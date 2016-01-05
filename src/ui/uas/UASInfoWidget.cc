@@ -70,7 +70,7 @@ UASInfoWidget::UASInfoWidget(const QString& title, QAction* action, QWidget *par
     errors = QMap<QString, int>();
 
     updateTimer = new QTimer(this);
-    connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+    connect(updateTimer, &QTimer::timeout, this, &UASInfoWidget::refresh);
     updateTimer->start(updateInterval);
 
     this->setVisible(false);
@@ -102,19 +102,19 @@ void UASInfoWidget::hideEvent(QHideEvent* event)
 void UASInfoWidget::_activeVehicleChanged(Vehicle* vehicle)
 {
     if (activeUAS) {
-        disconnect(activeUAS, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
-        disconnect(activeUAS, SIGNAL(dropRateChanged(int,float)), this, SLOT(updateReceiveLoss(int,float)));
-        disconnect(activeUAS, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateCPULoad(UASInterface*,double)));
-        disconnect(activeUAS, SIGNAL(errCountChanged(int,QString,QString,int)), this, SLOT(updateErrorCount(int,QString,QString,int)));
+        disconnect(activeUAS, &UASInterface::batteryChanged, this, &UASInfoWidget::updateBattery);
+        disconnect(activeUAS, &UASInterface::dropRateChanged, this, &UASInfoWidget::updateReceiveLoss);
+        disconnect(static_cast<UAS*>(activeUAS), &UAS::loadChanged, this, &UASInfoWidget::updateCPULoad);
+        disconnect(activeUAS, &UASInterface::errCountChanged, this, &UASInfoWidget::updateErrorCount);
         activeUAS = NULL;
     }
     
     if (vehicle) {
         activeUAS = vehicle->uas();
-        connect(activeUAS, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
-        connect(activeUAS, SIGNAL(dropRateChanged(int,float)), this, SLOT(updateReceiveLoss(int,float)));
-        connect(activeUAS, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateCPULoad(UASInterface*,double)));
-        connect(activeUAS, SIGNAL(errCountChanged(int,QString,QString,int)), this, SLOT(updateErrorCount(int,QString,QString,int)));
+        connect(activeUAS, &UASInterface::batteryChanged, this, &UASInfoWidget::updateBattery);
+        connect(activeUAS, &UASInterface::dropRateChanged, this, &UASInfoWidget::updateReceiveLoss);
+        connect(static_cast<UAS*>(activeUAS), &UAS::loadChanged, this, &UASInfoWidget::updateCPULoad);
+        connect(activeUAS, &UASInterface::errCountChanged, this, &UASInfoWidget::updateErrorCount);
     }
 }
 

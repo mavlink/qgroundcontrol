@@ -47,10 +47,7 @@ MainToolBarController::MainToolBarController(QObject* parent)
     , _telemetryLRSSI(0)
 {
     _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
-    // RSSI (didn't like standard connection)
-    connect(qgcApp()->toolbox()->mavlinkProtocol(),
-        SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, int, int, unsigned, unsigned, unsigned)), this,
-        SLOT(_telemetryChanged(LinkInterface*, unsigned, unsigned, int, int, unsigned, unsigned, unsigned)));
+    connect(qgcApp()->toolbox()->mavlinkProtocol(),     &MAVLinkProtocol::radioStatusChanged, this, &MainToolBarController::_telemetryChanged);
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MainToolBarController::_activeVehicleChanged);
 }
 
