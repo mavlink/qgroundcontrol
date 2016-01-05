@@ -91,7 +91,7 @@ QGCView {
                             QGCLabel {
                                 anchors.baseline:   modeCombo.baseline
                                 text:               "Flight Mode " + index + ":"
-                                color:              controller.activeFlightMode == index ? qgcPal.buttonHighlight : qgcPal.text
+                                color:              controller.activeFlightMode == index ? "yellow" : qgcPal.text
                             }
 
                             FactComboBox {
@@ -149,7 +149,7 @@ QGCView {
                             QGCLabel {
                                 anchors.baseline:   optCombo.baseline
                                 text:               "Channel option " + index + ":"
-                                color:              controller.channelOptionEnabled[modelData] ? qgcPal.buttonHighlight : qgcPal.text
+                                color:              controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
                             }
 
                             FactComboBox {

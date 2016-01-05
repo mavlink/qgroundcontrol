@@ -99,6 +99,47 @@ WindowsBuild {
 }
 
 LinuxBuild {
+    QMAKE_POST_LINK += && mkdir -p $$DESTDIR/libs
+
+    # QT_INSTALL_LIBS
+    QT_LIB_LIST = \
+        libicudata.so.54 \
+        libicui18n.so.54 \
+        libicuuc.so.54 \
+        libQt5Core.so.5 \
+        libQt5DBus.so.5 \
+        libQt5Gui.so.5 \
+        libQt5Location.so.5 \
+        libQt5Network.so.5 \
+        libQt5OpenGL.so.5 \
+        libQt5Positioning.so.5 \
+        libQt5PrintSupport.so.5 \
+        libQt5Qml.so.5 \
+        libQt5Quick.so.5 \
+        libQt5QuickWidgets.so.5 \
+        libQt5SerialPort.so.5 \
+        libQt5Svg.so.5 \
+        libQt5Test.so.5 \
+        libQt5Widgets.so.5 \
+        libQt5XcbQpa.so.5
+
+    for(QT_LIB, QT_LIB_LIST) {
+        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/libs
+    }
+
+    # QT_INSTALL_PLUGINS
+    QT_PLUGIN_LIST = \
+        platforms \
+        xcbglintegrations
+
+    for(QT_PLUGIN, QT_PLUGIN_LIST) {
+        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/libs
+    }
+
+    # QT_INSTALL_QML
+    QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/libs   
+   
+    # QGroundControl start script
     QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
 }
 

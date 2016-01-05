@@ -119,7 +119,7 @@ QGCView {
                         }
                         MenuItem {
                             text:           "Search..."
-                            onTriggered:    showDialog(searchDialogComponent, "Parameter Search", 50, StandardButton.Reset | StandardButton.Apply)
+                            onTriggered:    showDialog(searchDialogComponent, "Parameter Search", panel.showDialogDefaultWidth, StandardButton.Reset | StandardButton.Apply)
                         }
                         MenuSeparator { visible: !ScreenTools.isMobile }
                         MenuItem {
@@ -290,7 +290,7 @@ QGCView {
                             id:     valueLabel
                             width:  ScreenTools.defaultFontPixelWidth  * 20
                             color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText) : __qgcPal.text
-                            text:   factRow.modelFact.valueString + " " + factRow.modelFact.units
+                            text:   factRow.modelFact.enumStrings.length == 0 ? factRow.modelFact.valueString + " " + factRow.modelFact.units : factRow.modelFact.enumStringValue
                         }
                         QGCLabel {
                             text:   factRow.modelFact.shortDescription
@@ -314,7 +314,7 @@ QGCView {
                         acceptedButtons:    Qt.LeftButton
                         onClicked: {
                             __editorDialogFact = factRow.modelFact
-                            showDialog(editorDialogComponent, "Parameter Editor", 50, StandardButton.Cancel | StandardButton.Save)
+                            showDialog(editorDialogComponent, "Parameter Editor", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
                         }
                     }
                 }

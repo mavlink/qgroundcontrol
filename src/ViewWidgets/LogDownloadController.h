@@ -34,10 +34,10 @@
 #include "AutoPilotPlugin.h"
 #include "FactPanelController.h"
 
-class   MultiVehicleManager;
-class   UASInterface;
-class   Vehicle;
-class   QGCLogEntry;
+class  MultiVehicleManager;
+class  UASInterface;
+class  Vehicle;
+class  QGCLogEntry;
 class  LogDownloadData;
 
 Q_DECLARE_LOGGING_CATEGORY(LogDownloadLog)

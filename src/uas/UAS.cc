@@ -810,7 +810,8 @@ void UAS::receiveMessage(mavlink_message_t message)
             {
             case MAV_RESULT_ACCEPTED:
             {
-                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_INFO, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
+                // Do not confirm each command positively, as it spams the console.
+                // emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_INFO, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_TEMPORARILY_REJECTED:
