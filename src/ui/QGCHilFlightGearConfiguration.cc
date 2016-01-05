@@ -73,9 +73,10 @@ QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(Vehicle* vehicle, Q
 
     // Provide an option on the context menu to reset the option back to default
     _ui.optionsPlainTextEdit->setContextMenuPolicy(Qt::CustomContextMenu);
-    bool success = connect(&_resetOptionsAction, SIGNAL(triggered()), this, SLOT(_setDefaultOptions()));
+    bool success = connect(&_resetOptionsAction, &QAction::triggered, this, &QGCHilFlightGearConfiguration::_setDefaultOptions);
     Q_ASSERT(success);
-    success = connect(_ui.optionsPlainTextEdit, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(_showContextMenu(const QPoint &)));
+    success = connect(_ui.optionsPlainTextEdit, &QPlainTextEdit::customContextMenuRequested,
+                      this, &QGCHilFlightGearConfiguration::_showContextMenu);
     Q_ASSERT(success);
     Q_UNUSED(success);  // Silence release build unused variable warning
 }

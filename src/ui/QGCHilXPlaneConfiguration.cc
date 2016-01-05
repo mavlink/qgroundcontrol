@@ -1,18 +1,22 @@
 #include "QGCHilXPlaneConfiguration.h"
 #include "ui_QGCHilXPlaneConfiguration.h"
 #include "QGCXPlaneLink.h"
+#include "QGCHilConfiguration.h"
 
-QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QWidget *parent) :
+QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QGCHilConfiguration *parent) :
     QWidget(parent),
     ui(new Ui::QGCHilXPlaneConfiguration)
 {
     ui->setupUi(this);
     this->link = link;
 
-    connect(ui->startButton, SIGNAL(clicked(bool)), this, SLOT(toggleSimulation(bool)));
-    connect(ui->hostComboBox, SIGNAL(activated(QString)), link, SLOT(setRemoteHost(QString)));
-    connect(link, SIGNAL(remoteChanged(QString)), ui->hostComboBox, SLOT(setEditText(QString)));
-    connect(link, SIGNAL(statusMessage(QString)), parent, SLOT(receiveStatusMessage(QString)));
+    connect(ui->startButton, &QPushButton::clicked, this, &QGCHilXPlaneConfiguration::toggleSimulation);
+
+    connect(ui->hostComboBox, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated),
+            link, &QGCHilLink::setRemoteHost);
+
+    connect(link, &QGCHilLink::remoteChanged, ui->hostComboBox, &QComboBox::setEditText);
+    connect(link, &QGCHilLink::statusMessage, parent, &QGCHilConfiguration::receiveStatusMessage);
 
 //    connect(mav->getHILSimulation(), SIGNAL(statusMessage(QString)), this, SLOT(receiveStatusMessage(QString)));
 //    connect(ui->simComboBox, SIGNAL(activated(QString)), mav->getHILSimulation(), SLOT(setVersion(QString)));
