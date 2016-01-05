@@ -327,7 +327,7 @@ bool UDPLink::_hardwareConnect()
         _registerZeroconf(_config->localPort(), kZeroconfRegistration);
         //-- Connect signal if this version of Qt is not broken
         if(!UDP_BROKEN_SIGNAL) {
-            QObject::connect(_socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+            QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
         }
         emit connected();
     } else {

@@ -185,11 +185,11 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     }
 
 #ifndef __mobile__
-    connect(mavlink, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), &fileManager, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
+    connect(mavlink, &MAVLinkProtocol::messageReceived, &fileManager, &FileManager::receiveMessage);
 #endif
 
     color = UASInterface::getNextColor();
-    connect(&statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
+    connect(&statusTimeout, &QTimer::timeout, this, &UAS::updateState);
     statusTimeout.start(500);
 }
 
