@@ -356,6 +356,8 @@ HEADERS += \
     src/VehicleSetup/JoystickConfigController.h \
     src/ViewWidgets/CustomCommandWidget.h \
     src/ViewWidgets/CustomCommandWidgetController.h \
+    src/ViewWidgets/LogDownload.h \
+    src/ViewWidgets/LogDownloadController.h \
     src/ViewWidgets/ViewWidgetController.h \
 }
 
@@ -468,6 +470,8 @@ SOURCES += \
     src/VehicleSetup/JoystickConfigController.cc \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \
+    src/ViewWidgets/LogDownload.cc \
+    src/ViewWidgets/LogDownloadController.cc \
     src/ViewWidgets/ViewWidgetController.cc \
 }
 
