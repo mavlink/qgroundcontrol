@@ -171,7 +171,7 @@ private:
     void _findMissingEntries();
     void _receivedAllEntries();
     void _receivedAllData   ();
-    void _resetSelection    ();
+    void _resetSelection    (bool canceled = false);
     void _findMissingData   ();
     void _requestLogList    (uint32_t start = 0, uint32_t end = 0xFFFF);
     void _requestLogData    (uint8_t id, uint32_t offset = 0, uint32_t count = 0xFFFFFFFF);
@@ -187,6 +187,7 @@ private:
     bool                _requestingLogEntries;
     bool                _downloadingLogs;
     int                 _retries;
+    int                 _apmOneBased;
     QString             _downloadPath;
 };
 
