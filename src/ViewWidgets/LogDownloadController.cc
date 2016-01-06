@@ -502,7 +502,12 @@ LogDownloadController::_prepareLogDownload()
         ftime = entry->time().toString("yyyy-M-d-hh-mm-ss");
     }
     _downloadData = new LogDownloadData(entry);
-    _downloadData->filename = QString("log_") + QString::number(entry->id()) + "_" + ftime + ".mavlink";
+    _downloadData->filename = QString("log_") + QString::number(entry->id()) + "_" + ftime;
+    if(_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
+        _downloadData->filename += ".px4log";
+    } else {
+        _downloadData->filename += ".bin";
+    }
     _downloadData->file.setFileName(_downloadPath + _downloadData->filename);
     //-- Append a number to the end if the filename already exists
     if (_downloadData->file.exists()){
