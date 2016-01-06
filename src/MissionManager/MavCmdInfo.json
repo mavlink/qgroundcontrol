@@ -594,7 +594,7 @@
             "friendlyName": "VTOL Transition",
             "description":  "Perform flight mode transition",
             "category":     "Basic",
-            "param7": {
+            "param1": {
                 "label":            "Mode:",
                 "default":          3,
                 "decimalPlaces":    0,
