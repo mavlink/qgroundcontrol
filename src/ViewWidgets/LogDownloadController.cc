@@ -67,6 +67,7 @@ LogDownloadController::LogDownloadController(void)
     , _requestingLogEntries(false)
     , _downloadingLogs(false)
     , _retries(0)
+    , _apmOneBased(0)
 {
     MultiVehicleManager *manager = qgcApp()->toolbox()->multiVehicleManager();
     connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &LogDownloadController::_setActiveVehicle);
@@ -114,6 +115,11 @@ LogDownloadController::_logEntry(UASInterface* uas, uint32_t time_utc, uint32_t 
     }
     //-- If this is the first, pre-fill it
     if(!_logEntriesModel.count() && num_logs > 0) {
+        //-- Is this APM? They send a first entry with bogus ID and only the
+        //   count is valid. From now on, all entries are 1-based.
+        if(_vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            _apmOneBased = 1;
+        }
         for(int i = 0; i < num_logs; i++) {
             QGCLogEntry *entry = new QGCLogEntry(i);
             _logEntriesModel.append(entry);
@@ -121,14 +127,18 @@ LogDownloadController::_logEntry(UASInterface* uas, uint32_t time_utc, uint32_t 
     }
     //-- Update this log record
     if(num_logs > 0) {
-        if(id < _logEntriesModel.count()) {
-            QGCLogEntry* entry = _logEntriesModel[id];
-            entry->setSize(size);
-            entry->setTime(QDateTime::fromTime_t(time_utc));
-            entry->setReceived(true);
-            entry->setStatus(QString("Available"));
-        } else {
-            qWarning() << "Received log entry for out-of-bound index:" << id;
+        //-- Skip if empty (APM first packet)
+        if(size) {
+            id -= _apmOneBased;
+            if(id < _logEntriesModel.count()) {
+                QGCLogEntry* entry = _logEntriesModel[id];
+                entry->setSize(size);
+                entry->setTime(QDateTime::fromTime_t(time_utc));
+                entry->setReceived(true);
+                entry->setStatus(QString("Available"));
+            } else {
+                qWarning() << "Received log entry for out-of-bound index:" << id;
+            }
         }
     } else {
         //-- No logs to list
@@ -164,13 +174,18 @@ LogDownloadController::_entriesComplete()
 
 //----------------------------------------------------------------------------------------
 void
-LogDownloadController::_resetSelection()
+LogDownloadController::_resetSelection(bool canceled)
 {
     int num_logs = _logEntriesModel.count();
     for(int i = 0; i < num_logs; i++) {
         QGCLogEntry* entry = _logEntriesModel[i];
         if(entry) {
-            entry->setSelected(false);
+            if(entry->selected()) {
+                if(canceled) {
+                    entry->setStatus(QString("Canceled"));
+                }
+                entry->setSelected(false);
+            }
         }
     }
     emit selectionChanged();
@@ -227,6 +242,9 @@ LogDownloadController::_findMissingEntries()
         if(end < 0) {
             end = start;
         }
+        //-- APM "Fix"
+        start += _apmOneBased;
+        end   += _apmOneBased;
         //-- Request these entries again
         _requestLogList((uint32_t)start, (uint32_t) end);
     } else {
@@ -241,6 +259,8 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
     if(!_uas || uas != _uas || !_downloadData) {
         return;
     }
+    //-- APM "Fix"
+    id -= _apmOneBased;
     if(_downloadData->ID != id) {
         qWarning() << "Received log data for wrong log";
         return;
@@ -360,6 +380,8 @@ void
 LogDownloadController::_requestLogData(uint8_t id, uint32_t offset, uint32_t count)
 {
     if(_vehicle) {
+        //-- APM "Fix"
+        id += _apmOneBased;
         qCDebug(LogDownloadLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count << ")";
         mavlink_message_t msg;
         mavlink_msg_log_request_data_pack(
@@ -423,6 +445,16 @@ LogDownloadController::download(void)
     if(!_downloadPath.isEmpty()) {
         if(!_downloadPath.endsWith(QDir::separator()))
             _downloadPath += QDir::separator();
+        //-- Iterate selected entries and shown them as waiting
+        int num_logs = _logEntriesModel.count();
+        for(int i = 0; i < num_logs; i++) {
+            QGCLogEntry* entry = _logEntriesModel[i];
+            if(entry) {
+                if(entry->selected()) {
+                   entry->setStatus(QString("Waiting"));
+                }
+            }
+        }
         //-- Start download process
         _downloadingLogs = true;
         emit downloadingLogsChanged();
@@ -464,13 +496,18 @@ LogDownloadController::_prepareLogDownload()
     emit selectionChanged();
     bool result = false;
     QString ftime;
-    if(entry->time().date().year() < 1980) {
+    if(entry->time().date().year() < 2010) {
         ftime = "UnknownDate";
     } else {
         ftime = entry->time().toString("yyyy-M-d-hh-mm-ss");
     }
     _downloadData = new LogDownloadData(entry);
-    _downloadData->filename = QString("log_") + QString::number(entry->id()) + "_" + ftime + ".txt";
+    _downloadData->filename = QString("log_") + QString::number(entry->id()) + "_" + ftime;
+    if(_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
+        _downloadData->filename += ".px4log";
+    } else {
+        _downloadData->filename += ".bin";
+    }
     _downloadData->file.setFileName(_downloadPath + _downloadData->filename);
     //-- Append a number to the end if the filename already exists
     if (_downloadData->file.exists()){
@@ -539,7 +576,7 @@ LogDownloadController::cancel(void)
         delete _downloadData;
         _downloadData = 0;
     }
-    _resetSelection();
+    _resetSelection(true);
     _downloadingLogs = false;
     emit downloadingLogsChanged();
 }
