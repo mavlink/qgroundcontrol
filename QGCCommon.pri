@@ -31,6 +31,10 @@ linux {
         message("Linux build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
+    } else : linux-rasp-pi2-g++ {
+        message("Linux R-Pi2 build")
+        CONFIG += LinuxBuild
+        DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
     } else : android-g++ {
         message("Android build")
         CONFIG += AndroidBuild MobileBuild
