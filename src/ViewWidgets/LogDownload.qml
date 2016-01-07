@@ -94,7 +94,7 @@ QGCView {
                             //-- Have we received this entry already?
                             if(controller.model.get(styleData.row).received) {
                                 var d = controller.model.get(styleData.row).time
-                                if(d.getUTCFullYear() < 1980)
+                                if(d.getUTCFullYear() < 2010)
                                     return "Date Unknown"
                                 else
                                     return d.toLocaleString()

@@ -219,6 +219,7 @@ QGCView {
                             //offlineHomePosition = coordinate
                         } else if (addMissionItemsButton.checked) {
                             var index = controller.addMissionItem(coordinate)
+                            addMissionItemsButtonAutoOffTimer.stop()
                             addMissionItemsButtonAutoOffTimer.start()
                             setCurrentItem(index)
                         } else {
