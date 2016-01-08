@@ -533,7 +533,7 @@ void QGCXPlaneLink::readBytes()
     bool emitUpdate = false;
     quint16 fields_changed = 0;
 
-    const qint64 maxLength = 1000;
+    const qint64 maxLength = 65536;
     char data[maxLength];
     QHostAddress sender;
     quint16 senderPort;
