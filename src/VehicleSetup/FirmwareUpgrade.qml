@@ -376,7 +376,6 @@ QGCView {
             style: TextAreaStyle {
                 textColor:          qgcPal.text
                 backgroundColor:    qgcPal.windowShade
-                renderType:         Text.QtRendering
             }
         }
     } // QGCViewPabel
