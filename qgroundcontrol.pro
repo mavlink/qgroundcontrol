@@ -478,13 +478,8 @@ SOURCES += \
 #
 # Unit Test specific configuration goes here
 #
-# We have to special case Windows debug_and_release builds because you can't have files
-# which are only in the debug variant [QTBUG-40351]. So in this case we include unit tests
-# even in the release variant. If you want a Windows release build with no unit tests run
-# qmake with CONFIG-=debug_and_release CONFIG+=release.
-#
 
-DebugBuild|WindowsDebugAndRelease {
+DebugBuild {
 
 HEADERS += src/QmlControls/QmlTestWidget.h
 SOURCES += src/QmlControls/QmlTestWidget.cc
@@ -540,8 +535,8 @@ SOURCES += \
     src/qgcunittest/UnitTest.cc \
     src/qgcunittest/UnitTestList.cc \
     src/VehicleSetup/SetupViewTest.cc \
-} # DebugBuild|WindowsDebugAndRelease
-} # MobileBuild
+} # !MobileBuild
+} # DebugBuild
 
 #
 # Firmware Plugin Support
