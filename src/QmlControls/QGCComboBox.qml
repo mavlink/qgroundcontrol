@@ -15,6 +15,7 @@ ComboBox {
         textColor: __showHighlight ?
                     control.__qgcPal.buttonHighlightText :
                     control.__qgcPal.buttonText
+        renderType: Text.QtRendering
 
         background: Item {
             implicitWidth: Math.round(TextSingleton.implicitHeight * 4.5)
