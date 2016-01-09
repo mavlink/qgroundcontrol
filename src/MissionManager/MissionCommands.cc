@@ -58,9 +58,6 @@ const QString MissionCommands::_specifiesCoordinateJsonKey  (QStringLiteral("spe
 const QString MissionCommands::_unitsJsonKey                (QStringLiteral("units"));
 const QString MissionCommands::_versionJsonKey              (QStringLiteral("version"));
 
-const QString MissionCommands::_degreesConvertUnits         (QStringLiteral("degreesConvert"));
-const QString MissionCommands::_degreesUnits                (QStringLiteral("degrees"));
-
 MissionCommands::MissionCommands(QGCApplication* app)
     : QGCTool(app)
 {

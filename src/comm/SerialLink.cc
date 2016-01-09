@@ -377,15 +377,6 @@ LinkConfiguration* SerialLink::getLinkConfiguration()
     return _config;
 }
 
-bool SerialLink::requiresUSBMavlinkStart(void) const
-{
-    if (_port) {
-        return QGCSerialPortInfo(*_port).boardTypePixhawk();
-    } else {
-        return false;
-    }
-}
-
 //--------------------------------------------------------------------------
 //-- SerialConfiguration
 

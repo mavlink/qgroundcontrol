@@ -177,8 +177,9 @@ int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
     return 0;   // 0 buttons reserved for rc switch simulation
 }
 
-void PX4FirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
+void PX4FirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
+    Q_UNUSED(vehicle);
     Q_UNUSED(message);
 
     // PX4 Flight Stack plugin does no message adjustment
@@ -217,6 +218,8 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
          << MAV_CMD_NAV_RETURN_TO_LAUNCH << MAV_CMD_NAV_LAND << MAV_CMD_NAV_TAKEOFF
          << MAV_CMD_NAV_ROI
          << MAV_CMD_DO_JUMP
-         << MAV_CMD_CONDITION_DELAY;
+         << MAV_CMD_CONDITION_DELAY
+         << MAV_CMD_DO_VTOL_TRANSITION
+         << MAV_CMD_DO_DIGICAM_CONTROL;
     return list;
 }

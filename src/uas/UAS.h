@@ -64,7 +64,6 @@ class UAS : public UASInterface
     Q_OBJECT
 public:
     UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager);
-    ~UAS();
 
     float lipoFull;  ///< 100% charged voltage
     float lipoEmpty; ///< Discharged voltage
@@ -81,24 +80,28 @@ public:
     /** @brief Add one measurement and get low-passed voltage */
     float filterVoltage(float value);
 
-    Q_PROPERTY(double latitude READ getLatitude WRITE setLatitude NOTIFY latitudeChanged)
-    Q_PROPERTY(double longitude READ getLongitude WRITE setLongitude NOTIFY longitudeChanged)
-    Q_PROPERTY(double satelliteCount READ getSatelliteCount WRITE setSatelliteCount NOTIFY satelliteCountChanged)
-    Q_PROPERTY(bool isGlobalPositionKnown READ globalPositionKnown)
-    Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY rollChanged)
-    Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY pitchChanged)
-    Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY yawChanged)
-    Q_PROPERTY(double distToWaypoint READ getDistToWaypoint WRITE setDistToWaypoint NOTIFY distToWaypointChanged)
-    Q_PROPERTY(double airSpeed READ getGroundSpeed WRITE setGroundSpeed NOTIFY airSpeedChanged)
-    Q_PROPERTY(double groundSpeed READ getGroundSpeed WRITE setGroundSpeed NOTIFY groundSpeedChanged)
-    Q_PROPERTY(double bearingToWaypoint READ getBearingToWaypoint WRITE setBearingToWaypoint NOTIFY bearingToWaypointChanged)
-    Q_PROPERTY(double altitudeAMSL READ getAltitudeAMSL WRITE setAltitudeAMSL NOTIFY altitudeAMSLChanged)
-    Q_PROPERTY(double altitudeAMSLFT READ getAltitudeAMSLFT NOTIFY altitudeAMSLFTChanged)
-    Q_PROPERTY(double altitudeWGS84 READ getAltitudeWGS84 WRITE setAltitudeWGS84 NOTIFY altitudeWGS84Changed)
-    Q_PROPERTY(double altitudeRelative READ getAltitudeRelative WRITE setAltitudeRelative NOTIFY altitudeRelativeChanged)
+    Q_PROPERTY(double   latitude                READ getLatitude            WRITE setLatitude           NOTIFY latitudeChanged)
+    Q_PROPERTY(double   longitude               READ getLongitude           WRITE setLongitude          NOTIFY longitudeChanged)
+    Q_PROPERTY(double   satelliteCount          READ getSatelliteCount      WRITE setSatelliteCount     NOTIFY satelliteCountChanged)
+    Q_PROPERTY(bool     isGlobalPositionKnown   READ globalPositionKnown)
+    Q_PROPERTY(double   roll                    READ getRoll                WRITE setRoll               NOTIFY rollChanged)
+    Q_PROPERTY(double   pitch                   READ getPitch               WRITE setPitch              NOTIFY pitchChanged)
+    Q_PROPERTY(double   yaw                     READ getYaw                 WRITE setYaw                NOTIFY yawChanged)
+    Q_PROPERTY(double   distToWaypoint          READ getDistToWaypoint      WRITE setDistToWaypoint     NOTIFY distToWaypointChanged)
+    Q_PROPERTY(double   airSpeed                READ getGroundSpeed         WRITE setGroundSpeed        NOTIFY airSpeedChanged)
+    Q_PROPERTY(double   groundSpeed             READ getGroundSpeed         WRITE setGroundSpeed        NOTIFY groundSpeedChanged)
+    Q_PROPERTY(double   bearingToWaypoint       READ getBearingToWaypoint   WRITE setBearingToWaypoint  NOTIFY bearingToWaypointChanged)
+    Q_PROPERTY(double   altitudeAMSL            READ getAltitudeAMSL        WRITE setAltitudeAMSL       NOTIFY altitudeAMSLChanged)
+    Q_PROPERTY(double   altitudeAMSLFT          READ getAltitudeAMSLFT                                  NOTIFY altitudeAMSLFTChanged)
+    Q_PROPERTY(double   altitudeWGS84           READ getAltitudeWGS84       WRITE setAltitudeWGS84      NOTIFY altitudeWGS84Changed)
+    Q_PROPERTY(double   altitudeRelative        READ getAltitudeRelative    WRITE setAltitudeRelative   NOTIFY altitudeRelativeChanged)
+    Q_PROPERTY(double   satRawHDOP              READ getSatRawHDOP                                      NOTIFY satRawHDOPChanged)
+    Q_PROPERTY(double   satRawVDOP              READ getSatRawVDOP                                      NOTIFY satRawVDOPChanged)
+    Q_PROPERTY(double   satRawCOG               READ getSatRawCOG                                       NOTIFY satRawCOGChanged)
 
-    void clearVehicle(void) { _vehicle = NULL; }
-    
+    /// Vehicle is about to go away
+    void shutdownVehicle(void);
+
     void setGroundSpeed(double val)
     {
         groundSpeed = val;
@@ -223,6 +226,21 @@ public:
     double getAltitudeRelative() const
     {
         return altitudeRelative;
+    }
+
+    double getSatRawHDOP() const
+    {
+        return satRawHDOP;
+    }
+
+    double getSatRawVDOP() const
+    {
+        return satRawVDOP;
+    }
+
+    double getSatRawCOG() const
+    {
+        return satRawCOG;
     }
 
     void setSatelliteCount(double val)
@@ -361,7 +379,7 @@ protected: //COMMENTS FOR TEST UNIT
     /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
     QMap<int, QString> components;///< IDs and names of all detected onboard components
-    
+
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
@@ -415,9 +433,13 @@ protected: //COMMENTS FOR TEST UNIT
     double latitude;            ///< Global latitude as estimated by position estimator
     double longitude;           ///< Global longitude as estimated by position estimator
     double altitudeAMSL;        ///< Global altitude as estimated by position estimator, AMSL
-    double altitudeAMSLFT;        ///< Global altitude as estimated by position estimator, AMSL
-    double altitudeWGS84;        ///< Global altitude as estimated by position estimator, WGS84
+    double altitudeAMSLFT;      ///< Global altitude as estimated by position estimator, AMSL
+    double altitudeWGS84;       ///< Global altitude as estimated by position estimator, WGS84
     double altitudeRelative;    ///< Altitude above home as estimated by position estimator
+
+    double satRawHDOP;
+    double satRawVDOP;
+    double satRawCOG;
 
     double satelliteCount;      ///< Number of satellites visible to raw GPS
     bool globalEstimatorActive; ///< Global position estimator present, do not fall back to GPS raw for position
@@ -604,6 +626,11 @@ signals:
     void altitudeAMSLFTChanged(double val,QString name);
     void altitudeWGS84Changed(double val,QString name);
     void altitudeRelativeChanged(double val,QString name);
+
+    void satRawHDOPChanged  (double value);
+    void satRawVDOPChanged  (double value);
+    void satRawCOGChanged   (double value);
+
     void rollChanged(double val,QString name);
     void pitchChanged(double val,QString name);
     void yawChanged(double val,QString name);
@@ -637,7 +664,7 @@ protected:
 
 private:
     void _say(const QString& text, int severity = 6);
-    
+
 private:
     Vehicle*                _vehicle;
     FirmwarePluginManager*  _firmwarePluginManager;

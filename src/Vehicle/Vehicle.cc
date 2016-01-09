@@ -90,6 +90,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _batteryConsumed(-1.0)
     , _currentHeartbeatTimeout(0)
     , _satelliteCount(-1)
+    , _satRawHDOP(1e10f)
+    , _satRawVDOP(1e10f)
+    , _satRawCOG(0.0)
     , _satelliteLock(0)
     , _updateCount(0)
     , _rcRSSI(0)
@@ -137,9 +140,16 @@ Vehicle::Vehicle(LinkInterface*             link,
     emit heartbeatTimeoutChanged();
 
     _mav = uas();
-    // Reset satellite count (no GPS)
+    // Reset satellite data (no GPS)
     _satelliteCount = -1;
+    _satRawHDOP     = 1e10f;
+    _satRawVDOP     = 1e10f;
+    _satRawCOG      = 0.0;
+    emit satRawHDOPChanged();
+    emit satRawVDOPChanged();
+    emit satRawCOGChanged();
     emit satelliteCountChanged();
+
     // Reset connection lost (if any)
     _currentHeartbeatTimeout = 0;
     emit heartbeatTimeoutChanged();
@@ -161,7 +171,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     UAS* pUas = dynamic_cast<UAS*>(_mav);
     if(pUas) {
         _setSatelliteCount(pUas->getSatelliteCount(), QString(""));
-        connect(pUas, &UAS::satelliteCountChanged, this, &Vehicle::_setSatelliteCount);
+        connect(pUas, &UAS::satelliteCountChanged,  this, &Vehicle::_setSatelliteCount);
+        connect(pUas, &UAS::satRawHDOPChanged,      this, &Vehicle::_setSatRawHDOP);
+        connect(pUas, &UAS::satRawVDOPChanged,      this, &Vehicle::_setSatRawVDOP);
+        connect(pUas, &UAS::satRawCOGChanged,       this, &Vehicle::_setSatRawCOG);
     }
 
     _loadSettings();
@@ -208,7 +221,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
 
     // Give the plugin a change to adjust the message contents
-    _firmwarePlugin->adjustMavlinkMessage(&message);
+    _firmwarePlugin->adjustMavlinkMessage(this, &message);
 
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HOME_POSITION:
@@ -375,7 +388,7 @@ void Vehicle::_handleRCChannelsRaw(mavlink_message_t& message)
         if (channelValue == UINT16_MAX) {
             pwmValues[i] = -1;
         } else {
-            channelCount = i;
+            channelCount = i + 1;
             pwmValues[i] = channelValue;
         }
     }
@@ -429,7 +442,7 @@ void Vehicle::_sendMessage(mavlink_message_t message)
             MAVLinkProtocol* mavlink = _mavlink;
 
             // Give the plugin a chance to adjust
-            _firmwarePlugin->adjustMavlinkMessage(&message);
+            _firmwarePlugin->adjustMavlinkMessage(this, &message);
 
             static const uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
             mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getMavlinkChannel(), message.len, messageKeys[message.msgid]);
@@ -754,6 +767,30 @@ void Vehicle::_setSatelliteCount(double val, QString)
     }
 }
 
+void Vehicle::_setSatRawHDOP(double val)
+{
+    if(_satRawHDOP != val) {
+        _satRawHDOP = val;
+        emit satRawHDOPChanged();
+    }
+}
+
+void Vehicle::_setSatRawVDOP(double val)
+{
+    if(_satRawVDOP != val) {
+        _satRawVDOP = val;
+        emit satRawVDOPChanged();
+    }
+}
+
+void Vehicle::_setSatRawCOG(double val)
+{
+    if(_satRawCOG != val) {
+        _satRawCOG = val;
+        emit satRawCOGChanged();
+    }
+}
+
 void Vehicle::_setSatLoc(UASInterface*, int fix)
 {
     // fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D lock, 3: 3D lock
@@ -1020,7 +1057,7 @@ void Vehicle::setFlightMode(const QString& flightMode)
         mavlink_msg_set_mode_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, id(), newBaseMode, custom_mode);
         sendMessage(msg);
     } else {
-        qCWarning(VehicleLog) << "FirmwarePlugin::setFlightMode failed, flightMode:" << flightMode;
+        qWarning() << "FirmwarePlugin::setFlightMode failed, flightMode:" << flightMode;
     }
 }
 

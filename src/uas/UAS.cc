@@ -96,6 +96,10 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     altitudeWGS84(0.0),
     altitudeRelative(0.0),
 
+    satRawHDOP(1e10f),
+    satRawVDOP(1e10f),
+    satRawCOG(0.0),
+
     globalEstimatorActive(false),
 
     latitude_gps(0.0),
@@ -187,23 +191,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     color = UASInterface::getNextColor();
     connect(&statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     statusTimeout.start(500);
-}
-
-/**
-* Saves the settings of name, airframe, autopilot type and battery specifications
-* by calling writeSettings.
-*/
-UAS::~UAS()
-{
-#ifndef __mobile__
-    stopHil();
-    if (simulation) {
-        // wait for the simulator to exit
-        simulation->wait();
-        simulation->disconnectSimulation();
-        simulation->deleteLater();
-    }
-#endif
 }
 
 /**
@@ -715,9 +702,9 @@ void UAS::receiveMessage(mavlink_message_t message)
                 positionLock = true;
                 isGlobalPositionKnown = true;
 
-                latitude_gps = pos.lat/(double)1E7;
+                latitude_gps  = pos.lat/(double)1E7;
                 longitude_gps = pos.lon/(double)1E7;
-                altitude_gps = pos.alt/1000.0;
+                altitude_gps  = pos.alt/1000.0;
 
                 // If no GLOBAL_POSITION_INT messages ever received, use these raw GPS values instead.
                 if (!globalEstimatorActive) {
@@ -736,6 +723,27 @@ void UAS::receiveMessage(mavlink_message_t message)
                         emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_NOTICE, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
                     }
                 }
+            }
+
+            double dtmp;
+            //-- Raw GPS data
+            dtmp = pos.eph == 0xFFFF ? 1e10f : pos.eph / 100.0;
+            if(dtmp != satRawHDOP)
+            {
+                satRawHDOP = dtmp;
+                emit satRawHDOPChanged(satRawHDOP);
+            }
+            dtmp = pos.epv == 0xFFFF ? 1e10f : pos.epv / 100.0;
+            if(dtmp != satRawVDOP)
+            {
+                satRawVDOP = dtmp;
+                emit satRawVDOPChanged(satRawVDOP);
+            }
+            dtmp = pos.cog == 0xFFFF ? 0.0 : pos.cog / 100.0;
+            if(dtmp != satRawCOG)
+            {
+                satRawCOG = dtmp;
+                emit satRawCOGChanged(satRawCOG);
             }
 
             // Emit this signal after the above signals. This way a trigger on gps lock signal which then asks for vehicle position
@@ -785,7 +793,8 @@ void UAS::receiveMessage(mavlink_message_t message)
             {
             case MAV_RESULT_ACCEPTED:
             {
-                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_INFO, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
+                // Do not confirm each command positively, as it spams the console.
+                // emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_INFO, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_TEMPORARILY_REJECTED:
@@ -935,6 +944,23 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit NavigationControllerDataChanged(this, p.nav_roll, p.nav_pitch, p.nav_bearing, p.target_bearing, p.wp_dist);
         }
             break;
+
+        case MAVLINK_MSG_ID_LOG_ENTRY:
+        {
+            mavlink_log_entry_t log;
+            mavlink_msg_log_entry_decode(&message, &log);
+            emit logEntry(this, log.time_utc, log.size, log.id, log.num_logs, log.last_log_num);
+        }
+            break;
+
+        case MAVLINK_MSG_ID_LOG_DATA:
+        {
+            mavlink_log_data_t log;
+            mavlink_msg_log_data_decode(&message, &log);
+            emit logData(this, log.ofs, log.id, log.count, log.data);
+        }
+            break;
+
         default:
             break;
         }
@@ -2189,4 +2215,18 @@ void UAS::_say(const QString& text, int severity)
 {
     if (!qgcApp()->runningUnitTests())
         qgcApp()->toolbox()->audioOutput()->say(text, severity);
+}
+
+void UAS::shutdownVehicle(void)
+{
+#ifndef __mobile__
+    stopHil();
+    if (simulation) {
+        // wait for the simulator to exit
+        simulation->wait();
+        simulation->disconnectSimulation();
+        simulation->deleteLater();
+    }
+#endif
+    _vehicle = NULL;
 }

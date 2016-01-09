@@ -47,9 +47,11 @@ public:
     const Fact& operator=(const Fact& other);
 
     Q_PROPERTY(int          componentId             READ componentId                                        CONSTANT)
+    Q_PROPERTY(QStringList  bitmaskStrings          READ bitmaskStrings                                     NOTIFY bitmaskStringsChanged)
+    Q_PROPERTY(QVariantList bitmaskValues           READ bitmaskValues                                      NOTIFY bitmaskValuesChanged)
     Q_PROPERTY(int          decimalPlaces           READ decimalPlaces                                      CONSTANT)
-    Q_PROPERTY(QVariant     defaultValue            READ defaultValue                                       CONSTANT)
-    Q_PROPERTY(QString      defaultValueString      READ defaultValueString                                 CONSTANT)
+    Q_PROPERTY(QVariant     defaultValue            READ cookedDefaultValue                                 CONSTANT)
+    Q_PROPERTY(QString      defaultValueString      READ cookedDefaultValueString                           CONSTANT)
     Q_PROPERTY(bool         defaultValueAvailable   READ defaultValueAvailable                              CONSTANT)
     Q_PROPERTY(int          enumIndex               READ enumIndex              WRITE setEnumIndex          NOTIFY valueChanged)
     Q_PROPERTY(QStringList  enumStrings             READ enumStrings                                        NOTIFY enumStringsChanged)
@@ -57,48 +59,55 @@ public:
     Q_PROPERTY(QVariantList enumValues              READ enumValues                                         NOTIFY enumValuesChanged)
     Q_PROPERTY(QString      group                   READ group                                              CONSTANT)
     Q_PROPERTY(QString      longDescription         READ longDescription                                    CONSTANT)
-    Q_PROPERTY(QVariant     max                     READ max                                                CONSTANT)
-    Q_PROPERTY(QString      maxString               READ maxString                                          CONSTANT)
+    Q_PROPERTY(QVariant     max                     READ cookedMax                                          CONSTANT)
+    Q_PROPERTY(QString      maxString               READ cookedMaxString                                    CONSTANT)
     Q_PROPERTY(bool         maxIsDefaultForType     READ maxIsDefaultForType                                CONSTANT)
-    Q_PROPERTY(QVariant     min                     READ min                                                CONSTANT)
-    Q_PROPERTY(QString      minString               READ minString                                          CONSTANT)
+    Q_PROPERTY(QVariant     min                     READ cookedMin                                          CONSTANT)
+    Q_PROPERTY(QString      minString               READ cookedMinString                                    CONSTANT)
     Q_PROPERTY(bool         minIsDefaultForType     READ minIsDefaultForType                                CONSTANT)
     Q_PROPERTY(QString      name                    READ name                                               CONSTANT)
     Q_PROPERTY(QString      shortDescription        READ shortDescription                                   CONSTANT)
     Q_PROPERTY(FactMetaData::ValueType_t type       READ type                                               CONSTANT)
-    Q_PROPERTY(QString      units                   READ units                                              CONSTANT)
+    Q_PROPERTY(QString      units                   READ cookedUnits                                        CONSTANT)
     Q_PROPERTY(QVariant     value                   READ cookedValue            WRITE setCookedValue        NOTIFY valueChanged)
     Q_PROPERTY(bool         valueEqualsDefault      READ valueEqualsDefault                                 NOTIFY valueChanged)
-    Q_PROPERTY(QVariant     valueString             READ valueString                                        NOTIFY valueChanged)
+    Q_PROPERTY(QVariant     valueString             READ cookedValueString                                  NOTIFY valueChanged)
 
     /// Convert and validate value
     ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
-    Q_INVOKABLE QString validate(const QString& value, bool convertOnly);
-    
+    Q_INVOKABLE QString validate(const QString& cookedValue, bool convertOnly);
+
     QVariant        cookedValue             (void) const;   /// Value after translation
+    QVariant        rawValue                (void) const { return _rawValue; }  /// value prior to translation, careful
     int             componentId             (void) const;
     int             decimalPlaces           (void) const;
-    QVariant        defaultValue            (void) const;
+    QVariant        rawDefaultValue         (void) const;
+    QVariant        cookedDefaultValue      (void) const;
     bool            defaultValueAvailable   (void) const;
-    QString         defaultValueString      (void) const;
+    QString         cookedDefaultValueString(void) const;
+    QStringList     bitmaskStrings             (void) const;
+    QVariantList    bitmaskValues              (void) const;
     int             enumIndex               (void);         // This is not const, since an unknown value can modify the enum lists
     QStringList     enumStrings             (void) const;
     QString         enumStringValue         (void);         // This is not const, since an unknown value can modify the enum lists
     QVariantList    enumValues              (void) const;
     QString         group                   (void) const;
     QString         longDescription         (void) const;
-    QVariant        max                     (void) const;
-    QString         maxString               (void) const;
+    QVariant        rawMax                  (void) const;
+    QVariant        cookedMax               (void) const;
+    QString         cookedMaxString         (void) const;
     bool            maxIsDefaultForType     (void) const;
-    QVariant        min                     (void) const;
-    QString         minString               (void) const;
+    QVariant        rawMin                  (void) const;
+    QVariant        cookedMin               (void) const;
+    QString         cookedMinString         (void) const;
     bool            minIsDefaultForType     (void) const;
     QString         name                    (void) const;
-    QVariant        rawValue                (void) const { return _rawValue; }  /// value prior to translation, careful
     QString         shortDescription        (void) const;
     FactMetaData::ValueType_t type          (void) const;
-    QString         units                   (void) const;
-    QString         valueString             (void) const;
+    QString         cookedUnits             (void) const;
+    QString         rawUnits                (void) const;
+    QString         rawValueString          (void) const;
+    QString         cookedValueString       (void) const;
     bool            valueEqualsDefault      (void) const;
 
     void setRawValue        (const QVariant& value);
@@ -120,6 +129,8 @@ public:
     void _setName(const QString& name) { _name = name; }
     
 signals:
+    void bitmaskStringsChanged(void);
+    void bitmaskValuesChanged(void);
     void enumStringsChanged(void);
     void enumValuesChanged(void);
 

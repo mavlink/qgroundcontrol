@@ -21,29 +21,17 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-import QtQuick      2.4
-import QtLocation   5.3
+#ifndef LogDownload_H
+#define LogDownload_H
 
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Vehicle       1.0
+#include "QGCQmlWidgetHolder.h"
 
-/// Marker for displaying a mission item on the map
-MapQuickItem {
-    id: _item
+class LogDownload : public QGCQmlWidgetHolder
+{
+    Q_OBJECT
+	
+public:
+    LogDownload(const QString& title, QAction* action, QWidget *parent = 0);
+};
 
-    property var missionItem
-
-    signal clicked
-
-    anchorPoint.x:  sourceItem.width  / 2
-    anchorPoint.y:  sourceItem.height / 2
-
-    sourceItem:
-        MissionItemIndexLabel {
-            id:             _label
-            isCurrentItem:  missionItem.isCurrentItem
-            label:          missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
-            onClicked:      _item.clicked()
-        }
-}
+#endif

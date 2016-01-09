@@ -98,58 +98,9 @@ Rectangle {
         }
 
         Image {
-            id:                 deleteHelpIcon
-            anchors.topMargin:  ScreenTools.defaultFontPixelHeight
-            anchors.top:        addMissionItemsHelpText.bottom
-            width:              ScreenTools.defaultFontPixelHeight * 3
-            fillMode:           Image.PreserveAspectFit
-            mipmap:             true
-            smooth:             true
-            source:             (qgcPal.globalTheme === QGCPalette.Light) ? "/qmlimages/TrashDeleteBlack.svg" : "/qmlimages/TrashDelete.svg"
-        }
-
-        QGCLabel {
-            id:                 deleteHelpText
-            anchors.leftMargin: ScreenTools.defaultFontPixelHeight
-            anchors.left:       mapTypeHelpIcon.right
-            anchors.right:      parent.right
-            anchors.top:        deleteHelpIcon.top
-            wrapMode:           Text.WordWrap
-            text:               "<b>Delete Mission Item</b><br>" +
-                                "Delete the currently selected mission item."
-        }
-
-        /*
-          Home Position Manager disabled
-
-        Image {
-            id:                 homePositionManagerHelpIcon
-            anchors.topMargin:  ScreenTools.defaultFontPixelHeight
-            anchors.top:        deleteHelpText.bottom
-            width:              ScreenTools.defaultFontPixelHeight * 3
-            fillMode:           Image.PreserveAspectFit
-            mipmap:             true
-            smooth:             true
-            source:             (qgcPal.globalTheme === QGCPalette.Light) ? "/qmlimages/MapHomeBlack.svg" : "/qmlimages/MapHome.svg"
-        }
-
-        QGCLabel {
-            id:                 homePositionManagerHelpText
-            anchors.leftMargin: ScreenTools.defaultFontPixelHeight
-            anchors.left:       mapTypeHelpIcon.right
-            anchors.right:      parent.right
-            anchors.top:        homePositionManagerHelpIcon.top
-            wrapMode:           Text.WordWrap
-            text:               "<b>Flying Field Manager</b><br>" +
-                                "When enabled, allows you to select/add/update flying field locations. " +
-                                "You can save multiple flying field locations for use while creating missions while you are not connected to your vehicle."
-        }
-        */
-
-        Image {
             id:                 mapCenterHelpIcon
             anchors.topMargin:  ScreenTools.defaultFontPixelHeight
-            anchors.top:        deleteHelpText.bottom
+            anchors.top:        addMissionItemsHelpText.bottom
             width:              ScreenTools.defaultFontPixelHeight * 3
             fillMode:           Image.PreserveAspectFit
             mipmap:             true

@@ -80,7 +80,7 @@ void Fact::forceSetRawValue(const QVariant& value)
         QVariant    typedValue;
         QString     errorString;
         
-        if (_metaData->convertAndValidate(value, true /* convertOnly */, typedValue, errorString)) {
+        if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
             _rawValue.setValue(typedValue);
             emit valueChanged(cookedValue());
             emit _containerRawValueChanged(rawValue());
@@ -96,7 +96,7 @@ void Fact::setRawValue(const QVariant& value)
         QVariant    typedValue;
         QString     errorString;
         
-        if (_metaData->convertAndValidate(value, true /* convertOnly */, typedValue, errorString)) {
+        if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
             if (typedValue != _rawValue) {
                 _rawValue.setValue(typedValue);
                 emit valueChanged(cookedValue());
@@ -223,6 +223,26 @@ QVariantList Fact::enumValues(void) const
     }
 }
 
+QStringList Fact::bitmaskStrings(void) const
+{
+    if (_metaData) {
+        return _metaData->bitmaskStrings();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return QStringList();
+    }
+}
+
+QVariantList Fact::bitmaskValues(void) const
+{
+    if (_metaData) {
+        return _metaData->bitmaskValues();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return QVariantList();
+    }
+}
+
 QString Fact::_variantToString(const QVariant& variant) const
 {
     QString valueString;
@@ -242,27 +262,45 @@ QString Fact::_variantToString(const QVariant& variant) const
     return valueString;
 }
 
-QString Fact::valueString(void) const
+QString Fact::rawValueString(void) const
+{
+    return _variantToString(rawValue());
+}
+
+QString Fact::cookedValueString(void) const
 {
     return _variantToString(cookedValue());
 }
 
-QVariant Fact::defaultValue(void) const
+QVariant Fact::rawDefaultValue(void) const
 {
     if (_metaData) {
         if (!_metaData->defaultValueAvailable()) {
             qDebug() << "Access to unavailable default value";
         }
-        return _metaData->defaultValue();
+        return _metaData->rawDefaultValue();
     } else {
         qWarning() << "Meta data pointer missing";
         return QVariant(0);
     }
 }
 
-QString Fact::defaultValueString(void) const
+QVariant Fact::cookedDefaultValue(void) const
 {
-    return _variantToString(defaultValue());
+    if (_metaData) {
+        if (!_metaData->defaultValueAvailable()) {
+            qDebug() << "Access to unavailable default value";
+        }
+        return _metaData->cookedDefaultValue();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return QVariant(0);
+    }
+}
+
+QString Fact::cookedDefaultValueString(void) const
+{
+    return _variantToString(cookedDefaultValue());
 }
 
 FactMetaData::ValueType_t Fact::type(void) const
@@ -290,44 +328,74 @@ QString Fact::longDescription(void) const
     }
 }
 
-QString Fact::units(void) const
+QString Fact::rawUnits(void) const
 {
     if (_metaData) {
-        return _metaData->units();
+        return _metaData->rawUnits();
     } else {
         qWarning() << "Meta data pointer missing";
         return QString();
     }
 }
 
-QVariant Fact::min(void) const
+QString Fact::cookedUnits(void) const
 {
     if (_metaData) {
-        return _metaData->min();
+        return _metaData->cookedUnits();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return QString();
+    }
+}
+
+QVariant Fact::rawMin(void) const
+{
+    if (_metaData) {
+        return _metaData->rawMin();
     } else {
         qWarning() << "Meta data pointer missing";
         return QVariant(0);
     }
 }
 
-QString Fact::minString(void) const
-{
-    return _variantToString(min());
-}
-
-QVariant Fact::max(void) const
+QVariant Fact::cookedMin(void) const
 {
     if (_metaData) {
-        return _metaData->max();
+        return _metaData->cookedMin();
     } else {
         qWarning() << "Meta data pointer missing";
         return QVariant(0);
     }
 }
 
-QString Fact::maxString(void) const
+QString Fact::cookedMinString(void) const
 {
-    return _variantToString(max());
+    return _variantToString(cookedMin());
+}
+
+QVariant Fact::rawMax(void) const
+{
+    if (_metaData) {
+        return _metaData->rawMax();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return QVariant(0);
+    }
+}
+
+QVariant Fact::cookedMax(void) const
+{
+    if (_metaData) {
+        return _metaData->cookedMax();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return QVariant(0);
+    }
+}
+
+QString Fact::cookedMaxString(void) const
+{
+    return _variantToString(cookedMax());
 }
 
 bool Fact::minIsDefaultForType(void) const
@@ -372,41 +440,6 @@ QString Fact::group(void) const
 
 void Fact::setMetaData(FactMetaData* metaData)
 {
-    static QStringList  apmFlightModeParamList;
-    static QStringList  apmFlightModeEnumStrings;
-    static QVariantList apmFlightModeEnumValues;
-
-    static QStringList  apmChannelOptParamList;
-    static QStringList  apmChannelOptEnumStrings;
-    static QVariantList apmChannelOptEnumValues;
-
-    // FIXME: Hack to stuff enums into APM parameters, wating on real APM metadata
-
-    if (apmFlightModeEnumStrings.count() == 0) {
-        apmFlightModeParamList << "FLTMODE1" << "FLTMODE2" << "FLTMODE3" << "FLTMODE4" << "FLTMODE5" << "FLTMODE6";
-        apmFlightModeEnumStrings << "Stabilize" << "Acro" << "AltHold" << "Auto" << "Guided" << "Loiter" << "RTL" << "Circle"
-                                 << "Land" << "Drift" << "Sport" << "Flip" << "AutoTune" << "PosHold" << "Brake";
-        for (int i=0; i<apmFlightModeEnumStrings.count(); i++) {
-            apmFlightModeEnumValues << QVariant(i);
-        }
-
-        apmChannelOptParamList << "CH7_OPT" << "CH8_OPT" << "CH9_OPT" << "CH10_OPT" << "CH11_OPT" << "CH12_OPT";
-        apmChannelOptEnumStrings << "Do Nothing" << "Flip" << "Simple Mode" << "RTL" << "Save Trim" << "Save WP" << "Camera Trigger" << "RangeFinder"
-                                 << "Fence" << "ResetToArmedYaw" << "Super Simple Mode" << "Acro Trainer" << "Auto" << "AutoTune" << "Land" << "EPM"
-                                 << "Parachute Enable" << "Parachute Release" << "Parachute 3pos" << "Auto Mission Reset" << "AttCon Feed Forward"
-                                 << "AttCon Accel Limits" << "Retract Mount" << "Relay On/Off" << "Landing Gear" << "Lost Copter Sound"
-                                 << "Motor Emergency Stop" << "Motor Interlock" << "Brake";
-        for (int i=0; i<apmChannelOptEnumStrings.count(); i++) {
-            apmChannelOptEnumValues << QVariant(i);
-        }
-    }
-
-    if (apmFlightModeParamList.contains(name())) {
-        metaData->setEnumInfo(apmFlightModeEnumStrings, apmFlightModeEnumValues);
-    } else if (apmChannelOptParamList.contains(name())) {
-        metaData->setEnumInfo(apmChannelOptEnumStrings, apmChannelOptEnumValues);
-    }
-
     _metaData = metaData;
     emit valueChanged(cookedValue());
 }
@@ -415,7 +448,7 @@ bool Fact::valueEqualsDefault(void) const
 {
     if (_metaData) {
         if (_metaData->defaultValueAvailable()) {
-            return _metaData->defaultValue() == rawValue();
+            return _metaData->rawDefaultValue() == rawValue();
         } else {
             return false;
         }
@@ -435,14 +468,13 @@ bool Fact::defaultValueAvailable(void) const
     }
 }
 
-QString Fact::validate(const QString& value, bool convertOnly)
+QString Fact::validate(const QString& cookedValue, bool convertOnly)
 {
     if (_metaData) {
-        
         QVariant    typedValue;
         QString     errorString;
         
-        _metaData->convertAndValidate(value, convertOnly, typedValue, errorString);
+        _metaData->convertAndValidateCooked(cookedValue, convertOnly, typedValue, errorString);
         
         return errorString;
     } else {

@@ -29,6 +29,14 @@ APMRadioComponent::APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilo
     APMComponent(vehicle, autopilot, parent),
     _name(tr("Radio"))
 {
+    _mapParams << QStringLiteral("RCMAP_ROLL") << QStringLiteral("RCMAP_PITCH") << QStringLiteral("RCMAP_YAW") << QStringLiteral("RCMAP_THROTTLE");
+
+    foreach (const QString& mapParam, _mapParams) {
+        Fact* fact = _autopilot->getParameterFact(-1, mapParam);
+        connect(fact, &Fact::valueChanged, this, &APMRadioComponent::_triggerChanged);
+    }
+
+    _connectSetupTriggers();
 }
 
 QString APMRadioComponent::name(void) const
@@ -56,25 +64,38 @@ bool APMRadioComponent::requiresSetup(void) const
 bool APMRadioComponent::setupComplete(void) const
 {
     // The best we can do to detect the need for a radio calibration is look for attitude
-    // controls to be mapped.
-    QStringList attitudeMappings;
-    attitudeMappings << "RCMAP_ROLL" << "RCMAP_PITCH" << "RCMAP_YAW" << "RCMAP_THROTTLE";
-    foreach(const QString &mapParam, attitudeMappings) {
-        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, mapParam)->rawValue().toInt() == 0) {
+    // controls to be mapped as well as all attitude control rc min/max/trim still at defaults.
+    QList<int> mapValues;
+
+    // First check for all attitude controls mapped
+    for (int i=0; i<_mapParams.count(); i++) {
+        mapValues << _autopilot->getParameterFact(FactSystem::defaultComponentId, _mapParams[i])->rawValue().toInt();
+        if (mapValues[i] <= 0) {
             return false;
         }
     }
+
+    // Next check RC#_MIN/MAX/TRIM all at defaults
+    foreach (const QString& mapParam, _mapParams) {
+        int channel = _autopilot->getParameterFact(-1, mapParam)->rawValue().toInt();
+        if (_autopilot->getParameterFact(-1, QString("RC%1_MIN").arg(channel))->rawValue().toInt() != 1100) {
+            return true;
+        }
+        if (_autopilot->getParameterFact(-1, QString("RC%1_MAX").arg(channel))->rawValue().toInt() != 1900) {
+            return true;
+        }
+        if (_autopilot->getParameterFact(-1, QString("RC%1_TRIM").arg(channel))->rawValue().toInt() != 1500) {
+            return true;
+        }
+    }
     
-    return true;
+    return false;
 }
 
 QStringList APMRadioComponent::setupCompleteChangedTriggerList(void) const
 {
-    QStringList triggers;
-    
-    triggers << "RCMAP_ROLL" << "RCMAP_PITCH" << "RCMAP_YAW" << "RCMAP_THROTTLE";
-    
-    return triggers;
+    // APMRadioComponent manages it's own triggers
+    return QStringList();
 }
 
 QUrl APMRadioComponent::setupSource(void) const
@@ -93,8 +114,41 @@ QString APMRadioComponent::prerequisiteSetup(void) const
 
     if (!plugin->airframeComponent()->setupComplete()) {
         return plugin->airframeComponent()->name();
-
     }
     
     return QString();
+}
+
+void APMRadioComponent::_connectSetupTriggers(void)
+{
+    // Disconnect previous triggers
+    foreach(Fact* fact, _triggerFacts) {
+        disconnect(fact, &Fact::valueChanged, this, &APMRadioComponent::_triggerChanged);
+    }
+    _triggerFacts.clear();
+
+    // Get the channels for attitude controls and connect to those values for triggers
+    foreach (const QString& mapParam, _mapParams) {
+        int channel = _autopilot->getParameterFact(FactSystem::defaultComponentId, mapParam)->rawValue().toInt();
+
+        Fact* fact = _autopilot->getParameterFact(-1, QString("RC%1_MIN").arg(channel));
+        _triggerFacts << fact;
+        connect(fact, &Fact::valueChanged, this, &APMRadioComponent::_triggerChanged);
+
+        fact = _autopilot->getParameterFact(-1, QString("RC%1_MAX").arg(channel));
+        _triggerFacts << fact;
+        connect(fact, &Fact::valueChanged, this, &APMRadioComponent::_triggerChanged);
+
+        fact = _autopilot->getParameterFact(-1, QString("RC%1_TRIM").arg(channel));
+        _triggerFacts << fact;
+        connect(fact, &Fact::valueChanged, this, &APMRadioComponent::_triggerChanged);
+    }
+}
+
+void APMRadioComponent::_triggerChanged(void)
+{
+    emit setupCompleteChanged(setupComplete());
+
+    // Control mapping may have changed so we need to reset triggers
+    _connectSetupTriggers();
 }

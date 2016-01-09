@@ -128,8 +128,12 @@ FactPanel {
     /// Shows a QGCViewDialog component
     ///     @param compoent QGCViewDialog component
     ///     @param title Title for dialog
-    ///     @param charWidth Width of dialog in characters (-1 for full parent width)
+    ///     @param charWidth Width of dialog in characters
     ///     @param buttons Buttons to show in dialog using StandardButton enum
+
+    readonly property int showDialogFullWidth:      -1  ///< Use for full width dialog
+    readonly property int showDialogDefaultWidth:   40  ///< Use for default dialog width
+
     function showDialog(component, title, charWidth, buttons) {
         if (__checkForEarlyDialog(title)) {
             return
@@ -146,7 +150,7 @@ FactPanel {
         viewPanel.enabled = false
         __dialogOverlay.visible = true
 
-        __dialogComponentLoader.item.forceActiveFocus()
+        //__dialogComponentLoader.item.forceActiveFocus()
 
         __animateShowDialog.start()
     }
@@ -158,7 +162,7 @@ FactPanel {
 
         __stopAllAnimations()
 
-        __dialogCharWidth = 50
+        __dialogCharWidth = showDialogDefaultWidth
         __dialogTitle = title
         __messageDialogText = message
 
@@ -174,7 +178,7 @@ FactPanel {
     }
 
     function hideDialog() {
-        __dialogComponentLoader.item.focus = false
+        //__dialogComponentLoader.item.focus = false
         viewPanel.enabled = true
         __animateHideDialog.start()
     }
@@ -277,7 +281,7 @@ FactPanel {
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
             anchors.left:   parent.left
-            width:          parent.width
+            anchors.right:  __dialogPanel.left
             opacity:        0.0
             color:          __qgcPal.window
         }
@@ -285,11 +289,11 @@ FactPanel {
         // This is the main dialog panel which is anchored to the right edge
         Rectangle {
             id:                 __dialogPanel
-            width:              __dialogCharWidth == -1 ? parent.width : defaultTextWidth * __dialogCharWidth
+            width:              __dialogCharWidth == showDialogFullWidth ? parent.width : defaultTextWidth * __dialogCharWidth
             anchors.topMargin:  topDialogMargin
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            anchors.left:       __transparentSection.right
+            anchors.right:      parent.right
             color:              __qgcPal.windowShadeDark
 
             Rectangle {

@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -21,29 +21,13 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-import QtQuick      2.4
-import QtLocation   5.3
+#include "LogDownload.h"
 
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Vehicle       1.0
-
-/// Marker for displaying a mission item on the map
-MapQuickItem {
-    id: _item
-
-    property var missionItem
-
-    signal clicked
-
-    anchorPoint.x:  sourceItem.width  / 2
-    anchorPoint.y:  sourceItem.height / 2
-
-    sourceItem:
-        MissionItemIndexLabel {
-            id:             _label
-            isCurrentItem:  missionItem.isCurrentItem
-            label:          missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
-            onClicked:      _item.clicked()
-        }
+LogDownload::LogDownload(const QString& title, QAction* action, QWidget *parent) :
+    QGCQmlWidgetHolder(title, action, parent)
+{
+    Q_UNUSED(title);
+    Q_UNUSED(action);
+    setSource(QUrl::fromUserInput("qrc:/qml/LogDownload.qml"));
+    loadSettings();
 }

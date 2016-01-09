@@ -20,6 +20,7 @@ Rectangle {
 
     signal clicked
     signal remove
+    signal removeAll
 
     height: innerItem.height + (_margin * 3)
     color:  missionItem.isCurrentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
@@ -32,6 +33,19 @@ Rectangle {
     QGCPalette {
         id: qgcPal
         colorGroupEnabled: enabled
+    }
+
+    Component {
+        id: deleteAllPromptDialog
+
+        QGCViewMessage {
+            message: "Are you sure you want to delete all mission items?"
+
+            function accept() {
+                removeAll()
+                hideDialog()
+            }
+        }
     }
 
     Item {
@@ -57,18 +71,54 @@ Rectangle {
         }
 
         Image {
-            id:                     rawEdit
+            id:                     hamburger
             anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
             anchors.right:          parent.right
             anchors.verticalCenter: commandPicker.verticalCenter
             width:                  commandPicker.height
             height:                 commandPicker.height
-            visible:                missionItem.friendlyEditAllowed && missionItem.sequenceNumber != 0 && missionItem.isCurrentItem
-            source:                 "qrc:/qmlimages/CogWheel.svg"
+            source:                 "qrc:/qmlimages/Hamburger.svg"
+            visible:                missionItem.isCurrentItem && missionItem.sequenceNumber != 0
 
             MouseArea {
                 anchors.fill:   parent
-                onClicked:      missionItem.rawEdit = !missionItem.rawEdit
+                onClicked:      hamburgerMenu.popup()
+
+                Menu {
+                    id: hamburgerMenu
+
+                    MenuItem {
+                        text:           "Delete"
+                        onTriggered:    remove()
+                    }
+
+                    MenuItem {
+                        text:           "Delete all"
+
+                        onTriggered: qgcView.showDialog(deleteAllPromptDialog, "Delete all", qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                    }
+
+                    MenuSeparator { }
+
+                    MenuItem {
+                        text:       "Show all values"
+                        checkable:  true
+                        checked:    missionItem.rawEdit
+
+                        onTriggered:    {
+                            if (missionItem.rawEdit) {
+                                if (missionItem.friendlyEditAllowed) {
+                                    missionItem.rawEdit = false
+                                } else {
+                                    qgcView.showMessage("Mission Edit", "You have made changes to the mission item which cannot be shown in Simple Mode", StandardButton.Ok)
+                                }
+                            } else {
+                                missionItem.rawEdit = true
+                            }
+                            checked = missionItem.rawEdit
+                        }
+                    }
+                }
             }
         }
 
@@ -77,7 +127,7 @@ Rectangle {
             anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
             anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
             anchors.left:           label.right
-            anchors.right:          rawEdit.left
+            anchors.right:          hamburger.left
             visible:                missionItem.sequenceNumber != 0 && missionItem.isCurrentItem && !missionItem.rawEdit
             text:                   missionItem.commandName
 
@@ -89,7 +139,7 @@ Rectangle {
                 }
             }
 
-            onClicked:              qgcView.showDialog(commandDialog, "Select Mission Command", 40, StandardButton.Cancel)
+            onClicked:              qgcView.showDialog(commandDialog, "Select Mission Command", qgcView.showDialogDefaultWidth, StandardButton.Cancel)
         }
 
         QGCLabel {

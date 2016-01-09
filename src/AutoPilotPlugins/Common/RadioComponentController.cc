@@ -120,6 +120,10 @@ RadioComponentController::RadioComponentController(void) :
 
     connect(_vehicle, &Vehicle::rcChannelsChanged, this, &RadioComponentController::_rcChannelsChanged);
     _loadSettings();
+
+    // APM Stack has a bug where some RC params are missing. We need to know what these are so we can skip them if missing
+    // instead of popping missing param warnings.
+    _apmPossibleMissingRCChannelParams << 9 << 11 << 12 << 13 << 14;
     
     _resetInternalCalibrationValues();
 }
@@ -704,17 +708,20 @@ void RadioComponentController::_resetInternalCalibrationValues(void)
             QVariant value;
             enum rcCalFunctions curFunction = rgFlightModeFunctions[i];
 
-            bool ok;
-            int switchChannel = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[curFunction].parameterName)->rawValue().toInt(&ok);
-            Q_ASSERT(ok);
+            Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[curFunction].parameterName);
+            if (paramFact) {
+                bool ok;
+                int switchChannel = paramFact->rawValue().toInt(&ok);
+                Q_ASSERT(ok);
 
-            // Parameter: 1-based channel, 0=not mapped
-            // _rgFunctionChannelMapping: 0-based channel, _chanMax=not mapped
+                // Parameter: 1-based channel, 0=not mapped
+                // _rgFunctionChannelMapping: 0-based channel, _chanMax=not mapped
 
-            if (switchChannel != 0) {
-                qCDebug(RadioComponentControllerLog) << "Reserving 0-based switch channel" << switchChannel - 1;
-                _rgFunctionChannelMapping[curFunction] = switchChannel - 1;
-                _rgChannelInfo[switchChannel - 1].function = curFunction;
+                if (switchChannel != 0) {
+                    qCDebug(RadioComponentControllerLog) << "Reserving 0-based switch channel" << switchChannel - 1;
+                    _rgFunctionChannelMapping[curFunction] = switchChannel - 1;
+                    _rgChannelInfo[switchChannel - 1].function = curFunction;
+                }
             }
         }
     }
@@ -747,20 +754,43 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
     
     for (int i = 0; i < _chanMax(); ++i) {
         struct ChannelInfo* info = &_rgChannelInfo[i];
-        
-        info->rcTrim = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(i+1))->rawValue().toInt(&convertOk);
-        Q_ASSERT(convertOk);
-        
-        info->rcMin = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(i+1))->rawValue().toInt(&convertOk);
-        Q_ASSERT(convertOk);
 
-        info->rcMax = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(i+1))->rawValue().toInt(&convertOk);
-        Q_ASSERT(convertOk);
+        if (_px4Vehicle() && _apmPossibleMissingRCChannelParams.contains(i+1)) {
+            if (!parameterExists(FactSystem::defaultComponentId, minTpl.arg(i+1))) {
+                // Parameter is missing from this version of APM
+                info->rcTrim = 1500;
+                info->rcMin = 1100;
+                info->rcMax = 1900;
+                info->reversed = false;
+                continue;
+            }
+        }
+        
+        Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(i+1));
+        if (paramFact) {
+            info->rcTrim = paramFact->rawValue().toInt(&convertOk);
+            Q_ASSERT(convertOk);
+        }
+        
+        paramFact = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(i+1));
+        if (paramFact) {
+            info->rcMin = paramFact->rawValue().toInt(&convertOk);
+            Q_ASSERT(convertOk);
+        }
 
-        float floatReversed = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(i+1))->rawValue().toFloat(&convertOk);
-        Q_ASSERT(convertOk);
-        Q_ASSERT(floatReversed == 1.0f || floatReversed == -1.0f);
-        info->reversed = floatReversed == -1.0f;
+        paramFact = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(i+1));
+        if (paramFact) {
+            info->rcMax = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(i+1))->rawValue().toInt(&convertOk);
+            Q_ASSERT(convertOk);
+        }
+
+        paramFact = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(i+1));
+        if (paramFact) {
+            float floatReversed = paramFact->rawValue().toFloat(&convertOk);
+            Q_ASSERT(convertOk);
+            Q_ASSERT(floatReversed == 1.0f || floatReversed == -1.0f);
+            info->reversed = floatReversed == -1.0f;
+        }
     }
     
     for (int i=0; i<rcCalFunctionMax; i++) {
@@ -768,12 +798,15 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
         
         const char* paramName = _functionInfo()[i].parameterName;
         if (paramName) {
-            paramChannel = getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt(&convertOk);
-            Q_ASSERT(convertOk);
+            Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, paramName);
+            if (paramFact) {
+                paramChannel = paramFact->rawValue().toInt(&convertOk);
+                Q_ASSERT(convertOk);
 
-            if (paramChannel != 0) {
-                _rgFunctionChannelMapping[i] = paramChannel - 1;
-                _rgChannelInfo[paramChannel - 1].function = (enum rcCalFunctions)i;
+                if (paramChannel != 0) {
+                    _rgFunctionChannelMapping[i] = paramChannel - 1;
+                    _rgChannelInfo[paramChannel - 1].function = (enum rcCalFunctions)i;
+                }
             }
         }
     }
@@ -837,7 +870,9 @@ void RadioComponentController::_writeCalibration(void)
 {
     if (!_uas) return;
     
-    _uas->stopCalibration();
+    if (_px4Vehicle()) {
+        _uas->stopCalibration();
+    }
     
     _validateCalibration();
     
@@ -851,10 +886,35 @@ void RadioComponentController::_writeCalibration(void)
         struct ChannelInfo* info = &_rgChannelInfo[chan];
         int                 oneBasedChannel = chan + 1;
         
-        getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel))->setRawValue((float)info->rcTrim);
-        getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->setRawValue((float)info->rcMin);
-        getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel))->setRawValue((float)info->rcMax);
-        getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel))->setRawValue(info->reversed ? -1.0f : 1.0f);
+        if (_px4Vehicle() && _apmPossibleMissingRCChannelParams.contains(chan+1) && !parameterExists(FactSystem::defaultComponentId, minTpl.arg(chan+1))) {
+            // RC parameters for this channel are missing from this version of APM
+            continue;
+        }
+
+        Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel));
+        if (paramFact) {
+            paramFact->setRawValue((float)info->rcTrim);
+        }
+        paramFact = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel));
+        if (paramFact) {
+            paramFact->setRawValue((float)info->rcMin);
+        }
+        paramFact = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel));
+        if (paramFact) {
+            paramFact->setRawValue((float)info->rcMax);
+        }
+
+        // APM has a backwards interpretation of "reversed" on the Pitch control. So be careful.
+        float reversedParamValue;
+        if (_px4Vehicle() || info->function != rcCalFunctionPitch) {
+            reversedParamValue = info->reversed ? -1.0f : 1.0f;
+        } else {
+            reversedParamValue = info->reversed ? 1.0f : -1.0f;
+        }
+        paramFact = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel));
+        if (paramFact) {
+            paramFact->setRawValue(reversedParamValue);
+        }
     }
     
     // Write function mapping parameters
@@ -872,9 +932,12 @@ void RadioComponentController::_writeCalibration(void)
         if (paramName) {
             Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
 
-            if (paramFact->rawValue().toInt() != paramChannel) {
+            if (paramFact && paramFact->rawValue().toInt() != paramChannel) {
                 functionMappingChanged = true;
-                getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName)->setRawValue(paramChannel);
+                paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
+                if (paramFact) {
+                    paramFact->setRawValue(paramChannel);
+                }
             }
         }
     }
@@ -903,7 +966,9 @@ void RadioComponentController::_startCalibration(void)
     _resetInternalCalibrationValues();
     
     // Let the mav known we are starting calibration. This should turn off motors and so forth.
-    _uas->startCalibration(UASInterface::StartCalibrationRadio);
+    if (_px4Vehicle()) {
+        _uas->startCalibration(UASInterface::StartCalibrationRadio);
+    }
     
     _nextButton->setProperty("text", "Next");
     _cancelButton->setEnabled(true);
@@ -918,7 +983,9 @@ void RadioComponentController::_stopCalibration(void)
     _currentStep = -1;
     
     if (_uas) {
-        _uas->stopCalibration();
+        if (_px4Vehicle()) {
+            _uas->stopCalibration();
+        }
         _setInternalCalibrationValuesFromParameters();
     } else {
         _resetInternalCalibrationValues();

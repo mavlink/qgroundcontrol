@@ -31,20 +31,26 @@
 #include <QDebug>
 
 #include <limits>
+#include <cmath>
+
+const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuildInTranslations[] = {
+    { "centi-degrees",  "degrees",  FactMetaData::_centiDegreesToDegrees,   FactMetaData::_degreesToCentiDegrees },
+    { "radians",        "degrees",  FactMetaData::_radiansToDegrees,        FactMetaData::_degreesToRadians },
+};
 
 FactMetaData::FactMetaData(QObject* parent)
     : QObject(parent)
     , _type(valueTypeInt32)
     , _decimalPlaces(defaultDecimalPlaces)
-    , _defaultValue(0)
+    , _rawDefaultValue(0)
     , _defaultValueAvailable(false)
     , _group("*Default Group")
-    , _max(_maxForType())
+    , _rawMax(_maxForType())
     , _maxIsDefaultForType(true)
-    , _min(_minForType())
+    , _rawMin(_minForType())
     , _minIsDefaultForType(true)
-    , _rawTranslator(defaultTranslator)
-    , _cookedTranslator(defaultTranslator)
+    , _rawTranslator(_defaultTranslator)
+    , _cookedTranslator(_defaultTranslator)
 {
 
 }
@@ -53,15 +59,15 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     : QObject(parent)
     , _type(type)
     , _decimalPlaces(defaultDecimalPlaces)
-    , _defaultValue(0)
+    , _rawDefaultValue(0)
     , _defaultValueAvailable(false)
     , _group("*Default Group")
-    , _max(_maxForType())
+    , _rawMax(_maxForType())
     , _maxIsDefaultForType(true)
-    , _min(_minForType())
+    , _rawMin(_minForType())
     , _minIsDefaultForType(true)
-    , _rawTranslator(defaultTranslator)
-    , _cookedTranslator(defaultTranslator)
+    , _rawTranslator(_defaultTranslator)
+    , _cookedTranslator(_defaultTranslator)
 {
 
 }
@@ -75,66 +81,69 @@ FactMetaData::FactMetaData(const FactMetaData& other, QObject* parent)
 const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
 {
     _decimalPlaces          = other._decimalPlaces;
-    _defaultValue           = other._defaultValue;
+    _rawDefaultValue        = other._rawDefaultValue;
     _defaultValueAvailable  = other._defaultValueAvailable;
+    _bitmaskStrings         = other._bitmaskStrings;
+    _bitmaskValues          = other._bitmaskValues;
     _enumStrings            = other._enumStrings;
     _enumValues             = other._enumValues;
     _group                  = other._group;
     _longDescription        = other._longDescription;
-    _max                    = other._max;
+    _rawMax                 = other._rawMax;
     _maxIsDefaultForType    = other._maxIsDefaultForType;
-    _min                    = other._min;
+    _rawMin                 = other._rawMin;
     _minIsDefaultForType    = other._minIsDefaultForType;
     _name                   = other._name;
     _shortDescription       = other._shortDescription;
     _type                   = other._type;
-    _units                  = other._units;
+    _rawUnits               = other._rawUnits;
+    _cookedUnits            = other._cookedUnits;
     _rawTranslator          = other._rawTranslator;
     _cookedTranslator       = other._cookedTranslator;
 
     return *this;
 }
 
-QVariant FactMetaData::defaultValue(void) const
+QVariant FactMetaData::rawDefaultValue(void) const
 {
     if (_defaultValueAvailable) {
-        return _defaultValue;
+        return _rawDefaultValue;
     } else {
         qWarning() << "Attempt to access unavailable default value";
         return QVariant(0);
     }
 }
 
-void FactMetaData::setDefaultValue(const QVariant& defaultValue)
+void FactMetaData::setRawDefaultValue(const QVariant& rawDefaultValue)
 {
-    if (_min <= defaultValue && defaultValue <= _max) {
-        _defaultValue = defaultValue;
+    if (_rawMin <= rawDefaultValue && rawDefaultValue <= _rawMax) {
+        _rawDefaultValue = rawDefaultValue;
         _defaultValueAvailable = true;
     } else {
         qWarning() << "Attempt to set default value which is outside min/max range";
     }
 }
 
-void FactMetaData::setMin(const QVariant& min)
+void FactMetaData::setRawMin(const QVariant& rawMin)
 {
-    if (min > _minForType()) {
-        _min = min;
+    if (rawMin > _minForType()) {
+        _rawMin = rawMin;
         _minIsDefaultForType = false;
     } else {
         qWarning() << "Attempt to set min below allowable value for fact: " << name()
-                   << ", value attempted: " << min
+                   << ", value attempted: " << rawMin
                    << ", type: " << type() << ", min for type: " << _minForType();
-        _min = _minForType();
+        _rawMin = _minForType();
     }
 }
 
-void FactMetaData::setMax(const QVariant& max)
+void FactMetaData::setRawMax(const QVariant& rawMax)
 {
-    if (max > _maxForType()) {
+    if (rawMax > _maxForType()) {
         qWarning() << "Attempt to set max above allowable value";
-        _max = _maxForType();
+        _rawMax = _maxForType();
     } else {
-        _max = max;
+        _rawMax = rawMax;
         _maxIsDefaultForType = false;
     }
 }
@@ -189,7 +198,7 @@ QVariant FactMetaData::_maxForType(void) const
     return QVariant();
 }
 
-bool FactMetaData::convertAndValidate(const QVariant& value, bool convertOnly, QVariant& typedValue, QString& errorString)
+bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertOnly, QVariant& typedValue, QString& errorString)
 {
     bool convertOk = false;
     
@@ -199,10 +208,10 @@ bool FactMetaData::convertAndValidate(const QVariant& value, bool convertOnly, Q
         case FactMetaData::valueTypeInt8:
         case FactMetaData::valueTypeInt16:
         case FactMetaData::valueTypeInt32:
-            typedValue = QVariant(value.toInt(&convertOk));
+            typedValue = QVariant(rawValue.toInt(&convertOk));
             if (!convertOnly && convertOk) {
-                if (min() > typedValue || typedValue > max()) {
-                    errorString = QString("Value must be within %1 and %2").arg(min().toInt()).arg(max().toInt());
+                if (rawMin() > typedValue || typedValue > rawMax()) {
+                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
                 }
             }
             break;
@@ -210,28 +219,28 @@ bool FactMetaData::convertAndValidate(const QVariant& value, bool convertOnly, Q
         case FactMetaData::valueTypeUint8:
         case FactMetaData::valueTypeUint16:
         case FactMetaData::valueTypeUint32:
-            typedValue = QVariant(value.toUInt(&convertOk));
+            typedValue = QVariant(rawValue.toUInt(&convertOk));
             if (!convertOnly && convertOk) {
-                if (min() > typedValue || typedValue > max()) {
-                    errorString = QString("Value must be within %1 and %2").arg(min().toUInt()).arg(max().toUInt());
+                if (rawMin() > typedValue || typedValue > rawMax()) {
+                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
                 }
             }
             break;
             
         case FactMetaData::valueTypeFloat:
-            typedValue = QVariant(value.toFloat(&convertOk));
+            typedValue = QVariant(rawValue.toFloat(&convertOk));
             if (!convertOnly && convertOk) {
-                if (min() > typedValue || typedValue > max()) {
-                    errorString = QString("Value must be within %1 and %2").arg(min().toFloat()).arg(max().toFloat());
+                if (rawMin() > typedValue || typedValue > rawMax()) {
+                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toFloat()).arg(cookedMax().toFloat());
                 }
             }
             break;
             
         case FactMetaData::valueTypeDouble:
-            typedValue = QVariant(value.toDouble(&convertOk));
+            typedValue = QVariant(rawValue.toDouble(&convertOk));
             if (!convertOnly && convertOk) {
-                if (min() > typedValue || typedValue > max()) {
-                    errorString = QString("Value must be within %1 and %2").arg(min().toDouble()).arg(max().toDouble());
+                if (rawMin() > typedValue || typedValue > rawMax()) {
+                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
                 }
             }
             break;
@@ -244,6 +253,79 @@ bool FactMetaData::convertAndValidate(const QVariant& value, bool convertOnly, Q
     return convertOk && errorString.isEmpty();
 }
 
+bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool convertOnly, QVariant& typedValue, QString& errorString)
+{
+    bool convertOk = false;
+
+    errorString.clear();
+
+    switch (type()) {
+        case FactMetaData::valueTypeInt8:
+        case FactMetaData::valueTypeInt16:
+        case FactMetaData::valueTypeInt32:
+            typedValue = QVariant(cookedValue.toInt(&convertOk));
+            if (!convertOnly && convertOk) {
+                if (cookedMin() > typedValue || typedValue > cookedMax()) {
+                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
+                }
+            }
+            break;
+
+        case FactMetaData::valueTypeUint8:
+        case FactMetaData::valueTypeUint16:
+        case FactMetaData::valueTypeUint32:
+            typedValue = QVariant(cookedValue.toUInt(&convertOk));
+            if (!convertOnly && convertOk) {
+                if (cookedMin() > typedValue || typedValue > cookedMax()) {
+                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
+                }
+            }
+            break;
+
+        case FactMetaData::valueTypeFloat:
+            typedValue = QVariant(cookedValue.toFloat(&convertOk));
+            if (!convertOnly && convertOk) {
+                if (cookedMin() > typedValue || typedValue > cookedMax()) {
+                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toFloat()).arg(cookedMax().toFloat());
+                }
+            }
+            break;
+
+        case FactMetaData::valueTypeDouble:
+            typedValue = QVariant(cookedValue.toDouble(&convertOk));
+            if (!convertOnly && convertOk) {
+                if (cookedMin() > typedValue || typedValue > cookedMax()) {
+                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
+                }
+            }
+            break;
+    }
+
+    if (!convertOk) {
+        errorString += "Invalid number";
+    }
+
+    return convertOk && errorString.isEmpty();
+}
+
+void FactMetaData::setBitmaskInfo(const QStringList& strings, const QVariantList& values)
+{
+    if (strings.count() != values.count()) {
+        qWarning() << "Count mismatch strings:values" << strings.count() << values.count();
+        return;
+    }
+
+    _bitmaskStrings = strings;
+    _bitmaskValues = values;
+    _setBuiltInTranslator();
+}
+
+void FactMetaData::addBitmaskInfo(const QString& name, const QVariant& value)
+{
+    _bitmaskStrings << name;
+    _bitmaskValues << value;
+}
+
 void FactMetaData::setEnumInfo(const QStringList& strings, const QVariantList& values)
 {
     if (strings.count() != values.count()) {
@@ -253,6 +335,13 @@ void FactMetaData::setEnumInfo(const QStringList& strings, const QVariantList& v
 
     _enumStrings = strings;
     _enumValues = values;
+    _setBuiltInTranslator();
+}
+
+void FactMetaData::addEnumInfo(const QString& name, const QVariant& value)
+{
+    _enumStrings << name;
+    _enumValues << value;
 }
 
 void FactMetaData::setTranslators(Translator rawTranslator, Translator cookedTranslator)
@@ -261,8 +350,48 @@ void FactMetaData::setTranslators(Translator rawTranslator, Translator cookedTra
     _cookedTranslator = cookedTranslator;
 }
 
-void FactMetaData::addEnumInfo(const QString& name, const QVariant& value)
+void FactMetaData::_setBuiltInTranslator(void)
 {
-    _enumStrings << name;
-    _enumValues << value;
+    if (_enumStrings.count()) {
+        // No translation if enum
+        setTranslators(_defaultTranslator, _defaultTranslator);
+        _cookedUnits = _rawUnits;
+    } else {
+        for (size_t i=0; i<sizeof(_rgBuildInTranslations)/sizeof(_rgBuildInTranslations[0]); i++) {
+            const BuiltInTranslation_s* pBuiltInTranslation = &_rgBuildInTranslations[i];
+
+            if (pBuiltInTranslation->rawUnits == _rawUnits.toLower()) {
+                _cookedUnits = pBuiltInTranslation->cookedUnits;
+                setTranslators(pBuiltInTranslation->rawTranslator, pBuiltInTranslation->cookedTranslator);
+            }
+        }
+    }
+}
+
+QVariant FactMetaData::_degreesToRadians(const QVariant& degrees)
+{
+    return QVariant(degrees.toDouble() * (M_PI / 180.0));
+}
+
+QVariant FactMetaData::_radiansToDegrees(const QVariant& radians)
+{
+    return QVariant(radians.toDouble() * (180 / M_PI));
+}
+
+QVariant FactMetaData::_centiDegreesToDegrees(const QVariant& centiDegrees)
+{
+    return QVariant(centiDegrees.toFloat() / 100.0f);
+}
+
+QVariant FactMetaData::_degreesToCentiDegrees(const QVariant& degrees)
+{
+    return QVariant((unsigned int)(degrees.toFloat() * 100.0f));
+}
+
+void FactMetaData::setRawUnits(const QString& rawUnits)
+{
+    _rawUnits = rawUnits;
+    _cookedUnits = rawUnits;
+
+    _setBuiltInTranslator();
 }

@@ -46,12 +46,14 @@ public:
     QString                  incrementSize;
     QString                  units;
     QList<QPair<QString, QString> > values;
+    QList<QPair<QString, QString> > bitmask;
 };
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
+Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog)
 
 /// Collection of Parameter Facts for PX4 AutoPilot
 

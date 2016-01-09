@@ -119,10 +119,6 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
     } else {
         qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequestList not responding due to failure mode";
     }
-    
-    if (_failureFirstTimeOnly) {
-        _failureMode = FailNone;
-    }
 }
 
 void MockLinkMissionItemHandler::_handleMissionRequest(const mavlink_message_t& msg)
@@ -180,10 +176,6 @@ void MockLinkMissionItemHandler::_handleMissionRequest(const mavlink_message_t& 
                                           item.x, item.y, item.z);
             _mockLink->respondWithMavlinkMessage(responseMsg);
         }
-    }
-    
-    if (_failureFirstTimeOnly) {
-        _failureMode = FailNone;
     }
 }
 
@@ -246,10 +238,6 @@ void MockLinkMissionItemHandler::_requestNextMissionItem(int sequenceNumber)
             _startMissionItemResponseTimer();
         }
     }
-    
-    if (_failureFirstTimeOnly) {
-        _failureMode = FailNone;
-    }
 }
 
 void MockLinkMissionItemHandler::_sendAck(MAV_MISSION_RESULT ackType)
@@ -279,9 +267,6 @@ void MockLinkMissionItemHandler::_handleMissionItem(const mavlink_message_t& msg
     
     Q_ASSERT(missionItem.target_system == _mockLink->vehicleId());
     
-    Q_ASSERT(!_missionItems.contains(missionItem.seq));
-    Q_ASSERT(missionItem.seq == _writeSequenceIndex);
-    
     _missionItems[missionItem.seq] = missionItem;
     
     _writeSequenceIndex++;
@@ -301,9 +286,6 @@ void MockLinkMissionItemHandler::_handleMissionItem(const mavlink_message_t& msg
             }
             _sendAck(ack);
         }
-    }
-    if (_failureFirstTimeOnly) {
-        _failureMode = FailNone;
     }
 }
 
@@ -330,9 +312,8 @@ void MockLinkMissionItemHandler::sendUnexpectedMissionRequest(void)
     Q_ASSERT(false);
 }
 
-void MockLinkMissionItemHandler::setMissionItemFailureMode(FailureMode_t failureMode, bool firstTimeOnly)
+void MockLinkMissionItemHandler::setMissionItemFailureMode(FailureMode_t failureMode)
 {
-    _failureFirstTimeOnly = firstTimeOnly;
     _failureMode = failureMode;
 }
 

@@ -34,7 +34,7 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
 
 QGCView {
-    id:         rootQGCView
+    id:         qgcView
     viewPanel:  panel
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
@@ -51,7 +51,7 @@ QGCView {
             FIXME: Turned off for now, since it prevents binding. Need to restructure to
             allow binding and still check channel count
             if (controller.channelCount < controller.minChannelCount) {
-                showDialog(channelCountDialogComponent, dialogTitle, 50, 0)
+                showDialog(channelCountDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, 0)
             } else {
                 hideDialog()
             }
@@ -68,7 +68,7 @@ QGCView {
 
         Component.onCompleted: {
             controllerCompleted = true
-            if (rootQGCView.completedSignalled) {
+            if (qgcView.completedSignalled) {
                 controllerAndViewReady = true
                 controller.start()
                 updateChannelCount()
@@ -108,7 +108,8 @@ QGCView {
             id: zeroTrimsDialogComponent
 
             QGCViewMessage {
-                message: "Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration."
+                message: "Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n" +
+                         (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : "Please ensure all motor power is disconnected AND all props are removed from the vehicle.")
 
                 function accept() {
                     hideDialog()
@@ -282,11 +283,11 @@ QGCView {
                         id:                 rollLoader
                         anchors.left:       rollLabel.right
                         anchors.right:      parent.right
-                        height:             rootQGCView.defaultTextHeight
+                        height:             qgcView.defaultTextHeight
                         width:              100
                         sourceComponent:    channelMonitorDisplayComponent
 
-                        property real defaultTextWidth: rootQGCView.defaultTextWidth
+                        property real defaultTextWidth: qgcView.defaultTextWidth
                         property bool mapped:           controller.rollChannelMapped
                         property bool reversed:         controller.rollChannelReversed
                     }
@@ -312,11 +313,11 @@ QGCView {
                         id:                 pitchLoader
                         anchors.left:       pitchLabel.right
                         anchors.right:      parent.right
-                        height:             rootQGCView.defaultTextHeight
+                        height:             qgcView.defaultTextHeight
                         width:              100
                         sourceComponent:    channelMonitorDisplayComponent
 
-                        property real defaultTextWidth: rootQGCView.defaultTextWidth
+                        property real defaultTextWidth: qgcView.defaultTextWidth
                         property bool mapped:           controller.pitchChannelMapped
                         property bool reversed:         controller.pitchChannelReversed
                     }
@@ -342,11 +343,11 @@ QGCView {
                         id:                 yawLoader
                         anchors.left:       yawLabel.right
                         anchors.right:      parent.right
-                        height:             rootQGCView.defaultTextHeight
+                        height:             qgcView.defaultTextHeight
                         width:              100
                         sourceComponent:    channelMonitorDisplayComponent
 
-                        property real defaultTextWidth: rootQGCView.defaultTextWidth
+                        property real defaultTextWidth: qgcView.defaultTextWidth
                         property bool mapped:           controller.yawChannelMapped
                         property bool reversed:         controller.yawChannelReversed
                     }
@@ -372,11 +373,11 @@ QGCView {
                         id:                 throttleLoader
                         anchors.left:       throttleLabel.right
                         anchors.right:      parent.right
-                        height:             rootQGCView.defaultTextHeight
+                        height:             qgcView.defaultTextHeight
                         width:              100
                         sourceComponent:    channelMonitorDisplayComponent
 
-                        property real defaultTextWidth: rootQGCView.defaultTextWidth
+                        property real defaultTextWidth: qgcView.defaultTextWidth
                         property bool mapped:           controller.throttleChannelMapped
                         property bool reversed:         controller.throttleChannelReversed
                     }
@@ -417,7 +418,7 @@ QGCView {
 
                     onClicked: {
                         if (text == "Calibrate") {
-                            showDialog(zeroTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+                            showDialog(zeroTrimsDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                         } else {
                             controller.nextButtonClicked()
                         }
@@ -459,7 +460,7 @@ QGCView {
                     showBorder: true
                     text:       "Spektrum Bind"
 
-                    onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+                    onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
             }
 
@@ -467,7 +468,7 @@ QGCView {
                 showBorder: true
                 text:       "Copy Trims"
                 visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
-                onClicked:  showDialog(copyTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+                onClicked:  showDialog(copyTrimsDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
             }
 
         } // Column - Left Column
@@ -551,11 +552,11 @@ QGCView {
                         Loader {
                             id:                     theLoader
                             anchors.verticalCenter: channelLabel.verticalCenter
-                            height:                 rootQGCView.defaultTextHeight
+                            height:                 qgcView.defaultTextHeight
                             width:                  200
                             sourceComponent:        channelMonitorDisplayComponent
 
-                            property real defaultTextWidth:     rootQGCView.defaultTextWidth
+                            property real defaultTextWidth:     qgcView.defaultTextWidth
                             property bool mapped:               true
                             readonly property bool reversed:    false
                         }

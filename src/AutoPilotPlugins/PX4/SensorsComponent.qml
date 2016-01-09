@@ -34,7 +34,7 @@ import QGroundControl.ScreenTools 1.0
 import QGroundControl.Controllers 1.0
 
 QGCView {
-    id:         rootQGCView
+    id:         qgcView
     viewPanel:  panel
 
     // Help text which is shown both in the status text area prior to pressing a cal button and in the
@@ -130,7 +130,7 @@ QGCView {
 
         onSetCompassRotations: {
             if (showCompass0Rot || showCompass1Rot || showCompass2Rot) {
-            showDialog(compassRotationDialogComponent, "Set Compass Rotation(s)", 50, StandardButton.Ok)
+            showDialog(compassRotationDialogComponent, "Set Compass Rotation(s)", qgcView.showDialogDefaultWidth, StandardButton.Ok)
             }
         }
 
@@ -295,7 +295,7 @@ QGCView {
                     onClicked: {
                         preCalibrationDialogType = "compass"
                         preCalibrationDialogHelp = compassHelp
-                        showDialog(preCalibrationDialogComponent, "Calibrate Compass", 50, StandardButton.Cancel | StandardButton.Ok)
+                        showDialog(preCalibrationDialogComponent, "Calibrate Compass", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
 
@@ -308,7 +308,7 @@ QGCView {
                     onClicked: {
                         preCalibrationDialogType = "gyro"
                         preCalibrationDialogHelp = gyroHelp
-                        showDialog(preCalibrationDialogComponent, "Calibrate Gyro", 50, StandardButton.Cancel | StandardButton.Ok)
+                        showDialog(preCalibrationDialogComponent, "Calibrate Gyro", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
 
@@ -321,7 +321,7 @@ QGCView {
                     onClicked: {
                         preCalibrationDialogType = "accel"
                         preCalibrationDialogHelp = accelHelp
-                        showDialog(preCalibrationDialogComponent, "Calibrate Accelerometer", 50, StandardButton.Cancel | StandardButton.Ok)
+                        showDialog(preCalibrationDialogComponent, "Calibrate Accelerometer", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
 
@@ -335,7 +335,7 @@ QGCView {
                     onClicked: {
                         preCalibrationDialogType = "level"
                         preCalibrationDialogHelp = levelHelp
-                        showDialog(preCalibrationDialogComponent, "Level Horizon", 50, StandardButton.Cancel | StandardButton.Ok)
+                        showDialog(preCalibrationDialogComponent, "Level Horizon", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
 
@@ -349,7 +349,7 @@ QGCView {
                     onClicked: {
                         preCalibrationDialogType = "airspeed"
                         preCalibrationDialogHelp = airspeedHelp
-                        showDialog(preCalibrationDialogComponent, "Calibrate Airspeed", 50, StandardButton.Cancel | StandardButton.Ok)
+                        showDialog(preCalibrationDialogComponent, "Calibrate Airspeed", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
 

@@ -34,18 +34,16 @@ import QGroundControl.ScreenTools   1.0
 Row {
     spacing:  tbSpacing * 2
 
-    function getSatStrength(count) {
-        if (count < 1)
-            return 0
-        if (count < 4)
-            return 20
-        if (count < 6)
-            return 40
-        if (count < 8)
-            return 60
-        if (count < 10)
-            return 80
-        return 100
+    function getSatStrength(hdop) {
+        if (hdop < 3)
+            return 100
+        if (hdop < 6)
+            return 75
+        if (hdop < 11)
+            return 50
+        if (hdop < 21)
+            return 25
+        return 0
     }
 
     function getMessageColor() {
@@ -183,7 +181,7 @@ Row {
             }
             SignalStrength {
                 size:           mainWindow.tbCellHeight * 0.5
-                percent:        activeVehicle ? getSatStrength(activeVehicle.satelliteCount) : ""
+                percent:        activeVehicle ? getSatStrength(activeVehicle.satRawHDOP) : ""
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -399,8 +397,6 @@ Row {
             id: flightModeMenuItemComponent
 
             MenuItem {
-                checkable:      true
-                checked:        activeVehicle ? (activeVehicle.flightMode === text) : false
                 onTriggered: {
                     if(activeVehicle) {
                         activeVehicle.flightMode = text

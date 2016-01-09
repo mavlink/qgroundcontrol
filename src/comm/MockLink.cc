@@ -783,9 +783,9 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
     }
 }
 
-void MockLink::setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode, bool firstTimeOnly)
+void MockLink::setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode)
 {
-    _missionItemHandler.setMissionItemFailureMode(failureMode, firstTimeOnly);
+    _missionItemHandler.setMissionItemFailureMode(failureMode);
 }
 
 void MockLink::_sendHomePosition(void)
