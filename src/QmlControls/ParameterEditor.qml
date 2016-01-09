@@ -37,7 +37,8 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 
 QGCView {
-    viewPanel: panel
+    id:         qgcView
+    viewPanel:  panel
 
     QGCPalette { id: __qgcPal; colorGroupEnabled: true }
 
@@ -119,7 +120,7 @@ QGCView {
                         }
                         MenuItem {
                             text:           "Search..."
-                            onTriggered:    showDialog(searchDialogComponent, "Parameter Search", panel.showDialogDefaultWidth, StandardButton.Reset | StandardButton.Apply)
+                            onTriggered:    showDialog(searchDialogComponent, "Parameter Search", qgcView.showDialogDefaultWidth, StandardButton.Reset | StandardButton.Apply)
                         }
                         MenuSeparator { visible: !ScreenTools.isMobile }
                         MenuItem {
