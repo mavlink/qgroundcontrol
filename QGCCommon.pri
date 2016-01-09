@@ -113,11 +113,6 @@ CONFIG(debug, debug|release) {
     error(Unsupported build flavor)
 }
 
-# Need to special case Windows debug_and_release since VS Project creation in this case does strange things [QTBUG-40351]
-win32:debug_and_release {
-    CONFIG += WindowsDebugAndRelease
-}
-
 # Setup our build directories
 
 BASEDIR      = $$IN_PWD
@@ -183,12 +178,7 @@ ReleaseBuild {
 #
 # Unit Test specific configuration goes here
 #
-# We have to special case Windows debug_and_release builds because you can't have files
-# which are only in the debug variant [QTBUG-40351]. So in this case we include unit tests
-# even in the release variant. If you want a Windows release build with no unit tests run
-# qmake with CONFIG-=debug_and_release CONFIG+=release.
-#
 
-DebugBuild|WindowsDebugAndRelease {
+DebugBuild {
     DEFINES += UNITTEST_BUILD
 }
