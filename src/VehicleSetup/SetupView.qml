@@ -45,8 +45,8 @@ Rectangle {
 
     readonly property real      _defaultTextHeight: ScreenTools.defaultFontPixelHeight
     readonly property real      _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
-    readonly property real      _margin:            _defaultTextHeight / 2
-    readonly property real      _buttonWidth:       _defaultTextWidth * 18
+    readonly property real      _margin:            Math.round(_defaultTextHeight / 2)
+    readonly property real      _buttonWidth:       Math.round(_defaultTextWidth * 18)
     readonly property string    _armedVehicleText:  "This operation cannot be performed while vehicle is armed."
 
     property string _messagePanelText:              "missing message panel text"
