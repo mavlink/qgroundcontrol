@@ -259,7 +259,7 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? (activeVehicle.satRawHDOP.toFixed(0)) : "N/A"
+                        text:   activeVehicle ? (activeVehicle.satRawHDOP < 10000 ? activeVehicle.satRawHDOP.toFixed(0) : "N/A") : "N/A"
                         color:  colorWhite
                     }
                     QGCLabel {
@@ -267,7 +267,7 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? (activeVehicle.satRawVDOP.toFixed(0)) : "N/A"
+                        text:   activeVehicle ? (activeVehicle.satRawVDOP < 10000 ? activeVehicle.satRawVDOP.toFixed(0) : "N/A") : "N/A"
                         color:  colorWhite
                     }
                     QGCLabel {
