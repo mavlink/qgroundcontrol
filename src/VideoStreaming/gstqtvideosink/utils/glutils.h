@@ -34,7 +34,15 @@ This file is part of the QGROUNDCONTROL project
 #include <QOpenGLFunctions>
 #define getQOpenGLFunctions() QOpenGLContext::currentContext()->functions()
 #define QOpenGLFunctionsDef QOpenGLFunctions
-#else
+#endif
+
+#ifdef __rasp_pi2__
+#include <QOpenGLFunctions_ES2>
+#define getQOpenGLFunctions() QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_ES2>()
+#define QOpenGLFunctionsDef QOpenGLFunctions_ES2
+#endif
+
+#ifndef QOpenGLFunctionsDef
 #include <QOpenGLFunctions_2_0>
 #define getQOpenGLFunctions() QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>()
 #define QOpenGLFunctionsDef QOpenGLFunctions_2_0
