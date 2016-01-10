@@ -190,16 +190,22 @@ Rectangle {
 
     function getGpsLockStatus() {
         if(activeVehicle) {
-            if(activeVehicle.satelliteLock == 0) {
-                return "No Satellite Link"
-            }
-            if(activeVehicle.satelliteLock == 1) {
-                return "No GPS Lock"
+            if(activeVehicle.satelliteLock < 2) {
+                return "No Satellite Lock"
             }
             if(activeVehicle.satelliteLock == 2) {
                 return "2D Lock"
             }
-            return "3D Lock"
+            if(activeVehicle.satelliteLock == 3) {
+                return "3D Lock"
+            }
+            if(activeVehicle.satelliteLock == 4) {
+                return "3D Lock with Differential"
+            }
+            if(activeVehicle.satelliteLock == 5) {
+                return "3D Lock with Relative Positioning"
+            }
+            return "Unkown Lock Type (" + activeVehicle.satelliteLock + ")"
         }
         return "N/A"
     }
@@ -226,14 +232,14 @@ Rectangle {
                 anchors.centerIn:   parent
                 QGCLabel {
                     id:         gpsLabel
-                    text:       (activeVehicle && (activeVehicle.satelliteCount > 0)) ? "GPS Status" : "GPS Data Unavailable"
+                    text:       (activeVehicle && activeVehicle.satelliteCount >= 0) ? "GPS Status" : "GPS Data Unavailable"
                     font.weight:Font.DemiBold
                     color:      colorWhite
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 GridLayout {
                     id:                 gpsGrid
-                    visible:            (activeVehicle && (activeVehicle.satelliteCount > 0))
+                    visible:            (activeVehicle && activeVehicle.satelliteCount >= 0)
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
