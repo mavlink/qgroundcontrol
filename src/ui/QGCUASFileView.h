@@ -27,6 +27,7 @@
 #include <QWidget>
 #include <QTreeWidgetItem>
 
+#include "Vehicle.h"
 #include "uas/FileManager.h"
 #include "ui_QGCUASFileView.h"
 
@@ -35,7 +36,7 @@ class QGCUASFileView : public QWidget
     Q_OBJECT
 
 public:
-    explicit QGCUASFileView(QWidget *parent, FileManager *manager);
+    explicit QGCUASFileView(QWidget *parent, Vehicle* vehicle);
 
 protected:
     FileManager* _manager;
