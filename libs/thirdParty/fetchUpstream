@@ -50,7 +50,7 @@ function processLib
 			exit 0
 			;;
 		*)
-			echo unknown lib, possiblities are: $libList
+			echo unknown lib, possibilities are: $libList
 			exit 1
 	esac
     REPLY=

@@ -168,7 +168,7 @@ private:
         rcCalFunctionFirstAttitudeFunction = rcCalFunctionRoll,
         rcCalFunctionLastAttitudeFunction = rcCalFunctionThrottle,
         
-        // Non-Attitude functions are everthing else
+        // Non-Attitude functions are everything else
         rcCalFunctionFirstNonAttitudeFunction = rcCalFunctionModeSwitch,
         rcCalFunctionLastNonAttitudeFunction = rcCalFunctionAux2,
     };

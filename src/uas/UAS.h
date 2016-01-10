@@ -471,7 +471,7 @@ protected: //COMMENTS FOR TEST UNIT
     /// IMAGING
     int imageSize;              ///< Image size being transmitted (bytes)
     int imagePackets;           ///< Number of data packets being sent for this image
-    int imagePacketsArrived;    ///< Number of data packets recieved
+    int imagePacketsArrived;    ///< Number of data packets received
     int imagePayload;           ///< Payload size per transmitted packet (bytes). Standard is 254, and decreases when image resolution increases.
     int imageQuality;           ///< Quality of the transmitted image (percentage)
     int imageType;              ///< Type of the transmitted image (BMP, PNG, JPEG, RAW 8 bit, RAW 32 bit)
