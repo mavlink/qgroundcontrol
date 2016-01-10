@@ -38,6 +38,7 @@ QGCViewDialog {
     id: root
 
     property Fact   fact
+    property bool   showRCToParam:  false
     property bool   validate:       false
     property string validateValue
 
@@ -185,7 +186,7 @@ QGCViewDialog {
         anchors.right:  parent.right
         anchors.bottom: parent.bottom
         text:           "Set RC to Param..."
-        visible:        !validate && !ScreenTools.isMobile
+        visible:        !validate && showRCToParam
         onClicked:      controller.setRCToParam(fact.name)
     }
 } // QGCViewDialog
