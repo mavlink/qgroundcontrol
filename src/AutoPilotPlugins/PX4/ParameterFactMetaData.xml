@@ -948,12 +948,12 @@ velocity</short_desc>
       <max>1</max>
     </parameter>
     <parameter default="30.0" name="LAUN_CAT_A" type="FLOAT">
-      <short_desc>Catapult accelerometer theshold</short_desc>
+      <short_desc>Catapult accelerometer threshold</short_desc>
       <long_desc>LAUN_CAT_A * LAUN_CAT_T serves as threshold to trigger launch detection.</long_desc>
       <min>0</min>
     </parameter>
     <parameter default="0.05" name="LAUN_CAT_T" type="FLOAT">
-      <short_desc>Catapult time theshold</short_desc>
+      <short_desc>Catapult time threshold</short_desc>
       <long_desc>LAUN_CAT_A * LAUN_CAT_T serves as threshold to trigger launch detection.</long_desc>
       <min>0</min>
     </parameter>

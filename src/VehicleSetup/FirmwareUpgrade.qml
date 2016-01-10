@@ -282,7 +282,7 @@ QGCView {
                                         "This firmware has NOT BEEN FLIGHT TESTED. " +
                                         "It is only intended for DEVELOPERS. " +
                                         "Run bench tests without props first. " +
-                                        "Do NOT fly this without addional safety precautions. " +
+                                        "Do NOT fly this without additonal safety precautions. " +
                                         "Follow the mailing list actively when using it."
                             } else {
                                 firmwareVersionWarningLabel.visible = false

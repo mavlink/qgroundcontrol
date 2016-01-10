@@ -19,7 +19,7 @@
 
 #
 # This file contains configuration settings which are common to both the QGC Application and
-# the Location Plugin. It should mainly contains intial CONFIG tag setup and compiler settings.
+# the Location Plugin. It should mainly contains initial CONFIG tag setup and compiler settings.
 #
 
 # Setup our supported build types. We do this once here and then use the defined config scopes

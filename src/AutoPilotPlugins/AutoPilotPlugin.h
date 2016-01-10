@@ -86,7 +86,7 @@
         QStringList parameterNames(int componentId);
 
         /// Returns the specified parameter Fact from the default component
-        /// WARNING: Returns a default Fact if parameter does not exists. If that possibility exists, check for existince first with
+        /// WARNING: Returns a default Fact if parameter does not exists. If that possibility exists, check for existence first with
         /// parameterExists.
         Fact* getParameterFact(int componentId, const QString& name);
 
@@ -103,7 +103,7 @@
                                     const QString&          name);          ///< fact name
 
         /// Returns the specified Fact.
-        /// WARNING: Will assert if fact does not exists. If that possibility exists, check for existince first with
+        /// WARNING: Will assert if fact does not exists. If that possibility exists, check for existence first with
         /// factExists.
         Fact* getFact(FactSystem::Provider_t    provider,       ///< fact provider
                       int                       componentId,    ///< fact component, -1=default component

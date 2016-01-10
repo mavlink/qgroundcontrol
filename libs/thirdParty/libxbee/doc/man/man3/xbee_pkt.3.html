@@ -51,18 +51,18 @@ and others need explaining. I will touch on the most important here:
 <DT><B>atCmd</B>
 
 <DD>
-This is the 2 character identifier for the AT command response you just recieved.
+This is the 2 character identifier for the AT command response you just received.
 Of course if you didnt setup an AT connection, you should never see, or try to see data here.
 <DT><B>Addr64</B> and <B>Addr16</B>
 
 <DD>
-These contain the address of the XBee that you recieved the packet from. You should really know this
+These contain the address of the XBee that you received the packet from. You should really know this
 because you setup the connection. However remote AT packets will contain both 16 and 64 bit
 addresses.
 <DT><B>data</B>
 
 <DD>
-This is the data you just recieved. Either the AT reponse, or the data from the remote XBee node.
+This is the data you just received. Either the AT reponse, or the data from the remote XBee node.
 <DT><B>datalen</B>
 
 <DD>

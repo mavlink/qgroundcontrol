@@ -194,7 +194,7 @@ void FileManagerTest::_listTest(void)
             // And then it should have errored out because the next list Request would have failed.
             QCOMPARE(_multiSpy->checkOnlySignalByMask(commandErrorSignalMask), true);
         } else {
-            // For the simulated errors which failed the intial response we should not have gotten any results back at all.
+            // For the simulated errors which failed the initial response we should not have gotten any results back at all.
             // Just an error.
             QCOMPARE(_multiSpy->checkOnlySignalByMask(commandErrorSignalMask), true);
         }

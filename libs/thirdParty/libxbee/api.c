@@ -267,7 +267,7 @@ static int xbee_sendATdelay(xbee_hnd xbee, int guardTime, char *command, char *r
   /* terminate the string */
   retBuf[bufi] = '\0';
 
-  xbee_log("sendATdelay: Recieved '%s'",retBuf);
+  xbee_log("sendATdelay: Received '%s'",retBuf);
   return 0;
 }
 
@@ -999,7 +999,7 @@ int _xbee_vsenddata(xbee_hnd xbee, xbee_con *con, char *format, va_list ap) {
 }
 
 /* returns:
-    1 - if NAC was recieved
+    1 - if NAC was received
     0 - if packet was successfully sent (or just sent if waitforACK is off)
    -1 - if there was an error building the packet
    -2 - if the connection type was unknown */
@@ -1226,14 +1226,14 @@ xbee_pkt *_xbee_getpacket(xbee_hnd xbee, xbee_con *con) {
   if ((p = xbee->pktlist) == NULL) {
     xbee_mutex_unlock(xbee->pktmutex);
     /*if (xbee->log) {
-      xbee_log("No packets avaliable...");
+      xbee_log("No packets available...");
       }*/
     return NULL;
   }
 
   l = NULL;
   q = NULL;
-  /* get the first avaliable packet for this connection */
+  /* get the first available packet for this connection */
   do {
     /* does the packet match the connection? */
     if (xbee_matchpktcon(xbee, p, con)) {
@@ -1490,18 +1490,18 @@ static int xbee_listen(xbee_hnd xbee) {
     /* check it is a valid length... */
     if (!l) {
       if (xbee->log) {
-        xbee_logI("Recived zero length packet!");
+        xbee_logI("Received zero length packet!");
       }
       continue;
     }
     if (l > 100) {
       if (xbee->log) {
-        xbee_logI("Recived oversized packet! Length: %d",l - 1);
+        xbee_logI("Received oversized packet! Length: %d",l - 1);
       }
     }
     if (l > LISTEN_BUFLEN) {
       if (xbee->log) {
-        xbee_logI("Recived packet larger than buffer! Discarding...");
+        xbee_logI("Received packet larger than buffer! Discarding...");
       }
       continue;
     }
@@ -1551,7 +1551,7 @@ static int xbee_listen(xbee_hnd xbee) {
     /* add the checksum */
     chksum += xbee_getbyte(xbee);
 
-    /* check if the whole packet was recieved, or something else occured... unlikely... */
+    /* check if the whole packet was received, or something else occured... unlikely... */
     if (l>1) {
       if (xbee->log) {
         xbee_logE("Didn't get whole packet... :(");
@@ -1754,7 +1754,7 @@ static int xbee_listen(xbee_hnd xbee) {
       xbee_mutex_unlock(xbee->conmutex);
       
       /* ########################################## */
-      /* if: 16 / 64bit data recieve */
+      /* if: 16 / 64bit data receive */
     } else if ((t == XBEE_64BIT_DATARX) ||
                (t == XBEE_16BIT_DATARX)) {
       int offset;
@@ -1816,7 +1816,7 @@ static int xbee_listen(xbee_hnd xbee) {
       for (;i>offset + 1;i--) p->data[i-(offset + 2)] = d[i];
 
       /* ########################################## */
-      /* if: 16 / 64bit I/O recieve */
+      /* if: 16 / 64bit I/O receive */
     } else if ((t == XBEE_64BIT_IO) ||
                (t == XBEE_16BIT_IO)) {
       int offset,i2;
@@ -1940,7 +1940,7 @@ static int xbee_listen(xbee_hnd xbee) {
       p->datalen = 0;
 
       /* ########################################## */
-      /* if: Series 2 data recieve */
+      /* if: Series 2 data receive */
     } else if (t == XBEE2_DATARX) {
       int offset;
       offset = 10;
@@ -2354,8 +2354,8 @@ static int _xbee_send_pkt(xbee_hnd xbee, t_data *pkt, xbee_con *con) {
     xbee_log("Waiting for ACK/NAK response...");
     xbee_sem_wait1sec(con->waitforACKsem);
     switch (con->ACKstatus) {
-      case 0: xbee_log("ACK recieved!"); break;
-      case 1: xbee_log("NAK recieved..."); break;
+      case 0: xbee_log("ACK received!"); break;
+      case 1: xbee_log("NAK received..."); break;
       case 2: xbee_log("CCA failure..."); break;
       case 3: xbee_log("Purged..."); break;
       case 255: default: xbee_log("Timeout...");
