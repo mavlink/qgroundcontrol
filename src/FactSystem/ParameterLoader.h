@@ -139,7 +139,7 @@ private:
     int _defaultComponentId;
     QString _defaultComponentIdParam;
     
-    static const int _maxInitialLoadRetry = 5;                  ///< Maximum a retries on initial index based load
+    static const int _maxInitialLoadRetry = 10;                  ///< Maximum a retries on initial index based load
     
     QMap<int, int>                  _paramCountMap;             ///< Key: Component id, Value: count of parameters in this component
     QMap<int, QMap<int, int> >      _waitingReadParamIndexMap;  ///< Key: Component id, Value: Map { Key: parameter index still waiting for, Value: retry count }
