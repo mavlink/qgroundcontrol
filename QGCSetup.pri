@@ -100,7 +100,7 @@ WindowsBuild {
 
 LinuxBuild {
     installer {
-        QMAKE_POST_LINK += && mkdir -p $$DESTDIR/libs
+        QMAKE_POST_LINK += && mkdir -p $$DESTDIR/Qt/libs && mkdir -p $$DESTDIR/Qt/plugins
 
         # QT_INSTALL_LIBS
         QT_LIB_LIST = \
@@ -129,22 +129,30 @@ LinuxBuild {
         }
 
         for(QT_LIB, QT_LIB_LIST) {
-            QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/libs
+            QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
         }
 
         # QT_INSTALL_PLUGINS
-        QT_PLUGIN_LIST = platforms
+        QT_PLUGIN_LIST = \
+            bearer \
+            geoservices \
+            iconengines \
+            imageformats \
+            platforminputcontexts \
+            platforms \
+            platformthemes \
+            position
 
         !contains(DEFINES, __rasp_pi2__) {
             QT_PLUGIN_LIST += xcbglintegrations
         }
 
         for(QT_PLUGIN, QT_PLUGIN_LIST) {
-            QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/libs
+            QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
         }
 
         # QT_INSTALL_QML
-        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/libs
+        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
 
         # QGroundControl start script
         QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
