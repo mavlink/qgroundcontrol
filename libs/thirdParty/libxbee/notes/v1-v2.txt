@@ -21,7 +21,7 @@ XBee 2.5
 0x10* ZigBee Transmit Request
 0x11  Explicit Addressing ZigBee Command Frame
 0x8B* ZigBee Transmit Status
-0x90* ZigBee Receive Packet
+0x90* ZigBee Recieve Packet
 0x91  ZigBee Explicit Rx
 0x92  ZigBee IO Data Sample Rx
 0x94  Xbee Sensor Read
