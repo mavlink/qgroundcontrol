@@ -181,7 +181,7 @@ double QwtPlainTextEngine::heightForWidth( const QFont& font, int flags,
   \param flags Bitwise OR of the flags used like in QPainter::drawText
   \param text Text to be rendered
 
-  \return Calculated size
+  \return Caluclated size
 */
 QSizeF QwtPlainTextEngine::textSize( const QFont &font,
     int flags, const QString& text ) const
@@ -270,7 +270,7 @@ double QwtRichTextEngine::heightForWidth( const QFont& font, int flags,
   \param flags Bitwise OR of the flags used like in QPainter::drawText()
   \param text Text to be rendered
 
-  \return Calculated size
+  \return Caluclated size
 */
 
 QSizeF QwtRichTextEngine::textSize( const QFont &font,
