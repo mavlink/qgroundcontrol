@@ -1,18 +1,22 @@
 #include "QGCHilXPlaneConfiguration.h"
 #include "ui_QGCHilXPlaneConfiguration.h"
 #include "QGCXPlaneLink.h"
+#include "QGCHilConfiguration.h"
 
-QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QWidget *parent) :
+QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QGCHilConfiguration *parent) :
     QWidget(parent),
     ui(new Ui::QGCHilXPlaneConfiguration)
 {
     ui->setupUi(this);
     this->link = link;
 
-    connect(ui->startButton, SIGNAL(clicked(bool)), this, SLOT(toggleSimulation(bool)));
-    connect(ui->hostComboBox, SIGNAL(activated(QString)), link, SLOT(setRemoteHost(QString)));
-    connect(link, SIGNAL(remoteChanged(QString)), ui->hostComboBox, SLOT(setEditText(QString)));
-    connect(link, SIGNAL(statusMessage(QString)), parent, SLOT(receiveStatusMessage(QString)));
+    connect(ui->startButton, &QPushButton::clicked, this, &QGCHilXPlaneConfiguration::toggleSimulation);
+
+    connect(ui->hostComboBox, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated),
+            link, &QGCHilLink::setRemoteHost);
+
+    connect(link, &QGCHilLink::remoteChanged, ui->hostComboBox, &QComboBox::setEditText);
+    connect(link, &QGCHilLink::statusMessage, parent, &QGCHilConfiguration::receiveStatusMessage);
 
 //    connect(mav->getHILSimulation(), SIGNAL(statusMessage(QString)), this, SLOT(receiveStatusMessage(QString)));
 //    connect(ui->simComboBox, SIGNAL(activated(QString)), mav->getHILSimulation(), SLOT(setVersion(QString)));
@@ -31,10 +35,11 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QWidget *
         // XXX not implemented yet
         //ui->airframeComboBox->hide();
         ui->sensorHilCheckBox->setChecked(xplane->sensorHilEnabled());
-        connect(xplane, SIGNAL(sensorHilChanged(bool)), ui->sensorHilCheckBox, SLOT(setChecked(bool)));
-        connect(ui->sensorHilCheckBox, SIGNAL(clicked(bool)), xplane, SLOT(enableSensorHIL(bool)));
+        connect(xplane, &QGCXPlaneLink::sensorHilChanged, ui->sensorHilCheckBox, &QCheckBox::setChecked);
+        connect(ui->sensorHilCheckBox, &QCheckBox::clicked, xplane, &QGCXPlaneLink::enableSensorHIL);
 
-        connect(link, SIGNAL(versionChanged(int)), this, SLOT(setVersion(int)));
+        connect(link, static_cast<void (QGCHilLink::*)(int)>(&QGCHilLink::versionChanged),
+                this, &QGCHilXPlaneConfiguration::setVersion);
     }
 
     ui->hostComboBox->clear();

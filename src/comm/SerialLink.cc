@@ -215,7 +215,8 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
         return false; // couldn't create serial port.
     }
 
-    QObject::connect(_port, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(linkError(QSerialPort::SerialPortError)));
+    QObject::connect(_port, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
+                     this, &SerialLink::linkError);
     QObject::connect(_port, &QIODevice::readyRead, this, &SerialLink::_readBytes);
 
     //  port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);

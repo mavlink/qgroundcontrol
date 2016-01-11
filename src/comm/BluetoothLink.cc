@@ -158,10 +158,12 @@ bool BluetoothLink::_hardwareConnect()
         _discoveryAgent = NULL;
     }
     _discoveryAgent = new QBluetoothServiceDiscoveryAgent(this);
-    QObject::connect(_discoveryAgent, SIGNAL(serviceDiscovered(QBluetoothServiceInfo)),     this, SLOT(serviceDiscovered(QBluetoothServiceInfo)));
-    QObject::connect(_discoveryAgent, SIGNAL(finished()),                                   this, SLOT(discoveryFinished()));
-    QObject::connect(_discoveryAgent, SIGNAL(canceled()),                                   this, SLOT(discoveryFinished()));
-    QObject::connect(_discoveryAgent, SIGNAL(error(QBluetoothServiceDiscoveryAgent::Error)),this, SLOT(discoveryError(QBluetoothServiceDiscoveryAgent::Error)));
+    QObject::connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::serviceDiscovered, this, &BluetoothLink::serviceDiscovered);
+    QObject::connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::finished, this, &BluetoothLink::discoveryFinished);
+    QObject::connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::canceled, this, &BluetoothLink::discoveryFinished);
+
+    QObject::connect(_discoveryAgent, static_cast<void (QBluetoothServiceDiscoveryAgent::*)(QBluetoothSocket::SocketError)>(&QBluetoothServiceDiscoveryAgent::error),
+            this, &BluetoothLink::discoveryError);
     _shutDown = false;
     _discoveryAgent->start();
 #else
@@ -179,10 +181,13 @@ void BluetoothLink::_createSocket()
         _targetSocket = NULL;
     }
     _targetSocket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
-    QObject::connect(_targetSocket, SIGNAL(connected()), this, SLOT(deviceConnected()));
-    QObject::connect(_targetSocket, SIGNAL(error(QBluetoothSocket::SocketError)), this, SLOT(deviceError(QBluetoothSocket::SocketError)));
-    QObject::connect(_targetSocket, SIGNAL(readyRead()), this, SLOT(readBytes()));
-    QObject::connect(_targetSocket, SIGNAL(disconnected()), this, SLOT(deviceDisconnected()));
+    QObject::connect(_targetSocket, &QBluetoothSocket::connected, this, &BluetoothLink::deviceConnected);
+
+    QObject::connect(_targetSocket, &QBluetoothSocket::readyRead, this, &BluetoothLink::readBytes);
+    QObject::connect(_targetSocket, &QBluetoothSocket::disconnected, this, &BluetoothLink::deviceDisconnected);
+
+    QObject::connect(_targetSocket, static_cast<void (QBluetoothSocket::*)(QBluetoothSocket::SocketError)>(&QBluetoothSocket::error),
+            this, &BluetoothLink::deviceError);
 }
 
 #ifdef __ios__

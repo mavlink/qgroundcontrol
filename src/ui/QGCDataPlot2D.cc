@@ -62,16 +62,21 @@ QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
     ui->gridCheckBox->setChecked(plot->gridEnabled());
 
     // Connect user actions
-    connect(ui->selectFileButton, SIGNAL(clicked()), this, SLOT(selectFile()));
-    connect(ui->saveCsvButton, SIGNAL(clicked()), this, SLOT(saveCsvLog()));
-    connect(ui->reloadButton, SIGNAL(clicked()), this, SLOT(reloadFile()));
-    connect(ui->savePlotButton, SIGNAL(clicked()), this, SLOT(savePlot()));
-    connect(ui->printButton, SIGNAL(clicked()), this, SLOT(print()));
-    connect(ui->legendCheckBox, SIGNAL(clicked(bool)), plot, SLOT(showLegend(bool)));
-    connect(ui->symmetricCheckBox, SIGNAL(clicked(bool)), plot, SLOT(setSymmetric(bool)));
-    connect(ui->gridCheckBox, SIGNAL(clicked(bool)), plot, SLOT(showGrid(bool)));
+    connect(ui->selectFileButton, &QPushButton::clicked, this, &QGCDataPlot2D::selectFile);
+    connect(ui->saveCsvButton, &QPushButton::clicked, this, &QGCDataPlot2D::saveCsvLog);
+    connect(ui->reloadButton, &QPushButton::clicked, this, &QGCDataPlot2D::reloadFile);
+    connect(ui->savePlotButton, &QPushButton::clicked, this, &QGCDataPlot2D::savePlot);
+    connect(ui->printButton, &QPushButton::clicked, this, &QGCDataPlot2D::print);
+    connect(ui->legendCheckBox, &QCheckBox::clicked, plot, &IncrementalPlot::showLegend);
+    connect(ui->symmetricCheckBox,&QCheckBox::clicked, plot, &IncrementalPlot::setSymmetric);
+    connect(ui->gridCheckBox, &QCheckBox::clicked, plot, &IncrementalPlot::showGrid);
+
+    connect(ui->style, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
+            plot, &IncrementalPlot::setStyleText);
+
+    //TODO: calculateRegression returns bool, slots are expected to return void, this makes
+    // converting to new style way too hard.
     connect(ui->regressionButton, SIGNAL(clicked()), this, SLOT(calculateRegression()));
-    connect(ui->style, SIGNAL(currentIndexChanged(QString)), plot, SLOT(setStyleText(QString)));
 
     // Allow style changes to propagate through this widget
     connect(qgcApp(), &QGCApplication::styleChanged, plot, &IncrementalPlot::styleChanged);
@@ -324,7 +329,7 @@ void QGCDataPlot2D::loadRawLog(QString file, QString xAxisName, QString yAxisFil
     // Postprocess log file
     logFile = new QTemporaryFile("qt_qgc_temp_log.XXXXXX.csv");
     compressor = new LogCompressor(file, logFile->fileName());
-    connect(compressor, SIGNAL(finishedFile(QString)), this, SLOT(loadFile(QString)));
+    connect(compressor, &LogCompressor::finishedFile, this, static_cast<void (QGCDataPlot2D::*)(QString)>(&QGCDataPlot2D::loadFile));
     compressor->startCompression();
 }
 

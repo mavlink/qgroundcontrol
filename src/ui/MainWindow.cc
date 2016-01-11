@@ -207,7 +207,7 @@ MainWindow::MainWindow()
     emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouse = new Mouse6dofInput(this);
-    connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
+    connect(this, &MainWindow::x11EventOccured, mouse, &Mouse6dofInput::handleX11Event);
 #endif //QGC_MOUSE_ENABLED_LINUX
 
     // Set low power mode
@@ -256,7 +256,7 @@ MainWindow::MainWindow()
 
     _ui.actionFlight->setChecked(true);
 
-    connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
+    connect(&windowNameUpdateTimer, &QTimer::timeout, this, &MainWindow::configureWindowName);
     windowNameUpdateTimer.start(15000);
     emit initStatusChanged(tr("Done"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
@@ -305,8 +305,7 @@ void MainWindow::_buildCommonWidgets(void)
     // Add generic MAVLink decoder
     // TODO: This is never deleted
     mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol(), this);
-    connect(mavlinkDecoder, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),
-                      this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
+    connect(mavlinkDecoder.data(), &MAVLinkDecoder::valueChanged, this, &MainWindow::valueChanged);
 
     // Log player
     // TODO: Make this optional with a preferences setting or under a "View" menu
@@ -523,11 +522,11 @@ void MainWindow::connectCommonActions()
 {
     // Audio output
     _ui.actionMuteAudioOutput->setChecked(qgcApp()->toolbox()->audioOutput()->isMuted());
-    connect(qgcApp()->toolbox()->audioOutput(), SIGNAL(mutedChanged(bool)), _ui.actionMuteAudioOutput, SLOT(setChecked(bool)));
-    connect(_ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), qgcApp()->toolbox()->audioOutput(), SLOT(mute(bool)));
+    connect(qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mutedChanged, _ui.actionMuteAudioOutput, &QAction::setChecked);
+    connect(_ui.actionMuteAudioOutput, &QAction::triggered, qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mute);
 
     // Application Settings
-    connect(_ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
+    connect(_ui.actionSettings, &QAction::triggered, this, &MainWindow::showSettings);
 
     // Views actions
     connect(_ui.actionFlight,   &QAction::triggered,    qgcApp(),   &QGCApplication::showFlyView);
@@ -567,7 +566,7 @@ void MainWindow::showSettings()
 
 void MainWindow::_vehicleAdded(Vehicle* vehicle)
 {
-    connect(vehicle->uas(), SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)), this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
+    connect(vehicle->uas(), &UAS::valueChanged, this, &MainWindow::valueChanged);
 }
 
 /// Stores the state of the toolbar, status bar and widgets associated with the current view
