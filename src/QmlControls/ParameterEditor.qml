@@ -42,12 +42,13 @@ QGCView {
 
     QGCPalette { id: __qgcPal; colorGroupEnabled: true }
 
-    property Fact   __editorDialogFact: Fact { }
+    property Fact   _editorDialogFact: Fact { }
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10      // Dynamic adjusted at runtime
     property bool   _searchFilter:      false   ///< true: showing results of search
     property var    _searchResults              ///< List of parameter names from search results
     property string _currentGroup:      ""
+    property bool   _showRCToParam:     !ScreenTools.isMobile && multiVehicleManager.activeVehicle.px4Firmware
 
     ParameterEditorController {
         id: controller;
@@ -133,11 +134,11 @@ QGCView {
                             onTriggered:	controller.saveToFile()
                             visible:        !ScreenTools.isMobile
                         }
-                        MenuSeparator { visible: !ScreenTools.isMobile }
+                        MenuSeparator { visible: _showRCToParam }
                         MenuItem {
                             text:           "Clear RC to Param"
                             onTriggered:	controller.clearRCToParam()
-                            visible:        !ScreenTools.isMobile
+                            visible:        _showRCToParam
                         }
                     }
                 }
@@ -314,7 +315,7 @@ QGCView {
                         anchors.fill:       parent
                         acceptedButtons:    Qt.LeftButton
                         onClicked: {
-                            __editorDialogFact = factRow.modelFact
+                            _editorDialogFact = factRow.modelFact
                             showDialog(editorDialogComponent, "Parameter Editor", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
                         }
                     }
@@ -325,7 +326,11 @@ QGCView {
 
     Component {
         id: editorDialogComponent
-        ParameterEditorDialog { fact: __editorDialogFact }
+
+        ParameterEditorDialog {
+            fact:           _editorDialogFact
+            showRCToParam:  _showRCToParam
+        }
     }
 
     Component {
@@ -355,30 +360,6 @@ QGCView {
                 anchors.top:        searchForLabel.bottom
                 width:              ScreenTools.defaultFontPixelWidth * 20
             }
-
-/*
-            // Leaving in for possible future use. We'll see if needed from user comments.
-            QGCLabel {
-                id:                 searchInLabel
-                anchors.topMargin:  defaultTextHeight
-                anchors.top:        searchFor.bottom
-                text:               "Search in:"
-            }
-
-            QGCCheckBox {
-                id:                 searchInName
-                anchors.topMargin:  defaultTextHeight / 3
-                anchors.top:        searchInLabel.bottom
-                text:               "Name"
-            }
-
-            QGCCheckBox {
-                id:                 searchInDescriptions
-                anchors.topMargin:  defaultTextHeight / 3
-                anchors.top:        searchInName.bottom
-                text:               "Descriptions"
-            }
-*/
 
             QGCLabel {
                 anchors.topMargin:  defaultTextHeight
