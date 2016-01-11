@@ -32,8 +32,8 @@ void ScrollBar::init()
     d_maxBase = 1.0;
     moveSlider(d_minBase, d_maxBase);
 
-    connect(this, SIGNAL(sliderMoved(int)), SLOT(catchSliderMoved(int)));
-    connect(this, SIGNAL(valueChanged(int)), SLOT(catchValueChanged(int)));
+    connect(this, &ScrollBar::sliderMoved, this, &ScrollBar::catchSliderMoved);
+    connect(this, &ScrollBar::valueChanged, this, &ScrollBar::catchValueChanged);
 }
 
 void ScrollBar::setInverted(bool inverted)
@@ -75,23 +75,14 @@ void ScrollBar::moveSlider(double min, double max)
     if ( steps <= 0 )
         steps = 1;
 
-#if QT_VERSION < 0x040000
-    setSteps(steps, sliderTicks);
-#else
     setSingleStep(steps);
     setPageStep(sliderTicks);
-#endif
 
     int tick = mapToTick(min + (max - min) / 2);
     if ( isInverted() )
         tick = d_baseTicks - tick;
 
-#if QT_VERSION < 0x040000
-    directSetValue(tick);
-    rangeChange();
-#else
     setSliderPosition(tick);
-#endif
     blockSignals(false);
 }
 
@@ -158,9 +149,6 @@ void ScrollBar::catchSliderMoved(int value)
 
 int ScrollBar::extent() const
 {
-#if QT_VERSION < 0x040000
-    return style().pixelMetric(QStyle::PM_ScrollBarExtent, this);
-#else
     QStyleOptionSlider opt;
     opt.init(this);
     opt.subControls = QStyle::SC_None;
@@ -176,5 +164,4 @@ int ScrollBar::extent() const
     if (orientation() == Qt::Horizontal)
         opt.state |= QStyle::State_Horizontal;
     return style()->pixelMetric(QStyle::PM_ScrollBarExtent, &opt, this);
-#endif
 }

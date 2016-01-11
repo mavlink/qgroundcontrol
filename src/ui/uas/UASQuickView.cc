@@ -41,16 +41,16 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
 
     QAction *action = new QAction("Add/Remove Items",this);
     action->setCheckable(false);
-    connect(action,SIGNAL(triggered()),this,SLOT(actionTriggered()));
+    connect(action,&QAction::triggered,this, static_cast<void (UASQuickView::*)(bool)>(&UASQuickView::actionTriggered));
     this->addAction(action);
 
     QAction *columnaction = new QAction("Set Column Count",this);
     columnaction->setCheckable(false);
-    connect(columnaction,SIGNAL(triggered()),this,SLOT(columnActionTriggered()));
+    connect(columnaction,&QAction::triggered,this,&UASQuickView::columnActionTriggered);
     this->addAction(columnaction);
 
     updateTimer = new QTimer(this);
-    connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateTimerTick()));
+    connect(updateTimer,&QTimer::timeout,this,&UASQuickView::updateTimerTick);
     updateTimer->start(1000);
 
 }
@@ -83,9 +83,10 @@ void UASQuickView::actionTriggered()
         return;
     }
     quickViewSelectDialog = new UASQuickViewItemSelect();
-    connect(quickViewSelectDialog,SIGNAL(destroyed()),this,SLOT(selectDialogClosed()));
-    connect(quickViewSelectDialog,SIGNAL(valueDisabled(QString)),this,SLOT(valueDisabled(QString)));
-    connect(quickViewSelectDialog,SIGNAL(valueEnabled(QString)),this,SLOT(valueEnabled(QString)));
+    connect(quickViewSelectDialog,&UASQuickViewItemSelect::destroyed,this,&UASQuickView::selectDialogClosed);
+    connect(quickViewSelectDialog,&UASQuickViewItemSelect::valueDisabled,this,&UASQuickView::valueDisabled);
+    connect(quickViewSelectDialog,&UASQuickViewItemSelect::valueEnabled,this,&UASQuickView::valueEnabled);
+
     quickViewSelectDialog->setAttribute(Qt::WA_DeleteOnClose,true);
     for (QMap<QString,double>::const_iterator i = uasPropertyValueMap.constBegin();i!=uasPropertyValueMap.constEnd();i++)
     {

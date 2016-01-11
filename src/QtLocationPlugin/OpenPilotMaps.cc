@@ -205,9 +205,11 @@ void UrlFactory::_tryCorrectGoogleVersions()
 #endif
         qheader.setRawHeader("User-Agent", userAgent);
         _googleReply = _network->get(qheader);
-        connect(_googleReply, SIGNAL(finished()), this, SLOT(_googleVersionCompleted()));
-        connect(_googleReply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(_networkReplyError(QNetworkReply::NetworkError)));
-        connect(_googleReply, SIGNAL(destroyed()), this, SLOT(_replyDestroyed()));
+        connect(_googleReply, &QNetworkReply::finished, this, &UrlFactory::_googleVersionCompleted);
+        connect(_googleReply, &QNetworkReply::destroyed, this, &UrlFactory::_replyDestroyed);
+
+        connect(_googleReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+                this, &UrlFactory::_networkReplyError);
         _network->setProxy(proxy);
     }
 }

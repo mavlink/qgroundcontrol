@@ -120,6 +120,7 @@
         bool setupComplete(void);
 
         Vehicle* vehicle(void) { return _vehicle; }
+        virtual void _parametersReadyPreChecks(bool parametersReady) = 0;
 
     signals:
         void parametersReadyChanged(bool parametersReady);
@@ -136,6 +137,7 @@
         bool            _parametersReady;
         bool            _missingParameters;
         bool            _setupComplete;
+
 
     private slots:
         void _uasDisconnected(void);

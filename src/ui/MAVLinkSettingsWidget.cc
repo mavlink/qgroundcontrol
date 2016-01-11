@@ -67,37 +67,38 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
 
     // Connect actions
     // Heartbeat
-    connect(protocol, SIGNAL(heartbeatChanged(bool)), m_ui->heartbeatCheckBox, SLOT(setChecked(bool)));
-    connect(m_ui->heartbeatCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableHeartbeats(bool)));
+    connect(protocol, &MAVLinkProtocol::heartbeatChanged, m_ui->heartbeatCheckBox, &QCheckBox::setChecked);
+    connect(m_ui->heartbeatCheckBox, &QCheckBox::toggled, protocol, &MAVLinkProtocol::enableHeartbeats);
+
     // Version check
-    connect(protocol, SIGNAL(versionCheckChanged(bool)), m_ui->versionCheckBox, SLOT(setChecked(bool)));
-    connect(m_ui->versionCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableVersionCheck(bool)));
+    connect(protocol, &MAVLinkProtocol::versionCheckChanged, m_ui->versionCheckBox, &QCheckBox::setChecked);
+    connect(m_ui->versionCheckBox, &QCheckBox::toggled, protocol, &MAVLinkProtocol::enableVersionCheck);
     // System ID
-    connect(protocol, SIGNAL(systemIdChanged(int)), m_ui->systemIdSpinBox, SLOT(setValue(int)));
-    connect(m_ui->systemIdSpinBox, SIGNAL(valueChanged(int)), protocol, SLOT(setSystemId(int)));
+    connect(protocol, &MAVLinkProtocol::systemIdChanged, m_ui->systemIdSpinBox, &QSpinBox::setValue);
+    connect(m_ui->systemIdSpinBox,static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), protocol, &MAVLinkProtocol::setSystemId);
     // Multiplexing
-    connect(protocol, SIGNAL(multiplexingChanged(bool)), m_ui->multiplexingCheckBox, SLOT(setChecked(bool)));
-    connect(m_ui->multiplexingCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableMultiplexing(bool)));
+    connect(protocol, &MAVLinkProtocol::multiplexingChanged, m_ui->multiplexingCheckBox, &QCheckBox::setChecked);
+    connect(m_ui->multiplexingCheckBox, &QCheckBox::toggled, protocol, &MAVLinkProtocol::enableMultiplexing);
     // Parameter guard
-    connect(protocol, SIGNAL(paramGuardChanged(bool)), m_ui->paramGuardCheckBox, SLOT(setChecked(bool)));
-    connect(m_ui->paramGuardCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableParamGuard(bool)));
-    connect(protocol, SIGNAL(paramRetransmissionTimeoutChanged(int)), m_ui->paramRetransmissionSpinBox, SLOT(setValue(int)));
-    connect(m_ui->paramRetransmissionSpinBox, SIGNAL(valueChanged(int)), protocol, SLOT(setParamRetransmissionTimeout(int)));
-    connect(protocol, SIGNAL(paramRewriteTimeoutChanged(int)), m_ui->paramRewriteSpinBox, SLOT(setValue(int)));
-    connect(m_ui->paramRewriteSpinBox, SIGNAL(valueChanged(int)), protocol, SLOT(setParamRewriteTimeout(int)));
+    connect(protocol, &MAVLinkProtocol::paramGuardChanged, m_ui->paramGuardCheckBox, &QCheckBox::setChecked);
+    connect(m_ui->paramGuardCheckBox, &QCheckBox::toggled, protocol, &MAVLinkProtocol::enableParamGuard);
+    connect(protocol, &MAVLinkProtocol::paramRetransmissionTimeoutChanged, m_ui->paramRetransmissionSpinBox, &QSpinBox::setValue);
+    connect(m_ui->paramRetransmissionSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), protocol, &MAVLinkProtocol::setParamRetransmissionTimeout);
+    connect(protocol, &MAVLinkProtocol::paramRewriteTimeoutChanged, m_ui->paramRewriteSpinBox, &QSpinBox::setValue);
+    connect(m_ui->paramRewriteSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), protocol, &MAVLinkProtocol::setParamRewriteTimeout);
     // Action guard
-    connect(protocol, SIGNAL(actionGuardChanged(bool)), m_ui->actionGuardCheckBox, SLOT(setChecked(bool)));
-    connect(m_ui->actionGuardCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableActionGuard(bool)));
-    connect(protocol, SIGNAL(actionRetransmissionTimeoutChanged(int)), m_ui->actionRetransmissionSpinBox, SLOT(setValue(int)));
-    connect(m_ui->actionRetransmissionSpinBox, SIGNAL(valueChanged(int)), protocol, SLOT(setActionRetransmissionTimeout(int)));
+    connect(protocol, &MAVLinkProtocol::actionGuardChanged, m_ui->actionGuardCheckBox, &QCheckBox::setChecked);
+    connect(m_ui->actionGuardCheckBox, &QCheckBox::toggled, protocol, &MAVLinkProtocol::enableActionGuard);
+    connect(protocol, &MAVLinkProtocol::actionRetransmissionTimeoutChanged, m_ui->actionRetransmissionSpinBox, &QSpinBox::setValue);
+    connect(m_ui->actionRetransmissionSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), protocol, &MAVLinkProtocol::setActionRetransmissionTimeout);
     // MAVLink AUTH
-    connect(protocol, SIGNAL(authChanged(bool)), m_ui->droneOSCheckBox, SLOT(setChecked(bool)));
-    connect(m_ui->droneOSCheckBox, SIGNAL(toggled(bool)), this, SLOT(enableDroneOS(bool)));
-    connect(protocol, SIGNAL(authKeyChanged(QString)), m_ui->droneOSLineEdit, SLOT(setText(QString)));
-    connect(m_ui->droneOSLineEdit, SIGNAL(textChanged(QString)), this, SLOT(setDroneOSKey(QString)));
+    connect(protocol, &MAVLinkProtocol::authChanged, m_ui->droneOSCheckBox, &QCheckBox::setChecked);
+    connect(m_ui->droneOSCheckBox, &QCheckBox::toggled, this, &MAVLinkSettingsWidget::enableDroneOS);
+    connect(protocol, &MAVLinkProtocol::authKeyChanged, m_ui->droneOSLineEdit, &QLineEdit::setText);
+    connect(m_ui->droneOSLineEdit, &QLineEdit::textChanged, this, &MAVLinkSettingsWidget::setDroneOSKey);
 
     // Drone OS
-    connect(m_ui->droneOSComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(setDroneOSHost(QString)));
+    connect(m_ui->droneOSComboBox, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged), this, &MAVLinkSettingsWidget::setDroneOSHost);
     // FIXME Manually trigger this action here, this brings control code to UI = BAD!
     setDroneOSHost(m_ui->droneOSComboBox->currentText());
 
@@ -105,26 +106,28 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     m_ui->versionLabel->setText(tr("MAVLINK_VERSION: %1").arg(protocol->getVersion()));
 
     // Connect visibility updates
-    connect(protocol, SIGNAL(versionCheckChanged(bool)), m_ui->versionLabel, SLOT(setVisible(bool)));
+    connect(protocol, &MAVLinkProtocol::versionCheckChanged, m_ui->versionLabel, &QWidget::setVisible);
     m_ui->versionLabel->setVisible(protocol->versionCheckEnabled());
+
 //    // Multiplexing visibility
 //    connect(protocol, SIGNAL(multiplexingChanged(bool)), m_ui->multiplexingFilterCheckBox, SLOT(setVisible(bool)));
 //    m_ui->multiplexingFilterCheckBox->setVisible(protocol->multiplexingEnabled());
 //    connect(protocol, SIGNAL(multiplexingChanged(bool)), m_ui->multiplexingFilterLineEdit, SLOT(setVisible(bool)));
 //    m_ui->multiplexingFilterLineEdit->setVisible(protocol->multiplexingEnabled());
+
     // Param guard visibility
-    connect(protocol, SIGNAL(paramGuardChanged(bool)), m_ui->paramRetransmissionSpinBox, SLOT(setVisible(bool)));
+    connect(protocol, &MAVLinkProtocol::paramGuardChanged, m_ui->paramRetransmissionSpinBox, &QWidget::setVisible);
     m_ui->paramRetransmissionSpinBox->setVisible(protocol->paramGuardEnabled());
-    connect(protocol, SIGNAL(paramGuardChanged(bool)), m_ui->paramRetransmissionLabel, SLOT(setVisible(bool)));
+    connect(protocol, &MAVLinkProtocol::paramGuardChanged, m_ui->paramRetransmissionLabel, &QWidget::setVisible);
     m_ui->paramRetransmissionLabel->setVisible(protocol->paramGuardEnabled());
-    connect(protocol, SIGNAL(paramGuardChanged(bool)), m_ui->paramRewriteSpinBox, SLOT(setVisible(bool)));
+    connect(protocol, &MAVLinkProtocol::paramGuardChanged, m_ui->paramRewriteSpinBox, &QWidget::setVisible);
     m_ui->paramRewriteSpinBox->setVisible(protocol->paramGuardEnabled());
-    connect(protocol, SIGNAL(paramGuardChanged(bool)), m_ui->paramRewriteLabel, SLOT(setVisible(bool)));
+    connect(protocol, &MAVLinkProtocol::paramGuardChanged, m_ui->paramRewriteLabel, &QWidget::setVisible);
     m_ui->paramRewriteLabel->setVisible(protocol->paramGuardEnabled());
     // Action guard visibility
-    connect(protocol, SIGNAL(actionGuardChanged(bool)), m_ui->actionRetransmissionSpinBox, SLOT(setVisible(bool)));
+    connect(protocol, &MAVLinkProtocol::actionGuardChanged, m_ui->actionRetransmissionSpinBox, &QWidget::setVisible);
     m_ui->actionRetransmissionSpinBox->setVisible(protocol->actionGuardEnabled());
-    connect(protocol, SIGNAL(actionGuardChanged(bool)), m_ui->actionRetransmissionLabel, SLOT(setVisible(bool)));
+    connect(protocol, &MAVLinkProtocol::actionGuardChanged, m_ui->actionRetransmissionLabel, &QWidget::setVisible);
     m_ui->actionRetransmissionLabel->setVisible(protocol->actionGuardEnabled());
 
     // TODO implement filtering

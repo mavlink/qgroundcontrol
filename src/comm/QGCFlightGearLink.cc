@@ -98,31 +98,29 @@ void QGCFlightGearLink::run()
     Q_CHECK_PTR(_udpCommSocket);
     _udpCommSocket->moveToThread(this);
     _udpCommSocket->bind(host, port, QAbstractSocket::ReuseAddressHint);
-    QObject::connect(_udpCommSocket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+    QObject::connect(_udpCommSocket, &QUdpSocket::readyRead, this, &QGCFlightGearLink::readBytes);
 
 
     // Connect to the various HIL signals that we use to then send information across the UDP protocol to FlightGear.
-    connect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)),
-            this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    connect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)),
-            _vehicle->uas(), SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
-    connect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)),
-            _vehicle->uas(), SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
-    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)),
-            _vehicle->uas(), SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
-    connect(this, SIGNAL(sensorHilOpticalFlowChanged(quint64, qint16, qint16, float,float, quint8, float)),
-            _vehicle->uas(), SLOT(sendHilOpticalFlow(quint64, qint16, qint16, float, float, quint8, float)));
+    connect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCFlightGearLink::updateControls);
+
+    connect(this, &QGCFlightGearLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState);
+    connect(this, &QGCFlightGearLink::sensorHilGpsChanged, _vehicle->uas(), &UAS::sendHilGps);
+    connect(this, &QGCFlightGearLink::sensorHilRawImuChanged, _vehicle->uas(), &UAS::sendHilSensors);
+    connect(this, &QGCFlightGearLink::sensorHilOpticalFlowChanged, _vehicle->uas(), &UAS::sendHilOpticalFlow);
 
     // Start a new QProcess to run FlightGear in
     _fgProcess = new QProcess(this);
     Q_CHECK_PTR(_fgProcess);
     _fgProcess->moveToThread(this);
 
-    connect(_fgProcess, SIGNAL(error(QProcess::ProcessError)), this, SLOT(processError(QProcess::ProcessError)));
-#ifdef DEBUG_FLIGHTGEAR_CONNECT
-    connect(_fgProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(_printFgfsOutput()));
-    connect(_fgProcess, SIGNAL(readyReadStandardError()), this, SLOT(_printFgfsError()));
-#endif
+    connect(_fgProcess, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
+            this, &QGCFlightGearLink::processError);
+
+//#ifdef DEBUG_FLIGHTGEAR_CONNECT
+    connect(_fgProcess, &QProcess::readyReadStandardOutput, this, &QGCFlightGearLink::_printFgfsOutput);
+    connect(_fgProcess, &QProcess::readyReadStandardError, this, &QGCFlightGearLink::_printFgfsError);
+//#endif
 
     if (!_fgProcessWorkingDirPath.isEmpty()) {
         _fgProcess->setWorkingDirectory(_fgProcessWorkingDirPath);
@@ -491,14 +489,15 @@ qint64 QGCFlightGearLink::bytesAvailable()
  **/
 bool QGCFlightGearLink::disconnectSimulation()
 {
-    disconnect(_fgProcess, SIGNAL(error(QProcess::ProcessError)),
-               this, SLOT(processError(QProcess::ProcessError)));
-    disconnect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    disconnect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), _vehicle->uas(), SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
-    disconnect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)), _vehicle->uas(), SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
-    disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), _vehicle->uas(), SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
-    disconnect(this, SIGNAL(sensorHilOpticalFlowChanged(quint64, qint16, qint16, float,float, quint8, float)),
-            _vehicle->uas(), SLOT(sendHilOpticalFlow(quint64, qint16, qint16, float, float, quint8, float)));
+    disconnect(_fgProcess, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
+            this, &QGCFlightGearLink::processError);
+
+    disconnect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCFlightGearLink::updateControls);
+
+    disconnect(this, &QGCFlightGearLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState);
+    disconnect(this, &QGCFlightGearLink::sensorHilGpsChanged, _vehicle->uas(), &UAS::sendHilGps);
+    disconnect(this, &QGCFlightGearLink::sensorHilRawImuChanged, _vehicle->uas(), &UAS::sendHilSensors);
+    disconnect(this, &QGCFlightGearLink::sensorHilOpticalFlowChanged, _vehicle->uas(), &UAS::sendHilOpticalFlow);
 
     if (_fgProcess)
     {

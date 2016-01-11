@@ -43,7 +43,7 @@ signals:
     void downloadFinished(QString remoteFile, QString localFile);
     void error(QString errorMsg);
 
-private slots:
+private:
     void _downloadFinished(void);
     void _downloadError(QNetworkReply::NetworkError code);
 };

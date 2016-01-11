@@ -43,21 +43,24 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(const QString& title, QAction* action, 
     rateHeader << tr("#ID");
     rateHeader << tr("Rate");
     ui->rateTreeWidget->setHeaderLabels(rateHeader);
-    connect(ui->rateTreeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
-            this, SLOT(rateTreeItemChanged(QTreeWidgetItem*,int)));
+    connect(ui->rateTreeWidget, &QTreeWidget::itemChanged,
+            this, &QGCMAVLinkInspector::rateTreeItemChanged);
     ui->rateTreeWidget->hide();
 
     // Connect the UI
-    connect(ui->systemComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuSystem(int)));
-    connect(ui->componentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuComponent(int)));
-    connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clearView()));
+    connect(ui->systemComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            this, &QGCMAVLinkInspector::selectDropDownMenuSystem);
+    connect(ui->componentComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            this, &QGCMAVLinkInspector::selectDropDownMenuComponent);
+
+    connect(ui->clearButton, &QPushButton::clicked, this, &QGCMAVLinkInspector::clearView);
 
     // Connect external connections
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &QGCMAVLinkInspector::_vehicleAdded);
-    connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
+    connect(protocol, &MAVLinkProtocol::messageReceived, this, &QGCMAVLinkInspector::receiveMessage);
 
     // Attach the UI's refresh rate to a timer.
-    connect(&updateTimer, SIGNAL(timeout()), this, SLOT(refreshView()));
+    connect(&updateTimer, &QTimer::timeout, this, &QGCMAVLinkInspector::refreshView);
     updateTimer.start(updateInterval);
     
     loadSettings();

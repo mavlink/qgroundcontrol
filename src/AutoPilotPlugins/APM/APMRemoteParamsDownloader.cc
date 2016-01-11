@@ -69,9 +69,8 @@ void APMRemoteParamsDownloader::refreshParamList()
     QUrl url = FRAME_PARAMS_LIST;
     m_networkReply->deleteLater();
     m_networkReply = m_networkAccessManager.get(QNetworkRequest(url));
-    connect(m_networkReply, SIGNAL(finished()), this, SLOT(httpParamListFinished()));
-    connect(m_networkReply, SIGNAL(downloadProgress(qint64,qint64)),
-            this, SLOT(updateDataReadProgress(qint64,qint64)));
+    connect(m_networkReply, &QNetworkReply::finished, this, &APMRemoteParamsDownloader::httpParamListFinished);
+    connect(m_networkReply, &QNetworkReply::downloadProgress, this, &APMRemoteParamsDownloader::updateDataReadProgress);
 }
 
 /* Returned Json Example
@@ -120,9 +119,9 @@ void APMRemoteParamsDownloader::startFileDownloadRequest()
     m_downloadedParamFile->open(QIODevice::WriteOnly);
 
     m_networkReply = m_networkAccessManager.get(QNetworkRequest(url));
-    connect(m_networkReply, SIGNAL(finished()), this, SLOT(httpFinished()));
-    connect(m_networkReply, SIGNAL(readyRead()), this, SLOT(httpReadyRead()));
-    connect(m_networkReply, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(updateDataReadProgress(qint64,qint64)));
+    connect(m_networkReply, &QNetworkReply::finished, this, &APMRemoteParamsDownloader::httpFinished);
+    connect(m_networkReply, &QNetworkReply::readyRead, this, &APMRemoteParamsDownloader::httpReadyRead);
+    connect(m_networkReply, &QNetworkReply::downloadProgress, this, &APMRemoteParamsDownloader::updateDataReadProgress);
     curr++;
 }
 

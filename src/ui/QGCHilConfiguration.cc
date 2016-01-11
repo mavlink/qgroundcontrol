@@ -94,7 +94,7 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
         QGCFlightGearLink* fg = dynamic_cast<QGCFlightGearLink*>(_vehicle->uas()->getHILSimulation());
         if (fg)
         {
-            connect(fg, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
+            connect(fg, &QGCFlightGearLink::statusMessage, ui->statusLabel, &QLabel::setText);
         }
 
     }
@@ -111,7 +111,7 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
         if (xplane)
         {
             xplane->setVersion((index == 2) ? 10 : 9);
-            connect(xplane, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
+            connect(xplane, &QGCXPlaneLink::statusMessage, ui->statusLabel, &QLabel::setText);
         }
     }
 // Disabling JSB Sim since its not well maintained,
