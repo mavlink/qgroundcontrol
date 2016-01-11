@@ -117,7 +117,8 @@ before_script:
 script:
   - cd ${TRAVIS_BUILD_DIR} && ./tools/update_android_version.sh
   - echo 'Building QGroundControl' && echo -en 'travis_fold:start:script.1\\r'
-  - if [ "${CONFIG}" != "doxygen" ]; then cd ${SHADOW_BUILD_DIR} && make -j4; fi
+  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "installer" && "${CONFIG}" != "doxygen" ]]; then ./deploy/ubuntu_ppa; fi
+  - if [[ "${TRAVIS_OS_NAME}" != "linux" && "${CONFIG}" != "doxygen" ]]; then cd ${SHADOW_BUILD_DIR} && make -j4; fi
   - if [ "${CONFIG}" = "doxygen" ]; then cd ${TRAVIS_BUILD_DIR}/src && doxygen documentation.dox; fi
   - echo -en 'travis_fold:end:script.1\\r'
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then ${SHADOW_BUILD_DIR}/debug/qgroundcontrol --unittest; fi
