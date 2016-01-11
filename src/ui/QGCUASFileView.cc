@@ -24,31 +24,37 @@
 #include "QGCUASFileView.h"
 #include "FileManager.h"
 #include "QGCFileDialog.h"
+#include "UAS.h"
 
 #include <QFileDialog>
 #include <QDir>
 #include <QDebug>
 
-QGCUASFileView::QGCUASFileView(QWidget *parent, FileManager *manager) :
-    QWidget(parent),
-    _manager(manager),
-    _currentCommand(commandNone)
+QGCUASFileView::QGCUASFileView(QWidget *parent, Vehicle* vehicle)
+    : QWidget(parent)
+    , _manager(vehicle->uas()->getFileManager())
+    , _currentCommand(commandNone)
 {
     _ui.setupUi(this);
-    
-    _ui.progressBar->reset();
-    
-    // Connect UI signals
-    connect(_ui.listFilesButton,    &QPushButton::clicked,              this, &QGCUASFileView::_refreshTree);
-    connect(_ui.downloadButton,     &QPushButton::clicked,              this, &QGCUASFileView::_downloadFile);
-    connect(_ui.uploadButton,       &QPushButton::clicked,              this, &QGCUASFileView::_uploadFile);
-    connect(_ui.treeWidget,         &QTreeWidget::currentItemChanged,   this, &QGCUASFileView::_currentItemChanged);
 
-    // Connect signals from FileManager
-    connect(_manager, &FileManager::commandProgress,    this, &QGCUASFileView::_commandProgress);
-    connect(_manager, &FileManager::commandComplete,    this, &QGCUASFileView::_commandComplete);
-    connect(_manager, &FileManager::commandError,       this, &QGCUASFileView::_commandError);
-    connect(_manager, &FileManager::listEntry,  this, &QGCUASFileView::_listEntryReceived);
+    if (vehicle->px4Firmware()) {
+        _ui.progressBar->reset();
+
+        // Connect UI signals
+        connect(_ui.listFilesButton,    &QPushButton::clicked,              this, &QGCUASFileView::_refreshTree);
+        connect(_ui.downloadButton,     &QPushButton::clicked,              this, &QGCUASFileView::_downloadFile);
+        connect(_ui.uploadButton,       &QPushButton::clicked,              this, &QGCUASFileView::_uploadFile);
+        connect(_ui.treeWidget,         &QTreeWidget::currentItemChanged,   this, &QGCUASFileView::_currentItemChanged);
+
+        // Connect signals from FileManager
+        connect(_manager, &FileManager::commandProgress,    this, &QGCUASFileView::_commandProgress);
+        connect(_manager, &FileManager::commandComplete,    this, &QGCUASFileView::_commandComplete);
+        connect(_manager, &FileManager::commandError,       this, &QGCUASFileView::_commandError);
+        connect(_manager, &FileManager::listEntry,  this, &QGCUASFileView::_listEntryReceived);
+    } else {
+        _setAllButtonsEnabled(false);
+        _ui.statusText->setText(QStringLiteral("Onboard Files not supported by this Vehicle"));
+    }
 }
 
 /// @brief Downloads the file currently selected in the tree view
