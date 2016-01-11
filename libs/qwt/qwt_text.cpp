@@ -529,7 +529,7 @@ double QwtText::heightForWidth( double width, const QFont &defaultFont ) const
    Returns the size, that is needed to render text
 
    \param defaultFont Font of the text
-   \return Calculated size
+   \return Caluclated size
 */
 QSizeF QwtText::textSize( const QFont &defaultFont ) const
 {
@@ -637,7 +637,7 @@ void QwtText::draw( QPainter *painter, const QRectF &rect ) const
    returns true. If there is none QwtPlainTextEngine is returned.
 
    If no text engine is registered for the format QwtPlainTextEngine
-   is returned.
+   is returnd.
 
    \param text Text, needed in case of AutoText
    \param format Text format
