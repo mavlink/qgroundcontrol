@@ -165,7 +165,8 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
             
             if (appendToLastBlock) {
                 _ihxBlocks[_ihxBlocks.count() - 1].bytes += bytes;
-                qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - append - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+                // Too noisy even for verbose
+                //qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - append - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
             } else {
                 IntelHexBlock_t block;
                 

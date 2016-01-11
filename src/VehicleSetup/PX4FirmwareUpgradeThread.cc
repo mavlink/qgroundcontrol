@@ -95,7 +95,7 @@ void PX4FirmwareUpgradeThreadWorker::_startFindBoardLoop(void)
 
 void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
 {
-    qCDebug(FirmwareUpgradeLog) << "_findBoardOnce";
+    qCDebug(FirmwareUpgradeVerboseLog) << "_findBoardOnce";
     
     QGCSerialPortInfo               portInfo;
     QGCSerialPortInfo::BoardType_t  boardType;
@@ -200,9 +200,9 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QGCSerialPor
         emit error("Unable to reboot radio (ready read)");
         return;
     }
-    QGC::SLEEP::msleep(700);
     port.close();
-    
+    QGC::SLEEP::msleep(2000);
+
     // The bootloader should be waiting for us now
     
     _findBootloader(portInfo, true /* radio mode */, true /* errorOnNotFound */);
@@ -232,6 +232,10 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QGCSerialPortInfo& po
         }
     }
     
+    if (radioMode) {
+        QGC::SLEEP::msleep(2000);
+    }
+
     if (_bootloader->sync(_bootloaderPort)) {
         bool success;
         
