@@ -40,6 +40,8 @@ import QGroundControl.Controllers   1.0
 QGCView {
     id:         _root
 
+    property bool syncNeeded: controller.missionItems.dirty // Unsaved changes, visible to parent container
+
     viewPanel:          panel
     topDialogMargin:    height - mainWindow.availableHeight
 
@@ -73,7 +75,6 @@ QGCView {
     property var    liveHomePositionAvailable:  controller.liveHomePositionAvailable
     property var    homePosition:               _defaultVehicleCoordinate
 
-    property bool _syncNeeded:                  controller.missionItems.dirty
     property bool _syncInProgress:              _activeVehicle ? _activeVehicle.missionManager.inProgress : false
 
     property bool _showHelp:                    QGroundControl.flightMapSettings.loadBoolMapSetting(editorMap.mapName, _showHelpKey, true)
@@ -458,7 +459,7 @@ QGCView {
                     DropButton {
                         id:                 syncButton
                         dropDirection:      dropRight
-                        buttonImage:        _syncNeeded ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
+                        buttonImage:        syncNeeded ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
                         viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
                         exclusiveGroup:     _dropButtonsExclusiveGroup
                         z:                  QGroundControl.zOrderWidgets
@@ -595,6 +596,34 @@ QGCView {
     } // QGCViewPanel
 
     Component {
+        id: syncLoadFromVehicleOverwrite
+
+        QGCViewMessage {
+            id:         syncLoadFromVehicleCheck
+            message:   "Load vehicle check"
+
+            function accept() {
+                hideDialog()
+                controller.getMissionItems()
+            }
+        }
+    }
+
+    Component {
+        id: syncLoadFromFileOverwrite
+
+        QGCViewMessage {
+            id:         syncLoadFromVehicleCheck
+            message:   "Load file check"
+
+            function accept() {
+                hideDialog()
+                controller.loadMissionFromFile()
+            }
+        }
+    }
+
+    Component {
         id: syncDropDownComponent
 
         Column {
@@ -604,7 +633,7 @@ QGCView {
             QGCLabel {
                 width:      columnHolder.width
                 wrapMode:   Text.WordWrap
-                text:       _syncNeeded && !controller.autoSync ?
+                text:       syncNeeded && !controller.autoSync ?
                                 "You have unsaved changed to you mission. You should send to your vehicle, or save to a file:" :
                                 "Sync:"
             }
@@ -629,7 +658,11 @@ QGCView {
 
                     onClicked: {
                         syncButton.hideDropDown()
-                        controller.getMissionItems()
+                        if (syncNeeded) {
+                            _root.showDialog(syncLoadFromVehicleOverwrite, "Mission overwrite", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                        } else {
+                            controller.getMissionItems()
+                        }
                     }
                 }
             }
@@ -652,7 +685,11 @@ QGCView {
 
                     onClicked: {
                         syncButton.hideDropDown()
-                        controller.loadMissionFromFile()
+                        if (syncNeeded) {
+                            _root.showDialog(syncLoadFromFileOverwrite, "Mission overwrite", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                        } else {
+                            controller.loadMissionFromFile()
+                        }
                     }
                 }
             }
