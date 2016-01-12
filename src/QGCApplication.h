@@ -135,7 +135,7 @@ public slots:
     void showPlanView(void);
     void showSetupView(void);
 
-    void showWindowCloseMessage(void);
+    void qmlAttemptWindowClose(void);
 
 #ifndef __mobile__
     /// Save the specified Flight Data Log

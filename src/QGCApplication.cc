@@ -692,9 +692,9 @@ void QGCApplication::showSetupView(void)
     QMetaObject::invokeMethod(_rootQmlObject(), "showSetupView");
 }
 
-void QGCApplication::showWindowCloseMessage(void)
+void QGCApplication::qmlAttemptWindowClose(void)
 {
-    QMetaObject::invokeMethod(_rootQmlObject(), "showWindowCloseMessage");
+    QMetaObject::invokeMethod(_rootQmlObject(), "attemptWindowClose");
 }
 
 
