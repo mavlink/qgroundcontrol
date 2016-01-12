@@ -600,7 +600,7 @@ QGCView {
 
         QGCViewMessage {
             id:         syncLoadFromVehicleCheck
-            message:   "Load vehicle check"
+            message:   "You have unsaved/unsent mission changes. Loading the mission from the Vehicle will lose these changes. Are you sure you want to load the mission from the Vehicle?"
 
             function accept() {
                 hideDialog()
@@ -614,7 +614,7 @@ QGCView {
 
         QGCViewMessage {
             id:         syncLoadFromVehicleCheck
-            message:   "Load file check"
+            message:   "You have unsaved/unsent mission changes. Loading a mission from a file will lose these changes. Are you sure you want to load a mission from a file?"
 
             function accept() {
                 hideDialog()
