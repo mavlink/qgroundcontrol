@@ -182,8 +182,8 @@ void MissionManager::_readTransactionComplete(void)
     
     _vehicle->sendMessage(message);
     
-    emit newMissionItemsAvailable();
     _finishTransaction(true);
+    emit newMissionItemsAvailable();
 }
 
 void MissionManager::_handleMissionCount(const mavlink_message_t& message)
