@@ -32,17 +32,13 @@ Window {
     id:         _rootWindow
     visible:    true
 
-    onClosing: {
-        // Disallow window close if there are active connections
-        if (QGroundControl.multiVehicleManager.activeVehicle) {
-            showWindowCloseMessage()
-            close.accepted = false
-            return
-        }
+    property bool _forceClose: false
 
-        // We still need to shutdown LinkManager even though no active connections so that we don't get any
-        // more auto-connect links during shutdown.
-        QGroundControl.linkManager.shutdown();
+    onClosing: {
+        if (!_forceClose) {
+            mainWindowInner.item.attemptWindowClose()
+            close.accepted = false
+        }
     }
 
     function showFlyView() {
@@ -55,10 +51,6 @@ Window {
 
     function showSetupView() {
         mainWindowInner.item.showSetupView()
-    }
-
-    function showWindowCloseMessage() {
-        windowCloseDialog.open()
     }
 
     // The following are use for unit testing only
@@ -87,33 +79,15 @@ Window {
         id:             mainWindowInner
         anchors.fill:   parent
         source:         "MainWindowInner.qml"
-    }
 
-    MessageDialog {
-        id:                 windowCloseDialog
-        title:              "QGroundControl close"
-        text:               "There are still active connections to vehicles. Do you want to disconnect these before closing?"
-        standardButtons:    StandardButton.Yes | StandardButton.Cancel
-        modality:           Qt.ApplicationModal
-        visible:            false
+        Connections {
+            target: mainWindowInner.item
 
-        onYes: {
-            QGroundControl.linkManager.shutdown()
-            // The above shutdown causes a flurry of activity as the vehicle components are removed. This in turn
-            // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
-            // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
-            delayedWindowCloseTimer.start()
+            onReallyClose: {
+                _forceClose = true
+                _rootWindow.close()
+            }
         }
     }
-
-    Timer {
-        id:         delayedWindowCloseTimer
-        interval:   1500
-        running:    false
-        repeat:     false
-
-        onTriggered: _rootWindow.close()
-    }
-
 }
 

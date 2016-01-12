@@ -96,7 +96,7 @@ public:
     void saveLastUsedConnection(const QString connection);
 
     // Called from MainWindow.qml when the user accepts the window close dialog
-    Q_INVOKABLE void acceptWindowClose(void);
+    Q_INVOKABLE void reallyClose(void);
 
     /// @return Root qml object of main window QML
     QObject* rootQmlObject(void);
@@ -229,6 +229,8 @@ private:
     Ui::MainWindow          _ui;
 
     QGCQmlWidgetHolder*     _mainQmlWidgetHolder;
+
+    bool    _forceClose;
 
     QString _getWindowGeometryKey();
 };

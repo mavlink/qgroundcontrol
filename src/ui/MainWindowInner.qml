@@ -37,6 +37,8 @@ import QGroundControl.MultiVehicleManager   1.0
 Item {
     id:         mainWindow
 
+    signal reallyClose
+
     readonly property string _planViewSource:   "MissionEditor.qml"
     readonly property string _setupViewSource:  "SetupView.qml"
 
@@ -110,6 +112,68 @@ Item {
     function showSetupVehicleComponent(vehicleComponent) {
         setupViewLoader.item.showVehicleComponentPanel(vehicleComponent)
     }
+
+    /// Start the process of closing QGroundControl. Prompts the user are needed.
+    function attemptWindowClose() {
+        unsavedMissionCloseDialog.check()
+    }
+
+    function finishCloseProcess() {
+        QGroundControl.linkManager.shutdown()
+        // The above shutdown causes a flurry of activity as the vehicle components are removed. This in turn
+        // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
+        // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
+        delayedWindowCloseTimer.start()
+    }
+
+    MessageDialog {
+        id:                 unsavedMissionCloseDialog
+        title:              "QGroundControl close"
+        text:               "You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?"
+        standardButtons:    StandardButton.Yes | StandardButton.No
+        modality:           Qt.ApplicationModal
+        visible:            false
+
+        onYes: activeConnectionsCloseDialog.check()
+
+        function check() {
+            if (planViewLoader.item && planViewLoader.item.syncNeeded) {
+                unsavedMissionCloseDialog.open()
+            } else {
+                activeConnectionsCloseDialog.check()
+            }
+        }
+    }
+
+    MessageDialog {
+        id:                 activeConnectionsCloseDialog
+        title:              "QGroundControl close"
+        text:               "There are still active connections to vehicles. Do you want to disconnect these before closing?"
+        standardButtons:    StandardButton.Yes | StandardButton.Cancel
+        modality:           Qt.ApplicationModal
+        visible:            false
+        onYes:              finishCloseProcess()
+
+        function check() {
+            if (QGroundControl.multiVehicleManager.activeVehicle) {
+                activeConnectionsCloseDialog.open()
+            } else {
+                finishCloseProcess()
+            }
+        }
+    }
+
+    Timer {
+        id:         delayedWindowCloseTimer
+        interval:   1500
+        running:    false
+        repeat:     false
+
+        onTriggered: {
+            mainWindow.reallyClose()
+        }
+    }
+
 
     //-- Detect tablet position
     PositionSource {
