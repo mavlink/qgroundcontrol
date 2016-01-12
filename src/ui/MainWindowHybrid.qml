@@ -25,7 +25,8 @@ import QtQuick          2.5
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
 
-import QGroundControl.Controls 1.0
+import QGroundControl           1.0
+import QGroundControl.Controls  1.0
 
 /// Native QML top level window
 Item {
@@ -41,8 +42,8 @@ Item {
         mainWindowInner.item.showSetupView()
     }
 
-    function showWindowCloseMessage() {
-        windowCloseDialog.open()
+    function attemptWindowClose() {
+        mainWindowInner.item.attemptWindowClose()
     }
 
     // The following are use for unit testing only
@@ -71,17 +72,11 @@ Item {
         id:             mainWindowInner
         anchors.fill:   parent
         source:         "MainWindowInner.qml"
-    }
 
-    MessageDialog {
-        id:                 windowCloseDialog
-        title:              "QGroundControl close"
-        text:               "There are still active connections to vehicles. Do you want to disconnect these before closing?"
-        standardButtons:    StandardButton.Yes | StandardButton.Cancel
-        modality:           Qt.ApplicationModal
-        visible:            false
+        Connections {
+            target: mainWindowInner.item
 
-        onYes: controller.acceptWindowClose()
+            onReallyClose: controller.reallyClose()
+        }
     }
 }
-
