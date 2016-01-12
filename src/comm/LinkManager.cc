@@ -508,11 +508,13 @@ void LinkManager::_updateAutoConnectLinks(void)
                 case QGCSerialPortInfo::BoardTypePX4FMUV4:
                     if (_autoconnectPixhawk) {
                         pSerialConfig = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypeAeroCore:
                     if (_autoconnectPixhawk) {
                         pSerialConfig = new SerialConfiguration(QString("AeroCore on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypePX4Flow:
