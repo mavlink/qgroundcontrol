@@ -185,9 +185,8 @@ void MissionManager::_readTransactionComplete(void)
     
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
 
-    // FIXME: Hack to get master changed, remove before push
-    _finishTransaction(true);
     emit newMissionItemsAvailable();
+    _finishTransaction(true);
 }
 
 void MissionManager::_handleMissionCount(const mavlink_message_t& message)
