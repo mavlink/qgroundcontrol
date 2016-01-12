@@ -390,7 +390,7 @@ LogDownloadController::_requestLogData(uint8_t id, uint32_t offset, uint32_t cou
             &msg,
             qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), MAV_COMP_ID_ALL,
             id, offset, count);
-        _vehicle->sendMessage(msg);
+        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
     }
 }
 
@@ -419,7 +419,7 @@ LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
             MAV_COMP_ID_ALL,
             start,
             end);
-        _vehicle->sendMessage(msg);
+        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
         //-- Wait 2 seconds before bitching about not getting anything
         _timer.start(2000);
     }
@@ -556,7 +556,7 @@ LogDownloadController::eraseAll(void)
             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
             &msg,
             qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), MAV_COMP_ID_ALL);
-        _vehicle->sendMessage(msg);
+        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
         refresh();
     }
 }
