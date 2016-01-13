@@ -40,6 +40,7 @@ QGCView {
 
     QGCPalette { id: palette; colorGroupEnabled: enabled }
 
+    property Fact _failsafeGCSEnable:   controller.getParameterFact(-1, "FS_GCS_ENABLE")
     property Fact _failsafeBattEnable:  controller.getParameterFact(-1, "FS_BATT_ENABLE")
     property Fact _failsafeBattMah:     controller.getParameterFact(-1, "FS_BATT_MAH")
     property Fact _failsafeBattVoltage: controller.getParameterFact(-1, "FS_BATT_VOLTAGE")
@@ -93,6 +94,25 @@ QGCView {
                 color:                  palette.windowShade
 
                 QGCLabel {
+                    id:                 gcsEnableLabel
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.baseline:   gcsEnableCombo.baseline
+                    text:               "Ground Station failsafe:"
+                }
+
+                FactComboBox {
+                    id:                 gcsEnableCombo
+                    anchors.topMargin:  _margins
+                    anchors.leftMargin: _margins
+                    anchors.left:       gcsEnableLabel.right
+                    anchors.top:        parent.top
+                    width:              voltageField.width
+                    fact:               _failsafeGCSEnable
+                    indexModel:         false
+                }
+
+                QGCLabel {
                     id:                 throttleEnableLabel
                     anchors.margins:    _margins
                     anchors.left:       parent.left
@@ -103,8 +123,8 @@ QGCView {
                 QGCComboBox {
                     id:                 throttleEnableCombo
                     anchors.topMargin:  _margins
-                    anchors.left:       voltageField.left
-                    anchors.top:        parent.top
+                    anchors.left:       gcsEnableCombo.left
+                    anchors.top:        gcsEnableCombo.bottom
                     width:              voltageField.width
                     model:              ["Disabled", "Always RTL", "Continue with Mission in Auto Mode", "Always Land"]
                     currentIndex:       _failsafeThrEnable.value
@@ -123,7 +143,7 @@ QGCView {
                 FactTextField {
                     id:                 throttlePWMField
                     anchors.topMargin:  _margins / 2
-                    anchors.left:       voltageField.left
+                    anchors.left:       gcsEnableCombo.left
                     anchors.top:        throttleEnableCombo.bottom
                     fact:               _failsafeThrValue
                     showUnits:          true
@@ -140,7 +160,7 @@ QGCView {
                 QGCComboBox {
                     id:                 batteryEnableCombo
                     anchors.topMargin:  _margins
-                    anchors.left:       voltageField.left
+                    anchors.left:       gcsEnableCombo.left
                     anchors.top:        throttlePWMField.bottom
                     width:              voltageField.width
                     model:              ["Disabled", "Land", "Return to Launch"]
@@ -163,8 +183,7 @@ QGCView {
                 FactTextField {
                     id:                 voltageField
                     anchors.topMargin:  _margins / 2
-                    anchors.leftMargin: _margins
-                    anchors.left:       voltageLabel.right
+                    anchors.left:       gcsEnableCombo.left
                     anchors.top:        batteryEnableCombo.bottom
                     fact:               _failsafeBattVoltage
                     showUnits:          true
@@ -184,7 +203,7 @@ QGCView {
                 FactTextField {
                     id:                 mahField
                     anchors.topMargin:  _margins / 2
-                    anchors.left:       voltageField.left
+                    anchors.left:       gcsEnableCombo.left
                     anchors.top:        voltageField.bottom
                     fact:               _failsafeBattMah
                     showUnits:          true
