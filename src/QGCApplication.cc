@@ -295,18 +295,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     this->setApplicationVersion(versionString);
 
     // Set settings format
-#if !defined(__mobile__) && !defined(__macos__)
     QSettings::setDefaultFormat(QSettings::IniFormat);
-#else
-    QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
-    if(!settingsLocation.isEmpty())
-    {
-        QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, settingsLocation);
-    }
-#endif
-
     QSettings settings;
-    qDebug() << "Settings location" << settings.fileName() << settings.isWritable();
+    qDebug() << "Settings location" << settings.fileName() << "Is writable?:" << settings.isWritable();
 
 #ifdef UNITTEST_BUILD
     if (!settings.isWritable()) {
