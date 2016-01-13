@@ -37,14 +37,19 @@
 class APMFactMetaDataRaw
 {
 public:
-    QString                  name;
-    QString                  group;
-    QString                  shortDescription;
-    QString                  longDescription;
-    QString                  min;
-    QString                  max;
-    QString                  incrementSize;
-    QString                  units;
+    APMFactMetaDataRaw(void)
+        : rebootRequired(false)
+    { }
+
+    QString name;
+    QString group;
+    QString shortDescription;
+    QString longDescription;
+    QString min;
+    QString max;
+    QString incrementSize;
+    QString units;
+    bool    rebootRequired;
     QList<QPair<QString, QString> > values;
     QList<QPair<QString, QString> > bitmask;
 };

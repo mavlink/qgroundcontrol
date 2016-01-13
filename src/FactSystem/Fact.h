@@ -66,6 +66,7 @@ public:
     Q_PROPERTY(QString      minString               READ cookedMinString                                    CONSTANT)
     Q_PROPERTY(bool         minIsDefaultForType     READ minIsDefaultForType                                CONSTANT)
     Q_PROPERTY(QString      name                    READ name                                               CONSTANT)
+    Q_PROPERTY(bool         rebootRequired          READ rebootRequired                                     CONSTANT)
     Q_PROPERTY(QString      shortDescription        READ shortDescription                                   CONSTANT)
     Q_PROPERTY(FactMetaData::ValueType_t type       READ type                                               CONSTANT)
     Q_PROPERTY(QString      units                   READ cookedUnits                                        CONSTANT)
@@ -109,6 +110,7 @@ public:
     QString         rawValueString          (void) const;
     QString         cookedValueString       (void) const;
     bool            valueEqualsDefault      (void) const;
+    bool            rebootRequired          (void) const;
 
     void setRawValue        (const QVariant& value);
     void setCookedValue     (const QVariant& value);
