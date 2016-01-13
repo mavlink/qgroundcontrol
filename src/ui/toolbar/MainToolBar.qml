@@ -200,10 +200,10 @@ Rectangle {
                 return "3D Lock"
             }
             if(activeVehicle.satelliteLock == 4) {
-                return "3D Lock with Differential"
+                return "3D DGPS Lock"
             }
             if(activeVehicle.satelliteLock == 5) {
-                return "3D Lock with Relative Positioning"
+                return "3D RTK GPS Lock"
             }
             return "Unkown Lock Type (" + activeVehicle.satelliteLock + ")"
         }
