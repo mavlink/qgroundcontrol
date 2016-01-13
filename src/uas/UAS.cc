@@ -1417,6 +1417,10 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
             paramValue = QVariant(paramUnion.param_int8);
             break;
 
+        case MAV_PARAM_TYPE_UINT16:
+            paramValue = QVariant(paramUnion.param_uint16);
+            break;
+
         case MAV_PARAM_TYPE_INT16:
             paramValue = QVariant(paramUnion.param_int16);
             break;
@@ -1428,6 +1432,14 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
         case MAV_PARAM_TYPE_INT32:
             paramValue = QVariant(paramUnion.param_int32);
             break;
+
+        //-- Note: These are not handled above:
+        //
+        //   MAV_PARAM_TYPE_UINT64
+        //   MAV_PARAM_TYPE_INT64
+        //   MAV_PARAM_TYPE_REAL64
+        //
+        //   No space in message (the only storage allocation is a "float") and not present in mavlink_param_union_t
 
         default:
             qCritical() << "INVALID DATA TYPE USED AS PARAMETER VALUE: " << rawValue.param_type;
