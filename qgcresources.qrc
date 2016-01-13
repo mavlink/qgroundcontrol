@@ -1,16 +1,50 @@
 <RCC>
     <qresource prefix="/qmlimages">
-        <file alias="AirframeComponentIcon.png">src/AutoPilotPlugins/PX4/Images/AirframeComponentIcon.png</file>
-        <file alias="AirframeFlyingWing.png">src/AutoPilotPlugins/PX4/Images/AirframeFlyingWing.png</file>
-        <file alias="AirframeHexaRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorPlus.png</file>
-        <file alias="AirframeHexaRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorX.png</file>
-        <file alias="AirframeOctoRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeOctoRotorPlus.png</file>
-        <file alias="AirframeOctoRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeOctoRotorX.png</file>
-        <file alias="AirframeQuadRotorH.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorH.png</file>
-        <file alias="AirframeQuadRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorPlus.png</file>
-        <file alias="AirframeQuadRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorX.png</file>
-        <file alias="AirframeSimulation.png">src/AutoPilotPlugins/PX4/Images/AirframeSimulation.png</file>
-        <file alias="AirframeStandardPlane.png">src/AutoPilotPlugins/PX4/Images/AirframeStandardPlane.png</file>
+        <file alias="AirframeComponentIcon.png">src/AutoPilotPlugins/Common/Images/AirframeComponentIcon.png</file>
+
+        <!-- These are here for back compat with previous airframe meta data -->
+        <file alias="AirframeFlyingWing.png">src/AutoPilotPlugins/Common/Images/FlyingWing.svg</file>
+        <file alias="AirframeHexaRotorPlus.png">src/AutoPilotPlugins/Common/Images/HexaRotorPlus.svg</file>
+        <file alias="AirframeHexaRotorX.png">src/AutoPilotPlugins/Common/Images/HexaRotorX.svg</file>
+        <file alias="AirframeOctoRotorPlus.png">src/AutoPilotPlugins/Common/Images/OctoRotorPlus.svg</file>
+        <file alias="AirframeOctoRotorX.png">src/AutoPilotPlugins/Common/Images/OctoRotorX.svg</file>
+        <file alias="AirframeQuadRotorH.png">src/AutoPilotPlugins/Common/Images/QuadRotorH.png</file>
+        <file alias="AirframeQuadRotorPlus.png">src/AutoPilotPlugins/Common/Images/QuadRotorPlus.svg</file>
+        <file alias="AirframeQuadRotorX.png">src/AutoPilotPlugins/Common/Images/QuadRotorX.svg</file>
+        <file alias="AirframeSimulation.png">src/AutoPilotPlugins/Common/Images/AirframeSimulation.svg</file>
+        <file alias="AirframeStandardPlane.png">src/AutoPilotPlugins/Common/Images/Plane.svg</file>
+
+        <!-- Aiframe images supported by airfame meta data ml image tag -->
+        <file alias="Airframe/AirframeSimulation">src/AutoPilotPlugins/Common/Images/AirframeSimulation.svg</file>
+        <file alias="Airframe/AirframeUnknown">src/AutoPilotPlugins/Common/Images/AirframeUnknown.svg</file>
+        <file alias="Airframe/Boat">src/AutoPilotPlugins/Common/Images/Boat.svg</file>
+        <file alias="Airframe/FlyingWing">src/AutoPilotPlugins/Common/Images/FlyingWing.svg</file>
+        <file alias="Airframe/Helicopter">src/AutoPilotPlugins/Common/Images/Helicopter.png</file>
+        <file alias="Airframe/HelicopterCoaxial">src/AutoPilotPlugins/Common/Images/HelicopterCoaxial.png</file>
+        <file alias="Airframe/HexaRotorPlus">src/AutoPilotPlugins/Common/Images/HexaRotorPlus.svg</file>
+        <file alias="Airframe/HexaRotorX">src/AutoPilotPlugins/Common/Images/HexaRotorX.svg</file>
+        <file alias="Airframe/OctoRotorPlus">src/AutoPilotPlugins/Common/Images/OctoRotorPlus.svg</file>
+        <file alias="Airframe/OctoRotorPlusCoaxial">src/AutoPilotPlugins/Common/Images/OctoRotorPlusCoaxial.svg</file>
+        <file alias="Airframe/OctoRotorX">src/AutoPilotPlugins/Common/Images/OctoRotorX.svg</file>
+        <file alias="Airframe/OctoRotorXCoaxial">src/AutoPilotPlugins/Common/Images/OctoRotorXCoaxial.svg</file>
+        <file alias="Airframe/Plane">src/AutoPilotPlugins/Common/Images/Plane.svg</file>
+        <file alias="Airframe/PlaneATail">src/AutoPilotPlugins/Common/Images/PlaneATail.svg</file>
+        <file alias="Airframe/QuadRotorATail">src/AutoPilotPlugins/Common/Images/QuadRotorATail.png</file>
+        <file alias="Airframe/QuadRotorH">src/AutoPilotPlugins/Common/Images/QuadRotorH.png</file>
+        <file alias="Airframe/QuadRotorPlus">src/AutoPilotPlugins/Common/Images/QuadRotorPlus.svg</file>
+        <file alias="Airframe/QuadRotorVTail">src/AutoPilotPlugins/Common/Images/QuadRotorVTail.png</file>
+        <file alias="Airframe/QuadRotorWide">src/AutoPilotPlugins/Common/Images/QuadRotorWide.svg</file>
+        <file alias="Airframe/QuadRotorX">src/AutoPilotPlugins/Common/Images/QuadRotorX.svg</file>
+        <file alias="Airframe/Rover">src/AutoPilotPlugins/Common/Images/Rover.svg</file>
+        <file alias="Airframe/VTOLDuoRotorTailSitter">src/AutoPilotPlugins/Common/Images/VTOLDuoRotorTailSitter.svg</file>
+        <file alias="Airframe/VTOLPlane">src/AutoPilotPlugins/Common/Images/VTOLPlane.svg</file>
+        <file alias="Airframe/VTOLQuadRotorTailSitter">src/AutoPilotPlugins/Common/Images/VTOLQuadRotorTailSitter.svg</file>
+        <file alias="Airframe/VTOLTiltRotor">src/AutoPilotPlugins/Common/Images/VTOLTiltRotor.svg</file>
+        <file alias="Airframe/Y6A">src/AutoPilotPlugins/Common/Images/Y6A.png</file>
+        <file alias="Airframe/Y6B">src/AutoPilotPlugins/Common/Images/Y6B.png</file>
+        <file alias="Airframe/YMinus">src/AutoPilotPlugins/Common/Images/YMinus.svg</file>
+        <file alias="Airframe/YPlus">src/AutoPilotPlugins/Common/Images/YPlus.svg</file>
+
         <file alias="arrow-down.png">src/QmlControls/arrow-down.png</file>
         <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/Images/FlightModesComponentIcon.png</file>
