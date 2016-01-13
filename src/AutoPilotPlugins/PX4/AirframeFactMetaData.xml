@@ -329,6 +329,10 @@
       <maintainer>Sander Smeets &lt;sander@droneslab.com&gt;</maintainer>
       <type>Standard VTOL</type>
     </airframe>
+    <airframe id="13008" maintainer="Sander Smeets &lt;sander@droneslab.com&gt;" name="QuadRanger VTOL.">
+      <maintainer>Sander Smeets &lt;sander@droneslab.com&gt;</maintainer>
+      <type>Standard VTOL</type>
+    </airframe>
   </airframe_group>
   <airframe_group image="" name="Tricopter Y+">
     <airframe id="14001" maintainer="Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;" name="Generic Tricopter Y+ Geometry">
