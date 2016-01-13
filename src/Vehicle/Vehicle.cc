@@ -116,6 +116,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     connect(_mavlink, &MAVLinkProtocol::messageReceived,     this, &Vehicle::_mavlinkMessageReceived);
     connect(this, &Vehicle::_sendMessageOnThread, this, &Vehicle::_sendMessage, Qt::QueuedConnection);
+    connect(this, &Vehicle::_sendMessageOnLinkOnThread, this, &Vehicle::_sendMessageOnLink, Qt::QueuedConnection);
 
     _uas = new UAS(_mavlink, this, _firmwarePluginManager);
 
@@ -435,26 +436,66 @@ void Vehicle::sendMessage(mavlink_message_t message)
     emit _sendMessageOnThread(message);
 }
 
+bool Vehicle::sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
+{
+    if (!link || !_links.contains(link) || !link->isConnected()) {
+        return false;
+    }
+
+    emit _sendMessageOnLinkOnThread(link, message);
+
+    return true;
+}
+
+void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
+{
+    // Make sure this is still a good link
+    if (!link || !_links.contains(link) || !link->isConnected()) {
+        return;
+    }
+
+    // Give the plugin a chance to adjust
+    _firmwarePlugin->adjustMavlinkMessage(this, &message);
+
+    static const uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
+    mavlink_finalize_message_chan(&message, _mavlink->getSystemId(), _mavlink->getComponentId(), link->getMavlinkChannel(), message.len, messageKeys[message.msgid]);
+
+    // Write message into buffer, prepending start sign
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    int len = mavlink_msg_to_send_buffer(buffer, &message);
+
+    link->writeBytes((const char*)buffer, len);
+}
+
 void Vehicle::_sendMessage(mavlink_message_t message)
 {
     // Emit message on all links that are currently connected
     foreach (LinkInterface* link, _links) {
         if (link->isConnected()) {
-            MAVLinkProtocol* mavlink = _mavlink;
-
-            // Give the plugin a chance to adjust
-            _firmwarePlugin->adjustMavlinkMessage(this, &message);
-
-            static const uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
-            mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getMavlinkChannel(), message.len, messageKeys[message.msgid]);
-
-            // Write message into buffer, prepending start sign
-            uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-            int len = mavlink_msg_to_send_buffer(buffer, &message);
-
-            link->writeBytes((const char*)buffer, len);
+            _sendMessageOnLink(link, message);
         }
     }
+}
+
+/// @return Direct usb connection link to board if one, NULL if none
+LinkInterface* Vehicle::priorityLink(void)
+{
+    foreach (LinkInterface* link, _links) {
+        if (link->isConnected()) {
+            SerialLink* pSerialLink = qobject_cast<SerialLink*>(link);
+            if (pSerialLink) {
+                LinkConfiguration* pLinkConfig = pSerialLink->getLinkConfiguration();
+                if (pLinkConfig) {
+                    SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(pLinkConfig);
+                    if (pSerialConfig && pSerialConfig->usbDirect()) {
+                        return link;
+                    }
+                }
+            }
+        }
+    }
+
+    return _links.count() ? _links[0] : NULL;
 }
 
 void Vehicle::setLatitude(double latitude)

@@ -388,6 +388,7 @@ SerialConfiguration::SerialConfiguration(const QString& name) : LinkConfiguratio
     _parity     = QSerialPort::NoParity;
     _dataBits   = 8;
     _stopBits   = 1;
+    _usbDirect  = false;
 }
 
 SerialConfiguration::SerialConfiguration(SerialConfiguration* copy) : LinkConfiguration(copy)
@@ -399,6 +400,7 @@ SerialConfiguration::SerialConfiguration(SerialConfiguration* copy) : LinkConfig
     _stopBits           = copy->stopBits();
     _portName           = copy->portName();
     _portDisplayName    = copy->portDisplayName();
+    _usbDirect          = copy->_usbDirect;
 }
 
 void SerialConfiguration::copyFrom(LinkConfiguration *source)
@@ -413,6 +415,7 @@ void SerialConfiguration::copyFrom(LinkConfiguration *source)
     _stopBits           = ssource->stopBits();
     _portName           = ssource->portName();
     _portDisplayName    = ssource->portDisplayName();
+    _usbDirect          = ssource->_usbDirect;
 }
 
 void SerialConfiguration::updateSettings()
@@ -554,3 +557,10 @@ void SerialConfiguration::_initBaudRates()
     kSupportedBaudRates << "921600";
 }
 
+void SerialConfiguration::setUsbDirect(bool usbDirect)
+{
+    if (_usbDirect != usbDirect) {
+        _usbDirect = usbDirect;
+        emit usbDirectChanged(_usbDirect);
+    }
+}
