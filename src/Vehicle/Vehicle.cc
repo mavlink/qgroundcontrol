@@ -449,6 +449,11 @@ bool Vehicle::sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
 
 void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
 {
+    // Make sure this is still a good link
+    if (!link || !_links.contains(link) || !link->isConnected()) {
+        return;
+    }
+
     // Give the plugin a chance to adjust
     _firmwarePlugin->adjustMavlinkMessage(this, &message);
 
