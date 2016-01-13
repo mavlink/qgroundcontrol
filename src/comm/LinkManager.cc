@@ -173,14 +173,21 @@ void LinkManager::_addLink(LinkInterface* link)
     }
 
     if (!_links.contains(link)) {
+        bool channelSet = false;
+
         // Find a mavlink channel to use for this link
         for (int i=0; i<32; i++) {
             if (!(_mavlinkChannelsUsedBitMask && 1 << i)) {
                 mavlink_reset_channel_status(i);
                 link->_setMavlinkChannel(i);
                 _mavlinkChannelsUsedBitMask |= i << i;
+                channelSet = true;
                 break;
             }
+        }
+
+        if (!channelSet) {
+            qWarning() << "Ran out of mavlink channels";
         }
 
         _links.append(link);
