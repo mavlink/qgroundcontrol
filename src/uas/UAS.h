@@ -614,8 +614,6 @@ signals:
     void imageReady(UASInterface* uas);
     /** @brief HIL controls have changed */
     void hilControlsChanged(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
-    /** @brief HIL actuator outputs have changed */
-    void hilActuatorsChanged(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
 
     void localXChanged(double val,QString name);
     void localYChanged(double val,QString name);
