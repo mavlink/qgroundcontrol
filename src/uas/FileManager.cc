@@ -34,13 +34,14 @@
 
 QGC_LOGGING_CATEGORY(FileManagerLog, "FileManagerLog")
 
-FileManager::FileManager(QObject* parent, Vehicle* vehicle) :
-    QObject(parent),
-    _currentOperation(kCOIdle),
-    _vehicle(vehicle),
-    _lastOutgoingSeqNumber(0),
-    _activeSession(0),
-    _systemIdQGC(0)
+FileManager::FileManager(QObject* parent, Vehicle* vehicle)
+    : QObject(parent)
+    , _currentOperation(kCOIdle)
+    , _vehicle(vehicle)
+    , _dedicatedLink(NULL)
+    , _lastOutgoingSeqNumber(0)
+    , _activeSession(0)
+    , _systemIdQGC(0)
 {
     connect(&_ackTimer, &QTimer::timeout, this, &FileManager::_ackTimeout);
     
@@ -308,10 +309,8 @@ void FileManager::_writeFileDatablock(void)
     _sendRequest(&request);
 }
 
-void FileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
+void FileManager::receiveMessage(mavlink_message_t message)
 {
-    Q_UNUSED(link);
-
     // receiveMessage is signalled will all mavlink messages so we need to filter everything else out but ours.
     if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL) {
         return;
@@ -444,6 +443,12 @@ void FileManager::listDirectory(const QString& dirPath)
         return;
     }
 
+    _dedicatedLink = _vehicle->priorityLink();
+    if (!_dedicatedLink) {
+        _emitErrorMessage(tr("Command not sent. No Vehicle links."));
+        return;
+    }
+
     // initialise the lister
     _listPath = dirPath;
     _listOffset = 0;
@@ -481,6 +486,12 @@ void FileManager::downloadPath(const QString& from, const QDir& downloadDir)
         _emitErrorMessage(tr("Command not sent. Waiting for previous command to complete."));
         return;
     }
+
+    _dedicatedLink = _vehicle->priorityLink();
+    if (!_dedicatedLink) {
+        _emitErrorMessage(tr("Command not sent. No Vehicle links."));
+        return;
+    }
     
 	qCDebug(FileManagerLog) << "downloadPath from:" << from << "to:" << downloadDir;
 	_downloadWorker(from, downloadDir, true /* read file */);
@@ -490,6 +501,12 @@ void FileManager::streamPath(const QString& from, const QDir& downloadDir)
 {
     if (_currentOperation != kCOIdle) {
         _emitErrorMessage(tr("Command not sent. Waiting for previous command to complete."));
+        return;
+    }
+
+    _dedicatedLink = _vehicle->priorityLink();
+    if (!_dedicatedLink) {
+        _emitErrorMessage(tr("Command not sent. No Vehicle links."));
         return;
     }
     
@@ -534,6 +551,12 @@ void FileManager::uploadPath(const QString& toPath, const QFileInfo& uploadFile)
 {
     if(_currentOperation != kCOIdle){
         _emitErrorMessage(tr("UAS File manager busy.  Try again later"));
+        return;
+    }
+
+    _dedicatedLink = _vehicle->priorityLink();
+    if (!_dedicatedLink) {
+        _emitErrorMessage(tr("Command not sent. No Vehicle links."));
         return;
     }
 
@@ -731,5 +754,5 @@ void FileManager::_sendRequest(Request* request)
                                             0,                  // Target component
                                             (uint8_t*)request); // Payload
     
-    _vehicle->sendMessage(message);
+    _vehicle->sendMessageOnLink(_dedicatedLink, message);
 }

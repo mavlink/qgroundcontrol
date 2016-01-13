@@ -45,15 +45,15 @@ QGC_LOGGING_CATEGORY(ParameterLoaderVerboseLog, "ParameterLoaderVerboseLog")
 
 Fact ParameterLoader::_defaultFact;
 
-ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent) :
-    QObject(parent),
-    _autopilot(autopilot),
-    _vehicle(vehicle),
-    _mavlink(qgcApp()->toolbox()->mavlinkProtocol()),
-    _parametersReady(false),
-    _initialLoadComplete(false),
-    _defaultComponentId(FactSystem::defaultComponentId),
-    _totalParamCount(0)
+ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent)
+    : QObject(parent)
+    , _autopilot(autopilot)
+    , _vehicle(vehicle)
+    , _mavlink(qgcApp()->toolbox()->mavlinkProtocol())
+    , _parametersReady(false)
+    , _initialLoadComplete(false)
+    , _defaultComponentId(FactSystem::defaultComponentId)
+    , _totalParamCount(0)
 {
     Q_ASSERT(_autopilot);
     Q_ASSERT(_vehicle);
@@ -321,7 +321,7 @@ void ParameterLoader::refreshAllParameters(void)
 
     mavlink_message_t msg;
     mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->id(), MAV_COMP_ID_ALL);
-    _vehicle->sendMessage(msg);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
     qCDebug(ParameterLoaderLog) << "Request to refresh all parameters";
 }
@@ -522,7 +522,7 @@ void ParameterLoader::_tryCacheLookup()
 
     mavlink_message_t msg;
     mavlink_msg_param_request_read_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->id(), MAV_COMP_ID_ALL, "_HASH_CHECK", -1);
-    _vehicle->sendMessage(msg);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
 
 void ParameterLoader::_readParameterRaw(int componentId, const QString& paramName, int paramIndex)
@@ -538,7 +538,7 @@ void ParameterLoader::_readParameterRaw(int componentId, const QString& paramNam
                                         componentId,                // Target component id
                                         fixedParamName,             // Named parameter being requested
                                         paramIndex);                // Parameter index being requested, -1 for named
-    _vehicle->sendMessage(msg);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
 
 void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramName, const QVariant& value)
@@ -591,7 +591,7 @@ void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramNa
 
     mavlink_message_t msg;
     mavlink_msg_param_set_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &p);
-    _vehicle->sendMessage(msg);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
 
 void ParameterLoader::_writeLocalParamCache()
@@ -663,7 +663,7 @@ void ParameterLoader::_saveToEEPROM(void)
     if (_vehicle->firmwarePlugin()->isCapable(FirmwarePlugin::MavCmdPreflightStorageCapability)) {
         mavlink_message_t msg;
         mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _vehicle->id(), 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
-        _vehicle->sendMessage(msg);
+        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
         qCDebug(ParameterLoaderLog) << "_saveToEEPROM";
     } else {
         qCDebug(ParameterLoaderLog) << "_saveToEEPROM skipped due to FirmwarePlugin::isCapable";

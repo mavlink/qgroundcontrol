@@ -33,6 +33,7 @@
 #include "QmlObjectListModel.h"
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
+#include "LinkInterface.h"
 
 class Vehicle;
 
@@ -116,6 +117,7 @@ private:
 
 private:
     Vehicle*            _vehicle;
+    LinkInterface*      _dedicatedLink;
     
     QTimer*             _ackTimeoutTimer;
     AckType_t           _retryAck;
