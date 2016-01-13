@@ -296,8 +296,8 @@ void ParameterLoader::_valueUpdated(const QVariant& value)
     _writeParameterRaw(componentId, fact->name(), value);
     qCDebug(ParameterLoaderLog) << "Set parameter (componentId:" << componentId << "name:" << name << value << ")";
 
-    if (fact->rebootRequired()) {
-        qgcApp()->showMessage(QStringLiteral("Change of parameter %1 requires a Vehicle reboot to take affect").arg(name));
+    if (fact->rebootRequired() && !qgcApp()->runningUnitTests()) {
+        qgcApp()->showMessage(QStringLiteral("Change of parameter %1 requires a Vehicle reboot to take effect").arg(name));
     }
 }
 
