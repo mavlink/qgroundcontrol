@@ -87,7 +87,7 @@ signals:
     void commandProgress(int value);
 
 public slots:
-    void receiveMessage(LinkInterface* link, mavlink_message_t message);
+    void receiveMessage(mavlink_message_t message);
 	
 private slots:
 	void _ackTimeout(void);
@@ -203,7 +203,8 @@ private:
     OperationState  _currentOperation;              ///< Current operation of state machine
     QTimer          _ackTimer;                      ///< Used to signal a timeout waiting for an ack
     
-    Vehicle* _vehicle;
+    Vehicle*        _vehicle;
+    LinkInterface*  _dedicatedLink; ///< Link to use for communication
     
     uint16_t _lastOutgoingSeqNumber; ///< Sequence number sent in last outgoing packet
 
