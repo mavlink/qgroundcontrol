@@ -57,7 +57,6 @@ QGCView {
     readonly property real      _rightPanelOpacity: 0.8
     readonly property int       _toolButtonCount:   6
     readonly property string    _autoSyncKey:       "AutoSync"
-    readonly property string    _showHelpKey:       "ShowHelp"
     readonly property int       _addMissionItemsButtonAutoOffTimeout:   10000
     readonly property var       _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
 
@@ -77,12 +76,9 @@ QGCView {
 
     property bool _syncInProgress:              _activeVehicle ? _activeVehicle.missionManager.inProgress : false
 
-    property bool _showHelp:                    QGroundControl.flightMapSettings.loadBoolMapSetting(editorMap.mapName, _showHelpKey, true)
-
     onGpsLockChanged:       updateMapToVehiclePosition()
 
     Component.onCompleted: {
-        helpPanel.source = "MissionEditorHelp.qml"
         updateMapToVehiclePosition()
     }
 
@@ -410,16 +406,6 @@ QGCView {
                     }
                 }
 
-                //-- Help Panel
-                Loader {
-                    id:         helpPanel
-                    width:      parent.width  * 0.65
-                    height:     parent.height * 0.75
-                    z:          QGroundControl.zOrderTopMost
-                    anchors.verticalCenter:   parent.verticalCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
                 Item {
                     id:     toolbarSpacer
                     height: mainWindow.tbHeight
@@ -569,14 +555,6 @@ QGCView {
                                 editorMap.zoomLevel -= 0.5
                             checked = false
                         }
-                    }
-
-                    RoundButton {
-                        id:                 helpButton
-                        buttonImage:        "/qmlimages/Help.svg"
-                        exclusiveGroup:     _dropButtonsExclusiveGroup
-                        z:                  QGroundControl.zOrderWidgets
-                        checked:            _showHelp
                     }
                 }
 
