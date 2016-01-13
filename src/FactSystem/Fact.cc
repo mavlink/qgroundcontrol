@@ -482,3 +482,13 @@ QString Fact::validate(const QString& cookedValue, bool convertOnly)
         return QString("Internal error: Meta data pointer missing");
     }
 }
+
+bool Fact::rebootRequired(void) const
+{
+    if (_metaData) {
+        return _metaData->rebootRequired();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return false;
+    }
+}

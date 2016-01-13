@@ -81,6 +81,7 @@ public:
     ValueType_t     type                    (void) const { return _type; }
     QString         rawUnits                (void) const { return _rawUnits; }
     QString         cookedUnits             (void) const { return _cookedUnits; }
+    bool            rebootRequired          (void) const { return _rebootRequired; }
 
     Translator      rawTranslator           (void) const { return _rawTranslator; }
     Translator      cookedTranslator        (void) const { return _cookedTranslator; }
@@ -102,6 +103,7 @@ public:
     void setName            (const QString& name)               { _name = name; }
     void setShortDescription(const QString& shortDescription)   { _shortDescription = shortDescription; }
     void setRawUnits        (const QString& rawUnits);
+    void setRebootRequired  (bool rebootRequired)               { _rebootRequired = rebootRequired; }
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
 
@@ -150,6 +152,7 @@ private:
     QString         _cookedUnits;
     Translator      _rawTranslator;
     Translator      _cookedTranslator;
+    bool            _rebootRequired;
 
     struct BuiltInTranslation_s {
         const char* rawUnits;
