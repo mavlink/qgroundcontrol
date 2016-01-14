@@ -57,7 +57,7 @@ public:
     bool parametersAreReady(void) { return _parametersReady; }
 
     /// Re-request the full set of parameters from the autopilot
-    void refreshAllParameters(void);
+    void refreshAllParameters(uint8_t componentID = MAV_COMP_ID_ALL);
 
     /// Request a refresh on the specific parameter
     void refreshParameter(int componentId, const QString& name);
@@ -107,6 +107,9 @@ protected:
     void _tryCacheLookup(void);
     void _initialRequestTimeout(void);
     
+private slots:
+    void _timeoutRefreshAll();
+
 private:
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
     int _actualComponentId(int componentId);
