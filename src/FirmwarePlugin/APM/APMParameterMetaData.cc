@@ -342,6 +342,7 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
             // skip empty elements. Somehow I am getting lot of these. Dont know what to do with them.
         } else if (elementName == "field") {
             QString attributeName = xml.attributes().value("name").toString();
+
             if ( attributeName == "Range") {
                 QString range = xml.readElementText().trimmed();
                 QStringList rangeList = range.split(' ');
@@ -402,6 +403,11 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
                 if (parseError) {
                     rawMetaData->bitmask.clear();
                 }
+            } else if (attributeName == "RebootRequired") {
+                QString strValue = xml.readElementText().trimmed();
+                if (strValue.compare("true", Qt::CaseInsensitive) == 0) {
+                    rawMetaData->rebootRequired = true;
+                }
             }
         } else if (elementName == "values") {
             // doing nothing individual value will follow anyway. May be used for sanity checking.
@@ -447,6 +453,7 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 
     metaData->setName(rawMetaData->name);
     metaData->setGroup(rawMetaData->group);
+    metaData->setRebootRequired(rawMetaData->rebootRequired);
 
     if (!rawMetaData->shortDescription.isEmpty()) {
         metaData->setShortDescription(rawMetaData->shortDescription);
