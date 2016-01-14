@@ -42,7 +42,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _virtualTabletJoystick(false)
     , _offlineEditingFirmwareTypeFact(QString(), "OfflineEditingFirmwareType", FactMetaData::valueTypeUint32, (uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA)
     , _offlineEditingFirmwareTypeMetaData(FactMetaData::valueTypeUint32)
-
 {
     QSettings settings;
     _virtualTabletJoystick = settings.value(_virtualTabletJoystickKey, false). toBool();

@@ -76,6 +76,8 @@ public:
 
     Q_PROPERTY(Fact*    offlineEditingFirmwareType READ offlineEditingFirmwareType CONSTANT)
 
+    Q_PROPERTY(QGeoCoordinate defaultMapPosition READ defaultMapPosition CONSTANT)
+
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
@@ -113,6 +115,8 @@ public:
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
 
+    QGeoCoordinate defaultMapPosition() { return qgcApp()->defaultMapPosition(); }
+
     Fact*   offlineEditingFirmwareType () { return &_offlineEditingFirmwareTypeFact; }
 
     //-- TODO: Make this into an actual preference.
@@ -144,7 +148,6 @@ signals:
     void mavlinkSystemIDChanged         (int id);
 
 private:
-
     FlightMapSettings*      _flightMapSettings;
     HomePositionManager*    _homePositionManager;
     LinkManager*            _linkManager;
