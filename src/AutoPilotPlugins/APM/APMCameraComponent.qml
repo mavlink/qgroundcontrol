@@ -47,12 +47,6 @@ QGCView {
     property Fact _mountNeutralY:       controller.getParameterFact(-1, "MNT_NEUTRAL_Y")
     property Fact _mountNeutralZ:       controller.getParameterFact(-1, "MNT_NEUTRAL_Z")
 
-    /*
-    property Fact _mountControlX:   controller.getParameterFact(-1, "MNT_CONTROL_X")
-    property Fact _mountControlY:   controller.getParameterFact(-1, "MNT_CONTROL_Y")
-    property Fact _mountControlZ:   controller.getParameterFact(-1, "MNT_CONTROL_Z")
-    */
-
     property Fact _mountRCInTilt:       controller.getParameterFact(-1, "MNT_RC_IN_TILT")
     property Fact _mountStabTilt:       controller.getParameterFact(-1, "MNT_STAB_TILT")
     property Fact _mountAngMinTilt:     controller.getParameterFact(-1, "MNT_ANGMIN_TIL")
@@ -67,9 +61,6 @@ QGCView {
     property Fact _mountStabPan:        controller.getParameterFact(-1, "MNT_STAB_PAN")
     property Fact _mountAngMinPan:      controller.getParameterFact(-1, "MNT_ANGMIN_PAN")
     property Fact _mountAngMaxPan:      controller.getParameterFact(-1, "MNT_ANGMAX_PAN")
-
-    property Fact _mountDefaultMode:    controller.getParameterFact(-1, "MNT_DEFLT_MODE")
-    property Fact _mountType:           controller.getParameterFact(-1, "MNT_TYPE")
 
     property Fact _rc5Function:         controller.getParameterFact(-1, "RC5_FUNCTION")
     property Fact _rc6Function:         controller.getParameterFact(-1, "RC6_FUNCTION")
@@ -86,6 +77,9 @@ QGCView {
     property bool _panEnabled:          false
     property bool _rollEnabled:         false
 
+    // Gimbal Settings not available on older firmware
+    property bool _showGimbaLSettings:  controller.parameterExists(-1, "MNT_DEFLT_MODE")
+
     readonly property real  _margins:                       ScreenTools.defaultFontPixelHeight
     readonly property int   _rcFunctionDisabled:            0
     readonly property int   _rcFunctionMountPan:            6
@@ -94,6 +88,13 @@ QGCView {
     readonly property int   _firstGimbalOutChannel:         5
     readonly property int   _lastGimbalOutChannel:          14
     readonly property int   _mountDefaultModeRCTargetting:  3
+
+    Component.onCompleted: {
+        if (_showGimbaLSettings) {
+            gimbalSettingsLoader.sourceComponent = gimbalSettings
+        }
+        calcGimbalOutValues()
+    }
 
     function setGimbalSettingsServoInfo(loader, channel) {
         var rcPrefix = "RC" + channel + "_"
@@ -143,8 +144,6 @@ QGCView {
             functionFact.value = rcFunction
         }
     }
-
-    Component.onCompleted: calcGimbalOutValues()
 
     // Whenever any RC#_FUNCTION parameters chagnes we need to go looking for gimbal output channels again
     Connections { target: _rc5Function; onValueChanged: calcGimbalOutValues() }
@@ -381,6 +380,81 @@ QGCView {
         } // Item
     } // Component - gimbalDirectionSettings
 
+    Component {
+        id: gimbalSettings
+
+        Item {
+            width:  rectangle.x + rectangle.width
+            height: rectangle.y + rectangle.height
+
+            property Fact _mountDefaultMode:    controller.getParameterFact(-1, "MNT_DEFLT_MODE")
+            property Fact _mountType:           controller.getParameterFact(-1, "MNT_TYPE")
+
+            QGCLabel {
+                id:             settingsLabel
+                text:           "Gimbal Settings"
+                font.weight:    Font.DemiBold
+            }
+
+            Rectangle {
+                id:                 rectangle
+                anchors.topMargin:  _margins / 2
+                anchors.top:        settingsLabel.bottom
+                width:              gimbalModeCombo.x + gimbalModeCombo.width + _margins
+                height:             gimbalModeCombo.y + gimbalModeCombo.height + _margins
+                color:              palette.windowShade
+
+                QGCLabel {
+                    id:                 gimbalTypeLabel
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.baseline:   gimbalTypeCombo.baseline
+                    text:               "Type:"
+                }
+
+                FactComboBox {
+                    id:                 gimbalTypeCombo
+                    anchors.topMargin:  _margins
+                    anchors.top:        parent.top
+                    anchors.left:       gimbalModeCombo.left
+                    width:              gimbalModeCombo.width
+                    fact:               _mountType
+                    indexModel:         false
+                }
+
+                QGCLabel {
+                    id:                     rebootLabel
+                    anchors.topMargin:      _margins / 2
+                    anchors.leftMargin:     _margins
+                    anchors.rightMargin:    _margins
+                    anchors.left:           parent.left
+                    anchors.right:          parent.right
+                    anchors.top:            gimbalTypeCombo.bottom
+                    wrapMode:               Text.WordWrap
+                    text:                   "Gimbal Type changes takes affect next reboot of autopilot"
+                }
+
+                QGCLabel {
+                    id:                 gimbalModeLabel
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.baseline:   gimbalModeCombo.baseline
+                    text:               "Default Mode:"
+                }
+
+                FactComboBox {
+                    id:                 gimbalModeCombo
+                    anchors.margins:    _margins
+                    anchors.top:        rebootLabel.bottom
+                    anchors.left:       gimbalModeLabel.right
+                    width:              ScreenTools.defaultFontPixelWidth * 15
+                    fact:               _mountDefaultMode
+                    indexModel:         false
+                }
+            } // Rectangle
+        } // Item
+    } // Component - gimbalSettings
+
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
@@ -389,7 +463,7 @@ QGCView {
             clip:           true
             anchors.fill:   parent
             contentHeight:  gimbalDirectionPanLoader.y + gimbalDirectionPanLoader.height
-            contentWidth:   settingsRectangle.x + settingsRectangle.width
+            contentWidth:   _showGimbaLSettings ? gimbalSettingsLoader.x + gimbalSettingsLoader.width : gimbalDirectionTiltLoader.x + gimbalDirectionTiltLoader.width
 
             Loader {
                 id:                 gimbalDirectionTiltLoader
@@ -446,70 +520,12 @@ QGCView {
                 property int    rcFunction:         _rcFunctionMountPan
             }
 
-            QGCLabel {
-                id:                 settingsLabel
-                anchors.leftMargin: _margins
+            Loader {
+                id:                 gimbalSettingsLoader
+                anchors.margins:    _margins
                 anchors.left:       gimbalDirectionTiltLoader.right
-                text:               "Gimbal Settings"
-                font.weight:        Font.DemiBold
-            }
+                anchors.top:        parent.top
 
-            Rectangle {
-                id:                 settingsRectangle
-                anchors.topMargin:  _margins / 2
-                anchors.left:       settingsLabel.left
-                anchors.top:        settingsLabel.bottom
-                width:              gimbalModeCombo.x + gimbalModeCombo.width + _margins
-                height:             gimbalModeCombo.y + gimbalModeCombo.height + _margins
-                color:              palette.windowShade
-
-                QGCLabel {
-                    id:                 gimbalTypeLabel
-                    anchors.margins:    _margins
-                    anchors.left:       parent.left
-                    anchors.baseline:   gimbalTypeCombo.baseline
-                    text:               "Type:"
-                }
-
-                FactComboBox {
-                    id:                 gimbalTypeCombo
-                    anchors.topMargin:  _margins
-                    anchors.top:        parent.top
-                    anchors.left:       gimbalModeCombo.left
-                    width:              gimbalModeCombo.width
-                    fact:               _mountType
-                    indexModel:         false
-                }
-
-                QGCLabel {
-                    id:                     rebootLabel
-                    anchors.topMargin:      _margins / 2
-                    anchors.leftMargin:     _margins
-                    anchors.rightMargin:    _margins
-                    anchors.left:           parent.left
-                    anchors.right:          parent.right
-                    anchors.top:            gimbalTypeCombo.bottom
-                    wrapMode:               Text.WordWrap
-                    text:                   "Gimbal Type changes takes affect next reboot of autopilot"
-                }
-
-                QGCLabel {
-                    id:                 gimbalModeLabel
-                    anchors.margins:    _margins
-                    anchors.left:       parent.left
-                    anchors.baseline:   gimbalModeCombo.baseline
-                    text:               "Default Mode:"
-                }
-
-                FactComboBox {
-                    id:                 gimbalModeCombo
-                    anchors.margins:    _margins
-                    anchors.top:        rebootLabel.bottom
-                    anchors.left:       gimbalModeLabel.right
-                    width:              ScreenTools.defaultFontPixelWidth * 15
-                    fact:               _mountDefaultMode
-                    indexModel:         false
-                }
             }
         } // Flickable
     } // QGCViewPanel

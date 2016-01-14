@@ -17,29 +17,33 @@ FactPanel {
     property Fact _mountRCInTilt:   controller.getParameterFact(-1, "MNT_RC_IN_TILT")
     property Fact _mountRCInRoll:   controller.getParameterFact(-1, "MNT_RC_IN_ROLL")
     property Fact _mountRCInPan:    controller.getParameterFact(-1, "MNT_RC_IN_PAN")
-    property Fact _mountType:       controller.getParameterFact(-1, "MNT_TYPE")
+
+    // MNT_TYPE parameter is not in older firmware versions
+    property bool   _mountTypeExists: controller.parameterExists(-1, "MNT_TYPE")
+    property string _mountTypeValue: _mountTypeExists ? controller.getParameterFact(-1, "MNT_TYPE").enumStringValue : ""
 
     Column {
         anchors.fill:       parent
         anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: "Gimbal type:"
-            valueText:  _mountType.enumStringValue
+            visible:    _mountTypeExists
+            labelText:  "Gimbal type:"
+            valueText:  _mountTypeValue
         }
 
         VehicleSummaryRow {
-            labelText: "Tilt input channel:"
+            labelText:  "Tilt input channel:"
             valueText:  _mountRCInTilt.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: "Pan input channel:"
+            labelText:  "Pan input channel:"
             valueText:  _mountRCInPan.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: "Roll input channel:"
+            labelText:  "Roll input channel:"
             valueText:  _mountRCInRoll.enumStringValue
         }
     }

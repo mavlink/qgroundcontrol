@@ -20,7 +20,6 @@
         <file alias="Airframe/Boat">src/AutoPilotPlugins/Common/Images/Boat.svg</file>
         <file alias="Airframe/FlyingWing">src/AutoPilotPlugins/Common/Images/FlyingWing.svg</file>
         <file alias="Airframe/Helicopter">src/AutoPilotPlugins/Common/Images/Helicopter.png</file>
-        <file alias="Airframe/HelicopterCoaxial">src/AutoPilotPlugins/Common/Images/HelicopterCoaxial.png</file>
         <file alias="Airframe/HexaRotorPlus">src/AutoPilotPlugins/Common/Images/HexaRotorPlus.svg</file>
         <file alias="Airframe/HexaRotorX">src/AutoPilotPlugins/Common/Images/HexaRotorX.svg</file>
         <file alias="Airframe/OctoRotorPlus">src/AutoPilotPlugins/Common/Images/OctoRotorPlus.svg</file>
@@ -44,6 +43,7 @@
         <file alias="Airframe/Y6B">src/AutoPilotPlugins/Common/Images/Y6B.png</file>
         <file alias="Airframe/YMinus">src/AutoPilotPlugins/Common/Images/YMinus.svg</file>
         <file alias="Airframe/YPlus">src/AutoPilotPlugins/Common/Images/YPlus.svg</file>
+        <file alias="Airframe/HelicopterCoaxial">src/ui/toolbar/Images/Yield.svg</file>
 
         <file alias="arrow-down.png">src/QmlControls/arrow-down.png</file>
         <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
