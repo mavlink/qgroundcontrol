@@ -33,9 +33,9 @@ import QGroundControl.FlightDisplay         1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 
-/// Inner common QML for MainWindow
+/// Inner common QML for mainWindow
 Item {
-    id:         mainWindow
+    id: mainWindow
 
     signal reallyClose
 
@@ -50,10 +50,7 @@ Item {
     property real   tbButtonWidth:      tbCellHeight * 1.35
     property real   availableHeight:    height - tbHeight
     property real   menuButtonWidth:    (tbButtonWidth * 2) + (tbSpacing * 4) + 1
-
-    property var    defaultPosition:    QtPositioning.coordinate(37.803784, -122.462276)
-    property var    tabletPosition:     defaultPosition
-
+    property var    gcsPosition:        QtPositioning.coordinate()  // Starts as invalid coordinate
     property var    currentPopUp:       null
     property real   currentCenterX:     0
     property var    activeVehicle:      multiVehicleManager.activeVehicle
@@ -179,20 +176,20 @@ Item {
     PositionSource {
         id:             positionSource
         updateInterval: 1000
-        active:         false
+        active:         true
+
         onPositionChanged: {
             if(positionSource.valid) {
                 if(positionSource.position.coordinate.latitude) {
                     if(Math.abs(positionSource.position.coordinate.latitude)  > 0.001) {
                         if(positionSource.position.coordinate.longitude) {
                             if(Math.abs(positionSource.position.coordinate.longitude)  > 0.001) {
-                                tabletPosition = positionSource.position.coordinate
+                                gcsPosition = positionSource.position.coordinate
                             }
                         }
                     }
                 }
             }
-            positionSource.stop()
         }
     }
 
@@ -299,9 +296,6 @@ Item {
         anchors.fill:       parent
         availableHeight:    mainWindow.availableHeight
         visible:            true
-        Component.onCompleted: {
-            positionSource.start()
-        }
     }
 
     Loader {

@@ -62,13 +62,8 @@ QGCView {
 
     property var    _missionItems:          controller.missionItems
     property var    _currentMissionItem
-
-    property bool   gpsLock:        _activeVehicle ? _activeVehicle.coordinateValid : false
-    property bool   _firstGpsLock:  true
-
-    //property var    _homePositionManager:       QGroundControl.homePositionManager
-    //property string _homePositionName:          _homePositionManager.homePositions.get(0).name
-    //property var    offlineHomePosition:        _homePositionManager.homePositions.get(0).coordinate
+    property bool   _firstVehiclePosition:  true
+    property var    activeVehiclePosition:  _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
 
     property var    liveHomePosition:           controller.liveHomePosition
     property var    liveHomePositionAvailable:  controller.liveHomePositionAvailable
@@ -76,17 +71,23 @@ QGCView {
 
     property bool _syncInProgress:              _activeVehicle ? _activeVehicle.missionManager.inProgress : false
 
-    onGpsLockChanged:       updateMapToVehiclePosition()
+    Component.onCompleted:          updateMapToVehiclePosition()
+    onActiveVehiclePositionChanged: updateMapToVehiclePosition()
 
-    Component.onCompleted: {
-        updateMapToVehiclePosition()
+    Connections {
+        target: multiVehicleManager
+
+        onActiveVehicleChanged: {
+            // When the active vehicle changes we need to allow the first vehicle position to move the map again
+            _firstVehiclePosition = true
+            updateMapToVehiclePosition()
+        }
     }
 
     function updateMapToVehiclePosition() {
-        if (gpsLock && _firstGpsLock) {
-            _firstGpsLock = false
-            editorMap.latitude = _activeVehicle.latitude
-            editorMap.longitude = _activeVehicle.longitude
+        if (_activeVehicle && _activeVehicle.coordinateValid && _firstVehiclePosition) {
+            _firstVehiclePosition = false
+            editorMap.center = _activeVehicle.coordinate
         }
     }
 
@@ -178,26 +179,10 @@ QGCView {
                 id:             editorMap
                 anchors.fill:   parent
                 mapName:        "MissionEditor"
-                latitude:       mainWindow.tabletPosition.latitude
-                longitude:      mainWindow.tabletPosition.longitude
 
                 readonly property real animationDuration: 500
 
                 Behavior on zoomLevel {
-                    NumberAnimation {
-                        duration:       editorMap.animationDuration
-                        easing.type:    Easing.InOutQuad
-                    }
-                }
-
-                Behavior on latitude {
-                    NumberAnimation {
-                        duration:       editorMap.animationDuration
-                        easing.type:    Easing.InOutQuad
-                    }
-                }
-
-                Behavior on longitude {
                     NumberAnimation {
                         duration:       editorMap.animationDuration
                         easing.type:    Easing.InOutQuad
