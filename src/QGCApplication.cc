@@ -121,6 +121,8 @@ const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
 const char* QGCApplication::_promptFlightDataSave           = "PromptFLightDataSave";
 const char* QGCApplication::_promptFlightDataSaveNotArmed   = "PromptFLightDataSaveNotArmed";
 const char* QGCApplication::_styleKey                       = "StyleIsDark";
+const char* QGCApplication::_defaultMapPositionLatKey       = "DefaultMapPositionLat";
+const char* QGCApplication::_defaultMapPositionLonKey       = "DefaultMapPositionLon";
 
 const char* QGCApplication::_darkStyleFile          = ":/res/styles/style-dark.css";
 const char* QGCApplication::_lightStyleFile         = ":/res/styles/style-light.css";
@@ -176,6 +178,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #endif
     , _toolbox(NULL)
     , _bluetoothAvailable(false)
+    , _defaultMapPosition(37.803784, -122.462276)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -317,6 +320,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
     }
+
+    _defaultMapPosition.setLatitude(settings.value(_defaultMapPositionLatKey, 37.803784).toDouble());
+    _defaultMapPosition.setLongitude(settings.value(_defaultMapPositionLonKey, -122.462276).toDouble());
 
     // Initialize Bluetooth
 #ifdef QGC_ENABLE_BLUETOOTH
@@ -710,4 +716,13 @@ void QGCApplication::_showSetupVehicleComponent(VehicleComponent* vehicleCompone
     QVariant varComponent = QVariant::fromValue(vehicleComponent);
 
     QMetaObject::invokeMethod(_rootQmlObject(), "showSetupVehicleComponent", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varComponent));
+}
+
+void QGCApplication::setDefaultMapPosition(QGeoCoordinate& defaultMapPosition)
+{
+    QSettings settings;
+
+    settings.setValue(_defaultMapPositionLatKey, defaultMapPosition.latitude());
+    settings.setValue(_defaultMapPositionLonKey, defaultMapPosition.longitude());
+    _defaultMapPosition = defaultMapPosition;
 }

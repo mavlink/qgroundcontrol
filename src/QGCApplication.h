@@ -121,6 +121,9 @@ public:
     /// Do we have Bluetooth Support?
     bool isBluetoothAvailable() { return _bluetoothAvailable; }
 
+    QGeoCoordinate defaultMapPosition(void) { return _defaultMapPosition; }
+    void setDefaultMapPosition(QGeoCoordinate& defaultMapPosition);
+
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
@@ -184,12 +187,6 @@ private:
     QQmlApplicationEngine* _qmlAppEngine;
 #endif
 
-    static const char* _settingsVersionKey;             ///< Settings key which hold settings version
-    static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
-    static const char* _promptFlightDataSave;           ///< Settings key for promptFlightDataSave
-    static const char* _promptFlightDataSaveNotArmed;   ///< Settings key for promptFlightDataSaveNotArmed
-    static const char* _styleKey;                       ///< Settings key for UI style
-
     bool _runningUnitTests; ///< true: running unit tests, false: normal app
 
     static const char*  _darkStyleFile;
@@ -209,6 +206,16 @@ private:
     QGCToolbox* _toolbox;
 
     bool _bluetoothAvailable;
+
+    QGeoCoordinate _defaultMapPosition;    ///< Map position when all other sources fail
+
+    static const char* _settingsVersionKey;             ///< Settings key which hold settings version
+    static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
+    static const char* _promptFlightDataSave;           ///< Settings key for promptFlightDataSave
+    static const char* _promptFlightDataSaveNotArmed;   ///< Settings key for promptFlightDataSaveNotArmed
+    static const char* _styleKey;                       ///< Settings key for UI style
+    static const char* _defaultMapPositionLatKey;       ///< Settings key for default map location
+    static const char* _defaultMapPositionLonKey;       ///< Settings key for default map location
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
