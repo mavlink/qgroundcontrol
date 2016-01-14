@@ -572,6 +572,7 @@ HEADERS+= \
     src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
     src/AutoPilotPlugins/APM/APMTuningComponent.h \
     src/AutoPilotPlugins/Common/RadioComponentController.h \
+    src/AutoPilotPlugins/Common/ESP8266ComponentController.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
     src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
@@ -583,6 +584,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/PX4Component.h \
     src/AutoPilotPlugins/PX4/PX4RadioComponent.h \
+    src/AutoPilotPlugins/PX4/PX4ESP8266Component.h \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
@@ -628,6 +630,7 @@ SOURCES += \
     src/AutoPilotPlugins/APM/APMSensorsComponentController.cc \
     src/AutoPilotPlugins/APM/APMTuningComponent.cc \
     src/AutoPilotPlugins/Common/RadioComponentController.cc \
+    src/AutoPilotPlugins/Common/ESP8266ComponentController.cc \
     src/AutoPilotPlugins/APM/APMAirframeComponentAirframes.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
@@ -640,6 +643,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4Component.cc \
     src/AutoPilotPlugins/PX4/PX4RadioComponent.cc \
+    src/AutoPilotPlugins/PX4/PX4ESP8266Component.cc \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \

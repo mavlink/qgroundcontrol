@@ -45,6 +45,7 @@
         <file alias="Airframe/YMinus">src/AutoPilotPlugins/Common/Images/YMinus.svg</file>
         <file alias="Airframe/YPlus">src/AutoPilotPlugins/Common/Images/YPlus.svg</file>
 
+        <file alias="wifi.svg">src/AutoPilotPlugins/Common/Images/wifi.svg</file>
         <file alias="arrow-down.png">src/QmlControls/arrow-down.png</file>
         <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/Images/FlightModesComponentIcon.png</file>
