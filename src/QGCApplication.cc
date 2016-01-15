@@ -68,6 +68,7 @@
 #include "APMSensorsComponentController.h"
 #include "PowerComponentController.h"
 #include "RadioComponentController.h"
+#include "ESP8266ComponentController.h"
 #include "ScreenToolsController.h"
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
@@ -384,6 +385,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
     qmlRegisterType<PowerComponentController>           ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
     qmlRegisterType<RadioComponentController>           ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
+    qmlRegisterType<ESP8266ComponentController>         ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     qmlRegisterType<MainToolBarController>              ("QGroundControl.Controllers", 1, 0, "MainToolBarController");
     qmlRegisterType<MissionController>                  ("QGroundControl.Controllers", 1, 0, "MissionController");

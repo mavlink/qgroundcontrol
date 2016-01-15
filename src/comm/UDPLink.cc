@@ -140,7 +140,7 @@ void UDPLink::run()
                 if(!_running)
                     break;
                 //-- Settle down (it gets here if there is nothing to read or write)
-                this->msleep(50);
+                this->msleep(5);
             }
         } else {
             exec();
@@ -242,30 +242,21 @@ void UDPLink::_sendBytes(const char* data, qint64 size)
  **/
 void UDPLink::readBytes()
 {
+    QByteArray databuffer;
     while (_socket->hasPendingDatagrams())
     {
         QByteArray datagram;
         datagram.resize(_socket->pendingDatagramSize());
-
         QHostAddress sender;
         quint16 senderPort;
         _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-
-        // FIXME TODO Check if this method is better than retrieving the data by individual processes
-        emit bytesReceived(this, datagram);
-
+        databuffer.append(datagram);
+        //-- Wait a bit before sending it over
+        if(databuffer.size() > 10 * 1024) {
+            emit bytesReceived(this, databuffer);
+            databuffer.clear();
+        }
         _logInputDataRate(datagram.length(), QDateTime::currentMSecsSinceEpoch());
-
-//        // Echo data for debugging purposes
-//        std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
-//        int i;
-//        for (i=0; i<s; i++)
-//        {
-//            unsigned int v=data[i];
-//            fprintf(stderr,"%02x ", v);
-//        }
-//        std::cerr << std::endl;
-
         // TODO This doesn't validade the sender. Anything sending UDP packets to this port gets
         // added to the list and will start receiving datagrams from here. Even a port scanner
         // would trigger this.
@@ -273,6 +264,10 @@ void UDPLink::readBytes()
         _config->addHost(sender.toString(), (int)senderPort);
         if(UDP_BROKEN_SIGNAL && !_running)
             break;
+    }
+    //-- Send whatever is left
+    if(databuffer.size()) {
+        emit bytesReceived(this, databuffer);
     }
 }
 
@@ -324,6 +319,14 @@ bool UDPLink::_hardwareConnect()
     _socket->setProxy(QNetworkProxy::NoProxy);
     _connectState = _socket->bind(host, _config->localPort(), QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
     if (_connectState) {
+        //-- Make sure we have a large enough IO buffers
+#ifdef __mobile
+        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
+        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
+#else
+        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    256 * 1024);
+        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);
+#endif
         _registerZeroconf(_config->localPort(), kZeroconfRegistration);
         //-- Connect signal if this version of Qt is not broken
         if(!UDP_BROKEN_SIGNAL) {
@@ -451,17 +454,18 @@ void UDPConfiguration::addHost(const QString host)
 
 void UDPConfiguration::addHost(const QString& host, int port)
 {
+    bool changed = false;
     QMutexLocker locker(&_confMutex);
     if(_hosts.contains(host)) {
         if(_hosts[host] != port) {
             _hosts[host] = port;
+            changed = true;
         }
     } else {
         QString ipAdd = get_ip_address(host);
         if(ipAdd.isEmpty()) {
             qWarning() << "UDP:" << "Could not resolve host:" << host << "port:" << port;
         } else {
-
             // In simulation and testing setups the vehicle and the GCS can be
             // running on the same host. This leads to packets arriving through
             // the local network or the loopback adapter, which makes it look
@@ -470,21 +474,17 @@ void UDPConfiguration::addHost(const QString& host, int port)
             //
             // We detect this case and force all traffic to a simulated instance
             // onto the local loopback interface.
-
             bool not_local = true;
-
             // Run through all IPv4 interfaces and check if their canonical
             // IP address in string representation matches the source IP address
             foreach (const QHostAddress &address, QNetworkInterface::allAddresses()) {
                 if (address.protocol() == QAbstractSocket::IPv4Protocol) {
-
                     if (ipAdd.endsWith(address.toString())) {
                         // This is a local address of the same host
                         not_local = false;
                     }
                 }
             }
-
             if (not_local) {
                 // This is a normal remote host, add it using its IPv4 address
                 _hosts[ipAdd] = port;
@@ -493,9 +493,12 @@ void UDPConfiguration::addHost(const QString& host, int port)
                 // It is localhost, so talk to it through the IPv4 loopback interface
                 _hosts["127.0.0.1"] = port;
             }
+            changed = true;
         }
     }
-    _updateHostList();
+    if(changed) {
+        _updateHostList();
+    }
 }
 
 void UDPConfiguration::removeHost(const QString host)

@@ -69,6 +69,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     AutoPilotPlugin(vehicle, parent),
     _airframeComponent(NULL),
     _radioComponent(NULL),
+    _esp8266Component(NULL),
     _flightModesComponent(NULL),
     _sensorsComponent(NULL),
     _safetyComponent(NULL),
@@ -101,7 +102,27 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _radioComponent = new PX4RadioComponent(_vehicle, this);
             _radioComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
-            
+
+            //-- Is there an ESP8266 Connected?
+#ifdef QT_DEBUG
+#ifndef __mobile__
+            //-- Unit test barfs if I ask for a parameter that does not exists. The whole poing of the
+            //   test below is to behave differently if ESP8266 is present or not.
+    if (!qgcApp()->runningUnitTests()) {
+#endif
+#endif
+            Fact* espVersion = getFact(FactSystem::ParameterProvider, MAV_COMP_ID_UDP_BRIDGE, "SW_VER");
+            if(espVersion && espVersion->componentId() == MAV_COMP_ID_UDP_BRIDGE) {
+                _esp8266Component = new PX4ESP8266Component(_vehicle, this);
+                _esp8266Component->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_esp8266Component));
+            }
+#ifdef QT_DEBUG
+#ifndef __mobile__
+    }
+#endif
+#endif
+
             _flightModesComponent = new FlightModesComponent(_vehicle, this);
             _flightModesComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
