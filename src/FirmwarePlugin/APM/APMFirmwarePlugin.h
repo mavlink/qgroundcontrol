@@ -102,6 +102,8 @@ private:
     void _adjustSeverity(mavlink_message_t* message) const;
     void _adjustCalibrationMessageSeverity(mavlink_message_t* message) const;
     static bool _isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion);
+    void _setInfoSeverity(mavlink_message_t* message) const;
+    QString _getMessageText(mavlink_message_t* message) const;
 
     APMFirmwareVersion      _firmwareVersion;
     bool                    _textSeverityAdjustmentNeeded;
