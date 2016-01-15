@@ -312,6 +312,14 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                             qCWarning(PX4ParameterMetaDataLog) << "Invalid decimals value, name:" << metaData->name() << " type:" << metaData->type() << " decimals:" << text << " error: invalid number";
                         }
 
+                    } else if (elementName == "reboot_required") {
+                        Q_ASSERT(metaData);
+                        QString text = xml.readElementText();
+                        qCDebug(PX4ParameterMetaDataLog) << "RebootRequired:" << text;
+                        if (text.compare("true", Qt::CaseInsensitive) == 0) {
+                            metaData->setRebootRequired(true);
+                        }
+
                     } else {
                         qDebug() << "Unknown element in XML: " << elementName;
                     }

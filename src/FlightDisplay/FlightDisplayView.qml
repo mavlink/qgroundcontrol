@@ -50,7 +50,6 @@ Item {
 
     property var _activeVehicle:  multiVehicleManager.activeVehicle
 
-    readonly property var  _defaultVehicleCoordinate:   mainWindow.tabletPosition
     readonly property real _defaultRoll:                0
     readonly property real _defaultPitch:               0
     readonly property real _defaultHeading:             0
@@ -70,8 +69,6 @@ Item {
     property real _roll:                _activeVehicle ? (isNaN(_activeVehicle.roll)    ? _defaultRoll    : _activeVehicle.roll)    : _defaultRoll
     property real _pitch:               _activeVehicle ? (isNaN(_activeVehicle.pitch)   ? _defaultPitch   : _activeVehicle.pitch)   : _defaultPitch
     property real _heading:             _activeVehicle ? (isNaN(_activeVehicle.heading) ? _defaultHeading : _activeVehicle.heading) : _defaultHeading
-
-    property var  _vehicleCoordinate:   _activeVehicle ? (_activeVehicle.coordinateValid ? _activeVehicle.coordinate : _defaultVehicleCoordinate) : _defaultVehicleCoordinate
 
     property real _altitudeWGS84:       _activeVehicle ? _activeVehicle.altitudeWGS84 : _defaultAltitudeWGS84
     property real _groundSpeed:         _activeVehicle ? _activeVehicle.groundSpeed   : _defaultGroundSpeed
@@ -120,7 +117,6 @@ Item {
                     _flightMap.zoomLevel = _savedZoomLevel
                 else
                     _savedZoomLevel = _flightMap.zoomLevel
-                _flightMap.updateMapPosition(true /* force */)
             } else {
                 _flightVideo = item
             }
