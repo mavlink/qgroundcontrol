@@ -85,7 +85,7 @@ QGCView {
     }
 
     function updateMapToVehiclePosition() {
-        if (_activeVehicle && _activeVehicle.coordinateValid && _firstVehiclePosition) {
+        if (_activeVehicle && _activeVehicle.coordinateValid && _activeVehicle.coordinate.isValid && _firstVehiclePosition) {
             _firstVehiclePosition = false
             editorMap.center = _activeVehicle.coordinate
         }
