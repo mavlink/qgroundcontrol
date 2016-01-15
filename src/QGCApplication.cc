@@ -201,7 +201,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         msgBox.setInformativeText("You are runnning QGroundControl as root. "
                                   "You should not do this since it will cause other issues with QGroundControl. "
                                   "QGroundControl will now exit. "
-                                  "If you are having serial port issues, execute the following commands to fix most serial port issues:\n"
+                                  "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
                                   "sudo usermod -a -G dialout $USER\n"
                                   "sudo apt-get remove modemmanager");
         msgBox.setStandardButtons(QMessageBox::Ok);
@@ -219,7 +219,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
                 QMessageBox msgBox;
                 msgBox.setInformativeText("The current user does not have the correct permissions to access serial devices. "
                                           "You should also remove modemmanager since it also interferes. "
-                                          "Execute the following commands to fix these issues:\n"
+                                          "If you are using Ubuntu, execute the following commands to fix these issues:\n"
                                           "sudo usermod -a -G dialout $USER\n"
                                           "sudo apt-get remove modemmanager");
                 msgBox.setStandardButtons(QMessageBox::Ok);
