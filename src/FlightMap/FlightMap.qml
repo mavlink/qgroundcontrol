@@ -43,7 +43,6 @@ import QGroundControl.Mavlink               1.0
 Map {
     id: _map
 
-    property bool   interactive:        true
     property string mapName:            'defaultMap'
     property string mapType:            QGroundControl.flightMapSettings.mapTypeForMapName(mapName)
 //  property alias  mapWidgets:         controlWidgets
@@ -54,7 +53,6 @@ Map {
     zoomLevel:                  18
     center:                     QGroundControl.defaultMapPosition
     gesture.flickDeceleration:  3000
-    gesture.enabled:            interactive
     gesture.activeGestures:     MapGestureArea.ZoomGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
 
     plugin: Plugin { name: "QGroundControl" }
