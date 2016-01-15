@@ -201,7 +201,6 @@ Item {
         } else {
             criticalMessageText.text = message
             criticalMmessageArea.visible = true
-            mainWindow.setMapInteractive(false)
         }
     }
 
@@ -219,10 +218,6 @@ Item {
         if(leftPanel.visible && !leftPanel.item.animateHideDialog.running) {
             leftPanel.item.animateHideDialog.start()
         }
-    }
-
-    function setMapInteractive(enabled) {
-        flightView.interactive = enabled
     }
 
     onFormatedMessageChanged: {
@@ -248,7 +243,6 @@ Item {
         }
         currentPopUp = messageArea
         messageArea.visible = true
-        mainWindow.setMapInteractive(false)
     }
 
     function showPopUp(dropItem, centerX) {
@@ -341,7 +335,6 @@ Item {
         function close() {
             currentPopUp = null
             messageText.text    = ""
-            mainWindow.setMapInteractive(true)
             messageArea.visible = false
         }
 
@@ -405,7 +398,6 @@ Item {
                 mainWindow.messageQueue = []
             } else {
                 criticalMessageText.text = ""
-                mainWindow.setMapInteractive(true)
                 criticalMmessageArea.visible = false
             }
         }
@@ -418,6 +410,15 @@ Item {
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.bottom:             parent.bottom
         anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight
+
+        MouseArea {
+            // This MouseArea prevents the Map below it from getting Mouse events. Without this
+            // things like mousewheel will scroll the Flickable and then scroll the map as well.
+            anchors.fill:       parent
+            preventStealing:    true
+            onWheel:            wheel.accepted = true
+        }
+
         Flickable {
             id:                 criticalMessageFlick
             anchors.margins:    ScreenTools.defaultFontPixelHeight
@@ -438,6 +439,7 @@ Item {
                 color:          "#fdfd3b"
             }
         }
+
         //-- Dismiss Critical Message
         Image {
             id:                 criticalClose
@@ -457,6 +459,7 @@ Item {
                 }
             }
         }
+
         //-- More text below indicator
         Image {
             anchors.margins:    ScreenTools.defaultFontPixelHeight
