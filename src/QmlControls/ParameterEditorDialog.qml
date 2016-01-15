@@ -100,13 +100,15 @@ QGCViewDialog {
         QGCComboBox {
             id:             factCombo
             width:          valueField.width
-            visible:        fact.enumStrings.length != 0 && !validate
+            visible:        _showCombo
             model:          fact.enumStrings
+
+            property bool _showCombo: fact.enumStrings.length != 0 && !validate
 
             Component.onCompleted: {
                 // We can't bind directly to fact.enumIndex since that would add an unknown value
                 // if there are no enum strings.
-                if (visible) {
+                if (_showCombo) {
                     currentIndex = fact.enumIndex
                 }
             }
