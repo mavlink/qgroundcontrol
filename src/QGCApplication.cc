@@ -113,6 +113,12 @@
     #include "OpalLink.h"
 #endif
 
+#ifdef Q_OS_LINUX
+#ifndef __mobile__
+#include <unistd.h>
+#include <sys/types.h>
+#endif
+#endif
 
 QGCApplication* QGCApplication::_app = NULL;
 
