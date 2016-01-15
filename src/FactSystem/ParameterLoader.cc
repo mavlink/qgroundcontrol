@@ -72,7 +72,7 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
 
     _cacheTimeoutTimer.setSingleShot(true);
     _cacheTimeoutTimer.setInterval(2500);
-    connect(&_cacheTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::refreshAllParameters);
+    connect(&_cacheTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::_timeoutRefreshAll);
 
     connect(_vehicle->uas(), &UASInterface::parameterUpdate, this, &ParameterLoader::_parameterUpdate);
 
@@ -301,7 +301,7 @@ void ParameterLoader::_valueUpdated(const QVariant& value)
     }
 }
 
-void ParameterLoader::refreshAllParameters(void)
+void ParameterLoader::refreshAllParameters(uint8_t componentID)
 {
     _dataMutex.lock();
 
@@ -310,11 +310,13 @@ void ParameterLoader::refreshAllParameters(void)
     }
 
     // Reset index wait lists
-    foreach (int componentId, _paramCountMap.keys()) {
+    foreach (int cid, _paramCountMap.keys()) {
         // Add/Update all indices to the wait list, parameter index is 0-based
-        for (int waitingIndex=0; waitingIndex<_paramCountMap[componentId]; waitingIndex++) {
+        if(componentID != MAV_COMP_ID_ALL && componentID != cid)
+            continue;
+        for (int waitingIndex = 0; waitingIndex < _paramCountMap[cid]; waitingIndex++) {
             // This will add a new waiting index if needed and set the retry count for that index to 0
-            _waitingReadParamIndexMap[componentId][waitingIndex] = 0;
+            _waitingReadParamIndexMap[cid][waitingIndex] = 0;
         }
     }
 
@@ -324,10 +326,11 @@ void ParameterLoader::refreshAllParameters(void)
     Q_ASSERT(mavlink);
 
     mavlink_message_t msg;
-    mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->id(), MAV_COMP_ID_ALL);
+    mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->id(), componentID);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
-    qCDebug(ParameterLoaderLog) << "Request to refresh all parameters";
+    QString what = (componentID == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(componentID);
+    qCDebug(ParameterLoaderLog) << "Request to refresh all parameters for component ID:" << what;
 }
 
 void ParameterLoader::_determineDefaultComponentId(void)
@@ -867,7 +870,7 @@ void ParameterLoader::_checkInitialLoadComplete(void)
 
     if (initialLoadFailures) {
         qgcApp()->showMessage("QGroundControl was unable to retrieve the full set of parameters from the vehicle. "
-                              "This will cause QGroundControl to be unable to display it's full user interface. "
+                              "This will cause QGroundControl to be unable to display its full user interface. "
                               "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
                               "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.");
         qCWarning(ParameterLoaderLog) << "The following parameter indices could not be loaded after the maximum number of retries: " << indexList;
@@ -887,3 +890,9 @@ void ParameterLoader::_initialRequestTimeout(void)
     refreshAllParameters();
     _initialRequestTimeoutTimer.start();
 }
+
+void ParameterLoader::_timeoutRefreshAll()
+{
+    refreshAllParameters();
+}
+

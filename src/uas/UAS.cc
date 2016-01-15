@@ -789,6 +789,7 @@ void UAS::receiveMessage(mavlink_message_t message)
         {
             mavlink_command_ack_t ack;
             mavlink_msg_command_ack_decode(&message, &ack);
+            emit commandAck(this, message.compid, ack.command, ack.result);
             switch (ack.result)
             {
             case MAV_RESULT_ACCEPTED:

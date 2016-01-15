@@ -105,9 +105,9 @@ void AutoPilotPlugin::resetAllParametersToDefaults(void)
     _vehicle->sendMessage(msg);
 }
 
-void AutoPilotPlugin::refreshAllParameters(void)
+void AutoPilotPlugin::refreshAllParameters(unsigned char componentID)
 {
-    _vehicle->getParameterLoader()->refreshAllParameters();
+    _vehicle->getParameterLoader()->refreshAllParameters((uint8_t)componentID);
 }
 
 void AutoPilotPlugin::refreshParameter(int componentId, const QString& name)
