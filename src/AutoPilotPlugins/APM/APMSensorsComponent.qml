@@ -69,28 +69,49 @@ QGCView {
 
     readonly property int rotationColumnWidth: 250
 
-    property Fact compass1Id:       controller.getParameterFact(-1, "COMPASS_DEV_ID")
-    property Fact compass2Id:       controller.getParameterFact(-1, "COMPASS_DEV_ID2")
-    property Fact compass3Id:       controller.getParameterFact(-1, "COMPASS_DEV_ID3")
-    property Fact compass1External: controller.getParameterFact(-1, "COMPASS_EXTERNAL")
-    property Fact compass2External: controller.getParameterFact(-1, "COMPASS_EXTERN2")
-    property Fact compass3External: controller.getParameterFact(-1, "COMPASS_EXTERN3")
-    property Fact compass1Rot:      controller.getParameterFact(-1, "COMPASS_ORIENT")
-    property Fact compass2Rot:      controller.getParameterFact(-1, "COMPASS_ORIENT2")
-    property Fact compass3Rot:      controller.getParameterFact(-1, "COMPASS_ORIENT3")
-    property Fact compass1Use:      controller.getParameterFact(-1, "COMPASS_USE")
-    property Fact compass2Use:      controller.getParameterFact(-1, "COMPASS_USE2")
-    property Fact compass3Use:      controller.getParameterFact(-1, "COMPASS_USE3")
+    property Fact compass1Id:           controller.getParameterFact(-1, "COMPASS_DEV_ID")
+    property Fact compass2Id:           controller.getParameterFact(-1, "COMPASS_DEV_ID2")
+    property Fact compass3Id:           controller.getParameterFact(-1, "COMPASS_DEV_ID3")
+    property Fact compass1ExternalFact: controller.getParameterFact(-1, "COMPASS_EXTERNAL")
+    property Fact compass1Rot:          controller.getParameterFact(-1, "COMPASS_ORIENT")
 
-    property Fact boardRot:     controller.getParameterFact(-1, "AHRS_ORIENTATION")
+    property Fact boardRot:             controller.getParameterFact(-1, "AHRS_ORIENTATION")
 
-    property bool accelCalNeeded:   controller.accelSetupNeeded
-    property bool compassCalNeeded: controller.compassSetupNeeded
+    property bool accelCalNeeded:       controller.accelSetupNeeded
+    property bool compassCalNeeded:     controller.compassSetupNeeded
+
+
+    // The following parameters are not available in olders firmwares
+
+    property bool compass2ExternalParamAvailable:   controller.parameterExists(-1, "COMPASS_EXTERN2")
+    property bool compass3ExternalParamAvailable:   controller.parameterExists(-1, "COMPASS_EXTERN3")
+    property bool compass2RotParamAvailable:        controller.parameterExists(-1, "COMPASS_ORIENT2")
+    property bool compass3RotParamAvailable:        controller.parameterExists(-1, "COMPASS_ORIENT3")
+    property bool compass1UseParamAvailable:        controller.parameterExists(-1, "COMPASS_USE")
+    property bool compass2UseParamAvailable:        controller.parameterExists(-1, "COMPASS_USE2")
+    property bool compass3UseParamAvailable:        controller.parameterExists(-1, "COMPASS_USE3")
+
+    property Fact noFact: Fact { }
+    property Fact compass2ExternalFact: compass2ExternalParamAvailable ? controller.getParameterFact(-1, "COMPASS_EXTERN2") : noFact
+    property Fact compass3ExternalFact: compass3ExternalParamAvailable ? controller.getParameterFact(-1, "COMPASS_EXTERN3") : noFact
+    property Fact compass2Rot:          compass2RotParamAvailable ? controller.getParameterFact(-1, "COMPASS_ORIENT2") : noFact
+    property Fact compass3Rot:          compass3RotParamAvailable ? controller.getParameterFact(-1, "COMPASS_ORIENT3") : noFact
+    property Fact compass1UseFact:      compass1UseParamAvailable ? controller.getParameterFact(-1, "COMPASS_USE") : noFact
+    property Fact compass2UseFact:      compass2UseParamAvailable ? controller.getParameterFact(-1, "COMPASS_USE2") : noFact
+    property Fact compass3UseFact:      compass3UseParamAvailable ? controller.getParameterFact(-1, "COMPASS_USE3") : noFact
+
+    // We track these values by binding through a separate property so we can handle missing params
+    property bool compass1External: compass1ExternalFact.value
+    property bool compass2External: compass2ExternalParamAvailable ? compass2ExternalFact.value : false // false: Simulate internal so we don't show rotation combos
+    property bool compass3External: compass3ExternalParamAvailable ? compass3ExternalFact.value : false // false: Simulate internal so we don't show rotation combos
+    property bool compass1Use:      compass1UseParamAvailable ? compass1UseFact.value : true
+    property bool compass2Use:      compass2UseParamAvailable ? compass2UseFact.value : true
+    property bool compass3Use:      compass3UseParamAvailable ? compass3UseFact.value : true
 
     // Id > = signals compass available, rot < 0 signals internal compass
-    property bool showCompass1Rot: compass1Id.value > 0 && compass1External.value != 0 && compass1Use.value != 0
-    property bool showCompass2Rot: compass2Id.value > 0 && compass2External.value != 0 && compass2Use.value != 0
-    property bool showCompass3Rot: compass3Id.value > 0 && compass3External.value != 0 && compass3Use.value != 0
+    property bool showCompass1Rot: compass1Id.value > 0 && compass1External && compass1Use
+    property bool showCompass2Rot: compass2Id.value > 0 && compass2External && compass2Use
+    property bool showCompass3Rot: compass3Id.value > 0 && compass3External && compass3Use
 
     function validCompassOffsets(compassParamPrefix) {
         var ofsX = controller.getParameterFact(-1, compassParamPrefix + "X")
