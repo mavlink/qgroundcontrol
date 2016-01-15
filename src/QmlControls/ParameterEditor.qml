@@ -206,6 +206,8 @@ QGCView {
                                         factRowsLoader.parameterNames   = controller.getParametersForGroup(componentId, modelData)
                                         factRowsLoader.sourceComponent  = factRowsComponent
                                         _currentGroup                   = modelData
+                                        factScrollView.contentX         = 0
+                                        factScrollView.contentY         = 0
                                     }
                                 }
                             }
