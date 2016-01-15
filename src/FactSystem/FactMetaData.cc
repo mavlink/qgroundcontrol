@@ -51,6 +51,7 @@ FactMetaData::FactMetaData(QObject* parent)
     , _minIsDefaultForType(true)
     , _rawTranslator(_defaultTranslator)
     , _cookedTranslator(_defaultTranslator)
+    , _rebootRequired(false)
 {
 
 }
@@ -68,6 +69,7 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _minIsDefaultForType(true)
     , _rawTranslator(_defaultTranslator)
     , _cookedTranslator(_defaultTranslator)
+    , _rebootRequired(false)
 {
 
 }
@@ -100,6 +102,7 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _cookedUnits            = other._cookedUnits;
     _rawTranslator          = other._rawTranslator;
     _cookedTranslator       = other._cookedTranslator;
+    _rebootRequired         = other._rebootRequired;
 
     return *this;
 }

@@ -43,22 +43,16 @@ import QGroundControl.Mavlink               1.0
 Map {
     id: _map
 
-    property real   latitude:           64.154549   //-- If you find yourself here on startup, something went wrong :)
-    property real   longitude:          -22.023540
-    property real   heading:            0
     property bool   interactive:        true
     property string mapName:            'defaultMap'
     property string mapType:            QGroundControl.flightMapSettings.mapTypeForMapName(mapName)
 //  property alias  mapWidgets:         controlWidgets
     property bool   isSatelliteMap:     mapType == "Satellite Map" || mapType == "Hybrid Map"
 
-    property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
-    property real   lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
-
     readonly property real maxZoomLevel:    20
 
     zoomLevel:                  18
-    center:                     QtPositioning.coordinate(lat, lon)
+    center:                     QGroundControl.defaultMapPosition
     gesture.flickDeceleration:  3000
     gesture.enabled:            interactive
     gesture.activeGestures:     MapGestureArea.ZoomGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
@@ -68,6 +62,18 @@ Map {
     ExclusiveGroup { id: mapTypeGroup }
 
     Component.onCompleted: onMapTypeChanged
+
+    property bool _initialMapPositionSet: false
+    Connections {
+        target: mainWindow
+
+        onGcsPositionChanged: {
+            if (!_initialMapPositionSet) {
+                _initialMapPositionSet = true
+                flightMap.center = mainWindow.gcsPosition
+            }
+        }
+    }
 
     onMapTypeChanged: {
         QGroundControl.flightMapSettings.setMapTypeForMapName(mapName, mapType)
@@ -80,7 +86,18 @@ Map {
         }
     }
 
-/*********************************************
+    MapQuickItem {
+        anchorPoint.x:  sourceItem.width  / 2
+        anchorPoint.y:  sourceItem.height / 2
+        visible:        mainWindow.gcsPosition.isValid
+        coordinate:     mainWindow.gcsPosition
+
+        sourceItem: MissionItemIndexLabel {
+            label: "Q"
+        }
+    }
+
+    /*********************************************
     /// Map control widgets
     Column {
         id:                 controlWidgets
