@@ -384,8 +384,6 @@ protected: //COMMENTS FOR TEST UNIT
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
-    quint64 lastHeartbeat;        ///< Time of the last heartbeat message
-    QTimer statusTimeout;       ///< Timer for various status timeouts
 
     /// BASIC UAS TYPE, NAME AND STATE
     uint8_t base_mode;                 ///< The current mode of the MAV
@@ -423,7 +421,6 @@ protected: //COMMENTS FOR TEST UNIT
     double manualThrust;        ///< Thrust set by human pilot (radians)
 
     /// POSITION
-    bool positionLock;          ///< Status if position information is available or not
     bool isGlobalPositionKnown; ///< If the global position has been received for this MAV
 
     double localX;
@@ -591,9 +588,6 @@ public slots:
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(mavlink_message_t message);
 
-    /** @brief Update the system state */
-    void updateState();
-
     void startCalibration(StartCalibrationType calType);
     void stopCalibration(void);
 
@@ -607,8 +601,6 @@ public slots:
     void unsetRCToParameterMap();
 signals:
     void loadChanged(UASInterface* uas, double load);
-    /** @brief Propagate a heartbeat received from the system */
-    //void heartbeat(UASInterface* uas); // Defined in UASInterface already
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
