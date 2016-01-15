@@ -98,7 +98,6 @@ public:
     Q_PROPERTY(double               satRawCOG               READ satRawCOG                              NOTIFY satRawCOGChanged)
     Q_PROPERTY(QString              currentState            READ currentState                           NOTIFY currentStateChanged)
     Q_PROPERTY(int                  satelliteLock           READ satelliteLock                          NOTIFY satelliteLockChanged)
-    Q_PROPERTY(unsigned int         heartbeatTimeout        READ heartbeatTimeout                       NOTIFY heartbeatTimeoutChanged)
     Q_PROPERTY(QmlObjectListModel*  missionItems            READ missionItemsModel                      CONSTANT)
     Q_PROPERTY(bool                 messageTypeNone         READ messageTypeNone                        NOTIFY messageTypeChanged)
     Q_PROPERTY(bool                 messageTypeNormal       READ messageTypeNormal                      NOTIFY messageTypeChanged)
@@ -118,6 +117,8 @@ public:
     Q_PROPERTY(bool                 px4Firmware             READ px4Firmware                            CONSTANT)
     Q_PROPERTY(bool                 apmFirmware             READ apmFirmware                            CONSTANT)
     Q_PROPERTY(bool                 genericFirmware         READ genericFirmware                        CONSTANT)
+    Q_PROPERTY(bool                 connectionLost          READ connectionLost                         NOTIFY connectionLostChanged)
+    Q_PROPERTY(bool                 connectionLostEnabled   READ connectionLostEnabled  WRITE setConnectionLostEnabled NOTIFY connectionLostEnabledChanged)
 
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
     /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
@@ -268,11 +269,14 @@ public:
     double          batteryConsumed     () { return _batteryConsumed; }
     QString         currentState        () { return _currentState; }
     int             satelliteLock       () { return _satelliteLock; }
-    unsigned int    heartbeatTimeout    () { return _currentHeartbeatTimeout; }
     int             rcRSSI              () { return _rcRSSI; }
     bool            px4Firmware         () { return _firmwareType == MAV_AUTOPILOT_PX4; }
     bool            apmFirmware         () { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
     bool            genericFirmware     () { return !px4Firmware() && !apmFirmware(); }
+    bool            connectionLost      () const { return _connectionLost; }
+    bool            connectionLostEnabled() const { return _connectionLostEnabled; }
+
+    void setConnectionLostEnabled(bool connectionLostEnabled);
 
     ParameterLoader* getParameterLoader(void);
 
@@ -296,6 +300,8 @@ signals:
     void flightModeChanged(const QString& flightMode);
     void hilModeChanged(bool hilMode);
     void missingParametersChanged(bool missingParameters);
+    void connectionLostChanged(bool connectionLost);
+    void connectionLostEnabledChanged(bool connectionLostEnabled);
 
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnThread(mavlink_message_t message);
@@ -320,7 +326,6 @@ signals:
     void batteryVoltageChanged  ();
     void batteryPercentChanged  ();
     void batteryConsumedChanged ();
-    void heartbeatTimeoutChanged();
     void currentConfigChanged   ();
     void satelliteCountChanged  ();
     void satRawHDOPChanged      ();
@@ -368,7 +373,6 @@ private slots:
     void _updateBatteryRemaining            (UASInterface*, double voltage, double, double percent, int);
     void _updateBatteryConsumedChanged      (UASInterface*, double current_consumed);
     void _updateState                       (UASInterface* system, QString name, QString description);
-    void _heartbeatTimeout                  (bool timeout, unsigned int ms);
     void _setSatelliteCount                 (double val, QString name);
     void _setSatRawHDOP                     (double val);
     void _setSatRawVDOP                     (double val);
@@ -376,6 +380,7 @@ private slots:
     void _setSatLoc                         (UASInterface* uas, int fix);
     /** @brief A new camera image has arrived */
     void _imageReady                        (UASInterface* uas);
+    void _connectionLostTimeout(void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -390,6 +395,8 @@ private:
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
+    void _connectionActive(void);
+    void _say(const QString& text, int severity);
 
     void    _addChange                      (int id);
     float   _oneDecimal                     (float value);
@@ -444,7 +451,6 @@ private:
     double          _batteryPercent;
     double          _batteryConsumed;
     QString         _currentState;
-    unsigned int    _currentHeartbeatTimeout;
     int             _satelliteCount;
     double          _satRawHDOP;
     double          _satRawVDOP;
@@ -454,6 +460,12 @@ private:
     QString         _formatedMessage;
     int             _rcRSSI;
     double          _rcRSSIstore;
+
+    // Lost connection handling
+    bool                _connectionLost;
+    bool                _connectionLostEnabled;
+    static const int    _connectionLostTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of missed heartbeat
+    QTimer              _connectionLostTimer;
 
     MissionManager*     _missionManager;
     bool                _missionManagerInitialRequestComplete;

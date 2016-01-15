@@ -34,6 +34,7 @@
 #include "ParameterLoader.h"
 #include "QGCApplication.h"
 #include "QGCImageProvider.h"
+#include "GAudioOutput.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -88,7 +89,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _batteryVoltage(-1.0f)
     , _batteryPercent(0.0)
     , _batteryConsumed(-1.0)
-    , _currentHeartbeatTimeout(0)
     , _satelliteCount(-1)
     , _satRawHDOP(1e10f)
     , _satRawVDOP(1e10f)
@@ -97,6 +97,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _updateCount(0)
     , _rcRSSI(0)
     , _rcRSSIstore(100.0)
+    , _connectionLost(false)
+    , _connectionLostEnabled(true)
     , _missionManager(NULL)
     , _missionManagerInitialRequestComplete(false)
     , _parameterLoader(NULL)
@@ -138,7 +140,12 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_refreshTimer, &QTimer::timeout, this, &Vehicle::_checkUpdate);
     _refreshTimer->setInterval(UPDATE_TIMER);
     _refreshTimer->start(UPDATE_TIMER);
-    emit heartbeatTimeoutChanged();
+
+    // Connection Lost time
+    _connectionLostTimer.setInterval(Vehicle::_connectionLostTimeoutMSecs);
+    _connectionLostTimer.setSingleShot(false);
+    _connectionLostTimer.start();
+    connect(&_connectionLostTimer, &QTimer::timeout, this, &Vehicle::_connectionLostTimeout);
 
     _mav = uas();
     // Reset satellite data (no GPS)
@@ -151,9 +158,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     emit satRawCOGChanged();
     emit satelliteCountChanged();
 
-    // Reset connection lost (if any)
-    _currentHeartbeatTimeout = 0;
-    emit heartbeatTimeoutChanged();
     // Listen for system messages
     connect(qgcApp()->toolbox()->uasMessageHandler(), &UASMessageHandler::textMessageCountChanged,  this, &Vehicle::_handleTextMessage);
     connect(qgcApp()->toolbox()->uasMessageHandler(), &UASMessageHandler::textMessageReceived,      this, &Vehicle::_handletextMessageReceived);
@@ -166,7 +170,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_mav, &UASInterface::altitudeChanged, this, &Vehicle::_updateAltitude);
     connect(_mav, &UASInterface::navigationControllerErrorsChanged,this, &Vehicle::_updateNavigationControllerErrors);
     connect(_mav, &UASInterface::NavigationControllerDataChanged,   this, &Vehicle::_updateNavigationControllerData);
-    connect(_mav, &UASInterface::heartbeatTimeout,                  this, &Vehicle::_heartbeatTimeout);
     connect(_mav, &UASInterface::batteryChanged,                    this, &Vehicle::_updateBatteryRemaining);
     connect(_mav, &UASInterface::batteryConsumedChanged,            this, &Vehicle::_updateBatteryConsumedChanged);
     connect(_mav, &UASInterface::localizationChanged,               this, &Vehicle::_setSatLoc);
@@ -291,6 +294,8 @@ void Vehicle::_handleHomePosition(mavlink_message_t& message)
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)
 {
+    _connectionActive();
+
     mavlink_heartbeat_t heartbeat;
 
     mavlink_msg_heartbeat_decode(&message, &heartbeat);
@@ -786,19 +791,6 @@ void Vehicle::_updateState(UASInterface*, QString name, QString)
     }
 }
 
-void Vehicle::_heartbeatTimeout(bool timeout, unsigned int ms)
-{
-    unsigned int elapsed = ms;
-    if (!timeout)
-    {
-        elapsed = 0;
-    }
-    if(elapsed != _currentHeartbeatTimeout) {
-        _currentHeartbeatTimeout = elapsed;
-        emit heartbeatTimeoutChanged();
-    }
-}
-
 void Vehicle::_setSatelliteCount(double val, QString)
 {
     // I'm assuming that a negative value or over 99 means there is no GPS
@@ -1262,4 +1254,40 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
     if ( !_joystickEnabled ) {
         _uas->setExternalControlSetpoint(roll, pitch, yaw, thrust, 0, JoystickModeRC);
     }
+}
+
+void Vehicle::setConnectionLostEnabled(bool connectionLostEnabled)
+{
+    if (_connectionLostEnabled != connectionLostEnabled) {
+        _connectionLostEnabled = connectionLostEnabled;
+        emit connectionLostEnabledChanged(_connectionLostEnabled);
+    }
+}
+
+void Vehicle::_connectionLostTimeout(void)
+{
+    if (_connectionLostEnabled && !_connectionLost) {
+        _connectionLost = true;
+        emit connectionLostChanged(true);
+
+        _say(QString("connection lost to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
+    }
+}
+
+void Vehicle::_connectionActive(void)
+{
+    _connectionLostTimer.start();
+
+    if (_connectionLost) {
+        _connectionLost = false;
+        emit connectionLostChanged(false);
+
+        _say(QString("connection regained to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
+    }
+}
+
+void Vehicle::_say(const QString& text, int severity)
+{
+    if (!qgcApp()->runningUnitTests())
+        qgcApp()->toolbox()->audioOutput()->say(text.toLower(), severity);
 }
