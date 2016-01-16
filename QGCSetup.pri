@@ -121,13 +121,6 @@ LinuxBuild {
             libQt5Widgets.so.5 \
             libQt5XcbQpa.so.5
 
-        !contains(DEFINES, __rasp_pi2__) {
-            QT_LIB_LIST += \
-                libicudata.so.54 \
-                libicui18n.so.54 \
-                libicuuc.so.54
-        }
-
         for(QT_LIB, QT_LIB_LIST) {
             QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
         }
