@@ -51,6 +51,7 @@ public:
     ~ESP8266ComponentController     ();
 
     Q_PROPERTY(int              componentID     READ componentID                            CONSTANT)
+    Q_PROPERTY(QString          version         READ version                                NOTIFY versionChanged)
     Q_PROPERTY(QString          wifiSSID        READ wifiSSID       WRITE setWifiSSID       NOTIFY wifiSSIDChanged)
     Q_PROPERTY(QString          wifiPassword    READ wifiPassword   WRITE setWifiPassword   NOTIFY wifiPasswordChanged)
     Q_PROPERTY(QStringList      wifiChannels    READ wifiChannels                           CONSTANT)
@@ -62,6 +63,7 @@ public:
     Q_INVOKABLE void reboot();
 
     int             componentID     () { return MAV_COMP_ID_UDP_BRIDGE; }
+    QString         version         ();
     QString         wifiSSID        ();
     QString         wifiPassword    ();
     QStringList     wifiChannels    () { return _channels; }
@@ -74,6 +76,7 @@ public:
     void        setBaudIndex        (int idx);
 
 signals:
+    void        versionChanged      ();
     void        wifiSSIDChanged     ();
     void        wifiPasswordChanged ();
     void        baudIndexChanged    ();
@@ -85,6 +88,7 @@ private slots:
     void        _ssidChanged        (QVariant value);
     void        _passwordChanged    (QVariant value);
     void        _baudChanged        (QVariant value);
+    void        _versionChanged     (QVariant value);
 
 private:
     void        _reboot             ();
