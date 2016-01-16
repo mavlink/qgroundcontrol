@@ -75,7 +75,7 @@ before_install:
 install:
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" != "doxygen" ]]; then
           sudo apt-get -y install devscripts dput
-          wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2
+          && wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2
           && tar jxf Qt5.5.1-linux.tar.bz2 -C /tmp
           && export PATH=/tmp/Qt/5.5/gcc_64/bin:$PATH
       && export CXX="g++-4.8"
