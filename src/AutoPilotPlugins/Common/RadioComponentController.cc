@@ -918,7 +918,6 @@ void RadioComponentController::_writeCalibration(void)
     }
     
     // Write function mapping parameters
-    bool functionMappingChanged = false;
     for (size_t i=0; i<rcCalFunctionMax; i++) {
         int32_t paramChannel;
         if (_rgFunctionChannelMapping[i] == _chanMax()) {
@@ -933,7 +932,6 @@ void RadioComponentController::_writeCalibration(void)
             Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
 
             if (paramFact && paramFact->rawValue().toInt() != paramChannel) {
-                functionMappingChanged = true;
                 paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
                 if (paramFact) {
                     paramFact->setRawValue(paramChannel);
