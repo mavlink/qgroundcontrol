@@ -178,12 +178,6 @@ void QGroundControlQmlGlobal::setIsSaveLogPromptNotArmed(bool prompt)
     emit isSaveLogPromptNotArmedChanged(prompt);
 }
 
-void QGroundControlQmlGlobal::setIsHeartBeatEnabled(bool enable)
-{
-    qgcApp()->toolbox()->mavlinkProtocol()->enableHeartbeats(enable);
-    emit isHeartBeatEnabledChanged(enable);
-}
-
 void QGroundControlQmlGlobal::setIsMultiplexingEnabled(bool enable)
 {
     qgcApp()->toolbox()->mavlinkProtocol()->enableMultiplexing(enable);

@@ -399,10 +399,7 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
 void MockLink::_handleHeartBeat(const mavlink_message_t& msg)
 {
     Q_UNUSED(msg);
-#if 0
-    mavlink_heartbeat_t heartbeat;
-    mavlink_msg_heartbeat_decode(&msg, &heartbeat);
-#endif
+    qCDebug(MockLinkLog) << "Heartbeat";
 }
 
 void MockLink::_handleSetMode(const mavlink_message_t& msg)

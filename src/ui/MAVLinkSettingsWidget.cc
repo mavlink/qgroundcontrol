@@ -53,7 +53,6 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     m_ui->droneOSLineEdit->setText(protocol->getAuthKey());
 
     // Initialize state
-    m_ui->heartbeatCheckBox->setChecked(protocol->heartbeatsEnabled());
     m_ui->versionCheckBox->setChecked(protocol->versionCheckEnabled());
     m_ui->multiplexingCheckBox->setChecked(protocol->multiplexingEnabled());
     m_ui->systemIdSpinBox->setValue(protocol->getSystemId());
@@ -64,11 +63,6 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
 
     m_ui->actionGuardCheckBox->setChecked(protocol->actionGuardEnabled());
     m_ui->actionRetransmissionSpinBox->setValue(protocol->getActionRetransmissionTimeout());
-
-    // Connect actions
-    // Heartbeat
-    connect(protocol, &MAVLinkProtocol::heartbeatChanged, m_ui->heartbeatCheckBox, &QCheckBox::setChecked);
-    connect(m_ui->heartbeatCheckBox, &QCheckBox::toggled, protocol, &MAVLinkProtocol::enableHeartbeats);
 
     // Version check
     connect(protocol, &MAVLinkProtocol::versionCheckChanged, m_ui->versionCheckBox, &QCheckBox::setChecked);

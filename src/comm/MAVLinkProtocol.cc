@@ -60,8 +60,6 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
     , _logPromptForSave(false)
     , _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension))
 #endif
-    , _heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE)
-    , _heartbeatsEnabled(true)
     , _linkMgr(NULL)
     , _multiVehicleManager(NULL)
 {
@@ -101,10 +99,6 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
        }
    }
 
-   // Start heartbeat timer, emitting a heartbeat at the configured rate
-   connect(&_heartbeatTimer, &QTimer::timeout, this, &MAVLinkProtocol::sendHeartbeat);
-   _heartbeatTimer.start(1000/_heartbeatRate);
-
    connect(this, &MAVLinkProtocol::protocolStatusMessage, _app, &QGCApplication::criticalMessageBoxOnMainThread);
 #ifndef __mobile__
    connect(this, &MAVLinkProtocol::saveTempFlightDataLog, _app, &QGCApplication::saveTempFlightDataLogOnMainThread);
@@ -120,7 +114,6 @@ void MAVLinkProtocol::loadSettings()
     // Load defaults from settings
     QSettings settings;
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    enableHeartbeats(settings.value("HEARTBEATS_ENABLED", _heartbeatsEnabled).toBool());
     enableVersionCheck(settings.value("VERSION_CHECK_ENABLED", m_enable_version_check).toBool());
     enableMultiplexing(settings.value("MULTIPLEXING_ENABLED", m_multiplexingEnabled).toBool());
 
@@ -150,7 +143,6 @@ void MAVLinkProtocol::storeSettings()
     // Store settings
     QSettings settings;
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    settings.setValue("HEARTBEATS_ENABLED", _heartbeatsEnabled);
     settings.setValue("VERSION_CHECK_ENABLED", m_enable_version_check);
     settings.setValue("MULTIPLEXING_ENABLED", m_multiplexingEnabled);
     settings.setValue("GCS_SYSTEM_ID", systemId);
@@ -473,37 +465,6 @@ void MAVLinkProtocol::_sendMessage(LinkInterface* link, mavlink_message_t messag
     }
 }
 
-/**
- * The heartbeat is sent out of order and does not reset the
- * periodic heartbeat emission. It will be just sent in addition.
- * @return mavlink_message_t heartbeat message sent on serial link
- */
-void MAVLinkProtocol::sendHeartbeat()
-{
-    if (_heartbeatsEnabled)
-    {
-        mavlink_message_t beat;
-        mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, MAV_MODE_MANUAL_ARMED, 0, MAV_STATE_ACTIVE);
-        _sendMessage(beat);
-    }
-    if (m_authEnabled)
-    {
-        mavlink_message_t msg;
-        mavlink_auth_key_t auth;
-        memset(&auth, 0, sizeof(auth));
-        memcpy(auth.key, m_authKey.toStdString().c_str(), qMin(m_authKey.length(), MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN));
-        mavlink_msg_auth_key_encode(getSystemId(), getComponentId(), &msg, &auth);
-        _sendMessage(msg);
-    }
-}
-
-/** @param enabled true to enable heartbeats emission at _heartbeatRate, false to disable */
-void MAVLinkProtocol::enableHeartbeats(bool enabled)
-{
-    _heartbeatsEnabled = enabled;
-    emit heartbeatChanged(enabled);
-}
-
 void MAVLinkProtocol::enableMultiplexing(bool enabled)
 {
     bool changed = false;
@@ -567,23 +528,6 @@ void MAVLinkProtocol::enableVersionCheck(bool enabled)
 {
     m_enable_version_check = enabled;
     emit versionCheckChanged(enabled);
-}
-
-/**
- * The default rate is 1 Hertz.
- *
- * @param rate heartbeat rate in hertz (times per second)
- */
-void MAVLinkProtocol::setHeartbeatRate(int rate)
-{
-    _heartbeatRate = rate;
-    _heartbeatTimer.setInterval(1000/_heartbeatRate);
-}
-
-/** @return heartbeat rate in Hertz */
-int MAVLinkProtocol::getHeartbeatRate()
-{
-    return _heartbeatRate;
 }
 
 void MAVLinkProtocol::_vehicleCountChanged(int count)

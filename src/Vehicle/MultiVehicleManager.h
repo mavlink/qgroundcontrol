@@ -51,10 +51,11 @@ public:
     Q_INVOKABLE void        saveSetting (const QString &key, const QString& value);
     Q_INVOKABLE QString     loadSetting (const QString &key, const QString& defaultValue);
 
-    Q_PROPERTY(bool                 activeVehicleAvailable          READ activeVehicleAvailable                                 NOTIFY activeVehicleAvailableChanged)
-    Q_PROPERTY(bool                 parameterReadyVehicleAvailable  READ parameterReadyVehicleAvailable                         NOTIFY parameterReadyVehicleAvailableChanged)
-    Q_PROPERTY(Vehicle*             activeVehicle                   READ activeVehicle                  WRITE setActiveVehicle  NOTIFY activeVehicleChanged)
-    Q_PROPERTY(QmlObjectListModel*  vehicles                        READ vehicles                                               CONSTANT)
+    Q_PROPERTY(bool                 activeVehicleAvailable          READ activeVehicleAvailable                                         NOTIFY activeVehicleAvailableChanged)
+    Q_PROPERTY(bool                 parameterReadyVehicleAvailable  READ parameterReadyVehicleAvailable                                 NOTIFY parameterReadyVehicleAvailableChanged)
+    Q_PROPERTY(Vehicle*             activeVehicle                   READ activeVehicle                  WRITE setActiveVehicle          NOTIFY activeVehicleChanged)
+    Q_PROPERTY(QmlObjectListModel*  vehicles                        READ vehicles                                                       CONSTANT)
+    Q_PROPERTY(bool                 gcsHeartBeatEnabled             READ gcsHeartbeatEnabled            WRITE setGcsHeartbeatEnabled    NOTIFY gcsHeartBeatEnabledChanged)
 
     // Methods
 
@@ -73,6 +74,9 @@ public:
 
     QmlObjectListModel* vehicles(void) { return &_vehicles; }
 
+    bool gcsHeartbeatEnabled(void) const { return _gcsHeartbeatEnabled; }
+    void setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled);
+
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
@@ -82,6 +86,7 @@ signals:
     void activeVehicleAvailableChanged(bool activeVehicleAvailable);
     void parameterReadyVehicleAvailableChanged(bool parameterReadyVehicleAvailable);
     void activeVehicleChanged(Vehicle* activeVehicle);
+    void gcsHeartBeatEnabledChanged(bool gcsHeartBeatEnabled);
 
     void _deleteVehiclePhase2Signal(void);
 
@@ -91,6 +96,7 @@ private slots:
     void _setActiveVehiclePhase2(void);
     void _autopilotParametersReadyChanged(bool parametersReady);
     void _linkActive(LinkInterface* link, int vehicleId, int vehicleFirmwareType, int vehicleType);
+    void _sendGCSHeartbeat(void);
 
 private:
     bool _vehicleExists(int vehicleId);
@@ -111,6 +117,10 @@ private:
     JoystickManager*            _joystickManager;
     MAVLinkProtocol*            _mavlinkProtocol;
 
+    QTimer              _gcsHeartbeatTimer;             ///< Timer to emit heartbeats
+    bool                _gcsHeartbeatEnabled;           ///< Enabled/disable heartbeat emission
+    static const int    _gcsHeartbeatRateMSecs = 1000;  ///< Heartbeat rate
+    static const char*  _gcsHeartbeatEnabledKey;
 };
 
 #endif
