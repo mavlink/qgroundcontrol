@@ -32,6 +32,8 @@
 
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "MultiVehicleManagerLog")
 
+const char* MultiVehicleManager::_gcsHeartbeatEnabledKey = "gcsHeartbeatEnabled";
+
 MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     : QGCTool(app)
     , _activeVehicleAvailable(false)
@@ -41,8 +43,18 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     , _autopilotPluginManager(NULL)
     , _joystickManager(NULL)
     , _mavlinkProtocol(NULL)
+    , _gcsHeartbeatEnabled(true)
 {
+    QSettings settings;
 
+    _gcsHeartbeatEnabled = settings.value(_gcsHeartbeatEnabledKey, true).toBool();
+
+    _gcsHeartbeatTimer.setInterval(_gcsHeartbeatRateMSecs);
+    _gcsHeartbeatTimer.setSingleShot(false);
+    connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
+    if (_gcsHeartbeatEnabled) {
+        _gcsHeartbeatTimer.start();
+    }
 }
 
 void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
@@ -237,4 +249,39 @@ Vehicle* MultiVehicleManager::getVehicleById(int vehicleId)
     }
 
     return NULL;
+}
+
+void MultiVehicleManager::setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled)
+{
+    if (gcsHeartBeatEnabled != _gcsHeartbeatEnabled) {
+        _gcsHeartbeatEnabled = gcsHeartBeatEnabled;
+        emit gcsHeartBeatEnabledChanged(gcsHeartBeatEnabled);
+
+        QSettings settings;
+        settings.setValue(_gcsHeartbeatEnabledKey, gcsHeartBeatEnabled);
+
+        if (gcsHeartBeatEnabled) {
+            _gcsHeartbeatTimer.start();
+        } else {
+            _gcsHeartbeatTimer.stop();
+        }
+    }
+}
+
+void MultiVehicleManager::_sendGCSHeartbeat(void)
+{
+    for (int i=0; i< _vehicles.count(); i++) {
+        Vehicle* vehicle = qobject_cast<Vehicle*>(_vehicles[i]);
+
+        mavlink_message_t message;
+        mavlink_msg_heartbeat_pack(_mavlinkProtocol->getSystemId(),
+                                   _mavlinkProtocol->getComponentId(),
+                                   &message,
+                                   MAV_TYPE_GCS,                // MAV_TYPE
+                                   MAV_AUTOPILOT_INVALID,   // MAV_AUTOPILOT
+                                   MAV_MODE_MANUAL_ARMED,   // MAV_MODE
+                                   0,                       // custom mode
+                                   MAV_STATE_ACTIVE);       // MAV_STATE
+        vehicle->sendMessage(message);
+    }
 }
