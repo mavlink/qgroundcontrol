@@ -289,12 +289,14 @@ QGCView {
                             id:     nameLabel
                             width:  ScreenTools.defaultFontPixelWidth  * 20
                             text:   factRow.modelFact.name
+                            clip:   true
                         }
                         QGCLabel {
                             id:     valueLabel
                             width:  ScreenTools.defaultFontPixelWidth  * 20
                             color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText) : __qgcPal.text
                             text:   factRow.modelFact.enumStrings.length == 0 ? factRow.modelFact.valueString + " " + factRow.modelFact.units : factRow.modelFact.enumStringValue
+                            clip:   true
                         }
                         QGCLabel {
                             text:   factRow.modelFact.shortDescription
