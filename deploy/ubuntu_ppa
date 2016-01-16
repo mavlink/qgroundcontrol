@@ -19,6 +19,4 @@ cd ${tmpdir}/qgroundcontrol-${dir_version}/
 debuild -S
 debuild --prepend-path=/usr/lib/ccache -sa -B -i -I -j4
 
-dput ppa:qgroundcontrol/ppa ${tmpdir}/qgroundcontrol_${version}_source.changes
-
 dput -f ppa:qgroundcontrol/ppa ${tmpdir}/qgroundcontrol_${version}_source.changes
