@@ -114,6 +114,12 @@
     #include "OpalLink.h"
 #endif
 
+#ifdef Q_OS_LINUX
+#ifndef __mobile__
+#include <unistd.h>
+#include <sys/types.h>
+#endif
+#endif
 
 QGCApplication* QGCApplication::_app = NULL;
 
@@ -187,6 +193,47 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
 #ifndef __android__
     setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+#endif
+
+#ifdef Q_OS_LINUX
+#ifndef __mobile__
+    if (!_runningUnitTests) {
+        if (getuid() == 0) {
+            QMessageBox msgBox;
+            msgBox.setInformativeText("You are runnning QGroundControl as root. "
+                                      "You should not do this since it will cause other issues with QGroundControl. "
+                                      "QGroundControl will now exit. "
+                                      "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
+                                      "sudo usermod -a -G dialout $USER\n"
+                                      "sudo apt-get remove modemmanager");
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.setDefaultButton(QMessageBox::Ok);
+            msgBox.exec();
+            _exit(0);
+        }
+
+        // Determine if we have the correct permissions to access USB serial devices
+        QFile permFile("/etc/group");
+        if(permFile.open(QIODevice::ReadOnly)) {
+            while(!permFile.atEnd()) {
+                QString line = permFile.readLine();
+                if (line.contains("dialout") && !line.contains(getenv("USER"))) {
+                    QMessageBox msgBox;
+                    msgBox.setInformativeText("The current user does not have the correct permissions to access serial devices. "
+                                              "You should also remove modemmanager since it also interferes. "
+                                              "If you are using Ubuntu, execute the following commands to fix these issues:\n"
+                                              "sudo usermod -a -G dialout $USER\n"
+                                              "sudo apt-get remove modemmanager");
+                    msgBox.setStandardButtons(QMessageBox::Ok);
+                    msgBox.setDefaultButton(QMessageBox::Ok);
+                    msgBox.exec();
+                    break;
+                }
+            }
+            permFile.close();
+        }
+    }
+#endif
 #endif
 
     // Parse command line options
