@@ -951,11 +951,6 @@ void RadioComponentController::_writeCalibration(void)
     
     _stopCalibration();
     _setInternalCalibrationValuesFromParameters();
-
-    if (_vehicle->apmFirmware() && functionMappingChanged && !_unitTestMode) {
-        // We can't emit this in unit test mode since it confused to Qml which is running in an invisible widget
-        emit functionMappingChangedAPMReboot();
-    }
 }
 
 /// @brief Starts the calibration process
