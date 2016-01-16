@@ -386,11 +386,6 @@ void JoystickConfigController::_inputStickMin(Joystick::AxisFunction_t function,
             } else {
                 _rgAxisInfo[axis].axisMin = value;
             }
-
-            // Check if this is throttle and set trim accordingly
-            if (function == Joystick::throttleFunction) {
-                _rgAxisInfo[axis].axisTrim = value;
-            }
             
             qCDebug(JoystickConfigControllerLog) << "_inputStickMin saving values, function:axis:value:reversed" << function << axis << value << info->reversed;
             
