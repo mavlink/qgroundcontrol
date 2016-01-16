@@ -77,6 +77,11 @@ APMSensorsComponentController::APMSensorsComponentController(void) :
     connect(_sensorsComponent, &VehicleComponent::setupCompleteChanged, this, &APMSensorsComponentController::setupNeededChanged);
 }
 
+APMSensorsComponentController::~APMSensorsComponentController()
+{
+    _vehicle->setConnectionLostEnabled(true);
+}
+
 /// Appends the specified text to the status log area in the ui
 void APMSensorsComponentController::_appendStatusLog(const QString& text)
 {
@@ -143,6 +148,10 @@ void APMSensorsComponentController::_resetInternalState(void)
 
 void APMSensorsComponentController::_stopCalibration(APMSensorsComponentController::StopCalibrationCode code)
 {
+    if (_accelCalInProgress) {
+        _vehicle->setConnectionLostEnabled(true);
+    }
+
     disconnect(_uas, &UASInterface::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
     
     _compassButton->setEnabled(true);
@@ -193,6 +202,7 @@ void APMSensorsComponentController::calibrateCompass(void)
 
 void APMSensorsComponentController::calibrateAccel(void)
 {
+    _vehicle->setConnectionLostEnabled(false);
     _startLogCalibration();
     _accelCalInProgress = true;
     _uas->startCalibration(UASInterface::StartCalibrationAccel);
