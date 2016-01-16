@@ -86,7 +86,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     manualYawAngle(0),
     manualThrust(0),
 
-    positionLock(false),
     isGlobalPositionKnown(false),
 
     latitude(0.0),
@@ -189,8 +188,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
 #endif
 
     color = UASInterface::getNextColor();
-    connect(&statusTimeout, &QTimer::timeout, this, &UAS::updateState);
-    statusTimeout.start(500);
 }
 
 /**
@@ -199,46 +196,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
 int UAS::getUASID() const
 {
     return uasId;
-}
-
-/**
-* Update the heartbeat.
-*/
-void UAS::updateState()
-{
-    // Check if heartbeat timed out
-    quint64 heartbeatInterval = QGC::groundTimeUsecs() - lastHeartbeat;
-    if (!connectionLost && (heartbeatInterval > timeoutIntervalHeartbeat))
-    {
-        connectionLost = true;
-        receivedMode = false;
-        QString audiostring = QString("Link lost to system %1").arg(this->getUASID());
-        _say(audiostring.toLower(), GAudioOutput::AUDIO_SEVERITY_ALERT);
-    }
-
-    // Update connection loss time on each iteration
-    if (connectionLost && (heartbeatInterval > timeoutIntervalHeartbeat))
-    {
-        connectionLossTime = heartbeatInterval;
-        emit heartbeatTimeout(true, heartbeatInterval/1000);
-    }
-
-    // Connection gained
-    if (connectionLost && (heartbeatInterval < timeoutIntervalHeartbeat))
-    {
-        QString audiostring = QString("Link regained to system %1").arg(this->getUASID());
-        _say(audiostring.toLower(), GAudioOutput::AUDIO_SEVERITY_NOTICE);
-        connectionLost = false;
-        connectionLossTime = 0;
-        emit heartbeatTimeout(false, 0);
-    }
-
-    // Position lock is set by the MAVLink message handler
-    // if no position lock is available, indicate an error
-    if (positionLock)
-    {
-        positionLock = false;
-    }
 }
 
 void UAS::receiveMessage(mavlink_message_t message)
@@ -325,8 +282,6 @@ void UAS::receiveMessage(mavlink_message_t message)
             {
                 break;
             }
-            lastHeartbeat = QGC::groundTimeUsecs();
-            emit heartbeat(this);
             mavlink_heartbeat_t state;
             mavlink_msg_heartbeat_decode(&message, &state);
 
@@ -637,8 +592,6 @@ void UAS::receiveMessage(mavlink_message_t message)
 
                 // Emit
                 emit velocityChanged_NED(this, speedX, speedY, speedZ, time);
-
-                positionLock = true;
             }
         }
             break;
@@ -678,7 +631,6 @@ void UAS::receiveMessage(mavlink_message_t message)
             setGroundSpeed(qSqrt(speedX*speedX+speedY*speedY));
             emit speedChanged(this, groundSpeed, airSpeed, time);
 
-            positionLock = true;
             isGlobalPositionKnown = true;
         }
             break;
@@ -699,7 +651,6 @@ void UAS::receiveMessage(mavlink_message_t message)
 
             if (pos.fix_type > 2)
             {
-                positionLock = true;
                 isGlobalPositionKnown = true;
 
                 latitude_gps  = pos.lat/(double)1E7;

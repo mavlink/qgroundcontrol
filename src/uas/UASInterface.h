@@ -256,7 +256,6 @@ signals:
     void batteryConsumedChanged(UASInterface* uas, double current_consumed);
     void statusChanged(UASInterface* uas, QString status);
     void thrustChanged(UASInterface*, double thrust);
-    void heartbeat(UASInterface* uas);
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
     void attitudeChanged(UASInterface*, int component, double roll, double pitch, double yaw, quint64 usec);
     void attitudeRotationRatesChanged(int uas, double rollrate, double pitchrate, double yawrate, quint64 usec);
@@ -313,8 +312,6 @@ signals:
     void localizationChanged(UASInterface* uas, int fix);
 
     // ERROR AND STATUS SIGNALS
-    /** @brief Heartbeat timed out or was regained */
-    void heartbeatTimeout(bool timeout, unsigned int ms);
     /** @brief Name of system changed */
     void nameChanged(QString newName);
     /** @brief Core specifications have changed */
@@ -329,12 +326,6 @@ signals:
 
     /** @brief Command Ack */
     void commandAck (UASInterface* uas, uint8_t compID, uint16_t command, uint8_t result);
-
-protected:
-
-    // TIMEOUT CONSTANTS
-    static const unsigned int timeoutIntervalHeartbeat = 3500 * 1000; ///< Heartbeat timeout is 3.5 seconds
-
 };
 
 Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0")
