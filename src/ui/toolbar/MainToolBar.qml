@@ -584,10 +584,10 @@ Rectangle {
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
 
-        property bool vehicleInactive: activeVehicle ? activeVehicle.heartbeatTimeout != 0 : false
+        property bool vehicleConnectionLost: activeVehicle ? activeVehicle.connectionLost : false
 
         Loader {
-            source:                 activeVehicle && !parent.vehicleInactive ? "MainToolBarIndicators.qml" : ""
+            source:                 activeVehicle && !parent.vehicleConnectionLost ? "MainToolBarIndicators.qml" : ""
             anchors.left:           parent.left
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -600,7 +600,7 @@ Rectangle {
             color:                  colorRed
             anchors.left:           parent.left
             anchors.verticalCenter: parent.verticalCenter
-            visible:                parent.vehicleInactive
+            visible:                parent.vehicleConnectionLost
 
         }
 
@@ -609,7 +609,7 @@ Rectangle {
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
             text:                   "Disconnect"
-            visible:                parent.vehicleInactive
+            visible:                parent.vehicleConnectionLost
             onClicked:              activeVehicle.disconnectInactiveVehicle()
         }
     }
