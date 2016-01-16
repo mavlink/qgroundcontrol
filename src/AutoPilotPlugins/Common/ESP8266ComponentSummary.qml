@@ -29,6 +29,10 @@ FactPanel {
         anchors.fill:       parent
         anchors.margins:    8
         VehicleSummaryRow {
+            labelText: "Firmware Version:"
+            valueText: esp8266.version
+        }
+        VehicleSummaryRow {
             labelText: "WiFi Channel:"
             valueText: wifiChannel.valueString
         }
@@ -39,14 +43,6 @@ FactPanel {
         VehicleSummaryRow {
             labelText: "WiFi Password:"
             valueText: esp8266.wifiPassword
-        }
-        VehicleSummaryRow {
-            labelText: "QGC UDP Port:"
-            valueText: wifiHostPort.valueString
-        }
-        VehicleSummaryRow {
-            labelText: "UAV UDP Port:"
-            valueText: wifiClientPort.valueString
         }
         VehicleSummaryRow {
             labelText: "UART Baud Rate:"
