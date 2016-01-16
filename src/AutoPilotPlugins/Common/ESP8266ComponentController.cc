@@ -56,12 +56,23 @@ ESP8266ComponentController::ESP8266ComponentController()
     connect(paswd, &Fact::valueChanged, this, &ESP8266ComponentController::_passwordChanged);
     Fact* baud = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "UART_BAUDRATE");
     connect(baud, &Fact::valueChanged, this, &ESP8266ComponentController::_baudChanged);
+    Fact* ver = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "SW_VER");
+    connect(ver, &Fact::valueChanged, this, &ESP8266ComponentController::_versionChanged);
 }
 
 //-----------------------------------------------------------------------------
 ESP8266ComponentController::~ESP8266ComponentController()
 {
 
+}
+
+//-----------------------------------------------------------------------------
+QString
+ESP8266ComponentController::version()
+{
+    uint32_t uv = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "SW_VER")->rawValue().toUInt();
+    QString versionString = QString("%1.%2.%3").arg(uv >> 24).arg((uv >> 16) & 0xFF).arg(uv & 0xFFFF);
+    return versionString;
 }
 
 //-----------------------------------------------------------------------------
@@ -315,4 +326,11 @@ void
 ESP8266ComponentController::_baudChanged(QVariant)
 {
     emit baudIndexChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+ESP8266ComponentController::_versionChanged(QVariant)
+{
+    emit versionChanged();
 }
