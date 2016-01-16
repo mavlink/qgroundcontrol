@@ -320,7 +320,7 @@ void APMFirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t
                         switch (vehicle->vehicleType()) {
                         case MAV_TYPE_FIXED_WING:
                             supportedMajorNumber = 3;
-                            supportedMinorNumber = 4;
+                            supportedMinorNumber = 2;
                             break;
                         case MAV_TYPE_QUADROTOR:
                         case MAV_TYPE_COAXIAL:
@@ -330,7 +330,7 @@ void APMFirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t
                         case MAV_TYPE_OCTOROTOR:
                         case MAV_TYPE_TRICOPTER:
                             supportedMajorNumber = 3;
-                            supportedMinorNumber = 3;
+                            supportedMinorNumber = 2;
                             break;
                         default:
                             break;
