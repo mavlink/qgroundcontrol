@@ -149,7 +149,7 @@ QGCView {
             width:          10
         }
 
-        Flickable {
+        QGCFlickable {
             id:             scroll
             anchors.top:    lastSpacer.bottom
             anchors.bottom: parent.bottom
@@ -157,7 +157,6 @@ QGCView {
             clip:           true
             contentHeight:  flowView.height
             contentWidth:   parent.width
-            boundsBehavior:     Flickable.StopAtBounds
             flickableDirection: Flickable.VerticalFlick
 
             onWidthChanged: {

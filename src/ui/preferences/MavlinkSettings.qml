@@ -43,14 +43,13 @@ Rectangle {
         colorGroupEnabled:  enabled
     }
 
-    Flickable {
+    QGCFlickable {
         clip:               true
         anchors.fill:       parent
         anchors.margins:    ScreenTools.defaultFontPixelWidth
         contentHeight:      settingsColumn.height
         contentWidth:       __mavlinkRoot.width
         flickableDirection: Flickable.VerticalFlick
-        boundsBehavior:     Flickable.StopAtBounds
 
         Column {
             id:                 settingsColumn

@@ -71,7 +71,7 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
-        Flickable {
+        QGCFlickable {
             clip:               true
             anchors.fill:       parent
             contentHeight:      armingCheckSettings.y + armingCheckSettings.height
@@ -494,6 +494,6 @@ QGCView {
                     FactBitmask { fact: _armingCheck }
                 }
             }
-        } // Flickable
+        } // QGCFlickable
     } // QGCViewPanel
 } // QGCView

@@ -75,13 +75,12 @@ Rectangle {
         computeSummaryBoxSize()
     }
 
-    Flickable {
+    QGCFlickable {
         clip:               true
         anchors.fill:       parent
         contentHeight:      summaryColumn.height
         contentWidth:       _summaryRoot.width
         flickableDirection: Flickable.VerticalFlick
-        boundsBehavior:     Flickable.StopAtBounds
 
         Column {
             id:             summaryColumn

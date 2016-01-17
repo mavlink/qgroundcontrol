@@ -51,10 +51,9 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
-        Flickable {
+        QGCFlickable {
             anchors.fill:       parent
             clip:               true
-            boundsBehavior:     Flickable.StopAtBounds
             flickableDirection: Flickable.VerticalFlick
             contentHeight:      flightModeSettings.y + flightModeSettings.height
 
@@ -164,6 +163,6 @@ QGCView {
                     } // Repeater -- Channel options
                 } // Column - Channel options
             } // Rectangle - Channel options
-        } // FLickable
+        } // QGCFlickable
     } // QGCViewPanel
 } // QGCView

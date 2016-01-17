@@ -239,7 +239,7 @@ QGCView {
                 text:               "Show values"
             }
 
-            Flickable {
+            QGCFlickable {
                 anchors.topMargin:  ScreenTools.defaultFontPixelHeight
                 anchors.top:        showValues.bottom
                 anchors.bottom:     parent.bottom

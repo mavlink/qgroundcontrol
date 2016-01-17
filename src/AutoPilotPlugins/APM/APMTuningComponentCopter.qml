@@ -126,10 +126,9 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
-        Flickable {
+        QGCFlickable {
             clip:               true
             anchors.fill:       parent
-            boundsBehavior:     Flickable.StopAtBounds
             contentHeight:      autoTuneRect.y + autoTuneRect.height
             flickableDirection: Flickable.VerticalFlick
 
@@ -340,6 +339,6 @@ QGCView {
                     }
                 }
             } // Rectangle - AutoTune
-        } // Flickable
+        } // QGCFlickable
     } // QGCViewPanel
 } // QGCView

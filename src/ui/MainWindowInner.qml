@@ -346,13 +346,12 @@ Item {
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.top:                parent.top
         anchors.topMargin:          tbHeight + ScreenTools.defaultFontPixelHeight
-        Flickable {
+        QGCFlickable {
             id:                 messageFlick
             anchors.margins:    ScreenTools.defaultFontPixelHeight
             anchors.fill:       parent
             contentHeight:      messageText.height
             contentWidth:       messageText.width
-            boundsBehavior:     Flickable.StopAtBounds
             pixelAligned:       true
             clip:               true
             TextEdit {

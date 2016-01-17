@@ -99,7 +99,7 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
-        Flickable {
+        QGCFlickable {
             anchors.fill:       parent
             clip:               true
             contentWidth:       capacityField.x + capacityField.width + _margins
@@ -246,6 +246,6 @@ QGCView {
                 fact:               battAmpPerVolt
                 visible:            _showAdvanced
             }
-        } // Flickable
+        } // QGCFlickable
     } // QGCViewPanel
 } // QGCView
