@@ -73,7 +73,7 @@ QStringList PX4RadioComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList triggers;
     
-    triggers << "RC_MAP_ROLL" << "RC_MAP_PITCH" << "RC_MAP_YAW" << "RC_MAP_THROTTLE";
+    triggers << "COM_RC_IN_MODE" << "RC_MAP_ROLL" << "RC_MAP_PITCH" << "RC_MAP_YAW" << "RC_MAP_THROTTLE";
     
     return triggers;
 }
