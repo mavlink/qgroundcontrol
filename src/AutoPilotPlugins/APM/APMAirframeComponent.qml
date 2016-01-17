@@ -138,7 +138,7 @@ QGCView {
             width:          10
         }
 
-        Flickable {
+        QGCFlickable {
             id:             scroll
             anchors.top:    helpSpacer.bottom
             anchors.bottom: parent.bottom
