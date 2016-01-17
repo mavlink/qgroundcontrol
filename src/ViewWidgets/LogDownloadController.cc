@@ -326,8 +326,7 @@ LogDownloadController::_receivedAllData()
         _requestLogData(_downloadData->ID, 0, _downloadData->entry->size());
     } else {
         _resetSelection();
-        _downloadingLogs = false;
-        emit downloadingLogsChanged();
+        _setDownloading(false);
     }
 }
 
@@ -456,8 +455,7 @@ LogDownloadController::download(void)
             }
         }
         //-- Start download process
-        _downloadingLogs = true;
-        emit downloadingLogsChanged();
+        _setDownloading(true);
         _receivedAllData();
     }
 }
@@ -547,6 +545,15 @@ LogDownloadController::_prepareLogDownload()
 
 //----------------------------------------------------------------------------------------
 void
+LogDownloadController::_setDownloading(bool active)
+{
+    _downloadingLogs = active;
+    _vehicle->setConnectionLostEnabled(!active);
+    emit downloadingLogsChanged();
+}
+
+//----------------------------------------------------------------------------------------
+void
 LogDownloadController::eraseAll(void)
 {
     if(_vehicle && _uas) {
@@ -577,8 +584,7 @@ LogDownloadController::cancel(void)
         _downloadData = 0;
     }
     _resetSelection(true);
-    _downloadingLogs = false;
-    emit downloadingLogsChanged();
+    _setDownloading(false);
 }
 
 //-----------------------------------------------------------------------------
