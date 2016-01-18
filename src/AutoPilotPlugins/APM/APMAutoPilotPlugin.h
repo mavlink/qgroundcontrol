@@ -47,7 +47,7 @@ public:
     ~APMAutoPilotPlugin();
 
     // Overrides from AutoPilotPlugin
-    virtual const QVariantList& vehicleComponents(void);
+    const QVariantList& vehicleComponents(void) final;
 
     APMAirframeComponent*       airframeComponent   (void) { return _airframeComponent; }
     APMCameraComponent*         cameraComponent     (void) { return _cameraComponent; }
