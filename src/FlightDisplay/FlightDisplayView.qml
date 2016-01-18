@@ -208,94 +208,17 @@ Item {
 
     //-- Virtual Joystick
     Item {
-        id:             multiTouchItem
-        width:          parent.width  - (pip.width / 2)
-        height:         thumbAreaHeight
-        visible:        QGroundControl.virtualTabletJoystick
-        anchors.bottom: pip.top
-        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 2
-        anchors.horizontalCenter: parent.horizontalCenter
+        id:                         multiTouchItem
+        width:                      parent.width  - (pip.width / 2)
+        height:                     thumbAreaHeight
+        visible:                    QGroundControl.virtualTabletJoystick
+        anchors.bottom:             pip.top
+        anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
+        anchors.horizontalCenter:   parent.horizontalCenter
 
         readonly property real thumbAreaHeight: Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
 
         QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
-
-        MultiPointTouchArea {
-            anchors.fill:       parent
-            touchPoints: [
-                TouchPoint { id: point1 },
-                TouchPoint { id: point2 }
-            ]
-
-            property var leftRect:  Qt.rect(0, 0, parent.thumbAreaHeight, parent.thumbAreaHeight)
-            property var rightRect: Qt.rect(parent.width - parent.thumbAreaHeight, 0, parent.thumbAreaHeight, parent.thumbAreaHeight)
-
-            function pointInRect(rect, point) {
-                return point.x >= rect.x &&
-                        point.y >= rect.y &&
-                        point.x <= rect.x + rect.width &&
-                        point.y <= rect.y + rect.height
-            }
-
-            function newTouchPoints(touchPoints)
-            {
-                var point1Location = 0
-                var point2Location = 0
-
-                var point1
-                if (touchPoints.length > 0) {
-                    point1 = touchPoints[0]
-                    if (pointInRect(leftRect, point1)) {
-                        point1Location = -1
-                    } else if (pointInRect(rightRect, point1)) {
-                        point1Location = 1
-                    }
-                }
-
-                var point2
-                if (touchPoints.length == 2) {
-                    point2 = touchPoints[1]
-                    if (pointInRect(leftRect, point2)) {
-                        point2Location = -1
-                    } else if (pointInRect(rightRect, point2)) {
-                        point2Location = 1
-                    }
-                }
-
-                var leftStickSet = false
-                var rightStickSet = false
-
-                // Make sure points are not both in the same rect
-                if (point1Location != point2Location) {
-                    if (point1Location != 0) {
-                        if (point1Location == -1) {
-                            leftStick.stickPosition = point1
-                            leftStickSet = true
-                        } else {
-                            rightStick.stickPosition = Qt.point(point1.x - (multiTouchItem.width - multiTouchItem.thumbAreaHeight), point1.y)
-                            rightStickSet = true
-                        }
-                    }
-                    if (point2Location != 0) {
-                        if (point2Location == -1) {
-                            leftStick.stickPosition = point2
-                            leftStickSet = true
-                        } else {
-                            rightStick.stickPosition = Qt.point(point2.x - (multiTouchItem.width - multiTouchItem.thumbAreaHeight), point2.y)
-                            rightStickSet = true
-                        }
-                    }
-                }
-                if (!leftStickSet) {
-                    leftStick.reCenter()
-                }
-                if (!rightStickSet) {
-                    rightStick.reCenter()
-                }
-            }
-
-            onTouchUpdated: newTouchPoints(touchPoints)
-        }
 
         Timer {
             interval:   40  // 25Hz, same as real joystick rate
@@ -309,22 +232,26 @@ Item {
         }
 
         JoystickThumbPad {
-            id:             leftStick
-            anchors.left:   parent.left
-            anchors.bottom: parent.bottom
-            width:          parent.thumbAreaHeight
-            height:         parent.thumbAreaHeight
-            yAxisThrottle:  true
-            lightColors:    !isBackgroundDark
+            id:                     leftStick
+            anchors.leftMargin:     xPositionDelta
+            anchors.bottomMargin:   -yPositionDelta
+            anchors.left:           parent.left
+            anchors.bottom:         parent.bottom
+            width:                  parent.thumbAreaHeight
+            height:                 parent.thumbAreaHeight
+            yAxisThrottle:          true
+            lightColors:            !isBackgroundDark
         }
 
         JoystickThumbPad {
-            id:             rightStick
-            anchors.right:  parent.right
-            anchors.bottom: parent.bottom
-            width:          parent.thumbAreaHeight
-            height:         parent.thumbAreaHeight
-            lightColors:    !isBackgroundDark
+            id:                     rightStick
+            anchors.rightMargin:    -xPositionDelta
+            anchors.bottomMargin:   -yPositionDelta
+            anchors.right:          parent.right
+            anchors.bottom:         parent.bottom
+            width:                  parent.thumbAreaHeight
+            height:                 parent.thumbAreaHeight
+            lightColors:            !isBackgroundDark
         }
     }
 }
