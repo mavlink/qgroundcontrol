@@ -49,14 +49,14 @@ public:
     // Overrides from AutoPilotPlugin
     const QVariantList& vehicleComponents(void) final;
 
-    APMAirframeComponent*       airframeComponent   (void) { return _airframeComponent; }
-    APMCameraComponent*         cameraComponent     (void) { return _cameraComponent; }
-    APMFlightModesComponent*    flightModesComponent(void) { return _flightModesComponent; }
-    APMPowerComponent*          powerComponent      (void) { return _powerComponent; }
-    APMRadioComponent*          radioComponent      (void) { return _radioComponent; }
-    APMSafetyComponent*         safetyComponent     (void) { return _safetyComponent; }
-    APMSensorsComponent*        sensorsComponent    (void) { return _sensorsComponent; }
-    APMTuningComponent*         tuningComponent     (void) { return _tuningComponent; }
+    APMAirframeComponent*       airframeComponent   (void) const { return _airframeComponent; }
+    APMCameraComponent*         cameraComponent     (void) const { return _cameraComponent; }
+    APMFlightModesComponent*    flightModesComponent(void) const { return _flightModesComponent; }
+    APMPowerComponent*          powerComponent      (void) const { return _powerComponent; }
+    APMRadioComponent*          radioComponent      (void) const { return _radioComponent; }
+    APMSafetyComponent*         safetyComponent     (void) const { return _safetyComponent; }
+    APMSensorsComponent*        sensorsComponent    (void) const { return _sensorsComponent; }
+    APMTuningComponent*         tuningComponent     (void) const { return _tuningComponent; }
 
 public slots:
     // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
