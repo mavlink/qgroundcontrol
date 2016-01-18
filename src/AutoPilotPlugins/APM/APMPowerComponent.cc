@@ -43,7 +43,7 @@ QString APMPowerComponent::description(void) const
 
 QString APMPowerComponent::iconResource(void) const
 {
-    return "/qmlimages/PowerComponentIcon.png";
+    return QStringLiteral("/qmlimages/PowerComponentIcon.png");
 }
 
 bool APMPowerComponent::requiresSetup(void) const
@@ -53,26 +53,26 @@ bool APMPowerComponent::requiresSetup(void) const
 
 bool APMPowerComponent::setupComplete(void) const
 {
-    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "BATT_CAPACITY")->rawValue().toInt() != 0;
+    return _autopilot->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("BATT_CAPACITY"))->rawValue().toInt() != 0;
 }
 
 QStringList APMPowerComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList list;
 
-    list << "BATT_CAPACITY";
+    list << QStringLiteral("BATT_CAPACITY");
 
     return list;
 }
 
 QUrl APMPowerComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/APMPowerComponent.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMPowerComponent.qml"));
 }
 
 QUrl APMPowerComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/APMPowerComponentSummary.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMPowerComponentSummary.qml"));
 }
 
 QString APMPowerComponent::prerequisiteSetup(void) const

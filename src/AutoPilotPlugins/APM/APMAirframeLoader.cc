@@ -57,7 +57,7 @@ void APMAirframeLoader::loadAirframeFactMetaData(void)
 
     Q_ASSERT(APMAirframeComponentAirframes::get().count() == 0);
 
-    QString airframeFilename = ":/AutoPilotPlugins/APM/APMAirframeFactMetaData.xml";
+    QString airframeFilename(QStringLiteral(":/AutoPilotPlugins/APM/APMAirframeFactMetaData.xml"));
 
     qCDebug(APMAirframeLoaderLog) << "Loading meta data file:" << airframeFilename;
 
@@ -82,14 +82,14 @@ void APMAirframeLoader::loadAirframeFactMetaData(void)
         if (xml.isStartElement()) {
             QString elementName = xml.name().toString();
             QXmlStreamAttributes attr = xml.attributes();
-            if (elementName == "airframe_group") {
-                airframeGroup = attr.value("name").toString();
-                image = attr.value("image").toString();
-                groupId = attr.value("id").toInt();
+            if (elementName == QLatin1Literal("airframe_group")) {
+                airframeGroup = attr.value(QStringLiteral("name")).toString();
+                image = attr.value(QStringLiteral("image")).toString();
+                groupId = attr.value(QStringLiteral("id")).toInt();
                 APMAirframeComponentAirframes::insert(airframeGroup, groupId, image);
-            } else if (elementName == "airframe") {
-                QString name = attr.value("name").toString();
-                QString file = attr.value("file").toString();
+            } else if (elementName == QLatin1Literal("airframe")) {
+                QString name = attr.value(QStringLiteral("name")).toString();
+                QString file = attr.value(QStringLiteral("file")).toString();
                 APMAirframeComponentAirframes::insert(airframeGroup, groupId, image, name, file);
             }
         }
