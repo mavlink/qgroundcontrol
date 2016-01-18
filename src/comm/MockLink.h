@@ -187,6 +187,7 @@ private:
     void _handleParamRequestRead(const mavlink_message_t& msg);
     void _handleFTP(const mavlink_message_t& msg);
     void _handleCommandLong(const mavlink_message_t& msg);
+    void _handleManualControl(const mavlink_message_t& msg);
     float _floatUnionForParam(int componentId, const QString& paramName);
     void _setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat);
     void _sendHomePosition(void);
