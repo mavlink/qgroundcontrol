@@ -53,12 +53,11 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
-        Flickable {
+        QGCFlickable {
             clip:               true
             anchors.fill:       parent
             contentHeight:      screenBottom.y + screenBottom.height
             contentWidth:       parent.width
-            boundsBehavior:     Flickable.StopAtBounds
             flickableDirection: Flickable.VerticalFlick
 
             QGCLabel {
@@ -321,6 +320,6 @@ QGCView {
                 width:          1
                 height:         1
             }
-        } // Flickable
+        } // QGCFlickable
     } // QGCViewPanel
 } // QGCView

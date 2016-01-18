@@ -90,7 +90,7 @@ Rectangle {
         text:               _expanded ? "<<" : ">>"
     }
 
-    Flickable {
+    QGCFlickable {
         anchors.leftMargin:     _margins
         anchors.rightMargin:    _margins
         anchors.left:           distanceLabel.right

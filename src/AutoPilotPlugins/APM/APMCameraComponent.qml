@@ -459,7 +459,7 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
-        Flickable {
+        QGCFlickable {
             clip:           true
             anchors.fill:   parent
             contentHeight:  gimbalDirectionPanLoader.y + gimbalDirectionPanLoader.height

@@ -211,16 +211,13 @@ Rectangle {
         anchors.right:      parent.right
         color:              qgcPal.window
 
-        Flickable {
+        QGCFlickable {
             id:                 buttonScroll
             width:              buttonColumn.width
             anchors.topMargin:  _defaultTextHeight / 2
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            clip:               true
             contentHeight:      buttonColumn.height
-            contentWidth:       buttonColumn.width
-            boundsBehavior:     Flickable.StopAtBounds
             flickableDirection: Flickable.VerticalFlick
 
             Column {
