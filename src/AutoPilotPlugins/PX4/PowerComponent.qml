@@ -108,12 +108,11 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
-        Flickable {
+        QGCFlickable {
             anchors.fill:       parent
             clip:               true
             contentHeight:      innerColumn.height
             contentWidth:       panel.width
-            boundsBehavior:     Flickable.StopAtBounds
             flickableDirection: Flickable.VerticalFlick
 
             Column {
@@ -414,6 +413,6 @@ QGCView {
                     }
                 } // Rectangle - Advanced power settings
             } // Column
-        } // Flickable
+        } // QGCFlickable
     } // QGCViewPanel
 } // QGCView

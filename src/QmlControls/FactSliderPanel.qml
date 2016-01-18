@@ -68,10 +68,9 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
-        Flickable {
+        QGCFlickable {
             clip:               true
             anchors.fill:       parent
-            boundsBehavior:     Flickable.StopAtBounds
             contentHeight:      sliderRect.y + sliderRect.height
             flickableDirection: Flickable.VerticalFlick
 
@@ -138,6 +137,6 @@ QGCView {
                     } // Repeater
                 } // Column
             } // Rectangle
-        } // Flickable
+        } // QGCFlickable
     } // QGCViewPanel
 } // QGCView

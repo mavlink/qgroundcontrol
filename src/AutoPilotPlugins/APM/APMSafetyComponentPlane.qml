@@ -56,10 +56,9 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
-        Flickable {
+        QGCFlickable {
             clip:               true
             anchors.fill:       parent
-            boundsBehavior:     Flickable.StopAtBounds
             contentHeight:      rtlSettings.y + rtlSettings.height
             flickableDirection: Flickable.VerticalFlick
 
@@ -205,6 +204,6 @@ QGCView {
                     enabled:            returnAltRadio.checked
                 }
             } // Rectangle - RTL Settings
-        } // Flickable
+        } // QGCFlickable
     } // QGCViewPanel
 } // QGCView

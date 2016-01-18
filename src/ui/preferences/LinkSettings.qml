@@ -58,7 +58,7 @@ Rectangle {
         settingLoader.sourceComponent = null
     }
 
-    Flickable {
+    QGCFlickable {
         clip:               true
         anchors.top:        parent.top
         width:              parent.width
@@ -66,7 +66,6 @@ Rectangle {
         contentHeight:      settingsColumn.height
         contentWidth:       _linkRoot.width
         flickableDirection: Flickable.VerticalFlick
-        boundsBehavior:     Flickable.StopAtBounds
 
         Column {
             id:                 settingsColumn
@@ -201,7 +200,7 @@ Rectangle {
                     editConfig = null
                 }
             }
-            Flickable {
+            QGCFlickable {
                 id:                 settingsFlick
                 clip:               true
                 anchors.top:        parent.top

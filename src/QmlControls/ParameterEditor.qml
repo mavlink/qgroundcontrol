@@ -166,7 +166,7 @@ QGCView {
         Row {
             spacing: ScreenTools.defaultFontPixelWidth * 0.5
             //-- Parameter Groups
-            Flickable {
+            QGCFlickable {
                 id :                groupScroll
                 width:              ScreenTools.defaultFontPixelWidth * 25
                 height:             parent.height
@@ -174,7 +174,6 @@ QGCView {
                 pixelAligned:       true
                 contentHeight:      groupedViewComponentColumn.height
                 contentWidth:       groupedViewComponentColumn.width
-                boundsBehavior:     Flickable.OvershootBounds
                 flickableDirection: Flickable.VerticalFlick
                 Column {
                     id: groupedViewComponentColumn
@@ -223,7 +222,7 @@ QGCView {
                 opacity:    0.1
             }
             //-- Parameters
-            Flickable {
+            QGCFlickable {
                 id:             factScrollView
                 width:          parent.width - groupScroll.width
                 height:         parent.height
@@ -250,7 +249,7 @@ QGCView {
     Component {
         id: searchResultsViewComponent
         Item {
-            Flickable {
+            QGCFlickable {
                 id:             factScrollView
                 width:          parent.width
                 height:         parent.height
