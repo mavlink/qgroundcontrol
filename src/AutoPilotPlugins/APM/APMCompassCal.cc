@@ -628,17 +628,13 @@ void APMCompassCal::startCalibration(void)
 
                         _rgSavedCompassOffsets[i][j] = paramFact->rawValue().toFloat();
                         paramFact->setRawValue(0.0);
-                    } else {
-                        _calWorkerThread->rgCompassAvailable[i] = false;
+                        goto has_compass;
                     }
                 }
-            } else {
-                _calWorkerThread->rgCompassAvailable[i] = false;
             }
-        } else {
-            _calWorkerThread->rgCompassAvailable[i] = false;
         }
-
+        _calWorkerThread->rgCompassAvailable[i] = false;
+    has_compass:
         qCDebug(APMCompassCalLog) << QStringLiteral("Compass %1 available: %2").arg(i).arg(_calWorkerThread->rgCompassAvailable[i]);
     }
 
