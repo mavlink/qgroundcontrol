@@ -40,7 +40,7 @@ void APMAirframeComponentAirframes::insert(const QString& group, int groupId, co
         g = new AirframeType_t;
         g->name = group;
         g->type = groupId;
-        g->imageResource = image.isEmpty() ? "" : QString("qrc:/qmlimages/") + image;
+        g->imageResource = image.isEmpty() ? QString() : QStringLiteral("qrc:/qmlimages/") + image;
         rgAirframeTypes.insert(group, g);
     } else {
         g = rgAirframeTypes.value(group);

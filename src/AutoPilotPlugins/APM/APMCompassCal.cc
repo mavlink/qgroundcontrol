@@ -99,7 +99,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
             worker_data.y[cur_mag] = reinterpret_cast<float *>(malloc(sizeof(float) * calibration_points_maxcount));
             worker_data.z[cur_mag] = reinterpret_cast<float *>(malloc(sizeof(float) * calibration_points_maxcount));
             if (worker_data.x[cur_mag] == NULL || worker_data.y[cur_mag] == NULL || worker_data.z[cur_mag] == NULL) {
-                _emitVehicleTextMessage("[cal] ERROR: out of memory");
+                _emitVehicleTextMessage(QStringLiteral("[cal] ERROR: out of memory"));
                 result = calibrate_return_error;
             }
         }
@@ -170,7 +170,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(detect
 
     mag_worker_data_t* worker_data = (mag_worker_data_t*)(data);
 
-    _emitVehicleTextMessage("[cal] Rotate vehicle around the detected orientation");
+    _emitVehicleTextMessage(QStringLiteral("[cal] Rotate vehicle around the detected orientation"));
     _emitVehicleTextMessage(QString("[cal] Continue rotation for %1 seconds").arg(worker_data->calibration_interval_perside_seconds));
 
     uint64_t calibration_deadline = QGC::groundTimeUsecs() + worker_data->calibration_interval_perside_useconds;

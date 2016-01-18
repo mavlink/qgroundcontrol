@@ -34,7 +34,8 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
     , _fixedWing(_vehicle->vehicleType() == MAV_TYPE_FIXED_WING)
 {
     QStringList usedParams;
-    usedParams << "FLTMODE1" << "FLTMODE2" << "FLTMODE3" << "FLTMODE4" << "FLTMODE5" << "FLTMODE6";
+    usedParams << QStringLiteral("FLTMODE1") << QStringLiteral("FLTMODE2") << QStringLiteral("FLTMODE3")
+               << QStringLiteral("FLTMODE4") << QStringLiteral("FLTMODE5") << QStringLiteral("FLTMODE6");
     if (!_allParametersExists(FactSystem::defaultComponentId, usedParams)) {
         return;
     }

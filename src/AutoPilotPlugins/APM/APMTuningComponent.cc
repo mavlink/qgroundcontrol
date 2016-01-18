@@ -43,7 +43,7 @@ QString APMTuningComponent::description(void) const
 
 QString APMTuningComponent::iconResource(void) const
 {
-    return "/qmlimages/TuningComponentIcon.png";
+    return QStringLiteral("/qmlimages/TuningComponentIcon.png");
 }
 
 bool APMTuningComponent::requiresSetup(void) const
@@ -74,7 +74,7 @@ QUrl APMTuningComponent::setupSource(void) const
         case MAV_TYPE_TRICOPTER:
             // Older firmwares do not have CH9_OPT, we don't support Tuning on older firmwares
             if (_autopilot->parameterExists(-1, "CH9_OPT")) {
-                qmlFile = "qrc:/qml/APMTuningComponentCopter.qml";
+                qmlFile = QStringLiteral("qrc:/qml/APMTuningComponentCopter.qml");
             }
             break;
         default:

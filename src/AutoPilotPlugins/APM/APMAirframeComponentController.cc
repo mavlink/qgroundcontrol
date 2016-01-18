@@ -42,12 +42,12 @@ APMAirframeComponentController::APMAirframeComponentController(void) :
 {
     if (!_typesRegistered) {
         _typesRegistered = true;
-        qmlRegisterUncreatableType<APMAirframeType>("QGroundControl.Controllers", 1, 0, "APMAiframeType", "Can only reference APMAirframeType");
-        qmlRegisterUncreatableType<APMAirframe>("QGroundControl.Controllers", 1, 0, "APMAiframe", "Can only reference APMAirframe");
+        qmlRegisterUncreatableType<APMAirframeType>("QGroundControl.Controllers", 1, 0, "APMAiframeType", QStringLiteral("Can only reference APMAirframeType"));
+        qmlRegisterUncreatableType<APMAirframe>("QGroundControl.Controllers", 1, 0, "APMAiframe", QStringLiteral("Can only reference APMAirframe"));
     }
     _fillAirFrames();
 
-    Fact *frame = getParameterFact(FactSystem::defaultComponentId, "FRAME");
+    Fact *frame = getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME"));
     connect(frame, &Fact::vehicleUpdated, this, &APMAirframeComponentController::_factFrameChanged);
     _factFrameChanged(frame->rawValue());
 }
@@ -201,7 +201,7 @@ void APMAirframeComponentController::setCurrentAirframe(APMAirframe *t)
 
 void APMAirframeComponentController::setCurrentAirframeType(APMAirframeType *t)
 {
-    Fact *param = getParameterFact(-1, "FRAME");
+    Fact *param = getParameterFact(-1, QStringLiteral("FRAME"));
     Q_ASSERT(param);
     param->setRawValue(t->type());
 }

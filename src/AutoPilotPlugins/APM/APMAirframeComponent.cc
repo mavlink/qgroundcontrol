@@ -54,7 +54,7 @@ QString APMAirframeComponent::description(void) const
 
 QString APMAirframeComponent::iconResource(void) const
 {
-    return "/qmlimages/AirframeComponentIcon.png";
+    return QStringLiteral("/qmlimages/AirframeComponentIcon.png");
 }
 
 bool APMAirframeComponent::requiresSetup(void) const
@@ -65,7 +65,7 @@ bool APMAirframeComponent::requiresSetup(void) const
 bool APMAirframeComponent::setupComplete(void) const
 {
     if (_requiresFrameSetup) {
-        return _autopilot->getParameterFact(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() >= 0;
+        return _autopilot->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME"))->rawValue().toInt() >= 0;
     } else {
         return true;
     }
@@ -76,7 +76,7 @@ QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
     QStringList list;
 
     if (_requiresFrameSetup) {
-        list << "FRAME";
+        list << QStringLiteral("FRAME");
     }
 
     return list;
@@ -85,7 +85,7 @@ QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
 QUrl APMAirframeComponent::setupSource(void) const
 {
     if (_requiresFrameSetup) {
-        return QUrl::fromUserInput("qrc:/qml/APMAirframeComponent.qml");
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponent.qml"));
     } else {
         return QUrl();
     }
@@ -94,7 +94,7 @@ QUrl APMAirframeComponent::setupSource(void) const
 QUrl APMAirframeComponent::summaryQmlSource(void) const
 {
     if (_requiresFrameSetup) {
-        return QUrl::fromUserInput("qrc:/qml/APMAirframeComponentSummary.qml");
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponentSummary.qml"));
     } else {
         return QUrl();
     }
