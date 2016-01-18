@@ -200,11 +200,12 @@ QGCView {
                                     exclusiveGroup: setupButtonGroup
                                     onClicked: {
                                         checked = true
-                                        factRowsLoader.sourceComponent  = null
+                                        // Clear the rows from the component first. This allows us to change the componentId without
+                                        // breaking any bindings.
+                                        factRowsLoader.parameterNames   = [ ]
                                         _rowWidth                       = 10
                                         factRowsLoader.componentId      = componentId
                                         factRowsLoader.parameterNames   = controller.getParametersForGroup(componentId, modelData)
-                                        factRowsLoader.sourceComponent  = factRowsComponent
                                         _currentGroup                   = modelData
                                         factScrollView.contentX         = 0
                                         factScrollView.contentY         = 0
