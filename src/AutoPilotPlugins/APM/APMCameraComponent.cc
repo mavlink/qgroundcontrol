@@ -47,7 +47,7 @@ QString APMCameraComponent::description(void) const
 
 QString APMCameraComponent::iconResource(void) const
 {
-    return "/qmlimages/CameraComponentIcon.png";
+    return QStringLiteral("/qmlimages/CameraComponentIcon.png");
 }
 
 bool APMCameraComponent::requiresSetup(void) const
@@ -67,12 +67,12 @@ QStringList APMCameraComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl APMCameraComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/APMCameraComponent.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMCameraComponent.qml"));
 }
 
 QUrl APMCameraComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/APMCameraComponentSummary.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMCameraComponentSummary.qml"));
 }
 
 QString APMCameraComponent::prerequisiteSetup(void) const
