@@ -53,7 +53,7 @@ QString APMRadioComponent::description(void) const
 
 QString APMRadioComponent::iconResource(void) const
 {
-    return "/qmlimages/RadioComponentIcon.png";
+    return QStringLiteral("/qmlimages/RadioComponentIcon.png");
 }
 
 bool APMRadioComponent::requiresSetup(void) const
@@ -100,12 +100,12 @@ QStringList APMRadioComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl APMRadioComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/RadioComponent.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/RadioComponent.qml"));
 }
 
 QUrl APMRadioComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/APMRadioComponentSummary.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMRadioComponentSummary.qml"));
 }
 
 QString APMRadioComponent::prerequisiteSetup(void) const

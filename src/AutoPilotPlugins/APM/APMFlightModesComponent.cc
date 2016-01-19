@@ -39,12 +39,12 @@ QString APMFlightModesComponent::name(void) const
 
 QString APMFlightModesComponent::description(void) const
 {
-    return QString("The Flight Modes Component is used to assign FLight Modes to Channel 5.");
+    return QStringLiteral("The Flight Modes Component is used to assign FLight Modes to Channel 5.");
 }
 
 QString APMFlightModesComponent::iconResource(void) const
 {
-    return "/qmlimages/FlightModesComponentIcon.png";
+    return QStringLiteral("/qmlimages/FlightModesComponentIcon.png");
 }
 
 bool APMFlightModesComponent::requiresSetup(void) const
@@ -64,12 +64,12 @@ QStringList APMFlightModesComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl APMFlightModesComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/APMFlightModesComponent.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMFlightModesComponent.qml"));
 }
 
 QUrl APMFlightModesComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/APMFlightModesComponentSummary.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMFlightModesComponentSummary.qml"));
 }
 
 QString APMFlightModesComponent::prerequisiteSetup(void) const
