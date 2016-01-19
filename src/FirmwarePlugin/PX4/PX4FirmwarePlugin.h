@@ -46,7 +46,7 @@ public:
     void initializeVehicle(Vehicle* vehicle) final;
     bool sendHomePositionToVehicle(void) final;
     void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType) final;
-    QString getDefaultComponentIdParam(void) const final { return QString("SYS_AUTOSTART"); }
+    QString getDefaultComponentIdParam(void) const final { return QStringLiteral("SYS_AUTOSTART"); }
     QList<MAV_CMD> supportedMissionCommands(void) final;
     void missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const final;
 

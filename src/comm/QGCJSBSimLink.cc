@@ -110,8 +110,8 @@ void QGCJSBSimLink::run()
 #endif
 
 #ifdef Q_OS_LINUX
-    processJSB = "/usr/games/fgfs";
-    rootJSB = "/usr/share/games/flightgear";
+    processJSB = QLatin1String("/usr/games/fgfs");
+    rootJSB = QLatin1String("/usr/share/games/flightgear");
 #endif
 
     // Sanity checks
@@ -119,14 +119,14 @@ void QGCJSBSimLink::run()
     QFileInfo executable(processJSB);
     if (!executable.isExecutable())
     {
-        QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim was not found at %1").arg(processJSB));
+        QGCMessageBox::critical(QStringLiteral("JSBSim"), tr("JSBSim failed to start. JSBSim was not found at %1").arg(processJSB));
         sane = false;
     }
 
     QFileInfo root(rootJSB);
     if (!root.isDir())
     {
-        QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim data directory was not found at %1").arg(rootJSB));
+        QGCMessageBox::critical(QStringLiteral("JSBSim"), tr("JSBSim failed to start. JSBSim data directory was not found at %1").arg(rootJSB));
         sane = false;
     }
 
@@ -136,11 +136,11 @@ void QGCJSBSimLink::run()
 
     if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     {
-        arguments << QString("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
+        arguments << QStringLiteral("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
     }
     else
     {
-        arguments << QString("JSBSim --realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
+        arguments << QStringLiteral("JSBSim --realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
     }
 
     process->start(processJSB, arguments);
@@ -190,7 +190,7 @@ void QGCJSBSimLink::processError(QProcess::ProcessError err)
             break;
     }
     
-    QGCMessageBox::critical("JSBSim HIL", msg);
+    QGCMessageBox::critical(QStringLiteral("JSBSim HIL"), msg);
 }
 
 /**
@@ -198,10 +198,10 @@ void QGCJSBSimLink::processError(QProcess::ProcessError err)
  */
 void QGCJSBSimLink::setRemoteHost(const QString& host)
 {
-    if (host.contains(":"))
+    if (host.contains(QStringLiteral(":")))
     {
         //qDebug() << "HOST: " << host.split(":").first();
-        QHostInfo info = QHostInfo::fromName(host.split(":").first());
+        QHostInfo info = QHostInfo::fromName(host.split(QStringLiteral(":")).first());
         if (info.error() == QHostInfo::NoError)
         {
             // Add host
@@ -210,7 +210,7 @@ void QGCJSBSimLink::setRemoteHost(const QString& host)
             for (int i = 0; i < hostAddresses.size(); i++)
             {
                 // Exclude loopback IPv4 and all IPv6 addresses
-                if (!hostAddresses.at(i).toString().contains(":"))
+                if (!hostAddresses.at(i).toString().contains(QStringLiteral(":")))
                 {
                     address = hostAddresses.at(i);
                 }
@@ -218,7 +218,7 @@ void QGCJSBSimLink::setRemoteHost(const QString& host)
             currentHost = address;
             //qDebug() << "Address:" << address.toString();
             // Set port according to user input
-            currentPort = host.split(":").last().toInt();
+            currentPort = host.split(QStringLiteral(":")).last().toInt();
         }
     }
     else
@@ -244,7 +244,7 @@ void QGCJSBSimLink::updateControls(quint64 time, float rollAilerons, float pitch
 
     if(!isnan(rollAilerons) && !isnan(pitchElevator) && !isnan(yawRudder) && !isnan(throttle))
     {
-        QString state("%1\t%2\t%3\t%4\t%5\n");
+        QString state(QStringLiteral("%1\t%2\t%3\t%4\t%5\n"));
         state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
         writeBytes(state.toLatin1().constData(), state.length());
     }
@@ -406,7 +406,7 @@ QString QGCJSBSimLink::getName()
 
 QString QGCJSBSimLink::getRemoteHost()
 {
-    return QString("%1:%2").arg(currentHost.toString(), currentPort);
+    return QStringLiteral("%1:%2").arg(currentHost.toString(), currentPort);
 }
 
 void QGCJSBSimLink::setName(QString name)

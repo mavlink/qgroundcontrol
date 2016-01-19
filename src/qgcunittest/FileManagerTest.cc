@@ -153,18 +153,18 @@ void FileManagerTest::_listTest(void)
     
     // Send a bogus path
     //  We should get a single commandError signal
-    _fileManager->listDirectory("/bogus");
+    _fileManager->listDirectory(QStringLiteral("/bogus"));
     _multiSpy->waitForSignalByIndex(commandErrorSignalIndex, _ackTimerTimeoutMsecs);
     QCOMPARE(_multiSpy->checkOnlySignalByMask(commandErrorSignalMask), true);
     _multiSpy->clearAllSignals();
 
     // Setup the mock file server with a valid directory list
     QStringList fileList;
-    fileList << "Ddir" << "Ffoo" << "Fbar";
+    fileList << QStringLiteral("Ddir") << QStringLiteral("Ffoo") << QStringLiteral("Fbar");
     _fileServer->setFileList(fileList);
     
     // Send a list command at the root of the directory tree which should succeed
-    _fileManager->listDirectory("/");
+    _fileManager->listDirectory(QStringLiteral("/"));
     QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
     QCOMPARE(_multiSpy->checkSignalByMask(commandCompleteSignalMask), true);
     QCOMPARE(_multiSpy->checkNoSignalByMask(commandErrorSignalMask), true);
@@ -181,7 +181,7 @@ void FileManagerTest::_listTest(void)
         qDebug() << "Testing failure mode:" << errMode;
         _fileServer->setErrorMode(errMode);
         
-        _fileManager->listDirectory("/");
+        _fileManager->listDirectory(QStringLiteral("/"));
         QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
         
         if (errMode == MockLinkFileServer::errModeNoSecondResponse || errMode == MockLinkFileServer::errModeNakSecondResponse) {

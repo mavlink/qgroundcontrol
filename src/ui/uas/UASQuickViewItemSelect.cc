@@ -11,13 +11,13 @@ UASQuickViewItemSelect::UASQuickViewItemSelect(QWidget *parent) : QWidget(parent
 }
 void UASQuickViewItemSelect::addItem(QString item,bool enabled)
 {
-    QString category = ".";
+    QString category = QStringLiteral(".");
     QString name = item;
-    if (item.indexOf(":") != -1 && item.indexOf(".") != -1)
+    if (item.indexOf(QStringLiteral(":")) != -1 && item.indexOf(QStringLiteral(".")) != -1)
     {
         //Item has a subcateogry
-        category = item.mid(item.indexOf(":")+1,item.indexOf(".") - item.indexOf(":")-1);
-        name = item.mid(item.indexOf(".")+1);
+        category = item.mid(item.indexOf(QStringLiteral(":"))+1,item.indexOf(QStringLiteral(".")) - item.indexOf(QStringLiteral(":"))-1);
+        name = item.mid(item.indexOf(QStringLiteral("."))+1);
     }
     int col = -1;
     if (m_categoryToIndexMap.contains(category))

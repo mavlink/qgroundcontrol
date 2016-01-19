@@ -27,7 +27,7 @@
 
 PX4TuningComponent::PX4TuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)
-    , _name("Tuning")
+    , _name(QStringLiteral("Tuning"))
 {
 }
 
@@ -43,7 +43,7 @@ QString PX4TuningComponent::description(void) const
 
 QString PX4TuningComponent::iconResource(void) const
 {
-    return "/qmlimages/TuningComponentIcon.png";
+    return QStringLiteral("/qmlimages/TuningComponentIcon.png");
 }
 
 bool PX4TuningComponent::requiresSetup(void) const
@@ -67,7 +67,7 @@ QUrl PX4TuningComponent::setupSource(void) const
 
     switch (_vehicle->vehicleType()) {
         case MAV_TYPE_FIXED_WING:
-            qmlFile = "qrc:/qml/PX4TuningComponentPlane.qml";
+            qmlFile = QLatin1String("qrc:/qml/PX4TuningComponentPlane.qml");
             break;
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:
@@ -75,7 +75,7 @@ QUrl PX4TuningComponent::setupSource(void) const
         case MAV_TYPE_HEXAROTOR:
         case MAV_TYPE_OCTOROTOR:
         case MAV_TYPE_TRICOPTER:
-            qmlFile = "qrc:/qml/PX4TuningComponentCopter.qml";
+            qmlFile = QLatin1String("qrc:/qml/PX4TuningComponentCopter.qml");
             break;
         case MAV_TYPE_VTOL_DUOROTOR:
         case MAV_TYPE_VTOL_QUADROTOR:
@@ -84,7 +84,7 @@ QUrl PX4TuningComponent::setupSource(void) const
         case MAV_TYPE_VTOL_RESERVED3:
         case MAV_TYPE_VTOL_RESERVED4:
         case MAV_TYPE_VTOL_RESERVED5:
-            qmlFile = "qrc:/qml/PX4TuningComponentVTOL.qml";
+            qmlFile = QLatin1String("qrc:/qml/PX4TuningComponentVTOL.qml");
             break;
         default:
             break;

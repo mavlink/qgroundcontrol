@@ -40,14 +40,14 @@ QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
     QQuickWidget(parent)
 {
     setAttribute(Qt::WA_AcceptTouchEvents);
-    rootContext()->engine()->addImportPath("qrc:/qml");
-    rootContext()->setContextProperty("multiVehicleManager", qgcApp()->toolbox()->multiVehicleManager());
-    rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
+    rootContext()->engine()->addImportPath(QStringLiteral("qrc:/qml"));
+    rootContext()->setContextProperty(QStringLiteral("multiVehicleManager"), qgcApp()->toolbox()->multiVehicleManager());
+    rootContext()->setContextProperty(QStringLiteral("joystickManager"), qgcApp()->toolbox()->joystickManager());
 }
 
 void QGCQuickWidget::setAutoPilot(AutoPilotPlugin* autoPilot)
 {
-    rootContext()->setContextProperty("autopilot", autoPilot);
+    rootContext()->setContextProperty(QStringLiteral("autopilot"), autoPilot);
 }
 
 bool QGCQuickWidget::setSource(const QUrl& qmlUrl)
@@ -58,9 +58,9 @@ bool QGCQuickWidget::setSource(const QUrl& qmlUrl)
         
         foreach (QQmlError error, errors()) {
             errorList += error.toString();
-            errorList += "\n";
+            errorList += QLatin1String("\n");
         }
-        qgcApp()->showMessage(QString("Source not ready: Status(%1)\nErrors:\n%2").arg(status()).arg(errorList));
+        qgcApp()->showMessage(QStringLiteral("Source not ready: Status(%1)\nErrors:\n%2").arg(status()).arg(errorList));
         return false;
     }
     

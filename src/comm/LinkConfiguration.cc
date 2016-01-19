@@ -81,7 +81,7 @@ void LinkConfiguration::copyFrom(LinkConfiguration* source)
 */
 const QString LinkConfiguration::settingsRoot()
 {
-    return QString(LINK_SETTING_ROOT);
+    return QStringLiteral(LINK_SETTING_ROOT);
 }
 
 /*!

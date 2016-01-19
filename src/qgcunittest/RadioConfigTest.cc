@@ -213,7 +213,7 @@ void RadioConfigTest::_init(MAV_AUTOPILOT firmwareType)
     _calWidget->resize(600, 600);
     Q_CHECK_PTR(_calWidget);
     _calWidget->setAutoPilot(_autopilot);
-    _calWidget->setSource(QUrl::fromUserInput("qrc:/qml/RadioComponent.qml"));
+    _calWidget->setSource(QUrl::fromUserInput(QStringLiteral("qrc:/qml/RadioComponent.qml")));
     
     // Nasty hack to get to controller
     _controller = RadioComponentController::_unitTestController;
@@ -405,7 +405,7 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
                 if (_px4Vehicle()) {
                     // Make sure this function isn't being use for a switch
                     QStringList switchList;
-                    switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_ACRO_SW";
+                    switchList << QStringLiteral("RC_MAP_MODE_SW") << QStringLiteral("RC_MAP_LOITER_SW") << QStringLiteral("RC_MAP_RETURN_SW") << QStringLiteral("RC_MAP_POSCTL_SW") << QStringLiteral("RC_MAP_ACRO_SW");
 
                     foreach (const QString &switchParam, switchList) {
                         Q_ASSERT(_autopilot->getParameterFact(FactSystem::defaultComponentId, switchParam)->rawValue().toInt() != channel + 1);
@@ -487,10 +487,10 @@ void RadioConfigTest::_channelHomePosition(void)
 
 void RadioConfigTest::_validateParameters(void)
 {
-    QString minTpl("RC%1_MIN");
-    QString maxTpl("RC%1_MAX");
-    QString trimTpl("RC%1_TRIM");
-    QString revTpl("RC%1_REV");
+    QString minTpl(QStringLiteral("RC%1_MIN"));
+    QString maxTpl(QStringLiteral("RC%1_MAX"));
+    QString trimTpl(QStringLiteral("RC%1_TRIM"));
+    QString revTpl(QStringLiteral("RC%1_REV"));
     
     // Check mapping for all fuctions
     for (int chanFunction=0; chanFunction<RadioComponentController::rcCalFunctionMax; chanFunction++) {

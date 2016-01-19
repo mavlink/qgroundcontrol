@@ -55,7 +55,7 @@ public:
 
     virtual QwtText label(double v) const {
         QDateTime time = MG::TIME::msecToQDateTime(static_cast<quint64>(v));
-        return time.toString("hh:mm:ss"); // was hh:mm:ss:zzz
+        return time.toString(QStringLiteral("hh:mm:ss")); // was hh:mm:ss:zzz
         // Show seconds since system startup
         //return QString::number(static_cast<int>(v)/1000000);
     }
@@ -76,7 +76,7 @@ class TimeSeriesData
 {
 public:
 
-    TimeSeriesData(QwtPlot* plot, QString friendlyName = "data", quint64 plotInterval = 10000, quint64 maxInterval = 0, double zeroValue = 0);
+    TimeSeriesData(QwtPlot* plot, QString friendlyName = QStringLiteral("data"), quint64 plotInterval = 10000, quint64 maxInterval = 0, double zeroValue = 0);
     ~TimeSeriesData();
 
     void append(quint64 ms, double value);

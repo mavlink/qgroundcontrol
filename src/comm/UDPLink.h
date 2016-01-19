@@ -149,7 +149,7 @@ public:
     void        loadSettings    (QSettings& settings, const QString& root);
     void        saveSettings    (QSettings& settings, const QString& root);
     void        updateSettings  ();
-    QString     settingsURL     () { return "UdpSettings.qml"; }
+    QString     settingsURL     () { return QStringLiteral("UdpSettings.qml"); }
 
 signals:
     void localPortChanged   ();

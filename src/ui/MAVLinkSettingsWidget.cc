@@ -49,7 +49,7 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     // AUTH
     m_ui->droneOSCheckBox->setChecked(protocol->getAuthEnabled());
     QSettings settings;
-    m_ui->droneOSComboBox->setCurrentIndex(m_ui->droneOSComboBox->findText(settings.value("DRONELINK_HOST", "dronelink.io:14555").toString()));
+    m_ui->droneOSComboBox->setCurrentIndex(m_ui->droneOSComboBox->findText(settings.value(QStringLiteral("DRONELINK_HOST"), "dronelink.io:14555").toString()));
     m_ui->droneOSLineEdit->setText(protocol->getAuthKey());
 
     // Initialize state
@@ -153,7 +153,7 @@ void MAVLinkSettingsWidget::enableDroneOS(bool enable)
             for (int i = 0; i < m_ui->droneOSComboBox->count(); ++i)
             {
                 QString oldHostString = m_ui->droneOSComboBox->itemText(i);
-                oldHostString = hostString.split(":").first();
+                oldHostString = hostString.split(QStringLiteral(":")).first();
                 udp->removeHost(oldHostString);
             }
         }
@@ -169,7 +169,7 @@ void MAVLinkSettingsWidget::enableDroneOS(bool enable)
         // Set key
         protocol->setAuthKey(m_ui->droneOSLineEdit->text().trimmed());
         QSettings settings;
-        settings.setValue("DRONELINK_HOST", m_ui->droneOSComboBox->currentText());
+        settings.setValue(QStringLiteral("DRONELINK_HOST"), m_ui->droneOSComboBox->currentText());
     }
     protocol->enableAuth(enable);
 }

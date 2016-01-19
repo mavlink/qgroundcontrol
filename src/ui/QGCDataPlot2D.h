@@ -19,7 +19,7 @@ public:
     ~QGCDataPlot2D();
 
     /** @brief Calculate and display regression function*/
-    bool calculateRegression(QString xName, QString yName, QString method="linear");
+    bool calculateRegression(QString xName, QString yName, QString method=QStringLiteral("linear"));
 
     /** @brief Linear regression over data points */
     bool linearRegression(double *x, double *y, int n, double *a, double *b, double *r);
@@ -32,8 +32,8 @@ public slots:
     /** @brief Reload a file, with filtering enabled */
     void reloadFile();
     void selectFile();
-    void loadCsvLog(QString file, QString xAxisName="", QString yAxisFilter="");
-    void loadRawLog(QString file, QString xAxisName="", QString yAxisFilter="");
+    void loadCsvLog(QString file, QString xAxisName=QLatin1String(""), QString yAxisFilter=QLatin1String(""));
+    void loadRawLog(QString file, QString xAxisName=QLatin1String(""), QString yAxisFilter=QLatin1String(""));
     void saveCsvLog();
     /** @brief Save plot to PDF or SVG */
     void savePlot();

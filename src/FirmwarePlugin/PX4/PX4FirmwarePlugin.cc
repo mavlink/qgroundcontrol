@@ -112,7 +112,7 @@ QStringList PX4FirmwarePlugin::flightModes(void)
 
 QString PX4FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode)
 {
-    QString flightMode = "Unknown";
+    QString flightMode = QStringLiteral("Unknown");
 
     if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
         union px4_custom_mode px4_mode;

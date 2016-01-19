@@ -73,7 +73,7 @@ public:
     APMParameterMetaData(QObject* parent = NULL);
 
     /// Override from ParameterLoader
-    virtual QString getDefaultComponentIdParam(void) const { return QString("SYSID_SW_TYPE"); }    
+    virtual QString getDefaultComponentIdParam(void) const { return QStringLiteral("SYSID_SW_TYPE"); }    
     
     // Overrides from ParameterLoader
     static void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);

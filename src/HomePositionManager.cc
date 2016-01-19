@@ -49,7 +49,7 @@ HomePositionManager::HomePositionManager(QGCApplication* app)
     , homeLon(8.549444)
     , homeAlt(470.0)
 {
-    qmlRegisterUncreatableType<HomePositionManager> ("QGroundControl", 1, 0, "HomePositionManager", "Reference only");
+    qmlRegisterUncreatableType<HomePositionManager> ("QGroundControl", 1, 0, "HomePositionManager", QStringLiteral("Reference only"));
 }
 
 void HomePositionManager::setToolbox(QGCToolbox *toolbox)
@@ -82,10 +82,10 @@ void HomePositionManager::_storeSettings(void)
     settings.endGroup();
     
     // Deprecated settings for old editor
-    settings.beginGroup("QGC_UASMANAGER");
-    settings.setValue("HOMELAT", homeLat);
-    settings.setValue("HOMELON", homeLon);
-    settings.setValue("HOMEALT", homeAlt);
+    settings.beginGroup(QStringLiteral("QGC_UASMANAGER"));
+    settings.setValue(QStringLiteral("HOMELAT"), homeLat);
+    settings.setValue(QStringLiteral("HOMELON"), homeLon);
+    settings.setValue(QStringLiteral("HOMEALT"), homeAlt);
     settings.endGroup();
 }
 
@@ -114,7 +114,7 @@ void HomePositionManager::_loadSettings(void)
     settings.endGroup();
     
     if (_homePositions.count() == 0) {
-        _homePositions.append(new HomePosition("ETH Campus", QGeoCoordinate(47.3769, 8.549444, 470.0), this));
+        _homePositions.append(new HomePosition(QStringLiteral("ETH Campus"), QGeoCoordinate(47.3769, 8.549444, 470.0), this));
     }    
 }
 

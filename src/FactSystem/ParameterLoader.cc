@@ -114,7 +114,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     }
 #endif
 
-    if (parameterName == "_HASH_CHECK") {
+    if (parameterName == QLatin1String("_HASH_CHECK")) {
         /* we received a cache hash, potentially load from cache */
         _tryCacheHashLoad(uasId, componentId, value);
         return;
@@ -328,7 +328,7 @@ void ParameterLoader::refreshAllParameters(uint8_t componentID)
     mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->id(), componentID);
     _vehicle->sendMessageOnLink(_dedicatedLink, msg);
 
-    QString what = (componentID == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(componentID);
+    QString what = (componentID == MAV_COMP_ID_ALL) ? QStringLiteral("MAV_COMP_ID_ALL") : QString::number(componentID);
     qCDebug(ParameterLoaderLog) << "Request to refresh all parameters for component ID:" << what;
 }
 
@@ -470,7 +470,7 @@ void ParameterLoader::_waitingParamTimeout(void)
             } else {
                 // Retry again
                 paramsRequested = true;
-                _readParameterRaw(componentId, "", paramIndex);
+                _readParameterRaw(componentId, QLatin1String(""), paramIndex);
                 qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentId << "paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
 
                 if (++batchCount > maxBatchSize) {
@@ -688,12 +688,12 @@ QString ParameterLoader::readParametersFromStream(QTextStream& stream)
 
     while (!stream.atEnd()) {
         QString line = stream.readLine();
-        if (!line.startsWith("#")) {
-            QStringList wpParams = line.split("\t");
+        if (!line.startsWith(QLatin1String("#"))) {
+            QStringList wpParams = line.split(QStringLiteral("\t"));
             int lineMavId = wpParams.at(0).toInt();
             if (wpParams.size() == 5) {
                 if (_vehicle->id() != lineMavId) {
-                    return QString("The parameters in the stream have been saved from System Id %1, but the current vehicle has the System Id %2.").arg(lineMavId).arg(_vehicle->id());
+                    return QStringLiteral("The parameters in the stream have been saved from System Id %1, but the current vehicle has the System Id %2.").arg(lineMavId).arg(_vehicle->id());
                 }
 
                 int     componentId = wpParams.at(1).toInt();
@@ -703,7 +703,7 @@ QString ParameterLoader::readParametersFromStream(QTextStream& stream)
 
                 if (!_autopilot->factExists(FactSystem::ParameterProvider, componentId, paramName)) {
                     QString error;
-                    error = QString("Skipped parameter %1:%2 - does not exist on this vehicle\n").arg(componentId).arg(paramName);
+                    error = QStringLiteral("Skipped parameter %1:%2 - does not exist on this vehicle\n").arg(componentId).arg(paramName);
                     errors += error;
                     qCDebug(ParameterLoaderLog) << error;
                     continue;
@@ -712,7 +712,7 @@ QString ParameterLoader::readParametersFromStream(QTextStream& stream)
                 Fact* fact = _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName);
                 if (fact->type() != _mavTypeToFactType((MAV_PARAM_TYPE)mavType)) {
                     QString error;
-                    error  = QString("Skipped parameter %1:%2 - type mismatch %3:%4\n").arg(componentId).arg(paramName).arg(fact->type()).arg(_mavTypeToFactType((MAV_PARAM_TYPE)mavType));
+                    error  = QStringLiteral("Skipped parameter %1:%2 - type mismatch %3:%4\n").arg(componentId).arg(paramName).arg(fact->type()).arg(_mavTypeToFactType((MAV_PARAM_TYPE)mavType));
                     errors += error;
                     qCDebug(ParameterLoaderLog) << error;
                     continue;
@@ -738,7 +738,7 @@ void ParameterLoader::writeParametersToStream(QTextStream &stream)
             Fact* fact = _mapParameterName2Variant[componentId][paramName].value<Fact*>();
             Q_ASSERT(fact);
 
-            stream << _vehicle->id() << "\t" << componentId << "\t" << paramName << "\t" << fact->rawValueString() << "\t" << QString("%1").arg(_factTypeToMavType(fact->type())) << "\n";
+            stream << _vehicle->id() << "\t" << componentId << "\t" << paramName << "\t" << fact->rawValueString() << "\t" << QStringLiteral("%1").arg(_factTypeToMavType(fact->type())) << "\n";
         }
     }
 
@@ -834,9 +834,9 @@ void ParameterLoader::_checkInitialLoadComplete(void)
     foreach (int componentId, _failedReadParamIndexMap.keys()) {
         foreach (int paramIndex, _failedReadParamIndexMap[componentId]) {
             if (initialLoadFailures) {
-                indexList += ", ";
+                indexList += QLatin1String(", ");
             }
-            indexList += QString("%1").arg(paramIndex);
+            indexList += QStringLiteral("%1").arg(paramIndex);
             initialLoadFailures = true;
             qCDebug(ParameterLoaderLog) << "Gave up on initial load after max retries (componentId:" << componentId << "paramIndex:" << paramIndex << ")";
         }
@@ -854,9 +854,9 @@ void ParameterLoader::_checkInitialLoadComplete(void)
         foreach (UASMessage* msg, msgHandler->messages()) {
             if (msg->severityIsError()) {
                 if (!firstError) {
-                    errors += "<br>";
+                    errors += QLatin1String("<br>");
                 }
-                errors += " - ";
+                errors += QLatin1String(" - ");
                 errors += msg->getText();
                 firstError = false;
                 errorsFound = true;
@@ -866,7 +866,7 @@ void ParameterLoader::_checkInitialLoadComplete(void)
         msgHandler->unlockAccess();
 
         if (errorsFound) {
-            QString errorMsg = QString("<b>Critical safety issue detected:</b><br>%1").arg(errors);
+            QString errorMsg = QStringLiteral("<b>Critical safety issue detected:</b><br>%1").arg(errors);
             qgcApp()->showMessage(errorMsg);
         }
     }
@@ -891,7 +891,7 @@ void ParameterLoader::_checkInitialLoadComplete(void)
 
 void ParameterLoader::_initialRequestTimeout(void)
 {
-    qgcApp()->showMessage("Vehicle did not respond to request for parameters, retrying");
+    qgcApp()->showMessage(QStringLiteral("Vehicle did not respond to request for parameters, retrying"));
     refreshAllParameters();
     _initialRequestTimeoutTimer.start();
 }

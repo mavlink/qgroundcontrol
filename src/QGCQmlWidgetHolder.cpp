@@ -46,7 +46,7 @@ QGCQmlWidgetHolder::~QGCQmlWidgetHolder()
 
 void QGCQmlWidgetHolder::setAutoPilot(AutoPilotPlugin* autoPilot)
 {
-    setContextPropertyObject("autopilot", autoPilot);
+    setContextPropertyObject(QStringLiteral("autopilot"), autoPilot);
 }
 
 bool QGCQmlWidgetHolder::setSource(const QUrl& qmlUrl)

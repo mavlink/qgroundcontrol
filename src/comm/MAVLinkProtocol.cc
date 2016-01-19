@@ -58,7 +58,7 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
     , _logSuspendError(false)
     , _logSuspendReplay(false)
     , _logPromptForSave(false)
-    , _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension))
+    , _tempLogFile(QStringLiteral("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension))
 #endif
     , _linkMgr(NULL)
     , _multiVehicleManager(NULL)
@@ -84,7 +84,7 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
 
    qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
 
-   m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+   m_authKey = QLatin1String("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
    loadSettings();
 
    // All the *Counter variables are not initialized here, as they should be initialized
@@ -113,28 +113,28 @@ void MAVLinkProtocol::loadSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    enableVersionCheck(settings.value("VERSION_CHECK_ENABLED", m_enable_version_check).toBool());
-    enableMultiplexing(settings.value("MULTIPLEXING_ENABLED", m_multiplexingEnabled).toBool());
+    settings.beginGroup(QStringLiteral("QGC_MAVLINK_PROTOCOL"));
+    enableVersionCheck(settings.value(QStringLiteral("VERSION_CHECK_ENABLED"), m_enable_version_check).toBool());
+    enableMultiplexing(settings.value(QStringLiteral("MULTIPLEXING_ENABLED"), m_multiplexingEnabled).toBool());
 
     // Only set system id if it was valid
-    int temp = settings.value("GCS_SYSTEM_ID", systemId).toInt();
+    int temp = settings.value(QStringLiteral("GCS_SYSTEM_ID"), systemId).toInt();
     if (temp > 0 && temp < 256)
     {
         systemId = temp;
     }
 
     // Set auth key
-    m_authKey = settings.value("GCS_AUTH_KEY", m_authKey).toString();
-    enableAuth(settings.value("GCS_AUTH_ENABLED", m_authEnabled).toBool());
+    m_authKey = settings.value(QStringLiteral("GCS_AUTH_KEY"), m_authKey).toString();
+    enableAuth(settings.value(QStringLiteral("GCS_AUTH_ENABLED"), m_authEnabled).toBool());
 
     // Parameter interface settings
     bool ok;
-    temp = settings.value("PARAMETER_RETRANSMISSION_TIMEOUT", m_paramRetransmissionTimeout).toInt(&ok);
+    temp = settings.value(QStringLiteral("PARAMETER_RETRANSMISSION_TIMEOUT"), m_paramRetransmissionTimeout).toInt(&ok);
     if (ok) m_paramRetransmissionTimeout = temp;
-    temp = settings.value("PARAMETER_REWRITE_TIMEOUT", m_paramRewriteTimeout).toInt(&ok);
+    temp = settings.value(QStringLiteral("PARAMETER_REWRITE_TIMEOUT"), m_paramRewriteTimeout).toInt(&ok);
     if (ok) m_paramRewriteTimeout = temp;
-    m_paramGuardEnabled = settings.value("PARAMETER_TRANSMISSION_GUARD_ENABLED", m_paramGuardEnabled).toBool();
+    m_paramGuardEnabled = settings.value(QStringLiteral("PARAMETER_TRANSMISSION_GUARD_ENABLED"), m_paramGuardEnabled).toBool();
     settings.endGroup();
 }
 
@@ -142,16 +142,16 @@ void MAVLinkProtocol::storeSettings()
 {
     // Store settings
     QSettings settings;
-    settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    settings.setValue("VERSION_CHECK_ENABLED", m_enable_version_check);
-    settings.setValue("MULTIPLEXING_ENABLED", m_multiplexingEnabled);
-    settings.setValue("GCS_SYSTEM_ID", systemId);
-    settings.setValue("GCS_AUTH_KEY", m_authKey);
-    settings.setValue("GCS_AUTH_ENABLED", m_authEnabled);
+    settings.beginGroup(QStringLiteral("QGC_MAVLINK_PROTOCOL"));
+    settings.setValue(QStringLiteral("VERSION_CHECK_ENABLED"), m_enable_version_check);
+    settings.setValue(QStringLiteral("MULTIPLEXING_ENABLED"), m_multiplexingEnabled);
+    settings.setValue(QStringLiteral("GCS_SYSTEM_ID"), systemId);
+    settings.setValue(QStringLiteral("GCS_AUTH_KEY"), m_authKey);
+    settings.setValue(QStringLiteral("GCS_AUTH_ENABLED"), m_authEnabled);
     // Parameter interface settings
-    settings.setValue("PARAMETER_RETRANSMISSION_TIMEOUT", m_paramRetransmissionTimeout);
-    settings.setValue("PARAMETER_REWRITE_TIMEOUT", m_paramRewriteTimeout);
-    settings.setValue("PARAMETER_TRANSMISSION_GUARD_ENABLED", m_paramGuardEnabled);
+    settings.setValue(QStringLiteral("PARAMETER_RETRANSMISSION_TIMEOUT"), m_paramRetransmissionTimeout);
+    settings.setValue(QStringLiteral("PARAMETER_REWRITE_TIMEOUT"), m_paramRewriteTimeout);
+    settings.setValue(QStringLiteral("PARAMETER_TRANSMISSION_GUARD_ENABLED"), m_paramGuardEnabled);
     settings.endGroup();
 }
 
@@ -604,7 +604,7 @@ void MAVLinkProtocol::checkForLostLogFiles(void)
 {
     QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
     
-    QString filter(QString("*.%1").arg(_logFileExtension));
+    QString filter(QStringLiteral("*.%1").arg(_logFileExtension));
     QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
     qDebug() << "Orphaned log file count" << fileInfoList.count();
     
@@ -634,7 +634,7 @@ void MAVLinkProtocol::deleteTempLogFiles(void)
 {
     QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
     
-    QString filter(QString("*.%1").arg(_logFileExtension));
+    QString filter(QStringLiteral("*.%1").arg(_logFileExtension));
     QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
     
     foreach(const QFileInfo fileInfo, fileInfoList) {

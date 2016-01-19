@@ -41,7 +41,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _multiVehicleManager(NULL)
     , _mapEngineManager(NULL)
     , _virtualTabletJoystick(false)
-    , _offlineEditingFirmwareTypeFact(QString(), "OfflineEditingFirmwareType", FactMetaData::valueTypeUint32, (uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA)
+    , _offlineEditingFirmwareTypeFact(QString(), QStringLiteral("OfflineEditingFirmwareType"), FactMetaData::valueTypeUint32, (uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA)
     , _offlineEditingFirmwareTypeMetaData(FactMetaData::valueTypeUint32)
 {
     QSettings settings;
@@ -50,7 +50,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     QStringList     firmwareEnumStrings;
     QVariantList    firmwareEnumValues;
 
-    firmwareEnumStrings << "ArduPilot Flight Stack" << "PX4 Flight Stack" << "Mavlink Generic Flight Stack";
+    firmwareEnumStrings << QStringLiteral("ArduPilot Flight Stack") << QStringLiteral("PX4 Flight Stack") << QStringLiteral("Mavlink Generic Flight Stack");
     firmwareEnumValues << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_PX4) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_GENERIC);
 
     _offlineEditingFirmwareTypeMetaData.setEnumInfo(firmwareEnumStrings, firmwareEnumValues);

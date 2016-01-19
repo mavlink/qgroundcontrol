@@ -78,19 +78,19 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
     }
     
     // All calibration messages start with [cal]
-    QString calPrefix("[cal] ");
+    QString calPrefix(QStringLiteral("[cal] "));
     if (!text.startsWith(calPrefix)) {
         return;
     }
     text = text.right(text.length() - calPrefix.length());
 
     // Make sure we can understand this firmware rev
-    QString calStartPrefix("calibration started: ");
+    QString calStartPrefix(QStringLiteral("calibration started: "));
     if (text.startsWith(calStartPrefix)) {
         text = text.right(text.length() - calStartPrefix.length());
         
         // Split version number and cal type
-        QStringList parts = text.split(" ");
+        QStringList parts = text.split(QStringLiteral(" "));
         if (parts.count() != 2) {
             emit incorrectFirmwareRevReporting();
             return;
@@ -111,21 +111,21 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
 #endif
     }
 
-    if (text == "Connect battery now") {
+    if (text == QLatin1String("Connect battery now")) {
         emit connectBattery();
         return;
     }
     
-    if (text == "Battery connected") {
+    if (text == QLatin1String("Battery connected")) {
         emit batteryConnected();
         return;
     }
 
     
-    QString failedPrefix("calibration failed: ");
+    QString failedPrefix(QStringLiteral("calibration failed: "));
     if (text.startsWith(failedPrefix)) {
         QString failureText = text.right(text.length() - failedPrefix.length());
-        if (failureText.startsWith("Disconnect battery")) {
+        if (failureText.startsWith(QLatin1String("Disconnect battery"))) {
             emit disconnectBattery();
             return;
         }
@@ -135,19 +135,19 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
         return;
     }
     
-    QString calCompletePrefix("calibration done:");
+    QString calCompletePrefix(QStringLiteral("calibration done:"));
     if (text.startsWith(calCompletePrefix)) {
         _stopCalibration();
         emit calibrationSuccess(_warningMessages);
         return;
     }
     
-    QString warningPrefix("config warning: ");
+    QString warningPrefix(QStringLiteral("config warning: "));
     if (text.startsWith(warningPrefix)) {
         _warningMessages << text.right(text.length() - warningPrefix.length());
     }
 
-    QString busFailedPrefix("bus conf fail:");
+    QString busFailedPrefix(QStringLiteral("bus conf fail:"));
     if (text.startsWith(busFailedPrefix)) {
 
         _stopBusConfig();
@@ -155,14 +155,14 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
         return;
     }
 
-    QString busCompletePrefix("bus conf done:");
+    QString busCompletePrefix(QStringLiteral("bus conf done:"));
     if (text.startsWith(calCompletePrefix)) {
         _stopBusConfig();
         emit calibrationSuccess(_warningMessages);
         return;
     }
 
-    QString busWarningPrefix("bus conf warn: ");
+    QString busWarningPrefix(QStringLiteral("bus conf warn: "));
     if (text.startsWith(busWarningPrefix)) {
         _warningMessages << text.right(text.length() - warningPrefix.length());
     }

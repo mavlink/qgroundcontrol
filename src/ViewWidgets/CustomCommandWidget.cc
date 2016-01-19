@@ -28,7 +28,7 @@ CustomCommandWidget::CustomCommandWidget(const QString& title, QAction* action, 
 {
     Q_UNUSED(title);
     Q_UNUSED(action);
-	setSource(QUrl::fromUserInput("qrc:/qml/CustomCommandWidget.qml"));
+	setSource(QUrl::fromUserInput(QStringLiteral("qrc:/qml/CustomCommandWidget.qml")));
     
     loadSettings();
 }

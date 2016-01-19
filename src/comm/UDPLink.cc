@@ -75,13 +75,13 @@ static QString get_ip_address(const QString& address)
         for (int i = 0; i < hostAddresses.size(); i++)
         {
             // Exclude all IPv6 addresses
-            if (!hostAddresses.at(i).toString().contains(":"))
+            if (!hostAddresses.at(i).toString().contains(QStringLiteral(":")))
             {
                 return hostAddresses.at(i).toString();
             }
         }
     }
-    return QString("");
+    return QLatin1String("");
 }
 
 UDPLink::UDPLink(UDPConfiguration* config)
@@ -332,7 +332,7 @@ bool UDPLink::_hardwareConnect()
         }
         emit connected();
     } else {
-        emit communicationError("UDP Link Error", "Error binding UDP port");
+        emit communicationError(QStringLiteral("UDP Link Error"), QStringLiteral("Error binding UDP port"));
     }
     return _connectState;
 }
@@ -439,9 +439,9 @@ void UDPConfiguration::copyFrom(LinkConfiguration *source)
 void UDPConfiguration::addHost(const QString host)
 {
     // Handle x.x.x.x:p
-    if (host.contains(":"))
+    if (host.contains(QStringLiteral(":")))
     {
-        addHost(host.split(":").first(), host.split(":").last().toInt());
+        addHost(host.split(QStringLiteral(":")).first(), host.split(QStringLiteral(":")).last().toInt());
     }
     // If no port, use default
     else
@@ -489,7 +489,7 @@ void UDPConfiguration::addHost(const QString& host, int port)
                 //qDebug() << "UDP:" << "Adding Host:" << ipAdd << ":" << port;
             } else {
                 // It is localhost, so talk to it through the IPv4 loopback interface
-                _hosts["127.0.0.1"] = port;
+                _hosts[QStringLiteral("127.0.0.1")] = port;
             }
             changed = true;
         }
@@ -503,8 +503,8 @@ void UDPConfiguration::removeHost(const QString host)
 {
     QMutexLocker locker(&_confMutex);
     QString tHost = host;
-    if (tHost.contains(":")) {
-        tHost = tHost.split(":").first();
+    if (tHost.contains(QStringLiteral(":"))) {
+        tHost = tHost.split(QStringLiteral(":")).first();
     }
     tHost = tHost.trimmed();
     QMap<QString, int>::iterator i = _hosts.find(tHost);
@@ -550,14 +550,14 @@ void UDPConfiguration::saveSettings(QSettings& settings, const QString& root)
 {
     _confMutex.lock();
     settings.beginGroup(root);
-    settings.setValue("port", (int)_localPort);
-    settings.setValue("hostCount", _hosts.count());
+    settings.setValue(QStringLiteral("port"), (int)_localPort);
+    settings.setValue(QStringLiteral("hostCount"), _hosts.count());
     int index = 0;
     QMap<QString, int>::const_iterator it = _hosts.begin();
     while(it != _hosts.end()) {
-        QString hkey = QString("host%1").arg(index);
+        QString hkey = QStringLiteral("host%1").arg(index);
         settings.setValue(hkey, it.key());
-        QString pkey = QString("port%1").arg(index);
+        QString pkey = QStringLiteral("port%1").arg(index);
         settings.setValue(pkey, it.value());
         it++;
         index++;
@@ -572,11 +572,11 @@ void UDPConfiguration::loadSettings(QSettings& settings, const QString& root)
     _hosts.clear();
     _confMutex.unlock();
     settings.beginGroup(root);
-    _localPort = (quint16)settings.value("port", QGC_UDP_LOCAL_PORT).toUInt();
-    int hostCount = settings.value("hostCount", 0).toInt();
+    _localPort = (quint16)settings.value(QStringLiteral("port"), QGC_UDP_LOCAL_PORT).toUInt();
+    int hostCount = settings.value(QStringLiteral("hostCount"), 0).toInt();
     for(int i = 0; i < hostCount; i++) {
-        QString hkey = QString("host%1").arg(i);
-        QString pkey = QString("port%1").arg(i);
+        QString hkey = QStringLiteral("host%1").arg(i);
+        QString pkey = QStringLiteral("port%1").arg(i);
         if(settings.contains(hkey) && settings.contains(pkey)) {
             addHost(settings.value(hkey).toString(), settings.value(pkey).toInt());
         }
@@ -600,7 +600,7 @@ void UDPConfiguration::_updateHostList()
     _hostList.clear();
     QMap<QString, int>::const_iterator it = _hosts.begin();
     while(it != _hosts.end()) {
-        QString host = QString("%1").arg(it.key()) + ":" + QString("%1").arg(it.value());
+        QString host = QStringLiteral("%1").arg(it.key()) + ":" + QStringLiteral("%1").arg(it.value());
         _hostList += host;
         it++;
     }

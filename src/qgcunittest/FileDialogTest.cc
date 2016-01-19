@@ -37,7 +37,7 @@ FileDialogTest::FileDialogTest(void)
 void FileDialogTest::_fileDialogExpected_test(void)
 {
     QStringList response;
-    response << "" << "response";
+    response << QLatin1String("") << QStringLiteral("response");
     
     for (int i=0; i<response.count(); i++) {
         setExpectedFileDialog(getExistingDirectory, QStringList(response[i]));
@@ -61,8 +61,8 @@ void FileDialogTest::_fileDialogExpected_test(void)
     QStringList list;
     
     responseList.append(QStringList());
-    responseList.append(QStringList("response1"));
-    list << "response1" << "response2";
+    responseList.append(QStringList(QStringLiteral("response1")));
+    list << QStringLiteral("response1") << QStringLiteral("response2");
     responseList.append(list);
 
     for (int i=0; i<responseList.count(); i++) {

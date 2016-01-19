@@ -212,13 +212,13 @@ bool QGCAudioWorker::isMuted()
 }
 
 bool QGCAudioWorker::_getMillisecondString(const QString& string, QString& match, int& number) {
-    static QRegularExpression re("([0-9]+ms)");
+    static QRegularExpression re(QStringLiteral("([0-9]+ms)"));
     QRegularExpressionMatchIterator i = re.globalMatch(string);
     while (i.hasNext()) {
         QRegularExpressionMatch qmatch = i.next();
         if (qmatch.hasMatch()) {
             match = qmatch.captured(0);
-            number = qmatch.captured(0).replace("ms", "").toInt();
+            number = qmatch.captured(0).replace(QLatin1String("ms"), QLatin1String("")).toInt();
             return true;
         }
     }
@@ -230,59 +230,59 @@ QString QGCAudioWorker::fixTextMessageForAudio(const QString& string) {
     QString newNumber;
     QString result = string;
     //-- Look for codified terms
-    if(result.contains("ERR ", Qt::CaseInsensitive)) {
-        result.replace("ERR ", "error ", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("ERR "), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("ERR "), QLatin1String("error "), Qt::CaseInsensitive);
     }
-    if(result.contains("ERR:", Qt::CaseInsensitive)) {
-        result.replace("ERR:", "error.", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("ERR:"), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("ERR:"), QLatin1String("error."), Qt::CaseInsensitive);
     }
-    if(result.contains("POSCTL", Qt::CaseInsensitive)) {
-        result.replace("POSCTL", "Position Control", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("POSCTL"), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("POSCTL"), QLatin1String("Position Control"), Qt::CaseInsensitive);
     }
-    if(result.contains("ALTCTL", Qt::CaseInsensitive)) {
-        result.replace("ALTCTL", "Altitude Control", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("ALTCTL"), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("ALTCTL"), QLatin1String("Altitude Control"), Qt::CaseInsensitive);
     }
-    if(result.contains("AUTO_RTL", Qt::CaseInsensitive)) {
-        result.replace("AUTO_RTL", "auto Return To Land", Qt::CaseInsensitive);
-    } else if(result.contains("RTL", Qt::CaseInsensitive)) {
-        result.replace("RTL", "Return To Land", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("AUTO_RTL"), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("AUTO_RTL"), QLatin1String("auto Return To Land"), Qt::CaseInsensitive);
+    } else if(result.contains(QStringLiteral("RTL"), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("RTL"), QLatin1String("Return To Land"), Qt::CaseInsensitive);
     }
-    if(result.contains("ACCEL ", Qt::CaseInsensitive)) {
-        result.replace("ACCEL ", "accelerometer ", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("ACCEL "), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("ACCEL "), QLatin1String("accelerometer "), Qt::CaseInsensitive);
     }
-    if(result.contains("RC_MAP_MODE_SW", Qt::CaseInsensitive)) {
-        result.replace("RC_MAP_MODE_SW", "RC mode switch", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("RC_MAP_MODE_SW"), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("RC_MAP_MODE_SW"), QLatin1String("RC mode switch"), Qt::CaseInsensitive);
     }
-    if(result.contains("REJ.", Qt::CaseInsensitive)) {
-        result.replace("REJ.", "Rejected", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("REJ."), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("REJ."), QLatin1String("Rejected"), Qt::CaseInsensitive);
     }
-    if(result.contains("WP", Qt::CaseInsensitive)) {
-        result.replace("WP", "way point", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("WP"), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("WP"), QLatin1String("way point"), Qt::CaseInsensitive);
     }
-    if(result.contains("CMD", Qt::CaseInsensitive)) {
-        result.replace("CMD", "command", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("CMD"), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("CMD"), QLatin1String("command"), Qt::CaseInsensitive);
     }
-    if(result.contains("COMPID", Qt::CaseInsensitive)) {
-        result.replace("COMPID", "component eye dee", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral("COMPID"), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String("COMPID"), QLatin1String("component eye dee"), Qt::CaseInsensitive);
     }
-    if(result.contains(" params ", Qt::CaseInsensitive)) {
-        result.replace(" params ", " parameters ", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral(" params "), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String(" params "), QLatin1String(" parameters "), Qt::CaseInsensitive);
     }
-    if(result.contains(" id ", Qt::CaseInsensitive)) {
-        result.replace(" id ", " eye dee ", Qt::CaseInsensitive);
+    if(result.contains(QStringLiteral(" id "), Qt::CaseInsensitive)) {
+        result.replace(QLatin1String(" id "), QLatin1String(" eye dee "), Qt::CaseInsensitive);
     }
     int number;
     if(_getMillisecondString(string, match, number) && number > 1000) {
         if(number < 60000) {
             int seconds = number / 1000;
-            newNumber = QString("%1 second%2").arg(seconds).arg(seconds > 1 ? "s" : "");
+            newNumber = QStringLiteral("%1 second%2").arg(seconds).arg(seconds > 1 ? "s" : "");
         } else {
             int minutes = number / 60000;
             int seconds = (number - (minutes * 60000)) / 1000;
             if (!seconds) {
-                newNumber = QString("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
+                newNumber = QStringLiteral("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
             } else {
-                newNumber = QString("%1 minute%2 and %3 second%4").arg(minutes).arg(minutes > 1 ? "s" : "").arg(seconds).arg(seconds > 1 ? "s" : "");
+                newNumber = QStringLiteral("%1 minute%2 and %3 second%4").arg(minutes).arg(minutes > 1 ? "s" : "").arg(seconds).arg(seconds > 1 ? "s" : "");
             }
         }
         result.replace(match, newNumber);

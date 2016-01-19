@@ -97,8 +97,8 @@ void APMRemoteParamsDownloader::startFileDownloadRequest()
     // Find the correct file from the json file list.
     while(curr != end) {
         obj = (*curr).toObject();
-        url = QUrl(obj["download_url"].toString());
-        QString name = obj["name"].toString();
+        url = QUrl(obj[QStringLiteral("download_url")].toString());
+        QString name = obj[QStringLiteral("name")].toString();
         if (name == m_fileToDownload) {
             break;
         }
@@ -111,7 +111,7 @@ void APMRemoteParamsDownloader::startFileDownloadRequest()
     if (!parameterDir.exists())
         parameterDir.mkpath(dataLocation);
 
-    QString filename = parameterDir.absoluteFilePath(obj["name"].toString());
+    QString filename = parameterDir.absoluteFilePath(obj[QStringLiteral("name")].toString());
 
     if(m_downloadedParamFile)
         m_downloadedParamFile->deleteLater();

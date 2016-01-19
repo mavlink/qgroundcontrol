@@ -471,7 +471,7 @@ void ArbFpSurfacePainter::init(const BufferFormat &format)
 
     GLenum glError = funcs->glGetError();
     if (glError != GL_NO_ERROR) {
-        throw QString("ARBfb Shader allocation error ") +
+        throw QStringLiteral("ARBfb Shader allocation error ") +
             QString::number(static_cast<int>(glError), 16);
     } else {
         glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, m_programId);
@@ -486,7 +486,7 @@ void ArbFpSurfacePainter::init(const BufferFormat &format)
             glDeleteProgramsARB(1, &m_programId);
             m_textureCount = 0;
             m_programId = 0;
-            throw QString("ARBfp Shader compile error ") +
+            throw QStringLiteral("ARBfp Shader compile error ") +
                 QString::number(static_cast<int>(glError), 16) +
                 reinterpret_cast<const char *>(errorString);
         } else {
@@ -719,15 +719,15 @@ void GlslSurfacePainter::init(const BufferFormat &format)
     m_videoColorMatrix = format.colorMatrix();
 
     if (!m_program.addShaderFromSourceCode(QGLShader::Vertex, qt_glsl_vertexShaderProgram)) {
-        throw QString("Vertex shader compile error ") + m_program.log();
+        throw QStringLiteral("Vertex shader compile error ") + m_program.log();
     }
 
     if (!m_program.addShaderFromSourceCode(QGLShader::Fragment, fragmentProgram)) {
-        throw QString("Shader compile error ") + m_program.log();
+        throw QStringLiteral("Shader compile error ") + m_program.log();
     }
 
     if(!m_program.link()) {
-        throw QString("Shader link error ") + m_program.log();
+        throw QStringLiteral("Shader link error ") + m_program.log();
     }
 
     QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();

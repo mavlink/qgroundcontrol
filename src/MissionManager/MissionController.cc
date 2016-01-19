@@ -331,7 +331,7 @@ void MissionController::_loadMissionFromFile(const QString& filename)
         QTextStream stream(&bytes);
 
         QString firstLine = stream.readLine();
-        if (firstLine.contains(QRegExp("QGC.*WPL"))) {
+        if (firstLine.contains(QRegExp(QStringLiteral("QGC.*WPL")))) {
             stream.seek(0);
             _loadTextMissionFile(stream, newMissionItems, errorString);
         } else {
@@ -360,7 +360,12 @@ void MissionController::_loadMissionFromFile(const QString& filename)
 void MissionController::loadMissionFromFile(void)
 {
 #ifndef __mobile__
-    QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Mission File to load", QString(), "Mission file (*.mission);;All Files (*.*)");
+
+    QString filename = QGCFileDialog::getOpenFileName(
+        NULL,
+        QStringLiteral("Select Mission File to load"),
+        QString(),
+        QStringLiteral("Mission file (*.mission);;All Files (*.*)"));
 
     if (filename.isEmpty()) {
         return;

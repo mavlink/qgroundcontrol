@@ -107,7 +107,7 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
         parameterFilename = parameterMetaDataFile();
     }
 	if (parameterFilename.isEmpty() || !QFile(parameterFilename).exists()) {
-		parameterFilename = ":/AutoPilotPlugins/PX4/ParameterFactMetaData.xml";
+		parameterFilename = QLatin1String(":/AutoPilotPlugins/PX4/ParameterFactMetaData.xml");
 	}
 	
     qCDebug(PX4ParameterMetaDataLog) << "Loading parameter meta data:" << parameterFilename;
@@ -136,14 +136,14 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
         if (xml.isStartElement()) {
             QString elementName = xml.name().toString();
             
-            if (elementName == "parameters") {
+            if (elementName == QLatin1String("parameters")) {
                 if (xmlState != XmlStateNone) {
                     qWarning() << "Badly formed XML";
                     return;
                 }
                 xmlState = XmlStateFoundParameters;
                 
-            } else if (elementName == "version") {
+            } else if (elementName == QLatin1String("version")) {
                 if (xmlState != XmlStateFoundParameters) {
                     qWarning() << "Badly formed XML";
                     return;
@@ -164,7 +164,7 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                 }
                 
                 
-            } else if (elementName == "group") {
+            } else if (elementName == QLatin1String("group")) {
                 if (xmlState != XmlStateFoundVersion) {
                     // We didn't get a version stamp, assume older version we can't read
                     qDebug() << "Parameter version stamp not found, skipping load" << parameterFilename;
@@ -172,28 +172,28 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                 }
                 xmlState = XmlStateFoundGroup;
                 
-                if (!xml.attributes().hasAttribute("name")) {
+                if (!xml.attributes().hasAttribute(QStringLiteral("name"))) {
                     qWarning() << "Badly formed XML";
                     return;
                 }
-                factGroup = xml.attributes().value("name").toString();
+                factGroup = xml.attributes().value(QStringLiteral("name")).toString();
                 qCDebug(PX4ParameterMetaDataLog) << "Found group: " << factGroup;
                 
-            } else if (elementName == "parameter") {
+            } else if (elementName == QLatin1String("parameter")) {
                 if (xmlState != XmlStateFoundGroup) {
                     qWarning() << "Badly formed XML";
                     return;
                 }
                 xmlState = XmlStateFoundParameter;
                 
-                if (!xml.attributes().hasAttribute("name") || !xml.attributes().hasAttribute("type")) {
+                if (!xml.attributes().hasAttribute(QStringLiteral("name")) || !xml.attributes().hasAttribute(QStringLiteral("type"))) {
                     qWarning() << "Badly formed XML";
                     return;
                 }
                 
-                QString name = xml.attributes().value("name").toString();
-                QString type = xml.attributes().value("type").toString();
-                QString strDefault =    xml.attributes().value("default").toString();
+                QString name = xml.attributes().value(QStringLiteral("name")).toString();
+                QString type = xml.attributes().value(QStringLiteral("type")).toString();
+                QString strDefault =    xml.attributes().value(QStringLiteral("default")).toString();
                 
                 qCDebug(PX4ParameterMetaDataLog) << "Found parameter name:" << name << " type:" << type << " default:" << strDefault;
 
@@ -220,7 +220,7 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                     metaData->setName(name);
                     metaData->setGroup(factGroup);
                     
-                    if (xml.attributes().hasAttribute("default") && !strDefault.isEmpty()) {
+                    if (xml.attributes().hasAttribute(QStringLiteral("default")) && !strDefault.isEmpty()) {
                         QVariant varDefault;
                         
                         if (metaData->convertAndValidateRaw(strDefault, false, varDefault, errorString)) {
@@ -239,21 +239,21 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                 }
 
                 if (!badMetaData) {
-                    if (elementName == "short_desc") {
+                    if (elementName == QLatin1String("short_desc")) {
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
-                        text = text.replace("\n", " ");
+                        text = text.replace(QLatin1String("\n"), QLatin1String(" "));
                         qCDebug(PX4ParameterMetaDataLog) << "Short description:" << text;
                         metaData->setShortDescription(text);
 
-                    } else if (elementName == "long_desc") {
+                    } else if (elementName == QLatin1String("long_desc")) {
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
-                        text = text.replace("\n", " ");
+                        text = text.replace(QLatin1String("\n"), QLatin1String(" "));
                         qCDebug(PX4ParameterMetaDataLog) << "Long description:" << text;
                         metaData->setLongDescription(text);
                         
-                    } else if (elementName == "min") {
+                    } else if (elementName == QLatin1String("min")) {
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
                         qCDebug(PX4ParameterMetaDataLog) << "Min:" << text;
@@ -265,7 +265,7 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                             qCWarning(PX4ParameterMetaDataLog) << "Invalid min value, name:" << metaData->name() << " type:" << metaData->type() << " min:" << text << " error:" << errorString;
                         }
                         
-                    } else if (elementName == "max") {
+                    } else if (elementName == QLatin1String("max")) {
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
                         qCDebug(PX4ParameterMetaDataLog) << "Max:" << text;
@@ -277,13 +277,13 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                             qCWarning(PX4ParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
                         }
                         
-                    } else if (elementName == "unit") {
+                    } else if (elementName == QLatin1String("unit")) {
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
                         qCDebug(PX4ParameterMetaDataLog) << "Unit:" << text;
                         metaData->setRawUnits(text);
                         
-                    } else if (elementName == "decimal") {
+                    } else if (elementName == QLatin1String("decimal")) {
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
                         qCDebug(PX4ParameterMetaDataLog) << "Decimal:" << text;
@@ -296,11 +296,11 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                             qCWarning(PX4ParameterMetaDataLog) << "Invalid decimals value, name:" << metaData->name() << " type:" << metaData->type() << " decimals:" << text << " error: invalid number";
                         }
 
-                    } else if (elementName == "reboot_required") {
+                    } else if (elementName == QLatin1String("reboot_required")) {
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
                         qCDebug(PX4ParameterMetaDataLog) << "RebootRequired:" << text;
-                        if (text.compare("true", Qt::CaseInsensitive) == 0) {
+                        if (text.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0) {
                             metaData->setRebootRequired(true);
                         }
 
@@ -330,7 +330,7 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
         } else if (xml.isEndElement()) {
             QString elementName = xml.name().toString();
 
-            if (elementName == "parameter") {
+            if (elementName == QLatin1String("parameter")) {
                 // Done loading this parameter, validate default value
                 if (metaData->defaultValueAvailable()) {
                     QVariant var;
@@ -344,9 +344,9 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                 metaData = NULL;
                 badMetaData = false;
                 xmlState = XmlStateFoundGroup;
-            } else if (elementName == "group") {
+            } else if (elementName == QLatin1String("group")) {
                 xmlState = XmlStateFoundVersion;
-            } else if (elementName == "parameters") {
+            } else if (elementName == QLatin1String("parameters")) {
                 xmlState = XmlStateFoundParameters;
             }
         }

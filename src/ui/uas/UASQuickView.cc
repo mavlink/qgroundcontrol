@@ -31,19 +31,19 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
     //If we don't have any predefined settings, set some defaults.
     if (uasPropertyValueMap.size() == 0)
     {
-        valueEnabled("altitudeAMSL");
-        valueEnabled("altitudeAMSLFT");
-        valueEnabled("altitudeRelative");
-        valueEnabled("groundSpeed");
-        valueEnabled("distToWaypoint");
+        valueEnabled(QStringLiteral("altitudeAMSL"));
+        valueEnabled(QStringLiteral("altitudeAMSLFT"));
+        valueEnabled(QStringLiteral("altitudeRelative"));
+        valueEnabled(QStringLiteral("groundSpeed"));
+        valueEnabled(QStringLiteral("distToWaypoint"));
     }
 
-    QAction *action = new QAction("Add/Remove Items",this);
+    QAction *action = new QAction(QStringLiteral("Add/Remove Items"),this);
     action->setCheckable(false);
     connect(action,&QAction::triggered,this, &UASQuickView::addActionTriggered);
     this->addAction(action);
 
-    QAction *columnaction = new QAction("Set Column Count",this);
+    QAction *columnaction = new QAction(QStringLiteral("Set Column Count"),this);
     columnaction->setCheckable(false);
     connect(columnaction,&QAction::triggered,this,&UASQuickView::columnActionTriggered);
     this->addAction(columnaction);
@@ -64,7 +64,7 @@ void UASQuickView::columnActionTriggered()
 {
     bool ok = false;
     int newcolumns = QInputDialog::getInt(
-        this,"Columns","Enter number of columns", m_columnCount, 1, 10, 1, &ok);
+        this,QStringLiteral("Columns"),QStringLiteral("Enter number of columns"), m_columnCount, 1, 10, 1, &ok);
     if (!ok)
     {
         return;
@@ -96,28 +96,28 @@ void UASQuickView::addActionTriggered()
 void UASQuickView::saveSettings()
 {
     QSettings settings;
-    settings.beginWriteArray("UAS_QUICK_VIEW_ITEMS");
+    settings.beginWriteArray(QStringLiteral("UAS_QUICK_VIEW_ITEMS"));
     int count = 0;
     for (QMap<QString,UASQuickViewItem*>::const_iterator i = uasPropertyToLabelMap.constBegin();i!=uasPropertyToLabelMap.constEnd();i++)
     {
         settings.setArrayIndex(count++);
-        settings.setValue("name",i.key());
-        settings.setValue("type","text");
+        settings.setValue(QStringLiteral("name"),i.key());
+        settings.setValue(QStringLiteral("type"),"text");
     }
     settings.endArray();
-    settings.setValue("UAS_QUICK_VIEW_COLUMNS",m_columnCount);
+    settings.setValue(QStringLiteral("UAS_QUICK_VIEW_COLUMNS"),m_columnCount);
 }
 void UASQuickView::loadSettings()
 {
     QSettings settings;
-    m_columnCount = settings.value("UAS_QUICK_VIEW_COLUMNS",1).toInt();
-    int size = settings.beginReadArray("UAS_QUICK_VIEW_ITEMS");
+    m_columnCount = settings.value(QStringLiteral("UAS_QUICK_VIEW_COLUMNS"),1).toInt();
+    int size = settings.beginReadArray(QStringLiteral("UAS_QUICK_VIEW_ITEMS"));
     for (int i = 0; i < size; i++)
     {
         settings.setArrayIndex(i);
-        QString nameval = settings.value("name").toString();
-        QString typeval = settings.value("type").toString();
-        if (typeval == "text" && !uasPropertyToLabelMap.contains(nameval))
+        QString nameval = settings.value(QStringLiteral("name")).toString();
+        QString typeval = settings.value(QStringLiteral("type")).toString();
+        if (typeval == QLatin1String("text") && !uasPropertyToLabelMap.contains(nameval))
         {
             valueEnabled(nameval);
         }

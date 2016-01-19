@@ -54,7 +54,7 @@ public:
     void        saveSettings            (QSettings& settings, const QString& root);
     void        updateSettings          ();
     bool        isAutoConnectAllowed    () { return false; }
-    QString     settingsURL             () { return "LogReplaySettings.qml"; }
+    QString     settingsURL             () { return QStringLiteral("LogReplaySettings.qml"); }
 signals:
     void fileNameChanged();
 

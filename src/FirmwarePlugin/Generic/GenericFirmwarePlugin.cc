@@ -55,14 +55,14 @@ QString GenericFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mod
     Q_UNUSED(custom_mode);
     
     if (base_mode == 0) {
-        flightMode = "PreFlight";
+        flightMode = QLatin1String("PreFlight");
     } else if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
-        flightMode = QString("Custom:0x%1").arg(custom_mode, 0, 16);
+        flightMode = QStringLiteral("Custom:0x%1").arg(custom_mode, 0, 16);
     } else {
         for (size_t i=0; i<sizeof(rgBit2Name)/sizeof(rgBit2Name[0]); i++) {
             if (base_mode & rgBit2Name[i].baseModeBit) {
                 if (i != 0) {
-                    flightMode += " ";
+                    flightMode += QLatin1String(" ");
                 }
                 flightMode += rgBit2Name[i].name;
             }

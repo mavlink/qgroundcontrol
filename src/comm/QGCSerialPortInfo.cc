@@ -75,22 +75,22 @@ QGCSerialPortInfo::BoardType_t QGCSerialPortInfo::boardType(void) const
     if (boardType == BoardTypeUnknown) {
         // Fall back to port name matching which could lead to incorrect board mapping. But in some cases the
         // vendor and product id do not come through correctly so this is used as a last chance detection method.
-        if (description() == "PX4 FMU v4.x" || description() == "PX4 BL FMU v4.x") {
+        if (description() == QLatin1String("PX4 FMU v4.x") || description() == QLatin1String("PX4 BL FMU v4.x")) {
             qCDebug(QGCSerialPortInfoLog) << "Found PX4 FMU V4 (by name matching fallback)";
             boardType = BoardTypePX4FMUV4;
-        } else if (description() == "PX4 FMU v2.x" || description() == "PX4 BL FMU v2.x") {
+        } else if (description() == QLatin1String("PX4 FMU v2.x") || description() == QLatin1String("PX4 BL FMU v2.x")) {
             qCDebug(QGCSerialPortInfoLog) << "Found PX4 FMU V2 (by name matching fallback)";
             boardType = BoardTypePX4FMUV2;
-        } else if (description() == "PX4 FMU v1.x" || description() == "PX4 BL FMU v1.x") {
+        } else if (description() == QLatin1String("PX4 FMU v1.x") || description() == QLatin1String("PX4 BL FMU v1.x")) {
             qCDebug(QGCSerialPortInfoLog) << "Found PX4 FMU V1 (by name matching fallback)";
             boardType = BoardTypePX4FMUV1;
-        } else if (description().startsWith("PX4 FMU")) {
+        } else if (description().startsWith(QLatin1String("PX4 FMU"))) {
             qCDebug(QGCSerialPortInfoLog) << "Found PX4 FMU, assuming V2 (by name matching fallback)";
             boardType = BoardTypePX4FMUV2;
         } else if (description().contains(QRegExp("PX4.*Flow", Qt::CaseInsensitive))) {
             qCDebug(QGCSerialPortInfoLog) << "Found possible px4 flow camera (by name matching fallback)";
             boardType = BoardTypePX4Flow;
-        } else if (description() == "FT231X USB UART") {
+        } else if (description() == QLatin1String("FT231X USB UART")) {
             qCDebug(QGCSerialPortInfoLog) << "Found possible Radio (by name matching fallback)";
             boardType = BoardType3drRadio;
 #ifdef __android__
@@ -127,5 +127,5 @@ bool QGCSerialPortInfo::boardTypePixhawk(void) const
 bool QGCSerialPortInfo::isBootloader(void) const
 {
     // FIXME: Check SerialLink bootloade detect code which is different
-    return boardTypePixhawk() && description().contains("BL");
+    return boardTypePixhawk() && description().contains(QStringLiteral("BL"));
 }
