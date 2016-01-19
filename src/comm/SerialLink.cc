@@ -71,9 +71,9 @@ bool SerialLink::_isBootloader()
         qCDebug(SerialLinkLog) << "PortName    : " << info.portName() << "Description : " << info.description();
         qCDebug(SerialLinkLog) << "Manufacturer: " << info.manufacturer();
         if (info.portName().trimmed() == _config->portName() &&
-                (info.description().toLower().contains("bootloader") ||
-                 info.description().toLower().contains("px4 bl") ||
-                 info.description().toLower().contains("px4 fmu v1.6"))) {
+                (info.description().toLower().contains(QStringLiteral("bootloader")) ||
+                 info.description().toLower().contains(QStringLiteral("px4 bl")) ||
+                 info.description().toLower().contains(QStringLiteral("px4 fmu v1.6")))) {
             qCDebug(SerialLinkLog) << "BOOTLOADER FOUND";
             return true;
        }
@@ -167,7 +167,7 @@ bool SerialLink::_connect(void)
             }
         }
 
-        _emitLinkError(QString("Error connecting: Could not create port. %1").arg(errorString));
+        _emitLinkError(QStringLiteral("Error connecting: Could not create port. %1").arg(errorString));
         return false;
     }
     return true;
@@ -255,7 +255,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
     _port->setStopBits     (static_cast<QSerialPort::StopBits>     (_config->stopBits()));
     _port->setParity       (static_cast<QSerialPort::Parity>       (_config->parity()));
 
-    emit communicationUpdate(getName(), "Opened port!");
+    emit communicationUpdate(getName(), QStringLiteral("Opened port!"));
     emit connected();
 
     qCDebug(SerialLinkLog) << "Connection SeriaLink: " << "with settings" << _config->portName()
@@ -368,7 +368,7 @@ void SerialLink::_resetConfiguration()
 
 void SerialLink::_emitLinkError(const QString& errorMsg)
 {
-    QString msg("Error on link %1. %2");
+    QString msg(QStringLiteral("Error on link %1. %2"));
     qDebug() << errorMsg;
     emit communicationError(tr("Link Error"), msg.arg(getName()).arg(errorMsg));
 }
@@ -469,8 +469,8 @@ QString SerialConfiguration::cleanPortDisplayname(const QString name)
 #ifdef Q_OS_WIN
     pname.replace("\\\\.\\", "");
 #else
-    pname.replace("/dev/cu.", "");
-    pname.replace("/dev/", "");
+    pname.replace(QLatin1String("/dev/cu."), QLatin1String(""));
+    pname.replace(QLatin1String("/dev/"), QLatin1String(""));
 #endif
     return pname;
 }
@@ -478,26 +478,26 @@ QString SerialConfiguration::cleanPortDisplayname(const QString name)
 void SerialConfiguration::saveSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
-    settings.setValue("baud",           _baud);
-    settings.setValue("dataBits",       _dataBits);
-    settings.setValue("flowControl",    _flowControl);
-    settings.setValue("stopBits",       _stopBits);
-    settings.setValue("parity",         _parity);
-    settings.setValue("portName",       _portName);
-    settings.setValue("portDisplayName",_portDisplayName);
+    settings.setValue(QStringLiteral("baud"),           _baud);
+    settings.setValue(QStringLiteral("dataBits"),       _dataBits);
+    settings.setValue(QStringLiteral("flowControl"),    _flowControl);
+    settings.setValue(QStringLiteral("stopBits"),       _stopBits);
+    settings.setValue(QStringLiteral("parity"),         _parity);
+    settings.setValue(QStringLiteral("portName"),       _portName);
+    settings.setValue(QStringLiteral("portDisplayName"),_portDisplayName);
     settings.endGroup();
 }
 
 void SerialConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
-    if(settings.contains("baud"))           _baud           = settings.value("baud").toInt();
-    if(settings.contains("dataBits"))       _dataBits       = settings.value("dataBits").toInt();
-    if(settings.contains("flowControl"))    _flowControl    = settings.value("flowControl").toInt();
-    if(settings.contains("stopBits"))       _stopBits       = settings.value("stopBits").toInt();
-    if(settings.contains("parity"))         _parity         = settings.value("parity").toInt();
-    if(settings.contains("portName"))       _portName       = settings.value("portName").toString();
-    if(settings.contains("portDisplayName"))_portDisplayName= settings.value("portDisplayName").toString();
+    if(settings.contains(QStringLiteral("baud")))           _baud           = settings.value(QStringLiteral("baud")).toInt();
+    if(settings.contains(QStringLiteral("dataBits")))       _dataBits       = settings.value(QStringLiteral("dataBits")).toInt();
+    if(settings.contains(QStringLiteral("flowControl")))    _flowControl    = settings.value(QStringLiteral("flowControl")).toInt();
+    if(settings.contains(QStringLiteral("stopBits")))       _stopBits       = settings.value(QStringLiteral("stopBits")).toInt();
+    if(settings.contains(QStringLiteral("parity")))         _parity         = settings.value(QStringLiteral("parity")).toInt();
+    if(settings.contains(QStringLiteral("portName")))       _portName       = settings.value(QStringLiteral("portName")).toString();
+    if(settings.contains(QStringLiteral("portDisplayName")))_portDisplayName= settings.value(QStringLiteral("portDisplayName")).toString();
     settings.endGroup();
 }
 
@@ -529,32 +529,32 @@ void SerialConfiguration::_initBaudRates()
     kSupportedBaudRates << "1800";
 #endif
 #endif
-    kSupportedBaudRates << "2400";
-    kSupportedBaudRates << "4800";
-    kSupportedBaudRates << "9600";
+    kSupportedBaudRates << QStringLiteral("2400");
+    kSupportedBaudRates << QStringLiteral("4800");
+    kSupportedBaudRates << QStringLiteral("9600");
 #if defined(Q_OS_WIN)
     kSupportedBaudRates << "14400";
 #endif
-    kSupportedBaudRates << "19200";
-    kSupportedBaudRates << "38400";
+    kSupportedBaudRates << QStringLiteral("19200");
+    kSupportedBaudRates << QStringLiteral("38400");
 #if defined(Q_OS_WIN)
     kSupportedBaudRates << "56000";
 #endif
-    kSupportedBaudRates << "57600";
-    kSupportedBaudRates << "115200";
+    kSupportedBaudRates << QStringLiteral("57600");
+    kSupportedBaudRates << QStringLiteral("115200");
 #if defined(Q_OS_WIN)
     kSupportedBaudRates << "128000";
 #endif
-    kSupportedBaudRates << "230400";
+    kSupportedBaudRates << QStringLiteral("230400");
 #if defined(Q_OS_WIN)
     kSupportedBaudRates << "256000";
 #endif
-    kSupportedBaudRates << "460800";
+    kSupportedBaudRates << QStringLiteral("460800");
 #if defined(Q_OS_LINUX)
-    kSupportedBaudRates << "500000";
-    kSupportedBaudRates << "576000";
+    kSupportedBaudRates << QStringLiteral("500000");
+    kSupportedBaudRates << QStringLiteral("576000");
 #endif
-    kSupportedBaudRates << "921600";
+    kSupportedBaudRates << QStringLiteral("921600");
 }
 
 void SerialConfiguration::setUsbDirect(bool usbDirect)

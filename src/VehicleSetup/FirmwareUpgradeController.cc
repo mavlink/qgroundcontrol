@@ -126,24 +126,24 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
 
     switch (boardType) {
     case QGCSerialPortInfo::BoardTypePX4FMUV1:
-        _foundBoardTypeName = "PX4 FMU V1";
+        _foundBoardTypeName = QLatin1String("PX4 FMU V1");
         _startFlashWhenBootloaderFound = false;
         break;
     case QGCSerialPortInfo::BoardTypePX4FMUV2:
     case QGCSerialPortInfo::BoardTypePX4FMUV4:
-        _foundBoardTypeName = "Pixhawk";
+        _foundBoardTypeName = QLatin1String("Pixhawk");
         _startFlashWhenBootloaderFound = false;
         break;
     case QGCSerialPortInfo::BoardTypeAeroCore:
-        _foundBoardTypeName = "AeroCore";
+        _foundBoardTypeName = QLatin1String("AeroCore");
         _startFlashWhenBootloaderFound = false;
         break;
     case QGCSerialPortInfo::BoardTypePX4Flow:
-        _foundBoardTypeName = "PX4 Flow";
+        _foundBoardTypeName = QLatin1String("PX4 Flow");
         _startFlashWhenBootloaderFound = false;
         break;
     case QGCSerialPortInfo::BoardType3drRadio:
-        _foundBoardTypeName = "3DR Radio";
+        _foundBoardTypeName = QLatin1String("3DR Radio");
         if (!firstAttempt) {
             // Radio always flashes latest firmware, so we can start right away without
             // any further user input.
@@ -180,10 +180,10 @@ void FirmwareUpgradeController::_foundBootloader(int bootloaderVersion, int boar
     _bootloaderBoardID = boardID;
     _bootloaderBoardFlashSize = flashSize;
     
-    _appendStatusLog("Connected to bootloader:");
-    _appendStatusLog(QString("  Version: %1").arg(_bootloaderVersion));
-    _appendStatusLog(QString("  Board ID: %1").arg(_bootloaderBoardID));
-    _appendStatusLog(QString("  Flash size: %1").arg(_bootloaderBoardFlashSize));
+    _appendStatusLog(QStringLiteral("Connected to bootloader:"));
+    _appendStatusLog(QStringLiteral("  Version: %1").arg(_bootloaderVersion));
+    _appendStatusLog(QStringLiteral("  Board ID: %1").arg(_bootloaderBoardID));
+    _appendStatusLog(QStringLiteral("  Flash size: %1").arg(_bootloaderBoardFlashSize));
     
     if (_startFlashWhenBootloaderFound) {
         flash(_startFlashWhenBootloaderFoundFirmwareIdentity);
@@ -338,7 +338,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
 ///         machine to the appropriate error state.
 void FirmwareUpgradeController::_bootloaderSyncFailed(void)
 {
-    _errorCancel("Unable to sync with bootloader.");
+    _errorCancel(QStringLiteral("Unable to sync with bootloader."));
 }
 
 QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_firmwareHashForBoardId(int boardId)
@@ -400,27 +400,27 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
     QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(_bootloaderBoardID);
     
     if (!prgFirmware && firmwareId.firmwareType != CustomFirmware) {
-        _errorCancel("Attempting to flash an unknown board type, you must select 'Custom firmware file'");
+        _errorCancel(QStringLiteral("Attempting to flash an unknown board type, you must select 'Custom firmware file'"));
         return;
     }
     
     if (firmwareId.firmwareType == CustomFirmware) {
         _firmwareFilename = QGCFileDialog::getOpenFileName(NULL,                                                                // Parent to main window
-                                                           "Select Firmware File",                                              // Dialog Caption
+                                                           QStringLiteral("Select Firmware File"),                                              // Dialog Caption
                                                            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), // Initial directory
-                                                           "Firmware Files (*.px4 *.bin *.ihx)");                               // File filter
+                                                           QStringLiteral("Firmware Files (*.px4 *.bin *.ihx)"));                               // File filter
     } else {
 
         if (prgFirmware->contains(firmwareId)) {
             _firmwareFilename = prgFirmware->value(firmwareId);
         } else {
-            _errorCancel("Unable to find specified firmware download location");
+            _errorCancel(QStringLiteral("Unable to find specified firmware download location"));
             return;
         }
     }
     
     if (_firmwareFilename.isEmpty()) {
-        _errorCancel("No firmware file selected");
+        _errorCancel(QStringLiteral("No firmware file selected"));
     } else {
         _downloadFirmware();
     }
@@ -431,8 +431,8 @@ void FirmwareUpgradeController::_downloadFirmware(void)
 {
     Q_ASSERT(!_firmwareFilename.isEmpty());
     
-    _appendStatusLog("Downloading firmware...");
-    _appendStatusLog(QString(" From: %1").arg(_firmwareFilename));
+    _appendStatusLog(QStringLiteral("Downloading firmware..."));
+    _appendStatusLog(QStringLiteral(" From: %1").arg(_firmwareFilename));
     
     // Split out filename from path
     QString firmwareFilename = QFileInfo(_firmwareFilename).fileName();
@@ -443,7 +443,7 @@ void FirmwareUpgradeController::_downloadFirmware(void)
     if (downloadFile.isEmpty()) {
         downloadFile = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
         if (downloadFile.isEmpty()) {
-            _errorCancel("Unabled to find writable download location. Tried downloads and temp directory.");
+            _errorCancel(QStringLiteral("Unabled to find writable download location. Tried downloads and temp directory."));
             return;
         }
     }
@@ -451,7 +451,7 @@ void FirmwareUpgradeController::_downloadFirmware(void)
     downloadFile += "/"  + firmwareFilename;
 
     QUrl firmwareUrl;
-    if (_firmwareFilename.startsWith("http:")) {
+    if (_firmwareFilename.startsWith(QLatin1String("http:"))) {
         firmwareUrl.setUrl(_firmwareFilename);
     } else {
         firmwareUrl = QUrl::fromLocalFile(_firmwareFilename);
@@ -486,7 +486,7 @@ void FirmwareUpgradeController::_downloadProgress(qint64 curr, qint64 total)
 /// @brief Called when the firmware download completes.
 void FirmwareUpgradeController::_downloadFinished(void)
 {
-    _appendStatusLog("Download complete");
+    _appendStatusLog(QStringLiteral("Download complete"));
     
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
     Q_ASSERT(reply);
@@ -509,7 +509,7 @@ void FirmwareUpgradeController::_downloadFinished(void)
     // Store downloaded file in download location
     QFile file(downloadFilename);
     if (!file.open(QIODevice::WriteOnly)) {
-        _errorCancel(QString("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
+        _errorCancel(QStringLiteral("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
         return;
     }
     
@@ -521,18 +521,18 @@ void FirmwareUpgradeController::_downloadFinished(void)
     connect(image, &FirmwareImage::errorMessage, this, &FirmwareUpgradeController::_error);
     
     if (!image->load(downloadFilename, _bootloaderBoardID)) {
-        _errorCancel("Image load failed");
+        _errorCancel(QStringLiteral("Image load failed"));
         return;
     }
     
     // We can't proceed unless we have the bootloader
     if (!_bootloaderFound) {
-        _errorCancel("Bootloader not found");
+        _errorCancel(QStringLiteral("Bootloader not found"));
         return;
     }
     
     if (_bootloaderBoardFlashSize != 0 && image->imageSize() > _bootloaderBoardFlashSize) {
-        _errorCancel(QString("Image size of %1 is too large for board flash size %2").arg(image->imageSize()).arg(_bootloaderBoardFlashSize));
+        _errorCancel(QStringLiteral("Image size of %1 is too large for board flash size %2").arg(image->imageSize()).arg(_bootloaderBoardFlashSize));
         return;
     }
 
@@ -545,9 +545,9 @@ void FirmwareUpgradeController::_downloadError(QNetworkReply::NetworkError code)
     QString errorMsg;
     
     if (code == QNetworkReply::OperationCanceledError) {
-        errorMsg = "Download cancelled";
+        errorMsg = QLatin1String("Download cancelled");
     } else {
-        errorMsg = QString("Error during download. Error: %1").arg(code);
+        errorMsg = QStringLiteral("Error during download. Error: %1").arg(code);
     }
     _errorCancel(errorMsg);
 }
@@ -559,8 +559,8 @@ void FirmwareUpgradeController::_flashComplete(void)
     delete _image;
     _image = NULL;
     
-    _appendStatusLog("Upgrade complete", true);
-    _appendStatusLog("------------------------------------------", false);
+    _appendStatusLog(QStringLiteral("Upgrade complete"), true);
+    _appendStatusLog(QStringLiteral("------------------------------------------"), false);
     emit flashComplete();
     qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
 }
@@ -570,7 +570,7 @@ void FirmwareUpgradeController::_error(const QString& errorString)
     delete _image;
     _image = NULL;
     
-    _errorCancel(QString("Error: %1").arg(errorString));
+    _errorCancel(QStringLiteral("Error: %1").arg(errorString));
 }
 
 void FirmwareUpgradeController::_status(const QString& statusString)
@@ -603,7 +603,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
     QVariant varText;
     
     if (critical) {
-        varText = QString("<font color=\"yellow\">%1</font>").arg(text);
+        varText = QStringLiteral("<font color=\"yellow\">%1</font>").arg(text);
     } else {
         varText = text;
     }
@@ -617,8 +617,8 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
 void FirmwareUpgradeController::_errorCancel(const QString& msg)
 {
     _appendStatusLog(msg, false);
-    _appendStatusLog("Upgrade cancelled", true);
-    _appendStatusLog("------------------------------------------", false);
+    _appendStatusLog(QStringLiteral("Upgrade cancelled"), true);
+    _appendStatusLog(QStringLiteral("------------------------------------------"), false);
     emit error();
     cancel();
     qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
@@ -667,7 +667,7 @@ void FirmwareUpgradeController::_apmVersionDownloadFinished(QString remoteFile, 
     QString versionContents = stream.readAll();
 
     QString version;
-    QRegularExpression re("APMVERSION: (.*)$");
+    QRegularExpression re(QStringLiteral("APMVERSION: (.*)$"));
     QRegularExpressionMatch match = re.match(versionContents);
     if (match.hasMatch()) {
         version = match.captured(1);
@@ -711,25 +711,25 @@ QStringList FirmwareUpgradeController::apmAvailableVersions(void)
 
         switch (vehicleType) {
         case QuadFirmware:
-            version = "Quad - ";
+            version = QLatin1String("Quad - ");
             break;
         case X8Firmware:
-            version = "X8 - ";
+            version = QLatin1String("X8 - ");
             break;
         case HexaFirmware:
-            version = "Hexa - ";
+            version = QLatin1String("Hexa - ");
             break;
         case OctoFirmware:
-            version = "Octo - ";
+            version = QLatin1String("Octo - ");
             break;
         case YFirmware:
-            version = "Y - ";
+            version = QLatin1String("Y - ");
             break;
         case Y6Firmware:
-            version = "Y6 - ";
+            version = QLatin1String("Y6 - ");
             break;
         case HeliFirmware:
-            version = "Heli - ";
+            version = QLatin1String("Heli - ");
             break;
         case PlaneFirmware:
         case RoverFirmware:

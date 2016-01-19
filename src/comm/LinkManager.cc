@@ -76,9 +76,9 @@ LinkManager::LinkManager(QGCApplication* app)
     , _autoconnectPX4Flow(true)
 
 {
-    qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
-    qmlRegisterUncreatableType<LinkConfiguration>   ("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
-    qmlRegisterUncreatableType<LinkInterface>       ("QGroundControl", 1, 0, "LinkInterface",       "Reference only");
+    qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<LinkConfiguration>   ("QGroundControl", 1, 0, "LinkConfiguration",   QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<LinkInterface>       ("QGroundControl", 1, 0, "LinkInterface",       QStringLiteral("Reference only"));
 
     QSettings settings;
 
@@ -275,7 +275,7 @@ void LinkManager::_deleteLink(LinkInterface* link)
 bool LinkManager::_connectionsSuspendedMsg(void)
 {
     if (_connectionsSuspended) {
-        qgcApp()->showMessage(QString("Connect not allowed: %1").arg(_connectionsSuspendedReason));
+        qgcApp()->showMessage(QStringLiteral("Connect not allowed: %1").arg(_connectionsSuspendedReason));
         return true;
     } else {
         return false;
@@ -315,7 +315,7 @@ void LinkManager::saveLinkConfigurationList()
             if(!linkConfig->isDynamic())
             {
                 QString root = LinkConfiguration::settingsRoot();
-                root += QString("/Link%1").arg(trueCount++);
+                root += QStringLiteral("/Link%1").arg(trueCount++);
                 settings.setValue(root + "/name", linkConfig->name());
                 settings.setValue(root + "/type", linkConfig->type());
                 settings.setValue(root + "/auto", linkConfig->isAutoConnect());
@@ -344,7 +344,7 @@ void LinkManager::loadLinkConfigurationList()
         int count = settings.value(LinkConfiguration::settingsRoot() + "/count").toInt();
         for(int i = 0; i < count; i++) {
             QString root(LinkConfiguration::settingsRoot());
-            root += QString("/Link%1").arg(i);
+            root += QStringLiteral("/Link%1").arg(i);
             if(settings.contains(root + "/type")) {
                 int type = settings.value(root + "/type").toInt();
                 if((LinkConfiguration::LinkType)type < LinkConfiguration::TypeLast) {
@@ -410,7 +410,7 @@ void LinkManager::loadLinkConfigurationList()
 #ifdef QT_DEBUG
     if(!mockPresent)
     {
-        MockConfiguration* pMock = new MockConfiguration("Mock Link PX4");
+        MockConfiguration* pMock = new MockConfiguration(QStringLiteral("Mock Link PX4"));
         pMock->setDynamic(true);
         _linkConfigurations.append(pMock);
         linksChanged = true;
@@ -514,24 +514,24 @@ void LinkManager::_updateAutoConnectLinks(void)
                 case QGCSerialPortInfo::BoardTypePX4FMUV2:
                 case QGCSerialPortInfo::BoardTypePX4FMUV4:
                     if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(QStringLiteral("Pixhawk on %1").arg(portInfo.portName().trimmed()));
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypeAeroCore:
                     if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(QString("AeroCore on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(QStringLiteral("AeroCore on %1").arg(portInfo.portName().trimmed()));
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypePX4Flow:
                     if (_autoconnectPX4Flow) {
-                        pSerialConfig = new SerialConfiguration(QString("PX4Flow on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(QStringLiteral("PX4Flow on %1").arg(portInfo.portName().trimmed()));
                     }
                     break;
                 case QGCSerialPortInfo::BoardType3drRadio:
                     if (_autoconnect3DRRadio) {
-                        pSerialConfig = new SerialConfiguration(QString("3DR Radio on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(QStringLiteral("3DR Radio on %1").arg(portInfo.portName().trimmed()));
                     }
                     break;
                 default:
@@ -618,11 +618,11 @@ void LinkManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int 
                                 << vehicleType;
 
         if (vehicleId == _mavlinkProtocol->getSystemId()) {
-            _app->showMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
+            _app->showMessage(QStringLiteral("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
         }
 
         QSettings settings;
-        bool mavlinkVersionCheck = settings.value("VERSION_CHECK_ENABLED", true).toBool();
+        bool mavlinkVersionCheck = settings.value(QStringLiteral("VERSION_CHECK_ENABLED"), true).toBool();
         if (mavlinkVersionCheck && vehicleMavlinkVersion != MAVLINK_VERSION) {
             _ignoreVehicleIds += vehicleId;
             _app->showMessage(QString("The MAVLink protocol version on vehicle #%1 and QGroundControl differ! "
@@ -644,7 +644,7 @@ void LinkManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int 
 
 void LinkManager::shutdown(void)
 {
-    setConnectionsSuspended("Shutdown");
+    setConnectionsSuspended(QStringLiteral("Shutdown"));
     disconnectAll();
 }
 
@@ -710,18 +710,18 @@ QStringList LinkManager::linkTypeStrings(void) const
     if(!list.size())
     {
 #ifndef __ios__
-        list += "Serial";
+        list += QStringLiteral("Serial");
 #endif
-        list += "UDP";
-        list += "TCP";
+        list += QStringLiteral("UDP");
+        list += QStringLiteral("TCP");
 #ifdef QGC_ENABLE_BLUETOOTH
         list += "Bluetooth";
 #endif
 #ifdef QT_DEBUG
-        list += "Mock Link";
+        list += QStringLiteral("Mock Link");
 #endif
 #ifndef __mobile__
-        list += "Log Replay";
+        list += QStringLiteral("Log Replay");
 #endif
         Q_ASSERT(list.size() == (int)LinkConfiguration::TypeLast);
     }
@@ -818,7 +818,7 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
 {
     Q_ASSERT(config != NULL);
     //-- Check for "Unnamed"
-    if (config->name() == "Unnamed") {
+    if (config->name() == QLatin1String("Unnamed")) {
         switch(config->type()) {
 #ifndef __ios__
             case LinkConfiguration::TypeSerial: {
@@ -826,22 +826,22 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
 #ifdef Q_OS_WIN
                 tname.replace("\\\\.\\", "");
 #else
-                tname.replace("/dev/cu.", "");
-                tname.replace("/dev/", "");
+                tname.replace(QLatin1String("/dev/cu."), QLatin1String(""));
+                tname.replace(QLatin1String("/dev/"), QLatin1String(""));
 #endif
-                config->setName(QString("Serial Device on %1").arg(tname));
+                config->setName(QStringLiteral("Serial Device on %1").arg(tname));
                 break;
                 }
 #endif
             case LinkConfiguration::TypeUdp:
                 config->setName(
-                    QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
+                    QStringLiteral("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
                 break;
             case LinkConfiguration::TypeTcp: {
                     TCPConfiguration* tconfig = dynamic_cast<TCPConfiguration*>(config);
                     if(tconfig) {
                         config->setName(
-                            QString("TCP Link %1:%2").arg(tconfig->address().toString()).arg((int)tconfig->port()));
+                            QStringLiteral("TCP Link %1:%2").arg(tconfig->address().toString()).arg((int)tconfig->port()));
                     }
                 }
                 break;
@@ -858,7 +858,7 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
             case LinkConfiguration::TypeLogReplay: {
                     LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
                     if(tconfig) {
-                        config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
+                        config->setName(QStringLiteral("Log Replay %1").arg(tconfig->logFilenameShort()));
                     }
                 }
                 break;
@@ -866,7 +866,7 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
 #ifdef QT_DEBUG
             case LinkConfiguration::TypeMock:
                 config->setName(
-                    QString("Mock Link"));
+                    QStringLiteral("Mock Link"));
                 break;
 #endif
             case LinkConfiguration::TypeLast:

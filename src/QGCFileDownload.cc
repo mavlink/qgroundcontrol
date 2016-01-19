@@ -58,7 +58,7 @@ bool QGCFileDownload::download(const QString& remoteFile)
     localFile += "/"  + remoteFileName;
 
     QUrl remoteUrl;
-    if (remoteFile.startsWith("http:")) {
+    if (remoteFile.startsWith(QLatin1String("http:"))) {
         remoteUrl.setUrl(remoteFile);
     } else {
         remoteUrl = QUrl::fromLocalFile(remoteFile);
@@ -104,7 +104,7 @@ void QGCFileDownload::_downloadFinished(void)
     // Store downloaded file in download location
     QFile file(downloadFilename);
     if (!file.open(QIODevice::WriteOnly)) {
-        emit error(QString("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
+        emit error(QStringLiteral("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
         return;
     }
     
@@ -120,9 +120,9 @@ void QGCFileDownload::_downloadError(QNetworkReply::NetworkError code)
     QString errorMsg;
     
     if (code == QNetworkReply::OperationCanceledError) {
-        errorMsg = "Download cancelled";
+        errorMsg = QLatin1String("Download cancelled");
     } else {
-        errorMsg = QString("Error during download. Error: %1").arg(code);
+        errorMsg = QStringLiteral("Error during download. Error: %1").arg(code);
     }
 
     emit error(errorMsg);

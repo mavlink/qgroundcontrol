@@ -208,22 +208,22 @@ void UAS::receiveMessage(mavlink_message_t message)
         {
         case MAV_COMP_ID_ALL:
         {
-            componentName = "ANONYMOUS";
+            componentName = QLatin1String("ANONYMOUS");
             break;
         }
         case MAV_COMP_ID_IMU:
         {
-            componentName = "IMU #1";
+            componentName = QLatin1String("IMU #1");
             break;
         }
         case MAV_COMP_ID_CAMERA:
         {
-            componentName = "CAMERA";
+            componentName = QLatin1String("CAMERA");
             break;
         }
         case MAV_COMP_ID_MISSIONPLANNER:
         {
-            componentName = "MISSIONPLANNER";
+            componentName = QLatin1String("MISSIONPLANNER");
             break;
         }
         }
@@ -288,15 +288,15 @@ void UAS::receiveMessage(mavlink_message_t message)
             // Send the base_mode and system_status values to the plotter. This uses the ground time
             // so the Ground Time checkbox must be ticked for these values to display
             quint64 time = getUnixTime();
-            QString name = QString("M%1:HEARTBEAT.%2").arg(message.sysid);
-            emit valueChanged(uasId, name.arg("base_mode"), "bits", state.base_mode, time);
-            emit valueChanged(uasId, name.arg("custom_mode"), "bits", state.custom_mode, time);
-            emit valueChanged(uasId, name.arg("system_status"), "-", state.system_status, time);
+            QString name = QStringLiteral("M%1:HEARTBEAT.%2").arg(message.sysid);
+            emit valueChanged(uasId, name.arg(QStringLiteral("base_mode")), QStringLiteral("bits"), state.base_mode, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("custom_mode")), QStringLiteral("bits"), state.custom_mode, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("system_status")), QStringLiteral("-"), state.system_status, time);
 
-            QString audiostring = QString("System %1").arg(uasId);
-            QString stateAudio = "";
-            QString modeAudio = "";
-            QString navModeAudio = "";
+            QString audiostring = QStringLiteral("System %1").arg(uasId);
+            QString stateAudio = QLatin1String("");
+            QString modeAudio = QLatin1String("");
+            QString navModeAudio = QLatin1String("");
             bool statechanged = false;
             bool modechanged = false;
 
@@ -311,10 +311,10 @@ void UAS::receiveMessage(mavlink_message_t message)
                 emit statusChanged(this->status);
 
                 // Adjust for better audio
-                if (uasState == QString("STANDBY")) uasState = QString("standing by");
-                if (uasState == QString("EMERGENCY")) uasState = QString("emergency condition");
-                if (uasState == QString("CRITICAL")) uasState = QString("critical condition");
-                if (uasState == QString("SHUTDOWN")) uasState = QString("shutting down");
+                if (uasState == QStringLiteral("STANDBY")) uasState = QStringLiteral("standing by");
+                if (uasState == QStringLiteral("EMERGENCY")) uasState = QStringLiteral("emergency condition");
+                if (uasState == QStringLiteral("CRITICAL")) uasState = QStringLiteral("critical condition");
+                if (uasState == QStringLiteral("SHUTDOWN")) uasState = QStringLiteral("shutting down");
 
                 stateAudio = uasState;
             }
@@ -344,7 +344,7 @@ void UAS::receiveMessage(mavlink_message_t message)
 
             if (statechanged && ((int)state.system_status == (int)MAV_STATE_CRITICAL || state.system_status == (int)MAV_STATE_EMERGENCY))
             {
-                _say(QString("Emergency for system %1").arg(this->getUASID()), GAudioOutput::AUDIO_SEVERITY_EMERGENCY);
+                _say(QStringLiteral("Emergency for system %1").arg(this->getUASID()), GAudioOutput::AUDIO_SEVERITY_EMERGENCY);
                 QTimer::singleShot(3000, qgcApp()->toolbox()->audioOutput(), SLOT(startEmergency()));
             }
             else if (modechanged || statechanged)
@@ -378,18 +378,18 @@ void UAS::receiveMessage(mavlink_message_t message)
 
             // Prepare for sending data to the realtime plotter, which is every field excluding onboard_control_sensors_present.
             quint64 time = getUnixTime();
-            QString name = QString("M%1:SYS_STATUS.%2").arg(message.sysid);
-            emit valueChanged(uasId, name.arg("sensors_enabled"), "bits", state.onboard_control_sensors_enabled, time);
-            emit valueChanged(uasId, name.arg("sensors_health"), "bits", state.onboard_control_sensors_health, time);
-            emit valueChanged(uasId, name.arg("errors_comm"), "-", state.errors_comm, time);
-            emit valueChanged(uasId, name.arg("errors_count1"), "-", state.errors_count1, time);
-            emit valueChanged(uasId, name.arg("errors_count2"), "-", state.errors_count2, time);
-            emit valueChanged(uasId, name.arg("errors_count3"), "-", state.errors_count3, time);
-            emit valueChanged(uasId, name.arg("errors_count4"), "-", state.errors_count4, time);
+            QString name = QStringLiteral("M%1:SYS_STATUS.%2").arg(message.sysid);
+            emit valueChanged(uasId, name.arg(QStringLiteral("sensors_enabled")), QStringLiteral("bits"), state.onboard_control_sensors_enabled, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("sensors_health")), QStringLiteral("bits"), state.onboard_control_sensors_health, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("errors_comm")), QStringLiteral("-"), state.errors_comm, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("errors_count1")), QStringLiteral("-"), state.errors_count1, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("errors_count2")), QStringLiteral("-"), state.errors_count2, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("errors_count3")), QStringLiteral("-"), state.errors_count3, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("errors_count4")), QStringLiteral("-"), state.errors_count4, time);
 
             // Process CPU load.
             emit loadChanged(this,state.load/10.0f);
-            emit valueChanged(uasId, name.arg("load"), "%", state.load/10.0f, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("load")), QStringLiteral("%"), state.load/10.0f, time);
 
             if (state.voltage_battery > 0.0f && state.voltage_battery != UINT16_MAX) {
                 // Battery charge/time remaining/voltage calculations
@@ -413,7 +413,7 @@ void UAS::receiveMessage(mavlink_message_t message)
                         /* warn only every 20 seconds */
                         && (QGC::groundTimeUsecs() - lastVoltageWarning) > 20000000)
                 {
-                    _say(QString("Low battery system %1: %2 volts").arg(getUASID()).arg(lpVoltage, 0, 'f', 1, QChar(' ')));
+                    _say(QStringLiteral("Low battery system %1: %2 volts").arg(getUASID()).arg(lpVoltage, 0, 'f', 1, QChar(' ')));
                     lastVoltageWarning = QGC::groundTimeUsecs();
                     lastTickVoltageValue = tickLowpassVoltage;
                 }
@@ -424,14 +424,14 @@ void UAS::receiveMessage(mavlink_message_t message)
                 emit batteryChanged(this, lpVoltage, currentCurrent, getChargeLevel(), 0);
             }
 
-            emit valueChanged(uasId, name.arg("battery_remaining"), "%", getChargeLevel(), time);
-            emit valueChanged(uasId, name.arg("battery_voltage"), "V", currentVoltage, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("battery_remaining")), QStringLiteral("%"), getChargeLevel(), time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("battery_voltage")), QStringLiteral("V"), currentVoltage, time);
 
             // And if the battery current draw is measured, log that also.
             if (state.current_battery != -1)
             {
                 currentCurrent = ((double)state.current_battery)/100.0f;
-                emit valueChanged(uasId, name.arg("battery_current"), "A", currentCurrent, time);
+                emit valueChanged(uasId, name.arg(QStringLiteral("battery_current")), QStringLiteral("A"), currentCurrent, time);
             }
 
             // LOW BATTERY ALARM
@@ -461,7 +461,7 @@ void UAS::receiveMessage(mavlink_message_t message)
                 state.drop_rate_comm = 10000;
             }
             emit dropRateChanged(this->getUASID(), state.drop_rate_comm/100.0f);
-            emit valueChanged(uasId, name.arg("drop_rate_comm"), "%", state.drop_rate_comm/100.0f, time);
+            emit valueChanged(uasId, name.arg(QStringLiteral("drop_rate_comm")), QStringLiteral("%"), state.drop_rate_comm/100.0f, time);
         }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
@@ -671,7 +671,7 @@ void UAS::receiveMessage(mavlink_message_t message)
                         setGroundSpeed(vel);
                         emit speedChanged(this, groundSpeed, airSpeed, time);
                     } else {
-                        emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_NOTICE, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
+                        emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_NOTICE, QStringLiteral("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
                     }
                 }
             }
@@ -781,9 +781,9 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, out.thrust, time);
 
             // For plotting emit roll sp, pitch sp and yaw sp values
-            emit valueChanged(uasId, "roll sp", "rad", roll, time);
-            emit valueChanged(uasId, "pitch sp", "rad", pitch, time);
-            emit valueChanged(uasId, "yaw sp", "rad", yaw, time);
+            emit valueChanged(uasId, QStringLiteral("roll sp"), QStringLiteral("rad"), roll, time);
+            emit valueChanged(uasId, QStringLiteral("pitch sp"), QStringLiteral("rad"), pitch, time);
+            emit valueChanged(uasId, QStringLiteral("yaw sp"), QStringLiteral("rad"), yaw, time);
         }
             break;
 
@@ -819,9 +819,9 @@ void UAS::receiveMessage(mavlink_message_t message)
 
         // If the message is NOTIFY or higher severity, or starts with a '#',
         // then read it aloud.
-            if (text.startsWith("#") || severity <= MAV_SEVERITY_NOTICE)
+            if (text.startsWith(QLatin1String("#")) || severity <= MAV_SEVERITY_NOTICE)
             {
-                text.remove("#");
+                text.remove(QStringLiteral("#"));
                 emit textMessageReceived(uasId, message.compid, severity, text);
                 _say(text.toLower(), severity);
             }
@@ -1269,7 +1269,7 @@ QImage UAS::getImage()
         int imgColors = 255;
 
         // Construct PGM header
-        QString header("P5\n%1 %2\n%3\n");
+        QString header(QStringLiteral("P5\n%1 %2\n%3\n"));
         header = header.arg(imageWidth).arg(imageHeight).arg(imgColors);
 
         QByteArray tmpImage(header.toStdString().c_str(), header.length());
@@ -1815,24 +1815,24 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
     Q_UNUSED(zacc);
 
         // Emit attitude for cross-check
-        emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
-        emit valueChanged(uasId, "pitch sim", "rad", pitch, getUnixTime());
-        emit valueChanged(uasId, "yaw sim", "rad", yaw, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("roll sim"), QStringLiteral("rad"), roll, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("pitch sim"), QStringLiteral("rad"), pitch, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("yaw sim"), QStringLiteral("rad"), yaw, getUnixTime());
 
-        emit valueChanged(uasId, "roll rate sim", "rad/s", rollspeed, getUnixTime());
-        emit valueChanged(uasId, "pitch rate sim", "rad/s", pitchspeed, getUnixTime());
-        emit valueChanged(uasId, "yaw rate sim", "rad/s", yawspeed, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("roll rate sim"), QStringLiteral("rad/s"), rollspeed, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("pitch rate sim"), QStringLiteral("rad/s"), pitchspeed, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("yaw rate sim"), QStringLiteral("rad/s"), yawspeed, getUnixTime());
 
-        emit valueChanged(uasId, "lat sim", "deg", lat*1e7, getUnixTime());
-        emit valueChanged(uasId, "lon sim", "deg", lon*1e7, getUnixTime());
-        emit valueChanged(uasId, "alt sim", "deg", alt*1e3, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("lat sim"), QStringLiteral("deg"), lat*1e7, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("lon sim"), QStringLiteral("deg"), lon*1e7, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("alt sim"), QStringLiteral("deg"), alt*1e3, getUnixTime());
 
-        emit valueChanged(uasId, "vx sim", "m/s", vx*1e2, getUnixTime());
-        emit valueChanged(uasId, "vy sim", "m/s", vy*1e2, getUnixTime());
-        emit valueChanged(uasId, "vz sim", "m/s", vz*1e2, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("vx sim"), QStringLiteral("m/s"), vx*1e2, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("vy sim"), QStringLiteral("m/s"), vy*1e2, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("vz sim"), QStringLiteral("m/s"), vz*1e2, getUnixTime());
 
-        emit valueChanged(uasId, "IAS sim", "m/s", ind_airspeed, getUnixTime());
-        emit valueChanged(uasId, "TAS sim", "m/s", true_airspeed, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("IAS sim"), QStringLiteral("m/s"), ind_airspeed, getUnixTime());
+        emit valueChanged(uasId, QStringLiteral("TAS sim"), QStringLiteral("m/s"), true_airspeed, getUnixTime());
 }
 #endif
 

@@ -47,7 +47,7 @@ This file is part of the QGROUNDCONTROL project
 
 QGCXPlaneLink::QGCXPlaneLink(Vehicle* vehicle, QString remoteHost, QHostAddress localHost, quint16 localPort) :
     _vehicle(vehicle),
-    remoteHost(QHostAddress("127.0.0.1")),
+    remoteHost(QHostAddress(QStringLiteral("127.0.0.1"))),
     remotePort(49000),
     socket(NULL),
     process(NULL),
@@ -96,11 +96,11 @@ void QGCXPlaneLink::loadSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.beginGroup("QGC_XPLANE_LINK");
-    setRemoteHost(settings.value("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString()).arg(remotePort)).toString());
-    setVersion(settings.value("XPLANE_VERSION", 10).toInt());
-    selectAirframe(settings.value("AIRFRAME", "default").toString());
-    _sensorHilEnabled = settings.value("SENSOR_HIL", _sensorHilEnabled).toBool();
+    settings.beginGroup(QStringLiteral("QGC_XPLANE_LINK"));
+    setRemoteHost(settings.value(QStringLiteral("REMOTE_HOST"), QStringLiteral("%1:%2").arg(remoteHost.toString()).arg(remotePort)).toString());
+    setVersion(settings.value(QStringLiteral("XPLANE_VERSION"), 10).toInt());
+    selectAirframe(settings.value(QStringLiteral("AIRFRAME"), "default").toString());
+    _sensorHilEnabled = settings.value(QStringLiteral("SENSOR_HIL"), _sensorHilEnabled).toBool();
     settings.endGroup();
 }
 
@@ -108,37 +108,37 @@ void QGCXPlaneLink::storeSettings()
 {
     // Store settings
     QSettings settings;
-    settings.beginGroup("QGC_XPLANE_LINK");
-    settings.setValue("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString()).arg(remotePort));
-    settings.setValue("XPLANE_VERSION", xPlaneVersion);
-    settings.setValue("AIRFRAME", airframeName);
-    settings.setValue("SENSOR_HIL", _sensorHilEnabled);
+    settings.beginGroup(QStringLiteral("QGC_XPLANE_LINK"));
+    settings.setValue(QStringLiteral("REMOTE_HOST"), QStringLiteral("%1:%2").arg(remoteHost.toString()).arg(remotePort));
+    settings.setValue(QStringLiteral("XPLANE_VERSION"), xPlaneVersion);
+    settings.setValue(QStringLiteral("AIRFRAME"), airframeName);
+    settings.setValue(QStringLiteral("SENSOR_HIL"), _sensorHilEnabled);
     settings.endGroup();
 }
 
 void QGCXPlaneLink::setVersion(const QString& version)
 {
     unsigned int oldVersion = xPlaneVersion;
-    if (version.contains("9"))
+    if (version.contains(QStringLiteral("9")))
     {
         xPlaneVersion = 9;
     }
-    else if (version.contains("10"))
+    else if (version.contains(QStringLiteral("10")))
     {
         xPlaneVersion = 10;
     }
-    else if (version.contains("11"))
+    else if (version.contains(QStringLiteral("11")))
     {
         xPlaneVersion = 11;
     }
-    else if (version.contains("12"))
+    else if (version.contains(QStringLiteral("12")))
     {
         xPlaneVersion = 12;
     }
 
     if (oldVersion != xPlaneVersion)
     {
-        emit versionChanged(QString("X-Plane %1").arg(xPlaneVersion));
+        emit versionChanged(QStringLiteral("X-Plane %1").arg(xPlaneVersion));
     }
 }
 
@@ -146,7 +146,7 @@ void QGCXPlaneLink::setVersion(unsigned int version)
 {
     bool changed = (xPlaneVersion != version);
     xPlaneVersion = version;
-    if (changed) emit versionChanged(QString("X-Plane %1").arg(xPlaneVersion));
+    if (changed) emit versionChanged(QStringLiteral("X-Plane %1").arg(xPlaneVersion));
 }
 
 
@@ -157,12 +157,12 @@ void QGCXPlaneLink::setVersion(unsigned int version)
 void QGCXPlaneLink::run()
 {
     if (!_vehicle) {
-        emit statusMessage("No MAV present");
+        emit statusMessage(QStringLiteral("No MAV present"));
         return;
     }
 
     if (connectState) {
-        emit statusMessage("Already connected");
+        emit statusMessage(QStringLiteral("Already connected"));
         return;
     }
 
@@ -171,7 +171,7 @@ void QGCXPlaneLink::run()
     connectState = socket->bind(localHost, localPort, QAbstractSocket::ReuseAddressHint);
     if (!connectState) {
 
-        emit statusMessage("Binding socket failed!");
+        emit statusMessage(QStringLiteral("Binding socket failed!"));
 
         socket->deleteLater();
         socket = NULL;
@@ -212,12 +212,12 @@ void QGCXPlaneLink::run()
     QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
 
     QString localAddrStr;
-    QString localPortStr = QString("%1").arg(localPort);
+    QString localPortStr = QStringLiteral("%1").arg(localPort);
 
     for (int i = 0; i < hostAddresses.size(); i++)
     {
         // Exclude loopback IPv4 and all IPv6 addresses
-        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
+        if (hostAddresses.at(i) != QHostAddress(QStringLiteral("127.0.0.1")) && !hostAddresses.at(i).toString().contains(QStringLiteral(":")))
         {
             localAddrStr = hostAddresses.at(i).toString();
             break;
@@ -297,7 +297,7 @@ void QGCXPlaneLink::processError(QProcess::ProcessError err)
 
 QString QGCXPlaneLink::getRemoteHost()
 {
-    return QString("%1:%2").arg(remoteHost.toString()).arg(remotePort);
+    return QStringLiteral("%1:%2").arg(remoteHost.toString()).arg(remotePort);
 }
 
 /**
@@ -308,9 +308,9 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
     if (newHost.length() == 0)
         return;
 
-    if (newHost.contains(":"))
+    if (newHost.contains(QStringLiteral(":")))
     {
-        QHostInfo info = QHostInfo::fromName(newHost.split(":").first());
+        QHostInfo info = QHostInfo::fromName(newHost.split(QStringLiteral(":")).first());
         if (info.error() == QHostInfo::NoError)
         {
             // Add newHost
@@ -319,14 +319,14 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
             for (int i = 0; i < newHostAddresses.size(); i++)
             {
                 // Exclude loopback IPv4 and all IPv6 addresses
-                if (!newHostAddresses.at(i).toString().contains(":"))
+                if (!newHostAddresses.at(i).toString().contains(QStringLiteral(":")))
                 {
                     address = newHostAddresses.at(i);
                 }
             }
             remoteHost = address;
             // Set localPort according to user input
-            remotePort = newHost.split(":").last().toInt();
+            remotePort = newHost.split(QStringLiteral(":")).last().toInt();
         }
     }
     else
@@ -346,7 +346,7 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
         connectSimulation();
     }
 
-    emit remoteChanged(QString("%1:%2").arg(remoteHost.toString()).arg(remotePort));
+    emit remoteChanged(QStringLiteral("%1:%2").arg(remoteHost.toString()).arg(remotePort));
 }
 
 void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
@@ -843,30 +843,30 @@ void QGCXPlaneLink::selectAirframe(const QString& plane)
 {
     airframeName = plane;
 
-    if (plane.contains("QRO"))
+    if (plane.contains(QStringLiteral("QRO")))
     {
-        if (plane.contains("MK") && airframeID != AIRFRAME_QUAD_X_MK_10INCH_I2C)
+        if (plane.contains(QStringLiteral("MK")) && airframeID != AIRFRAME_QUAD_X_MK_10INCH_I2C)
         {
             airframeID = AIRFRAME_QUAD_X_MK_10INCH_I2C;
-            emit airframeChanged("QRO_X / MK");
+            emit airframeChanged(QStringLiteral("QRO_X / MK"));
         }
-        else if (plane.contains("ARDRONE") && airframeID != AIRFRAME_QUAD_X_ARDRONE)
+        else if (plane.contains(QStringLiteral("ARDRONE")) && airframeID != AIRFRAME_QUAD_X_ARDRONE)
         {
             airframeID = AIRFRAME_QUAD_X_ARDRONE;
-            emit airframeChanged("QRO_X / ARDRONE");
+            emit airframeChanged(QStringLiteral("QRO_X / ARDRONE"));
         }
         else
         {
             bool changed = (airframeID != AIRFRAME_QUAD_DJI_F450_PWM);
             airframeID = AIRFRAME_QUAD_DJI_F450_PWM;
-            if (changed) emit airframeChanged("QRO_X / DJI-F450 / PWM");
+            if (changed) emit airframeChanged(QStringLiteral("QRO_X / DJI-F450 / PWM"));
         }
     }
     else
     {
         bool changed = (airframeID != AIRFRAME_UNKNOWN);
         airframeID = AIRFRAME_UNKNOWN;
-        if (changed) emit airframeChanged("X Plane default");
+        if (changed) emit airframeChanged(QStringLiteral("X Plane default"));
     }
 }
 

@@ -57,7 +57,7 @@ void QGCImageProvider::setToolbox(QGCToolbox *toolbox)
    f.setPixelSize(20);
    painter.setFont(f);
    painter.setPen(Qt::white);
-   painter.drawText(QRectF(0, 0, 320, 240), Qt::AlignCenter, "Waiting...");
+   painter.drawText(QRectF(0, 0, 320, 240), Qt::AlignCenter, QStringLiteral("Waiting..."));
 }
 
 QImage QGCImageProvider::requestImage(const QString & /* image url with vehicle id*/, QSize *, const QSize &)

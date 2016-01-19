@@ -48,7 +48,7 @@ QString APMSensorsComponent::description(void) const
 
 QString APMSensorsComponent::iconResource(void) const
 {
-    return "/qmlimages/SensorsComponentIcon.png";
+    return QStringLiteral("/qmlimages/SensorsComponentIcon.png");
 }
 
 bool APMSensorsComponent::requiresSetup(void) const
@@ -66,21 +66,21 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
     QStringList triggers;
     
     // Compass triggers
-    triggers << "COMPASS_DEV_ID" << "COMPASS_DEV_ID2" << "COMPASS_DEV_ID3"
-             << "COMPASS_OFS_X" << "COMPASS_OFS_X" << "COMPASS_OFS_X"
-             << "COMPASS_OFS2_X" << "COMPASS_OFS2_X" << "COMPASS_OFS2_X"
-             << "COMPASS_OFS3_X" << "COMPASS_OFS3_X" << "COMPASS_OFS3_X";
+    triggers << QStringLiteral("COMPASS_DEV_ID") << QStringLiteral("COMPASS_DEV_ID2") << QStringLiteral("COMPASS_DEV_ID3")
+             << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X")
+             << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_X")
+             << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_X");
 
     // Accelerometer triggers
-    if (_autopilot->parameterExists(FactSystem::defaultComponentId, "INS_USE")) {
-        triggers << "INS_USE" << "INS_USE2" << "INS_USE3"
-                 << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z"
-                 << "INS_ACC2OFFS_X" << "INS_ACC2OFFS_Y" << "INS_ACC2OFFS_Z"
-                 << "INS_ACC3OFFS_X" << "INS_ACC3OFFS_Y" << "INS_ACC3OFFS_Z";
+    if (_autopilot->parameterExists(FactSystem::defaultComponentId, QStringLiteral("INS_USE"))) {
+        triggers << QStringLiteral("INS_USE") << QStringLiteral("INS_USE2") << QStringLiteral("INS_USE3")
+                 << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z")
+                 << QStringLiteral("INS_ACC2OFFS_X") << QStringLiteral("INS_ACC2OFFS_Y") << QStringLiteral("INS_ACC2OFFS_Z")
+                 << QStringLiteral("INS_ACC3OFFS_X") << QStringLiteral("INS_ACC3OFFS_Y") << QStringLiteral("INS_ACC3OFFS_Z");
     } else {
         // For older firmwares which don't support the INS_USE parameter we can't determine which secondary accels are in use.
         // So we just base things off the the first accel.
-        triggers << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
+        triggers << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
     }
 
     return triggers;
@@ -88,12 +88,12 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl APMSensorsComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/APMSensorsComponent.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMSensorsComponent.qml"));
 }
 
 QUrl APMSensorsComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/APMSensorsComponentSummary.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMSensorsComponentSummary.qml"));
 }
 
 QString APMSensorsComponent::prerequisiteSetup(void) const
@@ -140,7 +140,7 @@ bool APMSensorsComponent::accelSetupNeeded(void) const
     QStringList insUse;
     QStringList rgOffsets[cAccel];
 
-    if (_autopilot->parameterExists(FactSystem::defaultComponentId, "INS_USE")) {
+    if (_autopilot->parameterExists(FactSystem::defaultComponentId, QStringLiteral("INS_USE"))) {
         insUse << QStringLiteral("INS_USE") << QStringLiteral("INS_USE2") << QStringLiteral("INS_USE3");
         rgOffsets[0] << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
         rgOffsets[1] << QStringLiteral("INS_ACC2OFFS_X") << QStringLiteral("INS_ACC2OFFS_Y") << QStringLiteral("INS_ACC2OFFS_Z");

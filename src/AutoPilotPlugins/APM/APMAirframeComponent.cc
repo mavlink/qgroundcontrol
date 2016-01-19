@@ -30,7 +30,7 @@
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : APMComponent(vehicle, autopilot, parent)
     , _requiresFrameSetup(false)
-    , _name("Airframe")
+    , _name(QStringLiteral("Airframe"))
 {
     if (qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) != NULL) {
         _requiresFrameSetup = true;

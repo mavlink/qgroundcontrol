@@ -60,7 +60,7 @@ void FactSystemTestBase::_cleanup(void)
 void FactSystemTestBase::_parameter_default_component_id_test(void)
 {
     QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, FactSystem::defaultComponentId, "RC_MAP_THROTTLE"));
-    Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, FactSystem::defaultComponentId, "RC_MAP_THROTTLE");
+    Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, FactSystem::defaultComponentId, QStringLiteral("RC_MAP_THROTTLE"));
     QVERIFY(fact != NULL);
     QVariant factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
@@ -71,7 +71,7 @@ void FactSystemTestBase::_parameter_default_component_id_test(void)
 void FactSystemTestBase::_parameter_specific_component_id_test(void)
 {
     QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, 50, "RC_MAP_THROTTLE"));
-    Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, 50, "RC_MAP_THROTTLE");
+    Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, 50, QStringLiteral("RC_MAP_THROTTLE"));
     QVERIFY(fact != NULL);
     QVariant factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
@@ -81,7 +81,7 @@ void FactSystemTestBase::_parameter_specific_component_id_test(void)
 
     // Test another component id
     QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, 51, "COMPONENT_51"));
-    fact = _plugin->getFact(FactSystem::ParameterProvider, 51, "COMPONENT_51");
+    fact = _plugin->getFact(FactSystem::ParameterProvider, 51, QStringLiteral("COMPONENT_51"));
     QVERIFY(fact != NULL);
     factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
@@ -96,10 +96,10 @@ void FactSystemTestBase::_qml_test(void)
 
     widget->setAutoPilot(_plugin);
 
-    widget->setSource(QUrl::fromUserInput("qrc:unittest/FactSystemTest.qml"));
+    widget->setSource(QUrl::fromUserInput(QStringLiteral("qrc:unittest/FactSystemTest.qml")));
 
     QQuickItem* rootObject = widget->rootObject();
-    QObject* control = rootObject->findChild<QObject*>("testControl");
+    QObject* control = rootObject->findChild<QObject*>(QStringLiteral("testControl"));
     QVERIFY(control != NULL);
     QVariant qmlValue = control->property("text").toInt();
 
@@ -115,19 +115,19 @@ void FactSystemTestBase::_qmlUpdate_test(void)
 
     widget->setAutoPilot(_plugin);
 
-    widget->setSource(QUrl::fromUserInput("qrc:unittest/FactSystemTest.qml"));
+    widget->setSource(QUrl::fromUserInput(QStringLiteral("qrc:unittest/FactSystemTest.qml")));
 
     // Change the value
 
     QVariant paramValue = 12;
-    _plugin->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_THROTTLE")->setRawValue(paramValue);
+    _plugin->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("RC_MAP_THROTTLE"))->setRawValue(paramValue);
 
     QTest::qWait(500); // Let the signals flow through
 
     // Make sure the qml has the right value
 
     QQuickItem* rootObject = widget->rootObject();
-    QObject* control = rootObject->findChild<QObject*>("testControl");
+    QObject* control = rootObject->findChild<QObject*>(QStringLiteral("testControl"));
     QVERIFY(control != NULL);
     QCOMPARE(control->property("text").toInt(), 12);
 

@@ -44,7 +44,7 @@ FactMetaData::FactMetaData(QObject* parent)
     , _decimalPlaces(defaultDecimalPlaces)
     , _rawDefaultValue(0)
     , _defaultValueAvailable(false)
-    , _group("*Default Group")
+    , _group(QStringLiteral("*Default Group"))
     , _rawMax(_maxForType())
     , _maxIsDefaultForType(true)
     , _rawMin(_minForType())
@@ -62,7 +62,7 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _decimalPlaces(defaultDecimalPlaces)
     , _rawDefaultValue(0)
     , _defaultValueAvailable(false)
-    , _group("*Default Group")
+    , _group(QStringLiteral("*Default Group"))
     , _rawMax(_maxForType())
     , _maxIsDefaultForType(true)
     , _rawMin(_minForType())
@@ -214,7 +214,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
             typedValue = QVariant(rawValue.toInt(&convertOk));
             if (!convertOnly && convertOk) {
                 if (rawMin() > typedValue || typedValue > rawMax()) {
-                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
+                    errorString = QStringLiteral("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
                 }
             }
             break;
@@ -225,7 +225,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
             typedValue = QVariant(rawValue.toUInt(&convertOk));
             if (!convertOnly && convertOk) {
                 if (rawMin() > typedValue || typedValue > rawMax()) {
-                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
+                    errorString = QStringLiteral("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
                 }
             }
             break;
@@ -234,7 +234,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
             typedValue = QVariant(rawValue.toFloat(&convertOk));
             if (!convertOnly && convertOk) {
                 if (rawMin() > typedValue || typedValue > rawMax()) {
-                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toFloat()).arg(cookedMax().toFloat());
+                    errorString = QStringLiteral("Value must be within %1 and %2").arg(cookedMin().toFloat()).arg(cookedMax().toFloat());
                 }
             }
             break;
@@ -243,14 +243,14 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
             typedValue = QVariant(rawValue.toDouble(&convertOk));
             if (!convertOnly && convertOk) {
                 if (rawMin() > typedValue || typedValue > rawMax()) {
-                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
+                    errorString = QStringLiteral("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
                 }
             }
             break;
     }
     
     if (!convertOk) {
-        errorString += "Invalid number";
+        errorString += QLatin1String("Invalid number");
     }
     
     return convertOk && errorString.isEmpty();
@@ -269,7 +269,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
             typedValue = QVariant(cookedValue.toInt(&convertOk));
             if (!convertOnly && convertOk) {
                 if (cookedMin() > typedValue || typedValue > cookedMax()) {
-                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
+                    errorString = QStringLiteral("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
                 }
             }
             break;
@@ -280,7 +280,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
             typedValue = QVariant(cookedValue.toUInt(&convertOk));
             if (!convertOnly && convertOk) {
                 if (cookedMin() > typedValue || typedValue > cookedMax()) {
-                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
+                    errorString = QStringLiteral("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
                 }
             }
             break;
@@ -289,7 +289,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
             typedValue = QVariant(cookedValue.toFloat(&convertOk));
             if (!convertOnly && convertOk) {
                 if (cookedMin() > typedValue || typedValue > cookedMax()) {
-                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toFloat()).arg(cookedMax().toFloat());
+                    errorString = QStringLiteral("Value must be within %1 and %2").arg(cookedMin().toFloat()).arg(cookedMax().toFloat());
                 }
             }
             break;
@@ -298,14 +298,14 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
             typedValue = QVariant(cookedValue.toDouble(&convertOk));
             if (!convertOnly && convertOk) {
                 if (cookedMin() > typedValue || typedValue > cookedMax()) {
-                    errorString = QString("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
+                    errorString = QStringLiteral("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
                 }
             }
             break;
     }
 
     if (!convertOk) {
-        errorString += "Invalid number";
+        errorString += QLatin1String("Invalid number");
     }
 
     return convertOk && errorString.isEmpty();

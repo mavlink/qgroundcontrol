@@ -109,8 +109,8 @@ SerialConfigurationWindow::SerialConfigurationWindow(SerialConfiguration *config
 
     int idx = 0;
     _ui.flowControlCheckBox->setChecked(_config->flowControl() == QSerialPort::HardwareControl);
-    idx = _ui.baudRate->findText(QString("%1").arg(_config->baud()));
-    if(idx < 0) idx = _ui.baudRate->findText("57600");
+    idx = _ui.baudRate->findText(QStringLiteral("%1").arg(_config->baud()));
+    if(idx < 0) idx = _ui.baudRate->findText(QStringLiteral("57600"));
     if(idx < 0) idx = 0;
     _ui.baudRate->setCurrentIndex(idx);
     _ui.dataBitsSpinBox->setValue(_config->dataBits());

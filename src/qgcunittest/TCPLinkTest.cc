@@ -34,7 +34,7 @@ TCPLinkUnitTest::TCPLinkUnitTest(void)
     , _link(NULL)
     , _multiSpy(NULL)
 {
-    _config = new TCPConfiguration("MockTCP");
+    _config = new TCPConfiguration(QStringLiteral("MockTCP"));
     _config->setAddress(QHostAddress::LocalHost);
     _config->setPort(5760);
 }

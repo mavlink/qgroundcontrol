@@ -61,7 +61,7 @@ void AutoPilotPlugin::_parametersReadyChanged(bool parametersReady)
 	if (parametersReady) {
 		_recalcSetupComplete();
 		if (!_setupComplete) {
-            qgcApp()->showMessage("One or more vehicle components require setup prior to flight.");
+            qgcApp()->showMessage(QStringLiteral("One or more vehicle components require setup prior to flight."));
 			
 			// Take the user to Vehicle Summary
             qgcApp()->showSetupView();

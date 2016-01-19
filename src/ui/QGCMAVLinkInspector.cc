@@ -68,7 +68,7 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(const QString& title, QAction* action, 
 
 void QGCMAVLinkInspector::_vehicleAdded(Vehicle* vehicle)
 {
-    ui->systemComboBox->addItem(QString("Vehicle %1").arg(vehicle->id()), vehicle->id());
+    ui->systemComboBox->addItem(QStringLiteral("Vehicle %1").arg(vehicle->id()), vehicle->id());
 
     // Add a tree for a new UAS
     addUAStoTree(vehicle->id());
@@ -250,7 +250,7 @@ void QGCMAVLinkInspector::refreshView()
         uasMsgCount->insert(msg->msgid,(unsigned int) 0);
 
         // Update the tree view
-        QString messageName("%1 (%2 Hz, #%3)");
+        QString messageName(QStringLiteral("%1 (%2 Hz, #%3)"));
         messageName = messageName.arg(messageInfo[msg->msgid].name).arg(msgHz, 3, 'f', 1).arg(msg->msgid);
 
         addUAStoTree(msg->sysid);
@@ -313,14 +313,14 @@ void QGCMAVLinkInspector::refreshView()
         }
 
         // Update the tree view
-        QString messageName("%1");
+        QString messageName(QStringLiteral("%1"));
         messageName = messageName.arg(msgname);
         if (!rateTreeWidgetItems.contains(i))
         {
             QStringList fields;
             fields << messageName;
-            fields << QString("%1").arg(i);
-            fields << "OFF / --- Hz";
+            fields << QStringLiteral("%1").arg(i);
+            fields << QStringLiteral("OFF / --- Hz");
             QTreeWidgetItem* widget = new QTreeWidgetItem(fields);
             widget->setFlags(widget->flags() | Qt::ItemIsEditable);
             rateTreeWidgetItems.insert(i, widget);
@@ -343,7 +343,7 @@ void QGCMAVLinkInspector::addUAStoTree(int sysId)
         {
             UASInterface* uas = vehicle->uas();
             QStringList idstring;
-            idstring << QString("Vehicle %1").arg(uas->getUASID());
+            idstring << QStringLiteral("Vehicle %1").arg(uas->getUASID());
             QTreeWidgetItem* uasWidget = new QTreeWidgetItem(idstring);
             uasWidget->setFirstColumnSpanned(true);
             uasTreeWidgetItems.insert(sysId,uasWidget);
@@ -562,7 +562,7 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             // Single char
             char b = *((char*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            item->setData(2, Qt::DisplayRole, QString("char[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("char[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, b);
         }
         break;
@@ -571,13 +571,13 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             uint8_t* nums = m+messageInfo[msgid].fields[fieldid].wire_offset;
             // Enforce null termination
-            QString tmp("%1, ");
+            QString tmp(QStringLiteral("%1, "));
             QString string;
             for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("uint8_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("uint8_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
@@ -593,13 +593,13 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             int8_t* nums = (int8_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             // Enforce null termination
-            QString tmp("%1, ");
+            QString tmp(QStringLiteral("%1, "));
             QString string;
             for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("int8_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("int8_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
@@ -615,13 +615,13 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             uint16_t* nums = (uint16_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             // Enforce null termination
-            QString tmp("%1, ");
+            QString tmp(QStringLiteral("%1, "));
             QString string;
             for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("uint16_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("uint16_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
@@ -637,13 +637,13 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             int16_t* nums = (int16_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             // Enforce null termination
-            QString tmp("%1, ");
+            QString tmp(QStringLiteral("%1, "));
             QString string;
             for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("int16_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("int16_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
@@ -659,13 +659,13 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             uint32_t* nums = (uint32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             // Enforce null termination
-            QString tmp("%1, ");
+            QString tmp(QStringLiteral("%1, "));
             QString string;
             for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("uint32_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("uint32_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
@@ -681,13 +681,13 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             int32_t* nums = (int32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             // Enforce null termination
-            QString tmp("%1, ");
+            QString tmp(QStringLiteral("%1, "));
             QString string;
             for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("int32_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("int32_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
@@ -703,13 +703,13 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             float* nums = (float*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             // Enforce null termination
-            QString tmp("%1, ");
+            QString tmp(QStringLiteral("%1, "));
             QString string;
             for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("float[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("float[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
@@ -725,13 +725,13 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             double* nums = (double*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             // Enforce null termination
-            QString tmp("%1, ");
+            QString tmp(QStringLiteral("%1, "));
             QString string;
             for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("double[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("double[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
@@ -747,13 +747,13 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             uint64_t* nums = (uint64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             // Enforce null termination
-            QString tmp("%1, ");
+            QString tmp(QStringLiteral("%1, "));
             QString string;
             for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("uint64_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("uint64_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
@@ -769,13 +769,13 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         {
             int64_t* nums = (int64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             // Enforce null termination
-            QString tmp("%1, ");
+            QString tmp(QStringLiteral("%1, "));
             QString string;
             for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("int64_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QStringLiteral("int64_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else

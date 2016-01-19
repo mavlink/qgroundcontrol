@@ -46,7 +46,7 @@ void VehicleComponent::addSummaryQmlComponent(QQmlContext* context, QQuickItem* 
     Q_ASSERT(context);
     
     // FIXME: We own this object now, need to delete somewhere
-    QQmlComponent component(context->engine(), QUrl::fromUserInput("qrc:/qml/VehicleComponentSummaryButton.qml"));
+    QQmlComponent component(context->engine(), QUrl::fromUserInput(QStringLiteral("qrc:/qml/VehicleComponentSummaryButton.qml")));
     if (component.status() == QQmlComponent::Error) {
         qDebug() << component.errors();
         Q_ASSERT(false);

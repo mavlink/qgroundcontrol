@@ -31,14 +31,14 @@ APMRoverMode::APMRoverMode(uint32_t mode, bool settable)
     : APMCustomMode(mode, settable)
 {
     QMap<uint32_t,QString> enumToString;
-    enumToString.insert(MANUAL,         "Manual");
-    enumToString.insert(LEARNING,       "Learning");
-    enumToString.insert(STEERING,       "Steering");
-    enumToString.insert(HOLD,           "Hold");
-    enumToString.insert(AUTO,           "Auto");
-    enumToString.insert(RTL,            "RTL");
-    enumToString.insert(GUIDED,         "Guided");
-    enumToString.insert(INITIALIZING,   "Initializing");
+    enumToString.insert(MANUAL,         QStringLiteral("Manual"));
+    enumToString.insert(LEARNING,       QStringLiteral("Learning"));
+    enumToString.insert(STEERING,       QStringLiteral("Steering"));
+    enumToString.insert(HOLD,           QStringLiteral("Hold"));
+    enumToString.insert(AUTO,           QStringLiteral("Auto"));
+    enumToString.insert(RTL,            QStringLiteral("RTL"));
+    enumToString.insert(GUIDED,         QStringLiteral("Guided"));
+    enumToString.insert(INITIALIZING,   QStringLiteral("Initializing"));
 
     setEnumToStringMapping(enumToString);
 }

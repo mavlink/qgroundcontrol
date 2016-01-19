@@ -86,7 +86,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
 
     switch(vehicleTypeEnum) {
         case MAV_TYPE_FIXED_WING:
-            vehicleName = "ArduPlane";
+            vehicleName = QLatin1String("ArduPlane");
             break;
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:
@@ -95,10 +95,10 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
         case MAV_TYPE_HEXAROTOR:
         case MAV_TYPE_OCTOROTOR:
         case MAV_TYPE_TRICOPTER:
-            vehicleName = "ArduCopter";
+            vehicleName = QLatin1String("ArduCopter");
             break;
         case MAV_TYPE_ANTENNA_TRACKER:
-            vehicleName = "Antenna Tracker";
+            vehicleName = QLatin1String("Antenna Tracker");
         case MAV_TYPE_GENERIC:
         case MAV_TYPE_GCS:
         case MAV_TYPE_AIRSHIP:
@@ -107,7 +107,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
             break;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_SURFACE_BOAT:
-            vehicleName = "ArduRover";
+            vehicleName = QLatin1String("ArduRover");
             break;
         case MAV_TYPE_FLAPPING_WING:
         case MAV_TYPE_KITE:
@@ -145,7 +145,7 @@ void APMParameterMetaData::_loadParameterFactMetaData()
     // Fixme:: always picking up the bundled xml, we would like to update it from web
     // just not sure right now as the xml is in bad shape.
     if (parameterFilename.isEmpty() || !QFile(parameterFilename).exists()) {
-        parameterFilename = ":/FirmwarePlugin/APM/apm.pdef.xml";
+        parameterFilename = QLatin1String(":/FirmwarePlugin/APM/apm.pdef.xml");
     }
 
     qCDebug(APMParameterMetaDataLog) << "Loading parameter meta data:" << parameterFilename;
@@ -179,35 +179,35 @@ void APMParameterMetaData::_loadParameterFactMetaData()
 
             if (elementName.isEmpty()) {
                 // skip empty elements
-            } else if (elementName == "paramfile") {
+            } else if (elementName == QLatin1String("paramfile")) {
                 if (xmlState.top() != XmlStateNone) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, paramfile matched";
                 }
                 xmlState.push(XmlstateParamFileFound);
                 // we don't really do anything with this element
-            } else if (elementName == "vehicles") {
+            } else if (elementName == QLatin1String("vehicles")) {
                 if (xmlState.top() != XmlstateParamFileFound) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, vehicles matched";
                     return;
                 }
                 xmlState.push(XmlStateFoundVehicles);
-            } else if (elementName == "libraries") {
+            } else if (elementName == QLatin1String("libraries")) {
                 if (xmlState.top() != XmlstateParamFileFound) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, libraries matched";
                     return;
                 }
-                currentCategory = "libraries";
+                currentCategory = QLatin1String("libraries");
                 xmlState.push(XmlStateFoundLibraries);
-            } else if (elementName == "parameters") {
+            } else if (elementName == QLatin1String("parameters")) {
                 if (xmlState.top() != XmlStateFoundVehicles && xmlState.top() != XmlStateFoundLibraries) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, parameters matched"
                                                        << "but we don't have proper vehicle or libraries yet";
                     return;
                 }
 
-                if (xml.attributes().hasAttribute("name")) {
+                if (xml.attributes().hasAttribute(QStringLiteral("name"))) {
                     // we will handle metadata only for specific MAV_TYPEs and libraries
-                    const QString nameValue = xml.attributes().value("name").toString();
+                    const QString nameValue = xml.attributes().value(QStringLiteral("name")).toString();
                     if (nameValue.contains(parameterCategories)) {
                         xmlState.push(XmlStateFoundParameters);
                         currentCategory = nameValue;
@@ -217,7 +217,7 @@ void APMParameterMetaData::_loadParameterFactMetaData()
                         xmlState.push(XmlStateFoundParameters);
                     } else {
                         qCDebug(APMParameterMetaDataVerboseLog) << "not interested in this block of parameters, skipping:" << nameValue;
-                        if (skipXMLBlock(xml, "parameters")) {
+                        if (skipXMLBlock(xml, QStringLiteral("parameters"))) {
                             qCWarning(APMParameterMetaDataLog) << "something wrong with the xml, skip of the xml failed";
                             return;
                         }
@@ -225,7 +225,7 @@ void APMParameterMetaData::_loadParameterFactMetaData()
                         continue;
                     }
                 }
-            }  else if (elementName == "param") {
+            }  else if (elementName == QLatin1String("param")) {
                 if (xmlState.top() != XmlStateFoundParameters) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, element param matched"
                                                        << "while we are not yet in parameters";
@@ -233,21 +233,21 @@ void APMParameterMetaData::_loadParameterFactMetaData()
                 }
                 xmlState.push(XmlStateFoundParameter);
 
-                if (!xml.attributes().hasAttribute("name")) {
+                if (!xml.attributes().hasAttribute(QStringLiteral("name"))) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, parameter attribute name missing";
                     return;
                 }
 
-                QString name = xml.attributes().value("name").toString();
+                QString name = xml.attributes().value(QStringLiteral("name")).toString();
                 if (name.contains(':')) {
                     name = name.split(':').last();
                 }
                 QString group = name.split('_').first();
                 group = group.remove(QRegExp("[0-9]*$")); // remove any numbers from the end
 
-                QString shortDescription = xml.attributes().value("humanName").toString();
-                QString longDescription = xml.attributes().value("docmentation").toString();
-                QString userLevel = xml.attributes().value("user").toString();
+                QString shortDescription = xml.attributes().value(QStringLiteral("humanName")).toString();
+                QString longDescription = xml.attributes().value(QStringLiteral("docmentation")).toString();
+                QString userLevel = xml.attributes().value(QStringLiteral("user")).toString();
 
                 qCDebug(APMParameterMetaDataVerboseLog) << "Found parameter name:" << name
                           << "short Desc:" << shortDescription
@@ -289,19 +289,19 @@ void APMParameterMetaData::_loadParameterFactMetaData()
         } else if (xml.isEndElement()) {
             QString elementName = xml.name().toString();
 
-            if (elementName == "param" && xmlState.top() == XmlStateFoundParameter) {
+            if (elementName == QLatin1String("param") && xmlState.top() == XmlStateFoundParameter) {
                 // Done loading this parameter
                 // Reset for next parameter
                 qCDebug(APMParameterMetaDataVerboseLog) << "done loading parameter";
                 rawMetaData = NULL;
                 badMetaData = false;
                 xmlState.pop();
-            } else if (elementName == "parameters") {
+            } else if (elementName == QLatin1String("parameters")) {
                 qCDebug(APMParameterMetaDataVerboseLog) << "end of parameters for category: " << currentCategory;
                 correctGroupMemberships(_vehicleTypeToParametersMap[currentCategory], groupMembers);
                 groupMembers.clear();
                 xmlState.pop();
-            } else if (elementName == "vehicles") {
+            } else if (elementName == QLatin1String("vehicles")) {
                 qCDebug(APMParameterMetaDataVerboseLog) << "vehicles end here, libraries will follow";
                 xmlState.pop();
             }
@@ -316,7 +316,7 @@ void APMParameterMetaData::correctGroupMemberships(ParameterNametoFactMetaDataMa
     foreach(const QString& groupName, groupMembers.keys()) {
             if (groupMembers[groupName].count() == 1) {
                 foreach(const QString& parameter, groupMembers.value(groupName)) {
-                    parameterToFactMetaDataMap[parameter]->group = "others";
+                    parameterToFactMetaDataMap[parameter]->group = QLatin1String("others");
                 }
             }
         }
@@ -337,18 +337,18 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
     QString elementName = xml.name().toString();
     QList<QPair<QString,QString> > values;
     // as long as param doens't end
-    while (!(elementName == "param" && xml.isEndElement())) {
+    while (!(elementName == QLatin1String("param") && xml.isEndElement())) {
         if (elementName.isEmpty()) {
             // skip empty elements. Somehow I am getting lot of these. Dont know what to do with them.
-        } else if (elementName == "field") {
-            QString attributeName = xml.attributes().value("name").toString();
+        } else if (elementName == QLatin1String("field")) {
+            QString attributeName = xml.attributes().value(QStringLiteral("name")).toString();
 
-            if ( attributeName == "Range") {
+            if ( attributeName == QLatin1String("Range")) {
                 QString range = xml.readElementText().trimmed();
                 QStringList rangeList = range.split(' ');
                 if (rangeList.count() != 2) {
                     qCDebug(APMParameterMetaDataVerboseLog) << "space seperator didn't work',trying 'to' separator";
-                    rangeList = range.split("to");
+                    rangeList = range.split(QStringLiteral("to"));
                     if (rangeList.count() != 2) {
                         qCDebug(APMParameterMetaDataVerboseLog) << " 'to' seperaator didn't work', trying '-' as seperator";
                         rangeList = range.split('-');
@@ -373,23 +373,23 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
                     qCDebug(APMParameterMetaDataVerboseLog) << "read field parameter " << "min: " << rawMetaData->min
                                                      << "max: " << rawMetaData->max;
                 }
-            } else if (attributeName == "Increment") {
+            } else if (attributeName == QLatin1String("Increment")) {
                 QString increment = xml.readElementText();
                 qCDebug(APMParameterMetaDataVerboseLog) << "read Increment: " << increment;
                 rawMetaData->incrementSize = increment;
-            } else if (attributeName == "Units") {
+            } else if (attributeName == QLatin1String("Units")) {
                 QString units = xml.readElementText();
                 qCDebug(APMParameterMetaDataVerboseLog) << "read Units: " << units;
                 rawMetaData->units = units;
-            } else if (attributeName == "Bitmask") {
+            } else if (attributeName == QLatin1String("Bitmask")) {
                 bool    parseError = false;
 
                 QString bitmaskString = xml.readElementText();
                 qCDebug(APMParameterMetaDataVerboseLog) << "read Bitmask: " << bitmaskString;
-                QStringList bitmaskList = bitmaskString.split(",");
+                QStringList bitmaskList = bitmaskString.split(QStringLiteral(","));
                 if (bitmaskList.count() > 0) {
                     foreach (const QString& bitmask, bitmaskList) {
-                        QStringList pair = bitmask.split(":");
+                        QStringList pair = bitmask.split(QStringLiteral(":"));
                         if (pair.count() == 2) {
                             rawMetaData->bitmask << QPair<QString, QString>(pair[0], pair[1]);
                         } else {
@@ -403,16 +403,16 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
                 if (parseError) {
                     rawMetaData->bitmask.clear();
                 }
-            } else if (attributeName == "RebootRequired") {
+            } else if (attributeName == QLatin1String("RebootRequired")) {
                 QString strValue = xml.readElementText().trimmed();
-                if (strValue.compare("true", Qt::CaseInsensitive) == 0) {
+                if (strValue.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0) {
                     rawMetaData->rebootRequired = true;
                 }
             }
-        } else if (elementName == "values") {
+        } else if (elementName == QLatin1String("values")) {
             // doing nothing individual value will follow anyway. May be used for sanity checking.
-        } else if (elementName == "value") {
-            QString valueValue = xml.attributes().value("code").toString();
+        } else if (elementName == QLatin1String("value")) {
+            QString valueValue = xml.attributes().value(QStringLiteral("code")).toString();
             QString valueName = xml.readElementText();
             qCDebug(APMParameterMetaDataVerboseLog) << "read value parameter " << "value desc: "
                                              << valueName << "code: " << valueValue;
@@ -438,8 +438,8 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     // check if we have metadata for fact, use generic otherwise
     if (_vehicleTypeToParametersMap[mavTypeString].contains(fact->name())) {
         rawMetaData = _vehicleTypeToParametersMap[mavTypeString][fact->name()];
-    } else if (_vehicleTypeToParametersMap["libraries"].contains(fact->name())) {
-        rawMetaData = _vehicleTypeToParametersMap["libraries"][fact->name()];
+    } else if (_vehicleTypeToParametersMap[QStringLiteral("libraries")].contains(fact->name())) {
+        rawMetaData = _vehicleTypeToParametersMap[QStringLiteral("libraries")][fact->name()];
     }
 
     FactMetaData *metaData = new FactMetaData(fact->type(), fact);

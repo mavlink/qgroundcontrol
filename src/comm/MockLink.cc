@@ -78,7 +78,7 @@ const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
 
 MockLink::MockLink(MockConfiguration* config)
     : _missionItemHandler(this, qgcApp()->toolbox()->mavlinkProtocol())
-    , _name("MockLink")
+    , _name(QStringLiteral("MockLink"))
     , _connected(false)
     , _vehicleSystemId(128)     // FIXME: Pull from eventual parameter manager
     , _vehicleComponentId(200)  // FIXME: magic number?
@@ -206,12 +206,12 @@ void MockLink::_loadParams(void)
 
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         if (_vehicleType == MAV_TYPE_FIXED_WING) {
-            paramFile.setFileName(":/unittest/APMArduPlaneMockLink.params");
+            paramFile.setFileName(QStringLiteral(":/unittest/APMArduPlaneMockLink.params"));
         } else {
-            paramFile.setFileName(":/unittest/APMArduCopterMockLink.params");
+            paramFile.setFileName(QStringLiteral(":/unittest/APMArduCopterMockLink.params"));
         }
     } else {
-        paramFile.setFileName(":/unittest/PX4MockLink.params");
+        paramFile.setFileName(QStringLiteral(":/unittest/PX4MockLink.params"));
     }
 
 
@@ -224,11 +224,11 @@ void MockLink::_loadParams(void)
     while (!paramStream.atEnd()) {
         QString line = paramStream.readLine();
 
-        if (line.startsWith("#")) {
+        if (line.startsWith(QLatin1String("#"))) {
             continue;
         }
 
-        QStringList paramData = line.split("\t");
+        QStringList paramData = line.split(QStringLiteral("\t"));
         Q_ASSERT(paramData.count() == 5);
 
         int componentId = paramData.at(1).toInt();
@@ -683,7 +683,7 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t& msg)
     int componentId = request.target_component;
 
     // special case for magic _HASH_CHECK value
-    if (request.target_component == MAV_COMP_ID_ALL && param_name == "_HASH_CHECK") {
+    if (request.target_component == MAV_COMP_ID_ALL && param_name == QLatin1String("_HASH_CHECK")) {
         mavlink_param_union_t   valueUnion;
         valueUnion.type = MAV_PARAM_TYPE_UINT32;
         valueUnion.param_uint32 = 0;
@@ -951,7 +951,7 @@ MockLink*  MockLink::_startMockLink(MockConfiguration* mockConfig)
 
 MockLink*  MockLink::startPX4MockLink(bool sendStatusText)
 {
-    MockConfiguration* mockConfig = new MockConfiguration("PX4 MockLink");
+    MockConfiguration* mockConfig = new MockConfiguration(QStringLiteral("PX4 MockLink"));
 
     mockConfig->setFirmwareType(MAV_AUTOPILOT_PX4);
     mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
@@ -962,7 +962,7 @@ MockLink*  MockLink::startPX4MockLink(bool sendStatusText)
 
 MockLink*  MockLink::startGenericMockLink(bool sendStatusText)
 {
-    MockConfiguration* mockConfig = new MockConfiguration("Generic MockLink");
+    MockConfiguration* mockConfig = new MockConfiguration(QStringLiteral("Generic MockLink"));
 
     mockConfig->setFirmwareType(MAV_AUTOPILOT_GENERIC);
     mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
@@ -973,7 +973,7 @@ MockLink*  MockLink::startGenericMockLink(bool sendStatusText)
 
 MockLink*  MockLink::startAPMArduCopterMockLink(bool sendStatusText)
 {
-    MockConfiguration* mockConfig = new MockConfiguration("APM ArduCopter MockLink");
+    MockConfiguration* mockConfig = new MockConfiguration(QStringLiteral("APM ArduCopter MockLink"));
 
     mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
     mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
@@ -984,7 +984,7 @@ MockLink*  MockLink::startAPMArduCopterMockLink(bool sendStatusText)
 
 MockLink*  MockLink::startAPMArduPlaneMockLink(bool sendStatusText)
 {
-    MockConfiguration* mockConfig = new MockConfiguration("APM ArduPlane MockLink");
+    MockConfiguration* mockConfig = new MockConfiguration(QStringLiteral("APM ArduPlane MockLink"));
 
     mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
     mockConfig->setVehicleType(MAV_TYPE_FIXED_WING);

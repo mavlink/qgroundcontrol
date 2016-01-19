@@ -104,7 +104,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
 
             //-- Is there an ESP8266 Connected?
-            if(factExists(FactSystem::ParameterProvider, MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
+            if(factExists(FactSystem::ParameterProvider, MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("SW_VER"))) {
                 _esp8266Component = new PX4ESP8266Component(_vehicle, this);
                 _esp8266Component->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_esp8266Component));
@@ -143,7 +143,7 @@ void PX4AutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
     // Check for older parameter version set
     // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
     // should be used instead.
-    if (parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF")) {
+    if (parameterExists(FactSystem::defaultComponentId, QStringLiteral("SENS_GYRO_XOFF"))) {
         _incorrectParameterVersion = true;
         qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
                               "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");

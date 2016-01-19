@@ -14,19 +14,19 @@ QGCHilJSBSimConfiguration::QGCHilJSBSimConfiguration(Vehicle* vehicle, QWidget *
     QStringList items = QStringList();
     if (_vehicle->vehicleType() == MAV_TYPE_FIXED_WING)
     {
-        items << "EasyStar";
-        items << "Rascal110-JSBSim";
-        items << "c172p";
-        items << "YardStik";
-        items << "Malolo1";
+        items << QStringLiteral("EasyStar");
+        items << QStringLiteral("Rascal110-JSBSim");
+        items << QStringLiteral("c172p");
+        items << QStringLiteral("YardStik");
+        items << QStringLiteral("Malolo1");
     }
     else if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     {
-        items << "arducopter";
+        items << QStringLiteral("arducopter");
     }
     else
     {
-        items << "<aircraft>";
+        items << QStringLiteral("<aircraft>");
     }
     ui->aircraftComboBox->addItems(items);
 }

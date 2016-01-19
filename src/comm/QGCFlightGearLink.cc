@@ -186,10 +186,10 @@ void QGCFlightGearLink::processError(QProcess::ProcessError err)
  */
 void QGCFlightGearLink::setRemoteHost(const QString& host)
 {
-    if (host.contains(":"))
+    if (host.contains(QStringLiteral(":")))
     {
         //qDebug() << "HOST: " << host.split(":").first();
-        QHostInfo info = QHostInfo::fromName(host.split(":").first());
+        QHostInfo info = QHostInfo::fromName(host.split(QStringLiteral(":")).first());
         if (info.error() == QHostInfo::NoError)
         {
             // Add host
@@ -198,7 +198,7 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
             for (int i = 0; i < hostAddresses.size(); i++)
             {
                 // Exclude loopback IPv4 and all IPv6 addresses
-                if (!hostAddresses.at(i).toString().contains(":"))
+                if (!hostAddresses.at(i).toString().contains(QStringLiteral(":")))
                 {
                     address = hostAddresses.at(i);
                 }
@@ -206,7 +206,7 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
             currentHost = address;
             //qDebug() << "Address:" << address.toString();
             // Set port according to user input
-            currentPort = host.split(":").last().toInt();
+            currentPort = host.split(QStringLiteral(":")).last().toInt();
         }
     }
     else
@@ -232,7 +232,7 @@ void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float p
 
     if(!isnan(rollAilerons) && !isnan(pitchElevator) && !isnan(yawRudder) && !isnan(throttle))
     {
-        QString state("%1\t%2\t%3\t%4\t%5\n");
+        QString state(QStringLiteral("%1\t%2\t%3\t%4\t%5\n"));
         state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
         writeBytes(state.toLatin1().constData(), state.length());
         //qDebug() << "Updated controls" << rollAilerons << pitchElevator << yawRudder << throttle;
@@ -293,7 +293,7 @@ void QGCFlightGearLink::readBytes()
     QString state(b);
     //qDebug() << "FG LINK GOT:" << state;
 
-    QStringList values = state.split("\t");
+    QStringList values = state.split(QStringLiteral("\t"));
 
     // Check length
     const int nValues = 22;
@@ -732,10 +732,10 @@ bool QGCFlightGearLink::connectSimulation()
     }
 #elif defined Q_OS_LINUX
     // Linux installs to a location on the path so we don't need a directory to run the executable
-    fgAppName = "fgfs";
-    _fgProcessName = "fgfs";
-    fgRootPathProposedList += "/usr/share/flightgear/data/";    // Default Archlinux location
-    fgRootPathProposedList += "/usr/share/games/flightgear/";   // Default Ubuntu location
+    fgAppName = QLatin1String("fgfs");
+    _fgProcessName = QLatin1String("fgfs");
+    fgRootPathProposedList += QStringLiteral("/usr/share/flightgear/data/");    // Default Archlinux location
+    fgRootPathProposedList += QStringLiteral("/usr/share/games/flightgear/");   // Default Ubuntu location
 #else
 #error Unknown OS build flavor
 #endif
@@ -769,7 +769,7 @@ bool QGCFlightGearLink::connectSimulation()
     // If we have an --fg-root coming in from the ui options, that setting overrides any internal searching of
     // proposed locations.
     QString argValue;
-    fgRootDirOverride = _findUIArgument(_fgArgList, "--fg-root", argValue);
+    fgRootDirOverride = _findUIArgument(_fgArgList, QStringLiteral("--fg-root"), argValue);
     if (fgRootDirOverride) {
         fgRootPathProposedList.clear();
         fgRootPathProposedList += argValue;
@@ -806,7 +806,7 @@ bool QGCFlightGearLink::connectSimulation()
 
     // Add --fg-scenery command line arg. If --fg-scenery is specified from the ui we use that instead.
     // On Windows --fg-scenery is required on the command line otherwise FlightGear won't boot.
-    fgSceneryDirOverride = _findUIArgument(_fgArgList, "--fg-scenery", argValue);
+    fgSceneryDirOverride = _findUIArgument(_fgArgList, QStringLiteral("--fg-scenery"), argValue);
     if (fgSceneryDirOverride) {
         fgSceneryPath = argValue;
         qDebug() << "--fg-scenery override" << argValue;
@@ -841,13 +841,13 @@ bool QGCFlightGearLink::connectSimulation()
 
     // Setup protocol we will be using to communicate with FlightGear
     QString fgProtocol(_vehicle->vehicleType() == MAV_TYPE_QUADROTOR ? "qgroundcontrol-quadrotor" : "qgroundcontrol-fixed-wing");
-    QString fgProtocolArg("--generic=socket,%1,300,127.0.0.1,%2,udp,%3");
-    _fgArgList << fgProtocolArg.arg("out").arg(port).arg(fgProtocol);
-    _fgArgList << fgProtocolArg.arg("in").arg(currentPort).arg(fgProtocol);
+    QString fgProtocolArg(QStringLiteral("--generic=socket,%1,300,127.0.0.1,%2,udp,%3"));
+    _fgArgList << fgProtocolArg.arg(QStringLiteral("out")).arg(port).arg(fgProtocol);
+    _fgArgList << fgProtocolArg.arg(QStringLiteral("in")).arg(currentPort).arg(fgProtocol);
 
     // Verify directory where FlightGear stores communicaton protocols.
     QDir fgProtocolDir(fgRootPath);
-    if (!fgProtocolDir.cd("Protocol")) {
+    if (!fgProtocolDir.cd(QStringLiteral("Protocol"))) {
         QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect FlightGear setup. Protocol directory is missing: '%1'. Command line parameter for --fg-root may be set incorrectly.").arg(fgProtocolDir.path()));
         return false;
     }
@@ -919,7 +919,7 @@ bool QGCFlightGearLink::connectSimulation()
             QString copyCmd = QString("copy \"%1\" \"%2\"").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified);
             copyCmd.replace("/", "\\");
 #else
-            QString copyCmd = QString("sudo cp %1 %2").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified);
+            QString copyCmd = QStringLiteral("sudo cp %1 %2").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified);
 #endif
 
             QMessageBox msgBox(QMessageBox::Critical,
@@ -943,17 +943,17 @@ bool QGCFlightGearLink::connectSimulation()
     // Start the engines to save a startup step
     if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR) {
         // Start all engines of the quad
-        _fgArgList << "--prop:/engines/engine[0]/running=true";
-        _fgArgList << "--prop:/engines/engine[1]/running=true";
-        _fgArgList << "--prop:/engines/engine[2]/running=true";
-        _fgArgList << "--prop:/engines/engine[3]/running=true";
+        _fgArgList << QStringLiteral("--prop:/engines/engine[0]/running=true");
+        _fgArgList << QStringLiteral("--prop:/engines/engine[1]/running=true");
+        _fgArgList << QStringLiteral("--prop:/engines/engine[2]/running=true");
+        _fgArgList << QStringLiteral("--prop:/engines/engine[3]/running=true");
     } else {
-        _fgArgList << "--prop:/engines/engine/running=true";
+        _fgArgList << QStringLiteral("--prop:/engines/engine/running=true");
     }
 
     // We start out at our home position
-    _fgArgList << QString("--lat=%1").arg(qgcApp()->toolbox()->homePositionManager()->getHomeLatitude());
-    _fgArgList << QString("--lon=%1").arg(qgcApp()->toolbox()->homePositionManager()->getHomeLongitude());
+    _fgArgList << QStringLiteral("--lat=%1").arg(qgcApp()->toolbox()->homePositionManager()->getHomeLatitude());
+    _fgArgList << QStringLiteral("--lon=%1").arg(qgcApp()->toolbox()->homePositionManager()->getHomeLongitude());
     // The altitude is not set because an altitude not equal to the ground altitude leads to a non-zero default throttle in flightgear
     // Without the altitude-setting the aircraft is positioned on the ground
     //_fgArgList << QString("--altitude=%1").arg(qgcApp()->toolbox()->homePositionManager()->getHomeAltitude());
@@ -972,7 +972,7 @@ void QGCFlightGearLink::_printFgfsOutput(void)
 {
    qDebug() << "fgfs stdout:";
    QByteArray byteArray = _fgProcess->readAllStandardOutput();
-   QStringList strLines = QString(byteArray).split("\n");
+   QStringList strLines = QString(byteArray).split(QStringLiteral("\n"));
 
    foreach (const QString &line, strLines){
     qDebug() << line;
@@ -984,7 +984,7 @@ void QGCFlightGearLink::_printFgfsError(void)
    qDebug() << "fgfs stderr:";
 
    QByteArray byteArray = _fgProcess->readAllStandardError();
-   QStringList strLines = QString(byteArray).split("\n");
+   QStringList strLines = QString(byteArray).split(QStringLiteral("\n"));
 
    foreach (const QString &line, strLines){
     qDebug() << line;
@@ -1017,7 +1017,7 @@ QString QGCFlightGearLink::getName()
 
 QString QGCFlightGearLink::getRemoteHost()
 {
-    return QString("%1:%2").arg(currentHost.toString(), currentPort);
+    return QStringLiteral("%1:%2").arg(currentHost.toString(), currentPort);
 }
 
 void QGCFlightGearLink::setName(QString name)

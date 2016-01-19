@@ -56,8 +56,8 @@ bool QGCTemporaryFile::open(QFile::OpenMode openMode)
             uniqueStr += rgDigits[qrand() % 10];
         }
         
-        if (_template.contains("XXXXXX")) {
-            tempFilename = _template.replace("XXXXXX", uniqueStr, Qt::CaseSensitive);
+        if (_template.contains(QStringLiteral("XXXXXX"))) {
+            tempFilename = _template.replace(QLatin1String("XXXXXX"), uniqueStr, Qt::CaseSensitive);
         } else {
             tempFilename = _template + uniqueStr;
         }

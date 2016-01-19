@@ -53,7 +53,7 @@ UASMessageViewWidget::UASMessageViewWidget(UASMessageHandler* uasMessageHandler,
     , _unconnectedWidget(NULL)
     , _uasMessageHandler(uasMessageHandler)
 {
-    setStyleSheet("QPlainTextEdit { border: 0px }");
+    setStyleSheet(QStringLiteral("QPlainTextEdit { border: 0px }"));
     // Construct initial widget
     _unconnectedWidget = new QGCUnconnectedInfoWidget(this);
     ui()->horizontalLayout->addWidget(_unconnectedWidget);

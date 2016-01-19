@@ -44,9 +44,9 @@ static const QRegExp VERSION_REXP("^(APM:Copter|APM:Plane|APM:Rover|ArduCopter|A
 
 // minimum firmware versions that don't suffer from mavlink severity inversion bug.
 // https://github.com/diydrones/apm_planner/issues/788
-static const QString MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Copter V3.4.0");
-static const QString MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Plane V3.4.0");
-static const QString MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Rover V2.6.0");
+static const QString MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS(QStringLiteral("APM:Copter V3.4.0"));
+static const QString MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS(QStringLiteral("APM:Plane V3.4.0"));
+static const QString MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS(QStringLiteral("APM:Rover V2.6.0"));
 
 
 /*
@@ -173,7 +173,7 @@ QStringList APMFirmwarePlugin::flightModes(void)
 
 QString APMFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode)
 {
-    QString flightMode = "Unknown";
+    QString flightMode = QStringLiteral("Unknown");
 
     if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
         foreach (const APMCustomMode& customMode, _supportedModes) {
@@ -338,7 +338,7 @@ void APMFirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t
 
                         if (supportedMajorNumber != -1) {
                             if (_firmwareVersion.majorNumber() < supportedMajorNumber || _firmwareVersion.minorNumber() < supportedMinorNumber) {
-                                qgcApp()->showMessage(QString("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
+                                qgcApp()->showMessage(QStringLiteral("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
                             }
                         }
                     }
@@ -348,7 +348,7 @@ void APMFirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t
             // APM user facing calibration messages come through as high severity, we need to parse them out
             // and lower the severity on them so that they don't pop in the users face.
 
-            if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
+            if (messageText.contains(QStringLiteral("Place vehicle")) || messageText.contains(QStringLiteral("Calibration successful"))) {
                 _adjustCalibrationMessageSeverity(message);
                 return;
             }

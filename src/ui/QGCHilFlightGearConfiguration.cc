@@ -30,7 +30,7 @@ QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(Vehicle* vehicle, Q
     if (_vehicle->vehicleType() == MAV_TYPE_FIXED_WING)
     {
         /*items << "EasyStar";*/
-        items << "Rascal110-JSBSim";
+        items << QStringLiteral("Rascal110-JSBSim");
         /*items << "c172p";
         items << "YardStik";
         items << "Malolo1";*/
@@ -44,7 +44,7 @@ QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(Vehicle* vehicle, Q
     else
     {
         // FIXME: Should disable all input, won't work. Show error message in the status label thing.
-        items << "<aircraft>";
+        items << QStringLiteral("<aircraft>");
     }
     _ui.aircraftComboBox->addItems(items);
     

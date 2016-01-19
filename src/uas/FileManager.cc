@@ -54,7 +54,7 @@ FileManager::FileManager(QObject* parent, Vehicle* vehicle)
 /// Respond to the Ack associated with the Open command with the next read command.
 void FileManager::_openAckResponse(Request* openAck)
 {
-    qCDebug(FileManagerLog) << QString("_openAckResponse: _currentOperation(%1) _readFileLength(%2)").arg(_currentOperation).arg(openAck->openFileLength);
+    qCDebug(FileManagerLog) << QStringLiteral("_openAckResponse: _currentOperation(%1) _readFileLength(%2)").arg(_currentOperation).arg(openAck->openFileLength);
     
 	Q_ASSERT(_currentOperation == kCOOpenRead || _currentOperation == kCOOpenBurst);
 	_currentOperation = _currentOperation == kCOOpenRead ? kCORead : kCOBurst;
@@ -83,7 +83,7 @@ void FileManager::_openAckResponse(Request* openAck)
 ///     @param success true: successful download completion, false: error during download
 void FileManager::_closeDownloadSession(bool success)
 {
-    qCDebug(FileManagerLog) << QString("_closeDownloadSession: success(%1)").arg(success);
+    qCDebug(FileManagerLog) << QStringLiteral("_closeDownloadSession: success(%1)").arg(success);
     
     _currentOperation = kCOIdle;
     
@@ -117,7 +117,7 @@ void FileManager::_closeDownloadSession(bool success)
 ///     @param success true: successful upload completion, false: error during download
 void FileManager::_closeUploadSession(bool success)
 {
-    qCDebug(FileManagerLog) << QString("_closeUploadSession: success(%1)").arg(success);
+    qCDebug(FileManagerLog) << QStringLiteral("_closeUploadSession: success(%1)").arg(success);
     
     _currentOperation = kCOIdle;
     _writeFileAccumulator.clear();
@@ -147,7 +147,7 @@ void FileManager::_downloadAckResponse(Request* readAck, bool readFile)
         return;
     }
     
-    qCDebug(FileManagerLog) << QString("_downloadAckResponse: offset(%1) size(%2) burstComplete(%3)").arg(readAck->hdr.offset).arg(readAck->hdr.size).arg(readAck->hdr.burstComplete);
+    qCDebug(FileManagerLog) << QStringLiteral("_downloadAckResponse: offset(%1) size(%2) burstComplete(%3)").arg(readAck->hdr.offset).arg(readAck->hdr.size).arg(readAck->hdr.burstComplete);
 
 	_downloadOffset += readAck->hdr.size;
     _readFileAccumulator.append((const char*)readAck->data, readAck->hdr.size);
@@ -600,27 +600,27 @@ QString FileManager::errorString(uint8_t errorCode)
 {
     switch(errorCode) {
         case kErrNone:
-            return QString("no error");
+            return QStringLiteral("no error");
         case kErrFail:
-            return QString("unknown error");
+            return QStringLiteral("unknown error");
         case kErrEOF:
-            return QString("read beyond end of file");
+            return QStringLiteral("read beyond end of file");
         case kErrUnknownCommand:
-            return QString("unknown command");
+            return QStringLiteral("unknown command");
         case kErrFailErrno:
-            return QString("command failed");
+            return QStringLiteral("command failed");
         case kErrInvalidDataSize:
-            return QString("invalid data size");
+            return QStringLiteral("invalid data size");
         case kErrInvalidSession:
-            return QString("invalid session");
+            return QStringLiteral("invalid session");
         case kErrNoSessionsAvailable:
-            return QString("no sessions availble");
+            return QStringLiteral("no sessions availble");
         case kErrFailFileExists:
-            return QString("File already exists on target");
+            return QStringLiteral("File already exists on target");
         case kErrFailFileProtected:
-            return QString("File is write protected");
+            return QStringLiteral("File is write protected");
         default:
-            return QString("unknown error code");
+            return QStringLiteral("unknown error code");
     }
 }
 
@@ -702,7 +702,7 @@ void FileManager::_ackTimeout(void)
 			
         default:
             _currentOperation = kCOIdle;
-            _emitErrorMessage(QString("Timeout waiting for ack: Command failed (%1)").arg(_currentOperation));
+            _emitErrorMessage(QStringLiteral("Timeout waiting for ack: Command failed (%1)").arg(_currentOperation));
             break;
     }
 }

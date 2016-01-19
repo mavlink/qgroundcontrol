@@ -105,8 +105,8 @@ public:
     void setGroundSpeed(double val)
     {
         groundSpeed = val;
-        emit groundSpeedChanged(val,"groundSpeed");
-        emit valueChanged(this->uasId,"groundSpeed","m/s",QVariant(val),getUnixTime());
+        emit groundSpeedChanged(val,QStringLiteral("groundSpeed"));
+        emit valueChanged(this->uasId,QStringLiteral("groundSpeed"),QStringLiteral("m/s"),QVariant(val),getUnixTime());
     }
     double getGroundSpeed() const
     {
@@ -116,8 +116,8 @@ public:
     void setAirSpeed(double val)
     {
         airSpeed = val;
-        emit airSpeedChanged(val,"airSpeed");
-        emit valueChanged(this->uasId,"airSpeed","m/s",QVariant(val),getUnixTime());
+        emit airSpeedChanged(val,QStringLiteral("airSpeed"));
+        emit valueChanged(this->uasId,QStringLiteral("airSpeed"),QStringLiteral("m/s"),QVariant(val),getUnixTime());
     }
 
     double getAirSpeed() const
@@ -128,8 +128,8 @@ public:
     void setLocalX(double val)
     {
         localX = val;
-        emit localXChanged(val,"localX");
-        emit valueChanged(this->uasId,"localX","m",QVariant(val),getUnixTime());
+        emit localXChanged(val,QStringLiteral("localX"));
+        emit valueChanged(this->uasId,QStringLiteral("localX"),QStringLiteral("m"),QVariant(val),getUnixTime());
     }
 
     double getLocalX() const
@@ -140,8 +140,8 @@ public:
     void setLocalY(double val)
     {
         localY = val;
-        emit localYChanged(val,"localY");
-        emit valueChanged(this->uasId,"localY","m",QVariant(val),getUnixTime());
+        emit localYChanged(val,QStringLiteral("localY"));
+        emit valueChanged(this->uasId,QStringLiteral("localY"),QStringLiteral("m"),QVariant(val),getUnixTime());
     }
     double getLocalY() const
     {
@@ -151,8 +151,8 @@ public:
     void setLocalZ(double val)
     {
         localZ = val;
-        emit localZChanged(val,"localZ");
-        emit valueChanged(this->uasId,"localZ","m",QVariant(val),getUnixTime());
+        emit localZChanged(val,QStringLiteral("localZ"));
+        emit valueChanged(this->uasId,QStringLiteral("localZ"),QStringLiteral("m"),QVariant(val),getUnixTime());
     }
     double getLocalZ() const
     {
@@ -162,8 +162,8 @@ public:
     void setLatitude(double val)
     {
         latitude = val;
-        emit latitudeChanged(val,"latitude");
-        emit valueChanged(this->uasId,"latitude","deg",QVariant(val),getUnixTime());
+        emit latitudeChanged(val,QStringLiteral("latitude"));
+        emit valueChanged(this->uasId,QStringLiteral("latitude"),QStringLiteral("deg"),QVariant(val),getUnixTime());
     }
 
     double getLatitude() const
@@ -174,8 +174,8 @@ public:
     void setLongitude(double val)
     {
         longitude = val;
-        emit longitudeChanged(val,"longitude");
-        emit valueChanged(this->uasId,"longitude","deg",QVariant(val),getUnixTime());
+        emit longitudeChanged(val,QStringLiteral("longitude"));
+        emit valueChanged(this->uasId,QStringLiteral("longitude"),QStringLiteral("deg"),QVariant(val),getUnixTime());
     }
 
     double getLongitude() const
@@ -186,11 +186,11 @@ public:
     void setAltitudeAMSL(double val)
     {
         altitudeAMSL = val;
-        emit altitudeAMSLChanged(val, "altitudeAMSL");
-        emit valueChanged(this->uasId,"altitudeAMSL","m",QVariant(altitudeAMSL),getUnixTime());
+        emit altitudeAMSLChanged(val, QStringLiteral("altitudeAMSL"));
+        emit valueChanged(this->uasId,QStringLiteral("altitudeAMSL"),QStringLiteral("m"),QVariant(altitudeAMSL),getUnixTime());
         altitudeAMSLFT = 3.28084 * altitudeAMSL;
-        emit altitudeAMSLFTChanged(val, "altitudeAMSLFT");
-        emit valueChanged(this->uasId,"altitudeAMSLFT","m",QVariant(altitudeAMSLFT),getUnixTime());
+        emit altitudeAMSLFTChanged(val, QStringLiteral("altitudeAMSLFT"));
+        emit valueChanged(this->uasId,QStringLiteral("altitudeAMSLFT"),QStringLiteral("m"),QVariant(altitudeAMSLFT),getUnixTime());
     }
 
     double getAltitudeAMSL() const
@@ -206,8 +206,8 @@ public:
     void setAltitudeWGS84(double val)
     {
         altitudeWGS84 = val;
-        emit altitudeWGS84Changed(val, "altitudeWGS84");
-        emit valueChanged(this->uasId,"altitudeWGS84","m",QVariant(val),getUnixTime());
+        emit altitudeWGS84Changed(val, QStringLiteral("altitudeWGS84"));
+        emit valueChanged(this->uasId,QStringLiteral("altitudeWGS84"),QStringLiteral("m"),QVariant(val),getUnixTime());
     }
 
     double getAltitudeWGS84() const
@@ -219,8 +219,8 @@ public:
     void setAltitudeRelative(double val)
     {
         altitudeRelative = val;
-        emit altitudeRelativeChanged(val, "altitudeRelative");
-        emit valueChanged(this->uasId,"altitudeRelative","m",QVariant(val),getUnixTime());
+        emit altitudeRelativeChanged(val, QStringLiteral("altitudeRelative"));
+        emit valueChanged(this->uasId,QStringLiteral("altitudeRelative"),QStringLiteral("m"),QVariant(val),getUnixTime());
     }
 
     double getAltitudeRelative() const
@@ -246,8 +246,8 @@ public:
     void setSatelliteCount(double val)
     {
         satelliteCount = val;
-        emit satelliteCountChanged(val,"satelliteCount");
-        emit valueChanged(this->uasId,"satelliteCount","",QVariant(val),getUnixTime());
+        emit satelliteCountChanged(val,QStringLiteral("satelliteCount"));
+        emit valueChanged(this->uasId,QStringLiteral("satelliteCount"),QLatin1String(""),QVariant(val),getUnixTime());
     }
 
     double getSatelliteCount() const
@@ -263,8 +263,8 @@ public:
     void setDistToWaypoint(double val)
     {
         distToWaypoint = val;
-        emit distToWaypointChanged(val,"distToWaypoint");
-        emit valueChanged(this->uasId,"distToWaypoint","m",QVariant(val),getUnixTime());
+        emit distToWaypointChanged(val,QStringLiteral("distToWaypoint"));
+        emit valueChanged(this->uasId,QStringLiteral("distToWaypoint"),QStringLiteral("m"),QVariant(val),getUnixTime());
     }
 
     double getDistToWaypoint() const
@@ -275,8 +275,8 @@ public:
     void setBearingToWaypoint(double val)
     {
         bearingToWaypoint = val;
-        emit bearingToWaypointChanged(val,"bearingToWaypoint");
-        emit valueChanged(this->uasId,"bearingToWaypoint","deg",QVariant(val),getUnixTime());
+        emit bearingToWaypointChanged(val,QStringLiteral("bearingToWaypoint"));
+        emit valueChanged(this->uasId,QStringLiteral("bearingToWaypoint"),QStringLiteral("deg"),QVariant(val),getUnixTime());
     }
 
     double getBearingToWaypoint() const
@@ -288,7 +288,7 @@ public:
     void setRoll(double val)
     {
         roll = val;
-        emit rollChanged(val,"roll");
+        emit rollChanged(val,QStringLiteral("roll"));
     }
 
     double getRoll() const
@@ -299,7 +299,7 @@ public:
     void setPitch(double val)
     {
         pitch = val;
-        emit pitchChanged(val,"pitch");
+        emit pitchChanged(val,QStringLiteral("pitch"));
     }
 
     double getPitch() const
@@ -310,7 +310,7 @@ public:
     void setYaw(double val)
     {
         yaw = val;
-        emit yawChanged(val,"yaw");
+        emit yawChanged(val,QStringLiteral("yaw"));
     }
 
     double getYaw() const

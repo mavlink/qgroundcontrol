@@ -51,7 +51,7 @@ QString SensorsComponent::description(void) const
 
 QString SensorsComponent::iconResource(void) const
 {
-    return "/qmlimages/SensorsComponentIcon.png";
+    return QStringLiteral("/qmlimages/SensorsComponentIcon.png");
 }
 
 bool SensorsComponent::requiresSetup(void) const
@@ -74,7 +74,7 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList triggers;
     
-    triggers << "CAL_MAG0_ID" << "CAL_GYRO0_ID" << "CAL_ACC0_ID";
+    triggers << QStringLiteral("CAL_MAG0_ID") << QStringLiteral("CAL_GYRO0_ID") << QStringLiteral("CAL_ACC0_ID");
     switch (_vehicle->vehicleType()) {
         case MAV_TYPE_FIXED_WING:
         case MAV_TYPE_VTOL_DUOROTOR:
@@ -84,7 +84,7 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
         case MAV_TYPE_VTOL_RESERVED3:
         case MAV_TYPE_VTOL_RESERVED4:
         case MAV_TYPE_VTOL_RESERVED5:
-            triggers << "SENS_DPRES_OFF";
+            triggers << QStringLiteral("SENS_DPRES_OFF");
             break;
         default:
             break;
@@ -95,7 +95,7 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl SensorsComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/SensorsComponent.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/SensorsComponent.qml"));
 }
 
 QUrl SensorsComponent::summaryQmlSource(void) const
@@ -107,10 +107,10 @@ QUrl SensorsComponent::summaryQmlSource(void) const
         case MAV_TYPE_VTOL_DUOROTOR:
         case MAV_TYPE_VTOL_QUADROTOR:
         case MAV_TYPE_VTOL_TILTROTOR:
-            summaryQml = "qrc:/qml/SensorsComponentSummaryFixedWing.qml";
+            summaryQml = QLatin1String("qrc:/qml/SensorsComponentSummaryFixedWing.qml");
             break;
         default:
-            summaryQml = "qrc:/qml/SensorsComponentSummary.qml";
+            summaryQml = QLatin1String("qrc:/qml/SensorsComponentSummary.qml");
             break;
     }
     

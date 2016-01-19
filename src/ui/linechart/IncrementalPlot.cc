@@ -87,7 +87,7 @@ IncrementalPlot::IncrementalPlot(QWidget *parent):
     ChartPlot(parent),
     symmetric(false)
 {
-    setStyleText("solid crosses");
+    setStyleText(QStringLiteral("solid crosses"));
 
     plotLayout()->setAlignCanvasToScales(true);
 
@@ -173,22 +173,22 @@ void IncrementalPlot::updateStyle(QwtPlotCurve *curve)
 
     // Update the symbol style
     QwtSymbol *newSymbol = NULL;
-    if (styleText.contains("circles")) {
+    if (styleText.contains(QStringLiteral("circles"))) {
         newSymbol = new QwtSymbol(QwtSymbol::Ellipse, Qt::NoBrush, QPen(oldColor, symbolWidth), QSize(6, 6));
-    } else if (styleText.contains("crosses")) {
+    } else if (styleText.contains(QStringLiteral("crosses"))) {
         newSymbol = new QwtSymbol(QwtSymbol::XCross, Qt::NoBrush, QPen(oldColor, symbolWidth), QSize(5, 5));
-    } else if (styleText.contains("rect")) {
+    } else if (styleText.contains(QStringLiteral("rect"))) {
         newSymbol = new QwtSymbol(QwtSymbol::Rect, Qt::NoBrush, QPen(oldColor, symbolWidth), QSize(6, 6));
     }
     // Else-case already handled by NULL value, which indicates no symbol
     curve->setSymbol(newSymbol);
 
     // Update the line style
-    if (styleText.contains("dotted")) {
+    if (styleText.contains(QStringLiteral("dotted"))) {
         curve->setPen(QPen(oldColor, curveWidth, Qt::DotLine));
-    } else if (styleText.contains("dashed")) {
+    } else if (styleText.contains(QStringLiteral("dashed"))) {
         curve->setPen(QPen(oldColor, curveWidth, Qt::DashLine));
-    } else if (styleText.contains("line") || styleText.contains("solid")) {
+    } else if (styleText.contains(QStringLiteral("line")) || styleText.contains(QStringLiteral("solid"))) {
         curve->setPen(QPen(oldColor, curveWidth, Qt::SolidLine));
     } else {
         curve->setPen(QPen(oldColor, curveWidth, Qt::NoPen));

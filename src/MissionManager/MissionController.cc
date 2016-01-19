@@ -221,7 +221,7 @@ void MissionController::loadMissionFromFile(void)
 {
 #ifndef __mobile__
     QString errorString;
-    QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Mission File to load");
+    QString filename = QGCFileDialog::getOpenFileName(NULL, QStringLiteral("Select Mission File to load"));
 
     if (filename.isEmpty()) {
         return;
@@ -242,10 +242,10 @@ void MissionController::loadMissionFromFile(void)
     } else {
         QTextStream in(&file);
 
-        const QStringList& version = in.readLine().split(" ");
+        const QStringList& version = in.readLine().split(QStringLiteral(" "));
 
-        if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "120")) {
-            errorString = "The mission file is not compatible with the current version of QGroundControl.";
+        if (!(version.size() == 3 && version[0] == QLatin1String("QGC") && version[1] == QLatin1String("WPL") && version[2] == QLatin1String("120"))) {
+            errorString = QLatin1String("The mission file is not compatible with the current version of QGroundControl.");
         } else {
             while (!in.atEnd()) {
                 MissionItem* item = new MissionItem();
@@ -253,7 +253,7 @@ void MissionController::loadMissionFromFile(void)
                 if (item->load(in)) {
                     _missionItems->append(item);
                 } else {
-                    errorString = "The mission file is corrupted.";
+                    errorString = QLatin1String("The mission file is corrupted.");
                     break;
                 }
             }
@@ -273,7 +273,7 @@ void MissionController::saveMissionToFile(void)
 {
 #ifndef __mobile__
     QString errorString;
-    QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save mission to");
+    QString filename = QGCFileDialog::getSaveFileName(NULL, QStringLiteral("Select file to save mission to"));
 
     if (filename.isEmpty()) {
         return;

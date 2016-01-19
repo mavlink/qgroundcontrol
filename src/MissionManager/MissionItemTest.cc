@@ -130,7 +130,7 @@ void MissionItemTest::_test(void)
                                 "50.1234566999999984\t"
                                 "60.1234566999999984\t"
                                 "70.1234567000000055";
-        QString expectedItemString = QString("1\t0\t%1\t%2\t%3\t1\r\n").arg(info->frame).arg(info->command).arg(paramStrings);
+        QString expectedItemString = QStringLiteral("1\t0\t%1\t%2\t%3\t1\r\n").arg(info->frame).arg(info->command).arg(paramStrings);
         QCOMPARE(savedItemString, expectedItemString);
         
         // Validate that the fact values are correctly returned

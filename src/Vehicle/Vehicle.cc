@@ -175,7 +175,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_mav, &UASInterface::localizationChanged,               this, &Vehicle::_setSatLoc);
     UAS* pUas = dynamic_cast<UAS*>(_mav);
     if(pUas) {
-        _setSatelliteCount(pUas->getSatelliteCount(), QString(""));
+        _setSatelliteCount(pUas->getSatelliteCount(), QLatin1String(""));
         connect(pUas, &UAS::satelliteCountChanged,  this, &Vehicle::_setSatelliteCount);
         connect(pUas, &UAS::satRawHDOPChanged,      this, &Vehicle::_setSatRawHDOP);
         connect(pUas, &UAS::satRawVDOPChanged,      this, &Vehicle::_setSatRawVDOP);
@@ -417,7 +417,7 @@ void Vehicle::_addLink(LinkInterface* link)
 {
     if (!_containsLink(link)) {
         _links += link;
-        qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
+        qCDebug(VehicleLog) << "_addLink:" << QStringLiteral("%1").arg((ulong)link, 0, 16);
         connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactiveOrDeleted);
         connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDeleted, this, &Vehicle::_linkInactiveOrDeleted);
     }
@@ -734,7 +734,7 @@ QString Vehicle::getMavIconColor()
     if(_mav)
         return _mav->getColor().name();
     else
-        return QString("black");
+        return QStringLiteral("black");
 }
 
 QString Vehicle::formatedMessages()
@@ -975,7 +975,7 @@ QStringList Vehicle::joystickModes(void)
 {
     QStringList list;
 
-    list << "Normal" << "Attitude" << "Position" << "Force" << "Velocity";
+    list << QStringLiteral("Normal") << QStringLiteral("Attitude") << QStringLiteral("Position") << QStringLiteral("Force") << QStringLiteral("Velocity");
 
     return list;
 }
@@ -1172,7 +1172,7 @@ void Vehicle::sendMessageMultiple(mavlink_message_t message)
 void Vehicle::_missionManagerError(int errorCode, const QString& errorMsg)
 {
     Q_UNUSED(errorCode);
-    qgcApp()->showMessage(QString("Error during Mission communication with Vehicle: %1").arg(errorMsg));
+    qgcApp()->showMessage(QStringLiteral("Error during Mission communication with Vehicle: %1").arg(errorMsg));
 }
 
 void Vehicle::_addNewMapTrajectoryPoint(void)
@@ -1270,7 +1270,7 @@ void Vehicle::_connectionLostTimeout(void)
         _connectionLost = true;
         emit connectionLostChanged(true);
 
-        _say(QString("connection lost to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
+        _say(QStringLiteral("connection lost to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
     }
 }
 
@@ -1282,7 +1282,7 @@ void Vehicle::_connectionActive(void)
         _connectionLost = false;
         emit connectionLostChanged(false);
 
-        _say(QString("connection regained to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
+        _say(QStringLiteral("connection regained to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
     }
 }
 

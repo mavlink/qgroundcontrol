@@ -213,11 +213,11 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         }
 
         // Determine if we have the correct permissions to access USB serial devices
-        QFile permFile("/etc/group");
+        QFile permFile(QStringLiteral("/etc/group"));
         if(permFile.open(QIODevice::ReadOnly)) {
             while(!permFile.atEnd()) {
                 QString line = permFile.readLine();
-                if (line.contains("dialout") && !line.contains(getenv("USER"))) {
+                if (line.contains(QStringLiteral("dialout")) && !line.contains(getenv("USER"))) {
                     QMessageBox msgBox;
                     msgBox.setInformativeText("The current user does not have the correct permissions to access serial devices. "
                                               "You should also remove modemmanager since it also interferes. "
@@ -260,21 +260,21 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     QString filterRules;
 
     // Turn off bogus ssl warning
-    filterRules += "qt.network.ssl.warning=false\n";
+    filterRules += QLatin1String("qt.network.ssl.warning=false\n");
 
     if (logging) {
-        QStringList logList = loggingOptions.split(",");
+        QStringList logList = loggingOptions.split(QStringLiteral(","));
 
-        if (logList[0] == "full") {
-            filterRules += "*Log.debug=true\n";
+        if (logList[0] == QLatin1String("full")) {
+            filterRules += QLatin1String("*Log.debug=true\n");
             for(int i=1; i<logList.count(); i++) {
                 filterRules += logList[i];
-                filterRules += ".debug=false\n";
+                filterRules += QLatin1String(".debug=false\n");
             }
         } else {
             foreach(const QString &rule, logList) {
                 filterRules += rule;
-                filterRules += ".debug=true\n";
+                filterRules += QLatin1String(".debug=true\n");
             }
         }
     } else {
@@ -330,7 +330,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     if (_runningUnitTests) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
         // name. Also we want to run unit tests with clean settings every time.
-        setApplicationName(QString("%1_unittest").arg(QGC_APPLICATION_NAME));
+        setApplicationName(QStringLiteral("%1_unittest").arg(QGC_APPLICATION_NAME));
     } else {
         setApplicationName(QGC_APPLICATION_NAME);
     }
@@ -408,20 +408,20 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<QGCPalette>     ("QGroundControl.Palette", 1, 0, "QGCPalette");
     qmlRegisterType<QGCMapPalette>  ("QGroundControl.Palette", 1, 0, "QGCMapPalette");
 
-    qmlRegisterUncreatableType<CoordinateVector>    ("QGroundControl",                  1, 0, "CoordinateVector",       "Reference only");
-    qmlRegisterUncreatableType<MissionCommands>     ("QGroundControl",                  1, 0, "MissionCommands",        "Reference only");
-    qmlRegisterUncreatableType<QGCQGeoCoordinate>   ("QGroundControl",                  1, 0, "QGCQGeoCoordinate",      "Reference only");
-    qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     "Reference only");
-    qmlRegisterUncreatableType<VideoReceiver>       ("QGroundControl",                  1, 0, "VideoReceiver",          "Reference only");
-    qmlRegisterUncreatableType<VideoSurface>        ("QGroundControl",                  1, 0, "VideoSurface",           "Reference only");
+    qmlRegisterUncreatableType<CoordinateVector>    ("QGroundControl",                  1, 0, "CoordinateVector",       QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<MissionCommands>     ("QGroundControl",                  1, 0, "MissionCommands",        QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<QGCQGeoCoordinate>   ("QGroundControl",                  1, 0, "QGCQGeoCoordinate",      QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<VideoReceiver>       ("QGroundControl",                  1, 0, "VideoReceiver",          QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<VideoSurface>        ("QGroundControl",                  1, 0, "VideoSurface",           QStringLiteral("Reference only"));
 
-    qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",        "Reference only");
-    qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",       "Reference only");
-    qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",                "Reference only");
-    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",          1, 0, "MissionItem",            "Reference only");
-    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",          1, 0, "MissionManager",         "Reference only");
-    qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",        "Reference only");
-    qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",               "Reference only");
+    qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",        QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",       QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",                QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",          1, 0, "MissionItem",            QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",          1, 0, "MissionManager",         QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",        QStringLiteral("Reference only"));
+    qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",               QStringLiteral("Reference only"));
 
     qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
     qmlRegisterType<APMFlightModesComponentController>  ("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController");
@@ -593,18 +593,18 @@ void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
             tr("Save Flight Data Log"),
             QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
             tr("Flight Data Log Files (*.mavlink)"),
-            "mavlink");
+            QStringLiteral("mavlink"));
 
         if (!saveFilename.isEmpty()) {
             // if file exsits already, try to remove it first to overwrite it
             if(QFile::exists(saveFilename) && !QFile::remove(saveFilename)){
                 // if the file cannot be removed, prompt user and ask new path
                 saveError = true;
-                QGCMessageBox::warning("File Error","Could not overwrite existing file.\nPlease provide a different file name to save to.");
+                QGCMessageBox::warning(QStringLiteral("File Error"),QStringLiteral("Could not overwrite existing file.\nPlease provide a different file name to save to."));
             } else if(!QFile::copy(tempLogfile, saveFilename)) {
                 // if file could not be copied, prompt user and ask new path
                 saveError = true;
-                QGCMessageBox::warning("File Error","Could not create file.\nPlease provide a different file name to save to.");
+                QGCMessageBox::warning(QStringLiteral("File Error"),QStringLiteral("Could not create file.\nPlease provide a different file name to save to."));
             }
         }
     } while(saveError); // if the file could not be overwritten, ask for new file
@@ -663,7 +663,7 @@ void QGCApplication::_loadCurrentStyle(void)
 
 void QGCApplication::reportMissingParameter(int componentId, const QString& name)
 {
-    _missingParams += QString("%1:%2").arg(componentId).arg(name);
+    _missingParams += QStringLiteral("%1:%2").arg(componentId).arg(name);
     _missingParamsDelayedDisplayTimer.start();
 }
 
@@ -677,12 +677,12 @@ void QGCApplication::_missingParamsDisplay(void)
         if (params.isEmpty()) {
             params += name;
         } else {
-            params += QString(", %1").arg(name);
+            params += QStringLiteral(", %1").arg(name);
         }
     }
     _missingParams.clear();
 
-    showMessage(QString("Parameters missing from firmware: %1. You may be running an older version of firmware QGC does not work correctly with or your firmware has a bug in it.").arg(params));
+    showMessage(QStringLiteral("Parameters missing from firmware: %1. You may be running an older version of firmware QGC does not work correctly with or your firmware has a bug in it.").arg(params));
 }
 
 QObject* QGCApplication::_rootQmlObject(void)
@@ -716,7 +716,7 @@ void QGCApplication::showMessage(const QString& message)
 #ifndef __mobile__
     } else if (runningUnitTests()){
         // Unit test can run without a main window which will lead to no root qml object. Use QGCMessageBox instead
-        QGCMessageBox::information("Unit Test", message);
+        QGCMessageBox::information(QStringLiteral("Unit Test"), message);
 #endif
     } else {
         qWarning() << "Internal error";

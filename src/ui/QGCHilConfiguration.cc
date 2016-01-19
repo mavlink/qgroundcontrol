@@ -42,8 +42,8 @@ QGCHilConfiguration::QGCHilConfiguration(Vehicle* vehicle, QWidget *parent)
     // class, but this is something to clean up for later.
 
     QSettings settings;
-    settings.beginGroup("QGC_HILCONFIG");
-    int i = settings.value("SIMULATOR_INDEX", -1).toInt();
+    settings.beginGroup(QStringLiteral("QGC_HILCONFIG"));
+    int i = settings.value(QStringLiteral("SIMULATOR_INDEX"), -1).toInt();
 
     if (i > 0) {
 //        ui->simComboBox->blockSignals(true);
@@ -63,8 +63,8 @@ void QGCHilConfiguration::receiveStatusMessage(const QString& message)
 QGCHilConfiguration::~QGCHilConfiguration()
 {
     QSettings settings;
-    settings.beginGroup("QGC_HILCONFIG");
-    settings.setValue("SIMULATOR_INDEX", ui->simComboBox->currentIndex());
+    settings.beginGroup(QStringLiteral("QGC_HILCONFIG"));
+    settings.setValue(QStringLiteral("SIMULATOR_INDEX"), ui->simComboBox->currentIndex());
     settings.endGroup();
     delete ui;
 }
@@ -87,7 +87,7 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
     if(1 == index)
     {
         // Ensure the sim exists and is disabled
-        _vehicle->uas()->enableHilFlightGear(false, "", true, this);
+        _vehicle->uas()->enableHilFlightGear(false, QLatin1String(""), true, this);
         QGCHilFlightGearConfiguration* hfgconf = new QGCHilFlightGearConfiguration(_vehicle, this);
         hfgconf->show();
         ui->simulatorConfigurationLayout->addWidget(hfgconf);

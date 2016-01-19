@@ -95,7 +95,7 @@ void FactPanelController::_reportMissingParameter(int componentId, const QString
 {
     qgcApp()->reportMissingParameter(componentId, name);
 
-    QString missingParam = QString("%1:%2").arg(componentId).arg(name);
+    QString missingParam = QStringLiteral("%1:%2").arg(componentId).arg(name);
 
     // If missing parameters a reported from the constructor of a derived class we
     // will not have access to _factPanel yet. Just record list of missing facts
@@ -125,7 +125,7 @@ bool FactPanelController::_allParametersExists(int componentId, QStringList name
 void FactPanelController::_checkForMissingFactPanel(void)
 {
     if (!_factPanel) {
-        _showInternalError("Incorrect FactPanel Qml implementation. FactPanelController used without passing in factPanel.");
+        _showInternalError(QStringLiteral("Incorrect FactPanel Qml implementation. FactPanelController used without passing in factPanel."));
     }
 }
 
@@ -148,7 +148,7 @@ bool FactPanelController::parameterExists(int componentId, const QString& name)
 
 void FactPanelController::_showInternalError(const QString& errorMsg)
 {
-    _notifyPanelErrorMsg(QString("Internal Error: %1").arg(errorMsg));
+    _notifyPanelErrorMsg(QStringLiteral("Internal Error: %1").arg(errorMsg));
     qCWarning(FactPanelControllerLog) << "Internal Error" << errorMsg;
     qgcApp()->showMessage(errorMsg);
 }

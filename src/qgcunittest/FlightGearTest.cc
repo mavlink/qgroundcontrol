@@ -63,7 +63,7 @@ void FlightGearUnitTest::_parseUIArguments_test(void)
         bool actualReturn = QGCFlightGearLink::parseUIArguments(testCase->args, returnedArgList);
         QCOMPARE(actualReturn, testCase->expectedReturn);
         if (actualReturn) {
-            QStringList expectedArgList = QString(testCase->expectedListAsChar).split("|");
+            QStringList expectedArgList = QString(testCase->expectedListAsChar).split(QStringLiteral("|"));
             if (returnedArgList != expectedArgList) {
                 qDebug() << "About to fail: Returned" << returnedArgList << "Expected" << expectedArgList;
             }

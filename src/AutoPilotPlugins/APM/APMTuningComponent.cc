@@ -27,7 +27,7 @@
 
 APMTuningComponent::APMTuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : APMComponent(vehicle, autopilot, parent)
-    , _name("Tuning")
+    , _name(QStringLiteral("Tuning"))
 {
 }
 

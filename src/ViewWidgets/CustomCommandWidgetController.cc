@@ -62,7 +62,7 @@ void CustomCommandWidgetController::selectQmlFile(void)
 {
     QSettings settings;
     
-    QString qmlFile = QGCFileDialog::getOpenFileName(NULL, "Select custom Qml file", QString(), "Qml files (*.qml)");
+    QString qmlFile = QGCFileDialog::getOpenFileName(NULL, QStringLiteral("Select custom Qml file"), QString(), QStringLiteral("Qml files (*.qml)"));
     if (qmlFile.isEmpty()) {
         _customQmlFile.clear();
         settings.remove(_settingsKey);

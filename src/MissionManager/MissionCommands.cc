@@ -87,7 +87,7 @@ bool MissionCommands::_validateKeyTypes(QJsonObject& jsonObject, const QStringLi
 
 void MissionCommands::_loadMavCmdInfoJson(void)
 {
-    QFile jsonFile(":/json/MavCmdInfo.json");
+    QFile jsonFile(QStringLiteral(":/json/MavCmdInfo.json"));
     if (!jsonFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning() << "Unable to open MavCmdInfo.json" << jsonFile.errorString();
         return;
@@ -149,7 +149,7 @@ void MissionCommands::_loadMavCmdInfoJson(void)
         MavCmdInfo* mavCmdInfo = new MavCmdInfo(this);
 
         mavCmdInfo->_command = (MAV_CMD)      jsonObject.value(_idJsonKey).toInt();
-        mavCmdInfo->_category =               jsonObject.value(_categoryJsonKey).toString("Advanced");
+        mavCmdInfo->_category =               jsonObject.value(_categoryJsonKey).toString(QStringLiteral("Advanced"));
         mavCmdInfo->_rawName =                jsonObject.value(_rawNameJsonKey).toString();
         mavCmdInfo->_friendlyName =           jsonObject.value(_friendlyNameJsonKey).toString(QString());
         mavCmdInfo->_description =            jsonObject.value(_descriptionJsonKey).toString(QString());
@@ -203,11 +203,11 @@ void MissionCommands::_loadMavCmdInfoJson(void)
                 paramInfo->_label =         paramObject.value(_labelJsonKey).toString();
                 paramInfo->_defaultValue =  paramObject.value(_defaultJsonKey).toDouble(0.0);
                 paramInfo->_decimalPlaces = paramObject.value(_decimalPlacesJsonKey).toInt(FactMetaData::defaultDecimalPlaces);
-                paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
+                paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(QStringLiteral(","), QString::SkipEmptyParts);
                 paramInfo->_param =         i;
                 paramInfo->_units =         paramObject.value(_unitsJsonKey).toString();
 
-                QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(",", QString::SkipEmptyParts);
+                QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(QStringLiteral(","), QString::SkipEmptyParts);
                 foreach (const QString &enumValue, enumValues) {
                     bool    convertOk;
                     double  value = enumValue.toDouble(&convertOk);
@@ -274,7 +274,7 @@ MAV_AUTOPILOT MissionCommands::_firmwareTypeFromVehicle(Vehicle* vehicle) const
         // FIXME: Hack duplicated code from QGroundControlQmlGlobal. Had to do this for now since
         // QGroundControlQmlGlobal is not available from C++ side.
 
-        return (MAV_AUTOPILOT)settings.value("OfflineEditingFirmwareType", MAV_AUTOPILOT_ARDUPILOTMEGA).toInt();
+        return (MAV_AUTOPILOT)settings.value(QStringLiteral("OfflineEditingFirmwareType"), MAV_AUTOPILOT_ARDUPILOTMEGA).toInt();
     }
 }
 

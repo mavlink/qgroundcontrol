@@ -67,11 +67,11 @@ void LogCompressor::run()
 
     QString outFileName;
 
-    QStringList parts = QFileInfo(infile.fileName()).absoluteFilePath().split(".", QString::SkipEmptyParts);
+    QStringList parts = QFileInfo(infile.fileName()).absoluteFilePath().split(QStringLiteral("."), QString::SkipEmptyParts);
 
     parts.replace(0, parts.first() + "_compressed");
-    parts.replace(parts.size()-1, "txt");
-    outFileName = parts.join(".");
+    parts.replace(parts.size()-1, QStringLiteral("txt"));
+    outFileName = parts.join(QStringLiteral("."));
 
 	// Verify that the output file is useable
     QFile outTmpFile(outFileName);
@@ -108,10 +108,10 @@ void LogCompressor::run()
 
 	QString headerLine = "timestamp_ms" + delimiter + headerList.join(delimiter) + "\n";
     // Clean header names from symbols Matlab considers as Latex syntax
-    headerLine = headerLine.replace("timestamp", "TIMESTAMP");
-    headerLine = headerLine.replace(":", "");
-    headerLine = headerLine.replace("_", "");
-    headerLine = headerLine.replace(".", "");
+    headerLine = headerLine.replace(QLatin1String("timestamp"), QLatin1String("TIMESTAMP"));
+    headerLine = headerLine.replace(QLatin1String(":"), QLatin1String(""));
+    headerLine = headerLine.replace(QLatin1String("_"), QLatin1String(""));
+    headerLine = headerLine.replace(QLatin1String("."), QLatin1String(""));
 	outTmpFile.write(headerLine.toLocal8Bit());
 
     _signalCriticalError(tr("Log compressor: Dataset contains dimensions: ") + headerLine);
@@ -167,13 +167,13 @@ void LogCompressor::run()
         // line could be incomplete
         if (lineCounter > 1) {
             // Set the timestamp
-            list.replace(0,QString("%1").arg(timestampMap.keys().at(lineCounter)));
+            list.replace(0,QStringLiteral("%1").arg(timestampMap.keys().at(lineCounter)));
 
             // Fill holes if necessary
             if (holeFillingEnabled) {
                 int index = 0;
                 foreach (const QString& str, list) {
-                    if (str == "" || str == "NaN") {
+                    if (str == QLatin1String("") || str == QLatin1String("NaN")) {
                         list.replace(index, lastList.at(index));
                     }
                     index++;

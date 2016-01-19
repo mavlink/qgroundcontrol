@@ -29,6 +29,6 @@ LogDownload::LogDownload(const QString& title, QAction* action, QWidget *parent)
     Q_UNUSED(title);
     Q_UNUSED(action);
     resize(800, 600);
-    setSource(QUrl::fromUserInput("qrc:/qml/LogDownload.qml"));
+    setSource(QUrl::fromUserInput(QStringLiteral("qrc:/qml/LogDownload.qml")));
     loadSettings();
 }

@@ -94,7 +94,7 @@ int UnitTest::run(QString& singleTest)
     foreach (QObject* test, _testList()) {
         if (singleTest.isEmpty() || singleTest == test->objectName()) {
             QStringList args;
-            args << "*" << "-maxwarnings" << "0";
+            args << QStringLiteral("*") << QStringLiteral("-maxwarnings") << QStringLiteral("0");
             ret += QTest::qExec(test, args);
         }
     }

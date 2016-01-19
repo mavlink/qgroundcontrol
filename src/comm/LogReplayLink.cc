@@ -103,7 +103,7 @@ bool LogReplayLink::_connect(void)
 {
     // Disallow replay when any links are connected
     if (qgcApp()->toolbox()->linkManager()->anyActiveLinks()) {
-        emit communicationError(_errorTitle, "You must close all connections prior to replaying a log.");
+        emit communicationError(_errorTitle, QStringLiteral("You must close all connections prior to replaying a log."));
         return false;
     }
 
@@ -208,19 +208,19 @@ bool LogReplayLink::_loadLogFile(void)
     int logDurationSecondsTotal;
     
     if (_logFile.isOpen()) {
-        errorMsg = "Attempt to load new log while log being played";
+        errorMsg = QLatin1String("Attempt to load new log while log being played");
         goto Error;
     }
     
     _logFile.setFileName(logFilename);
     if (!_logFile.open(QFile::ReadOnly)) {
-        errorMsg = QString("Unable to open log file: '%1', error: %2").arg(logFilename).arg(_logFile.errorString());
+        errorMsg = QStringLiteral("Unable to open log file: '%1', error: %2").arg(logFilename).arg(_logFile.errorString());
         goto Error;
     }
     logFileInfo.setFile(logFilename);
     _logFileSize = logFileInfo.size();
     
-    _logTimestamped = logFilename.endsWith(".mavlink");
+    _logTimestamped = logFilename.endsWith(QLatin1String(".mavlink"));
     
     if (_logTimestamped) {
         // Get the first timestamp from the log
@@ -244,7 +244,7 @@ bool LogReplayLink::_loadLogFile(void)
         }
         
         if (endTimeUSecs == startTimeUSecs) {
-            errorMsg = QString("The log file '%1' is corrupt. No valid timestamps were found at the end of the file.").arg(logFilename);
+            errorMsg = QStringLiteral("The log file '%1' is corrupt. No valid timestamps were found at the end of the file.").arg(logFilename);
             goto Error;
         }
         
@@ -265,7 +265,7 @@ bool LogReplayLink::_loadLogFile(void)
         
         
         // Set baud rate if any present. Otherwise we default to 57600.
-        QStringList parts = logFileInfo.baseName().split("_");
+        QStringList parts = logFileInfo.baseName().split(QStringLiteral("_"));
         _binaryBaudRate = _defaultBinaryBaudRate;
         if (parts.count() > 1)
         {
@@ -439,7 +439,7 @@ void LogReplayLink::movePlayhead(int percentComplete)
         
         // Now seek to the appropriate position, failing gracefully if we can't.
         if (!_logFile.seek(newFilePos)) {
-            _replayError("Unable to seek to new position");
+            _replayError(QStringLiteral("Unable to seek to new position"));
             return;
         }
         
@@ -459,7 +459,7 @@ void LogReplayLink::movePlayhead(int percentComplete)
         // And now jump the necessary number of bytes in the proper direction
         qint64 offset = (newRelativeTimeUSecs - desiredTimeUSecs) * baudRate;
         if (!_logFile.seek(_logFile.pos() + offset)) {
-            _replayError("Unable to seek to new position");
+            _replayError(QStringLiteral("Unable to seek to new position"));
             return;
         }
         
@@ -478,7 +478,7 @@ void LogReplayLink::movePlayhead(int percentComplete)
         
         // Now seek to the appropriate position, failing gracefully if we can't.
         if (!_logFile.seek(newFilePos)) {
-            _replayError("Unable to seek to new position");
+            _replayError(QStringLiteral("Unable to seek to new position"));
             return;
         }
         
