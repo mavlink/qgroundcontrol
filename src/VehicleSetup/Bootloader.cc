@@ -364,7 +364,7 @@ bool Bootloader::_binVerifyBytes(QextSerialPort* port, const FirmwareImage* imag
     
     QFile firmwareFile(image->binFilename());
     if (!firmwareFile.open(QIODevice::ReadOnly)) {
-        _errorString = tr("Unable to open firmware file %1: %2").arg(image->binFilename()).arg(firmwareFile.errorString());
+        _errorString = tr("Unable to open firmware file %1: %2").arg(image->binFilename(),firmwareFile.errorString());
         return false;
     }
     uint32_t imageSize = (uint32_t)firmwareFile.size();
@@ -555,7 +555,7 @@ bool Bootloader::open(QextSerialPort* port, const QString portName)
     port->setFlowControl(FLOW_OFF);
     
     if (!port->open(QIODevice::ReadWrite | QIODevice::Unbuffered)) {
-        _errorString = tr("Open failed on port %1: %2").arg(portName).arg(port->errorString());
+        _errorString = tr("Open failed on port %1: %2").arg(portName, port->errorString());
         return false;
     }
     

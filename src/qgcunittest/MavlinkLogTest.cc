@@ -70,7 +70,7 @@ void MavlinkLogTest::cleanup(void)
 
 void MavlinkLogTest::_createTempLogFile(bool zeroLength)
 {
-    QGCTemporaryFile tempLogFile(QStringLiteral("%1.%2").arg(QString(_tempLogFileTemplate),QString(_logFileExtension));
+    QGCTemporaryFile tempLogFile(QStringLiteral("%1.%2").arg(QString(_tempLogFileTemplate),QString(_logFileExtension)));
     
     tempLogFile.open();
     if (!zeroLength) {
