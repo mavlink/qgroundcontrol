@@ -48,7 +48,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 class QGCMessageBox : public QMessageBox {
-
+    Q_OBJECT
 public:
     static StandardButton critical(const QString& title, const QString& text, StandardButtons buttons = Ok, StandardButton defaultButton = NoButton, QWidget* parent = NULL)
         { return _messageBox(QMessageBox::Critical, title, text, buttons, defaultButton, parent); }
