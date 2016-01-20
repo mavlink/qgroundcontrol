@@ -101,6 +101,7 @@ const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;
 
 class SLEEP : public QThread
 {
+    Q_OBJECT
 public:
     /**
      * @brief Set a thread to sleep for seconds
