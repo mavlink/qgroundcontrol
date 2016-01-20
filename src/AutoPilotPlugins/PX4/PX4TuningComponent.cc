@@ -67,7 +67,7 @@ QUrl PX4TuningComponent::setupSource(void) const
 
     switch (_vehicle->vehicleType()) {
         case MAV_TYPE_FIXED_WING:
-            qmlFile = QLatin1String("qrc:/qml/PX4TuningComponentPlane.qml");
+            qmlFile = QStringLiteral("qrc:/qml/PX4TuningComponentPlane.qml");
             break;
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:
@@ -75,7 +75,7 @@ QUrl PX4TuningComponent::setupSource(void) const
         case MAV_TYPE_HEXAROTOR:
         case MAV_TYPE_OCTOROTOR:
         case MAV_TYPE_TRICOPTER:
-            qmlFile = QLatin1String("qrc:/qml/PX4TuningComponentCopter.qml");
+            qmlFile = QStringLiteral("qrc:/qml/PX4TuningComponentCopter.qml");
             break;
         case MAV_TYPE_VTOL_DUOROTOR:
         case MAV_TYPE_VTOL_QUADROTOR:
@@ -84,7 +84,7 @@ QUrl PX4TuningComponent::setupSource(void) const
         case MAV_TYPE_VTOL_RESERVED3:
         case MAV_TYPE_VTOL_RESERVED4:
         case MAV_TYPE_VTOL_RESERVED5:
-            qmlFile = QLatin1String("qrc:/qml/PX4TuningComponentVTOL.qml");
+            qmlFile = QStringLiteral("qrc:/qml/PX4TuningComponentVTOL.qml");
             break;
         default:
             break;

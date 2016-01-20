@@ -110,8 +110,8 @@ void QGCJSBSimLink::run()
 #endif
 
 #ifdef Q_OS_LINUX
-    processJSB = QLatin1String("/usr/games/fgfs");
-    rootJSB = QLatin1String("/usr/share/games/flightgear");
+    processJSB = QStringLiteral("/usr/games/fgfs");
+    rootJSB = QStringLiteral("/usr/share/games/flightgear");
 #endif
 
     // Sanity checks

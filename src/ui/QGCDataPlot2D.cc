@@ -379,7 +379,7 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
     QString header = in.readLine();
 
     bool charRead = false;
-    QString separator = QLatin1String("");
+    QString separator = QStringLiteral("");
     QList<QChar> sepCandidates;
     sepCandidates << '\t';
     sepCandidates << ',';
@@ -494,7 +494,7 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
                     ui->yAxis->setText(ui->yAxis->text()+"|");
                 }
                 // If this curve was renamed, re-add the renaming to the text field
-                QString renamingText = QLatin1String("");
+                QString renamingText = QStringLiteral("");
                 if (renaming.contains(curveName)) renamingText = QStringLiteral(":%1").arg(renaming.value(curveName));
                 ui->yAxis->setText(ui->yAxis->text()+curveName+renamingText);
                 // Insert same value, not renaming anything

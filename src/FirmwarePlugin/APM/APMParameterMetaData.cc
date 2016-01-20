@@ -87,7 +87,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
 
     switch(vehicleTypeEnum) {
         case MAV_TYPE_FIXED_WING:
-            vehicleName = QLatin1String("ArduPlane");
+            vehicleName = QStringLiteral("ArduPlane");
             break;
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:
@@ -96,10 +96,10 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
         case MAV_TYPE_HEXAROTOR:
         case MAV_TYPE_OCTOROTOR:
         case MAV_TYPE_TRICOPTER:
-            vehicleName = QLatin1String("ArduCopter");
+            vehicleName = QStringLiteral("ArduCopter");
             break;
         case MAV_TYPE_ANTENNA_TRACKER:
-            vehicleName = QLatin1String("Antenna Tracker");
+            vehicleName = QStringLiteral("Antenna Tracker");
         case MAV_TYPE_GENERIC:
         case MAV_TYPE_GCS:
         case MAV_TYPE_AIRSHIP:
@@ -108,7 +108,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
             break;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_SURFACE_BOAT:
-            vehicleName = QLatin1String("ArduRover");
+            vehicleName = QStringLiteral("ArduRover");
             break;
         case MAV_TYPE_FLAPPING_WING:
         case MAV_TYPE_KITE:
@@ -146,7 +146,7 @@ void APMParameterMetaData::_loadParameterFactMetaData()
     // Fixme:: always picking up the bundled xml, we would like to update it from web
     // just not sure right now as the xml is in bad shape.
     if (parameterFilename.isEmpty() || !QFile(parameterFilename).exists()) {
-        parameterFilename = QLatin1String(":/FirmwarePlugin/APM/apm.pdef.xml");
+        parameterFilename = QStringLiteral(":/FirmwarePlugin/APM/apm.pdef.xml");
     }
 
     qCDebug(APMParameterMetaDataLog) << "Loading parameter meta data:" << parameterFilename;
@@ -197,7 +197,7 @@ void APMParameterMetaData::_loadParameterFactMetaData()
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, libraries matched";
                     return;
                 }
-                currentCategory = QLatin1String("libraries");
+                currentCategory = QStringLiteral("libraries");
                 xmlState.push(XmlStateFoundLibraries);
             } else if (elementName == QLatin1String("parameters")) {
                 if (xmlState.top() != XmlStateFoundVehicles && xmlState.top() != XmlStateFoundLibraries) {
@@ -317,7 +317,7 @@ void APMParameterMetaData::correctGroupMemberships(ParameterNametoFactMetaDataMa
     foreach(const QString& groupName, groupMembers.keys()) {
             if (groupMembers[groupName].count() == 1) {
                 foreach(const QString& parameter, groupMembers.value(groupName)) {
-                    parameterToFactMetaDataMap[parameter]->group = QLatin1String("others");
+                    parameterToFactMetaDataMap[parameter]->group = QStringLiteral("others");
                 }
             }
         }

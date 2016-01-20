@@ -107,7 +107,7 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
         parameterFilename = parameterMetaDataFile();
     }
 	if (parameterFilename.isEmpty() || !QFile(parameterFilename).exists()) {
-		parameterFilename = QLatin1String(":/AutoPilotPlugins/PX4/ParameterFactMetaData.xml");
+		parameterFilename = QStringLiteral(":/AutoPilotPlugins/PX4/ParameterFactMetaData.xml");
 	}
 	
     qCDebug(PX4ParameterMetaDataLog) << "Loading parameter meta data:" << parameterFilename;

@@ -107,10 +107,10 @@ QUrl SensorsComponent::summaryQmlSource(void) const
         case MAV_TYPE_VTOL_DUOROTOR:
         case MAV_TYPE_VTOL_QUADROTOR:
         case MAV_TYPE_VTOL_TILTROTOR:
-            summaryQml = QLatin1String("qrc:/qml/SensorsComponentSummaryFixedWing.qml");
+            summaryQml = QStringLiteral("qrc:/qml/SensorsComponentSummaryFixedWing.qml");
             break;
         default:
-            summaryQml = QLatin1String("qrc:/qml/SensorsComponentSummary.qml");
+            summaryQml = QStringLiteral("qrc:/qml/SensorsComponentSummary.qml");
             break;
     }
     

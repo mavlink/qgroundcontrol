@@ -208,7 +208,7 @@ bool LogReplayLink::_loadLogFile(void)
     int logDurationSecondsTotal;
     
     if (_logFile.isOpen()) {
-        errorMsg = QLatin1String("Attempt to load new log while log being played");
+        errorMsg = QStringLiteral("Attempt to load new log while log being played");
         goto Error;
     }
     

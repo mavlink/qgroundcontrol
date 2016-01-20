@@ -101,7 +101,7 @@ QGCLogEntry::QGCLogEntry(uint logId, const QDateTime& dateTime, uint logSize, bo
     , _received(received)
     , _selected(false)
 {
-    _status = QLatin1String("Pending");
+    _status = QStringLiteral("Pending");
 }
 
 //----------------------------------------------------------------------------------------
@@ -569,7 +569,7 @@ LogDownloadController::_prepareLogDownload()
     bool result = false;
     QString ftime;
     if(entry->time().date().year() < 2010) {
-        ftime = QLatin1String("UnknownDate");
+        ftime = QStringLiteral("UnknownDate");
     } else {
         ftime = entry->time().toString(QStringLiteral("yyyy-M-d-hh-mm-ss"));
     }

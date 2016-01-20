@@ -84,7 +84,7 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
 
    qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
 
-   m_authKey = QLatin1String("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+   m_authKey = QStringLiteral("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
    loadSettings();
 
    // All the *Counter variables are not initialized here, as they should be initialized
