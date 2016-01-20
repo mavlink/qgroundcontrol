@@ -28,6 +28,21 @@ This file is part of the QGROUNDCONTROL project
 namespace QGC
 {
 
+const int defaultSystemId = 255;
+const int defaultComponentId = 0;
+
+const QColor colorCyan(55, 154, 195);
+const QColor colorRed(154, 20, 20);
+const QColor colorGreen(20, 200, 20);
+const QColor colorYellow(255, 255, 0);
+const QColor colorOrange(255, 140, 0);
+const QColor colorMagenta(255, 0, 55);
+const QColor colorDarkWhite(240, 240, 240);
+const QColor colorDarkYellow(180, 180, 0);
+const QColor colorBackground("#050508");
+const QColor colorBlack(0, 0, 0);
+
+
 quint64 groundTimeUsecs()
 {
     return groundTimeMilliseconds() * 1000;

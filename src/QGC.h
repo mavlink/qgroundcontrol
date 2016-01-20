@@ -66,19 +66,19 @@ inline bool isinf(T value)
 
 namespace QGC
 {
-const static int defaultSystemId = 255;
-const static int defaultComponentId = 0;
+extern const int defaultSystemId;
+extern const int defaultComponentId;
 
-const QColor colorCyan(55, 154, 195);
-const QColor colorRed(154, 20, 20);
-const QColor colorGreen(20, 200, 20);
-const QColor colorYellow(255, 255, 0);
-const QColor colorOrange(255, 140, 0);
-const QColor colorMagenta(255, 0, 55);
-const QColor colorDarkWhite(240, 240, 240);
-const QColor colorDarkYellow(180, 180, 0);
-const QColor colorBackground("#050508");
-const QColor colorBlack(0, 0, 0);
+extern const QColor colorCyan;
+extern const QColor colorRed;
+extern const QColor colorGreen;
+extern const QColor colorYellow;
+extern const QColor colorOrange;
+extern const QColor colorMagenta;
+extern const QColor colorDarkWhite;
+extern const QColor colorDarkYellow;
+extern const QColor colorBackground;
+extern const QColor colorBlack;
 
 /**
  * @brief Get the current ground time in microseconds.
