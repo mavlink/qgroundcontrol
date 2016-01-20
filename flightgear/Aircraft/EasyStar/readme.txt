@@ -1,4 +1,4 @@
-Original readme:
+Origional readme:
 ************************************************************************
 *             MULTIPLEX Modellsport GmbH & Co. KG                      *
 *             Neuer Weg 2, D-75223 Niefern, Germany                    *

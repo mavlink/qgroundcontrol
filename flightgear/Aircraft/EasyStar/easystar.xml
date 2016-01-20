@@ -7,7 +7,7 @@
  <fileheader>
   <author> Ron Jensen Aeromatic v 0.91 </author>
   <filecreationdate> 2010-03-28 </filecreationdate>
-  <version>$Revision: $</version>
+  <version>$Revison: $</version>
   <description> Models a EasyStar. </description>
  </fileheader>
 
@@ -641,3 +641,4 @@
  </aerodynamics>
 
 </fdm_config>
+
