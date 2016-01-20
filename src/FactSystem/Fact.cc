@@ -122,7 +122,7 @@ void Fact::setEnumStringValue(const QString& value)
     if (_metaData) {
         int index = _metaData->enumStrings().indexOf(value);
         if (index != -1) {
-            setCookedValue(_metaData->enumValues().at(index);
+            setCookedValue(_metaData->enumValues().at(index));
         }
     } else {
         qWarning() << "Meta data pointer missing";
@@ -132,7 +132,7 @@ void Fact::setEnumStringValue(const QString& value)
 void Fact::setEnumIndex(int index)
 {
     if (_metaData) {
-        setCookedValue(_metaData->enumValues().at(index);
+        setCookedValue(_metaData->enumValues().at(index));
     } else {
         qWarning() << "Meta data pointer missing";
     }

@@ -131,7 +131,7 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
 
 bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType)
 {
-    foreach (QGCSerialPortInfo info, QGCSerialPortInfo::availablePorts()) {
+    foreach (const QGCSerialPortInfo& info, QGCSerialPortInfo::availablePorts()) {
         qCDebug(FirmwareUpgradeVerboseLog) << "Serial Port --------------";
         qCDebug(FirmwareUpgradeVerboseLog) << "\tboard type" << info.boardType();
         qCDebug(FirmwareUpgradeVerboseLog) << "\tport name:" << info.portName();
@@ -171,7 +171,7 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QGCSerialPor
     port.open(QIODevice::ReadWrite);
     
     if (!port.isOpen()) {
-        emit error(QStringLiteral("Unable to open port: %1 error: %2").arg(portInfo.systemLocation()).arg(port.errorString()));
+        emit error(QStringLiteral("Unable to open port: %1 error: %2").arg(portInfo.systemLocation(), port.errorString()));
         return;
     }
 
