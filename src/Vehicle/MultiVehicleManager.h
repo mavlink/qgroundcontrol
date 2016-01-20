@@ -95,8 +95,8 @@ private slots:
     void _deleteVehiclePhase2(void);
     void _setActiveVehiclePhase2(void);
     void _autopilotParametersReadyChanged(bool parametersReady);
-    void _linkActive(LinkInterface* link, int vehicleId, int vehicleFirmwareType, int vehicleType);
     void _sendGCSHeartbeat(void);
+    void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
 
 private:
     bool _vehicleExists(int vehicleId);

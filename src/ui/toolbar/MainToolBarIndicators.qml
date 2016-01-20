@@ -325,7 +325,6 @@ Row {
 
             MenuItem {
                 checkable:      true
-                checked:        vehicle ? vehicle.active : false
                 onTriggered:    multiVehicleManager.activeVehicle = vehicle
 
                 property int vehicleId: Number(text.split(" ")[1])
@@ -355,7 +354,7 @@ Row {
 
         Connections {
             target:         multiVehicleManager.vehicles
-            onCountChanged: vehicleSelectorButton.updateVehicleMenu
+            onCountChanged: vehicleSelectorButton.updateVehicleMenu()
         }
     }
 

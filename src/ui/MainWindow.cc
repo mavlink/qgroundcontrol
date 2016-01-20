@@ -425,7 +425,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 
     // Should not be any active connections
-    if (qgcApp()->toolbox()->linkManager()->anyActiveLinks()) {
+    if (qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
         qWarning() << "All links should be disconnected by now";
     }
 
