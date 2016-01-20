@@ -74,8 +74,6 @@ public:
     LinkManager(QGCApplication* app);
     ~LinkManager();
 
-    Q_PROPERTY(bool anyActiveLinks                      READ anyActiveLinks                                                     NOTIFY anyActiveLinksChanged)
-    Q_PROPERTY(bool anyConnectedLinks                   READ anyConnectedLinks                                                  NOTIFY anyConnectedLinksChanged)
     Q_PROPERTY(bool autoconnectUDP                      READ autoconnectUDP                     WRITE setAutoconnectUDP         NOTIFY autoconnectUDPChanged)
     Q_PROPERTY(bool autoconnectPixhawk                  READ autoconnectPixhawk                 WRITE setAutoconnectPixhawk     NOTIFY autoconnectPixhawkChanged)
     Q_PROPERTY(bool autoconnect3DRRadio                 READ autoconnect3DRRadio                WRITE setAutoconnect3DRRadio    NOTIFY autoconnect3DRRadioChanged)
@@ -105,8 +103,6 @@ public:
 
     // Property accessors
 
-    bool anyConnectedLinks          (void);
-    bool anyActiveLinks             (void);
     bool autoconnectUDP             (void)  { return _autoconnectUDP; }
     bool autoconnectPixhawk         (void)  { return _autoconnectPixhawk; }
     bool autoconnect3DRRadio        (void)  { return _autoconnect3DRRadio; }
@@ -185,8 +181,6 @@ public:
     virtual void setToolbox(QGCToolbox *toolbox);
 
 signals:
-    void anyActiveLinksChanged(bool anyActiveLinks);
-    void anyConnectedLinksChanged(bool anyConnectedLinks);
     void autoconnectUDPChanged(bool autoconnect);
     void autoconnectPixhawkChanged(bool autoconnect);
     void autoconnect3DRRadioChanged(bool autoconnect);
@@ -216,7 +210,6 @@ signals:
 private slots:
     void _linkConnected(void);
     void _linkDisconnected(void);
-    void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
 
 private:
     bool _connectionsSuspendedMsg(void);
@@ -236,7 +229,6 @@ private:
     uint32_t _mavlinkChannelsUsedBitMask;
 
     MAVLinkProtocol*    _mavlinkProtocol;
-    QList<int>          _ignoreVehicleIds;  ///< List of vehicle id for which we ignore further communication
 
     QmlObjectListModel  _links;
     QmlObjectListModel  _linkConfigurations;

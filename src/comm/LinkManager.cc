@@ -91,9 +91,7 @@ LinkManager::LinkManager(QGCApplication* app)
 
 LinkManager::~LinkManager()
 {
-    if (anyActiveLinks()) {
-        qWarning() << "Why are there still active links?";
-    }
+
 }
 
 void LinkManager::setToolbox(QGCToolbox *toolbox)
@@ -101,7 +99,6 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
    QGCTool::setToolbox(toolbox);
 
    _mavlinkProtocol = _toolbox->mavlinkProtocol();
-   connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &LinkManager::_vehicleHeartbeatInfo);
 
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
     _portListTimer.start(_autoconnectUpdateTimerMSecs); // timeout must be long enough to get past bootloader on second pass
@@ -219,16 +216,7 @@ bool LinkManager::connectLink(LinkInterface* link)
         return false;
     }
 
-    bool previousAnyConnectedLinks = anyConnectedLinks();
-
-    if (link->_connect()) {
-        if (!previousAnyConnectedLinks) {
-            emit anyConnectedLinksChanged(true);
-        }
-        return true;
-    } else {
-        return false;
-    }
+    return link->_connect();
 }
 
 void LinkManager::disconnectLink(LinkInterface* link)
@@ -577,69 +565,6 @@ void LinkManager::_updateAutoConnectLinks(void)
         delete pDeleteConfig;
     }
 #endif // __ios__
-}
-
-bool LinkManager::anyConnectedLinks(void)
-{
-    bool found = false;
-    for (int i=0; i<_links.count(); i++) {
-        LinkInterface* link = _links.value<LinkInterface*>(i);
-
-        if (link && link->isConnected()) {
-            found = true;
-            break;
-        }
-    }
-    return found;
-}
-
-bool LinkManager::anyActiveLinks(void)
-{
-    bool found = false;
-    for (int i=0; i<_links.count(); i++) {
-        LinkInterface* link = _links.value<LinkInterface*>(i);
-
-        if (link && link->active()) {
-            found = true;
-            break;
-        }
-    }
-    return found;
-}
-
-void LinkManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)
-{
-    if (!link->active() && !_ignoreVehicleIds.contains(vehicleId)) {
-        qCDebug(LinkManagerLog) << "New heartbeat on link:vehicleId:vehicleMavlinkVersion:vehicleFirmwareType:vehicleType "
-                                << link->getName()
-                                << vehicleId
-                                << vehicleMavlinkVersion
-                                << vehicleFirmwareType
-                                << vehicleType;
-
-        if (vehicleId == _mavlinkProtocol->getSystemId()) {
-            _app->showMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
-        }
-
-        QSettings settings;
-        bool mavlinkVersionCheck = settings.value("VERSION_CHECK_ENABLED", true).toBool();
-        if (mavlinkVersionCheck && vehicleMavlinkVersion != MAVLINK_VERSION) {
-            _ignoreVehicleIds += vehicleId;
-            _app->showMessage(QString("The MAVLink protocol version on vehicle #%1 and QGroundControl differ! "
-                                                 "It is unsafe to use different MAVLink versions. "
-                                                 "QGroundControl therefore refuses to connect to vehicle #%1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(vehicleId).arg(vehicleMavlinkVersion).arg(MAVLINK_VERSION));
-            return;
-        }
-
-        bool previousAnyActiveLinks = anyActiveLinks();
-
-        link->setActive(true);
-        emit linkActive(link, vehicleId, vehicleFirmwareType, vehicleType);
-
-        if (!previousAnyActiveLinks) {
-            emit anyActiveLinksChanged(true);
-        }
-    }
 }
 
 void LinkManager::shutdown(void)

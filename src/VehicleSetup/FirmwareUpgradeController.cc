@@ -85,10 +85,12 @@ void FirmwareUpgradeController::startBoardSearch(void)
 
     linkMgr->setConnectionsSuspended(tr("Connect not allowed during Firmware Upgrade."));
 
-    if (!linkMgr->anyActiveLinks()) {
+    // FIXME: Why did we get here with active vehicle?
+    if (!qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
         // We have to disconnect any inactive links
         linkMgr->disconnectAll();
     }
+
     _bootloaderFound = false;
     _startFlashWhenBootloaderFound = false;
     _threadController->startFindBoardLoop();
