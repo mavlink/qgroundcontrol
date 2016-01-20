@@ -194,7 +194,7 @@ bool Bootloader::_binProgram(QextSerialPort* port, const FirmwareImage* image)
 {
     QFile firmwareFile(image->binFilename());
     if (!firmwareFile.open(QIODevice::ReadOnly)) {
-        _errorString = tr("Unable to open firmware file %1: %2").arg(image->binFilename()).arg(firmwareFile.errorString());
+        _errorString = tr("Unable to open firmware file %1: %2").arg(image->binFilename(),firmwareFile.errorString());
         return false;
     }
     uint32_t imageSize = (uint32_t)firmwareFile.size();

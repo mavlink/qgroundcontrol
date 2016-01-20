@@ -407,28 +407,28 @@ QextSerialPort::QextSerialPort(QextSerialPort::QueryMode mode, QObject *parent)
     : QIODevice(parent), d_ptr(new QextSerialPortPrivate(this))
 {
 #ifdef Q_OS_WIN
-    setPortName(QLatin1String("COM1"));
+    setPortName(QStringLiteral("COM1"));
 
 #elif defined(Q_OS_IRIX)
-    setPortName(QLatin1String("/dev/ttyf1"));
+    setPortName(QStringLiteral("/dev/ttyf1"));
 
 #elif defined(Q_OS_HPUX)
-    setPortName(QLatin1String("/dev/tty1p0"));
+    setPortName(QStringLiteral("/dev/tty1p0"));
 
 #elif defined(Q_OS_SOLARIS)
-    setPortName(QLatin1String("/dev/ttya"));
+    setPortName(QStringLiteral("/dev/ttya"));
 
 #elif defined(Q_OS_OSF) //formally DIGITAL UNIX
-    setPortName(QLatin1String("/dev/tty01"));
+    setPortName(QStringLiteral("/dev/tty01"));
 
 #elif defined(Q_OS_FREEBSD)
-    setPortName(QLatin1String("/dev/ttyd1"));
+    setPortName(QStringLiteral("/dev/ttyd1"));
 
 #elif defined(Q_OS_OPENBSD)
-    setPortName(QLatin1String("/dev/tty00"));
+    setPortName(QStringLiteral("/dev/tty00"));
 
 #else
-    setPortName(QLatin1String("/dev/ttyS0"));
+    setPortName(QStringLiteral("/dev/ttyS0"));
 #endif
     setQueryMode(mode);
 }

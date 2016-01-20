@@ -927,7 +927,7 @@ bool QGCFlightGearLink::connectSimulation()
 #ifdef Q_OS_WIN32
                                tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a Command Prompt which was started with Run as Administrator:\n\n").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified) + copyCmd,
 #else
-                               tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a shell:\n\n").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified) + copyCmd,
+                               tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a shell:\n\n").arg(qgcProtocolFileFullyQualified, _fgProtocolFileFullyQualified) + copyCmd,
 #endif
                                QMessageBox::Cancel,
                                MainWindow::instance());
