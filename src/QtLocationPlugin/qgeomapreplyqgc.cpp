@@ -55,14 +55,14 @@ QGeoMapReplyQGC::QGeoMapReplyQGC(QNetworkReply *reply, const QGeoTileSpec &spec,
 {
     if(!reply)
     {
-        setError(QGeoTiledMapReply::UnknownError, "Invalid tile request");
+        setError(QGeoTiledMapReply::UnknownError, QStringLiteral("Invalid tile request"));
         setFinished(true);
     }
     else
     {
-        connect(m_reply, SIGNAL(finished()),                         this, SLOT(networkReplyFinished()));
-        connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
-        connect(m_reply, SIGNAL(destroyed()),                        this, SLOT(replyDestroyed()));
+        connect(m_reply, &QNetworkReply::finished,                         this, &QGeoMapReplyQGC::networkReplyFinished);
+        connect(m_reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &QGeoMapReplyQGC::networkReplyError);
+        connect(m_reply, &QNetworkReply::destroyed,                        this, &QGeoMapReplyQGC::replyDestroyed);
     }
 }
 
