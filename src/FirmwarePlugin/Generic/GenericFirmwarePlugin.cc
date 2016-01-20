@@ -55,7 +55,7 @@ QString GenericFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mod
     Q_UNUSED(custom_mode);
     
     if (base_mode == 0) {
-        flightMode = QLatin1String("PreFlight");
+        flightMode = QStringLiteral("PreFlight");
     } else if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
         flightMode = QStringLiteral("Custom:0x%1").arg(custom_mode, 0, 16);
     } else {

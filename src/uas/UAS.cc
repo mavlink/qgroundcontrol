@@ -208,22 +208,22 @@ void UAS::receiveMessage(mavlink_message_t message)
         {
         case MAV_COMP_ID_ALL:
         {
-            componentName = QLatin1String("ANONYMOUS");
+            componentName = QStringLiteral("ANONYMOUS");
             break;
         }
         case MAV_COMP_ID_IMU:
         {
-            componentName = QLatin1String("IMU #1");
+            componentName = QStringLiteral("IMU #1");
             break;
         }
         case MAV_COMP_ID_CAMERA:
         {
-            componentName = QLatin1String("CAMERA");
+            componentName = QStringLiteral("CAMERA");
             break;
         }
         case MAV_COMP_ID_MISSIONPLANNER:
         {
-            componentName = QLatin1String("MISSIONPLANNER");
+            componentName = QStringLiteral("MISSIONPLANNER");
             break;
         }
         }
@@ -294,9 +294,9 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit valueChanged(uasId, name.arg(QStringLiteral("system_status")), QStringLiteral("-"), state.system_status, time);
 
             QString audiostring = QStringLiteral("System %1").arg(uasId);
-            QString stateAudio = QLatin1String("");
-            QString modeAudio = QLatin1String("");
-            QString navModeAudio = QLatin1String("");
+            QString stateAudio = QStringLiteral("");
+            QString modeAudio = QStringLiteral("");
+            QString navModeAudio = QStringLiteral("");
             bool statechanged = false;
             bool modechanged = false;
 

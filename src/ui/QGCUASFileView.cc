@@ -210,11 +210,11 @@ void QGCUASFileView::_commandComplete(void)
     if (_currentCommand == commandDownload) {
         _currentCommand = commandNone;
         _setAllButtonsEnabled(true);
-        statusText = QLatin1String("Download complete");
+        statusText = QStringLiteral("Download complete");
     } else if (_currentCommand == commandDownload) {
         _currentCommand = commandNone;
         _setAllButtonsEnabled(true);
-        statusText = QLatin1String("Upload complete");
+        statusText = QStringLiteral("Upload complete");
     } else if (_currentCommand == commandList) {
         _listComplete();
     }

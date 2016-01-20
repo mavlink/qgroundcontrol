@@ -732,8 +732,8 @@ bool QGCFlightGearLink::connectSimulation()
     }
 #elif defined Q_OS_LINUX
     // Linux installs to a location on the path so we don't need a directory to run the executable
-    fgAppName = QLatin1String("fgfs");
-    _fgProcessName = QLatin1String("fgfs");
+    fgAppName = QStringLiteral("fgfs");
+    _fgProcessName = QStringLiteral("fgfs");
     fgRootPathProposedList += QStringLiteral("/usr/share/flightgear/data/");    // Default Archlinux location
     fgRootPathProposedList += QStringLiteral("/usr/share/games/flightgear/");   // Default Ubuntu location
 #else

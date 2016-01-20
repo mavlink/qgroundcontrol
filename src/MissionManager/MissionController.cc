@@ -245,7 +245,7 @@ void MissionController::loadMissionFromFile(void)
         const QStringList& version = in.readLine().split(QStringLiteral(" "));
 
         if (!(version.size() == 3 && version[0] == QLatin1String("QGC") && version[1] == QLatin1String("WPL") && version[2] == QLatin1String("120"))) {
-            errorString = QLatin1String("The mission file is not compatible with the current version of QGroundControl.");
+            errorString = QStringLiteral("The mission file is not compatible with the current version of QGroundControl.");
         } else {
             while (!in.atEnd()) {
                 MissionItem* item = new MissionItem();
@@ -253,7 +253,7 @@ void MissionController::loadMissionFromFile(void)
                 if (item->load(in)) {
                     _missionItems->append(item);
                 } else {
-                    errorString = QLatin1String("The mission file is corrupted.");
+                    errorString = QStringLiteral("The mission file is corrupted.");
                     break;
                 }
             }

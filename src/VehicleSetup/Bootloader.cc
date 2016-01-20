@@ -112,9 +112,9 @@ bool Bootloader::_getCommandResponse(QextSerialPort* port, int responseTimeout)
     } else if (response[1] != PROTO_OK) {
         QString responseCode = tr("Unknown response code");
         if (response[1] == PROTO_FAILED) {
-            responseCode = QLatin1String("PROTO_FAILED");
+            responseCode = QStringLiteral("PROTO_FAILED");
         } else if (response[1] == PROTO_INVALID) {
-            responseCode = QLatin1String("PROTO_INVALID");
+            responseCode = QStringLiteral("PROTO_INVALID");
         }
         _errorString = tr("Command failed: 0x%1 (%2)").arg(response[1], 2, 16, QLatin1Char('0')).arg(responseCode);
         return false;

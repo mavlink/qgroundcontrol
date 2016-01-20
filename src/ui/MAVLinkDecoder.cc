@@ -328,7 +328,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             // Single value
             uint8_t u = *(m+messageInfo[msgid].fields[fieldid].wire_offset);
-            fieldType = QLatin1String("uint8_t");
+            fieldType = QStringLiteral("uint8_t");
             emit valueChanged(msg->sysid, name, fieldType, u, time);
         }
         break;
@@ -346,7 +346,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             // Single value
             int8_t n = *((int8_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            fieldType = QLatin1String("int8_t");
+            fieldType = QStringLiteral("int8_t");
             emit valueChanged(msg->sysid, name, fieldType, n, time);
         }
         break;
@@ -364,7 +364,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             // Single value
             uint16_t n = *((uint16_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            fieldType = QLatin1String("uint16_t");
+            fieldType = QStringLiteral("uint16_t");
             emit valueChanged(msg->sysid, name, fieldType, n, time);
         }
         break;
@@ -382,7 +382,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             // Single value
             int16_t n = *((int16_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            fieldType = QLatin1String("int16_t");
+            fieldType = QStringLiteral("int16_t");
             emit valueChanged(msg->sysid, name, fieldType, n, time);
         }
         break;
@@ -400,7 +400,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             // Single value
             uint32_t n = *((uint32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            fieldType = QLatin1String("uint32_t");
+            fieldType = QStringLiteral("uint32_t");
             emit valueChanged(msg->sysid, name, fieldType, n, time);
         }
         break;
@@ -418,7 +418,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             // Single value
             int32_t n = *((int32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            fieldType = QLatin1String("int32_t");
+            fieldType = QStringLiteral("int32_t");
             emit valueChanged(msg->sysid, name, fieldType, n, time);
         }
         break;
@@ -436,7 +436,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             // Single value
             float f = *((float*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            fieldType = QLatin1String("float");
+            fieldType = QStringLiteral("float");
             emit valueChanged(msg->sysid, name, fieldType, f, time);
         }
         break;
@@ -454,7 +454,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             // Single value
             double f = *((double*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            fieldType = QLatin1String("double");
+            fieldType = QStringLiteral("double");
             emit valueChanged(msg->sysid, name, fieldType, f, time);
         }
         break;
@@ -472,7 +472,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             // Single value
             uint64_t n = *((uint64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            fieldType = QLatin1String("uint64_t");
+            fieldType = QStringLiteral("uint64_t");
             emit valueChanged(msg->sysid, name, fieldType, (quint64) n, time);
         }
         break;
@@ -490,7 +490,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             // Single value
             int64_t n = *((int64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            fieldType = QLatin1String("int64_t");
+            fieldType = QStringLiteral("int64_t");
             emit valueChanged(msg->sysid, name, fieldType, (qint64) n, time);
         }
         break;

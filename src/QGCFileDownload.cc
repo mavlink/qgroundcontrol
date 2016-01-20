@@ -120,7 +120,7 @@ void QGCFileDownload::_downloadError(QNetworkReply::NetworkError code)
     QString errorMsg;
     
     if (code == QNetworkReply::OperationCanceledError) {
-        errorMsg = QLatin1String("Download cancelled");
+        errorMsg = QStringLiteral("Download cancelled");
     } else {
         errorMsg = QStringLiteral("Error during download. Error: %1").arg(code);
     }

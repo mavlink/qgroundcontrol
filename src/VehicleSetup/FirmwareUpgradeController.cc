@@ -126,24 +126,24 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
 
     switch (boardType) {
     case QGCSerialPortInfo::BoardTypePX4FMUV1:
-        _foundBoardTypeName = QLatin1String("PX4 FMU V1");
+        _foundBoardTypeName = QStringLiteral("PX4 FMU V1");
         _startFlashWhenBootloaderFound = false;
         break;
     case QGCSerialPortInfo::BoardTypePX4FMUV2:
     case QGCSerialPortInfo::BoardTypePX4FMUV4:
-        _foundBoardTypeName = QLatin1String("Pixhawk");
+        _foundBoardTypeName = QStringLiteral("Pixhawk");
         _startFlashWhenBootloaderFound = false;
         break;
     case QGCSerialPortInfo::BoardTypeAeroCore:
-        _foundBoardTypeName = QLatin1String("AeroCore");
+        _foundBoardTypeName = QStringLiteral("AeroCore");
         _startFlashWhenBootloaderFound = false;
         break;
     case QGCSerialPortInfo::BoardTypePX4Flow:
-        _foundBoardTypeName = QLatin1String("PX4 Flow");
+        _foundBoardTypeName = QStringLiteral("PX4 Flow");
         _startFlashWhenBootloaderFound = false;
         break;
     case QGCSerialPortInfo::BoardType3drRadio:
-        _foundBoardTypeName = QLatin1String("3DR Radio");
+        _foundBoardTypeName = QStringLiteral("3DR Radio");
         if (!firstAttempt) {
             // Radio always flashes latest firmware, so we can start right away without
             // any further user input.
@@ -545,7 +545,7 @@ void FirmwareUpgradeController::_downloadError(QNetworkReply::NetworkError code)
     QString errorMsg;
     
     if (code == QNetworkReply::OperationCanceledError) {
-        errorMsg = QLatin1String("Download cancelled");
+        errorMsg = QStringLiteral("Download cancelled");
     } else {
         errorMsg = QStringLiteral("Error during download. Error: %1").arg(code);
     }
@@ -711,25 +711,25 @@ QStringList FirmwareUpgradeController::apmAvailableVersions(void)
 
         switch (vehicleType) {
         case QuadFirmware:
-            version = QLatin1String("Quad - ");
+            version = QStringLiteral("Quad - ");
             break;
         case X8Firmware:
-            version = QLatin1String("X8 - ");
+            version = QStringLiteral("X8 - ");
             break;
         case HexaFirmware:
-            version = QLatin1String("Hexa - ");
+            version = QStringLiteral("Hexa - ");
             break;
         case OctoFirmware:
-            version = QLatin1String("Octo - ");
+            version = QStringLiteral("Octo - ");
             break;
         case YFirmware:
-            version = QLatin1String("Y - ");
+            version = QStringLiteral("Y - ");
             break;
         case Y6Firmware:
-            version = QLatin1String("Y6 - ");
+            version = QStringLiteral("Y6 - ");
             break;
         case HeliFirmware:
-            version = QLatin1String("Heli - ");
+            version = QStringLiteral("Heli - ");
             break;
         case PlaneFirmware:
         case RoverFirmware:
