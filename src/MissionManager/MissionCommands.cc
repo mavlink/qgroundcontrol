@@ -117,7 +117,7 @@ void MissionCommands::_loadMavCmdInfoJson(void)
     }
 
     QJsonArray jsonArray = jsonValue.toArray();
-    foreach(QJsonValue info, jsonArray) {
+    foreach(const QJsonValue& info, jsonArray) {
         if (!info.isObject()) {
             qWarning() << "mavCmdArray should contain objects";
             return;
