@@ -115,28 +115,28 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
     switch(config->type()) {
 #ifndef __ios__
         case LinkConfiguration::TypeSerial:
-            pLink = new SerialLink(dynamic_cast<SerialConfiguration*>(config));
+            pLink = new SerialLink(qobject_cast<SerialConfiguration*>(config));
             break;
 #endif
         case LinkConfiguration::TypeUdp:
-            pLink = new UDPLink(dynamic_cast<UDPConfiguration*>(config));
+            pLink = new UDPLink(qobject_cast<UDPConfiguration*>(config));
             break;
         case LinkConfiguration::TypeTcp:
-            pLink = new TCPLink(dynamic_cast<TCPConfiguration*>(config));
+            pLink = new TCPLink(qobject_cast<TCPConfiguration*>(config));
             break;
 #ifdef QGC_ENABLE_BLUETOOTH
         case LinkConfiguration::TypeBluetooth:
-            pLink = new BluetoothLink(dynamic_cast<BluetoothConfiguration*>(config));
+            pLink = new BluetoothLink(qobject_cast<BluetoothConfiguration*>(config));
             break;
 #endif
 #ifndef __mobile__
         case LinkConfiguration::TypeLogReplay:
-            pLink = new LogReplayLink(dynamic_cast<LogReplayLinkConfiguration*>(config));
+            pLink = new LogReplayLink(qobject_cast<LogReplayLinkConfiguration*>(config));
             break;
 #endif
 #ifdef QT_DEBUG
         case LinkConfiguration::TypeMock:
-            pLink = new MockLink(dynamic_cast<MockConfiguration*>(config));
+            pLink = new MockLink(qobject_cast<MockConfiguration*>(config));
             break;
 #endif
         case LinkConfiguration::TypeLast:

@@ -184,7 +184,7 @@ bool TCPLink::_hardwareConnect()
 void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
 {
     Q_UNUSED(socketError);
-    emit communicationError(tr("Link Error"), QStringLiteral("Error on link %1. Error on socket: %2.").arg(getName()).arg(_socket->errorString()));
+    emit communicationError(tr("Link Error"), QStringLiteral("Error on link %1. Error on socket: %2.").arg(getName(),_socket->errorString()));
 }
 
 /**

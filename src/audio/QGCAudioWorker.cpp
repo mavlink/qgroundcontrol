@@ -68,7 +68,7 @@ extern void iOSSpeak(QString msg);
 #include <espeak/speak_lib.h>
 #endif
 
-#define QGC_GAUDIOOUTPUT_KEY QString("QGC_AUDIOOUTPUT_")
+QString QGC_GAUDIOOUTPUT_KEY = QStringLiteral("QGC_AUDIOOUTPUT_");
 
 QGCAudioWorker::QGCAudioWorker(QObject *parent) :
     QObject(parent),
@@ -84,7 +84,7 @@ QGCAudioWorker::QGCAudioWorker(QObject *parent) :
 {
     // Load settings
     QSettings settings;
-    muted = settings.value(QGC_GAUDIOOUTPUT_KEY + "muted", muted).toBool();
+    muted = settings.value(QGC_GAUDIOOUTPUT_KEY + QStringLiteral("muted"), muted).toBool();
 }
 
 void QGCAudioWorker::init()
@@ -275,14 +275,14 @@ QString QGCAudioWorker::fixTextMessageForAudio(const QString& string) {
     if(_getMillisecondString(string, match, number) && number > 1000) {
         if(number < 60000) {
             int seconds = number / 1000;
-            newNumber = QStringLiteral("%1 second%2").arg(seconds).arg(seconds > 1 ? "s" : "");
+            newNumber = QStringLiteral("%1 second%2").arg(seconds).arg(seconds > 1 ? QChar('s') : QChar());
         } else {
             int minutes = number / 60000;
             int seconds = (number - (minutes * 60000)) / 1000;
             if (!seconds) {
-                newNumber = QStringLiteral("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
+                newNumber = QStringLiteral("%1 minute%2").arg(minutes).arg(minutes > 1 ? QChar('s') : QChar());
             } else {
-                newNumber = QStringLiteral("%1 minute%2 and %3 second%4").arg(minutes).arg(minutes > 1 ? "s" : "").arg(seconds).arg(seconds > 1 ? "s" : "");
+                newNumber = QStringLiteral("%1 minute%2 and %3 second%4").arg(minutes).arg(minutes > 1 ? QChar('s') : QChar()).arg(seconds).arg(seconds > 1 ? QChar('s') : QChar());
             }
         }
         result.replace(match, newNumber);
