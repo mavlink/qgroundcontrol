@@ -38,7 +38,7 @@
 
 #include "APMRemoteParamsDownloader.h"
 
-#define FRAME_PARAMS_LIST QUrl("https://api.github.com/repos/diydrones/ardupilot/contents/Tools/Frame_params")
+#define FRAME_PARAMS_LIST QUrl(QStringLiteral("https://api.github.com/repos/diydrones/ardupilot/contents/Tools/Frame_params"))
 #define FRAME_PARAMS_URL "https://raw.github.com/diydrones/ardupilot/master/Tools/Frame_params/"
 
 static QString dataLocation;

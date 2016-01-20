@@ -110,7 +110,7 @@ QList<QGCSerialPortInfo> QGCSerialPortInfo::availablePorts(void)
 {
     QList<QGCSerialPortInfo>    list;
 
-    foreach(QSerialPortInfo portInfo, QSerialPortInfo::availablePorts()) {
+    foreach(const QSerialPortInfo& portInfo, QSerialPortInfo::availablePorts()) {
         list << *((QGCSerialPortInfo*)&portInfo);
     }
 
