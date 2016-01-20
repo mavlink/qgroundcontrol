@@ -363,7 +363,7 @@ QString UnitTest::_getSaveFileName(
     Q_UNUSED(options);
 
     if(!defaultSuffix.isEmpty()) {
-        Q_ASSERT(defaultSuffix.startsWith(".") == false);
+        Q_ASSERT(defaultSuffix.startsWith(QLatin1String(".")) == false);
     }
 
     return _fileDialogResponseSingle(getSaveFileName);

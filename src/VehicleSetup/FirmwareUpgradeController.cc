@@ -509,7 +509,7 @@ void FirmwareUpgradeController::_downloadFinished(void)
     // Store downloaded file in download location
     QFile file(downloadFilename);
     if (!file.open(QIODevice::WriteOnly)) {
-        _errorCancel(QStringLiteral("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
+        _errorCancel(QStringLiteral("Could not save downloaded file to %1. Error: %2").arg(downloadFilename, file.errorString()));
         return;
     }
     
