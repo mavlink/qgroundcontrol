@@ -29,6 +29,7 @@
 #endif
 
 #include <QFileDialog>
+#include <QObject>
 
 /// @file
 ///     @brief Subclass of <a href="http://qt-project.org/doc/qt-5/qfiledialog.html">QFileDialog</a>
@@ -53,7 +54,6 @@
 */
 
 class QGCFileDialog : public QFileDialog {
-    
 public:
 
     //! Static helper that will return an existing directory selected by the user.

@@ -176,7 +176,7 @@ void QGCDataPlot2D::print()
 
     QString docName = plot->title().text();
     if ( !docName.isEmpty() ) {
-        docName.replace (QRegExp (QString::fromLatin1 ("\n")), tr (" -- "));
+        docName.replace (QRegExp (QStringLiteral ("\n")), tr (" -- "));
         printer.setDocName (docName);
     }
 
@@ -221,7 +221,7 @@ void QGCDataPlot2D::exportPDF(QString fileName)
 
     QString docName = plot->title().text();
     if ( !docName.isEmpty() ) {
-        docName.replace (QRegExp (QString::fromLatin1 ("\n")), tr (" -- "));
+        docName.replace (QRegExp (QStringLiteral ("\n")), tr (" -- "));
         printer.setDocName (docName);
     }
 

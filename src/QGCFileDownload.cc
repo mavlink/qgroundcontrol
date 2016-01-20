@@ -104,7 +104,7 @@ void QGCFileDownload::_downloadFinished(void)
     // Store downloaded file in download location
     QFile file(downloadFilename);
     if (!file.open(QIODevice::WriteOnly)) {
-        emit error(QStringLiteral("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
+        emit error(QStringLiteral("Could not save downloaded file to %1. Error: %2").arg(downloadFilename,file.errorString()));
         return;
     }
     

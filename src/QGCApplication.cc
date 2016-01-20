@@ -123,6 +123,10 @@
 #endif
 #endif
 
+const char* QGC_APPLICATION_NAME = "QGroundControl";
+const char* QGC_ORG_NAME = "QGroundControl.org";
+const char* QGC_ORG_DOMAIN = "org.qgroundcontrol";
+
 QGCApplication* QGCApplication::_app = NULL;
 
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
@@ -220,7 +224,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         if(permFile.open(QIODevice::ReadOnly)) {
             while(!permFile.atEnd()) {
                 QString line = permFile.readLine();
-                if (line.contains(QStringLiteral("dialout")) && !line.contains(getenv("USER"))) {
+                if (line.contains(QLatin1Literal("dialout")) && !line.contains(getenv("USER"))) {
                     QMessageBox msgBox;
                     msgBox.setInformativeText("The current user does not have the correct permissions to access serial devices. "
                                               "You should also remove modemmanager since it also interferes. "

@@ -162,7 +162,7 @@ bool MissionManager::_stopAckTimeout(AckType_t expectedAck)
     _ackTimeoutTimer->stop();
     
     if (savedRetryAck != expectedAck) {
-        _sendError(ProtocolOrderError, QStringLiteral("Vehicle responded incorrectly to mission item protocol sequence: %1:%2").arg(_ackTypeToString(savedRetryAck)).arg(_ackTypeToString(expectedAck)));
+        _sendError(ProtocolOrderError, QStringLiteral("Vehicle responded incorrectly to mission item protocol sequence: %1:%2").arg(_ackTypeToString(savedRetryAck),_ackTypeToString(expectedAck)));
         _finishTransaction(false);
         success = false;
     } else {
