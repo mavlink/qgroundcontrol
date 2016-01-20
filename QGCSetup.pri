@@ -60,6 +60,7 @@ MacBuild {
 WindowsBuild {
     BASEDIR_WIN = $$replace(BASEDIR, "/", "\\")
     DESTDIR_WIN = $$replace(DESTDIR, "/", "\\")
+    QT_BIN_DIR  = $$dirname(QMAKE_QMAKE)
 
     # Copy dependencies
     DebugBuild: DLL_QT_DEBUGCHAR = "d"
@@ -71,7 +72,6 @@ WindowsBuild {
     for(COPY_FILE, COPY_FILE_LIST) {
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
     }
-
 
         ReleaseBuild {
         # Copy Visual Studio DLLs
@@ -94,7 +94,7 @@ WindowsBuild {
     }
 
     DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR_WIN\\$${TARGET}.exe))
-    QMAKE_POST_LINK += $$escape_expand(\\n) windeployqt --no-compiler-runtime --qmldir=$${BASEDIR_WIN}\\src $${DEPLOY_TARGET}
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QT_BIN_DIR\\windeployqt --no-compiler-runtime --qmldir=$${BASEDIR_WIN}\\src $${DEPLOY_TARGET}
 
 }
 
