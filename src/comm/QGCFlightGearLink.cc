@@ -215,7 +215,7 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
         if (info.error() == QHostInfo::NoError)
         {
             // Add host
-            currentHost = info.addresses().first();
+            currentHost = info.addresses().at(0);
         }
     }
 
@@ -840,7 +840,7 @@ bool QGCFlightGearLink::connectSimulation()
     _fgArgList += "--fg-aircraft=" + qgcAircraftDir;
 
     // Setup protocol we will be using to communicate with FlightGear
-    QString fgProtocol(_vehicle->vehicleType() == MAV_TYPE_QUADROTOR ? "qgroundcontrol-quadrotor" : "qgroundcontrol-fixed-wing");
+    QString fgProtocol(_vehicle->vehicleType() == MAV_TYPE_QUADROTOR ? QStringLiteral("qgroundcontrol-quadrotor") : QStringLiteral("qgroundcontrol-fixed-wing"));
     QString fgProtocolArg(QStringLiteral("--generic=socket,%1,300,127.0.0.1,%2,udp,%3"));
     _fgArgList << fgProtocolArg.arg(QStringLiteral("out")).arg(port).arg(fgProtocol);
     _fgArgList << fgProtocolArg.arg(QStringLiteral("in")).arg(currentPort).arg(fgProtocol);
@@ -903,7 +903,7 @@ bool QGCFlightGearLink::connectSimulation()
     if (!QFileInfo(_fgProtocolFileFullyQualified).exists()) {
         QMessageBox msgBox(QMessageBox::Critical,
                            tr("FlightGear Failed to Start"),
-                           tr("FlightGear Failed to Start. QGroundControl protocol (%1) not installed to FlightGear Protocol directory (%2)").arg(fgProtocolXmlFile).arg(fgProtocolDir.path()),
+                           tr("FlightGear Failed to Start. QGroundControl protocol (%1) not installed to FlightGear Protocol directory (%2)").arg(fgProtocolXmlFile,fgProtocolDir.path()),
                            QMessageBox::Cancel,
                            MainWindow::instance());
         msgBox.setWindowModality(Qt::ApplicationModal);

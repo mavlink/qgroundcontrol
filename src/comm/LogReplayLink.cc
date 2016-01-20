@@ -214,7 +214,7 @@ bool LogReplayLink::_loadLogFile(void)
     
     _logFile.setFileName(logFilename);
     if (!_logFile.open(QFile::ReadOnly)) {
-        errorMsg = QStringLiteral("Unable to open log file: '%1', error: %2").arg(logFilename).arg(_logFile.errorString());
+        errorMsg = QStringLiteral("Unable to open log file: '%1', error: %2").arg(logFilename,_logFile.errorString());
         goto Error;
     }
     logFileInfo.setFile(logFilename);

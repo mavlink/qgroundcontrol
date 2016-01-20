@@ -58,7 +58,7 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
     , _logSuspendError(false)
     , _logSuspendReplay(false)
     , _logPromptForSave(false)
-    , _tempLogFile(QStringLiteral("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension))
+    , _tempLogFile(QStringLiteral("%2.%3").arg(QString(_tempLogFileTemplate),QString(_logFileExtension)))
 #endif
     , _linkMgr(NULL)
     , _multiVehicleManager(NULL)

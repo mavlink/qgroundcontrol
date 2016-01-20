@@ -132,7 +132,7 @@ QString QGCFileDialog::getSaveFileName(
         while (true) {
             if (dlg.exec()) {
                 if (dlg.selectedFiles().count()) {
-                    QString result = dlg.selectedFiles().first();
+                    QString result = dlg.selectedFiles().at(0);
                     //-- If we don't care about the extension, just return it
                     if (!strict) {
                         return result;

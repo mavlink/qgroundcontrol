@@ -136,11 +136,11 @@ void QGCJSBSimLink::run()
 
     if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     {
-        arguments << QStringLiteral("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
+        arguments << QStringLiteral("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB, rootJSB, script);
     }
     else
     {
-        arguments << QStringLiteral("JSBSim --realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
+        arguments << QStringLiteral("JSBSim --realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB, rootJSB, script);
     }
 
     process->start(processJSB, arguments);

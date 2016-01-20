@@ -41,6 +41,7 @@
 
 class QGCImageProvider : public QGCTool, public QQuickImageProvider
 {
+    Q_OBJECT
 public:
     QGCImageProvider        (QGCApplication* app);
     ~QGCImageProvider       ();

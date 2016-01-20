@@ -38,7 +38,10 @@ Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog)
 /// This is a QGC specific replacement for Q_LOGGING_CATEGORY. It will register the category name into a
 /// global list. It's usage is the same as Q_LOGGING_CATEOGRY.
 #define QGC_LOGGING_CATEGORY(name, ...) \
-    static QGCLoggingCategory qgcCategory ## name (__VA_ARGS__); \
+    QGCLoggingCategory& qgcCategory ## name() { \
+        static QGCLoggingCategory category (__VA_ARGS__); \
+        return category; \
+    } \
     Q_LOGGING_CATEGORY(name, __VA_ARGS__)
 
 class QGCLoggingCategoryRegister

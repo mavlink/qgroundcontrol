@@ -221,7 +221,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         if(permFile.open(QIODevice::ReadOnly)) {
             while(!permFile.atEnd()) {
                 QString line = permFile.readLine();
-                if (line.contains(QLatin1Literal("dialout")) && !line.contains(getenv("USER"))) {
+                if (line.contains(QLatin1Literal("dialout")) && !line.contains(QLatin1String(getenv("USER")))) {
                     QMessageBox msgBox;
                     msgBox.setInformativeText("The current user does not have the correct permissions to access serial devices. "
                                               "You should also remove modemmanager since it also interferes. "
@@ -341,7 +341,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
 
-    QString versionString(GIT_VERSION);
+    QString versionString(QStringLiteral(GIT_VERSION));
     // stable versions are on tags (v1.2.3)
     // development versions are full git describe versions (v1.2.3-18-g879e8b3)
     if (versionString.length() > 8) {
