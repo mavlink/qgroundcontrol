@@ -173,7 +173,7 @@ void UrlFactory::_googleVersionCompleted()
     reg = QRegExp(QS("\"*http://mts0.google.com/vt/lyrs=t@(\\d*),r@(\\d*)"), Qt::CaseInsensitive);
     if (reg.indexIn(html) != -1) {
         QStringList gc = reg.capturedTexts();
-        VersionGoogleTerrain = QS("t@%1,r@%2").arg(gc[1]).arg(gc[2]);
+        VersionGoogleTerrain = QS("t@%1,r@%2").arg(gc[1], gc[2]);
         VersionGoogleTerrainChina = VersionGoogleTerrain;
         VersionGoogleTerrainChina = VersionGoogleTerrain;
     }
@@ -273,7 +273,7 @@ QString UrlFactory::makeImageUrl(const MapType &type, const QPoint& pos, const i
         _getSecGoogleWords(pos, sec1, sec2);
         _tryCorrectGoogleVersions();
         // http://mt0.google.cn/vt/v=w2.101&hl=zh-CN&gl=cn&x=12&y=6&z=4&s=Ga
-        return QS("http://%1%2.google.cn/%3/lyrs=%4&hl=%5&gl=cn&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(pos, 4)).arg(request).arg(VersionGoogleMapChina).arg("zh-CN").arg(pos.x()).arg(sec1).arg(pos.y()).arg(zoom).arg(sec2);
+        return QS("http://%1%2.google.cn/%3/lyrs=%4&hl=%5&gl=cn&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(pos, 4)).arg(request).arg(VersionGoogleMapChina).arg(QStringLiteral("zh-CN")).arg(pos.x()).arg(sec1).arg(pos.y()).arg(zoom).arg(sec2);
     }
     break;
     case GoogleSatelliteChina:
@@ -355,12 +355,12 @@ QString UrlFactory::makeImageUrl(const MapType &type, const QPoint& pos, const i
     }
     case YahooSatellite:
     {
-        return QS("http://maps%1.yimg.com/ae/ximg?v=%2&t=a&s=256&.intl=%3&x=%4&y=%5&z=%6&r=1").arg("3").arg(VersionYahooSatellite).arg(language).arg(pos.x()).arg(((1 << zoom) >> 1) - 1 - pos.y()).arg(zoom + 1);
+        return QS("http://maps%1.yimg.com/ae/ximg?v=%2&t=a&s=256&.intl=%3&x=%4&y=%5&z=%6&r=1").arg('3').arg(VersionYahooSatellite).arg(language).arg(pos.x()).arg(((1 << zoom) >> 1) - 1 - pos.y()).arg(zoom + 1);
     }
     break;
     case YahooLabels:
     {
-        return QS("http://maps%1.yimg.com/hx/tl?v=%2&t=h&.intl=%3&x=%4&y=%5&z=%6&r=1").arg("1").arg(VersionYahooLabels).arg(language).arg(pos.x()).arg(((1 << zoom) >> 1) - 1 - pos.y()).arg(zoom + 1);
+        return QS("http://maps%1.yimg.com/hx/tl?v=%2&t=h&.intl=%3&x=%4&y=%5&z=%6&r=1").arg('1').arg(VersionYahooLabels).arg(language).arg(pos.x()).arg(((1 << zoom) >> 1) - 1 - pos.y()).arg(zoom + 1);
     }
     break;
     case OpenStreetMap:
@@ -390,19 +390,19 @@ QString UrlFactory::makeImageUrl(const MapType &type, const QPoint& pos, const i
     case BingMap:
     {
         QString key = _tileXYToQuadKey(pos.x(), pos.y(), zoom);
-        return QS("http://ecn.t%1.tiles.virtualearth.net/tiles/r%2.png?g=%3&mkt=%4%5").arg(_getServerNum(pos, 4)).arg(key).arg(VersionBingMaps).arg(language).arg(!(BingMapsClientToken.isNull() | BingMapsClientToken.isEmpty()) ? "&token=" + BingMapsClientToken : QString(""));
+        return QS("http://ecn.t%1.tiles.virtualearth.net/tiles/r%2.png?g=%3&mkt=%4%5").arg(_getServerNum(pos, 4)).arg(key).arg(VersionBingMaps).arg(language).arg(!(BingMapsClientToken.isNull() | BingMapsClientToken.isEmpty()) ? QStringLiteral("&token=") + BingMapsClientToken : QString());
     }
     break;
     case BingSatellite:
     {
         QString key = _tileXYToQuadKey(pos.x(), pos.y(), zoom);
-        return QS("http://ecn.t%1.tiles.virtualearth.net/tiles/a%2.jpeg?g=%3&mkt=%4%5").arg(_getServerNum(pos, 4)).arg(key).arg(VersionBingMaps).arg(language).arg(!(BingMapsClientToken.isNull() | BingMapsClientToken.isEmpty()) ? "&token=" + BingMapsClientToken : QString(""));
+        return QS("http://ecn.t%1.tiles.virtualearth.net/tiles/a%2.jpeg?g=%3&mkt=%4%5").arg(_getServerNum(pos, 4)).arg(key).arg(VersionBingMaps).arg(language).arg(!(BingMapsClientToken.isNull() | BingMapsClientToken.isEmpty()) ? QStringLiteral("&token=") + BingMapsClientToken : QString());
     }
     break;
     case BingHybrid:
     {
         QString key = _tileXYToQuadKey(pos.x(), pos.y(), zoom);
-        return QS("http://ecn.t%1.tiles.virtualearth.net/tiles/h%2.jpeg?g=%3&mkt=%4%5").arg(_getServerNum(pos, 4)).arg(key).arg(VersionBingMaps).arg(language).arg(!(BingMapsClientToken.isNull() | BingMapsClientToken.isEmpty()) ? "&token=" + BingMapsClientToken : QString(""));
+        return QS("http://ecn.t%1.tiles.virtualearth.net/tiles/h%2.jpeg?g=%3&mkt=%4%5").arg(_getServerNum(pos, 4)).arg(key).arg(VersionBingMaps).arg(language).arg(!(BingMapsClientToken.isNull() | BingMapsClientToken.isEmpty()) ? QStringLiteral("&token=") + BingMapsClientToken : QString());
     }
     case ArcGIS_Map:
     {
@@ -471,9 +471,9 @@ QString UrlFactory::makeImageUrl(const MapType &type, const QPoint& pos, const i
         // string x = pos.x().ToString("000000000").Insert(3, "/").Insert(7, "/"); // - 000/000/001
         // string y = pos.y().ToString("000000000").Insert(3, "/").Insert(7, "/"); // - 000/000/000
         QString x = QS("%1").arg(QString::number(pos.x()), 9, (QChar)'0');
-        x.insert(3, "/").insert(7, "/");
+        x.insert(3, '/').insert(7, '/');
         QString y = QS("%1").arg(QString::number(pos.y()), 9, (QChar)'0');
-        y.insert(3, "/").insert(7, "/");
+        y.insert(3, '/').insert(7, '/');
         // "http://map03.pergo.com.tr/tile/2/000/000/003/000/000/002.png"
         return QS("http://map%1.pergo.com.tr/tile/%2/%3/%4.png").arg(_getServerNum(pos, 4)).arg(zoom, 2, 10, (QChar)'0').arg(x).arg(y);
     }

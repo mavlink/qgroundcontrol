@@ -109,9 +109,9 @@ void QGeoMapReplyQGC::networkReplyFinished()
     if(a.size() > 2)
     {
         if((char)a[0] == (char)0xff && (char)a[1] == (char)0xd8)
-            setMapImageFormat("jpg");
+            setMapImageFormat(QStringLiteral("jpg"));
         else if((char)a[0] == (char)0x89 && (char)a[1] == (char)0x50)
-            setMapImageFormat("png");
+            setMapImageFormat(QStringLiteral("png"));
         else
         {
             switch ((OpenPilot::MapType)tileSpec().mapId()) {
@@ -121,12 +121,12 @@ void QGeoMapReplyQGC::networkReplyFinished()
                 case OpenPilot::GoogleHybrid:
                 case OpenPilot::BingMap:
                 case OpenPilot::OpenStreetMap:
-                    setMapImageFormat("png");
+                    setMapImageFormat(QStringLiteral("png"));
                     break;
                 case OpenPilot::GoogleSatellite:
                 case OpenPilot::BingSatellite:
                 case OpenPilot::BingHybrid:
-                    setMapImageFormat("jpg");
+                    setMapImageFormat(QStringLiteral("jpg"));
                     break;
                 default:
                     qWarning("Unknown map id %d", tileSpec().mapId());
