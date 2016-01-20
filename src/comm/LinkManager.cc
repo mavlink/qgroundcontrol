@@ -477,7 +477,7 @@ void LinkManager::_updateAutoConnectLinks(void)
     QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
 
     // Iterate Comm Ports
-    foreach (QGCSerialPortInfo portInfo, portList) {
+    foreach (const QGCSerialPortInfo& portInfo, portList) {
         qCDebug(LinkManagerVerboseLog) << "-----------------------------------------------------";
         qCDebug(LinkManagerVerboseLog) << "portName:          " << portInfo.portName();
         qCDebug(LinkManagerVerboseLog) << "systemLocation:    " << portInfo.systemLocation();

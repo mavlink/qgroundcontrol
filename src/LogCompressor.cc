@@ -69,7 +69,7 @@ void LogCompressor::run()
 
     QStringList parts = QFileInfo(infile.fileName()).absoluteFilePath().split(QStringLiteral("."), QString::SkipEmptyParts);
 
-    parts.replace(0, parts.first() + "_compressed");
+    parts.replace(0, parts.first() + QStringLiteral("_compressed"));
     parts.replace(parts.size()-1, QStringLiteral("txt"));
     outFileName = parts.join(QStringLiteral("."));
 
@@ -119,7 +119,7 @@ void LogCompressor::run()
     // Template list stores a list for populating with data as it's parsed from messages.
     QStringList templateList;
     for (int i = 0; i < headerList.size() + 1; ++i) {
-        templateList << (holeFillingEnabled?"NaN":"");
+        templateList << (holeFillingEnabled ? QStringLiteral("NaN") : QString());
     }
 
 
@@ -184,7 +184,7 @@ void LogCompressor::run()
             lastList = list;
 
             // Write data columns
-            QString output = list.join(delimiter) + "\n";
+            QString output = list.join(delimiter) + QChar('\n');
             outTmpFile.write(output.toLocal8Bit());
         }
         lineCounter++;
