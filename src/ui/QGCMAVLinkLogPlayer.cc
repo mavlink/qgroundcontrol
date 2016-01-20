@@ -75,8 +75,6 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
         return;
     }
     
-    LinkInterface* createConnectedLink(LinkConfiguration* config);
-    
     LogReplayLinkConfiguration* linkConfig = new LogReplayLinkConfiguration(QStringLiteral("Log Replay"));
     linkConfig->setLogFilename(logFilename);
     linkConfig->setName(linkConfig->logFilenameShort());
