@@ -32,21 +32,22 @@
 
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
 
-static const QRegExp APM_COPTER_REXP("^(ArduCopter|APM:Copter)");
-static const QRegExp APM_PLANE_REXP("^(ArduPlane|APM:Plane)");
-static const QRegExp APM_ROVER_REXP("^(ArduRover|APM:Rover)");
-static const QRegExp APM_PX4NUTTX_REXP("^PX4: .*NuttX: .*");
-static const QRegExp APM_FRAME_REXP("^Frame: ");
-static const QRegExp APM_SYSID_REXP("^PX4v2 ");
+#define QS QStringLiteral
+static const QRegExp APM_COPTER_REXP(QS("^(ArduCopter|APM:Copter)"));
+static const QRegExp APM_PLANE_REXP(QS("^(ArduPlane|APM:Plane)"));
+static const QRegExp APM_ROVER_REXP(QS("^(ArduRover|APM:Rover)"));
+static const QRegExp APM_PX4NUTTX_REXP(QS("^PX4: .*NuttX: .*"));
+static const QRegExp APM_FRAME_REXP(QS("^Frame: "));
+static const QRegExp APM_SYSID_REXP(QS("^PX4v2 "));
 
 // Regex to parse version text coming from APM, gives out firmware type, major, minor and patch level numbers
-static const QRegExp VERSION_REXP("^(APM:Copter|APM:Plane|APM:Rover|ArduCopter|ArduPlane|ArduRover) +[vV](\\d*)\\.*(\\d*)*\\.*(\\d*)*");
+static const QRegExp VERSION_REXP(QS("^(APM:Copter|APM:Plane|APM:Rover|ArduCopter|ArduPlane|ArduRover) +[vV](\\d*)\\.*(\\d*)*\\.*(\\d*)*"));
 
 // minimum firmware versions that don't suffer from mavlink severity inversion bug.
 // https://github.com/diydrones/apm_planner/issues/788
-static const QString MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS(QStringLiteral("APM:Copter V3.4.0"));
-static const QString MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS(QStringLiteral("APM:Plane V3.4.0"));
-static const QString MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS(QStringLiteral("APM:Rover V2.6.0"));
+static const QString MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS(QS("APM:Copter V3.4.0"));
+static const QString MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS(QS("APM:Plane V3.4.0"));
+static const QString MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS(QS("APM:Rover V2.6.0"));
 
 
 /*
@@ -72,12 +73,12 @@ bool APMFirmwareVersion::isValid() const
 
 bool APMFirmwareVersion::isBeta() const
 {
-    return _versionString.contains(QStringLiteral(".rc"));
+    return _versionString.contains(QS(".rc"));
 }
 
 bool APMFirmwareVersion::isDev() const
 {
-    return _versionString.contains(QStringLiteral(".dev"));
+    return _versionString.contains(QS(".dev"));
 }
 
 bool APMFirmwareVersion::operator <(const APMFirmwareVersion& other) const
@@ -173,7 +174,7 @@ QStringList APMFirmwarePlugin::flightModes(void)
 
 QString APMFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode)
 {
-    QString flightMode = QStringLiteral("Unknown");
+    QString flightMode = QS("Unknown");
 
     if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
         foreach (const APMCustomMode& customMode, _supportedModes) {
@@ -476,8 +477,9 @@ void APMFirmwarePlugin::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 
 QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(void)
 {
-    QList<MAV_CMD> list;
+    static QList<MAV_CMD> list;
 
+    list.reserve(24);
     list << MAV_CMD_NAV_WAYPOINT
          << MAV_CMD_NAV_LOITER_UNLIM << MAV_CMD_NAV_LOITER_TURNS << MAV_CMD_NAV_LOITER_TIME
          << MAV_CMD_NAV_RETURN_TO_LAUNCH << MAV_CMD_NAV_LAND << MAV_CMD_NAV_TAKEOFF
@@ -488,5 +490,7 @@ QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(void)
          << MAV_CMD_DO_DIGICAM_CONFIGURE << MAV_CMD_DO_DIGICAM_CONTROL
          << MAV_CMD_DO_MOUNT_CONTROL
          << MAV_CMD_CONDITION_DELAY  << MAV_CMD_CONDITION_CHANGE_ALT << MAV_CMD_CONDITION_DISTANCE << MAV_CMD_CONDITION_YAW;
+
     return list;
 }
+#undef QS

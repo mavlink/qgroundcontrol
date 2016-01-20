@@ -227,7 +227,7 @@ void QGCJSBSimLink::setRemoteHost(const QString& host)
         if (info.error() == QHostInfo::NoError)
         {
             // Add host
-            currentHost = info.addresses().first();
+            currentHost = info.addresses().at(0);
         }
     }
 
