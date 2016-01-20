@@ -54,10 +54,7 @@ UASMessageViewWidget::UASMessageViewWidget(UASMessageHandler* uasMessageHandler,
     , _uasMessageHandler(uasMessageHandler)
 {
     setStyleSheet("QPlainTextEdit { border: 0px }");
-    // Construct initial widget
-    _unconnectedWidget = new QGCUnconnectedInfoWidget(this);
-    ui()->horizontalLayout->addWidget(_unconnectedWidget);
-    ui()->plainTextEdit->hide();
+
     // Enable the right-click menu for the text editor. This works because the plainTextEdit
     // widget has its context menu policy set to its actions list. So any actions we add
     // to this widget's action list will be automatically displayed.
@@ -85,16 +82,7 @@ void UASMessageViewWidget::handleTextMessage(UASMessage *message)
     // Reset
     if(!message) {
         ui()->plainTextEdit->clear();
-        _unconnectedWidget->show();
-        ui()->plainTextEdit->hide();
     } else {
-        // Make sure the UI is configured for showing messages.
-        // Note that this call is NOT equivalent to `_unconnectedWidget->isVisible()`.
-        if (!_unconnectedWidget->isHidden())
-        {
-            _unconnectedWidget->hide();
-            ui()->plainTextEdit->show();
-        }
         QPlainTextEdit *msgWidget = ui()->plainTextEdit;
         // Turn off updates while we're appending content to avoid breaking the autoscroll behavior
         msgWidget->setUpdatesEnabled(false);
