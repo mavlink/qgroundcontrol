@@ -120,7 +120,9 @@ Rectangle {
         target: multiVehicleManager
 
         onParameterReadyVehicleAvailableChanged: {
-            if (parameterReadyVehicleAvailable) {
+            if (parameterReadyVehicleAvailable || summaryButton.checked) {
+                // When a new vehicle shows up we switch to the Summary View. If the Summary View is already showing
+                // and a vehicle goes away, we must reload it to show new disconnected Qml
                 summaryButton.checked = true
                 showSummaryPanel()
             }
