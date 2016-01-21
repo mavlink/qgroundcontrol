@@ -200,7 +200,7 @@ QGCView {
                         if (false /*homePositionManagerButton.checked*/) {
                             //offlineHomePosition = coordinate
                         } else if (addMissionItemsButton.checked) {
-                            var index = controller.addMissionItem(coordinate)
+                            var index = controller.insertMissionItem(coordinate, controller.missionItems.count)
                             addMissionItemsButtonAutoOffTimer.stop()
                             addMissionItemsButtonAutoOffTimer.start()
                             setCurrentItem(index)
@@ -290,10 +290,6 @@ QGCView {
                                     } else {
                                         itemDragger.clearItem()
                                     }
-
-                                    // Move to the new position
-                                    editorMap.latitude = object.coordinate.latitude
-                                    editorMap.longitude = object.coordinate.longitude
                                 }
                             }
                         }
@@ -375,6 +371,11 @@ QGCView {
                             onRemoveAll: {
                                 itemDragger.clearItem()
                                 controller.removeAllMissionItems()
+                            }
+
+                            onInsert: {
+                                controller.insertMissionItem(editorMap.center, i)
+                                setCurrentItem(i)
                             }
                         }
                     } // ListView
