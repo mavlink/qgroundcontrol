@@ -201,8 +201,6 @@ QGCView {
                             //offlineHomePosition = coordinate
                         } else if (addMissionItemsButton.checked) {
                             var index = controller.addMissionItem(coordinate)
-                            addMissionItemsButtonAutoOffTimer.stop()
-                            addMissionItemsButtonAutoOffTimer.start()
                             setCurrentItem(index)
                         } else {
                             editorMap.zoomLevel = editorMap.maxZoomLevel - 2
@@ -409,22 +407,6 @@ QGCView {
                         id:                 addMissionItemsButton
                         buttonImage:        "/qmlimages/MapAddMission.svg"
                         z:                  QGroundControl.zOrderWidgets
-
-                        onCheckedChanged: {
-                            if (checked) {
-                                addMissionItemsButtonAutoOffTimer.start()
-                            } else {
-                                addMissionItemsButtonAutoOffTimer.stop()
-                            }
-                        }
-
-                        Timer {
-                            id:         addMissionItemsButtonAutoOffTimer
-                            interval:   _addMissionItemsButtonAutoOffTimeout
-                            repeat:     false
-
-                            onTriggered: addMissionItemsButton.checked = false
-                        }
                     }
 
                     DropButton {
