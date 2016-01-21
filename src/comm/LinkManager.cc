@@ -87,6 +87,10 @@ LinkManager::LinkManager(QGCApplication* app)
     _autoconnectPixhawk =   settings.value(_autoconnectPixhawkKey, true).toBool();
     _autoconnect3DRRadio =  settings.value(_autoconnect3DRRadioKey, true).toBool();
     _autoconnectPX4Flow =   settings.value(_autoconnectPX4FlowKey, true).toBool();
+
+    _activeLinkCheckTimer.setInterval(_activeLinkCheckTimeoutMSecs);
+    _activeLinkCheckTimer.setSingleShot(false);
+    connect(&_activeLinkCheckTimer, &QTimer::timeout, this, &LinkManager::_activeLinkCheck);
 }
 
 LinkManager::~LinkManager()
@@ -115,8 +119,19 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
     switch(config->type()) {
 #ifndef __ios__
         case LinkConfiguration::TypeSerial:
-            pLink = new SerialLink(dynamic_cast<SerialConfiguration*>(config));
-            break;
+        {
+            SerialConfiguration* serialConfig = dynamic_cast<SerialConfiguration*>(config);
+            if (serialConfig) {
+                pLink = new SerialLink(serialConfig);
+                if (serialConfig->usbDirect()) {
+                    _activeLinkCheckList.append(pLink);
+                    if (!_activeLinkCheckTimer.isActive()) {
+                        _activeLinkCheckTimer.start();
+                    }
+                }
+            }
+        }
+        break;
 #endif
         case LinkConfiguration::TypeUdp:
             pLink = new UDPLink(dynamic_cast<UDPConfiguration*>(config));
@@ -459,7 +474,7 @@ void LinkManager::_updateAutoConnectLinks(void)
             break;
         }
     }
-    if (!foundUDP) {
+    if (!foundUDP && _autoconnectUDP) {
         qCDebug(LinkManagerLog) << "New auto-connect UDP port added";
         UDPConfiguration* udpConfig = new UDPConfiguration(_defaultUPDLinkName);
         udpConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
@@ -898,4 +913,32 @@ bool LinkManager::isAutoconnectLink(LinkInterface* link)
 bool LinkManager::isBluetoothAvailable(void)
 {
     return qgcApp()->isBluetoothAvailable();
+}
+
+void LinkManager::_activeLinkCheck(void)
+{
+    bool found = false;
+
+    if (_activeLinkCheckList.count() != 0) {
+        LinkInterface* link = _activeLinkCheckList.takeFirst();
+        if (_links.contains(link) && link->isConnected()) {
+            // Make sure there is a vehicle on the link
+            QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
+            for (int i=0; i<vehicles->count(); i++) {
+                Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
+                if (vehicle->containsLink(link)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (_activeLinkCheckList.count() == 0) {
+        _activeLinkCheckTimer.stop();
+    }
+
+    if (!found) {
+        qgcApp()->showMessage("You have connected to a Vehicle which does not have it's SD Card Inserted. Please insert an SD card and try again.");
+    }
 }
