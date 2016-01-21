@@ -120,8 +120,10 @@ Rectangle {
         target: multiVehicleManager
 
         onParameterReadyVehicleAvailableChanged: {
-            summaryButton.checked = true
-            showSummaryPanel()
+            if (parameterReadyVehicleAvailable) {
+                summaryButton.checked = true
+                showSummaryPanel()
+            }
         }
     }
 
