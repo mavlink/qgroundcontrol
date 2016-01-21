@@ -21,6 +21,7 @@ Rectangle {
     signal clicked
     signal remove
     signal removeAll
+    signal insert(int i)
 
     height: innerItem.height + (_margin * 3)
     color:  missionItem.isCurrentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
@@ -86,6 +87,11 @@ Rectangle {
 
                 Menu {
                     id: hamburgerMenu
+
+                    MenuItem {
+                        text:           "Insert"
+                        onTriggered:    insert(missionItem.sequenceNumber)
+                    }
 
                     MenuItem {
                         text:           "Delete"
