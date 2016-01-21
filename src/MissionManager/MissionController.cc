@@ -158,7 +158,7 @@ void MissionController::sendMissionItems(void)
     }
 }
 
-int MissionController::addMissionItem(QGeoCoordinate coordinate)
+int MissionController::insertMissionItem(QGeoCoordinate coordinate, int i)
 {
     MissionItem * newItem = new MissionItem(this);
     newItem->setSequenceNumber(_missionItems->count());
@@ -179,7 +179,7 @@ int MissionController::addMissionItem(QGeoCoordinate coordinate)
             newItem->setParam7(lastValue);
         }
     }
-    _missionItems->append(newItem);
+    _missionItems->insert(i, newItem);
 
     _recalcAll();
 
