@@ -210,6 +210,8 @@ signals:
 private slots:
     void _linkConnected(void);
     void _linkDisconnected(void);
+    void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
+    void _activeLinkCheck(void);
 
 private:
     bool _connectionsSuspendedMsg(void);
@@ -242,6 +244,10 @@ private:
     bool _autoconnectPixhawk;
     bool _autoconnect3DRRadio;
     bool _autoconnectPX4Flow;
+
+    QTimer                  _activeLinkCheckTimer;                  // Timer which checks for a vehicle showing up on a usb direct link
+    QList<LinkInterface*>   _activeLinkCheckList;                   // List of links we are waiting for a vehicle to show up on
+    static const int        _activeLinkCheckTimeoutMSecs = 7000;
 
     static const char*  _settingsGroup;
     static const char*  _autoconnectUDPKey;
