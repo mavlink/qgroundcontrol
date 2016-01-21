@@ -73,7 +73,7 @@ public:
 	QStringList parameterNames(int componentId);
     
     /// Returns the specified Fact.
-    /// WARNING: Will assert if parameter does not exists. If that possibily exists, check for existince first with
+    /// WARNING: Will assert if parameter does not exists. If that possibily exists, check for existence first with
     /// parameterExists.
     Fact* getFact(int               componentId,    ///< fact component, -1=default component
                   const QString&    name);          ///< fact name

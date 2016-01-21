@@ -63,7 +63,7 @@ public:
         { return _messageBox(QMessageBox::Warning, title, text, buttons, defaultButton, parent); }
 
 private slots:
-    /// @brief The exec slot is private becasue when only want QGCMessageBox users to use the static methods. Otherwise it will break
+    /// @brief The exec slot is private because when only want QGCMessageBox users to use the static methods. Otherwise it will break
     ///         unit testing.
     int exec(void) { return QMessageBox::exec(); }
 

@@ -614,7 +614,7 @@ QString FileManager::errorString(uint8_t errorCode)
         case kErrInvalidSession:
             return QString("invalid session");
         case kErrNoSessionsAvailable:
-            return QString("no sessions availble");
+            return QString("no sessions available");
         case kErrFailFileExists:
             return QString("File already exists on target");
         case kErrFailFileProtected:
