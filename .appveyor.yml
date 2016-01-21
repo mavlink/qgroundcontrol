@@ -38,6 +38,7 @@ artifacts:
   - path: qgroundcontrol-installer.exe
     name: qgcinstaller
 
+# TODO: dagar deploy pdbs
 deploy:
   - provider: S3
     access_key_id:
