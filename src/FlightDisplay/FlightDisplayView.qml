@@ -95,10 +95,37 @@ Item {
         }
     }
 
+    function px4JoystickCheck() {
+        if (_activeVehicle && !_activeVehicle.px4Firmware && (QGroundControl.virtualTabletJoystick || _activeVehicle.joystickEnabled)) {
+            px4JoystickSupport.open()
+        }
+    }
+
+    MessageDialog {
+        id:     px4JoystickSupport
+        text:   "Joystick support requires MAVLink MANUAL_CONTROL support. " +
+                "The firmware you are running does not normally support this. " +
+                "It will only work if you have modified the firmware to add MANUAL_CONTROL support."
+    }
+
     Component.onCompleted: {
         reloadContents();
         widgetsLoader.source    = "FlightDisplayViewWidgets.qml"
+        px4JoystickCheck()
     }
+
+    Connections {
+        target: multiVehicleManager
+        onActiveVehicleChanged: px4JoystickCheck()
+    }
+
+    Connections {
+        target: QGroundControl
+        onVirtualTabletJoystickChanged: px4JoystickCheck()
+    }
+
+    property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
+    onActiveVehicleJoystickEnabledChanged: px4JoystickCheck()
 
     //-- Main Window
     Loader {
