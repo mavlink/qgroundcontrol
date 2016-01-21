@@ -46,9 +46,8 @@ QGCView {
     readonly property string plugInText:        highlightPrefix + "Plug in your device" + highlightSuffix + " via USB to " + highlightPrefix + "start" + highlightSuffix + " firmware upgrade. "
     readonly property string flashFailText:     "If upgrade failed, make sure to connect " + highlightPrefix + "directly" + highlightSuffix + " to a powered USB port on your computer, not through a USB hub. " +
                                                 "Also make sure you are only powered via USB " + highlightPrefix + "not battery" + highlightSuffix + "."
-    readonly property string qgcDisconnectText: "All QGroundControl connections to vehicles must be disconnected prior to firmware upgrade."
-    property string usbUnplugText:              "Device must be disconnected from USB to start firmware upgrade. " +
-                                                    highlightPrefix + "Disconnect {0}" + highlightSuffix + " from usb."
+    readonly property string qgcUnplugText1:    "All QGroundControl connections to vehicles must be " + highlightPrefix + " disconnected " + highlightSuffix + "prior to firmware upgrade."
+    readonly property string qgcUnplugText2:    highlightPrefix + "<big>Please unplug your Pixhawk and/or Radio from USB.</big>" + highlightSuffix
 
     property string firmwareWarningMessage
     property bool   controllerCompleted:      false
@@ -102,11 +101,8 @@ QGCView {
         onBoardFound: {
             if (initialBoardSearch) {
                 // Board was found right away, so something is already plugged in before we've started upgrade
-                if (QGroundControl.multiVehicleManager.activeVehicleAvailable) {
-                    statusTextArea.append(qgcDisconnectText)
-                } else {
-                    statusTextArea.append(usbUnplugText.replace('{0}', controller.boardType))
-                }
+                statusTextArea.append(qgcUnplugText1)
+                statusTextArea.append(qgcUnplugText2)
             } else {
                 // We end up here when we detect a board plugged in after we've started upgrade
                 statusTextArea.append(highlightPrefix + "Found device" + highlightSuffix + ": " + controller.boardType)
