@@ -87,7 +87,7 @@ public:
     /// @return -1: reserver all buttons, >0 number of buttons to reserve
     virtual int manualControlReservedButtonCount(void) = 0;
     
-    /// Called before any mavlink message is processed by Vehicle such taht the firmwre plugin
+    /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.
     ///     @param vehicle Vehicle message came from

@@ -150,7 +150,7 @@ private:
     static const int _eraseTimeout = 20000;     ///< Msecs to wait for response from erase command
     static const int _rebootTimeout = 10000;    ///< Msecs to wait for reboot command to cause serial port to disconnect
     static const int _verifyTimeout = 5000;     ///< Msecs to wait for response to PROTO_GET_CRC command
-    static const int _readTimout = 2000;        ///< Msecs to wait for read bytes to become avilable
+    static const int _readTimout = 2000;        ///< Msecs to wait for read bytes to become available
     static const int _responseTimeout = 2000;   ///< Msecs to wait for command response bytes
 };
 

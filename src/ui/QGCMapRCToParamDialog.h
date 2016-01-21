@@ -22,7 +22,7 @@
  ======================================================================*/
 
 /// @file
-///     @brief Dialog to configure RC to paramter mapping
+///     @brief Dialog to configure RC to parameter mapping
 ///     @author Thomas Gubler <thomasgubler@gmail.com>
 
 #ifndef QGCMAPRCTOPARAMDIALOG_H

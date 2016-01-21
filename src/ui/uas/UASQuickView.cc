@@ -161,7 +161,7 @@ void UASQuickView::sortItems(int columncount)
         m_PropertyToLayoutIndexMap.remove(i.key());
         itemlist.append(i.value());
     }
-    // Item list has all the widgets availble, now re-add them to the layouts.
+    // Item list has all the widgets available, now re-add them to the layouts.
     for (int i = 0; i < m_verticalLayoutList.size(); i++)
     {
         ui.horizontalLayout->removeItem(m_verticalLayoutList[i]);

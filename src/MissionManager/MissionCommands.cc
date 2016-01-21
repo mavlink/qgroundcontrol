@@ -239,7 +239,7 @@ void MissionCommands::_loadMavCmdInfoJson(void)
 
         // We don't add categories till down here, since friendly edit isn't valid till here
         if (mavCmdInfo->_command != MAV_CMD_NAV_LAST) {
-            // Don't add fake home postion command to categories
+            // Don't add fake home position command to categories
 
             if (mavCmdInfo->friendlyEdit()) {
                 // Only friendly edit commands go in category list. We use MAV_AUTOPILOT_GENERIC key to store full list.
