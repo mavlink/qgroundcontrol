@@ -282,6 +282,8 @@ public:
 
     static const int cMaxRcChannels = 18;
 
+    bool containsLink(LinkInterface* link) { return _links.contains(link); }
+
 public slots:
     void setLatitude(double latitude);
     void setLongitude(double longitude);
