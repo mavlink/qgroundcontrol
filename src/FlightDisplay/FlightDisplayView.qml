@@ -47,7 +47,7 @@ Item {
 
     readonly property bool isBackgroundDark: _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
 
-    property var _activeVehicle:  multiVehicleManager.activeVehicle
+    property var _activeVehicle:    multiVehicleManager.activeVehicle
 
     readonly property real _defaultRoll:                0
     readonly property real _defaultPitch:               0
@@ -74,145 +74,140 @@ Item {
     property real _airSpeed:            _activeVehicle ? _activeVehicle.airSpeed      : _defaultAirSpeed
     property real _climbRate:           _activeVehicle ? _activeVehicle.climbRate     : _defaultClimbRate
 
-    property var  _flightMap:           null
-    property var  _flightVideo:         null
     property var  _savedZoomLevel:      0
 
-    property real _pipSize:             mainWindow.width * 0.2
+    property real pipSize:              mainWindow.width * 0.2
 
     FlightDisplayViewController { id: _controller }
 
-    function reloadContents() {
-        if(_flightVideo) {
-            _flightVideo.visible = false
-        }
+    function setStates() {
         if(_mainIsMap) {
-            mainLoader.source   = "FlightDisplayViewMap.qml"
-            pipLoader.source    = "FlightDisplayViewVideo.qml"
+            //-- Adjust Margins
+            _flightMapContainer.state   = "fullMode"
+            _flightVideo.state          = "pipMode"
+            //-- Save/Restore Map Zoom Level
+            if(_savedZoomLevel != 0)
+                _flightMap.zoomLevel = _savedZoomLevel
+            else
+                _savedZoomLevel = _flightMap.zoomLevel
         } else {
-            mainLoader.source   = "FlightDisplayViewVideo.qml"
-            pipLoader.source    = "FlightDisplayViewMap.qml"
+            //-- Adjust Margins
+            _flightMapContainer.state   = "pipMode"
+            _flightVideo.state          = "fullMode"
+            //-- Set Map Zoom Level
+            _savedZoomLevel = _flightMap.zoomLevel
+            _flightMap.zoomLevel = _savedZoomLevel - 3
         }
+    }
+
+    function setPipVisibility(state) {
+        _isPipVisible = state;
+        QGroundControl.saveBoolGlobalSetting(_PIPVisibleKey, state)
     }
 
     Component.onCompleted: {
-        reloadContents();
-        widgetsLoader.source    = "FlightDisplayViewWidgets.qml"
+        widgetsLoader.source = "FlightDisplayViewWidgets.qml"
+        setStates()
     }
 
-    //-- Main Window
-    Loader {
-        id:                 mainLoader
-        anchors.fill:       parent
-        onLoaded: {
-            if(_mainIsMap) {
-                _flightMap   = item
-                if(_savedZoomLevel != 0)
-                    _flightMap.zoomLevel = _savedZoomLevel
-                else
-                    _savedZoomLevel = _flightMap.zoomLevel
-            } else {
-                _flightVideo = item
-            }
-        }
-    }
-
-    //-- PIP Window
+    //-- Map View
+    //   For whatever reason, if FlightDisplayViewMap is the root item, changing
+    //   width/height has no effect.
     Item {
-        id:                 pip
-        visible:            _controller.hasVideo && _isPipVisible
-        anchors.margins:    ScreenTools.defaultFontPixelHeight
-        anchors.left:       parent.left
-        anchors.bottom:     parent.bottom
-        width:              _pipSize
-        height:             _pipSize * (9/16)
-        Loader {
-            id:                 pipLoader
-            anchors.fill:       parent
-            onLoaded: {
-                if(_mainIsMap) {
-                    _flightVideo = item
-                } else {
-                    _flightMap = item
-                    _savedZoomLevel = _flightMap.zoomLevel
-                    _flightMap.zoomLevel = _savedZoomLevel - 3
+        id: _flightMapContainer
+        z:  _mainIsMap ? root.z + 1 : root.z + 2
+        anchors.left:   root.left
+        anchors.bottom: root.bottom
+        visible:        _mainIsMap || _isPipVisible
+        width:          _mainIsMap ? root.width  : pipSize
+        height:         _mainIsMap ? root.height : pipSize * (9/16)
+        states: [
+            State {
+                name:   "pipMode"
+                PropertyChanges {
+                    target:             _flightMapContainer
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                }
+            },
+            State {
+                name:   "fullMode"
+                PropertyChanges {
+                    target:             _flightMapContainer
+                    anchors.margins:    0
                 }
             }
-        }
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                _mainIsMap = !_mainIsMap
-                reloadContents();
-                QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, _mainIsMap)
-            }
-        }
-        Image {
-            id:             closePIP
-            source:         "/qmlimages/PiP.svg"
-            mipmap:         true
-            fillMode:       Image.PreserveAspectFit
-            anchors.left:   parent.left
-            anchors.bottom: parent.bottom
-            height:         ScreenTools.defaultFontPixelSize * 2.5
-            width:          ScreenTools.defaultFontPixelSize * 2.5
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    _isPipVisible = false
-                    QGroundControl.saveBoolGlobalSetting(_PIPVisibleKey, false)
-                }
-            }
+        ]
+        FlightDisplayViewMap {
+            id:             _flightMap
+            anchors.fill:   parent
         }
     }
 
-    //-- Show PIP
-    Rectangle {
-        id:                     openPIP
-        anchors.left :          parent.left
-        anchors.bottom:         parent.bottom
-        anchors.margins:        ScreenTools.defaultFontPixelHeight
-        height:                 ScreenTools.defaultFontPixelSize * 2
-        width:                  ScreenTools.defaultFontPixelSize * 2
-        radius:                 ScreenTools.defaultFontPixelSize / 3
-        visible:                _controller.hasVideo && !_isPipVisible
-        color:                  isBackgroundDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
-        Image {
-            width:              parent.width  * 0.75
-            height:             parent.height * 0.75
-            source:             "/res/buttonRight.svg"
-            mipmap:             true
-            fillMode:           Image.PreserveAspectFit
-            anchors.verticalCenter:     parent.verticalCenter
-            anchors.horizontalCenter:   parent.horizontalCenter
-        }
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                _isPipVisible = true
-                QGroundControl.saveBoolGlobalSetting(_PIPVisibleKey, true)
+    //-- Video View
+    FlightDisplayViewVideo {
+        id:             _flightVideo
+        z:              _mainIsMap ? root.z + 2 : root.z + 1
+        width:          !_mainIsMap ? root.width  : pipSize
+        height:         !_mainIsMap ? root.height : pipSize * (9/16)
+        anchors.left:   root.left
+        anchors.bottom: root.bottom
+        visible:        _controller.hasVideo && (!_mainIsMap || _isPipVisible)
+        states: [
+            State {
+                name:   "pipMode"
+                PropertyChanges {
+                    target: _flightVideo
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                }
+            },
+            State {
+                name:   "fullMode"
+                PropertyChanges {
+                    target: _flightVideo
+                    anchors.margins:    0
+                }
             }
+        ]
+    }
+
+    QGCPipable {
+        id:                 _flightVideoPipControl
+        z:                  _flightVideo.z + 3
+        width:              pipSize
+        height:             pipSize * (9/16)
+        anchors.left:       root.left
+        anchors.bottom:     root.bottom
+        anchors.margins:    ScreenTools.defaultFontPixelHeight
+        isHidden:           !_isPipVisible
+        isDark:             isBackgroundDark
+        onActivated: {
+            _mainIsMap = !_mainIsMap
+            setStates()
+        }
+        onHideIt: {
+            setPipVisibility(!state)
         }
     }
 
     //-- Widgets
     Loader {
         id:                 widgetsLoader
+        z:                  root.z + 4
         anchors.right:      parent.right
         anchors.left:       parent.left
         anchors.bottom:     parent.bottom
         height:             availableHeight
-
         property bool isBackgroundDark: root.isBackgroundDark
     }
 
     //-- Virtual Joystick
     Item {
         id:                         multiTouchItem
-        width:                      parent.width  - (pip.width / 2)
+        z:                          root.z + 5
+        width:                      parent.width  - (_flightVideoPipControl.width / 2)
         height:                     thumbAreaHeight
         visible:                    QGroundControl.virtualTabletJoystick
-        anchors.bottom:             pip.top
+        anchors.bottom:             _flightVideoPipControl.top
         anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
         anchors.horizontalCenter:   parent.horizontalCenter
 
