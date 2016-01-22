@@ -91,6 +91,53 @@ QGCView {
         }
     }
 
+    function loadFromVehicle() {
+        controller.getMissionItems()
+    }
+
+    function loadFromFile() {
+        controller.loadMissionFromFile()
+        fitViewportToMissionItems()
+    }
+
+    function normalizeLat(lat) {
+        // Normalize latitude to range: 0 to 180, S to N
+        return lat + 90.0
+    }
+
+    function normalizeLon(lon) {
+        // Normalize longitude to range: 0 to 360, W to E
+        return lon  + 180.0
+    }
+
+    /// Fix the map viewport to the current mission items. We don't fit the home position in this process.
+    function fitViewportToMissionItems() {
+        if (_missionItems.count <= 1) {
+            return
+        }
+
+        var missionItem = _missionItems.get(1)
+
+        var north = normalizeLat(missionItem.coordinate.latitude)
+        var south = north
+        var east = normalizeLon(missionItem.coordinate.longitude)
+        var west = east
+
+        for (var i=2; i<_missionItems.count; i++) {
+            missionItem = _missionItems.get(i)
+
+            var lat = normalizeLat(missionItem.coordinate.latitude)
+            var lon = normalizeLon(missionItem.coordinate.longitude)
+
+            north = Math.max(north, lat)
+            south = Math.min(south, lat)
+            east = Math.max(east, lon)
+            west = Math.min(west, lon)
+        }
+
+        editorMap.visibleRegion = QtPositioning.rectangle(QtPositioning.coordinate(north - 90.0, west - 180.0), QtPositioning.coordinate(south - 90.0, east - 180.0))
+    }
+
     MissionController {
         id:         controller
 
@@ -107,6 +154,7 @@ QGCView {
 */
 
         onMissionItemsChanged: itemDragger.clearItem()
+        onNewItemsFromVehicle: fitViewportToMissionItems()
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -261,11 +309,11 @@ QGCView {
                 // Add the mission items to the map
                 MapItemView {
                     model:          controller.missionItems
-                    delegate:       delegateComponent
+                    delegate:       missionItemComponent
                 }
 
                 Component {
-                    id: delegateComponent
+                    id: missionItemComponent
 
                     MissionItemIndicator {
                         id:             itemIndicator
@@ -549,7 +597,7 @@ QGCView {
 
             function accept() {
                 hideDialog()
-                controller.getMissionItems()
+                loadFromVehicle()
             }
         }
     }
@@ -563,7 +611,7 @@ QGCView {
 
             function accept() {
                 hideDialog()
-                controller.loadMissionFromFile()
+                loadFromFile()
             }
         }
     }
@@ -606,7 +654,7 @@ QGCView {
                         if (syncNeeded) {
                             _root.showDialog(syncLoadFromVehicleOverwrite, "Mission overwrite", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                         } else {
-                            controller.getMissionItems()
+                            loadFromVehicle()
                         }
                     }
                 }
@@ -633,7 +681,7 @@ QGCView {
                         if (syncNeeded) {
                             _root.showDialog(syncLoadFromFileOverwrite, "Mission overwrite", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                         } else {
-                            controller.loadMissionFromFile()
+                            loadFromFile()
                         }
                     }
                 }
