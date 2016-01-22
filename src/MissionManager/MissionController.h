@@ -46,14 +46,16 @@ public:
     Q_PROPERTY(QGeoCoordinate       liveHomePosition            READ liveHomePosition               NOTIFY liveHomePositionChanged)
     Q_PROPERTY(bool                 autoSync                    READ autoSync   WRITE setAutoSync   NOTIFY autoSyncChanged)
 
-    Q_INVOKABLE void start(bool editMode)    ;
-    Q_INVOKABLE int addMissionItem(QGeoCoordinate coordinate);
+    Q_INVOKABLE void start(bool editMode);
     Q_INVOKABLE void getMissionItems(void);
     Q_INVOKABLE void sendMissionItems(void);
     Q_INVOKABLE void loadMissionFromFile(void);
     Q_INVOKABLE void saveMissionToFile(void);
     Q_INVOKABLE void removeMissionItem(int index);
     Q_INVOKABLE void removeAllMissionItems(void);
+
+    /// @param i: index to insert at
+    Q_INVOKABLE int insertMissionItem(QGeoCoordinate coordinate, int i);
 
     // Property accessors
 
