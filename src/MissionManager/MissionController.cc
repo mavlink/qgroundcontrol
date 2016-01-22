@@ -130,12 +130,13 @@ void MissionController::_setupMissionItems(bool loadFromVehicle, bool forceLoad)
     if (!missionManager || !loadFromVehicle || missionManager->inProgress()) {
         _missionItems = new QmlObjectListModel(this);
         qCDebug(MissionControllerLog) << "creating empty set";
+        _initAllMissionItems();
     } else {
         _missionItems = missionManager->copyMissionItems();
         qCDebug(MissionControllerLog) << "loading from vehicle count"<< _missionItems->count();
+        _initAllMissionItems();
+        emit newItemsFromVehicle();
     }
-
-    _initAllMissionItems();
 }
 
 void MissionController::getMissionItems(void)
@@ -222,6 +223,7 @@ void MissionController::loadMissionFromFile(void)
 #ifndef __mobile__
     QString errorString;
     QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Mission File to load");
+    bool versionAPM = false;
 
     if (filename.isEmpty()) {
         return;
@@ -244,9 +246,17 @@ void MissionController::loadMissionFromFile(void)
 
         const QStringList& version = in.readLine().split(" ");
 
-        if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "120")) {
-            errorString = "The mission file is not compatible with the current version of QGroundControl.";
-        } else {
+        bool versionOk = false;
+        if (version.size() == 3 && version[0] == "QGC" && version[1] == "WPL") {
+            if (version[2] == "120") {
+                versionOk = true;
+            } else if (version[2] == "110") {
+                versionOk = true;
+                versionAPM = true;
+            }
+        }
+
+        if (versionOk) {
             while (!in.atEnd()) {
                 MissionItem* item = new MissionItem();
 
@@ -257,12 +267,19 @@ void MissionController::loadMissionFromFile(void)
                     break;
                 }
             }
+        } else {
+            errorString = "The mission file is not compatible with this version of QGroundControl.";
         }
-
     }
 
-    if (!errorString.isEmpty()) {
+    if (errorString.isEmpty()) {
+        if (versionAPM) {
+            // Remove fake home position from APM files
+            _missionItems->removeAt(0);
+        }
+    } else {
         _missionItems->clear();
+        qgcApp()->showMessage(errorString);
     }
 
     _initAllMissionItems();
@@ -272,7 +289,6 @@ void MissionController::loadMissionFromFile(void)
 void MissionController::saveMissionToFile(void)
 {
 #ifndef __mobile__
-    QString errorString;
     QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save mission to");
 
     if (filename.isEmpty()) {
@@ -282,7 +298,7 @@ void MissionController::saveMissionToFile(void)
     QFile file(filename);
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        errorString = file.errorString();
+        qgcApp()->showMessage(file.errorString());
     } else {
         QTextStream out(&file);
 
