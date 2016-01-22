@@ -72,6 +72,7 @@ signals:
     void liveHomePositionAvailableChanged(bool homePositionAvailable);
     void liveHomePositionChanged(const QGeoCoordinate& homePosition);
     void autoSyncChanged(bool autoSync);
+    void newItemsFromVehicle(void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle();
