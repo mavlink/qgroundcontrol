@@ -1,0 +1,21 @@
+configs:
+    dev:
+        'qt_deps_tarball': '/vagrant/Qt5.5.1-linux.tar.bz2'
+        'qt_deps_unpack_parent_dir': '/tmp'
+
+        'qt_deps_unpack_dir': '/tmp/Qt'
+        'qt_deps_bin_unpack_dir': '/tmp/Qt/5.5/gcc_64/bin'
+        'qt_deps_lib_unpack_dir': '/tmp/Qt/5.5/gcc_64/lib'
+        'qt_deps_plugins_unpack_dir': '/tmp/Qt/5.5/gcc_64/plugins'
+        'qt_deps_qml_unpack_dir': '/tmp/Qt/5.5/gcc_64/qml'
+
+        'qt_deps_dir': '/vagrant/shadow-build/release/Qt'
+        'qt_deps_bin_dir': '/vagrant/shadow-build/release/Qt/bin'
+        'qt_deps_lib_dir': '/vagrant/shadow-build/release/Qt/libs'
+        'qt_deps_plugins_dir': '/vagrant/shadow-build/release/Qt/plugins'
+        'qt_deps_qml_dir': '/vagrant/shadow-build/release/Qt/qml'
+
+        'spec': 'linux-g++-64'
+        'shadow_build_dir': '/vagrant/shadow-build'
+        'pro': '/vagrant/qgroundcontrol.pro'
+        'deps_url': 'https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies'
