@@ -74,6 +74,8 @@ Item {
     property real _airSpeed:            _activeVehicle ? _activeVehicle.airSpeed      : _defaultAirSpeed
     property real _climbRate:           _activeVehicle ? _activeVehicle.climbRate     : _defaultClimbRate
 
+    property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
+
     property var  _savedZoomLevel:      0
 
     property real pipSize:              mainWindow.width * 0.2
@@ -105,9 +107,35 @@ Item {
         QGroundControl.saveBoolGlobalSetting(_PIPVisibleKey, state)
     }
 
+    function px4JoystickCheck() {
+        if (_activeVehicle && !_activeVehicle.px4Firmware && (QGroundControl.virtualTabletJoystick || _activeVehicle.joystickEnabled)) {
+            px4JoystickSupport.open()
+        }
+    }
+
+    MessageDialog {
+        id:     px4JoystickSupport
+        text:   "Joystick support requires MAVLink MANUAL_CONTROL support. " +
+                "The firmware you are running does not normally support this. " +
+                "It will only work if you have modified the firmware to add MANUAL_CONTROL support."
+    }
+
+    Connections {
+        target: multiVehicleManager
+        onActiveVehicleChanged: px4JoystickCheck()
+    }
+
+    Connections {
+        target: QGroundControl
+        onVirtualTabletJoystickChanged: px4JoystickCheck()
+    }
+
+    onActiveVehicleJoystickEnabledChanged: px4JoystickCheck()
+
     Component.onCompleted: {
         widgetsLoader.source = "FlightDisplayViewWidgets.qml"
         setStates()
+        px4JoystickCheck()
     }
 
     //-- Map View
