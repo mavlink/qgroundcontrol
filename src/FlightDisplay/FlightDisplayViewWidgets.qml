@@ -118,8 +118,8 @@ Item {
         anchors.margins:    ScreenTools.defaultFontPixelHeight
         anchors.right:      parent.right
         anchors.bottom:     parent.bottom
-        width:              _pipSize
-        height:             _pipSize * (9/16)
+        width:              pipSize
+        height:             pipSize * (9/16)
         color:              Qt.rgba(0,0,0,0.75)
         Column {
             id:                 instruments
