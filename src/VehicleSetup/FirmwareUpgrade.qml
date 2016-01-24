@@ -117,29 +117,11 @@ QGCView {
             statusTextArea.append(flashFailText)
             flashCompleteWaitTimer.running = true
         }
-
-        onFlashComplete: flashCompleteWaitTimer.running = true
     }
 
     onCompleted: {
         if (controllerCompleted) {
             // We can only start the board search when the Qml and Controller are completely done loading
-            controller.startBoardSearch()
-        }
-    }
-
-    // After a flash completes we start this timer to trigger resetting the ui back to it's initial state of being ready to
-    // flash another board. We do this only after the timer triggers to leave the results of the previous flash on the screen
-    // for a small amount amount of time.
-
-    Timer {
-        id:         flashCompleteWaitTimer
-        interval:   15000
-
-        onTriggered: {
-            initialBoardSearch = true
-            progressBar.value = 0
-            statusTextArea.append(welcomeText)
             controller.startBoardSearch()
         }
     }
