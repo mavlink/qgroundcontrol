@@ -23,8 +23,8 @@ exists($${OUT_PWD}/qgroundcontrol.pro) {
 
 message(Qt version $$[QT_VERSION])
 
-!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 3) {
-    error("Unsupported Qt version, 5.4+ is required")
+!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 4) {
+    error("Unsupported Qt version, 5.5+ is required")
 }
 
 include(QGCCommon.pri)
