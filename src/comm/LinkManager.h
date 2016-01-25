@@ -244,9 +244,9 @@ private:
     bool _autoconnect3DRRadio;
     bool _autoconnectPX4Flow;
 
-    QTimer                  _activeLinkCheckTimer;                  // Timer which checks for a vehicle showing up on a usb direct link
-    QList<LinkInterface*>   _activeLinkCheckList;                   // List of links we are waiting for a vehicle to show up on
-    static const int        _activeLinkCheckTimeoutMSecs = 7000;
+    QTimer                  _activeLinkCheckTimer;                  ///< Timer which checks for a vehicle showing up on a usb direct link
+    QList<LinkInterface*>   _activeLinkCheckList;                   ///< List of links we are waiting for a vehicle to show up on
+    static const int        _activeLinkCheckTimeoutMSecs = 10000;   ///< Amount of time to wait for a heatbeat. Keep in mind ArduPilot stack heartbeat is slow to come.
 
     static const char*  _settingsGroup;
     static const char*  _autoconnectUDPKey;

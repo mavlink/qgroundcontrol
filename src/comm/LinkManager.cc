@@ -864,6 +864,6 @@ void LinkManager::_activeLinkCheck(void)
     }
 
     if (!found) {
-        qgcApp()->showMessage("You have connected to a Vehicle which does not have an SD Card inserted. Please insert an SD card and try again.");
+        qgcApp()->showMessage("Your Vehicle is not responding. If this continues please check that you have an SD Card inserted and try again.");
     }
 }
