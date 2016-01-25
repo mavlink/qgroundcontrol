@@ -233,8 +233,7 @@ Item {
 
                         onClicked: {
                             _dropButtonsExclusiveGroup.current = null
-                            _flightMap.latitude  = activeVehicle.latitude
-                            _flightMap.longitude = activeVehicle.longitude
+                            _flightMap.center = activeVehicle.coordinate
                         }
                     }
                 }
