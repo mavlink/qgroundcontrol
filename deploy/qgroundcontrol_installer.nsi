@@ -26,6 +26,8 @@ Section "Uninstall"
   Delete $INSTDIR\QGroundControl_uninstall.exe
   RMDir /r /REBOOTOK $INSTDIR
   RMDir /r /REBOOTOK "$SMPROGRAMS\QGroundControl\"
+  SetShellVarContext current
+  RMDir /r /REBOOTOK "$APPDATA\QGROUNDCONTROL.ORG\"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl"
 SectionEnd
 
