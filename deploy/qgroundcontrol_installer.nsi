@@ -18,7 +18,35 @@ Section
   WriteUninstaller $INSTDIR\QGroundControl_uninstall.exe
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl" "DisplayName" "QGroundControl"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl" "UninstallString" "$\"$INSTDIR\QGroundControl_uninstall.exe$\""
+
+  ; Only attempt to install the PX4 driver if the version isn't present
+  !define ROOTKEY "SYSTEM\CurrentControlSet\Control\Class\{4D36E978-E325-11CE-BFC1-08002BE10318}"
+  StrCpy $0 0
+loop:
+  EnumRegKey $1 HKLM ${ROOTKEY} $0
+  StrCmp $1 "" notfound cont1
+
+cont1:
+  StrCpy     $2 "${ROOTKEY}\$1"
+  ReadRegStr $3 HKLM $2 "ProviderName"
+  StrCmp     $3 "3D Robotics" found_provider
+mismatch:
+  IntOp      $0 $0 + 1
+  goto  loop
+
+found_provider:
+  ReadRegStr $3 HKLM $2 "DriverVersion"
+  StrCmp     $3 "2.0.0.4" skip_driver
+  goto  mismatch
+
+notfound:
+  DetailPrint "USB Driver not found... installing"
   ExecWait '"msiexec" /i "px4driver.msi"'
+  goto done
+
+skip_driver:
+  DetailPrint "USB Driver found... skipping install"
+done:
 SectionEnd 
 
 Section "Uninstall"
