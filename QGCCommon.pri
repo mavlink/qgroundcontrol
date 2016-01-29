@@ -90,7 +90,7 @@ MobileBuild {
 exists ($$PWD/.git) {
   GIT_DESCRIBE = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
   GIT_HASH     = $$system(git rev-parse HEAD)
-  VERSION      = $$replace(GIT_DESCRIBE, "v", "")
+  VERSION      = $$section($$replace($$replace(GIT_DESCRIBE, "v", ""), "-", "."), ".", 0, 3)
   message(QGroundControl version $${GIT_DESCRIBE} hash $${GIT_HASH})
 } else {
   GIT_DESCRIBE = None
