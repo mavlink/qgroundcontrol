@@ -78,7 +78,7 @@
       <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
   </airframe_group>
-  <airframe_group image="Y6B" name="Hexarotor Coaxial">
+  <airframe_group image="Y6A" name="Hexarotor Coaxial">
     <airframe id="11001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Generic Hexa coaxial geometry">
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Hexarotor Coaxial</type>
@@ -124,6 +124,23 @@
       <output name="AUX1">feed-through of RC AUX1 channel</output>
       <output name="AUX2">feed-through of RC AUX2 channel</output>
       <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="PlaneATail" name="Plane A-Tail">
+    <airframe id="2106" maintainer="Andreas Antener &lt;andreas@uaventure.com&gt;" name="Applied Aeronautics Albatross">
+      <maintainer>Andreas Antener &lt;andreas@uaventure.com&gt;</maintainer>
+      <type>Plane A-Tail</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output name="MAIN1">aileron right</output>
+      <output name="MAIN2">aileron left</output>
+      <output name="MAIN3">v-tail right</output>
+      <output name="MAIN4">v-tail left</output>
+      <output name="MAIN5">throttle</output>
+      <output name="MAIN6">wheel</output>
+      <output name="MAIN7">flaps right</output>
+      <output name="MAIN8">flaps left</output>
     </airframe>
   </airframe_group>
   <airframe_group image="QuadRotorPlus" name="Quadrotor +">
@@ -300,21 +317,6 @@
       <output name="MAIN6">wheel</output>
       <output name="MAIN7">flaps</output>
     </airframe>
-    <airframe id="2106" maintainer="Andreas Antener &lt;andreas@uaventure.com&gt;" name="Applied Aeronautics Albatross">
-      <maintainer>Andreas Antener &lt;andreas@uaventure.com&gt;</maintainer>
-      <type>Standard Plane</type>
-      <output name="AUX1">feed-through of RC AUX1 channel</output>
-      <output name="AUX2">feed-through of RC AUX2 channel</output>
-      <output name="AUX3">feed-through of RC AUX3 channel</output>
-      <output name="MAIN1">aileron right</output>
-      <output name="MAIN2">aileron left</output>
-      <output name="MAIN3">v-tail right</output>
-      <output name="MAIN4">v-tail left</output>
-      <output name="MAIN5">throttle</output>
-      <output name="MAIN6">wheel</output>
-      <output name="MAIN7">flaps right</output>
-      <output name="MAIN8">flaps left</output>
-    </airframe>
   </airframe_group>
   <airframe_group image="VTOLPlane" name="Standard VTOL">
     <airframe id="13005" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;" name="Fun Cub Quad VTOL.">
@@ -329,7 +331,7 @@
       <maintainer>Sander Smeets &lt;sander@droneslab.com&gt;</maintainer>
       <type>Standard VTOL</type>
     </airframe>
-    <airframe id="13008" maintainer="Sander Smeets &lt;sander@droneslab.com&gt;" name="QuadRanger VTOL.">
+    <airframe id="13008" maintainer="Sander Smeets &lt;sander@droneslab.com&gt;" name="QuadRanger">
       <maintainer>Sander Smeets &lt;sander@droneslab.com&gt;</maintainer>
       <type>Standard VTOL</type>
     </airframe>
@@ -346,18 +348,20 @@
       <type>Tricopter Y-</type>
     </airframe>
   </airframe_group>
-  <airframe_group image="VTOLDuoRotorTailSitter" name="VTOL Tailsitter">
+  <airframe_group image="VTOLDuoRotorTailSitter" name="VTOL Duo Tailsitter">
     <airframe id="13001" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="Duorotor Tailsitter">
       <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
-      <type>VTOL Tailsitter</type>
+      <type>VTOL Duo Tailsitter</type>
     </airframe>
+  </airframe_group>
+  <airframe_group image="VTOLQuadRotorTailSitter" name="VTOL Quad Tailsitter">
     <airframe id="13003" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="Quadrotor X Tailsitter">
       <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
-      <type>VTOL Tailsitter</type>
+      <type>VTOL Quad Tailsitter</type>
     </airframe>
     <airframe id="13004" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="Quadrotor + Tailsitter">
       <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
-      <type>VTOL Tailsitter</type>
+      <type>VTOL Quad Tailsitter</type>
     </airframe>
   </airframe_group>
   <airframe_group image="VTOLTiltRotor" name="VTOL Tiltrotor">
