@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009 - 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -21,34 +21,33 @@
  
  ======================================================================*/
 
-#ifndef PX4COMPONENT_H
-#define PX4COMPONENT_H
+#ifndef ESP8266Component_H
+#define ESP8266Component_H
 
 #include "VehicleComponent.h"
 
-#include <QStringList>
-
-/// @file
-///     @brief This class is used as an abstract base class for all PX4 VehicleComponent objects.
-///     @author Don Gagne <don@thegagnes.com>
-
-class PX4Component : public VehicleComponent
+class ESP8266Component : public VehicleComponent
 {
     Q_OBJECT
-    
 public:
-    PX4Component(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    ESP8266Component            (Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    /// @brief Returns an list of parameter names for which a change should cause the setupCompleteChanged
-    ///         signal to be emitted. Last element is signalled by NULL.
-    virtual QStringList setupCompleteChangedTriggerList(void) const = 0;
+    // Virtuals from VehicleComponent
+    QStringList setupCompleteChangedTriggerList() const;
     
-    /// Should be called after the component is created (but not in constructor) to setup the
-    /// signals which are used to track parameter changes which affect setupComplete state.
-    void setupTriggerSignals(void);
+    // Virtuals from VehicleComponent
+    QString name                () const;
+    QString description         () const;
+    QString iconResource        () const;
+    bool    requiresSetup       () const;
+    bool    setupComplete       () const;
+    QUrl    setupSource         () const;
+    QUrl    summaryQmlSource    () const;
+    QString prerequisiteSetup   () const;
     
-private slots:
-    void _triggerUpdated(QVariant value);
+private:
+    const QString   _name;
+    QVariantList    _summaryItems;
 };
 
 #endif

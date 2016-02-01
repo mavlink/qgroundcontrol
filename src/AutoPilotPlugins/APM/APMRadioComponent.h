@@ -24,17 +24,17 @@
 #ifndef APMRadioComponent_H
 #define APMRadioComponent_H
 
-#include "APMComponent.h"
+#include "VehicleComponent.h"
 #include "Fact.h"
 
-class APMRadioComponent : public APMComponent
+class APMRadioComponent : public VehicleComponent
 {
     Q_OBJECT
     
 public:
     APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    // Virtuals from PX4Component
+    // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;
     
     // Virtuals from VehicleComponent

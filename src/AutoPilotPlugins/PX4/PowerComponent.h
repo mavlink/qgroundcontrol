@@ -24,20 +24,20 @@
 #ifndef PowerComponent_H
 #define PowerComponent_H
 
-#include "PX4Component.h"
+#include "VehicleComponent.h"
 
 /// @file
 ///     @brief Battery, propeller and magnetometer settings
 ///     @author Gus Grubba <mavlink@grubba.com>
 
-class PowerComponent : public PX4Component
+class PowerComponent : public VehicleComponent
 {
     Q_OBJECT
     
 public:
     PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    // Virtuals from PX4Component
+    // Virtuals from VehicleComponent
     virtual QStringList setupCompleteChangedTriggerList(void) const;
     
     // Virtuals from VehicleComponent

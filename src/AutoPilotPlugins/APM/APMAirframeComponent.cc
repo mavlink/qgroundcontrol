@@ -28,7 +28,7 @@
 #include "ArduCopterFirmwarePlugin.h"
 
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : APMComponent(vehicle, autopilot, parent)
+    : VehicleComponent(vehicle, autopilot, parent)
     , _requiresFrameSetup(false)
     , _name("Airframe")
 {

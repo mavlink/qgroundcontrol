@@ -26,7 +26,7 @@
 #include "AirframeComponent.h"
 
 PX4TuningComponent::PX4TuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : PX4Component(vehicle, autopilot, parent)
+    : VehicleComponent(vehicle, autopilot, parent)
     , _name("Tuning")
 {
 }

@@ -24,9 +24,9 @@
 #ifndef APMSensorsComponent_H
 #define APMSensorsComponent_H
 
-#include "APMComponent.h"
+#include "VehicleComponent.h"
 
-class APMSensorsComponent : public APMComponent
+class APMSensorsComponent : public VehicleComponent
 {
     Q_OBJECT
     
@@ -36,7 +36,7 @@ public:
     bool compassSetupNeeded(void) const;
     bool accelSetupNeeded(void) const;
 
-    // Virtuals from APMComponent
+    // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;
     
     // Virtuals from VehicleComponent

@@ -34,7 +34,7 @@ struct SwitchListItem {
 };
 
 FlightModesComponent::FlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(vehicle, autopilot, parent),
+    VehicleComponent(vehicle, autopilot, parent),
     _name(tr("Flight Modes"))
 {
 }
