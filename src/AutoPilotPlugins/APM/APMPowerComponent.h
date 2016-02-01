@@ -24,16 +24,16 @@
 #ifndef APMPowerComponent_H
 #define APMPowerComponent_H
 
-#include "APMComponent.h"
+#include "VehicleComponent.h"
 
-class APMPowerComponent : public APMComponent
+class APMPowerComponent : public VehicleComponent
 {
     Q_OBJECT
     
 public:
     APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    // Virtuals from PX4Component
+    // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;
     
     // Virtuals from VehicleComponent

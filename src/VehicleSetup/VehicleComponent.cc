@@ -57,3 +57,17 @@ void VehicleComponent::addSummaryQmlComponent(QQmlContext* context, QQuickItem* 
     item->setParentItem(parent);
     item->setProperty("vehicleComponent", QVariant::fromValue(this));
 }
+
+void VehicleComponent::setupTriggerSignals(void)
+{
+    // Watch for changed on trigger list params
+    foreach (const QString &paramName, setupCompleteChangedTriggerList()) {
+        Fact* fact = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName);
+        connect(fact, &Fact::valueChanged, this, &VehicleComponent::_triggerUpdated);
+    }
+}
+
+void VehicleComponent::_triggerUpdated(QVariant /*value*/)
+{
+    emit setupCompleteChanged(setupComplete());
+}

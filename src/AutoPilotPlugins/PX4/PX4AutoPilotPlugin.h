@@ -28,7 +28,7 @@
 #include "PX4AirframeLoader.h"
 #include "AirframeComponent.h"
 #include "PX4RadioComponent.h"
-#include "PX4ESP8266Component.h"
+#include "ESP8266Component.h"
 #include "FlightModesComponent.h"
 #include "SensorsComponent.h"
 #include "SafetyComponent.h"
@@ -56,7 +56,7 @@ public:
     // These methods should only be used by objects within the plugin
     AirframeComponent*      airframeComponent(void)     { return _airframeComponent; }
     PX4RadioComponent*      radioComponent(void)        { return _radioComponent; }
-    PX4ESP8266Component*    esp8266Component(void)      { return _esp8266Component; }
+    ESP8266Component*       esp8266Component(void)      { return _esp8266Component; }
     FlightModesComponent*   flightModesComponent(void)  { return _flightModesComponent; }
     SensorsComponent*       sensorsComponent(void)      { return _sensorsComponent; }
     SafetyComponent*        safetyComponent(void)       { return _safetyComponent; }
@@ -72,7 +72,7 @@ private:
     QVariantList            _components;
     AirframeComponent*      _airframeComponent;
     PX4RadioComponent*      _radioComponent;
-    PX4ESP8266Component*    _esp8266Component;
+    ESP8266Component*       _esp8266Component;
     FlightModesComponent*   _flightModesComponent;
     SensorsComponent*       _sensorsComponent;
     SafetyComponent*        _safetyComponent;

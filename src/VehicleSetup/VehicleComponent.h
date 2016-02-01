@@ -66,9 +66,20 @@ public:
     
     virtual void addSummaryQmlComponent(QQmlContext* context, QQuickItem* parent);
     
+    /// @brief Returns an list of parameter names for which a change should cause the setupCompleteChanged
+    ///         signal to be emitted. Last element is signalled by NULL.
+    virtual QStringList setupCompleteChangedTriggerList(void) const = 0;
+
+    /// Should be called after the component is created (but not in constructor) to setup the
+    /// signals which are used to track parameter changes which affect setupComplete state.
+    virtual void setupTriggerSignals(void);
+
 signals:
     void setupCompleteChanged(bool setupComplete);
-    
+
+protected slots:
+    void _triggerUpdated(QVariant value);
+
 protected:
     Vehicle*            _vehicle;
     AutoPilotPlugin*    _autopilot;

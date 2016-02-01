@@ -69,7 +69,7 @@ static size_t cMavTypes = sizeof(mavTypeInfo) / sizeof(mavTypeInfo[0]);
 #endif
 
 AirframeComponent::AirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(vehicle, autopilot, parent),
+    VehicleComponent(vehicle, autopilot, parent),
     _name(tr("Airframe"))
 {
 #if 0

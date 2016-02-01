@@ -21,57 +21,57 @@
  
  ======================================================================*/
 
-#include "PX4ESP8266Component.h"
-#include "PX4AutoPilotPlugin.h"
+#include "ESP8266Component.h"
+#include "AutoPilotPlugin.h"
 
-PX4ESP8266Component::PX4ESP8266Component(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : PX4Component(vehicle, autopilot, parent)
+ESP8266Component::ESP8266Component(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+    : VehicleComponent(vehicle, autopilot, parent)
     , _name(tr("WiFi Bridge"))
 {
 
 }
 
-QString PX4ESP8266Component::name(void) const
+QString ESP8266Component::name(void) const
 {
     return _name;
 }
 
-QString PX4ESP8266Component::description(void) const
+QString ESP8266Component::description(void) const
 {
     return tr("The ESP8266 WiFi Bridge Component is used to setup the WiFi link.");
 }
 
-QString PX4ESP8266Component::iconResource(void) const
+QString ESP8266Component::iconResource(void) const
 {
     return "/qmlimages/wifi.svg";
 }
 
-bool PX4ESP8266Component::requiresSetup(void) const
+bool ESP8266Component::requiresSetup(void) const
 {
     return false;
 }
 
-bool PX4ESP8266Component::setupComplete(void) const
+bool ESP8266Component::setupComplete(void) const
 {
     return true;
 }
 
-QStringList PX4ESP8266Component::setupCompleteChangedTriggerList(void) const
+QStringList ESP8266Component::setupCompleteChangedTriggerList(void) const
 {
     return QStringList();
 }
 
-QUrl PX4ESP8266Component::setupSource(void) const
+QUrl ESP8266Component::setupSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/ESP8266Component.qml");
 }
 
-QUrl PX4ESP8266Component::summaryQmlSource(void) const
+QUrl ESP8266Component::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/ESP8266ComponentSummary.qml");
 }
 
-QString PX4ESP8266Component::prerequisiteSetup(void) const
+QString ESP8266Component::prerequisiteSetup(void) const
 {
     return QString();
 }

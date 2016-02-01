@@ -26,7 +26,7 @@
 #include "APMAirframeComponent.h"
 
 APMPowerComponent::APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : APMComponent(vehicle, autopilot, parent),
+    : VehicleComponent(vehicle, autopilot, parent),
     _name("Power")
 {
 }
