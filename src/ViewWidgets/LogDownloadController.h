@@ -27,6 +27,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QAbstractListModel>
+#include <QLocale>
 
 #include <memory>
 
@@ -80,6 +81,7 @@ class QGCLogEntry : public QObject {
     Q_PROPERTY(uint         id          READ id                             CONSTANT)
     Q_PROPERTY(QDateTime    time        READ time                           NOTIFY timeChanged)
     Q_PROPERTY(uint         size        READ size                           NOTIFY sizeChanged)
+    Q_PROPERTY(QString      sizeStr     READ sizeStr                        NOTIFY sizeChanged)
     Q_PROPERTY(bool         received    READ received                       NOTIFY receivedChanged)
     Q_PROPERTY(bool         selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
     Q_PROPERTY(QString      status      READ status                         NOTIFY statusChanged)
@@ -89,6 +91,7 @@ public:
 
     uint        id          () const { return _logID; }
     uint        size        () const { return _logSize; }
+    QString     sizeStr     () const;
     QDateTime   time        () const { return _logTimeUTC; }
     bool        received    () const { return _received; }
     bool        selected    () const { return _selected; }

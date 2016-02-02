@@ -36,10 +36,6 @@ QGCView {
 
     property real _margins: ScreenTools.defaultFontPixelHeight
 
-    function numberWithCommas(x) {
-        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",").replace(/,,/g, ",");
-    }
-
     LogDownloadController {
         id:         controller
         factPanel:  panel
@@ -113,7 +109,7 @@ QGCView {
                     horizontalAlignment: Text.AlignRight
                     text: {
                         var o = controller.model.get(styleData.row)
-                        return o ? numberWithCommas(o.size) : ""
+                        return o ? o.sizeStr : ""
                     }
                 }
             }
