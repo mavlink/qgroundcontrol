@@ -39,6 +39,8 @@
 
 QGC_LOGGING_CATEGORY(LogDownloadLog, "LogDownloadLog")
 
+static QLocale kLocale;
+
 //----------------------------------------------------------------------------------------
 LogDownloadData::LogDownloadData(QGCLogEntry* entry_)
     : ID(entry_->id())
@@ -49,7 +51,7 @@ LogDownloadData::LogDownloadData(QGCLogEntry* entry_)
 }
 
 //----------------------------------------------------------------------------------------
-QGCLogEntry:: QGCLogEntry(uint logId, const QDateTime& dateTime, uint logSize, bool received)
+QGCLogEntry::QGCLogEntry(uint logId, const QDateTime& dateTime, uint logSize, bool received)
     : _logID(logId)
     , _logSize(logSize)
     , _logTimeUTC(dateTime)
@@ -57,6 +59,13 @@ QGCLogEntry:: QGCLogEntry(uint logId, const QDateTime& dateTime, uint logSize, b
     , _selected(false)
 {
     _status = "Pending";
+}
+
+//----------------------------------------------------------------------------------------
+QString
+QGCLogEntry::sizeStr() const
+{
+    return kLocale.toString(_logSize);
 }
 
 //----------------------------------------------------------------------------------------
@@ -275,7 +284,8 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
             if(_downloadData->file.write((const char*)data, count)) {
                 _downloadData->written += count;
                 //-- Update status
-                _downloadData->entry->setStatus(QString::number(_downloadData->written));
+                QString comma_value = kLocale.toString(_downloadData->written);
+                _downloadData->entry->setStatus(comma_value);
                 result = true;
                 //-- reset retries
                 _retries = 0;
