@@ -24,20 +24,20 @@
 #ifndef SENSORSCOMPONENT_H
 #define SENSORSCOMPONENT_H
 
-#include "PX4Component.h"
+#include "VehicleComponent.h"
 
 /// @file
 ///     @brief The Sensors VehicleComponent is used to calibrate the the various sensors associated with the board.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class SensorsComponent : public PX4Component
+class SensorsComponent : public VehicleComponent
 {
     Q_OBJECT
     
 public:
     SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    // Virtuals from PX4Component
+    // Virtuals from VehicleComponent
     virtual QStringList setupCompleteChangedTriggerList(void) const;
     
     // Virtuals from VehicleComponent

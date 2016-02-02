@@ -25,7 +25,7 @@
 #include "PX4AutoPilotPlugin.h"
 
 PX4RadioComponent::PX4RadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(vehicle, autopilot, parent),
+    VehicleComponent(vehicle, autopilot, parent),
     _name(tr("Radio"))
 {
 }

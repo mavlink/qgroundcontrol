@@ -29,7 +29,7 @@
 #include "PX4AutoPilotPlugin.h"
 
 PowerComponent::PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(vehicle, autopilot, parent),
+    VehicleComponent(vehicle, autopilot, parent),
     _name(tr("Power"))
 {
 }

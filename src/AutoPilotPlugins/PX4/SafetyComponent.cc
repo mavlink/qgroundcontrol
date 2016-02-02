@@ -28,7 +28,7 @@
 #include "PX4AutoPilotPlugin.h"
 
 SafetyComponent::SafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(vehicle, autopilot, parent),
+    VehicleComponent(vehicle, autopilot, parent),
     _name(tr("Safety"))
 {
 }

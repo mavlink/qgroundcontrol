@@ -24,21 +24,21 @@
 #ifndef SafetyComponent_H
 #define SafetyComponent_H
 
-#include "PX4Component.h"
+#include "VehicleComponent.h"
 
 /// @file
 ///     @brief The Radio VehicleComponent is used to calibrate the trasmitter and assign function mapping
 ///             to channels.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class SafetyComponent : public PX4Component
+class SafetyComponent : public VehicleComponent
 {
     Q_OBJECT
     
 public:
     SafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    // Virtuals from PX4Component
+    // Virtuals from VehicleComponent
     virtual QStringList setupCompleteChangedTriggerList(void) const;
     
     // Virtuals from VehicleComponent

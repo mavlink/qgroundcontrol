@@ -30,7 +30,7 @@
 #include "APMAirframeComponent.h"
 
 APMCameraComponent::APMCameraComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : APMComponent(vehicle, autopilot, parent)
+    : VehicleComponent(vehicle, autopilot, parent)
     , _name(tr("Camera"))
 {
 }

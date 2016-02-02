@@ -24,16 +24,16 @@
 #ifndef APMAirframeComponent_H
 #define APMAirframeComponent_H
 
-#include "APMComponent.h"
+#include "VehicleComponent.h"
 
-class APMAirframeComponent : public APMComponent
+class APMAirframeComponent : public VehicleComponent
 {
     Q_OBJECT
     
 public:
     APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    // Virtuals from APMComponent
+    // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;
 
     // Virtuals from VehicleComponent
