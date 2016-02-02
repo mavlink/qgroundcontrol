@@ -24,16 +24,16 @@
 #ifndef APMFlightModesComponent_H
 #define APMFlightModesComponent_H
 
-#include "APMComponent.h"
+#include "VehicleComponent.h"
 
-class APMFlightModesComponent : public APMComponent
+class APMFlightModesComponent : public VehicleComponent
 {
     Q_OBJECT
     
 public:
     APMFlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    // Virtuals from PX4Component
+    // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;
     
     // Virtuals from VehicleComponent

@@ -24,16 +24,16 @@
 #ifndef APMCameraComponent_H
 #define APMCameraComponent_H
 
-#include "APMComponent.h"
+#include "VehicleComponent.h"
 
-class APMCameraComponent : public APMComponent
+class APMCameraComponent : public VehicleComponent
 {
     Q_OBJECT
     
 public:
     APMCameraComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    // Virtuals from PX4Component
+    // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;
     
     // Virtuals from VehicleComponent

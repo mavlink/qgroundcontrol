@@ -217,6 +217,11 @@ int APMFirmwarePlugin::manualControlReservedButtonCount(void)
 
 void APMFirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
+    //-- Don't process messages to/from UDP Bridge. It doesn't suffer from these issues
+    if (message->compid == MAV_COMP_ID_UDP_BRIDGE) {
+        return;
+    }
+
     if (message->msgid == MAVLINK_MSG_ID_PARAM_VALUE) {
         mavlink_param_value_t paramValue;
         mavlink_param_union_t paramUnion;

@@ -105,7 +105,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
 
             //-- Is there an ESP8266 Connected?
             if(factExists(FactSystem::ParameterProvider, MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
-                _esp8266Component = new PX4ESP8266Component(_vehicle, this);
+                _esp8266Component = new ESP8266Component(_vehicle, this);
                 _esp8266Component->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_esp8266Component));
             }

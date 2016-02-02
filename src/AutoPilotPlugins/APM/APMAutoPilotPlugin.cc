@@ -27,7 +27,7 @@
 #include "FirmwarePlugin/APM/APMParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/APM/APMFirmwarePlugin.h"  // FIXME: Hack
 #include "FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h"
-#include "APMComponent.h"
+#include "VehicleComponent.h"
 #include "APMAirframeComponent.h"
 #include "APMAirframeComponentAirframes.h"
 #include "APMAirframeComponentController.h"
@@ -40,6 +40,7 @@
 #include "APMSensorsComponent.h"
 #include "APMPowerComponent.h"
 #include "APMCameraComponent.h"
+#include "ESP8266Component.h"
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
@@ -54,6 +55,7 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _sensorsComponent(NULL)
     , _tuningComponent(NULL)
     , _airframeFacts(new APMAirframeLoader(this, vehicle->uas(), this))
+    , _esp8266Component(NULL)
 {
     APMAirframeLoader::loadAirframeFactMetaData();
 }
@@ -89,6 +91,13 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _radioComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
 
+            //-- Is there an ESP8266 Connected?
+            if(factExists(FactSystem::ParameterProvider, MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
+                _esp8266Component = new ESP8266Component(_vehicle, this);
+                _esp8266Component->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_esp8266Component));
+            }
+
             _sensorsComponent = new APMSensorsComponent(_vehicle, this);
             _sensorsComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
@@ -100,6 +109,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _tuningComponent = new APMTuningComponent(_vehicle, this);
             _tuningComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
+
         } else {
             qWarning() << "Call to vehicleCompenents prior to parametersReady";
         }

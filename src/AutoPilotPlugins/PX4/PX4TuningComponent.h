@@ -24,16 +24,16 @@
 #ifndef PX4TuningComponent_H
 #define PX4TuningComponent_H
 
-#include "PX4Component.h"
+#include "VehicleComponent.h"
 
-class PX4TuningComponent : public PX4Component
+class PX4TuningComponent : public VehicleComponent
 {
     Q_OBJECT
     
 public:
     PX4TuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    // Virtuals from PX4Component
+    // Virtuals from VehicleComponent
     virtual QStringList setupCompleteChangedTriggerList(void) const;
     
     // Virtuals from VehicleComponent

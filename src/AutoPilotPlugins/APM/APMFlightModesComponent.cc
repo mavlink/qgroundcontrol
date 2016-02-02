@@ -27,7 +27,7 @@
 #include "APMRadioComponent.h"
 
 APMFlightModesComponent::APMFlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    APMComponent(vehicle, autopilot, parent),
+    VehicleComponent(vehicle, autopilot, parent),
     _name(tr("Flight Modes"))
 {
 }
