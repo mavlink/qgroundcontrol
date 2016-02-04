@@ -46,7 +46,7 @@ TCPLink::TCPLink(TCPConfiguration *config)
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
-    qDebug() << "TCP Created " << _config->name();
+    //qDebug() << "TCP Created " << _config->name();
 }
 
 TCPLink::~TCPLink()
