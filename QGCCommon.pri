@@ -178,11 +178,15 @@ MacBuild | LinuxBuild {
 }
 
 WindowsBuild {
+    QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
+    QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
+    QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
+    QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
     QMAKE_CXXFLAGS_WARN_ON += /W3 \
         /wd4996 \   # silence warnings about deprecated strcpy and whatnot
         /wd4005 \   # silence warnings about macro redefinition
-        /wd4290 \   # ignore exception specifications
-        /Zc:strictStrings-  # work around win 8.1 sdk sapi.h problem
+        /wd4290     # ignore exception specifications
+
     WarningsAsErrorsOn {
         QMAKE_CXXFLAGS_WARN_ON += /WX
     }
