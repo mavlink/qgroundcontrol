@@ -111,6 +111,12 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _joystickManager(joystickManager)
     , _flowImageIndex(0)
     , _allLinksInactiveSent(false)
+    , _messagesReceived(0)
+    , _messagesSent(0)
+    , _messagesLost(0)
+    , _messageSeq(0)
+    , _compID(0)
+    , _heardFrom(false)
 {
     _addLink(link);
 
@@ -215,6 +221,16 @@ Vehicle::~Vehicle()
 
 }
 
+void
+Vehicle::resetCounters()
+{
+    _messagesReceived   = 0;
+    _messagesSent       = 0;
+    _messagesLost       = 0;
+    _messageSeq         = 0;
+    _heardFrom          = false;
+}
+
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
     if (message.sysid != _id && message.sysid != 0) {
@@ -223,6 +239,32 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     if (!_containsLink(link)) {
         _addLink(link);
+    }
+
+    //-- Check link status
+    _messagesReceived++;
+    emit messagesReceivedChanged();
+    if(!_heardFrom) {
+        if(message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+            _heardFrom = true;
+            _compID = message.compid;
+            _messageSeq = message.seq + 1;
+        }
+    } else {
+        if(_compID == message.compid) {
+            uint16_t seq_received = (uint16_t)message.seq;
+            uint16_t packet_lost_count = 0;
+            //-- Account for overflow during packet loss
+            if(seq_received < _messageSeq) {
+                packet_lost_count = (seq_received + 255) - _messageSeq;
+            } else {
+                packet_lost_count = seq_received - _messageSeq;
+            }
+            _messageSeq = message.seq + 1;
+            _messagesLost += packet_lost_count;
+            if(packet_lost_count)
+                emit messagesLostChanged();
+        }
     }
 
     // Give the plugin a change to adjust the message contents
@@ -471,6 +513,8 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
     int len = mavlink_msg_to_send_buffer(buffer, &message);
 
     link->writeBytes((const char*)buffer, len);
+    _messagesSent++;
+    emit messagesSentChanged();
 }
 
 void Vehicle::_sendMessage(mavlink_message_t message)
@@ -1269,8 +1313,8 @@ void Vehicle::_connectionLostTimeout(void)
 {
     if (_connectionLostEnabled && !_connectionLost) {
         _connectionLost = true;
+        _heardFrom = false;
         emit connectionLostChanged(true);
-
         _say(QString("connection lost to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
     }
 }
@@ -1278,11 +1322,9 @@ void Vehicle::_connectionLostTimeout(void)
 void Vehicle::_connectionActive(void)
 {
     _connectionLostTimer.start();
-
     if (_connectionLost) {
         _connectionLost = false;
         emit connectionLostChanged(false);
-
         _say(QString("connection regained to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
     }
 }
