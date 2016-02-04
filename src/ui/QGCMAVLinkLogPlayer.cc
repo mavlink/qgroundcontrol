@@ -161,7 +161,7 @@ void QGCMAVLinkLogPlayer::_enablePlaybackControls(bool enabled)
 
 void QGCMAVLinkLogPlayer::_setAccelerationFromSlider(int value)
 {
-    qDebug() << value;
+    //qDebug() << value;
     if (_replayLink) {
         _replayLink->setAccelerationFactor(value);
     }

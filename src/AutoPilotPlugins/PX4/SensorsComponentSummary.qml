@@ -29,17 +29,17 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: "Compass:"
-            valueText: mag0IdFact.value  == 0 ? "Setup required" : "Ready"
+            valueText: mag0IdFact ? (mag0IdFact.value === 0 ? "Setup required" : "Ready") : ""
         }
 
         VehicleSummaryRow {
             labelText: "Gyro:"
-            valueText: gyro0IdFact.value  == 0 ? "Setup required" : "Ready"
+            valueText: gyro0IdFact ? (gyro0IdFact.value === 0 ? "Setup required" : "Ready") : ""
         }
 
         VehicleSummaryRow {
             labelText: "Accelerometer:"
-            valueText: accel0IdFact.value  == 0 ? "Setup required" : "Ready"
+            valueText: accel0IdFact ? (accel0IdFact.value === 0 ? "Setup required" : "Ready") : ""
         }
     }
 }

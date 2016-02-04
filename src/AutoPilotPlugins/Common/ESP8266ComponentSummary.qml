@@ -34,7 +34,7 @@ FactPanel {
         }
         VehicleSummaryRow {
             labelText: "WiFi Channel:"
-            valueText: wifiChannel.valueString
+            valueText: wifiChannel ? wifiChannel.valueString : ""
         }
         VehicleSummaryRow {
             labelText: "WiFi SSID:"
@@ -46,7 +46,7 @@ FactPanel {
         }
         VehicleSummaryRow {
             labelText: "UART Baud Rate:"
-            valueText: uartBaud.valueString
+            valueText: uartBaud ? uartBaud.valueString : ""
         }
     }
 }

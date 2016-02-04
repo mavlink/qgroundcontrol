@@ -2146,7 +2146,7 @@ void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 p
                                   valueMin,
                                   valueMax);
     _vehicle->sendMessage(message);
-    qDebug() << "Mavlink message sent";
+    //qDebug() << "Mavlink message sent";
 }
 
 void UAS::unsetRCToParameterMap()

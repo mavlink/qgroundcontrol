@@ -11,8 +11,8 @@ import QGroundControl.Controls 1.0
 QGCTextField {
     id: _textField
 
-    text:       fact.valueString
-    unitsLabel: fact.units
+    text:       fact ? fact.valueString : ""
+    unitsLabel: fact ? fact.units : ""
     showUnits:  true
 
     property Fact   fact:           null

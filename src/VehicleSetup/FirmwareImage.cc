@@ -271,7 +271,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
         QSettings settings;
         QDir airframeDir = QFileInfo(settings.fileName()).dir();
         QString airframeFilename = airframeDir.filePath("PX4AirframeFactMetaData.xml");
-        qDebug() << airframeFilename;
+        //qDebug() << airframeFilename;
         QFile airframeFile(airframeFilename);
 
         if (airframeFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
