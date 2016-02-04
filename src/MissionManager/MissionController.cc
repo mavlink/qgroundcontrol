@@ -514,7 +514,7 @@ void MissionController::_initAllMissionItems(void)
         homeItem->setCoordinate(QGeoCoordinate(37.803784, -122.462276, 0.0));
     }
 
-    qDebug() << "home item" << homeItem->homePositionValid() << homeItem->coordinate();
+    //qDebug() << "home item" << homeItem->homePositionValid() << homeItem->coordinate();
 
     for (int i=0; i<_missionItems->count(); i++) {
         _initMissionItem(qobject_cast<MissionItem*>(_missionItems->get(i)));

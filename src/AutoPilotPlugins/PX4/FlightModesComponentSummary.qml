@@ -25,22 +25,22 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: "Mode switch:"
-            valueText: modeSwFact.value == 0 ? "Setup required" : modeSwFact.valueString
+            valueText: modeSwFact ? (modeSwFact.value === 0 ? "Setup required" : modeSwFact.valueString) : ""
         }
 
         VehicleSummaryRow {
             labelText: "Position Ctl switch:"
-            valueText: posCtlSwFact.value == 0 ? "Disabled" : posCtlSwFact.valueString
+            valueText: posCtlSwFact ? (posCtlSwFact.value === 0 ? "Disabled" : posCtlSwFact.valueString) : ""
         }
 
         VehicleSummaryRow {
             labelText: "Loiter switch:"
-            valueText: loiterSwFact.value == 0 ? "Disabled" : loiterSwFact.valueString
+            valueText: loiterSwFact ? (loiterSwFact.value === 0 ? "Disabled" : loiterSwFact.valueString) : ""
         }
 
         VehicleSummaryRow {
             labelText: "Return switch:"
-            valueText: returnSwFact.value == 0 ? "Disabled" : returnSwFact.valueString
+            valueText: returnSwFact ? (returnSwFact.value === 0 ? "Disabled" : returnSwFact.valueString) : ""
         }
     }
 }

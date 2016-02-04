@@ -28,37 +28,37 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: "Roll:"
-            valueText: mapRollFact.value == 0 ? "Setup required" : mapRollFact.valueString
+            valueText: mapRollFact ? (mapRollFact.value === 0 ? "Setup required" : mapRollFact.valueString) : ""
         }
 
         VehicleSummaryRow {
             labelText: "Pitch:"
-            valueText: mapPitchFact.value == 0 ? "Setup required" : mapPitchFact.valueString
+            valueText: mapPitchFact ? (mapPitchFact.value === 0 ? "Setup required" : mapPitchFact.valueString) : ""
         }
 
         VehicleSummaryRow {
             labelText: "Yaw:"
-            valueText: mapYawFact.value == 0 ? "Setup required" : mapYawFact.valueString
+            valueText: mapYawFact ? (mapYawFact.value === 0 ? "Setup required" : mapYawFact.valueString) : ""
         }
 
         VehicleSummaryRow {
             labelText: "Throttle:"
-            valueText: mapThrottleFact.value == 0 ? "Setup required" : mapThrottleFact.valueString
+            valueText: mapThrottleFact ? (mapThrottleFact.value === 0 ? "Setup required" : mapThrottleFact.valueString) : ""
         }
 
         VehicleSummaryRow {
             labelText: "Flaps:"
-            valueText: mapFlapsFact.value == 0 ? "Disabled" : mapFlapsFact.valueString
+            valueText: mapFlapsFact ? (mapFlapsFact.value === 0 ? "Disabled" : mapFlapsFact.valueString) : ""
         }
 
         VehicleSummaryRow {
             labelText: "Aux1:"
-            valueText: mapAux1Fact.value == 0 ? "Disabled" : mapAux1Fact.valueString
+            valueText: mapAux1Fact ? (mapAux1Fact.value === 0 ? "Disabled" : mapAux1Fact.valueString) : ""
         }
 
         VehicleSummaryRow {
             labelText: "Aux2:"
-            valueText: mapAux2Fact.value == 0 ? "Disabled" : mapAux2Fact.valueString
+            valueText: mapAux2Fact ? (mapAux2Fact.value === 0 ? "Disabled" : mapAux2Fact.valueString) : ""
         }
     }
 }

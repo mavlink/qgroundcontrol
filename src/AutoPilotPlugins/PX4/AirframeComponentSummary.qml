@@ -18,15 +18,15 @@ FactPanel {
     property Fact sysIdFact:        controller.getParameterFact(-1, "MAV_SYS_ID")
     property Fact sysAutoStartFact: controller.getParameterFact(-1, "SYS_AUTOSTART")
 
-    property bool autoStartSet: sysAutoStartFact.value != 0
+    property bool autoStartSet: sysAutoStartFact ? (sysAutoStartFact.value !== 0) : false
 
     Column {
-        anchors.fill: parent
+        anchors.fill:    parent
         anchors.margins: 8
 
         VehicleSummaryRow {
             labelText: "System ID:"
-            valueText: sysIdFact.valueString
+            valueText: sysIdFact ? sysIdFact.valueString : ""
         }
 
         VehicleSummaryRow {
