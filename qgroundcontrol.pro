@@ -206,11 +206,6 @@ FORMS += \
     src/ui/MainWindow.ui \
     src/QGCQmlWidgetHolder.ui \
 
-!iOSBuild {
-FORMS += \
-    src/ui/SerialSettings.ui \
-}
-
 !MobileBuild {
 FORMS += \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
@@ -309,7 +304,6 @@ contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
 HEADERS += \
     src/comm/QGCSerialPortInfo.h \
     src/comm/SerialLink.h \
-    src/ui/SerialConfigurationWindow.h \
 }
 
 !MobileBuild {
@@ -420,7 +414,6 @@ SOURCES += \
 SOURCES += \
     src/comm/QGCSerialPortInfo.cc \
     src/comm/SerialLink.cc \
-    src/ui/SerialConfigurationWindow.cc \
 }
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {

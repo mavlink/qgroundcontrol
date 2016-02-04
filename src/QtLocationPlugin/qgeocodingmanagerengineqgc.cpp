@@ -119,7 +119,7 @@ QGeoCodeReply *QGeoCodingManagerEngineQGC::geocode(const QString &address, int l
 
     url.setQuery(query);
     request.setUrl(url);
-    qDebug() << url;
+    //qDebug() << url;
     
     QNetworkReply *reply = m_networkManager->get(request);
     reply->setParent(0);
@@ -150,7 +150,7 @@ QGeoCodeReply *QGeoCodingManagerEngineQGC::reverseGeocode(const QGeoCoordinate &
 
     url.setQuery(query);
     request.setUrl(url);
-    qDebug() << url;
+    //qDebug() << url;
 
     QNetworkReply *reply = m_networkManager->get(request);
     reply->setParent(0);

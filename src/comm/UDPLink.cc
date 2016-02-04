@@ -99,8 +99,6 @@ UDPLink::UDPLink(UDPConfiguration* config)
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
-
-    //qDebug() << "UDP Created " << _config->name();
 }
 
 UDPLink::~UDPLink()
@@ -140,7 +138,7 @@ void UDPLink::run()
                 if(!_running)
                     break;
                 //-- Settle down (it gets here if there is nothing to read or write)
-                this->msleep(5);
+                _socket->waitForReadyRead(5);
             }
         } else {
             exec();
