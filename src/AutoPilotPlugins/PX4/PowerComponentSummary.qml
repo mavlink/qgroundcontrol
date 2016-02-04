@@ -51,17 +51,17 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: "Battery Full:"
-            valueText: batVChargedFact.valueString
+            valueText: batVChargedFact ? batVChargedFact.valueString : ""
         }
 
         VehicleSummaryRow {
             labelText: "Battery Empty:"
-            valueText: batVEmptyFact.valueString
+            valueText: batVEmptyFact ? batVEmptyFact.valueString : ""
         }
 
         VehicleSummaryRow {
             labelText: "Number of Cells:"
-            valueText: batCellsFact.valueString
+            valueText: batCellsFact ? batCellsFact.valueString : ""
         }
     }
 }

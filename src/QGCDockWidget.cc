@@ -52,7 +52,8 @@ void QGCDockWidget::closeEvent(QCloseEvent* event)
 
 void QGCDockWidget::loadSettings(void)
 {
-    if (_action) {
+    // TODO: This is crashing for some reason. Disabled until sorted out.
+    if (0 /*_action*/) {
         QSettings settings;
         settings.beginGroup(_settingsGroup);
         if (settings.contains(_title)) {
@@ -64,7 +65,8 @@ void QGCDockWidget::loadSettings(void)
 
 void QGCDockWidget::saveSettings(void)
 {
-    if (_action) {
+    // TODO: This is crashing for some reason. Disabled until sorted out.
+    if (0 /*_action*/) {
         QSettings settings;
         settings.beginGroup(_settingsGroup);
         settings.setValue(_title, saveGeometry());
