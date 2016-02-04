@@ -119,6 +119,12 @@ public:
     Q_PROPERTY(bool                 genericFirmware         READ genericFirmware                        CONSTANT)
     Q_PROPERTY(bool                 connectionLost          READ connectionLost                         NOTIFY connectionLostChanged)
     Q_PROPERTY(bool                 connectionLostEnabled   READ connectionLostEnabled  WRITE setConnectionLostEnabled NOTIFY connectionLostEnabledChanged)
+    Q_PROPERTY(uint                 messagesReceived        READ messagesReceived                       NOTIFY messagesReceivedChanged)
+    Q_PROPERTY(uint                 messagesSent            READ messagesSent                           NOTIFY messagesSentChanged)
+    Q_PROPERTY(uint                 messagesLost            READ messagesLost                           NOTIFY messagesLostChanged)
+
+    /// Resets link status counters
+    Q_INVOKABLE void resetCounters  ();
 
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
     /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
@@ -275,6 +281,9 @@ public:
     bool            genericFirmware     () { return !px4Firmware() && !apmFirmware(); }
     bool            connectionLost      () const { return _connectionLost; }
     bool            connectionLostEnabled() const { return _connectionLostEnabled; }
+    uint            messagesReceived    () { return _messagesReceived; }
+    uint            messagesSent        () { return _messagesSent; }
+    uint            messagesLost        () { return _messagesLost; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -304,6 +313,10 @@ signals:
     void missingParametersChanged(bool missingParameters);
     void connectionLostChanged(bool connectionLost);
     void connectionLostEnabledChanged(bool connectionLostEnabled);
+
+    void messagesReceivedChanged    ();
+    void messagesSentChanged        ();
+    void messagesLostChanged        ();
 
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnThread(mavlink_message_t message);
@@ -505,6 +518,13 @@ private:
     int                         _flowImageIndex;
 
     bool _allLinksInactiveSent; ///< true: allLinkInactive signal already sent one time
+
+    uint                _messagesReceived;
+    uint                _messagesSent;
+    uint                _messagesLost;
+    uint8_t             _messageSeq;
+    uint8_t             _compID;
+    bool                _heardFrom;
 
     // Settings keys
     static const char* _settingsGroup;
