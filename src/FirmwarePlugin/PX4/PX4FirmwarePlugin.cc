@@ -220,6 +220,7 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
          << MAV_CMD_DO_JUMP
          << MAV_CMD_CONDITION_DELAY
          << MAV_CMD_DO_VTOL_TRANSITION
-         << MAV_CMD_DO_DIGICAM_CONTROL;
+         << MAV_CMD_DO_DIGICAM_CONTROL
+         << MAV_CMD_DO_SET_SERVO;
     return list;
 }
