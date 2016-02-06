@@ -275,8 +275,9 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
         qWarning() << "Received log data for wrong log";
         return;
     }
-    bool result = false;
 
+    bool result = false;
+    uint32_t timeout_time = kTimeOutMilliseconds;
     if(ofs <= _downloadData->entry->size()) {
         // Check for a gap
         qint64 pos = _downloadData->file.pos();
@@ -287,6 +288,8 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
                 const int32_t gap = _downloadData->gaps.take(ofs) - count;
                 if (gap > 0) {
                     _downloadData->gaps[ofs+count] =  qMax(static_cast<uint32_t>(gap), _downloadData->gaps.value(ofs+count, 0));
+                } else {
+                    timeout_time = 20;
                 }
             } else if (pos < ofs) {
                 // Mind the gap
@@ -314,7 +317,7 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
             //-- reset retries
             _retries = 0;
             //-- Reset timer
-            _timer.start(kTimeOutMilliseconds);
+            _timer.start(timeout_time);
             //-- Do we have it all?
             if(_logComplete()) {
                 _downloadData->entry->setStatus(QString("Downloaded"));
@@ -539,6 +542,8 @@ LogDownloadController::_prepareLogDownload()
         if(!_downloadData->file.resize(entry->size())) {
             qWarning() << "Failed to allocate space for log file:" <<  _downloadData->filename;
         } else {
+            // Force ourselves to request the last few bytes if we have any gaps so we end cleanly
+            _downloadData->gaps.insert(entry->size()-MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN, MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
             _downloadData->elapsed.start();
             result = true;
         }
