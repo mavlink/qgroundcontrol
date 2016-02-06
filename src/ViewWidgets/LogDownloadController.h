@@ -125,13 +125,13 @@ private:
 //-----------------------------------------------------------------------------
 struct LogDownloadData {
     LogDownloadData(QGCLogEntry* entry);
-    QMap<uint32_t, uint32_t> gaps;
-    QFile                    file;
-    QString                  filename;
-    uint                     ID;
-    QGCLogEntry*             entry;
-    uint                     written;
-    QElapsedTimer            elapsed;
+    QHash<uint32_t, uint32_t> gaps;
+    QFile                     file;
+    QString                   filename;
+    uint                      ID;
+    QGCLogEntry*              entry;
+    uint                      written;
+    QElapsedTimer             elapsed;
 };
 
 //-----------------------------------------------------------------------------

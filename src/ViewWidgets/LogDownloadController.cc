@@ -282,16 +282,7 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
         // Check for a gap
         qint64 pos = _downloadData->file.pos();
         if (pos != ofs) {
-            // Check for a gap collision
-            if (_downloadData->gaps.contains(ofs)) {
-                // The gap is being filled. Shrink it
-                const int32_t gap = _downloadData->gaps.take(ofs) - count;
-                if (gap > 0) {
-                    _downloadData->gaps[ofs+count] =  qMax(static_cast<uint32_t>(gap), _downloadData->gaps.value(ofs+count, 0));
-                } else {
-                    timeout_time = 20;
-                }
-            } else if (pos < ofs) {
+            if (pos < ofs) {
                 // Mind the gap
                 uint32_t gap = ofs - pos;
                 _downloadData->gaps[pos] = gap;
@@ -301,6 +292,17 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
             if (!_downloadData->file.seek(ofs)) {
                 qWarning() << "Error while seeking log file offset";
                 return;
+            }
+        }
+
+        // Check for a gap collision
+        if (_downloadData->gaps.contains(ofs)) {
+            // The gap is being filled. Shrink it
+            const int32_t gap = _downloadData->gaps.take(ofs) - count;
+            if (gap > 0) {
+                _downloadData->gaps[ofs+count] =  qMax(static_cast<uint32_t>(gap), _downloadData->gaps.value(ofs+count, 0));
+            } else {
+                timeout_time = 20;
             }
         }
 
@@ -378,9 +380,12 @@ LogDownloadController::_findMissingData()
     const qint64 pos = _downloadData->file.pos(),
                 size = _downloadData->entry->size();
     if (!_downloadData->gaps.isEmpty()) {
-        const uint32_t start = _downloadData->gaps.firstKey();
+        auto keys = _downloadData->gaps.keys();
+        qSort(keys);
+        const uint32_t start = keys.first();
         const uint32_t count = _downloadData->gaps.value(start);
 
+        _downloadData->file.seek(start);
         //-- Request these log chunks again
         _requestLogData(_downloadData->ID, start, count);
     } else if (pos != size) {
