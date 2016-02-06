@@ -37,6 +37,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     messageFilter.insert(MAVLINK_MSG_ID_DATA_STREAM, false);
     messageFilter.insert(MAVLINK_MSG_ID_GPS_STATUS, false);
     messageFilter.insert(MAVLINK_MSG_ID_RC_CHANNELS_RAW, false);
+    messageFilter.insert(MAVLINK_MSG_ID_LOG_DATA, false);
     #ifdef MAVLINK_MSG_ID_ENCAPSULATED_DATA
     messageFilter.insert(MAVLINK_MSG_ID_ENCAPSULATED_DATA, false);
     #endif
