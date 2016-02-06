@@ -28,6 +28,7 @@
 #include <QTimer>
 #include <QAbstractListModel>
 #include <QLocale>
+#include <QElapsedTimer>
 
 #include <memory>
 
@@ -39,7 +40,7 @@ class  MultiVehicleManager;
 class  UASInterface;
 class  Vehicle;
 class  QGCLogEntry;
-class  LogDownloadData;
+struct LogDownloadData;
 
 Q_DECLARE_LOGGING_CATEGORY(LogDownloadLog)
 
@@ -122,16 +123,15 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-class LogDownloadData {
-public:
+struct LogDownloadData {
     LogDownloadData(QGCLogEntry* entry);
-    QList<uint>     offsets;
-    QFile           file;
-    QString         filename;
-    uint            ID;
-    QTimer          processDataTimer;
-    QGCLogEntry*    entry;
-    uint            written;
+    QMap<uint32_t, uint32_t> gaps;
+    QFile                    file;
+    QString                  filename;
+    uint                     ID;
+    QGCLogEntry*             entry;
+    uint                     written;
+    QElapsedTimer            elapsed;
 };
 
 //-----------------------------------------------------------------------------

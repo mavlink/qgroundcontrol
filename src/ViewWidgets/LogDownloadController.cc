@@ -36,6 +36,7 @@
 #include <QUrl>
 
 #define kTimeOutMilliseconds 500
+#define kGUIRateMilliseconds 17
 
 QGC_LOGGING_CATEGORY(LogDownloadLog, "LogDownloadLog")
 
@@ -275,33 +276,53 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
         return;
     }
     bool result = false;
-    //-- Find offset table entry
-    uint o_index = ofs / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
-    if(o_index <= (uint)_downloadData->offsets.count()) {
-        _downloadData->offsets[o_index] = count;
+
+    if(ofs <= _downloadData->entry->size()) {
+        // Check for a gap
+        qint64 pos = _downloadData->file.pos();
+        if (pos != ofs) {
+            // Check for a gap collision
+            if (_downloadData->gaps.contains(ofs)) {
+                // The gap is being filled. Shrink it
+                const int32_t gap = _downloadData->gaps.take(ofs) - count;
+                if (gap > 0) {
+                    _downloadData->gaps[ofs+count] =  qMax(static_cast<uint32_t>(gap), _downloadData->gaps.value(ofs+count, 0));
+                }
+            } else if (pos < ofs) {
+                // Mind the gap
+                uint32_t gap = ofs - pos;
+                _downloadData->gaps[pos] = gap;
+            }
+
+            // Seek to correct position
+            if (!_downloadData->file.seek(ofs)) {
+                qWarning() << "Error while seeking log file offset";
+                return;
+            }
+        }
+
         //-- Write chunk to file
-        if(_downloadData->file.seek(ofs)) {
-            if(_downloadData->file.write((const char*)data, count)) {
-                _downloadData->written += count;
+        if(_downloadData->file.write((const char*)data, count)) {
+            _downloadData->written += count;
+            if (_downloadData->elapsed.elapsed() >= kGUIRateMilliseconds) {
                 //-- Update status
                 QString comma_value = kLocale.toString(_downloadData->written);
                 _downloadData->entry->setStatus(comma_value);
-                result = true;
-                //-- reset retries
-                _retries = 0;
-                //-- Reset timer
-                _timer.start(kTimeOutMilliseconds);
-                //-- Do we have it all?
-                if(_logComplete()) {
-                    _downloadData->entry->setStatus(QString("Downloaded"));
-                    //-- Check for more
-                    _receivedAllData();
-                }
-            } else {
-                qWarning() << "Error while writing log file chunk";
+                _downloadData->elapsed.start();
+            }
+            result = true;
+            //-- reset retries
+            _retries = 0;
+            //-- Reset timer
+            _timer.start(kTimeOutMilliseconds);
+            //-- Do we have it all?
+            if(_logComplete()) {
+                _downloadData->entry->setStatus(QString("Downloaded"));
+                //-- Check for more
+                _receivedAllData();
             }
         } else {
-            qWarning() << "Error while seeking log file offset";
+            qWarning() << "Error while writing log file chunk";
         }
     } else {
         qWarning() << "Received log offset greater than expected";
@@ -315,14 +336,8 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
 bool
 LogDownloadController::_logComplete()
 {
-    //-- Iterate entries and look for a gap
-    int num_ofs = _downloadData->offsets.count();
-    for(int i = 0; i < num_ofs; i++) {
-        if(_downloadData->offsets[i] == 0) {
-           return false;
-        }
-    }
-    return true;
+    return _downloadData->file.pos() == _downloadData->entry->size() &&
+            _downloadData->gaps.count() == 0;
 }
 
 //----------------------------------------------------------------------------------------
@@ -344,42 +359,32 @@ LogDownloadController::_receivedAllData()
 void
 LogDownloadController::_findMissingData()
 {
-    int start = -1;
-    int end   = -1;
-    int num_ofs = _downloadData->offsets.count();
-    //-- Iterate offsets and look for a gap
-    for(int i = 0; i < num_ofs; i++) {
-        if(_downloadData->offsets[i] == 0) {
-            if(start < 0)
-                start = i;
-            else
-                end = i;
-        } else {
-            if(start >= 0) {
-                break;
-            }
-        }
+    if (_logComplete()) {
+         _receivedAllData();
+         return;
     }
-    //-- Is there something missing?
-    if(start >= 0) {
-        //-- Have we tried too many times?
-        if(_retries++ > 2) {
-            _downloadData->entry->setStatus(QString("Timed Out"));
-            //-- Give up
-            qWarning() << "Too many errors retreiving log data. Giving up.";
-            _receivedAllData();
-            return;
-        }
-        //-- Is it a sequence or just one entry?
-        if(end < 0) {
-            end = start;
-        }
+
+    if(_retries++ > 2) {
+        _downloadData->entry->setStatus(QString("Timed Out"));
+        //-- Give up
+        qWarning() << "Too many errors retreiving log data. Giving up.";
+        _receivedAllData();
+        return;
+    }
+
+    const qint64 pos = _downloadData->file.pos(),
+                size = _downloadData->entry->size();
+    if (!_downloadData->gaps.isEmpty()) {
+        const uint32_t start = _downloadData->gaps.firstKey();
+        const uint32_t count = _downloadData->gaps.value(start);
+
         //-- Request these log chunks again
-        _requestLogData(
-            _downloadData->ID,
-            (uint32_t)(start * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN),
-            (uint32_t)((end - start + 1) * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN));
+        _requestLogData(_downloadData->ID, start, count);
+    } else if (pos != size) {
+        // Request where we left off
+        _requestLogData(_downloadData->ID, pos, size - pos);
     } else {
+        qWarning() << "Apparently we're missing data but can't figure out what. Giving up.";
         _receivedAllData();
     }
 }
@@ -534,11 +539,7 @@ LogDownloadController::_prepareLogDownload()
         if(!_downloadData->file.resize(entry->size())) {
             qWarning() << "Failed to allocate space for log file:" <<  _downloadData->filename;
         } else {
-            //-- Prepare Offset Table
-            uint o_count = (uint)ceil(entry->size() / (double)MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
-            for(uint i = 0; i < o_count; i++) {
-                _downloadData->offsets.append(0);
-            }
+            _downloadData->elapsed.start();
             result = true;
         }
     }
