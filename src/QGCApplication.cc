@@ -97,6 +97,7 @@
 #include "VideoSurface.h"
 #include "VideoReceiver.h"
 #include "LogDownloadController.h"
+#include "PX4AirframeLoader.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -365,8 +366,13 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     if (fClearSettingsOptions) {
         // User requested settings to be cleared on command line
+
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
+
+        QFile::remove(PX4AirframeLoader::aiframeMetaDataFile());
+        QFile::remove(PX4ParameterMetaData::parameterMetaDataFile());
+        QFile::remove(ParameterLoader::parameterCacheFile());
     }
 
     _defaultMapPosition.setLatitude(settings.value(_defaultMapPositionLatKey, 37.803784).toDouble());
