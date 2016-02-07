@@ -52,6 +52,9 @@ public:
     ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent = NULL);
     
     ~ParameterLoader();
+
+    /// @return Location of parameter cache file
+    static QString parameterCacheFile(void);
     
     /// Returns true if the full set of facts are ready
     bool parametersAreReady(void) { return _parametersReady; }

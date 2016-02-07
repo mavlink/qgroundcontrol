@@ -46,10 +46,17 @@ PX4AirframeLoader::PX4AirframeLoader(AutoPilotPlugin* autopilot, UASInterface* u
     Q_ASSERT(uas);
 }
 
+QString PX4AirframeLoader::aiframeMetaDataFile(void)
+{
+    QSettings settings;
+    QDir parameterDir = QFileInfo(settings.fileName()).dir();
+    return parameterDir.filePath("PX4AirframeFactMetaData.xml");
+}
+
 /// Load Airframe Fact meta data
 ///
 /// The meta data comes from firmware airframes.xml file.
-void PX4AirframeLoader::loadAirframeFactMetaData(void)
+void PX4AirframeLoader::loadAirframeMetaData(void)
 {
     if (_airframeMetaDataLoaded) {
         return;
@@ -64,9 +71,7 @@ void PX4AirframeLoader::loadAirframeFactMetaData(void)
     // We want unit test builds to always use the resource based meta data to provide repeatable results
     if (!qgcApp()->runningUnitTests()) {
         // First look for meta data that comes from a firmware download. Fall back to resource if not there.
-        QSettings settings;
-        QDir parameterDir = QFileInfo(settings.fileName()).dir();
-        airframeFilename = parameterDir.filePath("PX4AirframeFactMetaData.xml");
+        airframeFilename = aiframeMetaDataFile();
     }
     if (airframeFilename.isEmpty() || !QFile(airframeFilename).exists()) {
         airframeFilename = ":/AutoPilotPlugins/PX4/AirframeFactMetaData.xml";
