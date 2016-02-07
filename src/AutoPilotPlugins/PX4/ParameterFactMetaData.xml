@@ -55,7 +55,7 @@
       <short_desc>Extended status ID</short_desc>
       <long_desc>Extended status ID</long_desc>
       <min>1</min>
-      <max>100000</max>
+      <max>1000000</max>
     </parameter>
     <parameter default="50000" name="int_ext_status" type="INT32">
       <short_desc>Extended status interval (µs)</short_desc>
@@ -89,7 +89,6 @@
             specification sheet; accuracy will help control performance but
             some deviation from the specified value is acceptable.</long_desc>
       <unit>RPM/v</unit>
-      <decimal>0</decimal>
       <min>0</min>
       <max>4000</max>
     </parameter>
@@ -244,17 +243,21 @@ velocity</short_desc>
       <short_desc>Empty cell voltage</short_desc>
       <long_desc>Defines the voltage where a single cell of the battery is considered empty.</long_desc>
       <unit>V</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="4.2" name="BAT_V_CHARGED" type="FLOAT">
       <short_desc>Full cell voltage</short_desc>
       <long_desc>Defines the voltage where a single cell of the battery is considered full.</long_desc>
       <unit>V</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.07" name="BAT_V_LOAD_DROP" type="FLOAT">
       <short_desc>Voltage drop per cell on 100% load</short_desc>
       <long_desc>This implicitely defines the internal resistance to maximum current ratio and assumes linearity.</long_desc>
       <min>0.0</min>
+      <max>1.5</max>
       <unit>V</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="3" name="BAT_N_CELLS" type="INT32">
       <short_desc>Number of cells</short_desc>
@@ -267,6 +270,7 @@ velocity</short_desc>
       <short_desc>Battery capacity</short_desc>
       <long_desc>Defines the capacity of the attached battery.</long_desc>
       <unit>mA</unit>
+      <decimal>0</decimal>
     </parameter>
     <parameter default="10000" name="BAT_V_SCALE_IO" type="INT32">
       <short_desc>Scaling factor for battery voltage sensor on PX4IO</short_desc>
@@ -276,7 +280,7 @@ velocity</short_desc>
     <parameter default="-1.0" name="BAT_V_SCALING" type="FLOAT">
       <short_desc>Scaling factor for battery voltage sensor on FMU v2</short_desc>
     </parameter>
-    <parameter default="0.0124" name="BAT_C_SCALING" type="FLOAT">
+    <parameter default="-1.0" name="BAT_C_SCALING" type="FLOAT">
       <short_desc>Scaling factor for battery current sensor</short_desc>
     </parameter>
   </group>
@@ -304,6 +308,7 @@ velocity</short_desc>
       <long_desc>0 disables the trigger, 1 sets it to enabled on command, 2 always on</long_desc>
       <min>0</min>
       <max>2</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="12" name="TRIG_PINS" type="INT32">
       <short_desc>Camera trigger pin</short_desc>
@@ -361,6 +366,12 @@ velocity</short_desc>
       <min>0</min>
       <max>782097</max>
     </parameter>
+    <parameter default="0" name="CBRK_USB_CHK" type="INT32">
+      <short_desc>Circuit breaker for USB link check</short_desc>
+      <long_desc>Setting this parameter to 197848 will disable the USB connected checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
+      <min>0</min>
+      <max>197848</max>
+    </parameter>
   </group>
   <group name="Commander">
     <parameter default="0" name="COM_DL_LOSS_EN" type="INT32">
@@ -388,6 +399,7 @@ velocity</short_desc>
       <long_desc>Engine failure triggers only above this throttle value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="5.0" name="COM_EF_C2T" type="FLOAT">
       <short_desc>Engine Failure Current/Throttle Threshold</short_desc>
@@ -395,6 +407,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>30.0</max>
       <unit>ampere</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="10.0" name="COM_EF_TIME" type="FLOAT">
       <short_desc>Engine Failure Time Threshold</short_desc>
@@ -402,6 +415,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>60.0</max>
       <unit>second</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="0.5" name="COM_RC_LOSS_T" type="FLOAT">
       <short_desc>RC loss time threshold</short_desc>
@@ -409,6 +423,7 @@ velocity</short_desc>
       <min>0</min>
       <max>35</max>
       <unit>second</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="5.0" name="COM_HOME_H_T" type="FLOAT">
       <short_desc>Home set horizontal threshold</short_desc>
@@ -416,6 +431,7 @@ velocity</short_desc>
       <min>2</min>
       <max>15</max>
       <unit>meter</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="10.0" name="COM_HOME_V_T" type="FLOAT">
       <short_desc>Home set vertical threshold</short_desc>
@@ -423,6 +439,7 @@ velocity</short_desc>
       <min>5</min>
       <max>25</max>
       <unit>meter</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="1" name="COM_AUTOS_PAR" type="INT32">
       <short_desc>Autosaving of params</short_desc>
@@ -509,11 +526,208 @@ velocity</short_desc>
       <unit>m</unit>
     </parameter>
   </group>
+  <group name="EKF2">
+    <parameter default="0" name="EKF2_MAG_DELAY" type="FLOAT">
+      <short_desc>Magnetometer measurement delay relative to IMU measurements</short_desc>
+      <min>0</min>
+      <max>300</max>
+      <unit>ms</unit>
+    </parameter>
+    <parameter default="0" name="EKF2_BARO_DELAY" type="FLOAT">
+      <short_desc>Barometer measurement delay relative to IMU measurements</short_desc>
+      <min>0</min>
+      <max>300</max>
+      <unit>ms</unit>
+    </parameter>
+    <parameter default="200" name="EKF2_GPS_DELAY" type="FLOAT">
+      <short_desc>GPS measurement delay relative to IMU measurements</short_desc>
+      <min>0</min>
+      <max>300</max>
+      <unit>ms</unit>
+    </parameter>
+    <parameter default="200" name="EKF2_ASP_DELAY" type="FLOAT">
+      <short_desc>Airspeed measurement delay relative to IMU measurements</short_desc>
+      <min>0</min>
+      <max>300</max>
+      <unit>ms</unit>
+    </parameter>
+    <parameter default="21" name="EKF2_GPS_CHECK" type="INT32">
+      <short_desc>Integer bitmask controlling GPS checks. Set bits to 1 to enable checks. Checks enabled by the following bit positions
+0 : Minimum required sat count set by EKF2_REQ_NSATS
+1 : Minimum required GDoP set by EKF2_REQ_GDOP
+2 : Maximum allowed horizontal position error set by EKF2_REQ_EPH
+3 : Maximum allowed vertical position error set by EKF2_REQ_EPV
+4 : Maximum allowed speed error set by EKF2_REQ_SACC
+5 : Maximum allowed horizontal position rate set by EKF2_REQ_HDRIFT. This check can only be used if the vehciel is stationary during alignment.
+6 : Maximum allowed vertical position rate set by EKF2_REQ_VDRIFT. This check can only be used if the vehciel is stationary during alignment.
+7 : Maximum allowed horizontal speed set by EKF2_REQ_HDRIFT. This check can only be used if the vehciel is stationary during alignment.
+8 : Maximum allowed vertical velocity discrepancy set by EKF2_REQ_VDRIFT</short_desc>
+      <min>0</min>
+      <max>511</max>
+      <unit />
+    </parameter>
+    <parameter default="5.0" name="EKF2_REQ_EPH" type="FLOAT">
+      <short_desc>Required EPH to use GPS</short_desc>
+      <min>2</min>
+      <max>100</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="8.0" name="EKF2_REQ_EPV" type="FLOAT">
+      <short_desc>Required EPV to use GPS</short_desc>
+      <min>2</min>
+      <max>100</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="1.0" name="EKF2_REQ_SACC" type="FLOAT">
+      <short_desc>Required speed accuracy to use GPS</short_desc>
+      <min>0.5</min>
+      <max>5.0</max>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="6" name="EKF2_REQ_NSATS" type="INT32">
+      <short_desc>Required satellite count to use GPS</short_desc>
+      <min>4</min>
+      <max>12</max>
+      <unit />
+    </parameter>
+    <parameter default="2.5" name="EKF2_REQ_GDOP" type="FLOAT">
+      <short_desc>Required GDoP to use GPS</short_desc>
+      <min>1.5</min>
+      <max>5.0</max>
+      <unit />
+    </parameter>
+    <parameter default="0.3" name="EKF2_REQ_HDRIFT" type="FLOAT">
+      <short_desc>Maximum horizontal drift speed to use GPS</short_desc>
+      <min>0.1</min>
+      <max>1.0</max>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="0.5" name="EKF2_REQ_VDRIFT" type="FLOAT">
+      <short_desc>Maximum vertical drift speed to use GPS</short_desc>
+      <min>0.1</min>
+      <max>1.5</max>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="1.0e-3" name="EKF2_GYR_NOISE" type="FLOAT">
+      <short_desc>Rate gyro noise for covariance prediction</short_desc>
+      <min>0.0001</min>
+      <max>0.01</max>
+      <unit>rad/s</unit>
+    </parameter>
+    <parameter default="0.25" name="EKF2_ACC_NOISE" type="FLOAT">
+      <short_desc>Accelerometer noise for covariance prediction</short_desc>
+      <min>0.01</min>
+      <max>1.0</max>
+      <unit>m/s/s</unit>
+    </parameter>
+    <parameter default="7.0e-5" name="EKF2_GYR_B_NOISE" type="FLOAT">
+      <short_desc>Process noise for delta angle bias prediction</short_desc>
+      <min>0.0</min>
+      <max>0.0001</max>
+      <unit>rad/s</unit>
+    </parameter>
+    <parameter default="1.0e-4" name="EKF2_ACC_B_NOISE" type="FLOAT">
+      <short_desc>Process noise for delta velocity z bias prediction</short_desc>
+      <min>0.0</min>
+      <max>0.01</max>
+      <unit>m/s/s</unit>
+    </parameter>
+    <parameter default="3.0e-3" name="EKF2_GYR_S_NOISE" type="FLOAT">
+      <short_desc>Process noise for delta angle scale factor prediction</short_desc>
+      <min>0.0</min>
+      <max>0.01</max>
+      <unit>None</unit>
+    </parameter>
+    <parameter default="2.5e-2" name="EKF2_MAG_B_NOISE" type="FLOAT">
+      <short_desc>Process noise for sensor bias and earth magnetic field prediction</short_desc>
+      <min>0.0</min>
+      <max>0.1</max>
+      <unit>Gauss/s</unit>
+    </parameter>
+    <parameter default="1.0e-1" name="EKF2_WIND_NOISE" type="FLOAT">
+      <short_desc>Process noise for wind velocity prediction</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>m/s/s</unit>
+    </parameter>
+    <parameter default="0.5" name="EKF2_GPS_V_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for gps horizontal velocity</short_desc>
+      <min>0.01</min>
+      <max>5.0</max>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="1.0" name="EKF2_GPS_P_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for gps position</short_desc>
+      <min>0.01</min>
+      <max>10.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="10.0" name="EKF2_NOAID_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for non-aiding position hold</short_desc>
+      <min>0.5</min>
+      <max>50.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="3.0" name="EKF2_BARO_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for barometric altitude</short_desc>
+      <min>0.01</min>
+      <max>15.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.17" name="EKF2_HEAD_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for magnetic heading fusion</short_desc>
+      <min>0.01</min>
+      <max>1.0</max>
+      <unit>rad</unit>
+    </parameter>
+    <parameter default="5.0e-2" name="EKF2_MAG_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for magnetometer 3-axis fusion</short_desc>
+      <min>0.001</min>
+      <max>1.0</max>
+      <unit>Gauss</unit>
+    </parameter>
+    <parameter default="0" name="EKF2_MAG_DECL" type="FLOAT">
+      <short_desc>Magnetic declination</short_desc>
+      <unit>degrees</unit>
+    </parameter>
+    <parameter default="3.0" name="EKF2_HDG_GATE" type="FLOAT">
+      <short_desc>Gate size for magnetic heading fusion</short_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+    </parameter>
+    <parameter default="3.0" name="EKF2_MAG_GATE" type="FLOAT">
+      <short_desc>Gate size for magnetometer XYZ component fusion</short_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+    </parameter>
+    <parameter default="3.0" name="EKF2_BARO_GATE" type="FLOAT">
+      <short_desc>Gate size for barometric height fusion</short_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+    </parameter>
+    <parameter default="3.0" name="EKF2_GPS_P_GATE" type="FLOAT">
+      <short_desc>Gate size for GPS horizontal position fusion</short_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+    </parameter>
+    <parameter default="3.0" name="EKF2_GPS_V_GATE" type="FLOAT">
+      <short_desc>Gate size for GPS velocity fusion</short_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+    </parameter>
+  </group>
   <group name="FW Attitude Control">
-    <parameter default="0.4" name="FW_ATT_TC" type="FLOAT">
-      <short_desc>Attitude Time Constant</short_desc>
-      <long_desc>This defines the latency between a step input and the achieved setpoint (inverse to a P gain). Half a second is a good start value and fits for most average systems. Smaller systems may require smaller values, but as this will wear out servos faster, the value should only be decreased as needed.</long_desc>
+    <parameter default="0.4" name="FW_R_TC" type="FLOAT">
+      <short_desc>Attitude Roll Time Constant</short_desc>
+      <long_desc>This defines the latency between a roll step input and the achieved setpoint (inverse to a P gain). Half a second is a good start value and fits for most average systems. Smaller systems may require smaller values, but as this will wear out servos faster, the value should only be decreased as needed.</long_desc>
       <min>0.4</min>
+      <max>1.0</max>
+      <unit>seconds</unit>
+    </parameter>
+    <parameter default="0.4" name="FW_P_TC" type="FLOAT">
+      <short_desc>Attitude Pitch Time Constant</short_desc>
+      <long_desc>This defines the latency between a pitch step input and the achieved setpoint (inverse to a P gain). Half a second is a good start value and fits for most average systems. Smaller systems may require smaller values, but as this will wear out servos faster, the value should only be decreased as needed.</long_desc>
+      <min>0.2</min>
       <max>1.0</max>
       <unit>seconds</unit>
     </parameter>
@@ -599,6 +813,31 @@ velocity</short_desc>
       <max>90.0</max>
       <unit>deg/s</unit>
     </parameter>
+    <parameter default="0.5" name="FW_WR_P" type="FLOAT">
+      <short_desc>Wheel steering rate proportional gain</short_desc>
+      <long_desc>This defines how much the wheel steering input will be commanded depending on the current body angular rate error.</long_desc>
+      <min>0.005</min>
+      <max>1.0</max>
+    </parameter>
+    <parameter default="0.1" name="FW_WR_I" type="FLOAT">
+      <short_desc>Wheel steering rate integrator gain</short_desc>
+      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
+      <min>0.0</min>
+      <max>50.0</max>
+    </parameter>
+    <parameter default="1.0" name="FW_WR_IMAX" type="FLOAT">
+      <short_desc>Wheel steering rate integrator limit</short_desc>
+      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+    </parameter>
+    <parameter default="0.0" name="FW_W_RMAX" type="FLOAT">
+      <short_desc>Maximum wheel steering rate</short_desc>
+      <long_desc>This limits the maximum wheel steering rate the controller will output (in degrees per second). Setting a value of zero disables the limit.</long_desc>
+      <min>0.0</min>
+      <max>90.0</max>
+      <unit>deg/s</unit>
+    </parameter>
     <parameter default="0.5" name="FW_RR_FF" type="FLOAT">
       <short_desc>Roll rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output. Use this to obtain a tigher response of the controller without introducing noise amplification.</long_desc>
@@ -613,6 +852,12 @@ velocity</short_desc>
     </parameter>
     <parameter default="0.3" name="FW_YR_FF" type="FLOAT">
       <short_desc>Yaw rate feed forward</short_desc>
+      <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
+      <min>0.0</min>
+      <max>10.0</max>
+    </parameter>
+    <parameter default="0.2" name="FW_WR_FF" type="FLOAT">
+      <short_desc>Wheel steering rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
       <min>0.0</min>
       <max>10.0</max>
@@ -677,6 +922,16 @@ velocity</short_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg</unit>
+    </parameter>
+    <parameter default="1.0" name="FW_FLAPS_SCL" type="FLOAT">
+      <short_desc>Scale factor for flaps</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+    </parameter>
+    <parameter default="0.0" name="FW_FLAPERON_SCL" type="FLOAT">
+      <short_desc>Scale factor for flaperons</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
     </parameter>
   </group>
   <group name="Fixed Wing TECS">
@@ -794,18 +1049,36 @@ velocity</short_desc>
     <parameter default="-1" name="GF_MAX_HOR_DIST" type="INT32">
       <short_desc>Max horizontal distance in meters</short_desc>
       <long_desc>Set to &gt; 0 to activate a geofence action if horizontal distance to home exceeds this value.</long_desc>
+      <min>-1</min>
+      <unit>meters</unit>
     </parameter>
     <parameter default="-1" name="GF_MAX_VER_DIST" type="INT32">
       <short_desc>Max vertical distance in meters</short_desc>
       <long_desc>Set to &gt; 0 to activate a geofence action if vertical distance to home exceeds this value.</long_desc>
+      <min>-1</min>
+      <unit>meters</unit>
+    </parameter>
+  </group>
+  <group name="Gimbal">
+    <parameter default="0" name="GMB_USE_MNT" type="INT32">
+      <short_desc>Consider mount operation mode</short_desc>
+      <long_desc>If set to 1, mount mode will be enforced.</long_desc>
+      <min>0</min>
+      <max>1</max>
+    </parameter>
+    <parameter default="0" name="GMB_AUX_MNT_CHN" type="INT32">
+      <short_desc>Auxiliary switch to set mount operation mode</short_desc>
+      <long_desc>Set to 0 to disable manual mode control. If set to an auxiliary switch: Switch off means the gimbal is put into safe/locked position. Switch on means the gimbal can move freely, and landing gear will be retracted if applicable.</long_desc>
+      <min>0</min>
+      <max>3</max>
     </parameter>
   </group>
   <group name="L1 Control">
     <parameter default="20.0" name="FW_L1_PERIOD" type="FLOAT">
       <short_desc>L1 period</short_desc>
       <long_desc>This is the L1 distance and defines the tracking point ahead of the aircraft its following. A value of 25 meters works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
-      <min>1.0</min>
-      <max>100.0</max>
+      <min>12.0</min>
+      <max>50.0</max>
     </parameter>
     <parameter default="0.75" name="FW_L1_DAMPING" type="FLOAT">
       <short_desc>L1 damping</short_desc>
@@ -896,6 +1169,12 @@ velocity</short_desc>
       <short_desc>Enable or disable usage of terrain estimate during landing</short_desc>
       <long_desc>0: disabled, 1: enabled</long_desc>
     </parameter>
+    <parameter default="1.3" name="FW_AIRSPD_SCALE" type="FLOAT">
+      <short_desc>Takeoff and landing airspeed scale factor</short_desc>
+      <long_desc>Multiplying this factor with the minimum airspeed of the plane gives the target airspeed for takeoff and landing approach.</long_desc>
+      <min>1.0</min>
+      <max>1.5</max>
+    </parameter>
   </group>
   <group name="Land Detector">
     <parameter default="0.70" name="LNDMC_Z_VEL_MAX" type="FLOAT">
@@ -931,6 +1210,13 @@ velocity</short_desc>
       <long_desc>Maximum vertical velocity allowed in the landed state (m/s up and down)</long_desc>
       <min>5</min>
       <max>20</max>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="4.0" name="LNDFW_VELI_MAX" type="FLOAT">
+      <short_desc>Fixedwing max short-term velocity</short_desc>
+      <long_desc>Maximum velocity integral in flight direction allowed in the landed state (m/s)</long_desc>
+      <min>2</min>
+      <max>10</max>
       <unit>m/s</unit>
     </parameter>
     <parameter default="8.00" name="LNDFW_AIRSPD_MAX" type="FLOAT">
@@ -1144,7 +1430,7 @@ velocity</short_desc>
     </parameter>
   </group>
   <group name="Mission">
-    <parameter default="10.0" name="MIS_TAKEOFF_ALT" type="FLOAT">
+    <parameter default="2.5" name="MIS_TAKEOFF_ALT" type="FLOAT">
       <short_desc>Take-off altitude</short_desc>
       <long_desc>Even if first waypoint has altitude less then MIS_TAKEOFF_ALT above home position, system will climb to MIS_TAKEOFF_ALT on takeoff, then go to waypoint.</long_desc>
       <unit>meters</unit>
@@ -1201,6 +1487,18 @@ velocity</short_desc>
     </parameter>
   </group>
   <group name="Multicopter Attitude Control">
+    <parameter default="0.2" name="MC_ROLL_TC" type="FLOAT">
+      <short_desc>Roll time constant</short_desc>
+      <long_desc>Reduce if the system is too twitchy, increase if the response is too slow and sluggish.</long_desc>
+      <min>0.15</min>
+      <max>0.25</max>
+    </parameter>
+    <parameter default="0.2" name="MC_PITCH_TC" type="FLOAT">
+      <short_desc>Pitch time constant</short_desc>
+      <long_desc>Reduce if the system is too twitchy, increase if the response is too slow and sluggish.</long_desc>
+      <min>0.15</min>
+      <max>0.25</max>
+    </parameter>
     <parameter default="6.5" name="MC_ROLL_P" type="FLOAT">
       <short_desc>Roll P gain</short_desc>
       <long_desc>Roll proportional gain, i.e. desired angular speed in rad/s for error 1 rad.</long_desc>
@@ -1298,11 +1596,18 @@ velocity</short_desc>
       <max>360.0</max>
       <unit>deg/s</unit>
     </parameter>
-    <parameter default="60.0" name="MC_YAWRATE_MAX" type="FLOAT">
+    <parameter default="120.0" name="MC_YAWRATE_MAX" type="FLOAT">
       <short_desc>Max yaw rate</short_desc>
-      <long_desc>Limit for yaw rate, has effect for large rotations in autonomous mode, to avoid large control output and mixer saturation. A value of significantly over 60 degrees per second can already lead to mixer saturation.</long_desc>
+      <long_desc>A value of significantly over 120 degrees per second can already lead to mixer saturation.</long_desc>
       <min>0.0</min>
       <max>360.0</max>
+      <unit>deg/s</unit>
+    </parameter>
+    <parameter default="45.0" name="MC_YAWRAUTO_MAX" type="FLOAT">
+      <short_desc>Max yaw rate in auto mode</short_desc>
+      <long_desc>Limit for yaw rate, has effect for large rotations in autonomous mode, to avoid large control output and mixer saturation. A value of significantly over 60 degrees per second can already lead to mixer saturation. A value of 30 degrees / second is recommended to avoid very audible twitches.</long_desc>
+      <min>0.0</min>
+      <max>120.0</max>
       <unit>deg/s</unit>
     </parameter>
     <parameter default="360.0" name="MC_ACRO_R_MAX" type="FLOAT">
@@ -1452,7 +1757,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>0.95</max>
     </parameter>
-    <parameter default="0.12" name="MPC_MANTHR_MIN" type="FLOAT">
+    <parameter default="0.08" name="MPC_MANTHR_MIN" type="FLOAT">
       <short_desc>Minimum manual thrust</short_desc>
       <long_desc>Minimum vertical thrust. It's recommended to set it &gt; 0 to avoid free fall with zero thrust.</long_desc>
       <min>0.0</min>
@@ -1530,15 +1835,20 @@ velocity</short_desc>
       <max>90.0</max>
       <unit>degree</unit>
     </parameter>
-    <parameter default="15.0" name="MPC_TILTMAX_LND" type="FLOAT">
+    <parameter default="12.0" name="MPC_TILTMAX_LND" type="FLOAT">
       <short_desc>Maximum tilt during landing</short_desc>
       <long_desc>Limits maximum tilt angle on landing.</long_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>degree</unit>
     </parameter>
-    <parameter default="1.0" name="MPC_LAND_SPEED" type="FLOAT">
+    <parameter default="0.5" name="MPC_LAND_SPEED" type="FLOAT">
       <short_desc>Landing descend rate</short_desc>
+      <min>0.0</min>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="1.5" name="MPC_TKO_SPEED" type="FLOAT">
+      <short_desc>Takeoff climb rate</short_desc>
       <min>0.0</min>
       <unit>m/s</unit>
     </parameter>
@@ -1585,6 +1895,12 @@ velocity</short_desc>
       <short_desc>Low pass filter cut freq. for numerical velocity derivative</short_desc>
       <min>0.0</min>
       <unit>Hz</unit>
+    </parameter>
+    <parameter default="4.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
+      <short_desc>Maximum horizonal acceleration in velocity controlled modes</short_desc>
+      <min>2.0</min>
+      <max>10.0</max>
+      <unit>m/s/s</unit>
     </parameter>
     <parameter default="0.1" name="MPP_THR_MIN" type="FLOAT">
       <short_desc>Minimum thrust</short_desc>
@@ -1682,84 +1998,98 @@ velocity</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV2" type="INT32">
       <short_desc>Invert direction of aux output channel 2</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV3" type="INT32">
       <short_desc>Invert direction of aux output channel 3</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV4" type="INT32">
       <short_desc>Invert direction of aux output channel 4</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV5" type="INT32">
       <short_desc>Invert direction of aux output channel 5</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV6" type="INT32">
       <short_desc>Invert direction of aux output channel 6</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV1" type="INT32">
       <short_desc>Invert direction of main output channel 1</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV2" type="INT32">
       <short_desc>Invert direction of main output channel 2</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV3" type="INT32">
       <short_desc>Invert direction of main output channel 3</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV4" type="INT32">
       <short_desc>Invert direction of main output channel 4</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV5" type="INT32">
       <short_desc>Invert direction of main output channel 5</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV6" type="INT32">
       <short_desc>Invert direction of main output channel 6</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV7" type="INT32">
       <short_desc>Invert direction of main output channel 7</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV8" type="INT32">
       <short_desc>Invert direction of main output channel 8</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_SBUS_MODE" type="INT32">
       <short_desc>Enable S.BUS out</short_desc>
@@ -1773,6 +2103,7 @@ velocity</short_desc>
       <min>800</min>
       <max>1400</max>
       <unit>microseconds</unit>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="2000" name="PWM_MAX" type="INT32">
       <short_desc>Set the maximum PWM for the MAIN outputs</short_desc>
@@ -1780,6 +2111,7 @@ velocity</short_desc>
       <min>1600</min>
       <max>2200</max>
       <unit>microseconds</unit>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_DISARMED" type="INT32">
       <short_desc>Set the disarmed PWM for MAIN outputs</short_desc>
@@ -1787,6 +2119,7 @@ velocity</short_desc>
       <min>0</min>
       <max>2200</max>
       <unit>microseconds</unit>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="1000" name="PWM_AUX_MIN" type="INT32">
       <short_desc>Set the minimum PWM for the MAIN outputs</short_desc>
@@ -1794,6 +2127,7 @@ velocity</short_desc>
       <min>800</min>
       <max>1400</max>
       <unit>microseconds</unit>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="2000" name="PWM_AUX_MAX" type="INT32">
       <short_desc>Set the maximum PWM for the MAIN outputs</short_desc>
@@ -1801,6 +2135,7 @@ velocity</short_desc>
       <min>1600</min>
       <max>2200</max>
       <unit>microseconds</unit>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="1000" name="PWM_AUX_DISARMED" type="INT32">
       <short_desc>Set the disarmed PWM for AUX outputs</short_desc>
@@ -1808,6 +2143,7 @@ velocity</short_desc>
       <min>0</min>
       <max>2200</max>
       <unit>microseconds</unit>
+      <reboot_required>true</reboot_required>
     </parameter>
   </group>
   <group name="Payload drop">
@@ -1933,7 +2269,7 @@ velocity</short_desc>
       <min>0.001</min>
       <max>0.05</max>
     </parameter>
-    <parameter default="0.25" name="PE_ACC_PNOISE" type="FLOAT">
+    <parameter default="0.125" name="PE_ACC_PNOISE" type="FLOAT">
       <short_desc>Accelerometer process noise</short_desc>
       <long_desc>Generic defaults: 0.25, multicopters: 0.25, ground vehicles: 0.25. Increasing this value makes the filter trust the accelerometer less and other sensors more.</long_desc>
       <min>0.05</min>
@@ -2049,11 +2385,11 @@ velocity</short_desc>
       <min>0.0</min>
       <max>10.0</max>
     </parameter>
-    <parameter default="10.0" name="INAV_W_XY_FLOW" type="FLOAT">
+    <parameter default="9.0" name="INAV_W_XY_FLOW" type="FLOAT">
       <short_desc>XY axis weight for optical flow</short_desc>
       <long_desc>Weight (cutoff frequency) for optical flow (velocity) measurements.</long_desc>
       <min>0.0</min>
-      <max>30.0</max>
+      <max>10.0</max>
     </parameter>
     <parameter default="0.5" name="INAV_W_XY_RES_V" type="FLOAT">
       <short_desc>XY axis weight for resetting velocity</short_desc>
@@ -2140,6 +2476,12 @@ velocity</short_desc>
       <max>1.0</max>
       <unit>m</unit>
     </parameter>
+    <parameter default="0" name="INAV_DISAB_MOCAP" type="FLOAT">
+      <short_desc>Disable mocap (set 0 if using fake gps)</short_desc>
+      <long_desc>Disable mocap</long_desc>
+      <min>0</min>
+      <max>1</max>
+    </parameter>
     <parameter default="0" name="CBRK_NO_VISION" type="INT32">
       <short_desc>Disable vision input</short_desc>
       <long_desc>Set to the appropriate key (328754) to disable vision input.</long_desc>
@@ -2159,18 +2501,21 @@ velocity</short_desc>
       <long_desc>The trim value is the actuator control value the system needs for straight and level flight. It can be calibrated by flying manually straight and level using the RC trims and copying them using the GCS.</long_desc>
       <min>-0.25</min>
       <max>0.25</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.0" name="TRIM_PITCH" type="FLOAT">
       <short_desc>Pitch trim</short_desc>
       <long_desc>The trim value is the actuator control value the system needs for straight and level flight. It can be calibrated by flying manually straight and level using the RC trims and copying them using the GCS.</long_desc>
       <min>-0.25</min>
       <max>0.25</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.0" name="TRIM_YAW" type="FLOAT">
       <short_desc>Yaw trim</short_desc>
       <long_desc>The trim value is the actuator control value the system needs for straight and level flight. It can be calibrated by flying manually straight and level using the RC trims and copying them using the GCS.</long_desc>
       <min>-0.25</min>
       <max>0.25</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="1000.0" name="RC1_MIN" type="FLOAT">
       <short_desc>RC Channel 1 Minimum</short_desc>
@@ -2920,6 +3265,11 @@ velocity</short_desc>
       <min>0</min>
       <max>18</max>
     </parameter>
+    <parameter default="0" name="RC_MAP_KILL_SW" type="INT32">
+      <short_desc>Kill switch channel mapping</short_desc>
+      <min>0</min>
+      <max>18</max>
+    </parameter>
     <parameter default="0" name="RC_MAP_FLAPS" type="INT32">
       <short_desc>Flaps channel mapping</short_desc>
       <min>0</min>
@@ -2973,6 +3323,12 @@ velocity</short_desc>
       <min>-1</min>
       <max>1</max>
     </parameter>
+    <parameter default="0.25" name="RC_KILLSWITCH_TH" type="FLOAT">
+      <short_desc>Threshold for the kill switch</short_desc>
+      <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
+      <min>-1</min>
+      <max>1</max>
+    </parameter>
   </group>
   <group name="Return To Land">
     <parameter default="60" name="RTL_RETURN_ALT" type="FLOAT">
@@ -2995,6 +3351,67 @@ velocity</short_desc>
       <min>-1</min>
       <max>300</max>
       <unit>seconds</unit>
+    </parameter>
+  </group>
+  <group name="Runway Takeoff">
+    <parameter default="0" name="RWTO_TKOFF" type="INT32">
+      <short_desc>Enable or disable runway takeoff with landing gear</short_desc>
+      <long_desc>0: disabled, 1: enabled</long_desc>
+      <min>0</min>
+      <max>1</max>
+    </parameter>
+    <parameter default="0" name="RWTO_HDG" type="INT32">
+      <short_desc>Specifies which heading should be held during runnway takeoff</short_desc>
+      <long_desc>0: airframe heading, 1: heading towards takeoff waypoint</long_desc>
+      <min>0</min>
+      <max>1</max>
+    </parameter>
+    <parameter default="5.0" name="RWTO_NAV_ALT" type="FLOAT">
+      <short_desc>Altitude AGL at which we have enough ground clearance to allow some roll.
+Until RWTO_NAV_ALT is reached the plane is held level and only
+rudder is used to keep the heading (see RWTO_HDG). This should be below
+FW_CLMBOUT_DIFF if FW_CLMBOUT_DIFF &gt; 0</short_desc>
+      <min>0.0</min>
+      <max>100.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="1.0" name="RWTO_MAX_THR" type="FLOAT">
+      <short_desc>Max throttle during runway takeoff.
+(Can be used to test taxi on runway)</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+    </parameter>
+    <parameter default="0.0" name="RWTO_PSP" type="FLOAT">
+      <short_desc>Pitch setpoint during taxi / before takeoff airspeed is reached.
+A taildragger with stearable wheel might need to pitch up
+a little to keep it's wheel on the ground before airspeed
+to takeoff is reached</short_desc>
+      <min>0.0</min>
+      <max>20.0</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter default="20.0" name="RWTO_MAX_PITCH" type="FLOAT">
+      <short_desc>Max pitch during takeoff.
+Fixed-wing settings are used if set to 0. Note that there is also a minimum
+pitch of 10 degrees during takeoff, so this must be larger if set</short_desc>
+      <min>0.0</min>
+      <max>60.0</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter default="25.0" name="RWTO_MAX_ROLL" type="FLOAT">
+      <short_desc>Max roll during climbout.
+Roll is limited during climbout to ensure enough lift and prevents aggressive
+navigation before we're on a safe height</short_desc>
+      <min>0.0</min>
+      <max>60.0</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter default="1.3" name="RWTO_AIRSPD_SCL" type="FLOAT">
+      <short_desc>Min. airspeed scaling factor for takeoff.
+Pitch up will be commanded when the following airspeed is reached:
+FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</short_desc>
+      <min>0.0</min>
+      <max>2.0</max>
     </parameter>
   </group>
   <group name="SD Logging">
@@ -3380,11 +3797,17 @@ velocity</short_desc>
       <min>0</min>
       <max>2</max>
     </parameter>
-    <parameter default="0" name="SYS_COMPANION" type="INT32">
+    <parameter default="157600" name="SYS_COMPANION" type="INT32">
       <short_desc>Companion computer interface</short_desc>
       <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Configures the baud rate of the companion computer interface. Set to zero to disable, set to these values to enable (NO OTHER VALUES SUPPORTED!) 921600: enables onboard mode at 921600 baud, 8N1. 57600: enables onboard mode at 57600 baud, 8N1. 157600: enables OSD mode at 57600 baud, 8N1.</long_desc>
       <min>0</min>
       <max>921600</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="57600">Companion Link (57600 baud, 8N1)</value>
+        <value code="921600">Companion Link (921600 baud, 8N1)</value>
+        <value code="157600">OSD (57600 baud, 8N1)</value>
+      </values>
     </parameter>
     <parameter default="1" name="SYS_PARAM_VER" type="INT32">
       <short_desc>Parameter version</short_desc>
@@ -3441,10 +3864,10 @@ velocity</short_desc>
       <min>0.1</min>
       <max>2</max>
     </parameter>
-    <parameter default="0" name="VT_FW_MOT_OFF" type="INT32">
+    <parameter default="0" name="VT_FW_MOT_OFFID" type="INT32">
       <short_desc>The channel number of motors that must be turned off in fixed wing mode</short_desc>
       <min>0</min>
-      <max>123456</max>
+      <max>12345678</max>
     </parameter>
     <parameter default="0" name="VT_MOT_COUNT" type="INT32">
       <short_desc>VTOL number of engines</short_desc>
@@ -3532,6 +3955,11 @@ velocity</short_desc>
       <long_desc>Airspeed at which we can switch to fw mode</long_desc>
       <min>1.0</min>
       <max>20</max>
+    </parameter>
+    <parameter default="0" name="VT_OPT_RECOV_EN" type="INT32">
+      <short_desc>Enable optimal recovery strategy for pitch-weak tailsitters</short_desc>
+      <min>0</min>
+      <max>1</max>
     </parameter>
   </group>
   <group name="mTECS">
@@ -3802,126 +4230,6 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
     </parameter>
     <parameter default="2.0" name="TEST_DEV" type="FLOAT">
       <short_desc>TEST_DEV</short_desc>
-    </parameter>
-    <parameter default="300.0" name="FWB_P_LP" type="FLOAT">
-      <short_desc>FWB_P_LP</short_desc>
-    </parameter>
-    <parameter default="300.0" name="FWB_Q_LP" type="FLOAT">
-      <short_desc>FWB_Q_LP</short_desc>
-    </parameter>
-    <parameter default="300.0" name="FWB_R_LP" type="FLOAT">
-      <short_desc>FWB_R_LP</short_desc>
-    </parameter>
-    <parameter default="1.0" name="FWB_R_HP" type="FLOAT">
-      <short_desc>FWB_R_HP</short_desc>
-    </parameter>
-    <parameter default="0.3" name="FWB_P2AIL" type="FLOAT">
-      <short_desc>FWB_P2AIL</short_desc>
-    </parameter>
-    <parameter default="0.1" name="FWB_Q2ELV" type="FLOAT">
-      <short_desc>FWB_Q2ELV</short_desc>
-    </parameter>
-    <parameter default="0.1" name="FWB_R2RDR" type="FLOAT">
-      <short_desc>FWB_R2RDR</short_desc>
-    </parameter>
-    <parameter default="0.5" name="FWB_PSI2PHI" type="FLOAT">
-      <short_desc>FWB_PSI2PHI</short_desc>
-    </parameter>
-    <parameter default="1.0" name="FWB_PHI2P" type="FLOAT">
-      <short_desc>FWB_PHI2P</short_desc>
-    </parameter>
-    <parameter default="0.3" name="FWB_PHI_LIM_MAX" type="FLOAT">
-      <short_desc>FWB_PHI_LIM_MAX</short_desc>
-    </parameter>
-    <parameter default="1.0" name="FWB_V2THE_P" type="FLOAT">
-      <short_desc>FWB_V2THE_P</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_V2THE_I" type="FLOAT">
-      <short_desc>FWB_V2THE_I</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_V2THE_D" type="FLOAT">
-      <short_desc>FWB_V2THE_D</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_V2THE_D_LP" type="FLOAT">
-      <short_desc>FWB_V2THE_D_LP</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_V2THE_I_MAX" type="FLOAT">
-      <short_desc>FWB_V2THE_I_MAX</short_desc>
-    </parameter>
-    <parameter default="-0.5" name="FWB_THE_MIN" type="FLOAT">
-      <short_desc>FWB_THE_MIN</short_desc>
-    </parameter>
-    <parameter default="0.5" name="FWB_THE_MAX" type="FLOAT">
-      <short_desc>FWB_THE_MAX</short_desc>
-    </parameter>
-    <parameter default="1.0" name="FWB_THE2Q_P" type="FLOAT">
-      <short_desc>FWB_THE2Q_P</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_THE2Q_I" type="FLOAT">
-      <short_desc>FWB_THE2Q_I</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_THE2Q_D" type="FLOAT">
-      <short_desc>FWB_THE2Q_D</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_THE2Q_D_LP" type="FLOAT">
-      <short_desc>FWB_THE2Q_D_LP</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_THE2Q_I_MAX" type="FLOAT">
-      <short_desc>FWB_THE2Q_I_MAX</short_desc>
-    </parameter>
-    <parameter default="0.01" name="FWB_H2THR_P" type="FLOAT">
-      <short_desc>FWB_H2THR_P</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_H2THR_I" type="FLOAT">
-      <short_desc>FWB_H2THR_I</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_H2THR_D" type="FLOAT">
-      <short_desc>FWB_H2THR_D</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_H2THR_D_LP" type="FLOAT">
-      <short_desc>FWB_H2THR_D_LP</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_H2THR_I_MAX" type="FLOAT">
-      <short_desc>FWB_H2THR_I_MAX</short_desc>
-    </parameter>
-    <parameter default="1.57" name="FWB_XT2YAW_MAX" type="FLOAT">
-      <short_desc>FWB_XT2YAW_MAX</short_desc>
-    </parameter>
-    <parameter default="0.005" name="FWB_XT2YAW" type="FLOAT">
-      <short_desc>FWB_XT2YAW</short_desc>
-    </parameter>
-    <parameter default="10.0" name="FWB_V_MIN" type="FLOAT">
-      <short_desc>FWB_V_MIN</short_desc>
-    </parameter>
-    <parameter default="12.0" name="FWB_V_CMD" type="FLOAT">
-      <short_desc>FWB_V_CMD</short_desc>
-    </parameter>
-    <parameter default="16.0" name="FWB_V_MAX" type="FLOAT">
-      <short_desc>FWB_V_MAX</short_desc>
-    </parameter>
-    <parameter default="1.0" name="FWB_CR_MAX" type="FLOAT">
-      <short_desc>FWB_CR_MAX</short_desc>
-    </parameter>
-    <parameter default="0.01" name="FWB_CR2THR_P" type="FLOAT">
-      <short_desc>FWB_CR2THR_P</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_CR2THR_I" type="FLOAT">
-      <short_desc>FWB_CR2THR_I</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_CR2THR_D" type="FLOAT">
-      <short_desc>FWB_CR2THR_D</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_CR2THR_D_LP" type="FLOAT">
-      <short_desc>FWB_CR2THR_D_LP</short_desc>
-    </parameter>
-    <parameter default="0.0" name="FWB_CR2THR_I_MAX" type="FLOAT">
-      <short_desc>FWB_CR2THR_I_MAX</short_desc>
-    </parameter>
-    <parameter default="0.8" name="FWB_TRIM_THR" type="FLOAT">
-      <short_desc>FWB_TRIM_THR</short_desc>
-    </parameter>
-    <parameter default="12.0" name="FWB_TRIM_V" type="FLOAT">
-      <short_desc>FWB_TRIM_V</short_desc>
     </parameter>
     <parameter default="2.5" name="FW_FLARE_PMIN" type="FLOAT">
       <short_desc>Flare, minimum pitch</short_desc>
