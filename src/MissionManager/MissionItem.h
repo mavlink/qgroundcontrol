@@ -46,9 +46,10 @@ class MissionItem : public QObject
     Q_OBJECT
     
 public:
-    MissionItem(QObject* parent = NULL);
+    MissionItem(Vehicle* vehicle, QObject* parent = NULL);
 
-    MissionItem(int             sequenceNumber,
+    MissionItem(Vehicle*        vehicle,
+                int             sequenceNumber,
                 MAV_CMD         command,
                 MAV_FRAME       frame,
                 double          param1,
@@ -212,6 +213,7 @@ private:
     void _setupMetaData(void);
 
 private:
+    Vehicle*    _vehicle;                   ///< Vehicle associated with this item, NULL for offline mode
     bool        _rawEdit;
     bool        _dirty;
     int         _sequenceNumber;
@@ -257,7 +259,7 @@ private:
     bool _syncingAltitudeRelativeToHomeAndFrame;    ///< true: already in a sync signal, prevents signal loop
     bool _syncingHeadingDegreesAndParam4;           ///< true: already in a sync signal, prevents signal loop
 
-    const QMap<MAV_CMD, MavCmdInfo*>& _mavCmdInfoMap;
+    const MissionCommands*  _missionCommands;
 };
 
 QDebug operator<<(QDebug dbg, const MissionItem& missionItem);

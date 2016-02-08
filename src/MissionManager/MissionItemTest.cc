@@ -103,7 +103,8 @@ void MissionItemTest::_test(void)
         
         qDebug() << "Command:" << info->command;
         
-        MissionItem* item = new MissionItem(1,
+        MissionItem* item = new MissionItem(NULL,           // Vehicle
+                                            1,
                                             info->command,
                                             info->frame,
                                             10.1234567,
@@ -158,7 +159,7 @@ void MissionItemTest::_test(void)
         QCOMPARE(factCount, expected->cFactValues);
         
         // Validate that loading is working correctly
-        MissionItem* loadedItem = new MissionItem();
+        MissionItem* loadedItem = new MissionItem(NULL /* Vehicle */);
         QTextStream loadStream(&savedItemString, QIODevice::ReadOnly);
         QVERIFY(loadedItem->load(loadStream));
         QCOMPARE(loadedItem->coordinate().latitude(), item->coordinate().latitude());
@@ -180,7 +181,7 @@ void MissionItemTest::_test(void)
 
 void MissionItemTest::_testDefaultValues(void)
 {
-    MissionItem item;
+    MissionItem item(NULL /* Vehicle */);
 
     item.setCommand(MAV_CMD_NAV_WAYPOINT);
     item.setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);

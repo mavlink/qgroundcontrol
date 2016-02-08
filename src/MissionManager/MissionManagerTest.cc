@@ -50,7 +50,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     QmlObjectListModel* list = new QmlObjectListModel();
     
     // Editor has a home position item on the front, so we do the same
-    MissionItem* homeItem = new MissionItem(this);
+    MissionItem* homeItem = new MissionItem(NULL /* Vehicle */, this);
     homeItem->setHomePositionSpecialCase(true);
     homeItem->setHomePositionValid(false);
     homeItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
@@ -61,7 +61,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     for (size_t i=0; i<_cTestCases; i++) {
         const TestCase_t* testCase = &_rgTestCases[i];
         
-        MissionItem* item = new MissionItem(list);
+        MissionItem* item = new MissionItem(NULL /* Vehicle */, list);
         
         QTextStream loadStream(testCase->itemStream, QIODevice::ReadOnly);
         QVERIFY(item->load(loadStream));
