@@ -127,3 +127,11 @@ QList<MAV_CMD> GenericFirmwarePlugin::supportedMissionCommands(void)
     // Generic supports all commands
     return QList<MAV_CMD>();
 }
+
+void GenericFirmwarePlugin::missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const
+{
+    // No overrides
+    commonJsonFilename.clear();
+    fixedWingJsonFilename.clear();
+    multiRotorJsonFilename.clear();
+}

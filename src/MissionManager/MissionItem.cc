@@ -74,8 +74,9 @@ QDebug operator<<(QDebug dbg, const MissionItem* missionItem)
     return dbg;
 }
 
-MissionItem::MissionItem(QObject* parent)
+MissionItem::MissionItem(Vehicle* vehicle, QObject* parent)
     : QObject(parent)
+    , _vehicle(vehicle)
     , _rawEdit(false)
     , _dirty(false)
     , _sequenceNumber(0)
@@ -107,7 +108,7 @@ MissionItem::MissionItem(QObject* parent)
     , _param7MetaData(FactMetaData::valueTypeDouble)
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
-    , _mavCmdInfoMap(qgcApp()->toolbox()->missionCommands()->commandInfoMap())
+    , _missionCommands(qgcApp()->toolbox()->missionCommands())
 {
     // Need a good command and frame before we start passing signals around
     _commandFact.setRawValue(MAV_CMD_NAV_WAYPOINT);
@@ -121,7 +122,8 @@ MissionItem::MissionItem(QObject* parent)
     setDefaultsForCommand();
 }
 
-MissionItem::MissionItem(int             sequenceNumber,
+MissionItem::MissionItem(Vehicle*       vehicle,
+                         int             sequenceNumber,
                          MAV_CMD         command,
                          MAV_FRAME       frame,
                          double          param1,
@@ -135,6 +137,7 @@ MissionItem::MissionItem(int             sequenceNumber,
                          bool            isCurrentItem,
                          QObject*        parent)
     : QObject(parent)
+    , _vehicle(vehicle)
     , _rawEdit(false)
     , _dirty(false)
     , _sequenceNumber(sequenceNumber)
@@ -165,7 +168,7 @@ MissionItem::MissionItem(int             sequenceNumber,
     , _param7MetaData(FactMetaData::valueTypeDouble)
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
-    , _mavCmdInfoMap(qgcApp()->toolbox()->missionCommands()->commandInfoMap())
+    , _missionCommands(qgcApp()->toolbox()->missionCommands())
 {
     // Need a good command and frame before we start passing signals around
     _commandFact.setRawValue(MAV_CMD_NAV_WAYPOINT);
@@ -192,6 +195,7 @@ MissionItem::MissionItem(int             sequenceNumber,
 
 MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     : QObject(parent)
+    , _vehicle(NULL)
     , _rawEdit(false)
     , _dirty(false)
     , _sequenceNumber(0)
@@ -219,7 +223,7 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     , _param4MetaData(FactMetaData::valueTypeDouble)
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
-    , _mavCmdInfoMap(qgcApp()->toolbox()->missionCommands()->commandInfoMap())
+    , _missionCommands(qgcApp()->toolbox()->missionCommands())
 {
     // Need a good command and frame before we start passing signals around
     _commandFact.setRawValue(MAV_CMD_NAV_WAYPOINT);
@@ -234,6 +238,8 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
 
 const MissionItem& MissionItem::operator=(const MissionItem& other)
 {
+    _vehicle = other._vehicle;
+
     setCommand(other.command());
     setFrame(other.frame());
     setRawEdit(other._rawEdit);
@@ -314,7 +320,8 @@ void MissionItem::_setupMetaData(void)
 
         enumStrings.clear();
         enumValues.clear();
-        foreach (const MavCmdInfo* mavCmdInfo, _mavCmdInfoMap) {
+        foreach (const MAV_CMD command, _missionCommands->commandsIds()) {
+            const MavCmdInfo* mavCmdInfo = _missionCommands->getMavCmdInfo(command, _vehicle);
             enumStrings.append(mavCmdInfo->rawName());
             enumValues.append(QVariant(mavCmdInfo->command()));
         }
@@ -488,8 +495,8 @@ void MissionItem::setParam7(double param)
 
 bool MissionItem::standaloneCoordinate(void) const
 {
-    if (_mavCmdInfoMap.contains((MAV_CMD)command())) {
-        return _mavCmdInfoMap[(MAV_CMD)command()]->standaloneCoordinate();
+    if (_missionCommands->contains((MAV_CMD)command())) {
+        return _missionCommands->getMavCmdInfo((MAV_CMD)command(), _vehicle)->standaloneCoordinate();
     } else {
         return false;
     }
@@ -497,8 +504,8 @@ bool MissionItem::standaloneCoordinate(void) const
 
 bool MissionItem::specifiesCoordinate(void) const
 {
-    if (_mavCmdInfoMap.contains((MAV_CMD)command())) {
-        return _mavCmdInfoMap[(MAV_CMD)command()]->specifiesCoordinate();
+    if (_missionCommands->contains((MAV_CMD)command())) {
+        return _missionCommands->getMavCmdInfo((MAV_CMD)command(), _vehicle)->specifiesCoordinate();
     } else {
         return false;
     }
@@ -506,8 +513,8 @@ bool MissionItem::specifiesCoordinate(void) const
 
 QString MissionItem::commandDescription(void) const
 {
-    if (_mavCmdInfoMap.contains((MAV_CMD)command())) {
-        return _mavCmdInfoMap[(MAV_CMD)command()]->description();
+    if (_missionCommands->contains((MAV_CMD)command())) {
+        return _missionCommands->getMavCmdInfo((MAV_CMD)command(), _vehicle)->description();
     } else {
         qWarning() << "Should not ask for command description on unknown command";
         return QString();
@@ -561,7 +568,7 @@ QmlObjectListModel* MissionItem::textFieldFacts(void)
         FactMetaData*   rgParamMetaData[7] =    { &_param1MetaData, &_param2MetaData, &_param3MetaData, &_param4MetaData, &_param5MetaData, &_param6MetaData, &_param7MetaData };
 
         for (int i=1; i<=7; i++) {
-            const QMap<int, MavCmdParamInfo*>& paramInfoMap = _mavCmdInfoMap[command]->paramInfoMap();
+            const QMap<int, MavCmdParamInfo*>& paramInfoMap = _missionCommands->getMavCmdInfo(command, _vehicle)->paramInfoMap();
 
             if (paramInfoMap.contains(i) && paramInfoMap[i]->enumStrings().count() == 0) {
                 Fact*               paramFact =     rgParamFacts[i-1];
@@ -615,7 +622,7 @@ QmlObjectListModel* MissionItem::comboboxFacts(void)
         MAV_CMD command = (MAV_CMD)this->command();
 
         for (int i=1; i<=7; i++) {
-            const QMap<int, MavCmdParamInfo*>& paramInfoMap = _mavCmdInfoMap[command]->paramInfoMap();
+            const QMap<int, MavCmdParamInfo*>& paramInfoMap = _missionCommands->getMavCmdInfo(command, _vehicle)->paramInfoMap();
 
             if (paramInfoMap.contains(i) && paramInfoMap[i]->enumStrings().count() != 0) {
                 Fact*               paramFact =     rgParamFacts[i-1];
@@ -649,7 +656,7 @@ void MissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 
 bool MissionItem::friendlyEditAllowed(void) const
 {
-    if (_mavCmdInfoMap.contains((MAV_CMD)command()) && _mavCmdInfoMap[(MAV_CMD)command()]->friendlyEdit()) {
+    if (_missionCommands->contains((MAV_CMD)command()) && _missionCommands->getMavCmdInfo((MAV_CMD)command(), _vehicle)->friendlyEdit()) {
         if (!autoContinue()) {
             return false;
         }
@@ -752,8 +759,9 @@ void MissionItem::setDefaultsForCommand(void)
     // We set these global defaults first, then if there are param defaults they will get reset
     setParam7(defaultAltitude);
 
-    if (_mavCmdInfoMap.contains((MAV_CMD)command())) {
-        foreach (const MavCmdParamInfo* paramInfo, _mavCmdInfoMap[(MAV_CMD)command()]->paramInfoMap()) {
+    MAV_CMD command = (MAV_CMD)this->command();
+    if (_missionCommands->contains(command)) {
+        foreach (const MavCmdParamInfo* paramInfo, _missionCommands->getMavCmdInfo(command, _vehicle)->paramInfoMap()) {
             Fact* rgParamFacts[7] = { &_param1Fact, &_param2Fact, &_param3Fact, &_param4Fact, &_param5Fact, &_param6Fact, &_param7Fact };
 
             rgParamFacts[paramInfo->param()-1]->setRawValue(paramInfo->defaultValue());
@@ -782,11 +790,12 @@ void MissionItem::_sendCommandChanged(void)
 
 QString MissionItem::commandName(void) const
 {
-    if (_mavCmdInfoMap.contains((MAV_CMD)command())) {
-        const MavCmdInfo* mavCmdInfo = _mavCmdInfoMap[(MAV_CMD)command()];
+    MAV_CMD command = (MAV_CMD)this->command();
+    if (_missionCommands->contains(command)) {
+        const MavCmdInfo* mavCmdInfo = _missionCommands->getMavCmdInfo(command, _vehicle);
         return mavCmdInfo->friendlyName().isEmpty() ? mavCmdInfo->rawName() : mavCmdInfo->friendlyName();
     } else {
-        return QString("Unknown: %1").arg(command());
+        return QString("Unknown: %1").arg(command);
     }
 }
 

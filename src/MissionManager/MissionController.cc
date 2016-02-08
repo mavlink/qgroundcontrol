@@ -161,7 +161,7 @@ void MissionController::sendMissionItems(void)
 
 int MissionController::insertMissionItem(QGeoCoordinate coordinate, int i)
 {
-    MissionItem * newItem = new MissionItem(this);
+    MissionItem * newItem = new MissionItem(_activeVehicle, this);
     newItem->setSequenceNumber(_missionItems->count());
     newItem->setCoordinate(coordinate);
     newItem->setCommand(MAV_CMD_NAV_WAYPOINT);
@@ -258,7 +258,7 @@ void MissionController::loadMissionFromFile(void)
 
         if (versionOk) {
             while (!in.atEnd()) {
-                MissionItem* item = new MissionItem();
+                MissionItem* item = new MissionItem(_activeVehicle, this);
 
                 if (item->load(in)) {
                     _missionItems->append(item);
@@ -494,7 +494,7 @@ void MissionController::_initAllMissionItems(void)
         homeItem = qobject_cast<MissionItem*>(_missionItems->get(0));
     } else {
         // Add the home position item to the front
-        homeItem = new MissionItem(this);
+        homeItem = new MissionItem(_activeVehicle, this);
         homeItem->setSequenceNumber(0);
         _missionItems->insert(0, homeItem);
     }

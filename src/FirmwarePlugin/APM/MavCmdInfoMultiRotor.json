@@ -1,0 +1,59 @@
+{
+    "version": 1,
+
+    "mavCmdInfo": [
+        {
+            "id":                   22,
+            "rawName":              "MAV_CMD_NAV_TAKEOFF",
+            "friendlyName":         "Takeoff",
+            "description":          "Take off from the ground.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "Basic"
+        },
+        {
+            "id":                   17,
+            "rawName":              "MAV_CMD_NAV_LOITER_UNLIM",
+            "friendlyName":         "Loiter",
+            "description":          "Travel to a position and Loiter indefinitely.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "Basic"
+        },
+        {
+            "id":                   18,
+            "rawName":              "MAV_CMD_NAV_LOITER_TURNS",
+            "friendlyName":         "Loiter (turns)",
+            "description":          "Travel to a position and Circle with the specified radius for a number of turns.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "Basic",
+            "param1": {
+                "label":            "Turns:",
+                "default":          1,
+                "decimalPlaces":    0
+            },
+            "param3": {
+                "label":            "Radius:",
+                "units":            "meters",
+                "default":          10.0,
+                "decimalPlaces":    2
+            }
+        },
+        {
+            "id":                   19,
+            "rawName":              "MAV_CMD_NAV_LOITER_TIME",
+            "friendlyName":         "Loiter (time)",
+            "description":          "Travel to a position and Loiter for an amount of time.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "Basic",
+            "param1": {
+                "label":            "Hold:",
+                "units":            "seconds",
+                "default":          30,
+                "decimalPlaces":    0
+            }
+        }
+    ]
+}
