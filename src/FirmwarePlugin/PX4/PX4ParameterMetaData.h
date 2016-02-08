@@ -49,6 +49,9 @@ public:
 
     void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
 
+    /// @return Location of PX4 parameter meta data file
+    static QString parameterMetaDataFile(void);
+
 private:
     enum {
         XmlStateNone,

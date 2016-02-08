@@ -49,7 +49,10 @@ public:
     /// @param uas Uas which this set of facts is associated with
     PX4AirframeLoader(AutoPilotPlugin* autpilot,UASInterface* uas, QObject* parent = NULL);
 
-    static void loadAirframeFactMetaData(void);
+    static void loadAirframeMetaData(void);
+
+    /// @return Location of PX4 airframe fact meta data file
+    static QString aiframeMetaDataFile(void);
 
 private:
     enum {

@@ -81,7 +81,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     _airframeFacts = new PX4AirframeLoader(this, _vehicle->uas(), this);
     Q_CHECK_PTR(_airframeFacts);
     
-    PX4AirframeLoader::loadAirframeFactMetaData();
+    PX4AirframeLoader::loadAirframeMetaData();
 }
 
 PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
