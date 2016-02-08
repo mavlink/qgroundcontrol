@@ -147,9 +147,10 @@ public:
 
     FirmwareType_t selectedFirmwareType(void) { return _selectedFirmwareType; }
     void setSelectedFirmwareType(FirmwareType_t firmwareType);
+    QString firmwareTypeAsString(FirmwareType_t type) const;
 
     QStringList apmAvailableVersions(void);
-    
+
 signals:
     void boardFound(void);
     void noBoardFound(void);
