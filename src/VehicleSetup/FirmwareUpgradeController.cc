@@ -208,6 +208,8 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v4_default.px4"},
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v4_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v4_default.px4"},
+        { AutoPilotStackAPM, StableFirmware,    QuadFirmware,           "http://firmware.diydrones.com/Copter/stable/PX4-quad/ArduCopter-v4.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      QuadFirmware,           "http://firmware.diydrones.com/Copter/beta/PX4-quad/ArduCopter-v4.px4"},
         { AutoPilotStackAPM, DeveloperFirmware, QuadFirmware,           "http://firmware.diydrones.com/Copter/latest/PX4-quad/ArduCopter-v4.px4"}
     };
 
@@ -573,10 +575,30 @@ void FirmwareUpgradeController::_downloadError(QNetworkReply::NetworkError code)
     
     if (code == QNetworkReply::OperationCanceledError) {
         errorMsg = "Download cancelled";
+
+    } else if (code == QNetworkReply::ContentNotFoundError) {
+        errorMsg = QString("Error: File Not Found. Please check %1 firmware version is available.")
+                      .arg(firmwareTypeAsString(_selectedFirmwareType));
+
     } else {
         errorMsg = QString("Error during download. Error: %1").arg(code);
     }
     _errorCancel(errorMsg);
+}
+
+/// @brief returns firmware type as a string
+QString FirmwareUpgradeController::firmwareTypeAsString(FirmwareType_t type) const
+{
+    switch (type) {
+    case StableFirmware:
+        return "stable";
+    case DeveloperFirmware:
+        return "developer";
+    case BetaFirmware:
+        return "beta";
+    default:
+        return "custom";
+    }
 }
 
 /// @brief Signals completion of one of the specified bootloader commands. Moves the state machine to the
