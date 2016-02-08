@@ -325,6 +325,24 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                             metaData->setRebootRequired(true);
                         }
 
+                    } else if (elementName == "values") {
+                        // doing nothing individual value will follow anyway. May be used for sanity checking.
+
+                    } else if (elementName == "value") {
+                        QString enumValueStr = xml.attributes().value("code").toString();
+                        QString enumString = xml.readElementText();
+                        qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
+                                                         << "value desc:" << enumString << "code:" << enumValueStr;
+
+                        QVariant    enumValue;
+                        QString     errorString;
+                        if (metaData->convertAndValidateRaw(enumValueStr, false /* validate */, enumValue, errorString)) {
+                            metaData->addEnumInfo(enumString, enumValue);
+                        } else {
+                            qCDebug(PX4ParameterMetaDataLog) << "Invalid enum value, name:" << metaData->name()
+                                                             << " type:" << metaData->type() << " value:" << enumValueStr
+                                                             << " error:" << errorString;
+                        }
                     } else {
                         qDebug() << "Unknown element in XML: " << elementName;
                     }
