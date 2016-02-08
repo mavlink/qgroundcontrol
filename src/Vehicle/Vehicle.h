@@ -122,6 +122,8 @@ public:
     Q_PROPERTY(uint                 messagesReceived        READ messagesReceived                       NOTIFY messagesReceivedChanged)
     Q_PROPERTY(uint                 messagesSent            READ messagesSent                           NOTIFY messagesSentChanged)
     Q_PROPERTY(uint                 messagesLost            READ messagesLost                           NOTIFY messagesLostChanged)
+    Q_PROPERTY(bool                 fixedWing               READ fixedWing                              CONSTANT)
+    Q_PROPERTY(bool                 multiRotor              READ multiRotor                             CONSTANT)
 
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
@@ -170,8 +172,8 @@ public:
 
     // Property accesors
     int id(void) { return _id; }
-    MAV_AUTOPILOT firmwareType(void) { return _firmwareType; }
-    MAV_TYPE vehicleType(void) { return _vehicleType; }
+    MAV_AUTOPILOT firmwareType(void) const { return _firmwareType; }
+    MAV_TYPE vehicleType(void) const { return _vehicleType; }
 
     /// Returns the highest quality link available to the Vehicle
     LinkInterface* priorityLink(void);
@@ -213,6 +215,9 @@ public:
 
     bool hilMode(void);
     void setHilMode(bool hilMode);
+
+    bool fixedWing(void) const;
+    bool multiRotor(void) const;
 
     QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
 
