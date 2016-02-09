@@ -283,7 +283,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
 
     /////////////////////////////// FMUV1 firmwares ///////////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FMUV1FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/latest/px4fmu-v1_default.px4"},
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v1_default.px4"},
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v1_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v1_default.px4"},
         { AutoPilotStackAPM, StableFirmware,    QuadFirmware,           "http://firmware.diydrones.com/Copter/stable/PX4-quad/ArduCopter-v1.px4"},
