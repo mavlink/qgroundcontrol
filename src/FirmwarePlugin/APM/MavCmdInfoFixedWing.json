@@ -7,7 +7,7 @@
             "rawName":              "MAV_CMD_NAV_TAKEOFF",
             "friendlyName":         "Takeoff",
             "description":          "Take off from the ground.",
-            "specifiesCoordinate":  true,
+            "specifiesCoordinate":  false,
             "friendlyEdit":         true,
             "category":             "Basic",
             "param1": {
