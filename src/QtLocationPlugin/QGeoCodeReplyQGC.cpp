@@ -54,7 +54,7 @@
 #include <QSet>
 #include <QDebug>
 
-#include "qgeocodereplyqgc.h"
+#include "QGeoCodeReplyQGC.h"
 
 enum QGeoCodeTypeGoogle {
     GeoCodeTypeUnknown,

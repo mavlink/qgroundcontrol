@@ -44,24 +44,38 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOSERVICEPROVIDER_GOOGLE_H
-#define QGEOSERVICEPROVIDER_GOOGLE_H
+#ifndef QGEOCODINGMANAGERENGINEQGC_H
+#define QGEOCODINGMANAGERENGINEQGC_H
 
-#include <QtCore/QObject>
-#include <QtLocation/QGeoServiceProviderFactory>
-#include <QtPlugin>
+#include <QtLocation/QGeoServiceProvider>
+#include <QtLocation/QGeoCodingManagerEngine>
+#include <QtLocation/QGeoCodeReply>
 
-class QGeoServiceProviderFactoryQGC: public QObject, public QGeoServiceProviderFactory
+QT_BEGIN_NAMESPACE
+
+class QNetworkAccessManager;
+
+class QGeoCodingManagerEngineQGC : public QGeoCodingManagerEngine
 {
     Q_OBJECT
-    Q_INTERFACES(QGeoServiceProviderFactory)
-    Q_PLUGIN_METADATA(IID "org.qt-project.qt.geoservice.serviceproviderfactory/5.0" FILE "qgc_maps_plugin.json")
 
 public:
-    QGeoCodingManagerEngine*    createGeocodingManagerEngine    (const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
-    QGeoMappingManagerEngine*   createMappingManagerEngine      (const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
-    QGeoRoutingManagerEngine*   createRoutingManagerEngine      (const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
-    QPlaceManagerEngine*        createPlaceManagerEngine        (const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    QGeoCodingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString);
+    ~QGeoCodingManagerEngineQGC();
+
+    QGeoCodeReply* geocode          (const QGeoAddress &address, const QGeoShape &bounds) Q_DECL_OVERRIDE;
+    QGeoCodeReply* geocode          (const QString &address, int limit, int offset, const QGeoShape &bounds) Q_DECL_OVERRIDE;
+    QGeoCodeReply* reverseGeocode   (const QGeoCoordinate &coordinate, const QGeoShape &bounds) Q_DECL_OVERRIDE;
+
+private Q_SLOTS:
+    void replyFinished  ();
+    void replyError     (QGeoCodeReply::Error errorCode, const QString &errorString);
+
+private:
+    QNetworkAccessManager *m_networkManager;
+    QByteArray m_userAgent;
 };
 
-#endif // QGEOSERVICEPROVIDER_GOOGLE_H
+QT_END_NAMESPACE
+
+#endif // QGEOCODINGMANAGERENGINEQGC_H

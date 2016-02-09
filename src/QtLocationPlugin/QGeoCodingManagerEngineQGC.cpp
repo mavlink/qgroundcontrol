@@ -57,8 +57,8 @@
 #include <QtPositioning/QGeoRectangle>
 #include <QDebug>
 
-#include "qgeocodingmanagerengineqgc.h"
-#include "qgeocodereplyqgc.h"
+#include "QGeoCodingManagerEngineQGC.h"
+#include "QGeoCodeReplyQGC.h"
 
 static QString addressToQuery(const QGeoAddress &address)
 {

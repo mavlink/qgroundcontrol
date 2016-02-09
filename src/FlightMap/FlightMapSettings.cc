@@ -43,7 +43,7 @@ void FlightMapSettings::setToolbox(QGCToolbox *toolbox)
 
     qmlRegisterUncreatableType<FlightMapSettings> ("QGroundControl", 1, 0, "FlightMapSetting", "Reference only");
 
-    _supportedMapProviders << "Bing" << "Google" << "OpenStreetMap";
+    _supportedMapProviders << "Bing" << "Google"; // << "OpenStreetMap";
 
     _loadSettings();
 }
@@ -93,8 +93,10 @@ void FlightMapSettings::_setMapTypesForCurrentProvider(void)
         _mapTypes << "Street Map" << "Satellite Map" << "Hybrid Map";
     } else if (_mapProvider == "Google") {
         _mapTypes << "Street Map" << "Satellite Map" << "Terrain Map";
+    /*
     } else if (_mapProvider == "OpenStreetMap") {
         _mapTypes << "Street Map";
+    */
     }
 
     emit mapTypesChanged(_mapTypes);
