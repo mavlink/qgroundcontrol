@@ -30,13 +30,12 @@
 #include "QGCApplication.h"
 
 void SetupViewTest::_clickThrough_test(void)
-{
+{    
+    _createMainWindow();
     _connectMockLink();
-    
+
     AutoPilotPlugin* autopilot = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(autopilot);
-
-    _createMainWindow();
 
     // Switch to the Setup view
     qgcApp()->showSetupView();

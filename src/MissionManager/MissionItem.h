@@ -28,6 +28,7 @@
 #include <QString>
 #include <QtQml>
 #include <QTextStream>
+#include <QJsonObject>
 #include <QGeoCoordinate>
 
 #include "QGCMAVLink.h"
@@ -81,13 +82,13 @@ public:
     Q_PROPERTY(double           distance                READ distance               WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
     Q_PROPERTY(bool             friendlyEditAllowed     READ friendlyEditAllowed                                NOTIFY friendlyEditAllowedChanged)
     Q_PROPERTY(bool             homePosition            READ homePosition                                       CONSTANT)                           ///< true: This item is being used as a home position indicator
-    Q_PROPERTY(bool             homePositionValid       READ homePositionValid      WRITE setHomePositionValid  NOTIFY homePositionValidChanged)    ///< true: Home position should be shown
     Q_PROPERTY(bool             isCurrentItem           READ isCurrentItem          WRITE setIsCurrentItem      NOTIFY isCurrentItemChanged)
     Q_PROPERTY(bool             rawEdit                 READ rawEdit                WRITE setRawEdit            NOTIFY rawEditChanged)              ///< true: raw item editing with all params
     Q_PROPERTY(bool             relativeAltitude        READ relativeAltitude                                   NOTIFY frameChanged)
     Q_PROPERTY(int              sequenceNumber          READ sequenceNumber         WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
     Q_PROPERTY(bool             standaloneCoordinate    READ standaloneCoordinate                               NOTIFY commandChanged)
     Q_PROPERTY(bool             specifiesCoordinate     READ specifiesCoordinate                                NOTIFY commandChanged)
+    Q_PROPERTY(bool             showHomePosition        READ showHomePosition       WRITE setShowHomePosition   NOTIFY showHomePositionChanged)
 
     // These properties are used to display the editing ui
     Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  NOTIFY uiModelChanged)
@@ -112,12 +113,12 @@ public:
     double          distance            (void) const    { return _distance; }
     bool            friendlyEditAllowed (void) const;
     bool            homePosition        (void) const    { return _homePositionSpecialCase; }
-    bool            homePositionValid   (void) const    { return _homePositionValid; }
     bool            isCurrentItem       (void) const    { return _isCurrentItem; }
     bool            rawEdit             (void) const;
     int             sequenceNumber      (void) const    { return _sequenceNumber; }
     bool            standaloneCoordinate(void) const;
     bool            specifiesCoordinate (void) const;
+    bool            showHomePosition    (void) const    { return _showHomePosition; }
 
 
     QmlObjectListModel* textFieldFacts  (void);
@@ -137,8 +138,8 @@ public:
 
     void setCommand(MavlinkQmlSingleton::Qml_MAV_CMD command);
 
-    void setHomePositionValid(bool homePositionValid);
     void setHomePositionSpecialCase(bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
+    void setShowHomePosition(bool showHomePosition);
 
     void setAltDifference   (double altDifference);
     void setAltPercent      (double altPercent);
@@ -170,8 +171,9 @@ public:
 
     // C++ only methods
     
-    void save(QTextStream &saveStream);
+    void save(QJsonObject& json);
     bool load(QTextStream &loadStream);
+    bool load(const QJsonObject& json, QString& errorString);
 
     bool relativeAltitude(void) { return frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
 
@@ -191,11 +193,11 @@ signals:
     void frameChanged               (int frame);
     void friendlyEditAllowedChanged (bool friendlyEditAllowed);
     void headingDegreesChanged      (double heading);
-    void homePositionValidChanged   (bool homePostionValid);
     void isCurrentItemChanged       (bool isCurrentItem);
     void rawEditChanged             (bool rawEdit);
     void sequenceNumberChanged      (int sequenceNumber);
     void uiModelChanged             (void);
+    void showHomePositionChanged    (bool showHomePosition);
     
 private slots:
     void _setDirtyFromSignal(void);
@@ -223,7 +225,7 @@ private:
     double      _azimuth;                   ///< Azimuth to previous waypoint
     double      _distance;                  ///< Distance to previous waypoint
     bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator
-    bool        _homePositionValid;         ///< true: Home psition should be displayed
+    bool        _showHomePosition;
 
     Fact    _altitudeRelativeToHomeFact;
     Fact    _autoContinueFact;
@@ -260,6 +262,18 @@ private:
     bool _syncingHeadingDegreesAndParam4;           ///< true: already in a sync signal, prevents signal loop
 
     const MissionCommands*  _missionCommands;
+
+    static const char*  _itemType;
+    static const char*  _jsonTypeKey;
+    static const char*  _jsonIdKey;
+    static const char*  _jsonFrameKey;
+    static const char*  _jsonCommandKey;
+    static const char*  _jsonParam1Key;
+    static const char*  _jsonParam2Key;
+    static const char*  _jsonParam3Key;
+    static const char*  _jsonParam4Key;
+    static const char*  _jsonAutoContinueKey;
+    static const char*  _jsonCoordinateKey;
 };
 
 QDebug operator<<(QDebug dbg, const MissionItem& missionItem);

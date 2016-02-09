@@ -6,11 +6,21 @@
             "comment":              "MAV_CMD_NAV_LAST: Used for fake home position waypoint",
             "id":                   95,
             "rawName":              "HomeRaw",
-            "friendlyName":         "Home",
-            "description":          "Home Position",
-            "description":          "Home Position",
+            "friendlyName":         "Home Position",
+            "description":          "Planned home position for mission.",
             "specifiesCoordinate":  true,
-            "friendlyEdit":         true
+            "friendlyEdit":         true,
+            "category":             "Basic",
+            "param5": {
+                "label":            "Latitude:",
+                "default":          37.803784,
+                "decimalPlaces":    7
+            },
+            "param6": {
+                "label":            "Longitude:",
+                "default":          -122.462276,
+                "decimalPlaces":    7
+            }
         },
         {
             "id":                   16,
