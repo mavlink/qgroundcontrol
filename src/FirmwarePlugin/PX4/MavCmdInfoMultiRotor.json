@@ -1,0 +1,44 @@
+{
+    "version": 1,
+
+    "mavCmdInfo": [
+        {
+            "id":                   17,
+            "rawName":              "MAV_CMD_NAV_LOITER_UNLIM",
+            "friendlyName":         "Loiter",
+            "description":          "Travel to a position and Loiter indefinitely.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "Basic"
+        },
+        {
+            "id":                   18,
+            "rawName":              "MAV_CMD_NAV_LOITER_TURNS",
+            "friendlyName":         "Loiter (turns)",
+            "description":          "Travel to a position and Loiter for a number of turns.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "Basic",
+            "param1": {
+                "label":            "Turns:",
+                "default":          1,
+                "decimalPlaces":    0
+            }
+        },
+        {
+            "id":                   19,
+            "rawName":              "MAV_CMD_NAV_LOITER_TIME",
+            "friendlyName":         "Loiter (time)",
+            "description":          "Travel to a position and Loiter for an amount of time.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "Basic",
+            "param1": {
+                "label":            "Hold:",
+                "units":            "seconds",
+                "default":          30,
+                "decimalPlaces":    0
+            }
+        }
+    ]
+}

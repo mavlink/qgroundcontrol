@@ -35,19 +35,19 @@ class GenericFirmwarePlugin : public FirmwarePlugin
     
 public:
     // Overrides from FirmwarePlugin
-    
-    virtual bool isCapable(FirmwareCapabilities capabilities) { Q_UNUSED(capabilities); return false; }
-    virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
-    virtual QStringList flightModes(void) { return QStringList(); }
-    virtual QString flightMode(uint8_t base_mode, uint32_t custom_mode);
-    virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
-    virtual int manualControlReservedButtonCount(void);
-    virtual void adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
-    virtual void initializeVehicle(Vehicle* vehicle);
-    virtual bool sendHomePositionToVehicle(void);
-    virtual void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
-    virtual QString getDefaultComponentIdParam(void) const { return QString(); }
-    virtual QList<MAV_CMD> supportedMissionCommands(void);
+    bool isCapable(FirmwareCapabilities capabilities) final { Q_UNUSED(capabilities); return false; }
+    QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) final;
+    QStringList flightModes(void) final { return QStringList(); }
+    QString flightMode(uint8_t base_mode, uint32_t custom_mode) final;
+    bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
+    int manualControlReservedButtonCount(void) final;
+    void adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
+    void initializeVehicle(Vehicle* vehicle) final;
+    bool sendHomePositionToVehicle(void) final;
+    void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType) final;
+    QString getDefaultComponentIdParam(void) const final { return QString(); }
+    QList<MAV_CMD> supportedMissionCommands(void) final;
+    void missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const final;
 };
 
 #endif

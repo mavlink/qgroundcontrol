@@ -1334,3 +1334,23 @@ void Vehicle::_say(const QString& text, int severity)
     if (!qgcApp()->runningUnitTests())
         qgcApp()->toolbox()->audioOutput()->say(text.toLower(), severity);
 }
+
+bool Vehicle::fixedWing(void) const
+{
+    return vehicleType() == MAV_TYPE_FIXED_WING;
+}
+
+bool Vehicle::multiRotor(void) const
+{
+    switch (vehicleType()) {
+    case MAV_TYPE_QUADROTOR:
+    case MAV_TYPE_COAXIAL:
+    case MAV_TYPE_HELICOPTER:
+    case MAV_TYPE_HEXAROTOR:
+    case MAV_TYPE_OCTOROTOR:
+    case MAV_TYPE_TRICOPTER:
+        return true;
+    default:
+        return false;
+    }
+}
