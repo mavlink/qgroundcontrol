@@ -191,7 +191,7 @@ void MissionControllerTest::_testAddWaypointWorker(MAV_AUTOPILOT firmwareType)
     QVERIFY(item);
 
     QCOMPARE(item->command(), MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
-    QCOMPARE(homeItem->childItems()->count(), 0);
+    QCOMPARE(homeItem->childItems()->count(), firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? 1 : 0);
     QCOMPARE(item->childItems()->count(), 0);
 
     int expectedLineCount;
