@@ -35,3 +35,4 @@ SubMenuButton           1.0 SubMenuButton.qml
 VehicleRotationCal      1.0 VehicleRotationCal.qml
 VehicleSummaryRow       1.0 VehicleSummaryRow.qml
 ViewWidget              1.0 ViewWidget.qml
+OfflineMapButton        1.0 OfflineMapButton.qml

@@ -203,6 +203,8 @@ INCLUDEPATH += \
     src/ui/uas \
     src/VehicleSetup \
     src/ViewWidgets \
+    src/QtLocationPlugin \
+    src/QtLocationPlugin/QMLControl \
 
 FORMS += \
     src/ui/MainWindow.ui \
@@ -284,7 +286,8 @@ HEADERS += \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
     src/AutoPilotPlugins/APM/APMAirframeLoader.h \
     src/QmlControls/QGCImageProvider.h \
-    src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.h
+    src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.h \
+    src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
 
 DebugBuild {
 HEADERS += \
@@ -405,7 +408,8 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
     src/AutoPilotPlugins/APM/APMAirframeLoader.cc \
     src/QmlControls/QGCImageProvider.cc \
-    src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.cc
+    src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.cc \
+    src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
 
 DebugBuild {
 SOURCES += \

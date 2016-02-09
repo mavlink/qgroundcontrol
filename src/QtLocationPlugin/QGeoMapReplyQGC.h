@@ -44,43 +44,35 @@
 **
 ****************************************************************************/
 
-#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
+#ifndef QGEOMAPREPLYQGC_H
+#define QGEOMAPREPLYQGC_H
 
-#include "qdebug.h"
-#include "qgeoserviceproviderpluginqgc.h"
-#include "qgeotiledmappingmanagerengineqgc.h"
-#include "qgeocodingmanagerengineqgc.h"
+#include <QtNetwork/QNetworkReply>
+#include <QtLocation/private/qgeotiledmapreply_p.h>
 
-Q_EXTERN_C Q_DECL_EXPORT const char *qt_plugin_query_metadata();
-Q_EXTERN_C Q_DECL_EXPORT QT_PREPEND_NAMESPACE(QObject) *qt_plugin_instance();
-const QT_PREPEND_NAMESPACE(QStaticPlugin) qt_static_plugin_QGeoServiceProviderFactoryQGC()
+#include "QGCMapEngineData.h"
+
+class QGeoTiledMapReplyQGC : public QGeoTiledMapReply
 {
-    QT_PREPEND_NAMESPACE(QStaticPlugin) plugin = { qt_plugin_instance, qt_plugin_query_metadata};
-    return plugin;
-}
+    Q_OBJECT
+public:
+    QGeoTiledMapReplyQGC(QNetworkAccessManager*  networkManager, const QNetworkRequest& request, const QGeoTileSpec &spec, QObject *parent = 0);
+    ~QGeoTiledMapReplyQGC();
+    void abort();
 
-QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(
-    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
-{
-    return new QGeoCodingManagerEngineQGC(parameters, error, errorString);
-}
+private slots:
+    void replyDestroyed         ();
+    void networkReplyFinished   ();
+    void networkReplyError      (QNetworkReply::NetworkError error);
+    void cacheReply             (QGCCacheTile* tile);
+    void cacheError             (QGCMapTask::TaskType type, QString errorString);
 
-QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
-    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
-{
-    return new QGeoTiledMappingManagerEngineQGC(parameters, error, errorString);
-}
+private:
+    QNetworkReply*          _reply;
+    QNetworkRequest         _request;
+    QNetworkAccessManager*  _networkManager;
+    QByteArray              _badMapBox;
+    QByteArray              _badTile;
+};
 
-QGeoRoutingManagerEngine *QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(
-    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
-{
-    // Not implemented for QGC
-    return NULL;
-}
-
-QPlaceManagerEngine *QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
-    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
-{
-    // Not implemented for QGC
-    return NULL;
-}
+#endif // QGEOMAPREPLYQGC_H

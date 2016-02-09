@@ -44,32 +44,43 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOTILEFETCHERGOOGLE_H
-#define QGEOTILEFETCHERGOOGLE_H
+#ifndef QGEOTILEDMAPPINGMANAGERENGINEQGC_H
+#define QGEOTILEDMAPPINGMANAGERENGINEQGC_H
 
-#include <QtLocation/private/qgeotilefetcher_p.h>
-#include <QtLocation/private/qgeotilecache_p.h>
-#include "OpenPilotMaps.h"
+#include <QtLocation/QGeoServiceProvider>
+#if QT_VERSION >= 0x050500
+#include <QtLocation/private/qgeotiledmap_p.h>
+#endif
+#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 
-class QGeoTiledMappingManagerEngine;
-class QNetworkAccessManager;
-
-class QGeoTileFetcherQGC : public QGeoTileFetcher
+#if QT_VERSION >= 0x050500
+class QGeoTiledMapQGC : public QGeoTiledMap
 {
     Q_OBJECT
-
 public:
-    explicit QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent = 0);
-    ~QGeoTileFetcherQGC();
+    QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject *parent = 0);
+};
+#endif
 
-    void setUserAgent(const QByteArray &userAgent);
+class QGeoTileFetcherQGC;
 
+class QGeoTiledMappingManagerEngineQGC : public QGeoTiledMappingManagerEngine
+{
+    Q_OBJECT
+public:
+    QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString);
+    ~QGeoTiledMappingManagerEngineQGC();
+#if QT_VERSION < 0x050500
+    QGeoMapData *createMapData();
+#else
+    QGeoMap *createMap();
+    QString customCopyright() const;
+#endif
 private:
-    QGeoTiledMapReply* getTileImage(const QGeoTileSpec &spec);
-    QNetworkAccessManager*  m_networkManager;
-    QByteArray              m_userAgent;
-    OpenPilot::UrlFactory*  m_UrlFactory;
-    QString                 m_Language;
+#if QT_VERSION >= 0x050500
+    QString m_customCopyright;
+    void _setCache(const QVariantMap &parameters);
+#endif
 };
 
-#endif // QGEOTILEFETCHERGOOGLE_H
+#endif // QGEOTILEDMAPPINGMANAGERENGINEQGC_H

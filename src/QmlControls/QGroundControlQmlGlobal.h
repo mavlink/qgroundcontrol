@@ -55,6 +55,7 @@ public:
     Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
     Q_PROPERTY(MissionCommands*     missionCommands     READ missionCommands        CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
+    Q_PROPERTY(QGCMapEngineManager*  mapEngineManager  READ mapEngineManager     CONSTANT)
 
     Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -95,9 +96,10 @@ public:
 
     FlightMapSettings*      flightMapSettings   ()      { return _flightMapSettings; }
     HomePositionManager*    homePositionManager ()      { return _homePositionManager; }
-    LinkManager*            linkManager ()              { return _linkManager; }
-    MissionCommands*        missionCommands ()          { return _missionCommands; }
+    LinkManager*            linkManager         ()      { return _linkManager; }
+    MissionCommands*        missionCommands     ()      { return _missionCommands; }
     MultiVehicleManager*    multiVehicleManager ()      { return _multiVehicleManager; }
+    QGCMapEngineManager*     mapEngineManager  ()      { return _mapEngineManager; }
 
     qreal                   zOrderTopMost       ()      { return 1000; }
     qreal                   zOrderWidgets       ()      { return 100; }
@@ -149,6 +151,7 @@ private:
     LinkManager*            _linkManager;
     MissionCommands*        _missionCommands;
     MultiVehicleManager*    _multiVehicleManager;
+    QGCMapEngineManager*     _mapEngineManager;
 
     bool _virtualTabletJoystick;
 

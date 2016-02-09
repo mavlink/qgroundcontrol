@@ -44,31 +44,24 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOMAPREPLYGOOGLE_H
-#define QGEOMAPREPLYGOOGLE_H
+#ifndef QGEOSERVICEPROVIDERQGC_H
+#define QGEOSERVICEPROVIDERQGC_H
 
-#include <QtNetwork/QNetworkReply>
-#include <QtLocation/private/qgeotiledmapreply_p.h>
+#include <QtCore/QObject>
+#include <QtLocation/QGeoServiceProviderFactory>
+#include <QtPlugin>
 
-class QGeoMapReplyQGC : public QGeoTiledMapReply
+class QGeoServiceProviderFactoryQGC: public QObject, public QGeoServiceProviderFactory
 {
     Q_OBJECT
+    Q_INTERFACES(QGeoServiceProviderFactory)
+    Q_PLUGIN_METADATA(IID "org.qt-project.qt.geoservice.serviceproviderfactory/5.0" FILE "qgc_maps_plugin.json")
 
 public:
-    explicit QGeoMapReplyQGC(QNetworkReply *reply, const QGeoTileSpec &spec, QObject *parent = 0);
-    ~QGeoMapReplyQGC();
-
-    void abort();
-
-    QNetworkReply *networkReply() const;
-
-private Q_SLOTS:
-    void replyDestroyed         ();
-    void networkReplyFinished   ();
-    void networkReplyError      (QNetworkReply::NetworkError error);
-
-private:
-    QNetworkReply*  m_reply;
+    QGeoCodingManagerEngine*    createGeocodingManagerEngine    (const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    QGeoMappingManagerEngine*   createMappingManagerEngine      (const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    QGeoRoutingManagerEngine*   createRoutingManagerEngine      (const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    QPlaceManagerEngine*        createPlaceManagerEngine        (const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
 };
 
-#endif // QGEOMAPREPLYGOOGLE_H
+#endif // QGEOSERVICEPROVIDERQGC_H

@@ -177,6 +177,19 @@ Item {
             QGCButton {
                 width:      parent.width * 0.85
                 height:     ScreenTools.defaultFontPixelHeight * 2.5
+                text:       "Offline Maps"
+                exclusiveGroup: panelActionGroup
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked: {
+                    if(__rightPanel.source != "OfflineMap.qml") {
+                        __rightPanel.source = "OfflineMap.qml"
+                    }
+                    checked = true
+                }
+            }
+            QGCButton {
+                width:      parent.width * 0.85
+                height:     ScreenTools.defaultFontPixelHeight * 2.5
                 text:       "MavLink"
                 exclusiveGroup: panelActionGroup
                 anchors.horizontalCenter: parent.horizontalCenter
