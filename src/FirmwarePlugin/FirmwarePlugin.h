@@ -113,6 +113,12 @@ public:
 
     /// List of supported mission commands. Empty list for all commands supported.
     virtual QList<MAV_CMD> supportedMissionCommands(void) = 0;
+
+    /// Returns the names for the mission command json override files. Empty string to specify no overrides.
+    ///     @param[out] commonJsonFilename Filename for common overrides
+    ///     @param[out] fixedWingJsonFilename Filename for fixed wing overrides
+    ///     @param[out] multiRotorJsonFilename Filename for multi rotor overrides
+    virtual void missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const = 0;
 };
 
 #endif

@@ -251,7 +251,8 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
         _requestItemRetryCount = 0;
         _itemIndicesToRead.removeOne(missionItem.seq);
 
-        MissionItem* item = new MissionItem(missionItem.seq,
+        MissionItem* item = new MissionItem(_vehicle,
+                                            missionItem.seq,
                                             (MAV_CMD)missionItem.command,
                                             (MAV_FRAME)missionItem.frame,
                                             missionItem.param1,

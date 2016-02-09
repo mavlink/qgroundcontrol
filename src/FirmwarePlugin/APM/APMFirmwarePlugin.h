@@ -92,6 +92,7 @@ public:
     virtual void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
     virtual QString getDefaultComponentIdParam(void) const { return QString("SYSID_SW_TYPE"); }
     virtual QList<MAV_CMD> supportedMissionCommands(void);
+    void missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const final;
 
 protected:
     /// All access to singleton is through stack specific implementation
