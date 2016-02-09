@@ -108,8 +108,10 @@ Rectangle {
                 model: missionItems
 
                 Item {
-                    height: graphRow.height
-                    width:  ScreenTools.smallFontPixelWidth * 2
+                    height:     graphRow.height
+                    width:      ScreenTools.smallFontPixelWidth * 2
+                    visible:    object.specifiesCoordinate && !object.standaloneCoordinate
+
 
                     property real availableHeight: height - ScreenTools.smallFontPixelHeight - indicator.height
 
