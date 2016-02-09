@@ -35,40 +35,12 @@ import QGroundControl.Controls      1.0
 MapItemView {
     id: _root
 
-    property var    itemDragger     ///< Set to item drag control if you want to support drag
-
     delegate: MissionItemIndicator {
         id:             itemIndicator
         coordinate:     object.coordinate
-        visible:        object.specifiesCoordinate && (!object.homePosition || object.homePositionValid)
+        visible:        object.specifiesCoordinate && (index != 0 || object.showHomePosition)
         z:              QGroundControl.zOrderMapItems
         missionItem:    object
-
-        onClicked: setCurrentItem(object.sequenceNumber)
-
-        Connections {
-            target: object
-
-            onIsCurrentItemChanged: {
-                if (isCurrentItem) {
-                    if (_root.itemDragger) {
-                        // Setup our drag item
-                        if (object.sequenceNumber != 0) {
-                            _root.itemDragger.visible = true
-                            _root.itemDragger.missionItem = Qt.binding(function() { return object })
-                            _root.itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
-                        } else {
-                            _root.itemDragger.clearItem()
-                        }
-                    }
-
-                    // Zoom the map and move to the new position
-                    _root.parent.zoomLevel = _root.parent.maxZoomLevel
-                    _root.parent.latitude = object.coordinate.latitude
-                    _root.parent.longitude = object.coordinate.longitude
-                }
-            }
-        }
 
         // These are the non-coordinate child mission items attached to this item
         Row {

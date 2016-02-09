@@ -51,7 +51,7 @@ Map {
     readonly property real maxZoomLevel:    20
 
     zoomLevel:                  18
-    center:                     QGroundControl.defaultMapPosition
+    center:                     QGroundControl.lastKnownHomePosition
     gesture.flickDeceleration:  3000
     gesture.activeGestures:     MapGestureArea.ZoomGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
 

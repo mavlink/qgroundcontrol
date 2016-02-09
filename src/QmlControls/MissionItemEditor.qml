@@ -22,6 +22,7 @@ Rectangle {
     signal remove
     signal removeAll
     signal insert(int i)
+    signal moveHomeToMapCenter
 
     height: innerItem.height + (_margin * 3)
     color:  missionItem.isCurrentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
@@ -152,7 +153,7 @@ Rectangle {
             anchors.fill:       commandPicker
             visible:            missionItem.sequenceNumber == 0 || !missionItem.isCurrentItem
             verticalAlignment:  Text.AlignVCenter
-            text:               missionItem.sequenceNumber == 0 ? "Home" : missionItem.commandName
+            text:               missionItem.sequenceNumber == 0 ? "Home Position" : missionItem.commandName
             color:              qgcPal.buttonText
         }
 
@@ -164,7 +165,7 @@ Rectangle {
             anchors.right:      parent.right
             height:             valuesItem.height
             color:              qgcPal.windowShadeDark
-            visible:            missionItem.sequenceNumber != 0 && missionItem.isCurrentItem
+            visible:            missionItem.isCurrentItem
             radius:             _radius
 
             Item {
@@ -185,9 +186,11 @@ Rectangle {
                     QGCLabel {
                         width:      parent.width
                         wrapMode:   Text.WordWrap
-                        text:       missionItem.rawEdit ?
-                                        "Provides advanced access to all commands/parameters. Be very careful!" :
-                                        missionItem.commandDescription
+                        text:       missionItem.sequenceNumber == 0 ?
+                                        "Planned home position." :
+                                        (missionItem.rawEdit ?
+                                            "Provides advanced access to all commands/parameters. Be very careful!" :
+                                            missionItem.commandDescription)
                     }
 
                     Repeater {
@@ -253,6 +256,13 @@ Rectangle {
                             text:   object.name
                             fact:   object
                         }
+                    }
+
+                    QGCButton {
+                        text:       "Move Home to map center"
+                        visible:    missionItem.homePosition
+                        onClicked:  moveHomeToMapCenter()
+                        anchors.horizontalCenter: parent.horizontalCenter
                     }
                 } // Column
             } // Item

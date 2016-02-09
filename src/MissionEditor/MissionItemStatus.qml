@@ -32,7 +32,6 @@ Rectangle {
     property var    currentMissionItem          ///< Mission item to display status for
     property var    missionItems                ///< List of all available mission items
     property real   expandedWidth               ///< Width of control when expanded
-    property bool   homePositionValid:  false   /// true: home position in missionItems[0] is valid
 
     width:      _expanded ? expandedWidth : _collapsedWidth
     height:     expandLabel.y + expandLabel.height + _margins
@@ -49,7 +48,7 @@ Rectangle {
     property real   _altDifference:     _currentMissionItem ? _currentMissionItem.altDifference : -1
     property real   _azimuth:           _currentMissionItem ? _currentMissionItem.azimuth : -1
     property real   _isHomePosition:    _currentMissionItem ? _currentMissionItem.homePosition : false
-    property bool   _statusValid:       _distance != -1 && ((_isHomePosition && homePositionValid) || !_isHomePosition)
+    property bool   _statusValid:       _distance != -1
     property string _distanceText:      _statusValid ? Math.round(_distance) + " meters" : ""
     property string _altText:           _statusValid ? Math.round(_altDifference) + " meters" : ""
     property string _azimuthText:       _statusValid ? Math.round(_azimuth) : ""
@@ -115,9 +114,7 @@ Rectangle {
 
                     property real availableHeight: height - ScreenTools.smallFontPixelHeight - indicator.height
 
-                    // If home position is not valid we are graphing relative based on a home alt of 0. Because of this
-                    // we cannot graph absolute altitudes since we have no basis for comparison against the relative values.
-                    property bool graphAbsolute:    homePositionValid
+                    property bool graphAbsolute:    true
 
                     MissionItemIndexLabel {
                         id:                         indicator
