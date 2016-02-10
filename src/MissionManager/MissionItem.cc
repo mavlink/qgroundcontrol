@@ -821,6 +821,12 @@ void MissionItem::setDefaultsForCommand(void)
         }
     }
 
+    if (command == MAV_CMD_NAV_WAYPOINT) {
+        // We default all acceptance radius to 0. This allows flight controller to be in control of
+        // accept radius.
+        setParam2(0);
+    }
+
     setAutoContinue(true);
     setFrame(specifiesCoordinate() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_MISSION);
     setRawEdit(false);
