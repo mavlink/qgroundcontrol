@@ -38,7 +38,6 @@
 #include "SetupViewTest.h"
 #include "MavlinkLogTest.h"
 
-UT_REGISTER_TEST(SetupViewTest)
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
 UT_REGISTER_TEST(FileDialogTest)
@@ -65,3 +64,5 @@ UT_REGISTER_TEST(RadioConfigTest)
 // time to debug.
 //UT_REGISTER_TEST(TCPLinkUnitTest)
 
+// Windows based unit tests are not working correctly. Needs major reword to support.
+//UT_REGISTER_TEST(SetupViewTest)

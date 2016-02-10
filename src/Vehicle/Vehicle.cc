@@ -326,7 +326,7 @@ void Vehicle::_handleHomePosition(mavlink_message_t& message)
 
     if (emitHomePositionChanged) {
         qCDebug(VehicleLog) << "New home position" << newHomePosition;
-        qgcApp()->setDefaultMapPosition(_homePosition);
+        qgcApp()->setLastKnownHomePosition(_homePosition);
         emit homePositionChanged(_homePosition);
     }
     if (emitHomePositionAvailableChanged) {
