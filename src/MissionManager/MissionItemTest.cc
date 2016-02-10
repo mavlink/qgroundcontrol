@@ -38,7 +38,6 @@ const MissionItemTest::ItemInfo_t MissionItemTest::_rgItemInfo[] = {
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesWaypoint[] = {
     { "Altitude:",      70.1234567 },
     { "Hold:",          10.1234567 },
-    { "Accept radius:", 20.1234567 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLoiterUnlim[] = {
@@ -189,6 +188,5 @@ void MissionItemTest::_testDefaultValues(void)
 
     item.setCommand(MAV_CMD_NAV_WAYPOINT);
     item.setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
-    QCOMPARE(item.param2(), 3.0);
     QCOMPARE(item.param7(), MissionItem::defaultAltitude);
 }
