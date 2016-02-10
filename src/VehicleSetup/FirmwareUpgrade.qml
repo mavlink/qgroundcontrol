@@ -227,7 +227,7 @@ QGCView {
                 QGCRadioButton {
                     id:             apmFlightStack
                     exclusiveGroup: firmwareGroup
-                    text:           "APM Flight Stack"
+                    text:           "ArduPilot Flight Stack"
                     visible:        !px4Flow
 
                     onClicked: parent.firmwareVersionChanged(firmwareTypeList)
