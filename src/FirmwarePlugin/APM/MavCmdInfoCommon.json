@@ -16,6 +16,24 @@
                 "default":          0.26179939,
                 "decimalPlaces":    2
             }
+        },
+        {
+            "id":                   84,
+            "rawName":              "MAV_CMD_NAV_VTOL_TAKEOFF",
+            "friendlyName":         "VTOL takeoff",
+            "description":          "Takeoff from ground using VTOL mode.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "VTOL"
+        },
+        {
+            "id":                   85,
+            "rawName":              "MAV_CMD_NAV_VTOL_LAND",
+            "friendlyName":         "VTOL land",
+            "description":          "Land using VTOL mode.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "VTOL"
         }
     ]
 }
