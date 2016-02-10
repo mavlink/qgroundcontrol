@@ -446,12 +446,17 @@ void MissionController::_recalcWaypointLines(void)
 
     _waypointLines.clear();
 
+    bool linkBackToHome = false;
     for (int i=1; i<_missionItems->count(); i++) {
         MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
 
         // Assume the worst
         item->setAzimuth(0.0);
         item->setDistance(-1.0);
+
+        if (firstCoordinateItem && item->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
+            linkBackToHome = true;
+        }
 
         if (item->specifiesCoordinate()) {
             double absoluteAltitude = item->coordinate().altitude();
@@ -462,23 +467,8 @@ void MissionController::_recalcWaypointLines(void)
             maxAltSeen = std::max(maxAltSeen, absoluteAltitude);
 
             if (!item->standaloneCoordinate()) {
-                if (firstCoordinateItem) {
-                    if (item->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
-                        // The first coordinate we hit is a takeoff command so link back to home position
-                        if (showHomePosition) {
-                            double azimuth, distance, altDifference;
-
-                            _waypointLines.append(new CoordinateVector(homeItem->coordinate(), item->coordinate()));
-                            _calcPrevWaypointValues(homeAlt, item, homeItem, &azimuth, &distance, &altDifference);
-                            item->setAltDifference(altDifference);
-                            item->setAzimuth(azimuth);
-                            item->setDistance(distance);
-                        }
-                    } else {
-                        // First coordiante is not a takeoff command, it does not link backwards to anything
-                    }
-                    firstCoordinateItem = false;
-                } else if (!lastCoordinateItem->homePosition() || showHomePosition) {
+                firstCoordinateItem = false;
+                if (!lastCoordinateItem->homePosition() || (showHomePosition && linkBackToHome)) {
                     double azimuth, distance, altDifference;
 
                     // Subsequent coordinate items link to last coordinate item. If the last coordinate item
