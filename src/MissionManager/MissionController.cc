@@ -280,6 +280,15 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QString& error
 
     if (addPlannedHomePosition || _missionItems->count() == 0) {
         _addPlannedHomePosition(true /* addToCenter */);
+
+        // Update sequence numbers in DO_JUMP commands to take into account added home position
+        for (int i=1; i<_missionItems->count(); i++) {
+            MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+            if (item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
+                // Home is in position 0
+                item->setParam1((int)item->param1() + 1);
+            }
+        }
     }
 
     return true;
