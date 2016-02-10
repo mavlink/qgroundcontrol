@@ -153,11 +153,11 @@ MavCmdInfo* MissionCommands::getMavCmdInfo(MAV_CMD command, Vehicle* vehicle) co
             if (_autopilotToMultiRotorMissionCommands[firmwareType]->contains(command)) {
                 mavCmdInfo = _autopilotToMultiRotorMissionCommands[firmwareType]->getMavCmdInfo(command);
             }
-        } else {
-            if (_autopilotToCommonMissionCommands[firmwareType]->contains(command)) {
-                mavCmdInfo = _autopilotToCommonMissionCommands[firmwareType]->getMavCmdInfo(command);
-            }
         }
+    }
+
+    if (!mavCmdInfo && _autopilotToCommonMissionCommands[firmwareType]->contains(command)) {
+        mavCmdInfo = _autopilotToCommonMissionCommands[firmwareType]->getMavCmdInfo(command);
     }
 
     if (!mavCmdInfo) {

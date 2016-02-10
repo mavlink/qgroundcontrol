@@ -813,7 +813,8 @@ void MissionItem::setDefaultsForCommand(void)
 
     MAV_CMD command = (MAV_CMD)this->command();
     if (_missionCommands->contains(command)) {
-        foreach (const MavCmdParamInfo* paramInfo, _missionCommands->getMavCmdInfo(command, _vehicle)->paramInfoMap()) {
+        MavCmdInfo* mavCmdInfo = _missionCommands->getMavCmdInfo(command, _vehicle);
+        foreach (const MavCmdParamInfo* paramInfo, mavCmdInfo->paramInfoMap()) {
             Fact* rgParamFacts[7] = { &_param1Fact, &_param2Fact, &_param3Fact, &_param4Fact, &_param5Fact, &_param6Fact, &_param7Fact };
 
             rgParamFacts[paramInfo->param()-1]->setRawValue(paramInfo->defaultValue());
