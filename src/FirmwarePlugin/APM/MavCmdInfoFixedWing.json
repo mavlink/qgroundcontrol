@@ -2,20 +2,5 @@
     "version": 1,
 
     "mavCmdInfo": [
-        {
-            "id":                   22,
-            "rawName":              "MAV_CMD_NAV_TAKEOFF",
-            "friendlyName":         "Takeoff",
-            "description":          "Take off from the ground.",
-            "specifiesCoordinate":  false,
-            "friendlyEdit":         true,
-            "category":             "Basic",
-            "param1": {
-                "label":            "Pitch:",
-                "units":            "radians",
-                "default":          0.26179939,
-                "decimalPlaces":    2
-            }
-        }
     ]
 }
