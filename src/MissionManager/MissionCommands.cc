@@ -77,10 +77,14 @@ void MissionCommands::_createCategories(void)
         foreach (MAV_CMD command, cmdList) {
             MavCmdInfo* mavCmdInfo = _commonMissionCommands.getMavCmdInfo(command);
 
-            if (mavCmdInfo->friendlyEdit()) {
-                _categoryToMavCmdListMap[firmwareType][mavCmdInfo->category()].append(command);
-            } else if (!allCommandsSupported) {
-                qWarning() << "Attempt to add non friendly edit supported command";
+            if (mavCmdInfo) {
+                if (mavCmdInfo->friendlyEdit()) {
+                    _categoryToMavCmdListMap[firmwareType][mavCmdInfo->category()].append(command);
+                } else if (!allCommandsSupported) {
+                    qWarning() << "Attempt to add non friendly edit supported command" << command;
+                }
+            } else {
+                qCDebug(MissionCommandsLog) << "Command missing from json" << command;
             }
         }
     }
