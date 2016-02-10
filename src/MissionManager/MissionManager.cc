@@ -265,6 +265,12 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
                                             missionItem.autocontinue,
                                             missionItem.current,
                                             this);
+
+        if (item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
+            // Home is in position 0
+            item->setParam1((int)item->param1() + 1);
+        }
+
         _missionItems.append(item);
     } else {
         qCDebug(MissionManagerLog) << "_handleMissionItem mission item received item index which was not requested, disregrarding:" << missionItem.seq;

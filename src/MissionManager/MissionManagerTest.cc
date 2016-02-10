@@ -64,11 +64,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         QVERIFY(item->load(loadStream));
 
         // Mission Manager expects to get 1-base sequence numbers for write
-
         item->setSequenceNumber(item->sequenceNumber() + 1);
-        if (item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
-            item->setParam1((int)item->param1() + 1);
-        }
         
         list->append(item);
     }
@@ -212,14 +208,9 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         const TestCase_t* testCase = &_rgTestCases[testCaseIndex];
 
         int expectedSequenceNumber = testCase->expectedItem.sequenceNumber;
-        int expectedParam1 = (int)testCase->expectedItem.param1;
         if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
             // Account for home position in first item
             expectedSequenceNumber++;
-            if (testCase->expectedItem.command == MAV_CMD_DO_JUMP) {
-                // Expected data in test case is for PX4
-                expectedParam1++;
-            }
         }
 
         MissionItem* actual = qobject_cast<MissionItem*>(_missionManager->missionItems()->get(actualItemIndex));
@@ -230,7 +221,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         QCOMPARE(actual->coordinate().longitude(),  testCase->expectedItem.coordinate.longitude());
         QCOMPARE(actual->coordinate().altitude(),   testCase->expectedItem.coordinate.altitude());
         QCOMPARE((int)actual->command(),       (int)testCase->expectedItem.command);
-        QCOMPARE((int)actual->param1(),        (int)expectedParam1);
+        QCOMPARE(actual->param1(),                  testCase->expectedItem.param1);
         QCOMPARE(actual->param2(),                  testCase->expectedItem.param2);
         QCOMPARE(actual->param3(),                  testCase->expectedItem.param3);
         QCOMPARE(actual->param4(),                  testCase->expectedItem.param4);
