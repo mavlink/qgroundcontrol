@@ -50,11 +50,13 @@ public:
     
     Q_PROPERTY(bool                 inProgress      READ inProgress     NOTIFY inProgressChanged)
     Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItems   CONSTANT)
+    Q_PROPERTY(int                  currentItem     READ currentItem    NOTIFY currentItemChanged)
     
     // Property accessors
     
     bool inProgress(void);
     QmlObjectListModel* missionItems(void) { return &_missionItems; }
+    int currentItem(void) { return _currentMissionItem; }
     
     // C++ methods
     
@@ -88,6 +90,7 @@ signals:
     void newMissionItemsAvailable(void);
     void inProgressChanged(bool inProgress);
     void error(int errorCode, const QString& errorMsg);
+    void currentItemChanged(int currentItem);
     
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
@@ -108,6 +111,7 @@ private:
     void _handleMissionItem(const mavlink_message_t& message);
     void _handleMissionRequest(const mavlink_message_t& message);
     void _handleMissionAck(const mavlink_message_t& message);
+    void _handleMissionCurrent(const mavlink_message_t& message);
     void _requestNextMissionItem(void);
     void _clearMissionItems(void);
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
@@ -131,6 +135,7 @@ private:
     QMutex _dataMutex;
     
     QmlObjectListModel  _missionItems;
+    int                 _currentMissionItem;
 };
 
 #endif

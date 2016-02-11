@@ -637,6 +637,7 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
 
         disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailableFromVehicle);
         disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
+        disconnect(missionManager, &MissionManager::currentItemChanged,         this, &MissionController::_currentMissionItemChanged);
         disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,      this, &MissionController::_activeVehicleHomePositionAvailableChanged);
         disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionController::_activeVehicleHomePositionChanged);
         _activeVehicle = NULL;
@@ -649,6 +650,7 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
 
         connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailableFromVehicle);
         connect(missionManager, &MissionManager::inProgressChanged,         this, &MissionController::_inProgressChanged);
+        connect(missionManager, &MissionManager::currentItemChanged,        this, &MissionController::_currentMissionItemChanged);
         connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
         connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
 
@@ -812,5 +814,19 @@ void MissionController::_addPlannedHomePosition(bool addToCenter)
         homeItem->setCoordinate(QGeoCoordinate((south + ((north - south) / 2)) - 90.0, (west + ((east - west) / 2)) - 180.0, 0.0));
     } else {
         homeItem->setCoordinate(qgcApp()->lastKnownHomePosition());
+    }
+}
+
+void MissionController::_currentMissionItemChanged(int sequenceNumber)
+{
+    if (!_editMode) {
+        if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle()) {
+            sequenceNumber++;
+        }
+
+        for (int i=0; i<_missionItems->count(); i++) {
+            MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+            item->setIsCurrentItem(item->sequenceNumber() == sequenceNumber);
+        }
     }
 }
