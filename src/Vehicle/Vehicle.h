@@ -124,6 +124,7 @@ public:
     Q_PROPERTY(uint                 messagesLost            READ messagesLost                           NOTIFY messagesLostChanged)
     Q_PROPERTY(bool                 fixedWing               READ fixedWing                              CONSTANT)
     Q_PROPERTY(bool                 multiRotor              READ multiRotor                             CONSTANT)
+    Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                      NOTIFY autoDisconnectChanged)
 
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
@@ -318,6 +319,7 @@ signals:
     void missingParametersChanged(bool missingParameters);
     void connectionLostChanged(bool connectionLost);
     void connectionLostEnabledChanged(bool connectionLostEnabled);
+    void autoDisconnectChanged(bool autoDisconnectChanged);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -480,6 +482,7 @@ private:
     QString         _formatedMessage;
     int             _rcRSSI;
     double          _rcRSSIstore;
+    bool            _autoDisconnect;    ///< true: Automatically disconnect vehicle when last connection goes away or lost heartbeat
 
     // Lost connection handling
     bool                _connectionLost;

@@ -97,6 +97,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _updateCount(0)
     , _rcRSSI(0)
     , _rcRSSIstore(100.0)
+    , _autoDisconnect(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -1316,6 +1317,9 @@ void Vehicle::_connectionLostTimeout(void)
         _heardFrom = false;
         emit connectionLostChanged(true);
         _say(QString("connection lost to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
+        if (_autoDisconnect) {
+            disconnectInactiveVehicle();
+        }
     }
 }
 
