@@ -39,6 +39,7 @@ MissionManager::MissionManager(Vehicle* vehicle)
     , _retryAck(AckNone)
     , _readTransactionInProgress(false)
     , _writeTransactionInProgress(false)
+    , _currentMissionItem(-1)
 {
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &MissionManager::_mavlinkMessageReceived);
     
@@ -421,7 +422,7 @@ void MissionManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             break;
             
         case MAVLINK_MSG_ID_MISSION_CURRENT:
-            // FIXME: NYI
+            _handleMissionCurrent(message);
             break;
     }
 }
@@ -534,4 +535,17 @@ void MissionManager::_finishTransaction(bool success)
 bool MissionManager::inProgress(void)
 {
     return _readTransactionInProgress || _writeTransactionInProgress;
+}
+
+void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
+{
+    mavlink_mission_current_t missionCurrent;
+
+    mavlink_msg_mission_current_decode(&message, &missionCurrent);
+
+    qCDebug(MissionManagerLog) << "_handleMissionCurrent seq:" << missionCurrent.seq;
+    if (missionCurrent.seq != _currentMissionItem) {
+        _currentMissionItem = missionCurrent.seq;
+        emit currentItemChanged(_currentMissionItem);
+    }
 }
