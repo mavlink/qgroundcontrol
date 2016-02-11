@@ -78,6 +78,7 @@ private slots:
     void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
     void _dirtyChanged(bool dirty);
     void _inProgressChanged(bool inProgress);
+    void _currentMissionItemChanged(int sequenceNumber);
 
 private:
     void _recalcSequence(void);
