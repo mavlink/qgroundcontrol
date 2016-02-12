@@ -35,6 +35,8 @@ Fact::Fact(QObject* parent)
     , _rawValue(0)
     , _type(FactMetaData::valueTypeInt32)
     , _metaData(NULL)
+    , _sendValueChangedSignals(true)
+    , _deferredValueChangeSignal(false)
 {    
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
@@ -47,6 +49,8 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
     , _rawValue(0)
     , _type(type)
     , _metaData(NULL)
+    , _sendValueChangedSignals(true)
+    , _deferredValueChangeSignal(false)
 {
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
@@ -60,11 +64,13 @@ Fact::Fact(const Fact& other, QObject* parent)
 
 const Fact& Fact::operator=(const Fact& other)
 {
-    _name           = other._name;
-    _componentId    = other._componentId;
-    _rawValue          = other._rawValue;
-    _type           = other._type;
-    
+    _name                       = other._name;
+    _componentId                = other._componentId;
+    _rawValue                   = other._rawValue;
+    _type                       = other._type;
+    _sendValueChangedSignals    = other._sendValueChangedSignals;
+    _deferredValueChangeSignal  = other._deferredValueChangeSignal;
+
     if (_metaData && other._metaData) {
         *_metaData = *other._metaData;
     } else {
@@ -82,7 +88,7 @@ void Fact::forceSetRawValue(const QVariant& value)
         
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
             _rawValue.setValue(typedValue);
-            emit valueChanged(cookedValue());
+            _sendValueChangedSignal(cookedValue());
             emit _containerRawValueChanged(rawValue());
         }
     } else {
@@ -99,7 +105,7 @@ void Fact::setRawValue(const QVariant& value)
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
             if (typedValue != _rawValue) {
                 _rawValue.setValue(typedValue);
-                emit valueChanged(cookedValue());
+                _sendValueChangedSignal(cookedValue());
                 emit _containerRawValueChanged(rawValue());
             }
         }
@@ -141,7 +147,7 @@ void Fact::setEnumIndex(int index)
 void Fact::_containerSetRawValue(const QVariant& value)
 {
     _rawValue = value;
-    emit valueChanged(cookedValue());
+    _sendValueChangedSignal(cookedValue());
     emit vehicleUpdated(_rawValue);
 }
 
@@ -490,5 +496,31 @@ bool Fact::rebootRequired(void) const
     } else {
         qWarning() << "Meta data pointer missing";
         return false;
+    }
+}
+
+void Fact::setSendValueChangedSignals (bool sendValueChangedSignals)
+{
+    if (sendValueChangedSignals != _sendValueChangedSignals) {
+        _sendValueChangedSignals = sendValueChangedSignals;
+        emit sendValueChangedSignalsChanged(_sendValueChangedSignals);
+    }
+}
+
+void Fact::_sendValueChangedSignal(QVariant value)
+{
+    if (_sendValueChangedSignals) {
+        emit valueChanged(value);
+        _deferredValueChangeSignal = false;
+    } else {
+        _deferredValueChangeSignal = true;
+    }
+}
+
+void Fact::sendDeferredValueChangedSignal(void)
+{
+    if (_deferredValueChangeSignal) {
+        _deferredValueChangeSignal = false;
+        emit valueChanged(cookedValue());
     }
 }

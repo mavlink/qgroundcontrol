@@ -176,18 +176,18 @@ Row {
                 smooth:         true
                 width:          mainWindow.tbCellHeight * 0.65
                 height:         mainWindow.tbCellHeight * 0.5
-                opacity:        (activeVehicle && activeVehicle.satelliteCount >= 0) ? 1 : 0.5
+                opacity:        (activeVehicle && activeVehicle.gps.count.value >= 0) ? 1 : 0.5
                 anchors.verticalCenter: parent.verticalCenter
             }
             SignalStrength {
                 size:           mainWindow.tbCellHeight * 0.5
-                percent:        activeVehicle ? getSatStrength(activeVehicle.satRawHDOP) : ""
+                percent:        activeVehicle ? getSatStrength(activeVehicle.gps.hdop.value) : ""
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
         QGCLabel {
-            text:           (activeVehicle && activeVehicle.satelliteCount >= 0) ? activeVehicle.satelliteCount : ""
-            visible:        (activeVehicle && activeVehicle.satelliteCount >= 0)
+            text:           (activeVehicle && activeVehicle.gps.count.value >= 0) ? activeVehicle.gps.count.valueString : ""
+            visible:        (activeVehicle && activeVehicle.gps.count.value >= 0)
             font.pixelSize: tbFontSmall
             color:          colorWhite
             anchors.top:    parent.top

@@ -673,6 +673,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     src/FactSystem/Fact.h \
+    src/FactSystem/FactGroup.h \
     src/FactSystem/FactControls/FactPanelController.h \
     src/FactSystem/FactMetaData.h \
     src/FactSystem/FactSystem.h \
@@ -682,6 +683,7 @@ HEADERS += \
 
 SOURCES += \
     src/FactSystem/Fact.cc \
+    src/FactSystem/FactGroup.cc \
     src/FactSystem/FactControls/FactPanelController.cc \
     src/FactSystem/FactMetaData.cc \
     src/FactSystem/FactSystem.cc \

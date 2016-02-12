@@ -25,6 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FactSystem.h"
+#include "FactGroup.h"
 #include "FactPanelController.h"
 
 #include <QtQml>
@@ -41,6 +42,7 @@ void FactSystem::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
-    qmlRegisterType<Fact>(_factSystemQmlUri, 1, 0, "Fact");
+    qmlRegisterType<Fact>               (_factSystemQmlUri, 1, 0, "Fact");
+    qmlRegisterType<Fact>               (_factSystemQmlUri, 1, 0, "FactGroup");
     qmlRegisterType<FactPanelController>(_factSystemQmlUri, 1, 0, "FactPanelController");
 }

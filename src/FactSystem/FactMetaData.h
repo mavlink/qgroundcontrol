@@ -120,6 +120,8 @@ public:
 
     static const int defaultDecimalPlaces = 3;
 
+    static ValueType_t stringToType(const QString& typeString, bool& unknownType);
+
 private:
     QVariant _minForType(void) const;
     QVariant _maxForType(void) const;
