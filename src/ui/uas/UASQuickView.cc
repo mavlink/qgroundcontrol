@@ -41,7 +41,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
 
     QAction *action = new QAction("Add/Remove Items",this);
     action->setCheckable(false);
-    connect(action,&QAction::triggered,this, static_cast<void (UASQuickView::*)(bool)>(&UASQuickView::actionTriggered));
+    connect(action,&QAction::triggered,this, &UASQuickView::addActionTriggered);
     this->addAction(action);
 
     QAction *columnaction = new QAction("Set Column Count",this);
@@ -75,7 +75,7 @@ void UASQuickView::columnActionTriggered()
     saveSettings();
 }
 
-void UASQuickView::actionTriggered()
+void UASQuickView::addActionTriggered()
 {
     if (quickViewSelectDialog)
     {
