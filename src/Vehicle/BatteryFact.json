@@ -1,0 +1,69 @@
+{
+    "version": 1,
+
+    "properties": [
+        {
+            "name":             "roll",
+            "shortDescription": "Roll",
+            "type":             "double",
+            "decimalPlaces":    1,
+            "units":            "degrees"
+        },
+        {
+            "name":             "pitch",
+            "shortDescription": "Pitch",
+            "type":             "double",
+            "decimalPlaces":    1,
+            "units":            "degrees"
+        },
+        {
+            "name":             "heading",
+            "shortDescription": "Heading",
+            "type":             "double",
+            "decimalPlaces":    0,
+            "units":            "degrees"
+        },
+        {
+            "name":             "groundSpeed",
+            "shortDescription": "Ground Speed",
+            "type":             "double",
+            "decimalPlaces":    1,
+            "units":            "m/s"
+        },
+        {
+            "name":             "airSpeed",
+            "shortDescription": "Air Speed",
+            "type":             "double",
+            "decimalPlaces":    1,
+            "units":            "m/s"
+        },
+        {
+            "name":             "climbRate",
+            "shortDescription": "Climb Rate",
+            "type":             "double",
+            "decimalPlaces":    1,
+            "units":            "m/s"
+        },
+        {
+            "name":             "altitudeRelative",
+            "shortDescription": "Altitude",
+            "type":             "double",
+            "decimalPlaces":    1,
+            "units":            "m"
+        },
+        {
+            "name":             "altitudeQGS84",
+            "shortDescription": "Altitude",
+            "type":             "double",
+            "decimalPlaces":    1,
+            "units":            "m"
+        },
+        {
+            "name":             "altitudeAMSL",
+            "shortDescription": "Altitude",
+            "type":             "double",
+            "decimalPlaces":    1,
+            "units":            "m"
+        }
+    ]
+}

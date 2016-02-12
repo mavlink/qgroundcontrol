@@ -39,7 +39,8 @@ Item {
 
     readonly property string _InstrumentVisibleKey: "IsInstrumentPanelVisible"
 
-    property bool _isInstrumentVisible: QGroundControl.loadBoolGlobalSetting(_InstrumentVisibleKey, true)
+    property bool   _isInstrumentVisible:   QGroundControl.loadBoolGlobalSetting(_InstrumentVisibleKey, true)
+    property var    _activeVehicle:         multiVehicleManager.activeVehicle
 
     QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
 
@@ -101,9 +102,9 @@ Item {
         heading:                _heading
         rollAngle:              _roll
         pitchAngle:             _pitch
-        altitude:               _altitudeWGS84
-        groundSpeed:            _groundSpeed
-        airSpeed:               _airSpeed
+        altitudeFact:           _altitudeWGS84Fact
+        groundSpeedFact:        _groundSpeedFact
+        airSpeedFact:           _airSpeedFact
         isSatellite:            _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
         z:                      QGroundControl.zOrderWidgets
         onClicked: {
@@ -127,7 +128,7 @@ Item {
             spacing:            ScreenTools.defaultFontPixelSize * 0.33
             anchors.verticalCenter: parent.verticalCenter
             QGCLabel {
-                text:           "Altitude (m)"
+                text:           _altitudeWGS84Fact.shortDescription + "(" + _altitudeWGS84Fact.units + ")"
                 font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
                 width:          parent.width
                 height:         ScreenTools.defaultFontPixelSize * 0.75
@@ -135,7 +136,7 @@ Item {
                 horizontalAlignment: TextEdit.AlignHCenter
             }
             QGCLabel {
-                text:           _altitudeWGS84 < 10000 ? _altitudeWGS84.toFixed(1) : _altitudeWGS84.toFixed(0)
+                text:           _altitudeWGS84Fact.valueString
                 font.pixelSize: ScreenTools.defaultFontPixelSize * 1.5
                 font.weight:    Font.DemiBold
                 width:          parent.width
@@ -143,7 +144,7 @@ Item {
                 horizontalAlignment: TextEdit.AlignHCenter
             }
             QGCLabel {
-                text:           "Ground Speed (km/h)"
+                text:           _groundSpeedFact.shortDescription + "(" + _groundSpeedFact.units + ")"
                 font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
                 width:          parent.width
                 height:         ScreenTools.defaultFontPixelSize * 0.75
@@ -151,7 +152,7 @@ Item {
                 horizontalAlignment: TextEdit.AlignHCenter
             }
             QGCLabel {
-                text:           (_groundSpeed * 3.6).toFixed(1)
+                text:           _groundSpeedFact.valueString
                 font.pixelSize: ScreenTools.defaultFontPixelSize
                 font.weight:    Font.DemiBold
                 width:          parent.width

@@ -51,7 +51,7 @@ MapQuickItem {
         transform: Rotation {
             origin.x:   vehicleIcon.width  / 2
             origin.y:   vehicleIcon.height / 2
-            angle:      vehicle ? vehicle.heading : 0
+            angle:      vehicle ? vehicle.heading.value : 0
         }
     }
 }
