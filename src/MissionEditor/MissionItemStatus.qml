@@ -96,6 +96,8 @@ Rectangle {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
+        contentWidth:           graphRow.width
+        clip:                   true
 
         Row {
             id:             graphRow
