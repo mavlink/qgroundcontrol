@@ -46,6 +46,23 @@ const char* Vehicle::_settingsGroup =               "Vehicle%1";        // %1 re
 const char* Vehicle::_joystickModeSettingsKey =     "JoystickMode";
 const char* Vehicle::_joystickEnabledSettingsKey =  "JoystickEnabled";
 
+const char* Vehicle::_rollFactName =                "roll";
+const char* Vehicle::_pitchFactName =               "pitch";
+const char* Vehicle::_headingFactName =             "heading";
+const char* Vehicle::_airSpeedFactName =            "airSpeed";
+const char* Vehicle::_groundSpeedFactName =         "groundSpeed";
+const char* Vehicle::_climbRateFactName =           "climbRate";
+const char* Vehicle::_altitudeRelativeFactName =    "altitudeRelative";
+const char* Vehicle::_altitudeWGS84FactName =       "altitudeWGS84";
+const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
+const char* Vehicle::_gpsFactGroupName =            "gps";
+
+const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
+const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
+const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
+const char* VehicleGPSFactGroup::_countFactName =               "count";
+const char* VehicleGPSFactGroup::_lockFactName =                "lock";
+
 Vehicle::Vehicle(LinkInterface*             link,
                  int                        vehicleId,
                  MAV_AUTOPILOT              firmwareType,
@@ -53,7 +70,8 @@ Vehicle::Vehicle(LinkInterface*             link,
                  FirmwarePluginManager*     firmwarePluginManager,
                  AutoPilotPluginManager*    autopilotPluginManager,
                  JoystickManager*           joystickManager)
-    : _id(vehicleId)
+    : FactGroup(_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json")
+    , _id(vehicleId)
     , _active(false)
     , _firmwareType(firmwareType)
     , _vehicleType(vehicleType)
@@ -72,15 +90,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _currentWarningCount(0)
     , _currentNormalCount(0)
     , _currentMessageType(MessageNone)
-    , _roll(0.0f)
-    , _pitch(0.0f)
-    , _heading(0.0f)
-    , _altitudeAMSL(0.0f)
-    , _altitudeWGS84(0.0f)
-    , _altitudeRelative(0.0f)
-    , _groundSpeed(0.0f)
-    , _airSpeed(0.0f)
-    , _climbRate(0.0f)
     , _navigationAltitudeError(0.0f)
     , _navigationSpeedError(0.0f)
     , _navigationCrosstrackError(0.0f)
@@ -89,11 +98,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _batteryVoltage(-1.0f)
     , _batteryPercent(0.0)
     , _batteryConsumed(-1.0)
-    , _satelliteCount(-1)
-    , _satRawHDOP(1e10f)
-    , _satRawVDOP(1e10f)
-    , _satRawCOG(0.0)
-    , _satelliteLock(0)
     , _updateCount(0)
     , _rcRSSI(0)
     , _rcRSSIstore(100.0)
@@ -118,6 +122,16 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _messageSeq(0)
     , _compID(0)
     , _heardFrom(false)
+    , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
+    , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
+    , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
+    , _groundSpeedFact      (0, _groundSpeedFactName,       FactMetaData::valueTypeDouble)
+    , _airSpeedFact         (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
+    , _climbRateFact        (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
+    , _altitudeRelativeFact (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
+    , _altitudeWGS84Fact    (0, _altitudeWGS84FactName,     FactMetaData::valueTypeDouble)
+    , _altitudeAMSLFact     (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
+    , _gpsFactGroup(this)
 {
     _addLink(link);
 
@@ -155,15 +169,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(&_connectionLostTimer, &QTimer::timeout, this, &Vehicle::_connectionLostTimeout);
 
     _mav = uas();
-    // Reset satellite data (no GPS)
-    _satelliteCount = -1;
-    _satRawHDOP     = 1e10f;
-    _satRawVDOP     = 1e10f;
-    _satRawCOG      = 0.0;
-    emit satRawHDOPChanged();
-    emit satRawVDOPChanged();
-    emit satRawCOGChanged();
-    emit satelliteCountChanged();
 
     // Listen for system messages
     connect(qgcApp()->toolbox()->uasMessageHandler(), &UASMessageHandler::textMessageCountChanged,  this, &Vehicle::_handleTextMessage);
@@ -179,15 +184,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_mav, &UASInterface::NavigationControllerDataChanged,   this, &Vehicle::_updateNavigationControllerData);
     connect(_mav, &UASInterface::batteryChanged,                    this, &Vehicle::_updateBatteryRemaining);
     connect(_mav, &UASInterface::batteryConsumedChanged,            this, &Vehicle::_updateBatteryConsumedChanged);
-    connect(_mav, &UASInterface::localizationChanged,               this, &Vehicle::_setSatLoc);
-    UAS* pUas = dynamic_cast<UAS*>(_mav);
-    if(pUas) {
-        _setSatelliteCount(pUas->getSatelliteCount(), QString(""));
-        connect(pUas, &UAS::satelliteCountChanged,  this, &Vehicle::_setSatelliteCount);
-        connect(pUas, &UAS::satRawHDOPChanged,      this, &Vehicle::_setSatRawHDOP);
-        connect(pUas, &UAS::satRawVDOPChanged,      this, &Vehicle::_setSatRawVDOP);
-        connect(pUas, &UAS::satRawCOGChanged,       this, &Vehicle::_setSatRawCOG);
-    }
 
     _loadSettings();
 
@@ -205,6 +201,21 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     _mapTrajectoryTimer.setInterval(_mapTrajectoryMsecsBetweenPoints);
     connect(&_mapTrajectoryTimer, &QTimer::timeout, this, &Vehicle::_addNewMapTrajectoryPoint);
+
+    // Build FactGroup object model
+
+    _addFact(&_rollFact,                _rollFactName);
+    _addFact(&_pitchFact,               _pitchFactName);
+    _addFact(&_headingFact,             _headingFactName);
+    _addFact(&_groundSpeedFact,         _groundSpeedFactName);
+    _addFact(&_airSpeedFact,            _airSpeedFactName);
+    _addFact(&_climbRateFact,           _climbRateFactName);
+    _addFact(&_altitudeRelativeFact,    _altitudeRelativeFactName);
+    _addFact(&_altitudeWGS84Fact,       _altitudeWGS84FactName);
+    _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
+
+    _addFactGroup(&_gpsFactGroup, _gpsFactGroupName);
+    _gpsFactGroup.setVehicle(this);
 }
 
 Vehicle::~Vehicle()
@@ -564,50 +575,21 @@ void Vehicle::setLongitude(double longitude){
 void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64)
 {
     if (isinf(roll)) {
-        _roll = std::numeric_limits<double>::quiet_NaN();
+        _rollFact.setRawValue(0);
     } else {
-        float rolldeg = _oneDecimal(roll * (180.0 / M_PI));
-        if (fabs(roll - rolldeg) > 0.25) {
-            _roll = rolldeg;
-            if(_refreshTimer->isActive()) {
-                emit rollChanged();
-            }
-        }
-        if(_roll != rolldeg) {
-            _roll = rolldeg;
-            _addChange(ROLL_CHANGED);
-        }
+        _rollFact.setRawValue(roll * (180.0 / M_PI));
     }
     if (isinf(pitch)) {
-        _pitch = std::numeric_limits<double>::quiet_NaN();
+        _pitchFact.setRawValue(0);
     } else {
-        float pitchdeg = _oneDecimal(pitch * (180.0 / M_PI));
-        if (fabs(pitch - pitchdeg) > 0.25) {
-            _pitch = pitchdeg;
-            if(_refreshTimer->isActive()) {
-                emit pitchChanged();
-            }
-        }
-        if(_pitch != pitchdeg) {
-            _pitch = pitchdeg;
-            _addChange(PITCH_CHANGED);
-        }
+        _pitchFact.setRawValue(pitch * (180.0 / M_PI));
     }
     if (isinf(yaw)) {
-        _heading = std::numeric_limits<double>::quiet_NaN();
+        _headingFact.setRawValue(0);
     } else {
-        yaw = _oneDecimal(yaw * (180.0 / M_PI));
+        yaw = yaw * (180.0 / M_PI);
         if (yaw < 0) yaw += 360;
-        if (fabs(_heading - yaw) > 0.25) {
-            _heading = yaw;
-            if(_refreshTimer->isActive()) {
-                emit headingChanged();
-            }
-        }
-        if(_heading != yaw) {
-            _heading = yaw;
-            _addChange(HEADING_CHANGED);
-        }
+        _headingFact.setRawValue(yaw);
     }
 }
 
@@ -618,75 +600,15 @@ void Vehicle::_updateAttitude(UASInterface* uas, int, double roll, double pitch,
 
 void Vehicle::_updateSpeed(UASInterface*, double groundSpeed, double airSpeed, quint64)
 {
-    groundSpeed = _oneDecimal(groundSpeed);
-    if (fabs(_groundSpeed - groundSpeed) > 0.5) {
-        _groundSpeed = groundSpeed;
-        if(_refreshTimer->isActive()) {
-            emit groundSpeedChanged();
-        }
-    }
-    airSpeed = _oneDecimal(airSpeed);
-    if (fabs(_airSpeed - airSpeed) > 0.5) {
-        _airSpeed = airSpeed;
-        if(_refreshTimer->isActive()) {
-            emit airSpeedChanged();
-        }
-    }
-    if(_groundSpeed != groundSpeed) {
-        _groundSpeed = groundSpeed;
-        _addChange(GROUNDSPEED_CHANGED);
-    }
-    if(_airSpeed != airSpeed) {
-        _airSpeed = airSpeed;
-        _addChange(AIRSPEED_CHANGED);
-    }
+    _groundSpeedFact.setRawValue(groundSpeed);
+    _airSpeedFact.setRawValue(airSpeed);
 }
 
 void Vehicle::_updateAltitude(UASInterface*, double altitudeAMSL, double altitudeWGS84, double altitudeRelative, double climbRate, quint64) {
-    altitudeAMSL = _oneDecimal(altitudeAMSL);
-    if (fabs(_altitudeAMSL - altitudeAMSL) > 0.5) {
-        _altitudeAMSL = altitudeAMSL;
-        if(_refreshTimer->isActive()) {
-            emit altitudeAMSLChanged();
-        }
-    }
-    altitudeWGS84 = _oneDecimal(altitudeWGS84);
-    if (fabs(_altitudeWGS84 - altitudeWGS84) > 0.5) {
-        _altitudeWGS84 = altitudeWGS84;
-        if(_refreshTimer->isActive()) {
-            emit altitudeWGS84Changed();
-        }
-    }
-    altitudeRelative = _oneDecimal(altitudeRelative);
-    if (fabs(_altitudeRelative - altitudeRelative) > 0.5) {
-        _altitudeRelative = altitudeRelative;
-        if(_refreshTimer->isActive()) {
-            emit altitudeRelativeChanged();
-        }
-    }
-    climbRate = _oneDecimal(climbRate);
-    if (fabs(_climbRate - climbRate) > 0.5) {
-        _climbRate = climbRate;
-        if(_refreshTimer->isActive()) {
-            emit climbRateChanged();
-        }
-    }
-    if(_altitudeAMSL != altitudeAMSL) {
-        _altitudeAMSL = altitudeAMSL;
-        _addChange(ALTITUDEAMSL_CHANGED);
-    }
-    if(_altitudeWGS84 != altitudeWGS84) {
-        _altitudeWGS84 = altitudeWGS84;
-        _addChange(ALTITUDEWGS84_CHANGED);
-    }
-    if(_altitudeRelative != altitudeRelative) {
-        _altitudeRelative = altitudeRelative;
-        _addChange(ALTITUDERELATIVE_CHANGED);
-    }
-    if(_climbRate != climbRate) {
-        _climbRate = climbRate;
-        _addChange(CLIMBRATE_CHANGED);
-    }
+    _altitudeAMSLFact.setRawValue(altitudeAMSL);
+    _altitudeWGS84Fact.setRawValue(altitudeWGS84);
+    _altitudeRelativeFact.setRawValue(altitudeRelative);
+    _climbRateFact.setRawValue(climbRate);
 }
 
 void Vehicle::_updateNavigationControllerErrors(UASInterface*, double altitudeError, double speedError, double xtrackError) {
@@ -705,19 +627,6 @@ void Vehicle::_updateNavigationControllerData(UASInterface *uas, float, float, f
  * Internal
  */
 
-void Vehicle::_addChange(int id)
-{
-    if(!_changes.contains(id)) {
-        _changes.append(id);
-    }
-}
-
-float Vehicle::_oneDecimal(float value)
-{
-    int i = (value * 10);
-    return (float)i / 10.0;
-}
-
 void Vehicle::_checkUpdate()
 {
     // Update current location
@@ -728,49 +637,6 @@ void Vehicle::_checkUpdate()
         if(longitude() != _mav->getLongitude()) {
             setLongitude(_mav->getLongitude());
         }
-    }
-    // The timer rate is 20Hz for the coordinates above. These below we only check
-    // twice a second.
-    if(++_updateCount > 9) {
-        _updateCount = 0;
-        // Check for changes
-        // Significant changes, that is, whole number changes, are updated immediatelly.
-        // For every message however, we set a flag for what changed and this timer updates
-        // them to bring everything up-to-date. This prevents an avalanche of UI updates.
-        foreach(int i, _changes) {
-            switch (i) {
-                case ROLL_CHANGED:
-                    emit rollChanged();
-                    break;
-                case PITCH_CHANGED:
-                    emit pitchChanged();
-                    break;
-                case HEADING_CHANGED:
-                    emit headingChanged();
-                    break;
-                case GROUNDSPEED_CHANGED:
-                    emit groundSpeedChanged();
-                    break;
-                case AIRSPEED_CHANGED:
-                    emit airSpeedChanged();
-                    break;
-                case CLIMBRATE_CHANGED:
-                    emit climbRateChanged();
-                    break;
-                case ALTITUDERELATIVE_CHANGED:
-                    emit altitudeRelativeChanged();
-                    break;
-                case ALTITUDEWGS84_CHANGED:
-                    emit altitudeWGS84Changed();
-                    break;
-                case ALTITUDEAMSL_CHANGED:
-                    emit altitudeAMSLChanged();
-                    break;
-                default:
-                    break;
-            }
-        }
-        _changes.clear();
     }
 }
 
@@ -834,54 +700,6 @@ void Vehicle::_updateState(UASInterface*, QString name, QString)
     if (_currentState != name) {
         _currentState = name;
         emit currentStateChanged();
-    }
-}
-
-void Vehicle::_setSatelliteCount(double val, QString)
-{
-    // I'm assuming that a negative value or over 99 means there is no GPS
-    if(val < 0.0)  val = -1.0;
-    if(val > 99.0) val = -1.0;
-    if(_satelliteCount != (int)val) {
-        _satelliteCount = (int)val;
-        emit satelliteCountChanged();
-    }
-}
-
-void Vehicle::_setSatRawHDOP(double val)
-{
-    if(_satRawHDOP != val) {
-        _satRawHDOP = val;
-        emit satRawHDOPChanged();
-    }
-}
-
-void Vehicle::_setSatRawVDOP(double val)
-{
-    if(_satRawVDOP != val) {
-        _satRawVDOP = val;
-        emit satRawVDOPChanged();
-    }
-}
-
-void Vehicle::_setSatRawCOG(double val)
-{
-    if(_satRawCOG != val) {
-        _satRawCOG = val;
-        emit satRawCOGChanged();
-    }
-}
-
-void Vehicle::_setSatLoc(UASInterface*, int fix)
-{
-    // fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D lock, 3: 3D lock
-    if(_satelliteLock != fix) {
-        if (fix > 2) {
-            _coordinateValid = true;
-            emit coordinateValidChanged(true);
-        }
-        _satelliteLock = fix;
-        emit satelliteLockChanged();
     }
 }
 
@@ -1358,3 +1176,86 @@ bool Vehicle::multiRotor(void) const
         return false;
     }
 }
+
+void Vehicle::_setCoordinateValid(bool coordinateValid)
+{
+    if (coordinateValid != _coordinateValid) {
+        _coordinateValid = coordinateValid;
+        emit coordinateValidChanged(_coordinateValid);
+    }
+}
+
+
+VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
+    : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
+    , _vehicle(NULL)
+    , _hdopFact             (0, _hdopFactName,              FactMetaData::valueTypeDouble)
+    , _vdopFact             (0, _vdopFactName,              FactMetaData::valueTypeDouble)
+    , _courseOverGroundFact (0, _courseOverGroundFactName,  FactMetaData::valueTypeDouble)
+    , _countFact            (0, _countFactName,             FactMetaData::valueTypeInt32)
+    , _lockFact             (0, _lockFactName,              FactMetaData::valueTypeInt32)
+{
+    // Build FactGroup object model
+
+    _addFact(&_hdopFact,                _hdopFactName);
+    _addFact(&_vdopFact,                _vdopFactName);
+    _addFact(&_courseOverGroundFact,    _courseOverGroundFactName);
+    _addFact(&_lockFact,                _lockFactName);
+    _addFact(&_countFact,               _countFactName);
+}
+
+void VehicleGPSFactGroup::setVehicle(Vehicle* vehicle)
+{
+    _vehicle = vehicle;
+
+#if 0
+    // Reset satellite data (no GPS)
+    _satelliteCount = -1;
+    _satRawHDOP     = 1e10f;
+    _satRawVDOP     = 1e10f;
+    _satRawCOG      = 0.0;
+#endif
+
+    connect(_vehicle->uas(), &UASInterface::localizationChanged, this, &VehicleGPSFactGroup::_setSatLoc);
+
+    UAS* pUas = dynamic_cast<UAS*>(_vehicle->uas());
+    connect(pUas, &UAS::satelliteCountChanged,  this, &VehicleGPSFactGroup::_setSatelliteCount);
+    connect(pUas, &UAS::satRawHDOPChanged,      this, &VehicleGPSFactGroup::_setSatRawHDOP);
+    connect(pUas, &UAS::satRawVDOPChanged,      this, &VehicleGPSFactGroup::_setSatRawVDOP);
+    connect(pUas, &UAS::satRawCOGChanged,       this, &VehicleGPSFactGroup::_setSatRawCOG);
+}
+
+void VehicleGPSFactGroup::_setSatelliteCount(double val, QString)
+{
+    // I'm assuming that a negative value or over 99 means there is no GPS
+    if(val < 0.0)  val = -1.0;
+    if(val > 99.0) val = -1.0;
+
+    _countFact.setRawValue(val);
+}
+
+void VehicleGPSFactGroup::_setSatRawHDOP(double val)
+{
+    _hdopFact.setRawValue(val);
+}
+
+void VehicleGPSFactGroup::_setSatRawVDOP(double val)
+{
+    _vdopFact.setRawValue(val);
+}
+
+void VehicleGPSFactGroup::_setSatRawCOG(double val)
+{
+    _courseOverGroundFact.setRawValue(val);
+}
+
+void VehicleGPSFactGroup::_setSatLoc(UASInterface*, int fix)
+{
+    _lockFact.setRawValue(fix);
+
+    // fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D lock, 3: 3D lock
+    if (fix > 2) {
+        _vehicle->_setCoordinateValid(true);
+    }
+}
+

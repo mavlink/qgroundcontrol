@@ -188,28 +188,6 @@ Rectangle {
         return colorRed;
     }
 
-    function getGpsLockStatus() {
-        if(activeVehicle) {
-            if(activeVehicle.satelliteLock < 2) {
-                return "No Satellite Lock"
-            }
-            if(activeVehicle.satelliteLock == 2) {
-                return "2D Lock"
-            }
-            if(activeVehicle.satelliteLock == 3) {
-                return "3D Lock"
-            }
-            if(activeVehicle.satelliteLock == 4) {
-                return "3D DGPS Lock"
-            }
-            if(activeVehicle.satelliteLock == 5) {
-                return "3D RTK GPS Lock"
-            }
-            return "Unkown Lock Type (" + activeVehicle.satelliteLock + ")"
-        }
-        return "N/A"
-    }
-
     Component.onCompleted: {
         //-- TODO: Get this from the actual state
         flyButton.checked = true
@@ -232,14 +210,14 @@ Rectangle {
                 anchors.centerIn:   parent
                 QGCLabel {
                     id:         gpsLabel
-                    text:       (activeVehicle && activeVehicle.satelliteCount >= 0) ? "GPS Status" : "GPS Data Unavailable"
+                    text:       (activeVehicle && activeVehicle.gps.count.value >= 0) ? "GPS Status" : "GPS Data Unavailable"
                     font.weight:Font.DemiBold
                     color:      colorWhite
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 GridLayout {
                     id:                 gpsGrid
-                    visible:            (activeVehicle && activeVehicle.satelliteCount >= 0)
+                    visible:            (activeVehicle && activeVehicle.gps.count.value >= 0)
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -249,7 +227,7 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? (activeVehicle.satelliteCount) : "N/A"
+                        text:   activeVehicle ? activeVehicle.gps.count.valueString : "N/A"
                         color:  colorWhite
                     }
                     QGCLabel {
@@ -257,7 +235,7 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   getGpsLockStatus()
+                        text:   activeVehicle ? activeVehicle.gps.lock.enumStringValue : "N/A"
                         color:  colorWhite
                     }
                     QGCLabel {
@@ -265,7 +243,7 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? (activeVehicle.satRawHDOP < 10000 ? activeVehicle.satRawHDOP.toFixed(0) : "N/A") : "N/A"
+                        text:   activeVehicle ? (activeVehicle.gps.hdop.value < 10000 ? activeVehicle.gps.hdop.valueString : "N/A") : "N/A"
                         color:  colorWhite
                     }
                     QGCLabel {
@@ -273,7 +251,7 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? (activeVehicle.satRawVDOP < 10000 ? activeVehicle.satRawVDOP.toFixed(0) : "N/A") : "N/A"
+                        text:   activeVehicle ? (activeVehicle.gps.vdop.value < 10000 ? activeVehicle.gps.vdop.valueString : "N/A") : "N/A"
                         color:  colorWhite
                     }
                     QGCLabel {
@@ -281,7 +259,7 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? (activeVehicle.satRawCOG).toFixed(2) : "N/A"
+                        text:   activeVehicle ? activeVehicle.gps.courseOverGround.valueString : "N/A"
                         color:  colorWhite
                     }
                 }

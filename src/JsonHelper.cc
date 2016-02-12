@@ -24,6 +24,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QJsonArray>
 
+const char* JsonHelper::_enumStringsJsonKey =   "enumStrings";
+const char* JsonHelper::_enumValuesJsonKey =    "enumValues";
+
 bool JsonHelper::validateRequiredKeys(const QJsonObject& jsonObject, const QStringList& keys, QString& errorString)
 {
     QString missingKeys;
@@ -66,6 +69,33 @@ bool JsonHelper::toQGeoCoordinate(const QJsonValue& jsonValue, QGeoCoordinate& c
 
     if (!coordinate.isValid()) {
         errorString = QString("Coordinate is invalid: %1").arg(coordinate.toString());
+        return false;
+    }
+
+    return true;
+}
+
+bool JsonHelper::validateKeyTypes(QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types, QString& errorString)
+{
+    for (int i=0; i<keys.count(); i++) {
+        if (jsonObject.contains(keys[i])) {
+            if (jsonObject.value(keys[i]).type() != types[i]) {
+                errorString  = QString("Incorrect type key:type:expected %1 %2 %3").arg(keys[i]).arg(jsonObject.value(keys[i]).type()).arg(types[i]);
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool JsonHelper::parseEnum(QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString)
+{
+    enumStrings = jsonObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
+    enumValues = jsonObject.value(_enumValuesJsonKey).toString().split(",", QString::SkipEmptyParts);
+
+    if (enumStrings.count() != enumValues.count()) {
+        errorString = QString("enum strings/values count mismatch: %1");
         return false;
     }
 

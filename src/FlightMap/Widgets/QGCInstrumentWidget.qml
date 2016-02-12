@@ -29,8 +29,9 @@ This file is part of the QGROUNDCONTROL project
 
 import QtQuick 2.4
 
-import QGroundControl.Controls 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem    1.0
 
 Item {
     id:     root
@@ -41,12 +42,14 @@ Item {
     property alias  heading:        compass.heading
     property alias  rollAngle:      attitude.rollAngle
     property alias  pitchAngle:     attitude.pitchAngle
-    property real   altitude:       0
-    property real   groundSpeed:    0
-    property real   airSpeed:       0
     property real   size:           _defaultSize
     property bool   isSatellite:    false
     property bool   active:         false
+
+    property Fact   _emptyFact:         Fact { }
+    property Fact   groundSpeedFact:    _emptyFact
+    property Fact   airSpeedFact:       _emptyFact
+    property Fact   altitudeFact:       _emptyFact
 
     property real   _defaultSize:   ScreenTools.defaultFontPixelSize * (9)
 
@@ -84,7 +87,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             QGCLabel {
-                text:           "Altitude (m)"
+                text:           altitudeFact.shortDescription + " (" + altitudeFact.units + ")"
                 font.pixelSize: _labelFontSize
                 width:          parent.width
                 height:         _labelFontSize
@@ -92,7 +95,7 @@ Item {
                 horizontalAlignment: TextEdit.AlignHCenter
             }
             QGCLabel {
-                text:           altitude < 10000 ? altitude.toFixed(1) : altitude.toFixed(0)
+                text:           altitudeFact.valueString
                 font.pixelSize: _bigFontSize
                 font.weight:    Font.DemiBold
                 width:          parent.width
@@ -105,25 +108,25 @@ Item {
                 width:          parent.width * 0.9
                 color:          isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible:        airSpeed <= 0 && !ScreenTools.isTinyScreen
+                visible:        airSpeedFact.value <= 0 && !ScreenTools.isTinyScreen
             }
             QGCLabel {
-                text:           "Ground Speed (km/h)"
+                text:           groundSpeedFact.shortDescription + " (" + groundSpeedFact.units + ")"
                 font.pixelSize: _labelFontSize
                 width:          parent.width
                 height:         _labelFontSize
                 color:          isSatellite ? "black" : "white"
                 horizontalAlignment: TextEdit.AlignHCenter
-                visible:        airSpeed <= 0 && !ScreenTools.isTinyScreen
+                visible:        airSpeedFact.value <= 0 && !ScreenTools.isTinyScreen
             }
             QGCLabel {
-                text:           (groundSpeed * 3.6).toFixed(1)
+                text:           groundSpeedFact.valueString
                 font.pixelSize: _normalFontSize
                 font.weight:    Font.DemiBold
                 width:          parent.width
                 color:          isSatellite ? "black" : "white"
                 horizontalAlignment: TextEdit.AlignHCenter
-                visible:        airSpeed <= 0 && !ScreenTools.isTinyScreen
+                visible:        airSpeedFact.value <= 0 && !ScreenTools.isTinyScreen
             }
             //-- Air Speed
             Rectangle {
@@ -131,24 +134,24 @@ Item {
                 width:          parent.width * 0.9
                 color:          isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible:        airSpeed > 0 && !ScreenTools.isTinyScreen
+                visible:        airSpeedFact.value > 0 && !ScreenTools.isTinyScreen
             }
             QGCLabel {
-                text:           "Air Speed (km/h)"
+                text:           airSpeedFact.shortDescription + " (" + airSpeedFact.units + ")"
                 font.pixelSize: _labelFontSize
                 width:          parent.width
                 height:         _labelFontSize
                 color:          isSatellite ? "black" : "white"
-                visible:        airSpeed > 0 && !ScreenTools.isTinyScreen
+                visible:        airSpeedFact.value > 0 && !ScreenTools.isTinyScreen
                 horizontalAlignment: TextEdit.AlignHCenter
             }
             QGCLabel {
-                text:           (airSpeed * 3.6).toFixed(1)
+                text:           airSpeedFact.valueString
                 font.pixelSize: _normalFontSize
                 font.weight:    Font.DemiBold
                 width:          parent.width
                 color:          isSatellite ? "black" : "white"
-                visible:        airSpeed > 0 && !ScreenTools.isTinyScreen
+                visible:        airSpeedFact.value > 0 && !ScreenTools.isTinyScreen
                 horizontalAlignment: TextEdit.AlignHCenter
             }
             //-- Compass

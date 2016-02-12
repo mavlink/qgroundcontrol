@@ -31,7 +31,12 @@ class JsonHelper
 {
 public:
     static bool validateRequiredKeys(const QJsonObject& jsonObject, const QStringList& keys, QString& errorString);
+    static bool validateKeyTypes(QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types, QString& errorString);
     static bool toQGeoCoordinate(const QJsonValue& jsonValue, QGeoCoordinate& coordinate, bool altitudeRequired, QString& errorString);
+    static bool parseEnum(QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString);
+
+    static const char*  _enumStringsJsonKey;
+    static const char*  _enumValuesJsonKey;
 };
 
 #endif

@@ -30,6 +30,7 @@
 #include <QObject>
 #include <QGeoCoordinate>
 
+#include "FactGroup.h"
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
 #include "MissionItem.h"
@@ -50,7 +51,52 @@ class UASMessage;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
-class Vehicle : public QObject
+class Vehicle;
+
+class VehicleGPSFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    VehicleGPSFactGroup(QObject* parent = NULL);
+
+    Q_PROPERTY(Fact* hdop               READ hdop               CONSTANT)
+    Q_PROPERTY(Fact* vdop               READ vdop               CONSTANT)
+    Q_PROPERTY(Fact* courseOverGround   READ courseOverGround   CONSTANT)
+    Q_PROPERTY(Fact* count              READ count              CONSTANT)
+    Q_PROPERTY(Fact* lock               READ lock               CONSTANT)
+
+    Fact* hdop(void)                { return &_hdopFact; }
+    Fact* vdop(void)                { return &_vdopFact; }
+    Fact* courseOverGround(void)    { return &_courseOverGroundFact; }
+    Fact* count(void)               { return &_countFact; }
+    Fact* lock(void)                { return &_lockFact; }
+
+    void setVehicle(Vehicle* vehicle);
+
+private slots:
+    void _setSatelliteCount(double val, QString);
+    void _setSatRawHDOP(double val);
+    void _setSatRawVDOP(double val);
+    void _setSatRawCOG(double val);
+    void _setSatLoc(UASInterface*, int fix);
+
+private:
+    Vehicle*    _vehicle;
+    Fact        _hdopFact;
+    Fact        _vdopFact;
+    Fact        _courseOverGroundFact;
+    Fact        _countFact;
+    Fact        _lockFact;
+
+    static const char* _hdopFactName;
+    static const char* _vdopFactName;
+    static const char* _courseOverGroundFactName;
+    static const char* _countFactName;
+    static const char* _lockFactName;
+};
+
+class Vehicle : public FactGroup
 {
     Q_OBJECT
 
@@ -78,26 +124,12 @@ public:
     Q_PROPERTY(bool                 hilMode                 READ hilMode            WRITE setHilMode    NOTIFY hilModeChanged)
     Q_PROPERTY(bool                 missingParameters       READ missingParameters                      NOTIFY missingParametersChanged)
     Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                       CONSTANT)
-    Q_PROPERTY(float                roll                    READ roll                                   NOTIFY rollChanged)
-    Q_PROPERTY(float                pitch                   READ pitch                                  NOTIFY pitchChanged)
-    Q_PROPERTY(float                heading                 READ heading                                NOTIFY headingChanged)
-    Q_PROPERTY(float                groundSpeed             READ groundSpeed                            NOTIFY groundSpeedChanged)
-    Q_PROPERTY(float                airSpeed                READ airSpeed                               NOTIFY airSpeedChanged)
-    Q_PROPERTY(float                climbRate               READ climbRate                              NOTIFY climbRateChanged)
-    Q_PROPERTY(float                altitudeRelative        READ altitudeRelative                       NOTIFY altitudeRelativeChanged)
-    Q_PROPERTY(float                altitudeWGS84           READ altitudeWGS84                          NOTIFY altitudeWGS84Changed)
-    Q_PROPERTY(float                altitudeAMSL            READ altitudeAMSL                           NOTIFY altitudeAMSLChanged)
     Q_PROPERTY(float                latitude                READ latitude                               NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude               READ longitude                              NOTIFY coordinateChanged)
     Q_PROPERTY(double               batteryVoltage          READ batteryVoltage                         NOTIFY batteryVoltageChanged)
     Q_PROPERTY(double               batteryPercent          READ batteryPercent                         NOTIFY batteryPercentChanged)
     Q_PROPERTY(double               batteryConsumed         READ batteryConsumed                        NOTIFY batteryConsumedChanged)
-    Q_PROPERTY(int                  satelliteCount          READ satelliteCount                         NOTIFY satelliteCountChanged)
-    Q_PROPERTY(double               satRawHDOP              READ satRawHDOP                             NOTIFY satRawHDOPChanged)
-    Q_PROPERTY(double               satRawVDOP              READ satRawVDOP                             NOTIFY satRawVDOPChanged)
-    Q_PROPERTY(double               satRawCOG               READ satRawCOG                              NOTIFY satRawCOGChanged)
     Q_PROPERTY(QString              currentState            READ currentState                           NOTIFY currentStateChanged)
-    Q_PROPERTY(int                  satelliteLock           READ satelliteLock                          NOTIFY satelliteLockChanged)
     Q_PROPERTY(QmlObjectListModel*  missionItems            READ missionItemsModel                      CONSTANT)
     Q_PROPERTY(bool                 messageTypeNone         READ messageTypeNone                        NOTIFY messageTypeChanged)
     Q_PROPERTY(bool                 messageTypeNormal       READ messageTypeNormal                      NOTIFY messageTypeChanged)
@@ -126,6 +158,20 @@ public:
     Q_PROPERTY(bool                 multiRotor              READ multiRotor                             CONSTANT)
     Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                      NOTIFY autoDisconnectChanged)
 
+    // FactGroup object model properties
+
+    Q_PROPERTY(Fact* roll               READ roll               CONSTANT)
+    Q_PROPERTY(Fact* pitch              READ pitch              CONSTANT)
+    Q_PROPERTY(Fact* heading            READ heading            CONSTANT)
+    Q_PROPERTY(Fact* groundSpeed        READ groundSpeed        CONSTANT)
+    Q_PROPERTY(Fact* airSpeed           READ airSpeed           CONSTANT)
+    Q_PROPERTY(Fact* climbRate          READ climbRate          CONSTANT)
+    Q_PROPERTY(Fact* altitudeRelative   READ altitudeRelative   CONSTANT)
+    Q_PROPERTY(Fact* altitudeWGS84      READ altitudeWGS84      CONSTANT)
+    Q_PROPERTY(Fact* altitudeAMSL       READ altitudeAMSL       CONSTANT)
+
+    Q_PROPERTY(FactGroup* gps   READ gpsFactGroup CONSTANT)
+
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 
@@ -147,6 +193,7 @@ public:
 
     QGeoCoordinate coordinate(void) { return _coordinate; }
     bool coordinateValid(void)      { return _coordinateValid; }
+    void _setCoordinateValid(bool coordinateValid);
     QmlObjectListModel* missionItemsModel(void);
 
     typedef enum {
@@ -239,18 +286,6 @@ public:
         MessageError
     } MessageType_t;
 
-    enum {
-        ROLL_CHANGED,
-        PITCH_CHANGED,
-        HEADING_CHANGED,
-        GROUNDSPEED_CHANGED,
-        AIRSPEED_CHANGED,
-        CLIMBRATE_CHANGED,
-        ALTITUDERELATIVE_CHANGED,
-        ALTITUDEWGS84_CHANGED,
-        ALTITUDEAMSL_CHANGED
-    };
-
     bool            messageTypeNone     () { return _currentMessageType == MessageNone; }
     bool            messageTypeNormal   () { return _currentMessageType == MessageNormal; }
     bool            messageTypeWarning  () { return _currentMessageType == MessageWarning; }
@@ -260,27 +295,13 @@ public:
     QString         formatedMessages    ();
     QString         formatedMessage     () { return _formatedMessage; }
     QString         latestError         () { return _latestError; }
-    float           roll                () { return _roll; }
-    float           pitch               () { return _pitch; }
-    float           heading             () { return _heading; }
-    float           groundSpeed         () { return _groundSpeed; }
-    float           airSpeed            () { return _airSpeed; }
-    float           climbRate           () { return _climbRate; }
-    float           altitudeRelative    () { return _altitudeRelative; }
-    float           altitudeWGS84       () { return _altitudeWGS84; }
-    float           altitudeAMSL        () { return _altitudeAMSL; }
     float           latitude            () { return _coordinate.latitude(); }
     float           longitude           () { return _coordinate.longitude(); }
     bool            mavPresent          () { return _mav != NULL; }
-    int             satelliteCount      () { return _satelliteCount; }
-    double          satRawHDOP          () { return _satRawHDOP; }
-    double          satRawVDOP          () { return _satRawVDOP; }
-    double          satRawCOG           () { return _satRawCOG; }
     double          batteryVoltage      () { return _batteryVoltage; }
     double          batteryPercent      () { return _batteryPercent; }
     double          batteryConsumed     () { return _batteryConsumed; }
     QString         currentState        () { return _currentState; }
-    int             satelliteLock       () { return _satelliteLock; }
     int             rcRSSI              () { return _rcRSSI; }
     bool            px4Firmware         () { return _firmwareType == MAV_AUTOPILOT_PX4; }
     bool            apmFirmware         () { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
@@ -290,6 +311,18 @@ public:
     uint            messagesReceived    () { return _messagesReceived; }
     uint            messagesSent        () { return _messagesSent; }
     uint            messagesLost        () { return _messagesLost; }
+
+    Fact* roll              (void) { return &_rollFact; }
+    Fact* heading           (void) { return &_headingFact; }
+    Fact* pitch             (void) { return &_pitchFact; }
+    Fact* airSpeed          (void) { return &_airSpeedFact; }
+    Fact* groundSpeed       (void) { return &_groundSpeedFact; }
+    Fact* climbRate         (void) { return &_climbRateFact; }
+    Fact* altitudeRelative  (void) { return &_altitudeRelativeFact; }
+    Fact* altitudeWGS84     (void) { return &_altitudeWGS84Fact; }
+    Fact* altitudeAMSL      (void) { return &_altitudeAMSLFact; }
+
+    FactGroup* gpsFactGroup(void) { return &_gpsFactGroup; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -335,26 +368,12 @@ signals:
     void formatedMessagesChanged();
     void formatedMessageChanged ();
     void latestErrorChanged     ();
-    void rollChanged            ();
-    void pitchChanged           ();
-    void headingChanged         ();
-    void groundSpeedChanged     ();
-    void airSpeedChanged        ();
-    void climbRateChanged       ();
-    void altitudeRelativeChanged();
-    void altitudeWGS84Changed   ();
-    void altitudeAMSLChanged    ();
     void longitudeChanged       ();
     void batteryVoltageChanged  ();
     void batteryPercentChanged  ();
     void batteryConsumedChanged ();
     void currentConfigChanged   ();
-    void satelliteCountChanged  ();
-    void satRawHDOPChanged      ();
-    void satRawVDOPChanged      ();
-    void satRawCOGChanged       ();
     void currentStateChanged    ();
-    void satelliteLockChanged   ();
     void flowImageIndexChanged  ();
     void rcRSSIChanged          (int rcRSSI);
 
@@ -395,11 +414,6 @@ private slots:
     void _updateBatteryRemaining            (UASInterface*, double voltage, double, double percent, int);
     void _updateBatteryConsumedChanged      (UASInterface*, double current_consumed);
     void _updateState                       (UASInterface* system, QString name, QString description);
-    void _setSatelliteCount                 (double val, QString name);
-    void _setSatRawHDOP                     (double val);
-    void _setSatRawVDOP                     (double val);
-    void _setSatRawCOG                      (double val);
-    void _setSatLoc                         (UASInterface* uas, int fix);
     /** @brief A new camera image has arrived */
     void _imageReady                        (UASInterface* uas);
     void _connectionLostTimeout(void);
@@ -419,9 +433,6 @@ private:
     void _mapTrajectoryStop(void);
     void _connectionActive(void);
     void _say(const QString& text, int severity);
-
-    void    _addChange                      (int id);
-    float   _oneDecimal                     (float value);
 
 private:
     int     _id;            ///< Mavlink system id
@@ -454,30 +465,15 @@ private:
     int             _currentNormalCount;
     MessageType_t   _currentMessageType;
     QString         _latestError;
-    float           _roll;
-    float           _pitch;
-    float           _heading;
-    float           _altitudeAMSL;
-    float           _altitudeWGS84;
-    float           _altitudeRelative;
-    float           _groundSpeed;
-    float           _airSpeed;
-    float           _climbRate;
     float           _navigationAltitudeError;
     float           _navigationSpeedError;
     float           _navigationCrosstrackError;
     float           _navigationTargetBearing;
     QTimer*         _refreshTimer;
-    QList<int>      _changes;
     double          _batteryVoltage;
     double          _batteryPercent;
     double          _batteryConsumed;
     QString         _currentState;
-    int             _satelliteCount;
-    double          _satRawHDOP;
-    double          _satRawVDOP;
-    double          _satRawCOG;
-    int             _satelliteLock;
     int             _updateCount;
     QString         _formatedMessage;
     int             _rcRSSI;
@@ -534,9 +530,37 @@ private:
     uint8_t             _compID;
     bool                _heardFrom;
 
+    // FactGroup facts
+
+    Fact _rollFact;
+    Fact _pitchFact;
+    Fact _headingFact;
+    Fact _groundSpeedFact;
+    Fact _airSpeedFact;
+    Fact _climbRateFact;
+    Fact _altitudeRelativeFact;
+    Fact _altitudeWGS84Fact;
+    Fact _altitudeAMSLFact;
+
+    VehicleGPSFactGroup _gpsFactGroup;
+
+    static const char* _rollFactName;
+    static const char* _pitchFactName;
+    static const char* _headingFactName;
+    static const char* _groundSpeedFactName;
+    static const char* _airSpeedFactName;
+    static const char* _climbRateFactName;
+    static const char* _altitudeRelativeFactName;
+    static const char* _altitudeWGS84FactName;
+    static const char* _altitudeAMSLFactName;
+    static const char* _gpsFactGroupName;
+
+    static const int _vehicleUIUpdateRateMSecs = 100;
+
     // Settings keys
     static const char* _settingsGroup;
     static const char* _joystickModeSettingsKey;
     static const char* _joystickEnabledSettingsKey;
+
 };
 #endif
