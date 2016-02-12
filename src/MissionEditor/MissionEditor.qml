@@ -710,6 +710,7 @@ QGCView {
                 onClicked:  {
                     syncButton.hideDropDown()
                     _root.showDialog(removeAllPromptDialog, "Delete all", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                }
             }
 
 /*
