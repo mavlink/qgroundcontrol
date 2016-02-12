@@ -49,8 +49,11 @@ public:
     Q_INVOKABLE void sendMissionItems(void);
     Q_INVOKABLE void loadMissionFromFile(void);
     Q_INVOKABLE void saveMissionToFile(void);
+    Q_INVOKABLE void loadMobileMissionFromFile(const QString& file);
+    Q_INVOKABLE void saveMobileMissionToFile(const QString& file);
     Q_INVOKABLE void removeMissionItem(int index);
     Q_INVOKABLE void removeAllMissionItems(void);
+    Q_INVOKABLE QStringList getMobileMissionFiles(void);
 
     /// @param i: index to insert at
     Q_INVOKABLE int insertMissionItem(QGeoCoordinate coordinate, int i);
@@ -97,10 +100,10 @@ private:
     void _addPlannedHomePosition(QmlObjectListModel* missionItems, bool addToCenter);
     double _normalizeLat(double lat);
     double _normalizeLon(double lon);
-#ifndef __mobile__
     bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* missionItems, QString& errorString);
     bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* missionItems, QString& errorString);
-#endif
+    void _loadMissionFromFile(const QString& file);
+    void _saveMissionToFile(const QString& file);
 
 private:
     bool                _editMode;
