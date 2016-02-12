@@ -42,6 +42,11 @@ QGCView {
 
     property bool syncNeeded: controller.missionItems.dirty // Unsaved changes, visible to parent container
 
+    /// Maximun number of items we show in the editor ListView. Any more than this and we tell the user
+    /// that editors are not available.
+    readonly property int _maxEditableItems: 100
+    property bool _showEditors: controller.missionItems.count <= _maxEditableItems
+
     viewPanel:          panel
     topDialogMargin:    height - mainWindow.availableHeight
 
@@ -378,13 +383,32 @@ QGCView {
                         onWheel:            wheel.accepted = true
                     }
 
+                    Rectangle {
+                        anchors.fill:   parent
+                        color:          qgcPal.windowShade
+                        radius:         ScreenTools.defaultFontPixelWidth / 2
+                        visible:        !_showEditors
+
+                        readonly property real _editFieldWidth:     ScreenTools.defaultFontPixelWidth * 16
+                        readonly property real _margin:             ScreenTools.defaultFontPixelWidth / 2
+                        readonly property real _radius:             ScreenTools.defaultFontPixelWidth / 2
+
+                        QGCLabel {
+                            anchors.margins:    _margin
+                            anchors.fill:       parent
+                            text:               "Mission has too many items to allow item editing. " +
+                                                "Items are still displayed on map and can be sent to Vehicle. " +
+                                                "Maximum number of items to allow editing: " + _maxEditableItems
+                            wrapMode:           Text.WordWrap
+                        }
+                    }
+
                     ListView {
                         anchors.fill:   parent
                         spacing:        _margin / 2
                         orientation:    ListView.Vertical
-                        model:          controller.missionItems
-
-                        property real _maxItemHeight: 0
+                        model:          _showEditors ? controller.missionItems : 0
+                        visible:        _showEditors
 
                         delegate: MissionItemEditor {
                             missionItem:    object
@@ -397,11 +421,6 @@ QGCView {
                             onRemove: {
                                 itemDragger.clearItem()
                                 controller.removeMissionItem(object.sequenceNumber)
-                            }
-
-                            onRemoveAll: {
-                                itemDragger.clearItem()
-                                controller.removeAllMissionItems()
                             }
 
                             onInsert: {
@@ -602,6 +621,20 @@ QGCView {
     }
 
     Component {
+        id: removeAllPromptDialog
+
+        QGCViewMessage {
+            message: "Are you sure you want to delete all mission items?"
+
+            function accept() {
+                itemDragger.clearItem()
+                controller.removeAllMissionItems()
+                hideDialog()
+            }
+        }
+    }
+
+    Component {
         id: syncDropDownComponent
 
         Column {
@@ -671,6 +704,14 @@ QGCView {
                     }
                 }
             }
+
+            QGCButton {
+                text:       "Remove all"
+                onClicked:  {
+                    syncButton.hideDropDown()
+                    _root.showDialog(removeAllPromptDialog, "Delete all", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+            }
+
 /*
         FIXME: autoSync is temporarily disconnected since it's still buggy
 

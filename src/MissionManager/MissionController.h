@@ -94,12 +94,12 @@ private:
     void _calcPrevWaypointValues(double homeAlt, MissionItem* currentItem, MissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     bool _findLastAltitude(double* lastAltitude);
     bool _findLastAcceptanceRadius(double* lastAcceptanceRadius);
-    void _addPlannedHomePosition(bool addToCenter);
+    void _addPlannedHomePosition(QmlObjectListModel* missionItems, bool addToCenter);
     double _normalizeLat(double lat);
     double _normalizeLon(double lon);
 #ifndef __mobile__
-    bool _loadJsonMissionFile(const QByteArray& bytes, QString& errorString);
-    bool _loadTextMissionFile(QTextStream& stream, QString& errorString);
+    bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* missionItems, QString& errorString);
+    bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* missionItems, QString& errorString);
 #endif
 
 private:

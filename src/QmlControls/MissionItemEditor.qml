@@ -20,7 +20,6 @@ Rectangle {
 
     signal clicked
     signal remove
-    signal removeAll
     signal insert(int i)
     signal moveHomeToMapCenter
 
@@ -35,19 +34,6 @@ Rectangle {
     QGCPalette {
         id: qgcPal
         colorGroupEnabled: enabled
-    }
-
-    Component {
-        id: deleteAllPromptDialog
-
-        QGCViewMessage {
-            message: "Are you sure you want to delete all mission items?"
-
-            function accept() {
-                removeAll()
-                hideDialog()
-            }
-        }
     }
 
     Item {
@@ -97,12 +83,6 @@ Rectangle {
                     MenuItem {
                         text:           "Delete"
                         onTriggered:    remove()
-                    }
-
-                    MenuItem {
-                        text:           "Delete all"
-
-                        onTriggered: qgcView.showDialog(deleteAllPromptDialog, "Delete all", qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                     }
 
                     MenuSeparator { }
