@@ -123,18 +123,6 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-struct LogDownloadData {
-    LogDownloadData(QGCLogEntry* entry);
-    QHash<uint32_t, uint32_t> gaps;
-    QFile                     file;
-    QString                   filename;
-    uint                      ID;
-    QGCLogEntry*              entry;
-    uint                      written;
-    QElapsedTimer             elapsed;
-};
-
-//-----------------------------------------------------------------------------
 class LogDownloadController : public FactPanelController
 {
     Q_OBJECT
@@ -170,7 +158,8 @@ private slots:
 private:
 
     bool _entriesComplete   ();
-    bool _logComplete       ();
+    bool _chunkComplete     () const;
+    bool _logComplete       () const;
     void _findMissingEntries();
     void _receivedAllEntries();
     void _receivedAllData   ();
