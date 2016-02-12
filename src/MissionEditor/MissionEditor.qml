@@ -383,8 +383,7 @@ QGCView {
                         spacing:        _margin / 2
                         orientation:    ListView.Vertical
                         model:          controller.missionItems
-
-                        property real _maxItemHeight: 0
+                        cacheBuffer:    height * 2
 
                         delegate: MissionItemEditor {
                             missionItem:    object
@@ -397,11 +396,6 @@ QGCView {
                             onRemove: {
                                 itemDragger.clearItem()
                                 controller.removeMissionItem(object.sequenceNumber)
-                            }
-
-                            onRemoveAll: {
-                                itemDragger.clearItem()
-                                controller.removeAllMissionItems()
                             }
 
                             onInsert: {
@@ -602,6 +596,20 @@ QGCView {
     }
 
     Component {
+        id: removeAllPromptDialog
+
+        QGCViewMessage {
+            message: "Are you sure you want to delete all mission items?"
+
+            function accept() {
+                itemDragger.clearItem()
+                controller.removeAllMissionItems()
+                hideDialog()
+            }
+        }
+    }
+
+    Component {
         id: syncDropDownComponent
 
         Column {
@@ -671,6 +679,15 @@ QGCView {
                     }
                 }
             }
+
+            QGCButton {
+                text:       "Remove all"
+                onClicked:  {
+                    syncButton.hideDropDown()
+                    _root.showDialog(removeAllPromptDialog, "Delete all", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                }
+            }
+
 /*
         FIXME: autoSync is temporarily disconnected since it's still buggy
 
