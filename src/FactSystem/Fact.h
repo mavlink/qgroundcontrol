@@ -117,6 +117,15 @@ public:
     void setEnumIndex       (int index);
     void setEnumStringValue (const QString& value);
 
+    // The following methods allow you to defer sending of the valueChanged signals in order to implement
+    // rate limited signalling for ui performance. Used by FactGroup for example.
+
+    void setSendValueChangedSignals (bool sendValueChangedSignals);
+    bool sendValueChangedSignals (void) const { return _sendValueChangedSignals; }
+    bool deferredValueChangeSignal(void) const { return _deferredValueChangeSignal; }
+    void clearDeferredValueChangeSignal(void) { _deferredValueChangeSignal = false; }
+    void sendDeferredValueChangedSignal(void);
+
     // C++ methods
 
     /// Sets and sends new value to vehicle even if value is the same
@@ -129,12 +138,14 @@ public:
     
     /// Generally you should not change the name of a fact. But if you know what you are doing, you can.
     void _setName(const QString& name) { _name = name; }
+
     
 signals:
     void bitmaskStringsChanged(void);
     void bitmaskValuesChanged(void);
     void enumStringsChanged(void);
     void enumValuesChanged(void);
+    void sendValueChangedSignalsChanged(bool sendValueChangedSignals);
 
     /// QObject Property System signal for value property changes
     ///
@@ -151,12 +162,15 @@ signals:
     
 protected:
     QString _variantToString(const QVariant& variant) const;
+    void _sendValueChangedSignal(QVariant value);
 
     QString                     _name;
     int                         _componentId;
     QVariant                    _rawValue;
     FactMetaData::ValueType_t   _type;
     FactMetaData*               _metaData;
+    bool                        _sendValueChangedSignals;
+    bool                        _deferredValueChangeSignal;
 };
 
 #endif

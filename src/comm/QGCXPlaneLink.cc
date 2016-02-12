@@ -933,16 +933,16 @@ void QGCXPlaneLink::setRandomPosition()
     double offLon = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
     double offAlt = rand() / static_cast<double>(RAND_MAX) * 200.0 + 100.0;
 
-    if (_vehicle->altitudeAMSL() + offAlt < 0)
+    if (_vehicle->altitudeAMSL()->rawValue().toDouble() + offAlt < 0)
     {
         offAlt *= -1.0;
     }
 
     setPositionAttitude(_vehicle->latitude() + offLat,
                         _vehicle->longitude() + offLon,
-                        _vehicle->altitudeAMSL() + offAlt,
-                        _vehicle->roll(),
-                        _vehicle->pitch(),
+                        _vehicle->altitudeAMSL()->rawValue().toDouble() + offAlt,
+                        _vehicle->roll()->rawValue().toDouble(),
+                        _vehicle->pitch()->rawValue().toDouble(),
                         _vehicle->uas()->getYaw());
 }
 
@@ -957,7 +957,7 @@ void QGCXPlaneLink::setRandomAttitude()
 
     setPositionAttitude(_vehicle->latitude(),
                         _vehicle->longitude(),
-                        _vehicle->altitudeAMSL(),
+                        _vehicle->altitudeAMSL()->rawValue().toDouble(),
                         roll,
                         pitch,
                         yaw);

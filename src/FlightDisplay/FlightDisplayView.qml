@@ -36,6 +36,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
 import QGroundControl.Controllers   1.0
+import QGroundControl.FactSystem    1.0
 
 /// Flight Display View
 Item {
@@ -55,7 +56,6 @@ Item {
     readonly property real _defaultAltitudeWGS84:       0
     readonly property real _defaultGroundSpeed:         0
     readonly property real _defaultAirSpeed:            0
-    readonly property real _defaultClimbRate:           0
 
     readonly property string _mapName:                  "FlightDisplayView"
     readonly property string _showMapBackgroundKey:     "/showMapBackground"
@@ -65,14 +65,15 @@ Item {
     property bool _mainIsMap:           QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true)
     property bool _isPipVisible:        QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true)
 
-    property real _roll:                _activeVehicle ? (isNaN(_activeVehicle.roll)    ? _defaultRoll    : _activeVehicle.roll)    : _defaultRoll
-    property real _pitch:               _activeVehicle ? (isNaN(_activeVehicle.pitch)   ? _defaultPitch   : _activeVehicle.pitch)   : _defaultPitch
-    property real _heading:             _activeVehicle ? (isNaN(_activeVehicle.heading) ? _defaultHeading : _activeVehicle.heading) : _defaultHeading
+    property real _roll:                _activeVehicle ? _activeVehicle.roll.value    : _defaultRoll
+    property real _pitch:               _activeVehicle ? _activeVehicle.pitch.value   : _defaultPitch
+    property real _heading:             _activeVehicle ? _activeVehicle.heading.value : _defaultHeading
 
-    property real _altitudeWGS84:       _activeVehicle ? _activeVehicle.altitudeWGS84 : _defaultAltitudeWGS84
-    property real _groundSpeed:         _activeVehicle ? _activeVehicle.groundSpeed   : _defaultGroundSpeed
-    property real _airSpeed:            _activeVehicle ? _activeVehicle.airSpeed      : _defaultAirSpeed
-    property real _climbRate:           _activeVehicle ? _activeVehicle.climbRate     : _defaultClimbRate
+
+    property Fact _emptyFact:           Fact { }
+    property Fact _groundSpeedFact:     _activeVehicle ? _activeVehicle.groundSpeed   : _emptyFact
+    property Fact _airSpeedFact:        _activeVehicle ? _activeVehicle.airSpeed      : _emptyFact
+    property Fact _altitudeWGS84Fact:   _activeVehicle ? _activeVehicle.altitudeWGS84 : _emptyFact
 
     property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
 

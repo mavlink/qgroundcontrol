@@ -398,3 +398,39 @@ void FactMetaData::setRawUnits(const QString& rawUnits)
 
     _setBuiltInTranslator();
 }
+
+FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, bool& unknownType)
+{
+    QStringList         knownTypeStrings;
+    QList<ValueType_t>  knownTypes;
+
+    unknownType = false;
+
+    knownTypeStrings << QStringLiteral("Uint8")
+                        << QStringLiteral("Int8")
+                        << QStringLiteral("Uint16")
+                        << QStringLiteral("Int16")
+                        << QStringLiteral("Uint32")
+                        << QStringLiteral("Int32")
+                        << QStringLiteral("Float")
+                        << QStringLiteral("Double");
+
+    knownTypes << valueTypeUint8
+                << valueTypeInt8
+                << valueTypeUint16
+                << valueTypeInt16
+                << valueTypeUint32
+                << valueTypeInt32
+                << valueTypeFloat
+                << valueTypeDouble;
+
+    for (int i=0; i<knownTypeStrings.count(); i++) {
+        if (knownTypeStrings[i].compare(typeString, Qt::CaseInsensitive) == 0) {
+            return knownTypes[i];
+        }
+    }
+
+    unknownType = true;
+
+    return valueTypeDouble;
+}
