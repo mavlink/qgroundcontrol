@@ -143,7 +143,6 @@ public:
     
 private:
     void _loadMavCmdInfoJson(const QString& jsonFilename);
-    bool _validateKeyTypes(QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types);
 
 private:
     QMap<MAV_CMD, MavCmdInfo*> _mavCmdInfoMap;
