@@ -412,7 +412,7 @@ void MissionController::saveMissionToFile(void)
     if (filename.isEmpty()) {
         return;
     }
-    saveMissionToFile(filename);
+    _saveMissionToFile(filename);
 #endif
 }
 
@@ -424,7 +424,7 @@ void MissionController::saveMobileMissionToFile(const QString& filename)
         return;
     }
 
-    _saveMissionToFile(docDirs.at(0) + QDir::separator() + missionFilename);
+    _saveMissionToFile(docDirs.at(0) + QDir::separator() + filename);
 }
 
 void MissionController::loadMobileMissionFromFile(const QString& filename)
