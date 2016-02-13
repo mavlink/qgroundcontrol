@@ -198,30 +198,9 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                 qCDebug(PX4ParameterMetaDataLog) << "Found parameter name:" << name << " type:" << type << " default:" << strDefault;
 
                 // Convert type from string to FactMetaData::ValueType_t
-                
-                struct String2Type {
-                    const char*                 strType;
-                    FactMetaData::ValueType_t   type;
-                };
-                
-                static const struct String2Type rgString2Type[] = {
-                    { "FLOAT",  FactMetaData::valueTypeFloat },
-                    { "INT32",  FactMetaData::valueTypeInt32 },
-                };
-                static const size_t crgString2Type = sizeof(rgString2Type) / sizeof(rgString2Type[0]);
-                
-                bool found = false;
-                FactMetaData::ValueType_t foundType;
-                for (size_t i=0; i<crgString2Type; i++) {
-                    const struct String2Type* info = &rgString2Type[i];
-                    
-                    if (type == info->strType) {
-                        found = true;
-                        foundType = info->type;
-                        break;
-                    }
-                }
-                if (!found) {
+                bool unknownType;
+                FactMetaData::ValueType_t foundType = FactMetaData::stringToType(type, unknownType);
+                if (unknownType) {
                     qWarning() << "Parameter meta data with bad type:" << type << " name:" << name;
                     return;
                 }
