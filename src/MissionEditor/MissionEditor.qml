@@ -373,13 +373,17 @@ QGCView {
                     MouseArea {
                         // This MouseArea prevents the Map below it from getting Mouse events. Without this
                         // things like mousewheel will scroll the Flickable and then scroll the map as well.
-                        anchors.fill:       parent
+                        anchors.fill:       editorListView
                         preventStealing:    true
                         onWheel:            wheel.accepted = true
                     }
 
                     ListView {
-                        anchors.fill:   parent
+                        id:             editorListView
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        anchors.top:    parent.top
+                        height:         Math.min(contentHeight, parent.height)
                         spacing:        _margin / 2
                         orientation:    ListView.Vertical
                         model:          controller.missionItems
