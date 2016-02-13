@@ -67,7 +67,6 @@ QGCView {
 
     property bool _syncInProgress:              _activeVehicle ? _activeVehicle.missionManager.inProgress : false
 
-    Component.onCompleted:          updateMapToVehiclePosition()
     onActiveVehiclePositionChanged: updateMapToVehiclePosition()
 
     Connections {
@@ -106,29 +105,32 @@ QGCView {
         return lon  + 180.0
     }
 
-    /// Fix the map viewport to the current mission items. We don't fit the home position in this process.
+    /// Fix the map viewport to the current mission items.
     function fitViewportToMissionItems() {
-        var missionItem = _missionItems.get(0)
-        var north = normalizeLat(missionItem.coordinate.latitude)
-        var south = north
-        var east = normalizeLon(missionItem.coordinate.longitude)
-        var west = east
+        if (_missionItems.count == 1) {
+            editorMap.center = _missionItems.get(0).coordinate
+        } else {
+            var missionItem = _missionItems.get(0)
+            var north = normalizeLat(missionItem.coordinate.latitude)
+            var south = north
+            var east = normalizeLon(missionItem.coordinate.longitude)
+            var west = east
 
-        for (var i=1; i<_missionItems.count; i++) {
-            missionItem = _missionItems.get(i)
+            for (var i=1; i<_missionItems.count; i++) {
+                missionItem = _missionItems.get(i)
 
-            if (missionItem.specifiesCoordinate && !missionItem.standaloneCoordinate) {
-                var lat = normalizeLat(missionItem.coordinate.latitude)
-                var lon = normalizeLon(missionItem.coordinate.longitude)
+                if (missionItem.specifiesCoordinate && !missionItem.standaloneCoordinate) {
+                    var lat = normalizeLat(missionItem.coordinate.latitude)
+                    var lon = normalizeLon(missionItem.coordinate.longitude)
 
-                north = Math.max(north, lat)
-                south = Math.min(south, lat)
-                east = Math.max(east, lon)
-                west = Math.min(west, lon)
+                    north = Math.max(north, lat)
+                    south = Math.min(south, lat)
+                    east = Math.max(east, lon)
+                    west = Math.min(west, lon)
+                }
             }
+            editorMap.visibleRegion = QtPositioning.rectangle(QtPositioning.coordinate(north - 90.0, west - 180.0), QtPositioning.coordinate(south - 90.0, east - 180.0))
         }
-
-        editorMap.visibleRegion = QtPositioning.rectangle(QtPositioning.coordinate(north - 90.0, west - 180.0), QtPositioning.coordinate(south - 90.0, east - 180.0))
     }
 
     MissionController {
@@ -223,6 +225,9 @@ QGCView {
                 mapName:        "MissionEditor"
 
                 readonly property real animationDuration: 500
+
+                // Initial map position duplicates Fly view position
+                Component.onCompleted: editorMap.center = QGroundControl.flightMapPosition
 
                 Behavior on zoomLevel {
                     NumberAnimation {
@@ -471,6 +476,15 @@ QGCView {
                                         onClicked: {
                                             centerMapButton.hideDropDown()
                                             editorMap.center = controller.missionItems.get(0).coordinate
+                                        }
+                                    }
+
+                                    QGCButton {
+                                        text: "Mission"
+
+                                        onClicked: {
+                                            centerMapButton.hideDropDown()
+                                            fitViewportToMissionItems()
                                         }
                                     }
 
