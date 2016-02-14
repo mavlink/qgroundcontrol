@@ -44,6 +44,9 @@ FlightMap {
     property bool   _activeVehicleCoordinateValid:  multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.coordinateValid : false
     property var    activeVehicleCoordinate:        multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.coordinate : QtPositioning.coordinate()
 
+    Component.onCompleted: QGroundControl.flightMapPosition = center
+    onCenterChanged: QGroundControl.flightMapPosition = center
+
     onActiveVehicleCoordinateChanged: {
         if (_followVehicle && _activeVehicleCoordinateValid && activeVehicleCoordinate.isValid) {
             _initialMapPositionSet = true
