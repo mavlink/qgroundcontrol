@@ -12,6 +12,7 @@ QGCCompassWidget        1.0 QGCCompassWidget.qml
 QGCInstrumentWidget     1.0 QGCInstrumentWidget.qml
 QGCPitchIndicator       1.0 QGCPitchIndicator.qml
 QGCSlider               1.0 QGCSlider.qml
+ValuesWidget            1.0 ValuesWidget.qml
 
 # Map items
 MissionItemIndicator    1.0 MissionItemIndicator.qml

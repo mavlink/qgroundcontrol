@@ -29,6 +29,7 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <QFile>
+#include <QQmlEngine>
 
 QGC_LOGGING_CATEGORY(FactGroupLog, "FactGroupLog")
 
@@ -55,25 +56,46 @@ FactGroup::FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* 
 
 Fact* FactGroup::getFact(const QString& name)
 {
+    Fact* fact = NULL;
+
+    if (name.contains(".")) {
+        QStringList parts = name.split(".");
+        if (parts.count() != 2) {
+            qWarning() << "Only single level of hierarchy supported";
+            return NULL;
+        }
+
+        FactGroup * factGroup = getFactGroup(parts[0]);
+        if (!factGroup) {
+            qWarning() << "Unknown FactGroup" << parts[0];
+            return NULL;
+        }
+
+        return factGroup->getFact(parts[1]);
+    }
+
     if (_nameToFactMap.contains(name)) {
-        return _nameToFactMap[name];
+        fact = _nameToFactMap[name];
+        QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
     } else {
         qWarning() << "Unknown Fact" << name;
     }
 
-    return NULL;
+    return fact;
 }
 
 FactGroup* FactGroup::getFactGroup(const QString& name)
 {
+    FactGroup* factGroup = NULL;
+
     if (_nameToFactGroupMap.contains(name)) {
-        return _nameToFactGroupMap[name];
+        factGroup = _nameToFactGroupMap[name];
+        QQmlEngine::setObjectOwnership(factGroup, QQmlEngine::CppOwnership);
     } else {
         qWarning() << "Unknown FactGroup" << name;
     }
 
-    // FIXME: Return bogus fact
-    return NULL;
+    return factGroup;
 }
 
 void FactGroup::_addFact(Fact* fact, const QString& name)
