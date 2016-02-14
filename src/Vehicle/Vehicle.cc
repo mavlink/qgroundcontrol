@@ -1221,6 +1221,27 @@ void Vehicle::_setCoordinateValid(bool coordinateValid)
     }
 }
 
+void Vehicle::takeoff(double altitudeRelative)
+{
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd;
+
+    cmd.command = MAV_CMD_NAV_TAKEOFF;
+    cmd.confirmation = 0;
+    cmd.param1 = 0.0f;
+    cmd.param2 = 0.0f;
+    cmd.param3 = 0.0f;
+    cmd.param4 = 0.0f;
+    cmd.param5 = 0.0f;
+    cmd.param6 = 0.0f;
+    cmd.param7 = altitudeRelative;
+    cmd.target_system = id();
+    cmd.target_component = 0;
+
+    mavlink_msg_command_long_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &cmd);
+
+    sendMessage(msg);
+}
 
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)

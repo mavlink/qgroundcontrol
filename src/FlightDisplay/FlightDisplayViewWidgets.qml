@@ -100,7 +100,7 @@ Item {
         heading:                _heading
         rollAngle:              _roll
         pitchAngle:             _pitch
-        altitudeFact:           _altitudeAMSLFact
+        altitudeFact:           _altitudeRelativeFact
         groundSpeedFact:        _groundSpeedFact
         airSpeedFact:           _airSpeedFact
         isSatellite:            _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
@@ -124,7 +124,7 @@ Item {
             spacing:            ScreenTools.defaultFontPixelSize * 0.33
             anchors.verticalCenter: parent.verticalCenter
             QGCLabel {
-                text:           _altitudeAMSLFact.shortDescription + "(" + _altitudeAMSLFact.units + ")"
+                text:           _altitudeRelativeFact.shortDescription + "(" + _altitudeRelativeFact.units + ")"
                 font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
                 width:          parent.width
                 height:         ScreenTools.defaultFontPixelSize * 0.75
@@ -132,7 +132,7 @@ Item {
                 horizontalAlignment: TextEdit.AlignHCenter
             }
             QGCLabel {
-                text:           _altitudeAMSLFact.valueString
+                text:           _altitudeRelativeFact.valueString
                 font.pixelSize: ScreenTools.defaultFontPixelSize * 1.5
                 font.weight:    Font.DemiBold
                 width:          parent.width
