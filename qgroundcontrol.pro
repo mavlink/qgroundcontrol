@@ -186,6 +186,7 @@ INCLUDEPATH += \
     src/comm \
     src/FlightDisplay \
     src/FlightMap \
+    src/FlightMap/Widgets \
     src/input \
     src/Joystick \
     src/lib/qmapcontrol \
@@ -245,6 +246,7 @@ HEADERS += \
     src/comm/UDPLink.h \
     src/FlightDisplay/FlightDisplayViewController.h \
     src/FlightMap/FlightMapSettings.h \
+    src/FlightMap/Widgets/ValuesWidgetController.h \
     src/GAudioOutput.h \
     src/HomePositionManager.h \
     src/Joystick/Joystick.h \
@@ -370,6 +372,7 @@ SOURCES += \
     src/comm/UDPLink.cc \
     src/FlightDisplay/FlightDisplayViewController.cc \
     src/FlightMap/FlightMapSettings.cc \
+    src/FlightMap/Widgets/ValuesWidgetController.cc \
     src/GAudioOutput.cc \
     src/HomePositionManager.cc \
     src/Joystick/Joystick.cc \

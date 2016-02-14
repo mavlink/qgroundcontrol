@@ -98,6 +98,7 @@
 #include "VideoReceiver.h"
 #include "LogDownloadController.h"
 #include "PX4AirframeLoader.h"
+#include "ValuesWidgetController.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -445,6 +446,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<MainToolBarController>              ("QGroundControl.Controllers", 1, 0, "MainToolBarController");
     qmlRegisterType<MissionController>                  ("QGroundControl.Controllers", 1, 0, "MissionController");
     qmlRegisterType<FlightDisplayViewController>        ("QGroundControl.Controllers", 1, 0, "FlightDisplayViewController");
+    qmlRegisterType<ValuesWidgetController>             ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
 
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");

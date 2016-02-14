@@ -36,11 +36,9 @@ import QGroundControl.Vehicle       1.0
 import QGroundControl.FlightMap     1.0
 
 Item {
+    id: _root
 
-    readonly property string _InstrumentVisibleKey: "IsInstrumentPanelVisible"
-
-    property bool   _isInstrumentVisible:   QGroundControl.loadBoolGlobalSetting(_InstrumentVisibleKey, true)
-    property var    _activeVehicle:         multiVehicleManager.activeVehicle
+    property var _activeVehicle: multiVehicleManager.activeVehicle
 
     QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
 
@@ -96,7 +94,7 @@ Item {
         anchors.margins:        ScreenTools.defaultFontPixelHeight
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        visible:                _isInstrumentVisible && !QGroundControl.virtualTabletJoystick
+        visible:                !QGroundControl.virtualTabletJoystick
         size:                   getGadgetWidth()
         active:                 _activeVehicle != null
         heading:                _heading
@@ -107,10 +105,8 @@ Item {
         airSpeedFact:           _airSpeedFact
         isSatellite:            _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
         z:                      QGroundControl.zOrderWidgets
-        onClicked: {
-            _isInstrumentVisible = false
-            QGroundControl.saveBoolGlobalSetting(_InstrumentVisibleKey, false)
-        }
+        qgcView:                parent.parent.qgcView
+        maxHeight:              parent.height - (ScreenTools.defaultFontPixelHeight * 2)
     }
 
     //-- Alternate Instrument Panel
@@ -158,35 +154,6 @@ Item {
                 width:          parent.width
                 color:          "white"
                 horizontalAlignment: TextEdit.AlignHCenter
-            }
-        }
-    }
-
-    //-- Show (Hidden) Instrument Panel
-    Rectangle {
-        id:                     openButton
-        anchors.right:          parent.right
-        anchors.bottom:         parent.bottom
-        anchors.margins:        ScreenTools.defaultFontPixelHeight
-        height:                 ScreenTools.defaultFontPixelSize * 2
-        width:                  ScreenTools.defaultFontPixelSize * 2
-        radius:                 ScreenTools.defaultFontPixelSize / 3
-        visible:                !_isInstrumentVisible && !QGroundControl.virtualTabletJoystick
-        color:                  isBackgroundDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
-        Image {
-            width:              parent.width  * 0.75
-            height:             parent.height * 0.75
-            source:             "/res/buttonLeft.svg"
-            mipmap:             true
-            fillMode:           Image.PreserveAspectFit
-            anchors.verticalCenter:     parent.verticalCenter
-            anchors.horizontalCenter:   parent.horizontalCenter
-        }
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                _isInstrumentVisible = true
-                QGroundControl.saveBoolGlobalSetting(_InstrumentVisibleKey, true)
             }
         }
     }

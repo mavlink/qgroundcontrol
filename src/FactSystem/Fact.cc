@@ -524,3 +524,17 @@ void Fact::sendDeferredValueChangedSignal(void)
         emit valueChanged(cookedValue());
     }
 }
+
+QString Fact::enumOrValueString(void)
+{
+    if (_metaData) {
+        if (_metaData->enumStrings().count()) {
+            return enumStringValue();
+        } else {
+            return cookedValueString();
+        }
+    } else {
+        qWarning() << "Meta data pointer missing";
+    }
+    return QString();
+}
