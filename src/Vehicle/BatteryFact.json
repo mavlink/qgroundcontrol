@@ -3,67 +3,45 @@
 
     "properties": [
         {
-            "name":             "roll",
-            "shortDescription": "Roll",
+            "name":             "voltage",
+            "shortDescription": "Voltage",
             "type":             "double",
-            "decimalPlaces":    1,
-            "units":            "degrees"
+            "decimalPlaces":    2,
+            "units":            "v"
         },
         {
-            "name":             "pitch",
-            "shortDescription": "Pitch",
-            "type":             "double",
-            "decimalPlaces":    1,
-            "units":            "degrees"
-        },
-        {
-            "name":             "heading",
-            "shortDescription": "Heading",
-            "type":             "double",
+            "name":             "percentRemaining",
+            "shortDescription": "Percent",
+            "type":             "int32",
             "decimalPlaces":    0,
-            "units":            "degrees"
+            "units":            "%"
         },
         {
-            "name":             "groundSpeed",
-            "shortDescription": "Ground Speed",
-            "type":             "double",
-            "decimalPlaces":    1,
-            "units":            "m/s"
+            "name":             "mahConsumed",
+            "shortDescription": "Consumed",
+            "type":             "int32",
+            "decimalPlaces":    0,
+            "units":            "mAh"
         },
         {
-            "name":             "airSpeed",
-            "shortDescription": "Air Speed",
-            "type":             "double",
-            "decimalPlaces":    1,
-            "units":            "m/s"
+            "name":             "current",
+            "shortDescription": "Current",
+            "type":             "int32",
+            "decimalPlaces":    0,
+            "units":            "mA"
         },
         {
-            "name":             "climbRate",
-            "shortDescription": "Climb Rate",
-            "type":             "double",
-            "decimalPlaces":    1,
-            "units":            "m/s"
+            "name":             "temperature",
+            "shortDescription": "Temperature",
+            "type":             "int32",
+            "decimalPlaces":    2,
+            "units":            "C"
         },
         {
-            "name":             "altitudeRelative",
-            "shortDescription": "Altitude",
-            "type":             "double",
-            "decimalPlaces":    1,
-            "units":            "m"
-        },
-        {
-            "name":             "altitudeQGS84",
-            "shortDescription": "Altitude",
-            "type":             "double",
-            "decimalPlaces":    1,
-            "units":            "m"
-        },
-        {
-            "name":             "altitudeAMSL",
-            "shortDescription": "Altitude",
-            "type":             "double",
-            "decimalPlaces":    1,
-            "units":            "m"
+            "name":             "cellCount",
+            "shortDescription": "Cell Count",
+            "type":             "int32",
+            "decimalPlaces":    0
         }
     ]
 }

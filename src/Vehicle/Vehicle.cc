@@ -53,15 +53,30 @@ const char* Vehicle::_airSpeedFactName =            "airSpeed";
 const char* Vehicle::_groundSpeedFactName =         "groundSpeed";
 const char* Vehicle::_climbRateFactName =           "climbRate";
 const char* Vehicle::_altitudeRelativeFactName =    "altitudeRelative";
-const char* Vehicle::_altitudeWGS84FactName =       "altitudeWGS84";
 const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
-const char* Vehicle::_gpsFactGroupName =            "gps";
+
+const char* Vehicle::_gpsFactGroupName =        "gps";
+const char* Vehicle::_batteryFactGroupName =    "battery";
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
 const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
 const char* VehicleGPSFactGroup::_countFactName =               "count";
 const char* VehicleGPSFactGroup::_lockFactName =                "lock";
+
+const char* VehicleBatteryFactGroup::_voltageFactName =             "voltage";
+const char* VehicleBatteryFactGroup::_percentRemainingFactName =    "percentRemaining";
+const char* VehicleBatteryFactGroup::_mahConsumedFactName =         "mahConsumed";
+const char* VehicleBatteryFactGroup::_currentFactName =             "current";
+const char* VehicleBatteryFactGroup::_temperatureFactName =         "temperature";
+const char* VehicleBatteryFactGroup::_cellCountFactName =           "cellCount";
+
+const double VehicleBatteryFactGroup::_voltageUnavailable =           -1.0;
+const int    VehicleBatteryFactGroup::_percentRemainingUnavailable =  -1;
+const int    VehicleBatteryFactGroup::_mahConsumedUnavailable =       -1;
+const int    VehicleBatteryFactGroup::_currentUnavailable =           -1;
+const double VehicleBatteryFactGroup::_temperatureUnavailable =       -1.0;
+const int    VehicleBatteryFactGroup::_cellCountUnavailable =         -1.0;
 
 Vehicle::Vehicle(LinkInterface*             link,
                  int                        vehicleId,
@@ -95,9 +110,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _navigationCrosstrackError(0.0f)
     , _navigationTargetBearing(0.0f)
     , _refreshTimer(new QTimer(this))
-    , _batteryVoltage(-1.0f)
-    , _batteryPercent(0.0)
-    , _batteryConsumed(-1.0)
     , _updateCount(0)
     , _rcRSSI(0)
     , _rcRSSIstore(100.0)
@@ -129,9 +141,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _airSpeedFact         (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
     , _climbRateFact        (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
     , _altitudeRelativeFact (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
-    , _altitudeWGS84Fact    (0, _altitudeWGS84FactName,     FactMetaData::valueTypeDouble)
     , _altitudeAMSLFact     (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
     , _gpsFactGroup(this)
+    , _batteryFactGroup(this)
 {
     _addLink(link);
 
@@ -182,8 +194,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_mav, &UASInterface::altitudeChanged, this, &Vehicle::_updateAltitude);
     connect(_mav, &UASInterface::navigationControllerErrorsChanged,this, &Vehicle::_updateNavigationControllerErrors);
     connect(_mav, &UASInterface::NavigationControllerDataChanged,   this, &Vehicle::_updateNavigationControllerData);
-    connect(_mav, &UASInterface::batteryChanged,                    this, &Vehicle::_updateBatteryRemaining);
-    connect(_mav, &UASInterface::batteryConsumedChanged,            this, &Vehicle::_updateBatteryConsumedChanged);
 
     _loadSettings();
 
@@ -211,11 +221,12 @@ Vehicle::Vehicle(LinkInterface*             link,
     _addFact(&_airSpeedFact,            _airSpeedFactName);
     _addFact(&_climbRateFact,           _climbRateFactName);
     _addFact(&_altitudeRelativeFact,    _altitudeRelativeFactName);
-    _addFact(&_altitudeWGS84Fact,       _altitudeWGS84FactName);
     _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
 
-    _addFactGroup(&_gpsFactGroup, _gpsFactGroupName);
+    _addFactGroup(&_gpsFactGroup,       _gpsFactGroupName);
+    _addFactGroup(&_batteryFactGroup,   _batteryFactGroupName);
     _gpsFactGroup.setVehicle(this);
+    _batteryFactGroup.setVehicle(this);
 }
 
 Vehicle::~Vehicle()
@@ -295,6 +306,12 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
         _handleRCChannelsRaw(message);
         break;
+    case MAVLINK_MSG_ID_BATTERY_STATUS:
+        _handleBatteryStatus(message);
+        break;
+    case MAVLINK_MSG_ID_SYS_STATUS:
+        _handleSysStatus(message);
+        break;
     case MAVLINK_MSG_ID_RAW_IMU:
         emit mavlinkRawImu(message);
         break;
@@ -312,6 +329,53 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     emit mavlinkMessageReceived(message);
 
     _uas->receiveMessage(message);
+}
+
+void Vehicle::_handleSysStatus(mavlink_message_t& message)
+{
+    mavlink_sys_status_t sysStatus;
+    mavlink_msg_sys_status_decode(&message, &sysStatus);
+
+    if (sysStatus.current_battery == -1) {
+        _batteryFactGroup.current()->setRawValue(VehicleBatteryFactGroup::_currentUnavailable);
+    } else {
+        _batteryFactGroup.current()->setRawValue((double)sysStatus.current_battery * 10);
+    }
+    if (sysStatus.voltage_battery == UINT16_MAX) {
+        _batteryFactGroup.voltage()->setRawValue(VehicleBatteryFactGroup::_voltageUnavailable);
+    } else {
+        _batteryFactGroup.voltage()->setRawValue((double)sysStatus.voltage_battery / 1000.0);
+    }
+    _batteryFactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
+}
+
+void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
+{
+    mavlink_battery_status_t bat_status;
+    mavlink_msg_battery_status_decode(&message, &bat_status);
+
+    if (bat_status.temperature == INT16_MAX) {
+        _batteryFactGroup.temperature()->setRawValue(VehicleBatteryFactGroup::_temperatureUnavailable);
+    } else {
+        _batteryFactGroup.temperature()->setRawValue((double)bat_status.temperature / 100.0);
+    }
+    if (bat_status.current_consumed == -1) {
+        _batteryFactGroup.mahConsumed()->setRawValue(VehicleBatteryFactGroup::_mahConsumedUnavailable);
+    } else {
+        _batteryFactGroup.mahConsumed()->setRawValue(bat_status.current_consumed);
+    }
+
+    int cellCount = 0;
+    for (int i=0; i<10; i++) {
+        if (bat_status.voltages[i] != UINT16_MAX) {
+            cellCount++;
+        }
+    }
+    if (cellCount == 0) {
+        cellCount = -1;
+    }
+
+    _batteryFactGroup.cellCount()->setRawValue(cellCount);
 }
 
 void Vehicle::_handleHomePosition(mavlink_message_t& message)
@@ -604,9 +668,9 @@ void Vehicle::_updateSpeed(UASInterface*, double groundSpeed, double airSpeed, q
     _airSpeedFact.setRawValue(airSpeed);
 }
 
-void Vehicle::_updateAltitude(UASInterface*, double altitudeAMSL, double altitudeWGS84, double altitudeRelative, double climbRate, quint64) {
+void Vehicle::_updateAltitude(UASInterface*, double altitudeAMSL, double altitudeRelative, double climbRate, quint64)
+{
     _altitudeAMSLFact.setRawValue(altitudeAMSL);
-    _altitudeWGS84Fact.setRawValue(altitudeWGS84);
     _altitudeRelativeFact.setRawValue(altitudeRelative);
     _climbRateFact.setRawValue(climbRate);
 }
@@ -666,34 +730,6 @@ void Vehicle::_handletextMessageReceived(UASMessage* message)
         emit formatedMessageChanged();
     }
 }
-
-void Vehicle::_updateBatteryRemaining(UASInterface*, double voltage, double, double percent, int)
-{
-
-    if(percent < 0.0) {
-        percent = 0.0;
-    }
-    if(voltage < 0.0) {
-        voltage = 0.0;
-    }
-    if (_batteryVoltage != voltage) {
-        _batteryVoltage = voltage;
-        emit batteryVoltageChanged();
-    }
-    if (_batteryPercent != percent) {
-        _batteryPercent = percent;
-        emit batteryPercentChanged();
-    }
-}
-
-void Vehicle::_updateBatteryConsumedChanged(UASInterface*, double current_consumed)
-{
-    if(_batteryConsumed != current_consumed) {
-        _batteryConsumed = current_consumed;
-        emit batteryConsumedChanged();
-    }
-}
-
 
 void Vehicle::_updateState(UASInterface*, QString name, QString)
 {
@@ -1195,8 +1231,6 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     , _countFact            (0, _countFactName,             FactMetaData::valueTypeInt32)
     , _lockFact             (0, _lockFactName,              FactMetaData::valueTypeInt32)
 {
-    // Build FactGroup object model
-
     _addFact(&_hdopFact,                _hdopFactName);
     _addFact(&_vdopFact,                _vdopFactName);
     _addFact(&_courseOverGroundFact,    _courseOverGroundFactName);
@@ -1207,14 +1241,6 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
 void VehicleGPSFactGroup::setVehicle(Vehicle* vehicle)
 {
     _vehicle = vehicle;
-
-#if 0
-    // Reset satellite data (no GPS)
-    _satelliteCount = -1;
-    _satRawHDOP     = 1e10f;
-    _satRawVDOP     = 1e10f;
-    _satRawCOG      = 0.0;
-#endif
 
     connect(_vehicle->uas(), &UASInterface::localizationChanged, this, &VehicleGPSFactGroup::_setSatLoc);
 
@@ -1259,3 +1285,33 @@ void VehicleGPSFactGroup::_setSatLoc(UASInterface*, int fix)
     }
 }
 
+VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
+    : FactGroup(1000, ":/json/Vehicle/BatteryFact.json", parent)
+    , _vehicle(NULL)
+    , _voltageFact          (0, _voltageFactName,           FactMetaData::valueTypeDouble)
+    , _percentRemainingFact (0, _percentRemainingFactName,  FactMetaData::valueTypeInt32)
+    , _mahConsumedFact      (0, _mahConsumedFactName,       FactMetaData::valueTypeInt32)
+    , _currentFact          (0, _currentFactName,           FactMetaData::valueTypeInt32)
+    , _temperatureFact      (0, _temperatureFactName,       FactMetaData::valueTypeDouble)
+    , _cellCountFact        (0, _cellCountFactName,         FactMetaData::valueTypeInt32)
+{
+    _addFact(&_voltageFact,             _voltageFactName);
+    _addFact(&_percentRemainingFact,    _percentRemainingFactName);
+    _addFact(&_mahConsumedFact,         _mahConsumedFactName);
+    _addFact(&_currentFact,             _currentFactName);
+    _addFact(&_temperatureFact,         _temperatureFactName);
+    _addFact(&_cellCountFact,           _cellCountFactName);
+
+    // Start out as not available
+    _voltageFact.setRawValue            (_voltageUnavailable);
+    _percentRemainingFact.setRawValue   (_percentRemainingUnavailable);
+    _mahConsumedFact.setRawValue        (_mahConsumedUnavailable);
+    _currentFact.setRawValue            (_currentUnavailable);
+    _temperatureFact.setRawValue        (_temperatureUnavailable);
+    _cellCountFact.setRawValue          (_cellCountUnavailable);
+}
+
+void VehicleBatteryFactGroup::setVehicle(Vehicle* vehicle)
+{
+    _vehicle = vehicle;
+}

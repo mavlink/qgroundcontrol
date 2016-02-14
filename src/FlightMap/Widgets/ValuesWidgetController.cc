@@ -36,9 +36,17 @@ ValuesWidgetController::ValuesWidgetController(void)
 
     settings.beginGroup(_groupKey);
 
-    largeDefaults << "Vehicle.altitudeWGS84" << "Vehicle.groundSpeed";
+    largeDefaults << "Vehicle.altitudeRelative" << "Vehicle.groundSpeed";
     _largeValues = settings.value(_largeValuesKey, largeDefaults).toStringList();
     _smallValues = settings.value(_smallValuesKey, QStringList()).toStringList();
+
+    // Keep back compat for removed WGS84 value
+    if (_largeValues.contains ("Vehicle.altitudeWGS84")) {
+        setLargeValues(_largeValues.replaceInStrings("Vehicle.altitudeWGS84", "Vehicle.altitudeRelative"));
+    }
+    if (_smallValues.contains ("Vehicle.altitudeWGS84")) {
+        setSmallValues(_largeValues.replaceInStrings("Vehicle.altitudeWGS84", "Vehicle.altitudeRelative"));
+    }
 }
 
 void ValuesWidgetController::setLargeValues(const QStringList& values)
