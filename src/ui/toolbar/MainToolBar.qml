@@ -165,13 +165,13 @@ Rectangle {
 
     function getBatteryColor() {
         if(activeVehicle) {
-            if(activeVehicle.batteryPercent > 75) {
+            if(activeVehicle.battery.percentRemaining.value > 75) {
                 return colorGreen
             }
-            if(activeVehicle.batteryPercent > 50) {
+            if(activeVehicle.battery.percentRemaining.value > 50) {
                 return colorOrange
             }
-            if(activeVehicle.batteryPercent > 0.1) {
+            if(activeVehicle.battery.percentRemaining.value > 0.1) {
                 return colorRed
             }
         }
@@ -276,27 +276,29 @@ Rectangle {
     // Battery Info
     Component {
         id: batteryInfo
+
         Rectangle {
             color:          Qt.rgba(0,0,0,0.75)
             width:          battCol.width   + ScreenTools.defaultFontPixelWidth  * 3
             height:         battCol.height  + ScreenTools.defaultFontPixelHeight * 2
             radius:         ScreenTools.defaultFontPixelHeight * 0.5
+
             Column {
                 id:                 battCol
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 width:              Math.max(battGrid.width, battLabel.width)
                 anchors.margins:    ScreenTools.defaultFontPixelHeight
                 anchors.centerIn:   parent
+
                 QGCLabel {
                     id:         battLabel
-                    text:       (activeVehicle && (activeVehicle.batteryVoltage > 0)) ? "Battery Status" : "Battery Data Unavailable"
+                    text:       "Battery Status"
                     color:      colorWhite
                     font.weight:Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 GridLayout {
                     id:                 battGrid
-                    visible:            (activeVehicle && (activeVehicle.batteryVoltage > 0))
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -306,29 +308,20 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? (activeVehicle.batteryVoltage.toFixed(1) + " V") : "N/A"
+                        text:   (activeVehicle && activeVehicle.battery.voltage.value != -1) ? (activeVehicle.battery.voltage.valueString + " " + activeVehicle.battery.voltage.units) : "N/A"
                         color:  getBatteryColor()
                     }
-                    // TODO: What "controller" provides "Facts"?
-                    /*
-                    QGCLabel {
-                        text:   "Cell Voltage:"
-                    }
-                    QGCLabel {
-                        text:   (activeVehicle.batteryVoltage / controller.getParameterFact(-1, "BAT_N_CELLS").value) + "V"
-                        color:  getBatteryColor()
-                    }
-                    */
                     QGCLabel {
                         text:   "Accumulated Consumption:"
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? (activeVehicle.batteryConsumed + " mA") : "N/A"
+                        text:   (activeVehicle && activeVehicle.battery.mahConsumed.value != -1) ? (activeVehicle.battery.mahConsumed.valueString + " " + activeVehicle.battery.mahConsumed.units) : "N/A"
                         color:  getBatteryColor()
                     }
                 }
             }
+
             Component.onCompleted: {
                 var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
                 x = pos.x

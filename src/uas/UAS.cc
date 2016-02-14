@@ -92,7 +92,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     longitude(0.0),
     altitudeAMSL(0.0),
     altitudeAMSLFT(0.0),
-    altitudeWGS84(0.0),
     altitudeRelative(0.0),
 
     satRawHDOP(1e10f),
@@ -355,18 +354,6 @@ void UAS::receiveMessage(mavlink_message_t message)
 
             break;
 
-        case MAVLINK_MSG_ID_BATTERY_STATUS:
-        {
-            if (multiComponentSourceDetected && wrongComponent)
-            {
-                break;
-            }
-            mavlink_battery_status_t bat_status;
-            mavlink_msg_battery_status_decode(&message, &bat_status);
-            emit batteryConsumedChanged(this, (double)bat_status.current_consumed);
-        }
-            break;
-
         case MAVLINK_MSG_ID_SYS_STATUS:
         {
             if (multiComponentSourceDetected && wrongComponent)
@@ -390,6 +377,8 @@ void UAS::receiveMessage(mavlink_message_t message)
             // Process CPU load.
             emit loadChanged(this,state.load/10.0f);
             emit valueChanged(uasId, name.arg("load"), "%", state.load/10.0f, time);
+
+            currentVoltage = state.voltage_battery/1000.0f;
 
             if (state.voltage_battery > 0.0f && state.voltage_battery != UINT16_MAX) {
                 // Battery charge/time remaining/voltage calculations
@@ -572,7 +561,7 @@ void UAS::receiveMessage(mavlink_message_t message)
             if (!isnan(hud.airspeed))
                 setAirSpeed(hud.airspeed);
             speedZ = -hud.climb;
-            emit altitudeChanged(this, altitudeAMSL, altitudeWGS84, altitudeRelative, -speedZ, time);
+            emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
             emit speedChanged(this, groundSpeed, airSpeed, time);
         }
             break;
@@ -614,7 +603,6 @@ void UAS::receiveMessage(mavlink_message_t message)
 
             setLatitude(pos.lat/(double)1E7);
             setLongitude(pos.lon/(double)1E7);
-            setAltitudeWGS84(pos.alt/1000.0);
             setAltitudeRelative(pos.relative_alt/1000.0);
 
             globalEstimatorActive = true;
@@ -623,8 +611,8 @@ void UAS::receiveMessage(mavlink_message_t message)
             speedY = pos.vy/100.0;
             speedZ = pos.vz/100.0;
 
-            emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), getAltitudeWGS84(), time);
-            emit altitudeChanged(this, altitudeAMSL, altitudeWGS84, altitudeRelative, -speedZ, time);
+            emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), time);
+            emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
             // We had some frame mess here, global and local axes were mixed.
             emit velocityChanged_NED(this, speedX, speedY, speedZ, time);
 
@@ -661,9 +649,8 @@ void UAS::receiveMessage(mavlink_message_t message)
                 if (!globalEstimatorActive) {
                     setLatitude(latitude_gps);
                     setLongitude(longitude_gps);
-                    setAltitudeWGS84(altitude_gps);
-                    emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), getAltitudeWGS84(), time);
-                    emit altitudeChanged(this, altitudeAMSL, altitudeWGS84, altitudeRelative, -speedZ, time);
+                    emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), time);
+                    emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
 
                     float vel = pos.vel/100.0f;
                     // Smaller than threshold and not NaN
