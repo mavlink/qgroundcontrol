@@ -55,7 +55,7 @@ QGCView {
     readonly property real _defaultRoll:                0
     readonly property real _defaultPitch:               0
     readonly property real _defaultHeading:             0
-    readonly property real _defaultAltitudeWGS84:       0
+    readonly property real _defaultAltitudeAMSL:        0
     readonly property real _defaultGroundSpeed:         0
     readonly property real _defaultAirSpeed:            0
 
@@ -75,7 +75,7 @@ QGCView {
     property Fact _emptyFact:           Fact { }
     property Fact _groundSpeedFact:     _activeVehicle ? _activeVehicle.groundSpeed   : _emptyFact
     property Fact _airSpeedFact:        _activeVehicle ? _activeVehicle.airSpeed      : _emptyFact
-    property Fact _altitudeWGS84Fact:   _activeVehicle ? _activeVehicle.altitudeWGS84 : _emptyFact
+    property Fact _altitudeAMSLFact:    _activeVehicle ? _activeVehicle.altitudeAMSL : _emptyFact
 
     property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
 

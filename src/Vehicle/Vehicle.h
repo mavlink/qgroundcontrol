@@ -74,6 +74,12 @@ public:
 
     void setVehicle(Vehicle* vehicle);
 
+    static const char* _hdopFactName;
+    static const char* _vdopFactName;
+    static const char* _courseOverGroundFactName;
+    static const char* _countFactName;
+    static const char* _lockFactName;
+
 private slots:
     void _setSatelliteCount(double val, QString);
     void _setSatRawHDOP(double val);
@@ -88,12 +94,53 @@ private:
     Fact        _courseOverGroundFact;
     Fact        _countFact;
     Fact        _lockFact;
+};
 
-    static const char* _hdopFactName;
-    static const char* _vdopFactName;
-    static const char* _courseOverGroundFactName;
-    static const char* _countFactName;
-    static const char* _lockFactName;
+class VehicleBatteryFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    VehicleBatteryFactGroup(QObject* parent = NULL);
+
+    Q_PROPERTY(Fact* voltage            READ voltage            CONSTANT)
+    Q_PROPERTY(Fact* percentRemaining   READ percentRemaining   CONSTANT)
+    Q_PROPERTY(Fact* mahConsumed        READ mahConsumed        CONSTANT)
+    Q_PROPERTY(Fact* current            READ current            CONSTANT)
+    Q_PROPERTY(Fact* temperature        READ temperature        CONSTANT)
+    Q_PROPERTY(Fact* cellCount          READ cellCount        CONSTANT)
+
+    Fact* voltage(void)             { return &_voltageFact; }
+    Fact* percentRemaining(void)    { return &_percentRemainingFact; }
+    Fact* mahConsumed(void)         { return &_mahConsumedFact; }
+    Fact* current(void)             { return &_currentFact; }
+    Fact* temperature(void)         { return &_temperatureFact; }
+    Fact* cellCount(void)           { return &_cellCountFact; }
+
+    void setVehicle(Vehicle* vehicle);
+
+    static const char* _voltageFactName;
+    static const char* _percentRemainingFactName;
+    static const char* _mahConsumedFactName;
+    static const char* _currentFactName;
+    static const char* _temperatureFactName;
+    static const char* _cellCountFactName;
+
+    static const double _voltageUnavailable;
+    static const int    _percentRemainingUnavailable;
+    static const int    _mahConsumedUnavailable;
+    static const int    _currentUnavailable;
+    static const double _temperatureUnavailable;
+    static const int    _cellCountUnavailable;
+
+private:
+    Vehicle*    _vehicle;
+    Fact        _voltageFact;
+    Fact        _percentRemainingFact;
+    Fact        _mahConsumedFact;
+    Fact        _currentFact;
+    Fact        _temperatureFact;
+    Fact        _cellCountFact;
 };
 
 class Vehicle : public FactGroup
@@ -126,9 +173,6 @@ public:
     Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                       CONSTANT)
     Q_PROPERTY(float                latitude                READ latitude                               NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude               READ longitude                              NOTIFY coordinateChanged)
-    Q_PROPERTY(double               batteryVoltage          READ batteryVoltage                         NOTIFY batteryVoltageChanged)
-    Q_PROPERTY(double               batteryPercent          READ batteryPercent                         NOTIFY batteryPercentChanged)
-    Q_PROPERTY(double               batteryConsumed         READ batteryConsumed                        NOTIFY batteryConsumedChanged)
     Q_PROPERTY(QString              currentState            READ currentState                           NOTIFY currentStateChanged)
     Q_PROPERTY(QmlObjectListModel*  missionItems            READ missionItemsModel                      CONSTANT)
     Q_PROPERTY(bool                 messageTypeNone         READ messageTypeNone                        NOTIFY messageTypeChanged)
@@ -167,10 +211,10 @@ public:
     Q_PROPERTY(Fact* airSpeed           READ airSpeed           CONSTANT)
     Q_PROPERTY(Fact* climbRate          READ climbRate          CONSTANT)
     Q_PROPERTY(Fact* altitudeRelative   READ altitudeRelative   CONSTANT)
-    Q_PROPERTY(Fact* altitudeWGS84      READ altitudeWGS84      CONSTANT)
     Q_PROPERTY(Fact* altitudeAMSL       READ altitudeAMSL       CONSTANT)
 
-    Q_PROPERTY(FactGroup* gps   READ gpsFactGroup CONSTANT)
+    Q_PROPERTY(FactGroup* gps       READ gpsFactGroup       CONSTANT)
+    Q_PROPERTY(FactGroup* battery   READ batteryFactGroup   CONSTANT)
 
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
@@ -298,9 +342,6 @@ public:
     float           latitude            () { return _coordinate.latitude(); }
     float           longitude           () { return _coordinate.longitude(); }
     bool            mavPresent          () { return _mav != NULL; }
-    double          batteryVoltage      () { return _batteryVoltage; }
-    double          batteryPercent      () { return _batteryPercent; }
-    double          batteryConsumed     () { return _batteryConsumed; }
     QString         currentState        () { return _currentState; }
     int             rcRSSI              () { return _rcRSSI; }
     bool            px4Firmware         () { return _firmwareType == MAV_AUTOPILOT_PX4; }
@@ -319,10 +360,10 @@ public:
     Fact* groundSpeed       (void) { return &_groundSpeedFact; }
     Fact* climbRate         (void) { return &_climbRateFact; }
     Fact* altitudeRelative  (void) { return &_altitudeRelativeFact; }
-    Fact* altitudeWGS84     (void) { return &_altitudeWGS84Fact; }
     Fact* altitudeAMSL      (void) { return &_altitudeAMSLFact; }
 
-    FactGroup* gpsFactGroup(void) { return &_gpsFactGroup; }
+    FactGroup* gpsFactGroup     (void) { return &_gpsFactGroup; }
+    FactGroup* batteryFactGroup (void) { return &_batteryFactGroup; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -369,9 +410,6 @@ signals:
     void formatedMessageChanged ();
     void latestErrorChanged     ();
     void longitudeChanged       ();
-    void batteryVoltageChanged  ();
-    void batteryPercentChanged  ();
-    void batteryConsumedChanged ();
     void currentConfigChanged   ();
     void currentStateChanged    ();
     void flowImageIndexChanged  ();
@@ -407,12 +445,10 @@ private slots:
     /** @brief Attitude from one specific component / redundant autopilot */
     void _updateAttitude                    (UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
     void _updateSpeed                       (UASInterface* uas, double _groundSpeed, double _airSpeed, quint64 timestamp);
-    void _updateAltitude                    (UASInterface* uas, double _altitudeAMSL, double _altitudeWGS84, double _altitudeRelative, double _climbRate, quint64 timestamp);
+    void _updateAltitude                    (UASInterface* uas, double _altitudeAMSL, double _altitudeRelative, double _climbRate, quint64 timestamp);
     void _updateNavigationControllerErrors  (UASInterface* uas, double altitudeError, double speedError, double xtrackError);
     void _updateNavigationControllerData    (UASInterface *uas, float navRoll, float navPitch, float navBearing, float targetBearing, float targetDistance);
     void _checkUpdate                       ();
-    void _updateBatteryRemaining            (UASInterface*, double voltage, double, double percent, int);
-    void _updateBatteryConsumedChanged      (UASInterface*, double current_consumed);
     void _updateState                       (UASInterface* system, QString name, QString description);
     /** @brief A new camera image has arrived */
     void _imageReady                        (UASInterface* uas);
@@ -428,6 +464,8 @@ private:
     void _handleHeartbeat(mavlink_message_t& message);
     void _handleRCChannels(mavlink_message_t& message);
     void _handleRCChannelsRaw(mavlink_message_t& message);
+    void _handleBatteryStatus(mavlink_message_t& message);
+    void _handleSysStatus(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
@@ -470,9 +508,6 @@ private:
     float           _navigationCrosstrackError;
     float           _navigationTargetBearing;
     QTimer*         _refreshTimer;
-    double          _batteryVoltage;
-    double          _batteryPercent;
-    double          _batteryConsumed;
     QString         _currentState;
     int             _updateCount;
     QString         _formatedMessage;
@@ -539,10 +574,10 @@ private:
     Fact _airSpeedFact;
     Fact _climbRateFact;
     Fact _altitudeRelativeFact;
-    Fact _altitudeWGS84Fact;
     Fact _altitudeAMSLFact;
 
-    VehicleGPSFactGroup _gpsFactGroup;
+    VehicleGPSFactGroup     _gpsFactGroup;
+    VehicleBatteryFactGroup _batteryFactGroup;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;
@@ -551,9 +586,9 @@ private:
     static const char* _airSpeedFactName;
     static const char* _climbRateFactName;
     static const char* _altitudeRelativeFactName;
-    static const char* _altitudeWGS84FactName;
     static const char* _altitudeAMSLFactName;
     static const char* _gpsFactGroupName;
+    static const char* _batteryFactGroupName;
 
     static const int _vehicleUIUpdateRateMSecs = 100;
 

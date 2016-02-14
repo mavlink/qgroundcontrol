@@ -33,7 +33,6 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
     {
         valueEnabled("altitudeAMSL");
         valueEnabled("altitudeAMSLFT");
-        valueEnabled("altitudeWGS84");
         valueEnabled("altitudeRelative");
         valueEnabled("groundSpeed");
         valueEnabled("distToWaypoint");
