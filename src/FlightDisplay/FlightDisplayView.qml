@@ -39,8 +39,10 @@ import QGroundControl.Controllers   1.0
 import QGroundControl.FactSystem    1.0
 
 /// Flight Display View
-Item {
-    id: root
+QGCView {
+    id:             root
+    viewPanel:      _panel
+    topDialogMargin: height - availableHeight
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -139,143 +141,149 @@ Item {
         px4JoystickCheck()
     }
 
-    //-- Map View
-    //   For whatever reason, if FlightDisplayViewMap is the root item, changing
-    //   width/height has no effect.
-    Item {
-        id: _flightMapContainer
-        z:  _mainIsMap ? root.z + 1 : root.z + 2
-        anchors.left:   root.left
-        anchors.bottom: root.bottom
-        visible:        _mainIsMap || _isPipVisible
-        width:          _mainIsMap ? root.width  : pipSize
-        height:         _mainIsMap ? root.height : pipSize * (9/16)
-        states: [
-            State {
-                name:   "pipMode"
-                PropertyChanges {
-                    target:             _flightMapContainer
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+    QGCViewPanel {
+        id:             _panel
+        anchors.fill:   parent
+
+        //-- Map View
+        //   For whatever reason, if FlightDisplayViewMap is the _panel item, changing
+        //   width/height has no effect.
+        Item {
+            id: _flightMapContainer
+            z:  _mainIsMap ? _panel.z + 1 : _panel.z + 2
+            anchors.left:   _panel.left
+            anchors.bottom: _panel.bottom
+            visible:        _mainIsMap || _isPipVisible
+            width:          _mainIsMap ? _panel.width  : pipSize
+            height:         _mainIsMap ? _panel.height : pipSize * (9/16)
+            states: [
+                State {
+                    name:   "pipMode"
+                    PropertyChanges {
+                        target:             _flightMapContainer
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    }
+                },
+                State {
+                    name:   "fullMode"
+                    PropertyChanges {
+                        target:             _flightMapContainer
+                        anchors.margins:    0
+                    }
                 }
-            },
-            State {
-                name:   "fullMode"
-                PropertyChanges {
-                    target:             _flightMapContainer
-                    anchors.margins:    0
-                }
-            }
-        ]
-        FlightDisplayViewMap {
-            id:             _flightMap
-            anchors.fill:   parent
-        }
-    }
-
-    //-- Video View
-    FlightDisplayViewVideo {
-        id:             _flightVideo
-        z:              _mainIsMap ? root.z + 2 : root.z + 1
-        width:          !_mainIsMap ? root.width  : pipSize
-        height:         !_mainIsMap ? root.height : pipSize * (9/16)
-        anchors.left:   root.left
-        anchors.bottom: root.bottom
-        visible:        _controller.hasVideo && (!_mainIsMap || _isPipVisible)
-        states: [
-            State {
-                name:   "pipMode"
-                PropertyChanges {
-                    target: _flightVideo
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                }
-            },
-            State {
-                name:   "fullMode"
-                PropertyChanges {
-                    target: _flightVideo
-                    anchors.margins:    0
-                }
-            }
-        ]
-    }
-
-    QGCPipable {
-        id:                 _flightVideoPipControl
-        z:                  _flightVideo.z + 3
-        width:              pipSize
-        height:             pipSize * (9/16)
-        anchors.left:       root.left
-        anchors.bottom:     root.bottom
-        anchors.margins:    ScreenTools.defaultFontPixelHeight
-        isHidden:           !_isPipVisible
-        isDark:             isBackgroundDark
-        onActivated: {
-            _mainIsMap = !_mainIsMap
-            setStates()
-        }
-        onHideIt: {
-            setPipVisibility(!state)
-        }
-    }
-
-    //-- Widgets
-    Loader {
-        id:                 widgetsLoader
-        z:                  root.z + 4
-        anchors.right:      parent.right
-        anchors.left:       parent.left
-        anchors.bottom:     parent.bottom
-        height:             availableHeight
-        property bool isBackgroundDark: root.isBackgroundDark
-    }
-
-    //-- Virtual Joystick
-    Item {
-        id:                         multiTouchItem
-        z:                          root.z + 5
-        width:                      parent.width  - (_flightVideoPipControl.width / 2)
-        height:                     thumbAreaHeight
-        visible:                    QGroundControl.virtualTabletJoystick
-        anchors.bottom:             _flightVideoPipControl.top
-        anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
-        anchors.horizontalCenter:   parent.horizontalCenter
-
-        readonly property real thumbAreaHeight: Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
-
-        QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
-
-        Timer {
-            interval:   40  // 25Hz, same as real joystick rate
-            running:    QGroundControl.virtualTabletJoystick && _activeVehicle
-            repeat:     true
-            onTriggered: {
-                if (_activeVehicle) {
-                    _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
-                }
+            ]
+            FlightDisplayViewMap {
+                id:             _flightMap
+                anchors.fill:   parent
             }
         }
 
-        JoystickThumbPad {
-            id:                     leftStick
-            anchors.leftMargin:     xPositionDelta
-            anchors.bottomMargin:   -yPositionDelta
-            anchors.left:           parent.left
-            anchors.bottom:         parent.bottom
-            width:                  parent.thumbAreaHeight
-            height:                 parent.thumbAreaHeight
-            yAxisThrottle:          true
-            lightColors:            !isBackgroundDark
+        //-- Video View
+        FlightDisplayViewVideo {
+            id:             _flightVideo
+            z:              _mainIsMap ? _panel.z + 2 : _panel.z + 1
+            width:          !_mainIsMap ? _panel.width  : pipSize
+            height:         !_mainIsMap ? _panel.height : pipSize * (9/16)
+            anchors.left:   _panel.left
+            anchors.bottom: _panel.bottom
+            visible:        _controller.hasVideo && (!_mainIsMap || _isPipVisible)
+            states: [
+                State {
+                    name:   "pipMode"
+                    PropertyChanges {
+                        target: _flightVideo
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    }
+                },
+                State {
+                    name:   "fullMode"
+                    PropertyChanges {
+                        target: _flightVideo
+                        anchors.margins:    0
+                    }
+                }
+            ]
         }
 
-        JoystickThumbPad {
-            id:                     rightStick
-            anchors.rightMargin:    -xPositionDelta
-            anchors.bottomMargin:   -yPositionDelta
-            anchors.right:          parent.right
-            anchors.bottom:         parent.bottom
-            width:                  parent.thumbAreaHeight
-            height:                 parent.thumbAreaHeight
-            lightColors:            !isBackgroundDark
+        QGCPipable {
+            id:                 _flightVideoPipControl
+            z:                  _flightVideo.z + 3
+            width:              pipSize
+            height:             pipSize * (9/16)
+            anchors.left:       _panel.left
+            anchors.bottom:     _panel.bottom
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            isHidden:           !_isPipVisible
+            isDark:             isBackgroundDark
+            onActivated: {
+                _mainIsMap = !_mainIsMap
+                setStates()
+            }
+            onHideIt: {
+                setPipVisibility(!state)
+            }
+        }
+
+        //-- Widgets
+        Loader {
+            id:                 widgetsLoader
+            z:                  _panel.z + 4
+            anchors.right:      parent.right
+            anchors.left:       parent.left
+            anchors.bottom:     parent.bottom
+            height:             availableHeight
+            property bool isBackgroundDark: root.isBackgroundDark
+            property var qgcView: root
+        }
+
+        //-- Virtual Joystick
+        Item {
+            id:                         multiTouchItem
+            z:                          _panel.z + 5
+            width:                      parent.width  - (_flightVideoPipControl.width / 2)
+            height:                     thumbAreaHeight
+            visible:                    QGroundControl.virtualTabletJoystick
+            anchors.bottom:             _flightVideoPipControl.top
+            anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
+            anchors.horizontalCenter:   parent.horizontalCenter
+
+            readonly property real thumbAreaHeight: Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
+
+            QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
+
+            Timer {
+                interval:   40  // 25Hz, same as real joystick rate
+                running:    QGroundControl.virtualTabletJoystick && _activeVehicle
+                repeat:     true
+                onTriggered: {
+                    if (_activeVehicle) {
+                        _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
+                    }
+                }
+            }
+
+            JoystickThumbPad {
+                id:                     leftStick
+                anchors.leftMargin:     xPositionDelta
+                anchors.bottomMargin:   -yPositionDelta
+                anchors.left:           parent.left
+                anchors.bottom:         parent.bottom
+                width:                  parent.thumbAreaHeight
+                height:                 parent.thumbAreaHeight
+                yAxisThrottle:          true
+                lightColors:            !isBackgroundDark
+            }
+
+            JoystickThumbPad {
+                id:                     rightStick
+                anchors.rightMargin:    -xPositionDelta
+                anchors.bottomMargin:   -yPositionDelta
+                anchors.right:          parent.right
+                anchors.bottom:         parent.bottom
+                width:                  parent.thumbAreaHeight
+                height:                 parent.thumbAreaHeight
+                lightColors:            !isBackgroundDark
+            }
         }
     }
 }
