@@ -46,14 +46,7 @@
         },
         {
             "name":             "altitudeRelative",
-            "shortDescription": "Altitude",
-            "type":             "double",
-            "decimalPlaces":    1,
-            "units":            "m"
-        },
-        {
-            "name":             "altitudeWGS84",
-            "shortDescription": "Altitude",
+            "shortDescription": "Altitude (home)",
             "type":             "double",
             "decimalPlaces":    1,
             "units":            "m"
