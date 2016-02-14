@@ -203,10 +203,10 @@ int main(int argc, char *argv[])
         // hanging.
         DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
         SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
-
-        // Set our own OpenGL buglist
-        qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
     }
+
+    // Set our own OpenGL buglist
+    qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
 #endif
 #endif // QT_DEBUG
 
