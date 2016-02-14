@@ -72,7 +72,8 @@ public:
     Q_PROPERTY(QString      units                   READ cookedUnits                                        CONSTANT)
     Q_PROPERTY(QVariant     value                   READ cookedValue            WRITE setCookedValue        NOTIFY valueChanged)
     Q_PROPERTY(bool         valueEqualsDefault      READ valueEqualsDefault                                 NOTIFY valueChanged)
-    Q_PROPERTY(QVariant     valueString             READ cookedValueString                                  NOTIFY valueChanged)
+    Q_PROPERTY(QString      valueString             READ cookedValueString                                  NOTIFY valueChanged)
+    Q_PROPERTY(QString      enumOrValueString       READ enumOrValueString                                  NOTIFY valueChanged)
 
     /// Convert and validate value
     ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
@@ -111,6 +112,7 @@ public:
     QString         cookedValueString       (void) const;
     bool            valueEqualsDefault      (void) const;
     bool            rebootRequired          (void) const;
+    QString         enumOrValueString       (void);         // This is not const, since an unknown value can modify the enum lists
 
     void setRawValue        (const QVariant& value);
     void setCookedValue     (const QVariant& value);
