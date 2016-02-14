@@ -92,8 +92,20 @@ QGCView {
     }
 
     function loadFromFile() {
-        controller.loadMissionFromFile()
-        fitViewportToMissionItems()
+        if (ScreenTools.isMobile) {
+            _root.showDialog(mobileFilePicker, "Select Mission File", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+        } else {
+            controller.loadMissionFromFile()
+            fitViewportToMissionItems()
+        }
+    }
+
+    function saveToFile() {
+        if (ScreenTools.isMobile) {
+            _root.showDialog(mobileFileSaver, "Save Mission File", _root.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+        } else {
+            controller.saveToFile()
+        }
     }
 
     function normalizeLat(lat) {
@@ -174,6 +186,56 @@ QGCView {
     }
 
     property int _moveDialogMissionItemIndex
+
+    Component {
+        id: mobileFilePicker
+
+        QGCViewDialog {
+            ListView {
+                anchors.margins:    _margin
+                anchors.fill:       parent
+                spacing:            _margin / 2
+                orientation:    ListView.Vertical
+                model: controller.getMobileMissionFiles()
+
+                delegate: QGCButton {
+                    text: modelData
+
+                    onClicked: {
+                        hideDialog()
+                        controller.loadMobileMissionFromFile(modelData)
+                        fitViewportToMissionItems()
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: mobileFileSaver
+
+        QGCViewDialog {
+            function accept() {
+                hideDialog()
+                console.log(filenameTextField.text)
+                controller.saveMobileMissionToFile(filenameTextField.text)
+            }
+
+            Column {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        ScreenTools.defaultFontPixelHeight
+
+                QGCLabel {
+                    text: "File name:"
+                }
+
+                QGCTextField {
+                    id: filenameTextField
+                }
+            }
+        }
+    }
 
     Component {
         id: moveDialog
@@ -659,14 +721,13 @@ QGCView {
 
             Row {
                 spacing: ScreenTools.defaultFontPixelWidth
-                visible: !ScreenTools.isMobile
 
                 QGCButton {
                     text:       "Save to file..."
 
                     onClicked: {
                         syncButton.hideDropDown()
-                        controller.saveMissionToFile()
+                        saveToFile()
                     }
                 }
 

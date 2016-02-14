@@ -184,7 +184,6 @@ void MissionController::removeAllMissionItems(void)
     }
 }
 
-#ifndef __mobile__
 bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* missionItems, QString& errorString)
 {
     QJsonParseError jsonParseError;
@@ -242,9 +241,7 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
 
     return true;
 }
-#endif
 
-#ifndef __mobile__
 bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListModel* missionItems, QString& errorString)
 {
     bool addPlannedHomePosition = false;
@@ -295,13 +292,10 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
 
     return true;
 }
-#endif
 
-void MissionController::loadMissionFromFile(void)
+void MissionController::_loadMissionFromFile(const QString& filename)
 {
-#ifndef __mobile__
     QString errorString;
-    QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Mission File to load", QString(), "Mission file (*.mission);;All Files (*.*)");
 
     if (filename.isEmpty()) {
         return;
@@ -342,23 +336,34 @@ void MissionController::loadMissionFromFile(void)
     }
 
     _initAllMissionItems();
+}
+
+void MissionController::loadMissionFromFile(void)
+{
+#ifndef __mobile__
+    QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Mission File to load", QString(), "Mission file (*.mission);;All Files (*.*)");
+
+    if (filename.isEmpty()) {
+        return;
+    }
+    _loadMissionFromFile(filename);
 #endif
 }
 
-void MissionController::saveMissionToFile(void)
+void MissionController::_saveMissionToFile(const QString& filename)
 {
-#ifndef __mobile__
-    QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save mission to", QString(), "Mission file (*.mission);;All Files (*.*)");
+    qDebug() << filename;
 
     if (filename.isEmpty()) {
         return;
     }
 
+    QString missionFilename = filename;
     if (!QFileInfo(filename).fileName().contains(".")) {
-        filename += ".mission";
+        missionFilename += ".mission";
     }
 
-    QFile file(filename);
+    QFile file(missionFilename);
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qgcApp()->showMessage(file.errorString());
@@ -397,7 +402,39 @@ void MissionController::saveMissionToFile(void)
     }
 
     _missionItems->setDirty(false);
+}
+
+void MissionController::saveMissionToFile(void)
+{
+#ifndef __mobile__
+    QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save mission to", QString(), "Mission file (*.mission);;All Files (*.*)");
+
+    if (filename.isEmpty()) {
+        return;
+    }
+    _saveMissionToFile(filename);
 #endif
+}
+
+void MissionController::saveMobileMissionToFile(const QString& filename)
+{
+    QStringList docDirs = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
+    if (docDirs.count() <= 0) {
+        qWarning() << "No Documents location";
+        return;
+    }
+
+    _saveMissionToFile(docDirs.at(0) + QDir::separator() + filename);
+}
+
+void MissionController::loadMobileMissionFromFile(const QString& filename)
+{
+    QStringList docDirs = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
+    if (docDirs.count() <= 0) {
+        qWarning() << "No Documents location";
+        return;
+    }
+    _loadMissionFromFile(docDirs.at(0) + QDir::separator() + filename);
 }
 
 void MissionController::_calcPrevWaypointValues(double homeAlt, MissionItem* currentItem, MissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
@@ -833,4 +870,24 @@ void MissionController::_currentMissionItemChanged(int sequenceNumber)
             item->setIsCurrentItem(item->sequenceNumber() == sequenceNumber);
         }
     }
+}
+
+QStringList MissionController::getMobileMissionFiles(void)
+{
+    QStringList missionFiles;
+
+    QStringList docDirs = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
+    if (docDirs.count() <= 0) {
+        qWarning() << "No Documents location";
+        return QStringList();
+    }
+    QDir missionDir = docDirs.at(0);
+
+    QFileInfoList missionFileInfoList = missionDir.entryInfoList(QStringList(QStringLiteral("*.mission")),  QDir::Files, QDir::Name);
+
+    foreach (const QFileInfo& missionFileInfo, missionFileInfoList) {
+        missionFiles << missionFileInfo.baseName() + ".mission";
+    }
+
+    return missionFiles;
 }
