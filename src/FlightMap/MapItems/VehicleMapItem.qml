@@ -33,9 +33,13 @@ import QGroundControl.Vehicle       1.0
 
 /// Marker for displaying a vehicle location on the map
 MapQuickItem {
+    id: root
+
     property var    vehicle                ///< Vehicle object
     property bool   isSatellite:    false  ///< true: satellite map is showing
     property real   size:           ScreenTools.defaultFontPixelHeight * 5
+
+    signal clicked
 
     anchorPoint.x:  vehicleIcon.width  / 2
     anchorPoint.y:  vehicleIcon.height / 2
@@ -52,6 +56,11 @@ MapQuickItem {
             origin.x:   vehicleIcon.width  / 2
             origin.y:   vehicleIcon.height / 2
             angle:      vehicle ? vehicle.heading.value : 0
+        }
+
+        MouseArea {
+            anchors.fill:   parent
+            onClicked:      root.clicked()
         }
     }
 }

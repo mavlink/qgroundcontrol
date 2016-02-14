@@ -32,6 +32,7 @@ QGCViewPanel            1.0 QGCViewPanel.qml
 RoundButton             1.0 RoundButton.qml
 SignalStrength          1.0 SignalStrength.qml
 SubMenuButton           1.0 SubMenuButton.qml
+TakeoffWidget           1.0 TakeoffWidget.qml
 VehicleRotationCal      1.0 VehicleRotationCal.qml
 VehicleSummaryRow       1.0 VehicleSummaryRow.qml
 ViewWidget              1.0 ViewWidget.qml

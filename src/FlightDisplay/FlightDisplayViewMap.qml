@@ -83,8 +83,23 @@ FlightMap {
                     coordinate:     object.coordinate
                     isSatellite:    flightMap.isSatelliteMap
                     size:           _mainIsMap ? ScreenTools.defaultFontPixelHeight * 5 : ScreenTools.defaultFontPixelHeight * 2
-                    z:              QGroundControl.zOrderMapItems
+                    z:              QGroundControl.zOrderMapItems + 1
+
+                    onClicked: {
+                        if (object.active) {
+                            takeoffWidget.x = x + width
+                            takeoffWidget.y = y
+                            takeoffWidget.vehicle = object
+                            takeoffWidget.visible = true
+                        }
+                    }
             }
+    }
+
+    TakeoffWidget {
+        id:         takeoffWidget
+        visible:    false
+        z:          QGroundControl.zOrderMapItems + 1
     }
 
     // Add the mission items to the map
