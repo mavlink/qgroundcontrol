@@ -38,9 +38,7 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    readonly property string _InstrumentVisibleKey: "IsInstrumentPanelVisible"
-
-    property var _activeVehicle:         multiVehicleManager.activeVehicle
+    property var _activeVehicle: multiVehicleManager.activeVehicle
 
     QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
 
