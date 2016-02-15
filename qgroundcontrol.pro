@@ -254,6 +254,7 @@ HEADERS += \
     src/Joystick/JoystickManager.h \
     src/JsonHelper.h \
     src/FollowMe/FollowMe.h \
+    src/JsonHelper.h \
     src/LogCompressor.h \
     src/MG.h \
     src/MissionManager/MissionCommandList.h \
@@ -396,6 +397,7 @@ SOURCES += \
     src/Joystick/JoystickManager.cc \
     src/JsonHelper.cc \
     src/FollowMe/FollowMe.cc \
+    src/JsonHelper.cc \
     src/LogCompressor.cc \
     src/main.cc \
     src/MissionManager/MissionCommandList.cc \
