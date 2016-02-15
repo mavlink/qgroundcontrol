@@ -48,7 +48,8 @@ enum PX4_CUSTOM_SUB_MODE_AUTO {
     PX4_CUSTOM_SUB_MODE_AUTO_MISSION,
     PX4_CUSTOM_SUB_MODE_AUTO_RTL,
     PX4_CUSTOM_SUB_MODE_AUTO_LAND,
-    PX4_CUSTOM_SUB_MODE_AUTO_RTGS
+    PX4_CUSTOM_SUB_MODE_AUTO_RTGS,
+    PX4_CUSTOM_SUB_MODE_AUTO_FOLLOWME
 };
 
 union px4_custom_mode {
@@ -85,6 +86,7 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,       "Auto: Return To Land",   true },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      "Auto: Landing",          false },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,      "Return, Link Loss", false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_FOLLOWME,  "Auto: Follow Me",        true },
 };
 
 
