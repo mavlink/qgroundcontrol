@@ -78,8 +78,9 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
 
     connect(_vehicle->uas(), &UASInterface::parameterUpdate, this, &ParameterLoader::_parameterUpdate);
 
-    /* Initially attempt a local cache load, refresh over the link if it fails */
-    _tryCacheLookup();
+    // Ensure the cache directory exists
+    QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
+    refreshAllParameters();
 }
 
 ParameterLoader::~ParameterLoader()
@@ -120,7 +121,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     if (parameterName == "_HASH_CHECK") {
         /* we received a cache hash, potentially load from cache */
         _cacheTimeoutTimer.stop();
-        _tryCacheHashLoad(uasId, value);
+        _tryCacheHashLoad(uasId, componentId, value);
         return;
     }
     _dataMutex.lock();
@@ -269,7 +270,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     if (waitingParamCount == 0) {
         // Now that we know vehicle is up to date persist
         _saveToEEPROM();
-        _writeLocalParamCache();
+        _writeLocalParamCache(uasId, componentId);
     }
 
     _checkInitialLoadComplete();
@@ -604,40 +605,42 @@ void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramNa
     _vehicle->sendMessageOnLink(_dedicatedLink, msg);
 }
 
-void ParameterLoader::_writeLocalParamCache()
+void ParameterLoader::_writeLocalParamCache(int uasId, int componentId)
 {
-    QMap<int, MapID2NamedParam> cache_map;
+    MapID2NamedParam cache_map;
 
-    foreach(int component, _mapParameterId2Name.keys()) {
-        foreach(int id, _mapParameterId2Name[component].keys()) {
-            const QString name(_mapParameterId2Name[component][id]);
-            const Fact *fact = _mapParameterName2Variant[component][name].value<Fact*>();
-            cache_map[component][id] = NamedParam(name, ParamTypeVal(fact->type(), fact->rawValue()));
-        }
+    foreach(int id, _mapParameterId2Name[componentId].keys()) {
+        const QString name(_mapParameterId2Name[componentId][id]);
+        const Fact *fact = _mapParameterName2Variant[componentId][name].value<Fact*>();
+        cache_map[id] = NamedParam(name, ParamTypeVal(fact->type(), fact->rawValue()));
     }
 
-    QFile cache_file(QFileInfo(QSettings().fileName()).path() + QDir::separator() + "param_cache");
+    QFile cache_file(parameterCacheFile(uasId, componentId));
     cache_file.open(QIODevice::WriteOnly | QIODevice::Truncate);
 
     QDataStream ds(&cache_file);
     ds << cache_map;
 }
 
-QString ParameterLoader::parameterCacheFile(void)
+QDir ParameterLoader::parameterCacheDir()
 {
-    const QDir settingsDir(QFileInfo(QSettings().fileName()).dir());
-    return settingsDir.filePath("param_cache");
+    const QString spath(QFileInfo(QSettings().fileName()).dir().absolutePath());
+    return spath + QDir::separator() + "ParamCache";
 }
 
-void ParameterLoader::_tryCacheHashLoad(int uasId, QVariant hash_value)
+QString ParameterLoader::parameterCacheFile(int uasId, int componentId)
+{
+    return parameterCacheDir().filePath(QString("%1_%2").arg(uasId).arg(componentId));
+}
+
+void ParameterLoader::_tryCacheHashLoad(int uasId, int componentId, QVariant hash_value)
 {
     uint32_t crc32_value = 0;
     /* The datastructure of the cache table */
-    QMap<int, MapID2NamedParam> cache_map;
-    QFile cache_file(parameterCacheFile());
+    MapID2NamedParam cache_map;
+    QFile cache_file(parameterCacheFile(uasId, componentId));
     if (!cache_file.exists()) {
-        /* no local cache, immediately refresh all params */
-        refreshAllParameters();
+        /* no local cache, just wait for them to come in*/
         return;
     }
     cache_file.open(QIODevice::ReadOnly);
@@ -647,29 +650,38 @@ void ParameterLoader::_tryCacheHashLoad(int uasId, QVariant hash_value)
     ds >> cache_map;
 
     /* compute the crc of the local cache to check against the remote */
-    foreach(int component, cache_map.keys()) {
-        foreach(int id, cache_map[component].keys()) {
-            const QString name(cache_map[component][id].first);
-            const void *vdat = cache_map[component][id].second.second.constData();
-            crc32_value = QGC::crc32((const uint8_t *)qPrintable(name), name.length(),  crc32_value);
-            crc32_value = QGC::crc32((const uint8_t *)vdat, sizeof(uint32_t), crc32_value);
-        }
+
+    foreach(int id, cache_map.keys()) {
+        const QString name(cache_map[id].first);
+        const void *vdat = cache_map[id].second.second.constData();
+        const FactMetaData::ValueType_t fact_type = static_cast<FactMetaData::ValueType_t>(cache_map[id].second.first);
+        crc32_value = QGC::crc32((const uint8_t *)qPrintable(name), name.length(),  crc32_value);
+        crc32_value = QGC::crc32((const uint8_t *)vdat, FactMetaData::typeToSize(fact_type), crc32_value);
     }
 
     if (crc32_value == hash_value.toUInt()) {
+        qCInfo(ParameterLoaderLog) << "Parameters loaded from cache" << qPrintable(QFileInfo(cache_file).absoluteFilePath());
         /* if the two param set hashes match, just load from the disk */
-        foreach(int component, cache_map.keys()) {
-            int count = cache_map[component].count();
-            foreach(int id, cache_map[component].keys()) {
-                const QString &name = cache_map[component][id].first;
-                const QVariant &value = cache_map[component][id].second.second;
-                const int mavType = _factTypeToMavType(static_cast<FactMetaData::ValueType_t>(cache_map[component][id].second.first));
-                _parameterUpdate(uasId, component, name, count, id, mavType, value);
-            }
+        int count = cache_map.count();
+        foreach(int id, cache_map.keys()) {
+            const QString &name = cache_map[id].first;
+            const QVariant &value = cache_map[id].second.second;
+            const FactMetaData::ValueType_t fact_type = static_cast<FactMetaData::ValueType_t>(cache_map[id].second.first);
+            const int mavType = _factTypeToMavType(fact_type);
+            _parameterUpdate(uasId, componentId, name, count, id, mavType, value);
         }
-    } else {
-        /* cache and remote hashes differ. Immediately request all params */
-        refreshAllParameters();
+        // Return the hash value to notify we don't want any more updates
+        mavlink_param_set_t     p;
+        mavlink_param_union_t   union_value;
+        p.param_type = MAV_PARAM_TYPE_UINT32;
+        strncpy(p.param_id, "_HASH_CHECK", sizeof(p.param_id));
+        union_value.param_uint32 = crc32_value;
+        p.param_value = union_value.param_float;
+        p.target_system = (uint8_t)_vehicle->id();
+        p.target_component = (uint8_t)componentId;
+        mavlink_message_t msg;
+        mavlink_msg_param_set_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &p);
+        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
     }
 }
 
