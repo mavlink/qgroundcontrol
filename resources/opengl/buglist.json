@@ -36,10 +36,6 @@
             "os": {
                 "type": "win"
             },
-            "driver_version": {
-                "op": "<=",
-                "value": "8.15.10.2702"
-            },
             "features": [
                 "disable_desktopgl"
             ]
