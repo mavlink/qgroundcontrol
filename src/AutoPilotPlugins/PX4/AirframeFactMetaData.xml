@@ -102,6 +102,12 @@
       <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
   </airframe_group>
+  <airframe_group image="OctoRotorXCoaxial" name="Octo Coax Wide">
+    <airframe id="12002" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;" name="Steadidrone MAVRIK">
+      <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
+      <type>Octo Coax Wide</type>
+    </airframe>
+  </airframe_group>
   <airframe_group image="OctoRotorPlus" name="Octorotor +">
     <airframe id="9001" maintainer="Anton Babushkin &lt;anton@px4.io&gt;" name="Generic Octocopter + geometry">
       <maintainer>Anton Babushkin &lt;anton@px4.io&gt;</maintainer>
@@ -349,9 +355,13 @@
     </airframe>
   </airframe_group>
   <airframe_group image="VTOLDuoRotorTailSitter" name="VTOL Duo Tailsitter">
-    <airframe id="13001" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="Duorotor Tailsitter">
+    <airframe id="13001" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="Caipiroshka Duo Tailsitter">
       <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
       <type>VTOL Duo Tailsitter</type>
+      <output name="MAIN1">motor left</output>
+      <output name="MAIN2">motor right</output>
+      <output name="MAIN5">elevon left</output>
+      <output name="MAIN6">elevon right</output>
     </airframe>
   </airframe_group>
   <airframe_group image="VTOLQuadRotorTailSitter" name="VTOL Quad Tailsitter">
