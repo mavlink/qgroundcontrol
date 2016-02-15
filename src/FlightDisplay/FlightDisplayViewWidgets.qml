@@ -38,7 +38,8 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    property var _activeVehicle: multiVehicleManager.activeVehicle
+    property var    _activeVehicle: multiVehicleManager.activeVehicle
+    property bool   _isSatellite:   _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
 
     QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
 
@@ -103,59 +104,42 @@ Item {
         altitudeFact:           _altitudeAMSLFact
         groundSpeedFact:        _groundSpeedFact
         airSpeedFact:           _airSpeedFact
-        isSatellite:            _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
+        isSatellite:            _isSatellite
         z:                      QGroundControl.zOrderWidgets
         qgcView:                parent.parent.qgcView
         maxHeight:              parent.height - (ScreenTools.defaultFontPixelHeight * 2)
     }
 
-    //-- Alternate Instrument Panel
-    Rectangle {
+    QGCInstrumentWidgetAlternate {
+        id:                     instrumentGadgetAlternate
+        anchors.margins:        ScreenTools.defaultFontPixelHeight
+        anchors.top:            parent.top
+        anchors.right:          parent.right
+        visible:                QGroundControl.virtualTabletJoystick
+        width:                  getGadgetWidth()
+        active:                 _activeVehicle != null
+        heading:                _heading
+        rollAngle:              _roll
+        pitchAngle:             _pitch
+        altitudeFact:           _altitudeAMSLFact
+        groundSpeedFact:        _groundSpeedFact
+        airSpeedFact:           _airSpeedFact
+        isSatellite:            _isSatellite
+        z:                      QGroundControl.zOrderWidgets
+    }
+
+    ValuesWidget {
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+        anchors.top:        instrumentGadgetAlternate.bottom
+        anchors.left:       instrumentGadgetAlternate.left
+        width:              getGadgetWidth()
+        qgcView:            parent.parent.qgcView
+        textColor:          _isSatellite ? "white" : "black"
         visible:            QGroundControl.virtualTabletJoystick
-        anchors.margins:    ScreenTools.defaultFontPixelHeight
-        anchors.right:      parent.right
-        anchors.bottom:     parent.bottom
-        width:              pipSize
-        height:             pipSize * (9/16)
-        color:              Qt.rgba(0,0,0,0.75)
-        Column {
-            id:                 instruments
-            width:              parent.width
-            spacing:            ScreenTools.defaultFontPixelSize * 0.33
-            anchors.verticalCenter: parent.verticalCenter
-            QGCLabel {
-                text:           _altitudeAMSLFact.shortDescription + "(" + _altitudeAMSLFact.units + ")"
-                font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
-                width:          parent.width
-                height:         ScreenTools.defaultFontPixelSize * 0.75
-                color:          "white"
-                horizontalAlignment: TextEdit.AlignHCenter
-            }
-            QGCLabel {
-                text:           _altitudeAMSLFact.valueString
-                font.pixelSize: ScreenTools.defaultFontPixelSize * 1.5
-                font.weight:    Font.DemiBold
-                width:          parent.width
-                color:          "white"
-                horizontalAlignment: TextEdit.AlignHCenter
-            }
-            QGCLabel {
-                text:           _groundSpeedFact.shortDescription + "(" + _groundSpeedFact.units + ")"
-                font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
-                width:          parent.width
-                height:         ScreenTools.defaultFontPixelSize * 0.75
-                color:          "white"
-                horizontalAlignment: TextEdit.AlignHCenter
-            }
-            QGCLabel {
-                text:           _groundSpeedFact.valueString
-                font.pixelSize: ScreenTools.defaultFontPixelSize
-                font.weight:    Font.DemiBold
-                width:          parent.width
-                color:          "white"
-                horizontalAlignment: TextEdit.AlignHCenter
-            }
-        }
+        maxHeight:          multiTouchItem.y - y
+
+        Component.onCompleted: console.log(y)
+        onHeightChanged: console.log(y, height, multiTouchItem.y)
     }
 
     //-- Vertical Tool Buttons

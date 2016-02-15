@@ -103,6 +103,7 @@
         <file alias="QGroundControl/FlightMap/QGCAttitudeWidget.qml">src/FlightMap/Widgets/QGCAttitudeWidget.qml</file>
         <file alias="QGroundControl/FlightMap/QGCCompassWidget.qml">src/FlightMap/Widgets/QGCCompassWidget.qml</file>
         <file alias="QGroundControl/FlightMap/QGCInstrumentWidget.qml">src/FlightMap/Widgets/QGCInstrumentWidget.qml</file>
+        <file alias="QGroundControl/FlightMap/QGCInstrumentWidgetAlternate.qml">src/FlightMap/Widgets/QGCInstrumentWidgetAlternate.qml</file>
         <file alias="QGroundControl/FlightMap/QGCPitchIndicator.qml">src/FlightMap/Widgets/QGCPitchIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/QGCSlider.qml">src/FlightMap/Widgets/QGCSlider.qml</file>
         <file alias="QGroundControl/FlightMap/QGCVideoBackground.qml">src/FlightMap/QGCVideoBackground.qml</file>
