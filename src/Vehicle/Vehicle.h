@@ -233,6 +233,9 @@ public:
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
     Q_INVOKABLE void disconnectInactiveVehicle(void);
 
+    /// Takeoff vehicle from ground straight up to specified relative altitude
+    Q_INVOKABLE void takeoff(double altitudeRelative);
+
     // Property accessors
 
     QGeoCoordinate coordinate(void) { return _coordinate; }
