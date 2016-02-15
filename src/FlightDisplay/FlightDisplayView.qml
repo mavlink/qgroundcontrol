@@ -72,10 +72,10 @@ QGCView {
     property real _heading:             _activeVehicle ? _activeVehicle.heading.value : _defaultHeading
 
 
-    property Fact _emptyFact:           Fact { }
-    property Fact _groundSpeedFact:     _activeVehicle ? _activeVehicle.groundSpeed   : _emptyFact
-    property Fact _airSpeedFact:        _activeVehicle ? _activeVehicle.airSpeed      : _emptyFact
-    property Fact _altitudeAMSLFact:    _activeVehicle ? _activeVehicle.altitudeAMSL : _emptyFact
+    property Fact _emptyFact:               Fact { }
+    property Fact _groundSpeedFact:         _activeVehicle ? _activeVehicle.groundSpeed      : _emptyFact
+    property Fact _airSpeedFact:            _activeVehicle ? _activeVehicle.airSpeed         : _emptyFact
+    property Fact _altitudeRelativeFact:    _activeVehicle ? _activeVehicle.altitudeRelative : _emptyFact
 
     property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
 
