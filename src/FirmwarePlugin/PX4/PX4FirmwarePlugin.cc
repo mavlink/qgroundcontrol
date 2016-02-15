@@ -68,7 +68,7 @@ struct Modes2Name {
 };
 
 /// Tranlates from PX4 custom modes to flight mode names
-// FIXME: Doens't handle fixed-wing/multi-rotor name differences
+
 static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                  "Manual",           true },
     { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                  "Acro",             true },
@@ -77,12 +77,12 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                  "Altitude Control", true },
     { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                  "Position Control", true },
     { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                  "Offboard Control", true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,     "Auto Ready",       false },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,   "Taking Off",       false },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,    "Loiter",           true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,   "Mission",          true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,       "Return To Land",   true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      "Landing",          false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,     "Auto: Ready",       false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,   "Auto: Takeoff",       false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,    "Auto: Pause",           true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,   "Auto: Mission",          true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,       "Auto: Return To Land",   true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      "Auto: Landing",          false },
 };
 
 
