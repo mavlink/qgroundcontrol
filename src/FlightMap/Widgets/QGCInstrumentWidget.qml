@@ -53,7 +53,6 @@ Rectangle {
     property Fact   _emptyFact:         Fact { }
     property Fact   groundSpeedFact:    _emptyFact
     property Fact   airSpeedFact:       _emptyFact
-    property Fact   altitudeFact:       _emptyFact
 
     property real   _defaultSize:   ScreenTools.defaultFontPixelSize * (9)
 
