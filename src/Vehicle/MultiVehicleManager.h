@@ -120,7 +120,6 @@ private:
     FirmwarePluginManager*      _firmwarePluginManager;
     AutoPilotPluginManager*     _autopilotPluginManager;
     JoystickManager*            _joystickManager;
-    FollowMe*                   _followMe;
     MAVLinkProtocol*            _mavlinkProtocol;
 
     QTimer              _gcsHeartbeatTimer;             ///< Timer to emit heartbeats

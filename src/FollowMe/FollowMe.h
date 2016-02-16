@@ -56,16 +56,17 @@ private:
     QGeoPositionInfoSource * _locationInfo;
 
     struct motionReport_s {
-        uint32_t timestamp; // time since boot
-        int32_t lat_int;    // X Position in WGS84 frame in 1e7 * meters
-        int32_t lon_int;	// Y Position in WGS84 frame in 1e7 * meters
-        float alt;          //	Altitude in meters in AMSL altitude, not WGS84 if absolute or relative, above terrain if GLOBAL_TERRAIN_ALT_INT
-        float vx;           //	X velocity in NED frame in meter / s
-        float vy;           //	Y velocity in NED frame in meter / s
-        float vz;           //	Z velocity in NED frame in meter / s
-        float afx;          //	X acceleration in NED frame in meter / s^2 or N
-        float afy;          //	Y acceleration in NED frame in meter / s^2 or N
-        float afz;          //	Z acceleration in NED frame in meter / s^2 or N
+        uint32_t timestamp;     // time since boot
+        int32_t lat_int;        // X Position in WGS84 frame in 1e7 * meters
+        int32_t lon_int;        // Y Position in WGS84 frame in 1e7 * meters
+        float alt;              //	Altitude in meters in AMSL altitude, not WGS84 if absolute or relative, above terrain if GLOBAL_TERRAIN_ALT_INT
+        float vx;               //	X velocity in NED frame in meter / s
+        float vy;               //	Y velocity in NED frame in meter / s
+        float vz;               //	Z velocity in NED frame in meter / s
+        float afx;              //	X acceleration in NED frame in meter / s^2 or N
+        float afy;              //	Y acceleration in NED frame in meter / s^2 or N
+        float afz;              //	Z acceleration in NED frame in meter / s^2 or N
+        float pos_std_dev[3];   // -1 for unknown
     } _motionReport;
 
     QString _followMeStr;
@@ -73,4 +74,5 @@ private:
     QTimer              _gcsMotionReportTimer;             ///< Timer to emit motion reports
     bool                _gcsMotionReportEnabled;           ///< Enabled/disable MotionReport emission
     static const int    _gcsMotionReportRateMSecs = 1000;  ///< Motion report rate
+    double _degreesToRadian(double deg);
 };
