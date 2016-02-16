@@ -145,11 +145,19 @@ int main(int argc, char *argv[])
 
     // Set our own OpenGL buglist
     qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
-    if (QCoreApplication::arguments().contains(QStringLiteral("-angle"))) {
-        QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
-    } else if (QCoreApplication::arguments().contains(QStringLiteral("-swrast"))) {
-        QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+
+    // Allow for command line override of renderer
+    for (int i = 0; i < argc; i++) {
+        const QString arg(argv[i]);
+        if (arg == QStringLiteral("-angle")) {
+            QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
+            break;
+        } else if (arg == QStringLiteral("-swrast")) {
+            QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+            break;
+        }
     }
+
 #endif
 
     // The following calls to qRegisterMetaType are done to silence debug output which warns
