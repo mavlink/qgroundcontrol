@@ -139,9 +139,17 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-    // install the message handler
 #ifdef Q_OS_WIN
+    // install the message handler
     qInstallMessageHandler(msgHandler);
+
+    // Set our own OpenGL buglist
+    qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
+    if (QCoreApplication::arguments().contains(QStringLiteral("-angle"))) {
+        QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
+    } else if (QCoreApplication::arguments().contains(QStringLiteral("-swrast"))) {
+        QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+    }
 #endif
 
     // The following calls to qRegisterMetaType are done to silence debug output which warns
@@ -204,9 +212,6 @@ int main(int argc, char *argv[])
         DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
         SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
     }
-
-    // Set our own OpenGL buglist
-    qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
 #endif
 #endif // QT_DEBUG
 
