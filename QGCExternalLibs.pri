@@ -116,51 +116,6 @@ contains(DEFINES, DISABLE_XBEE) {
 }
 
 #
-# [OPTIONAL] Magellan 3DxWare library. Provides support for 3DConnexion's 3D mice.
-#
-contains(DEFINES, DISABLE_3DMOUSE) {
-    message("Skipping support for 3DConnexion mice (manual override from command line)")
-    DEFINES -= DISABLE_3DMOUSE
-# Otherwise the user can still disable this feature in the user_config.pri file.
-} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_3DMOUSE) {
-    message("Skipping support for 3DConnexion mice (manual override from user_config.pri)")
-} else:LinuxBuild {
-    exists(/usr/local/lib/libxdrvlib.so) {
-        message("Including support for 3DConnexion mice")
-
-                DEFINES += \
-        QGC_MOUSE_ENABLED_LINUX \
-                ParameterCheck
-                # Hack: Has to be defined for magellan usage
-
-        HEADERS += src/input/Mouse6dofInput.h
-        SOURCES += src/input/Mouse6dofInput.cpp
-        LIBS += -L/usr/local/lib/ -lxdrvlib
-    } else {
-        warning("Skipping support for 3DConnexion mice (missing libraries, see README)")
-    }
-} else:WindowsBuild {
-    message("Including support for 3DConnexion mice")
-
-    DEFINES += QGC_MOUSE_ENABLED_WIN
-
-    INCLUDEPATH += libs/thirdParty/3DMouse/win
-
-    HEADERS += \
-        libs/thirdParty/3DMouse/win/I3dMouseParams.h \
-        libs/thirdParty/3DMouse/win/MouseParameters.h \
-        libs/thirdParty/3DMouse/win/Mouse3DInput.h \
-        src/input/Mouse6dofInput.h
-
-    SOURCES += \
-        libs/thirdParty/3DMouse/win/MouseParameters.cpp \
-        libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
-        src/input/Mouse6dofInput.cpp
-} else {
-    message("Skipping support for 3DConnexion mice (unsupported platform)")
-}
-
-#
 # [OPTIONAL] Opal RT-LAB Library. Provides integration with Opal-RT's RT-LAB simulator.
 #
 contains(DEFINES, DISABLE_RTLAB) {
