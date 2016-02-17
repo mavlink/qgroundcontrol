@@ -62,6 +62,7 @@ private:
     int             _channelCount;
     QVariantList    _rgChannelOptionEnabled;
     bool            _fixedWing;
+    int             _flightModeChannel;
 };
 
 #endif
