@@ -52,6 +52,7 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
     , _mavlink(qgcApp()->toolbox()->mavlinkProtocol())
     , _parametersReady(false)
     , _initialLoadComplete(false)
+    , _saveRequired(false)
     , _defaultComponentId(FactSystem::defaultComponentId)
     , _totalParamCount(0)
 {
@@ -290,6 +291,7 @@ void ParameterLoader::_valueUpdated(const QVariant& value)
     _waitingWriteParamNameMap[componentId].remove(name);    // Remove any old entry
     _waitingWriteParamNameMap[componentId][name] = 0;       // Add new entry and set retry count
     _waitingParamTimeoutTimer.start();
+    _saveRequired = true;
 
     _dataMutex.unlock();
 
@@ -672,13 +674,16 @@ void ParameterLoader::_tryCacheHashLoad(int uasId, QVariant hash_value)
 
 void ParameterLoader::_saveToEEPROM(void)
 {
-    if (_vehicle->firmwarePlugin()->isCapable(FirmwarePlugin::MavCmdPreflightStorageCapability)) {
-        mavlink_message_t msg;
-        mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _vehicle->id(), 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
-        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-        qCDebug(ParameterLoaderLog) << "_saveToEEPROM";
-    } else {
-        qCDebug(ParameterLoaderLog) << "_saveToEEPROM skipped due to FirmwarePlugin::isCapable";
+    if (_saveRequired) {
+        _saveRequired = false;
+        if (_vehicle->firmwarePlugin()->isCapable(FirmwarePlugin::MavCmdPreflightStorageCapability)) {
+            mavlink_message_t msg;
+            mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _vehicle->id(), 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
+            _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+            qCDebug(ParameterLoaderLog) << "_saveToEEPROM";
+        } else {
+            qCDebug(ParameterLoaderLog) << "_saveToEEPROM skipped due to FirmwarePlugin::isCapable";
+        }
     }
 }
 

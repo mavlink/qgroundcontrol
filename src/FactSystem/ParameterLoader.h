@@ -139,6 +139,7 @@ private:
     
     bool _parametersReady;      ///< true: full set of parameters correctly loaded
     bool _initialLoadComplete;  ///< true: Initial load of all parameters complete, whether succesful or not
+    bool _saveRequired;         ///< true: _saveToEEPROM should be called
     int _defaultComponentId;
     QString _defaultComponentIdParam;
     
