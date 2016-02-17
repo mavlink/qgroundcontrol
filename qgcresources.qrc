@@ -236,4 +236,7 @@
     <qresource prefix="/FirmwarePlugin/APM">
         <file alias="apm.pdef.xml">src/FirmwarePlugin/APM/apm.pdef.xml</file>
     </qresource>
+    <qresource prefix="/opengl">
+        <file>resources/opengl/buglist.json</file>
+    </qresource>
 </RCC>
