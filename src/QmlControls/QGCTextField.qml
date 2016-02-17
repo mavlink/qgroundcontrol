@@ -71,7 +71,7 @@ TextField {
     }
 
     onActiveFocusChanged: {
-        if (activeFocus) {
+        if (!ScreenTools.isMobile && activeFocus) {
             selectAll()
         }
     }
