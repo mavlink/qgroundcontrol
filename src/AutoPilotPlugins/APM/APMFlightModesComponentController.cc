@@ -32,12 +32,18 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
     : _activeFlightMode(0)
     , _channelCount(Vehicle::cMaxRcChannels)
     , _fixedWing(_vehicle->vehicleType() == MAV_TYPE_FIXED_WING)
+    , _flightModeChannel(4)
+
 {
     QStringList usedParams;
     usedParams << QStringLiteral("FLTMODE1") << QStringLiteral("FLTMODE2") << QStringLiteral("FLTMODE3")
                << QStringLiteral("FLTMODE4") << QStringLiteral("FLTMODE5") << QStringLiteral("FLTMODE6");
     if (!_allParametersExists(FactSystem::defaultComponentId, usedParams)) {
         return;
+    }
+
+    if (parameterExists(FactSystem::defaultComponentId, QStringLiteral("FLTMODE_CH"))) {
+        _flightModeChannel = getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FLTMODE_CH"))->rawValue().toInt();
     }
 
     _rgChannelOptionEnabled << QVariant(false) << QVariant(false) << QVariant(false) << QVariant(false) << QVariant(false) << QVariant(false);
@@ -48,10 +54,12 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
 /// Connected to Vehicle::rcChannelsChanged signal
 void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
 {
-    Q_UNUSED(channelCount);
+    if (_flightModeChannel > channelCount) {
+        return;
+    }
 
     _activeFlightMode = 0;
-    int channelValue = pwmValues[4];
+    int channelValue = pwmValues[_flightModeChannel - 1];
     if (channelValue != -1) {
         bool found = false;
         int rgThreshold[] = { 1230, 1360, 1490, 1620, 1749 };
