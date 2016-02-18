@@ -30,6 +30,7 @@
 #include "QGCMapTileSet.h"
 #include "QGCMapUrlEngine.h"
 #include <QStorageInfo>
+#include <stdio.h>
 
 QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QGCMapEngineManagerLog")
 
@@ -378,10 +379,8 @@ QGCMapEngineManager::getUniqueName()
     QString name;
     int count = 1;
     while (true) {
-        char numb[16];
-        snprintf(numb, sizeof(numb), "%03d", count++);
         name = test;
-        name += numb;
+        name += QString().sprintf("%03d", count++);
         if(!findName(name))
             return name;
     }

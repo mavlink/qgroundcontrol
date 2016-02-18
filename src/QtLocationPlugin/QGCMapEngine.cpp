@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QSettings>
 #include <QStandardPaths>
 #include <QDir>
+#include <stdio.h>
 
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
@@ -208,9 +209,7 @@ QGCMapEngine::cacheTile(UrlFactory::MapType type, const QString& hash, const QBy
 QString
 QGCMapEngine::getTileHash(UrlFactory::MapType type, int x, int y, int z)
 {
-    char hashSource[64];
-    snprintf(hashSource, sizeof(hashSource), "%04d%08d%08d%03d", (int)type, x, y, z);
-    return QString(hashSource);
+    return QString().sprintf("%04d%08d%08d%03d", (int)type, x, y, z);
 }
 
 //-----------------------------------------------------------------------------
