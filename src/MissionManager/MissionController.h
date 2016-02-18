@@ -43,6 +43,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  missionItems                READ missionItems                   NOTIFY missionItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines               READ waypointLines                  NOTIFY waypointLinesChanged)
     Q_PROPERTY(bool                 autoSync                    READ autoSync   WRITE setAutoSync   NOTIFY autoSyncChanged)
+    Q_PROPERTY(bool                 syncInProgress              READ syncInProgress                 NOTIFY syncInProgressChanged)
 
     Q_INVOKABLE void start(bool editMode);
     Q_INVOKABLE void getMissionItems(void);
@@ -64,12 +65,14 @@ public:
     QmlObjectListModel* waypointLines(void) { return &_waypointLines; }
     bool autoSync(void) { return _autoSync; }
     void setAutoSync(bool autoSync);
+    bool syncInProgress(void);
 
 signals:
     void missionItemsChanged(void);
     void waypointLinesChanged(void);
     void autoSyncChanged(bool autoSync);
     void newItemsFromVehicle(void);
+    void syncInProgressChanged(bool syncInProgress);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle();

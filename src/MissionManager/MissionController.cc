@@ -762,6 +762,7 @@ void MissionController::_autoSyncSend(void)
 
 void MissionController::_inProgressChanged(bool inProgress)
 {
+    emit syncInProgressChanged(inProgress);
     if (!inProgress && _queuedSend) {
         _autoSyncSend();
     }
@@ -890,4 +891,10 @@ QStringList MissionController::getMobileMissionFiles(void)
     }
 
     return missionFiles;
+}
+
+bool MissionController::syncInProgress(void)
+{
+    qDebug() << _activeVehicle->missionManager()->inProgress();
+    return _activeVehicle->missionManager()->inProgress();
 }
