@@ -778,7 +778,8 @@ bool MissionController::_findLastAltitude(double* lastAltitude)
     bool found = false;
     double foundAltitude;
 
-    for (int i=0; i<_missionItems->count(); i++) {
+    // Don't use home position
+    for (int i=1; i<_missionItems->count(); i++) {
         MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
 
         if (item->specifiesCoordinate() && !item->standaloneCoordinate()) {
