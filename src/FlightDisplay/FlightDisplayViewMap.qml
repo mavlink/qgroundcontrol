@@ -65,7 +65,7 @@ FlightMap {
         delegate:
             MapPolyline {
                 line.width: 3
-                line.color: "orange"
+                line.color: "red"
                 z:          QGroundControl.zOrderMapItems - 1
                 path: [
                     { latitude: object.coordinate1.latitude, longitude: object.coordinate1.longitude },
