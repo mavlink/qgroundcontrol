@@ -544,17 +544,7 @@
             "specifiesCoordinate":  true,
             "standaloneCoordinate": true,
             "friendlyEdit":         true,
-            "category":             "Basic",
-            "param5": {
-                "label":            "Lat:",
-                "default":          0,
-                "decimalPlaces":    7
-            },
-            "param6": {
-                "label":            "Lon:",
-                "default":          0,
-                "decimalPlaces":    7
-            }
+            "category":             "Basic"
         },
         { "id": 190, "rawName": "MAV_CMD_DO_RALLY_LAND", "friendlyName": "MAV_CMD_DO_RALLY_LAND" },
         { "id": 191, "rawName": "MAV_CMD_DO_GO_AROUND", "friendlyName": "MAV_CMD_DO_GO_AROUND" },
