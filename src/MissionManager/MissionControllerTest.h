@@ -61,13 +61,11 @@ private:
 
     enum {
         coordinateChangedSignalIndex = 0,
-        homePositionValidChangedSignalIndex,
         missionItemMaxSignalIndex
     };
 
     enum {
         coordinateChangedSignalMask =           1 << coordinateChangedSignalIndex,
-        homePositionValidChangedSignalMask =    1 << homePositionValidChangedSignalIndex,
         missionItemMaxSignalMask =              1 << missionItemMaxSignalIndex,
     };
 
@@ -76,16 +74,12 @@ private:
     enum {
         missionItemsChangedSignalIndex = 0,
         waypointLinesChangedSignalIndex,
-        liveHomePositionAvailableChangedSignalIndex,
-        liveHomePositionChangedSignalIndex,
         missionControllerMaxSignalIndex
     };
 
     enum {
         missionItemsChangedSignalMask =                 1 << missionItemsChangedSignalIndex,
         waypointLinesChangedSignalMask =                1 << waypointLinesChangedSignalIndex,
-        liveHomePositionAvailableChangedSignalMask =    1 << liveHomePositionAvailableChangedSignalIndex,
-        liveHomePositionChangedSignalMask =             1 << liveHomePositionChangedSignalIndex,
     };
 
     MultiSignalSpy*     _multiSpyMissionController;

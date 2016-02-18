@@ -186,6 +186,7 @@ INCLUDEPATH += \
     src/comm \
     src/FlightDisplay \
     src/FlightMap \
+    src/FlightMap/Widgets \
     src/input \
     src/Joystick \
     src/lib/qmapcontrol \
@@ -247,10 +248,12 @@ HEADERS += \
     src/comm/UDPLink.h \
     src/FlightDisplay/FlightDisplayViewController.h \
     src/FlightMap/FlightMapSettings.h \
+    src/FlightMap/Widgets/ValuesWidgetController.h \
     src/GAudioOutput.h \
     src/HomePositionManager.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
+    src/JsonHelper.h \
     src/LogCompressor.h \
     src/MG.h \
     src/MissionManager/MissionCommandList.h \
@@ -372,10 +375,12 @@ SOURCES += \
     src/comm/UDPLink.cc \
     src/FlightDisplay/FlightDisplayViewController.cc \
     src/FlightMap/FlightMapSettings.cc \
+    src/FlightMap/Widgets/ValuesWidgetController.cc \
     src/GAudioOutput.cc \
     src/HomePositionManager.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
+    src/JsonHelper.cc \
     src/LogCompressor.cc \
     src/main.cc \
     src/MissionManager/MissionCommandList.cc \
@@ -675,6 +680,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     src/FactSystem/Fact.h \
+    src/FactSystem/FactGroup.h \
     src/FactSystem/FactControls/FactPanelController.h \
     src/FactSystem/FactMetaData.h \
     src/FactSystem/FactSystem.h \
@@ -684,6 +690,7 @@ HEADERS += \
 
 SOURCES += \
     src/FactSystem/Fact.cc \
+    src/FactSystem/FactGroup.cc \
     src/FactSystem/FactControls/FactPanelController.cc \
     src/FactSystem/FactMetaData.cc \
     src/FactSystem/FactSystem.cc \

@@ -70,6 +70,8 @@ Section "create Start Menu Shortcuts"
   SetShellVarContext all
   CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
   CreateShortCut "$SMPROGRAMS\$StartMenuFolder\QGroundControl.lnk" "$INSTDIR\qgroundcontrol.exe" "" "$INSTDIR\qgroundcontrol.exe" 0
+  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\QGroundControl (GPU Compatibility Mode).lnk" "$INSTDIR\qgroundcontrol.exe" "-angle" "$INSTDIR\qgroundcontrol.exe" 0
+  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\QGroundControl (GPU Safe Mode).lnk" "$INSTDIR\qgroundcontrol.exe" "-swrast" "$INSTDIR\qgroundcontrol.exe" 0
 SectionEnd
 
 Function .onInit

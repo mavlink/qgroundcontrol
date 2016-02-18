@@ -93,7 +93,6 @@ public:
     Q_PROPERTY(double   bearingToWaypoint       READ getBearingToWaypoint   WRITE setBearingToWaypoint  NOTIFY bearingToWaypointChanged)
     Q_PROPERTY(double   altitudeAMSL            READ getAltitudeAMSL        WRITE setAltitudeAMSL       NOTIFY altitudeAMSLChanged)
     Q_PROPERTY(double   altitudeAMSLFT          READ getAltitudeAMSLFT                                  NOTIFY altitudeAMSLFTChanged)
-    Q_PROPERTY(double   altitudeWGS84           READ getAltitudeWGS84       WRITE setAltitudeWGS84      NOTIFY altitudeWGS84Changed)
     Q_PROPERTY(double   altitudeRelative        READ getAltitudeRelative    WRITE setAltitudeRelative   NOTIFY altitudeRelativeChanged)
     Q_PROPERTY(double   satRawHDOP              READ getSatRawHDOP                                      NOTIFY satRawHDOPChanged)
     Q_PROPERTY(double   satRawVDOP              READ getSatRawVDOP                                      NOTIFY satRawVDOPChanged)
@@ -202,19 +201,6 @@ public:
     {
         return altitudeAMSLFT;
     }
-
-    void setAltitudeWGS84(double val)
-    {
-        altitudeWGS84 = val;
-        emit altitudeWGS84Changed(val, "altitudeWGS84");
-        emit valueChanged(this->uasId,"altitudeWGS84","m",QVariant(val),getUnixTime());
-    }
-
-    double getAltitudeWGS84() const
-    {
-        return altitudeWGS84;
-    }
-
 
     void setAltitudeRelative(double val)
     {
@@ -431,7 +417,6 @@ protected: //COMMENTS FOR TEST UNIT
     double longitude;           ///< Global longitude as estimated by position estimator
     double altitudeAMSL;        ///< Global altitude as estimated by position estimator, AMSL
     double altitudeAMSLFT;      ///< Global altitude as estimated by position estimator, AMSL
-    double altitudeWGS84;       ///< Global altitude as estimated by position estimator, WGS84
     double altitudeRelative;    ///< Altitude above home as estimated by position estimator
 
     double satRawHDOP;
@@ -614,7 +599,6 @@ signals:
     void latitudeChanged(double val,QString name);
     void altitudeAMSLChanged(double val,QString name);
     void altitudeAMSLFTChanged(double val,QString name);
-    void altitudeWGS84Changed(double val,QString name);
     void altitudeRelativeChanged(double val,QString name);
 
     void satRawHDOPChanged  (double value);

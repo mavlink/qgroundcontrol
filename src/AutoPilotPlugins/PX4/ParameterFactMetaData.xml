@@ -262,9 +262,20 @@ velocity</short_desc>
     <parameter default="3" name="BAT_N_CELLS" type="INT32">
       <short_desc>Number of cells</short_desc>
       <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
-      <min>1</min>
+      <min>2</min>
       <max>10</max>
       <unit>S</unit>
+      <values>
+        <value code="10">10S Battery</value>
+        <value code="3">3S Battery</value>
+        <value code="2">2S Battery</value>
+        <value code="5">5S Battery</value>
+        <value code="4">4S Battery</value>
+        <value code="7">7S Battery</value>
+        <value code="6">6S Battery</value>
+        <value code="9">9S Battery</value>
+        <value code="8">8S Battery</value>
+      </values>
     </parameter>
     <parameter default="-1.0" name="BAT_CAPACITY" type="FLOAT">
       <short_desc>Battery capacity</short_desc>
@@ -379,6 +390,10 @@ velocity</short_desc>
       <long_desc>Set to 1 to enable actions triggered when the datalink is lost.</long_desc>
       <min>0</min>
       <max>1</max>
+      <values>
+        <value code="1">ON: Datalink failse</value>
+        <value code="0">OFF: No Datalink failsafe</value>
+      </values>
     </parameter>
     <parameter default="10" name="COM_DL_LOSS_T" type="INT32">
       <short_desc>Datalink loss time threshold</short_desc>
@@ -452,6 +467,11 @@ velocity</short_desc>
       <long_desc>The default value of 0 requires a valid RC transmitter setup. Setting this to 1 disables RC input handling and the associated checks. A value of 2 will generate RC control data from manual input received via MAVLink instead of directly forwarding the manual input data.</long_desc>
       <min>0</min>
       <max>2</max>
+      <values>
+        <value code="1">Disable RC Input Checks</value>
+        <value code="0">RC Transmitter</value>
+        <value code="2">Virtual RC by Joystick</value>
+      </values>
     </parameter>
     <parameter default="0" name="COM_DISARM_LAND" type="INT32">
       <short_desc>Time-out for auto disarm after landing</short_desc>
@@ -1076,7 +1096,7 @@ velocity</short_desc>
   <group name="L1 Control">
     <parameter default="20.0" name="FW_L1_PERIOD" type="FLOAT">
       <short_desc>L1 period</short_desc>
-      <long_desc>This is the L1 distance and defines the tracking point ahead of the aircraft its following. A value of 25 meters works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
+      <long_desc>This is the L1 distance and defines the tracking point ahead of the aircraft its following. A value of 18-25 meters works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
       <min>12.0</min>
       <max>50.0</max>
     </parameter>
@@ -1170,8 +1190,8 @@ velocity</short_desc>
       <long_desc>0: disabled, 1: enabled</long_desc>
     </parameter>
     <parameter default="1.3" name="FW_AIRSPD_SCALE" type="FLOAT">
-      <short_desc>Takeoff and landing airspeed scale factor</short_desc>
-      <long_desc>Multiplying this factor with the minimum airspeed of the plane gives the target airspeed for takeoff and landing approach.</long_desc>
+      <short_desc>Landing airspeed scale factor</short_desc>
+      <long_desc>Multiplying this factor with the minimum airspeed of the plane gives the target airspeed the landing approach.</long_desc>
       <min>1.0</min>
       <max>1.5</max>
     </parameter>
@@ -1492,22 +1512,26 @@ velocity</short_desc>
       <long_desc>Reduce if the system is too twitchy, increase if the response is too slow and sluggish.</long_desc>
       <min>0.15</min>
       <max>0.25</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.2" name="MC_PITCH_TC" type="FLOAT">
       <short_desc>Pitch time constant</short_desc>
       <long_desc>Reduce if the system is too twitchy, increase if the response is too slow and sluggish.</long_desc>
       <min>0.15</min>
       <max>0.25</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="6.5" name="MC_ROLL_P" type="FLOAT">
       <short_desc>Roll P gain</short_desc>
       <long_desc>Roll proportional gain, i.e. desired angular speed in rad/s for error 1 rad.</long_desc>
       <min>0.0</min>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.15" name="MC_ROLLRATE_P" type="FLOAT">
       <short_desc>Roll rate P gain</short_desc>
       <long_desc>Roll rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.05" name="MC_ROLLRATE_I" type="FLOAT">
       <short_desc>Roll rate I gain</short_desc>
@@ -1518,69 +1542,82 @@ velocity</short_desc>
       <short_desc>Roll rate D gain</short_desc>
       <long_desc>Roll rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
       <min>0.0</min>
+      <decimal>4</decimal>
     </parameter>
     <parameter default="0.0" name="MC_ROLLRATE_FF" type="FLOAT">
       <short_desc>Roll rate feedforward</short_desc>
       <long_desc>Improves tracking performance.</long_desc>
       <min>0.0</min>
+      <decimal>4</decimal>
     </parameter>
     <parameter default="6.5" name="MC_PITCH_P" type="FLOAT">
       <short_desc>Pitch P gain</short_desc>
       <long_desc>Pitch proportional gain, i.e. desired angular speed in rad/s for error 1 rad.</long_desc>
       <min>0.0</min>
       <unit>1/s</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.15" name="MC_PITCHRATE_P" type="FLOAT">
       <short_desc>Pitch rate P gain</short_desc>
       <long_desc>Pitch rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.05" name="MC_PITCHRATE_I" type="FLOAT">
       <short_desc>Pitch rate I gain</short_desc>
       <long_desc>Pitch rate integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
       <min>0.0</min>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.003" name="MC_PITCHRATE_D" type="FLOAT">
       <short_desc>Pitch rate D gain</short_desc>
       <long_desc>Pitch rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
       <min>0.0</min>
+      <decimal>4</decimal>
     </parameter>
     <parameter default="0.0" name="MC_PITCHRATE_FF" type="FLOAT">
       <short_desc>Pitch rate feedforward</short_desc>
       <long_desc>Improves tracking performance.</long_desc>
       <min>0.0</min>
+      <decimal>4</decimal>
     </parameter>
     <parameter default="2.8" name="MC_YAW_P" type="FLOAT">
       <short_desc>Yaw P gain</short_desc>
       <long_desc>Yaw proportional gain, i.e. desired angular speed in rad/s for error 1 rad.</long_desc>
       <min>0.0</min>
       <unit>1/s</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.2" name="MC_YAWRATE_P" type="FLOAT">
       <short_desc>Yaw rate P gain</short_desc>
       <long_desc>Yaw rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.1" name="MC_YAWRATE_I" type="FLOAT">
       <short_desc>Yaw rate I gain</short_desc>
       <long_desc>Yaw rate integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
       <min>0.0</min>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.0" name="MC_YAWRATE_D" type="FLOAT">
       <short_desc>Yaw rate D gain</short_desc>
       <long_desc>Yaw rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
       <min>0.0</min>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.0" name="MC_YAWRATE_FF" type="FLOAT">
       <short_desc>Yaw rate feedforward</short_desc>
       <long_desc>Improves tracking performance.</long_desc>
       <min>0.0</min>
+      <decimal>4</decimal>
     </parameter>
     <parameter default="0.5" name="MC_YAW_FF" type="FLOAT">
       <short_desc>Yaw feed forward</short_desc>
       <long_desc>Feed forward weight for manual yaw control. 0 will give slow responce and no overshot, 1 - fast responce and big overshot.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="220.0" name="MC_ROLLRATE_MAX" type="FLOAT">
       <short_desc>Max roll rate</short_desc>
@@ -1588,6 +1625,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>360.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="220.0" name="MC_PITCHRATE_MAX" type="FLOAT">
       <short_desc>Max pitch rate</short_desc>
@@ -1595,6 +1633,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>360.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="120.0" name="MC_YAWRATE_MAX" type="FLOAT">
       <short_desc>Max yaw rate</short_desc>
@@ -1602,6 +1641,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>360.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="45.0" name="MC_YAWRAUTO_MAX" type="FLOAT">
       <short_desc>Max yaw rate in auto mode</short_desc>
@@ -1609,23 +1649,27 @@ velocity</short_desc>
       <min>0.0</min>
       <max>120.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="360.0" name="MC_ACRO_R_MAX" type="FLOAT">
       <short_desc>Max acro roll rate</short_desc>
       <min>0.0</min>
       <max>360.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="360.0" name="MC_ACRO_P_MAX" type="FLOAT">
       <short_desc>Max acro pitch rate</short_desc>
       <min>0.0</min>
       <max>360.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="360.0" name="MC_ACRO_Y_MAX" type="FLOAT">
       <short_desc>Max acro yaw rate</short_desc>
       <min>0.0</min>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="1.0" name="MC_RATT_TH" type="FLOAT">
       <short_desc>Threshold for Rattitude mode</short_desc>
@@ -1633,6 +1677,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit />
+      <decimal>2</decimal>
     </parameter>
     <parameter default="6.0" name="MP_ROLL_P" type="FLOAT">
       <short_desc>Roll P gain</short_desc>
@@ -1750,41 +1795,49 @@ velocity</short_desc>
       <long_desc>It's recommended to set it &gt; 0 to avoid free fall with zero thrust.</long_desc>
       <min>0.05</min>
       <max>1.0</max>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.9" name="MPC_THR_MAX" type="FLOAT">
       <short_desc>Maximum thrust in auto thrust control</short_desc>
       <long_desc>Limit max allowed thrust. Setting a value of one can put the system into actuator saturation as no spread between the motors is possible any more. A value of 0.8 - 0.9 is recommended.</long_desc>
       <min>0.0</min>
       <max>0.95</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.08" name="MPC_MANTHR_MIN" type="FLOAT">
       <short_desc>Minimum manual thrust</short_desc>
       <long_desc>Minimum vertical thrust. It's recommended to set it &gt; 0 to avoid free fall with zero thrust.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.9" name="MPC_MANTHR_MAX" type="FLOAT">
       <short_desc>Maximum manual thrust</short_desc>
       <long_desc>Limit max allowed thrust. Setting a value of one can put the system into actuator saturation as no spread between the motors is possible any more. A value of 0.8 - 0.9 is recommended.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="1.0" name="MPC_Z_P" type="FLOAT">
       <short_desc>Proportional gain for vertical position error</short_desc>
       <min>0.0</min>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.2" name="MPC_Z_VEL_P" type="FLOAT">
       <short_desc>Proportional gain for vertical velocity error</short_desc>
       <min>0.0</min>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.02" name="MPC_Z_VEL_I" type="FLOAT">
       <short_desc>Integral gain for vertical velocity error</short_desc>
       <long_desc>Non zero value allows hovering thrust estimation on stabilized or autonomous takeoff.</long_desc>
       <min>0.0</min>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="MPC_Z_VEL_D" type="FLOAT">
       <short_desc>Differential gain for vertical velocity error</short_desc>
       <min>0.0</min>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="3.0" name="MPC_Z_VEL_MAX" type="FLOAT">
       <short_desc>Maximum vertical velocity</short_desc>
@@ -1792,41 +1845,49 @@ velocity</short_desc>
       <min>0.0</min>
       <max>8.0</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="0.5" name="MPC_Z_FF" type="FLOAT">
       <short_desc>Vertical velocity feed forward</short_desc>
       <long_desc>Feed forward weight for altitude control in stabilized modes (ALTCTRL, POSCTRL). 0 will give slow responce and no overshot, 1 - fast responce and big overshot.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="1.0" name="MPC_XY_P" type="FLOAT">
       <short_desc>Proportional gain for horizontal position error</short_desc>
       <min>0.0</min>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.1" name="MPC_XY_VEL_P" type="FLOAT">
       <short_desc>Proportional gain for horizontal velocity error</short_desc>
       <min>0.0</min>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.02" name="MPC_XY_VEL_I" type="FLOAT">
       <short_desc>Integral gain for horizontal velocity error</short_desc>
       <long_desc>Non-zero value allows to resist wind.</long_desc>
       <min>0.0</min>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.01" name="MPC_XY_VEL_D" type="FLOAT">
       <short_desc>Differential gain for horizontal velocity error. Small values help reduce fast oscillations. If value is too big oscillations will appear again</short_desc>
       <min>0.0</min>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="5.0" name="MPC_XY_VEL_MAX" type="FLOAT">
       <short_desc>Maximum horizontal velocity</short_desc>
       <long_desc>Maximum horizontal velocity in AUTO mode and endpoint for position stabilized mode (POSCTRL).</long_desc>
       <min>0.0</min>
       <unit>m/s</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.5" name="MPC_XY_FF" type="FLOAT">
       <short_desc>Horizontal velocity feed forward</short_desc>
       <long_desc>Feed forward weight for position control in position control mode (POSCTRL). 0 will give slow responce and no overshot, 1 - fast responce and big overshot.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="45.0" name="MPC_TILTMAX_AIR" type="FLOAT">
       <short_desc>Maximum tilt angle in air</short_desc>
@@ -1834,6 +1895,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>degree</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="12.0" name="MPC_TILTMAX_LND" type="FLOAT">
       <short_desc>Maximum tilt during landing</short_desc>
@@ -1841,66 +1903,78 @@ velocity</short_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>degree</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="0.5" name="MPC_LAND_SPEED" type="FLOAT">
       <short_desc>Landing descend rate</short_desc>
       <min>0.0</min>
       <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="1.5" name="MPC_TKO_SPEED" type="FLOAT">
       <short_desc>Takeoff climb rate</short_desc>
       <min>0.0</min>
       <unit>m/s</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="35.0" name="MPC_MAN_R_MAX" type="FLOAT">
       <short_desc>Max manual roll</short_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>degree</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="35.0" name="MPC_MAN_P_MAX" type="FLOAT">
       <short_desc>Max manual pitch</short_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>degree</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="120.0" name="MPC_MAN_Y_MAX" type="FLOAT">
       <short_desc>Max manual yaw rate</short_desc>
       <min>0.0</min>
       <unit>degree / s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="0.1" name="MPC_HOLD_XY_DZ" type="FLOAT">
       <short_desc>Deadzone of X,Y sticks where position hold is enabled</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>%</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.1" name="MPC_HOLD_Z_DZ" type="FLOAT">
       <short_desc>Deadzone of Z stick where altitude hold is enabled</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>%</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.5" name="MPC_HOLD_MAX_XY" type="FLOAT">
       <short_desc>Maximum horizontal velocity for which position hold is enabled (use 0 to disable check)</short_desc>
       <min>0.0</min>
       <unit>m/s</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.5" name="MPC_HOLD_MAX_Z" type="FLOAT">
       <short_desc>Maximum vertical velocity for which position hold is enabled (use 0 to disable check)</short_desc>
       <min>0.0</min>
       <unit>m/s</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="5.0" name="MPC_VELD_LP" type="FLOAT">
       <short_desc>Low pass filter cut freq. for numerical velocity derivative</short_desc>
       <min>0.0</min>
       <unit>Hz</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="4.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
       <short_desc>Maximum horizonal acceleration in velocity controlled modes</short_desc>
       <min>2.0</min>
       <max>10.0</max>
       <unit>m/s/s</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.1" name="MPP_THR_MIN" type="FLOAT">
       <short_desc>Minimum thrust</short_desc>
@@ -2385,7 +2459,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>10.0</max>
     </parameter>
-    <parameter default="9.0" name="INAV_W_XY_FLOW" type="FLOAT">
+    <parameter default="0.8" name="INAV_W_XY_FLOW" type="FLOAT">
       <short_desc>XY axis weight for optical flow</short_desc>
       <long_desc>Weight (cutoff frequency) for optical flow (velocity) measurements.</long_desc>
       <min>0.0</min>
@@ -2409,12 +2483,11 @@ velocity</short_desc>
       <min>0.0</min>
       <max>0.1</max>
     </parameter>
-    <parameter default="0.15" name="INAV_FLOW_K" type="FLOAT">
+    <parameter default="1.35" name="INAV_FLOW_K" type="FLOAT">
       <short_desc>Optical flow scale factor</short_desc>
-      <long_desc>Factor to convert raw optical flow (in pixels) to radians [rad/px].</long_desc>
+      <long_desc>Factor to scale optical flow</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
-      <unit>rad/px</unit>
+      <max>10.0</max>
     </parameter>
     <parameter default="0.3" name="INAV_FLOW_Q_MIN" type="FLOAT">
       <short_desc>Minimal acceptable optical flow quality</short_desc>
@@ -2422,13 +2495,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>1.0</max>
     </parameter>
-    <parameter default="0.05" name="INAV_LIDAR_FILT" type="FLOAT">
-      <short_desc>Weight for lidar filter</short_desc>
-      <long_desc>Lidar filter detects spikes on lidar measurements and used to detect new surface level.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-    </parameter>
-    <parameter default="0.5" name="INAV_LIDAR_ERR" type="FLOAT">
+    <parameter default="0.2" name="INAV_LIDAR_ERR" type="FLOAT">
       <short_desc>Sonar maximal error for new surface</short_desc>
       <long_desc>If sonar measurement error is larger than this value it skiped (spike) or accepted as new surface level (if offset is stable).</long_desc>
       <min>0.0</min>
@@ -2481,6 +2548,19 @@ velocity</short_desc>
       <long_desc>Disable mocap</long_desc>
       <min>0</min>
       <max>1</max>
+    </parameter>
+    <parameter default="0" name="INAV_LIDAR_EST" type="FLOAT">
+      <short_desc>Enable LIDAR for altitude estimation</short_desc>
+      <long_desc>Enable LIDAR for altitude estimation</long_desc>
+      <min>0</min>
+      <max>1</max>
+    </parameter>
+    <parameter default="0.0" name="INAV_LIDAR_OFF" type="FLOAT">
+      <short_desc>LIDAR calibration offset</short_desc>
+      <long_desc>LIDAR calibration offset. Value will be added to the measured distance</long_desc>
+      <min>-20</min>
+      <max>20</max>
+      <unit>m</unit>
     </parameter>
     <parameter default="0" name="CBRK_NO_VISION" type="INT32">
       <short_desc>Disable vision input</short_desc>
@@ -3960,6 +4040,12 @@ FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</short_desc>
       <short_desc>Enable optimal recovery strategy for pitch-weak tailsitters</short_desc>
       <min>0</min>
       <max>1</max>
+    </parameter>
+    <parameter default="15.0" name="VT_TRANS_TIMEOUT" type="FLOAT">
+      <short_desc>Front transition timeout</short_desc>
+      <long_desc>Time in seconds after which transition will be cancelled. Disabled if set to 0.</long_desc>
+      <min>0.0</min>
+      <max>30.0</max>
     </parameter>
   </group>
   <group name="mTECS">
