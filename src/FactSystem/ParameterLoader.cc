@@ -72,10 +72,6 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
     _waitingParamTimeoutTimer.setInterval(1000);
     connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::_waitingParamTimeout);
 
-    _cacheTimeoutTimer.setSingleShot(true);
-    _cacheTimeoutTimer.setInterval(2500);
-    connect(&_cacheTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::_timeoutRefreshAll);
-
     connect(_vehicle->uas(), &UASInterface::parameterUpdate, this, &ParameterLoader::_parameterUpdate);
 
     // Ensure the cache directory exists
@@ -120,7 +116,6 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
 
     if (parameterName == "_HASH_CHECK") {
         /* we received a cache hash, potentially load from cache */
-        _cacheTimeoutTimer.stop();
         _tryCacheHashLoad(uasId, componentId, value);
         return;
     }
@@ -523,19 +518,6 @@ Out:
     }
 }
 
-void ParameterLoader::_tryCacheLookup()
-{
-    /* Start waiting for 2.5 seconds to get a cache hit and avoid loading all params over the radio */
-    _cacheTimeoutTimer.start();
-
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    Q_ASSERT(mavlink);
-
-    mavlink_message_t msg;
-    mavlink_msg_param_request_read_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->id(), MAV_COMP_ID_ALL, "_HASH_CHECK", -1);
-    _vehicle->sendMessageOnLink(_dedicatedLink, msg);
-}
-
 void ParameterLoader::_readParameterRaw(int componentId, const QString& paramName, int paramIndex)
 {
     mavlink_message_t msg;
@@ -913,9 +895,3 @@ void ParameterLoader::_initialRequestTimeout(void)
     refreshAllParameters();
     _initialRequestTimeoutTimer.start();
 }
-
-void ParameterLoader::_timeoutRefreshAll()
-{
-    refreshAllParameters();
-}
-
