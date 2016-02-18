@@ -112,9 +112,6 @@ protected:
     void _waitingParamTimeout(void);
     void _tryCacheLookup(void);
     void _initialRequestTimeout(void);
-    
-private slots:
-    void _timeoutRefreshAll();
 
 private:
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
@@ -160,7 +157,6 @@ private:
     
     QTimer _initialRequestTimeoutTimer;
     QTimer _waitingParamTimeoutTimer;
-    QTimer _cacheTimeoutTimer;
     
     QMutex _dataMutex;
     
