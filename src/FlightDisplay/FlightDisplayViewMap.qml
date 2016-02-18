@@ -44,6 +44,9 @@ FlightMap {
     property bool   _activeVehicleCoordinateValid:  multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.coordinateValid : false
     property var    activeVehicleCoordinate:        multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.coordinate : QtPositioning.coordinate()
 
+    Component.onCompleted: QGroundControl.flightMapPosition = center
+    onCenterChanged: QGroundControl.flightMapPosition = center
+
     onActiveVehicleCoordinateChanged: {
         if (_followVehicle && _activeVehicleCoordinateValid && activeVehicleCoordinate.isValid) {
             _initialMapPositionSet = true
@@ -62,7 +65,7 @@ FlightMap {
         delegate:
             MapPolyline {
                 line.width: 3
-                line.color: "orange"
+                line.color: "red"
                 z:          QGroundControl.zOrderMapItems - 1
                 path: [
                     { latitude: object.coordinate1.latitude, longitude: object.coordinate1.longitude },

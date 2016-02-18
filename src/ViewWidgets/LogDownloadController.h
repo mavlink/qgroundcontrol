@@ -28,6 +28,7 @@
 #include <QTimer>
 #include <QAbstractListModel>
 #include <QLocale>
+#include <QElapsedTimer>
 
 #include <memory>
 
@@ -39,7 +40,7 @@ class  MultiVehicleManager;
 class  UASInterface;
 class  Vehicle;
 class  QGCLogEntry;
-class  LogDownloadData;
+struct LogDownloadData;
 
 Q_DECLARE_LOGGING_CATEGORY(LogDownloadLog)
 
@@ -122,19 +123,6 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-class LogDownloadData {
-public:
-    LogDownloadData(QGCLogEntry* entry);
-    QList<uint>     offsets;
-    QFile           file;
-    QString         filename;
-    uint            ID;
-    QTimer          processDataTimer;
-    QGCLogEntry*    entry;
-    uint            written;
-};
-
-//-----------------------------------------------------------------------------
 class LogDownloadController : public FactPanelController
 {
     Q_OBJECT
@@ -170,7 +158,8 @@ private slots:
 private:
 
     bool _entriesComplete   ();
-    bool _logComplete       ();
+    bool _chunkComplete     () const;
+    bool _logComplete       () const;
     void _findMissingEntries();
     void _receivedAllEntries();
     void _receivedAllData   ();

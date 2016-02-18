@@ -73,6 +73,7 @@ QGCViewDialog {
         anchors.bottom:     parent.bottom
         spacing:            ScreenTools.defaultFontPixelHeight / 2
         orientation:        ListView.Vertical
+        clip:               true
 
         delegate: Rectangle {
             width:  parent.width
@@ -90,8 +91,9 @@ QGCViewDialog {
                 anchors.top:        parent.top
 
                 QGCLabel {
-                    text:   mavCmdInfo.friendlyName
-                    color:  textColor
+                    text:           mavCmdInfo.friendlyName
+                    color:          textColor
+                    font.weight:    Font.DemiBold
                 }
 
                 QGCLabel {

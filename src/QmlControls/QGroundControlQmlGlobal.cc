@@ -50,7 +50,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     QStringList     firmwareEnumStrings;
     QVariantList    firmwareEnumValues;
 
-    firmwareEnumStrings << "APM Flight Stack" << "PX4 Flight Stack" << "Mavlink Generic Flight Stack";
+    firmwareEnumStrings << "ArduPilot Flight Stack" << "PX4 Flight Stack" << "Mavlink Generic Flight Stack";
     firmwareEnumValues << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_PX4) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_GENERIC);
 
     _offlineEditingFirmwareTypeMetaData.setEnumInfo(firmwareEnumStrings, firmwareEnumValues);

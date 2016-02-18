@@ -43,7 +43,7 @@ QGCView {
     readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
     readonly property string highlightSuffix:   "</font>"
     readonly property string welcomeText:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
-    readonly property string plugInText:        highlightPrefix + "Plug in your device" + highlightSuffix + " via USB to " + highlightPrefix + "start" + highlightSuffix + " firmware upgrade. "
+    readonly property string plugInText:        "<big>" + highlightPrefix + "Plug in your device" + highlightSuffix + " via USB to " + highlightPrefix + "start" + highlightSuffix + " firmware upgrade.</big>"
     readonly property string flashFailText:     "If upgrade failed, make sure to connect " + highlightPrefix + "directly" + highlightSuffix + " to a powered USB port on your computer, not through a USB hub. " +
                                                 "Also make sure you are only powered via USB " + highlightPrefix + "not battery" + highlightSuffix + "."
     readonly property string qgcUnplugText1:    "All QGroundControl connections to vehicles must be " + highlightPrefix + " disconnected " + highlightSuffix + "prior to firmware upgrade."
@@ -58,7 +58,6 @@ QGCView {
         statusTextArea.append(highlightPrefix + "Upgrade cancelled" + highlightSuffix)
         statusTextArea.append("------------------------------------------")
         controller.cancel()
-        flashCompleteWaitTimer.running = true
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
@@ -103,6 +102,7 @@ QGCView {
                 // Board was found right away, so something is already plugged in before we've started upgrade
                 statusTextArea.append(qgcUnplugText1)
                 statusTextArea.append(qgcUnplugText2)
+                multiVehicleManager.activeVehicle.autoDisconnect = true
             } else {
                 // We end up here when we detect a board plugged in after we've started upgrade
                 statusTextArea.append(highlightPrefix + "Found device" + highlightSuffix + ": " + controller.boardType)
@@ -115,7 +115,6 @@ QGCView {
         onError: {
             hideDialog()
             statusTextArea.append(flashFailText)
-            flashCompleteWaitTimer.running = true
         }
     }
 
@@ -151,8 +150,8 @@ QGCView {
             }
 
             function reject() {
-                cancelFlash()
                 hideDialog()
+                cancelFlash()
             }
 
             ExclusiveGroup {
@@ -227,7 +226,7 @@ QGCView {
                 QGCRadioButton {
                     id:             apmFlightStack
                     exclusiveGroup: firmwareGroup
-                    text:           "APM Flight Stack"
+                    text:           "ArduPilot Flight Stack"
                     visible:        !px4Flow
 
                     onClicked: parent.firmwareVersionChanged(firmwareTypeList)

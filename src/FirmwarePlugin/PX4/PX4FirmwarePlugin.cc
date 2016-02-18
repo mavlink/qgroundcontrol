@@ -68,7 +68,7 @@ struct Modes2Name {
 };
 
 /// Tranlates from PX4 custom modes to flight mode names
-// FIXME: Doens't handle fixed-wing/multi-rotor name differences
+
 static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                  "Manual",           true },
     { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                  "Acro",             true },
@@ -77,12 +77,12 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                  "Altitude Control", true },
     { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                  "Position Control", true },
     { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                  "Offboard Control", true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,     "Auto Ready",       false },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,   "Taking Off",       false },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,    "Loiter",           true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,   "Mission",          true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,       "Return To Land",   true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      "Landing",          false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,     "Auto: Ready",       false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,   "Auto: Takeoff",       false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,    "Auto: Pause",           true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,   "Auto: Mission",          true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,       "Auto: Return To Land",   true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      "Auto: Landing",          false },
 };
 
 
@@ -215,14 +215,15 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
 
     list << MAV_CMD_NAV_WAYPOINT
          << MAV_CMD_NAV_LOITER_UNLIM << MAV_CMD_NAV_LOITER_TIME
-         << MAV_CMD_NAV_RETURN_TO_LAUNCH << MAV_CMD_NAV_LAND << MAV_CMD_NAV_TAKEOFF
+         << MAV_CMD_NAV_LAND << MAV_CMD_NAV_TAKEOFF
          << MAV_CMD_NAV_ROI
          << MAV_CMD_DO_JUMP
          << MAV_CMD_CONDITION_DELAY
-         << MAV_CMD_DO_VTOL_TRANSITION
+         << MAV_CMD_DO_VTOL_TRANSITION << MAV_CMD_NAV_VTOL_TAKEOFF << MAV_CMD_NAV_VTOL_LAND
          << MAV_CMD_DO_DIGICAM_CONTROL
          << MAV_CMD_DO_SET_SERVO
-         << MAV_CMD_DO_CHANGE_SPEED;
+         << MAV_CMD_DO_CHANGE_SPEED
+         << MAV_CMD_NAV_PATHPLANNING;
     return list;
 }
 

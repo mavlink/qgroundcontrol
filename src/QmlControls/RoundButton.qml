@@ -11,6 +11,7 @@ Item {
     signal          clicked()
     property alias  buttonImage:        button.source
     property real   radius:             ScreenTools.defaultFontPixelHeight * 1.5
+    property bool   rotateImage:        false
 
     width:  radius * 2
     height: radius * 2
@@ -23,6 +24,15 @@ Item {
     onExclusiveGroupChanged: {
         if (exclusiveGroup) {
             exclusiveGroup.bindCheckable(_root)
+        }
+    }
+
+    onRotateImageChanged: {
+        if (rotateImage) {
+            imageRotation.running = true
+        } else {
+            imageRotation.running = false
+            button.rotation = 0
         }
     }
 
@@ -39,6 +49,14 @@ Item {
             fillMode:       Image.PreserveAspectFit
             mipmap:         true
             smooth:         true
+            RotationAnimation on rotation {
+                id: imageRotation
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+                duration: 500
+                running: false
+            }
 
             MouseArea {
                 anchors.fill:   parent

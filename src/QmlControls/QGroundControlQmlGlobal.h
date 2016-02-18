@@ -76,7 +76,8 @@ public:
 
     Q_PROPERTY(Fact*    offlineEditingFirmwareType READ offlineEditingFirmwareType CONSTANT)
 
-    Q_PROPERTY(QGeoCoordinate defaultMapPosition READ defaultMapPosition CONSTANT)
+    Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition CONSTANT)
+    Q_PROPERTY(QGeoCoordinate flightMapPosition MEMBER _flightMapPosition NOTIFY flightMapPositionChanged)
 
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
@@ -115,7 +116,7 @@ public:
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
 
-    QGeoCoordinate defaultMapPosition() { return qgcApp()->defaultMapPosition(); }
+    QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
 
     Fact*   offlineEditingFirmwareType () { return &_offlineEditingFirmwareTypeFact; }
 
@@ -144,6 +145,7 @@ signals:
     void isMultiplexingEnabledChanged   (bool enabled);
     void isVersionCheckEnabledChanged   (bool enabled);
     void mavlinkSystemIDChanged         (int id);
+    void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
 
 private:
     FlightMapSettings*      _flightMapSettings;
@@ -154,6 +156,8 @@ private:
     QGCMapEngineManager*     _mapEngineManager;
 
     bool _virtualTabletJoystick;
+
+    QGeoCoordinate _flightMapPosition;
 
     SettingsFact    _offlineEditingFirmwareTypeFact;
     FactMetaData    _offlineEditingFirmwareTypeMetaData;

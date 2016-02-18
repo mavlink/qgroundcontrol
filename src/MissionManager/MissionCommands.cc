@@ -77,10 +77,14 @@ void MissionCommands::_createCategories(void)
         foreach (MAV_CMD command, cmdList) {
             MavCmdInfo* mavCmdInfo = _commonMissionCommands.getMavCmdInfo(command);
 
-            if (mavCmdInfo->friendlyEdit()) {
-                _categoryToMavCmdListMap[firmwareType][mavCmdInfo->category()].append(command);
-            } else if (!allCommandsSupported) {
-                qWarning() << "Attempt to add non friendly edit supported command";
+            if (mavCmdInfo) {
+                if (mavCmdInfo->friendlyEdit()) {
+                    _categoryToMavCmdListMap[firmwareType][mavCmdInfo->category()].append(command);
+                } else if (!allCommandsSupported) {
+                    qWarning() << "Attempt to add non friendly edit supported command" << command;
+                }
+            } else {
+                qCDebug(MissionCommandsLog) << "Command missing from json" << command;
             }
         }
     }
@@ -146,18 +150,18 @@ MavCmdInfo* MissionCommands::getMavCmdInfo(MAV_CMD command, Vehicle* vehicle) co
 
     if (vehicle) {
         if (vehicle->fixedWing()) {
-            if (_autopilotToFixedWingMissionCommands[firmwareType]->contains(command)) {
+            if (_autopilotToFixedWingMissionCommands.contains(firmwareType) && _autopilotToFixedWingMissionCommands[firmwareType]->contains(command)) {
                 mavCmdInfo = _autopilotToFixedWingMissionCommands[firmwareType]->getMavCmdInfo(command);
             }
         } else if (vehicle->multiRotor()) {
-            if (_autopilotToMultiRotorMissionCommands[firmwareType]->contains(command)) {
+            if (_autopilotToMultiRotorMissionCommands.contains(firmwareType) && _autopilotToMultiRotorMissionCommands[firmwareType]->contains(command)) {
                 mavCmdInfo = _autopilotToMultiRotorMissionCommands[firmwareType]->getMavCmdInfo(command);
             }
-        } else {
-            if (_autopilotToCommonMissionCommands[firmwareType]->contains(command)) {
-                mavCmdInfo = _autopilotToCommonMissionCommands[firmwareType]->getMavCmdInfo(command);
-            }
         }
+    }
+
+    if (!mavCmdInfo && _autopilotToCommonMissionCommands.contains(firmwareType) && _autopilotToCommonMissionCommands[firmwareType]->contains(command)) {
+        mavCmdInfo = _autopilotToCommonMissionCommands[firmwareType]->getMavCmdInfo(command);
     }
 
     if (!mavCmdInfo) {

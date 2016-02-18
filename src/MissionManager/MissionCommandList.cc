@@ -26,6 +26,7 @@ This file is part of the QGROUNDCONTROL project
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
 #include "QGroundControlQmlGlobal.h"
+#include "JsonHelper.h"
 
 #include <QStringList>
 #include <QJsonDocument>
@@ -60,20 +61,6 @@ MissionCommandList::MissionCommandList(const QString& jsonFilename, QObject* par
     : QObject(parent)
 {
     _loadMavCmdInfoJson(jsonFilename);
-}
-
-bool MissionCommandList::_validateKeyTypes(QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types)
-{
-    for (int i=0; i<keys.count(); i++) {
-        if (jsonObject.contains(keys[i])) {
-            if (jsonObject.value(keys[i]).type() != types[i]) {
-                qWarning() << "Incorrect type key:type:expected" << keys[i] << jsonObject.value(keys[i]).type() << types[i];
-                return false;
-            }
-        }
-    }
-
-    return true;
 }
 
 void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
@@ -122,13 +109,12 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
         QJsonObject jsonObject = info.toObject();
 
         // Make sure we have the required keys
+        QString errorString;
         QStringList requiredKeys;
         requiredKeys << _idJsonKey << _rawNameJsonKey;
-        foreach (const QString &key, requiredKeys) {
-            if (!jsonObject.contains(key)) {
-                qWarning() << "Mission required key" << key;
-                return;
-            }
+        if (!JsonHelper::validateRequiredKeys(jsonObject, requiredKeys, errorString)) {
+            qWarning() << errorString;
+            return;
         }
 
         // Validate key types
@@ -139,7 +125,8 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
              << _param1JsonKey << _param2JsonKey << _param3JsonKey << _param4JsonKey << _categoryJsonKey;
         types << QJsonValue::Double << QJsonValue::String << QJsonValue::String<< QJsonValue::String << QJsonValue::Bool << QJsonValue::Bool << QJsonValue::Bool
               << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::String;
-        if (!_validateKeyTypes(jsonObject, keys, types)) {
+        if (!JsonHelper::validateKeyTypes(jsonObject, keys, types, errorString)) {
+            qWarning() << errorString;
             return;
         }
 
@@ -184,7 +171,8 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
                 QList<QJsonValue::Type> types;
                 keys << _defaultJsonKey << _decimalPlacesJsonKey << _enumStringsJsonKey << _enumValuesJsonKey << _labelJsonKey << _unitsJsonKey;
                 types << QJsonValue::Double <<  QJsonValue::Double << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::String;
-                if (!_validateKeyTypes(paramObject, keys, types)) {
+                if (!JsonHelper::validateKeyTypes(jsonObject, keys, types, errorString)) {
+                    qWarning() << errorString;
                     return;
                 }
 

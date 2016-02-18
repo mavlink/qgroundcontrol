@@ -42,17 +42,19 @@ public:
 
     Q_PROPERTY(QmlObjectListModel*  missionItems                READ missionItems                   NOTIFY missionItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines               READ waypointLines                  NOTIFY waypointLinesChanged)
-    Q_PROPERTY(bool                 liveHomePositionAvailable   READ liveHomePositionAvailable      NOTIFY liveHomePositionAvailableChanged)
-    Q_PROPERTY(QGeoCoordinate       liveHomePosition            READ liveHomePosition               NOTIFY liveHomePositionChanged)
     Q_PROPERTY(bool                 autoSync                    READ autoSync   WRITE setAutoSync   NOTIFY autoSyncChanged)
+    Q_PROPERTY(bool                 syncInProgress              READ syncInProgress                 NOTIFY syncInProgressChanged)
 
     Q_INVOKABLE void start(bool editMode);
     Q_INVOKABLE void getMissionItems(void);
     Q_INVOKABLE void sendMissionItems(void);
     Q_INVOKABLE void loadMissionFromFile(void);
     Q_INVOKABLE void saveMissionToFile(void);
+    Q_INVOKABLE void loadMobileMissionFromFile(const QString& file);
+    Q_INVOKABLE void saveMobileMissionToFile(const QString& file);
     Q_INVOKABLE void removeMissionItem(int index);
     Q_INVOKABLE void removeAllMissionItems(void);
+    Q_INVOKABLE QStringList getMobileMissionFiles(void);
 
     /// @param i: index to insert at
     Q_INVOKABLE int insertMissionItem(QGeoCoordinate coordinate, int i);
@@ -61,18 +63,16 @@ public:
 
     QmlObjectListModel* missionItems(void);
     QmlObjectListModel* waypointLines(void) { return &_waypointLines; }
-    bool liveHomePositionAvailable(void) { return _liveHomePositionAvailable; }
-    QGeoCoordinate liveHomePosition(void) { return _liveHomePosition; }
     bool autoSync(void) { return _autoSync; }
     void setAutoSync(bool autoSync);
+    bool syncInProgress(void);
 
 signals:
     void missionItemsChanged(void);
     void waypointLinesChanged(void);
-    void liveHomePositionAvailableChanged(bool homePositionAvailable);
-    void liveHomePositionChanged(const QGeoCoordinate& homePosition);
     void autoSyncChanged(bool autoSync);
     void newItemsFromVehicle(void);
+    void syncInProgressChanged(bool syncInProgress);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle();
@@ -84,6 +84,7 @@ private slots:
     void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
     void _dirtyChanged(bool dirty);
     void _inProgressChanged(bool inProgress);
+    void _currentMissionItemChanged(int sequenceNumber);
 
 private:
     void _recalcSequence(void);
@@ -95,25 +96,34 @@ private:
     void _initMissionItem(MissionItem* item);
     void _deinitMissionItem(MissionItem* item);
     void _autoSyncSend(void);
-    void _setupMissionItems(bool loadFromVehicle, bool forceLoad);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
-    void _calcPrevWaypointValues(bool homePositionValid, double homeAlt, MissionItem* currentItem, MissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
+    void _calcPrevWaypointValues(double homeAlt, MissionItem* currentItem, MissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     bool _findLastAltitude(double* lastAltitude);
     bool _findLastAcceptanceRadius(double* lastAcceptanceRadius);
+    void _addPlannedHomePosition(QmlObjectListModel* missionItems, bool addToCenter);
+    double _normalizeLat(double lat);
+    double _normalizeLon(double lon);
+    bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* missionItems, QString& errorString);
+    bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* missionItems, QString& errorString);
+    void _loadMissionFromFile(const QString& file);
+    void _saveMissionToFile(const QString& file);
 
 private:
     bool                _editMode;
     QmlObjectListModel* _missionItems;
     QmlObjectListModel  _waypointLines;
     Vehicle*            _activeVehicle;
-    bool                _liveHomePositionAvailable;
-    QGeoCoordinate      _liveHomePosition;
     bool                _autoSync;
     bool                _firstItemsFromVehicle;
     bool                _missionItemsRequested;
     bool                _queuedSend;
 
-    static const char* _settingsGroup;
+    static const char*  _settingsGroup;
+    static const char*  _jsonVersionKey;
+    static const char*  _jsonGroundStationKey;
+    static const char*  _jsonMavAutopilotKey;
+    static const char*  _jsonItemsKey;
+    static const char*  _jsonPlannedHomePositionKey;
 };
 
 #endif
