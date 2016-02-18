@@ -33,7 +33,13 @@
             "description":          "Land using VTOL mode.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
-            "category":             "VTOL"
+            "category":             "VTOL",
+            "param7": {
+                "label":            "Altitude:",
+                "units":            "meters",
+                "default":          0.0,
+                "decimalPlaces":    2
+            }
         }
     ]
 }

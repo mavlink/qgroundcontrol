@@ -120,6 +120,12 @@
                 "units":            "radians",
                 "default":          0.0,
                 "decimalPlaces":    2
+            },
+            "param7": {
+                "label":            "Altitude:",
+                "units":            "meters",
+                "default":          0.0,
+                "decimalPlaces":    2
             }
         },
         {
@@ -288,6 +294,12 @@
             "param4": {
                 "label":            "Heading:",
                 "units":            "degrees",
+                "default":          0.0,
+                "decimalPlaces":    2
+            },
+            "param7": {
+                "label":            "Altitude:",
+                "units":            "meters",
                 "default":          0.0,
                 "decimalPlaces":    2
             }
