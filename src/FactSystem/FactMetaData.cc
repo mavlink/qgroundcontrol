@@ -434,3 +434,28 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
 
     return valueTypeDouble;
 }
+
+size_t FactMetaData::typeToSize(ValueType_t type)
+{
+    switch (type) {
+        case valueTypeUint8:
+        case valueTypeInt8:
+            return 1;
+
+        case valueTypeUint16:
+        case valueTypeInt16:
+            return 2;
+
+        case valueTypeUint32:
+        case valueTypeInt32:
+        case valueTypeFloat:
+            return 4;
+
+        case valueTypeDouble:
+            return 8;
+
+        default:
+            qWarning() << "Unsupported fact value type" << type;
+            return 4;
+    }
+}
