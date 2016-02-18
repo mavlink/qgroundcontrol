@@ -426,6 +426,19 @@ QGCView {
                     model:          controller.waypointLines
                 }
 
+                // Add the vehicles to the map
+                MapItemView {
+                    model: multiVehicleManager.vehicles
+                    delegate:
+                        VehicleMapItem {
+                                vehicle:        object
+                                coordinate:     object.coordinate
+                                isSatellite:    editorMap.isSatelliteMap
+                                size:           ScreenTools.defaultFontPixelHeight * 5
+                                z:              QGroundControl.zOrderMapItems - 1
+                        }
+                }
+
                 // Mission Item Editor
                 Item {
                     id:             missionItemEditor
@@ -518,6 +531,7 @@ QGCView {
                         z:                  QGroundControl.zOrderWidgets
                         dropDownComponent:  syncDropDownComponent
                         enabled:            !_syncInProgress
+                        rotateImage:        _syncInProgress
                     }
 
                     DropButton {
