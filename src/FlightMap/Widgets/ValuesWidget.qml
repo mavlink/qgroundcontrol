@@ -56,6 +56,15 @@ QGCFlickable {
         qgcView.showDialog(propertyPicker, "Value Widget Setup", qgcView.showDialogDefaultWidth, StandardButton.Ok)
     }
 
+    function listContains(list, value) {
+        for (var i=0; i<list.length; i++) {
+            if (list[i] === value) {
+                return true
+            }
+        }
+        return false
+    }
+
     MouseArea {
         anchors.fill:   parent
         onClicked:      showPicker()
@@ -74,6 +83,7 @@ QGCFlickable {
                 width:  _largeColumn.width
 
                 property Fact fact: _activeVehicle.getFact(modelData.replace("Vehicle.", ""))
+                property bool largeValue: _root.listContains(controller.altitudeProperties, fact.name)
 
                 QGCLabel {
                     width:                  parent.width
@@ -84,8 +94,8 @@ QGCFlickable {
                 QGCLabel {
                     width:                  parent.width
                     horizontalAlignment:    Text.AlignHCenter
-                    font.pixelSize:         ScreenTools.largeFontPixelSize
-                    font.weight:            Font.DemiBold
+                    font.pixelSize:         ScreenTools.largeFontPixelSize * (largeValue ? 1.3 : 1.0)
+                    font.weight:            largeValue ? Font.ExtraBold : Font.Normal
                     color:                  textColor
                     text:                   fact.valueString
                 }
@@ -185,15 +195,6 @@ QGCFlickable {
 
                     property string propertyName: factGroupName + "." + modelData
 
-                    function contains(list, value) {
-                        for (var i=0; i<list.length; i++) {
-                            if (list[i] === value) {
-                                return true
-                            }
-                        }
-                        return false
-                    }
-
                     function removeFromList(list, value) {
                         var newList = []
                         for (var i=0; i<list.length; i++) {
@@ -236,14 +237,14 @@ QGCFlickable {
                     QGCCheckBox {
                         id:         _addCheckBox
                         text:       factGroup.getFact(modelData).shortDescription
-                        checked:    _largeCheckBox.checked || parent.contains(controller.smallValues, propertyName)
+                        checked:    _largeCheckBox.checked || listContains(controller.smallValues, propertyName)
                         onClicked:  updateValues()
                     }
 
                     QGCCheckBox {
                         id:         _largeCheckBox
                         text:       "large"
-                        checked:    parent.contains(controller.largeValues, propertyName)
+                        checked:    listContains(controller.largeValues, propertyName)
                         enabled:    _addCheckBox.checked
                         onClicked:  updateValues()
                     }
