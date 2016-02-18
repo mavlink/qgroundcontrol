@@ -103,7 +103,7 @@ QGCView {
         if (ScreenTools.isMobile) {
             _root.showDialog(mobileFileSaver, "Save Mission File", _root.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
         } else {
-            controller.saveToFile()
+            controller.saveMissionToFile()
         }
     }
 
