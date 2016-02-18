@@ -53,8 +53,11 @@ public:
     
     ~ParameterLoader();
 
+    /// @return Directory of parameter caches
+    static QDir parameterCacheDir();
+
     /// @return Location of parameter cache file
-    static QString parameterCacheFile(void);
+    static QString parameterCacheFile(int uasId, int componentId);
     
     /// Returns true if the full set of facts are ready
     bool parametersAreReady(void) { return _parametersReady; }
@@ -109,9 +112,6 @@ protected:
     void _waitingParamTimeout(void);
     void _tryCacheLookup(void);
     void _initialRequestTimeout(void);
-    
-private slots:
-    void _timeoutRefreshAll();
 
 private:
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
@@ -120,8 +120,8 @@ private:
     void _setupGroupMap(void);
     void _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
     void _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
-    void _writeLocalParamCache();
-    void _tryCacheHashLoad(int uasId, QVariant hash_value);
+    void _writeLocalParamCache(int uasId, int componentId);
+    void _tryCacheHashLoad(int uasId, int componentId, QVariant hash_value);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
@@ -157,7 +157,6 @@ private:
     
     QTimer _initialRequestTimeoutTimer;
     QTimer _waitingParamTimeoutTimer;
-    QTimer _cacheTimeoutTimer;
     
     QMutex _dataMutex;
     

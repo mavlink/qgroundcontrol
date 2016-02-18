@@ -542,6 +542,7 @@
             "friendlyName":         "Land start",
             "description":          "Marker to indicate start of landing sequence.",
             "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
             "friendlyEdit":         true,
             "category":             "Basic"
         },
