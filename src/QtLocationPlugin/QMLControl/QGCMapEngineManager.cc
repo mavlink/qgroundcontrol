@@ -54,7 +54,7 @@ QGCMapEngineManager::QGCMapEngineManager(QGCApplication* app)
 //-----------------------------------------------------------------------------
 QGCMapEngineManager::~QGCMapEngineManager()
 {
-    //_clearTileSets();
+    _tileSets.clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -120,7 +120,7 @@ void
 QGCMapEngineManager::loadTileSets()
 {
     if(_tileSets.count()) {
-        _clearTileSets();
+        _tileSets.clear();
         emit tileSetsChanged();
     }
     QGCFetchTileSetTask* task = new QGCFetchTileSetTask();
@@ -140,18 +140,6 @@ QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet* tileSet)
     _tileSets.append(tileSet);
     tileSet->setManager(this);
     emit tileSetsChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngineManager::_clearTileSets()
-{
-    while(_tileSets.count()) {
-        QGCCachedTileSet* tileSet = qobject_cast<QGCCachedTileSet*>(_tileSets[0]);
-        if(tileSet)
-            delete tileSet;
-        _tileSets.removeAt(0);
-    }
 }
 
 //-----------------------------------------------------------------------------

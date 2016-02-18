@@ -115,8 +115,10 @@ QGCCachedTileSet::savedSizeStr()
 QString
 QGCCachedTileSet::downloadStatus()
 {
-    //-- Default size has no estimage. If complete, show only total size as well.
-    if(_defaultSet || _numTiles == _savedTiles) {
+    if(_defaultSet) {
+        return tilesSizeStr();
+    }
+    if(_numTiles == _savedTiles) {
         return savedSizeStr();
     } else {
         return savedSizeStr() + " / " + tilesSizeStr();
@@ -222,7 +224,7 @@ void QGCCachedTileSet::_prepareDownload()
             connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
             connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &QGCCachedTileSet::_networkReplyError);
             _replies.insert(tile->hash(), reply);
-            tile->deleteLater();
+            delete tile;
             //-- Refill queue if running low
             if(!_batchRequested && !_noMoreTiles && _tilesToDownload.count() < (QGCMapEngine::concurrentDownloads(_type) * 10)) {
                 //-- Request new batch of tiles

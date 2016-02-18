@@ -114,7 +114,7 @@ destroyMapEngine()
 
 //-----------------------------------------------------------------------------
 QGCMapEngine::QGCMapEngine()
-    : _urlFactory(new UrlFactory::UrlFactory())
+    : _urlFactory(new UrlFactory())
 #ifdef WE_ARE_KOSHER
     //-- TODO: Get proper version
     #if defined Q_OS_MAC
@@ -173,6 +173,7 @@ QGCMapEngine::init()
     if(!_cachePath.isEmpty()) {
         _cacheFile = kDbFileName;
         _worker.setDatabaseFile(_cachePath + "/" + _cacheFile);
+        qDebug() << "Map Cache in:" << _cachePath << "/" << _cacheFile;
     } else {
         qCritical() << "Could not find suitable map cache directory.";
     }

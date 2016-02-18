@@ -123,7 +123,6 @@ private slots:
     void _resetCompleted        ();
 
 private:
-    void _clearTileSets         ();
     void _updateDiskFreeSpace   ();
 
 private:
