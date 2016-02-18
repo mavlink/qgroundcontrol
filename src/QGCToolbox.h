@@ -37,6 +37,7 @@ class LinkManager;
 class MAVLinkProtocol;
 class MissionCommands;
 class MultiVehicleManager;
+class QGCMapEngineManager;
 class QGCApplication;
 class QGCImageProvider;
 class UASMessageHandler;
@@ -58,6 +59,7 @@ public:
     MAVLinkProtocol*            mavlinkProtocol(void)           { return _mavlinkProtocol; }
     MissionCommands*            missionCommands(void)           { return _missionCommands; }
     MultiVehicleManager*        multiVehicleManager(void)       { return _multiVehicleManager; }
+    QGCMapEngineManager*        mapEngineManager(void)          { return _mapEngineManager; }
     QGCImageProvider*           imageProvider()                 { return _imageProvider; }
     UASMessageHandler*          uasMessageHandler(void)         { return _uasMessageHandler; }
 
@@ -74,6 +76,7 @@ private:
     MAVLinkProtocol*            _mavlinkProtocol;
     MissionCommands*            _missionCommands;
     MultiVehicleManager*        _multiVehicleManager;
+    QGCMapEngineManager*         _mapEngineManager;
     UASMessageHandler*          _uasMessageHandler;
 };
 
