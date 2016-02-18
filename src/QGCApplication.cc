@@ -374,7 +374,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
         QFile::remove(PX4AirframeLoader::aiframeMetaDataFile());
         QFile::remove(PX4ParameterMetaData::parameterMetaDataFile());
-        QFile::remove(ParameterLoader::parameterCacheFile());
+        QDir paramDir(ParameterLoader::parameterCacheDir());
+        paramDir.removeRecursively();
+        paramDir.mkpath(paramDir.absolutePath());
     }
 
     _lastKnownHomePosition.setLatitude(settings.value(_lastKnownHomePositionLatKey, 37.803784).toDouble());
