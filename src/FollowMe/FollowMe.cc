@@ -30,7 +30,7 @@
 
 FollowMe::FollowMe(QGCApplication* app)
     : QGCTool(app)
-    , _followMeStr("follow me")
+    , _followMeStr("Auto: Follow Me")
 {
     // set up the QT position connection slot
 
@@ -88,7 +88,13 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
             _motionReport.pos_std_dev[2] = geoPositionInfo.attribute(QGeoPositionInfo::VerticalAccuracy);
         }
 
-        // calculate velocity if it's availible
+        // calculate z velocity if it's availible
+
+        if(geoPositionInfo.hasAttribute(QGeoPositionInfo::VerticalSpeed)) {
+            _motionReport.vz = geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
+        }
+
+        // calculate x,y velocity if it's availible
 
         if((geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction)   == true) &&
            (geoPositionInfo.hasAttribute(QGeoPositionInfo::GroundSpeed) == true)) {
@@ -98,8 +104,12 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
 
             _motionReport.vx = cos(direction)*velocity;
             _motionReport.vy = sin(direction)*velocity;
+
+
+            qWarning("vel = x%f, y%f\n", _motionReport.vx, _motionReport.vy);
         }
 
+        qWarning("lat %d, lon %d alt %d\n", _motionReport.lat_int, _motionReport.lon_int, _motionReport.alt);
     }
 }
 
@@ -107,16 +117,26 @@ void FollowMe::_sendGCSMotionReport(void)
 {
     QmlObjectListModel & vehicles = *_toolbox->multiVehicleManager()->vehicles();
     MAVLinkProtocol* mavlinkProtocol = _toolbox->mavlinkProtocol();
+    mavlink_follow_target_t follow_target = {};
+
+    follow_target.alt = _motionReport.alt;
+    follow_target.lat = _motionReport.lat_int;
+    follow_target.lon = _motionReport.lon_int;
+    follow_target.vel[0] = _motionReport.vx;
+    follow_target.vel[1] = _motionReport.vy;
+    follow_target.vel[2] = _motionReport.vz;
 
     for (int i=0; i< vehicles.count(); i++) {
 
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
-
         if(vehicle->flightMode().compare(_followMeStr, Qt::CaseInsensitive) == 0) {
             mavlink_message_t message;
-
+            mavlink_msg_follow_target_encode(mavlinkProtocol->getSystemId(),
+                                             mavlinkProtocol->getComponentId(),
+                                             &message,
+                                             &follow_target);
             vehicle->sendMessage(message);
-        }
+       }
     }
 }
 
