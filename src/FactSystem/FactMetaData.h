@@ -121,7 +121,7 @@ public:
     static const int defaultDecimalPlaces = 3;
 
     static ValueType_t stringToType(const QString& typeString, bool& unknownType);
-    static size_t typeToSize(ValueType_t);
+    static size_t typeToSize(ValueType_t type);
 
 private:
     QVariant _minForType(void) const;
