@@ -82,7 +82,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
     QJsonParseError jsonParseError;
     QJsonDocument doc = QJsonDocument::fromJson(bytes, &jsonParseError);
     if (jsonParseError.error != QJsonParseError::NoError) {
-        qWarning() <<  "Unable to open json document" << jsonParseError.errorString();
+        qWarning() << jsonFilename << "Unable to open json document" << jsonParseError.errorString();
         return;
     }
 
@@ -90,20 +90,20 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
 
     int version = json.value(_versionJsonKey).toInt();
     if (version != 1) {
-        qWarning() << "Invalid version" << version;
+        qWarning() << jsonFilename << "Invalid version" << version;
         return;
     }
 
     QJsonValue jsonValue = json.value(_mavCmdInfoJsonKey);
     if (!jsonValue.isArray()) {
-        qWarning() << "mavCmdInfo not array";
+        qWarning() << jsonFilename << "mavCmdInfo not array";
         return;
     }
 
     QJsonArray jsonArray = jsonValue.toArray();
     foreach(QJsonValue info, jsonArray) {
         if (!info.isObject()) {
-            qWarning() << "mavCmdArray should contain objects";
+            qWarning() << jsonFilename << "mavCmdArray should contain objects";
             return;
         }
         QJsonObject jsonObject = info.toObject();
@@ -113,7 +113,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
         QStringList requiredKeys;
         requiredKeys << _idJsonKey << _rawNameJsonKey;
         if (!JsonHelper::validateRequiredKeys(jsonObject, requiredKeys, errorString)) {
-            qWarning() << errorString;
+            qWarning() << jsonFilename << errorString;
             return;
         }
 
@@ -126,7 +126,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
         types << QJsonValue::Double << QJsonValue::String << QJsonValue::String<< QJsonValue::String << QJsonValue::Bool << QJsonValue::Bool << QJsonValue::Bool
               << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::String;
         if (!JsonHelper::validateKeyTypes(jsonObject, keys, types, errorString)) {
-            qWarning() << errorString;
+            qWarning() << jsonFilename << errorString;
             return;
         }
 
@@ -152,7 +152,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
                                     << mavCmdInfo->_friendlyEdit;
 
         if (_mavCmdInfoMap.contains((MAV_CMD)mavCmdInfo->command())) {
-            qWarning() << "Duplicate command" << mavCmdInfo->command();
+            qWarning() << jsonFilename << "Duplicate command" << mavCmdInfo->command();
             return;
         }
 
@@ -172,14 +172,14 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
                 keys << _defaultJsonKey << _decimalPlacesJsonKey << _enumStringsJsonKey << _enumValuesJsonKey << _labelJsonKey << _unitsJsonKey;
                 types << QJsonValue::Double <<  QJsonValue::Double << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::String;
                 if (!JsonHelper::validateKeyTypes(jsonObject, keys, types, errorString)) {
-                    qWarning() << errorString;
+                    qWarning() << jsonFilename << errorString;
                     return;
                 }
 
                 mavCmdInfo->_friendlyEdit = true; // Assume friendly edit if we have params
 
                 if (!paramObject.contains(_labelJsonKey)) {
-                    qWarning() << "param object missing label key" << mavCmdInfo->rawName() << paramKey;
+                    qWarning() << jsonFilename << "param object missing label key" << mavCmdInfo->rawName() << paramKey;
                     return;
                 }
 
@@ -198,14 +198,14 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
                     double  value = enumValue.toDouble(&convertOk);
 
                     if (!convertOk) {
-                        qWarning() << "Bad enumValue" << enumValue;
+                        qWarning() << jsonFilename << "Bad enumValue" << enumValue;
                         return;
                     }
 
                     paramInfo->_enumValues << QVariant(value);
                 }
                 if (paramInfo->_enumValues.count() != paramInfo->_enumStrings.count()) {
-                    qWarning() << "enum strings/values count mismatch" << paramInfo->_enumStrings.count() << paramInfo->_enumValues.count();
+                    qWarning() << jsonFilename << "enum strings/values count mismatch" << paramInfo->_enumStrings.count() << paramInfo->_enumValues.count();
                     return;
                 }
 
@@ -224,11 +224,11 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
 
         if (mavCmdInfo->friendlyEdit()) {
             if (mavCmdInfo->description().isEmpty()) {
-                qWarning() << "Missing description" << mavCmdInfo->rawName();
+                qWarning() << jsonFilename << "Missing description" << mavCmdInfo->rawName();
                 return;
             }
             if (mavCmdInfo->rawName() ==  mavCmdInfo->friendlyName()) {
-                qWarning() << "Missing friendly name" << mavCmdInfo->rawName() << mavCmdInfo->friendlyName();
+                qWarning() << jsonFilename << "Missing friendly name" << mavCmdInfo->rawName() << mavCmdInfo->friendlyName();
                 return;
             }
         }
