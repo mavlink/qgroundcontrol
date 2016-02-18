@@ -268,6 +268,10 @@ Rectangle {
                     handleChanges()
                     checkSanity()
                 }
+                // Used to make pinch zoom work
+                MouseArea {
+                    anchors.fill: parent
+                }
             }
             Rectangle {
                 width:              ScreenTools.defaultFontPixelHeight * 16
@@ -317,7 +321,7 @@ Rectangle {
             Row {
                 id: _controlRow
                 anchors.centerIn: parent
-                spacing: ScreenTools.defaultFontPixelWidth * 2
+                spacing: ScreenTools.defaultFontPixelWidth * 0.5
                 Rectangle {
                     height:     _zoomRow.height + ScreenTools.defaultFontPixelHeight * 1.5
                     width:      _zoomRow.width  + ScreenTools.defaultFontPixelWidth
@@ -362,7 +366,7 @@ Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     style: SliderStyle {
                                         groove: Rectangle {
-                                            implicitWidth:  ScreenTools.defaultFontPixelWidth * 16
+                                            implicitWidth:  ScreenTools.defaultFontPixelWidth * 12
                                             implicitHeight: 4
                                             color:          "gray"
                                             radius:         4
@@ -372,8 +376,8 @@ Rectangle {
                                             color: control.pressed ? "white" : "lightgray"
                                             border.color: "gray"
                                             border.width:   2
-                                            implicitWidth:  30
-                                            implicitHeight: 30
+                                            implicitWidth:  ScreenTools.isAndroid ? 60 : 30
+                                            implicitHeight: ScreenTools.isAndroid ? 60 : 30
                                             radius:         10
                                             Label {
                                                 text:  _slider0.value
@@ -426,7 +430,7 @@ Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     style: SliderStyle {
                                         groove: Rectangle {
-                                            implicitWidth:  ScreenTools.defaultFontPixelWidth * 16
+                                            implicitWidth:  ScreenTools.defaultFontPixelWidth * 12
                                             implicitHeight: 4
                                             color:          "gray"
                                             radius:         4
@@ -436,8 +440,8 @@ Rectangle {
                                             color: control.pressed ? "white" : "lightgray"
                                             border.color: "gray"
                                             border.width:   2
-                                            implicitWidth:  30
-                                            implicitHeight: 30
+                                            implicitWidth:  ScreenTools.isAndroid ? 60 : 30
+                                            implicitHeight: ScreenTools.isAndroid ? 60 : 30
                                             radius:         10
                                             Label {
                                                 text:  _slider1.value
@@ -504,7 +508,7 @@ Rectangle {
                         }
                         QGCTextField {
                             id:     setName
-                            width:  ScreenTools.defaultFontPixelWidth * 30
+                            width:  ScreenTools.defaultFontPixelWidth * 24
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -519,7 +523,7 @@ Rectangle {
                         QGCTextField {
                             id:     setDescription
                             text:   "Description"
-                            width:  ScreenTools.defaultFontPixelWidth * 30
+                            width:  ScreenTools.defaultFontPixelWidth * 24
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -533,7 +537,7 @@ Rectangle {
                         }
                         QGCComboBox {
                             id:         mapCombo
-                            width:      ScreenTools.defaultFontPixelWidth * 30
+                            width:      ScreenTools.defaultFontPixelWidth * 24
                             model:      QGroundControl.mapEngineManager.mapList
                             onActivated: {
                                 mapType = textAt(index)
@@ -554,7 +558,7 @@ Rectangle {
                 }
                 Item {
                     height: 1
-                    width:  ScreenTools.defaultFontPixelWidth * 2
+                    width:  ScreenTools.defaultFontPixelWidth * 1.5
                 }
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
@@ -567,7 +571,7 @@ Rectangle {
                             if(QGroundControl.mapEngineManager.findName(setName.text)) {
                                 duplicateName.visible = true
                             } else {
-                                /* Broken in Qt 5.5.1
+                                /* This does not work if hosted by QQuickWidget. Waiting until we're 100% QtQuick
                                 var mapImage
                                 _map.grabToImage(function(result) { mapImage = result; })
                                 QGroundControl.mapEngineManager.startDownload(setName.text, setDescription.text, mapType, mapImage);
@@ -612,7 +616,7 @@ Rectangle {
             width:          parent.width
             spacing:        ScreenTools.defaultFontPixelHeight
             Item {
-                height:     ScreenTools.defaultFontPixelHeight
+                height:     ScreenTools.defaultFontPixelHeight * 0.5
                 width:      1
             }
             Rectangle {
@@ -624,7 +628,7 @@ Rectangle {
                 QGCLabel {
                     id:     nameLabel
                     text:   _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.name : ""
-                    font.pixelSize: ScreenTools.largeFontPixelSize
+                    font.pixelSize:   ScreenTools.isAndroid ? ScreenTools.mediumFontPixelSize : ScreenTools.largeFontPixelSize
                     anchors.centerIn: parent
                 }
             }
@@ -684,13 +688,13 @@ Rectangle {
                         text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.numTilesStr : ""
                     }
                     QGCLabel {
-                        text:       isDefaultSet ? "Total Size:" : "Downloaded Size:"
+                        text:       isDefaultSet ? "Total Size (All Sets):" : "Downloaded Size:"
                     }
                     QGCLabel {
                         text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.savedSizeStr : ""
                     }
                     QGCLabel {
-                        text:       isDefaultSet ? "Total Count:" : "Downloaded Count:"
+                        text:       isDefaultSet ? "Total Count (All Sets):" : "Downloaded Count:"
                     }
                     QGCLabel {
                         text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.savedTilesStr : ""
@@ -706,17 +710,12 @@ Rectangle {
                 }
             }
             Item {
-                height:     ScreenTools.defaultFontPixelHeight
+                height:     ScreenTools.defaultFontPixelHeight * 0.5
                 width:      1
             }
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: ScreenTools.defaultFontPixelWidth
-                QGCButton {
-                    text:       "Back"
-                    width:      ScreenTools.defaultFontPixelWidth * 18
-                    onClicked:  showList()
-                }
                 QGCButton {
                     width:      ScreenTools.defaultFontPixelWidth * 18
                     text:       "Delete"
@@ -772,6 +771,11 @@ Rectangle {
                             _offlineMapRoot._currentSelection.cancelDownloadTask()
                     }
                 }
+                QGCButton {
+                    text:       "Back"
+                    width:      ScreenTools.defaultFontPixelWidth * 18
+                    onClicked:  showList()
+                }
             }
         }
     }
@@ -787,7 +791,7 @@ Rectangle {
             if(_optionsView.visible) {
                 mapBoxToken.text     = QGroundControl.mapEngineManager.mapboxToken
                 maxCacheSize.text    = QGroundControl.mapEngineManager.maxDiskCache
-                maxCacheMemSize.text = QGroundControl.mapEngineManager.maxDiskCache
+                maxCacheMemSize.text = QGroundControl.mapEngineManager.maxMemCache
             }
         }
         Column {
@@ -806,8 +810,8 @@ Rectangle {
                 QGCLabel {
                     id:     optionsLabel
                     text:   "Offline Map Options"
-                    font.pixelSize: ScreenTools.largeFontPixelSize
-                    anchors.centerIn: parent
+                    font.pixelSize:     ScreenTools.isAndroid ? ScreenTools.mediumFontPixelSize : ScreenTools.largeFontPixelSize
+                    anchors.centerIn:   parent
                 }
             }
             Rectangle {
@@ -829,7 +833,7 @@ Rectangle {
                     }
                     QGCTextField {
                         id:             maxCacheSize
-                        maximumLength:  256
+                        maximumLength:  6
                         inputMethodHints: Qt.ImhDigitsOnly
                         validator: IntValidator {bottom: 1; top: 262144;}
                     }
@@ -838,7 +842,7 @@ Rectangle {
                     }
                     QGCTextField {
                         id:             maxCacheMemSize
-                        maximumLength:  256
+                        maximumLength:  4
                         inputMethodHints: Qt.ImhDigitsOnly
                         validator: IntValidator {bottom: 1; top: 4096;}
                     }
@@ -865,7 +869,7 @@ Rectangle {
                         id:                 mapBoxToken
                         Layout.fillWidth:   true
                         maximumLength:      256
-                        implicitWidth :     ScreenTools.defaultFontPixelHeight * 30
+                        implicitWidth :     ScreenTools.defaultFontPixelWidth * 30
                     }
                     Item {
                         Layout.columnSpan:  2
@@ -886,6 +890,9 @@ Rectangle {
                     text:       "Save"
                     width:      ScreenTools.defaultFontPixelWidth * 18
                     onClicked:  {
+                        QGroundControl.mapEngineManager.mapboxToken  = mapBoxToken.text
+                        QGroundControl.mapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
+                        QGroundControl.mapEngineManager.maxMemCache  = parseInt(maxCacheMemSize.text)
                         showList()
                     }
                 }

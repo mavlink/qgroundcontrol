@@ -352,9 +352,8 @@ QGCCacheWorker::_getTileSets(QGCMapTask* mtask)
 void
 QGCCacheWorker::_updateSetTotals(QGCCachedTileSet* set)
 {
-    _updateTotals();
     if(set->defaultSet()) {
-        //-- Default Set is already computed
+        _updateTotals();
         set->setSavedTiles(_totalCount);
         set->setSavedSize(_totalSize);
         set->setNumTiles(_defaultCount);
@@ -362,7 +361,6 @@ QGCCacheWorker::_updateSetTotals(QGCCachedTileSet* set)
         return;
     }
     QSqlQuery subquery(*_db);
-    //-- Count everythin for Default Set
     QString sq = QString("SELECT COUNT(size), SUM(size) FROM Tiles A INNER JOIN SetTiles B on A.tileID = B.tileID WHERE B.setID = %1").arg(set->id());
     if(subquery.exec(sq)) {
         if(subquery.next()) {

@@ -42,9 +42,8 @@ This file is part of the QGROUNDCONTROL project
 class QGCCachedTileSet;
 
 //-----------------------------------------------------------------------------
-class QGCTile : public QObject
+class QGCTile
 {
-    Q_OBJECT
 public:
     QGCTile()
         : _x(0)
@@ -52,16 +51,6 @@ public:
         , _z(0)
         , _set(UINT64_MAX)
         , _type(UrlFactory::Invalid)
-    {
-    }
-
-    QGCTile(const QGCTile& other)
-        : _x(other.x())
-        , _y(other.y())
-        , _z(other.z())
-        , _set(other.set())
-        , _hash(other.hash())
-        , _type(other.type())
     {
     }
 
