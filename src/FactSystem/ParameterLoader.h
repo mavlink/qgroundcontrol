@@ -127,6 +127,8 @@ private:
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
     void _saveToEEPROM(void);
     void _checkInitialLoadComplete(void);
+
+    LinkInterface* _dedicatedLink; ///< Parameter protocol stays on this link
     
     /// First mapping is by component id
     /// Second mapping is parameter name, to Fact* in QVariant
