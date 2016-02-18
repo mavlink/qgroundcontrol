@@ -44,38 +44,53 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOCODINGMANAGERENGINEGOOGLE_H
-#define QGEOCODINGMANAGERENGINEGOOGLE_H
+#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 
-#include <QtLocation/QGeoServiceProvider>
-#include <QtLocation/QGeoCodingManagerEngine>
-#include <QtLocation/QGeoCodeReply>
+#include "qdebug.h"
+#include "QGeoServiceProviderPluginQGC.h"
+#include "QGeoTiledMappingManagerEngineQGC.h"
+#include "QGeoCodingManagerEngineQGC.h"
 
-QT_BEGIN_NAMESPACE
+Q_EXTERN_C Q_DECL_EXPORT const char *qt_plugin_query_metadata();
+Q_EXTERN_C Q_DECL_EXPORT QT_PREPEND_NAMESPACE(QObject) *qt_plugin_instance();
 
-class QNetworkAccessManager;
-
-class QGeoCodingManagerEngineQGC : public QGeoCodingManagerEngine
+//-----------------------------------------------------------------------------
+const QT_PREPEND_NAMESPACE(QStaticPlugin) qt_static_plugin_QGeoServiceProviderFactoryQGC()
 {
-    Q_OBJECT
+    QT_PREPEND_NAMESPACE(QStaticPlugin) plugin = { qt_plugin_instance, qt_plugin_query_metadata};
+    return plugin;
+}
 
-public:
-    QGeoCodingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString);
-    ~QGeoCodingManagerEngineQGC();
+//-----------------------------------------------------------------------------
+QGeoCodingManagerEngine*
+QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(
+    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
+{
+    return new QGeoCodingManagerEngineQGC(parameters, error, errorString);
+}
 
-    QGeoCodeReply* geocode          (const QGeoAddress &address, const QGeoShape &bounds) Q_DECL_OVERRIDE;
-    QGeoCodeReply* geocode          (const QString &address, int limit, int offset, const QGeoShape &bounds) Q_DECL_OVERRIDE;
-    QGeoCodeReply* reverseGeocode   (const QGeoCoordinate &coordinate, const QGeoShape &bounds) Q_DECL_OVERRIDE;
+//-----------------------------------------------------------------------------
+QGeoMappingManagerEngine*
+QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
+    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
+{
+    return new QGeoTiledMappingManagerEngineQGC(parameters, error, errorString);
+}
 
-private Q_SLOTS:
-    void replyFinished  ();
-    void replyError     (QGeoCodeReply::Error errorCode, const QString &errorString);
+//-----------------------------------------------------------------------------
+QGeoRoutingManagerEngine*
+QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(
+    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
+{
+    // Not implemented for QGC
+    return NULL;
+}
 
-private:
-    QNetworkAccessManager *m_networkManager;
-    QByteArray m_userAgent;
-};
-
-QT_END_NAMESPACE
-
-#endif // QGEOCODINGMANAGERENGINEGOOGLE_H
+//-----------------------------------------------------------------------------
+QPlaceManagerEngine*
+QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
+    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
+{
+    // Not implemented for QGC
+    return NULL;
+}

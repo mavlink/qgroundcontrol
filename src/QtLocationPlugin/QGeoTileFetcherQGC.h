@@ -44,28 +44,26 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOCODEREPLYGOOGLE_H
-#define QGEOCODEREPLYGOOGLE_H
+#ifndef QGEOTILEFETCHERQGC_H
+#define QGEOTILEFETCHERQGC_H
 
-#include <QtNetwork/QNetworkReply>
-#include <QtLocation/QGeoCodeReply>
+#include <QtLocation/private/qgeotilefetcher_p.h>
+#include <QtLocation/private/qgeotilecache_p.h>
+#include "QGCMapUrlEngine.h"
 
-class QGeoCodeReplyQGC : public QGeoCodeReply
+class QGeoTiledMappingManagerEngine;
+class QNetworkAccessManager;
+
+class QGeoTileFetcherQGC : public QGeoTileFetcher
 {
     Q_OBJECT
-
 public:
-    explicit QGeoCodeReplyQGC(QNetworkReply *reply, QObject *parent = 0);
-    ~QGeoCodeReplyQGC();
-
-    void abort();
-
-private Q_SLOTS:
-    void networkReplyFinished();
-    void networkReplyError(QNetworkReply::NetworkError error);
-
+    explicit QGeoTileFetcherQGC             (QGeoTiledMappingManagerEngine *parent = 0);
+    ~QGeoTileFetcherQGC();
 private:
-    QNetworkReply *m_reply;
+    QGeoTiledMapReply*      getTileImage    (const QGeoTileSpec &spec);
+private:
+    QNetworkAccessManager*  _networkManager;
 };
 
-#endif // QGEOCODEREPLYGOOGLE_H
+#endif // QGEOTILEFETCHERQGC_H

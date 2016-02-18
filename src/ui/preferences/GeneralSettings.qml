@@ -133,7 +133,6 @@ Rectangle {
                 height: ScreenTools.defaultFontPixelHeight / 2
                 width:  parent.width
             }
-
             //-----------------------------------------------------------------
             //-- Map Providers
             Row {
