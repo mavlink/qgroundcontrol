@@ -44,6 +44,8 @@
 **
 ****************************************************************************/
 
+#include "QGeoCodeReplyQGC.h"
+
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonArray>
@@ -53,8 +55,6 @@
 #include <QtPositioning/QGeoRectangle>
 #include <QSet>
 #include <QDebug>
-
-#include "QGeoCodeReplyQGC.h"
 
 enum QGeoCodeTypeGoogle {
     GeoCodeTypeUnknown,
@@ -193,7 +193,7 @@ void QGeoCodeReplyQGC::networkReplyFinished()
 
     QJsonDocument document = QJsonDocument::fromJson(m_reply->readAll());
     QJsonObject object = document.object();
-    
+
     if (object.value(QStringLiteral("status")) != QStringLiteral("OK")) {
         QString error = object.value(QStringLiteral("status")).toString();
         qWarning() << m_reply->url() << "returned" << error;
@@ -210,13 +210,13 @@ void QGeoCodeReplyQGC::networkReplyFinished()
             continue;
 
         QJsonObject geocode = results[i].toObject();
-        
+
         QGeoAddress address;
         if (geocode.contains(QStringLiteral("formatted_address"))) {
             address.setText(geocode.value(QStringLiteral("formatted_address")).toString());
         }
-        
-        
+
+
         if (geocode.contains(QStringLiteral("address_components"))) {
             QJsonArray ac = geocode.value(QStringLiteral("address_components")).toArray();
 

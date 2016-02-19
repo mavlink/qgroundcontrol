@@ -44,6 +44,10 @@
 **
 ****************************************************************************/
 
+#include "QGCMapEngine.h"
+#include "QGeoTiledMappingManagerEngineQGC.h"
+#include "QGeoTileFetcherQGC.h"
+
 #include <QtLocation/private/qgeocameracapabilities_p.h>
 #include <QtLocation/private/qgeomaptype_p.h>
 #if QT_VERSION < 0x050500
@@ -53,10 +57,6 @@
 #endif
 #include <QDir>
 #include <QStandardPaths>
-
-#include "QGCMapEngine.h"
-#include "QGeoTiledMappingManagerEngineQGC.h"
-#include "QGeoTileFetcherQGC.h"
 
 #if QT_VERSION >= 0x050500
 //-----------------------------------------------------------------------------
