@@ -433,10 +433,10 @@ QStringList ParameterLoader::parameterNames(int componentId)
 
 void ParameterLoader::_setupGroupMap(void)
 {
-    foreach (int componentId, _mapParameterName2Variant.keys()) {
-        foreach (const QString &name, _mapParameterName2Variant[componentId].keys()) {
-            Fact* fact = _mapParameterName2Variant[componentId][name].value<Fact*>();
-            _mapGroup2ParameterName[componentId][fact->group()] += name;
+    for (auto componentIt = _mapParameterName2Variant.begin(), componentEnd = _mapParameterName2Variant.end(); componentIt != componentEnd; componentIt++) {
+        for (auto variantIt =  componentIt.value().begin(), variantEnd = componentIt.value().end(); variantIt != variantEnd; variantIt++) {
+            Fact* fact = variantIt.value().value<Fact*>();
+            _mapGroup2ParameterName[componentIt.key()][fact->group()] += variantIt.key();
         }
     }
 }
@@ -461,13 +461,15 @@ void ParameterLoader::_waitingParamTimeout(void)
             if (_waitingReadParamIndexMap[componentId][paramIndex] > _maxInitialLoadRetry) {
                 // Give up on this index
                 _failedReadParamIndexMap[componentId] << paramIndex;
-                qCDebug(ParameterLoaderLog) << "Giving up on (componentId:" << componentId << "paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
+                qCDebug(ParameterLoaderLog) << "Giving up on (componentId:" << componentId << "paramIndex:"
+                                            << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
                 _waitingReadParamIndexMap[componentId].remove(paramIndex);
             } else {
                 // Retry again
                 paramsRequested = true;
                 _readParameterRaw(componentId, QLatin1String(""), paramIndex);
-                qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentId << "paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
+                qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentId << "paramIndex:"
+                                            << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
 
                 if (++batchCount > maxBatchSize) {
                     goto Out;
@@ -475,16 +477,17 @@ void ParameterLoader::_waitingParamTimeout(void)
             }
         }
     }
+
     // We need to check for initial load complete here as well, since it could complete on a max retry failure
     _checkInitialLoadComplete();
-
     if (!paramsRequested) {
-        foreach(int componentId, _waitingWriteParamNameMap.keys()) {
-            foreach(const QString &paramName, _waitingWriteParamNameMap[componentId].keys()) {
+        for(auto componentIt = _waitingWriteParamNameMap.begin(), componentEnd = _waitingWriteParamNameMap.end(); componentIt != componentEnd; componentIt++) {
+            for(auto nameIt = componentIt.value().begin(), nameEnd = componentIt.value().end(); nameIt != nameEnd; nameIt++) {
                 paramsRequested = true;
-                _waitingWriteParamNameMap[componentId][paramName]++;   // Bump retry count
-                _writeParameterRaw(componentId, paramName, _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName)->rawValue());
-                qCDebug(ParameterLoaderLog) << "Write resend for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingWriteParamNameMap[componentId][paramName] << ")";
+                nameIt.value()++;   // Bump retry count
+                _writeParameterRaw(componentIt.key(), nameIt.key(), _autopilot->getFact(FactSystem::ParameterProvider, componentIt.key(), nameIt.key())->rawValue());
+                qCDebug(ParameterLoaderLog) << "Write resend for (componentId:" << componentIt.key() << "paramName:"
+                                            << nameIt.key() << "retryCount:" << nameIt.value() << ")";
 
                 if (++batchCount > maxBatchSize) {
                     goto Out;
@@ -494,12 +497,13 @@ void ParameterLoader::_waitingParamTimeout(void)
     }
 
     if (!paramsRequested) {
-        foreach(int componentId, _waitingReadParamNameMap.keys()) {
-            foreach(const QString &paramName, _waitingReadParamNameMap[componentId].keys()) {
+        for(auto componentIt = _waitingReadParamNameMap.begin(), componentEnd = _waitingReadParamNameMap.end(); componentIt != componentEnd; componentIt++) {
+            for(auto paramIt = componentIt.value().begin(), paramEnd = componentIt.value().end(); paramIt != paramEnd; paramIt++) {
                 paramsRequested = true;
-                _waitingReadParamNameMap[componentId][paramName]++;   // Bump retry count
-                _readParameterRaw(componentId, paramName, -1);
-                qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingReadParamNameMap[componentId][paramName] << ")";
+                paramIt.value()++;   // Bump retry count
+                _readParameterRaw(componentIt.key(), paramIt.key(), -1);
+                qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentIt.key() << "paramName:"
+                                            << paramIt.key() << "retryCount:" << paramIt.value() << ")";
 
                 if (++batchCount > maxBatchSize) {
                     goto Out;
@@ -587,10 +591,10 @@ void ParameterLoader::_writeLocalParamCache(int uasId, int componentId)
 {
     MapID2NamedParam cache_map;
 
-    foreach(int id, _mapParameterId2Name[componentId].keys()) {
-        const QString name(_mapParameterId2Name[componentId][id]);
-        const Fact *fact = _mapParameterName2Variant[componentId][name].value<Fact*>();
-        cache_map[id] = NamedParam(name, ParamTypeVal(fact->type(), fact->rawValue()));
+    auto& innerMap = _mapParameterId2Name[componentId];
+    for(auto it = innerMap.begin(), end = innerMap.end(); it != end; it++) {
+        const Fact *fact = _mapParameterName2Variant[componentId][it.value()].value<Fact*>();
+        cache_map[it.key()] = NamedParam(it.value(), ParamTypeVal(fact->type(), fact->rawValue()));
     }
 
     QFile cache_file(parameterCacheFile(uasId, componentId));
@@ -629,10 +633,10 @@ void ParameterLoader::_tryCacheHashLoad(int uasId, int componentId, QVariant has
 
     /* compute the crc of the local cache to check against the remote */
 
-    foreach(int id, cache_map.keys()) {
-        const QString name(cache_map[id].first);
-        const void *vdat = cache_map[id].second.second.constData();
-        const FactMetaData::ValueType_t fact_type = static_cast<FactMetaData::ValueType_t>(cache_map[id].second.first);
+    foreach(auto cache, cache_map) {
+        const QString name(cache.first);
+        const void *vdat = cache.second.second.constData();
+        const FactMetaData::ValueType_t fact_type = static_cast<FactMetaData::ValueType_t>(cache.second.first);
         crc32_value = QGC::crc32((const uint8_t *)qPrintable(name), name.length(),  crc32_value);
         crc32_value = QGC::crc32((const uint8_t *)vdat, FactMetaData::typeToSize(fact_type), crc32_value);
     }
@@ -641,12 +645,12 @@ void ParameterLoader::_tryCacheHashLoad(int uasId, int componentId, QVariant has
         qCInfo(ParameterLoaderLog) << "Parameters loaded from cache" << qPrintable(QFileInfo(cache_file).absoluteFilePath());
         /* if the two param set hashes match, just load from the disk */
         int count = cache_map.count();
-        foreach(int id, cache_map.keys()) {
-            const QString &name = cache_map[id].first;
-            const QVariant &value = cache_map[id].second.second;
-            const FactMetaData::ValueType_t fact_type = static_cast<FactMetaData::ValueType_t>(cache_map[id].second.first);
+        for(auto it = cache_map.begin(), end = cache_map.end(); it != end; it++) {
+            const QString &name = it.value().first;
+            const QVariant &value = it.value().second.second;
+            const FactMetaData::ValueType_t fact_type = static_cast<FactMetaData::ValueType_t>(it.value().second.first);
             const int mavType = _factTypeToMavType(fact_type);
-            _parameterUpdate(uasId, componentId, name, count, id, mavType, value);
+            _parameterUpdate(uasId, componentId, name, count, it.key(), mavType, value);
         }
         // Return the hash value to notify we don't want any more updates
         mavlink_param_set_t     p;
@@ -729,12 +733,13 @@ void ParameterLoader::writeParametersToStream(QTextStream &stream)
     stream << "#\n";
     stream << "# MAV ID  COMPONENT ID  PARAM NAME  VALUE (FLOAT)\n";
 
-    foreach (int componentId, _mapParameterName2Variant.keys()) {
-        foreach (const QString &paramName, _mapParameterName2Variant[componentId].keys()) {
-            Fact* fact = _mapParameterName2Variant[componentId][paramName].value<Fact*>();
+    for (auto mapIt = _mapParameterName2Variant.begin(), mapEnd = _mapParameterName2Variant.end(); mapIt != mapEnd; mapIt++) {
+        for (auto variantIt = mapIt.value().begin(), variantEnd = mapIt.value().end(); variantIt != variantEnd; variantIt++) {
+            Fact* fact = variantIt.value().value<Fact*>();
             Q_ASSERT(fact);
 
-            stream << _vehicle->id() << "\t" << componentId << "\t" << paramName << "\t" << fact->rawValueString() << "\t" << QStringLiteral("%1").arg(_factTypeToMavType(fact->type())) << "\n";
+            stream << _vehicle->id() << "\t" << mapIt.key() << "\t" << variantIt.key() << "\t" << fact->rawValueString()
+                   << "\t" << QString::number(_factTypeToMavType(fact->type())) << "\n";
         }
     }
 
@@ -813,8 +818,8 @@ void ParameterLoader::_checkInitialLoadComplete(void)
         return;
     }
 
-    foreach (int componentId, _waitingReadParamIndexMap.keys()) {
-        if (_waitingReadParamIndexMap[componentId].count()) {
+    foreach (auto map, _waitingReadParamIndexMap) {
+        if (map.count()) {
             // We are still waiting on some parameters, not done yet
             return;
         }
