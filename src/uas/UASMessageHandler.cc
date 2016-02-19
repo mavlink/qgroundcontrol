@@ -186,7 +186,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     // Finally preppend the properly-styled text with a timestamp.
     QString dateString = QDateTime::currentDateTime().toString(QStringLiteral("hh:mm:ss.zzz"));
     UASMessage* message = new UASMessage(compId, severity, text);
-    message->_setFormatedText(QStringLiteral("<p style=\"color:#e0e0f0\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
+    message->_setFormatedText(QStringLiteral("<p style=\"color:#e0e0f0\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style,dateString).arg(compId).arg(severityText,text));
     _messages.append(message);
     int count = _messages.count();
     if (message->severityIsError()) {

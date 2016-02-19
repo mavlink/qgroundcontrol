@@ -567,11 +567,14 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
     // We must send the first parameter for each component first. Otherwise system won't correctly know
     // when all parameters are loaded.
 
-    foreach (int componentId, _mapParamName2Value.keys()) {
+    for (auto componentIt = _mapParamName2Value.begin(), componentEnd = _mapParamName2Value.end(); componentIt != componentEnd; componentIt++) {
+        int componentId = componentIt.key();
         uint16_t paramIndex = 0;
         int cParameters = _mapParamName2Value[componentId].count();
 
-        foreach(const QString &paramName, _mapParamName2Value[componentId].keys()) {
+        auto& valueMap = componentIt.value();
+        for(auto paramIt = valueMap.begin(), paramEnd = valueMap.end(); paramIt != paramEnd; paramIt++) {
+            const QString& paramName = paramIt.key();
             char paramId[MAVLINK_MSG_ID_PARAM_VALUE_LEN];
             mavlink_message_t       responseMsg;
 
@@ -581,7 +584,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
             MAV_PARAM_TYPE paramType = _mapParamName2MavParamType[paramName];
 
             Q_ASSERT(paramName.length() <= MAVLINK_MSG_ID_PARAM_VALUE_LEN);
-            strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_ID_PARAM_VALUE_LEN);
+            strncpy(paramId, qPrintable(paramName), MAVLINK_MSG_ID_PARAM_VALUE_LEN);
 
             qCDebug(MockLinkLog) << "Sending msg_param_value" << componentId << paramId << paramType << _mapParamName2Value[componentId][paramId];
 
@@ -600,12 +603,15 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
         }
     }
 
-    foreach (int componentId, _mapParamName2Value.keys()) {
+    for (auto componentIt = _mapParamName2Value.begin(), componentEnd = _mapParamName2Value.end(); componentIt != componentEnd; componentIt++) {
+        int componentId = componentIt.key();
         uint16_t paramIndex = 0;
         int cParameters = _mapParamName2Value[componentId].count();
         bool skipParam = true;
 
-        foreach(const QString &paramName, _mapParamName2Value[componentId].keys()) {
+        auto& valueMap = componentIt.value();
+        for(auto paramIt = valueMap.begin(), paramEnd = valueMap.end(); paramIt != paramEnd; paramIt++) {
+            const QString& paramName = paramIt.key();
             if (skipParam) {
                 // We've already sent the first param
                 skipParam = false;
