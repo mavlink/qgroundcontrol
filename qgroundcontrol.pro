@@ -261,6 +261,8 @@ HEADERS += \
     src/MissionManager/MissionController.h \
     src/MissionManager/MissionItem.h \
     src/MissionManager/MissionManager.h \
+    src/MissionManager/ComplexMissionItem.h \
+    src/MissionManager/SimpleMissionItem.h \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCComboBox.h \
@@ -388,6 +390,8 @@ SOURCES += \
     src/MissionManager/MissionController.cc \
     src/MissionManager/MissionItem.cc \
     src/MissionManager/MissionManager.cc \
+    src/MissionManager/ComplexMissionItem.cc \
+    src/MissionManager/SimpleMissionItem.cc \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \

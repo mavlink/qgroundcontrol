@@ -206,3 +206,18 @@ void QGroundControlQmlGlobal::setVirtualTabletJoystick(bool enabled)
         emit virtualTabletJoystickChanged(enabled);
     }
 }
+
+bool QGroundControlQmlGlobal::experimentalSurvey(void) const
+{
+    QSettings settings;
+
+    return settings.value("ExperimentalSurvey", false).toBool();
+}
+
+void QGroundControlQmlGlobal::setExperimentalSurvey(bool experimentalSurvey)
+{
+    QSettings settings;
+
+    settings.setValue("ExperimentalSurvey", experimentalSurvey);
+    emit experimentalSurveyChanged(experimentalSurvey);
+}
