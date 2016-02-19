@@ -341,11 +341,11 @@ void ParameterLoader::_determineDefaultComponentId(void)
 
         _defaultComponentId = -1;
         int largestCompParamCount = 0;
-        foreach(int componentId, _mapParameterName2Variant.keys()) {
-            int compParamCount = _mapParameterName2Variant[componentId].count();
+        for(auto it = _mapParameterName2Variant.begin(), end = _mapParameterName2Variant.end(); it != end; it++) {
+            int compParamCount = it.value().count();
             if (compParamCount > largestCompParamCount) {
                 largestCompParamCount = compParamCount;
-                _defaultComponentId = componentId;
+                _defaultComponentId = it.key();
             }
         }
 
@@ -391,11 +391,13 @@ void ParameterLoader::refreshParameter(int componentId, const QString& name)
 void ParameterLoader::refreshParametersPrefix(int componentId, const QString& namePrefix)
 {
     componentId = _actualComponentId(componentId);
+    const QVariantMap& map = _mapParameterName2Variant[componentId];
+
     qCDebug(ParameterLoaderLog) << "refreshParametersPrefix (component id:" << componentId << "name:" << namePrefix << ")";
 
-    foreach(const QString &name, _mapParameterName2Variant[componentId].keys()) {
-        if (name.startsWith(namePrefix)) {
-            refreshParameter(componentId, name);
+    for(auto it = map.begin(), end = map.end(); it != end; it++) {
+        if (it.key().startsWith(namePrefix)) {
+            refreshParameter(componentId, it.key());
         }
     }
 }
@@ -426,13 +428,7 @@ Fact* ParameterLoader::getFact(int componentId, const QString& name)
 
 QStringList ParameterLoader::parameterNames(int componentId)
 {
-    QStringList names;
-
-    foreach(const QString &paramName, _mapParameterName2Variant[_actualComponentId(componentId)].keys()) {
-        names << paramName;
-    }
-
-    return names;
+    return _mapParameterName2Variant[_actualComponentId(componentId)].keys();
 }
 
 void ParameterLoader::_setupGroupMap(void)
