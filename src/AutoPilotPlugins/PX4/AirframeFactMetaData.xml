@@ -226,6 +226,10 @@
       <maintainer>Andreas Antener &lt;andreas@uaventure.com&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
+    <airframe id="4040" maintainer="Blankered" name="Reaper 500 Quad">
+      <maintainer>Blankered</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
   </airframe_group>
   <airframe_group image="Rover" name="Rover">
     <airframe id="50001" maintainer="John Doe &lt;john@example.com&gt;" name="Axial Racing AX10">
