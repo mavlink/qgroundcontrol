@@ -110,10 +110,9 @@ void QGCMAVLinkInspector::rebuildComponentList()
     {
         UASInterface* uas = vehicle->uas();
         QMap<int, QString> components = uas->getComponents();
-        foreach (int id, components.keys())
+        for (auto it = components.begin(), end = components.end(); it != end; it++)
         {
-            QString name = components.value(id);
-            ui->componentComboBox->addItem(name, id);
+            ui->componentComboBox->addItem(it.value(), it.key());
         }
     }
 }

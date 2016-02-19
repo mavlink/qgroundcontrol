@@ -5,6 +5,7 @@
 #include <QLabel>
 class UASQuickViewGaugeItem : public UASQuickViewItem
 {
+    Q_OBJECT
 public:
     UASQuickViewGaugeItem(QWidget *parent=0);
     void setValue(double value);

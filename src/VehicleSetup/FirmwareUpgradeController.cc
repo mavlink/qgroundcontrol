@@ -692,9 +692,9 @@ void FirmwareUpgradeController::_loadAPMVersions(QGCSerialPortInfo::BoardType_t 
 
     QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardType(boardType);
 
-    foreach (FirmwareIdentifier firmwareId, prgFirmware->keys()) {
-        if (firmwareId.autopilotStackType == AutoPilotStackAPM) {
-            QString versionFile = QFileInfo(prgFirmware->value(firmwareId)).path() + "/git-version.txt";
+    for (auto firmwareIt = prgFirmware->begin(), end = prgFirmware->end(); firmwareIt != end; firmwareIt++) {
+        if (firmwareIt.key().autopilotStackType == AutoPilotStackAPM) {
+            QString versionFile = QFileInfo(firmwareIt.value()).path() + "/git-version.txt";
 
             qCDebug(FirmwareUpgradeLog) << "Downloading" << versionFile;
             QGCFileDownload* downloader = new QGCFileDownload(this);
@@ -733,10 +733,12 @@ void FirmwareUpgradeController::_apmVersionDownloadFinished(QString remoteFile, 
     QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardType(_foundBoardType);
 
     QString remotePath = QFileInfo(remoteFile).path();
-    foreach (FirmwareIdentifier firmwareId, prgFirmware->keys()) {
-        if (remotePath == QFileInfo((*prgFirmware)[firmwareId]).path()) {
-            qCDebug(FirmwareUpgradeLog) << "Adding version to map, version:firwmareType:vehicleType" << version << firmwareId.firmwareType << firmwareId.firmwareVehicleType;
-            _apmVersionMap[firmwareId.firmwareType][firmwareId.firmwareVehicleType] = version;
+    for (auto firmwareIt = prgFirmware->begin(), end = prgFirmware->end(); firmwareIt!=end; firmwareIt++) {
+        if (remotePath == QFileInfo(firmwareIt.value()).path()) {
+            qCDebug(FirmwareUpgradeLog) << "Adding version to map, version:firwmareType:vehicleType" <<
+                                            version << firmwareIt.key().firmwareType << firmwareIt.key().firmwareVehicleType;
+
+            _apmVersionMap[firmwareIt.key().firmwareType][firmwareIt.key().firmwareVehicleType] = version;
         }
     }
 
@@ -755,11 +757,12 @@ QStringList FirmwareUpgradeController::apmAvailableVersions(void)
     QStringList list;
 
     _apmVehicleTypeFromCurrentVersionList.clear();
+    const auto& map = _apmVersionMap[_selectedFirmwareType];
 
-    foreach (FirmwareVehicleType_t vehicleType, _apmVersionMap[_selectedFirmwareType].keys()) {
+    for (auto it = map.begin(), end = map.end(); it != end; it++) {
         QString version;
 
-        switch (vehicleType) {
+        switch (it.key()) {
         case QuadFirmware:
             version = QStringLiteral("Quad - ");
             break;
@@ -787,8 +790,8 @@ QStringList FirmwareUpgradeController::apmAvailableVersions(void)
             break;
         }
 
-        version += _apmVersionMap[_selectedFirmwareType][vehicleType];
-        _apmVehicleTypeFromCurrentVersionList.append(vehicleType);
+        version += it.value();
+        _apmVehicleTypeFromCurrentVersionList.append(it.key());
 
         list << version;
     }

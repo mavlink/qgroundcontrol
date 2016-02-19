@@ -161,23 +161,23 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     int waitingReadParamNameCount = 0;
     int waitingWriteParamNameCount = 0;
 
-    foreach(int waitingComponentId, _waitingReadParamIndexMap.keys()) {
-        waitingReadParamIndexCount += _waitingReadParamIndexMap[waitingComponentId].count();
+    foreach(const auto& maps, _waitingReadParamIndexMap) {
+        waitingReadParamIndexCount += maps.count();
     }
     if (waitingReadParamIndexCount) {
         qCDebug(ParameterLoaderLog) << "waitingReadParamIndexCount:" << waitingReadParamIndexCount;
     }
 
 
-    foreach(int waitingComponentId, _waitingReadParamNameMap.keys()) {
-        waitingReadParamNameCount += _waitingReadParamNameMap[waitingComponentId].count();
+    foreach(const auto& maps, _waitingReadParamNameMap) {
+        waitingReadParamNameCount += maps.count();
     }
     if (waitingReadParamNameCount) {
         qCDebug(ParameterLoaderLog) << "waitingReadParamNameCount:" << waitingReadParamNameCount;
     }
 
-    foreach(int waitingComponentId, _waitingWriteParamNameMap.keys()) {
-        waitingWriteParamNameCount += _waitingWriteParamNameMap[waitingComponentId].count();
+    foreach(const auto& maps, _waitingWriteParamNameMap) {
+        waitingWriteParamNameCount += maps.count();
     }
     if (waitingWriteParamNameCount) {
         qCDebug(ParameterLoaderLog) << "waitingWriteParamNameCount:" << waitingWriteParamNameCount;
@@ -309,13 +309,13 @@ void ParameterLoader::refreshAllParameters(uint8_t componentID)
     }
 
     // Reset index wait lists
-    foreach (int cid, _paramCountMap.keys()) {
+    for (auto it = _paramCountMap.begin(), end = _paramCountMap.end(); it != end; it++) {
         // Add/Update all indices to the wait list, parameter index is 0-based
-        if(componentID != MAV_COMP_ID_ALL && componentID != cid)
+        if(componentID != MAV_COMP_ID_ALL && componentID != it.key())
             continue;
-        for (int waitingIndex = 0; waitingIndex < _paramCountMap[cid]; waitingIndex++) {
+        for (int waitingIndex = 0; waitingIndex < it.value(); waitingIndex++) {
             // This will add a new waiting index if needed and set the retry count for that index to 0
-            _waitingReadParamIndexMap[cid][waitingIndex] = 0;
+            _waitingReadParamIndexMap[it.key()][waitingIndex] = 0;
         }
     }
 

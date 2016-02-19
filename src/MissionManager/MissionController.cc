@@ -219,7 +219,7 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
         errorString = QStringLiteral("File is missing version key");
         return false;
     }
-    if (json[_jsonVersionKey].toString() != "1.0") {
+    if (json[_jsonVersionKey].toString() != QLatin1String("1.0")) {
         errorString = QStringLiteral("QGroundControl does not support this file version");
         return false;
     }

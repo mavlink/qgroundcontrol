@@ -314,9 +314,9 @@ void APMParameterMetaData::_loadParameterFactMetaData()
 void APMParameterMetaData::correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap,
                                                    QMap<QString,QStringList>& groupMembers)
 {
-    foreach(const QString& groupName, groupMembers.keys()) {
-            if (groupMembers[groupName].count() == 1) {
-                foreach(const QString& parameter, groupMembers.value(groupName)) {
+    foreach(const QStringList& group, groupMembers) {
+            if (group.count() == 1) {
+                foreach(const QString& parameter, group) {
                     parameterToFactMetaDataMap[parameter]->group = QStringLiteral("others");
                 }
             }
