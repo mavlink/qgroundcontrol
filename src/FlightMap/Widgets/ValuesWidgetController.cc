@@ -40,7 +40,7 @@ ValuesWidgetController::ValuesWidgetController(void)
     _largeValues = settings.value(_largeValuesKey, largeDefaults).toStringList();
     _smallValues = settings.value(_smallValuesKey, QStringList()).toStringList();
 
-    _altitudeProperties << "altitudeRelative" << "altitudeAMSL";
+    _altitudeProperties << QStringLiteral("altitudeRelative") << QStringLiteral("altitudeAMSL");
 
     // Keep back compat for removed WGS84 value
     if (_largeValues.contains (QStringLiteral("Vehicle.altitudeWGS84"))) {

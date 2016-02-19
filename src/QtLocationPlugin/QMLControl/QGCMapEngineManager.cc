@@ -67,7 +67,7 @@ QGCMapEngineManager::setToolbox(QGCToolbox *toolbox)
 {
    QGCTool::setToolbox(toolbox);
    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-   qmlRegisterUncreatableType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0, "QGCMapEngineManager", "Reference only");
+   qmlRegisterUncreatableType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0, "QGCMapEngineManager", QStringLiteral("Reference only"));
    connect(getQGCMapEngine(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals);
    _updateDiskFreeSpace();
 }
@@ -139,7 +139,7 @@ QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet* tileSet)
 {
     //-- A blank (default) type means it uses various types and not just one
     if(tileSet->type() == UrlFactory::Invalid) {
-        tileSet->setMapTypeStr("Various");
+        tileSet->setMapTypeStr(QStringLiteral("Various"));
     }
     _tileSets.append(tileSet);
     tileSet->setManager(this);
@@ -314,29 +314,29 @@ QGCMapEngineManager::taskError(QGCMapTask::TaskType type, QString error)
     QString task;
     switch(type) {
     case QGCMapTask::taskFetchTileSets:
-        task = "Fetch Tile Set";
+        task = QLatin1String("Fetch Tile Set");
         break;
     case QGCMapTask::taskCreateTileSet:
-        task = "Create Tile Set";
+        task = QLatin1String("Create Tile Set");
         break;
     case QGCMapTask::taskGetTileDownloadList:
-        task = "Get Tile Download List";
+        task = QLatin1String("Get Tile Download List");
         break;
     case QGCMapTask::taskUpdateTileDownloadState:
-        task = "Update Tile Download Status";
+        task = QLatin1String("Update Tile Download Status");
         break;
     case QGCMapTask::taskDeleteTileSet:
-        task = "Delete Tile Set";
+        task = QLatin1String("Delete Tile Set");
         break;
     case QGCMapTask::taskReset:
-        task = "Reset Tile Sets";
+        task = QLatin1String("Reset Tile Sets");
         break;
     default:
-        task = "Database Error";
+        task = QLatin1String("Database Error");
         break;
     }
     QString serror = "Error in task: " + task;
-    serror += "\nError description:\n";
+    serror += QLatin1String("\nError description:\n");
     serror += error;
     qWarning() << "QGCMapEngineManager::_taskError()";
     setErrorMessage(serror);
@@ -378,7 +378,7 @@ QGCMapEngineManager::findName(const QString& name)
 QString
 QGCMapEngineManager::getUniqueName()
 {
-    QString test = "Tile Set ";
+    QString test = QStringLiteral("Tile Set ");
     QString name;
     int count = 1;
     while (true) {

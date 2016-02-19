@@ -211,13 +211,13 @@ bool QGroundControlQmlGlobal::experimentalSurvey(void) const
 {
     QSettings settings;
 
-    return settings.value("ExperimentalSurvey", false).toBool();
+    return settings.value(QStringLiteral("ExperimentalSurvey"), false).toBool();
 }
 
 void QGroundControlQmlGlobal::setExperimentalSurvey(bool experimentalSurvey)
 {
     QSettings settings;
 
-    settings.setValue("ExperimentalSurvey", experimentalSurvey);
+    settings.setValue(QStringLiteral("ExperimentalSurvey"), experimentalSurvey);
     emit experimentalSurveyChanged(experimentalSurvey);
 }

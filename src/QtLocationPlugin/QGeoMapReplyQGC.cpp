@@ -60,12 +60,12 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
 {
     if(_request.url().isEmpty()) {
         if(!_badMapBox.size()) {
-            QFile b(":/res/notile.png");
+            QFile b(QStringLiteral(":/res/notile.png"));
             if(b.open(QFile::ReadOnly))
                 _badMapBox = b.readAll();
         }
         setMapImageData(_badMapBox);
-        setMapImageFormat("png");
+        setMapImageFormat(QStringLiteral("png"));
         setFinished(true);
         setCached(false);
     } else {
@@ -134,12 +134,12 @@ QGeoTiledMapReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
     _reply->deleteLater();
     _reply = 0;
     if(!_badTile.size()) {
-        QFile b(":/res/notile.png");
+        QFile b(QStringLiteral(":/res/notile.png"));
         if(b.open(QFile::ReadOnly))
             _badTile = b.readAll();
     }
     setMapImageData(_badTile);
-    setMapImageFormat("png");
+    setMapImageFormat(QStringLiteral("png"));
     setFinished(true);
     setCached(false);
 }

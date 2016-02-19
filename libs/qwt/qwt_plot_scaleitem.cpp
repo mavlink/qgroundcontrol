@@ -75,7 +75,7 @@ void QwtPlotScaleItem::PrivateData::updateBorders( const QRectF &canvasRect,
 */
 QwtPlotScaleItem::QwtPlotScaleItem(
         QwtScaleDraw::Alignment alignment, const double pos ):
-    QwtPlotItem( QwtText( "Scale" ) )
+    QwtPlotItem( QwtText( QStringLiteral("Scale") ) )
 {
     d_data = new PrivateData;
     d_data->position = pos;

@@ -487,7 +487,7 @@ bool QwtCounter::event( QEvent *event )
 {
     if ( event->type() == QEvent::PolishRequest )
     {
-        const int w = d_data->valueEdit->fontMetrics().width( "W" ) + 8;
+        const int w = d_data->valueEdit->fontMetrics().width( QStringLiteral("W") ) + 8;
         for ( int i = 0; i < ButtonCnt; i++ )
         {
             d_data->buttonDown[i]->setMinimumWidth( w );

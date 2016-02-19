@@ -41,7 +41,7 @@ public:
 
 //! Enables major grid, disables minor grid
 QwtPlotGrid::QwtPlotGrid():
-    QwtPlotItem( QwtText( "Grid" ) )
+    QwtPlotItem( QwtText( QStringLiteral("Grid") ) )
 {
     d_data = new PrivateData;
 
