@@ -34,6 +34,8 @@
 #include "MainWindow.h"
 #endif
 
+#include <QStandardPaths>
+
 /// @Brief Constructs a new ParameterEditorController Widget. This widget is used within the PX4VehicleConfig set of screens.
 ParameterEditorController::ParameterEditorController(void)
 {

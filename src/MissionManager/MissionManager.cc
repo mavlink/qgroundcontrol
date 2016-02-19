@@ -29,6 +29,7 @@
 #include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
+#include "SimpleMissionItem.h"
 
 QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
 
@@ -64,7 +65,7 @@ void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems)
     int firstIndex = skipFirstItem ? 1 : 0;
     
     for (int i=firstIndex; i<missionItems.count(); i++) {
-        _missionItems.append(new MissionItem(*qobject_cast<const MissionItem*>(missionItems[i])));
+        _missionItems.append(new SimpleMissionItem(*qobject_cast<const SimpleMissionItem*>(missionItems[i])));
 
         MissionItem* item = qobject_cast<MissionItem*>(_missionItems.get(_missionItems.count() - 1));
 
@@ -252,7 +253,7 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
         _requestItemRetryCount = 0;
         _itemIndicesToRead.removeOne(missionItem.seq);
 
-        MissionItem* item = new MissionItem(_vehicle,
+        MissionItem* item = new SimpleMissionItem(_vehicle,
                                             missionItem.seq,
                                             (MAV_CMD)missionItem.command,
                                             (MAV_FRAME)missionItem.frame,
@@ -432,7 +433,7 @@ QmlObjectListModel* MissionManager::copyMissionItems(void)
     QmlObjectListModel* list = new QmlObjectListModel();
     
     for (int i=0; i<_missionItems.count(); i++) {
-        list->append(new MissionItem(*qobject_cast<const MissionItem*>(_missionItems[i])));
+        list->append(new SimpleMissionItem(*qobject_cast<const SimpleMissionItem*>(_missionItems[i])));
     }
     
     return list;

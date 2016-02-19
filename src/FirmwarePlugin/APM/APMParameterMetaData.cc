@@ -32,6 +32,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QDebug>
+#include <QStack>
 
 QGC_LOGGING_CATEGORY(APMParameterMetaDataLog, "APMParameterMetaDataLog")
 QGC_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog, "APMParameterMetaDataVerboseLog")

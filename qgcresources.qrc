@@ -99,6 +99,7 @@
         <file alias="MapAddMissionBlack.svg">src/FlightMap/Images/MapAddMissionBlack.svg</file>
         <file alias="MapCenter.svg">src/FlightMap/Images/MapCenter.svg</file>
         <file alias="MapCenterBlack.svg">src/FlightMap/Images/MapCenterBlack.svg</file>
+        <file alias="MapDrawShape.svg">src/FlightMap/Images/MapDrawShape.svg</file>
         <file alias="MapHome.svg">src/FlightMap/Images/MapHome.svg</file>
         <file alias="MapHomeBlack.svg">src/FlightMap/Images/MapHomeBlack.svg</file>
         <file alias="MapSync.svg">src/FlightMap/Images/MapSync.svg</file>

@@ -31,6 +31,9 @@
 #include "QGCApplication.h"
 #include "QGCFileDownload.h"
 
+#include <QStandardPaths>
+#include <QRegularExpression>
+
 struct FirmwareToUrlElement_t {
     FirmwareUpgradeController::AutoPilotStackType_t    stackType;
     FirmwareUpgradeController::FirmwareType_t          firmwareType;
