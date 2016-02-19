@@ -40,10 +40,10 @@
 ParameterEditorController::ParameterEditorController(void)
 {
     if (_autopilot) {
-        const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
-
-        foreach (int componentId, groupMap.keys()) {
-            _componentIds += QStringLiteral("%1").arg(componentId);
+        const auto& groupMap = _autopilot->getGroupMap();
+        _componentIds.reserve(groupMap.size());
+        for (auto it = groupMap.begin(), end = groupMap.end(); it != end; it++) {
+            _componentIds += QString::number(it.key());
         }
     }
 }
