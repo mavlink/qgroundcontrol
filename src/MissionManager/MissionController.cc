@@ -27,6 +27,8 @@ This file is part of the QGROUNDCONTROL project
 #include "CoordinateVector.h"
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
+#include "SimpleMissionItem.h"
+#include "ComplexMissionItem.h"
 
 #ifndef __mobile__
 #include "QGCFileDialog.h"
@@ -45,6 +47,7 @@ MissionController::MissionController(QObject *parent)
     : QObject(parent)
     , _editMode(false)
     , _missionItems(NULL)
+    , _complexMissionItems(NULL)
     , _activeVehicle(NULL)
     , _autoSync(false)
     , _firstItemsFromVehicle(false)
@@ -124,9 +127,9 @@ void MissionController::sendMissionItems(void)
     }
 }
 
-int MissionController::insertMissionItem(QGeoCoordinate coordinate, int i)
+int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
 {
-    MissionItem * newItem = new MissionItem(_activeVehicle, this);
+    MissionItem * newItem = new SimpleMissionItem(_activeVehicle, this);
     newItem->setSequenceNumber(_missionItems->count());
     newItem->setCoordinate(coordinate);
     newItem->setCommand(MAV_CMD_NAV_WAYPOINT);
@@ -146,6 +149,22 @@ int MissionController::insertMissionItem(QGeoCoordinate coordinate, int i)
         }
     }
     _missionItems->insert(i, newItem);
+
+    _recalcAll();
+
+    return _missionItems->count() - 1;
+}
+
+int MissionController::insertComplexMissionItem(QGeoCoordinate coordinate, int i)
+{
+    ComplexMissionItem * newItem = new ComplexMissionItem(_activeVehicle, this);
+    newItem->setSequenceNumber(_missionItems->count());
+    newItem->setCoordinate(coordinate);
+    newItem->setCommand(MAV_CMD_NAV_WAYPOINT);
+    _initMissionItem(newItem);
+
+    _missionItems->insert(i, newItem);
+    _complexMissionItems->append(newItem);
 
     _recalcAll();
 
@@ -218,7 +237,7 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
                 return false;
             }
 
-            MissionItem* item = new MissionItem(_activeVehicle, this);
+            MissionItem* item = new SimpleMissionItem(_activeVehicle, this);
             if (item->load(itemValue.toObject(), errorString)) {
                 missionItems->append(item);
             } else {
@@ -228,7 +247,7 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
     }
 
     if (json.contains(_jsonPlannedHomePositionKey)) {
-        MissionItem* item = new MissionItem(_activeVehicle, this);
+        MissionItem* item = new SimpleMissionItem(_activeVehicle, this);
 
         if (item->load(json[_jsonPlannedHomePositionKey].toObject(), errorString)) {
             missionItems->insert(0, item);
@@ -263,7 +282,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
 
     if (versionOk) {
         while (!stream.atEnd()) {
-            MissionItem* item = new MissionItem(_activeVehicle, this);
+            MissionItem* item = new SimpleMissionItem(_activeVehicle, this);
 
             if (item->load(stream)) {
                 missionItems->append(item);
@@ -612,13 +631,24 @@ void MissionController::_initAllMissionItems(void)
 
     qDebug() << "home item" << homeItem->coordinate();
 
+    QmlObjectListModel* newComplexItems = new QmlObjectListModel(this);
+
     for (int i=0; i<_missionItems->count(); i++) {
-        _initMissionItem(qobject_cast<MissionItem*>(_missionItems->get(i)));
+        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+
+        if (!item->simpleItem()) {
+            newComplexItems->append(item);
+        }
+        _initMissionItem(item);
     }
+
+    delete _complexMissionItems;
+    _complexMissionItems = newComplexItems;
 
     _recalcAll();
 
     emit missionItemsChanged();
+    emit complexMissionItemsChanged();
 
     _missionItems->setDirty(false);
 
@@ -773,6 +803,11 @@ QmlObjectListModel* MissionController::missionItems(void)
     return _missionItems;
 }
 
+QmlObjectListModel* MissionController::complexMissionItems(void)
+{
+    return _complexMissionItems;
+}
+
 bool MissionController::_findLastAltitude(double* lastAltitude)
 {
     bool found = false;
@@ -831,7 +866,7 @@ double MissionController::_normalizeLon(double lon)
 /// Add the home position item to the front of the list
 void MissionController::_addPlannedHomePosition(QmlObjectListModel* missionItems, bool addToCenter)
 {
-    MissionItem* homeItem = new MissionItem(_activeVehicle, this);
+    MissionItem* homeItem = new SimpleMissionItem(_activeVehicle, this);
     missionItems->insert(0, homeItem);
 
     if (missionItems->count() > 1  && addToCenter) {

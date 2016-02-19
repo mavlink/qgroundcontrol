@@ -34,6 +34,8 @@
 #include <QDebug>
 #include <QSettings>
 #include <QUrl>
+#include <QBitArray>
+#include <QtCore/qmath.h>
 
 #define kTimeOutMilliseconds 500
 #define kGUIRateMilliseconds 17

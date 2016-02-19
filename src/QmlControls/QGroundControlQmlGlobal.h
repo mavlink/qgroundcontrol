@@ -79,6 +79,9 @@ public:
     Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition CONSTANT)
     Q_PROPERTY(QGeoCoordinate flightMapPosition MEMBER _flightMapPosition NOTIFY flightMapPositionChanged)
 
+    /// @ return: true: experimental survey ip code is turned on
+    Q_PROPERTY(bool experimentalSurvey READ experimentalSurvey WRITE setExperimentalSurvey NOTIFY experimentalSurveyChanged)
+
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
@@ -133,6 +136,9 @@ public:
     void    setIsVersionCheckEnabled    (bool enable);
     void    setMavlinkSystemID          (int  id);
 
+    bool experimentalSurvey(void) const;
+    void setExperimentalSurvey(bool experimentalSurvey);
+
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
 
@@ -146,6 +152,7 @@ signals:
     void isVersionCheckEnabledChanged   (bool enabled);
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
+    void experimentalSurveyChanged      (bool experimentalSurvey);
 
 private:
     FlightMapSettings*      _flightMapSettings;

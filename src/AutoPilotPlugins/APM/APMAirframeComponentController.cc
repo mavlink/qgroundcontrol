@@ -34,6 +34,8 @@
 
 #include <QVariant>
 #include <QQmlProperty>
+#include <QStandardPaths>
+#include <QDir>
 
 bool APMAirframeComponentController::_typesRegistered = false;
 

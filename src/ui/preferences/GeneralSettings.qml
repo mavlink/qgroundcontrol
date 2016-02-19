@@ -242,6 +242,8 @@ Rectangle {
                 width:  parent.width
             }
 
+            //-----------------------------------------------------------------
+            //-- Offline mission editing settings
             Row {
                 spacing: ScreenTools.defaultFontPixelWidth
 
@@ -256,6 +258,19 @@ Rectangle {
                     fact:       QGroundControl.offlineEditingFirmwareType
                     indexModel: false
                 }
+            }
+
+            Item {
+                height: ScreenTools.defaultFontPixelHeight / 2
+                width:  parent.width
+            }
+
+            //-----------------------------------------------------------------
+            //-- Experimental Survey settings
+            QGCCheckBox {
+                text:       "Experimental Survey [WIP - no bugs reports please]"
+                checked:    QGroundControl.experimentalSurvey
+                onClicked:  QGroundControl.experimentalSurvey = checked
             }
         }
     }
