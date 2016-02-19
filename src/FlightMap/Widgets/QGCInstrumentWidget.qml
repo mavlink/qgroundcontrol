@@ -73,7 +73,7 @@ Rectangle {
         id:             attitude
         y:              _topBottomMargin
         size:           parent.width * 0.95
-        active:         active
+        active:         instrumentPanel.active
         anchors.horizontalCenter: parent.horizontalCenter
     }
 
@@ -112,7 +112,7 @@ Rectangle {
         anchors.topMargin:  _spacing
         anchors.top:        _spacer2.bottom
         size:               parent.width * 0.95
-        active:             active
+        active:             instrumentPanel.active
         anchors.horizontalCenter: parent.horizontalCenter
     }
 }
