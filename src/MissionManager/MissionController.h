@@ -29,6 +29,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
+#include "MavlinkQmlSingleton.h"
+#include "MissionItem.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
@@ -41,6 +43,7 @@ public:
     ~MissionController();
 
     Q_PROPERTY(QmlObjectListModel*  missionItems                READ missionItems                   NOTIFY missionItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  complexMissionItems         READ complexMissionItems            NOTIFY complexMissionItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines               READ waypointLines                  NOTIFY waypointLinesChanged)
     Q_PROPERTY(bool                 autoSync                    READ autoSync   WRITE setAutoSync   NOTIFY autoSyncChanged)
     Q_PROPERTY(bool                 syncInProgress              READ syncInProgress                 NOTIFY syncInProgressChanged)
@@ -57,11 +60,15 @@ public:
     Q_INVOKABLE QStringList getMobileMissionFiles(void);
 
     /// @param i: index to insert at
-    Q_INVOKABLE int insertMissionItem(QGeoCoordinate coordinate, int i);
+    Q_INVOKABLE int insertSimpleMissionItem(QGeoCoordinate coordinate, int i);
+
+    /// @param i: index to insert at
+    Q_INVOKABLE int insertComplexMissionItem(QGeoCoordinate coordinate, int i);
 
     // Property accessors
 
     QmlObjectListModel* missionItems(void);
+    QmlObjectListModel* complexMissionItems(void);
     QmlObjectListModel* waypointLines(void) { return &_waypointLines; }
     bool autoSync(void) { return _autoSync; }
     void setAutoSync(bool autoSync);
@@ -69,6 +76,7 @@ public:
 
 signals:
     void missionItemsChanged(void);
+    void complexMissionItemsChanged(void);
     void waypointLinesChanged(void);
     void autoSyncChanged(bool autoSync);
     void newItemsFromVehicle(void);
@@ -111,6 +119,7 @@ private:
 private:
     bool                _editMode;
     QmlObjectListModel* _missionItems;
+    QmlObjectListModel* _complexMissionItems;
     QmlObjectListModel  _waypointLines;
     Vehicle*            _activeVehicle;
     bool                _autoSync;

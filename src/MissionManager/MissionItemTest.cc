@@ -22,7 +22,7 @@
  ======================================================================*/
 
 #include "MissionItemTest.h"
-#include "MissionItem.h"
+#include "SimpleMissionItem.h"
 
 const MissionItemTest::ItemInfo_t MissionItemTest::_rgItemInfo[] = {
     { MAV_CMD_NAV_WAYPOINT,     MAV_FRAME_GLOBAL_RELATIVE_ALT },
@@ -184,7 +184,7 @@ void MissionItemTest::_test(void)
 
 void MissionItemTest::_testDefaultValues(void)
 {
-    MissionItem item(NULL /* Vehicle */);
+    SimpleMissionItem item(NULL /* Vehicle */);
 
     item.setCommand(MAV_CMD_NAV_WAYPOINT);
     item.setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
