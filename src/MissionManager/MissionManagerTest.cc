@@ -24,6 +24,7 @@
 #include "MissionManagerTest.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
+#include "SimpleMissionItem.h"
 
 const MissionManagerTest::TestCase_t MissionManagerTest::_rgTestCases[] = {
     { "0\t0\t3\t16\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 0, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_WAYPOINT,     10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
@@ -48,7 +49,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     QmlObjectListModel* list = new QmlObjectListModel();
     
     // Editor has a home position item on the front, so we do the same
-    MissionItem* homeItem = new MissionItem(NULL /* Vehicle */, this);
+    SimpleMissionItem* homeItem = new SimpleMissionItem(NULL /* Vehicle */, this);
     homeItem->setHomePositionSpecialCase(true);
     homeItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
     homeItem->setCoordinate(QGeoCoordinate(47.3769, 8.549444, 0));
@@ -58,7 +59,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     for (size_t i=0; i<_cTestCases; i++) {
         const TestCase_t* testCase = &_rgTestCases[i];
         
-        MissionItem* item = new MissionItem(NULL /* Vehicle */, list);
+        SimpleMissionItem* item = new SimpleMissionItem(NULL /* Vehicle */, list);
         
         QTextStream loadStream(testCase->itemStream, QIODevice::ReadOnly);
         QVERIFY(item->load(loadStream));

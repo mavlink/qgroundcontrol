@@ -34,6 +34,7 @@
 
 #include <QApplication>
 #include <QTimer>
+#include <QQmlApplicationEngine>
 
 #include "LinkConfiguration.h"
 #include "LinkManager.h"

@@ -33,7 +33,6 @@
 #include "FactGroup.h"
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
-#include "MissionItem.h"
 #include "QmlObjectListModel.h"
 #include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"

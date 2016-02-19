@@ -27,6 +27,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCApplication.h"
 #include "QGroundControlQmlGlobal.h"
 
+#include <QQmlEngine>
+
 MissionCommands::MissionCommands(QGCApplication* app)
     : QGCTool(app)
     , _commonMissionCommands(QStringLiteral(":/json/MavCmdInfoCommon.json"))
