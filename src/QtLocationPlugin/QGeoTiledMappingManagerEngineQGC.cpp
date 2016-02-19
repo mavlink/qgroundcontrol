@@ -226,13 +226,9 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     QGeoTileCache* pTileCache = createTileCacheWithDir(cacheDir);
     if(pTileCache)
     {
-        //-- We're basically telling it to use 1kb (100k for Windows) of disk for cache. It doesn't like
+        //-- We're basically telling it to use 100k of disk for cache. It doesn't like
         //   values smaller than that and I could not find a way to make it NOT cache.
-#ifdef Q_OS_WIN
         pTileCache->setMaxDiskUsage(1024 * 100);
-#else
-        pTileCache->setMaxDiskUsage(1024);
-#endif
         pTileCache->setMaxMemoryUsage(memLimit);
     }
 }
