@@ -159,15 +159,17 @@ void LogCompressor::run()
 
     int lineCounter = 0;
 
-    QStringList lastList = timestampMap.values().at(1);
-
-    foreach (QStringList list, timestampMap.values()) {
+    // values.at(1) is the second value, this means that it's the *(timestampMap.begin()++)
+    // but the second don't create a temporary list just so we can get the second element.
+    QStringList lastList = (timestampMap.begin()++).value();
+    QList<quint64> keys = timestampMap.keys();
+    foreach (QStringList list, timestampMap) {
         // Write this current time set out to the file
         // only do so from the 2nd line on, since the first
         // line could be incomplete
         if (lineCounter > 1) {
             // Set the timestamp
-            list.replace(0,QStringLiteral("%1").arg(timestampMap.keys().at(lineCounter)));
+            list.replace(0,QStringLiteral("%1").arg(keys.at(lineCounter)));
 
             // Fill holes if necessary
             if (holeFillingEnabled) {
