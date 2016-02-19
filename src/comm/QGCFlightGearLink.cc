@@ -862,7 +862,7 @@ bool QGCFlightGearLink::connectSimulation()
     // Make sure we can find the communication protocol file in QGC install
     QString fgProtocolXmlFile = fgProtocol + ".xml";
     QString qgcProtocolFileFullyQualified = qgcProtocolDir.absoluteFilePath(fgProtocolXmlFile);
-    if (!QFileInfo(qgcProtocolFileFullyQualified).exists()) {
+    if (!QFileInfo::exists(qgcProtocolFileFullyQualified)) {
         QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect QGroundControl installation. FlightGear protocol file missing: %1").arg(qgcProtocolFileFullyQualified));
         return false;
     }
@@ -872,7 +872,7 @@ bool QGCFlightGearLink::connectSimulation()
     // of protocol xml file to $FG_ROOT and $FG_ROOT only allows a single directory to be specified.
     _fgProtocolFileFullyQualified = fgProtocolDir.absoluteFilePath(fgProtocolXmlFile);
 
-    if (QFileInfo(_fgProtocolFileFullyQualified).exists()) {
+    if (QFileInfo::exists(_fgProtocolFileFullyQualified)) {
         // Verify that the file is current by comparing it against the one in QGC
 
         QFile fgFile(_fgProtocolFileFullyQualified);
@@ -900,7 +900,7 @@ bool QGCFlightGearLink::connectSimulation()
         }
     }
 
-    if (!QFileInfo(_fgProtocolFileFullyQualified).exists()) {
+    if (!QFileInfo::exists(_fgProtocolFileFullyQualified)) {
         QMessageBox msgBox(QMessageBox::Critical,
                            tr("FlightGear Failed to Start"),
                            tr("FlightGear Failed to Start. QGroundControl protocol (%1) not installed to FlightGear Protocol directory (%2)").arg(fgProtocolXmlFile,fgProtocolDir.path()),
@@ -916,10 +916,10 @@ bool QGCFlightGearLink::connectSimulation()
         bool succeeded = QFile::copy(qgcProtocolFileFullyQualified, _fgProtocolFileFullyQualified);
         if (!succeeded) {
 #ifdef Q_OS_WIN32
-            QString copyCmd = QString("copy \"%1\" \"%2\"").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified);
+            QString copyCmd = QString("copy \"%1\" \"%2\"").arg(qgcProtocolFileFullyQualified,_fgProtocolFileFullyQualified);
             copyCmd.replace("/", "\\");
 #else
-            QString copyCmd = QStringLiteral("sudo cp %1 %2").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified);
+            QString copyCmd = QStringLiteral("sudo cp %1 %2").arg(qgcProtocolFileFullyQualified,_fgProtocolFileFullyQualified);
 #endif
 
             QMessageBox msgBox(QMessageBox::Critical,

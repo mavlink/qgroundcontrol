@@ -670,13 +670,13 @@ void LinechartWidget::removeCurve(QString curve)
 void LinechartWidget::recolor()
 {
     activePlot->styleChanged(qgcApp()->styleIsDark());
-    foreach (const QString &key, colorIcons.keys())
+    for (auto it = colorIcons.begin(), end = colorIcons.end(); it != end; it++)
     {
-        QWidget* colorIcon = colorIcons.value(key, 0);
+        QWidget* colorIcon = colorIcons.value(it.key(), 0);
         if (colorIcon && !colorIcon->styleSheet().isEmpty())
         {
             QString colorstyle;
-            QColor color = activePlot->getColorForCurve(key);
+            QColor color = activePlot->getColorForCurve(it.key());
             colorstyle = colorstyle.sprintf("QWidget { background-color: #%02X%02X%02X; }", color.red(), color.green(), color.blue());
             colorIcon->setStyleSheet(colorstyle);
         }
@@ -706,28 +706,21 @@ void LinechartWidget::filterCurves(const QString &filter)
 {
     //qDebug() << "filterCurves: filter: " << filter;
 
-    if (filter != QLatin1String(""))
+    if (!filter.isEmpty())
     {
         /* Hide Elements which do not match the filter pattern */
         QStringMatcher stringMatcher(filter, Qt::CaseInsensitive);
-        foreach (const QString &key, colorIcons.keys())
+        for (auto it = colorIcons.begin(), end = colorIcons.end(); it != end; it++)
         {
-            if (stringMatcher.indexIn(key) < 0)
-            {
-                filterCurve(key, false);
-            }
-            else
-            {
-                filterCurve(key, true);
-            }
+            filterCurve(it.key(), stringMatcher.indexIn(it.key()) >= 0);
         }
     }
     else
     {
         /* Show all Elements */
-        foreach (const QString &key, colorIcons.keys())
+        for (auto it = colorIcons.begin(), end = colorIcons.end(); it != end; it++)
         {
-            filterCurve(key, true);
+            filterCurve(it.key(), true);
         }
     }
 }
@@ -736,16 +729,8 @@ QString LinechartWidget::getCurveName(const QString& key, bool shortEnabled)
 {
     if (shortEnabled)
     {
-        QString name;
-        QStringList parts = curveNames.value(key).split(QStringLiteral("."));
-        if (parts.length() > 1)
-        {
-            name = parts.at(1);
-        }
-        else
-        {
-            name = parts.at(0);
-        }
+        QStringList parts = curveNames.value(key).split(QChar('.'));
+        QString name = parts.at( (parts.length() > 1) ? 1 : 0);
 
         const int sizeLimit = 20;
 
@@ -776,11 +761,11 @@ QString LinechartWidget::getCurveName(const QString& key, bool shortEnabled)
         // Check if sub-part is still exceeding N chars
         if (name.length() > sizeLimit)
         {
-            name.replace(QLatin1String("a"), QLatin1String(""));
-            name.replace(QLatin1String("e"), QLatin1String(""));
-            name.replace(QLatin1String("i"), QLatin1String(""));
-            name.replace(QLatin1String("o"), QLatin1String(""));
-            name.replace(QLatin1String("u"), QLatin1String(""));
+            name.replace(QChar('a'), QString());
+            name.replace(QChar('e'), QString());
+            name.replace(QChar('i'), QString());
+            name.replace(QChar('o'), QString());
+            name.replace(QChar('u'), QString());
         }
 
         return name;
@@ -793,9 +778,9 @@ QString LinechartWidget::getCurveName(const QString& key, bool shortEnabled)
 
 void LinechartWidget::setShortNames(bool enable)
 {
-    foreach (const QString &key, curveNames.keys())
+    for (auto it = curveNames.begin(), end = curveNames.end(); it != end; it++)
     {
-        curveNameLabels.value(key)->setText(getCurveName(key, enable));
+        curveNameLabels.value(it.key())->setText(getCurveName(it.key(), enable));
     }
 }
 
