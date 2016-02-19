@@ -601,20 +601,19 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
     QString widgetNames;
     bool firstWidget = true;
 
-    foreach (const QString &name, _mapName2DockWidget.keys()) {
-        if (_mapName2DockWidget[name]->isVisible()) {
+    for (auto it = _mapName2DockWidget.begin(), end = _mapName2DockWidget.end(); it != end; it++) {
+        if (it.value()->isVisible()) {
             if (!firstWidget) {
-                widgetNames += QLatin1String(",");
+                widgetNames += QChar(',');
             } else {
                 firstWidget = false;
             }
 
-            widgetNames += name;
+            widgetNames += it.key();
         }
     }
 
     QSettings settings;
-
     settings.setValue(_visibleWidgetsKey, widgetNames);
 }
 #endif

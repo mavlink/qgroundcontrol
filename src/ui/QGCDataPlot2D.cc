@@ -575,14 +575,18 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
     // Add data array of each curve to the plot at once (fast)
     // Iterates through all x-y curve combinations
+    auto yKeys = yValues.keys();
+    auto yV = yValues.values();
+    auto xV = xValues.values();
+
     for (int i = 0; i < yValues.count(); i++) {
-        if (renaming.contains(yValues.keys().at(i)))
+        if (renaming.contains(yKeys.at(i)))
         {
-            plot->appendData(renaming.value(yValues.keys().at(i)), xValues.values().at(i)->data(), yValues.values().at(i)->data(), xValues.values().at(i)->count());
+            plot->appendData(renaming.value(yKeys.at(i)), xV.at(i)->data(), yV.at(i)->data(), xV.at(i)->count());
         }
         else
         {
-            plot->appendData(yValues.keys().at(i), xValues.values().at(i)->data(), yValues.values().at(i)->data(), xValues.values().at(i)->count());
+            plot->appendData(yKeys.at(i), xV.at(i)->data(), yV.at(i)->data(), xV.at(i)->count());
         }
     }
     plot->updateScale();
