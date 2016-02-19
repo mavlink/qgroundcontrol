@@ -126,13 +126,7 @@ QVariant MissionCommands::getCommandsForCategory(Vehicle* vehicle, const QString
 
 const QStringList MissionCommands::categories(Vehicle* vehicle) const
 {
-    QStringList list;
-
-    foreach (const QString &category, _categoryToMavCmdListMap[_firmwareTypeFromVehicle(vehicle)].keys()) {
-        list << category;
-    }
-
-    return list;
+    return  _categoryToMavCmdListMap.value(_firmwareTypeFromVehicle(vehicle)).keys();
 }
 
 bool MissionCommands::contains(MAV_CMD command) const
