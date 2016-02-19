@@ -230,7 +230,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         char buf[11];
         strncpy(buf, debug.name, 10);
         buf[10] = '\0';
-        name = QStringLiteral("%1.%2").arg(buf).arg(fieldName);
+        name = QStringLiteral("%1.%2").arg(buf,fieldName);
         time = getUnixTimeFromMs(msg->sysid, (debug.time_usec+500)/1000); // Scale to milliseconds, round up/down correctly
     }
     else if (msgid == MAVLINK_MSG_ID_DEBUG)
