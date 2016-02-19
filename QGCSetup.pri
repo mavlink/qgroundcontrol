@@ -116,6 +116,7 @@ LinuxBuild {
             libQt5Quick.so.5 \
             libQt5QuickWidgets.so.5 \
             libQt5SerialPort.so.5 \
+            libQt5Sql.so.5 \
             libQt5Svg.so.5 \
             libQt5Test.so.5 \
             libQt5Widgets.so.5 \
@@ -141,7 +142,8 @@ LinuxBuild {
             platforminputcontexts \
             platforms \
             platformthemes \
-            position
+            position \
+            sqldrivers
 
         !contains(DEFINES, __rasp_pi2__) {
             QT_PLUGIN_LIST += xcbglintegrations
