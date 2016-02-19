@@ -29,6 +29,7 @@
 #include <QXmlStreamReader>
 #include <QLoggingCategory>
 #include <QMutex>
+#include <QDir>
 
 #include "FactSystem.h"
 #include "MAVLinkProtocol.h"

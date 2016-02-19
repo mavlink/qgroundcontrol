@@ -32,6 +32,9 @@ This file is part of the QGROUNDCONTROL project
 #include <QApplication>
 #include <QSslSocket>
 #include <QProcessEnvironment>
+#include <QHostAddress>
+#include <QUdpSocket>
+#include <QtPlugin>
 
 #include "QGCApplication.h"
 
