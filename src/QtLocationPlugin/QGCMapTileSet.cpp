@@ -29,12 +29,12 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
-#include <math.h>
-#include <QSettings>
-
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
 #include "QGCMapEngineManager.h"
+
+#include <QSettings>
+#include <math.h>
 
 QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "QGCCachedTileSetLog")
 

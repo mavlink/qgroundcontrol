@@ -44,12 +44,12 @@
 **
 ****************************************************************************/
 
+#include "QGCMapEngine.h"
+#include "QGeoMapReplyQGC.h"
+
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QFile>
-
-#include "QGCMapEngine.h"
-#include "QGeoMapReplyQGC.h"
 
 //-----------------------------------------------------------------------------
 QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager, const QNetworkRequest &request, const QGeoTileSpec &spec, QObject *parent)
