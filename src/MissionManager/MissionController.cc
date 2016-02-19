@@ -266,14 +266,14 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
     bool addPlannedHomePosition = false;
 
     QString firstLine = stream.readLine();
-    const QStringList& version = firstLine.split(" ");
+    const QStringList& version = firstLine.split(QChar(' '));
 
     bool versionOk = false;
-    if (version.size() == 3 && version[0] == "QGC" && version[1] == "WPL") {
-        if (version[2] == "110") {
+    if (version.size() == 3 && version[0] == QLatin1String("QGC") && version[1] == QLatin1String("WPL")) {
+        if (version[2] == QLatin1String("110")) {
             // ArduPilot file, planned home position is already in position 0
             versionOk = true;
-        } else if (version[2] == "120") {
+        } else if (version[2] == QLatin1String("120")) {
             // Old QGC file, no planned home position
             versionOk = true;
             addPlannedHomePosition = true;
@@ -383,8 +383,8 @@ void MissionController::_saveMissionToFile(const QString& filename)
     }
 
     QString missionFilename = filename;
-    if (!QFileInfo(filename).fileName().contains(".")) {
-        missionFilename += ".mission";
+    if (!QFileInfo(filename).fileName().contains(QLatin1String("."))) {
+        missionFilename += QStringLiteral(".mission");
     }
 
     QFile file(missionFilename);
@@ -405,13 +405,13 @@ void MissionController::_saveMissionToFile(const QString& filename)
             // QGroundControlQmlGlobal is not available from C++ side.
 
             QSettings settings;
-            firmwareType = (MAV_AUTOPILOT)settings.value("OfflineEditingFirmwareType", MAV_AUTOPILOT_ARDUPILOTMEGA).toInt();
+            firmwareType = (MAV_AUTOPILOT)settings.value(QStringLiteral("OfflineEditingFirmwareType"), MAV_AUTOPILOT_ARDUPILOTMEGA).toInt();
         }
         missionObject[_jsonMavAutopilotKey] = firmwareType;
 
         QJsonObject homePositionObject;
         qobject_cast<MissionItem*>(_missionItems->get(0))->save(homePositionObject);
-        missionObject["plannedHomePosition"] = homePositionObject;
+        missionObject[QStringLiteral("plannedHomePosition")] = homePositionObject;
 
         QJsonArray itemArray;
         for (int i=1; i<_missionItems->count(); i++) {
@@ -419,7 +419,7 @@ void MissionController::_saveMissionToFile(const QString& filename)
             qobject_cast<MissionItem*>(_missionItems->get(i))->save(itemObject);
             itemArray.append(itemObject);
         }
-        missionObject["items"] = itemArray;
+        missionObject[QStringLiteral("items")] = itemArray;
 
         QJsonDocument saveDoc(missionObject);
         file.write(saveDoc.toJson());
@@ -431,7 +431,7 @@ void MissionController::_saveMissionToFile(const QString& filename)
 void MissionController::saveMissionToFile(void)
 {
 #ifndef __mobile__
-    QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save mission to", QString(), "Mission file (*.mission);;All Files (*.*)");
+    QString filename = QGCFileDialog::getSaveFileName(NULL, QStringLiteral("Select file to save mission to"), QString(), QStringLiteral("Mission file (*.mission);;All Files (*.*)"));
 
     if (filename.isEmpty()) {
         return;

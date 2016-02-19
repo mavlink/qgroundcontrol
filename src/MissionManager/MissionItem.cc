@@ -406,7 +406,7 @@ bool MissionItem::load(const QJsonObject& json, QString& errorString)
     }
 
     if (json[_jsonTypeKey] != _itemType) {
-        errorString = QString("type found: %1 must be: %2").arg(json[_jsonTypeKey].toString()).arg(_itemType);
+        errorString = QStringLiteral("type found: %1 must be: %2").arg(json[_jsonTypeKey].toString()).arg(_itemType);
         return false;
     }
 

@@ -75,7 +75,7 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
     connect(_vehicle->uas(), &UASInterface::parameterUpdate, this, &ParameterLoader::_parameterUpdate);
 
     // Ensure the cache directory exists
-    QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
+    QFileInfo(QSettings().fileName()).dir().mkdir(QStringLiteral("ParamCache"));
     refreshAllParameters();
 }
 
@@ -612,7 +612,7 @@ QDir ParameterLoader::parameterCacheDir()
 
 QString ParameterLoader::parameterCacheFile(int uasId, int componentId)
 {
-    return parameterCacheDir().filePath(QString("%1_%2").arg(uasId).arg(componentId));
+    return parameterCacheDir().filePath(QStringLiteral("%1_%2").arg(uasId).arg(componentId));
 }
 
 void ParameterLoader::_tryCacheHashLoad(int uasId, int componentId, QVariant hash_value)

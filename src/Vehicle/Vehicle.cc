@@ -85,7 +85,7 @@ Vehicle::Vehicle(LinkInterface*             link,
                  FirmwarePluginManager*     firmwarePluginManager,
                  AutoPilotPluginManager*    autopilotPluginManager,
                  JoystickManager*           joystickManager)
-    : FactGroup(_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json")
+    : FactGroup(_vehicleUIUpdateRateMSecs, QStringLiteral(":/json/Vehicle/VehicleFact.json"))
     , _id(vehicleId)
     , _active(false)
     , _firmwareType(firmwareType)
@@ -95,7 +95,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(NULL)
-    , _coordinate(37.803784, -122.462276)
+    , _coordinate(37.803784, -122.462276)\
     , _coordinateValid(false)
     , _homePositionAvailable(false)
     , _mav(NULL)
@@ -1223,7 +1223,7 @@ void Vehicle::_setCoordinateValid(bool coordinateValid)
 
 
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/GPSFact.json"), parent)
     , _vehicle(NULL)
     , _hdopFact             (0, _hdopFactName,              FactMetaData::valueTypeDouble)
     , _vdopFact             (0, _vdopFactName,              FactMetaData::valueTypeDouble)
@@ -1286,7 +1286,7 @@ void VehicleGPSFactGroup::_setSatLoc(UASInterface*, int fix)
 }
 
 VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/BatteryFact.json", parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/BatteryFact.json"), parent)
     , _vehicle(NULL)
     , _voltageFact          (0, _voltageFactName,           FactMetaData::valueTypeDouble)
     , _percentRemainingFact (0, _percentRemainingFactName,  FactMetaData::valueTypeInt32)

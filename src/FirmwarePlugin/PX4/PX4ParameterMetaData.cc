@@ -82,7 +82,7 @@ QString PX4ParameterMetaData::parameterMetaDataFile(void)
 {
     QSettings settings;
     QDir parameterDir = QFileInfo(settings.fileName()).dir();
-    return parameterDir.filePath("PX4ParameterFactMetaData.xml");
+    return parameterDir.filePath(QStringLiteral("PX4ParameterFactMetaData.xml"));
 }
 
 /// Load Parameter Fact meta data
@@ -304,11 +304,11 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                             metaData->setRebootRequired(true);
                         }
 
-                    } else if (elementName == "values") {
+                    } else if (elementName == QLatin1String("values")) {
                         // doing nothing individual value will follow anyway. May be used for sanity checking.
 
-                    } else if (elementName == "value") {
-                        QString enumValueStr = xml.attributes().value("code").toString();
+                    } else if (elementName == QLatin1String("value")) {
+                        QString enumValueStr = xml.attributes().value(QStringLiteral("code")).toString();
                         QString enumString = xml.readElementText();
                         qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
                                                          << "value desc:" << enumString << "code:" << enumValueStr;

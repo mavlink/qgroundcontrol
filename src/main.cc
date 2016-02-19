@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 
 #ifndef __mobile__
     //-- Test for another instance already running. If that's the case, we simply exit.
-    QHostAddress host("127.0.0.1");
+    QHostAddress host(QStringLiteral("127.0.0.1"));
     QUdpSocket socket;
     if(!socket.bind(host, SINGLE_INSTANCE_PORT, QAbstractSocket::DontShareAddress)) {
         qWarning() << "Another instance already running. Exiting.";

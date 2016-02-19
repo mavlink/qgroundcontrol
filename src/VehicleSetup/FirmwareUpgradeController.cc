@@ -592,13 +592,13 @@ QString FirmwareUpgradeController::firmwareTypeAsString(FirmwareType_t type) con
 {
     switch (type) {
     case StableFirmware:
-        return "stable";
+        return QStringLiteral("stable");
     case DeveloperFirmware:
-        return "developer";
+        return QStringLiteral("developer");
     case BetaFirmware:
-        return "beta";
+        return QStringLiteral("beta");
     default:
-        return "custom";
+        return QStringLiteral("custom");
     }
 }
 

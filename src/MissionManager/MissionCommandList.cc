@@ -101,7 +101,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
     }
 
     QJsonArray jsonArray = jsonValue.toArray();
-    foreach(QJsonValue info, jsonArray) {
+    foreach(const QJsonValue& info, jsonArray) {
         if (!info.isObject()) {
             qWarning() << jsonFilename << "mavCmdArray should contain objects";
             return;
@@ -133,7 +133,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
         MavCmdInfo* mavCmdInfo = new MavCmdInfo(this);
 
         mavCmdInfo->_command = (MAV_CMD)      jsonObject.value(_idJsonKey).toInt();
-        mavCmdInfo->_category =               jsonObject.value(_categoryJsonKey).toString("Advanced");
+        mavCmdInfo->_category =               jsonObject.value(_categoryJsonKey).toString(QStringLiteral("Advanced"));
         mavCmdInfo->_rawName =                jsonObject.value(_rawNameJsonKey).toString();
         mavCmdInfo->_friendlyName =           jsonObject.value(_friendlyNameJsonKey).toString(QString());
         mavCmdInfo->_description =            jsonObject.value(_descriptionJsonKey).toString(QString());
@@ -188,11 +188,11 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename)
                 paramInfo->_label =         paramObject.value(_labelJsonKey).toString();
                 paramInfo->_defaultValue =  paramObject.value(_defaultJsonKey).toDouble(0.0);
                 paramInfo->_decimalPlaces = paramObject.value(_decimalPlacesJsonKey).toInt(FactMetaData::defaultDecimalPlaces);
-                paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
+                paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(QChar(','), QString::SkipEmptyParts);
                 paramInfo->_param =         i;
                 paramInfo->_units =         paramObject.value(_unitsJsonKey).toString();
 
-                QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(",", QString::SkipEmptyParts);
+                QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(QChar(','), QString::SkipEmptyParts);
                 foreach (const QString &enumValue, enumValues) {
                     bool    convertOk;
                     double  value = enumValue.toDouble(&convertOk);

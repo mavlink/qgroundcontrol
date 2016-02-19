@@ -864,6 +864,6 @@ void LinkManager::_activeLinkCheck(void)
     }
 
     if (!found) {
-        qgcApp()->showMessage("Your Vehicle is not responding. If this continues please check that you have an SD Card inserted and try again.");
+        qgcApp()->showMessage(QStringLiteral("Your Vehicle is not responding. If this continues please check that you have an SD Card inserted and try again."));
     }
 }
