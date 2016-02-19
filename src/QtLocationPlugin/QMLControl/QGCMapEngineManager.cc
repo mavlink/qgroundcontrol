@@ -26,11 +26,14 @@
 
 #include "QGCMapEngineManager.h"
 #include "QGCApplication.h"
-#include <QSettings>
 #include "QGCMapTileSet.h"
 #include "QGCMapUrlEngine.h"
-#include <QStorageInfo>
+
 #include <stdio.h>
+
+#include <QQmlEngine>
+#include <QSettings>
+#include <QStorageInfo>
 
 QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QGCMapEngineManagerLog")
 
