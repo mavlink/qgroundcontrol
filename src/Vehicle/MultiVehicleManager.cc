@@ -30,6 +30,8 @@
 #include "UAS.h"
 #include "QGCApplication.h"
 
+#include <QQmlEngine>
+
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "MultiVehicleManagerLog")
 
 const char* MultiVehicleManager::_gcsHeartbeatEnabledKey = "gcsHeartbeatEnabled";
