@@ -43,6 +43,7 @@ import android.content.IntentFilter;
 import android.hardware.usb.*;
 import android.widget.Toast;
 import android.util.Log;
+import android.os.PowerManager;
 //-- Text To Speech
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -53,7 +54,7 @@ import org.qtproject.qt5.android.bindings.QtApplication;
 
 public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListener
 {
-    public static int BAD_PORT = 0;
+    public  static int BAD_PORT = 0;
     private static UsbDeviceJNI m_instance;
     private static UsbManager m_manager;    //  ANDROID USB HOST CLASS
     private static List<UsbSerialDriver> m_devices; //  LIST OF CURRENT DEVICES
@@ -65,6 +66,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     private final static ExecutorService m_Executor = Executors.newSingleThreadExecutor();
     private static final String TAG = "QGC_UsbDeviceJNI";
     private static TextToSpeech  m_tts;
+    private static PowerManager.WakeLock m_wl;
 
     private final static UsbIoManager.Listener m_Listener =
             new UsbIoManager.Listener()
@@ -113,6 +115,8 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         m_tts = new TextToSpeech(this,this);
+        PowerManager pm = (PowerManager)m_instance.getSystemService(Context.POWER_SERVICE);
+        m_wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
     }
 
     @Override
@@ -128,6 +132,24 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     {
         Log.i(TAG, "Say: " + msg);
         m_tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
+    public static void keepScreenOn()
+    {
+        if(m_wl != null) {
+            m_wl.acquire();
+            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK acquired.");
+        } else {
+            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!!!");
+        }
+    }
+
+    public static void restoreScreenOn()
+    {
+        if(m_wl != null) {
+            m_wl.release();
+            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK released.");
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
