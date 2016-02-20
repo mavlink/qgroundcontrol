@@ -32,9 +32,18 @@
 
 #include <QQmlEngine>
 
+#if defined __android__
+#include <QtAndroidExtras/QtAndroidExtras>
+#include <QtAndroidExtras/QAndroidJniObject>
+#endif
+
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "MultiVehicleManagerLog")
 
 const char* MultiVehicleManager::_gcsHeartbeatEnabledKey = "gcsHeartbeatEnabled";
+
+#if defined __android__
+static const char* kJniClassName = "org/qgroundcontrol/qgchelper/UsbDeviceJNI";
+#endif
 
 MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     : QGCTool(app)
@@ -110,6 +119,15 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     emit vehicleAdded(vehicle);
 
     setActiveVehicle(vehicle);
+
+#if defined __android__
+    if(_vehicles.count() == 1) {
+        //-- Once a vehicle is connected, keep Android screen from going off
+        qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::keepScreenOn";
+        QAndroidJniObject::callStaticMethod<void>(kJniClassName, "keepScreenOn", "()V");
+    }
+#endif
+
 }
 
 /// This slot is connected to the Vehicle::allLinksDestroyed signal such that the Vehicle is deleted
@@ -142,6 +160,14 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     emit activeVehicleAvailableChanged(false);
     emit parameterReadyVehicleAvailableChanged(false);
     emit vehicleRemoved(vehicle);
+
+#if defined __android__
+    if(_vehicles.count() == 0) {
+        //-- Once no vehicles are connected, we no longer need to keep Android screen from going off
+        qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::restoreScreenOn";
+        QAndroidJniObject::callStaticMethod<void>(kJniClassName, "restoreScreenOn", "()V");
+    }
+#endif
 
     // We must let the above signals flow through the system as well as get back to the main loop event queue
     // before we can actually delete the Vehicle. The reason is that Qml may be holding on the references to it.
