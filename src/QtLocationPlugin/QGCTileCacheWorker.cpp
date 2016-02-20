@@ -29,6 +29,9 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
+#include "QGCMapEngine.h"
+#include "QGCMapTileSet.h"
+
 #include <QVariant>
 #include <QtSql/QSqlQuery>
 #include <QSqlError>
@@ -38,9 +41,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QFile>
 
 #include "time.h"
-
-#include "QGCMapEngine.h"
-#include "QGCMapTileSet.h"
 
 const char* kDefaultSet = "Default Tile Set";
 const QString kSession  = QLatin1String("QGeoTileWorkerSession");

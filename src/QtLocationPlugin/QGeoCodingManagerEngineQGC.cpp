@@ -44,6 +44,9 @@
 **
 ****************************************************************************/
 
+#include "QGeoCodingManagerEngineQGC.h"
+#include "QGeoCodeReplyQGC.h"
+
 #include <QtCore/QVariantMap>
 #include <QtCore/QUrl>
 #include <QtCore/QUrlQuery>
@@ -55,10 +58,6 @@
 #include <QtPositioning/QGeoAddress>
 #include <QtPositioning/QGeoShape>
 #include <QtPositioning/QGeoRectangle>
-#include <QDebug>
-
-#include "QGeoCodingManagerEngineQGC.h"
-#include "QGeoCodeReplyQGC.h"
 
 static QString addressToQuery(const QGeoAddress &address)
 {
@@ -120,7 +119,7 @@ QGeoCodeReply *QGeoCodingManagerEngineQGC::geocode(const QString &address, int l
     url.setQuery(query);
     request.setUrl(url);
     //qDebug() << url;
-    
+
     QNetworkReply *reply = m_networkManager->get(request);
     reply->setParent(0);
 

@@ -29,11 +29,9 @@
 #include "QGCMapTileSet.h"
 #include "QGCMapUrlEngine.h"
 
-#include <stdio.h>
-
-#include <QQmlEngine>
 #include <QSettings>
 #include <QStorageInfo>
+#include <stdio.h>
 
 QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QGCMapEngineManagerLog")
 
