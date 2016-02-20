@@ -137,7 +137,7 @@ void MissionControllerTest::_testAddWaypointWorker(MAV_AUTOPILOT firmwareType)
 
     QGeoCoordinate coordinate(37.803784, -122.462276);
 
-    _missionController->insertMissionItem(coordinate, _missionController->missionItems()->count());
+    _missionController->insertSimpleMissionItem(coordinate, _missionController->missionItems()->count());
 
     QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(waypointLinesChangedSignalMask), true);
 
@@ -182,7 +182,7 @@ void MissionControllerTest::_testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareTyp
     _missionController = new MissionController();
     Q_CHECK_PTR(_missionController);
     _missionController->start(true /* editMode */);
-    _missionController->insertMissionItem(QGeoCoordinate(37.803784, -122.462276), _missionController->missionItems()->count());
+    _missionController->insertSimpleMissionItem(QGeoCoordinate(37.803784, -122.462276), _missionController->missionItems()->count());
 
     // Go online to empty vehicle
     MissionControllerManagerTest::_initForFirmwareType(firmwareType);

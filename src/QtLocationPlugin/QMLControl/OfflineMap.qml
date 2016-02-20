@@ -611,170 +611,177 @@ Rectangle {
         anchors.bottom:     parent.bottom
         anchors.margins:    ScreenTools.defaultFontPixelWidth
         visible:            false
-
-        Column {
-            width:          parent.width
-            spacing:        ScreenTools.defaultFontPixelHeight
-            Item {
-                height:     ScreenTools.defaultFontPixelHeight * 0.5
-                width:      1
-            }
-            Rectangle {
-                width:      infoWidth
-                height:     nameLabel.height + (ScreenTools.defaultFontPixelHeight * 2)
-                color:      __qgcPal.window
-                radius:     ScreenTools.defaultFontPixelHeight * 0.5
-                anchors.horizontalCenter: parent.horizontalCenter
+        QGCFlickable {
+            id:                 infoScroll
+            anchors.fill:       parent
+            contentHeight:      infoColumn.height
+            flickableDirection: Flickable.VerticalFlick
+            clip:               true
+            Column {
+                id:             infoColumn
+                width:          parent.width
+                spacing:        ScreenTools.defaultFontPixelHeight
+                Item {
+                    height:     ScreenTools.defaultFontPixelHeight * 0.5
+                    width:      1
+                }
+                Rectangle {
+                    width:      infoWidth
+                    height:     nameLabel.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    color:      __qgcPal.window
+                    radius:     ScreenTools.defaultFontPixelHeight * 0.5
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QGCLabel {
+                        id:     nameLabel
+                        text:   _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.name : ""
+                        font.pixelSize:   ScreenTools.isAndroid ? ScreenTools.mediumFontPixelSize : ScreenTools.largeFontPixelSize
+                        anchors.centerIn: parent
+                    }
+                }
                 QGCLabel {
-                    id:     nameLabel
-                    text:   _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.name : ""
-                    font.pixelSize:   ScreenTools.isAndroid ? ScreenTools.mediumFontPixelSize : ScreenTools.largeFontPixelSize
-                    anchors.centerIn: parent
+                    id:     descLabel
+                    text:   _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.description : ""
+                    anchors.horizontalCenter: parent.horizontalCenter
                 }
-            }
-            QGCLabel {
-                id:     descLabel
-                text:   _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.description : ""
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            Rectangle {
-                id:         infoRect
-                width:      infoWidth
-                height:     infoGrid.height + (ScreenTools.defaultFontPixelHeight * 4)
-                color:      __qgcPal.window
-                radius:     ScreenTools.defaultFontPixelHeight * 0.5
-                anchors.horizontalCenter: parent.horizontalCenter
-                GridLayout {
-                    id:                 infoGrid
-                    columns:            2
-                    anchors.centerIn:   parent
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth  * 2
-                    rowSpacing:         ScreenTools.defaultFontPixelWidth
-                    columnSpacing:      ScreenTools.defaultFontPixelHeight * 2
-                    QGCLabel {
-                        text:       "Map Type:"
-                        visible:    !isDefaultSet
-                    }
-                    QGCLabel {
-                        text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.mapTypeStr : ""
-                        visible:    !isDefaultSet
-                    }
-                    QGCLabel {
-                        text:       "Min Zoom:"
-                        visible:    !isDefaultSet
-                    }
-                    QGCLabel {
-                        text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.minZoom : ""
-                        visible:    !isDefaultSet
-                    }
-                    QGCLabel {
-                        text:       "Max Zoom:"
-                        visible:    !isDefaultSet
-                    }
-                    QGCLabel {
-                        text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.maxZoom : ""
-                        visible:    !isDefaultSet
-                    }
-                    QGCLabel {
-                        text:       isDefaultSet ? "Default Set Size:" : "Total Size:"
-                    }
-                    QGCLabel {
-                        text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.tilesSizeStr : ""
-                    }
-                    QGCLabel {
-                        text:       isDefaultSet ? "Default Set Tile Count:" : "Total Tile Count:"
-                    }
-                    QGCLabel {
-                        text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.numTilesStr : ""
-                    }
-                    QGCLabel {
-                        text:       isDefaultSet ? "Total Size (All Sets):" : "Downloaded Size:"
-                    }
-                    QGCLabel {
-                        text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.savedSizeStr : ""
-                    }
-                    QGCLabel {
-                        text:       isDefaultSet ? "Total Count (All Sets):" : "Downloaded Count:"
-                    }
-                    QGCLabel {
-                        text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.savedTilesStr : ""
-                    }
-                    QGCLabel {
-                        text:       "Error Count:"
-                        visible:    !isDefaultSet && _offlineMapRoot._currentSelection && !_offlineMapRoot._currentSelection.complete
-                    }
-                    QGCLabel {
-                        text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.errorCountStr : ""
-                        visible:    !isDefaultSet && _offlineMapRoot._currentSelection && !_offlineMapRoot._currentSelection.complete
-                    }
-                }
-            }
-            Item {
-                height:     ScreenTools.defaultFontPixelHeight * 0.5
-                width:      1
-            }
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: ScreenTools.defaultFontPixelWidth
-                QGCButton {
-                    width:      ScreenTools.defaultFontPixelWidth * 18
-                    text:       "Delete"
-                    enabled:    _offlineMapRoot._currentSelection && (!_offlineMapRoot._currentSelection.deleting)
-                    onClicked: {
-                        if(_offlineMapRoot._currentSelection)
-                            deleteDialog.visible = true
-                    }
-                    MessageDialog {
-                        id:         deleteDialog
-                        visible:    false
-                        icon:       StandardIcon.Warning
-                        standardButtons: StandardButton.Yes | StandardButton.No
-                        title:      "Delete Tile Set"
-                        text:       {
-                            if(_offlineMapRoot._currentSelection) {
-                                var blurb = "Delete " + _offlineMapRoot._currentSelection.name + " and all its tiles.\nIs this really what you want?"
-                                if(_offlineMapRoot._currentSelection.defaultSet)
-                                    return blurb + "\nNote that deleteting the Default Set deletes all tiles from all sets."
-                                else
-                                    return blurb
-                            }
-                            return ""
+                Rectangle {
+                    id:         infoRect
+                    width:      infoWidth
+                    height:     infoGrid.height + (ScreenTools.defaultFontPixelHeight * 4)
+                    color:      __qgcPal.window
+                    radius:     ScreenTools.defaultFontPixelHeight * 0.5
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    GridLayout {
+                        id:                 infoGrid
+                        columns:            2
+                        anchors.centerIn:   parent
+                        anchors.margins:    ScreenTools.defaultFontPixelWidth  * 2
+                        rowSpacing:         ScreenTools.defaultFontPixelWidth
+                        columnSpacing:      ScreenTools.defaultFontPixelHeight * 2
+                        QGCLabel {
+                            text:       "Map Type:"
+                            visible:    !isDefaultSet
                         }
-                        onYes: {
+                        QGCLabel {
+                            text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.mapTypeStr : ""
+                            visible:    !isDefaultSet
+                        }
+                        QGCLabel {
+                            text:       "Min Zoom:"
+                            visible:    !isDefaultSet
+                        }
+                        QGCLabel {
+                            text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.minZoom : ""
+                            visible:    !isDefaultSet
+                        }
+                        QGCLabel {
+                            text:       "Max Zoom:"
+                            visible:    !isDefaultSet
+                        }
+                        QGCLabel {
+                            text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.maxZoom : ""
+                            visible:    !isDefaultSet
+                        }
+                        QGCLabel {
+                            text:       isDefaultSet ? "Default Set Size:" : "Total Size:"
+                        }
+                        QGCLabel {
+                            text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.tilesSizeStr : ""
+                        }
+                        QGCLabel {
+                            text:       isDefaultSet ? "Default Set Tile Count:" : "Total Tile Count:"
+                        }
+                        QGCLabel {
+                            text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.numTilesStr : ""
+                        }
+                        QGCLabel {
+                            text:       isDefaultSet ? "Total Size (All Sets):" : "Downloaded Size:"
+                        }
+                        QGCLabel {
+                            text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.savedSizeStr : ""
+                        }
+                        QGCLabel {
+                            text:       isDefaultSet ? "Total Count (All Sets):" : "Downloaded Count:"
+                        }
+                        QGCLabel {
+                            text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.savedTilesStr : ""
+                        }
+                        QGCLabel {
+                            text:       "Error Count:"
+                            visible:    !isDefaultSet && _offlineMapRoot._currentSelection && !_offlineMapRoot._currentSelection.complete
+                        }
+                        QGCLabel {
+                            text:       _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.errorCountStr : ""
+                            visible:    !isDefaultSet && _offlineMapRoot._currentSelection && !_offlineMapRoot._currentSelection.complete
+                        }
+                    }
+                }
+                Item {
+                    height:     ScreenTools.defaultFontPixelHeight * 0.5
+                    width:      1
+                }
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: ScreenTools.defaultFontPixelWidth
+                    QGCButton {
+                        width:      ScreenTools.defaultFontPixelWidth * 18
+                        text:       "Delete"
+                        enabled:    _offlineMapRoot._currentSelection && (!_offlineMapRoot._currentSelection.deleting)
+                        onClicked: {
                             if(_offlineMapRoot._currentSelection)
-                                QGroundControl.mapEngineManager.deleteTileSet(_offlineMapRoot._currentSelection)
-                            deleteDialog.visible = false
-                            showList()
+                                deleteDialog.visible = true
                         }
-                        onNo: {
-                            deleteDialog.visible = false
+                        MessageDialog {
+                            id:         deleteDialog
+                            visible:    false
+                            icon:       StandardIcon.Warning
+                            standardButtons: StandardButton.Yes | StandardButton.No
+                            title:      "Delete Tile Set"
+                            text:       {
+                                if(_offlineMapRoot._currentSelection) {
+                                    var blurb = "Delete " + _offlineMapRoot._currentSelection.name + " and all its tiles.\nIs this really what you want?"
+                                    if(_offlineMapRoot._currentSelection.defaultSet)
+                                        return blurb + "\nNote that deleteting the Default Set deletes all tiles from all sets."
+                                    else
+                                        return blurb
+                                }
+                                return ""
+                            }
+                            onYes: {
+                                if(_offlineMapRoot._currentSelection)
+                                    QGroundControl.mapEngineManager.deleteTileSet(_offlineMapRoot._currentSelection)
+                                deleteDialog.visible = false
+                                showList()
+                            }
+                            onNo: {
+                                deleteDialog.visible = false
+                            }
                         }
                     }
-                }
-                QGCButton {
-                    text:       "Resume Download"
-                    width:      ScreenTools.defaultFontPixelWidth * 18
-                    enabled:    _offlineMapRoot._currentSelection && (!_offlineMapRoot._currentSelection.deleting && !_offlineMapRoot._currentSelection.downloading)
-                    visible:    !isDefaultSet && _offlineMapRoot._currentSelection && (!_offlineMapRoot._currentSelection.complete && !_offlineMapRoot._currentSelection.downloading)
-                    onClicked: {
-                        if(_offlineMapRoot._currentSelection)
-                            _offlineMapRoot._currentSelection.resumeDownloadTask()
+                    QGCButton {
+                        text:       "Resume Download"
+                        width:      ScreenTools.defaultFontPixelWidth * 18
+                        enabled:    _offlineMapRoot._currentSelection && (!_offlineMapRoot._currentSelection.deleting && !_offlineMapRoot._currentSelection.downloading)
+                        visible:    !isDefaultSet && _offlineMapRoot._currentSelection && (!_offlineMapRoot._currentSelection.complete && !_offlineMapRoot._currentSelection.downloading)
+                        onClicked: {
+                            if(_offlineMapRoot._currentSelection)
+                                _offlineMapRoot._currentSelection.resumeDownloadTask()
+                        }
                     }
-                }
-                QGCButton {
-                    text:       "Cancel Download"
-                    width:      ScreenTools.defaultFontPixelWidth * 18
-                    enabled:    _offlineMapRoot._currentSelection && (!_offlineMapRoot._currentSelection.deleting && _offlineMapRoot._currentSelection.downloading)
-                    visible:    !isDefaultSet && _offlineMapRoot._currentSelection && (!_offlineMapRoot._currentSelection.complete && _offlineMapRoot._currentSelection.downloading)
-                    onClicked: {
-                        if(_offlineMapRoot._currentSelection)
-                            _offlineMapRoot._currentSelection.cancelDownloadTask()
+                    QGCButton {
+                        text:       "Cancel Download"
+                        width:      ScreenTools.defaultFontPixelWidth * 18
+                        enabled:    _offlineMapRoot._currentSelection && (!_offlineMapRoot._currentSelection.deleting && _offlineMapRoot._currentSelection.downloading)
+                        visible:    !isDefaultSet && _offlineMapRoot._currentSelection && (!_offlineMapRoot._currentSelection.complete && _offlineMapRoot._currentSelection.downloading)
+                        onClicked: {
+                            if(_offlineMapRoot._currentSelection)
+                                _offlineMapRoot._currentSelection.cancelDownloadTask()
+                        }
                     }
-                }
-                QGCButton {
-                    text:       "Back"
-                    width:      ScreenTools.defaultFontPixelWidth * 18
-                    onClicked:  showList()
+                    QGCButton {
+                        text:       "Back"
+                        width:      ScreenTools.defaultFontPixelWidth * 18
+                        onClicked:  showList()
+                    }
                 }
             }
         }
@@ -794,113 +801,121 @@ Rectangle {
                 maxCacheMemSize.text = QGroundControl.mapEngineManager.maxMemCache
             }
         }
-        Column {
-            width:          parent.width
-            spacing:        ScreenTools.defaultFontPixelHeight
-            Item {
-                height:     ScreenTools.defaultFontPixelHeight
-                width:      1
-            }
-            Rectangle {
-                width:      infoWidth
-                height:     optionsLabel.height + (ScreenTools.defaultFontPixelHeight * 2)
-                color:      __qgcPal.window
-                radius:     ScreenTools.defaultFontPixelHeight * 0.5
-                anchors.horizontalCenter: parent.horizontalCenter
-                QGCLabel {
-                    id:     optionsLabel
-                    text:   "Offline Map Options"
-                    font.pixelSize:     ScreenTools.isAndroid ? ScreenTools.mediumFontPixelSize : ScreenTools.largeFontPixelSize
-                    anchors.centerIn:   parent
+        QGCFlickable {
+            id:                 optionsScroll
+            anchors.fill:       parent
+            contentHeight:      optionsColumn.height
+            flickableDirection: Flickable.VerticalFlick
+            clip:               true
+            Column {
+                id:             optionsColumn
+                width:          parent.width
+                spacing:        ScreenTools.defaultFontPixelHeight
+                Item {
+                    height:     ScreenTools.defaultFontPixelHeight
+                    width:      1
                 }
-            }
-            Rectangle {
-                id:         optionsRect
-                width:      optionsGrid.width  + (ScreenTools.defaultFontPixelWidth * 4)
-                height:     optionsGrid.height + (ScreenTools.defaultFontPixelHeight * 4)
-                color:      __qgcPal.window
-                radius:     ScreenTools.defaultFontPixelHeight * 0.5
-                anchors.horizontalCenter: parent.horizontalCenter
-                GridLayout {
-                    id:                 optionsGrid
-                    columns:            2
-                    anchors.centerIn:   parent
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth  * 2
-                    rowSpacing:         ScreenTools.defaultFontPixelWidth  * 1.5
-                    columnSpacing:      ScreenTools.defaultFontPixelHeight * 2
+                Rectangle {
+                    width:      infoWidth
+                    height:     optionsLabel.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    color:      __qgcPal.window
+                    radius:     ScreenTools.defaultFontPixelHeight * 0.5
+                    anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
-                        text:       "Max Cache Disk Size (MB):"
+                        id:     optionsLabel
+                        text:   "Offline Map Options"
+                        font.pixelSize:     ScreenTools.isAndroid ? ScreenTools.mediumFontPixelSize : ScreenTools.largeFontPixelSize
+                        anchors.centerIn:   parent
                     }
-                    QGCTextField {
-                        id:             maxCacheSize
-                        maximumLength:  6
-                        inputMethodHints: Qt.ImhDigitsOnly
-                        validator: IntValidator {bottom: 1; top: 262144;}
-                    }
-                    QGCLabel {
-                        text:       "Max Cache Memory Size (MB):"
-                    }
-                    QGCTextField {
-                        id:             maxCacheMemSize
-                        maximumLength:  4
-                        inputMethodHints: Qt.ImhDigitsOnly
-                        validator: IntValidator {bottom: 1; top: 4096;}
-                    }
-                    Item {
-                        Layout.columnSpan:  2
-                        Layout.fillWidth:   true
-                        implicitHeight:     ScreenTools.defaultFontPixelHeight * 1.5
+                }
+                Rectangle {
+                    id:         optionsRect
+                    width:      optionsGrid.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                    height:     optionsGrid.height + (ScreenTools.defaultFontPixelHeight * 4)
+                    color:      __qgcPal.window
+                    radius:     ScreenTools.defaultFontPixelHeight * 0.5
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    GridLayout {
+                        id:                 optionsGrid
+                        columns:            2
+                        anchors.centerIn:   parent
+                        anchors.margins:    ScreenTools.defaultFontPixelWidth  * 2
+                        rowSpacing:         ScreenTools.defaultFontPixelWidth  * 1.5
+                        columnSpacing:      ScreenTools.defaultFontPixelHeight * 2
                         QGCLabel {
-                            anchors.centerIn: parent
-                            text: "Memory cache changes require a restart to take effect."
-                            font.pixelSize: ScreenTools.defaultFontPixelSize * 0.85
+                            text:       "Max Cache Disk Size (MB):"
+                        }
+                        QGCTextField {
+                            id:             maxCacheSize
+                            maximumLength:  6
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            validator: IntValidator {bottom: 1; top: 262144;}
+                        }
+                        QGCLabel {
+                            text:       "Max Cache Memory Size (MB):"
+                        }
+                        QGCTextField {
+                            id:             maxCacheMemSize
+                            maximumLength:  4
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            validator: IntValidator {bottom: 1; top: 4096;}
+                        }
+                        Item {
+                            Layout.columnSpan:  2
+                            Layout.fillWidth:   true
+                            implicitHeight:     ScreenTools.defaultFontPixelHeight * 1.5
+                            QGCLabel {
+                                anchors.centerIn: parent
+                                text: "Memory cache changes require a restart to take effect."
+                                font.pixelSize: ScreenTools.defaultFontPixelSize * 0.85
+                            }
+                        }
+                        Rectangle {
+                            Layout.columnSpan:  2
+                            Layout.fillWidth:   true
+                            implicitHeight:     1
+                            color:              __qgcPal.text
+                        }
+                        QGCLabel {
+                            text: "MapBox Access Token"
+                        }
+                        QGCTextField {
+                            id:                 mapBoxToken
+                            Layout.fillWidth:   true
+                            maximumLength:      256
+                            implicitWidth :     ScreenTools.defaultFontPixelWidth * 30
+                        }
+                        Item {
+                            Layout.columnSpan:  2
+                            Layout.fillWidth:   true
+                            implicitHeight:     ScreenTools.defaultFontPixelHeight * 1.5
+                            QGCLabel {
+                                anchors.centerIn: parent
+                                text: "With an access token, you can use MapBox Maps."
+                                font.pixelSize: ScreenTools.defaultFontPixelSize * 0.85
+                            }
                         }
                     }
-                    Rectangle {
-                        Layout.columnSpan:  2
-                        Layout.fillWidth:   true
-                        implicitHeight:     1
-                        color:              __qgcPal.text
-                    }
-                    QGCLabel {
-                        text: "MapBox Access Token"
-                    }
-                    QGCTextField {
-                        id:                 mapBoxToken
-                        Layout.fillWidth:   true
-                        maximumLength:      256
-                        implicitWidth :     ScreenTools.defaultFontPixelWidth * 30
-                    }
-                    Item {
-                        Layout.columnSpan:  2
-                        Layout.fillWidth:   true
-                        implicitHeight:     ScreenTools.defaultFontPixelHeight * 1.5
-                        QGCLabel {
-                            anchors.centerIn: parent
-                            text: "With an access token, you can use MapBox Maps."
-                            font.pixelSize: ScreenTools.defaultFontPixelSize * 0.85
+                }
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: ScreenTools.defaultFontPixelWidth
+                    QGCButton {
+                        text:       "Save"
+                        width:      ScreenTools.defaultFontPixelWidth * 18
+                        onClicked:  {
+                            QGroundControl.mapEngineManager.mapboxToken  = mapBoxToken.text
+                            QGroundControl.mapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
+                            QGroundControl.mapEngineManager.maxMemCache  = parseInt(maxCacheMemSize.text)
+                            showList()
                         }
                     }
-                }
-            }
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: ScreenTools.defaultFontPixelWidth
-                QGCButton {
-                    text:       "Save"
-                    width:      ScreenTools.defaultFontPixelWidth * 18
-                    onClicked:  {
-                        QGroundControl.mapEngineManager.mapboxToken  = mapBoxToken.text
-                        QGroundControl.mapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
-                        QGroundControl.mapEngineManager.maxMemCache  = parseInt(maxCacheMemSize.text)
-                        showList()
-                    }
-                }
-                QGCButton {
-                    text:       "Cancel"
-                    width:      ScreenTools.defaultFontPixelWidth * 18
-                    onClicked:  {
-                        showList()
+                    QGCButton {
+                        text:       "Cancel"
+                        width:      ScreenTools.defaultFontPixelWidth * 18
+                        onClicked:  {
+                            showList()
+                        }
                     }
                 }
             }

@@ -28,8 +28,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCApplication.h"
 #include "JsonHelper.h"
 
-QGC_LOGGING_CATEGORY(MissionItemLog, "MissionItemLog")
-
 const double MissionItem::defaultAltitude =             25.0;
 
 FactMetaData* MissionItem::_altitudeMetaData =          NULL;
@@ -70,22 +68,6 @@ static const struct EnumInfo_s _rgMavFrameInfo[] = {
 { "MAV_FRAME_GLOBAL_TERRAIN_ALT",       MAV_FRAME_GLOBAL_TERRAIN_ALT },
 { "MAV_FRAME_GLOBAL_TERRAIN_ALT_INT",   MAV_FRAME_GLOBAL_TERRAIN_ALT_INT },
 };
-
-QDebug operator<<(QDebug dbg, const MissionItem& missionItem)
-{
-    QDebugStateSaver saver(dbg);
-    dbg.nospace() << "MissionItem(" << missionItem.coordinate() << ")";
-    
-    return dbg;
-}
-
-QDebug operator<<(QDebug dbg, const MissionItem* missionItem)
-{
-    QDebugStateSaver saver(dbg);
-    dbg.nospace() << "MissionItem(" << missionItem->coordinate() << ")";
-    
-    return dbg;
-}
 
 MissionItem::MissionItem(Vehicle* vehicle, QObject* parent)
     : QObject(parent)

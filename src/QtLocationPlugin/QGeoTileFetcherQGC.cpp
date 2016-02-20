@@ -44,13 +44,13 @@
 **
 ****************************************************************************/
 
-#include <QtCore/QLocale>
-#include <QtNetwork/QNetworkRequest>
-#include <QtLocation/private/qgeotilespec_p.h>
-
 #include "QGCMapEngine.h"
 #include "QGeoTileFetcherQGC.h"
 #include "QGeoMapReplyQGC.h"
+
+#include <QtCore/QLocale>
+#include <QtNetwork/QNetworkRequest>
+#include <QtLocation/private/qgeotilespec_p.h>
 
 //-----------------------------------------------------------------------------
 QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent)

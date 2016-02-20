@@ -720,6 +720,25 @@ velocity</short_desc>
       <min>1.0</min>
       <unit>SD</unit>
     </parameter>
+    <parameter default="7" name="EKF2_DECL_TYPE" type="INT32">
+      <short_desc>Integer bitmask controlling handling of magnetic declination. Set bits to in the following positions to enable functions.
+0 : Set to true to use the declination from the geo_lookup library when the GPS position becomes available, set to false to always use the EKF2_MAG_DECL value.
+1 : Set to true to save the EKF2_MAG_DECL parameter to the value returned by the EKF when the vehicle disarms.
+2 : Set to true to always use the declination as an observaton when 3-axis magnetometer fusion is being used</short_desc>
+      <min>0</min>
+      <max>7</max>
+      <unit />
+    </parameter>
+    <parameter default="0" name="EKF2_MAG_TYPE" type="INT32">
+      <short_desc>Integer controlling the type of magnetometer fusion used - magnetic heading or 3-axis magnetometer.
+0 : determine the best fusion method to use automatically - heading fusion on-ground and 3-axis fusion in-flight
+1 : always use magnetic heading fusion
+2 : always use 3-axis fusion
+Other values  will disable magnetometer fusion completely</short_desc>
+      <min>0</min>
+      <max>2</max>
+      <unit>None</unit>
+    </parameter>
     <parameter default="3.0" name="EKF2_BARO_GATE" type="FLOAT">
       <short_desc>Gate size for barometric height fusion</short_desc>
       <min>1.0</min>
@@ -1149,6 +1168,12 @@ velocity</short_desc>
       <min>0.0</min>
       <max>1.0</max>
     </parameter>
+    <parameter default="0.15" name="FW_THR_IDLE" type="FLOAT">
+      <short_desc>Idle throttle</short_desc>
+      <long_desc>This is the minimum throttle while on the ground For aircraft with internal combustion engine this parameter should be set above desired idle rpm.</long_desc>
+      <min>0.0</min>
+      <max>0.4</max>
+    </parameter>
     <parameter default="1.0" name="FW_THR_LND_MAX" type="FLOAT">
       <short_desc>Throttle limit value before flare</short_desc>
       <long_desc>This throttle value will be set as throttle limit at FW_LND_TLALT, before arcraft will flare.</long_desc>
@@ -1265,7 +1290,7 @@ velocity</short_desc>
     </parameter>
     <parameter default="0.0" name="LAUN_CAT_MDEL" type="FLOAT">
       <short_desc>Motor delay</short_desc>
-      <long_desc>Delay between starting attitude control and powering up the throttle (giving throttle control to the controller) Before this timespan is up the throttle will be set to LAUN_THR_PRE, set to 0 to deactivate</long_desc>
+      <long_desc>Delay between starting attitude control and powering up the throttle (giving throttle control to the controller) Before this timespan is up the throttle will be set to FW_THR_IDLE, set to 0 to deactivate</long_desc>
       <min>0</min>
       <unit>seconds</unit>
     </parameter>
@@ -1275,12 +1300,6 @@ velocity</short_desc>
       <min>0</min>
       <max>45</max>
       <unit>deg</unit>
-    </parameter>
-    <parameter default="0.0" name="LAUN_THR_PRE" type="FLOAT">
-      <short_desc>Throttle setting while detecting launch</short_desc>
-      <long_desc>The throttle is set to this value while the system is waiting for the take-off.</long_desc>
-      <min>0</min>
-      <max>1</max>
     </parameter>
   </group>
   <group name="Local Position Estimator">
@@ -1478,6 +1497,17 @@ velocity</short_desc>
       <long_desc>0: Set the yaw heading to the yaw value specified for the destination waypoint. 1: Maintain a yaw heading pointing towards the next waypoint. 2: Maintain a yaw heading that always points to the home location. 3: Maintain a yaw heading that always points away from the home location (ie: back always faces home). The values are defined in the enum mission_altitude_mode</long_desc>
       <min>0</min>
       <max>3</max>
+    </parameter>
+    <parameter default="-1.0" name="MIS_YAW_TMT" type="FLOAT">
+      <short_desc>Time in seconds we wait on reaching target heading at a waypoint if it is forced</short_desc>
+      <long_desc>If set &gt; 0 it will ignore the target heading for normal waypoint acceptance. If the waypoint forces the heading the timeout will matter. For example on VTOL forwards transiton. Mainly useful for VTOLs that have less yaw authority and might not reach target yaw in wind. Disabled by default.</long_desc>
+      <min>-1</min>
+      <max>20</max>
+    </parameter>
+    <parameter default="12.0" name="MIS_YAW_ERR" type="FLOAT">
+      <short_desc>Max yaw error in degree needed for waypoint heading acceptance</short_desc>
+      <min>0</min>
+      <max>90</max>
     </parameter>
     <parameter default="50.0" name="NAV_LOITER_RAD" type="FLOAT">
       <short_desc>Loiter radius (FW only)</short_desc>
@@ -1797,6 +1827,24 @@ velocity</short_desc>
       <max>1.0</max>
       <decimal>3</decimal>
     </parameter>
+    <parameter default="0.5" name="MPC_THR_HOVER" type="FLOAT">
+      <short_desc>Hover thrust</short_desc>
+      <long_desc>Vertical thrust required to hover. This value is mapped to center stick for manual throttle control. With this value set to the thrust required to hover, transition from manual to ALTCTL mode while hovering will occur with the throttle stick near center, which is then interpreted as (near) zero demand for vertical speed.</long_desc>
+      <min>0.2</min>
+      <max>0.8</max>
+    </parameter>
+    <parameter default="0.1" name="MPC_ALTCTL_DZ" type="FLOAT">
+      <short_desc>ALTCTL throttle curve breakpoint</short_desc>
+      <long_desc>Halfwidth of deadband or reduced sensitivity center portion of curve. This is the halfwidth of the center region of the ALTCTL throttle curve. It extends from center-dz to center+dz.</long_desc>
+      <min>0.0</min>
+      <max>0.2</max>
+    </parameter>
+    <parameter default="0.0" name="MPC_ALTCTL_DY" type="FLOAT">
+      <short_desc>ALTCTL throttle curve breakpoint height</short_desc>
+      <long_desc>Controls the slope of the reduced sensitivity region. This is the height of the ALTCTL throttle curve at center-dz and center+dz.</long_desc>
+      <min>0.0</min>
+      <max>0.2</max>
+    </parameter>
     <parameter default="0.9" name="MPC_THR_MAX" type="FLOAT">
       <short_desc>Maximum thrust in auto thrust control</short_desc>
       <long_desc>Limit max allowed thrust. Setting a value of one can put the system into actuator saturation as no spread between the motors is possible any more. A value of 0.8 - 0.9 is recommended.</long_desc>
@@ -1939,13 +1987,6 @@ velocity</short_desc>
     </parameter>
     <parameter default="0.1" name="MPC_HOLD_XY_DZ" type="FLOAT">
       <short_desc>Deadzone of X,Y sticks where position hold is enabled</short_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>%</unit>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter default="0.1" name="MPC_HOLD_Z_DZ" type="FLOAT">
-      <short_desc>Deadzone of Z stick where altitude hold is enabled</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>%</unit>
@@ -3513,6 +3554,12 @@ FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</short_desc>
       <min>0</min>
       <max>1</max>
     </parameter>
+    <parameter default="0" name="SDLOG_UTC_OFFSET" type="INT32">
+      <short_desc>UTC offset (unit: min)</short_desc>
+      <long_desc>the difference in hours and minutes from Coordinated Universal Time (UTC) for a your place and date. for example, In case of South Korea(UTC+09:00), UTC offset is 540 min (9*60) refer to https://en.wikipedia.org/wiki/List_of_UTC_time_offsets</long_desc>
+      <min>-1000</min>
+      <max>1000</max>
+    </parameter>
   </group>
   <group name="Sensor Calibration">
     <parameter default="0" name="CAL_BOARD_ID" type="INT32">
@@ -3884,6 +3931,8 @@ FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</short_desc>
       <max>921600</max>
       <reboot_required>true</reboot_required>
       <values>
+        <value code="357600">Telemetry (57600 baud, 8N1)</value>
+        <value code="257600">Command Receiver (57600 baud, 8N1)</value>
         <value code="57600">Companion Link (57600 baud, 8N1)</value>
         <value code="921600">Companion Link (921600 baud, 8N1)</value>
         <value code="157600">OSD (57600 baud, 8N1)</value>
@@ -4038,6 +4087,22 @@ FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</short_desc>
     </parameter>
     <parameter default="0" name="VT_OPT_RECOV_EN" type="INT32">
       <short_desc>Enable optimal recovery strategy for pitch-weak tailsitters</short_desc>
+      <min>0</min>
+      <max>1</max>
+    </parameter>
+    <parameter default="0" name="VT_WV_LND_EN" type="INT32">
+      <short_desc>Enable weather-vane mode landings for missions</short_desc>
+      <min>0</min>
+      <max>1</max>
+    </parameter>
+    <parameter default="0.15" name="VT_WV_YAWR_SCL" type="FLOAT">
+      <short_desc>Weather-vane yaw rate scale</short_desc>
+      <long_desc>The desired yawrate from the controller will be scaled in order to avoid yaw fighting against the wind.</long_desc>
+      <min>0</min>
+      <max>1</max>
+    </parameter>
+    <parameter default="0" name="VT_WV_LTR_EN" type="INT32">
+      <short_desc>Enable weather-vane mode for loiter</short_desc>
       <min>0</min>
       <max>1</max>
     </parameter>

@@ -30,6 +30,8 @@
 #include "UAS.h"
 #include "QGCApplication.h"
 
+#include <QQmlEngine>
+
 #if defined __android__
 #include <QtAndroidExtras/QtAndroidExtras>
 #include <QtAndroidExtras/QAndroidJniObject>
