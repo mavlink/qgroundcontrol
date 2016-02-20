@@ -44,12 +44,11 @@
 **
 ****************************************************************************/
 
-#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
-
-#include "qdebug.h"
 #include "QGeoServiceProviderPluginQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
 #include "QGeoCodingManagerEngineQGC.h"
+
+#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 
 Q_EXTERN_C Q_DECL_EXPORT const char *qt_plugin_query_metadata();
 Q_EXTERN_C Q_DECL_EXPORT QT_PREPEND_NAMESPACE(QObject) *qt_plugin_instance();

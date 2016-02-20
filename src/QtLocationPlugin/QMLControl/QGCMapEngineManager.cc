@@ -26,9 +26,10 @@
 
 #include "QGCMapEngineManager.h"
 #include "QGCApplication.h"
-#include <QSettings>
 #include "QGCMapTileSet.h"
 #include "QGCMapUrlEngine.h"
+
+#include <QSettings>
 #include <QStorageInfo>
 #include <stdio.h>
 

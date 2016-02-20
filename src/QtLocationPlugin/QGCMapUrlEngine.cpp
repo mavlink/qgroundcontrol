@@ -27,14 +27,14 @@ This file is part of the QGROUNDCONTROL project
  *  Original work: The OpenPilot Team, http://www.openpilot.org Copyright (C) 2012.
  */
 
+#include "QGCMapEngine.h"
+
 #include <QRegExp>
 #include <QNetworkReply>
 #include <QEventLoop>
 #include <QTimer>
 #include <QString>
 #include <QByteArray>
-
-#include "QGCMapEngine.h"
 
 //-----------------------------------------------------------------------------
 UrlFactory::UrlFactory()

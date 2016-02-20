@@ -40,8 +40,7 @@
 #include "QmlObjectListModel.h"
 #include "MissionCommands.h"
 
-Q_DECLARE_LOGGING_CATEGORY(MissionItemLog)
-
+// Abstract base class for Simple and Complex MissionItem obejcts.
 class MissionItem : public QObject
 {
     Q_OBJECT
@@ -77,7 +76,6 @@ public:
     Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand            NOTIFY commandChanged)
     Q_PROPERTY(QString          commandDescription      READ commandDescription                                 NOTIFY commandChanged)
     Q_PROPERTY(QString          commandName             READ commandName                                        NOTIFY commandChanged)
-    Q_PROPERTY(QGeoCoordinate   coordinate              READ coordinate             WRITE setCoordinate         NOTIFY coordinateChanged)
     Q_PROPERTY(bool             dirty                   READ dirty                  WRITE setDirty              NOTIFY dirtyChanged)
     Q_PROPERTY(double           distance                READ distance               WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
     Q_PROPERTY(bool             friendlyEditAllowed     READ friendlyEditAllowed                                NOTIFY friendlyEditAllowedChanged)
@@ -89,6 +87,16 @@ public:
     Q_PROPERTY(bool             standaloneCoordinate    READ standaloneCoordinate                               NOTIFY commandChanged)
     Q_PROPERTY(bool             specifiesCoordinate     READ specifiesCoordinate                                NOTIFY commandChanged)
     Q_PROPERTY(bool             showHomePosition        READ showHomePosition       WRITE setShowHomePosition   NOTIFY showHomePositionChanged)
+
+    // Mission item has two coordinates associated with them:
+    //  coordinate:     This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
+    //  exitCoordinate  This is the exit point for a waypoint line coming out of the item. For a SimpleMissionItem this will be the same as
+    //                  coordinate. For a ComplexMissionItem it may be different than the entry coordinate.
+    Q_PROPERTY(QGeoCoordinate   coordinate              READ coordinate             WRITE setCoordinate         NOTIFY coordinateChanged)
+    Q_PROPERTY(QGeoCoordinate   exitCoordinate          READ exitCoordinate                                     NOTIFY exitCoordinateChanged)
+
+    /// @return true: SimpleMissionItem, false: ComplexMissionItem
+    Q_PROPERTY(bool             simpleItem              READ simpleItem                                         NOTIFY simpleItemChanged)
 
     // These properties are used to display the editing ui
     Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  NOTIFY uiModelChanged)
@@ -179,6 +187,10 @@ public:
 
     static const double defaultAltitude;
 
+    // Pure virtuals which must be provides by derived classes
+    virtual bool            simpleItem(void) const = 0;
+    virtual QGeoCoordinate  exitCoordinate(void) const = 0;
+
 public slots:
     void setDefaultsForCommand(void);
 
@@ -188,6 +200,7 @@ signals:
     void azimuthChanged             (double azimuth);
     void commandChanged             (MavlinkQmlSingleton::Qml_MAV_CMD command);
     void coordinateChanged          (const QGeoCoordinate& coordinate);
+    void exitCoordinateChanged      (const QGeoCoordinate& exitCoordinate);
     void dirtyChanged               (bool dirty);
     void distanceChanged            (double distance);
     void frameChanged               (int frame);
@@ -198,6 +211,7 @@ signals:
     void sequenceNumberChanged      (int sequenceNumber);
     void uiModelChanged             (void);
     void showHomePositionChanged    (bool showHomePosition);
+    void simpleItemChanged          (bool simpleItem);
     
 private slots:
     void _setDirtyFromSignal(void);
@@ -275,8 +289,5 @@ private:
     static const char*  _jsonAutoContinueKey;
     static const char*  _jsonCoordinateKey;
 };
-
-QDebug operator<<(QDebug dbg, const MissionItem& missionItem);
-QDebug operator<<(QDebug dbg, const MissionItem* missionItem);
 
 #endif
