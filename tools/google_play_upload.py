@@ -24,8 +24,7 @@ from oauth2client import client
 from oauth2client.service_account import ServiceAccountCredentials
 
 TRACK = 'beta'  # Can be 'alpha', beta', 'production' or 'rollout'
-SERVICE_ACCOUNT_EMAIL = (
-    '868554619222-u4gvu4asjemc8n22o595j0fr2dg4012j@developer.gserviceaccount.com')
+JSON_KEY='android/Google_Play_Android_Developer-4432a3c4f5d1.json'
 
 # Declare command-line flags.
 argparser = argparse.ArgumentParser(add_help=False)
@@ -38,17 +37,12 @@ argparser.add_argument('apk_file',
 
 
 def main():
-  # Load the key in PKCS 12 format that you downloaded from the Google APIs
-  # Console when you created your Service account.
-  f = file('Google_Play_Android_Developer-bb93ae7d61ca.p12', 'rb')
-  key = f.read()
-  f.close()
-
   # Create an httplib2.Http object to handle our HTTP requests and authorize it
   # with the Credentials. Note that the first parameter, service_account_name,
   # is the Email address created for the Service account. It must be the email
   # address associated with the key that was created.
-  credentials = ServiceAccountCredentials.from_p12_keyfile(SERVICE_ACCOUNT_EMAIL, key, scopes=['https://www.googleapis.com/auth/androidpublisher'])
+  credentials = ServiceAccountCredentials.from_json_keyfile_name(JSON_KEY, scopes=['https://www.googleapis.com/auth/androidpublisher'])
+
   http = httplib2.Http()
   http = credentials.authorize(http)
 
