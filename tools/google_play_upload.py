@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Uploads an apk to the beta track."""
+"""Uploads an apk to the google play store."""
 
 import argparse
 
@@ -23,15 +23,16 @@ import httplib2
 from oauth2client import client
 from oauth2client.service_account import ServiceAccountCredentials
 
-TRACK = 'beta'  # Can be 'alpha', beta', 'production' or 'rollout'
 JSON_KEY='android/Google_Play_Android_Developer-4432a3c4f5d1.json'
 
 # Declare command-line flags.
 argparser = argparse.ArgumentParser(add_help=False)
-argparser.add_argument('package_name',
+argparser.add_argument('release_track',
+                       choices=['alpha', 'beta', 'production', 'rollout'],
+                       help='Google play track. Can be alpha, beta, production or rollout')
+argparser.add_argument('package_name', 
                        help='The package name. Example: com.android.sample')
 argparser.add_argument('apk_file',
-                       nargs='?',
                        default='qgroundcontrol.apk',
                        help='The path to the APK file to upload.')
 
@@ -51,10 +52,12 @@ def main():
   # Process flags and read their values.
   flags = argparser.parse_args()
 
+  release_track = flags.release_track
   package_name = flags.package_name
   apk_file = flags.apk_file
 
   try:
+    print 'Uploading package %s to track %s' % (package_name, release_track)
     edit_request = service.edits().insert(body={}, packageName=package_name)
     result = edit_request.execute()
     edit_id = result['id']
@@ -68,7 +71,7 @@ def main():
 
     track_response = service.edits().tracks().update(
         editId=edit_id,
-        track=TRACK,
+        track=release_track,
         packageName=package_name,
         body={u'versionCodes': [apk_response['versionCode']]}).execute()
 
