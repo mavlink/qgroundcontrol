@@ -72,16 +72,7 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
              << "COMPASS_OFS3_X" << "COMPASS_OFS3_X" << "COMPASS_OFS3_X";
 
     // Accelerometer triggers
-    if (_autopilot->parameterExists(FactSystem::defaultComponentId, "INS_USE")) {
-        triggers << "INS_USE" << "INS_USE2" << "INS_USE3"
-                 << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z"
-                 << "INS_ACC2OFFS_X" << "INS_ACC2OFFS_Y" << "INS_ACC2OFFS_Z"
-                 << "INS_ACC3OFFS_X" << "INS_ACC3OFFS_Y" << "INS_ACC3OFFS_Z";
-    } else {
-        // For older firmwares which don't support the INS_USE parameter we can't determine which secondary accels are in use.
-        // So we just base things off the the first accel.
-        triggers << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
-    }
+    triggers << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
 
     return triggers;
 }
@@ -116,9 +107,9 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
     QStringList rgOffsets[cCompass];
 
     devicesIds << QStringLiteral("COMPASS_DEV_ID") << QStringLiteral("COMPASS_DEV_ID2") << QStringLiteral("COMPASS_DEV_ID3");
-    rgOffsets[0] << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X");
-    rgOffsets[1] << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_X");
-    rgOffsets[2] << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_X");
+    rgOffsets[0] << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_Y") << QStringLiteral("COMPASS_OFS_Z");
+    rgOffsets[1] << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_Y") << QStringLiteral("COMPASS_OFS2_Z");
+    rgOffsets[2] << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_Y") << QStringLiteral("COMPASS_OFS3_Z");
 
     for (size_t i=0; i<cCompass; i++) {
         if (_autopilot->getParameterFact(FactSystem::defaultComponentId, devicesIds[i])->rawValue().toInt() != 0) {
@@ -135,29 +126,13 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
 
 bool APMSensorsComponent::accelSetupNeeded(void) const
 {
-    const size_t cAccel = 3;
-    const size_t cOffset = 3;
-    QStringList insUse;
-    QStringList rgOffsets[cAccel];
+    QStringList offsets;
 
-    if (_autopilot->parameterExists(FactSystem::defaultComponentId, "INS_USE")) {
-        insUse << QStringLiteral("INS_USE") << QStringLiteral("INS_USE2") << QStringLiteral("INS_USE3");
-        rgOffsets[0] << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
-        rgOffsets[1] << QStringLiteral("INS_ACC2OFFS_X") << QStringLiteral("INS_ACC2OFFS_Y") << QStringLiteral("INS_ACC2OFFS_Z");
-        rgOffsets[2] << QStringLiteral("INS_ACC3OFFS_X") << QStringLiteral("INS_ACC3OFFS_Y") << QStringLiteral("INS_ACC3OFFS_Z");
-    } else {
-        // For older firmwares which don't support the INS_USE parameter we can't determine which secondary accels are in use.
-        // So we just base things off the the first accel.
-        rgOffsets[0] << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
-    }
+    offsets << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
 
-    for (size_t i=0; i<cAccel; i++) {
-        if (insUse.count() == 0 || _autopilot->getParameterFact(FactSystem::defaultComponentId, insUse[i])->rawValue().toInt() != 0) {
-            for (size_t j=0; j<cOffset; j++) {
-                if (rgOffsets[i].count() && _autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
-                    return true;
-                }
-            }
+    foreach(const QString& offset, offsets) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, offset)->rawValue().toFloat() == 0.0f) {
+            return true;
         }
     }
 
