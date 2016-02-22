@@ -66,7 +66,7 @@ void MockLinkFileServer::_listCommand(uint8_t senderSystemId, uint8_t senderComp
 
     // We only support root path
     path = (char *)&request->data[0];
-    if (!path.isEmpty() && path != "/") {
+    if (!path.isEmpty() && path != QLatin1String("/")) {
 		_sendNak(senderSystemId, senderComponentId, FileManager::kErrFail, outgoingSeqNumber, FileManager::kCmdListDirectory);
         return;
     }

@@ -102,7 +102,7 @@ public:
     void        loadSettings    (QSettings& settings, const QString& root);
     void        saveSettings    (QSettings& settings, const QString& root);
     void        updateSettings  ();
-    QString     settingsURL     () { return "SerialSettings.qml"; }
+    QString     settingsURL     () { return QStringLiteral("SerialSettings.qml"); }
 
 signals:
     void baudChanged            ();

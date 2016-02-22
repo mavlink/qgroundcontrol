@@ -35,9 +35,9 @@ QmlTestWidget::QmlTestWidget(void)
     resize(900, 500);
     setVisible(true);
 
-    setContextPropertyObject("controller", this);
+    setContextPropertyObject(QStringLiteral("controller"), this);
 
-    setSource(QUrl::fromUserInput("qrc:qml/QmlTest.qml"));
+    setSource(QUrl::fromUserInput(QStringLiteral("qrc:qml/QmlTest.qml")));
 }
 
 void QmlTestWidget::showColorDialog(QQuickItem* item)

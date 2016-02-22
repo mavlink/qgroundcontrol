@@ -131,7 +131,7 @@ QGCMapEngine::QGCMapEngine()
     #elif defined Q_OS_WIN32
         , _userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:31.0) Gecko/20130401 Firefox/31.0")
     #else
-        , _userAgent("Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/31.0")
+        , _userAgent(QStringLiteral("Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/31.0"))
     #endif
 #endif
     , _maxDiskCache(0)
@@ -160,11 +160,11 @@ QGCMapEngine::init()
 #ifdef __mobile__
     QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache55");
 #else
-    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QStringLiteral("/QGCMapCache55");
 #endif
     if(!QDir::root().mkpath(cacheDir)) {
         qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
-        cacheDir = QDir::homePath() + QLatin1String("/.qgcmapscache/");
+        cacheDir = QDir::homePath() + QStringLiteral("/.qgcmapscache/");
         if(!QDir::root().mkpath(cacheDir)) {
             qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
             cacheDir.clear();

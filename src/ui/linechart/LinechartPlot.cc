@@ -183,9 +183,10 @@ void LinechartPlot::setActive(bool active)
 
 void LinechartPlot::removeTimedOutCurves()
 {
-    foreach(const QString &key, lastUpdate.keys())
+    for(auto it = lastUpdate.begin(), end = lastUpdate.end(); it != end; it++)
     {
-        quint64 time = lastUpdate.value(key);
+        const QString& key = it.key();
+        quint64 time = it.value();
         if (QGC::groundTimeMilliseconds() - time > 10000)
         {
             // Remove this curve
@@ -499,9 +500,9 @@ bool LinechartPlot::isVisible(QString id)
 bool LinechartPlot::anyCurveVisible()
 {
     bool visible = false;
-    foreach (const QString &key, curves.keys())
+    foreach (const auto &curve, curves)
     {
-        if (curves.value(key)->isVisible())
+        if (curve->isVisible())
         {
             visible = true;
         }

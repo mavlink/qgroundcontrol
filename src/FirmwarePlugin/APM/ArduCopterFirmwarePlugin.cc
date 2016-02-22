@@ -31,23 +31,23 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)
 {
     QMap<uint32_t,QString> enumToString;
-    enumToString.insert(STABILIZE, "Stabilize");
-    enumToString.insert(ACRO,      "Acro");
-    enumToString.insert(ALT_HOLD,  "Alt Hold");
-    enumToString.insert(AUTO,      "Auto");
-    enumToString.insert(GUIDED,    "Guided");
-    enumToString.insert(LOITER,    "Loiter");
-    enumToString.insert(RTL,       "RTL");
-    enumToString.insert(CIRCLE,    "Circle");
-    enumToString.insert(POSITION,  "Position");
-    enumToString.insert(LAND,      "Land");
-    enumToString.insert(OF_LOITER, "OF Loiter");
-    enumToString.insert(DRIFT,     "Drift");
-    enumToString.insert(SPORT,     "Sport");
-    enumToString.insert(FLIP,      "Flip");
-    enumToString.insert(AUTOTUNE,  "Autotune");
-    enumToString.insert(POS_HOLD,  "Pos Hold");
-    enumToString.insert(BRAKE,     "Brake");
+    enumToString.insert(STABILIZE, QStringLiteral("Stabilize"));
+    enumToString.insert(ACRO,      QStringLiteral("Acro"));
+    enumToString.insert(ALT_HOLD,  QStringLiteral("Alt Hold"));
+    enumToString.insert(AUTO,      QStringLiteral("Auto"));
+    enumToString.insert(GUIDED,    QStringLiteral("Guided"));
+    enumToString.insert(LOITER,    QStringLiteral("Loiter"));
+    enumToString.insert(RTL,       QStringLiteral("RTL"));
+    enumToString.insert(CIRCLE,    QStringLiteral("Circle"));
+    enumToString.insert(POSITION,  QStringLiteral("Position"));
+    enumToString.insert(LAND,      QStringLiteral("Land"));
+    enumToString.insert(OF_LOITER, QStringLiteral("OF Loiter"));
+    enumToString.insert(DRIFT,     QStringLiteral("Drift"));
+    enumToString.insert(SPORT,     QStringLiteral("Sport"));
+    enumToString.insert(FLIP,      QStringLiteral("Flip"));
+    enumToString.insert(AUTOTUNE,  QStringLiteral("Autotune"));
+    enumToString.insert(POS_HOLD,  QStringLiteral("Pos Hold"));
+    enumToString.insert(BRAKE,     QStringLiteral("Brake"));
 
     setEnumToStringMapping(enumToString);
 }

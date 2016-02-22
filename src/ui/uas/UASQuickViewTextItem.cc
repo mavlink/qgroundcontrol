@@ -1,6 +1,7 @@
 #include "UASQuickViewTextItem.h"
 #include <QVBoxLayout>
 #include <QDebug>
+
 UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(parent)
 {
     // Set a standard vertical layout.
@@ -12,7 +13,7 @@ UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(p
     titleLabel = new QLabel(this);
     titleLabel->setAlignment(Qt::AlignHCenter);
     titleLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
-    titleLabel->setObjectName(QString::fromUtf8("title"));
+    titleLabel->setObjectName(QStringLiteral("title"));
     QFont titlefont = titleLabel->font();
     titlefont.setPixelSize(this->height() / 4.0);
     titleLabel->setFont(titlefont);
@@ -22,8 +23,8 @@ UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(p
     valueLabel = new QLabel(this);
     valueLabel->setAlignment(Qt::AlignHCenter);
     valueLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
-    valueLabel->setObjectName(QString::fromUtf8("value"));
-    valueLabel->setText("0.00");
+    valueLabel->setObjectName(QStringLiteral("value"));
+    valueLabel->setText(QStringLiteral("0.00"));
     QFont valuefont = valueLabel->font();
     valuefont.setPixelSize(this->height() / 2.0);
     valueLabel->setFont(valuefont);
@@ -33,6 +34,11 @@ UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(p
     layout->addSpacerItem(new QSpacerItem(10, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     this->setLayout(layout);
 }
+
+UASQuickViewTextItem::~UASQuickViewTextItem()
+{
+}
+
 void UASQuickViewTextItem::setValue(double value)
 {
     if (value < 10 && value > -10)
@@ -59,15 +65,16 @@ void UASQuickViewTextItem::setValue(double value)
 
 void UASQuickViewTextItem::setTitle(QString title)
 {
-    if (title.indexOf(".") != -1 && title.indexOf(":") != -1)
+    if (title.indexOf(QStringLiteral(".")) != -1 && title.indexOf(QStringLiteral(":")) != -1)
     {
-        titleLabel->setText(title.mid(title.indexOf(".") + 1));
+        titleLabel->setText(title.mid(title.indexOf(QLatin1String(".")) + 1));
     }
     else
     {
         titleLabel->setText(title);
     }
 }
+
 int UASQuickViewTextItem::minValuePixelSize()
 {
     QFont valuefont = valueLabel->font();
@@ -83,7 +90,7 @@ int UASQuickViewTextItem::minValuePixelSize()
     {
 
         QFontMetrics valfm( valuefont );
-        QRect valbound = valfm.boundingRect(0,0, valueLabel->width(), valueLabel->height(), Qt::TextWordWrap | Qt::AlignLeft, "12345678.00"/*valueLabel->text()*/);
+        QRect valbound = valfm.boundingRect(0,0, valueLabel->width(), valueLabel->height(), Qt::TextWordWrap | Qt::AlignLeft, QStringLiteral("12345678.00")/*valueLabel->text()*/);
         //QFontMetrics titlefm( titlefont );
         //QRect titlebound = titlefm.boundingRect(0,0, titleLabel->width(), titleLabel->height(), Qt::TextWordWrap | Qt::AlignLeft, titleLabel->text());
 
@@ -106,6 +113,7 @@ int UASQuickViewTextItem::minValuePixelSize()
     }
     return valuefont.pixelSize();
 }
+
 void UASQuickViewTextItem::setValuePixelSize(int size)
 {
     QFont valuefont = valueLabel->font();

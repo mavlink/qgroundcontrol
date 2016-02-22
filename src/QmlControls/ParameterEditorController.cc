@@ -40,10 +40,10 @@
 ParameterEditorController::ParameterEditorController(void)
 {
     if (_autopilot) {
-        const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
-
-        foreach (int componentId, groupMap.keys()) {
-            _componentIds += QString("%1").arg(componentId);
+        const auto& groupMap = _autopilot->getGroupMap();
+        _componentIds.reserve(groupMap.size());
+        for (auto it = groupMap.begin(), end = groupMap.end(); it != end; it++) {
+            _componentIds += QString::number(it.key());
         }
     }
 }
@@ -103,19 +103,19 @@ void ParameterEditorController::saveToFile(void)
         return;
     }
 
-    QString msgTitle("Save Parameters");
+    QString msgTitle(QStringLiteral("Save Parameters"));
     
 	QString fileName = QGCFileDialog::getSaveFileName(NULL,
                                                       msgTitle,
                                                       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-                                                      "Parameter Files (*.params)",
-                                                      "params",
+                                                      QStringLiteral("Parameter Files (*.params)"),
+                                                      QStringLiteral("params"),
                                                       true);
 	if (!fileName.isEmpty()) {
 		QFile file(fileName);
         
 		if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            qgcApp()->showMessage("Unable to create file");
+            qgcApp()->showMessage(QStringLiteral("Unable to create file"));
 			return;
 		}
         
@@ -136,17 +136,17 @@ void ParameterEditorController::loadFromFile(void)
         return;
     }
 
-    QString msgTitle("Load Parameters");
+    QString msgTitle(QStringLiteral("Load Parameters"));
     
 	QString fileName = QGCFileDialog::getOpenFileName(NULL,
                                                       msgTitle,
                                                       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-													  "Parameter Files (*.params);;All Files (*)");
+													  QStringLiteral("Parameter Files (*.params);;All Files (*)"));
     if (!fileName.isEmpty()) {
         QFile file(fileName);
         
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            qgcApp()->showMessage("Unable to open file");
+            qgcApp()->showMessage(QStringLiteral("Unable to open file"));
             return;
         }
         

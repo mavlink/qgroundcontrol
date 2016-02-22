@@ -61,14 +61,14 @@ QGCUASFileView::QGCUASFileView(QWidget *parent, Vehicle* vehicle)
 void QGCUASFileView::_downloadFile(void)
 {
     if (_currentCommand != commandNone) {
-        qWarning() << QString("Download attempted while another command was in progress: _currentCommand(%1)").arg(_currentCommand);
+        qWarning() << QStringLiteral("Download attempted while another command was in progress: _currentCommand(%1)").arg(_currentCommand);
         return;
     }
     
     _ui.statusText->clear();
     
     QString downloadToHere = QGCFileDialog::getExistingDirectory(this,
-                                                                 "Download Directory",
+                                                                 QStringLiteral("Download Directory"),
                                                                  QDir::homePath(),
                                                                  QGCFileDialog::ShowDirsOnly | QGCFileDialog::DontResolveSymlinks);
     
@@ -80,7 +80,7 @@ void QGCUASFileView::_downloadFile(void)
     QTreeWidgetItem* item = _ui.treeWidget->currentItem();
     if (item && item->type() == _typeFile) {
         do {
-            QString name = item->text(0).split("\t")[0];    // Strip off file sizes
+            QString name = item->text(0).split(QStringLiteral("\t"))[0];    // Strip off file sizes
             
             // If this is the file name and not a directory keep track of the download file name
             if (downloadFilename.isEmpty()) {
@@ -94,7 +94,7 @@ void QGCUASFileView::_downloadFile(void)
         _setAllButtonsEnabled(false);
         _currentCommand = commandDownload;
         
-        _ui.statusText->setText(QString("Downloading: %1").arg(downloadFilename));
+        _ui.statusText->setText(QStringLiteral("Downloading: %1").arg(downloadFilename));
                                 
         _manager->streamPath(path, QDir(downloadToHere));
     }
@@ -104,7 +104,7 @@ void QGCUASFileView::_downloadFile(void)
 void QGCUASFileView::_uploadFile(void)
 {
     if (_currentCommand != commandNone) {
-        qWarning() << QString("Upload attempted while another command was in progress: _currentCommand(%1)").arg(_currentCommand);
+        qWarning() << QStringLiteral("Upload attempted while another command was in progress: _currentCommand(%1)").arg(_currentCommand);
         return;
     }
 
@@ -119,14 +119,14 @@ void QGCUASFileView::_uploadFile(void)
     // Find complete path for upload directory
     QString path;
     do {
-        QString name = item->text(0).split("\t")[0];    // Strip off file sizes
+        QString name = item->text(0).split(QStringLiteral("\t"))[0];    // Strip off file sizes
         path.prepend("/" + name);
         item = item->parent();
     } while (item);
 
-    QString uploadFromHere = QGCFileDialog::getOpenFileName(this, "Upload File", QDir::homePath());
+    QString uploadFromHere = QGCFileDialog::getOpenFileName(this, QStringLiteral("Upload File"), QDir::homePath());
 
-    _ui.statusText->setText(QString("Uploading: %1").arg(uploadFromHere));
+    _ui.statusText->setText(QStringLiteral("Uploading: %1").arg(uploadFromHere));
                             
     qDebug() << "Upload: " << uploadFromHere << "to path" << path;
     
@@ -149,14 +149,14 @@ void QGCUASFileView::_commandError(const QString& msg)
 {
     _setAllButtonsEnabled(true);
     _currentCommand = commandNone;
-    _ui.statusText->setText(QString("Error: %1").arg(msg));
+    _ui.statusText->setText(QStringLiteral("Error: %1").arg(msg));
 }
 
 /// @brief Refreshes the directory list tree.
 void QGCUASFileView::_refreshTree(void)
 {
     if (_currentCommand != commandNone) {
-        qWarning() << QString("List attempted while another command was in progress: _currentCommand(%1)").arg(_currentCommand);
+        qWarning() << QStringLiteral("List attempted while another command was in progress: _currentCommand(%1)").arg(_currentCommand);
         return;
     }
     
@@ -171,23 +171,23 @@ void QGCUASFileView::_refreshTree(void)
     _setAllButtonsEnabled(false);
     _currentCommand = commandList;
 
-    _requestDirectoryList("/");
+    _requestDirectoryList(QStringLiteral("/"));
 }
 
 /// @brief Adds the specified directory entry to the tree view.
 void QGCUASFileView::_listEntryReceived(const QString& entry)
 {
     if (_currentCommand != commandList) {
-        qWarning() << QString("List entry received while no list command in progress: _currentCommand(%1)").arg(_currentCommand);
+        qWarning() << QStringLiteral("List entry received while no list command in progress: _currentCommand(%1)").arg(_currentCommand);
         return;
     }
     
     int type;
-    if (entry.startsWith("F")) {
+    if (entry.startsWith(QLatin1String("F"))) {
         type = _typeFile;
-    } else if (entry.startsWith("D")) {
+    } else if (entry.startsWith(QLatin1String("D"))) {
         type = _typeDir;
-        if (entry == "D." || entry == "D..") {
+        if (entry == QLatin1String("D.") || entry == QLatin1String("D..")) {
             return;
         }
     } else {
@@ -210,11 +210,11 @@ void QGCUASFileView::_commandComplete(void)
     if (_currentCommand == commandDownload) {
         _currentCommand = commandNone;
         _setAllButtonsEnabled(true);
-        statusText = "Download complete";
+        statusText = QStringLiteral("Download complete");
     } else if (_currentCommand == commandDownload) {
         _currentCommand = commandNone;
         _setAllButtonsEnabled(true);
-        statusText = "Upload complete";
+        statusText = QStringLiteral("Upload complete");
     } else if (_currentCommand == commandList) {
         _listComplete();
     }

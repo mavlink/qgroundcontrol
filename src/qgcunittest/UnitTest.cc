@@ -94,7 +94,7 @@ int UnitTest::run(QString& singleTest)
     foreach (QObject* test, _testList()) {
         if (singleTest.isEmpty() || singleTest == test->objectName()) {
             QStringList args;
-            args << "*" << "-maxwarnings" << "0";
+            args << QStringLiteral("*") << QStringLiteral("-maxwarnings") << QStringLiteral("0");
             ret += QTest::qExec(test, args);
         }
     }
@@ -363,7 +363,7 @@ QString UnitTest::_getSaveFileName(
     Q_UNUSED(options);
 
     if(!defaultSuffix.isEmpty()) {
-        Q_ASSERT(defaultSuffix.startsWith(".") == false);
+        Q_ASSERT(defaultSuffix.startsWith(QLatin1String(".")) == false);
     }
 
     return _fileDialogResponseSingle(getSaveFileName);

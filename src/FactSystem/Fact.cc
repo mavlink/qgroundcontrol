@@ -128,7 +128,7 @@ void Fact::setEnumStringValue(const QString& value)
     if (_metaData) {
         int index = _metaData->enumStrings().indexOf(value);
         if (index != -1) {
-            setCookedValue(_metaData->enumValues()[index]);
+            setCookedValue(_metaData->enumValues().at(index));
         }
     } else {
         qWarning() << "Meta data pointer missing";
@@ -138,7 +138,7 @@ void Fact::setEnumStringValue(const QString& value)
 void Fact::setEnumIndex(int index)
 {
     if (_metaData) {
-        setCookedValue(_metaData->enumValues()[index]);
+        setCookedValue(_metaData->enumValues().at(index));
     } else {
         qWarning() << "Meta data pointer missing";
     }
@@ -176,7 +176,7 @@ QString Fact::enumStringValue(void)
     if (_metaData) {
         int enumIndex = this->enumIndex();
         if (enumIndex >= 0 && enumIndex < _metaData->enumStrings().count()) {
-            return _metaData->enumStrings()[enumIndex];
+            return _metaData->enumStrings().at(enumIndex);
         }
     } else {
         qWarning() << "Meta data pointer missing";
@@ -198,7 +198,7 @@ int Fact::enumIndex(void)
         }
 
         // Current value is not in list, add it manually
-        _metaData->addEnumInfo(QString("Unknown: %1").arg(rawValue().toString()), rawValue());
+        _metaData->addEnumInfo(QStringLiteral("Unknown: %1").arg(rawValue().toString()), rawValue());
         emit enumStringsChanged();
         emit enumValuesChanged();
         return index;
@@ -255,10 +255,10 @@ QString Fact::_variantToString(const QVariant& variant) const
 
     switch (type()) {
         case FactMetaData::valueTypeFloat:
-            valueString = QString("%1").arg(variant.toFloat(), 0, 'f', decimalPlaces());
+            valueString = QStringLiteral("%1").arg(variant.toFloat(), 0, 'f', decimalPlaces());
             break;
         case FactMetaData::valueTypeDouble:
-            valueString = QString("%1").arg(variant.toDouble(), 0, 'f', decimalPlaces());
+            valueString = QStringLiteral("%1").arg(variant.toDouble(), 0, 'f', decimalPlaces());
             break;
         default:
             valueString = variant.toString();
@@ -485,7 +485,7 @@ QString Fact::validate(const QString& cookedValue, bool convertOnly)
         return errorString;
     } else {
         qWarning() << "Meta data pointer missing";
-        return QString("Internal error: Meta data pointer missing");
+        return QStringLiteral("Internal error: Meta data pointer missing");
     }
 }
 

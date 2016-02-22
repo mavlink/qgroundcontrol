@@ -75,9 +75,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
         return;
     }
     
-    LinkInterface* createConnectedLink(LinkConfiguration* config);
-    
-    LogReplayLinkConfiguration* linkConfig = new LogReplayLinkConfiguration(QString("Log Replay"));
+    LogReplayLinkConfiguration* linkConfig = new LogReplayLinkConfiguration(QStringLiteral("Log Replay"));
     linkConfig->setLogFilename(logFilename);
     linkConfig->setName(linkConfig->logFilenameShort());
     _ui->logFileNameLabel->setText(linkConfig->logFilenameShort());
@@ -95,7 +93,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
 
 void QGCMAVLinkLogPlayer::_playbackError(void)
 {
-    _ui->logFileNameLabel->setText("Error");
+    _ui->logFileNameLabel->setText(QStringLiteral("Error"));
     _enablePlaybackControls(false);
 }
 
@@ -107,7 +105,7 @@ QString QGCMAVLinkLogPlayer::_secondsToHMS(int seconds)
     secondsPart -= 60 * minutesPart;
     minutesPart -= 60 * hoursPart;
 
-    return QString("%1h:%2m:%3s").arg(hoursPart, 2).arg(minutesPart, 2).arg(secondsPart, 2);
+    return QStringLiteral("%1h:%2m:%3s").arg(hoursPart, 2).arg(minutesPart, 2).arg(secondsPart, 2);
 }
 
 /// Signalled from LogReplayLink once log file information is known
@@ -128,13 +126,13 @@ void QGCMAVLinkLogPlayer::_playbackStarted(void)
 {
     _enablePlaybackControls(true);
     _ui->playButton->setChecked(true);
-    _ui->playButton->setIcon(QIcon(":/res/Pause"));
+    _ui->playButton->setIcon(QIcon(QStringLiteral(":/res/Pause")));
 }
 
 /// Signalled from LogReplayLink when replay is paused
 void QGCMAVLinkLogPlayer::_playbackPaused(void)
 {
-    _ui->playButton->setIcon(QIcon(":/res/Play"));
+    _ui->playButton->setIcon(QIcon(QStringLiteral(":/res/Play")));
     _ui->playButton->setChecked(false);
 }
 
@@ -181,7 +179,7 @@ void QGCMAVLinkLogPlayer::_setAccelerationFromSlider(int value)
         accelerationFactor = 1.0f;
     }
     
-    _ui->speedLabel->setText(QString("Speed: %1X").arg(accelerationFactor, 5, 'f', 2, '0'));
+    _ui->speedLabel->setText(QStringLiteral("Speed: %1X").arg(accelerationFactor, 5, 'f', 2, '0'));
 }
 
 void QGCMAVLinkLogPlayer::_replayLinkDisconnected(void)

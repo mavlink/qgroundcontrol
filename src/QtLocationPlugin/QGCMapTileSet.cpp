@@ -151,7 +151,7 @@ void
 QGCCachedTileSet::resumeDownloadTask()
 {
     //-- Reset and download error flag (for all tiles)
-    QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StatePending, "*");
+    QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StatePending, QStringLiteral("*"));
     getQGCMapEngine()->addTask(task);
     //-- Start download
     createDownloadTask();

@@ -55,7 +55,7 @@ SettingsDialog::SettingsDialog(QWidget *parent, Qt::WindowFlags flags)
     MAVLinkSettingsWidget* pMavsettings  = new MAVLinkSettingsWidget(qgcApp()->toolbox()->mavlinkProtocol(), this);
 
     // Add the MAVLink settings pane
-    _ui->tabWidget->addTab(pMavsettings,  "MAVLink");
+    _ui->tabWidget->addTab(pMavsettings,  QStringLiteral("MAVLink"));
 
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
 

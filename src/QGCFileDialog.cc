@@ -124,7 +124,7 @@ QString QGCFileDialog::getSaveFileName(
         }
         if (!defaultSuffixCopy.isEmpty()) {
             //-- Make sure dot is not present
-            if (defaultSuffixCopy.startsWith(".")) {
+            if (defaultSuffixCopy.startsWith(QLatin1String("."))) {
                 defaultSuffixCopy.remove(0,1);
             }
             dlg.setDefaultSuffix(defaultSuffixCopy);
@@ -132,7 +132,7 @@ QString QGCFileDialog::getSaveFileName(
         while (true) {
             if (dlg.exec()) {
                 if (dlg.selectedFiles().count()) {
-                    QString result = dlg.selectedFiles().first();
+                    QString result = dlg.selectedFiles().at(0);
                     //-- If we don't care about the extension, just return it
                     if (!strict) {
                         return result;
@@ -151,7 +151,7 @@ QString QGCFileDialog::getSaveFileName(
                         //-- If this is set to strict, we have to have a default extension
                         Q_ASSERT(defaultSuffixCopy.isEmpty() == false);
                         //-- Forcefully append our desired extension
-                        result += ".";
+                        result += QLatin1String(".");
                         result += defaultSuffixCopy;
                         //-- Check and see if this new file already exists
                         fi.setFile(result);
@@ -180,13 +180,13 @@ QString QGCFileDialog::getSaveFileName(
             }
             break;
         }
-        return QString("");
+        return QLatin1String("");
     }
 }
 
 /// @brief Make sure filename is using one of the valid extensions defined in the filter
 bool QGCFileDialog::_validateExtension(const QString& filter, const QString& extension) {
-    QRegularExpression re("(\\*\\.\\w+)");
+    QRegularExpression re(QStringLiteral("(\\*\\.\\w+)"));
     QRegularExpressionMatchIterator i = re.globalMatch(filter);
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
@@ -202,7 +202,7 @@ bool QGCFileDialog::_validateExtension(const QString& filter, const QString& ext
 
 /// @brief Returns first extension found in filter
 QString QGCFileDialog::_getFirstExtensionInFilter(const QString& filter) {
-    QRegularExpression re("(\\*\\.\\w+)");
+    QRegularExpression re(QStringLiteral("(\\*\\.\\w+)"));
     QRegularExpressionMatchIterator i = re.globalMatch(filter);
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
@@ -211,7 +211,7 @@ QString QGCFileDialog::_getFirstExtensionInFilter(const QString& filter) {
             return match.captured(0).mid(2);
         }
     }
-    return QString("");
+    return QLatin1String("");
 }
 
 /// @brief Validates and updates the parameters for the file dialog calls

@@ -163,12 +163,12 @@ MainWindow::MainWindow()
     _mainQmlWidgetHolder->setVisible(true);
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    _mainQmlWidgetHolder->setContextPropertyObject("controller", this);
-    _mainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
+    _mainQmlWidgetHolder->setContextPropertyObject(QStringLiteral("controller"), this);
+    _mainQmlWidgetHolder->setSource(QUrl::fromUserInput(QStringLiteral("qrc:qml/MainWindowHybrid.qml")));
 
     // Image provider
     QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
-    _mainQmlWidgetHolder->getEngine()->addImageProvider(QLatin1String("QGCImages"), pImgProvider);
+    _mainQmlWidgetHolder->getEngine()->addImageProvider(QStringLiteral("QGCImages"), pImgProvider);
 
     // Set dock options
     setDockOptions(0);
@@ -181,7 +181,7 @@ MainWindow::MainWindow()
 #endif
 
 #ifdef UNITTEST_BUILD
-    QAction* qmlTestAction = new QAction("Test QML palette and controls", NULL);
+    QAction* qmlTestAction = new QAction(QStringLiteral("Test QML palette and controls"), NULL);
     connect(qmlTestAction, &QAction::triggered, this, &MainWindow::_showQmlTestWidget);
     _ui.menuWidgets->addAction(qmlTestAction);
 #endif
@@ -285,7 +285,7 @@ MainWindow::~MainWindow()
 
 QString MainWindow::_getWindowGeometryKey()
 {
-    return "_geometry";
+    return QStringLiteral("_geometry");
 }
 
 #ifndef __mobile__
@@ -431,8 +431,8 @@ void MainWindow::loadSettings()
     // Why the screaming?
     QSettings settings;
     settings.beginGroup(MAIN_SETTINGS_GROUP);
-    _lowPowerMode   = settings.value("LOW_POWER_MODE",      _lowPowerMode).toBool();
-    _showStatusBar  = settings.value("SHOW_STATUSBAR",      _showStatusBar).toBool();
+    _lowPowerMode   = settings.value(QStringLiteral("LOW_POWER_MODE"),      _lowPowerMode).toBool();
+    _showStatusBar  = settings.value(QStringLiteral("SHOW_STATUSBAR"),      _showStatusBar).toBool();
     settings.endGroup();
 }
 
@@ -440,8 +440,8 @@ void MainWindow::storeSettings()
 {
     QSettings settings;
     settings.beginGroup(MAIN_SETTINGS_GROUP);
-    settings.setValue("LOW_POWER_MODE",     _lowPowerMode);
-    settings.setValue("SHOW_STATUSBAR",     _showStatusBar);
+    settings.setValue(QStringLiteral("LOW_POWER_MODE"),     _lowPowerMode);
+    settings.setValue(QStringLiteral("SHOW_STATUSBAR"),     _showStatusBar);
     settings.endGroup();
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
 
@@ -497,7 +497,7 @@ void MainWindow::connectCommonActions()
 void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
 {
     if(!QDesktopServices::openUrl(QUrl(url))) {
-        qgcApp()->showMessage(QString("Could not open information in browser: %1").arg(errorMessage));
+        qgcApp()->showMessage(QStringLiteral("Could not open information in browser: %1").arg(errorMessage));
     }
 }
 
@@ -531,7 +531,7 @@ void MainWindow::saveLastUsedConnection(const QString connection)
 {
     QSettings settings;
     QString key(MAIN_SETTINGS_GROUP);
-    key += "/LAST_CONNECTION";
+    key += QLatin1String("/LAST_CONNECTION");
     settings.setValue(key, connection);
 }
 
@@ -558,7 +558,7 @@ void MainWindow::_loadVisibleWidgetsSettings(void)
     QString widgets = settings.value(_visibleWidgetsKey).toString();
 
     if (!widgets.isEmpty()) {
-        QStringList nameList = widgets.split(",");
+        QStringList nameList = widgets.split(QStringLiteral(","));
 
         foreach (const QString &name, nameList) {
             _showDockWidget(name, true);
@@ -571,20 +571,19 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
     QString widgetNames;
     bool firstWidget = true;
 
-    foreach (const QString &name, _mapName2DockWidget.keys()) {
-        if (_mapName2DockWidget[name]->isVisible()) {
+    for (auto it = _mapName2DockWidget.begin(), end = _mapName2DockWidget.end(); it != end; it++) {
+        if (it.value()->isVisible()) {
             if (!firstWidget) {
-                widgetNames += ",";
+                widgetNames += QChar(',');
             } else {
                 firstWidget = false;
             }
 
-            widgetNames += name;
+            widgetNames += it.key();
         }
     }
 
     QSettings settings;
-
     settings.setValue(_visibleWidgetsKey, widgetNames);
 }
 #endif

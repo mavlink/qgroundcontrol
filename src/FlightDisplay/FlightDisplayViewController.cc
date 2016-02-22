@@ -63,7 +63,7 @@ FlightDisplayViewController::FlightDisplayViewController(QObject *parent)
      */
     _videoSurface = new VideoSurface;
     _videoReceiver = new VideoReceiver(this);
-    _videoReceiver->setUri(QLatin1Literal("udp://0.0.0.0:5000"));
+    _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:5000"));
 #if defined(QGC_GST_STREAMING)
     _videoReceiver->setVideoSink(_videoSurface->videoSink());
     connect(&_frameTimer, &QTimer::timeout, this, &FlightDisplayViewController::_updateTimer);

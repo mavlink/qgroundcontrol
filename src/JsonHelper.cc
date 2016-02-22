@@ -41,7 +41,7 @@ bool JsonHelper::validateRequiredKeys(const QJsonObject& jsonObject, const QStri
     }
 
     if (missingKeys.count() != 0) {
-        errorString = QString("The following required keys are missing: %1").arg(missingKeys);
+        errorString = QStringLiteral("The following required keys are missing: %1").arg(missingKeys);
         return false;
     }
 
@@ -58,7 +58,7 @@ bool JsonHelper::toQGeoCoordinate(const QJsonValue& jsonValue, QGeoCoordinate& c
     QJsonArray coordinateArray = jsonValue.toArray();
     int requiredCount = altitudeRequired ? 3 : 2;
     if (coordinateArray.count() != requiredCount) {
-        errorString = QString("Json array must contains %1 values").arg(requiredCount);
+        errorString = QStringLiteral("Json array must contains %1 values").arg(requiredCount);
         return false;
     }
 
@@ -68,7 +68,7 @@ bool JsonHelper::toQGeoCoordinate(const QJsonValue& jsonValue, QGeoCoordinate& c
     }
 
     if (!coordinate.isValid()) {
-        errorString = QString("Coordinate is invalid: %1").arg(coordinate.toString());
+        errorString = QStringLiteral("Coordinate is invalid: %1").arg(coordinate.toString());
         return false;
     }
 
@@ -80,7 +80,7 @@ bool JsonHelper::validateKeyTypes(QJsonObject& jsonObject, const QStringList& ke
     for (int i=0; i<keys.count(); i++) {
         if (jsonObject.contains(keys[i])) {
             if (jsonObject.value(keys[i]).type() != types[i]) {
-                errorString  = QString("Incorrect type key:type:expected %1 %2 %3").arg(keys[i]).arg(jsonObject.value(keys[i]).type()).arg(types[i]);
+                errorString  = QStringLiteral("Incorrect type key:type:expected %1 %2 %3").arg(keys[i]).arg(jsonObject.value(keys[i]).type()).arg(types[i]);
                 return false;
             }
         }
@@ -91,11 +91,11 @@ bool JsonHelper::validateKeyTypes(QJsonObject& jsonObject, const QStringList& ke
 
 bool JsonHelper::parseEnum(QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString)
 {
-    enumStrings = jsonObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
-    enumValues = jsonObject.value(_enumValuesJsonKey).toString().split(",", QString::SkipEmptyParts);
+    enumStrings = jsonObject.value(_enumStringsJsonKey).toString().split(QChar(','), QString::SkipEmptyParts);
+    enumValues = jsonObject.value(_enumValuesJsonKey).toString().split(QChar(','), QString::SkipEmptyParts);
 
     if (enumStrings.count() != enumValues.count()) {
-        errorString = QString("enum strings/values count mismatch: %1");
+        errorString = QStringLiteral("enum strings/values count mismatch: %1");
         return false;
     }
 

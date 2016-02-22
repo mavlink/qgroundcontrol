@@ -75,7 +75,7 @@ void QGCMapRCToParamDialog::_parameterUpdated(QVariant value)
 {
     Q_UNUSED(value);
     
-    ui->infoLabel->setText("Parameter value is up to date");
+    ui->infoLabel->setText(QStringLiteral("Parameter value is up to date"));
     ui->value0DoubleSpinBox->setValue(value.toDouble());
     ui->value0DoubleSpinBox->setEnabled(true);
     

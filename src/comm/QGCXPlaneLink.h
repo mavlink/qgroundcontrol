@@ -49,7 +49,7 @@ class QGCXPlaneLink : public QGCHilLink
     //Q_INTERFACES(QGCXPlaneLinkInterface:LinkInterface)
 
 public:
-    QGCXPlaneLink(Vehicle* vehicle, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress localHost = QHostAddress::Any, quint16 localPort = 49005);
+    QGCXPlaneLink(Vehicle* vehicle, QString remoteHost=QStringLiteral("127.0.0.1:49000"), QHostAddress localHost = QHostAddress::Any, quint16 localPort = 49005);
     ~QGCXPlaneLink();
 
     /**
@@ -93,7 +93,7 @@ public:
 
     QString getVersion()
     {
-        return QString("X-Plane %1").arg(xPlaneVersion);
+        return QStringLiteral("X-Plane %1").arg(xPlaneVersion);
     }
 
     int getAirFrameIndex()

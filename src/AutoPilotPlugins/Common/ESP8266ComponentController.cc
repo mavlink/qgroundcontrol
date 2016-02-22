@@ -42,21 +42,21 @@ ESP8266ComponentController::ESP8266ComponentController()
     for(int i = 1; i < 12; i++) {
         _channels.append(QString::number(i));
     }
-    _baudRates.append("57600");
-    _baudRates.append("115200");
-    _baudRates.append("230400");
-    _baudRates.append("460800");
-    _baudRates.append("921600");
+    _baudRates.append(QStringLiteral("57600"));
+    _baudRates.append(QStringLiteral("115200"));
+    _baudRates.append(QStringLiteral("230400"));
+    _baudRates.append(QStringLiteral("460800"));
+    _baudRates.append(QStringLiteral("921600"));
     connect(&_timer, &QTimer::timeout, this, &ESP8266ComponentController::_processTimeout);
     UASInterface* uas = dynamic_cast<UASInterface*>(_vehicle->uas());
     connect(uas, &UASInterface::commandAck, this, &ESP8266ComponentController::_commandAck);
-    Fact* ssid = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID4");
+    Fact* ssid = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID4"));
     connect(ssid, &Fact::valueChanged, this, &ESP8266ComponentController::_ssidChanged);
-    Fact* paswd = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD4");
+    Fact* paswd = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD4"));
     connect(paswd, &Fact::valueChanged, this, &ESP8266ComponentController::_passwordChanged);
-    Fact* baud = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "UART_BAUDRATE");
+    Fact* baud = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("UART_BAUDRATE"));
     connect(baud, &Fact::valueChanged, this, &ESP8266ComponentController::_baudChanged);
-    Fact* ver = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "SW_VER");
+    Fact* ver = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("SW_VER"));
     connect(ver, &Fact::valueChanged, this, &ESP8266ComponentController::_versionChanged);
 }
 
@@ -70,8 +70,8 @@ ESP8266ComponentController::~ESP8266ComponentController()
 QString
 ESP8266ComponentController::version()
 {
-    uint32_t uv = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "SW_VER")->rawValue().toUInt();
-    QString versionString = QString("%1.%2.%3").arg(uv >> 24).arg((uv >> 16) & 0xFF).arg(uv & 0xFFFF);
+    uint32_t uv = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("SW_VER"))->rawValue().toUInt();
+    QString versionString = QStringLiteral("%1.%2.%3").arg(uv >> 24).arg((uv >> 16) & 0xFF).arg(uv & 0xFFFF);
     return versionString;
 }
 
@@ -79,10 +79,10 @@ ESP8266ComponentController::version()
 QString
 ESP8266ComponentController::wifiSSID()
 {
-    uint32_t s1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID1")->rawValue().toUInt();
-    uint32_t s2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID2")->rawValue().toUInt();
-    uint32_t s3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID3")->rawValue().toUInt();
-    uint32_t s4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID4")->rawValue().toUInt();
+    uint32_t s1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID1"))->rawValue().toUInt();
+    uint32_t s2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID2"))->rawValue().toUInt();
+    uint32_t s3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID3"))->rawValue().toUInt();
+    uint32_t s4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID4"))->rawValue().toUInt();
     char tmp[20];
     memcpy(&tmp[0],  &s1, sizeof(uint32_t));
     memcpy(&tmp[4],  &s2, sizeof(uint32_t));
@@ -99,10 +99,10 @@ ESP8266ComponentController::setWifiSSID(QString ssid)
     memset(tmp, 0, sizeof(tmp));
     std::string	sid = ssid.toStdString();
     strncpy(tmp, sid.c_str(), sizeof(tmp));
-    Fact* f1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID1");
-    Fact* f2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID2");
-    Fact* f3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID3");
-    Fact* f4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID4");
+    Fact* f1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID1"));
+    Fact* f2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID2"));
+    Fact* f3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID3"));
+    Fact* f4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID4"));
     uint32_t u;
     memcpy(&u, &tmp[0], sizeof(uint32_t));
     f1->setRawValue(QVariant(u));
@@ -118,10 +118,10 @@ ESP8266ComponentController::setWifiSSID(QString ssid)
 QString
 ESP8266ComponentController::wifiPassword()
 {
-    uint32_t s1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD1")->rawValue().toUInt();
-    uint32_t s2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD2")->rawValue().toUInt();
-    uint32_t s3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD3")->rawValue().toUInt();
-    uint32_t s4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD4")->rawValue().toUInt();
+    uint32_t s1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD1"))->rawValue().toUInt();
+    uint32_t s2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD2"))->rawValue().toUInt();
+    uint32_t s3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD3"))->rawValue().toUInt();
+    uint32_t s4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD4"))->rawValue().toUInt();
     char tmp[20];
     memcpy(&tmp[0],  &s1, sizeof(uint32_t));
     memcpy(&tmp[4],  &s2, sizeof(uint32_t));
@@ -138,10 +138,10 @@ ESP8266ComponentController::setWifiPassword(QString password)
     memset(tmp, 0, sizeof(tmp));
     std::string	pwd = password.toStdString();
     strncpy(tmp, pwd.c_str(), sizeof(tmp));
-    Fact* f1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD1");
-    Fact* f2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD2");
-    Fact* f3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD3");
-    Fact* f4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD4");
+    Fact* f1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD1"));
+    Fact* f2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD2"));
+    Fact* f3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD3"));
+    Fact* f4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD4"));
     uint32_t u;
     memcpy(&u, &tmp[0], sizeof(uint32_t));
     f1->setRawValue(QVariant(u));
@@ -157,7 +157,7 @@ ESP8266ComponentController::setWifiPassword(QString password)
 int
 ESP8266ComponentController::baudIndex()
 {
-    int b = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "UART_BAUDRATE")->rawValue().toInt();
+    int b = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("UART_BAUDRATE"))->rawValue().toInt();
     switch (b) {
         case 57600:
             return 0;
@@ -195,7 +195,7 @@ ESP8266ComponentController::setBaudIndex(int idx)
             default:
                 baud = 921600;
         }
-        Fact* b = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "UART_BAUDRATE");
+        Fact* b = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("UART_BAUDRATE"));
         b->setRawValue(baud);
     }
 }

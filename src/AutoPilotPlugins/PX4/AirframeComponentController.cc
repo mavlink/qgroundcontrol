@@ -43,12 +43,12 @@ AirframeComponentController::AirframeComponentController(void) :
 {
     if (!_typesRegistered) {
         _typesRegistered = true;
-        qmlRegisterUncreatableType<AirframeType>("QGroundControl.Controllers", 1, 0, "AiframeType", "Can only reference AirframeType");
-        qmlRegisterUncreatableType<Airframe>("QGroundControl.Controllers", 1, 0, "Aiframe", "Can only reference Airframe");
+        qmlRegisterUncreatableType<AirframeType>("QGroundControl.Controllers", 1, 0, "AiframeType", QStringLiteral("Can only reference AirframeType"));
+        qmlRegisterUncreatableType<Airframe>("QGroundControl.Controllers", 1, 0, "Aiframe", QStringLiteral("Can only reference Airframe"));
     }
     
     QStringList usedParams;
-    usedParams << "SYS_AUTOSTART" << "SYS_AUTOCONFIG";
+    usedParams << QStringLiteral("SYS_AUTOSTART") << QStringLiteral("SYS_AUTOCONFIG");
     if (!_allParametersExists(FactSystem::defaultComponentId, usedParams)) {
         return;
     }
@@ -56,7 +56,7 @@ AirframeComponentController::AirframeComponentController(void) :
     // Load up member variables
     
     bool autostartFound = false;
-    _autostartId = getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt();
+    _autostartId = getParameterFact(FactSystem::defaultComponentId, QStringLiteral("SYS_AUTOSTART"))->rawValue().toInt();
 
     
     for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
@@ -97,14 +97,14 @@ AirframeComponentController::~AirframeComponentController()
 void AirframeComponentController::changeAutostart(void)
 {
     if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count() > 1) {
-        qgcApp()->showMessage("You cannot change airframe configuration while connected to multiple vehicles.");
+        qgcApp()->showMessage(QStringLiteral("You cannot change airframe configuration while connected to multiple vehicles."));
 		return;
 	}
 	
     qgcApp()->setOverrideCursor(Qt::WaitCursor);
     
-    Fact* sysAutoStartFact  = getParameterFact(-1, "SYS_AUTOSTART");
-    Fact* sysAutoConfigFact = getParameterFact(-1, "SYS_AUTOCONFIG");
+    Fact* sysAutoStartFact  = getParameterFact(-1, QStringLiteral("SYS_AUTOSTART"));
+    Fact* sysAutoConfigFact = getParameterFact(-1, QStringLiteral("SYS_AUTOCONFIG"));
     
     // We need to wait for the vehicleUpdated signals to come back before we reboot
     _waitParamWriteSignalCount = 0;

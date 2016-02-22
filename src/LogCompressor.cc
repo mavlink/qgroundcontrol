@@ -67,11 +67,11 @@ void LogCompressor::run()
 
     QString outFileName;
 
-    QStringList parts = QFileInfo(infile.fileName()).absoluteFilePath().split(".", QString::SkipEmptyParts);
+    QStringList parts = QFileInfo(infile.fileName()).absoluteFilePath().split(QStringLiteral("."), QString::SkipEmptyParts);
 
-    parts.replace(0, parts.first() + "_compressed");
-    parts.replace(parts.size()-1, "txt");
-    outFileName = parts.join(".");
+    parts.replace(0, parts.first() + QStringLiteral("_compressed"));
+    parts.replace(parts.size()-1, QStringLiteral("txt"));
+    outFileName = parts.join(QStringLiteral("."));
 
 	// Verify that the output file is useable
     QFile outTmpFile(outFileName);
@@ -108,10 +108,10 @@ void LogCompressor::run()
 
 	QString headerLine = "timestamp_ms" + delimiter + headerList.join(delimiter) + "\n";
     // Clean header names from symbols Matlab considers as Latex syntax
-    headerLine = headerLine.replace("timestamp", "TIMESTAMP");
-    headerLine = headerLine.replace(":", "");
-    headerLine = headerLine.replace("_", "");
-    headerLine = headerLine.replace(".", "");
+    headerLine = headerLine.replace(QLatin1String("timestamp"), QLatin1String("TIMESTAMP"));
+    headerLine = headerLine.replace(QLatin1String(":"), QLatin1String(""));
+    headerLine = headerLine.replace(QLatin1String("_"), QLatin1String(""));
+    headerLine = headerLine.replace(QLatin1String("."), QLatin1String(""));
 	outTmpFile.write(headerLine.toLocal8Bit());
 
     _signalCriticalError(tr("Log compressor: Dataset contains dimensions: ") + headerLine);
@@ -119,7 +119,7 @@ void LogCompressor::run()
     // Template list stores a list for populating with data as it's parsed from messages.
     QStringList templateList;
     for (int i = 0; i < headerList.size() + 1; ++i) {
-        templateList << (holeFillingEnabled?"NaN":"");
+        templateList << (holeFillingEnabled ? QStringLiteral("NaN") : QString());
     }
 
 
@@ -159,21 +159,23 @@ void LogCompressor::run()
 
     int lineCounter = 0;
 
-    QStringList lastList = timestampMap.values().at(1);
-
-    foreach (QStringList list, timestampMap.values()) {
+    // values.at(1) is the second value, this means that it's the *(timestampMap.begin()++)
+    // but the second don't create a temporary list just so we can get the second element.
+    QStringList lastList = (timestampMap.begin()++).value();
+    QList<quint64> keys = timestampMap.keys();
+    foreach (QStringList list, timestampMap) {
         // Write this current time set out to the file
         // only do so from the 2nd line on, since the first
         // line could be incomplete
         if (lineCounter > 1) {
             // Set the timestamp
-            list.replace(0,QString("%1").arg(timestampMap.keys().at(lineCounter)));
+            list.replace(0,QStringLiteral("%1").arg(keys.at(lineCounter)));
 
             // Fill holes if necessary
             if (holeFillingEnabled) {
                 int index = 0;
                 foreach (const QString& str, list) {
-                    if (str == "" || str == "NaN") {
+                    if (str == QLatin1String("") || str == QLatin1String("NaN")) {
                         list.replace(index, lastList.at(index));
                     }
                     index++;
@@ -184,7 +186,7 @@ void LogCompressor::run()
             lastList = list;
 
             // Write data columns
-            QString output = list.join(delimiter) + "\n";
+            QString output = list.join(delimiter) + QChar('\n');
             outTmpFile.write(output.toLocal8Bit());
         }
         lineCounter++;

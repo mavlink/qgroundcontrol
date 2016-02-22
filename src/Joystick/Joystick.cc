@@ -124,10 +124,10 @@ void Joystick::_loadSettings(void)
     
     qCDebug(JoystickLog) << "_loadSettings calibrated:throttlemode:badsettings" << _calibrated << _throttleMode << badSettings;
     
-    QString minTpl  ("Axis%1Min");
-    QString maxTpl  ("Axis%1Max");
-    QString trimTpl ("Axis%1Trim");
-    QString revTpl  ("Axis%1Rev");
+    QString minTpl  (QStringLiteral("Axis%1Min"));
+    QString maxTpl  (QStringLiteral("Axis%1Max"));
+    QString trimTpl (QStringLiteral("Axis%1Trim"));
+    QString revTpl  (QStringLiteral("Axis%1Rev"));
     
     for (int axis=0; axis<_axisCount; axis++) {
         Calibration_t* calibration = &_rgCalibration[axis];
@@ -180,10 +180,10 @@ void Joystick::_saveSettings(void)
     
     qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode" << _calibrated << _throttleMode;
 
-    QString minTpl  ("Axis%1Min");
-    QString maxTpl  ("Axis%1Max");
-    QString trimTpl ("Axis%1Trim");
-    QString revTpl  ("Axis%1Rev");
+    QString minTpl  (QStringLiteral("Axis%1Min"));
+    QString maxTpl  (QStringLiteral("Axis%1Max"));
+    QString trimTpl (QStringLiteral("Axis%1Trim"));
+    QString revTpl  (QStringLiteral("Axis%1Rev"));
     
     for (int axis=0; axis<_axisCount; axis++) {
         Calibration_t* calibration = &_rgCalibration[axis];
@@ -460,7 +460,7 @@ QStringList Joystick::actions(void)
 {
     QStringList list;
 
-    list << "Arm" << "Disarm";
+    list << QStringLiteral("Arm") << QStringLiteral("Disarm");
 
     if (_activeVehicle) {
         list << _activeVehicle->flightModes();
@@ -558,9 +558,9 @@ void Joystick::_buttonAction(const QString& action)
         return;
     }
 
-    if (action == "Arm") {
+    if (action == QLatin1String("Arm")) {
         _activeVehicle->setArmed(true);
-    } else if (action == "Disarm") {
+    } else if (action == QLatin1String("Disarm")) {
         _activeVehicle->setArmed(false);
     } else if (_activeVehicle->flightModes().contains(action)) {
         _activeVehicle->setFlightMode(action);

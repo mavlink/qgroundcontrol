@@ -4,3 +4,7 @@ UASQuickViewItem::UASQuickViewItem(QWidget *parent) :
     QWidget(parent)
 {
 }
+
+UASQuickViewItem::~UASQuickViewItem()
+{
+}

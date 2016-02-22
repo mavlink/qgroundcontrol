@@ -101,7 +101,7 @@ QGCLogEntry::QGCLogEntry(uint logId, const QDateTime& dateTime, uint logSize, bo
     , _received(received)
     , _selected(false)
 {
-    _status = "Pending";
+    _status = QStringLiteral("Pending");
 }
 
 //----------------------------------------------------------------------------------------
@@ -187,7 +187,7 @@ LogDownloadController::_logEntry(UASInterface* uas, uint32_t time_utc, uint32_t 
                 entry->setSize(size);
                 entry->setTime(QDateTime::fromTime_t(time_utc));
                 entry->setReceived(true);
-                entry->setStatus(QString("Available"));
+                entry->setStatus(QStringLiteral("Available"));
             } else {
                 qWarning() << "Received log entry for out-of-bound index:" << id;
             }
@@ -234,7 +234,7 @@ LogDownloadController::_resetSelection(bool canceled)
         if(entry) {
             if(entry->selected()) {
                 if(canceled) {
-                    entry->setStatus(QString("Canceled"));
+                    entry->setStatus(QStringLiteral("Canceled"));
                 }
                 entry->setSelected(false);
             }
@@ -282,7 +282,7 @@ LogDownloadController::_findMissingEntries()
             for(int i = 0; i < num_logs; i++) {
                 QGCLogEntry* entry = _logEntriesModel[i];
                 if(entry && !entry->received()) {
-                    entry->setStatus(QString("Error"));
+                    entry->setStatus(QStringLiteral("Error"));
                 }
             }
             //-- Give up
@@ -360,7 +360,7 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
             _timer.start(timeout_time);
             //-- Do we have it all?
             if(_logComplete()) {
-                _downloadData->entry->setStatus(QString("Downloaded"));
+                _downloadData->entry->setStatus(QStringLiteral("Downloaded"));
                 //-- Check for more
                 _receivedAllData();
             } else if (_chunkComplete()) {
@@ -376,7 +376,7 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
         qWarning() << "Received log offset greater than expected";
     }
     if(!result) {
-        _downloadData->entry->setStatus(QString("Error"));
+        _downloadData->entry->setStatus(QStringLiteral("Error"));
     }
 }
 
@@ -422,7 +422,7 @@ LogDownloadController::_findMissingData()
     }
 
     if(_retries++ > 2) {
-        _downloadData->entry->setStatus(QString("Timed Out"));
+        _downloadData->entry->setStatus(QString(QStringLiteral("Timed Out")));
         //-- Give up
         qWarning() << "Too many errors retreiving log data. Giving up.";
         _receivedAllData();
@@ -512,7 +512,7 @@ LogDownloadController::download(void)
     _downloadPath.clear();
     _downloadPath = QGCFileDialog::getExistingDirectory(
         MainWindow::instance(),
-        "Log Download Directory",
+        QStringLiteral("Log Download Directory"),
         QDir::homePath(),
         QGCFileDialog::ShowDirsOnly | QGCFileDialog::DontResolveSymlinks);
     if(!_downloadPath.isEmpty()) {
@@ -524,7 +524,7 @@ LogDownloadController::download(void)
             QGCLogEntry* entry = _logEntriesModel[i];
             if(entry) {
                 if(entry->selected()) {
-                   entry->setStatus(QString("Waiting"));
+                   entry->setStatus(QStringLiteral("Waiting"));
                 }
             }
         }
@@ -569,16 +569,16 @@ LogDownloadController::_prepareLogDownload()
     bool result = false;
     QString ftime;
     if(entry->time().date().year() < 2010) {
-        ftime = "UnknownDate";
+        ftime = QStringLiteral("UnknownDate");
     } else {
-        ftime = entry->time().toString("yyyy-M-d-hh-mm-ss");
+        ftime = entry->time().toString(QStringLiteral("yyyy-M-d-hh-mm-ss"));
     }
     _downloadData = new LogDownloadData(entry);
-    _downloadData->filename = QString("log_") + QString::number(entry->id()) + "_" + ftime;
+    _downloadData->filename = QStringLiteral("log_") + QString::number(entry->id()) + "_" + ftime;
     if(_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
-        _downloadData->filename += ".px4log";
+        _downloadData->filename += QLatin1String(".px4log");
     } else {
-        _downloadData->filename += ".bin";
+        _downloadData->filename += QLatin1String(".bin");
     }
     _downloadData->file.setFileName(_downloadPath + _downloadData->filename);
     //-- Append a number to the end if the filename already exists
@@ -608,7 +608,7 @@ LogDownloadController::_prepareLogDownload()
         if (_downloadData->file.exists()) {
             _downloadData->file.remove();
         }
-        _downloadData->entry->setStatus(QString("Error"));
+        _downloadData->entry->setStatus(QStringLiteral("Error"));
         delete _downloadData;
         _downloadData = NULL;
     }
@@ -648,7 +648,7 @@ LogDownloadController::cancel(void)
         _receivedAllEntries();
     }
     if(_downloadData) {
-        _downloadData->entry->setStatus(QString("Canceled"));
+        _downloadData->entry->setStatus(QStringLiteral("Canceled"));
         if (_downloadData->file.exists()) {
             _downloadData->file.remove();
         }

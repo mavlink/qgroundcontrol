@@ -31,20 +31,20 @@ APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable)
     : APMCustomMode(mode, settable)
 {
     QMap<uint32_t,QString> enumToString;
-    enumToString.insert(MANUAL,         "Manual");
-    enumToString.insert(CIRCLE,         "Circle");
-    enumToString.insert(STABILIZE,      "Stabilize");
-    enumToString.insert(TRAINING,       "Training");
-    enumToString.insert(ACRO,           "Acro");
-    enumToString.insert(FLY_BY_WIRE_A,  "FWB A");
-    enumToString.insert(FLY_BY_WIRE_B,  "FWB B");
-    enumToString.insert(CRUISE,         "Cruise");
-    enumToString.insert(AUTOTUNE,       "Autotune");
-    enumToString.insert(AUTO,           "Auto");
-    enumToString.insert(RTL,            "RTL");
-    enumToString.insert(LOITER,         "Loiter");
-    enumToString.insert(GUIDED,         "Guided");
-    enumToString.insert(INITIALIZING,   "Initializing");
+    enumToString.insert(MANUAL,         QStringLiteral("Manual"));
+    enumToString.insert(CIRCLE,         QStringLiteral("Circle"));
+    enumToString.insert(STABILIZE,      QStringLiteral("Stabilize"));
+    enumToString.insert(TRAINING,       QStringLiteral("Training"));
+    enumToString.insert(ACRO,           QStringLiteral("Acro"));
+    enumToString.insert(FLY_BY_WIRE_A,  QStringLiteral("FWB A"));
+    enumToString.insert(FLY_BY_WIRE_B,  QStringLiteral("FWB B"));
+    enumToString.insert(CRUISE,         QStringLiteral("Cruise"));
+    enumToString.insert(AUTOTUNE,       QStringLiteral("Autotune"));
+    enumToString.insert(AUTO,           QStringLiteral("Auto"));
+    enumToString.insert(RTL,            QStringLiteral("RTL"));
+    enumToString.insert(LOITER,         QStringLiteral("Loiter"));
+    enumToString.insert(GUIDED,         QStringLiteral("Guided"));
+    enumToString.insert(INITIALIZING,   QStringLiteral("Initializing"));
 
     setEnumToStringMapping(enumToString);
 }

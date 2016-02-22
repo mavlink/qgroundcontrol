@@ -46,7 +46,7 @@ QString PowerComponent::description(void) const
 
 QString PowerComponent::iconResource(void) const
 {
-    return "/qmlimages/PowerComponentIcon.png";
+    return QStringLiteral("/qmlimages/PowerComponentIcon.png");
 }
 
 bool PowerComponent::requiresSetup(void) const
@@ -57,9 +57,9 @@ bool PowerComponent::requiresSetup(void) const
 bool PowerComponent::setupComplete(void) const
 {
     QVariant cvalue, evalue, nvalue;
-    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "BAT_V_CHARGED")->rawValue().toFloat() != 0.0f &&
-        _autopilot->getParameterFact(FactSystem::defaultComponentId, "BAT_V_EMPTY")->rawValue().toFloat() != 0.0f &&
-        _autopilot->getParameterFact(FactSystem::defaultComponentId, "BAT_N_CELLS")->rawValue().toInt() != 0;
+    return _autopilot->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("BAT_V_CHARGED"))->rawValue().toFloat() != 0.0f &&
+        _autopilot->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("BAT_V_EMPTY"))->rawValue().toFloat() != 0.0f &&
+        _autopilot->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("BAT_N_CELLS"))->rawValue().toInt() != 0;
 }
 
 QStringList PowerComponent::setupCompleteChangedTriggerList(void) const
@@ -69,12 +69,12 @@ QStringList PowerComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl PowerComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/PowerComponent.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/PowerComponent.qml"));
 }
 
 QUrl PowerComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/PowerComponentSummary.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/PowerComponentSummary.qml"));
 }
 
 QString PowerComponent::prerequisiteSetup(void) const

@@ -58,8 +58,8 @@ Fact* FactGroup::getFact(const QString& name)
 {
     Fact* fact = NULL;
 
-    if (name.contains(".")) {
-        QStringList parts = name.split(".");
+    if (name.contains(QChar('.'))) {
+        QStringList parts = name.split(QChar('.'));
         if (parts.count() != 2) {
             qWarning() << "Only single level of hierarchy supported";
             return NULL;
@@ -167,7 +167,7 @@ void FactGroup::_loadMetaData(const QString& jsonFilename)
     }
 
     QJsonArray jsonArray = jsonValue.toArray();
-    foreach(QJsonValue property, jsonArray) {
+    foreach(const QJsonValue& property, jsonArray) {
         if (!property.isObject()) {
             qWarning() << "properties object should contain only objects";
             return;

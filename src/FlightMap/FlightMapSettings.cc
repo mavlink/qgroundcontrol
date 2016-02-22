@@ -41,10 +41,8 @@ void FlightMapSettings::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
-    qmlRegisterUncreatableType<FlightMapSettings> ("QGroundControl", 1, 0, "FlightMapSetting", "Reference only");
-
-    _supportedMapProviders << "Bing" << "Google"; // << "OpenStreetMap";
-
+    qmlRegisterUncreatableType<FlightMapSettings> ("QGroundControl", 1, 0, "FlightMapSetting", QStringLiteral("Reference only"));
+    _supportedMapProviders << QStringLiteral("Bing") << QStringLiteral("Google");// << QStringLiteral("OpenStreetMap");
     _loadSettings();
 }
 
@@ -89,15 +87,13 @@ void FlightMapSettings::_setMapTypesForCurrentProvider(void)
 {
     _mapTypes.clear();
 
-    if (_mapProvider == "Bing") {
-        _mapTypes << "Street Map" << "Satellite Map" << "Hybrid Map";
-    } else if (_mapProvider == "Google") {
-        _mapTypes << "Street Map" << "Satellite Map" << "Terrain Map";
-    /*
-    } else if (_mapProvider == "OpenStreetMap") {
-        _mapTypes << "Street Map";
-    */
-    }
+    if (_mapProvider == QLatin1String("Bing")) {
+        _mapTypes << QStringLiteral("Street Map") << QStringLiteral("Satellite Map") << QStringLiteral("Hybrid Map");
+    } else if (_mapProvider == QLatin1String("Google")) {
+        _mapTypes << QStringLiteral("Street Map") << QStringLiteral("Satellite Map") << QStringLiteral("Terrain Map");
+    } /* else if (_mapProvider == QLatin1String("OpenStreetMap")) {
+        _mapTypes << QStringLiteral("Street Map");
+    } */
 
     emit mapTypesChanged(_mapTypes);
 }

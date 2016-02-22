@@ -50,10 +50,10 @@ void QwtPlot::initAxesData()
     d_axisData[xBottom]->scaleWidget =
         new QwtScaleWidget( QwtScaleDraw::BottomScale, this );
 
-    d_axisData[yLeft]->scaleWidget->setObjectName( "QwtPlotAxisYLeft" );
-    d_axisData[yRight]->scaleWidget->setObjectName( "QwtPlotAxisYRight" );
-    d_axisData[xTop]->scaleWidget->setObjectName( "QwtPlotAxisXTop" );
-    d_axisData[xBottom]->scaleWidget->setObjectName( "QwtPlotAxisXBottom" );
+    d_axisData[yLeft]->scaleWidget->setObjectName( QStringLiteral("QwtPlotAxisYLeft") );
+    d_axisData[yRight]->scaleWidget->setObjectName( QStringLiteral("QwtPlotAxisYRight") );
+    d_axisData[xTop]->scaleWidget->setObjectName( QStringLiteral("QwtPlotAxisXTop") );
+    d_axisData[xBottom]->scaleWidget->setObjectName( QStringLiteral("QwtPlotAxisXBottom") );
 
 #if 1
     // better find the font sizes from the application font

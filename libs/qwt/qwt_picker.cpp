@@ -1503,7 +1503,7 @@ void QwtPicker::updateDisplay()
         if ( rw.isNull() )
         {
             rw = new QwtPickerRubberband( this, w );
-            rw->setObjectName( "PickerRubberBand" );
+            rw->setObjectName( QStringLiteral("PickerRubberBand") );
             rw->resize( w->size() );
         }
 
@@ -1538,7 +1538,7 @@ void QwtPicker::updateDisplay()
         if ( tw.isNull() )
         {
             tw = new QwtPickerTracker( this, w );
-            tw->setObjectName( "PickerTracker" );
+            tw->setObjectName( QStringLiteral("PickerTracker") );
             tw->resize( w->size() );
         }
         tw->setFont( d_data->trackerFont );

@@ -113,17 +113,17 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
 
     int labelRow = curvesWidgetLayout->rowCount();
 
-    selectAllCheckBox = new QCheckBox("", this);
+    selectAllCheckBox = new QCheckBox(QLatin1String(""), this);
     connect(selectAllCheckBox, &QCheckBox::clicked, this, &LinechartWidget::selectAllCurves);
     curvesWidgetLayout->addWidget(selectAllCheckBox, labelRow, 0, 1, 2);
 
     label = new QLabel(this);
-    label->setText("Name");
+    label->setText(QStringLiteral("Name"));
     curvesWidgetLayout->addWidget(label, labelRow, 2);
 
     // Value
     value = new QLabel(this);
-    value->setText("Val");
+    value->setText(QStringLiteral("Val"));
     curvesWidgetLayout->addWidget(value, labelRow, 3);
 
     // Unit
@@ -131,12 +131,12 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
 
     // Mean
     mean = new QLabel(this);
-    mean->setText("Mean");
+    mean->setText(QStringLiteral("Mean"));
     curvesWidgetLayout->addWidget(mean, labelRow, 5);
 
     // Variance
     variance = new QLabel(this);
-    variance->setText("Variance");
+    variance->setText(QStringLiteral("Variance"));
     curvesWidgetLayout->addWidget(variance, labelRow, 6);
 
     // Create the layout
@@ -182,26 +182,26 @@ void LinechartWidget::selectAllCurves(bool all)
 void LinechartWidget::writeSettings()
 {
     QSettings settings;
-    settings.beginGroup("LINECHART");
+    settings.beginGroup(QStringLiteral("LINECHART"));
     bool enforceGT = (!autoGroundTimeSet && timeButton->isChecked()) ? true : false;
-    if (timeButton) settings.setValue("ENFORCE_GROUNDTIME", enforceGT);
-    if (ui.showUnitsCheckBox) settings.setValue("SHOW_UNITS", ui.showUnitsCheckBox->isChecked());
-    if (ui.shortNameCheckBox) settings.setValue("SHORT_NAMES", ui.shortNameCheckBox->isChecked());
+    if (timeButton) settings.setValue(QStringLiteral("ENFORCE_GROUNDTIME"), enforceGT);
+    if (ui.showUnitsCheckBox) settings.setValue(QStringLiteral("SHOW_UNITS"), ui.showUnitsCheckBox->isChecked());
+    if (ui.shortNameCheckBox) settings.setValue(QStringLiteral("SHORT_NAMES"), ui.shortNameCheckBox->isChecked());
     settings.endGroup();
 }
 
 void LinechartWidget::readSettings()
 {
     QSettings settings;
-    settings.beginGroup("LINECHART");
+    settings.beginGroup(QStringLiteral("LINECHART"));
     if (activePlot) {
-        timeButton->setChecked(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
-        activePlot->enforceGroundTime(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
-        timeButton->setChecked(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
+        timeButton->setChecked(settings.value(QStringLiteral("ENFORCE_GROUNDTIME"), timeButton->isChecked()).toBool());
+        activePlot->enforceGroundTime(settings.value(QStringLiteral("ENFORCE_GROUNDTIME"), timeButton->isChecked()).toBool());
+        timeButton->setChecked(settings.value(QStringLiteral("ENFORCE_GROUNDTIME"), timeButton->isChecked()).toBool());
         //userGroundTimeSet = settings.value("USER_GROUNDTIME", timeButton->isChecked()).toBool();
     }
-    if (ui.showUnitsCheckBox) ui.showUnitsCheckBox->setChecked(settings.value("SHOW_UNITS", ui.showUnitsCheckBox->isChecked()).toBool());
-    if (ui.shortNameCheckBox) ui.shortNameCheckBox->setChecked(settings.value("SHORT_NAMES", ui.shortNameCheckBox->isChecked()).toBool());
+    if (ui.showUnitsCheckBox) ui.showUnitsCheckBox->setChecked(settings.value(QStringLiteral("SHOW_UNITS"), ui.showUnitsCheckBox->isChecked()).toBool());
+    if (ui.shortNameCheckBox) ui.shortNameCheckBox->setChecked(settings.value(QStringLiteral("SHORT_NAMES"), ui.shortNameCheckBox->isChecked()).toBool());
     settings.endGroup();
 }
 
@@ -267,21 +267,21 @@ void LinechartWidget::createLayout()
 
     hlayout->addStretch();
 
-    QLabel *timeScaleLabel = new QLabel("Time axis:");
+    QLabel *timeScaleLabel = new QLabel(QStringLiteral("Time axis:"));
     hlayout->addWidget(timeScaleLabel);
 
     timeScaleCmb = new QComboBox(this);
-    timeScaleCmb->addItem("10 seconds", 10);
-    timeScaleCmb->addItem("20 seconds", 20);
-    timeScaleCmb->addItem("30 seconds", 30);
-    timeScaleCmb->addItem("40 seconds", 40);
-    timeScaleCmb->addItem("50 seconds", 50);
-    timeScaleCmb->addItem("1 minute", 60);
-    timeScaleCmb->addItem("2 minutes", 60*2);
-    timeScaleCmb->addItem("3 minutes", 60*3);
-    timeScaleCmb->addItem("4 minutes", 60*4);
-    timeScaleCmb->addItem("5 minutes", 60*5);
-    timeScaleCmb->addItem("10 minutes", 60*10);
+    timeScaleCmb->addItem(QStringLiteral("10 seconds"), 10);
+    timeScaleCmb->addItem(QStringLiteral("20 seconds"), 20);
+    timeScaleCmb->addItem(QStringLiteral("30 seconds"), 30);
+    timeScaleCmb->addItem(QStringLiteral("40 seconds"), 40);
+    timeScaleCmb->addItem(QStringLiteral("50 seconds"), 50);
+    timeScaleCmb->addItem(QStringLiteral("1 minute"), 60);
+    timeScaleCmb->addItem(QStringLiteral("2 minutes"), 60*2);
+    timeScaleCmb->addItem(QStringLiteral("3 minutes"), 60*3);
+    timeScaleCmb->addItem(QStringLiteral("4 minutes"), 60*4);
+    timeScaleCmb->addItem(QStringLiteral("5 minutes"), 60*5);
+    timeScaleCmb->addItem(QStringLiteral("10 minutes"), 60*10);
     //timeScaleCmb->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     timeScaleCmb->setMinimumContentsLength(12);
 
@@ -380,7 +380,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
 
-            QString line = QString("%1\t%2\t%3\t%4\n").arg(time).arg(uasId).arg(curve).arg(value, 0, 'e', 15);
+            QString line = QStringLiteral("%1\t%2\t%3\t%4\n").arg(time).arg(uasId).arg(curve).arg(value, 0, 'e', 15);
             logFile->write(line.toLatin1());
         }
     }
@@ -460,7 +460,7 @@ void LinechartWidget::startLogging()
         tr("Save Log File"),
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         tr("Log Files (*.log)"),
-        "log"); // Default type
+        QStringLiteral("log")); // Default type
 
     qDebug() << "SAVE FILE " << fileName;
 
@@ -564,7 +564,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     // Value
     value = new QLabel(this);
     value->setNum(0.00);
-    value->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
+    value->setStyleSheet(QStringLiteral("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
     value->setToolTip(tr("Current value of %1 in %2 units").arg(curve, unit));
     value->setWhatsThis(tr("Current value of %1 in %2 units").arg(curve, unit));
     curveLabels->insert(curve+unit, value);
@@ -583,7 +583,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     // Mean
     mean = new QLabel(this);
     mean->setNum(0.00);
-    mean->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
+    mean->setStyleSheet(QStringLiteral("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
     mean->setToolTip(tr("Arithmetic mean of %1 in %2 units").arg(curve, unit));
     mean->setWhatsThis(tr("Arithmetic mean of %1 in %2 units").arg(curve, unit));
     curveMeans->insert(curve+unit, mean);
@@ -598,7 +598,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     // Variance
     variance = new QLabel(this);
     variance->setNum(0.00);
-    variance->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
+    variance->setStyleSheet(QStringLiteral("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
     variance->setToolTip(tr("Variance of %1 in (%2)^2 units").arg(curve, unit));
     variance->setWhatsThis(tr("Variance of %1 in (%2)^2 units").arg(curve, unit));
     curveVariances->insert(curve+unit, variance);
@@ -670,13 +670,13 @@ void LinechartWidget::removeCurve(QString curve)
 void LinechartWidget::recolor()
 {
     activePlot->styleChanged(qgcApp()->styleIsDark());
-    foreach (const QString &key, colorIcons.keys())
+    for (auto it = colorIcons.begin(), end = colorIcons.end(); it != end; it++)
     {
-        QWidget* colorIcon = colorIcons.value(key, 0);
+        QWidget* colorIcon = colorIcons.value(it.key(), 0);
         if (colorIcon && !colorIcon->styleSheet().isEmpty())
         {
             QString colorstyle;
-            QColor color = activePlot->getColorForCurve(key);
+            QColor color = activePlot->getColorForCurve(it.key());
             colorstyle = colorstyle.sprintf("QWidget { background-color: #%02X%02X%02X; }", color.red(), color.green(), color.blue());
             colorIcon->setStyleSheet(colorstyle);
         }
@@ -706,28 +706,21 @@ void LinechartWidget::filterCurves(const QString &filter)
 {
     //qDebug() << "filterCurves: filter: " << filter;
 
-    if (filter != "")
+    if (!filter.isEmpty())
     {
         /* Hide Elements which do not match the filter pattern */
         QStringMatcher stringMatcher(filter, Qt::CaseInsensitive);
-        foreach (const QString &key, colorIcons.keys())
+        for (auto it = colorIcons.begin(), end = colorIcons.end(); it != end; it++)
         {
-            if (stringMatcher.indexIn(key) < 0)
-            {
-                filterCurve(key, false);
-            }
-            else
-            {
-                filterCurve(key, true);
-            }
+            filterCurve(it.key(), stringMatcher.indexIn(it.key()) >= 0);
         }
     }
     else
     {
         /* Show all Elements */
-        foreach (const QString &key, colorIcons.keys())
+        for (auto it = colorIcons.begin(), end = colorIcons.end(); it != end; it++)
         {
-            filterCurve(key, true);
+            filterCurve(it.key(), true);
         }
     }
 }
@@ -736,51 +729,43 @@ QString LinechartWidget::getCurveName(const QString& key, bool shortEnabled)
 {
     if (shortEnabled)
     {
-        QString name;
-        QStringList parts = curveNames.value(key).split(".");
-        if (parts.length() > 1)
-        {
-            name = parts.at(1);
-        }
-        else
-        {
-            name = parts.at(0);
-        }
+        QStringList parts = curveNames.value(key).split(QChar('.'));
+        QString name = parts.at( (parts.length() > 1) ? 1 : 0);
 
         const int sizeLimit = 20;
 
         // Replace known words with abbreviations
         if (name.length() > sizeLimit)
         {
-            name.replace("gyroscope", "gyro");
-            name.replace("accelerometer", "acc");
-            name.replace("magnetometer", "mag");
-            name.replace("distance", "dist");
-            name.replace("ailerons", "ail");
-            name.replace("altitude", "alt");
-            name.replace("waypoint", "wp");
-            name.replace("throttle", "thr");
-            name.replace("elevator", "elev");
-            name.replace("rudder", "rud");
-            name.replace("error", "err");
-            name.replace("version", "ver");
-            name.replace("message", "msg");
-            name.replace("count", "cnt");
-            name.replace("value", "val");
-            name.replace("source", "src");
-            name.replace("index", "idx");
-            name.replace("type", "typ");
-            name.replace("mode", "mod");
+            name.replace(QLatin1String("gyroscope"), QLatin1String("gyro"));
+            name.replace(QLatin1String("accelerometer"), QLatin1String("acc"));
+            name.replace(QLatin1String("magnetometer"), QLatin1String("mag"));
+            name.replace(QLatin1String("distance"), QLatin1String("dist"));
+            name.replace(QLatin1String("ailerons"), QLatin1String("ail"));
+            name.replace(QLatin1String("altitude"), QLatin1String("alt"));
+            name.replace(QLatin1String("waypoint"), QLatin1String("wp"));
+            name.replace(QLatin1String("throttle"), QLatin1String("thr"));
+            name.replace(QLatin1String("elevator"), QLatin1String("elev"));
+            name.replace(QLatin1String("rudder"), QLatin1String("rud"));
+            name.replace(QLatin1String("error"), QLatin1String("err"));
+            name.replace(QLatin1String("version"), QLatin1String("ver"));
+            name.replace(QLatin1String("message"), QLatin1String("msg"));
+            name.replace(QLatin1String("count"), QLatin1String("cnt"));
+            name.replace(QLatin1String("value"), QLatin1String("val"));
+            name.replace(QLatin1String("source"), QLatin1String("src"));
+            name.replace(QLatin1String("index"), QLatin1String("idx"));
+            name.replace(QLatin1String("type"), QLatin1String("typ"));
+            name.replace(QLatin1String("mode"), QLatin1String("mod"));
         }
 
         // Check if sub-part is still exceeding N chars
         if (name.length() > sizeLimit)
         {
-            name.replace("a", "");
-            name.replace("e", "");
-            name.replace("i", "");
-            name.replace("o", "");
-            name.replace("u", "");
+            name.replace(QChar('a'), QString());
+            name.replace(QChar('e'), QString());
+            name.replace(QChar('i'), QString());
+            name.replace(QChar('o'), QString());
+            name.replace(QChar('u'), QString());
         }
 
         return name;
@@ -793,9 +778,9 @@ QString LinechartWidget::getCurveName(const QString& key, bool shortEnabled)
 
 void LinechartWidget::setShortNames(bool enable)
 {
-    foreach (const QString &key, curveNames.keys())
+    for (auto it = curveNames.begin(), end = curveNames.end(); it != end; it++)
     {
-        curveNameLabels.value(key)->setText(getCurveName(key, enable));
+        curveNameLabels.value(it.key())->setText(getCurveName(it.key(), enable));
     }
 }
 
@@ -946,7 +931,7 @@ void LinechartWidget::takeButtonClick(bool checked)
             }
             else
             {
-                colorIcon->setStyleSheet("");
+                colorIcon->setStyleSheet(QLatin1String(""));
             }
         }
     }

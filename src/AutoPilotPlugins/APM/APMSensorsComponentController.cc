@@ -225,7 +225,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
     }
 
     if (text.contains(QLatin1Literal("progress <"))) {
-        QString percent = text.split("<").last().split(">").first();
+        QString percent = text.split(QStringLiteral("<")).last().split(QStringLiteral(">")).first();
         bool ok;
         int p = percent.toInt(&ok);
         if (ok) {
@@ -292,7 +292,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
             
             _orientationCalAreaHelpText->setProperty("text", "Place your vehicle into one of the Incomplete orientations shown below and hold it still");
             
-            if (text == "accel") {
+            if (text == QLatin1String("accel")) {
                 _accelCalInProgress = true;
                 _orientationCalDownSideVisible = true;
                 _orientationCalUpsideDownSideVisible = true;
@@ -300,7 +300,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
                 _orientationCalRightSideVisible = true;
                 _orientationCalTailDownSideVisible = true;
                 _orientationCalNoseDownSideVisible = true;
-            } else if (text == "mag") {
+            } else if (text == QLatin1String("mag")) {
                 _magCalInProgress = true;
                 _orientationCalDownSideVisible = true;
                 _orientationCalUpsideDownSideVisible = true;
@@ -320,7 +320,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
     }
     
     if (text.endsWith(QLatin1Literal("orientation detected"))) {
-        QString side = text.section(" ", 0, 0);
+        QString side = text.section(QStringLiteral(" "), 0, 0);
         qDebug() << "Side started" << side;
         
         if (side == QLatin1Literal("down")) {
@@ -367,7 +367,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
     }
     
     if (text.endsWith(QLatin1Literal("side done, rotate to a different side"))) {
-        QString side = text.section(" ", 0, 0);
+        QString side = text.section(QStringLiteral(" "), 0, 0);
         qDebug() << "Side finished" << side;
         
         if (side == QLatin1Literal("down")) {

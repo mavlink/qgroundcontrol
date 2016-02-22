@@ -74,7 +74,7 @@ void GenericSurfacePainter::init(const BufferFormat &format)
         m_imageFormat = QImage::Format_RGB888;
         break;
     default:
-        throw QString("Unsupported format");
+        throw QStringLiteral("Unsupported format");
     }
 }
 

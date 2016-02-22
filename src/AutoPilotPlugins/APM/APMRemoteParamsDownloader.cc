@@ -38,7 +38,7 @@
 
 #include "APMRemoteParamsDownloader.h"
 
-#define FRAME_PARAMS_LIST QUrl("https://api.github.com/repos/diydrones/ardupilot/contents/Tools/Frame_params")
+#define FRAME_PARAMS_LIST QUrl(QStringLiteral("https://api.github.com/repos/diydrones/ardupilot/contents/Tools/Frame_params"))
 #define FRAME_PARAMS_URL "https://raw.github.com/diydrones/ardupilot/master/Tools/Frame_params/"
 
 static QString dataLocation;
@@ -97,8 +97,8 @@ void APMRemoteParamsDownloader::startFileDownloadRequest()
     // Find the correct file from the json file list.
     while(curr != end) {
         obj = (*curr).toObject();
-        url = QUrl(obj["download_url"].toString());
-        QString name = obj["name"].toString();
+        url = QUrl(obj[QStringLiteral("download_url")].toString());
+        QString name = obj[QStringLiteral("name")].toString();
         if (name == m_fileToDownload) {
             break;
         }
@@ -111,7 +111,7 @@ void APMRemoteParamsDownloader::startFileDownloadRequest()
     if (!parameterDir.exists())
         parameterDir.mkpath(dataLocation);
 
-    QString filename = parameterDir.absoluteFilePath(obj["name"].toString());
+    QString filename = parameterDir.absoluteFilePath(obj[QStringLiteral("name")].toString());
 
     if(m_downloadedParamFile)
         m_downloadedParamFile->deleteLater();

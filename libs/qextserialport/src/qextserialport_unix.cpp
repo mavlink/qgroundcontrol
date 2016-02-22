@@ -59,7 +59,7 @@ static QString fullPortName(const QString &name)
 {
     if (name.startsWith(QLatin1Char('/')))
         return name;
-    return QLatin1String("/dev/")+name;
+    return QStringLiteral("/dev/")+name;
 }
 
 bool QextSerialPortPrivate::open_sys(QIODevice::OpenMode mode)

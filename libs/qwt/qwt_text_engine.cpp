@@ -98,7 +98,7 @@ public:
 private:
     int findAscent( const QFont &font ) const
     {
-        static const QString dummy( "E" );
+        static const QString dummy( QStringLiteral("E") );
         static const QColor white( Qt::white );
 
         const QFontMetrics fm( font );

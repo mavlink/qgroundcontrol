@@ -53,7 +53,7 @@ void SetupViewTest::_clickThrough_test(void)
     QTest::qWait(1000);
     
     const QVariantList& components = autopilot->vehicleComponents();
-    foreach(QVariant varComponent, components) {
+    foreach(const QVariant& varComponent, components) {
         VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(varComponent));
         qDebug() << "Showing" << component->name();
         qgcApp()->_showSetupVehicleComponent(component);

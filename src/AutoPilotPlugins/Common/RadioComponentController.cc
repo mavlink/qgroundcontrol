@@ -312,7 +312,7 @@ void RadioComponentController::nextButtonClicked(void)
             if (_unitTestMode) {
                 emit nextButtonMessageBoxDisplayed();
             } else {
-                qgcApp()->showMessage(QString("Detected %1 radio channels. To operate PX4, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
+                qgcApp()->showMessage(QStringLiteral("Detected %1 radio channels. To operate PX4, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
             }
             return;
         }
@@ -571,7 +571,7 @@ void RadioComponentController::_saveFlapsDown(void)
         if (_unitTestMode) {
             emit nextButtonMessageBoxDisplayed();
         } else {
-            qgcApp()->showMessage("Flaps switch has not yet been detected.");
+            qgcApp()->showMessage(QStringLiteral("Flaps switch has not yet been detected."));
         }
         return;
     }
@@ -745,10 +745,10 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
     
     // Pull parameters and update
     
-    QString minTpl("RC%1_MIN");
-    QString maxTpl("RC%1_MAX");
-    QString trimTpl("RC%1_TRIM");
-    QString revTpl("RC%1_REV");
+    QString minTpl(QStringLiteral("RC%1_MIN"));
+    QString maxTpl(QStringLiteral("RC%1_MAX"));
+    QString trimTpl(QStringLiteral("RC%1_TRIM"));
+    QString revTpl(QStringLiteral("RC%1_REV"));
     
     bool convertOk;
     
@@ -876,10 +876,10 @@ void RadioComponentController::_writeCalibration(void)
     
     _validateCalibration();
     
-    QString minTpl("RC%1_MIN");
-    QString maxTpl("RC%1_MAX");
-    QString trimTpl("RC%1_TRIM");
-    QString revTpl("RC%1_REV");
+    QString minTpl(QStringLiteral("RC%1_MIN"));
+    QString maxTpl(QStringLiteral("RC%1_MAX"));
+    QString trimTpl(QStringLiteral("RC%1_TRIM"));
+    QString revTpl(QStringLiteral("RC%1_REV"));
     
     // Note that the rc parameters are all float, so you must cast to float in order to get the right QVariant
     for (int chan = 0; chan<_chanMax(); chan++) {
@@ -942,8 +942,8 @@ void RadioComponentController::_writeCalibration(void)
     
     if (_px4Vehicle()) {
         // If the RC_CHAN_COUNT parameter is available write the channel count
-        if (parameterExists(FactSystem::defaultComponentId, "RC_CHAN_CNT")) {
-            getParameterFact(FactSystem::defaultComponentId, "RC_CHAN_CNT")->setRawValue(_chanCount);
+        if (parameterExists(FactSystem::defaultComponentId, QStringLiteral("RC_CHAN_CNT"))) {
+            getParameterFact(FactSystem::defaultComponentId, QStringLiteral("RC_CHAN_CNT"))->setRawValue(_chanCount);
         }
     }
     

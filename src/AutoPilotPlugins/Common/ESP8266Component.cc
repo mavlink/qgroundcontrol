@@ -43,7 +43,7 @@ QString ESP8266Component::description(void) const
 
 QString ESP8266Component::iconResource(void) const
 {
-    return "/qmlimages/wifi.svg";
+    return QStringLiteral("/qmlimages/wifi.svg");
 }
 
 bool ESP8266Component::requiresSetup(void) const
@@ -63,12 +63,12 @@ QStringList ESP8266Component::setupCompleteChangedTriggerList(void) const
 
 QUrl ESP8266Component::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/ESP8266Component.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/ESP8266Component.qml"));
 }
 
 QUrl ESP8266Component::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/ESP8266ComponentSummary.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/ESP8266ComponentSummary.qml"));
 }
 
 QString ESP8266Component::prerequisiteSetup(void) const

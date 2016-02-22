@@ -59,7 +59,7 @@ void AirframeComponentAirframes::insert(QString& group, QString& image, QString&
         g->name = group;
 
         if (image.length() > 0) {
-            g->imageResource = QString(":/qmlimages/Airframe/").append(image);
+            g->imageResource = QStringLiteral(":/qmlimages/Airframe/").append(image);
             if (!QFile::exists(g->imageResource)) {
                 g->imageResource.clear();
             } else {
@@ -68,7 +68,7 @@ void AirframeComponentAirframes::insert(QString& group, QString& image, QString&
         }
 
         if (g->imageResource.isEmpty()) {
-            g->imageResource = QString("qrc:/qmlimages/Airframe/AirframeUnknown");
+            g->imageResource = QStringLiteral("qrc:/qmlimages/Airframe/AirframeUnknown");
         }
 
         rgAirframeTypes.insert(group, g);

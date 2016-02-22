@@ -32,22 +32,22 @@ const char* ValuesWidgetController::_smallValuesKey =   "small";
 ValuesWidgetController::ValuesWidgetController(void)
 {
     QSettings settings;
-    QStringList largeDefaults;
+    QStringList largeDefaults = {QStringLiteral("Vehicle.altitudeRelative"), QStringLiteral("Vehicle.groundSpeed")};
+
 
     settings.beginGroup(_groupKey);
 
-    largeDefaults << "Vehicle.altitudeRelative" << "Vehicle.groundSpeed";
     _largeValues = settings.value(_largeValuesKey, largeDefaults).toStringList();
     _smallValues = settings.value(_smallValuesKey, QStringList()).toStringList();
 
-    _altitudeProperties << "altitudeRelative" << "altitudeAMSL";
+    _altitudeProperties << QStringLiteral("altitudeRelative") << QStringLiteral("altitudeAMSL");
 
     // Keep back compat for removed WGS84 value
-    if (_largeValues.contains ("Vehicle.altitudeWGS84")) {
-        setLargeValues(_largeValues.replaceInStrings("Vehicle.altitudeWGS84", "Vehicle.altitudeRelative"));
+    if (_largeValues.contains (QStringLiteral("Vehicle.altitudeWGS84"))) {
+        setLargeValues(_largeValues.replaceInStrings(QStringLiteral("Vehicle.altitudeWGS84"), QStringLiteral("Vehicle.altitudeRelative")));
     }
-    if (_smallValues.contains ("Vehicle.altitudeWGS84")) {
-        setSmallValues(_largeValues.replaceInStrings("Vehicle.altitudeWGS84", "Vehicle.altitudeRelative"));
+    if (_smallValues.contains (QStringLiteral("Vehicle.altitudeWGS84"))) {
+        setSmallValues(_largeValues.replaceInStrings(QStringLiteral("Vehicle.altitudeWGS84"), QStringLiteral("Vehicle.altitudeRelative")));
     }
 }
 

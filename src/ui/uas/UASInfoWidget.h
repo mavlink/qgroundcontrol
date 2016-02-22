@@ -48,7 +48,7 @@ class UASInfoWidget : public QGCDockWidget
 {
     Q_OBJECT
 public:
-    UASInfoWidget(const QString& title, QAction* action, QWidget *parent = 0, QString name = "");
+    UASInfoWidget(const QString& title, QAction* action, QWidget *parent = 0, QString name = QLatin1String(""));
     ~UASInfoWidget();
 
 public slots:

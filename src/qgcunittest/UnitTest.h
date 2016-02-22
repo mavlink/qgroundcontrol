@@ -38,7 +38,7 @@
 #include "QGCMAVLink.h"
 #include "LinkInterface.h"
 
-#define UT_REGISTER_TEST(className) static UnitTestWrapper<className> className(#className);
+#define UT_REGISTER_TEST(className) static UnitTestWrapper<className> className(QStringLiteral(#className));
 
 class QGCMessageBox;
 class QGCFileDialog;

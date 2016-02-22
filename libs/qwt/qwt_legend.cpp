@@ -145,12 +145,12 @@ public:
         QScrollArea( parent )
     {
         contentsWidget = new QWidget( this );
-        contentsWidget->setObjectName( "QwtLegendViewContents" );
+        contentsWidget->setObjectName( QStringLiteral("QwtLegendViewContents") );
 
         setWidget( contentsWidget );
         setWidgetResizable( false );
 
-        viewport()->setObjectName( "QwtLegendViewport" );
+        viewport()->setObjectName( QStringLiteral("QwtLegendViewport") );
 
         // QScrollArea::setWidget internally sets autoFillBackground to true
         // But we don't want a background.
@@ -259,7 +259,7 @@ QwtLegend::QwtLegend( QWidget *parent ):
     d_data = new QwtLegend::PrivateData;
 
     d_data->view = new QwtLegend::PrivateData::LegendView( this );
-    d_data->view->setObjectName( "QwtLegendView" );
+    d_data->view->setObjectName( QStringLiteral("QwtLegendView") );
     d_data->view->setFrameStyle( NoFrame );
 
     QwtDynGridLayout *gridLayout = new QwtDynGridLayout(

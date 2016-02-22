@@ -147,7 +147,7 @@ void QwtPlot::initPlot( const QwtText &title )
 
     // title
     d_data->titleLabel = new QwtTextLabel( this );
-    d_data->titleLabel->setObjectName( "QwtPlotTitle" );
+    d_data->titleLabel->setObjectName( QStringLiteral("QwtPlotTitle") );
     d_data->titleLabel->setFont( QFont( fontInfo().family(), 14, QFont::Bold ) );
 
     QwtText text( title );
@@ -156,7 +156,7 @@ void QwtPlot::initPlot( const QwtText &title )
 
     // footer
     d_data->footerLabel = new QwtTextLabel( this );
-    d_data->footerLabel->setObjectName( "QwtPlotFooter" );
+    d_data->footerLabel->setObjectName( QStringLiteral("QwtPlotFooter") );
 
     QwtText footer;
     footer.setRenderFlags( Qt::AlignCenter | Qt::TextWordWrap );
@@ -170,7 +170,7 @@ void QwtPlot::initPlot( const QwtText &title )
 
     // canvas
     d_data->canvas = new QwtPlotCanvas( this );
-    d_data->canvas->setObjectName( "QwtPlotCanvas" );
+    d_data->canvas->setObjectName( QStringLiteral("QwtPlotCanvas") );
     d_data->canvas->installEventFilter( this );
 
     setSizePolicy( QSizePolicy::MinimumExpanding,

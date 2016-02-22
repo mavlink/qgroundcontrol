@@ -45,7 +45,7 @@ QString SafetyComponent::description(void) const
 
 QString SafetyComponent::iconResource(void) const
 {
-    return "/qmlimages/SafetyComponentIcon.png";
+    return QStringLiteral("/qmlimages/SafetyComponentIcon.png");
 }
 
 bool SafetyComponent::requiresSetup(void) const
@@ -66,12 +66,12 @@ QStringList SafetyComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl SafetyComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/SafetyComponent.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/SafetyComponent.qml"));
 }
 
 QUrl SafetyComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/SafetyComponentSummary.qml");
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/SafetyComponentSummary.qml"));
 }
 
 QString SafetyComponent::prerequisiteSetup(void) const

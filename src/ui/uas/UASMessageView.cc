@@ -53,7 +53,7 @@ UASMessageViewWidget::UASMessageViewWidget(UASMessageHandler* uasMessageHandler,
     , _unconnectedWidget(NULL)
     , _uasMessageHandler(uasMessageHandler)
 {
-    setStyleSheet("QPlainTextEdit { border: 0px }");
+    setStyleSheet(QStringLiteral("QPlainTextEdit { border: 0px }"));
 
     // Enable the right-click menu for the text editor. This works because the plainTextEdit
     // widget has its context menu policy set to its actions list. So any actions we add

@@ -82,18 +82,18 @@ MissionItem::MissionItem(Vehicle* vehicle, QObject* parent)
     , _distance(0.0)
     , _homePositionSpecialCase(false)
     , _showHomePosition(false)
-    , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
-    , _autoContinueFact             (0, "AutoContinue",                 FactMetaData::valueTypeUint32)
-    , _commandFact                  (0, "",                             FactMetaData::valueTypeUint32)
-    , _frameFact                    (0, "",                             FactMetaData::valueTypeUint32)
-    , _param1Fact                   (0, "Param1:",                      FactMetaData::valueTypeDouble)
-    , _param2Fact                   (0, "Param2:",                      FactMetaData::valueTypeDouble)
-    , _param3Fact                   (0, "Param3:",                      FactMetaData::valueTypeDouble)
-    , _param4Fact                   (0, "Param4:",                      FactMetaData::valueTypeDouble)
-    , _param5Fact                   (0, "Latitude:",                    FactMetaData::valueTypeDouble)
-    , _param6Fact                   (0, "Longitude:",                   FactMetaData::valueTypeDouble)
-    , _param7Fact                   (0, "Altitude:",                    FactMetaData::valueTypeDouble)
-    , _supportedCommandFact         (0, "Command:",                     FactMetaData::valueTypeUint32)
+    , _altitudeRelativeToHomeFact   (0, QStringLiteral("Altitude is relative to home"), FactMetaData::valueTypeUint32)
+    , _autoContinueFact             (0, QStringLiteral("AutoContinue"),                 FactMetaData::valueTypeUint32)
+    , _commandFact                  (0, QStringLiteral(""),                             FactMetaData::valueTypeUint32)
+    , _frameFact                    (0, QStringLiteral(""),                             FactMetaData::valueTypeUint32)
+    , _param1Fact                   (0, QStringLiteral("Param1:"),                      FactMetaData::valueTypeDouble)
+    , _param2Fact                   (0, QStringLiteral("Param2:"),                      FactMetaData::valueTypeDouble)
+    , _param3Fact                   (0, QStringLiteral("Param3:"),                      FactMetaData::valueTypeDouble)
+    , _param4Fact                   (0, QStringLiteral("Param4:"),                      FactMetaData::valueTypeDouble)
+    , _param5Fact                   (0, QStringLiteral("Latitude:"),                    FactMetaData::valueTypeDouble)
+    , _param6Fact                   (0, QStringLiteral("Longitude:"),                   FactMetaData::valueTypeDouble)
+    , _param7Fact                   (0, QStringLiteral("Altitude:"),                    FactMetaData::valueTypeDouble)
+    , _supportedCommandFact         (0, QStringLiteral("Command:"),                     FactMetaData::valueTypeUint32)
     , _param1MetaData(FactMetaData::valueTypeDouble)
     , _param2MetaData(FactMetaData::valueTypeDouble)
     , _param3MetaData(FactMetaData::valueTypeDouble)
@@ -143,17 +143,17 @@ MissionItem::MissionItem(Vehicle*       vehicle,
     , _distance(0.0)
     , _homePositionSpecialCase(false)
     , _showHomePosition(false)
-    , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
-    , _commandFact                  (0, "",                             FactMetaData::valueTypeUint32)
-    , _frameFact                    (0, "",                             FactMetaData::valueTypeUint32)
-    , _param1Fact                   (0, "Param1:",                      FactMetaData::valueTypeDouble)
-    , _param2Fact                   (0, "Param2:",                      FactMetaData::valueTypeDouble)
-    , _param3Fact                   (0, "Param3:",                      FactMetaData::valueTypeDouble)
-    , _param4Fact                   (0, "Param4:",                      FactMetaData::valueTypeDouble)
-    , _param5Fact                   (0, "Lat/X:",                       FactMetaData::valueTypeDouble)
-    , _param6Fact                   (0, "Lon/Y:",                       FactMetaData::valueTypeDouble)
-    , _param7Fact                   (0, "Alt/Z:",                       FactMetaData::valueTypeDouble)
-    , _supportedCommandFact         (0, "Command:",                     FactMetaData::valueTypeUint32)
+    , _altitudeRelativeToHomeFact   (0, QStringLiteral("Altitude is relative to home"), FactMetaData::valueTypeUint32)
+    , _commandFact                  (0, QStringLiteral(""),                             FactMetaData::valueTypeUint32)
+    , _frameFact                    (0, QStringLiteral(""),                             FactMetaData::valueTypeUint32)
+    , _param1Fact                   (0, QStringLiteral("Param1:"),                      FactMetaData::valueTypeDouble)
+    , _param2Fact                   (0, QStringLiteral("Param2:"),                      FactMetaData::valueTypeDouble)
+    , _param3Fact                   (0, QStringLiteral("Param3:"),                      FactMetaData::valueTypeDouble)
+    , _param4Fact                   (0, QStringLiteral("Param4:"),                      FactMetaData::valueTypeDouble)
+    , _param5Fact                   (0, QStringLiteral("Lat/X:"),                       FactMetaData::valueTypeDouble)
+    , _param6Fact                   (0, QStringLiteral("Lon/Y:"),                       FactMetaData::valueTypeDouble)
+    , _param7Fact                   (0, QStringLiteral("Alt/Z:"),                       FactMetaData::valueTypeDouble)
+    , _supportedCommandFact         (0, QStringLiteral("Command:"),                     FactMetaData::valueTypeUint32)
     , _param1MetaData(FactMetaData::valueTypeDouble)
     , _param2MetaData(FactMetaData::valueTypeDouble)
     , _param3MetaData(FactMetaData::valueTypeDouble)
@@ -201,17 +201,17 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     , _distance(0.0)
     , _homePositionSpecialCase(false)
     , _showHomePosition(false)
-    , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
-    , _commandFact                  (0, "",                             FactMetaData::valueTypeUint32)
-    , _frameFact                    (0, "",                             FactMetaData::valueTypeUint32)
-    , _param1Fact                   (0, "Param1:",                      FactMetaData::valueTypeDouble)
-    , _param2Fact                   (0, "Param2:",                      FactMetaData::valueTypeDouble)
-    , _param3Fact                   (0, "Param3:",                      FactMetaData::valueTypeDouble)
-    , _param4Fact                   (0, "Param4:",                      FactMetaData::valueTypeDouble)
-    , _param5Fact                   (0, "Lat/X:",                       FactMetaData::valueTypeDouble)
-    , _param6Fact                   (0, "Lon/Y:",                       FactMetaData::valueTypeDouble)
-    , _param7Fact                   (0, "Alt/Z:",                       FactMetaData::valueTypeDouble)
-    , _supportedCommandFact         (0, "Command:",                     FactMetaData::valueTypeUint32)
+    , _altitudeRelativeToHomeFact   (0, QStringLiteral("Altitude is relative to home"), FactMetaData::valueTypeUint32)
+    , _commandFact                  (0, QStringLiteral(""),                             FactMetaData::valueTypeUint32)
+    , _frameFact                    (0, QStringLiteral(""),                             FactMetaData::valueTypeUint32)
+    , _param1Fact                   (0, QStringLiteral("Param1:"),                      FactMetaData::valueTypeDouble)
+    , _param2Fact                   (0, QStringLiteral("Param2:"),                      FactMetaData::valueTypeDouble)
+    , _param3Fact                   (0, QStringLiteral("Param3:"),                      FactMetaData::valueTypeDouble)
+    , _param4Fact                   (0, QStringLiteral("Param4:"),                      FactMetaData::valueTypeDouble)
+    , _param5Fact                   (0, QStringLiteral("Lat/X:"),                       FactMetaData::valueTypeDouble)
+    , _param6Fact                   (0, QStringLiteral("Lon/Y:"),                       FactMetaData::valueTypeDouble)
+    , _param7Fact                   (0, QStringLiteral("Alt/Z:"),                       FactMetaData::valueTypeDouble)
+    , _supportedCommandFact         (0, QStringLiteral("Command:"),                     FactMetaData::valueTypeUint32)
     , _param1MetaData(FactMetaData::valueTypeDouble)
     , _param2MetaData(FactMetaData::valueTypeDouble)
     , _param3MetaData(FactMetaData::valueTypeDouble)
@@ -310,7 +310,7 @@ void MissionItem::_setupMetaData(void)
 
     if (!_altitudeMetaData) {
         _altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
-        _altitudeMetaData->setRawUnits("meters");
+        _altitudeMetaData->setRawUnits(QStringLiteral("meters"));
         _altitudeMetaData->setDecimalPlaces(2);
 
         enumStrings.clear();
@@ -338,11 +338,11 @@ void MissionItem::_setupMetaData(void)
         _frameMetaData->setEnumInfo(enumStrings, enumValues);
 
         _latitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
-        _latitudeMetaData->setRawUnits("deg");
+        _latitudeMetaData->setRawUnits(QStringLiteral("deg"));
         _latitudeMetaData->setDecimalPlaces(7);
 
         _longitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
-        _longitudeMetaData->setRawUnits("deg");
+        _longitudeMetaData->setRawUnits(QStringLiteral("deg"));
         _longitudeMetaData->setDecimalPlaces(7);
 
     }
@@ -374,7 +374,7 @@ void MissionItem::save(QJsonObject& json)
 
 bool MissionItem::load(QTextStream &loadStream)
 {
-    const QStringList &wpParams = loadStream.readLine().split("\t");
+    const QStringList &wpParams = loadStream.readLine().split(QStringLiteral("\t"));
     if (wpParams.size() == 12) {
         setSequenceNumber(wpParams[0].toInt());
         setIsCurrentItem(wpParams[1].toInt() == 1 ? true : false);
@@ -406,7 +406,7 @@ bool MissionItem::load(const QJsonObject& json, QString& errorString)
     }
 
     if (json[_jsonTypeKey] != _itemType) {
-        errorString = QString("type found: %1 must be: %2").arg(json[_jsonTypeKey].toString()).arg(_itemType);
+        errorString = QStringLiteral("type found: %1 must be: %2").arg(json[_jsonTypeKey].toString(),_itemType);
         return false;
     }
 
@@ -553,13 +553,13 @@ QString MissionItem::commandDescription(void) const
 
 void MissionItem::_clearParamMetaData(void)
 {
-    _param1MetaData.setRawUnits("");
+    _param1MetaData.setRawUnits(QLatin1String(""));
     _param1MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
-    _param2MetaData.setRawUnits("");
+    _param2MetaData.setRawUnits(QLatin1String(""));
     _param2MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
-    _param3MetaData.setRawUnits("");
+    _param3MetaData.setRawUnits(QLatin1String(""));
     _param3MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
-    _param4MetaData.setRawUnits("");
+    _param4MetaData.setRawUnits(QLatin1String(""));
     _param4MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
 }
 
@@ -568,25 +568,25 @@ QmlObjectListModel* MissionItem::textFieldFacts(void)
     QmlObjectListModel* model = new QmlObjectListModel(this);
     
     if (rawEdit()) {
-        _param1Fact._setName("Param1:");
+        _param1Fact._setName(QStringLiteral("Param1:"));
         _param1Fact.setMetaData(_defaultParamMetaData);
         model->append(&_param1Fact);
-        _param2Fact._setName("Param2:");
+        _param2Fact._setName(QStringLiteral("Param2:"));
         _param2Fact.setMetaData(_defaultParamMetaData);
         model->append(&_param2Fact);
-        _param3Fact._setName("Param3:");
+        _param3Fact._setName(QStringLiteral("Param3:"));
         _param3Fact.setMetaData(_defaultParamMetaData);
         model->append(&_param3Fact);
-        _param4Fact._setName("Param4:");
+        _param4Fact._setName(QStringLiteral("Param4:"));
         _param4Fact.setMetaData(_defaultParamMetaData);
         model->append(&_param4Fact);
-        _param5Fact._setName("Lat/X:");
+        _param5Fact._setName(QStringLiteral("Lat/X:"));
         _param5Fact.setMetaData(_defaultParamMetaData);
         model->append(&_param5Fact);
-        _param6Fact._setName("Lon/Y:");
+        _param6Fact._setName(QStringLiteral("Lon/Y:"));
         _param6Fact.setMetaData(_defaultParamMetaData);
         model->append(&_param6Fact);
-        _param7Fact._setName("Alt/Z:");
+        _param7Fact._setName(QStringLiteral("Alt/Z:"));
         _param7Fact.setMetaData(_defaultParamMetaData);
         model->append(&_param7Fact);
     } else {
@@ -625,7 +625,7 @@ QmlObjectListModel* MissionItem::textFieldFacts(void)
         }
 
         if (specifiesCoordinate() && !altitudeAdded) {
-            _param7Fact._setName("Altitude:");
+            _param7Fact._setName(QStringLiteral("Altitude:"));
             _param7Fact.setMetaData(_altitudeMetaData);
             model->append(&_param7Fact);
         }
@@ -841,7 +841,7 @@ QString MissionItem::commandName(void) const
         const MavCmdInfo* mavCmdInfo = _missionCommands->getMavCmdInfo(command, _vehicle);
         return mavCmdInfo->friendlyName().isEmpty() ? mavCmdInfo->rawName() : mavCmdInfo->friendlyName();
     } else {
-        return QString("Unknown: %1").arg(command);
+        return QStringLiteral("Unknown: %1").arg(command);
     }
 }
 

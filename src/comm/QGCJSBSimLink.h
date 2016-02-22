@@ -49,7 +49,7 @@ class QGCJSBSimLink : public QGCHilLink
     //Q_INTERFACES(QGCJSBSimLinkInterface:LinkInterface)
 
 public:
-    QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString remoteHost=QStringLiteral("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
     ~QGCJSBSimLink();
 
     bool isConnected();
@@ -71,7 +71,7 @@ public:
 
     QString getVersion()
     {
-        return QString("FlightGear %1").arg(flightGearVersion);
+        return QStringLiteral("FlightGear %1").arg(flightGearVersion);
     }
 
     int getAirFrameIndex()

@@ -135,23 +135,23 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     case MAV_SEVERITY_ALERT:
     case MAV_SEVERITY_CRITICAL:
     case MAV_SEVERITY_ERROR:
-        style = QString("color: #f95e5e; font-weight:bold");
+        style = QStringLiteral("color: #f95e5e; font-weight:bold");
         _errorCount++;
         _errorCountTotal++;
         break;
     case MAV_SEVERITY_NOTICE:
     case MAV_SEVERITY_WARNING:
-        style = QString("color: #f9b55e; font-weight:bold");
+        style = QStringLiteral("color: #f9b55e; font-weight:bold");
         _warningCount++;
         break;
     default:
-        style = QString("color: #ffffff; font-weight:bold");
+        style = QStringLiteral("color: #ffffff; font-weight:bold");
         _normalCount++;
         break;
     }
 
     // And determine the text for the severitie
-    QString severityText("");
+    QString severityText(QLatin1String(""));
     switch (severity)
     {
     case MAV_SEVERITY_EMERGENCY:
@@ -184,9 +184,9 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     }
 
     // Finally preppend the properly-styled text with a timestamp.
-    QString dateString = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+    QString dateString = QDateTime::currentDateTime().toString(QStringLiteral("hh:mm:ss.zzz"));
     UASMessage* message = new UASMessage(compId, severity, text);
-    message->_setFormatedText(QString("<p style=\"color:#e0e0f0\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
+    message->_setFormatedText(QStringLiteral("<p style=\"color:#e0e0f0\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style,dateString).arg(compId).arg(severityText,text));
     _messages.append(message);
     int count = _messages.count();
     if (message->severityIsError()) {

@@ -89,9 +89,9 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     //   Changes here must reflect those in QGCMapEngine.cpp
 
     QList<QGeoMapType> mapTypes;
-    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Google Street Map",        "Google street map",            false,  false,  UrlFactory::GoogleMap);
-    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "Google Satellite Map",     "Google satellite map",         false,  false,  UrlFactory::GoogleSatellite);
-    mapTypes << QGeoMapType(QGeoMapType::TerrainMap,        "Google Terrain Map",       "Google terrain map",           false,  false,  UrlFactory::GoogleTerrain);
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         QStringLiteral("Google Street Map"),        QStringLiteral("Google street map"),            false,  false,  UrlFactory::GoogleMap);
+    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   QStringLiteral("Google Satellite Map"),     QStringLiteral("Google satellite map"),         false,  false,  UrlFactory::GoogleSatellite);
+    mapTypes << QGeoMapType(QGeoMapType::TerrainMap,        QStringLiteral("Google Terrain Map"),       QStringLiteral("Google terrain map"),           false,  false,  UrlFactory::GoogleTerrain);
 
     /* TODO:
      *  Proper google hybrid maps requires collecting two separate bimaps and overlaying them.
@@ -101,36 +101,36 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
      */
 
     // Bing
-    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Bing Street Map",          "Bing street map",              false,  false,  UrlFactory::BingMap);
-    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "Bing Satellite Map",       "Bing satellite map",           false,  false,  UrlFactory::BingSatellite);
-    mapTypes << QGeoMapType(QGeoMapType::HybridMap,         "Bing Hybrid Map",          "Bing hybrid map",              false,  false,  UrlFactory::BingHybrid);
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         QStringLiteral("Bing Street Map"),          QStringLiteral("Bing street map"),              false,  false,  UrlFactory::BingMap);
+    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   QStringLiteral("Bing Satellite Map"),       QStringLiteral("Bing satellite map"),           false,  false,  UrlFactory::BingSatellite);
+    mapTypes << QGeoMapType(QGeoMapType::HybridMap,         QStringLiteral("Bing Hybrid Map"),          QStringLiteral("Bing hybrid map"),              false,  false,  UrlFactory::BingHybrid);
 
     /* See: https://wiki.openstreetmap.org/wiki/Tile_usage_policy
     mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Open Street Map",          "Open Street map",              false, false, UrlFactory::OpenStreetMap);
     */
 
     // MapQuest
-    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "MapQuest Street Map",      "MapQuest street map",          false,  false,  UrlFactory::MapQuestMap);
-    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "MapQuest Satellite Map",   "MapQuest satellite map",       false,  false,  UrlFactory::MapQuestSat);
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         QStringLiteral("MapQuest Street Map"),      QStringLiteral("MapQuest street map"),          false,  false,  UrlFactory::MapQuestMap);
+    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   QStringLiteral("MapQuest Satellite Map"),   QStringLiteral("MapQuest satellite map"),       false,  false,  UrlFactory::MapQuestSat);
 
     /*
      * These are OK as you need your own token for accessing it. Out-of-the box, QGC does not even offer these unless you enter a proper MapBox token.
      */
 
-    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "MapBox Street Map",        "MapBox Street Map",            false,  false,  UrlFactory::MapBoxStreets);
-    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "MapBox Satellite Map",     "MapBox Satellite Map",         false,  false,  UrlFactory::MapBoxSatellite);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox High Contrast Map", "MapBox High Contrast Map",     false,  false,  UrlFactory::MapBoxHighContrast);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Light Map",         "MapBox Light Map",             false,  false,  UrlFactory::MapBoxLight);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Dark Map",          "MapBox Dark Map",              false,  false,  UrlFactory::MapBoxDark);
-    mapTypes << QGeoMapType(QGeoMapType::HybridMap,         "MapBox Hybrid Map",        "MapBox Hybrid Map",            false,  false,  UrlFactory::MapBoxHybrid);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Wheat Paste Map",   "MapBox Wheat Paste Map",       false,  false,  UrlFactory::MapBoxWheatPaste);
-    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "MapBox Streets Basic Map", "MapBox Streets Basic Map",     false,  false,  UrlFactory::MapBoxStreetsBasic);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Comic Map",         "MapBox Comic Map",             false,  false,  UrlFactory::MapBoxComic);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Outdoors Map",      "MapBox Outdoors Map",          false,  false,  UrlFactory::MapBoxOutdoors);
-    mapTypes << QGeoMapType(QGeoMapType::CycleMap,          "MapBox Run, Byke and Hike Map",   "MapBox Run, Byke and Hike Map",     false,  false,  UrlFactory::MapBoxRunBikeHike);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Pencil Map",        "MapBox Pencil Map",            false,  false,  UrlFactory::MapBoxPencil);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Pirates Map",       "MapBox Pirates Map",           false,  false,  UrlFactory::MapBoxPirates);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Emerald Map",       "MapBox Emerald Map",           false,  false,  UrlFactory::MapBoxEmerald);
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         QStringLiteral("MapBox Street Map"),        QStringLiteral("MapBox Street Map"),            false,  false,  UrlFactory::MapBoxStreets);
+    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   QStringLiteral("MapBox Satellite Map"),     QStringLiteral("MapBox Satellite Map"),         false,  false,  UrlFactory::MapBoxSatellite);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         QStringLiteral("MapBox High Contrast Map"), QStringLiteral("MapBox High Contrast Map"),     false,  false,  UrlFactory::MapBoxHighContrast);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         QStringLiteral("MapBox Light Map"),         QStringLiteral("MapBox Light Map"),             false,  false,  UrlFactory::MapBoxLight);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         QStringLiteral("MapBox Dark Map"),          QStringLiteral("MapBox Dark Map"),              false,  false,  UrlFactory::MapBoxDark);
+    mapTypes << QGeoMapType(QGeoMapType::HybridMap,         QStringLiteral("MapBox Hybrid Map"),        QStringLiteral("MapBox Hybrid Map"),            false,  false,  UrlFactory::MapBoxHybrid);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         QStringLiteral("MapBox Wheat Paste Map"),   QStringLiteral("MapBox Wheat Paste Map"),       false,  false,  UrlFactory::MapBoxWheatPaste);
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         QStringLiteral("MapBox Streets Basic Map"), QStringLiteral("MapBox Streets Basic Map"),     false,  false,  UrlFactory::MapBoxStreetsBasic);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         QStringLiteral("MapBox Comic Map"),         QStringLiteral("MapBox Comic Map"),             false,  false,  UrlFactory::MapBoxComic);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         QStringLiteral("MapBox Outdoors Map"),      QStringLiteral("MapBox Outdoors Map"),          false,  false,  UrlFactory::MapBoxOutdoors);
+    mapTypes << QGeoMapType(QGeoMapType::CycleMap,          QStringLiteral("MapBox Run, Byke and Hike Map"),   QStringLiteral("MapBox Run, Byke and Hike Map"),     false,  false,  UrlFactory::MapBoxRunBikeHike);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         QStringLiteral("MapBox Pencil Map"),        QStringLiteral("MapBox Pencil Map"),            false,  false,  UrlFactory::MapBoxPencil);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         QStringLiteral("MapBox Pirates Map"),       QStringLiteral("MapBox Pirates Map"),           false,  false,  UrlFactory::MapBoxPirates);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         QStringLiteral("MapBox Emerald Map"),       QStringLiteral("MapBox Emerald Map"),           false,  false,  UrlFactory::MapBoxEmerald);
 
     setSupportedMapTypes(mapTypes);
 
@@ -194,10 +194,10 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     if (parameters.contains(QStringLiteral("mapping.cache.directory")))
         cacheDir = parameters.value(QStringLiteral("mapping.cache.directory")).toString();
     else {
-        cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
+        cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QStringLiteral("/QGCMapCache55");
         if(!QDir::root().mkpath(cacheDir)) {
             qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
-            cacheDir = QDir::homePath() + QLatin1String("/.qgcmapscache/");
+            cacheDir = QDir::homePath() + QStringLiteral("/.qgcmapscache/");
         }
     }
     if(!QFileInfo(cacheDir).exists()) {

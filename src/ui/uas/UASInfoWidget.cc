@@ -205,7 +205,7 @@ void UASInfoWidget::refresh()
         errorString += QString(i.key() + ": %1 ").arg(i.value());
 
         // FIXME
-        errorString.replace("IMU:", "");
+        errorString.replace(QLatin1String("IMU:"), QLatin1String(""));
 
 
     }

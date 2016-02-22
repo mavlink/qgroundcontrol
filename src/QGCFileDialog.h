@@ -29,6 +29,7 @@
 #endif
 
 #include <QFileDialog>
+#include <QObject>
 
 /// @file
 ///     @brief Subclass of <a href="http://qt-project.org/doc/qt-5/qfiledialog.html">QFileDialog</a>
@@ -53,7 +54,7 @@
 */
 
 class QGCFileDialog : public QFileDialog {
-    
+    Q_OBJECT
 public:
 
     //! Static helper that will return an existing directory selected by the user.
@@ -134,7 +135,7 @@ public:
 private slots:
     /// @brief The exec slot is private because we only want QGCFileDialog users to use the static methods. Otherwise it will break
     ///        unit testing.
-    int exec(void) { return QGCFileDialog::exec(); }
+    int exec(void) { return 1; }
     
 private:
     static void    _validate(Options& options);

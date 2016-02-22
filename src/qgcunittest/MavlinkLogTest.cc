@@ -50,7 +50,7 @@ void MavlinkLogTest::init(void)
     
     // Make sure temp directory is clear of mavlink logs
     QDir tmpDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-    QStringList logFiles(tmpDir.entryList(QStringList(QString("*.%1").arg(_logFileExtension)), QDir::Files));
+    QStringList logFiles(tmpDir.entryList(QStringList(QStringLiteral("*.%1").arg(_logFileExtension)), QDir::Files));
     foreach(const QString &logFile, logFiles) {
         bool success = tmpDir.remove(logFile);
         Q_UNUSED(success);
@@ -62,7 +62,7 @@ void MavlinkLogTest::cleanup(void)
 {
     // Make sure no left over logs in temp directory
     QDir tmpDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-    QStringList logFiles(tmpDir.entryList(QStringList(QString("*.%1").arg(_logFileExtension)), QDir::Files));
+    QStringList logFiles(tmpDir.entryList(QStringList(QStringLiteral("*.%1").arg(_logFileExtension)), QDir::Files));
     QCOMPARE(logFiles.count(), 0);
     
     UnitTest::cleanup();
@@ -70,7 +70,7 @@ void MavlinkLogTest::cleanup(void)
 
 void MavlinkLogTest::_createTempLogFile(bool zeroLength)
 {
-    QGCTemporaryFile tempLogFile(QString("%1.%2").arg(_tempLogFileTemplate).arg(_logFileExtension));
+    QGCTemporaryFile tempLogFile(QStringLiteral("%1.%2").arg(QString(_tempLogFileTemplate),QString(_logFileExtension)));
     
     tempLogFile.open();
     if (!zeroLength) {
@@ -176,6 +176,6 @@ void MavlinkLogTest::_deleteTempLogFiles_test(void)
     _createTempLogFile(false);
     MAVLinkProtocol::deleteTempLogFiles();
     QDir tmpDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-    QStringList logFiles(tmpDir.entryList(QStringList(QString("*.%1").arg(_logFileExtension)), QDir::Files));
+    QStringList logFiles(tmpDir.entryList(QStringList(QStringLiteral("*.%1").arg(_logFileExtension)), QDir::Files));
     QCOMPARE(logFiles.count(), 0);
 }

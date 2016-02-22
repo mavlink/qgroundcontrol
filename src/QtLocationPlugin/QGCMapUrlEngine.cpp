@@ -47,13 +47,13 @@ UrlFactory::UrlFactory()
         _language = langs[0];
     }
     // Google version strings
-    _versionGoogleMap            = "m@336";
-    _versionGoogleSatellite      = "194";
-    _versionGoogleLabels         = "h@336";
-    _versionGoogleTerrain        = "t@132,r@336";
-    _secGoogleWord               = "Galileo";
+    _versionGoogleMap            = QLatin1String("m@336");
+    _versionGoogleSatellite      = QLatin1String("194");
+    _versionGoogleLabels         = QLatin1String("h@336");
+    _versionGoogleTerrain        = QLatin1String("t@132,r@336");
+    _secGoogleWord               = QLatin1String("Galileo");
     // BingMaps
-    _versionBingMaps             = "563";
+    _versionBingMaps             = QLatin1String("563");
 }
 
 //-----------------------------------------------------------------------------
@@ -72,9 +72,9 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
     if(image.size() > 2)
     {
         if((char)image[0] == (char)0xff && (char)image[1] == (char)0xd8)
-            format = "jpg";
+            format = QLatin1String("jpg");
         else if((char)image[0] == (char)0x89 && (char)image[1] == (char)0x50)
-            format = "png";
+            format = QLatin1String("png");
         else {
             switch (type) {
                 case GoogleMap:
@@ -83,7 +83,7 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
                 case GoogleHybrid:
                 case BingMap:
                 case OpenStreetMap:
-                    format = "png";
+                    format = QLatin1String("png");
                     break;
                 case MapQuestMap:
                 case MapQuestSat:
@@ -104,7 +104,7 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
                 case GoogleSatellite:
                 case BingSatellite:
                 case BingHybrid:
-                    format = "jpg";
+                    format = QLatin1String("jpg");
                     break;
                 default:
                     qWarning("UrlFactory::getImageFormat() Unknown map id %d", type);
@@ -160,12 +160,12 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
 void
 UrlFactory::_getSecGoogleWords(int x, int y, QString &sec1, QString &sec2)
 {
-    sec1 = ""; // after &x=...
-    sec2 = ""; // after &zoom=...
+    sec1 = QLatin1String(""); // after &x=...
+    sec2 = QLatin1String(""); // after &zoom=...
     int seclen = ((x * 3) + y) % 8;
     sec2 = _secGoogleWord.left(seclen);
     if (y >= 10000 && y < 100000) {
-        sec1 = "&s=";
+        sec1 = QLatin1String("&s=");
     }
 }
 
@@ -177,47 +177,47 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     case GoogleMap:
     {
         // http://mt1.google.com/vt/lyrs=m
-        QString server  = "mt";
-        QString request = "vt";
-        QString sec1    = ""; // after &x=...
-        QString sec2    = ""; // after &zoom=...
+        QString server  = QStringLiteral("mt");
+        QString request = QStringLiteral("vt");
+        QString sec1    = QLatin1String(""); // after &x=...
+        QString sec2    = QLatin1String(""); // after &zoom=...
         _getSecGoogleWords(x, y, sec1, sec2);
         _tryCorrectGoogleVersions(networkManager);
-        return QString("http://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleMap).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
+        return QStringLiteral("http://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleMap).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
     }
     break;
     case GoogleSatellite:
     {
         // http://mt1.google.com/vt/lyrs=s
-        QString server  = "khm";
-        QString request = "kh";
-        QString sec1    = ""; // after &x=...
-        QString sec2    = ""; // after &zoom=...
+        QString server  = QStringLiteral("khm");
+        QString request = QStringLiteral("kh");
+        QString sec1    = QLatin1String(""); // after &x=...
+        QString sec2    = QLatin1String(""); // after &zoom=...
         _getSecGoogleWords(x, y, sec1, sec2);
         _tryCorrectGoogleVersions(networkManager);
-        return QString("http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleSatellite).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
+        return QStringLiteral("http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleSatellite).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
     }
     break;
     case GoogleLabels:
     {
-        QString server  = "mts";
-        QString request = "vt";
-        QString sec1    = ""; // after &x=...
-        QString sec2    = ""; // after &zoom=...
+        QString server  = QStringLiteral("mts");
+        QString request = QStringLiteral("vt");
+        QString sec1    = QLatin1String(""); // after &x=...
+        QString sec2    = QLatin1String(""); // after &zoom=...
         _getSecGoogleWords(x, y, sec1, sec2);
         _tryCorrectGoogleVersions(networkManager);
-        return QString("http://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleLabels).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
+        return QStringLiteral("http://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleLabels).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
     }
     break;
     case GoogleTerrain:
     {
-        QString server  = "mt";
-        QString request = "vt";
-        QString sec1    = ""; // after &x=...
-        QString sec2    = ""; // after &zoom=...
+        QString server  = QStringLiteral("mt");
+        QString request = QStringLiteral("vt");
+        QString sec1    = QLatin1String(""); // after &x=...
+        QString sec2    = QLatin1String(""); // after &zoom=...
         _getSecGoogleWords(x, y, sec1, sec2);
         _tryCorrectGoogleVersions(networkManager);
-        return QString("http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleTerrain).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
+        return QStringLiteral("http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleTerrain).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
     }
     break;
     /*
@@ -249,30 +249,30 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     case BingMap:
     {
         QString key = _tileXYToQuadKey(x, y, zoom);
-        return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/r%2.png?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
+        return QStringLiteral("http://ecn.t%1.tiles.virtualearth.net/tiles/r%2.png?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
     }
     break;
     case BingSatellite:
     {
         QString key = _tileXYToQuadKey(x, y, zoom);
-        return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/a%2.jpeg?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
+        return QStringLiteral("http://ecn.t%1.tiles.virtualearth.net/tiles/a%2.jpeg?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
     }
     break;
     case BingHybrid:
     {
         QString key = _tileXYToQuadKey(x, y, zoom);
-        return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/h%2.jpeg?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
+        return QStringLiteral("http://ecn.t%1.tiles.virtualearth.net/tiles/h%2.jpeg?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
     }
     case MapQuestMap:
     {
         char letter = "1234"[_getServerNum(x, y, 4)];
-        return QString("http://otile%1.mqcdn.com/tiles/1.0.0/map/%2/%3/%4.jpg").arg(letter).arg(zoom).arg(x).arg(y);
+        return QStringLiteral("http://otile%1.mqcdn.com/tiles/1.0.0/map/%2/%3/%4.jpg").arg(letter).arg(zoom).arg(x).arg(y);
     }
     break;
     case MapQuestSat:
     {
         char letter = "1234"[_getServerNum(x, y, 4)];
-        return QString("http://otile%1.mqcdn.com/tiles/1.0.0/sat/%2/%3/%4.jpg").arg(letter).arg(zoom).arg(x).arg(y);
+        return QStringLiteral("http://otile%1.mqcdn.com/tiles/1.0.0/sat/%2/%3/%4.jpg").arg(letter).arg(zoom).arg(x).arg(y);
     }
     break;
 
@@ -293,54 +293,54 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     {
         QString mapBoxToken = getQGCMapEngine()->getMapBoxToken();
         if(!mapBoxToken.isEmpty()) {
-            QString server = "https://api.mapbox.com/v4/";
+            QString server = QStringLiteral("https://api.mapbox.com/v4/");
             switch(type) {
                 case MapBoxStreets:
-                    server += "mapbox.streets";
+                    server += QLatin1String("mapbox.streets");
                     break;
                 case MapBoxLight:
-                    server += "mapbox.light";
+                    server += QLatin1String("mapbox.light");
                     break;
                 case MapBoxDark:
-                    server += "mapbox.dark";
+                    server += QLatin1String("mapbox.dark");
                     break;
                 case MapBoxSatellite:
-                    server += "mapbox.satellite";
+                    server += QLatin1String("mapbox.satellite");
                     break;
                 case MapBoxHybrid:
-                    server += "mapbox.streets-satellite";
+                    server += QLatin1String("mapbox.streets-satellite");
                     break;
                 case MapBoxWheatPaste:
-                    server += "mapbox.wheatpaste";
+                    server += QLatin1String("mapbox.wheatpaste");
                     break;
                 case MapBoxStreetsBasic:
-                    server += "mapbox.streets-basic";
+                    server += QLatin1String("mapbox.streets-basic");
                     break;
                 case MapBoxComic:
-                    server += "mapbox.comic";
+                    server += QLatin1String("mapbox.comic");
                     break;
                 case MapBoxOutdoors:
-                    server += "mapbox.outdoors";
+                    server += QLatin1String("mapbox.outdoors");
                     break;
                 case MapBoxRunBikeHike:
-                    server += "mapbox.run-bike-hike";
+                    server += QLatin1String("mapbox.run-bike-hike");
                     break;
                 case MapBoxPencil:
-                    server += "mapbox.pencil";
+                    server += QLatin1String("mapbox.pencil");
                     break;
                 case MapBoxPirates:
-                    server += "mapbox.pirates";
+                    server += QLatin1String("mapbox.pirates");
                     break;
                 case MapBoxEmerald:
-                    server += "mapbox.emerald";
+                    server += QLatin1String("mapbox.emerald");
                     break;
                 case MapBoxHighContrast:
-                    server += "mapbox.high-contrast";
+                    server += QLatin1String("mapbox.high-contrast");
                     break;
                 default:
                     return QString::null;
             }
-            server += QString("/%1/%2/%3.jpg80?access_token=%4").arg(zoom).arg(x).arg(y).arg(mapBoxToken);
+            server += QStringLiteral("/%1/%2/%3.jpg80?access_token=%4").arg(zoom).arg(x).arg(y).arg(mapBoxToken);
             return server;
         }
     }
@@ -411,12 +411,12 @@ UrlFactory::_googleVersionCompleted()
     QRegExp reg("\"*http://mt0.google.com/vt/lyrs=m@(\\d*)",Qt::CaseInsensitive);
     if (reg.indexIn(html) != -1) {
         QStringList gc = reg.capturedTexts();
-        _versionGoogleMap = QString("m@%1").arg(gc[1]);
+        _versionGoogleMap = QStringLiteral("m@%1").arg(gc[1]);
     }
     reg = QRegExp("\"*http://mt0.google.com/vt/lyrs=h@(\\d*)",Qt::CaseInsensitive);
     if (reg.indexIn(html) != -1) {
         QStringList gc = reg.capturedTexts();
-        _versionGoogleLabels = QString("h@%1").arg(gc[1]);
+        _versionGoogleLabels = QStringLiteral("h@%1").arg(gc[1]);
     }
     reg = QRegExp("\"*http://khm\\D?\\d.google.com/kh/v=(\\d*)",Qt::CaseInsensitive);
     if (reg.indexIn(html) != -1) {
@@ -426,7 +426,7 @@ UrlFactory::_googleVersionCompleted()
     reg = QRegExp("\"*http://mt0.google.com/vt/lyrs=t@(\\d*),r@(\\d*)",Qt::CaseInsensitive);
     if (reg.indexIn(html) != -1) {
         QStringList gc = reg.capturedTexts();
-        _versionGoogleTerrain = QString("t@%1,r@%2").arg(gc[1]).arg(gc[2]);
+        _versionGoogleTerrain = QStringLiteral("t@%1,r@%2").arg(gc[1]).arg(gc[2]);
     }
     _googleReply->deleteLater();
     _googleReply = NULL;
@@ -448,7 +448,7 @@ UrlFactory::_tryCorrectGoogleVersions(QNetworkAccessManager*  networkManager)
         QNetworkProxy tProxy;
         tProxy.setType(QNetworkProxy::NoProxy);
         networkManager->setProxy(tProxy);
-        QString url = "http://maps.google.com/maps";
+        QString url = QStringLiteral("http://maps.google.com/maps");
         qheader.setUrl(QUrl(url));
         QByteArray ua;
         ua.append(getQGCMapEngine()->userAgent());

@@ -36,7 +36,7 @@ Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 class APMFirmwareVersion
 {
 public:
-    APMFirmwareVersion(const QString &versionText = "");
+    APMFirmwareVersion(const QString &versionText = QLatin1String(""));
     bool isValid() const;
     bool isBeta() const;
     bool isDev() const;
@@ -90,7 +90,7 @@ public:
     virtual void initializeVehicle(Vehicle* vehicle);
     virtual bool sendHomePositionToVehicle(void);
     virtual void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
-    virtual QString getDefaultComponentIdParam(void) const { return QString("SYSID_SW_TYPE"); }
+    virtual QString getDefaultComponentIdParam(void) const { return QStringLiteral("SYSID_SW_TYPE"); }
     virtual QList<MAV_CMD> supportedMissionCommands(void);
     void missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const final;
 
