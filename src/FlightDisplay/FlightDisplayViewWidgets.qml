@@ -92,7 +92,7 @@ Item {
     //-- Instrument Panel
     QGCInstrumentWidget {
         id:                     instrumentGadget
-        anchors.margins:        ScreenTools.defaultFontPixelHeight
+        anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         visible:                !QGroundControl.virtualTabletJoystick
@@ -106,12 +106,12 @@ Item {
         isSatellite:            _isSatellite
         z:                      QGroundControl.zOrderWidgets
         qgcView:                parent.parent.qgcView
-        maxHeight:              parent.height - (ScreenTools.defaultFontPixelHeight * 2)
+        maxHeight:              parent.height - (anchors.margins * 2)
     }
 
     QGCInstrumentWidgetAlternate {
         id:                     instrumentGadgetAlternate
-        anchors.margins:        ScreenTools.defaultFontPixelHeight
+        anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
         anchors.top:            parent.top
         anchors.right:          parent.right
         visible:                QGroundControl.virtualTabletJoystick

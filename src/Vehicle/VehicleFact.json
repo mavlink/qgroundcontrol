@@ -46,7 +46,7 @@
         },
         {
             "name":             "altitudeRelative",
-            "shortDescription": "Altitude (home)",
+            "shortDescription": "Altitude-rel",
             "type":             "double",
             "decimalPlaces":    1,
             "units":            "m"
