@@ -20,6 +20,8 @@ FactPanel {
     FactPanelController { id: controller; factPanel: panel }
 
     property Fact mag0IdFact:   controller.getParameterFact(-1, "CAL_MAG0_ID")
+    property Fact mag1IdFact:   controller.getParameterFact(-1, "CAL_MAG1_ID")
+    property Fact mag2IdFact:   controller.getParameterFact(-1, "CAL_MAG2_ID")
     property Fact gyro0IdFact:  controller.getParameterFact(-1, "CAL_GYRO0_ID")
     property Fact accel0IdFact: controller.getParameterFact(-1, "CAL_ACC0_ID")
 
@@ -28,8 +30,20 @@ FactPanel {
         anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: "Compass:"
+            labelText: "Compass 0:"
             valueText: mag0IdFact ? (mag0IdFact.value === 0 ? "Setup required" : "Ready") : ""
+        }
+
+        VehicleSummaryRow {
+            labelText:  "Compass 1:"
+            visible:    mag1IdFact.value !== 0
+            valueText:  "Ready"
+        }
+
+        VehicleSummaryRow {
+            labelText:  "Compass 2:"
+            visible:    mag2IdFact.value !== 0
+            valueText:  "Ready"
         }
 
         VehicleSummaryRow {

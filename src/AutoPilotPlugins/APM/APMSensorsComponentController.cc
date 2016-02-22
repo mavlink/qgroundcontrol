@@ -77,11 +77,6 @@ APMSensorsComponentController::APMSensorsComponentController(void) :
     connect(_sensorsComponent, &VehicleComponent::setupCompleteChanged, this, &APMSensorsComponentController::setupNeededChanged);
 }
 
-APMSensorsComponentController::~APMSensorsComponentController()
-{
-    _vehicle->setConnectionLostEnabled(true);
-}
-
 /// Appends the specified text to the status log area in the ui
 void APMSensorsComponentController::_appendStatusLog(const QString& text)
 {
