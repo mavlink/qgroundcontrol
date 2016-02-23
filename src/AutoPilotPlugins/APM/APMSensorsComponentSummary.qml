@@ -20,7 +20,28 @@ FactPanel {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     APMSensorsComponentController { id: controller; factPanel: panel }
 
-    property bool accelCalNeeded:   controller.accelSetupNeeded
+    property Fact compass1IdFact:   controller.getParameterFact(-1, "COMPASS_DEV_ID")
+    property Fact compass2IdFact:   controller.getParameterFact(-1, "COMPASS_DEV_ID2")
+    property Fact compass3IdFact:   controller.getParameterFact(-1, "COMPASS_DEV_ID3")
+
+    property Fact compass1OfsXFact: controller.getParameterFact(-1, "COMPASS_OFS_X")
+    property Fact compass1OfsYFact: controller.getParameterFact(-1, "COMPASS_OFS_Y")
+    property Fact compass1OfsZFact: controller.getParameterFact(-1, "COMPASS_OFS_Z")
+    property Fact compass2OfsXFact: controller.getParameterFact(-1, "COMPASS_OFS2_X")
+    property Fact compass2OfsYFact: controller.getParameterFact(-1, "COMPASS_OFS2_Y")
+    property Fact compass2OfsZFact: controller.getParameterFact(-1, "COMPASS_OFS2_Z")
+    property Fact compass3OfsXFact: controller.getParameterFact(-1, "COMPASS_OFS3_X")
+    property Fact compass3OfsYFact: controller.getParameterFact(-1, "COMPASS_OFS3_Y")
+    property Fact compass3OfsZFact: controller.getParameterFact(-1, "COMPASS_OFS3_Z")
+
+    property bool compass1Available: compass1IdFact.value !== 0
+    property bool compass2Available: compass2IdFact.value !== 0
+    property bool compass3Available: compass3IdFact.value !== 0
+
+    property bool compass1Calibrated: compass1Available ? compass1OfsXFact.value != 0.0  && compass1OfsYFact.value != 0.0  &&compass1OfsZFact.value != 0.0 : false
+    property bool compass2Calibrated: compass2Available ? compass2OfsXFact.value != 0.0  && compass2OfsYFact.value != 0.0  &&compass2OfsZFact.value != 0.0 : false
+    property bool compass3Calibrated: compass3Available ? compass3OfsXFact.value != 0.0  && compass3OfsYFact.value != 0.0  &&compass3OfsZFact.value != 0.0 : false
+
     property bool compassCalNeeded: controller.compassSetupNeeded
 
     Column {
@@ -28,13 +49,26 @@ FactPanel {
         anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: "Compass:"
-            valueText: compassCalNeeded ? "Setup required" : "Ready"
+            labelText: "Compass 1:"
+            visible:    compass1Available
+            valueText:  compass1Calibrated ? "Ready" : "Setup required"
+        }
+
+        VehicleSummaryRow {
+            labelText: "Compass 2:"
+            visible:    compass2Available
+            valueText:  compass2Calibrated ? "Ready" : "Setup required"
+        }
+
+        VehicleSummaryRow {
+            labelText: "Compass 3:"
+            visible:    compass3Available
+            valueText:  compass3Calibrated ? "Ready" : "Setup required"
         }
 
         VehicleSummaryRow {
             labelText: "Accelerometer:"
-            valueText: accelCalNeeded ? "Setup required" : "Ready"
+            valueText: controller.accelSetupNeeded ? "Setup required" : "Ready"
         }
     }
 }
