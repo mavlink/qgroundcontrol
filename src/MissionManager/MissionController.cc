@@ -642,7 +642,7 @@ void MissionController::_initAllMissionItems(void)
         _initMissionItem(item);
     }
 
-    delete _complexMissionItems;
+    _complexMissionItems->deleteLater();
     _complexMissionItems = newComplexItems;
 
     _recalcAll();
