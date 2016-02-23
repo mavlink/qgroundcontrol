@@ -24,7 +24,6 @@
 #include "MissionManagerTest.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
-#include "SimpleMissionItem.h"
 
 const MissionManagerTest::TestCase_t MissionManagerTest::_rgTestCases[] = {
     { "0\t0\t3\t16\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 0, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_WAYPOINT,     10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
@@ -46,32 +45,31 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     _mockLink->setMissionItemFailureMode(failureMode);
     
     // Setup our test case data
-    QmlObjectListModel* list = new QmlObjectListModel();
+    QList<MissionItem*> missionItems;
     
     // Editor has a home position item on the front, so we do the same
-    SimpleMissionItem* homeItem = new SimpleMissionItem(NULL /* Vehicle */, this);
-    homeItem->setHomePositionSpecialCase(true);
-    homeItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
+    MissionItem* homeItem = new MissionItem(NULL /* Vehicle */, this);
+    homeItem->setCommand(MAV_CMD_NAV_WAYPOINT);
     homeItem->setCoordinate(QGeoCoordinate(47.3769, 8.549444, 0));
     homeItem->setSequenceNumber(0);
-    list->insert(0, homeItem);
+    missionItems.append(homeItem);
 
     for (size_t i=0; i<_cTestCases; i++) {
         const TestCase_t* testCase = &_rgTestCases[i];
         
-        SimpleMissionItem* item = new SimpleMissionItem(NULL /* Vehicle */, list);
+        MissionItem* missionItem = new MissionItem(this);
         
         QTextStream loadStream(testCase->itemStream, QIODevice::ReadOnly);
-        QVERIFY(item->load(loadStream));
+        QVERIFY(missionItem->load(loadStream));
 
         // Mission Manager expects to get 1-base sequence numbers for write
-        item->setSequenceNumber(item->sequenceNumber() + 1);
+        missionItem->setSequenceNumber(missionItem->sequenceNumber() + 1);
         
-        list->append(item);
+        missionItems.append(missionItem);
     }
     
     // Send the items to the vehicle
-    _missionManager->writeMissionItems(*list);
+    _missionManager->writeMissionItems(missionItems);
     
     // writeMissionItems should emit these signals before returning:
     //      inProgressChanged
@@ -101,7 +99,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
             expectedCount++;
         }
 
-        QCOMPARE(_missionManager->missionItems()->count(), expectedCount);
+        QCOMPARE(_missionManager->missionItems().count(), expectedCount);
     } else {
         // This should be a failed run
         
@@ -125,8 +123,6 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         checkExpectedMessageBox();
     }
     
-    delete list;
-    list = NULL;
     _multiSpyMissionManager->clearAllSignals();
 }
 
@@ -196,7 +192,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         cMissionItemsExpected = 0;
     }
     
-    QCOMPARE(_missionManager->missionItems()->count(), (int)cMissionItemsExpected);
+    QCOMPARE(_missionManager->missionItems().count(), (int)cMissionItemsExpected);
 
     size_t firstActualItem = 0;
     if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
@@ -214,7 +210,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
             expectedSequenceNumber++;
         }
 
-        MissionItem* actual = qobject_cast<MissionItem*>(_missionManager->missionItems()->get(actualItemIndex));
+        MissionItem* actual = _missionManager->missionItems()[actualItemIndex];
         
         qDebug() << "Test case" << testCaseIndex;
         QCOMPARE(actual->sequenceNumber(),          expectedSequenceNumber);
