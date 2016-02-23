@@ -92,7 +92,8 @@ bool MultiSignalSpy::_checkSignalByMaskWorker(quint16 mask, bool multipleSignals
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != NULL);
             
-            if ((multipleSignalsAllowed && spy->count() ==  0) || spy->count() != 1) {
+            if ((multipleSignalsAllowed && spy->count() ==  0) || (!multipleSignalsAllowed && spy->count() != 1)) {
+                qDebug() << "Failed index:" << i;
                 _printSignalState();
                 return false;
             }
