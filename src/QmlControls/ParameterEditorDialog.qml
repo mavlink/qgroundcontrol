@@ -149,8 +149,8 @@ QGCViewDialog {
         QGCLabel {
             width:      parent.width
             wrapMode:   Text.WordWrap
-            text:       "Warning: Modifying parameters while vehicle is in flight can lead to vehicle instability and possible vehicle loss. " +
-                            "Make sure you know what you are doing and double-check your values before Save!"
+            text:       "Warning: Modifying parameters in flight can be unsafe. " +
+                            "Double-check your values before Save!"
         }
 
         QGCLabel {
@@ -165,30 +165,35 @@ QGCViewDialog {
             visible:    false
             text:       "Force save (dangerous!)"
         }
+
+        Row {
+            spacing: defaultTextWidth
+            QGCButton {
+                id:                     bottomButton
+                visible:                fact.defaultValueAvailable
+                text:                   "Reset to default"
+
+                onClicked: {
+                    fact.value = fact.defaultValue
+                    fact.valueChanged(fact.value)
+                    hideDialog()
+                }
+            }
+
+            QGCButton {
+                id:             rcButton
+                text:           "Map param to RC"
+                visible:        !validate && showRCToParam
+                onClicked:      controller.setRCToParam(fact.name)
+            }
+        }
+
+        QGCLabel {
+            width:      parent.width
+            wrapMode:   Text.WordWrap
+            visible: showRCToParam
+            text: "Click on the left button to reset, click on the right button to map a parameter to a RC channel value."
+        }
     } // Column - Fact information
 
-
-    QGCButton {
-        id:                     bottomButton
-        anchors.rightMargin:    defaultTextWidth
-        anchors.right:          rcButton.left
-        anchors.bottom:         parent.bottom
-        visible:                fact.defaultValueAvailable
-        text:                   "Reset to default"
-
-        onClicked: {
-            fact.value = fact.defaultValue
-            fact.valueChanged(fact.value)
-            hideDialog()
-        }
-    }
-
-    QGCButton {
-        id:             rcButton
-        anchors.right:  parent.right
-        anchors.bottom: parent.bottom
-        text:           "Set RC to Param..."
-        visible:        !validate && showRCToParam
-        onClicked:      controller.setRCToParam(fact.name)
-    }
 } // QGCViewDialog
