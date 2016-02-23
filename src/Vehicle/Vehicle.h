@@ -160,7 +160,6 @@ public:
     Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                     CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                             NOTIFY coordinateChanged)
     Q_PROPERTY(bool                 coordinateValid         READ coordinateValid                        NOTIFY coordinateValidChanged)
-    Q_PROPERTY(MissionManager*      missionManager          MEMBER _missionManager                      CONSTANT)
     Q_PROPERTY(bool                 homePositionAvailable   READ homePositionAvailable                  NOTIFY homePositionAvailableChanged)
     Q_PROPERTY(QGeoCoordinate       homePosition            READ homePosition                           NOTIFY homePositionChanged)
     Q_PROPERTY(bool                 armed                   READ armed              WRITE setArmed      NOTIFY armedChanged)
@@ -173,7 +172,6 @@ public:
     Q_PROPERTY(float                latitude                READ latitude                               NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude               READ longitude                              NOTIFY coordinateChanged)
     Q_PROPERTY(QString              currentState            READ currentState                           NOTIFY currentStateChanged)
-    Q_PROPERTY(QmlObjectListModel*  missionItems            READ missionItemsModel                      CONSTANT)
     Q_PROPERTY(bool                 messageTypeNone         READ messageTypeNone                        NOTIFY messageTypeChanged)
     Q_PROPERTY(bool                 messageTypeNormal       READ messageTypeNormal                      NOTIFY messageTypeChanged)
     Q_PROPERTY(bool                 messageTypeWarning      READ messageTypeWarning                     NOTIFY messageTypeChanged)
@@ -237,7 +235,6 @@ public:
     QGeoCoordinate coordinate(void) { return _coordinate; }
     bool coordinateValid(void)      { return _coordinateValid; }
     void _setCoordinateValid(bool coordinateValid);
-    QmlObjectListModel* missionItemsModel(void);
 
     typedef enum {
         JoystickModeRC,         ///< Joystick emulates an RC Transmitter
