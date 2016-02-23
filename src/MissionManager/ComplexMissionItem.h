@@ -24,33 +24,16 @@
 #ifndef ComplexMissionItem_H
 #define ComplexMissionItem_H
 
+#include "VisualMissionItem.h"
 #include "MissionItem.h"
 
-class ComplexMissionItem : public MissionItem
+class ComplexMissionItem : public VisualMissionItem
 {
     Q_OBJECT
     
 public:
     ComplexMissionItem(Vehicle* vehicle, QObject* parent = NULL);
-
-    ComplexMissionItem(Vehicle*        vehicle,
-                int             sequenceNumber,
-                MAV_CMD         command,
-                MAV_FRAME       frame,
-                double          param1,
-                double          param2,
-                double          param3,
-                double          param4,
-                double          param5,
-                double          param6,
-                double          param7,
-                bool            autoContinue,
-                bool            isCurrentItem,
-                QObject*        parent = NULL);
-
     ComplexMissionItem(const ComplexMissionItem& other, QObject* parent = NULL);
-
-    const ComplexMissionItem& operator=(const ComplexMissionItem& other);
 
     Q_PROPERTY(QVariantList  polygonPath READ polygonPath NOTIFY polygonPathChanged)
 
@@ -59,15 +42,38 @@ public:
 
     QVariantList polygonPath(void);
 
-    // Overrides from MissionItem base class
-    bool            simpleItem      (void) const final { return false; }
-    QGeoCoordinate  exitCoordinate  (void) const final { return coordinate(); }
+    const QList<MissionItem*>& missionItems(void) { return _missionItems; }
+
+    /// @return The next sequence number to use after this item. Takes into account child items of the complex item
+    int nextSequenceNumber(void) const;
+
+    // Overrides from VisualMissionItem
+
+    bool            dirty                   (void) const final { return _dirty; }
+    bool            isSimpleItem            (void) const final { return false; }
+    bool            isStandaloneCoordinate  (void) const final { return false; }
+    bool            specifiesCoordinate     (void) const final { return true; }
+    QString         commandDescription      (void) const final { return "Survey"; }
+    QString         commandName             (void) const final { return "Survey"; }
+    QGeoCoordinate  coordinate              (void) const final { return _coordinate; }
+    QGeoCoordinate  exitCoordinate          (void) const final { return _coordinate; }
+
+    bool coordinateHasRelativeAltitude      (void) const final { return true; }
+    bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
+    bool exitCoordinateSameAsEntry          (void) const final { return false; }
+
+    void setDirty           (bool dirty) final;
+    void setCoordinate      (const QGeoCoordinate& coordinate);
+    bool save               (QJsonObject& missionObject, QJsonArray& missionItems, QString& errorString) final;
 
 signals:
     void polygonPathChanged(void);
 
 private:
-    QVariantList _polygonPath;
+    bool                _dirty;
+    QVariantList        _polygonPath;
+    QList<MissionItem*> _missionItems;
+    QGeoCoordinate      _coordinate;
 };
 
 #endif

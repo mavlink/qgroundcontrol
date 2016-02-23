@@ -114,7 +114,7 @@ Rectangle {
                 Item {
                     height:     graphRow.height
                     width:      ScreenTools.smallFontPixelWidth * 2
-                    visible:    object.specifiesCoordinate && !object.standaloneCoordinate
+                    visible:    object.specifiesCoordinate && !object.isStandaloneCoordinate
 
 
                     property real availableHeight: height - ScreenTools.smallFontPixelHeight - indicator.height

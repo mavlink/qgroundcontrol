@@ -30,7 +30,7 @@
 #include <QMutex>
 #include <QTimer>
 
-#include "QmlObjectListModel.h"
+#include "MissionItem.h"
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
 #include "LinkInterface.h"
@@ -48,27 +48,15 @@ public:
     MissionManager(Vehicle* vehicle);
     ~MissionManager();
     
-    Q_PROPERTY(bool                 inProgress      READ inProgress     NOTIFY inProgressChanged)
-    Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItems   CONSTANT)
-    Q_PROPERTY(int                  currentItem     READ currentItem    NOTIFY currentItemChanged)
-    
-    // Property accessors
-    
     bool inProgress(void);
-    QmlObjectListModel* missionItems(void) { return &_missionItems; }
+    const QList<MissionItem*>& missionItems(void) { return _missionItems; }
     int currentItem(void) { return _currentMissionItem; }
-    
-    // C++ methods
     
     void requestMissionItems(void);
     
     /// Writes the specified set of mission items to the vehicle
-    ///     @oaram missionItems Items to send to vehicle
-    void writeMissionItems(const QmlObjectListModel& missionItems);
-    
-    /// Returns a copy of the current set of mission items. Caller is responsible for
-    /// freeing returned object.
-    QmlObjectListModel* copyMissionItems(void);
+    ///     @param missionItems Items to send to vehicle
+    void writeMissionItems(const QList<MissionItem*>& missionItems);
     
     /// Error codes returned in error signal
     typedef enum {
@@ -134,7 +122,7 @@ private:
     
     QMutex _dataMutex;
     
-    QmlObjectListModel  _missionItems;
+    QList<MissionItem*> _missionItems;
     int                 _currentMissionItem;
 };
 
