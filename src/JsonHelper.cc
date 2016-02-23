@@ -58,8 +58,15 @@ bool JsonHelper::toQGeoCoordinate(const QJsonValue& jsonValue, QGeoCoordinate& c
     QJsonArray coordinateArray = jsonValue.toArray();
     int requiredCount = altitudeRequired ? 3 : 2;
     if (coordinateArray.count() != requiredCount) {
-        errorString = QString("Json array must contains %1 values").arg(requiredCount);
+        errorString = QString("Coordinate array must contain %1 values").arg(requiredCount);
         return false;
+    }
+
+    foreach(const QJsonValue& jsonValue, coordinateArray) {
+        if (jsonValue.type() != QJsonValue::Double) {
+            errorString = QString("Coordinate array may only contain double values, found: %1").arg(jsonValue.type());
+            return false;
+        }
     }
 
     coordinate = QGeoCoordinate(coordinateArray[0].toDouble(), coordinateArray[1].toDouble());
