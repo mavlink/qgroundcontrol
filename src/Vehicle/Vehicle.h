@@ -52,6 +52,36 @@ Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
 class Vehicle;
 
+class VehicleWindFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    VehicleWindFactGroup(QObject* parent = NULL);
+
+    Q_PROPERTY(Fact* direction      READ direction      CONSTANT)
+    Q_PROPERTY(Fact* speed          READ speed          CONSTANT)
+    Q_PROPERTY(Fact* verticalSpeed  READ verticalSpeed  CONSTANT)
+
+    Fact* direction(void)       { return &_directionFact; }
+    Fact* speed(void)           { return &_speedFact; }
+    Fact* verticalSpeed(void)   { return &_verticalSpeedFact; }
+
+    void setVehicle(Vehicle* vehicle);
+
+    static const char* _directionFactName;
+    static const char* _speedFactName;
+    static const char* _verticalSpeedFactName;
+
+private slots:
+
+private:
+    Vehicle*    _vehicle;
+    Fact        _directionFact;
+    Fact        _speedFact;
+    Fact        _verticalSpeedFact;
+};
+
 class VehicleGPSFactGroup : public FactGroup
 {
     Q_OBJECT
@@ -214,6 +244,7 @@ public:
 
     Q_PROPERTY(FactGroup* gps       READ gpsFactGroup       CONSTANT)
     Q_PROPERTY(FactGroup* battery   READ batteryFactGroup   CONSTANT)
+    Q_PROPERTY(FactGroup* wind      READ windFactGroup   CONSTANT)
 
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
@@ -363,6 +394,7 @@ public:
 
     FactGroup* gpsFactGroup     (void) { return &_gpsFactGroup; }
     FactGroup* batteryFactGroup (void) { return &_batteryFactGroup; }
+    FactGroup* windFactGroup    (void) { return &_windFactGroup; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -465,6 +497,7 @@ private:
     void _handleRCChannelsRaw(mavlink_message_t& message);
     void _handleBatteryStatus(mavlink_message_t& message);
     void _handleSysStatus(mavlink_message_t& message);
+    void _handleWind(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
@@ -577,6 +610,7 @@ private:
 
     VehicleGPSFactGroup     _gpsFactGroup;
     VehicleBatteryFactGroup _batteryFactGroup;
+    VehicleWindFactGroup    _windFactGroup;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;
@@ -586,8 +620,10 @@ private:
     static const char* _climbRateFactName;
     static const char* _altitudeRelativeFactName;
     static const char* _altitudeAMSLFactName;
+
     static const char* _gpsFactGroupName;
     static const char* _batteryFactGroupName;
+    static const char* _windFactGroupName;
 
     static const int _vehicleUIUpdateRateMSecs = 100;
 
