@@ -157,5 +157,6 @@
         <file alias="Vehicle/VehicleFact.json">src/Vehicle/VehicleFact.json</file>
         <file alias="Vehicle/BatteryFact.json">src/Vehicle/BatteryFact.json</file>
         <file alias="Vehicle/GPSFact.json">src/Vehicle/GPSFact.json</file>
+        <file alias="Vehicle/WindFact.json">src/Vehicle/WindFact.json</file>
     </qresource>
 </RCC>
