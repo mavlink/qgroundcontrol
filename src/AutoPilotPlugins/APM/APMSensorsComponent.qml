@@ -370,6 +370,19 @@ QGCView {
             QGCLabel { text: "Calibrate:"; anchors.baseline: compassButton.baseline }
 
             IndicatorButton {
+                id:             accelButton
+                width:          parent.buttonWidth
+                text:           "Accelerometer"
+                indicatorGreen: !accelCalNeeded
+
+                onClicked: {
+                    preCalibrationDialogType = "accel"
+                    preCalibrationDialogHelp = accelHelp
+                    showDialog(preCalibrationDialogComponent, "Calibrate Accelerometer", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                }
+            }
+
+            IndicatorButton {
                 id:             compassButton
                 width:          parent.buttonWidth
                 text:           "Compass"
@@ -388,18 +401,6 @@ QGCView {
                 }
             }
 
-            IndicatorButton {
-                id:             accelButton
-                width:          parent.buttonWidth
-                text:           "Accelerometer"
-                indicatorGreen: !accelCalNeeded
-
-                onClicked: {
-                    preCalibrationDialogType = "accel"
-                    preCalibrationDialogHelp = accelHelp
-                    showDialog(preCalibrationDialogComponent, "Calibrate Accelerometer", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
-                }
-            }
             QGCButton {
                 id:         nextButton
                 showBorder: true

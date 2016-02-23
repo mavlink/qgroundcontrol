@@ -130,7 +130,7 @@ QGCView {
 
         onSetCompassRotations: {
             if (showCompass0Rot || showCompass1Rot || showCompass2Rot) {
-            showDialog(compassRotationDialogComponent, "Set Compass Rotation(s)", qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                showDialog(compassRotationDialogComponent, "Set Compass Rotation(s)", qgcView.showDialogDefaultWidth, StandardButton.Ok)
             }
         }
 
