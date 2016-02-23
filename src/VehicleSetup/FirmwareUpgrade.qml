@@ -60,7 +60,7 @@ QGCView {
         controller.cancel()
     }
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     FirmwareUpgradeController {
         id:             controller
