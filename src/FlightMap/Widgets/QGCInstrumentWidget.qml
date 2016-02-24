@@ -77,6 +77,15 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
     }
 
+    Image {
+        anchors.bottom:     attitude.bottom
+        anchors.right:      attitude.right
+        source:             "/res/gear.svg"
+        mipmap:             true
+        width:              attitude.width * 0.15
+        fillMode:           Image.PreserveAspectFit
+    }
+
     Rectangle {
         id:                 _spacer1
         anchors.topMargin:  _spacing
