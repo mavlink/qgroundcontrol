@@ -77,6 +77,24 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
     }
 
+    Image {
+        id:                 gearThingy
+        anchors.bottom:     attitude.bottom
+        anchors.right:      attitude.right
+        source:             "/res/gear.svg"
+        mipmap:             true
+        opacity:            0.5
+        width:              attitude.width * 0.15
+        fillMode:           Image.PreserveAspectFit
+        MouseArea {
+            anchors.fill:   parent
+            hoverEnabled:   true
+            onEntered:      gearThingy.opacity = 0.85
+            onExited:       gearThingy.opacity = 0.5
+            onClicked:      _valuesWidget.showPicker()
+        }
+    }
+
     Rectangle {
         id:                 _spacer1
         anchors.topMargin:  _spacing
