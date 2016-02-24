@@ -29,7 +29,6 @@
 #include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
-#include "SimpleMissionItem.h"
 
 QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
 
@@ -56,7 +55,7 @@ MissionManager::~MissionManager()
 
 }
 
-void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems)
+void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 {
     bool skipFirstItem = !_vehicle->firmwarePlugin()->sendHomePositionToVehicle();
 
@@ -65,14 +64,15 @@ void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems)
     int firstIndex = skipFirstItem ? 1 : 0;
     
     for (int i=firstIndex; i<missionItems.count(); i++) {
-        _missionItems.append(new SimpleMissionItem(*qobject_cast<const SimpleMissionItem*>(missionItems[i])));
+        MissionItem* item = new MissionItem(*missionItems[i]);
+        _missionItems.append(item);
 
-        MissionItem* item = qobject_cast<MissionItem*>(_missionItems.get(_missionItems.count() - 1));
+        item->setIsCurrentItem(i == firstIndex);
 
         if (skipFirstItem) {
-            // Home is in sequence 1, remainder of items start at sequence 1
+            // Home is in sequence 0, remainder of items start at sequence 1
             item->setSequenceNumber(item->sequenceNumber() - 1);
-            if (item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
+            if (item->command() == MAV_CMD_DO_JUMP) {
                 item->setParam1((int)item->param1() - 1);
             }
         }
@@ -253,8 +253,7 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
         _requestItemRetryCount = 0;
         _itemIndicesToRead.removeOne(missionItem.seq);
 
-        MissionItem* item = new SimpleMissionItem(_vehicle,
-                                            missionItem.seq,
+        MissionItem* item = new MissionItem(missionItem.seq,
                                             (MAV_CMD)missionItem.command,
                                             (MAV_FRAME)missionItem.frame,
                                             missionItem.param1,
@@ -268,7 +267,7 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
                                             missionItem.current,
                                             this);
 
-        if (item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
+        if (item->command() == MAV_CMD_DO_JUMP) {
             // Home is in position 0
             item->setParam1((int)item->param1() + 1);
         }
@@ -323,19 +322,19 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message)
     mavlink_message_t       messageOut;
     mavlink_mission_item_t  missionItem;
     
-    MissionItem* item = (MissionItem*)_missionItems[missionRequest.seq];
+    MissionItem* item = _missionItems[missionRequest.seq];
     
     missionItem.target_system =     _vehicle->id();
     missionItem.target_component =  MAV_COMP_ID_MISSIONPLANNER;
     missionItem.seq =               missionRequest.seq;
     missionItem.command =           item->command();
-    missionItem.x =                 item->coordinate().latitude();
-    missionItem.y =                 item->coordinate().longitude();
-    missionItem.z =                 item->coordinate().altitude();
     missionItem.param1 =            item->param1();
     missionItem.param2 =            item->param2();
     missionItem.param3 =            item->param3();
     missionItem.param4 =            item->param4();
+    missionItem.x =                 item->param5();
+    missionItem.y =                 item->param6();
+    missionItem.z =                 item->param7();
     missionItem.frame =             item->frame();
     missionItem.current =           missionRequest.seq == 0;
     missionItem.autocontinue =      item->autoContinue();
@@ -426,17 +425,6 @@ void MissionManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             _handleMissionCurrent(message);
             break;
     }
-}
-
-QmlObjectListModel* MissionManager::copyMissionItems(void)
-{
-    QmlObjectListModel* list = new QmlObjectListModel();
-    
-    for (int i=0; i<_missionItems.count(); i++) {
-        list->append(new SimpleMissionItem(*qobject_cast<const SimpleMissionItem*>(_missionItems[i])));
-    }
-    
-    return list;
 }
 
 void MissionManager::_sendError(ErrorCode_t errorCode, const QString& errorMsg)

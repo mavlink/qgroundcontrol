@@ -40,16 +40,22 @@
 #include "QmlObjectListModel.h"
 #include "MissionCommands.h"
 
-// Abstract base class for Simple and Complex MissionItem obejcts.
+class ComplexMissionItem;
+class SimpleMissionItem;
+class MissionController;
+#ifdef UNITTEST_BUILD
+    class MissionItemTest;
+#endif
+
+// Represents a Mavlink mission command.
 class MissionItem : public QObject
 {
     Q_OBJECT
     
 public:
-    MissionItem(Vehicle* vehicle, QObject* parent = NULL);
+    MissionItem(QObject* parent = NULL);
 
-    MissionItem(Vehicle*        vehicle,
-                int             sequenceNumber,
+    MissionItem(int             sequenceNumber,
                 MAV_CMD         command,
                 MAV_FRAME       frame,
                 double          param1,
@@ -69,179 +75,48 @@ public:
 
     const MissionItem& operator=(const MissionItem& other);
     
-    Q_PROPERTY(double           altDifference           READ altDifference          WRITE setAltDifference      NOTIFY altDifferenceChanged)        ///< Change in altitude from previous waypoint
-    Q_PROPERTY(double           altPercent              READ altPercent             WRITE setAltPercent         NOTIFY altPercentChanged)           ///< Percent of total altitude change in mission altitude
-    Q_PROPERTY(double           azimuth                 READ azimuth                WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
-    Q_PROPERTY(QString          category                READ category                                           NOTIFY commandChanged)
-    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand            NOTIFY commandChanged)
-    Q_PROPERTY(QString          commandDescription      READ commandDescription                                 NOTIFY commandChanged)
-    Q_PROPERTY(QString          commandName             READ commandName                                        NOTIFY commandChanged)
-    Q_PROPERTY(bool             dirty                   READ dirty                  WRITE setDirty              NOTIFY dirtyChanged)
-    Q_PROPERTY(double           distance                READ distance               WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
-    Q_PROPERTY(bool             friendlyEditAllowed     READ friendlyEditAllowed                                NOTIFY friendlyEditAllowedChanged)
-    Q_PROPERTY(bool             homePosition            READ homePosition                                       CONSTANT)                           ///< true: This item is being used as a home position indicator
-    Q_PROPERTY(bool             isCurrentItem           READ isCurrentItem          WRITE setIsCurrentItem      NOTIFY isCurrentItemChanged)
-    Q_PROPERTY(bool             rawEdit                 READ rawEdit                WRITE setRawEdit            NOTIFY rawEditChanged)              ///< true: raw item editing with all params
-    Q_PROPERTY(bool             relativeAltitude        READ relativeAltitude                                   NOTIFY frameChanged)
-    Q_PROPERTY(int              sequenceNumber          READ sequenceNumber         WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
-    Q_PROPERTY(bool             standaloneCoordinate    READ standaloneCoordinate                               NOTIFY commandChanged)
-    Q_PROPERTY(bool             specifiesCoordinate     READ specifiesCoordinate                                NOTIFY commandChanged)
-    Q_PROPERTY(bool             showHomePosition        READ showHomePosition       WRITE setShowHomePosition   NOTIFY showHomePositionChanged)
+    MAV_CMD         command         (void) const { return (MAV_CMD)_commandFact.rawValue().toInt(); }
+    bool            isCurrentItem   (void) const { return _isCurrentItem; }
+    int             sequenceNumber  (void) const { return _sequenceNumber; }
+    MAV_FRAME       frame           (void) const { return (MAV_FRAME)_frameFact.rawValue().toInt(); }
+    bool            autoContinue    (void) const { return _autoContinueFact.rawValue().toBool(); }
+    double          param1          (void) const { return _param1Fact.rawValue().toDouble(); }
+    double          param2          (void) const { return _param2Fact.rawValue().toDouble(); }
+    double          param3          (void) const { return _param3Fact.rawValue().toDouble(); }
+    double          param4          (void) const { return _param4Fact.rawValue().toDouble(); }
+    double          param5          (void) const { return _param5Fact.rawValue().toDouble(); }
+    double          param6          (void) const { return _param6Fact.rawValue().toDouble(); }
+    double          param7          (void) const { return _param7Fact.rawValue().toDouble(); }
+    QGeoCoordinate  coordinate      (void) const;
 
-    // Mission item has two coordinates associated with them:
-    //  coordinate:     This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
-    //  exitCoordinate  This is the exit point for a waypoint line coming out of the item. For a SimpleMissionItem this will be the same as
-    //                  coordinate. For a ComplexMissionItem it may be different than the entry coordinate.
-    Q_PROPERTY(QGeoCoordinate   coordinate              READ coordinate             WRITE setCoordinate         NOTIFY coordinateChanged)
-    Q_PROPERTY(QGeoCoordinate   exitCoordinate          READ exitCoordinate                                     NOTIFY exitCoordinateChanged)
-
-    /// @return true: SimpleMissionItem, false: ComplexMissionItem
-    Q_PROPERTY(bool             simpleItem              READ simpleItem                                         NOTIFY simpleItemChanged)
-
-    // These properties are used to display the editing ui
-    Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  NOTIFY uiModelChanged)
-    Q_PROPERTY(QmlObjectListModel*  comboboxFacts   READ comboboxFacts  NOTIFY uiModelChanged)
-    Q_PROPERTY(QmlObjectListModel*  textFieldFacts  READ textFieldFacts NOTIFY uiModelChanged)
-
-    /// List of child mission items. Child mission item are subsequent mision items which do not specify a coordinate. They
-    /// are shown next to the part item in the ui.
-    Q_PROPERTY(QmlObjectListModel*  childItems      READ childItems     CONSTANT)
-
-    // Property accesors
-    
-    double          altDifference       (void) const    { return _altDifference; }
-    double          altPercent          (void) const    { return _altPercent; }
-    double          azimuth             (void) const    { return _azimuth; }
-    QString         category            (void) const;
-    MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_commandFact.cookedValue().toInt(); };
-    QString         commandDescription  (void) const;
-    QString         commandName         (void) const;
-    QGeoCoordinate  coordinate          (void) const;
-    bool            dirty               (void) const    { return _dirty; }
-    double          distance            (void) const    { return _distance; }
-    bool            friendlyEditAllowed (void) const;
-    bool            homePosition        (void) const    { return _homePositionSpecialCase; }
-    bool            isCurrentItem       (void) const    { return _isCurrentItem; }
-    bool            rawEdit             (void) const;
-    int             sequenceNumber      (void) const    { return _sequenceNumber; }
-    bool            standaloneCoordinate(void) const;
-    bool            specifiesCoordinate (void) const;
-    bool            showHomePosition    (void) const    { return _showHomePosition; }
-
-
-    QmlObjectListModel* textFieldFacts  (void);
-    QmlObjectListModel* checkboxFacts   (void);
-    QmlObjectListModel* comboboxFacts   (void);
-    QmlObjectListModel* childItems      (void) { return &_childItems; }
-
-    void setRawEdit(bool rawEdit);
-    void setDirty(bool dirty);
-    void setSequenceNumber(int sequenceNumber);
-    
-    void setIsCurrentItem(bool isCurrentItem);
-    
-    void setCoordinate(const QGeoCoordinate& coordinate);
-    
-    void setCommandByIndex(int index);
-
-    void setCommand(MavlinkQmlSingleton::Qml_MAV_CMD command);
-
-    void setHomePositionSpecialCase(bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
-    void setShowHomePosition(bool showHomePosition);
-
-    void setAltDifference   (double altDifference);
-    void setAltPercent      (double altPercent);
-    void setAzimuth         (double azimuth);
-    void setDistance        (double distance);
-
-    // C++ only methods
-
-    MAV_FRAME   frame       (void)  const { return (MAV_FRAME)_frameFact.rawValue().toInt(); }
-    bool        autoContinue(void)  const { return _autoContinueFact.rawValue().toBool(); }
-    double      param1      (void)  const { return _param1Fact.rawValue().toDouble(); }
-    double      param2      (void)  const { return _param2Fact.rawValue().toDouble(); }
-    double      param3      (void)  const { return _param3Fact.rawValue().toDouble(); }
-    double      param4      (void)  const { return _param4Fact.rawValue().toDouble(); }
-    double      param5      (void)  const { return _param5Fact.rawValue().toDouble(); }
-    double      param6      (void)  const { return _param6Fact.rawValue().toDouble(); }
-    double      param7      (void)  const { return _param7Fact.rawValue().toDouble(); }
-
-    void setCommand     (MAV_CMD command);
-    void setFrame       (MAV_FRAME frame);
-    void setAutoContinue(bool autoContinue);
-    void setParam1      (double param1);
-    void setParam2      (double param2);
-    void setParam3      (double param3);
-    void setParam4      (double param4);
-    void setParam5      (double param5);
-    void setParam6      (double param6);
-    void setParam7      (double param7);
-
-    // C++ only methods
+    void setCommand         (MAV_CMD command);
+    void setSequenceNumber  (int sequenceNumber);
+    void setIsCurrentItem   (bool isCurrentItem);
+    void setFrame           (MAV_FRAME frame);
+    void setAutoContinue    (bool autoContinue);
+    void setParam1          (double param1);
+    void setParam2          (double param2);
+    void setParam3          (double param3);
+    void setParam4          (double param4);
+    void setParam5          (double param5);
+    void setParam6          (double param6);
+    void setParam7          (double param7);
+    void setCoordinate      (const QGeoCoordinate& coordinate);
     
     void save(QJsonObject& json);
     bool load(QTextStream &loadStream);
     bool load(const QJsonObject& json, QString& errorString);
 
-    bool relativeAltitude(void) { return frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
-
-    static const double defaultAltitude;
-
-    // Pure virtuals which must be provides by derived classes
-    virtual bool            simpleItem(void) const = 0;
-    virtual QGeoCoordinate  exitCoordinate(void) const = 0;
-
-public slots:
-    void setDefaultsForCommand(void);
+    bool relativeAltitude(void) const { return frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
 
 signals:
-    void altDifferenceChanged       (double altDifference);
-    void altPercentChanged          (double altPercent);
-    void azimuthChanged             (double azimuth);
-    void commandChanged             (MavlinkQmlSingleton::Qml_MAV_CMD command);
-    void coordinateChanged          (const QGeoCoordinate& coordinate);
-    void exitCoordinateChanged      (const QGeoCoordinate& exitCoordinate);
-    void dirtyChanged               (bool dirty);
-    void distanceChanged            (double distance);
-    void frameChanged               (int frame);
-    void friendlyEditAllowedChanged (bool friendlyEditAllowed);
-    void headingDegreesChanged      (double heading);
     void isCurrentItemChanged       (bool isCurrentItem);
-    void rawEditChanged             (bool rawEdit);
     void sequenceNumberChanged      (int sequenceNumber);
-    void uiModelChanged             (void);
-    void showHomePositionChanged    (bool showHomePosition);
-    void simpleItemChanged          (bool simpleItem);
     
-private slots:
-    void _setDirtyFromSignal(void);
-    void _sendCommandChanged(void);
-    void _sendCoordinateChanged(void);
-    void _sendFrameChanged(void);
-    void _sendFriendlyEditAllowedChanged(void);
-    void _sendUiModelChanged(void);
-    void _syncAltitudeRelativeToHomeToFrame(const QVariant& value);
-    void _syncFrameToAltitudeRelativeToHome(void);
-
 private:
-    void _clearParamMetaData(void);
-    void _connectSignals(void);
-    void _setupMetaData(void);
-
-private:
-    Vehicle*    _vehicle;                   ///< Vehicle associated with this item, NULL for offline mode
-    bool        _rawEdit;
-    bool        _dirty;
     int         _sequenceNumber;
     bool        _isCurrentItem;
-    double      _altDifference;             ///< Difference in altitude from previous waypoint
-    double      _altPercent;                ///< Percent of total altitude change in mission
-    double      _azimuth;                   ///< Azimuth to previous waypoint
-    double      _distance;                  ///< Distance to previous waypoint
-    bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator
-    bool        _showHomePosition;
 
-    Fact    _altitudeRelativeToHomeFact;
     Fact    _autoContinueFact;
     Fact    _commandFact;
     Fact    _frameFact;
@@ -252,31 +127,8 @@ private:
     Fact    _param5Fact;
     Fact    _param6Fact;
     Fact    _param7Fact;
-    Fact    _supportedCommandFact;
     
-    static FactMetaData*    _altitudeMetaData;
-    static FactMetaData*    _commandMetaData;
-    static FactMetaData*    _defaultParamMetaData;
-    static FactMetaData*    _frameMetaData;
-    static FactMetaData*    _latitudeMetaData;
-    static FactMetaData*    _longitudeMetaData;
-
-    FactMetaData    _param1MetaData;
-    FactMetaData    _param2MetaData;
-    FactMetaData    _param3MetaData;
-    FactMetaData    _param4MetaData;
-    FactMetaData    _param5MetaData;
-    FactMetaData    _param6MetaData;
-    FactMetaData    _param7MetaData;
-
-    /// This is used to reference any subsequent mission items which do not specify a coordinate.
-    QmlObjectListModel  _childItems;
-
-    bool _syncingAltitudeRelativeToHomeAndFrame;    ///< true: already in a sync signal, prevents signal loop
-    bool _syncingHeadingDegreesAndParam4;           ///< true: already in a sync signal, prevents signal loop
-
-    const MissionCommands*  _missionCommands;
-
+    // Keys for Json save
     static const char*  _itemType;
     static const char*  _jsonTypeKey;
     static const char*  _jsonIdKey;
@@ -288,6 +140,13 @@ private:
     static const char*  _jsonParam4Key;
     static const char*  _jsonAutoContinueKey;
     static const char*  _jsonCoordinateKey;
+
+    friend class ComplexMissionItem;
+    friend class SimpleMissionItem;
+    friend class MissionController;
+#ifdef UNITTEST_BUILD
+    friend class MissionItemTest;
+#endif
 };
 
 #endif

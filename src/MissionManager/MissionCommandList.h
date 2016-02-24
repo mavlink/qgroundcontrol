@@ -95,7 +95,7 @@ public:
     Q_PROPERTY(bool     friendlyEdit            READ friendlyEdit           CONSTANT)
     Q_PROPERTY(QString  friendlyName            READ friendlyName           CONSTANT)
     Q_PROPERTY(QString  rawName                 READ rawName                CONSTANT)
-    Q_PROPERTY(bool     standaloneCoordinate    READ standaloneCoordinate   CONSTANT)
+    Q_PROPERTY(bool     isStandaloneCoordinate    READ isStandaloneCoordinate   CONSTANT)
     Q_PROPERTY(bool     specifiesCoordinate     READ specifiesCoordinate    CONSTANT)
 
     MavlinkQmlSingleton::Qml_MAV_CMD qmlCommand(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_command; }
@@ -106,7 +106,7 @@ public:
     bool    friendlyEdit        (void) const { return _friendlyEdit; }
     QString friendlyName        (void) const { return _friendlyName; }
     QString rawName             (void) const { return _rawName; }
-    bool    standaloneCoordinate(void) const { return _standaloneCoordinate; }
+    bool    isStandaloneCoordinate(void) const { return _standaloneCoordinate; }
     bool    specifiesCoordinate (void) const { return _specifiesCoordinate; }
 
     const QMap<int, MavCmdParamInfo*>& paramInfoMap(void) const { return _paramInfoMap; }

@@ -24,6 +24,7 @@
 #include "MissionControllerTest.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
+#include "SimpleMissionItem.h"
 
 MissionControllerTest::MissionControllerTest(void)
     : _multiSpyMissionController(NULL)
@@ -62,7 +63,7 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     _rgMissionItemSignals[coordinateChangedSignalIndex] = SIGNAL(coordinateChanged(const QGeoCoordinate&));
 
     // MissionController signals
-    _rgMissionControllerSignals[missionItemsChangedSignalIndex] =   SIGNAL(missionItemsChanged());
+    _rgMissionControllerSignals[visualItemsChangedSignalIndex] =    SIGNAL(visualItemsChanged());
     _rgMissionControllerSignals[waypointLinesChangedSignalIndex] =  SIGNAL(waypointLinesChanged());
 
     if (!_missionController) {
@@ -80,17 +81,17 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     }
 
     // All signals should some through on start
-    QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(missionItemsChangedSignalMask | waypointLinesChangedSignalMask), true);
+    QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(visualItemsChangedSignalMask | waypointLinesChangedSignalMask), true);
     _multiSpyMissionController->clearAllSignals();
 
-    QmlObjectListModel* missionItems = _missionController->missionItems();
-    QVERIFY(missionItems);
+    QmlObjectListModel* visualItems = _missionController->visualItems();
+    QVERIFY(visualItems);
 
     // Empty vehicle only has home position
-    QCOMPARE(missionItems->count(), 1);
+    QCOMPARE(visualItems->count(), 1);
 
     // Home position should be in first slot, but not yet valid
-    MissionItem* homeItem = qobject_cast<MissionItem*>(missionItems->get(0));
+    SimpleMissionItem* homeItem = qobject_cast<SimpleMissionItem*>(visualItems->get(0));
     QVERIFY(homeItem);
     QCOMPARE(homeItem->homePosition(), true);
 
@@ -113,9 +114,9 @@ void MissionControllerTest::_testEmptyVehicleWorker(MAV_AUTOPILOT firmwareType)
     // FYI: A significant amount of empty vehicle testing is in _initForFirmwareType since that
     // sets up an empty vehicle
 
-    QmlObjectListModel* missionItems = _missionController->missionItems();
-    QVERIFY(missionItems);
-    MissionItem* homeItem = qobject_cast<MissionItem*>(missionItems->get(0));
+    QmlObjectListModel* visualItems = _missionController->visualItems();
+    QVERIFY(visualItems);
+    SimpleMissionItem* homeItem = qobject_cast<SimpleMissionItem*>(visualItems->get(0));
     QVERIFY(homeItem);
 
     _setupMissionItemSignals(homeItem);
@@ -137,17 +138,17 @@ void MissionControllerTest::_testAddWaypointWorker(MAV_AUTOPILOT firmwareType)
 
     QGeoCoordinate coordinate(37.803784, -122.462276);
 
-    _missionController->insertSimpleMissionItem(coordinate, _missionController->missionItems()->count());
+    _missionController->insertSimpleMissionItem(coordinate, _missionController->visualItems()->count());
 
     QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(waypointLinesChangedSignalMask), true);
 
-    QmlObjectListModel* missionItems = _missionController->missionItems();
-    QVERIFY(missionItems);
+    QmlObjectListModel* visualItems = _missionController->visualItems();
+    QVERIFY(visualItems);
 
-    QCOMPARE(missionItems->count(), 2);
+    QCOMPARE(visualItems->count(), 2);
 
-    MissionItem* homeItem = qobject_cast<MissionItem*>(missionItems->get(0));
-    MissionItem* item = qobject_cast<MissionItem*>(missionItems->get(1));
+    SimpleMissionItem* homeItem = qobject_cast<SimpleMissionItem*>(visualItems->get(0));
+    SimpleMissionItem* item = qobject_cast<SimpleMissionItem*>(visualItems->get(1));
     QVERIFY(homeItem);
     QVERIFY(item);
 
@@ -182,13 +183,13 @@ void MissionControllerTest::_testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareTyp
     _missionController = new MissionController();
     Q_CHECK_PTR(_missionController);
     _missionController->start(true /* editMode */);
-    _missionController->insertSimpleMissionItem(QGeoCoordinate(37.803784, -122.462276), _missionController->missionItems()->count());
+    _missionController->insertSimpleMissionItem(QGeoCoordinate(37.803784, -122.462276), _missionController->visualItems()->count());
 
     // Go online to empty vehicle
     MissionControllerManagerTest::_initForFirmwareType(firmwareType);
 
     // Make sure our offline mission items are still there
-    QCOMPARE(_missionController->missionItems()->count(), 2);
+    QCOMPARE(_missionController->visualItems()->count(), 2);
 }
 
 void MissionControllerTest::_testOfflineToOnlineAPM(void)
@@ -201,7 +202,7 @@ void MissionControllerTest::_testOfflineToOnlinePX4(void)
     _testOfflineToOnlineWorker(MAV_AUTOPILOT_PX4);
 }
 
-void MissionControllerTest::_setupMissionItemSignals(MissionItem* item)
+void MissionControllerTest::_setupMissionItemSignals(SimpleMissionItem* item)
 {
     delete _multiSpyMissionItem;
 

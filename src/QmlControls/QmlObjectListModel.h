@@ -60,6 +60,9 @@ public:
     int indexOf(QObject* object) { return _objectList.indexOf(object); }
     template<class T> T value(int index) { return qobject_cast<T>(_objectList[index]); }
 
+    /// Calls deleteLater on all items and this itself.
+    void deleteListAndContents(void);
+
 signals:
     void countChanged(int count);
     void dirtyChanged(bool dirtyChanged);

@@ -42,8 +42,11 @@ MapQuickItem {
     sourceItem:
         MissionItemIndexLabel {
             id:             _label
-            isCurrentItem:  missionItem.isCurrentItem
-            label:          missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
+            isCurrentItem:  _isCurrentItem
+            label:          _sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
             onClicked:      _item.clicked()
+
+            property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem : false
+            property bool _sequenceNumber:  missionItem ? missionItem.sequenceNumber : 0
         }
 }

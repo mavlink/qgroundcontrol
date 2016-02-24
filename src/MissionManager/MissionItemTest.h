@@ -25,16 +25,9 @@
 #define MissionItemTest_H
 
 #include "UnitTest.h"
-#include "TCPLink.h"
 #include "MultiSignalSpy.h"
 
-#include <QGeoCoordinate>
-
-/// @file
-///     @brief FlightGear HIL Simulation unit tests
-///
-///     @author Don Gagne <don@thegagnes.com>
-
+/// Unit test for the MissionItem Object
 class MissionItemTest : public UnitTest
 {
     Q_OBJECT
@@ -43,36 +36,12 @@ public:
     MissionItemTest(void);
     
 private slots:
-    void _test(void);
-    void _testDefaultValues(void);
-    
-private:
-
-    typedef struct {
-        MAV_CMD        command;
-        MAV_FRAME      frame;
-    } ItemInfo_t;
-    
-    typedef struct {
-        const char* name;
-        double      value;
-    } FactValue_t;
-    
-    typedef struct {
-        size_t              cFactValues;
-        const FactValue_t*  rgFactValues;
-    } ItemExpected_t;
-
-    static const ItemInfo_t     _rgItemInfo[];
-    static const ItemExpected_t _rgItemExpected[];
-    static const FactValue_t    _rgFactValuesWaypoint[];
-    static const FactValue_t    _rgFactValuesLoiterUnlim[];
-    static const FactValue_t    _rgFactValuesLoiterTurns[];
-    static const FactValue_t    _rgFactValuesLoiterTime[];
-    static const FactValue_t    _rgFactValuesLand[];
-    static const FactValue_t    _rgFactValuesTakeoff[];
-    static const FactValue_t    _rgFactValuesConditionDelay[];
-    static const FactValue_t    _rgFactValuesDoJump[];
+    void _testSetGet(void);
+    void _testSignals(void);
+    void _testFactSignals(void);
+    void _testLoadFromStream(void);
+    void _testLoadFromJson(void);
+    void _testSaveToJson(void);
 };
 
 #endif

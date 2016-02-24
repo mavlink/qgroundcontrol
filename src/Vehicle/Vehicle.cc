@@ -923,11 +923,6 @@ void Vehicle::setActive(bool active)
     _startJoystick(_active);
 }
 
-QmlObjectListModel* Vehicle::missionItemsModel(void)
-{
-    return missionManager()->missionItems();
-}
-
 bool Vehicle::homePositionAvailable(void)
 {
     return _homePositionAvailable;

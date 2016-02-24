@@ -220,3 +220,11 @@ void QmlObjectListModel::_childDirtyChanged(bool dirty)
     // signal to know when a child has changed dirty state
     emit dirtyChanged(_dirty);
 }
+
+void QmlObjectListModel::deleteListAndContents(void)
+{
+    for (int i=0; i<_objectList.count(); i++) {
+        _objectList[i]->deleteLater();
+    }
+    deleteLater();
+}

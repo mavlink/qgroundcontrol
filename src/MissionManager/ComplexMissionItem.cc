@@ -23,41 +23,17 @@ This file is part of the QGROUNDCONTROL project
 #include "ComplexMissionItem.h"
 
 ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
-    : MissionItem(vehicle, parent)
-{
-
-}
-
-ComplexMissionItem::ComplexMissionItem(Vehicle*       vehicle,
-                         int             sequenceNumber,
-                         MAV_CMD         command,
-                         MAV_FRAME       frame,
-                         double          param1,
-                         double          param2,
-                         double          param3,
-                         double          param4,
-                         double          param5,
-                         double          param6,
-                         double          param7,
-                         bool            autoContinue,
-                         bool            isCurrentItem,
-                         QObject*        parent)
-    : MissionItem(vehicle, sequenceNumber, command, frame, param1, param2, param3, param4, param5, param6, param7, autoContinue, isCurrentItem, parent)
+    : VisualMissionItem(vehicle, parent)
+    , _dirty(false)
 {
 
 }
 
 ComplexMissionItem::ComplexMissionItem(const ComplexMissionItem& other, QObject* parent)
-    : MissionItem(other, parent)
+    : VisualMissionItem(other, parent)
+    , _dirty(false)
 {
 
-}
-
-const ComplexMissionItem& ComplexMissionItem::operator=(const ComplexMissionItem& other)
-{
-    static_cast<MissionItem&>(*this) = other;
-
-    return *this;
 }
 
 QVariantList ComplexMissionItem::polygonPath(void)
@@ -84,4 +60,34 @@ void ComplexMissionItem::addPolygonCoordinate(const QGeoCoordinate coordinate)
 {
     _polygonPath << QVariant::fromValue(coordinate);
     emit polygonPathChanged();
+}
+
+int ComplexMissionItem::nextSequenceNumber(void) const
+{
+    return _sequenceNumber + _missionItems.count();
+}
+
+void ComplexMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
+{
+    if (_coordinate != coordinate) {
+        _coordinate = coordinate;
+        emit coordinateChanged(_coordinate);
+    }
+}
+
+void ComplexMissionItem::setDirty(bool dirty)
+{
+   if (_dirty != dirty) {
+       _dirty = dirty;
+       emit dirtyChanged(_dirty);
+   }
+}
+
+bool ComplexMissionItem::save(QJsonObject& missionObject, QJsonArray& missionItems, QString& errorString)
+{
+    Q_UNUSED(missionObject);
+    Q_UNUSED(missionItems);
+
+    errorString = "Complex save NYI";
+    return false;
 }

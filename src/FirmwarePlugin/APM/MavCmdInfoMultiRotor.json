@@ -9,7 +9,13 @@
             "description":          "Take off from the ground.",
             "specifiesCoordinate":  false,
             "friendlyEdit":         true,
-            "category":             "Basic"
+            "category":             "Basic",
+            "param7": {
+                "label":            "Altitude:",
+                "units":            "meters",
+                "default":          25.0,
+                "decimalPlaces":    2
+            }
         },
         {
             "id":                   17,
