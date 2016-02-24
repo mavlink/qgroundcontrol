@@ -138,8 +138,8 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Pitch:",
-                "units":            "radians",
-                "default":          0.26179939,
+                "units":            "degrees",
+                "default":          15,
                 "decimalPlaces":    2
             },
             "param4": {

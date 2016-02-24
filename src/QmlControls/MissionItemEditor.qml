@@ -82,14 +82,14 @@ Rectangle {
                 }
 
                 MenuSeparator {
-                    visible: !missionItem.simpleItem
+                    visible: missionItem.isSimpleItem
                 }
 
                 MenuItem {
                     text:       "Show all values"
                     checkable:  true
                     checked:    missionItem.rawEdit
-                    visible:    !missionItem.simpleItem
+                    visible:    missionItem.isSimpleItem
 
                     onTriggered:    {
                         if (missionItem.rawEdit) {
@@ -114,7 +114,7 @@ Rectangle {
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.left:           label.right
         anchors.right:          hamburger.left
-        visible:                missionItem.sequenceNumber != 0 && missionItem.isCurrentItem && !missionItem.rawEdit && missionItem.simpleItem
+        visible:                missionItem.sequenceNumber != 0 && missionItem.isCurrentItem && !missionItem.rawEdit && missionItem.isSimpleItem
         text:                   missionItem.commandName
 
         Component {
@@ -130,9 +130,9 @@ Rectangle {
 
     QGCLabel {
         anchors.fill:       commandPicker
-        visible:            missionItem.sequenceNumber == 0 || !missionItem.isCurrentItem || !missionItem.simpleItem
+        visible:            missionItem.sequenceNumber == 0 || !missionItem.isCurrentItem || !missionItem.isSimpleItem
         verticalAlignment:  Text.AlignVCenter
-        text:               missionItem.sequenceNumber == 0 ? "Home Position" : (missionItem.simpleItem ? missionItem.commandName : "Survey")
+        text:               missionItem.sequenceNumber == 0 ? "Home Position" : (missionItem.isSimpleItem ? missionItem.commandName : "Survey")
         color:              _outerTextColor
     }
 
@@ -142,7 +142,7 @@ Rectangle {
         anchors.topMargin:  _margin
         anchors.left:       parent.left
         anchors.top:        commandPicker.bottom
-        sourceComponent:    missionItem.simpleItem ? simpleMissionItemEditor : complexMissionItemEditor
+        sourceComponent:    missionItem.isSimpleItem ? simpleMissionItemEditor : complexMissionItemEditor
 
         /// How wide the loaded component should be
         property real availableWidth: _root.width - (_margin * 2)

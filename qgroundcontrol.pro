@@ -263,6 +263,7 @@ HEADERS += \
     src/MissionManager/MissionManager.h \
     src/MissionManager/ComplexMissionItem.h \
     src/MissionManager/SimpleMissionItem.h \
+    src/MissionManager/VisualMissionItem.h \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCComboBox.h \
@@ -392,6 +393,7 @@ SOURCES += \
     src/MissionManager/MissionManager.cc \
     src/MissionManager/ComplexMissionItem.cc \
     src/MissionManager/SimpleMissionItem.cc \
+    src/MissionManager/VisualMissionItem.cc \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
@@ -508,6 +510,7 @@ HEADERS += \
     src/MissionManager/MissionControllerManagerTest.h \
     src/MissionManager/MissionItemTest.h \
     src/MissionManager/MissionManagerTest.h \
+    src/MissionManager/SimpleMissionItemTest.h \
     src/qgcunittest/GeoTest.h \
     src/qgcunittest/FileDialogTest.h \
     src/qgcunittest/FileManagerTest.h \
@@ -531,6 +534,7 @@ SOURCES += \
     src/MissionManager/MissionControllerManagerTest.cc \
     src/MissionManager/MissionItemTest.cc \
     src/MissionManager/MissionManagerTest.cc \
+    src/MissionManager/SimpleMissionItemTest.cc \
     src/qgcunittest/GeoTest.cc \
     src/qgcunittest/FileDialogTest.cc \
     src/qgcunittest/FileManagerTest.cc \

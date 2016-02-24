@@ -89,7 +89,7 @@ FlightMap {
 
     // Add the mission items to the map
     MissionItemView {
-        model: _mainIsMap ? _missionController.missionItems : 0
+        model: _mainIsMap ? _missionController.visualItems : 0
     }
 
     // Add lines between waypoints

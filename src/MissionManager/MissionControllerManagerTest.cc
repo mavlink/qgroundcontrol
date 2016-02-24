@@ -63,7 +63,7 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
     }
     
     QVERIFY(!_missionManager->inProgress());
-    QCOMPARE(_missionManager->missionItems()->count(), 0);
+    QCOMPARE(_missionManager->missionItems().count(), 0);
     _multiSpyMissionManager->clearAllSignals();
 }
 
