@@ -177,7 +177,7 @@ void FactGroup::_loadMetaData(const QString& jsonFilename)
         // Make sure we have the required keys
         QString errorString;
         QStringList requiredKeys;
-        requiredKeys << _nameJsonKey << _decimalPlacesJsonKey << _typeJsonKey << _shortDescriptionJsonKey;
+        requiredKeys << _nameJsonKey << _typeJsonKey << _shortDescriptionJsonKey;
         if (!JsonHelper::validateRequiredKeys(jsonObject, requiredKeys, errorString)) {
             qWarning() << errorString;
             return;
@@ -215,7 +215,7 @@ void FactGroup::_loadMetaData(const QString& jsonFilename)
 
         FactMetaData* metaData = new FactMetaData(type, this);
 
-        metaData->setDecimalPlaces(jsonObject.value(_decimalPlacesJsonKey).toInt());
+        metaData->setDecimalPlaces(jsonObject.value(_decimalPlacesJsonKey).toInt(0));
         metaData->setShortDescription(jsonObject.value(_shortDescriptionJsonKey).toString());
         metaData->setRawUnits(jsonObject.value(_unitsJsonKey).toString());
 
