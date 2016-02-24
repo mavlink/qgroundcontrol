@@ -254,15 +254,29 @@ QString Fact::_variantToString(const QVariant& variant) const
     QString valueString;
 
     switch (type()) {
-        case FactMetaData::valueTypeFloat:
-            valueString = QString("%1").arg(variant.toFloat(), 0, 'f', decimalPlaces());
-            break;
-        case FactMetaData::valueTypeDouble:
-            valueString = QString("%1").arg(variant.toDouble(), 0, 'f', decimalPlaces());
-            break;
-        default:
-            valueString = variant.toString();
-            break;
+    case FactMetaData::valueTypeFloat:
+    {
+        float fValue = variant.toFloat();
+        if (qIsNaN(fValue)) {
+            valueString = QStringLiteral("--.--");
+        } else {
+            valueString = QString("%1").arg(fValue, 0, 'f', decimalPlaces());
+        }
+    }
+        break;
+    case FactMetaData::valueTypeDouble:
+    {
+        double dValue = variant.toDouble();
+        if (qIsNaN(dValue)) {
+            valueString = QStringLiteral("--.--");
+        } else {
+            valueString = QString("%1").arg(dValue, 0, 'f', decimalPlaces());
+        }
+    }
+        break;
+    default:
+        valueString = variant.toString();
+        break;
     }
 
     return valueString;
