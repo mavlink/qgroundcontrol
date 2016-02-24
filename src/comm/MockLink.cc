@@ -174,6 +174,7 @@ void MockLink::_run1HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
         _sendHeartBeat();
+        _sendVibration();
         if (_sendHomePositionDelayCount > 0) {
             // We delay home position a bit to be more realistic
             _sendHomePositionDelayCount--;
@@ -284,6 +285,24 @@ void MockLink::_sendHeartBeat(void)
                                _mavBaseMode,        // MAV_MODE
                                _mavCustomMode,      // custom mode
                                _mavState);          // MAV_STATE
+
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendVibration(void)
+{
+    mavlink_message_t   msg;
+
+    mavlink_msg_vibration_pack(_vehicleSystemId,
+                               _vehicleComponentId,
+                               &msg,
+                               0,       // time_usec
+                               50.5,    // vibration_x,
+                               10.5,    // vibration_y,
+                               60.0,    // vibration_z,
+                               1,       // clipping_0
+                               2,       // clipping_0
+                               3);      // clipping_0
 
     respondWithMavlinkMessage(msg);
 }
