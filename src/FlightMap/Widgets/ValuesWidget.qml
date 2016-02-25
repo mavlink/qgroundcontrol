@@ -160,6 +160,7 @@ QGCFlickable {
                 anchors.fill:       parent
                 contentHeight:      _loader.y + _loader.height
                 flickableDirection: Flickable.VerticalFlick
+                clip:               true
 
                 QGCLabel {
                     id:     _label
