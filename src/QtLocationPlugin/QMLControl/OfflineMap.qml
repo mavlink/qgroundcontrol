@@ -56,6 +56,9 @@ Rectangle {
     property int  oldz0:        0
     property int  oldz1:        0
 
+    readonly property real minZoomLevel: 3
+    readonly property real maxZoomLevel: 20
+
     Component.onCompleted: {
         QGroundControl.mapEngineManager.loadTileSets()
         updateMap()
@@ -357,8 +360,8 @@ Rectangle {
                                 }
                                 Slider {
                                     id:                 _slider0
-                                    minimumValue:       3
-                                    maximumValue:       18
+                                    minimumValue:       minZoomLevel
+                                    maximumValue:       maxZoomLevel
                                     stepSize:           1
                                     tickmarksEnabled:   false
                                     orientation:        Qt.Horizontal
@@ -421,8 +424,8 @@ Rectangle {
                                 }
                                 Slider {
                                     id:                 _slider1
-                                    minimumValue:       3
-                                    maximumValue:       18
+                                    minimumValue:       minZoomLevel
+                                    maximumValue:       maxZoomLevel
                                     stepSize:           1
                                     tickmarksEnabled:   false
                                     orientation:        Qt.Horizontal
