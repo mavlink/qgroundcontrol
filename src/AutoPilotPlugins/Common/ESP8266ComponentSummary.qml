@@ -16,7 +16,8 @@ FactPanel {
     FactPanelController { id: controller; factPanel: panel }
 
     ESP8266ComponentController {
-        id: esp8266
+        id:         esp8266
+        factPanel:  panel
     }
 
     property Fact debugEnabled:     controller.getParameterFact(esp8266.componentID, "DEBUG_ENABLED")
