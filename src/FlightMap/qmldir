@@ -5,6 +5,7 @@ FlightMap               1.0 FlightMap.qml
 QGCVideoBackground      1.0 QGCVideoBackground.qml
 
 # Widgets
+InstrumentSwipeView             1.0 InstrumentSwipeView.qml
 QGCArtificialHorizon            1.0 QGCArtificialHorizon.qml
 QGCAttitudeHUD                  1.0 QGCAttitudeHUD.qml
 QGCAttitudeWidget               1.0 QGCAttitudeWidget.qml
@@ -14,6 +15,7 @@ QGCInstrumentWidgetAlternate    1.0 QGCInstrumentWidgetAlternate.qml
 QGCPitchIndicator               1.0 QGCPitchIndicator.qml
 QGCSlider                       1.0 QGCSlider.qml
 ValuesWidget                    1.0 ValuesWidget.qml
+VibrationWidget                 1.0 VibrationWidget.qml
 
 # Map items
 MissionItemIndicator    1.0 MissionItemIndicator.qml

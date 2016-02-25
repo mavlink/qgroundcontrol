@@ -58,6 +58,7 @@ const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
 const char* Vehicle::_gpsFactGroupName =        "gps";
 const char* Vehicle::_batteryFactGroupName =    "battery";
 const char* Vehicle::_windFactGroupName =       "wind";
+const char* Vehicle::_vibrationFactGroupName =  "vibration";
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
@@ -82,6 +83,13 @@ const int    VehicleBatteryFactGroup::_cellCountUnavailable =         -1.0;
 const char* VehicleWindFactGroup::_directionFactName =      "direction";
 const char* VehicleWindFactGroup::_speedFactName =          "speed";
 const char* VehicleWindFactGroup::_verticalSpeedFactName =  "verticalSpeed";
+
+const char* VehicleVibrationFactGroup::_xAxisFactName =      "xAxis";
+const char* VehicleVibrationFactGroup::_yAxisFactName =      "yAxis";
+const char* VehicleVibrationFactGroup::_zAxisFactName =      "zAxis";
+const char* VehicleVibrationFactGroup::_clipCount1FactName = "clipCount1";
+const char* VehicleVibrationFactGroup::_clipCount2FactName = "clipCount2";
+const char* VehicleVibrationFactGroup::_clipCount3FactName = "clipCount3";
 
 Vehicle::Vehicle(LinkInterface*             link,
                  int                        vehicleId,
@@ -150,6 +158,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _gpsFactGroup(this)
     , _batteryFactGroup(this)
     , _windFactGroup(this)
+    , _vibrationFactGroup(this)
 {
     _addLink(link);
 
@@ -232,10 +241,12 @@ Vehicle::Vehicle(LinkInterface*             link,
     _addFactGroup(&_gpsFactGroup,       _gpsFactGroupName);
     _addFactGroup(&_batteryFactGroup,   _batteryFactGroupName);
     _addFactGroup(&_windFactGroup,      _windFactGroupName);
+    _addFactGroup(&_vibrationFactGroup, _vibrationFactGroupName);
 
     _gpsFactGroup.setVehicle(this);
     _batteryFactGroup.setVehicle(this);
     _windFactGroup.setVehicle(this);
+    _vibrationFactGroup.setVehicle(this);
 }
 
 Vehicle::~Vehicle()
@@ -333,6 +344,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_SCALED_IMU3:
         emit mavlinkScaledImu3(message);
         break;
+    case MAVLINK_MSG_ID_VIBRATION:
+        _handleVibration(message);
+        break;
 
     // Following are ArduPilot dialect messages
 
@@ -344,6 +358,19 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     emit mavlinkMessageReceived(message);
 
     _uas->receiveMessage(message);
+}
+
+void Vehicle::_handleVibration(mavlink_message_t& message)
+{
+    mavlink_vibration_t vibration;
+    mavlink_msg_vibration_decode(&message, &vibration);
+
+    _vibrationFactGroup.xAxis()->setRawValue(vibration.vibration_x);
+    _vibrationFactGroup.yAxis()->setRawValue(vibration.vibration_y);
+    _vibrationFactGroup.zAxis()->setRawValue(vibration.vibration_z);
+    _vibrationFactGroup.clipCount1()->setRawValue(vibration.clipping_0);
+    _vibrationFactGroup.clipCount2()->setRawValue(vibration.clipping_1);
+    _vibrationFactGroup.clipCount3()->setRawValue(vibration.clipping_2);
 }
 
 void Vehicle::_handleWind(mavlink_message_t& message)
@@ -1354,6 +1381,34 @@ VehicleWindFactGroup::VehicleWindFactGroup(QObject* parent)
 }
 
 void VehicleWindFactGroup::setVehicle(Vehicle* vehicle)
+{
+    _vehicle = vehicle;
+}
+
+VehicleVibrationFactGroup::VehicleVibrationFactGroup(QObject* parent)
+    : FactGroup(1000, ":/json/Vehicle/VibrationFact.json", parent)
+    , _vehicle(NULL)
+    , _xAxisFact        (0, _xAxisFactName,         FactMetaData::valueTypeDouble)
+    , _yAxisFact        (0, _yAxisFactName,         FactMetaData::valueTypeDouble)
+    , _zAxisFact        (0, _zAxisFactName,         FactMetaData::valueTypeDouble)
+    , _clipCount1Fact   (0, _clipCount1FactName,    FactMetaData::valueTypeUint32)
+    , _clipCount2Fact   (0, _clipCount2FactName,    FactMetaData::valueTypeUint32)
+    , _clipCount3Fact   (0, _clipCount3FactName,    FactMetaData::valueTypeUint32)
+{
+    _addFact(&_xAxisFact,       _xAxisFactName);
+    _addFact(&_yAxisFact,       _yAxisFactName);
+    _addFact(&_zAxisFact,       _zAxisFactName);
+    _addFact(&_clipCount1Fact,  _clipCount1FactName);
+    _addFact(&_clipCount2Fact,  _clipCount2FactName);
+    _addFact(&_clipCount3Fact,  _clipCount3FactName);
+
+    // Start out as not available "--.--"
+    _xAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _yAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _zAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+}
+
+void VehicleVibrationFactGroup::setVehicle(Vehicle* vehicle)
 {
     _vehicle = vehicle;
 }
