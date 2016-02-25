@@ -29,6 +29,7 @@ This file is part of the QGROUNDCONTROL project
 
 import QtQuick 2.4
 
+import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.FactSystem    1.0
@@ -87,6 +88,8 @@ Rectangle {
         opacity:            0.5
         width:              attitude.width * 0.15
         fillMode:           Image.PreserveAspectFit
+        visible:            QGroundControl.multiVehicleManager.activeVehicle
+
         MouseArea {
             anchors.fill:   parent
             hoverEnabled:   true
