@@ -103,7 +103,7 @@ public:
     void setParam7          (double param7);
     void setCoordinate      (const QGeoCoordinate& coordinate);
     
-    void save(QJsonObject& json);
+    void save(QJsonObject& json) const;
     bool load(QTextStream &loadStream);
     bool load(const QJsonObject& json, QString& errorString);
 
