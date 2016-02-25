@@ -148,7 +148,7 @@ MissionItem::~MissionItem()
 {    
 }
 
-void MissionItem::save(QJsonObject& json)
+void MissionItem::save(QJsonObject& json) const
 {
     json[_jsonTypeKey] = _itemType;
     json[_jsonIdKey] = sequenceNumber();

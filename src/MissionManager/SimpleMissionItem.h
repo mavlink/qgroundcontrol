@@ -107,8 +107,9 @@ public:
     bool exitCoordinateSameAsEntry          (void) const final { return true; }
 
     void setDirty           (bool dirty) final;
-    void setCoordinate      (const QGeoCoordinate& coordinate);
-    bool save               (QJsonObject& missionObject, QJsonArray& missionItems, QString& errorString) final;
+    void setCoordinate      (const QGeoCoordinate& coordinate) final;
+    void setSequenceNumber  (int sequenceNumber) final;
+    void save               (QJsonObject& saveObject) const final;
 
 public slots:
     void setDefaultsForCommand(void);

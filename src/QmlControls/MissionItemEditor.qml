@@ -15,7 +15,7 @@ Rectangle {
     id: _root
 
     height: editorLoader.y + editorLoader.height + (_margin * 2)
-    color:  missionItem.isCurrentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
+    color:  _currentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
     radius: _radius
 
     property var    missionItem ///< MissionItem associated with this editor
@@ -27,11 +27,12 @@ Rectangle {
     signal insert(int i)
     signal moveHomeToMapCenter
 
+    property bool   _currentItem:       missionItem.isCurrentItem
+    property color  _outerTextColor:    _currentItem ? "black" : qgcPal.text
+
     readonly property real  _editFieldWidth:    ScreenTools.defaultFontPixelWidth * 16
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
-    property color          _outerTextColor:    missionItem.isCurrentItem ? "black" : qgcPal.text
-
 
     QGCPalette {
         id: qgcPal
@@ -88,7 +89,7 @@ Rectangle {
                 MenuItem {
                     text:       "Show all values"
                     checkable:  true
-                    checked:    missionItem.rawEdit
+                    checked:    missionItem.isSimpleItem ? missionItem.rawEdit : false
                     visible:    missionItem.isSimpleItem
 
                     onTriggered:    {
@@ -142,191 +143,10 @@ Rectangle {
         anchors.topMargin:  _margin
         anchors.left:       parent.left
         anchors.top:        commandPicker.bottom
-        sourceComponent:    missionItem.isSimpleItem ? simpleMissionItemEditor : complexMissionItemEditor
+        height:             _currentItem && item ? item.height : 0
+        source:             _currentItem ? (missionItem.isSimpleItem ? "qrc:/qml/SimpleItemEditor.qml" : "qrc:/qml/SurveyItemEditor.qml") : ""
 
-        /// How wide the loaded component should be
-        property real availableWidth: _root.width - (_margin * 2)
+        property real   availableWidth: _root.width - (_margin * 2) ///< How wide the editor should be
+        property var    editorRoot:     _root
     }
-
-    Component {
-        id: valuesComponent
-
-        Rectangle {
-            id:                 valuesRect
-            height:             valuesItem.height
-            color:              qgcPal.windowShadeDark
-            visible:            missionItem.isCurrentItem
-            radius:             _radius
-
-            Item {
-                id:                 valuesItem
-                anchors.margins:    _margin
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.top:        parent.top
-                height:             valuesColumn.height + (_margin * 2)
-
-                Column {
-                    id:             valuesColumn
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    anchors.top:    parent.top
-                    spacing:        _margin
-
-                    QGCLabel {
-                        width:      parent.width
-                        wrapMode:   Text.WordWrap
-                        text:       missionItem.sequenceNumber == 0 ?
-                                        "Planned home position." :
-                                        (missionItem.rawEdit ?
-                                             "Provides advanced access to all commands/parameters. Be very careful!" :
-                                             missionItem.commandDescription)
-                    }
-
-                    Repeater {
-                        model: missionItem.comboboxFacts
-
-                        Item {
-                            width:  valuesColumn.width
-                            height: comboBoxFact.height
-
-                            QGCLabel {
-                                id:                 comboBoxLabel
-                                anchors.baseline:   comboBoxFact.baseline
-                                text:               object.name
-                                visible:            object.name != ""
-                            }
-
-                            FactComboBox {
-                                id:             comboBoxFact
-                                anchors.right:  parent.right
-                                width:          comboBoxLabel.visible ? _editFieldWidth : parent.width
-                                indexModel:     false
-                                model:          object.enumStrings
-                                fact:           object
-                            }
-                        }
-                    }
-
-                    Repeater {
-                        model: missionItem.textFieldFacts
-
-                        Item {
-                            width:  valuesColumn.width
-                            height: textField.height
-
-                            QGCLabel {
-                                id:                 textFieldLabel
-                                anchors.baseline:   textField.baseline
-                                text:               object.name
-                            }
-
-                            FactTextField {
-                                id:             textField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                showUnits:      true
-                                fact:           object
-                                visible:        !_root.readOnly
-                            }
-
-                            FactLabel {
-                                anchors.baseline:   textFieldLabel.baseline
-                                anchors.right:      parent.right
-                                fact:               object
-                                visible:            _root.readOnly
-                            }
-                        }
-                    }
-
-                    Repeater {
-                        model: missionItem.checkboxFacts
-
-                        FactCheckBox {
-                            text:   object.name
-                            fact:   object
-                        }
-                    }
-
-                    QGCButton {
-                        text:       "Move Home to map center"
-                        visible:    missionItem.homePosition
-                        onClicked:  moveHomeToMapCenter()
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                } // Column
-            } // Item
-        } // Rectangle
-
-    }
-
-    Component {
-        id: simpleMissionItemEditor
-
-        Item {
-            id:     innerItem
-            width:  availableWidth
-            height: _showValues ? valuesLoader.y + valuesLoader.height : valuesLoader.y
-
-            property bool _showValues: missionItem.isCurrentItem
-
-            Loader {
-                id:                 valuesLoader
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                sourceComponent:    _showValues ? valuesComponent : undefined
-            }
-        } // Item
-    } // Component - simpleMissionItemEditor
-
-    Component {
-        id: complexMissionItemEditor
-
-        Rectangle {
-            id:         outerRect
-            height:     editorColumn.height + (_margin * 2)
-            width:      availableWidth
-            color:      qgcPal.windowShadeDark
-            radius:     _radius
-
-            property bool addPointsMode: false
-
-            Column {
-                id:                 editorColumn
-                anchors.margins:    _margin
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                width:              availableWidth
-                spacing:            _margin
-
-                Connections {
-                    target: editorMap
-
-                    onMapClicked: {
-                        if (addPointsMode) {
-                            missionItem.addPolygonCoordinate(coordinate)
-                        }
-                    }
-                }
-
-                QGCLabel {
-                    text:       "Fly a grid pattern over a defined area."
-                    wrapMode:   Text.WordWrap
-                }
-
-                QGCButton {
-                    text: addPointsMode ? "Finished" : "Draw Polygon"
-                    onClicked: {
-                        if (addPointsMode) {
-                            addPointsMode = false
-                        } else {
-                            missionItem.clearPolygon()
-                            addPointsMode = true
-                        }
-                    }
-                }
-            }
-        }
-    } // Component - complexMissionItemEditor
-
 } // Rectangle

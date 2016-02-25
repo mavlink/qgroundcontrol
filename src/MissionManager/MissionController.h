@@ -75,6 +75,8 @@ public:
     void setAutoSync(bool autoSync);
     bool syncInProgress(void);
 
+    static const char* jsonSimpleItemsKey;  ///< Key for simple items in a json file
+
 signals:
     void visualItemsChanged(void);
     void complexVisualItemsChanged(void);
@@ -131,7 +133,7 @@ private:
     static const char*  _jsonVersionKey;
     static const char*  _jsonGroundStationKey;
     static const char*  _jsonMavAutopilotKey;
-    static const char*  _jsonItemsKey;
+    static const char*  _jsonComplexItemsKey;
     static const char*  _jsonPlannedHomePositionKey;
 };
 
