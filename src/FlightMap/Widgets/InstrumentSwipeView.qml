@@ -17,6 +17,10 @@ Item {
 
     property real   _margins:   ScreenTools.defaultFontPixelWidth / 2
 
+    function showPicker() {
+        valuesPage.showPicker()
+    }
+
     ValuesWidget {
         id:         valuesPage
         width:      _root.width
