@@ -39,7 +39,7 @@ Rectangle {
     height: compass.y + compass.height + _topBottomMargin
     width:  size
     radius: size / 2
-    color:  isSatellite ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
+    color:  _backgroundColor
 
     property alias  heading:        compass.heading
     property alias  rollAngle:      attitude.rollAngle
@@ -56,12 +56,13 @@ Rectangle {
 
     property real   _defaultSize:   ScreenTools.defaultFontPixelSize * (9)
 
-    property real   _sizeRatio:     ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
-    property real   _bigFontSize:   ScreenTools.defaultFontPixelSize * 2.5  * _sizeRatio
-    property real   _normalFontSize:ScreenTools.defaultFontPixelSize * 1.5  * _sizeRatio
-    property real   _labelFontSize: ScreenTools.defaultFontPixelSize * 0.75 * _sizeRatio
-    property real   _spacing:       ScreenTools.defaultFontPixelSize * 0.33
-    property real   _topBottomMargin: (size * 0.05) / 2
+    property color  _backgroundColor:   isSatellite ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
+    property real   _sizeRatio:         ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
+    property real   _bigFontSize:       ScreenTools.defaultFontPixelSize * 2.5  * _sizeRatio
+    property real   _normalFontSize:    ScreenTools.defaultFontPixelSize * 1.5  * _sizeRatio
+    property real   _labelFontSize:     ScreenTools.defaultFontPixelSize * 0.75 * _sizeRatio
+    property real   _spacing:           ScreenTools.defaultFontPixelSize * 0.33
+    property real   _topBottomMargin:   (size * 0.05) / 2
     property real   _availableValueHeight: maxHeight - (attitude.height + _spacer1.height + _spacer2.height + compass.height + (_spacing * 4))
 
     MouseArea {
@@ -105,14 +106,25 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
     }
 
-    ValuesWidget {
+    InstrumentSwipeView {
         id:                 _valuesWidget
         anchors.topMargin:  _spacing
         anchors.top:        _spacer1.bottom
         width:              parent.width
         qgcView:            instrumentPanel.qgcView
         textColor:          isSatellite ? "black" : "white"
+        backgroundColor:    _backgroundColor
         maxHeight:          _availableValueHeight
+    }
+
+    Component {
+        id: valuesPage
+
+        Rectangle {
+            width: 100
+            height: 100
+            color: index == 0 ? "red" : "blue"
+        }
     }
 
     Rectangle {

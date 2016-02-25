@@ -192,6 +192,7 @@ private:
     void _setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat);
     void _sendHomePosition(void);
     void _sendGpsRawInt(void);
+    void _sendVibration(void);
     void _sendStatusTextMessages(void);
 
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
