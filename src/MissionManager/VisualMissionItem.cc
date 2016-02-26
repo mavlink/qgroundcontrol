@@ -31,7 +31,6 @@ This file is part of the QGROUNDCONTROL project
 VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
     : QObject(parent)
     , _vehicle(vehicle)
-    , _sequenceNumber(0)
     , _isCurrentItem(false)
     , _dirty(false)
     , _altDifference(0.0)
@@ -45,7 +44,6 @@ VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
 VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, QObject* parent)
     : QObject(parent)
     , _vehicle(NULL)
-    , _sequenceNumber(0)
     , _isCurrentItem(false)
     , _dirty(false)
     , _altDifference(0.0)
@@ -60,7 +58,6 @@ const VisualMissionItem& VisualMissionItem::operator=(const VisualMissionItem& o
 {
     _vehicle = other._vehicle;
 
-    setSequenceNumber(other._sequenceNumber);
     setIsCurrentItem(other._isCurrentItem);
     setDirty(other._dirty);
     setAltDifference(other._altDifference);
@@ -105,12 +102,4 @@ void VisualMissionItem::setAzimuth(double azimuth)
 {
     _azimuth = azimuth;
     emit azimuthChanged(_azimuth);
-}
-
-void VisualMissionItem::setSequenceNumber (int sequenceNumber)
-{
-    if (_sequenceNumber != sequenceNumber) {
-        _sequenceNumber = sequenceNumber;
-        emit sequenceNumberChanged(_sequenceNumber);
-    }
 }
