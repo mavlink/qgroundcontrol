@@ -243,7 +243,7 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? (activeVehicle.gps.hdop.value < 10000 ? activeVehicle.gps.hdop.valueString : "N/A") : "N/A"
+                        text:   activeVehicle ? activeVehicle.gps.hdop.valueString : "--.--"
                         color:  colorWhite
                     }
                     QGCLabel {
@@ -251,7 +251,7 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? (activeVehicle.gps.vdop.value < 10000 ? activeVehicle.gps.vdop.valueString : "N/A") : "N/A"
+                        text:   activeVehicle ? activeVehicle.gps.vdop.valueString : "--.--"
                         color:  colorWhite
                     }
                     QGCLabel {
@@ -259,7 +259,7 @@ Rectangle {
                         color:  colorWhite
                     }
                     QGCLabel {
-                        text:   activeVehicle ? activeVehicle.gps.courseOverGround.valueString : "N/A"
+                        text:   activeVehicle ? activeVehicle.gps.courseOverGround.valueString : "--.--"
                         color:  colorWhite
                     }
                 }
