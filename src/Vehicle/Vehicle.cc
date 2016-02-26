@@ -1283,6 +1283,10 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     _addFact(&_courseOverGroundFact,    _courseOverGroundFactName);
     _addFact(&_lockFact,                _lockFactName);
     _addFact(&_countFact,               _countFactName);
+
+    _hdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _vdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _courseOverGroundFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }
 
 void VehicleGPSFactGroup::setVehicle(Vehicle* vehicle)
