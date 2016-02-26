@@ -239,7 +239,7 @@ void MissionController::removeMissionItem(int index)
         index--;
     }
     for (int i=0; i<_visualItems->count(); i++) {
-        MissionItem* item =  qobject_cast<MissionItem*>(_visualItems->get(i));
+        VisualMissionItem* item =  qobject_cast<VisualMissionItem*>(_visualItems->get(i));
         item->setIsCurrentItem(i == index);
     }
     _visualItems->setDirty(true);
