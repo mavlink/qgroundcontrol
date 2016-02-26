@@ -205,7 +205,7 @@ Item {
     }
 
     function showLeftMenu() {
-        if(!leftPanel.visible && !leftPanel.item.animateShowDialog.running) {
+        if(!leftPanel.visible) {
             leftPanel.visible = true
             leftPanel.item.animateShowDialog.start()
         } else if(leftPanel.visible && !leftPanel.item.animateShowDialog.running) {
@@ -261,6 +261,8 @@ Item {
         anchors.fill:       parent
         visible:            false
         z:                  QGroundControl.zOrderTopMost + 100
+        active:             visible
+        source:             "MainWindowLeftPanel.qml"
     }
 
     //-- Main UI
@@ -275,10 +277,6 @@ Item {
         opaqueBackground:   leftPanel.visible
         isBackgroundDark:   flightView.isBackgroundDark
         z:                  QGroundControl.zOrderTopMost
-
-        Component.onCompleted: {
-            leftPanel.source = "MainWindowLeftPanel.qml"
-        }
 
         onShowSetupView:    mainWindow.showSetupView()
         onShowPlanView:     mainWindow.showPlanView()
