@@ -231,58 +231,25 @@ QGCView {
             anchors.left:       parent.left
             anchors.bottom:     parent.bottom
             height:             availableHeight
+            asynchronous:       true
+            visible:            status == Loader.Ready
+
             property bool isBackgroundDark: root.isBackgroundDark
             property var qgcView: root
         }
 
         //-- Virtual Joystick
-        Item {
+        Loader {
             id:                         multiTouchItem
             z:                          _panel.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
-            height:                     thumbAreaHeight
+            height:                     Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
             visible:                    QGroundControl.virtualTabletJoystick
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
             anchors.horizontalCenter:   parent.horizontalCenter
-
-            readonly property real thumbAreaHeight: Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
-
-            QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
-
-            Timer {
-                interval:   40  // 25Hz, same as real joystick rate
-                running:    QGroundControl.virtualTabletJoystick && _activeVehicle
-                repeat:     true
-                onTriggered: {
-                    if (_activeVehicle) {
-                        _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
-                    }
-                }
-            }
-
-            JoystickThumbPad {
-                id:                     leftStick
-                anchors.leftMargin:     xPositionDelta
-                anchors.bottomMargin:   -yPositionDelta
-                anchors.left:           parent.left
-                anchors.bottom:         parent.bottom
-                width:                  parent.thumbAreaHeight
-                height:                 parent.thumbAreaHeight
-                yAxisThrottle:          true
-                lightColors:            !isBackgroundDark
-            }
-
-            JoystickThumbPad {
-                id:                     rightStick
-                anchors.rightMargin:    -xPositionDelta
-                anchors.bottomMargin:   -yPositionDelta
-                anchors.right:          parent.right
-                anchors.bottom:         parent.bottom
-                width:                  parent.thumbAreaHeight
-                height:                 parent.thumbAreaHeight
-                lightColors:            !isBackgroundDark
-            }
+            source:                     "qrc:/qml/VirtualJoystick.qml"
+            active:                     QGroundControl.virtualTabletJoystick
         }
     }
 }
