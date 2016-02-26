@@ -35,13 +35,13 @@ Row {
     spacing:  tbSpacing * 2
 
     function getSatStrength(hdop) {
-        if (hdop < 3)
+        if (hdop <= 1.0)
             return 100
-        if (hdop < 6)
+        if (hdop <= 1.4)
             return 75
-        if (hdop < 11)
+        if (hdop <= 1.8)
             return 50
-        if (hdop < 21)
+        if (hdop <= 3.0)
             return 25
         return 0
     }
@@ -181,8 +181,8 @@ Row {
             }
         }
         QGCLabel {
-            text:           (activeVehicle && activeVehicle.gps.count.value >= 0) ? activeVehicle.gps.count.valueString : ""
-            visible:        (activeVehicle && activeVehicle.gps.count.value >= 0)
+            text:           activeVehicle ? activeVehicle.gps.hdop.valueString : ""
+            visible:        activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
             font.pixelSize: tbFontSmall
             color:          colorWhite
             anchors.top:    parent.top
