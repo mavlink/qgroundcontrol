@@ -99,7 +99,6 @@ public:
     double azimuth          (void) const { return _azimuth; }
     double distance         (void) const { return _distance; }
     bool   isCurrentItem    (void) const { return _isCurrentItem; }
-    int    sequenceNumber   (void) const { return _sequenceNumber; }
 
     QmlObjectListModel* childItems(void) { return &_childItems; }
 
@@ -111,10 +110,6 @@ public:
 
     Vehicle* vehicle(void) { return _vehicle; }
 
-    // Virtuals which may be overriden by derived classes
-
-    virtual void setSequenceNumber(int sequenceNumber);
-
     // Pure virtuals which must be provides by derived classes
 
     virtual bool            dirty                   (void) const = 0;
@@ -125,6 +120,7 @@ public:
     virtual QString         commandName             (void) const = 0;
     virtual QGeoCoordinate  coordinate              (void) const = 0;
     virtual QGeoCoordinate  exitCoordinate          (void) const = 0;
+    virtual int             sequenceNumber          (void) const = 0;
 
     virtual bool coordinateHasRelativeAltitude      (void) const = 0;
     virtual bool exitCoordinateHasRelativeAltitude  (void) const = 0;
@@ -132,6 +128,7 @@ public:
 
     virtual void setDirty           (bool dirty) = 0;
     virtual void setCoordinate      (const QGeoCoordinate& coordinate) = 0;
+    virtual void setSequenceNumber  (int sequenceNumber) = 0;
 
     /// Save the item(s) in Json format
     ///     @param saveObject Save the item to this json object
@@ -159,7 +156,6 @@ signals:
 
 protected:
     Vehicle*    _vehicle;
-    int         _sequenceNumber;
     bool        _isCurrentItem;
     bool        _dirty;
     double      _altDifference;             ///< Difference in altitude from previous waypoint

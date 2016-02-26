@@ -366,8 +366,42 @@ QGCView {
 
                 // Add the simple mission items to the map
                 MapItemView {
-                    model:          controller.visualItems
-                    delegate:       missionItemComponent
+                    model:      controller.visualItems
+                    delegate:   missionItemComponent
+                }
+
+                // Add the complex mission items to the map
+                MapItemView {
+                    model:      controller.complexVisualItems
+                    delegate:   polygonItemComponent
+                }
+
+                Component {
+                    id: polygonItemComponent
+
+                    MapPolygon {
+                        color:      'green'
+                        path:       object.polygonPath
+                        opacity:    0.5
+                    }
+                }
+
+                // Add the complex mission item exit coordinates
+                MapItemView {
+                    model:      controller.complexVisualItems
+                    delegate:   exitCoordinateComponent
+                }
+
+                Component {
+                    id: exitCoordinateComponent
+
+                    MissionItemIndicator {
+                        coordinate:     object.exitCoordinate
+                        z:              QGroundControl.zOrderMapItems
+                        missionItem:    object
+                        sequenceNumber: object.lastSequenceNumber
+                        visible:        object.specifiesCoordinate
+                    }
                 }
 
                 Component {
@@ -379,18 +413,18 @@ QGCView {
                         visible:        object.specifiesCoordinate
                         z:              QGroundControl.zOrderMapItems
                         missionItem:    object
+                        sequenceNumber: object.sequenceNumber
 
                         onClicked: setCurrentItem(object.sequenceNumber)
 
                         function updateItemIndicator()
                         {
-                            if (object.isCurrentItem && itemIndicator.visible) {
-                                if (object.specifiesCoordinate) {
-                                    // Setup our drag item
-                                        itemDragger.visible = true
-                                        itemDragger.missionItem = Qt.binding(function() { return object })
-                                        itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
-                                }
+                            if (object.isCurrentItem && itemIndicator.visible &&
+                                    object.specifiesCoordinate && object.isSimpleItem) {
+                                // Setup our drag item
+                                itemDragger.visible = true
+                                itemDragger.missionItem = Qt.binding(function() { return object })
+                                itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
                             }
                         }
 
@@ -418,22 +452,6 @@ QGCView {
                                 }
                             }
                         }
-                    }
-                }
-
-                // Add the complex mission items to the map
-                MapItemView {
-                    model:          controller.complexVisualItems
-                    delegate:       polygonItemComponent
-                }
-
-                Component {
-                    id: polygonItemComponent
-
-                    MapPolygon {
-                        color:      'green'
-                        path:       object.polygonPath
-                        opacity:    0.5
                     }
                 }
 
