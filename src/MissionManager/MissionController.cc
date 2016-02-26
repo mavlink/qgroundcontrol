@@ -29,6 +29,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCApplication.h"
 #include "SimpleMissionItem.h"
 #include "ComplexMissionItem.h"
+#include "JsonHelper.h"
 
 #ifndef __mobile__
 #include "QGCFileDialog.h"
@@ -36,11 +37,13 @@ This file is part of the QGROUNDCONTROL project
 
 QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
 
+const char* MissionController::jsonSimpleItemsKey = "items";
+
 const char* MissionController::_settingsGroup =                 "MissionController";
 const char* MissionController::_jsonVersionKey =                "version";
 const char* MissionController::_jsonGroundStationKey =          "groundStation";
 const char* MissionController::_jsonMavAutopilotKey =           "MAV_AUTOPILOT";
-const char* MissionController::_jsonItemsKey =                  "items";
+const char* MissionController::_jsonComplexItemsKey =           "complexItems";
 const char* MissionController::_jsonPlannedHomePositionKey =    "plannedHomePosition";
 
 MissionController::MissionController(QObject *parent)
@@ -140,7 +143,9 @@ void MissionController::sendMissionItems(void)
                 missionItem.setSequenceNumber(sequenceNumber++);
                 missionItems.append(&missionItem);
             } else {
-                foreach (MissionItem* missionItem, qobject_cast<ComplexMissionItem*>(visualItem)->missionItems()) {
+                ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
+                for (int j=0; j<complexItem->missionItems().count(); j++) {
+                    MissionItem* missionItem = complexItem->missionItems()[i];
                     missionItem->setSequenceNumber(sequenceNumber++);
                     missionItems.append(missionItem);
                 }
@@ -247,22 +252,31 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
 
     QJsonObject json = jsonDoc.object();
 
-    if (!json.contains(_jsonVersionKey)) {
-        errorString = QStringLiteral("File is missing version key");
+    // Check for required keys
+    QStringList requiredKeys;
+    requiredKeys << _jsonVersionKey << _jsonPlannedHomePositionKey;
+    if (!JsonHelper::validateRequiredKeys(json, requiredKeys, errorString)) {
         return false;
     }
+
+    // Validate base key types
+    QStringList             keyList;
+    QList<QJsonValue::Type> typeList;
+    keyList << jsonSimpleItemsKey << _jsonVersionKey << _jsonGroundStationKey << _jsonMavAutopilotKey << _jsonComplexItemsKey << _jsonPlannedHomePositionKey;
+    typeList << QJsonValue::Array << QJsonValue::String << QJsonValue::String << QJsonValue::Double << QJsonValue::Array << QJsonValue::Object;
+    if (!JsonHelper::validateKeyTypes(json, keyList, typeList, errorString)) {
+        return false;
+    }
+
+    // Version check
     if (json[_jsonVersionKey].toString() != "1.0") {
         errorString = QStringLiteral("QGroundControl does not support this file version");
         return false;
     }
 
-    if (json.contains(_jsonItemsKey)) {
-        if (!json[_jsonItemsKey].isArray()) {
-            errorString = QStringLiteral("items values must be array");
-            return false;
-        }
-
-        QJsonArray itemArray(json[_jsonItemsKey].toArray());
+    // Simple items
+    if (json.contains(jsonSimpleItemsKey)) {
+        QJsonArray itemArray(json[jsonSimpleItemsKey].toArray());
         foreach (const QJsonValue& itemValue, itemArray) {
             if (!itemValue.isObject()) {
                 errorString = QStringLiteral("Mission item is not an object");
@@ -270,6 +284,24 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
             }
 
             SimpleMissionItem* item = new SimpleMissionItem(_activeVehicle, this);
+            if (item->load(itemValue.toObject(), errorString)) {
+                missionItems->append(item);
+            } else {
+                return false;
+            }
+        }
+    }
+
+    // Complex items
+    if (json.contains(_jsonComplexItemsKey)) {
+        QJsonArray itemArray(json[_jsonComplexItemsKey].toArray());
+        foreach (const QJsonValue& itemValue, itemArray) {
+            if (!itemValue.isObject()) {
+                errorString = QStringLiteral("Mission item is not an object");
+                return false;
+            }
+
+            ComplexMissionItem* item = new ComplexMissionItem(_activeVehicle, this);
             if (item->load(itemValue.toObject(), errorString)) {
                 missionItems->append(item);
             } else {
@@ -418,12 +450,12 @@ void MissionController::_saveMissionToFile(const QString& filename)
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qgcApp()->showMessage(file.errorString());
     } else {
-        QJsonObject missionObject;      // top level json object
-        QJsonArray missionItemArray;    // array of mission items
-        QString errorString;
+        QJsonObject missionFileObject;      // top level json object
+        QJsonArray  simpleItemsObject;
+        QJsonArray  complexItemsObject;
 
-        missionObject[_jsonVersionKey] = "1.0";
-        missionObject[_jsonGroundStationKey] = "QGroundControl";
+        missionFileObject[_jsonVersionKey] =        "1.0";
+        missionFileObject[_jsonGroundStationKey] =  "QGroundControl";
 
         MAV_AUTOPILOT firmwareType = MAV_AUTOPILOT_GENERIC;
         if (_activeVehicle) {
@@ -435,7 +467,7 @@ void MissionController::_saveMissionToFile(const QString& filename)
             QSettings settings;
             firmwareType = (MAV_AUTOPILOT)settings.value("OfflineEditingFirmwareType", MAV_AUTOPILOT_ARDUPILOTMEGA).toInt();
         }
-        missionObject[_jsonMavAutopilotKey] = firmwareType;
+        missionFileObject[_jsonMavAutopilotKey] = firmwareType;
 
         // Save planned home position
         QJsonObject homePositionObject;
@@ -446,19 +478,26 @@ void MissionController::_saveMissionToFile(const QString& filename)
             qgcApp()->showMessage(QStringLiteral("Internal error: VisualMissionItem at index 0 not SimpleMissionItem"));
             return;
         }
-        missionObject[_jsonPlannedHomePositionKey] = homePositionObject;
+        missionFileObject[_jsonPlannedHomePositionKey] = homePositionObject;
 
-        // Save the remainder of the visual items
+        // Save the visual items
         for (int i=1; i<_visualItems->count(); i++) {
+            QJsonObject itemObject;
+
             VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
-            if (!visualItem->save(missionObject, missionItemArray, errorString)) {
-                qgcApp()->showMessage(errorString);
-                return;
+            visualItem->save(itemObject);
+
+            if (visualItem->isSimpleItem()) {
+                simpleItemsObject.append(itemObject);
+            } else {
+                complexItemsObject.append(itemObject);
             }
         }
-        missionObject["items"] = missionItemArray;
 
-        QJsonDocument saveDoc(missionObject);
+        missionFileObject[jsonSimpleItemsKey] = simpleItemsObject;
+        missionFileObject[_jsonComplexItemsKey] = complexItemsObject;
+
+        QJsonDocument saveDoc(missionFileObject);
         file.write(saveDoc.toJson());
     }
 

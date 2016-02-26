@@ -82,7 +82,19 @@ bool JsonHelper::toQGeoCoordinate(const QJsonValue& jsonValue, QGeoCoordinate& c
     return true;
 }
 
-bool JsonHelper::validateKeyTypes(QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types, QString& errorString)
+void JsonHelper::writeQGeoCoordinate(QJsonValue& jsonValue, const QGeoCoordinate& coordinate, bool writeAltitude)
+{
+    QJsonArray coordinateArray;
+
+    coordinateArray << coordinate.latitude() << coordinate.longitude();
+    if (writeAltitude) {
+        coordinateArray << coordinate.altitude();
+    }
+
+    jsonValue = QJsonValue(coordinateArray);
+}
+
+bool JsonHelper::validateKeyTypes(const QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types, QString& errorString)
 {
     for (int i=0; i<keys.count(); i++) {
         if (jsonObject.contains(keys[i])) {

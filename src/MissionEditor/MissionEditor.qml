@@ -552,6 +552,7 @@ QGCView {
                             var index = controller.insertComplexMissionItem(coordinate, controller.visualItems.count)
                             setCurrentItem(index)
                             checked = false
+                            addMissionItemsButton.checked = false
                         }
                     }
 

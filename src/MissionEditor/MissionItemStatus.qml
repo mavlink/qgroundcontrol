@@ -49,7 +49,6 @@ Rectangle {
     property real   _gradient:          _statusValid ? Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) : 0
     property real   _gradientPercent:   isNaN(_gradient) ? 0 : _gradient * 100
     property real   _azimuth:           _statusValid ? _currentMissionItem.azimuth : -1
-    property real   _isHomePosition:    _statusValid ? _currentMissionItem.homePosition : false
     property bool   _statusValid:       currentMissionItem != undefined
     property string _distanceText:      _statusValid ? _distance.toFixed(2) + " m" : ""
     property string _altText:           _statusValid ? _altDifference.toFixed(2) + " m" : ""

@@ -108,9 +108,12 @@ public:
     void setAltPercent      (double altPercent);
     void setAzimuth         (double azimuth);
     void setDistance        (double distance);
-    void setSequenceNumber  (int sequenceNumber);
 
     Vehicle* vehicle(void) { return _vehicle; }
+
+    // Virtuals which may be overriden by derived classes
+
+    virtual void setSequenceNumber(int sequenceNumber);
 
     // Pure virtuals which must be provides by derived classes
 
@@ -130,11 +133,9 @@ public:
     virtual void setDirty           (bool dirty) = 0;
     virtual void setCoordinate      (const QGeoCoordinate& coordinate) = 0;
 
-    /// Save the item in Json format
-    ///     @param missionObject Top level object for entire mission file
-    ///     @param missionItems Array of mission items
-    /// @return false: save failed, errorString set
-    virtual bool save(QJsonObject& missionObject, QJsonArray& missionItems, QString& errorString) = 0;
+    /// Save the item(s) in Json format
+    ///     @param saveObject Save the item to this json object
+    virtual void save(QJsonObject& saveObject) const = 0;
 
 signals:
     void altDifferenceChanged           (double altDifference);
