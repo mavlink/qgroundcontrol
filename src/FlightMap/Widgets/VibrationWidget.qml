@@ -134,8 +134,6 @@ QGCFlickable {
             width:                  barRow.width
             height:                 1
             color:                  "red"
-
-            Component.onCompleted: console.log(anchors.topMargin, xBar.height, _barBadValue, _barMaximum, _barMinimum)
         }
 
         QGCLabel {

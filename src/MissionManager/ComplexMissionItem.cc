@@ -33,6 +33,7 @@ const char* ComplexMissionItem::_complexType = "survey";
 
 ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
     : VisualMissionItem(vehicle, parent)
+    , _sequenceNumber(0)
     , _dirty(false)
 {
     MissionItem missionItem;
@@ -44,6 +45,7 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
 
 ComplexMissionItem::ComplexMissionItem(const ComplexMissionItem& other, QObject* parent)
     : VisualMissionItem(other, parent)
+    , _sequenceNumber(other.sequenceNumber())
     , _dirty(false)
 {
 
@@ -51,8 +53,18 @@ ComplexMissionItem::ComplexMissionItem(const ComplexMissionItem& other, QObject*
 
 void ComplexMissionItem::clearPolygon(void)
 {
-    _polygonPath.clear();
+    // Bug workaround, see below
+    while (_polygonPath.count() > 1) {
+        _polygonPath.takeLast();
+    }
     emit polygonPathChanged();
+
+    // Although this code should remove the polygon from the map it doesn't. There appears
+    // to be a bug in MapPolygon which causes it to not be redrawn if the list is empty. So
+    // we work around it by using the code above to remove all bu the last point which in turn
+    // will cause the polygon to go away.
+    _polygonPath.clear();
+    emit specifiesCoordinateChanged();
 }
 
 void ComplexMissionItem::addPolygonCoordinate(const QGeoCoordinate coordinate)
@@ -60,15 +72,18 @@ void ComplexMissionItem::addPolygonCoordinate(const QGeoCoordinate coordinate)
     _polygonPath << QVariant::fromValue(coordinate);
     emit polygonPathChanged();
 
-    // FIXME: Hack, first polygon point sets entry coordinate
-    if (_polygonPath.count() == 1) {
+    int pointCount = _polygonPath.count();
+    if (pointCount == 1) {
         setCoordinate(coordinate);
+    } else if (pointCount == 3) {
+        emit specifiesCoordinateChanged();
     }
+    _setExitCoordinate(coordinate);
 }
 
-int ComplexMissionItem::nextSequenceNumber(void) const
+int ComplexMissionItem::lastSequenceNumber(void) const
 {
-    return _sequenceNumber + _missionItems.count();
+    return _sequenceNumber + _missionItems.count() - 1;
 }
 
 void ComplexMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
@@ -126,11 +141,15 @@ void ComplexMissionItem::save(QJsonObject& saveObject) const
 
 void ComplexMissionItem::setSequenceNumber(int sequenceNumber)
 {
-    VisualMissionItem::setSequenceNumber(sequenceNumber);
+    if (_sequenceNumber != sequenceNumber) {
+        _sequenceNumber = sequenceNumber;
 
-    // Update internal mission items to new numbering
-    for (int i=0; i<_missionItems.count(); i++) {
-        _missionItems[i]->setSequenceNumber(sequenceNumber++);
+        // Update internal mission items to new numbering
+        for (int i=0; i<_missionItems.count(); i++) {
+            _missionItems[i]->setSequenceNumber(sequenceNumber++);
+        }
+
+        emit sequenceNumberChanged(sequenceNumber);
     }
 }
 
@@ -217,9 +236,11 @@ bool ComplexMissionItem::load(const QJsonObject& complexObject, QString& errorSt
 
     int itemCount = _missionItems.count();
     if (itemCount > 0) {
-        setCoordinate(_missionItems[0]->coordinate());
-        _setExitCoordinate(_missionItems[itemCount - 1]->coordinate());
+        _coordinate = _missionItems[0]->coordinate();
+        _exitCoordinate = _missionItems[itemCount - 1]->coordinate();
     }
+
+    qDebug() << coordinate() << exitCoordinate() << _missionItems[0]->coordinate() << _missionItems[1]->coordinate();
 
     return true;
 }
@@ -235,4 +256,9 @@ void ComplexMissionItem::_setExitCoordinate(const QGeoCoordinate& coordinate)
             _missionItems[itemCount - 1]->setCoordinate(coordinate);
         }
     }
+}
+
+bool ComplexMissionItem::specifiesCoordinate(void) const
+{
+    return _polygonPath.count() > 2;
 }

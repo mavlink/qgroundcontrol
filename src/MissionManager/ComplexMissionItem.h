@@ -35,7 +35,8 @@ public:
     ComplexMissionItem(Vehicle* vehicle, QObject* parent = NULL);
     ComplexMissionItem(const ComplexMissionItem& other, QObject* parent = NULL);
 
-    Q_PROPERTY(QVariantList  polygonPath READ polygonPath NOTIFY polygonPathChanged)
+    Q_PROPERTY(QVariantList polygonPath         READ polygonPath        NOTIFY polygonPathChanged)
+    Q_PROPERTY(int          lastSequenceNumber  READ lastSequenceNumber NOTIFY lastSequenceNumberChanged)
 
     Q_INVOKABLE void clearPolygon(void);
     Q_INVOKABLE void addPolygonCoordinate(const QGeoCoordinate coordinate);
@@ -44,8 +45,8 @@ public:
 
     QList<MissionItem*>& missionItems(void) { return _missionItems; }
 
-    /// @return The next sequence number to use after this item. Takes into account child items of the complex item
-    int nextSequenceNumber(void) const;
+    /// @return The last sequence number used by this item. Takes into account child items of the complex item
+    int lastSequenceNumber(void) const;
 
     /// Load the complex mission item from Json
     ///     @param complexObject Complex mission item json object
@@ -58,11 +59,12 @@ public:
     bool            dirty                   (void) const final { return _dirty; }
     bool            isSimpleItem            (void) const final { return false; }
     bool            isStandaloneCoordinate  (void) const final { return false; }
-    bool            specifiesCoordinate     (void) const final { return true; }
+    bool            specifiesCoordinate     (void) const final;
     QString         commandDescription      (void) const final { return "Survey"; }
     QString         commandName             (void) const final { return "Survey"; }
     QGeoCoordinate  coordinate              (void) const final { return _coordinate; }
     QGeoCoordinate  exitCoordinate          (void) const final { return _exitCoordinate; }
+    int             sequenceNumber          (void) const final { return _sequenceNumber; }
 
     bool coordinateHasRelativeAltitude      (void) const final { return true; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
@@ -75,11 +77,13 @@ public:
 
 signals:
     void polygonPathChanged(void);
+    void lastSequenceNumberChanged(int lastSequenceNumber);
 
 private:
     void _clear(void);
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
 
+    int                 _sequenceNumber;
     bool                _dirty;
     QVariantList        _polygonPath;
     QList<MissionItem*> _missionItems;

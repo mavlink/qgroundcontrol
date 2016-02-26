@@ -33,6 +33,7 @@ MapQuickItem {
     id: _item
 
     property var missionItem
+    property int sequenceNumber
 
     signal clicked
 
@@ -43,10 +44,9 @@ MapQuickItem {
         MissionItemIndexLabel {
             id:             _label
             isCurrentItem:  _isCurrentItem
-            label:          _sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
+            label:          sequenceNumber == 0 ? "H" : sequenceNumber
             onClicked:      _item.clicked()
 
             property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem : false
-            property bool _sequenceNumber:  missionItem ? missionItem.sequenceNumber : 0
         }
 }
