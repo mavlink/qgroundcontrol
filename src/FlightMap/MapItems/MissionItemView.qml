@@ -41,6 +41,7 @@ MapItemView {
         visible:        object.specifiesCoordinate && (index != 0 || object.showHomePosition)
         z:              QGroundControl.zOrderMapItems
         missionItem:    object
+        sequenceNumber: object.sequenceNumber
 
         // These are the non-coordinate child mission items attached to this item
         Row {

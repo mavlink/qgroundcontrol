@@ -113,10 +113,11 @@ private:
     void _addPlannedHomePosition(QmlObjectListModel* visualItems, bool addToCenter);
     double _normalizeLat(double lat);
     double _normalizeLon(double lon);
-    bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QString& errorString);
+    bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
     bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
     void _loadMissionFromFile(const QString& file);
     void _saveMissionToFile(const QString& file);
+    int _nextSequenceNumber(void);
 
 private:
     bool                _editMode;
