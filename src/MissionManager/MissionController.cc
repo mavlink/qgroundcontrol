@@ -353,7 +353,7 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
 
             nextSequenceNumber++;
         }
-    } while (nextSimpleItemIndex < itemArray.count() | nextComplexItemIndex < complexItems->count());
+    } while (nextSimpleItemIndex < itemArray.count() || nextComplexItemIndex < complexItems->count());
 
     if (json.contains(_jsonPlannedHomePositionKey)) {
         SimpleMissionItem* item = new SimpleMissionItem(_activeVehicle, this);
