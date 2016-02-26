@@ -244,16 +244,9 @@ SimpleMissionItem::~SimpleMissionItem()
 {    
 }
 
-bool SimpleMissionItem::save(QJsonObject& missionObject, QJsonArray& missionItems, QString& errorString)
+void SimpleMissionItem::save(QJsonObject& saveObject) const
 {
-    Q_UNUSED(missionObject);
-    Q_UNUSED(errorString);
-
-    QJsonObject itemObject;
-    _missionItem.save(itemObject);
-    missionItems.append(itemObject);
-
-    return true;
+    _missionItem.save(saveObject);
 }
 
 bool SimpleMissionItem::load(QTextStream &loadStream)
@@ -584,4 +577,10 @@ void SimpleMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
         qDebug() << _missionItem.coordinate() << coordinate;
         _missionItem.setCoordinate(coordinate);
     }
+}
+
+void SimpleMissionItem::setSequenceNumber(int sequenceNumber)
+{
+    _missionItem.setSequenceNumber(sequenceNumber);
+    VisualMissionItem::setSequenceNumber(sequenceNumber);
 }
