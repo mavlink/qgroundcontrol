@@ -26,6 +26,7 @@
 
 #include "VisualMissionItem.h"
 #include "MissionItem.h"
+#include "Fact.h"
 
 class ComplexMissionItem : public VisualMissionItem
 {
@@ -35,18 +36,29 @@ public:
     ComplexMissionItem(Vehicle* vehicle, QObject* parent = NULL);
     ComplexMissionItem(const ComplexMissionItem& other, QObject* parent = NULL);
 
+    Q_PROPERTY(Fact*        gridAltitude        READ gridAltitude       CONSTANT)
+    Q_PROPERTY(Fact*        gridAngle           READ gridAngle          CONSTANT)
+    Q_PROPERTY(Fact*        gridSpacing         READ gridSpacing        CONSTANT)
     Q_PROPERTY(QVariantList polygonPath         READ polygonPath        NOTIFY polygonPathChanged)
     Q_PROPERTY(int          lastSequenceNumber  READ lastSequenceNumber NOTIFY lastSequenceNumberChanged)
+    Q_PROPERTY(QVariantList gridPoints          READ gridPoints         NOTIFY gridPointsChanged)
 
     Q_INVOKABLE void clearPolygon(void);
     Q_INVOKABLE void addPolygonCoordinate(const QGeoCoordinate coordinate);
 
     QVariantList polygonPath(void) { return _polygonPath; }
+    QVariantList gridPoints (void) { return _gridPoints; }
 
-    QList<MissionItem*>& missionItems(void) { return _missionItems; }
+    Fact* gridAltitude(void)    { return &_gridAltitudeFact; }
+    Fact* gridAngle(void)       { return &_gridAngleFact; }
+    Fact* gridSpacing(void)     { return &_gridSpacingFact; }
 
     /// @return The last sequence number used by this item. Takes into account child items of the complex item
     int lastSequenceNumber(void) const;
+
+    /// Returns the mission items associated with the complex item. Caller is responsible for freeing. Calling
+    /// delete on returned QmlObjectListModel will free all memory including internal items.
+    QmlObjectListModel* getMissionItems(void) const;
 
     /// Load the complex mission item from Json
     ///     @param complexObject Complex mission item json object
@@ -78,22 +90,47 @@ public:
 signals:
     void polygonPathChanged(void);
     void lastSequenceNumberChanged(int lastSequenceNumber);
+    void altitudeChanged(double altitude);
+    void gridAngleChanged(double gridAngle);
+    void gridPointsChanged(void);
 
 private:
+    typedef struct Point_s {
+        double x;
+        double y;
+
+        Point_s(double x, double y) {
+            this->x = x;
+            this->y = y;
+        }
+    } Point_t;
+
     void _clear(void);
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
+    void _clearGrid(void);
+    void _generateGrid(void);
+    void _gridGenerator(const QList<Point_t>& polygonPoints, QList<Point_t>& gridPoints);
 
     int                 _sequenceNumber;
     bool                _dirty;
     QVariantList        _polygonPath;
-    QList<MissionItem*> _missionItems;
+    QVariantList        _gridPoints;
     QGeoCoordinate      _coordinate;
     QGeoCoordinate      _exitCoordinate;
+    double              _altitude;
+    double              _gridAngle;
+
+    Fact    _gridAltitudeFact;
+    Fact    _gridAngleFact;
+    Fact    _gridSpacingFact;
 
     static const char* _jsonVersionKey;
     static const char* _jsonTypeKey;
     static const char* _jsonPolygonKey;
     static const char* _jsonIdKey;
+    static const char* _jsonGridAltitudeKey;
+    static const char* _jsonGridAngleKey;
+    static const char* _jsonGridSpacingKey;
 
     static const char* _complexType;
 };
