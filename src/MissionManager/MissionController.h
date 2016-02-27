@@ -59,10 +59,14 @@ public:
     Q_INVOKABLE void removeAllMissionItems(void);
     Q_INVOKABLE QStringList getMobileMissionFiles(void);
 
-    /// @param i: index to insert at
+    /// Add a new simple mission item to the list
+    ///     @param i: index to insert at
+    /// @return Sequence number for new item
     Q_INVOKABLE int insertSimpleMissionItem(QGeoCoordinate coordinate, int i);
 
-    /// @param i: index to insert at
+    /// Add a new complex mission item to the list
+    ///     @param i: index to insert at
+    /// @return Sequence number for new item
     Q_INVOKABLE int insertComplexMissionItem(QGeoCoordinate coordinate, int i);
 
     // Property accessors
