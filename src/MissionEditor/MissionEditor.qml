@@ -173,14 +173,15 @@ QGCView {
         id: _dropButtonsExclusiveGroup
     }
 
-    function setCurrentItem(index) {
+    function setCurrentItem(sequenceNumber) {
         _currentMissionItem = undefined
         for (var i=0; i<_visualItems.count; i++) {
-            if (i == index) {
-                _currentMissionItem = _visualItems.get(i)
+            var visualItem = _visualItems.get(i)
+            if (visualItem.sequenceNumber == sequenceNumber) {
+                _currentMissionItem = visualItem
                 _currentMissionItem.isCurrentItem = true
             } else {
-                _visualItems.get(i).isCurrentItem = false
+                visualItem.isCurrentItem = false
             }
         }
     }
@@ -306,8 +307,8 @@ QGCView {
                         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                         coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
                         if (addMissionItemsButton.checked) {
-                            var index = controller.insertSimpleMissionItem(coordinate, controller.visualItems.count)
-                            setCurrentItem(index)
+                            var sequenceNumber = controller.insertSimpleMissionItem(coordinate, controller.visualItems.count)
+                            setCurrentItem(sequenceNumber)
                         } else {
                             editorMap.mapClicked(coordinate)
                         }
@@ -364,13 +365,7 @@ QGCView {
                     }
                 }
 
-                // Add the simple mission items to the map
-                MapItemView {
-                    model:      controller.visualItems
-                    delegate:   missionItemComponent
-                }
-
-                // Add the complex mission items to the map
+                // Add the complex mission item polygon to the map
                 MapItemView {
                     model:      controller.complexVisualItems
                     delegate:   polygonItemComponent
@@ -383,6 +378,16 @@ QGCView {
                         color:      'green'
                         path:       object.polygonPath
                         opacity:    0.5
+                    }
+                }
+
+                // Add the complex mission item grid to the map
+                MapItemView {
+                    model: controller.complexVisualItems
+
+                    delegate: MapPolyline {
+                        line.color: "white"
+                        path:       object.gridPoints
                     }
                 }
 
@@ -404,6 +409,12 @@ QGCView {
                     }
                 }
 
+                // Add the simple mission items to the map
+                MapItemView {
+                    model:      controller.visualItems
+                    delegate:   missionItemComponent
+                }
+
                 Component {
                     id: missionItemComponent
 
@@ -417,10 +428,8 @@ QGCView {
 
                         onClicked: setCurrentItem(object.sequenceNumber)
 
-                        function updateItemIndicator()
-                        {
-                            if (object.isCurrentItem && itemIndicator.visible &&
-                                    object.specifiesCoordinate && object.isSimpleItem) {
+                        function updateItemIndicator() {
+                            if (object.isCurrentItem && itemIndicator.visible && object.specifiesCoordinate && object.isSimpleItem) {
                                 // Setup our drag item
                                 itemDragger.visible = true
                                 itemDragger.missionItem = Qt.binding(function() { return object })
@@ -516,8 +525,8 @@ QGCView {
                             }
 
                             onInsert: {
-                                controller.insertSimpleMissionItem(editorMap.center, i)
-                                setCurrentItem(i)
+                                var sequenceNumber = controller.insertSimpleMissionItem(editorMap.center, i)
+                                setCurrentItem(sequenceNumber)
                             }
 
                             onMoveHomeToMapCenter: controller.visualItems.get(0).coordinate = editorMap.center
@@ -567,8 +576,8 @@ QGCView {
                             coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                             coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                             coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-                            var index = controller.insertComplexMissionItem(coordinate, controller.visualItems.count)
-                            setCurrentItem(index)
+                            var sequenceNumber = controller.insertComplexMissionItem(coordinate, controller.visualItems.count)
+                            setCurrentItem(sequenceNumber)
                             checked = false
                             addMissionItemsButton.checked = false
                         }
@@ -775,7 +784,7 @@ QGCView {
 
                 QGCButton {
                     text:       "Send to vehicle"
-                    enabled:    !controller.syncInProgress
+                    enabled:    _activeVehicle && !controller.syncInProgress
 
                     onClicked: {
                         syncButton.hideDropDown()
@@ -785,7 +794,7 @@ QGCView {
 
                 QGCButton {
                     text:       "Load from vehicle"
-                    enabled:    !controller.syncInProgress
+                    enabled:    _activeVehicle && !controller.syncInProgress
 
                     onClicked: {
                         syncButton.hideDropDown()

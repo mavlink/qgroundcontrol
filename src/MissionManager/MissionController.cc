@@ -132,28 +132,28 @@ void MissionController::sendMissionItems(void)
 {
     if (_activeVehicle) {
         // Convert to MissionItems so we can send to vehicle
-
         QList<MissionItem*> missionItems;
 
-        int sequenceNumber = 0;
         for (int i=0; i<_visualItems->count(); i++) {
             VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
             if (visualItem->isSimpleItem()) {
-                MissionItem& missionItem = qobject_cast<SimpleMissionItem*>(visualItem)->missionItem();
-                missionItem.setSequenceNumber(sequenceNumber++);
-                missionItems.append(&missionItem);
+                missionItems.append(new MissionItem(qobject_cast<SimpleMissionItem*>(visualItem)->missionItem()));
             } else {
                 ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
-                for (int j=0; j<complexItem->missionItems().count(); j++) {
-                    MissionItem* missionItem = complexItem->missionItems()[i];
-                    missionItem->setSequenceNumber(sequenceNumber++);
-                    missionItems.append(missionItem);
+                QmlObjectListModel* complexMissionItems = complexItem->getMissionItems();
+                for (int j=0; j<complexMissionItems->count(); j++) {
+                    missionItems.append(new MissionItem(*qobject_cast<MissionItem*>(complexMissionItems->get(j))));
                 }
+                delete complexMissionItems;
             }
         }
 
         _activeVehicle->missionManager()->writeMissionItems(missionItems);
         _visualItems->setDirty(false);
+
+        for (int i=0; i<missionItems.count(); i++) {
+            delete missionItems[i];
+        }
     }
 }
 
@@ -175,8 +175,9 @@ int MissionController::_nextSequenceNumber(void)
 
 int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
 {
+    int sequenceNumber = _nextSequenceNumber();
     SimpleMissionItem * newItem = new SimpleMissionItem(_activeVehicle, this);
-    newItem->setSequenceNumber(_nextSequenceNumber());
+    newItem->setSequenceNumber(sequenceNumber);
     newItem->setCoordinate(coordinate);
     newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
     _initVisualItem(newItem);
@@ -198,13 +199,14 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
 
     _recalcAll();
 
-    return _visualItems->count() - 1;
+    return sequenceNumber;
 }
 
 int MissionController::insertComplexMissionItem(QGeoCoordinate coordinate, int i)
 {
+    int sequenceNumber = _nextSequenceNumber();
     ComplexMissionItem* newItem = new ComplexMissionItem(_activeVehicle, this);
-    newItem->setSequenceNumber(_nextSequenceNumber());
+    newItem->setSequenceNumber(sequenceNumber);
     newItem->setCoordinate(coordinate);
     _initVisualItem(newItem);
 
@@ -213,7 +215,7 @@ int MissionController::insertComplexMissionItem(QGeoCoordinate coordinate, int i
 
     _recalcAll();
 
-    return _visualItems->count() - 1;
+    return sequenceNumber;
 }
 
 void MissionController::removeMissionItem(int index)
@@ -771,7 +773,7 @@ void MissionController::_recalcChildItems(void)
         if (item->specifiesCoordinate()) {
             item->childItems()->clear();
             currentParentItem = item;
-        } else {
+        } else if (item->isSimpleItem()) {
             currentParentItem->childItems()->append(item);
         }
     }
@@ -860,13 +862,16 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
 
     if (visualItem->isSimpleItem()) {
         // We need to track commandChanged on simple item since recalc has special handling for takeoff command
-
         SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
         if (simpleItem) {
             connect(&simpleItem->missionItem()._commandFact, &Fact::valueChanged, this, &MissionController::_itemCommandChanged);
         } else {
             qWarning() << "isSimpleItem == true, yet not SimpleMissionItem";
         }
+    } else {
+        // We need to track changes of lastSequenceNumber so we can recalc sequence numbers for subsequence items
+        ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
+        connect(complexItem, &ComplexMissionItem::lastSequenceNumberChanged, this, &MissionController::_recalcSequence);
     }
 }
 

@@ -117,16 +117,13 @@ public slots:
 
 signals:
     void commandChanged             (int command);
-    void coordinateChanged          (const QGeoCoordinate& coordinate);
-    void exitCoordinateChanged      (const QGeoCoordinate& exitCoordinate);
-    //void dirtyChanged               (bool dirty);
     void frameChanged               (int frame);
     void friendlyEditAllowedChanged (bool friendlyEditAllowed);
     void headingDegreesChanged      (double heading);
     void rawEditChanged             (bool rawEdit);
     void uiModelChanged             (void);
     void showHomePositionChanged    (bool showHomePosition);
-    
+
 private slots:
     void _setDirtyFromSignal(void);
     void _sendCommandChanged(void);

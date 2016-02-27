@@ -29,7 +29,7 @@ Rectangle {
         anchors.margins:    _margin
         anchors.top:        parent.top
         anchors.left:       parent.left
-        width:              availableWidth
+        anchors.right:      parent.right
         spacing:            _margin
 
         Connections {
@@ -45,6 +45,30 @@ Rectangle {
         QGCLabel {
             text:       "Fly a grid pattern over a defined area."
             wrapMode:   Text.WordWrap
+        }
+
+        Repeater {
+            model: [ missionItem.gridAltitude, missionItem.gridAngle, missionItem.gridSpacing ]
+
+            Item {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height:         textField.height
+
+                QGCLabel {
+                    anchors.baseline:   textField.baseline
+                    anchors.left:       parent.left
+                    text:               modelData.name
+                }
+
+                FactTextField {
+                    id:             textField
+                    anchors.right:  parent.right
+                    width:          _editFieldWidth
+                    showUnits:      true
+                    fact:           modelData
+                }
+            }
         }
 
         QGCButton {
