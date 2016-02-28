@@ -25,6 +25,8 @@ This file is part of the QGROUNDCONTROL project
 #include "MissionController.h"
 #include "QGCGeo.h"
 
+#include <QPolygonF>
+
 const char* ComplexMissionItem::_jsonVersionKey =       "version";
 const char* ComplexMissionItem::_jsonTypeKey =          "type";
 const char* ComplexMissionItem::_jsonPolygonKey =       "polygon";
@@ -252,17 +254,17 @@ void ComplexMissionItem::_generateGrid(void)
 
     _gridPoints.clear();
 
-    QList<Point_t> polygonPoints;
-    QList<Point_t> gridPoints;
+    QList<QPointF> polygonPoints;
+    QList<QPointF> gridPoints;
 
-    // Convert polygon to NED
+    // Convert polygon to Qt coordinate system (y positive is down)
     qDebug() << "Convert polygon";
     QGeoCoordinate tangentOrigin = _polygonPath[0].value<QGeoCoordinate>();
     for (int i=0; i<_polygonPath.count(); i++) {
-        double x, y, z;
-        convertGeoToNed(_polygonPath[i].value<QGeoCoordinate>(), tangentOrigin, &x, &y, &z);
-        polygonPoints += Point_t(x, y);
-        qDebug() << _polygonPath[i].value<QGeoCoordinate>() << polygonPoints.last().x << polygonPoints.last().y;
+        double y, x, down;
+        convertGeoToNed(_polygonPath[i].value<QGeoCoordinate>(), tangentOrigin, &y, &x, &down);
+        polygonPoints += QPointF(x, -y);
+        qDebug() << _polygonPath[i].value<QGeoCoordinate>() << polygonPoints.last().x() << polygonPoints.last().y();
     }
 
     // Generate grid
@@ -270,10 +272,10 @@ void ComplexMissionItem::_generateGrid(void)
 
     // Convert to Geo and set altitude
     for (int i=0; i<gridPoints.count(); i++) {
-        Point_t& point = gridPoints[i];
+        QPointF& point = gridPoints[i];
 
         QGeoCoordinate geoCoord;
-        convertNedToGeo(point.x, point.y, 0, tangentOrigin, &geoCoord);
+        convertNedToGeo(-point.y(), point.x(), 0, tangentOrigin, &geoCoord);
         _gridPoints += QVariant::fromValue(geoCoord);
     }
     emit gridPointsChanged();
@@ -283,54 +285,161 @@ void ComplexMissionItem::_generateGrid(void)
         setCoordinate(_gridPoints.first().value<QGeoCoordinate>());
         _setExitCoordinate(_gridPoints.last().value<QGeoCoordinate>());
     }
-
 }
 
-void ComplexMissionItem::_gridGenerator(const QList<Point_t>& polygonPoints, QList<Point_t>& gridPoints)
+QPointF ComplexMissionItem::_rotatePoint(const QPointF& point, const QPointF& origin, double angle)
 {
-    // FIXME: Hack implementataion
+    QPointF rotated;
+    double radians = (M_PI / 180.0) * angle;
+
+    rotated.setX(((point.x() - origin.x()) * cos(radians)) - ((point.y() - origin.y()) * sin(radians)) + origin.x());
+    rotated.setY(((point.x() - origin.x()) * sin(radians)) + ((point.y() - origin.y()) * cos(radians)) + origin.y());
+
+    return rotated;
+}
+
+void ComplexMissionItem::_intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines)
+{
+    QLineF topLine      (boundRect.topLeft(),       boundRect.topRight());
+    QLineF bottomLine   (boundRect.bottomLeft(),    boundRect.bottomRight());
+    QLineF leftLine     (boundRect.topLeft(),       boundRect.bottomLeft());
+    QLineF rightLine    (boundRect.topRight(),      boundRect.bottomRight());
+
+    for (int i=0; i<lineList.count(); i++) {
+        QPointF intersectPoint;
+        QLineF intersectLine;
+        const QLineF& line = lineList[i];
+
+        int foundCount = 0;
+        if (line.intersect(topLine, &intersectPoint) == QLineF::BoundedIntersection) {
+            intersectLine.setP1(intersectPoint);
+            foundCount++;
+        }
+        if (line.intersect(rightLine, &intersectPoint) == QLineF::BoundedIntersection) {
+            if (foundCount == 0) {
+                intersectLine.setP1(intersectPoint);
+            } else {
+                if (foundCount != 1) {
+                    qWarning() << "Found more than two intersecting points";
+                }
+                intersectLine.setP2(intersectPoint);
+            }
+            foundCount++;
+        }
+        if (line.intersect(bottomLine, &intersectPoint) == QLineF::BoundedIntersection) {
+            if (foundCount == 0) {
+                intersectLine.setP1(intersectPoint);
+            } else {
+                if (foundCount != 1) {
+                    qWarning() << "Found more than two intersecting points";
+                }
+                intersectLine.setP2(intersectPoint);
+            }
+            foundCount++;
+        }
+        if (line.intersect(leftLine, &intersectPoint) == QLineF::BoundedIntersection) {
+            if (foundCount == 0) {
+                intersectLine.setP1(intersectPoint);
+            } else {
+                if (foundCount != 1) {
+                    qWarning() << "Found more than two intersecting points";
+                }
+                intersectLine.setP2(intersectPoint);
+            }
+            foundCount++;
+        }
+
+        if (foundCount == 2) {
+            resultLines += intersectLine;
+        }
+    }
+}
+
+void ComplexMissionItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines)
+{
+    for (int i=0; i<lineList.count(); i++) {
+        int foundCount = 0;
+        QLineF intersectLine;
+        const QLineF& line = lineList[i];
+
+        for (int j=0; j<polygon.count()-1; j++) {
+            QPointF intersectPoint;
+            QLineF polygonLine = QLineF(polygon[j], polygon[j+1]);
+            if (line.intersect(polygonLine, &intersectPoint) == QLineF::BoundedIntersection) {
+                if (foundCount == 0) {
+                    foundCount++;
+                    intersectLine.setP1(intersectPoint);
+                } else {
+                    foundCount++;
+                    intersectLine.setP2(intersectPoint);
+                    break;
+                }
+            }
+        }
+
+        if (foundCount == 2) {
+            resultLines += intersectLine;
+        }
+    }
+}
+
+void ComplexMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QList<QPointF>& gridPoints)
+{
+    double gridAngle = _gridAngleFact.rawValue().toDouble();
 
     gridPoints.clear();
 
-    // Convert polygon to bounding square
+    // Convert polygon to bounding rect
 
-    Point_t upperLeft = polygonPoints[0];
-    Point_t lowerRight = polygonPoints[0];
-    for (int i=1; i<polygonPoints.count(); i++) {
-        const Point_t& point = polygonPoints[i];
-
-        upperLeft.x = std::min(upperLeft.x, point.x);
-        upperLeft.y = std::max(upperLeft.y, point.y);
-        lowerRight.x = std::max(lowerRight.x, point.x);
-        lowerRight.y = std::min(lowerRight.y, point.y);
+    qDebug() << "Polygon";
+    QPolygonF polygon;
+    for (int i=0; i<polygonPoints.count(); i++) {
+        qDebug() << polygonPoints[i];
+        polygon << polygonPoints[i];
     }
-    qDebug() << "bounding rect" << upperLeft.x <<  upperLeft.y << lowerRight.x << lowerRight.y;
+    polygon << polygonPoints[0];
+    QRectF smallBoundRect = polygon.boundingRect();
+    QPointF center = smallBoundRect.center();
+    qDebug() << "Bounding rect" << smallBoundRect.topLeft().x() << smallBoundRect.topLeft().y() << smallBoundRect.bottomRight().x() << smallBoundRect.bottomRight().y();
 
-    // Create simplistic set of parallel lines
+    // Rotate the bounding rect around it's center to generate the larger bounding rect
+    QPolygonF boundPolygon;
+    boundPolygon << _rotatePoint(smallBoundRect.topLeft(),       center, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.topRight(),      center, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.bottomRight(),   center, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.bottomLeft(),    center, gridAngle);
+    boundPolygon << boundPolygon[0];
+    QRectF largeBoundRect = boundPolygon.boundingRect();
+    qDebug() << "Rotated bounding rect" << largeBoundRect.topLeft().x() << largeBoundRect.topLeft().y() << largeBoundRect.bottomRight().x() << largeBoundRect.bottomRight().y();
 
-    QList<QPair<Point_t, Point_t>> lineList;
+    // Create set of rotated parallel lines within the expanded bounding rect. Make the lines larger than the
+    // bounding box to guarantee intersection.
+    QList<QLineF> lineList;
+    float x = largeBoundRect.topLeft().x();
+    float gridSpacing = _gridSpacingFact.rawValue().toDouble();
+    while (x < largeBoundRect.bottomRight().x()) {
+        float yTop =    largeBoundRect.topLeft().y() - 100.0;
+        float yBottom = largeBoundRect.bottomRight().y() + 100.0;
 
-    double x = upperLeft.x;
-    double gridSpacing = _gridSpacingFact.rawValue().toDouble();
-    while (x < lowerRight.x) {
-        double yTop = upperLeft.y;
-        double yBottom = lowerRight.y;
-
-        lineList += qMakePair(Point_t(x, yTop), Point_t(x, yBottom));
-        qDebug() << "line" << lineList.last().first.x<< lineList.last().first.y<< lineList.last().second.x<< lineList.last().second.y;
+        lineList += QLineF(_rotatePoint(QPointF(x, yTop), center, gridAngle), _rotatePoint(QPointF(x, yBottom), center, gridAngle));
+        qDebug() << "line" << lineList.last().x1() << lineList.last().y1() << lineList.last().x2() << lineList.last().y2();
 
         x += gridSpacing;
     }
 
-    // Turn into a path
+    // Now intesect the lines with the smaller bounding rect
+    QList<QLineF> resultLines;
+    //_intersectLinesWithRect(lineList, smallBoundRect, resultLines);
+    _intersectLinesWithPolygon(lineList, polygon, resultLines);
 
-    for (int i=0; i<lineList.count(); i++) {
-        const QPair<Point_t, Point_t> points = lineList[i];
+    // Turn into a path
+    for (int i=0; i<resultLines.count(); i++) {
+        const QLineF& line = resultLines[i];
 
         if (i & 1) {
-            gridPoints << points.second << points.first;
+            gridPoints << line.p2() << line.p1();
         } else {
-            gridPoints << points.first << points.second;
+            gridPoints << line.p1() << line.p2();
         }
     }
 }
