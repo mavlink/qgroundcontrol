@@ -39,6 +39,8 @@ public:
     Q_PROPERTY(Fact*        gridAltitude        READ gridAltitude       CONSTANT)
     Q_PROPERTY(Fact*        gridAngle           READ gridAngle          CONSTANT)
     Q_PROPERTY(Fact*        gridSpacing         READ gridSpacing        CONSTANT)
+    Q_PROPERTY(bool         cameraTrigger       MEMBER _cameraTrigger   NOTIFY cameraTriggerChanged)
+    Q_PROPERTY(Fact*        cameraTriggerDistance READ cameraTriggerDistance CONSTANT)
     Q_PROPERTY(QVariantList polygonPath         READ polygonPath        NOTIFY polygonPathChanged)
     Q_PROPERTY(int          lastSequenceNumber  READ lastSequenceNumber NOTIFY lastSequenceNumberChanged)
     Q_PROPERTY(QVariantList gridPoints          READ gridPoints         NOTIFY gridPointsChanged)
@@ -52,6 +54,7 @@ public:
     Fact* gridAltitude(void)    { return &_gridAltitudeFact; }
     Fact* gridAngle(void)       { return &_gridAngleFact; }
     Fact* gridSpacing(void)     { return &_gridSpacingFact; }
+    Fact* cameraTriggerDistance(void) { return &_cameraTriggerDistanceFact; }
 
     /// @return The last sequence number used by this item. Takes into account child items of the complex item
     int lastSequenceNumber(void) const;
@@ -93,6 +96,10 @@ signals:
     void altitudeChanged(double altitude);
     void gridAngleChanged(double gridAngle);
     void gridPointsChanged(void);
+    void cameraTriggerChanged(bool cameraTrigger);
+
+private slots:
+    void _signalLastSequenceNumberChanged(void);
 
 private:
     void _clear(void);
@@ -112,10 +119,12 @@ private:
     QGeoCoordinate      _exitCoordinate;
     double              _altitude;
     double              _gridAngle;
+    bool                _cameraTrigger;
 
     Fact    _gridAltitudeFact;
     Fact    _gridAngleFact;
     Fact    _gridSpacingFact;
+    Fact    _cameraTriggerDistanceFact;
 
     static const char* _jsonVersionKey;
     static const char* _jsonTypeKey;
@@ -124,6 +133,8 @@ private:
     static const char* _jsonGridAltitudeKey;
     static const char* _jsonGridAngleKey;
     static const char* _jsonGridSpacingKey;
+    static const char* _jsonCameraTriggerKey;
+    static const char* _jsonCameraTriggerDistanceKey;
 
     static const char* _complexType;
 };
