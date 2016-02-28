@@ -27,14 +27,17 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QPolygonF>
 
-const char* ComplexMissionItem::_jsonVersionKey =       "version";
-const char* ComplexMissionItem::_jsonTypeKey =          "type";
-const char* ComplexMissionItem::_jsonPolygonKey =       "polygon";
-const char* ComplexMissionItem::_jsonIdKey =            "id";
-const char* ComplexMissionItem::_jsonGridAltitudeKey =  "gridAltitude";
-const char* ComplexMissionItem::_jsonGridAngleKey =     "gridAngle";
-const char* ComplexMissionItem::_jsonGridSpacingKey =   "gridSpacing";
-const char* ComplexMissionItem::_jsonCameraTriggerKey = "cameraTrigger";
+QGC_LOGGING_CATEGORY(ComplexMissionItemLog, "ComplexMissionItemLog")
+
+const char* ComplexMissionItem::_jsonVersionKey =               "version";
+const char* ComplexMissionItem::_jsonTypeKey =                  "type";
+const char* ComplexMissionItem::_jsonPolygonKey =               "polygon";
+const char* ComplexMissionItem::_jsonIdKey =                    "id";
+const char* ComplexMissionItem::_jsonGridAltitudeKey =          "gridAltitude";
+const char* ComplexMissionItem::_jsonGridAltitudeRelativeKey =  "gridAltitudeRelative";
+const char* ComplexMissionItem::_jsonGridAngleKey =             "gridAngle";
+const char* ComplexMissionItem::_jsonGridSpacingKey =           "gridSpacing";
+const char* ComplexMissionItem::_jsonCameraTriggerKey =         "cameraTrigger";
 const char* ComplexMissionItem::_jsonCameraTriggerDistanceKey = "cameraTriggerDistance";
 
 const char* ComplexMissionItem::_complexType = "survey";
@@ -44,6 +47,7 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
     , _sequenceNumber(0)
     , _dirty(false)
     , _cameraTrigger(false)
+    , _gridAltitudeRelative(true)
     , _gridAltitudeFact (0, "Altitude:",        FactMetaData::valueTypeDouble)
     , _gridAngleFact    (0, "Grid angle:",      FactMetaData::valueTypeDouble)
     , _gridSpacingFact  (0, "Grid spacing:",    FactMetaData::valueTypeDouble)
@@ -56,18 +60,6 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
     connect(&_gridSpacingFact,  &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
     connect(&_gridAngleFact,    &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
     connect(this, &ComplexMissionItem::cameraTriggerChanged, this, &ComplexMissionItem::_signalLastSequenceNumberChanged);
-}
-
-ComplexMissionItem::ComplexMissionItem(const ComplexMissionItem& other, QObject* parent)
-    : VisualMissionItem(other, parent)
-    , _sequenceNumber(other.sequenceNumber())
-    , _dirty(false)
-    , _cameraTrigger(other._cameraTrigger)
-{
-    _gridAltitudeFact.setRawValue(other._gridAltitudeFact.rawValue());
-    _gridAngleFact.setRawValue(other._gridAngleFact.rawValue());
-    _gridSpacingFact.setRawValue(other._gridSpacingFact.rawValue());
-    _cameraTriggerDistanceFact.setRawValue(other._cameraTriggerDistanceFact.rawValue());
 }
 
 void ComplexMissionItem::clearPolygon(void)
@@ -139,13 +131,14 @@ void ComplexMissionItem::setDirty(bool dirty)
 
 void ComplexMissionItem::save(QJsonObject& saveObject) const
 {
-    saveObject[_jsonVersionKey] =       1;
-    saveObject[_jsonTypeKey] =          _complexType;
-    saveObject[_jsonIdKey] =            sequenceNumber();
-    saveObject[_jsonGridAltitudeKey] =  _gridAltitudeFact.rawValue().toDouble();
-    saveObject[_jsonGridAngleKey] =     _gridAngleFact.rawValue().toDouble();
-    saveObject[_jsonGridSpacingKey] =   _gridSpacingFact.rawValue().toDouble();
-    saveObject[_jsonCameraTriggerKey] = _cameraTrigger;
+    saveObject[_jsonVersionKey] =               1;
+    saveObject[_jsonTypeKey] =                  _complexType;
+    saveObject[_jsonIdKey] =                    sequenceNumber();
+    saveObject[_jsonGridAltitudeKey] =          _gridAltitudeFact.rawValue().toDouble();
+    saveObject[_jsonGridAltitudeRelativeKey] =  _gridAltitudeRelative;
+    saveObject[_jsonGridAngleKey] =             _gridAngleFact.rawValue().toDouble();
+    saveObject[_jsonGridSpacingKey] =           _gridSpacingFact.rawValue().toDouble();
+    saveObject[_jsonCameraTriggerKey] =         _cameraTrigger;
     saveObject[_jsonCameraTriggerDistanceKey] = _cameraTriggerDistanceFact.rawValue().toDouble();
 
     // Polygon shape
@@ -186,7 +179,7 @@ bool ComplexMissionItem::load(const QJsonObject& complexObject, QString& errorSt
     // Validate requires keys
     QStringList requiredKeys;
     requiredKeys << _jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey <<
-                    _jsonCameraTriggerKey << _jsonCameraTriggerDistanceKey;
+                    _jsonCameraTriggerKey << _jsonCameraTriggerDistanceKey << _jsonGridAltitudeRelativeKey;
     if (!JsonHelper::validateRequiredKeys(complexObject, requiredKeys, errorString)) {
         _clear();
         return false;
@@ -196,9 +189,9 @@ bool ComplexMissionItem::load(const QJsonObject& complexObject, QString& errorSt
     QStringList keyList;
     QList<QJsonValue::Type> typeList;
     keyList << _jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey <<
-               _jsonCameraTriggerKey << _jsonCameraTriggerDistanceKey;
+               _jsonCameraTriggerKey << _jsonCameraTriggerDistanceKey << _jsonGridAltitudeRelativeKey;
     typeList << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::Array << QJsonValue::Double << QJsonValue::Double<< QJsonValue::Double <<
-                QJsonValue::Bool << QJsonValue::Double;
+                QJsonValue::Bool << QJsonValue::Double << QJsonValue::Bool;
     if (!JsonHelper::validateKeyTypes(complexObject, keyList, typeList, errorString)) {
         _clear();
         return false;
@@ -218,11 +211,14 @@ bool ComplexMissionItem::load(const QJsonObject& complexObject, QString& errorSt
     }
 
     setSequenceNumber(complexObject[_jsonIdKey].toInt());
-    _cameraTrigger = complexObject[_jsonCameraTriggerKey].toBool();
-    _gridAltitudeFact.setRawValue   (complexObject[_jsonGridAltitudeKey].toDouble());
-    _gridAngleFact.setRawValue      (complexObject[_jsonGridAngleKey].toDouble());
-    _gridSpacingFact.setRawValue    (complexObject[_jsonGridSpacingKey].toDouble());
-    _cameraTriggerDistanceFact.setRawValue(complexObject[_jsonCameraTriggerDistanceKey].toDouble());
+
+    _cameraTrigger =        complexObject[_jsonCameraTriggerKey].toBool();
+    _gridAltitudeRelative = complexObject[_jsonGridAltitudeRelativeKey].toBool();
+
+    _gridAltitudeFact.setRawValue           (complexObject[_jsonGridAltitudeKey].toDouble());
+    _gridAngleFact.setRawValue              (complexObject[_jsonGridAngleKey].toDouble());
+    _gridSpacingFact.setRawValue            (complexObject[_jsonGridSpacingKey].toDouble());
+    _cameraTriggerDistanceFact.setRawValue  (complexObject[_jsonCameraTriggerDistanceKey].toDouble());
 
     // Polygon shape
     QJsonArray polygonArray(complexObject[_jsonPolygonKey].toArray());
@@ -280,13 +276,13 @@ void ComplexMissionItem::_generateGrid(void)
     QList<QPointF> gridPoints;
 
     // Convert polygon to Qt coordinate system (y positive is down)
-    qDebug() << "Convert polygon";
+    qCDebug(ComplexMissionItemLog) << "Convert polygon";
     QGeoCoordinate tangentOrigin = _polygonPath[0].value<QGeoCoordinate>();
     for (int i=0; i<_polygonPath.count(); i++) {
         double y, x, down;
         convertGeoToNed(_polygonPath[i].value<QGeoCoordinate>(), tangentOrigin, &y, &x, &down);
         polygonPoints += QPointF(x, -y);
-        qDebug() << _polygonPath[i].value<QGeoCoordinate>() << polygonPoints.last().x() << polygonPoints.last().y();
+        qCDebug(ComplexMissionItemLog) << _polygonPath[i].value<QGeoCoordinate>() << polygonPoints.last().x() << polygonPoints.last().y();
     }
 
     // Generate grid
@@ -413,16 +409,16 @@ void ComplexMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QL
 
     // Convert polygon to bounding rect
 
-    qDebug() << "Polygon";
+    qCDebug(ComplexMissionItemLog) << "Polygon";
     QPolygonF polygon;
     for (int i=0; i<polygonPoints.count(); i++) {
-        qDebug() << polygonPoints[i];
+        qCDebug(ComplexMissionItemLog) << polygonPoints[i];
         polygon << polygonPoints[i];
     }
     polygon << polygonPoints[0];
     QRectF smallBoundRect = polygon.boundingRect();
     QPointF center = smallBoundRect.center();
-    qDebug() << "Bounding rect" << smallBoundRect.topLeft().x() << smallBoundRect.topLeft().y() << smallBoundRect.bottomRight().x() << smallBoundRect.bottomRight().y();
+    qCDebug(ComplexMissionItemLog) << "Bounding rect" << smallBoundRect.topLeft().x() << smallBoundRect.topLeft().y() << smallBoundRect.bottomRight().x() << smallBoundRect.bottomRight().y();
 
     // Rotate the bounding rect around it's center to generate the larger bounding rect
     QPolygonF boundPolygon;
@@ -432,7 +428,7 @@ void ComplexMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QL
     boundPolygon << _rotatePoint(smallBoundRect.bottomLeft(),    center, gridAngle);
     boundPolygon << boundPolygon[0];
     QRectF largeBoundRect = boundPolygon.boundingRect();
-    qDebug() << "Rotated bounding rect" << largeBoundRect.topLeft().x() << largeBoundRect.topLeft().y() << largeBoundRect.bottomRight().x() << largeBoundRect.bottomRight().y();
+    qCDebug(ComplexMissionItemLog) << "Rotated bounding rect" << largeBoundRect.topLeft().x() << largeBoundRect.topLeft().y() << largeBoundRect.bottomRight().x() << largeBoundRect.bottomRight().y();
 
     // Create set of rotated parallel lines within the expanded bounding rect. Make the lines larger than the
     // bounding box to guarantee intersection.
@@ -444,7 +440,7 @@ void ComplexMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QL
         float yBottom = largeBoundRect.bottomRight().y() + 100.0;
 
         lineList += QLineF(_rotatePoint(QPointF(x, yTop), center, gridAngle), _rotatePoint(QPointF(x, yBottom), center, gridAngle));
-        qDebug() << "line" << lineList.last().x1() << lineList.last().y1() << lineList.last().x2() << lineList.last().y2();
+        qCDebug(ComplexMissionItemLog) << "line" << lineList.last().x1() << lineList.last().y1() << lineList.last().x2() << lineList.last().y2();
 
         x += gridSpacing;
     }
@@ -477,7 +473,7 @@ QmlObjectListModel* ComplexMissionItem::getMissionItems(void) const
 
         MissionItem* item = new MissionItem(seqNum++,                       // sequence number
                                             MAV_CMD_NAV_WAYPOINT,           // MAV_CMD
-                                            MAV_FRAME_GLOBAL_RELATIVE_ALT,  // MAV_FRAME
+                                            _gridAltitudeRelative ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,  // MAV_FRAME
                                             0.0, 0.0, 0.0, 0.0,             // param 1-4
                                             coord.latitude(),
                                             coord.longitude(),
