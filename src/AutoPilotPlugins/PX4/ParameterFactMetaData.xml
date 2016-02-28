@@ -244,12 +244,14 @@ velocity</short_desc>
       <long_desc>Defines the voltage where a single cell of the battery is considered empty.</long_desc>
       <unit>V</unit>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="4.2" name="BAT_V_CHARGED" type="FLOAT">
       <short_desc>Full cell voltage</short_desc>
       <long_desc>Defines the voltage where a single cell of the battery is considered full.</long_desc>
       <unit>V</unit>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.07" name="BAT_V_LOAD_DROP" type="FLOAT">
       <short_desc>Voltage drop per cell on 100% load</short_desc>
@@ -258,6 +260,7 @@ velocity</short_desc>
       <max>1.5</max>
       <unit>V</unit>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="3" name="BAT_N_CELLS" type="INT32">
       <short_desc>Number of cells</short_desc>
@@ -266,7 +269,13 @@ velocity</short_desc>
       <max>10</max>
       <unit>S</unit>
       <values>
+        <value code="11">11S Battery</value>
         <value code="10">10S Battery</value>
+        <value code="13">13S Battery</value>
+        <value code="12">12S Battery</value>
+        <value code="15">15S Battery</value>
+        <value code="14">14S Battery</value>
+        <value code="16">16S Battery</value>
         <value code="3">3S Battery</value>
         <value code="2">2S Battery</value>
         <value code="5">5S Battery</value>
@@ -280,8 +289,11 @@ velocity</short_desc>
     <parameter default="-1.0" name="BAT_CAPACITY" type="FLOAT">
       <short_desc>Battery capacity</short_desc>
       <long_desc>Defines the capacity of the attached battery.</long_desc>
+      <min>-1.0</min>
+      <max>100000</max>
       <unit>mA</unit>
       <decimal>0</decimal>
+      <increment>50</increment>
     </parameter>
     <parameter default="10000" name="BAT_V_SCALE_IO" type="INT32">
       <short_desc>Scaling factor for battery voltage sensor on PX4IO</short_desc>
@@ -316,16 +328,21 @@ velocity</short_desc>
     </parameter>
     <parameter default="0" name="TRIG_MODE" type="INT32">
       <short_desc>Camera trigger mode</short_desc>
-      <long_desc>0 disables the trigger, 1 sets it to enabled on command, 2 always on</long_desc>
+      <long_desc>0 disables the trigger, 1 sets it to enabled on command, 2 always on, 3 distance based, 4 distance based enabled on command</long_desc>
       <min>0</min>
-      <max>2</max>
-      <reboot_required>true</reboot_required>
+      <max>4</max>
     </parameter>
     <parameter default="12" name="TRIG_PINS" type="INT32">
       <short_desc>Camera trigger pin</short_desc>
       <long_desc>Selects which pin is used, ranges from 1 to 6 (AUX1-AUX6)</long_desc>
       <min>1</min>
       <max>123456</max>
+    </parameter>
+    <parameter default="25.0" name="TRIG_DISTANCE" type="FLOAT">
+      <short_desc>Camera trigger distance</short_desc>
+      <long_desc>Sets the distance at which to trigger the camera.</long_desc>
+      <min>0</min>
+      <unit>meters</unit>
     </parameter>
   </group>
   <group name="Circuit Breaker">
@@ -401,6 +418,8 @@ velocity</short_desc>
       <min>0</min>
       <max>30</max>
       <unit>second</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter default="0" name="COM_DL_REG_T" type="INT32">
       <short_desc>Datalink regain time threshold</short_desc>
@@ -408,6 +427,8 @@ velocity</short_desc>
       <min>0</min>
       <max>30</max>
       <unit>second</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter default="0.5" name="COM_EF_THROT" type="FLOAT">
       <short_desc>Engine Failure Throttle Threshold</short_desc>
@@ -415,14 +436,16 @@ velocity</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>1</decimal>
+      <increment>0.05</increment>
     </parameter>
     <parameter default="5.0" name="COM_EF_C2T" type="FLOAT">
       <short_desc>Engine Failure Current/Throttle Threshold</short_desc>
       <long_desc>Engine failure triggers only below this current value</long_desc>
       <min>0.0</min>
-      <max>30.0</max>
+      <max>50.0</max>
       <unit>ampere</unit>
       <decimal>2</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="10.0" name="COM_EF_TIME" type="FLOAT">
       <short_desc>Engine Failure Time Threshold</short_desc>
@@ -431,6 +454,7 @@ velocity</short_desc>
       <max>60.0</max>
       <unit>second</unit>
       <decimal>1</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="0.5" name="COM_RC_LOSS_T" type="FLOAT">
       <short_desc>RC loss time threshold</short_desc>
@@ -439,6 +463,7 @@ velocity</short_desc>
       <max>35</max>
       <unit>second</unit>
       <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter default="5.0" name="COM_HOME_H_T" type="FLOAT">
       <short_desc>Home set horizontal threshold</short_desc>
@@ -447,6 +472,7 @@ velocity</short_desc>
       <max>15</max>
       <unit>meter</unit>
       <decimal>2</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter default="10.0" name="COM_HOME_V_T" type="FLOAT">
       <short_desc>Home set vertical threshold</short_desc>
@@ -455,12 +481,17 @@ velocity</short_desc>
       <max>25</max>
       <unit>meter</unit>
       <decimal>2</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter default="1" name="COM_AUTOS_PAR" type="INT32">
       <short_desc>Autosaving of params</short_desc>
       <long_desc>If not equal to zero the commander will automatically save parameters to persistent storage once changed. Default is on, as the interoperability with currently deployed GCS solutions depends on parameters being sticky. Developers can default it to off.</long_desc>
       <min>0</min>
       <max>1</max>
+      <values>
+        <value code="1">Enabled</value>
+        <value code="0">Disabled</value>
+      </values>
     </parameter>
     <parameter default="0" name="COM_RC_IN_MODE" type="INT32">
       <short_desc>RC control input mode</short_desc>
@@ -477,6 +508,10 @@ velocity</short_desc>
       <short_desc>Time-out for auto disarm after landing</short_desc>
       <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. A value of zero means that automatic disarming is disabled.</long_desc>
       <min>0</min>
+      <max>20</max>
+      <unit>second</unit>
+      <decimal>0</decimal>
+      <increment>1</increment>
     </parameter>
   </group>
   <group name="Data Link Loss">
@@ -753,6 +788,12 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <short_desc>Gate size for GPS velocity fusion</short_desc>
       <min>1.0</min>
       <unit>SD</unit>
+    </parameter>
+    <parameter default="0" name="EKF2_REC_RPL" type="INT32">
+      <short_desc>A value of 1 indicates that the ekf2 module will publish
+replay messages for logging</short_desc>
+      <min>0</min>
+      <max>1</max>
     </parameter>
   </group>
   <group name="FW Attitude Control">
@@ -1161,6 +1202,8 @@ Other values  will disable magnetometer fusion completely</short_desc>
     <parameter default="1.0" name="FW_THR_MAX" type="FLOAT">
       <short_desc>Throttle limit max</short_desc>
       <long_desc>This is the maximum throttle % that can be used by the controller. For overpowered aircraft, this should be reduced to a value that provides sufficient thrust to climb at the maximum pitch angle PTCH_MAX.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
     </parameter>
     <parameter default="0.0" name="FW_THR_MIN" type="FLOAT">
       <short_desc>Throttle limit min</short_desc>
@@ -1194,25 +1237,49 @@ Other values  will disable magnetometer fusion completely</short_desc>
     </parameter>
     <parameter default="5.0" name="FW_LND_ANG" type="FLOAT">
       <short_desc>Landing slope angle</short_desc>
+      <min>1.0</min>
+      <max>15.0</max>
+      <unit>degrees</unit>
     </parameter>
     <parameter default="10.0" name="FW_LND_HVIRT" type="FLOAT">
       <short_desc>FW_LND_HVIRT</short_desc>
     </parameter>
     <parameter default="8.0" name="FW_LND_FLALT" type="FLOAT">
       <short_desc>Landing flare altitude (relative to landing altitude)</short_desc>
-      <unit>meter</unit>
+      <min>0.0</min>
+      <max>25.0</max>
+      <unit>meters</unit>
     </parameter>
     <parameter default="-1.0" name="FW_LND_TLALT" type="FLOAT">
       <short_desc>Landing throttle limit altitude (relative landing altitude)</short_desc>
       <long_desc>Default of -1.0f lets the system default to applying throttle limiting at 2/3 of the flare altitude.</long_desc>
-      <unit>meter</unit>
+      <min>-1.0</min>
+      <max>30.0</max>
+      <unit>meters</unit>
     </parameter>
     <parameter default="15.0" name="FW_LND_HHDIST" type="FLOAT">
       <short_desc>Landing heading hold horizontal distance</short_desc>
+      <min>0</min>
+      <max>30.0</max>
+      <unit>meters</unit>
     </parameter>
     <parameter default="0" name="FW_LND_USETER" type="INT32">
       <short_desc>Enable or disable usage of terrain estimate during landing</short_desc>
       <long_desc>0: disabled, 1: enabled</long_desc>
+    </parameter>
+    <parameter default="2.5" name="FW_FLARE_PMIN" type="FLOAT">
+      <short_desc>Flare, minimum pitch</short_desc>
+      <long_desc>Minimum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
+      <min>0</min>
+      <max>15.0</max>
+      <unit>degrees</unit>
+    </parameter>
+    <parameter default="15.0" name="FW_FLARE_PMAX" type="FLOAT">
+      <short_desc>Flare, maximum pitch</short_desc>
+      <long_desc>Maximum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
+      <min>0</min>
+      <max>45.0</max>
+      <unit>degrees</unit>
     </parameter>
     <parameter default="1.3" name="FW_AIRSPD_SCALE" type="FLOAT">
       <short_desc>Landing airspeed scale factor</short_desc>
@@ -1543,6 +1610,7 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <min>0.15</min>
       <max>0.25</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.2" name="MC_PITCH_TC" type="FLOAT">
       <short_desc>Pitch time constant</short_desc>
@@ -1550,29 +1618,37 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <min>0.15</min>
       <max>0.25</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="6.5" name="MC_ROLL_P" type="FLOAT">
       <short_desc>Roll P gain</short_desc>
       <long_desc>Roll proportional gain, i.e. desired angular speed in rad/s for error 1 rad.</long_desc>
       <min>0.0</min>
+      <max>8</max>
       <decimal>2</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter default="0.15" name="MC_ROLLRATE_P" type="FLOAT">
       <short_desc>Roll rate P gain</short_desc>
       <long_desc>Roll rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
+      <max>0.5</max>
       <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.05" name="MC_ROLLRATE_I" type="FLOAT">
       <short_desc>Roll rate I gain</short_desc>
       <long_desc>Roll rate integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
       <min>0.0</min>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.003" name="MC_ROLLRATE_D" type="FLOAT">
       <short_desc>Roll rate D gain</short_desc>
       <long_desc>Roll rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
       <min>0.0</min>
+      <max>0.01</max>
       <decimal>4</decimal>
+      <increment>0.0005</increment>
     </parameter>
     <parameter default="0.0" name="MC_ROLLRATE_FF" type="FLOAT">
       <short_desc>Roll rate feedforward</short_desc>
@@ -1584,26 +1660,32 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <short_desc>Pitch P gain</short_desc>
       <long_desc>Pitch proportional gain, i.e. desired angular speed in rad/s for error 1 rad.</long_desc>
       <min>0.0</min>
+      <max>10</max>
       <unit>1/s</unit>
       <decimal>2</decimal>
+      <increment>0.0005</increment>
     </parameter>
     <parameter default="0.15" name="MC_PITCHRATE_P" type="FLOAT">
       <short_desc>Pitch rate P gain</short_desc>
       <long_desc>Pitch rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
+      <max>0.6</max>
       <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.05" name="MC_PITCHRATE_I" type="FLOAT">
       <short_desc>Pitch rate I gain</short_desc>
       <long_desc>Pitch rate integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
       <min>0.0</min>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.003" name="MC_PITCHRATE_D" type="FLOAT">
       <short_desc>Pitch rate D gain</short_desc>
       <long_desc>Pitch rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
       <min>0.0</min>
       <decimal>4</decimal>
+      <increment>0.0005</increment>
     </parameter>
     <parameter default="0.0" name="MC_PITCHRATE_FF" type="FLOAT">
       <short_desc>Pitch rate feedforward</short_desc>
@@ -1615,32 +1697,39 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <short_desc>Yaw P gain</short_desc>
       <long_desc>Yaw proportional gain, i.e. desired angular speed in rad/s for error 1 rad.</long_desc>
       <min>0.0</min>
+      <max>5</max>
       <unit>1/s</unit>
       <decimal>2</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter default="0.2" name="MC_YAWRATE_P" type="FLOAT">
       <short_desc>Yaw rate P gain</short_desc>
       <long_desc>Yaw rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
+      <max>0.6</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.1" name="MC_YAWRATE_I" type="FLOAT">
       <short_desc>Yaw rate I gain</short_desc>
       <long_desc>Yaw rate integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
       <min>0.0</min>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.0" name="MC_YAWRATE_D" type="FLOAT">
       <short_desc>Yaw rate D gain</short_desc>
       <long_desc>Yaw rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
       <min>0.0</min>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.0" name="MC_YAWRATE_FF" type="FLOAT">
       <short_desc>Yaw rate feedforward</short_desc>
       <long_desc>Improves tracking performance.</long_desc>
       <min>0.0</min>
       <decimal>4</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.5" name="MC_YAW_FF" type="FLOAT">
       <short_desc>Yaw feed forward</short_desc>
@@ -1648,6 +1737,7 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="220.0" name="MC_ROLLRATE_MAX" type="FLOAT">
       <short_desc>Max roll rate</short_desc>
@@ -1656,6 +1746,7 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <max>360.0</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
     <parameter default="220.0" name="MC_PITCHRATE_MAX" type="FLOAT">
       <short_desc>Max pitch rate</short_desc>
@@ -1664,14 +1755,16 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <max>360.0</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
-    <parameter default="120.0" name="MC_YAWRATE_MAX" type="FLOAT">
+    <parameter default="200.0" name="MC_YAWRATE_MAX" type="FLOAT">
       <short_desc>Max yaw rate</short_desc>
       <long_desc>A value of significantly over 120 degrees per second can already lead to mixer saturation.</long_desc>
       <min>0.0</min>
       <max>360.0</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
     <parameter default="45.0" name="MC_YAWRAUTO_MAX" type="FLOAT">
       <short_desc>Max yaw rate in auto mode</short_desc>
@@ -1680,26 +1773,31 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <max>120.0</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
     <parameter default="360.0" name="MC_ACRO_R_MAX" type="FLOAT">
       <short_desc>Max acro roll rate</short_desc>
       <min>0.0</min>
-      <max>360.0</max>
+      <max>1000.0</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
     <parameter default="360.0" name="MC_ACRO_P_MAX" type="FLOAT">
       <short_desc>Max acro pitch rate</short_desc>
       <min>0.0</min>
-      <max>360.0</max>
+      <max>1000.0</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
     <parameter default="360.0" name="MC_ACRO_Y_MAX" type="FLOAT">
       <short_desc>Max acro yaw rate</short_desc>
       <min>0.0</min>
+      <max>1000.0</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
     <parameter default="1.0" name="MC_RATT_TH" type="FLOAT">
       <short_desc>Threshold for Rattitude mode</short_desc>
@@ -1708,6 +1806,7 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <max>1.0</max>
       <unit />
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="6.0" name="MP_ROLL_P" type="FLOAT">
       <short_desc>Roll P gain</short_desc>
@@ -1979,7 +2078,7 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <unit>degree</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter default="120.0" name="MPC_MAN_Y_MAX" type="FLOAT">
+    <parameter default="200.0" name="MPC_MAN_Y_MAX" type="FLOAT">
       <short_desc>Max manual yaw rate</short_desc>
       <min>0.0</min>
       <unit>degree / s</unit>
@@ -1992,13 +2091,13 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <unit>%</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="0.5" name="MPC_HOLD_MAX_XY" type="FLOAT">
+    <parameter default="0.8" name="MPC_HOLD_MAX_XY" type="FLOAT">
       <short_desc>Maximum horizontal velocity for which position hold is enabled (use 0 to disable check)</short_desc>
       <min>0.0</min>
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="0.5" name="MPC_HOLD_MAX_Z" type="FLOAT">
+    <parameter default="0.6" name="MPC_HOLD_MAX_Z" type="FLOAT">
       <short_desc>Maximum vertical velocity for which position hold is enabled (use 0 to disable check)</short_desc>
       <min>0.0</min>
       <unit>m/s</unit>
@@ -2010,7 +2109,7 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <unit>Hz</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="4.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
+    <parameter default="6.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
       <short_desc>Maximum horizonal acceleration in velocity controlled modes</short_desc>
       <min>2.0</min>
       <max>10.0</max>
@@ -2623,6 +2722,7 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <min>-0.25</min>
       <max>0.25</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.0" name="TRIM_PITCH" type="FLOAT">
       <short_desc>Pitch trim</short_desc>
@@ -2630,6 +2730,7 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <min>-0.25</min>
       <max>0.25</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.0" name="TRIM_YAW" type="FLOAT">
       <short_desc>Yaw trim</short_desc>
@@ -2637,6 +2738,7 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <min>-0.25</min>
       <max>0.25</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="1000.0" name="RC1_MIN" type="FLOAT">
       <short_desc>RC Channel 1 Minimum</short_desc>
@@ -3284,36 +3386,162 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <long_desc>Default function: Camera pitch</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_AUX2" type="INT32">
       <short_desc>Auxiliary switch 2 channel mapping</short_desc>
       <long_desc>Default function: Camera roll</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_AUX3" type="INT32">
       <short_desc>Auxiliary switch 3 channel mapping</short_desc>
       <long_desc>Default function: Camera azimuth / yaw</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_PARAM1" type="INT32">
       <short_desc>Channel which changes a parameter</short_desc>
       <long_desc>Can be used for parameter tuning with the RC. This one is further referenced as the 1st parameter channel. Set to 0 to deactivate *</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_PARAM2" type="INT32">
       <short_desc>Channel which changes a parameter</short_desc>
       <long_desc>Can be used for parameter tuning with the RC. This one is further referenced as the 2nd parameter channel. Set to 0 to deactivate *</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_PARAM3" type="INT32">
       <short_desc>Channel which changes a parameter</short_desc>
       <long_desc>Can be used for parameter tuning with the RC. This one is further referenced as the 3th parameter channel. Set to 0 to deactivate *</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_FAILS_THR" type="INT32">
       <short_desc>Failsafe channel PWM threshold</short_desc>
@@ -3355,46 +3583,235 @@ Other values  will disable magnetometer fusion completely</short_desc>
       <long_desc>This is the main flight mode selector. The channel index (starting from 1 for channel 1) indicates which channel should be used for deciding about the main mode. A value of zero indicates the switch is not assigned.</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_RETURN_SW" type="INT32">
       <short_desc>Return switch channel mapping</short_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_RATT_SW" type="INT32">
       <short_desc>Rattitude switch channel mapping</short_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_POSCTL_SW" type="INT32">
       <short_desc>Posctl switch channel mapping</short_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_LOITER_SW" type="INT32">
       <short_desc>Loiter switch channel mapping</short_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_ACRO_SW" type="INT32">
       <short_desc>Acro switch channel mapping</short_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_OFFB_SW" type="INT32">
       <short_desc>Offboard switch channel mapping</short_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_KILL_SW" type="INT32">
       <short_desc>Kill switch channel mapping</short_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_FLAPS" type="INT32">
       <short_desc>Flaps channel mapping</short_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0.25" name="RC_ASSIST_TH" type="FLOAT">
       <short_desc>Threshold for selecting assist mode</short_desc>
@@ -3559,6 +3976,13 @@ FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</short_desc>
       <long_desc>the difference in hours and minutes from Coordinated Universal Time (UTC) for a your place and date. for example, In case of South Korea(UTC+09:00), UTC offset is 540 min (9*60) refer to https://en.wikipedia.org/wiki/List_of_UTC_time_offsets</long_desc>
       <min>-1000</min>
       <max>1000</max>
+    </parameter>
+    <parameter default="0" name="SDLOG_PRIO_BOOST" type="INT32">
+      <short_desc>Give logging app higher thread priority to avoid data loss.
+This is used for gathering replay logs for the ekf2 module</short_desc>
+      <long_desc>A value of 0 indicates that the default priority is used. Increasing the parameter in steps of one increases the priority.</long_desc>
+      <min>0</min>
+      <max>3</max>
     </parameter>
   </group>
   <group name="Sensor Calibration">
@@ -4346,6 +4770,123 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
     <parameter default="0.1" name="RV_YAW_P" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>
     </parameter>
+    <parameter default="0" name="COM_FLTMODE_CH" type="INT32">
+      <short_desc>COM_FLTMODE_CH</short_desc>
+    </parameter>
+    <parameter default="0" name="COM_FLTMODE1" type="INT32">
+      <short_desc>First flightmode slot (1000-1160)</short_desc>
+      <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
+      <values>
+        <value code="11">AUTO / TAKEOFF</value>
+        <value code="10">RATTITUDE</value>
+        <value code="12">AUTO / LAND</value>
+        <value code="1">MANUAL</value>
+        <value code="0">Unassigned</value>
+        <value code="3">POSITION CONTROL</value>
+        <value code="2">ALTITUDE CONTROL</value>
+        <value code="5">AUTO / PAUSE</value>
+        <value code="4">AUTO / MISSION</value>
+        <value code="7">ACRO</value>
+        <value code="6">RETURN TO LAUNCH</value>
+        <value code="9">STABILIZED</value>
+        <value code="8">OFFBOARD</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="COM_FLTMODE2" type="INT32">
+      <short_desc>Second flightmode slot (1160-1320)</short_desc>
+      <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
+      <values>
+        <value code="11">AUTO / TAKEOFF</value>
+        <value code="10">RATTITUDE</value>
+        <value code="12">AUTO / LAND</value>
+        <value code="1">MANUAL</value>
+        <value code="0">Unassigned</value>
+        <value code="3">POSITION CONTROL</value>
+        <value code="2">ALTITUDE CONTROL</value>
+        <value code="5">AUTO / PAUSE</value>
+        <value code="4">AUTO / MISSION</value>
+        <value code="7">ACRO</value>
+        <value code="6">RETURN TO LAUNCH</value>
+        <value code="9">STABILIZED</value>
+        <value code="8">OFFBOARD</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="COM_FLTMODE3" type="INT32">
+      <short_desc>Third flightmode slot (1320-1480)</short_desc>
+      <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
+      <values>
+        <value code="11">AUTO / TAKEOFF</value>
+        <value code="10">RATTITUDE</value>
+        <value code="12">AUTO / LAND</value>
+        <value code="1">MANUAL</value>
+        <value code="0">Unassigned</value>
+        <value code="3">POSITION CONTROL</value>
+        <value code="2">ALTITUDE CONTROL</value>
+        <value code="5">AUTO / PAUSE</value>
+        <value code="4">AUTO / MISSION</value>
+        <value code="7">ACRO</value>
+        <value code="6">RETURN TO LAUNCH</value>
+        <value code="9">STABILIZED</value>
+        <value code="8">OFFBOARD</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="COM_FLTMODE4" type="INT32">
+      <short_desc>Fourth flightmode slot (1480-1640)</short_desc>
+      <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
+      <values>
+        <value code="11">AUTO / TAKEOFF</value>
+        <value code="10">RATTITUDE</value>
+        <value code="12">AUTO / LAND</value>
+        <value code="1">MANUAL</value>
+        <value code="0">Unassigned</value>
+        <value code="3">POSITION CONTROL</value>
+        <value code="2">ALTITUDE CONTROL</value>
+        <value code="5">AUTO / PAUSE</value>
+        <value code="4">AUTO / MISSION</value>
+        <value code="7">ACRO</value>
+        <value code="6">RETURN TO LAUNCH</value>
+        <value code="9">STABILIZED</value>
+        <value code="8">OFFBOARD</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="COM_FLTMODE5" type="INT32">
+      <short_desc>Fift flightmode slot (1640-1800)</short_desc>
+      <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
+      <values>
+        <value code="11">AUTO / TAKEOFF</value>
+        <value code="10">RATTITUDE</value>
+        <value code="12">AUTO / LAND</value>
+        <value code="1">MANUAL</value>
+        <value code="0">Unassigned</value>
+        <value code="3">POSITION CONTROL</value>
+        <value code="2">ALTITUDE CONTROL</value>
+        <value code="5">AUTO / PAUSE</value>
+        <value code="4">AUTO / MISSION</value>
+        <value code="7">ACRO</value>
+        <value code="6">RETURN TO LAUNCH</value>
+        <value code="9">STABILIZED</value>
+        <value code="8">OFFBOARD</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="COM_FLTMODE6" type="INT32">
+      <short_desc>Sixt flightmode slot (1800-2000)</short_desc>
+      <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
+      <values>
+        <value code="11">AUTO / TAKEOFF</value>
+        <value code="10">RATTITUDE</value>
+        <value code="12">AUTO / LAND</value>
+        <value code="1">MANUAL</value>
+        <value code="0">Unassigned</value>
+        <value code="3">POSITION CONTROL</value>
+        <value code="2">ALTITUDE CONTROL</value>
+        <value code="5">AUTO / PAUSE</value>
+        <value code="4">AUTO / MISSION</value>
+        <value code="7">ACRO</value>
+        <value code="6">RETURN TO LAUNCH</value>
+        <value code="9">STABILIZED</value>
+        <value code="8">OFFBOARD</value>
+      </values>
+    </parameter>
     <parameter default="-1.0" name="TEST_MIN" type="FLOAT">
       <short_desc>TEST_MIN</short_desc>
     </parameter>
@@ -4381,14 +4922,6 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
     </parameter>
     <parameter default="2.0" name="TEST_DEV" type="FLOAT">
       <short_desc>TEST_DEV</short_desc>
-    </parameter>
-    <parameter default="2.5" name="FW_FLARE_PMIN" type="FLOAT">
-      <short_desc>Flare, minimum pitch</short_desc>
-      <long_desc>Minimum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
-    </parameter>
-    <parameter default="15.0" name="FW_FLARE_PMAX" type="FLOAT">
-      <short_desc>Flare, maximum pitch</short_desc>
-      <long_desc>Maximum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
     </parameter>
     <parameter default="10.0" name="SEG_TH2V_P" type="FLOAT">
       <short_desc>SEG_TH2V_P</short_desc>
