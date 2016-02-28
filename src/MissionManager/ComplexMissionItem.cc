@@ -34,6 +34,8 @@ const char* ComplexMissionItem::_jsonIdKey =            "id";
 const char* ComplexMissionItem::_jsonGridAltitudeKey =  "gridAltitude";
 const char* ComplexMissionItem::_jsonGridAngleKey =     "gridAngle";
 const char* ComplexMissionItem::_jsonGridSpacingKey =   "gridSpacing";
+const char* ComplexMissionItem::_jsonCameraTriggerKey = "cameraTrigger";
+const char* ComplexMissionItem::_jsonCameraTriggerDistanceKey = "cameraTriggerDistance";
 
 const char* ComplexMissionItem::_complexType = "survey";
 
@@ -41,23 +43,31 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
     : VisualMissionItem(vehicle, parent)
     , _sequenceNumber(0)
     , _dirty(false)
+    , _cameraTrigger(false)
     , _gridAltitudeFact (0, "Altitude:",        FactMetaData::valueTypeDouble)
     , _gridAngleFact    (0, "Grid angle:",      FactMetaData::valueTypeDouble)
     , _gridSpacingFact  (0, "Grid spacing:",    FactMetaData::valueTypeDouble)
+    , _cameraTriggerDistanceFact(0, "Camera trigger distance", FactMetaData::valueTypeDouble)
 {
     _gridAltitudeFact.setRawValue(25);
-    _gridSpacingFact.setRawValue(5);
+    _gridSpacingFact.setRawValue(10);
+    _cameraTriggerDistanceFact.setRawValue(25);
 
     connect(&_gridSpacingFact,  &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
     connect(&_gridAngleFact,    &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
+    connect(this, &ComplexMissionItem::cameraTriggerChanged, this, &ComplexMissionItem::_signalLastSequenceNumberChanged);
 }
 
 ComplexMissionItem::ComplexMissionItem(const ComplexMissionItem& other, QObject* parent)
     : VisualMissionItem(other, parent)
     , _sequenceNumber(other.sequenceNumber())
     , _dirty(false)
+    , _cameraTrigger(other._cameraTrigger)
 {
-
+    _gridAltitudeFact.setRawValue(other._gridAltitudeFact.rawValue());
+    _gridAngleFact.setRawValue(other._gridAngleFact.rawValue());
+    _gridSpacingFact.setRawValue(other._gridSpacingFact.rawValue());
+    _cameraTriggerDistanceFact.setRawValue(other._cameraTriggerDistanceFact.rawValue());
 }
 
 void ComplexMissionItem::clearPolygon(void)
@@ -102,6 +112,11 @@ int ComplexMissionItem::lastSequenceNumber(void) const
     if (_gridPoints.count()) {
         lastSeq += _gridPoints.count() - 1;
     }
+    if (_cameraTrigger) {
+        // Account for two trigger messages
+        lastSeq += 2;
+    }
+
     return lastSeq;
 }
 
@@ -130,6 +145,8 @@ void ComplexMissionItem::save(QJsonObject& saveObject) const
     saveObject[_jsonGridAltitudeKey] =  _gridAltitudeFact.rawValue().toDouble();
     saveObject[_jsonGridAngleKey] =     _gridAngleFact.rawValue().toDouble();
     saveObject[_jsonGridSpacingKey] =   _gridSpacingFact.rawValue().toDouble();
+    saveObject[_jsonCameraTriggerKey] = _cameraTrigger;
+    saveObject[_jsonCameraTriggerDistanceKey] = _cameraTriggerDistanceFact.rawValue().toDouble();
 
     // Polygon shape
 
@@ -168,7 +185,8 @@ bool ComplexMissionItem::load(const QJsonObject& complexObject, QString& errorSt
 
     // Validate requires keys
     QStringList requiredKeys;
-    requiredKeys << _jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey;
+    requiredKeys << _jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey <<
+                    _jsonCameraTriggerKey << _jsonCameraTriggerDistanceKey;
     if (!JsonHelper::validateRequiredKeys(complexObject, requiredKeys, errorString)) {
         _clear();
         return false;
@@ -177,8 +195,10 @@ bool ComplexMissionItem::load(const QJsonObject& complexObject, QString& errorSt
     // Validate types
     QStringList keyList;
     QList<QJsonValue::Type> typeList;
-    keyList << _jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey;
-    typeList << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::Array << QJsonValue::Double << QJsonValue::Double<< QJsonValue::Double;
+    keyList << _jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey <<
+               _jsonCameraTriggerKey << _jsonCameraTriggerDistanceKey;
+    typeList << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::Array << QJsonValue::Double << QJsonValue::Double<< QJsonValue::Double <<
+                QJsonValue::Bool << QJsonValue::Double;
     if (!JsonHelper::validateKeyTypes(complexObject, keyList, typeList, errorString)) {
         _clear();
         return false;
@@ -198,9 +218,11 @@ bool ComplexMissionItem::load(const QJsonObject& complexObject, QString& errorSt
     }
 
     setSequenceNumber(complexObject[_jsonIdKey].toInt());
-    _gridAltitudeFact.setRawValue(complexObject[_jsonGridAltitudeKey].toDouble());
-    _gridAngleFact.setRawValue(complexObject[_jsonGridAngleKey].toDouble());
-    _gridSpacingFact.setRawValue(complexObject[_jsonGridSpacingKey].toDouble());
+    _cameraTrigger = complexObject[_jsonCameraTriggerKey].toBool();
+    _gridAltitudeFact.setRawValue   (complexObject[_jsonGridAltitudeKey].toDouble());
+    _gridAngleFact.setRawValue      (complexObject[_jsonGridAngleKey].toDouble());
+    _gridSpacingFact.setRawValue    (complexObject[_jsonGridSpacingKey].toDouble());
+    _cameraTriggerDistanceFact.setRawValue(complexObject[_jsonCameraTriggerDistanceKey].toDouble());
 
     // Polygon shape
     QJsonArray polygonArray(complexObject[_jsonPolygonKey].toArray());
@@ -444,7 +466,7 @@ void ComplexMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QL
     }
 }
 
-QmlObjectListModel*  ComplexMissionItem::getMissionItems(void) const
+QmlObjectListModel* ComplexMissionItem::getMissionItems(void) const
 {
     QmlObjectListModel* pMissionItems = new QmlObjectListModel;
 
@@ -464,7 +486,36 @@ QmlObjectListModel*  ComplexMissionItem::getMissionItems(void) const
                                             false,                          // isCurrentItem
                                             pMissionItems);                 // parent - allow delete on pMissionItems to delete everthing
         pMissionItems->append(item);
+
+        if (_cameraTrigger && i == 0) {
+            MissionItem* item = new MissionItem(seqNum++,                       // sequence number
+                                                MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // MAV_CMD
+                                                MAV_FRAME_MISSION,              // MAV_FRAME
+                                                _cameraTriggerDistanceFact.rawValue().toDouble(),   // trigger distance
+                                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0,   // param 2-7
+                                                true,                           // autoContinue
+                                                false,                          // isCurrentItem
+                                                pMissionItems);                 // parent - allow delete on pMissionItems to delete everthing
+            pMissionItems->append(item);
+        }
+    }
+
+    if (_cameraTrigger) {
+        MissionItem* item = new MissionItem(seqNum++,                       // sequence number
+                                            MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // MAV_CMD
+                                            MAV_FRAME_MISSION,              // MAV_FRAME
+                                            0.0,                            // trigger distance
+                                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,   // param 2-7
+                                            true,                           // autoContinue
+                                            false,                          // isCurrentItem
+                                            pMissionItems);                 // parent - allow delete on pMissionItems to delete everthing
+        pMissionItems->append(item);
     }
 
     return pMissionItems;
+}
+
+void ComplexMissionItem::_signalLastSequenceNumberChanged(void)
+{
+    emit lastSequenceNumberChanged(lastSequenceNumber());
 }
