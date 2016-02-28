@@ -72,11 +72,18 @@ Rectangle {
         }
 
         QGCCheckBox {
+            anchors.left:   parent.left
+            text:           "Relative altitude"
+            checked:        missionItem.gridAltitudeRelative
+            onClicked:      missionItem.gridAltitudeRelative = checked
+        }
+
+        QGCCheckBox {
             id:                 cameraTrigger
             anchors.left:       parent.left
             text:               "Camera trigger:"
             checked:            missionItem.cameraTrigger
-            onClicked:          missionItem.cameraTrigger = !missionItem.cameraTrigger
+            onClicked:          missionItem.cameraTrigger = checked
         }
 
         Item {
@@ -102,7 +109,7 @@ Rectangle {
         }
 
         QGCButton {
-            text: _addPointsMode ? "Finished" : "Draw Polygon"
+            text: _addPointsMode ? "Finish Polygon" : "Draw Polygon"
             onClicked: {
                 if (_addPointsMode) {
                     _addPointsMode = false
