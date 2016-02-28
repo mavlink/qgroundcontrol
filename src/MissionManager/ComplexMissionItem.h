@@ -95,21 +95,14 @@ signals:
     void gridPointsChanged(void);
 
 private:
-    typedef struct Point_s {
-        double x;
-        double y;
-
-        Point_s(double x, double y) {
-            this->x = x;
-            this->y = y;
-        }
-    } Point_t;
-
     void _clear(void);
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
     void _clearGrid(void);
     void _generateGrid(void);
-    void _gridGenerator(const QList<Point_t>& polygonPoints, QList<Point_t>& gridPoints);
+    void _gridGenerator(const QList<QPointF>& polygonPoints, QList<QPointF>& gridPoints);
+    QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
+    void _intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines);
+    void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
 
     int                 _sequenceNumber;
     bool                _dirty;
