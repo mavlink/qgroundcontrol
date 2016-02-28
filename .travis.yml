@@ -123,10 +123,11 @@ script:
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ${SHADOW_BUILD_DIR}/debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest; fi
 
 after_success:
+  - if [ "${TRAVIS_TAG}" ]; then export GOOGLE_PLAY_TRACK=production; else export GOOGLE_PLAY_TRACK=beta; fi
   - if [[ "${TRAVIS_OS_NAME}" = "android" && "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_BRANCH}" = "master" ]]; then
          pip install --user google-api-python-client PyOpenSSL
       && cd ${TRAVIS_BUILD_DIR} && openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in ${TRAVIS_BUILD_DIR}/android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d
-      && ${TRAVIS_BUILD_DIR}/tools/google_play_upload.py beta org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.apk
+      && ${TRAVIS_BUILD_DIR}/tools/google_play_upload.py ${GOOGLE_PLAY_TRACK} org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.apk
       ;
     fi
 
