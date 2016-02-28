@@ -71,6 +71,36 @@ Rectangle {
             }
         }
 
+        QGCCheckBox {
+            id:                 cameraTrigger
+            anchors.left:       parent.left
+            text:               "Camera trigger:"
+            checked:            missionItem.cameraTrigger
+            onClicked:          missionItem.cameraTrigger = !missionItem.cameraTrigger
+        }
+
+        Item {
+            id:             distanceItem
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            height:         textField.height
+            enabled:        cameraTrigger.checked
+
+            QGCLabel {
+                anchors.baseline:   textField.baseline
+                anchors.left:       parent.left
+                text:               "Distance:"
+            }
+
+            FactTextField {
+                id:             textField
+                anchors.right:  parent.right
+                width:          _editFieldWidth
+                showUnits:      true
+                fact:           missionItem.cameraTriggerDistance
+            }
+        }
+
         QGCButton {
             text: _addPointsMode ? "Finished" : "Draw Polygon"
             onClicked: {
