@@ -75,7 +75,7 @@ public:
     Q_PROPERTY(bool exitCoordinateHasRelativeAltitude READ exitCoordinateHasRelativeAltitude NOTIFY exitCoordinateHasRelativeAltitudeChanged)
 
     /// @return true: exitCoordinate and coordinate are the same value
-    Q_PROPERTY(bool exitCoordinateSameAsEntry READ exitCoordinateSameAsEntry NOTIFY exitCoordinateSameAsEntry)
+    Q_PROPERTY(bool exitCoordinateSameAsEntry READ exitCoordinateSameAsEntry NOTIFY exitCoordinateSameAsEntryChanged)
 
     // General properties associated with all types of visual mission items
 
@@ -152,7 +152,7 @@ signals:
 
     void coordinateHasRelativeAltitudeChanged       (bool coordinateHasRelativeAltitude);
     void exitCoordinateHasRelativeAltitudeChanged   (bool exitCoordinateHasRelativeAltitude);
-    void exitCoordinateSameAsEntry                  (bool exitCoordinateSameAsEntry);
+    void exitCoordinateSameAsEntryChanged           (bool exitCoordinateSameAsEntry);
 
 protected:
     Vehicle*    _vehicle;
