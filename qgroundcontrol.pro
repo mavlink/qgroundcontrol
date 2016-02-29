@@ -506,6 +506,7 @@ HEADERS += \
     src/FactSystem/FactSystemTestBase.h \
     src/FactSystem/FactSystemTestGeneric.h \
     src/FactSystem/FactSystemTestPX4.h \
+    src/MissionManager/ComplexMissionItemTest.h \
     src/MissionManager/MissionControllerTest.h \
     src/MissionManager/MissionControllerManagerTest.h \
     src/MissionManager/MissionItemTest.h \
@@ -530,6 +531,7 @@ SOURCES += \
     src/FactSystem/FactSystemTestBase.cc \
     src/FactSystem/FactSystemTestGeneric.cc \
     src/FactSystem/FactSystemTestPX4.cc \
+    src/MissionManager/ComplexMissionItemTest.cc \
     src/MissionManager/MissionControllerTest.cc \
     src/MissionManager/MissionControllerManagerTest.cc \
     src/MissionManager/MissionItemTest.cc \
