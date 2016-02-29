@@ -27,6 +27,9 @@
 #include "VisualMissionItem.h"
 #include "MissionItem.h"
 #include "Fact.h"
+#include "QGCLoggingCategory.h"
+
+Q_DECLARE_LOGGING_CATEGORY(ComplexMissionItemLog)
 
 class ComplexMissionItem : public VisualMissionItem
 {
@@ -34,16 +37,16 @@ class ComplexMissionItem : public VisualMissionItem
 
 public:
     ComplexMissionItem(Vehicle* vehicle, QObject* parent = NULL);
-    ComplexMissionItem(const ComplexMissionItem& other, QObject* parent = NULL);
 
-    Q_PROPERTY(Fact*        gridAltitude        READ gridAltitude       CONSTANT)
-    Q_PROPERTY(Fact*        gridAngle           READ gridAngle          CONSTANT)
-    Q_PROPERTY(Fact*        gridSpacing         READ gridSpacing        CONSTANT)
-    Q_PROPERTY(bool         cameraTrigger       MEMBER _cameraTrigger   NOTIFY cameraTriggerChanged)
-    Q_PROPERTY(Fact*        cameraTriggerDistance READ cameraTriggerDistance CONSTANT)
-    Q_PROPERTY(QVariantList polygonPath         READ polygonPath        NOTIFY polygonPathChanged)
-    Q_PROPERTY(int          lastSequenceNumber  READ lastSequenceNumber NOTIFY lastSequenceNumberChanged)
-    Q_PROPERTY(QVariantList gridPoints          READ gridPoints         NOTIFY gridPointsChanged)
+    Q_PROPERTY(Fact*                gridAltitude            READ gridAltitude               CONSTANT)
+    Q_PROPERTY(bool                 gridAltitudeRelative    MEMBER _gridAltitudeRelative    NOTIFY gridAltitudeRelativeChanged)
+    Q_PROPERTY(Fact*                gridAngle               READ gridAngle                  CONSTANT)
+    Q_PROPERTY(Fact*                gridSpacing             READ gridSpacing                CONSTANT)
+    Q_PROPERTY(bool                 cameraTrigger           MEMBER _cameraTrigger           NOTIFY cameraTriggerChanged)
+    Q_PROPERTY(Fact*                cameraTriggerDistance   READ cameraTriggerDistance      CONSTANT)
+    Q_PROPERTY(QVariantList         polygonPath             READ polygonPath                NOTIFY polygonPathChanged)
+    Q_PROPERTY(int                  lastSequenceNumber      READ lastSequenceNumber         NOTIFY lastSequenceNumberChanged)
+    Q_PROPERTY(QVariantList         gridPoints              READ gridPoints                 NOTIFY gridPointsChanged)
 
     Q_INVOKABLE void clearPolygon(void);
     Q_INVOKABLE void addPolygonCoordinate(const QGeoCoordinate coordinate);
@@ -81,8 +84,8 @@ public:
     QGeoCoordinate  exitCoordinate          (void) const final { return _exitCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
 
-    bool coordinateHasRelativeAltitude      (void) const final { return true; }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
+    bool coordinateHasRelativeAltitude      (void) const final { return _gridAltitudeRelative; }
+    bool exitCoordinateHasRelativeAltitude  (void) const final { return _gridAltitudeRelative; }
     bool exitCoordinateSameAsEntry          (void) const final { return false; }
 
     void setDirty           (bool dirty) final;
@@ -91,12 +94,13 @@ public:
     void save               (QJsonObject& saveObject) const final;
 
 signals:
-    void polygonPathChanged(void);
-    void lastSequenceNumberChanged(int lastSequenceNumber);
-    void altitudeChanged(double altitude);
-    void gridAngleChanged(double gridAngle);
-    void gridPointsChanged(void);
-    void cameraTriggerChanged(bool cameraTrigger);
+    void polygonPathChanged             (void);
+    void lastSequenceNumberChanged      (int lastSequenceNumber);
+    void altitudeChanged                (double altitude);
+    void gridAngleChanged               (double gridAngle);
+    void gridPointsChanged              (void);
+    void cameraTriggerChanged           (bool cameraTrigger);
+    void gridAltitudeRelativeChanged    (bool gridAltitudeRelative);
 
 private slots:
     void _signalLastSequenceNumberChanged(void);
@@ -120,6 +124,7 @@ private:
     double              _altitude;
     double              _gridAngle;
     bool                _cameraTrigger;
+    bool                _gridAltitudeRelative;
 
     Fact    _gridAltitudeFact;
     Fact    _gridAngleFact;
@@ -131,6 +136,7 @@ private:
     static const char* _jsonPolygonKey;
     static const char* _jsonIdKey;
     static const char* _jsonGridAltitudeKey;
+    static const char* _jsonGridAltitudeRelativeKey;
     static const char* _jsonGridAngleKey;
     static const char* _jsonGridSpacingKey;
     static const char* _jsonCameraTriggerKey;

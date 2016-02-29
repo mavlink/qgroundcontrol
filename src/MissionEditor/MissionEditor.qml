@@ -367,14 +367,8 @@ QGCView {
 
                 // Add the complex mission item polygon to the map
                 MapItemView {
-                    model:      controller.complexVisualItems
-                    delegate:   polygonItemComponent
-                }
-
-                Component {
-                    id: polygonItemComponent
-
-                    MapPolygon {
+                    model: controller.complexVisualItems
+                    delegate: MapPolygon {
                         color:      'green'
                         path:       object.polygonPath
                         opacity:    0.5
