@@ -11,6 +11,7 @@ Text {
     property bool enabled: true
 
     font.pixelSize: ScreenTools.defaultFontPixelSize
+    fontSizeMode:   Text.HorizontalFit
     color:          __qgcPal.text
     antialiasing:   true
 }
