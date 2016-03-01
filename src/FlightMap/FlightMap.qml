@@ -68,7 +68,7 @@ Map {
         onGcsPositionChanged: {
             if (!_initialMapPositionSet) {
                 _initialMapPositionSet = true
-                flightMap.center = mainWindow.gcsPosition
+                center = mainWindow.gcsPosition
             }
         }
     }

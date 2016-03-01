@@ -49,12 +49,6 @@
         </activity>
     </application>
     <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="22"/>
-    <supports-screens android:smallScreens="false"
-                      android:normalScreens="false"
-                      android:largeScreens="true"
-                      android:xlargeScreens="true"
-                      android:anyDensity="true"
-                      android:requiresSmallestWidthDp="600" />
 
     <!-- Needed to keep working while 'asleep' -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
