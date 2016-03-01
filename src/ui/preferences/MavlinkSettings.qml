@@ -48,14 +48,14 @@ Rectangle {
         anchors.fill:       parent
         anchors.margins:    ScreenTools.defaultFontPixelWidth
         contentHeight:      settingsColumn.height
-        contentWidth:       __mavlinkRoot.width
-        flickableDirection: Flickable.VerticalFlick
+        contentWidth:       settingsColumn.width
 
         Column {
             id:                 settingsColumn
-            width:              __mavlinkRoot.width
             spacing:            ScreenTools.defaultFontPixelHeight
             anchors.margins:    ScreenTools.defaultFontPixelWidth
+            anchors.left:       parent.left
+            anchors.top:        parent.top
             QGCLabel {
                 text:   "MavLink Settings"
                 font.pixelSize: ScreenTools.mediumFontPixelSize

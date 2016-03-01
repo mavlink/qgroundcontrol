@@ -49,14 +49,13 @@ Rectangle {
         clip:               true
         anchors.fill:       parent
         contentHeight:      settingsColumn.height
-        contentWidth:       _generalRoot.width
-        flickableDirection: Flickable.VerticalFlick
+        contentWidth:       settingsColumn.width
 
         Column {
             id:                 settingsColumn
-            width:              _generalRoot.width
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             spacing:            ScreenTools.defaultFontPixelHeight / 2
+
             QGCLabel {
                 text:   "General Settings"
                 font.pixelSize: ScreenTools.mediumFontPixelSize
