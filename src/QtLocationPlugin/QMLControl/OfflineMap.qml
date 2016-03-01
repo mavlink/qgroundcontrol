@@ -156,6 +156,7 @@ Rectangle {
             errorDialog.visible = false
         }
     }
+
     Rectangle {
         id:         _offlineMapTopRect
         width:      parent.width
@@ -180,25 +181,29 @@ Rectangle {
             }
         }
     }
+
     QGCFlickable {
         id:                 _tileSetList
         clip:               true
         anchors.top:        _offlineMapTopRect.bottom
-        width:              parent.width
-        height:             parent.height - _offlineMapTopRect.height
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.bottom:     _optionsButton.top
         contentHeight:      _cacheList.height
-        contentWidth:       parent.width
         flickableDirection: Flickable.VerticalFlick
+
         Column {
             id:                 _cacheList
-            width:              _offlineMapRoot.width
+            width:              Math.min(parent.width, (ScreenTools.defaultFontPixelWidth  * 50).toFixed(0))
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             spacing:            (ScreenTools.defaultFontPixelHeight * 0.5).toFixed(0)
+            anchors.horizontalCenter: parent.horizontalCenter
+
             OfflineMapButton {
-                text:   "Add new set"
-                width:  (ScreenTools.defaultFontPixelWidth  * 50).toFixed(0)
-                height: (ScreenTools.defaultFontPixelHeight * 2).toFixed(0)
-                anchors.horizontalCenter: parent.horizontalCenter
+                text:           "Add new set"
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height:         (ScreenTools.defaultFontPixelHeight * 2).toFixed(0)
                 onClicked: {
                     _offlineMapRoot._currentSelection = null
                     showMap()
@@ -207,12 +212,12 @@ Rectangle {
             Repeater {
                 model: QGroundControl.mapEngineManager.tileSets
                 delegate: OfflineMapButton {
-                    text:   object.name
-                    size:   object.downloadStatus
-                    complete: object.complete
-                    width:  (ScreenTools.defaultFontPixelWidth  * 50).toFixed(0)
-                    height: (ScreenTools.defaultFontPixelHeight * 2).toFixed(0)
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    text:           object.name
+                    size:           object.downloadStatus
+                    complete:       object.complete
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    height:         (ScreenTools.defaultFontPixelHeight * 2).toFixed(0)
                     onClicked: {
                         _offlineMapRoot._currentSelection = object
                         showInfo()
@@ -221,16 +226,17 @@ Rectangle {
             }
         }
     }
+
     QGCButton {
         id:              _optionsButton
         text:            "Options"
-        width:           ScreenTools.defaultFontPixelWidth * 10
         visible:         _tileSetList.visible
         anchors.bottom:  parent.bottom
         anchors.right:   parent.right
         anchors.margins: ScreenTools.defaultFontPixelWidth
         onClicked:       showOptions()
     }
+
     //-- Offline Map Definition
     Rectangle {
         id:                 _mapView

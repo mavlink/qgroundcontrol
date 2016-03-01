@@ -134,7 +134,6 @@ Rectangle {
             }
         }
         QGCButton {
-            width:      ScreenTools.defaultFontPixelWidth * 10
             text:       "Edit"
             enabled:    _currentSelection && !_currentSelection.link
             onClicked: {
@@ -142,14 +141,12 @@ Rectangle {
             }
         }
         QGCButton {
-            width:      ScreenTools.defaultFontPixelWidth * 10
             text:       "Add"
             onClicked: {
                 _linkRoot.openCommSettings(null)
             }
         }
         QGCButton {
-            width:      ScreenTools.defaultFontPixelWidth * 10
             text:       "Connect"
             enabled:    _currentSelection && !_currentSelection.link
             onClicked: {
@@ -158,7 +155,6 @@ Rectangle {
             }
         }
         QGCButton {
-            width:      ScreenTools.defaultFontPixelWidth * 10
             text:       "Disconnect"
             enabled:    _currentSelection && _currentSelection.link
             onClicked: {
