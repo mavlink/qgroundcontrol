@@ -53,7 +53,7 @@ QGCView {
     readonly property real      _margin:            ScreenTools.defaultFontPixelHeight / 2
     readonly property var       _activeVehicle:     multiVehicleManager.activeVehicle
     readonly property real      _editFieldWidth:    ScreenTools.defaultFontPixelWidth * 16
-    readonly property real      _rightPanelWidth:   ScreenTools.defaultFontPixelWidth * 30
+    readonly property real      _rightPanelWidth:   Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
     readonly property real      _rightPanelOpacity: 0.8
     readonly property int       _toolButtonCount:   6
     readonly property string    _autoSyncKey:       "AutoSync"
@@ -716,6 +716,7 @@ QGCView {
                     currentMissionItem: _currentMissionItem
                     missionItems:       controller.visualItems
                     expandedWidth:      missionItemEditor.x - (ScreenTools.defaultFontPixelWidth * 2)
+                    visible:            !ScreenTools.isShortScreen
                 }
             } // FlightMap
         } // Item - split view container

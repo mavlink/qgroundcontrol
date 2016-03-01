@@ -30,7 +30,7 @@ Rectangle {
     property bool   _currentItem:       missionItem.isCurrentItem
     property color  _outerTextColor:    _currentItem ? "black" : qgcPal.text
 
-    readonly property real  _editFieldWidth:    ScreenTools.defaultFontPixelWidth * 16
+    readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 16)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
 
