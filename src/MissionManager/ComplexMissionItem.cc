@@ -59,7 +59,8 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
 
     connect(&_gridSpacingFact,  &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
     connect(&_gridAngleFact,    &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
-    connect(this, &ComplexMissionItem::cameraTriggerChanged, this, &ComplexMissionItem::_signalLastSequenceNumberChanged);
+
+    connect(this, &ComplexMissionItem::cameraTriggerChanged, this, &ComplexMissionItem::_cameraTriggerChanged);
 }
 
 void ComplexMissionItem::clearPolygon(void)
@@ -77,8 +78,10 @@ void ComplexMissionItem::clearPolygon(void)
     _polygonPath.clear();
 
     _clearGrid();
+    setDirty(true);
 
     emit specifiesCoordinateChanged();
+    emit lastSequenceNumberChanged(lastSequenceNumber());
 }
 
 void ComplexMissionItem::addPolygonCoordinate(const QGeoCoordinate coordinate)
@@ -87,14 +90,13 @@ void ComplexMissionItem::addPolygonCoordinate(const QGeoCoordinate coordinate)
     emit polygonPathChanged();
 
     int pointCount = _polygonPath.count();
-    if (pointCount == 1) {
-        setCoordinate(coordinate);
-    } else if (pointCount == 3) {
-        emit specifiesCoordinateChanged();
+    if (pointCount >= 3) {
+        if (pointCount == 3) {
+            emit specifiesCoordinateChanged();
+        }
+        _generateGrid();
     }
-    _setExitCoordinate(coordinate);
-
-    _generateGrid();
+    setDirty(true);
 }
 
 int ComplexMissionItem::lastSequenceNumber(void) const
@@ -103,10 +105,10 @@ int ComplexMissionItem::lastSequenceNumber(void) const
 
     if (_gridPoints.count()) {
         lastSeq += _gridPoints.count() - 1;
-    }
-    if (_cameraTrigger) {
-        // Account for two trigger messages
-        lastSeq += 2;
+        if (_cameraTrigger) {
+            // Account for two trigger messages
+            lastSeq += 2;
+        }
     }
 
     return lastSeq;
@@ -117,7 +119,6 @@ void ComplexMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
     if (_coordinate != coordinate) {
         _coordinate = coordinate;
         emit coordinateChanged(_coordinate);
-        _setExitCoordinate(coordinate);
     }
 }
 
@@ -259,8 +260,6 @@ void ComplexMissionItem::_clearGrid(void)
     }
     emit gridPointsChanged();
     _gridPoints.clear();
-    emit gridPointsChanged();
-
 }
 
 void ComplexMissionItem::_generateGrid(void)
@@ -511,7 +510,11 @@ QmlObjectListModel* ComplexMissionItem::getMissionItems(void) const
     return pMissionItems;
 }
 
-void ComplexMissionItem::_signalLastSequenceNumberChanged(void)
+void ComplexMissionItem::_cameraTriggerChanged(void)
 {
-    emit lastSequenceNumberChanged(lastSequenceNumber());
+    setDirty(true);
+    if (_gridPoints.count()) {
+        // If we have grid turn on/off camera trigger will add/remove two camera trigger mission items
+        emit lastSequenceNumberChanged(lastSequenceNumber());
+    }
 }
