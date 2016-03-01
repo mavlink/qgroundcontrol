@@ -486,14 +486,6 @@ QGCView {
                     opacity:        _rightPanelOpacity
                     z:              QGroundControl.zOrderTopMost
 
-                    MouseArea {
-                        // This MouseArea prevents the Map below it from getting Mouse events. Without this
-                        // things like mousewheel will scroll the Flickable and then scroll the map as well.
-                        anchors.fill:       editorListView
-                        preventStealing:    true
-                        onWheel:            wheel.accepted = true
-                    }
-
                     ListView {
                         id:             editorListView
                         anchors.left:   parent.left
