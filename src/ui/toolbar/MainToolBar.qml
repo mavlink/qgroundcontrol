@@ -565,7 +565,7 @@ Rectangle {
 
         QGCLabel {
             id:                     connectionLost
-            text:                   "CONNECTION LOST"
+            text:                   "COMMUNICATION LOST"
             font.pixelSize:         tbFontLarge
             font.weight:            Font.DemiBold
             color:                  colorRed
