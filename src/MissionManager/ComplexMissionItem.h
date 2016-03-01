@@ -103,7 +103,7 @@ signals:
     void gridAltitudeRelativeChanged    (bool gridAltitudeRelative);
 
 private slots:
-    void _signalLastSequenceNumberChanged(void);
+    void _cameraTriggerChanged(void);
 
 private:
     void _clear(void);
