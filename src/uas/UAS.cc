@@ -41,8 +41,6 @@
 
 QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 
-#define UAS_DEFAULT_BATTERY_WARNLEVEL 20
-
 /**
 * Gets the settings from the previous UAS (name, airframe, autopilot, battery specs)
 * by calling readSettings. This means the new UAS will have the same settings
@@ -62,17 +60,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     base_mode(0),
     custom_mode(0),
     status(-1),
-
-    startVoltage(-1.0f),
-    tickVoltage(10.5f),
-    lastTickVoltageValue(13.0f),
-    tickLowpassVoltage(12.0f),
-    warnLevelPercent(UAS_DEFAULT_BATTERY_WARNLEVEL),
-    currentVoltage(12.6f),
-    lpVoltage(-1.0f),
-    currentCurrent(0.4f),
-    chargeLevel(-1),
-    lowBattAlarm(false),
 
     startTime(QGC::groundTimeMilliseconds()),
     onboardTimeOffset(0),
@@ -294,12 +281,8 @@ void UAS::receiveMessage(mavlink_message_t message)
 
             QString audiostring = QString("System %1").arg(uasId);
             QString stateAudio = "";
-            QString modeAudio = "";
             QString navModeAudio = "";
             bool statechanged = false;
-            bool modechanged = false;
-
-            QString audiomodeText = _firmwarePluginManager->firmwarePluginForAutopilot((MAV_AUTOPILOT)state.autopilot, (MAV_TYPE)state.type)->flightMode(state.base_mode, state.custom_mode);
 
             if ((state.system_status != this->status) && state.system_status != MAV_STATE_UNINIT)
             {
@@ -318,27 +301,14 @@ void UAS::receiveMessage(mavlink_message_t message)
                 stateAudio = uasState;
             }
 
-            if (this->base_mode != state.base_mode || this->custom_mode != state.custom_mode)
-            {
-                modechanged = true;
-                this->base_mode = state.base_mode;
-                this->custom_mode = state.custom_mode;
-                modeAudio = " is now in " + audiomodeText + " flight mode";
-            }
-
             // We got the mode
             receivedMode = true;
 
             // AUDIO
-            if (modechanged && statechanged)
-            {
-                // Output both messages
-                audiostring += modeAudio + " and " + stateAudio;
-            }
-            else if (modechanged || statechanged)
+            if (statechanged)
             {
                 // Output the one message
-                audiostring += modeAudio + stateAudio;
+                audiostring += stateAudio;
             }
 
             if (statechanged && ((int)state.system_status == (int)MAV_STATE_CRITICAL || state.system_status == (int)MAV_STATE_EMERGENCY))
@@ -346,7 +316,7 @@ void UAS::receiveMessage(mavlink_message_t message)
                 _say(QString("Emergency for system %1").arg(this->getUASID()), GAudioOutput::AUDIO_SEVERITY_EMERGENCY);
                 QTimer::singleShot(3000, qgcApp()->toolbox()->audioOutput(), SLOT(startEmergency()));
             }
-            else if (modechanged || statechanged)
+            else if (statechanged)
             {
                 _say(audiostring.toLower());
             }
@@ -377,62 +347,6 @@ void UAS::receiveMessage(mavlink_message_t message)
             // Process CPU load.
             emit loadChanged(this,state.load/10.0f);
             emit valueChanged(uasId, name.arg("load"), "%", state.load/10.0f, time);
-
-            currentVoltage = state.voltage_battery/1000.0f;
-
-            if (state.voltage_battery > 0.0f && state.voltage_battery != UINT16_MAX) {
-                // Battery charge/time remaining/voltage calculations
-                currentVoltage = state.voltage_battery/1000.0f;
-                filterVoltage(currentVoltage);
-                tickLowpassVoltage = tickLowpassVoltage * 0.8f + 0.2f * currentVoltage;
-
-                // We don't want to tick above the threshold
-                if (tickLowpassVoltage > tickVoltage)
-                {
-                    lastTickVoltageValue = tickLowpassVoltage;
-                }
-
-                if ((startVoltage > 0.0f) && (tickLowpassVoltage < tickVoltage) && (fabs(lastTickVoltageValue - tickLowpassVoltage) > 0.1f)
-                        /* warn if lower than treshold */
-                        && (lpVoltage < tickVoltage)
-                        /* warn only if we have at least the voltage of an empty LiPo cell, else we're sampling something wrong */
-                        && (currentVoltage > 3.3f)
-                        /* warn only if current voltage is really still lower by a reasonable amount */
-                        && ((currentVoltage - 0.2f) < tickVoltage)
-                        /* warn only every 20 seconds */
-                        && (QGC::groundTimeUsecs() - lastVoltageWarning) > 20000000)
-                {
-                    _say(QString("Low battery system %1: %2 volts").arg(getUASID()).arg(lpVoltage, 0, 'f', 1, QChar(' ')));
-                    lastVoltageWarning = QGC::groundTimeUsecs();
-                    lastTickVoltageValue = tickLowpassVoltage;
-                }
-
-                if (startVoltage == -1.0f && currentVoltage > 0.1f) startVoltage = currentVoltage;
-                chargeLevel = state.battery_remaining;
-
-                emit batteryChanged(this, lpVoltage, currentCurrent, getChargeLevel(), 0);
-            }
-
-            emit valueChanged(uasId, name.arg("battery_remaining"), "%", getChargeLevel(), time);
-            emit valueChanged(uasId, name.arg("battery_voltage"), "V", currentVoltage, time);
-
-            // And if the battery current draw is measured, log that also.
-            if (state.current_battery != -1)
-            {
-                currentCurrent = ((double)state.current_battery)/100.0f;
-                emit valueChanged(uasId, name.arg("battery_current"), "A", currentCurrent, time);
-            }
-
-            // LOW BATTERY ALARM
-            if (chargeLevel >= 0 && (getChargeLevel() < warnLevelPercent))
-            {
-                // An audio alarm. Does not generate any signals.
-                startLowBattAlarm();
-            }
-            else
-            {
-                stopLowBattAlarm();
-            }
 
             // control_sensors_enabled:
             // relevant bits: 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control
@@ -1176,19 +1090,6 @@ quint64 UAS::getUnixTime(quint64 time)
     }
 
     return ret;
-}
-
-/**
- * @param value battery voltage
- */
-float UAS::filterVoltage(float value)
-{
-    if (lpVoltage < 0.0f) {
-        lpVoltage = value;
-    }
-
-    lpVoltage = lpVoltage * 0.6f + value * 0.4f;
-    return lpVoltage;
 }
 
 /**
@@ -2077,31 +1978,6 @@ QMap<int, QString> UAS::getComponents()
     return components;
 }
 
-/**
- * @return charge level in percent - 0 - 100
- */
-float UAS::getChargeLevel()
-{
-    return chargeLevel;
-}
-
-void UAS::startLowBattAlarm()
-{
-    if (!lowBattAlarm)
-    {
-        _say(tr("System %1 has low battery").arg(getUASID()));
-        lowBattAlarm = true;
-    }
-}
-
-void UAS::stopLowBattAlarm()
-{
-    if (lowBattAlarm)
-    {
-        lowBattAlarm = false;
-    }
-}
-
 void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax)
 {
     if (!_vehicle) {
@@ -2164,8 +2040,8 @@ void UAS::unsetRCToParameterMap()
 
 void UAS::_say(const QString& text, int severity)
 {
-    if (!qgcApp()->runningUnitTests())
-        qgcApp()->toolbox()->audioOutput()->say(text, severity);
+    Q_UNUSED(severity);
+    qgcApp()->toolbox()->audioOutput()->say(text);
 }
 
 void UAS::shutdownVehicle(void)
