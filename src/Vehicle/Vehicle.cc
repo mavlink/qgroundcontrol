@@ -60,36 +60,7 @@ const char* Vehicle::_batteryFactGroupName =    "battery";
 const char* Vehicle::_windFactGroupName =       "wind";
 const char* Vehicle::_vibrationFactGroupName =  "vibration";
 
-const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
-const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
-const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
-const char* VehicleGPSFactGroup::_countFactName =               "count";
-const char* VehicleGPSFactGroup::_lockFactName =                "lock";
-
-const char* VehicleBatteryFactGroup::_voltageFactName =             "voltage";
-const char* VehicleBatteryFactGroup::_percentRemainingFactName =    "percentRemaining";
-const char* VehicleBatteryFactGroup::_mahConsumedFactName =         "mahConsumed";
-const char* VehicleBatteryFactGroup::_currentFactName =             "current";
-const char* VehicleBatteryFactGroup::_temperatureFactName =         "temperature";
-const char* VehicleBatteryFactGroup::_cellCountFactName =           "cellCount";
-
-const double VehicleBatteryFactGroup::_voltageUnavailable =           -1.0;
-const int    VehicleBatteryFactGroup::_percentRemainingUnavailable =  -1;
-const int    VehicleBatteryFactGroup::_mahConsumedUnavailable =       -1;
-const int    VehicleBatteryFactGroup::_currentUnavailable =           -1;
-const double VehicleBatteryFactGroup::_temperatureUnavailable =       -1.0;
-const int    VehicleBatteryFactGroup::_cellCountUnavailable =         -1.0;
-
-const char* VehicleWindFactGroup::_directionFactName =      "direction";
-const char* VehicleWindFactGroup::_speedFactName =          "speed";
-const char* VehicleWindFactGroup::_verticalSpeedFactName =  "verticalSpeed";
-
-const char* VehicleVibrationFactGroup::_xAxisFactName =      "xAxis";
-const char* VehicleVibrationFactGroup::_yAxisFactName =      "yAxis";
-const char* VehicleVibrationFactGroup::_zAxisFactName =      "zAxis";
-const char* VehicleVibrationFactGroup::_clipCount1FactName = "clipCount1";
-const char* VehicleVibrationFactGroup::_clipCount2FactName = "clipCount2";
-const char* VehicleVibrationFactGroup::_clipCount3FactName = "clipCount3";
+const int Vehicle::_lowBatteryAnnounceRepeatMSecs = 30 * 1000;
 
 Vehicle::Vehicle(LinkInterface*             link,
                  int                        vehicleId,
@@ -101,6 +72,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     : FactGroup(_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json")
     , _id(vehicleId)
     , _active(false)
+    , _disconnectedVehicle(false)
     , _firmwareType(firmwareType)
     , _vehicleType(vehicleType)
     , _firmwarePlugin(NULL)
@@ -165,8 +137,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     connect(_mavlink, &MAVLinkProtocol::messageReceived,     this, &Vehicle::_mavlinkMessageReceived);
-    connect(this, &Vehicle::_sendMessageOnThread, this, &Vehicle::_sendMessage, Qt::QueuedConnection);
+
+    connect(this, &Vehicle::_sendMessageOnThread,       this, &Vehicle::_sendMessage, Qt::QueuedConnection);
     connect(this, &Vehicle::_sendMessageOnLinkOnThread, this, &Vehicle::_sendMessageOnLink, Qt::QueuedConnection);
+    connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_announceflightModeChanged);
 
     _uas = new UAS(_mavlink, this, _firmwarePluginManager);
 
@@ -227,6 +201,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     _mapTrajectoryTimer.setInterval(_mapTrajectoryMsecsBetweenPoints);
     connect(&_mapTrajectoryTimer, &QTimer::timeout, this, &Vehicle::_addNewMapTrajectoryPoint);
 
+    // Invalidate the timer to signal first announce
+    _lowBatteryAnnounceTimer.invalidate();
+
     // Build FactGroup object model
 
     _addFact(&_rollFact,                _rollFactName);
@@ -247,6 +224,93 @@ Vehicle::Vehicle(LinkInterface*             link,
     _batteryFactGroup.setVehicle(this);
     _windFactGroup.setVehicle(this);
     _vibrationFactGroup.setVehicle(this);
+}
+
+// Disconnected Vehicle
+Vehicle::Vehicle(QObject* parent)
+    : FactGroup(_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json", parent)
+    , _id(0)
+    , _active(false)
+    , _disconnectedVehicle(false)
+    , _firmwareType(MAV_AUTOPILOT_PX4)
+    , _vehicleType(MAV_TYPE_QUADROTOR)
+    , _firmwarePlugin(NULL)
+    , _autopilotPlugin(NULL)
+    , _joystickMode(JoystickModeRC)
+    , _joystickEnabled(false)
+    , _uas(NULL)
+    , _coordinate(37.803784, -122.462276)
+    , _coordinateValid(false)
+    , _homePositionAvailable(false)
+    , _mav(NULL)
+    , _currentMessageCount(0)
+    , _messageCount(0)
+    , _currentErrorCount(0)
+    , _currentWarningCount(0)
+    , _currentNormalCount(0)
+    , _currentMessageType(MessageNone)
+    , _navigationAltitudeError(0.0f)
+    , _navigationSpeedError(0.0f)
+    , _navigationCrosstrackError(0.0f)
+    , _navigationTargetBearing(0.0f)
+    , _refreshTimer(new QTimer(this))
+    , _updateCount(0)
+    , _rcRSSI(0)
+    , _rcRSSIstore(100.0)
+    , _autoDisconnect(false)
+    , _connectionLost(false)
+    , _connectionLostEnabled(true)
+    , _missionManager(NULL)
+    , _missionManagerInitialRequestComplete(false)
+    , _parameterLoader(NULL)
+    , _armed(false)
+    , _base_mode(0)
+    , _custom_mode(0)
+    , _nextSendMessageMultipleIndex(0)
+    , _firmwarePluginManager(NULL)
+    , _autopilotPluginManager(NULL)
+    , _joystickManager(NULL)
+    , _flowImageIndex(0)
+    , _allLinksInactiveSent(false)
+    , _messagesReceived(0)
+    , _messagesSent(0)
+    , _messagesLost(0)
+    , _messageSeq(0)
+    , _compID(0)
+    , _heardFrom(false)
+    , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
+    , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
+    , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
+    , _groundSpeedFact      (0, _groundSpeedFactName,       FactMetaData::valueTypeDouble)
+    , _airSpeedFact         (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
+    , _climbRateFact        (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
+    , _altitudeRelativeFact (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
+    , _altitudeAMSLFact     (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
+    , _gpsFactGroup(this)
+    , _batteryFactGroup(this)
+    , _windFactGroup(this)
+    , _vibrationFactGroup(this)
+{
+    // Build FactGroup object model
+
+    _addFact(&_rollFact,                _rollFactName);
+    _addFact(&_pitchFact,               _pitchFactName);
+    _addFact(&_headingFact,             _headingFactName);
+    _addFact(&_groundSpeedFact,         _groundSpeedFactName);
+    _addFact(&_airSpeedFact,            _airSpeedFactName);
+    _addFact(&_climbRateFact,           _climbRateFactName);
+    _addFact(&_altitudeRelativeFact,    _altitudeRelativeFactName);
+    _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
+
+    _addFactGroup(&_gpsFactGroup,       _gpsFactGroupName);
+    _addFactGroup(&_batteryFactGroup,   _batteryFactGroupName);
+    _addFactGroup(&_windFactGroup,      _windFactGroupName);
+    _addFactGroup(&_vibrationFactGroup, _vibrationFactGroupName);
+
+    _gpsFactGroup.setVehicle(NULL);
+    _batteryFactGroup.setVehicle(NULL);
+    _windFactGroup.setVehicle(NULL);
+    _vibrationFactGroup.setVehicle(NULL);
 }
 
 Vehicle::~Vehicle()
@@ -399,6 +463,13 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
         _batteryFactGroup.voltage()->setRawValue((double)sysStatus.voltage_battery / 1000.0);
     }
     _batteryFactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
+
+    if (sysStatus.battery_remaining > 0 && sysStatus.battery_remaining < _batteryFactGroup.percentRemainingAnnounce()->rawValue().toInt()) {
+        if (!_lowBatteryAnnounceTimer.isValid() || _lowBatteryAnnounceTimer.elapsed() > _lowBatteryAnnounceRepeatMSecs) {
+            _lowBatteryAnnounceTimer.restart();
+            _say(QString("Low battery on %1: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
+        }
+    }
 }
 
 void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
@@ -1217,7 +1288,7 @@ void Vehicle::_connectionLostTimeout(void)
         _connectionLost = true;
         _heardFrom = false;
         emit connectionLostChanged(true);
-        _say(QString("connection lost to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
+        _say(QString("communication lost to %1").arg(_vehicleIdSpeech()));
         if (_autoDisconnect) {
             disconnectInactiveVehicle();
         }
@@ -1230,14 +1301,13 @@ void Vehicle::_connectionActive(void)
     if (_connectionLost) {
         _connectionLost = false;
         emit connectionLostChanged(false);
-        _say(QString("connection regained to vehicle %1").arg(id()), GAudioOutput::AUDIO_SEVERITY_NOTICE);
+        _say(QString("communication regained to %1").arg(_vehicleIdSpeech()));
     }
 }
 
-void Vehicle::_say(const QString& text, int severity)
+void Vehicle::_say(const QString& text)
 {
-    if (!qgcApp()->runningUnitTests())
-        qgcApp()->toolbox()->audioOutput()->say(text.toLower(), severity);
+    qgcApp()->toolbox()->audioOutput()->say(text.toLower());
 }
 
 bool Vehicle::fixedWing(void) const
@@ -1268,6 +1338,26 @@ void Vehicle::_setCoordinateValid(bool coordinateValid)
     }
 }
 
+/// Returns the string to speak to identify the vehicle
+QString Vehicle::_vehicleIdSpeech(void)
+{
+    if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count() > 1) {
+        return QString("vehicle %1").arg(id());
+    } else {
+        return QStringLiteral("vehicle");
+    }
+}
+
+void Vehicle::_announceflightModeChanged(const QString& flightMode)
+{
+    _say(QString("%1 is now in %2 flight mode").arg(_vehicleIdSpeech()).arg(flightMode));
+}
+
+const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
+const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
+const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
+const char* VehicleGPSFactGroup::_countFactName =               "count";
+const char* VehicleGPSFactGroup::_lockFactName =                "lock";
 
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
@@ -1292,6 +1382,11 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
 void VehicleGPSFactGroup::setVehicle(Vehicle* vehicle)
 {
     _vehicle = vehicle;
+
+    if (!vehicle) {
+        // Disconnected Vehicle
+        return;
+    }
 
     connect(_vehicle->uas(), &UASInterface::localizationChanged, this, &VehicleGPSFactGroup::_setSatLoc);
 
@@ -1336,22 +1431,43 @@ void VehicleGPSFactGroup::_setSatLoc(UASInterface*, int fix)
     }
 }
 
+const char* VehicleBatteryFactGroup::_voltageFactName =                     "voltage";
+const char* VehicleBatteryFactGroup::_percentRemainingFactName =            "percentRemaining";
+const char* VehicleBatteryFactGroup::_percentRemainingAnnounceFactName =    "percentRemainingAnnounce";
+const char* VehicleBatteryFactGroup::_mahConsumedFactName =                 "mahConsumed";
+const char* VehicleBatteryFactGroup::_currentFactName =                     "current";
+const char* VehicleBatteryFactGroup::_temperatureFactName =                 "temperature";
+const char* VehicleBatteryFactGroup::_cellCountFactName =                   "cellCount";
+
+const char* VehicleBatteryFactGroup::_settingsGroup =                       "Vehicle.battery";
+const int   VehicleBatteryFactGroup::_percentRemainingAnnounceDefault =     30;
+
+const double VehicleBatteryFactGroup::_voltageUnavailable =           -1.0;
+const int    VehicleBatteryFactGroup::_percentRemainingUnavailable =  -1;
+const int    VehicleBatteryFactGroup::_mahConsumedUnavailable =       -1;
+const int    VehicleBatteryFactGroup::_currentUnavailable =           -1;
+const double VehicleBatteryFactGroup::_temperatureUnavailable =       -1.0;
+const int    VehicleBatteryFactGroup::_cellCountUnavailable =         -1.0;
+
+SettingsFact VehicleBatteryFactGroup::_percentRemainingAnnounceFact (_settingsGroup, _percentRemainingAnnounceFactName, FactMetaData::valueTypeInt32, _percentRemainingAnnounceDefault);
+
 VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/BatteryFact.json", parent)
     , _vehicle(NULL)
-    , _voltageFact          (0, _voltageFactName,           FactMetaData::valueTypeDouble)
-    , _percentRemainingFact (0, _percentRemainingFactName,  FactMetaData::valueTypeInt32)
-    , _mahConsumedFact      (0, _mahConsumedFactName,       FactMetaData::valueTypeInt32)
-    , _currentFact          (0, _currentFactName,           FactMetaData::valueTypeInt32)
-    , _temperatureFact      (0, _temperatureFactName,       FactMetaData::valueTypeDouble)
-    , _cellCountFact        (0, _cellCountFactName,         FactMetaData::valueTypeInt32)
+    , _voltageFact                  (0, _voltageFactName,                   FactMetaData::valueTypeDouble)
+    , _percentRemainingFact         (0, _percentRemainingFactName,          FactMetaData::valueTypeInt32)
+    , _mahConsumedFact              (0, _mahConsumedFactName,               FactMetaData::valueTypeInt32)
+    , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeInt32)
+    , _temperatureFact              (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
+    , _cellCountFact                (0, _cellCountFactName,                 FactMetaData::valueTypeInt32)
 {
-    _addFact(&_voltageFact,             _voltageFactName);
-    _addFact(&_percentRemainingFact,    _percentRemainingFactName);
-    _addFact(&_mahConsumedFact,         _mahConsumedFactName);
-    _addFact(&_currentFact,             _currentFactName);
-    _addFact(&_temperatureFact,         _temperatureFactName);
-    _addFact(&_cellCountFact,           _cellCountFactName);
+    _addFact(&_voltageFact,                     _voltageFactName);
+    _addFact(&_percentRemainingFact,            _percentRemainingFactName);
+    _addFact(&_percentRemainingAnnounceFact,    _percentRemainingAnnounceFactName);
+    _addFact(&_mahConsumedFact,                 _mahConsumedFactName);
+    _addFact(&_currentFact,                     _currentFactName);
+    _addFact(&_temperatureFact,                 _temperatureFactName);
+    _addFact(&_cellCountFact,                   _cellCountFactName);
 
     // Start out as not available
     _voltageFact.setRawValue            (_voltageUnavailable);
@@ -1366,6 +1482,10 @@ void VehicleBatteryFactGroup::setVehicle(Vehicle* vehicle)
 {
     _vehicle = vehicle;
 }
+
+const char* VehicleWindFactGroup::_directionFactName =      "direction";
+const char* VehicleWindFactGroup::_speedFactName =          "speed";
+const char* VehicleWindFactGroup::_verticalSpeedFactName =  "verticalSpeed";
 
 VehicleWindFactGroup::VehicleWindFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/WindFact.json", parent)
@@ -1388,6 +1508,13 @@ void VehicleWindFactGroup::setVehicle(Vehicle* vehicle)
 {
     _vehicle = vehicle;
 }
+
+const char* VehicleVibrationFactGroup::_xAxisFactName =      "xAxis";
+const char* VehicleVibrationFactGroup::_yAxisFactName =      "yAxis";
+const char* VehicleVibrationFactGroup::_zAxisFactName =      "zAxis";
+const char* VehicleVibrationFactGroup::_clipCount1FactName = "clipCount1";
+const char* VehicleVibrationFactGroup::_clipCount2FactName = "clipCount2";
+const char* VehicleVibrationFactGroup::_clipCount3FactName = "clipCount3";
 
 VehicleVibrationFactGroup::VehicleVibrationFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/VibrationFact.json", parent)
