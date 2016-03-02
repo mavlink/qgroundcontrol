@@ -92,10 +92,6 @@ QT += \
     bluetooth \
 }
 
-contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
-    QT += multimedia
-}
-
 #  testlib is needed even in release flavor for QSignalSpy support
 QT += testlib
 
