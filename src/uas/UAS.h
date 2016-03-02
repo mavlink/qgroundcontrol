@@ -77,8 +77,6 @@ public:
 
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
-    /** @brief Add one measurement and get low-passed voltage */
-    float filterVoltage(float value);
 
     Q_PROPERTY(double   latitude                READ getLatitude            WRITE setLatitude           NOTIFY latitudeChanged)
     Q_PROPERTY(double   longitude               READ getLongitude           WRITE setLongitude          NOTIFY longitudeChanged)
@@ -376,21 +374,6 @@ protected: //COMMENTS FOR TEST UNIT
     uint32_t custom_mode;         ///< The current mode of the MAV
     int status;                   ///< The current status of the MAV
 
-    // dongfang: This looks like a candidate for being moved off to a separate class.
-    /// BATTERY / ENERGY
-    float startVoltage;         ///< Voltage at system start
-    float tickVoltage;          ///< Voltage where 0.1 V ticks are told
-    float lastTickVoltageValue; ///< The last voltage where a tick was announced
-    float tickLowpassVoltage;   ///< Lowpass-filtered voltage for the tick announcement
-    float warnLevelPercent;     ///< Warning level, in percent
-    double currentVoltage;      ///< Voltage currently measured
-    float lpVoltage;            ///< Low-pass filtered voltage
-    double currentCurrent;      ///< Battery current currently measured
-    bool batteryRemainingEstimateEnabled; ///< If the estimate is enabled, QGC will try to estimate the remaining battery life
-    float chargeLevel;          ///< Charge level of battery, in percent
-    bool lowBattAlarm;          ///< Switch if battery is low
-
-
     /// TIMEKEEPING
     quint64 startTime;            ///< The time the UAS was switched on
     quint64 onboardTimeOffset;
@@ -486,8 +469,6 @@ protected: //COMMENTS FOR TEST UNIT
 #endif
 
 public:
-    /** @brief Get the current charge level */
-    float getChargeLevel();
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
 
@@ -558,9 +539,6 @@ public slots:
     /** @brief Stops the UAV's Hardware-in-the-Loop simulation status **/
     void stopHil();
 #endif
-
-    void startLowBattAlarm();
-    void stopLowBattAlarm();
 
     /** @brief Set the values for the manual control of the vehicle */
     void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode);
