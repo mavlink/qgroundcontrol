@@ -40,6 +40,8 @@ Rectangle {
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
+    property Fact _percentRemainingAnnounce: QGroundControl.multiVehicleManager.disconnectedVehicle.battery.percentRemainingAnnounce
+
     QGCPalette {
         id:                 qgcPal
         colorGroupEnabled:  enabled
@@ -125,6 +127,32 @@ Rectangle {
                         clearCheck.checked  = false
                         clearDialog.visible = false
                     }
+                }
+            }
+            //-----------------------------------------------------------------
+            //-- Battery talker
+            Row {
+                spacing: ScreenTools.defaultFontPixelWidth
+
+                QGCCheckBox {
+                    id:                 announcePercentCheckbox
+                    anchors.baseline:   announcePercent.baseline
+                    text:               "Announce battery percent lower than:"
+                    checked:            _percentRemainingAnnounce.value != 0
+
+                    onClicked: {
+                        if (checked) {
+                            _percentRemainingAnnounce.value = _percentRemainingAnnounce.defaultValueString
+                        } else {
+                            _percentRemainingAnnounce.value = 0
+                        }
+                    }
+                }
+
+                FactTextField {
+                    id:         announcePercent
+                    fact:       _percentRemainingAnnounce
+                    enabled:    announcePercentCheckbox.checked
                 }
             }
 
