@@ -33,7 +33,6 @@ import QGroundControl               1.0
 
 QGCFlickable {
     id:                 _root
-    visible:            _activeVehicle
     height:             Math.min(maxHeight, innerItem.height)
     contentHeight:      innerItem.height
     flickableDirection: Flickable.VerticalFlick
@@ -43,7 +42,7 @@ QGCFlickable {
     property color  backgroundColor
     property var    maxHeight
 
-    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.disconnectedVehicle
     property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
     property real   _barWidth:      Math.round(ScreenTools.defaultFontPixelWidth * 3)
 
