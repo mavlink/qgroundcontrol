@@ -88,12 +88,11 @@ bool GAudioOutput::isMuted()
     return muted;
 }
 
-bool GAudioOutput::say(const QString& inText, int severity)
+bool GAudioOutput::say(const QString& inText)
 {
-    if (!muted) {
+    if (!muted && !qgcApp()->runningUnitTests()) {
 #if defined __android__
 #if defined QGC_SPEECH_ENABLED
-        Q_UNUSED(severity);
         static const char V_jniClassName[] {"org/qgroundcontrol/qgchelper/UsbDeviceJNI"};
         QAndroidJniEnvironment env;
         if (env->ExceptionCheck()) {
@@ -105,7 +104,7 @@ bool GAudioOutput::say(const QString& inText, int severity)
         QAndroidJniObject::callStaticMethod<void>(V_jniClassName, "say", "(Ljava/lang/String;)V", javaMessage.object<jstring>());
 #endif
 #else
-        emit textToSpeak(inText, severity);
+        emit textToSpeak(inText);
 #endif
     }
     return true;
