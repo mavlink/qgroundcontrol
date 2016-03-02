@@ -40,6 +40,9 @@ const char* FactGroup::_versionJsonKey =            "version";
 const char* FactGroup::_typeJsonKey =               "type";
 const char* FactGroup::_shortDescriptionJsonKey =   "shortDescription";
 const char* FactGroup::_unitsJsonKey =              "units";
+const char* FactGroup::_defaultValueJsonKey =       "defaultValue";
+const char* FactGroup::_minJsonKey =                "min";
+const char* FactGroup::_maxJsonKey =                "max";
 
 FactGroup::FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* parent)
     : QObject(parent)
@@ -187,8 +190,8 @@ void FactGroup::_loadMetaData(const QString& jsonFilename)
 
         QStringList             keys;
         QList<QJsonValue::Type> types;
-        keys << _nameJsonKey << _decimalPlacesJsonKey;
-        types << QJsonValue::String << QJsonValue::Double;
+        keys << _nameJsonKey << _decimalPlacesJsonKey << _typeJsonKey << _shortDescriptionJsonKey << _unitsJsonKey << _defaultValueJsonKey << _minJsonKey << _maxJsonKey;
+        types << QJsonValue::String << QJsonValue::Double << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double;
         if (!JsonHelper::validateKeyTypes(jsonObject, keys, types, errorString)) {
             qWarning() << errorString;
             return;
@@ -218,6 +221,16 @@ void FactGroup::_loadMetaData(const QString& jsonFilename)
         metaData->setDecimalPlaces(jsonObject.value(_decimalPlacesJsonKey).toInt(0));
         metaData->setShortDescription(jsonObject.value(_shortDescriptionJsonKey).toString());
         metaData->setRawUnits(jsonObject.value(_unitsJsonKey).toString());
+
+        if (jsonObject.contains(_defaultValueJsonKey)) {
+            metaData->setRawDefaultValue(jsonObject.value(_defaultValueJsonKey).toDouble());
+        }
+        if (jsonObject.contains(_minJsonKey)) {
+            metaData->setRawMin(jsonObject.value(_minJsonKey).toDouble());
+        }
+        if (jsonObject.contains(_maxJsonKey)) {
+            metaData->setRawMax(jsonObject.value(_maxJsonKey).toDouble());
+        }
 
         for (int i=0; i<enumValues.count(); i++) {
             QVariant    enumVariant;

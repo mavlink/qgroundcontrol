@@ -78,6 +78,9 @@ private:
     static const char*  _versionJsonKey;
     static const char*  _shortDescriptionJsonKey;
     static const char*  _unitsJsonKey;
+    static const char*  _defaultValueJsonKey;
+    static const char*  _minJsonKey;
+    static const char*  _maxJsonKey;
 };
 
 #endif
