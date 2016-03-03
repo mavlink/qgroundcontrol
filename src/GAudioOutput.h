@@ -79,14 +79,14 @@ public:
     bool isMuted();
 
 public slots:
-    /** @brief Say this text if current output priority matches */
-    bool say(const QString& text, int severity = 6);
+    /** @brief Say this text */
+    bool say(const QString& text);
     /** @brief Mute/unmute sound */
     void mute(bool mute);
 
 signals:
     void mutedChanged(bool);
-    bool textToSpeak(QString text, int severity = 1);
+    bool textToSpeak(QString text);
     void beepOnce();
 
 protected:

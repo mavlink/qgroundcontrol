@@ -23,7 +23,7 @@ QGCTextField {
     inputMethodHints:   Qt.ImhFormattedNumbersOnly
 
     onEditingFinished: {
-        if (qgcView) {
+        if (typeof qgcView !== 'undefined' && qgcView) {
             var errorString = fact.validate(text, false /* convertOnly */)
             if (errorString == "") {
                 fact.value = text

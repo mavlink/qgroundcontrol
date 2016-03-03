@@ -33,7 +33,6 @@ import QGroundControl               1.0
 
 QGCFlickable {
     id:                 _root
-    visible:            _activeVehicle
     height:             Math.min(maxHeight, _smallFlow.y + _smallFlow.height)
     contentHeight:      _smallFlow.y + _smallFlow.height
     flickableDirection: Flickable.VerticalFlick
@@ -43,7 +42,7 @@ QGCFlickable {
     property color  textColor
     property var    maxHeight
 
-    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.disconnectedVehicle
     property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
 
     QGCPalette { id:qgcPal; colorGroupEnabled: true }
