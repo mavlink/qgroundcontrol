@@ -47,6 +47,12 @@ PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
 /// Connected to Vehicle::rcChannelsChanged signal
 void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
 {
+    _rcChannelValues.clear();
+    for (int i=0; i<channelCount; i++) {
+        _rcChannelValues.append(pwmValues[i]);
+    }
+    emit rcChannelValuesChanged();
+
     int flightModeChannel = getParameterFact(-1, "RC_MAP_FLTMODE")->rawValue().toInt() - 1;
 
     if (flightModeChannel < 0 || flightModeChannel > channelCount) {
