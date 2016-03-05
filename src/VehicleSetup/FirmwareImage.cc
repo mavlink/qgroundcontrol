@@ -74,7 +74,7 @@ bool FirmwareImage::load(const QString& imageFilename, uint32_t boardId)
         _binFormat = false;
         return _ihxLoad(imageFilename);
     } else {
-        emit errorMessage("Unsupported file format");
+        emit statusMessage("Unsupported file format");
         return false;
     }
 }
@@ -132,7 +132,7 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
     
     QFile ihxFile(ihxFilename);
     if (!ihxFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit errorMessage(QString("Unable to open firmware file %1, error: %2").arg(ihxFilename).arg(ihxFile.errorString()));
+        emit statusMessage(QString("Unable to open firmware file %1, error: %2").arg(ihxFilename).arg(ihxFile.errorString()));
         return false;
     }
     
@@ -140,7 +140,7 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
     
     while (true) {
         if (stream.read(1) != ":") {
-            emit errorMessage("Incorrectly formatted .ihx file, line does not begin with :");
+            emit statusMessage("Incorrectly formatted .ihx file, line does not begin with :");
             return false;
         }
         
@@ -155,12 +155,12 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
             !_readByteFromStream(stream, recordType) ||
             !_readBytesFromStream(stream, blockByteCount, bytes) ||
             !_readByteFromStream(stream, crc)) {
-            emit errorMessage("Incorrectly formatted line in .ihx file, line too short");
+            emit statusMessage("Incorrectly formatted line in .ihx file, line too short");
             return false;
         }
         
         if (!(recordType == 0 || recordType == 1)) {
-            emit errorMessage(QString("Unsupported record type in file: %1").arg(recordType));
+            emit statusMessage(QString("Unsupported record type in file: %1").arg(recordType));
             return false;
         }
         
@@ -215,7 +215,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     
     QFile px4File(imageFilename);
     if (!px4File.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit errorMessage(QString("Unable to open firmware file %1, error: %2").arg(imageFilename).arg(px4File.errorString()));
+        emit statusMessage(QString("Unable to open firmware file %1, error: %2").arg(imageFilename).arg(px4File.errorString()));
         return false;
     }
     
@@ -224,7 +224,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     QJsonDocument doc = QJsonDocument::fromJson(bytes);
     
     if (doc.isNull()) {
-        emit errorMessage("Supplied file is not a valid JSON document");
+        emit statusMessage("Supplied file is not a valid JSON document");
         return false;
     }
     
@@ -235,7 +235,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     QStringList requiredKeys;
     requiredKeys << _jsonBoardIdKey << _jsonImageKey << _jsonImageSizeKey;
     if (!JsonHelper::validateRequiredKeys(px4Json, requiredKeys, errorString)) {
-        emit errorMessage(QString("Firmware file mission required key: %1").arg(errorString));
+        emit statusMessage(QString("Firmware file mission required key: %1").arg(errorString));
         return false;
     }
 
@@ -245,13 +245,13 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     keys << _jsonBoardIdKey << _jsonParamXmlSizeKey << _jsonParamXmlKey << _jsonAirframeXmlSizeKey << _jsonAirframeXmlKey << _jsonImageSizeKey << _jsonImageKey << _jsonMavAutopilotKey;
     types << QJsonValue::Double << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::String << QJsonValue::Double;
     if (!JsonHelper::validateKeyTypes(px4Json, keys, types, errorString)) {
-        emit errorMessage(QString("Firmware file has invalid key: %1").arg(errorString));
+        emit statusMessage(QString("Firmware file has invalid key: %1").arg(errorString));
         return false;
     }
 
     uint32_t firmwareBoardId = (uint32_t)px4Json.value(_jsonBoardIdKey).toInt();
     if (firmwareBoardId != _boardId) {
-        emit errorMessage(QString("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardId).arg(_boardId));
+        emit statusMessage(QString("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardId).arg(_boardId));
         return false;
     }
 
@@ -342,13 +342,13 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     
     QFile decompressFile(decompressFilename);
     if (!decompressFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        emit errorMessage(QString("Unable to open decompressed file %1 for writing, error: %2").arg(decompressFilename).arg(decompressFile.errorString()));
+        emit statusMessage(QString("Unable to open decompressed file %1 for writing, error: %2").arg(decompressFilename).arg(decompressFile.errorString()));
         return false;
     }
     
     qint64 bytesWritten = decompressFile.write(decompressedBytes);
     if (bytesWritten != decompressedBytes.count()) {
-        emit errorMessage(QString("Write failed for decompressed image file, error: %1").arg(decompressFile.errorString()));
+        emit statusMessage(QString("Write failed for decompressed image file, error: %1").arg(decompressFile.errorString()));
         return false;
     }
     decompressFile.close();
@@ -441,7 +441,7 @@ bool FirmwareImage::_binLoad(const QString& imageFilename)
 {
     QFile binFile(imageFilename);
     if (!binFile.open(QIODevice::ReadOnly)) {
-        emit errorMessage(QString("Unabled to open firmware file %1, %2").arg(imageFilename).arg(binFile.errorString()));
+        emit statusMessage(QString("Unabled to open firmware file %1, %2").arg(imageFilename).arg(binFile.errorString()));
         return false;
     }
     
