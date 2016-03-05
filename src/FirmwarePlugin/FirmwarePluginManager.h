@@ -38,7 +38,6 @@ class ArduCopterFirmwarePlugin;
 class ArduPlaneFirmwarePlugin;
 class ArduRoverFirmwarePlugin;
 class PX4FirmwarePlugin;
-class GenericFirmwarePlugin;
 
 /// FirmwarePluginManager is a singleton which is used to return the correct FirmwarePlugin for a MAV_AUTOPILOT type.
 
@@ -56,11 +55,14 @@ public:
     /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
     FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType);
 
+    /// Clears settings from all firmware plugins.
+    void clearSettings(void);
+
 private:
     ArduCopterFirmwarePlugin*   _arduCopterFirmwarePlugin;
     ArduPlaneFirmwarePlugin*    _arduPlaneFirmwarePlugin;
     ArduRoverFirmwarePlugin*    _arduRoverFirmwarePlugin;
-    GenericFirmwarePlugin*      _genericFirmwarePlugin;
+    FirmwarePlugin*             _genericFirmwarePlugin;
     PX4FirmwarePlugin*          _px4FirmwarePlugin;
 };
 

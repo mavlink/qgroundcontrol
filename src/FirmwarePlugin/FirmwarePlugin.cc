@@ -21,22 +21,18 @@
  
  ======================================================================*/
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#include "GenericFirmwarePlugin.h"
-#include "AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h"    // FIXME: Hack
+#include "FirmwarePlugin.h"
 
 #include <QDebug>
 
-QList<VehicleComponent*> GenericFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
+QList<VehicleComponent*> FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
 {
     Q_UNUSED(vehicle);
     
     return QList<VehicleComponent*>();
 }
 
-QString GenericFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode)
+QString FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode)
 {
     QString flightMode;
     
@@ -72,25 +68,25 @@ QString GenericFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mod
     return flightMode;
 }
 
-bool GenericFirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode)
+bool FirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode)
 {
     Q_UNUSED(flightMode);
     Q_UNUSED(base_mode);
     Q_UNUSED(custom_mode);
     
-    qWarning() << "GenericFirmwarePlugin::setFlightMode called on base class, not supported";
+    qWarning() << "FirmwarePlugin::setFlightMode called on base class, not supported";
     
     return false;
 }
 
-int GenericFirmwarePlugin::manualControlReservedButtonCount(void)
+int FirmwarePlugin::manualControlReservedButtonCount(void)
 {
     // We don't know whether the firmware is going to used any of these buttons.
     // So reserve them all.
     return -1;
 }
 
-void GenericFirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
+void FirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
     Q_UNUSED(message);
@@ -98,14 +94,14 @@ void GenericFirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_messa
     // Generic plugin does no message adjustment
 }
 
-void GenericFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
+void FirmwarePlugin::initializeVehicle(Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
     
     // Generic Flight Stack is by definition "generic", so no extra work
 }
 
-bool GenericFirmwarePlugin::sendHomePositionToVehicle(void)
+bool FirmwarePlugin::sendHomePositionToVehicle(void)
 {
     // Generic stack does not want home position sent in the first position.
     // Subsequent sequence numbers must be adjusted.
@@ -113,25 +109,23 @@ bool GenericFirmwarePlugin::sendHomePositionToVehicle(void)
     return false;
 }
 
-void GenericFirmwarePlugin::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
-{
-    Q_UNUSED(vehicleType)
-
-    // Add default meta data
-    FactMetaData* metaData = new FactMetaData(fact->type(), fact);
-    fact->setMetaData(metaData);
-}
-
-QList<MAV_CMD> GenericFirmwarePlugin::supportedMissionCommands(void)
+QList<MAV_CMD> FirmwarePlugin::supportedMissionCommands(void)
 {
     // Generic supports all commands
     return QList<MAV_CMD>();
 }
 
-void GenericFirmwarePlugin::missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const
+void FirmwarePlugin::missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const
 {
     // No overrides
     commonJsonFilename.clear();
     fixedWingJsonFilename.clear();
     multiRotorJsonFilename.clear();
+}
+
+void FirmwarePlugin::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
+{
+    Q_UNUSED(metaDataFile);
+    majorVersion = -1;
+    minorVersion = -1;
 }

@@ -25,7 +25,6 @@
 ///     @author Pritam Ghanghas <pritam.ghanghas@gmail.com>
 
 #include "ArduRoverFirmwarePlugin.h"
-#include "Generic/GenericFirmwarePlugin.h"
 
 APMRoverMode::APMRoverMode(uint32_t mode, bool settable)
     : APMCustomMode(mode, settable)

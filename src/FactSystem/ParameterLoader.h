@@ -40,7 +40,6 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-Q_DECLARE_LOGGING_CATEGORY(ParameterLoaderLog)
 Q_DECLARE_LOGGING_CATEGORY(ParameterLoaderVerboseLog)
 
 /// Connects to Parameter Manager to load/update Facts
@@ -50,7 +49,7 @@ class ParameterLoader : public QObject
     
 public:
     /// @param uas Uas which this set of facts is associated with
-    ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent = NULL);
+    ParameterLoader(Vehicle* vehicle);
     
     ~ParameterLoader();
 
@@ -91,6 +90,19 @@ public:
     QString readParametersFromStream(QTextStream& stream);
     
     void writeParametersToStream(QTextStream &stream);
+
+    /// Returns the version number for the parameter set, -1 if not known
+    int parameterSetVersion(void) { return _parameterSetMajorVersion; }
+
+    /// Returns the newest available parameter meta data file (from cache or internal) for the specified information.
+    ///     @param wantedMajorVersion Major version you are looking for
+    ///     @param[out] majorVersion Major version for found meta data
+    ///     @param[out] minorVersion Minor version for found meta data
+    /// @return Meta data file name of best match, emptyString is none found
+    static QString parameterMetaDataFile(MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion);
+
+    /// If this file is newer than anything in the cache, cache it as the latest version
+    static void cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPILOT firmwareType);
     
 signals:
     /// Signalled when the full set of facts are ready
@@ -103,7 +115,6 @@ signals:
     void restartWaitingParamTimer(void);
     
 protected:
-    AutoPilotPlugin*    _autopilot;
     Vehicle*            _vehicle;
     MAVLinkProtocol*    _mavlink;
     
@@ -123,6 +134,7 @@ private:
     void _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
     void _writeLocalParamCache(int uasId, int componentId);
     void _tryCacheHashLoad(int uasId, int componentId, QVariant hash_value);
+    void _addMetaDataToAll(void);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
@@ -134,18 +146,22 @@ private:
     /// First mapping is by component id
     /// Second mapping is parameter name, to Fact* in QVariant
     QMap<int, QVariantMap>            _mapParameterName2Variant;
+
     QMap<int, QMap<int, QString> >    _mapParameterId2Name;
     
     /// First mapping is by component id
     /// Second mapping is group name, to Fact
     QMap<int, QMap<QString, QStringList> > _mapGroup2ParameterName;
     
-    bool _parametersReady;      ///< true: full set of parameters correctly loaded
-    bool _initialLoadComplete;  ///< true: Initial load of all parameters complete, whether succesful or not
-    bool _saveRequired;         ///< true: _saveToEEPROM should be called
-    int _defaultComponentId;
-    QString _defaultComponentIdParam;
-    
+    bool        _parametersReady;           ///< true: full set of parameters correctly loaded
+    bool        _initialLoadComplete;       ///< true: Initial load of all parameters complete, whether succesful or not
+    bool        _saveRequired;              ///< true: _saveToEEPROM should be called
+    int         _defaultComponentId;
+    QString     _defaultComponentIdParam;   ///< Parameter which identifies default component
+    QString     _versionParam;              ///< Parameter which contains parameter set version
+    int         _parameterSetMajorVersion;  ///< Version for parameter set, -1 if not known
+    QObject*    _parameterMetaData;         ///< Opaque data from FirmwarePlugin::loadParameterMetaDataCall
+
     static const int _maxInitialLoadRetry = 10;                  ///< Maximum a retries on initial index based load
     
     QMap<int, int>                  _paramCountMap;             ///< Key: Component id, Value: count of parameters in this component
@@ -162,6 +178,8 @@ private:
     QMutex _dataMutex;
     
     static Fact _defaultFact;   ///< Used to return default fact, when parameter not found
+
+    static const char* _cachedMetaDataFilePrefix;
 };
 
 #endif

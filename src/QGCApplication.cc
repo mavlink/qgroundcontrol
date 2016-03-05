@@ -74,7 +74,6 @@
 #include "VehicleComponent.h"
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
-#include "Generic/GenericFirmwarePlugin.h"
 #include "APM/ArduCopterFirmwarePlugin.h"
 #include "APM/ArduPlaneFirmwarePlugin.h"
 #include "APM/ArduRoverFirmwarePlugin.h"
@@ -372,8 +371,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
 
-        QFile::remove(PX4AirframeLoader::aiframeMetaDataFile());
-        QFile::remove(PX4ParameterMetaData::parameterMetaDataFile());
+        // Clear parameter cache
         QDir paramDir(ParameterLoader::parameterCacheDir());
         paramDir.removeRecursively();
         paramDir.mkpath(paramDir.absolutePath());

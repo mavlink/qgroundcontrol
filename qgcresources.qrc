@@ -231,13 +231,15 @@
     </qresource>
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="AirframeFactMetaData.xml">src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>
-        <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
     </qresource>
     <qresource prefix="/AutoPilotPlugins/APM">
         <file alias="APMAirframeFactMetaData.xml">src/AutoPilotPlugins/APM/APMAirframeFactMetaData.xml</file>
     </qresource>
     <qresource prefix="/FirmwarePlugin/APM">
-        <file alias="apm.pdef.xml">src/FirmwarePlugin/APM/apm.pdef.xml</file>
+        <file alias="APMParameterFactMetaData.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.xml</file>
+    </qresource>
+    <qresource prefix="/FirmwarePlugin/PX4">
+        <file alias="PX4ParameterFactMetaData.xml">src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml</file>
     </qresource>
     <qresource prefix="/opengl">
         <file>resources/opengl/buglist.json</file>

@@ -28,6 +28,7 @@
 #define PX4FirmwarePlugin_H
 
 #include "FirmwarePlugin.h"
+#include "ParameterLoader.h"
 #include "PX4ParameterMetaData.h"
 
 class PX4FirmwarePlugin : public FirmwarePlugin
@@ -36,22 +37,25 @@ class PX4FirmwarePlugin : public FirmwarePlugin
 
 public:
     // Overrides from FirmwarePlugin
-    bool isCapable(FirmwareCapabilities capabilities) final;
-    QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) final;
-    QStringList flightModes(void) final;
-    QString flightMode(uint8_t base_mode, uint32_t custom_mode) final;
-    bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
-    int manualControlReservedButtonCount(void) final;
-    void adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
-    void initializeVehicle(Vehicle* vehicle) final;
-    bool sendHomePositionToVehicle(void) final;
-    void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType) final;
-    QString getDefaultComponentIdParam(void) const final { return QString("SYS_AUTOSTART"); }
-    QList<MAV_CMD> supportedMissionCommands(void) final;
-    void missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const final;
 
-private:
-    PX4ParameterMetaData    _parameterMetaData;
+    QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) final;
+    QList<MAV_CMD> supportedMissionCommands(void) final;
+
+    bool        isCapable                       (FirmwareCapabilities capabilities) final;
+    QStringList flightModes                     (void) final;
+    QString     flightMode                      (uint8_t base_mode, uint32_t custom_mode) final;
+    bool        setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
+    int         manualControlReservedButtonCount(void) final;
+    void        adjustMavlinkMessage            (Vehicle* vehicle, mavlink_message_t* message) final;
+    void        initializeVehicle               (Vehicle* vehicle) final;
+    bool        sendHomePositionToVehicle       (void) final;
+    void        addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;
+    QString     getDefaultComponentIdParam      (void) const final { return QString("SYS_AUTOSTART"); }
+    void        missionCommandOverrides         (QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const final;
+    QString     getVersionParam                 (void) final { return QString("SYS_PARAM_VER"); }
+    QString     internalParameterMetaDataFile   (void) final { return QString(":/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml"); }
+    void        getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) final { PX4ParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
+    QObject*    loadParameterMetaData           (const QString& metaDataFile);
 };
 
 #endif

@@ -55,6 +55,9 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
 
     _offlineEditingFirmwareTypeMetaData.setEnumInfo(firmwareEnumStrings, firmwareEnumValues);
     _offlineEditingFirmwareTypeFact.setMetaData(&_offlineEditingFirmwareTypeMetaData);
+
+    // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
+    setParent(NULL);
 }
 
 QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
