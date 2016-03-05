@@ -31,6 +31,7 @@ QGC_LOGGING_CATEGORY(FirmwareUpgradeLog,        "FirmwareUpgradeLog")
 QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "FirmwareUpgradeVerboseLog")
 QGC_LOGGING_CATEGORY(MissionCommandsLog,        "MissionCommandsLog")
 QGC_LOGGING_CATEGORY(MissionItemLog,            "MissionItemLog")
+QGC_LOGGING_CATEGORY(ParameterLoaderLog,        "ParameterLoaderLog")
 
 QGCLoggingCategoryRegister* _instance = NULL;
 

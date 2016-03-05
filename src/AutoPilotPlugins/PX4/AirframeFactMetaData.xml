@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <airframes>
   <version>1</version>
+  <airframe_version_minor>1</airframe_version_minor>
   <airframe_group image="HelicopterCoaxial" name="Coaxial Helicopter">
     <airframe id="15001" maintainer="Emmanuel Roussel" name="Coaxial Helicopter (such as Esky Lama v4 or Esky Big Lama)">
       <maintainer>Emmanuel Roussel</maintainer>
@@ -229,6 +230,13 @@
     <airframe id="4040" maintainer="Blankered" name="Reaper 500 Quad">
       <maintainer>Blankered</maintainer>
       <type>Quadrotor x</type>
+    </airframe>
+    <airframe id="4050" maintainer="Mark Whitehorn &lt;kd0aij@gmail.com&gt;" name="Generic 250 Racer">
+      <maintainer>Mark Whitehorn &lt;kd0aij@gmail.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
   </airframe_group>
   <airframe_group image="Rover" name="Rover">

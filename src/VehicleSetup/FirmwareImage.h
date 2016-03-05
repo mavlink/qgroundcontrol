@@ -98,6 +98,15 @@ private:
     QString                 _binFilename;
     QList<IntelHexBlock_t>  _ihxBlocks;
     uint32_t                _imageSize;
+
+    static const char* _jsonBoardIdKey;
+    static const char* _jsonParamXmlSizeKey;
+    static const char* _jsonParamXmlKey;
+    static const char* _jsonAirframeXmlSizeKey;
+    static const char* _jsonAirframeXmlKey;
+    static const char* _jsonImageSizeKey;
+    static const char* _jsonImageKey;
+    static const char* _jsonMavAutopilotKey;
 };
 
 #endif

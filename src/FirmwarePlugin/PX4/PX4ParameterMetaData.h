@@ -38,19 +38,18 @@
 
 Q_DECLARE_LOGGING_CATEGORY(PX4ParameterMetaDataLog)
 
-/// Collection of Parameter Facts for PX4 AutoPilot
-
+/// Loads and holds parameter fact meta data for PX4 stack
 class PX4ParameterMetaData : public QObject
 {
     Q_OBJECT
     
 public:
-    PX4ParameterMetaData(QObject* parent = NULL);
+    PX4ParameterMetaData(void);
 
-    void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
+    void loadParameterFactMetaDataFile  (const QString& metaDataFile);
+    void addMetaDataToFact              (Fact* fact, MAV_TYPE vehicleType);
 
-    /// @return Location of PX4 parameter meta data file
-    static QString parameterMetaDataFile(void);
+    static void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion);
 
 private:
     enum {
@@ -62,11 +61,10 @@ private:
         XmlStateDone
     };    
 
-    static void _loadParameterFactMetaData(void);
-    static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
+    QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
 
-    static bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
-    static QMap<QString, FactMetaData*> _mapParameterName2FactMetaData; ///< Maps from a parameter name to FactMetaData
+    bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
+    QMap<QString, FactMetaData*> _mapParameterName2FactMetaData; ///< Maps from a parameter name to FactMetaData
 };
 
 #endif

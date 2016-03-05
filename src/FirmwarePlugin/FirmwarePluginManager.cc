@@ -25,7 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FirmwarePluginManager.h"
-#include "Generic/GenericFirmwarePlugin.h"
 #include "APM/ArduCopterFirmwarePlugin.h"
 #include "APM/ArduPlaneFirmwarePlugin.h"
 #include "APM/ArduRoverFirmwarePlugin.h"
@@ -91,7 +90,12 @@ FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT 
     }
 
     if (!_genericFirmwarePlugin) {
-        _genericFirmwarePlugin = new GenericFirmwarePlugin;
+        _genericFirmwarePlugin = new FirmwarePlugin;
     }
     return _genericFirmwarePlugin;
+}
+
+void FirmwarePluginManager::clearSettings(void)
+{
+    // FIXME: NYI
 }

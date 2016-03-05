@@ -25,7 +25,6 @@
 ///     @author Pritam Ghanghas <pritam.ghanghas@gmail.com>
 
 #include "ArduPlaneFirmwarePlugin.h"
-#include "Generic/GenericFirmwarePlugin.h"
 
 APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable)
     : APMCustomMode(mode, settable)
