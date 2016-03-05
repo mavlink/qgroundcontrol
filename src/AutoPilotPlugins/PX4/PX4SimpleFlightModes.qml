@@ -57,79 +57,132 @@ Item {
             id:         contentColumn
             spacing:    _margins
 
-            QGCLabel {
-                id:             flightModeLabel
-                text:           "Flight Mode Settings"
-                font.weight:    Font.DemiBold
-            }
-
-            Item {
-                height: modeChannelCombo.height
-                width:  modeChannelCombo.x + modeChannelCombo.width
-
-                QGCLabel {
-                    id:                 modeChannelLabel
-                    anchors.baseline:   modeChannelCombo.baseline
-                    text:               "Flight mode channel:"
-                }
-
-                FactComboBox {
-                    id:                 modeChannelCombo
-                    anchors.leftMargin: _margins
-                    anchors.left:       modeChannelLabel.right
-                    width:              ScreenTools.defaultFontPixelWidth * 15
-                    fact:               controller.getParameterFact(-1, "RC_MAP_FLTMODE")
-                    indexModel:         false
-                }
-            }
-
-            Rectangle {
-                id:                 flightModeSettings
-                width:              flightModeColumn.width + (_margins * 2)
-                height:             flightModeColumn.height + ScreenTools.defaultFontPixelHeight
-                color:              qgcPal.windowShade
+            Row {
+                id:         settingsRow
+                spacing:    _margins
 
                 Column {
-                    id:                 flightModeColumn
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.left:       parent.left
-                    anchors.top:        parent.top
-                    spacing:            ScreenTools.defaultFontPixelHeight
+                    id:     flightModeSettingsColumn
+                    spacing: _margins
 
-                    Repeater {
-                        model:  6
+                    QGCLabel {
+                        id:             flightModeLabel
+                        text:           "Flight Mode Settings"
+                        font.weight:    Font.DemiBold
+                    }
 
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
+                    Rectangle {
+                        id:                 flightModeSettings
+                        width:              flightModeColumn.width + (_margins * 2)
+                        height:             flightModeColumn.height + ScreenTools.defaultFontPixelHeight
+                        color:              qgcPal.windowShade
 
-                            property int index:         modelData + 1
-                            property var pwmStrings:    [ "PWM 0 - 1230", "PWM 1231 - 1360", "PWM 1361 - 1490", "PWM 1491 - 1620", "PWM 1621 - 1749", "PWM 1750 +"]
+                        Column {
+                            id:                 flightModeColumn
+                            anchors.margins:    ScreenTools.defaultFontPixelWidth
+                            anchors.left:       parent.left
+                            anchors.top:        parent.top
+                            spacing:            ScreenTools.defaultFontPixelHeight
 
+                            Row {
+                                spacing: _margins
 
-                            QGCLabel {
-                                anchors.baseline:   modeCombo.baseline
-                                text:               "Flight Mode " + index + ":"
-                                color:              controller.activeFlightMode == index ? "yellow" : qgcPal.text
+                                QGCLabel {
+                                    id:                 modeChannelLabel
+                                    anchors.baseline:   modeChannelCombo.baseline
+                                    text:               "Flight mode channel:"
+                                }
+
+                                FactComboBox {
+                                    id:         modeChannelCombo
+                                    width:      ScreenTools.defaultFontPixelWidth * 15
+                                    fact:       controller.getParameterFact(-1, "RC_MAP_FLTMODE")
+                                    indexModel: false
+                                }
                             }
 
-                            FactComboBox {
-                                id:         modeCombo
-                                width:      ScreenTools.defaultFontPixelWidth * 20
-                                fact:       controller.getParameterFact(-1, "COM_FLTMODE" + index)
-                                indexModel: false
-                            }
+                            Repeater {
+                                model:  6
 
-                            QGCLabel {
-                                anchors.baseline:   modeCombo.baseline
-                                text:               pwmStrings[modelData]
-                            }
-                        }
-                    } // Repeater - Flight Modes
-                } // Column - Flight Modes
-            } // Rectangle - Flight Modes
+                                Row {
+                                    spacing: ScreenTools.defaultFontPixelWidth
+
+                                    property int index:         modelData + 1
+                                    property var pwmStrings:    [ "PWM 0 - 1230", "PWM 1231 - 1360", "PWM 1361 - 1490", "PWM 1491 - 1620", "PWM 1621 - 1749", "PWM 1750 +"]
+
+
+                                    QGCLabel {
+                                        anchors.baseline:   modeCombo.baseline
+                                        text:               "Flight Mode " + index + ":"
+                                        color:              controller.activeFlightMode == index ? "yellow" : qgcPal.text
+                                    }
+
+                                    FactComboBox {
+                                        id:         modeCombo
+                                        width:      ScreenTools.defaultFontPixelWidth * 20
+                                        fact:       controller.getParameterFact(-1, "COM_FLTMODE" + index)
+                                        indexModel: false
+                                    }
+
+                                    QGCLabel {
+                                        anchors.baseline:   modeCombo.baseline
+                                        text:               pwmStrings[modelData]
+                                    }
+                                }
+                            } // Repeater - Flight Modes
+                        } // Column - Flight Modes
+                    } // Rectangle - Flight Modes
+                } // Column - Flight mode settings
+
+                Column {
+                    spacing: _margins
+
+                    QGCLabel {
+                        text:           "Switch Settings"
+                        font.weight:    Font.DemiBold
+                    }
+
+                    Rectangle {
+                        width:  switchSettingsColumn.width + (_margins * 2)
+                        height: switchSettingsColumn.height + ScreenTools.defaultFontPixelHeight
+                        color:  qgcPal.windowShade
+
+                        Column {
+                            id:                 switchSettingsColumn
+                            anchors.margins:    ScreenTools.defaultFontPixelWidth
+                            anchors.left:       parent.left
+                            anchors.top:        parent.top
+                            spacing:            ScreenTools.defaultFontPixelHeight
+
+                            Repeater {
+                                model: [ "RC_MAP_RETURN_SW", "RC_MAP_KILL_SW", "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_AUX3", "RC_MAP_OFFB_SW" ]
+
+                                Row {
+                                    spacing: ScreenTools.defaultFontPixelWidth
+
+                                    property Fact fact: controller.getParameterFact(-1, modelData)
+
+                                    QGCLabel {
+                                        anchors.baseline:   optCombo.baseline
+                                        text:               fact.shortDescription + ":"
+                                        color:              fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
+                                    }
+
+                                    FactComboBox {
+                                        id:         optCombo
+                                        width:      ScreenTools.defaultFontPixelWidth * 15
+                                        fact:       parent.fact
+                                        indexModel: false
+                                    }
+                                }
+                            } // Repeater
+                        } // Column
+                    } // Rectangle
+                } // Column - Switch settings
+            } // Row - Settings
 
             QGCButton {
-                text:           "Use Advanced Flight Modes"
+                text: "Use Advanced Flight Modes"
                 onClicked: {
                     controller.getParameterFact(-1, "RC_MAP_MODE_SW").value = 5
                     controller.getParameterFact(-1, "RC_MAP_FLTMODE").value = 0
