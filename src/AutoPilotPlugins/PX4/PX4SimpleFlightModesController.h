@@ -42,14 +42,16 @@ class PX4SimpleFlightModesController : public FactPanelController
 public:
     PX4SimpleFlightModesController(void);
     
-    Q_PROPERTY(int      activeFlightMode            READ activeFlightMode       NOTIFY activeFlightModeChanged)
-    Q_PROPERTY(int      channelCount                MEMBER _channelCount        CONSTANT)
+    Q_PROPERTY(int          activeFlightMode    READ activeFlightMode       NOTIFY activeFlightModeChanged)
+    Q_PROPERTY(int          channelCount        MEMBER _channelCount        CONSTANT)
+    Q_PROPERTY(QVariantList rcChannelValues     MEMBER _rcChannelValues     NOTIFY rcChannelValuesChanged)
 
     int activeFlightMode(void) const { return _activeFlightMode; }
 
 signals:
     void activeFlightModeChanged(int activeFlightMode);
     void channelOptionEnabledChanged(void);
+    void rcChannelValuesChanged(void);
     
 private slots:
     void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
@@ -57,6 +59,7 @@ private slots:
 private:
     int             _activeFlightMode;
     int             _channelCount;
+    QVariantList    _rcChannelValues;
 };
 
 #endif
