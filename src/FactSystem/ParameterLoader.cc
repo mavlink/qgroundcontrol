@@ -40,14 +40,14 @@ typedef QPair<int, QVariant> ParamTypeVal;
 typedef QPair<QString, ParamTypeVal> NamedParam;
 typedef QMap<int, NamedParam> MapID2NamedParam;
 
-QGC_LOGGING_CATEGORY(ParameterLoaderLog, "ParameterLoaderLog")
 QGC_LOGGING_CATEGORY(ParameterLoaderVerboseLog, "ParameterLoaderVerboseLog")
 
 Fact ParameterLoader::_defaultFact;
 
-ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent)
-    : QObject(parent)
-    , _autopilot(autopilot)
+const char* ParameterLoader::_cachedMetaDataFilePrefix = "ParamaterFactMetaData";
+
+ParameterLoader::ParameterLoader(Vehicle* vehicle)
+    : QObject(vehicle)
     , _vehicle(vehicle)
     , _mavlink(qgcApp()->toolbox()->mavlinkProtocol())
     , _dedicatedLink(_vehicle->priorityLink())
@@ -55,9 +55,10 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
     , _initialLoadComplete(false)
     , _saveRequired(false)
     , _defaultComponentId(FactSystem::defaultComponentId)
+    , _parameterSetMajorVersion(-1)
+    , _parameterMetaData(NULL)
     , _totalParamCount(0)
 {
-    Q_ASSERT(_autopilot);
     Q_ASSERT(_vehicle);
     Q_ASSERT(_mavlink);
 
@@ -74,6 +75,9 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
 
     connect(_vehicle->uas(), &UASInterface::parameterUpdate, this, &ParameterLoader::_parameterUpdate);
 
+    _versionParam = vehicle->firmwarePlugin()->getVersionParam();
+    _defaultComponentIdParam = vehicle->firmwarePlugin()->getDefaultComponentIdParam();
+
     // Ensure the cache directory exists
     QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
     refreshAllParameters();
@@ -81,14 +85,12 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
 
 ParameterLoader::~ParameterLoader()
 {
-
+    delete _parameterMetaData;
 }
 
 /// Called whenever a parameter is updated or first seen.
 void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString parameterName, int parameterCount, int parameterId, int mavType, QVariant value)
 {
-    bool setMetaData = false;
-
     // Is this for our uas?
     if (uasId != _vehicle->id()) {
         return;
@@ -198,12 +200,14 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
         emit parameterListProgress((float)(_totalParamCount - waitingParamCount) / (float)_totalParamCount);
     }
 
-    // Attempt to determine default component id
-    if (_defaultComponentId == FactSystem::defaultComponentId && _defaultComponentIdParam.isEmpty()) {
-        _defaultComponentIdParam = _vehicle->firmwarePlugin()->getDefaultComponentIdParam();
-    }
+    // Determine default component id
     if (!_defaultComponentIdParam.isEmpty() && _defaultComponentIdParam == parameterName) {
         _defaultComponentId = componentId;
+    }
+
+    // Get parameter set version
+    if (!_versionParam.isEmpty() && _versionParam == parameterName) {
+        _parameterSetMajorVersion = value.toInt();
     }
 
     if (!_mapParameterName2Variant.contains(componentId) || !_mapParameterName2Variant[componentId].contains(parameterName)) {
@@ -242,7 +246,6 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
         }
 
         Fact* fact = new Fact(componentId, parameterName, factType, this);
-        setMetaData = true;
 
         _mapParameterName2Variant[componentId][parameterName] = QVariant::fromValue(fact);
 
@@ -257,10 +260,6 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     Fact* fact = _mapParameterName2Variant[componentId][parameterName].value<Fact*>();
     Q_ASSERT(fact);
     fact->_containerSetRawValue(value);
-
-    if (setMetaData) {
-        _vehicle->firmwarePlugin()->addMetaDataToFact(fact, _vehicle->vehicleType());
-    }
 
     if (waitingParamCount == 0) {
         // Now that we know vehicle is up to date persist
@@ -487,7 +486,7 @@ void ParameterLoader::_waitingParamTimeout(void)
             foreach(const QString &paramName, _waitingWriteParamNameMap[componentId].keys()) {
                 paramsRequested = true;
                 _waitingWriteParamNameMap[componentId][paramName]++;   // Bump retry count
-                _writeParameterRaw(componentId, paramName, _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName)->rawValue());
+                _writeParameterRaw(componentId, paramName, _vehicle->autopilotPlugin()->getFact(FactSystem::ParameterProvider, componentId, paramName)->rawValue());
                 qCDebug(ParameterLoaderLog) << "Write resend for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingWriteParamNameMap[componentId][paramName] << ")";
 
                 if (++batchCount > maxBatchSize) {
@@ -539,7 +538,7 @@ void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramNa
     mavlink_param_set_t     p;
     mavlink_param_union_t   union_value;
 
-    FactMetaData::ValueType_t factType = _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName)->type();
+    FactMetaData::ValueType_t factType = _vehicle->autopilotPlugin()->getFact(FactSystem::ParameterProvider, componentId, paramName)->type();
     p.param_type = _factTypeToMavType(factType);
 
     switch (factType) {
@@ -701,7 +700,7 @@ QString ParameterLoader::readParametersFromStream(QTextStream& stream)
                 QString valStr = wpParams.at(3);
                 uint    mavType = wpParams.at(4).toUInt();
 
-                if (!_autopilot->factExists(FactSystem::ParameterProvider, componentId, paramName)) {
+                if (!_vehicle->autopilotPlugin()->factExists(FactSystem::ParameterProvider, componentId, paramName)) {
                     QString error;
                     error = QString("Skipped parameter %1:%2 - does not exist on this vehicle\n").arg(componentId).arg(paramName);
                     errors += error;
@@ -709,7 +708,7 @@ QString ParameterLoader::readParametersFromStream(QTextStream& stream)
                     continue;
                 }
 
-                Fact* fact = _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName);
+                Fact* fact = _vehicle->autopilotPlugin()->getFact(FactSystem::ParameterProvider, componentId, paramName);
                 if (fact->type() != _mavTypeToFactType((MAV_PARAM_TYPE)mavType)) {
                     QString error;
                     error  = QString("Skipped parameter %1:%2 - type mismatch %3:%4\n").arg(componentId).arg(paramName).arg(fact->type()).arg(_mavTypeToFactType((MAV_PARAM_TYPE)mavType));
@@ -810,6 +809,33 @@ void ParameterLoader::_restartWaitingParamTimer(void)
     _waitingParamTimeoutTimer.start();
 }
 
+/// Adds meta data to all params after initial load completes
+void ParameterLoader::_addMetaDataToAll(void)
+{
+     if (_defaultComponentId == FactSystem::defaultComponentId) {
+         // We don't know what the default component is so we can't support meta data
+         return;
+     }
+
+     if (_parameterMetaData) {
+         // This should only be called once
+         qWarning() << "Internal Error: ParameterLoader::_addMetaDataToAll with _parameterMetaData non NULL";
+         return;
+     }
+
+    // Load best parameter meta data set
+     int majorVersion, minorVersion;
+     QString metaDataFile = parameterMetaDataFile(_vehicle->firmwareType(), _parameterSetMajorVersion, majorVersion, minorVersion);
+     _parameterMetaData = _vehicle->firmwarePlugin()->loadParameterMetaData(metaDataFile);
+     qCDebug(ParameterLoaderLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile << majorVersion << minorVersion;
+
+    // Loop over all parameters in default component adding meta data
+    QVariantMap& factMap = _mapParameterName2Variant[_defaultComponentId];
+    foreach (const QString& key, factMap.keys()) {
+        _vehicle->firmwarePlugin()->addMetaDataToFact(_parameterMetaData, factMap[key].value<Fact*>(), _vehicle->vehicleType());
+    }
+}
+
 void ParameterLoader::_checkInitialLoadComplete(void)
 {
     // Already processed?
@@ -823,7 +849,6 @@ void ParameterLoader::_checkInitialLoadComplete(void)
             return;
         }
     }
-
 
     // We aren't waiting for any more initial parameter updates, initial parameter loading is complete
     _initialLoadComplete = true;
@@ -871,6 +896,9 @@ void ParameterLoader::_checkInitialLoadComplete(void)
         }
     }
 
+    // We can now add meta data since we should know parameter set version
+    _addMetaDataToAll();
+
     // Warn of parameter load failure
 
     if (initialLoadFailures) {
@@ -894,4 +922,142 @@ void ParameterLoader::_initialRequestTimeout(void)
     qgcApp()->showMessage("Vehicle did not respond to request for parameters, retrying");
     refreshAllParameters();
     _initialRequestTimeoutTimer.start();
+}
+
+QString ParameterLoader::parameterMetaDataFile(MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion)
+{
+    bool            cacheHit = false;
+    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
+
+    // Cached files are stored in settings location
+    QSettings settings;
+    QDir cacheDir = QFileInfo(settings.fileName()).dir();
+
+    // First look for a direct cache hit
+    int cacheMinorVersion, cacheMajorVersion;
+    QFile cacheFile(cacheDir.filePath(QString("%1.%2.%3.xml").arg(_cachedMetaDataFilePrefix).arg(firmwareType).arg(wantedMajorVersion)));
+    if (cacheFile.exists()) {
+        plugin->getParameterMetaDataVersionInfo(cacheFile.fileName(), cacheMajorVersion, cacheMinorVersion);
+        if (wantedMajorVersion != cacheMajorVersion) {
+            qWarning() << "Parameter meta data cache corruption:" << cacheFile.fileName() << "major version does not match file name" << "actual:excepted" << cacheMajorVersion << wantedMajorVersion;
+        } else {
+            qCDebug(ParameterLoaderLog) << "Direct cache hit on file:major:minor" << cacheFile.fileName() << cacheMajorVersion << cacheMinorVersion;
+            cacheHit = true;
+        }
+    }
+
+    if (!cacheHit) {
+        // No direct hit, look for lower param set version
+        QString wildcard = QString("%1.%2.*.xml").arg(_cachedMetaDataFilePrefix).arg(firmwareType);
+        QStringList cacheHits = cacheDir.entryList(QStringList(wildcard), QDir::Files, QDir::Name);
+
+        // Find the highest major version number which is below the vehicles major version number
+        int cacheHitIndex = -1;
+        cacheMajorVersion = -1;
+        QRegExp regExp(QString("%1\\.%2\\.(\\d*)\\.xml").arg(_cachedMetaDataFilePrefix).arg(firmwareType));
+        for (int i=0; i< cacheHits.count(); i++) {
+            if (regExp.exactMatch(cacheHits[i]) && regExp.captureCount() == 1) {
+                int majorVersion = regExp.capturedTexts()[0].toInt();
+                if (majorVersion > cacheMajorVersion && majorVersion < wantedMajorVersion) {
+                    cacheMajorVersion = majorVersion;
+                    cacheHitIndex = i;
+                }
+            }
+        }
+
+        if (cacheHitIndex != -1) {
+            // We have a cache hit on a lower major version, read minor version as well
+            int majorVersion;
+            cacheFile.setFileName(cacheDir.filePath(cacheHits[cacheHitIndex]));
+            plugin->getParameterMetaDataVersionInfo(cacheFile.fileName(), majorVersion, cacheMinorVersion);
+            if (majorVersion != cacheMajorVersion) {
+                qWarning() << "Parameter meta data cache corruption:" << cacheFile.fileName() << "major version does not match file name" << "actual:excepted" << majorVersion << cacheMajorVersion;
+                cacheHit = false;
+            } else {
+                qCDebug(ParameterLoaderLog) << "Indirect cache hit on file:major:minor:want" << cacheFile.fileName() << cacheMajorVersion << cacheMinorVersion << wantedMajorVersion;
+                cacheHit = true;
+            }
+        }
+    }
+
+    int internalMinorVersion, internalMajorVersion;
+    QString internalMetaDataFile = plugin->internalParameterMetaDataFile();
+    plugin->getParameterMetaDataVersionInfo(internalMetaDataFile, internalMajorVersion, internalMinorVersion);
+    qCDebug(ParameterLoaderLog) << "Internal meta data file:major:minor" << internalMetaDataFile << internalMajorVersion << internalMinorVersion;
+    if (cacheHit) {
+        // Cache hit is available, we need to check if internal meta data is a better match, if so use internal version
+        if (internalMajorVersion == wantedMajorVersion) {
+            if (cacheMajorVersion == wantedMajorVersion) {
+                // Both internal and cache are direct hit on major version, Use higher minor version number
+                cacheHit = cacheMinorVersion > internalMinorVersion;
+            } else {
+                // Direct internal hit, but not direct hit in cache, use internal
+                cacheHit = false;
+            }
+        } else {
+            if (cacheMajorVersion == wantedMajorVersion) {
+                // Direct hit on cache, no direct hit on internal, use cache
+                cacheHit = true;
+            } else {
+                // No direct hit anywhere, use internal
+                cacheHit = false;
+            }
+        }
+    }
+
+    QString metaDataFile;
+    if (cacheHit && !qgcApp()->runningUnitTests()) {
+        majorVersion = cacheMajorVersion;
+        minorVersion = cacheMinorVersion;
+        metaDataFile = cacheFile.fileName();
+    } else {
+        majorVersion = internalMajorVersion;
+        minorVersion = internalMinorVersion;
+        metaDataFile = internalMetaDataFile;
+    }
+    qCDebug(ParameterLoaderLog) << "ParameterLoader::parameterMetaDataFile file:major:minor" << metaDataFile << majorVersion << minorVersion;
+
+    return metaDataFile;
+}
+
+void ParameterLoader::cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPILOT firmwareType)
+{
+    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
+
+    int newMajorVersion, newMinorVersion;
+    plugin->getParameterMetaDataVersionInfo(metaDataFile, newMajorVersion, newMinorVersion);
+    qCDebug(ParameterLoaderLog) << "ParameterLoader::cacheMetaDataFile file:firmware:major;minor" << metaDataFile << firmwareType << newMajorVersion << newMinorVersion;
+
+    // Find the cache hit closest to this new file
+    int cacheMajorVersion, cacheMinorVersion;
+    QString cacheHit = ParameterLoader::parameterMetaDataFile(firmwareType, newMajorVersion, cacheMajorVersion, cacheMinorVersion);
+    qCDebug(ParameterLoaderLog) << "ParameterLoader::cacheMetaDataFile cacheHit file:firmware:major;minor" << cacheHit << cacheMajorVersion << cacheMinorVersion;
+
+    bool cacheNewFile = false;
+    if (cacheHit.isEmpty()) {
+        // No cache hits, store the new file
+        cacheNewFile = true;
+    } else if (cacheMajorVersion == newMajorVersion) {
+        // Direct hit on major version in cache:
+        //      Cache new file if newer minor version
+        //      Also delete older cache file
+        if (newMinorVersion > cacheMinorVersion) {
+            cacheNewFile = true;
+            QFile::remove(cacheHit);
+        }
+    } else {
+        // Indirect hit in cache, store new file
+        cacheNewFile = true;
+    }
+
+    if (cacheNewFile) {
+        // Cached files are stored in settings location. Copy from current file to cache naming.
+
+        QSettings settings;
+        QDir cacheDir = QFileInfo(settings.fileName()).dir();
+        QFile cacheFile(cacheDir.filePath(QString("%1.%2.%3.xml").arg(_cachedMetaDataFilePrefix).arg(firmwareType).arg(newMajorVersion)));
+        qCDebug(ParameterLoaderLog) << "ParameterLoader::cacheMetaDataFile caching file:" << cacheFile.fileName();
+        QFile newFile(metaDataFile);
+        newFile.copy(cacheFile.fileName());
+    }
 }

@@ -25,7 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "APMFirmwarePlugin.h"
-#include "Generic/GenericFirmwarePlugin.h"
 #include "AutoPilotPlugins/APM/APMAutoPilotPlugin.h"    // FIXME: Hack
 #include "QGCMAVLink.h"
 #include "QGCApplication.h"
@@ -473,11 +472,16 @@ bool APMFirmwarePlugin::sendHomePositionToVehicle(void)
     return true;
 }
 
-void APMFirmwarePlugin::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
+void APMFirmwarePlugin::addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType)
 {
-    _parameterMetaData.addMetaDataToFact(fact, vehicleType);
-}
+    APMParameterMetaData* apmMetaData = qobject_cast<APMParameterMetaData*>(parameterMetaData);
 
+    if (apmMetaData) {
+        apmMetaData->addMetaDataToFact(fact, vehicleType);
+    } else {
+        qWarning() << "Internal error: pointer passed to APMFirmwarePlugin::addMetaDataToFact not APMParameterMetaData";
+    }
+}
 
 QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(void)
 {
@@ -507,4 +511,12 @@ void APMFirmwarePlugin::missionCommandOverrides(QString& commonJsonFilename, QSt
     commonJsonFilename = QStringLiteral(":/json/APM/MavCmdInfoCommon.json");
     fixedWingJsonFilename = QStringLiteral(":/json/APM/MavCmdInfoFixedWing.json");
     multiRotorJsonFilename = QStringLiteral(":/json/APM/MavCmdInfoMultiRotor.json");
+}
+
+QObject* APMFirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
+{
+    Q_UNUSED(metaDataFile);
+
+    APMParameterMetaData* metaData = new APMParameterMetaData;
+    return metaData;
 }

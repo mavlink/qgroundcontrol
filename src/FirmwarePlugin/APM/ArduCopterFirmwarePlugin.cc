@@ -25,7 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "ArduCopterFirmwarePlugin.h"
-#include "Generic/GenericFirmwarePlugin.h"
 
 APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)

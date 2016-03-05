@@ -27,6 +27,11 @@
 
 #include "FirmwareImage.h"
 #include "QGCLoggingCategory.h"
+#include "JsonHelper.h"
+#include "QGCMAVLink.h"
+#include "QGCApplication.h"
+#include "FirmwarePlugin.h"
+#include "ParameterLoader.h"
 
 #include <QDebug>
 #include <QFile>
@@ -36,6 +41,15 @@
 #include <QSettings>
 #include <QFileInfo>
 #include <QDir>
+
+const char* FirmwareImage::_jsonBoardIdKey =            "board_id";
+const char* FirmwareImage::_jsonParamXmlSizeKey =       "parameter_xml_size";
+const char* FirmwareImage::_jsonParamXmlKey =           "parameter_xml";
+const char* FirmwareImage::_jsonAirframeXmlSizeKey =    "airframe_xml_size";
+const char* FirmwareImage::_jsonAirframeXmlKey =        "airframe_xml";
+const char* FirmwareImage::_jsonImageSizeKey =          "image_size";
+const char* FirmwareImage::_jsonImageKey =              "image";
+const char* FirmwareImage::_jsonMavAutopilotKey =       "mav_autopilot";
 
 FirmwareImage::FirmwareImage(QObject* parent) :
     QObject(parent),
@@ -217,38 +231,52 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     QJsonObject px4Json = doc.object();
     
     // Make sure the keys we need are available
-    static const char* rgJsonKeys[] = { "board_id", "image_size", "description", "git_identity" };
-    for (size_t i=0; i<sizeof(rgJsonKeys)/sizeof(rgJsonKeys[0]); i++) {
-        if (!px4Json.contains(rgJsonKeys[i])) {
-            emit errorMessage(QString("Incorrectly formatted firmware file. No %1 key.").arg(rgJsonKeys[i]));
-            return false;
-        }
+    QString errorString;
+    QStringList requiredKeys;
+    requiredKeys << _jsonBoardIdKey << _jsonImageKey << _jsonImageSizeKey;
+    if (!JsonHelper::validateRequiredKeys(px4Json, requiredKeys, errorString)) {
+        emit errorMessage(QString("Firmware file mission required key: %1").arg(errorString));
+        return false;
     }
-    
-    uint32_t firmwareBoardId = (uint32_t)px4Json.value(QString("board_id")).toInt();
+
+    // Make sure the keys are the correct type
+    QStringList keys;
+    QList<QJsonValue::Type> types;
+    keys << _jsonBoardIdKey << _jsonParamXmlSizeKey << _jsonParamXmlKey << _jsonAirframeXmlSizeKey << _jsonAirframeXmlKey << _jsonImageSizeKey << _jsonImageKey << _jsonMavAutopilotKey;
+    types << QJsonValue::Double << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::String << QJsonValue::Double;
+    if (!JsonHelper::validateKeyTypes(px4Json, keys, types, errorString)) {
+        emit errorMessage(QString("Firmware file has invalid key: %1").arg(errorString));
+        return false;
+    }
+
+    uint32_t firmwareBoardId = (uint32_t)px4Json.value(_jsonBoardIdKey).toInt();
     if (firmwareBoardId != _boardId) {
         emit errorMessage(QString("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardId).arg(_boardId));
         return false;
     }
+
+    // What firmware type is this?
+    MAV_AUTOPILOT firmwareType = (MAV_AUTOPILOT)px4Json[_jsonMavAutopilotKey].toInt(MAV_AUTOPILOT_PX4);
+    emit statusMessage(QString("MAV_AUTOPILOT = %1").arg(firmwareType));
     
     // Decompress the parameter xml and save to file
     QByteArray decompressedBytes;
     bool success = _decompressJsonValue(px4Json,               // JSON object
                                         bytes,                 // Raw bytes of JSON document
-                                        "parameter_xml_size",  // key which holds byte size
-                                        "parameter_xml",       // key which holds compress bytes
+                                        _jsonParamXmlSizeKey,  // key which holds byte size
+                                        _jsonParamXmlKey,      // key which holds compressed bytes
                                         decompressedBytes);    // Returned decompressed bytes
     if (success) {
-        // We cache the parameter xml in the same location as settings
+        // Use settings location as our work directory, this way is something goes wrong the file is still there
+        // sitting next to the cache files.
         QSettings settings;
         QDir parameterDir = QFileInfo(settings.fileName()).dir();
-        QString parameterFilename = parameterDir.filePath("PX4ParameterFactMetaData.xml");
+        QString parameterFilename = parameterDir.filePath("ParameterFactMetaData.xml");
         QFile parameterFile(parameterFilename);
 
         if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = parameterFile.write(decompressedBytes);
             if (bytesWritten != decompressedBytes.count()) {
-                // FIXME: What about these warnings?
                 emit statusMessage(QString("Write failed for parameter meta data file, error: %1").arg(parameterFile.errorString()));
                 parameterFile.close();
                 QFile::remove(parameterFilename);
@@ -258,14 +286,17 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
         } else {
             emit statusMessage(QString("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename).arg(parameterFile.errorString()));
         }
+
+        // Cache this file with the system
+        ParameterLoader::cacheMetaDataFile(parameterFilename, firmwareType);
     }
 
     // Decompress the airframe xml and save to file
-    success = _decompressJsonValue(px4Json,               // JSON object
-                                        bytes,                 // Raw bytes of JSON document
-                                        "airframe_xml_size",  // key which holds byte size
-                                        "airframe_xml",       // key which holds compress bytes
-                                        decompressedBytes);    // Returned decompressed bytes
+    success = _decompressJsonValue(px4Json,                         // JSON object
+                                        bytes,                      // Raw bytes of JSON document
+                                        _jsonAirframeXmlSizeKey,    // key which holds byte size
+                                        _jsonAirframeXmlKey,        // key which holds compressed bytes
+                                        decompressedBytes);         // Returned decompressed bytes
     if (success) {
         // We cache the airframe xml in the same location as settings and parameters
         QSettings settings;
@@ -293,8 +324,8 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     _imageSize = px4Json.value(QString("image_size")).toInt();
     success = _decompressJsonValue(px4Json,               // JSON object
                                    bytes,                 // Raw bytes of JSON document
-                                   "image_size",          // key which holds byte size
-                                   "image",               // key which holds compress bytes
+                                   _jsonImageSizeKey,     // key which holds byte size
+                                   _jsonImageKey,         // key which holds compressed bytes
                                    decompressedBytes);    // Returned decompressed bytes
     if (!success) {
         return false;
@@ -341,7 +372,7 @@ bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< J
     }
     int decompressedSize = jsonObject.value(QString(sizeKey)).toInt();
     if (decompressedSize == 0) {
-        emit errorMessage(QString("Firmware file has invalid decompressed size for %1").arg(sizeKey));
+        emit statusMessage(QString("Firmware file has invalid decompressed size for %1").arg(sizeKey));
         return false;
     }
     
@@ -353,12 +384,12 @@ bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< J
     
     QStringList parts = QString(jsonDocBytes).split(QString("\"%1\": \"").arg(bytesKey));
     if (parts.count() == 1) {
-        emit errorMessage(QString("Could not find compressed bytes for %1 in Firmware file").arg(bytesKey));
+        emit statusMessage(QString("Could not find compressed bytes for %1 in Firmware file").arg(bytesKey));
         return false;
     }
     parts = parts.last().split("\"");
     if (parts.count() == 1) {
-        emit errorMessage(QString("Incorrectly formed compressed bytes section for %1 in Firmware file").arg(bytesKey));
+        emit statusMessage(QString("Incorrectly formed compressed bytes section for %1 in Firmware file").arg(bytesKey));
         return false;
     }
     
@@ -374,11 +405,11 @@ bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< J
     decompressedBytes = qUncompress(raw);
     
     if (decompressedBytes.count() == 0) {
-        emit errorMessage(QString("Firmware file has 0 length %1").arg(bytesKey));
+        emit statusMessage(QString("Firmware file has 0 length %1").arg(bytesKey));
         return false;
     }
     if (decompressedBytes.count() != decompressedSize) {
-        emit errorMessage(QString("Size for decompressed %1 does not match stored size: Expected(%1) Actual(%2)").arg(decompressedSize).arg(decompressedBytes.count()));
+        emit statusMessage(QString("Size for decompressed %1 does not match stored size: Expected(%1) Actual(%2)").arg(decompressedSize).arg(decompressedBytes.count()));
         return false;
     }
     

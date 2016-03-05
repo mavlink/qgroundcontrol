@@ -25,7 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "GenericAutoPilotPlugin.h"
-#include "FirmwarePlugin/Generic/GenericFirmwarePlugin.h"  // FIXME: Hack
 
 GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     AutoPilotPlugin(vehicle, parent)

@@ -35,6 +35,7 @@ Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeLog)
 Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog)
 Q_DECLARE_LOGGING_CATEGORY(MissionCommandsLog)
 Q_DECLARE_LOGGING_CATEGORY(MissionItemLog)
+Q_DECLARE_LOGGING_CATEGORY(ParameterLoaderLog)
 
 /// @def QGC_LOGGING_CATEGORY
 /// This is a QGC specific replacement for Q_LOGGING_CATEGORY. It will register the category name into a

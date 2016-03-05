@@ -134,6 +134,10 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
                     return;
                 }
 
+            } else if (elementName == "airframe_version_major") {
+                // Just skip over for now
+            } else if (elementName == "airframe_version_minor") {
+                // Just skip over for now
 
             } else if (elementName == "airframe_group") {
                 if (xmlState != XmlStateFoundVersion) {
