@@ -24,14 +24,14 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "FlightModesComponentController.h"
+#include "PX4AdvancedFlightModesController.h"
 #include "QGCMAVLink.h"
 #include "AutoPilotPluginManager.h"
 
 #include <QVariant>
 #include <QQmlProperty>
 
-FlightModesComponentController::FlightModesComponentController(void) :
+PX4AdvancedFlightModesController::PX4AdvancedFlightModesController(void) :
     _validConfiguration(false),
     _channelCount(18),
     _manualModeSelected(false),
@@ -55,10 +55,10 @@ FlightModesComponentController::FlightModesComponentController(void) :
     _init();
     _validateConfiguration();
     
-    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &FlightModesComponentController::_rcChannelsChanged);
+    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &PX4AdvancedFlightModesController::_rcChannelsChanged);
 }
 
-void FlightModesComponentController::_init(void)
+void PX4AdvancedFlightModesController::_init(void)
 {
     // FIXME: What about VTOL? That confuses the whole Flight Mode naming scheme
     _fixedWing = _vehicle->vehicleType() == MAV_TYPE_FIXED_WING;
@@ -151,7 +151,7 @@ void FlightModesComponentController::_init(void)
 
 /// This will look for parameter settings which would cause the config to not run correctly.
 /// It will set _validConfiguration and _configurationErrors as needed.
-void FlightModesComponentController::_validateConfiguration(void)
+void PX4AdvancedFlightModesController::_validateConfiguration(void)
 {
     _validConfiguration = true;
     
@@ -205,7 +205,7 @@ void FlightModesComponentController::_validateConfiguration(void)
 }
 
 /// Connected to Vehicle::rcChannelsChanged signal
-void FlightModesComponentController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
+void PX4AdvancedFlightModesController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
 {
     for (int channel=0; channel<channelCount; channel++) {
         int channelValue = pwmValues[channel];
@@ -232,7 +232,7 @@ void FlightModesComponentController::_rcChannelsChanged(int channelCount, int pw
     emit switchLiveRangeChanged();
 }
 
-double FlightModesComponentController::_switchLiveRange(const QString& param)
+double PX4AdvancedFlightModesController::_switchLiveRange(const QString& param)
 {
     QVariant value;
     
@@ -244,27 +244,27 @@ double FlightModesComponentController::_switchLiveRange(const QString& param)
     }
 }
 
-double FlightModesComponentController::manualModeRcValue(void)
+double PX4AdvancedFlightModesController::manualModeRcValue(void)
 {
     return _switchLiveRange("RC_MAP_MODE_SW");
 }
 
-double FlightModesComponentController::assistModeRcValue(void)
+double PX4AdvancedFlightModesController::assistModeRcValue(void)
 {
     return manualModeRcValue();
 }
 
-double FlightModesComponentController::autoModeRcValue(void)
+double PX4AdvancedFlightModesController::autoModeRcValue(void)
 {
     return manualModeRcValue();
 }
 
-double FlightModesComponentController::acroModeRcValue(void)
+double PX4AdvancedFlightModesController::acroModeRcValue(void)
 {
     return _switchLiveRange("RC_MAP_ACRO_SW");
 }
 
-double FlightModesComponentController::altCtlModeRcValue(void)
+double PX4AdvancedFlightModesController::altCtlModeRcValue(void)
 {
     int posCtlSwitchChannel = getParameterFact(-1, "RC_MAP_POSCTL_SW")->rawValue().toInt();
     
@@ -275,12 +275,12 @@ double FlightModesComponentController::altCtlModeRcValue(void)
     }
 }
 
-double FlightModesComponentController::posCtlModeRcValue(void)
+double PX4AdvancedFlightModesController::posCtlModeRcValue(void)
 {
     return _switchLiveRange("RC_MAP_POSCTL_SW");
 }
 
-double FlightModesComponentController::missionModeRcValue(void)
+double PX4AdvancedFlightModesController::missionModeRcValue(void)
 {
     int returnSwitchChannel = getParameterFact(-1, "RC_MAP_RETURN_SW")->rawValue().toInt();
     int loiterSwitchChannel = getParameterFact(-1, "RC_MAP_LOITER_SW")->rawValue().toInt();
@@ -302,22 +302,22 @@ double FlightModesComponentController::missionModeRcValue(void)
     return _switchLiveRange(switchChannelParam);
 }
 
-double FlightModesComponentController::loiterModeRcValue(void)
+double PX4AdvancedFlightModesController::loiterModeRcValue(void)
 {
     return _switchLiveRange("RC_MAP_LOITER_SW");
 }
 
-double FlightModesComponentController::returnModeRcValue(void)
+double PX4AdvancedFlightModesController::returnModeRcValue(void)
 {
     return _switchLiveRange("RC_MAP_RETURN_SW");
 }
 
-double FlightModesComponentController::offboardModeRcValue(void)
+double PX4AdvancedFlightModesController::offboardModeRcValue(void)
 {
     return _switchLiveRange("RC_MAP_OFFB_SW");
 }
 
-void FlightModesComponentController::_recalcModeSelections(void)
+void PX4AdvancedFlightModesController::_recalcModeSelections(void)
 {
     _manualModeSelected = false;
     _assistModeSelected = false;
@@ -377,7 +377,7 @@ void FlightModesComponentController::_recalcModeSelections(void)
     emit modesSelectedChanged();
 }
 
-void FlightModesComponentController::_recalcModeRows(void)
+void PX4AdvancedFlightModesController::_recalcModeRows(void)
 {
     int modeSwitchChannel =     getParameterFact(-1, "RC_MAP_MODE_SW")->rawValue().toInt();
     int acroSwitchChannel =     getParameterFact(-1, "RC_MAP_ACRO_SW")->rawValue().toInt();
@@ -467,140 +467,140 @@ void FlightModesComponentController::_recalcModeRows(void)
     emit modeRowsChanged();
 }
 
-double FlightModesComponentController::manualModeThreshold(void)
+double PX4AdvancedFlightModesController::manualModeThreshold(void)
 {
     return 0.0;
 }
 
-double FlightModesComponentController::assistModeThreshold(void)
+double PX4AdvancedFlightModesController::assistModeThreshold(void)
 {
     return getParameterFact(-1, "RC_ASSIST_TH")->rawValue().toDouble();
 }
 
-double FlightModesComponentController::autoModeThreshold(void)
+double PX4AdvancedFlightModesController::autoModeThreshold(void)
 {
     return getParameterFact(-1, "RC_AUTO_TH")->rawValue().toDouble();
 }
 
-double FlightModesComponentController::acroModeThreshold(void)
+double PX4AdvancedFlightModesController::acroModeThreshold(void)
 {
     return getParameterFact(-1, "RC_ACRO_TH")->rawValue().toDouble();
 }
 
-double FlightModesComponentController::altCtlModeThreshold(void)
+double PX4AdvancedFlightModesController::altCtlModeThreshold(void)
 {
     return _assistModeVisible ? 0.0 : getParameterFact(-1, "RC_ASSIST_TH")->rawValue().toDouble();
 }
 
-double FlightModesComponentController::posCtlModeThreshold(void)
+double PX4AdvancedFlightModesController::posCtlModeThreshold(void)
 {
     return getParameterFact(-1, "RC_POSCTL_TH")->rawValue().toDouble();
 }
 
-double FlightModesComponentController::missionModeThreshold(void)
+double PX4AdvancedFlightModesController::missionModeThreshold(void)
 {
     return _autoModeVisible ? 0.0 : getParameterFact(-1, "RC_AUTO_TH")->rawValue().toDouble();
 }
 
 
-double FlightModesComponentController::loiterModeThreshold(void)
+double PX4AdvancedFlightModesController::loiterModeThreshold(void)
 {
     return getParameterFact(-1, "RC_LOITER_TH")->rawValue().toDouble();
 }
 
-double FlightModesComponentController::returnModeThreshold(void)
+double PX4AdvancedFlightModesController::returnModeThreshold(void)
 {
     return getParameterFact(-1, "RC_RETURN_TH")->rawValue().toDouble();
 }
 
-double FlightModesComponentController::offboardModeThreshold(void)
+double PX4AdvancedFlightModesController::offboardModeThreshold(void)
 {
     return getParameterFact(-1, "RC_OFFB_TH")->rawValue().toDouble();
 }
 
-void FlightModesComponentController::setAssistModeThreshold(double threshold)
+void PX4AdvancedFlightModesController::setAssistModeThreshold(double threshold)
 {
     getParameterFact(-1, "RC_ASSIST_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
-void FlightModesComponentController::setAutoModeThreshold(double threshold)
+void PX4AdvancedFlightModesController::setAutoModeThreshold(double threshold)
 {
     getParameterFact(-1, "RC_AUTO_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
-void FlightModesComponentController::setAcroModeThreshold(double threshold)
+void PX4AdvancedFlightModesController::setAcroModeThreshold(double threshold)
 {
     getParameterFact(-1, "RC_ACRO_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
-void FlightModesComponentController::setAltCtlModeThreshold(double threshold)
+void PX4AdvancedFlightModesController::setAltCtlModeThreshold(double threshold)
 {
     setAssistModeThreshold(threshold);
 }
 
-void FlightModesComponentController::setPosCtlModeThreshold(double threshold)
+void PX4AdvancedFlightModesController::setPosCtlModeThreshold(double threshold)
 {
     getParameterFact(-1, "RC_POSCTL_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
-void FlightModesComponentController::setMissionModeThreshold(double threshold)
+void PX4AdvancedFlightModesController::setMissionModeThreshold(double threshold)
 {
     setAutoModeThreshold(threshold);
 }
 
-void FlightModesComponentController::setLoiterModeThreshold(double threshold)
+void PX4AdvancedFlightModesController::setLoiterModeThreshold(double threshold)
 {
     getParameterFact(-1, "RC_LOITER_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
-void FlightModesComponentController::setReturnModeThreshold(double threshold)
+void PX4AdvancedFlightModesController::setReturnModeThreshold(double threshold)
 {
     getParameterFact(-1, "RC_RETURN_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
-void FlightModesComponentController::setOffboardModeThreshold(double threshold)
+void PX4AdvancedFlightModesController::setOffboardModeThreshold(double threshold)
 {
     getParameterFact(-1, "RC_OFFB_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
-int FlightModesComponentController::_channelToChannelIndex(int channel)
+int PX4AdvancedFlightModesController::_channelToChannelIndex(int channel)
 {
     return _channelListModelChannel.lastIndexOf(channel);
 }
 
-int FlightModesComponentController::_channelToChannelIndex(const QString& channelParam)
+int PX4AdvancedFlightModesController::_channelToChannelIndex(const QString& channelParam)
 {
     return _channelToChannelIndex(getParameterFact(-1, channelParam)->rawValue().toInt());
 }
 
-int FlightModesComponentController::manualModeChannelIndex(void)
+int PX4AdvancedFlightModesController::manualModeChannelIndex(void)
 {
     return _channelToChannelIndex("RC_MAP_MODE_SW");
 }
 
-int FlightModesComponentController::assistModeChannelIndex(void)
+int PX4AdvancedFlightModesController::assistModeChannelIndex(void)
 {
     return _channelToChannelIndex("RC_MAP_MODE_SW");
 }
 
-int FlightModesComponentController::autoModeChannelIndex(void)
+int PX4AdvancedFlightModesController::autoModeChannelIndex(void)
 {
     return _channelToChannelIndex("RC_MAP_MODE_SW");
 }
 
-int FlightModesComponentController::acroModeChannelIndex(void)
+int PX4AdvancedFlightModesController::acroModeChannelIndex(void)
 {
     return _channelToChannelIndex("RC_MAP_ACRO_SW");
 }
 
-int FlightModesComponentController::altCtlModeChannelIndex(void)
+int PX4AdvancedFlightModesController::altCtlModeChannelIndex(void)
 {
     int posCtlSwitchChannel = getParameterFact(-1, "RC_MAP_POSCTL_SW")->rawValue().toInt();
     
@@ -611,17 +611,17 @@ int FlightModesComponentController::altCtlModeChannelIndex(void)
     }
 }
 
-int FlightModesComponentController::posCtlModeChannelIndex(void)
+int PX4AdvancedFlightModesController::posCtlModeChannelIndex(void)
 {
     return _channelToChannelIndex("RC_MAP_POSCTL_SW");
 }
 
-int FlightModesComponentController::loiterModeChannelIndex(void)
+int PX4AdvancedFlightModesController::loiterModeChannelIndex(void)
 {
     return _channelToChannelIndex("RC_MAP_LOITER_SW");
 }
 
-int FlightModesComponentController::missionModeChannelIndex(void)
+int PX4AdvancedFlightModesController::missionModeChannelIndex(void)
 {
     int loiterSwitchChannel = getParameterFact(-1, "RC_MAP_LOITER_SW")->rawValue().toInt();
     
@@ -632,22 +632,22 @@ int FlightModesComponentController::missionModeChannelIndex(void)
     }
 }
 
-int FlightModesComponentController::returnModeChannelIndex(void)
+int PX4AdvancedFlightModesController::returnModeChannelIndex(void)
 {
     return _channelToChannelIndex("RC_MAP_RETURN_SW");
 }
 
-int FlightModesComponentController::offboardModeChannelIndex(void)
+int PX4AdvancedFlightModesController::offboardModeChannelIndex(void)
 {
     return _channelToChannelIndex("RC_MAP_OFFB_SW");
 }
 
-int FlightModesComponentController::_channelIndexToChannel(int index)
+int PX4AdvancedFlightModesController::_channelIndexToChannel(int index)
 {
     return _channelListModelChannel[index];
 }
 
-void FlightModesComponentController::setManualModeChannelIndex(int index)
+void PX4AdvancedFlightModesController::setManualModeChannelIndex(int index)
 {
     getParameterFact(-1, "RC_MAP_MODE_SW")->setRawValue(_channelIndexToChannel(index));
     
@@ -657,7 +657,7 @@ void FlightModesComponentController::setManualModeChannelIndex(int index)
 
 }
 
-void FlightModesComponentController::setAcroModeChannelIndex(int index)
+void PX4AdvancedFlightModesController::setAcroModeChannelIndex(int index)
 {
     getParameterFact(-1, "RC_MAP_ACRO_SW")->setRawValue(_channelIndexToChannel(index));
     
@@ -665,7 +665,7 @@ void FlightModesComponentController::setAcroModeChannelIndex(int index)
     _recalcModeRows();
 }
 
-void FlightModesComponentController::setPosCtlModeChannelIndex(int index)
+void PX4AdvancedFlightModesController::setPosCtlModeChannelIndex(int index)
 {
     int channel = _channelIndexToChannel(index);
     
@@ -687,7 +687,7 @@ void FlightModesComponentController::setPosCtlModeChannelIndex(int index)
 
 }
 
-void FlightModesComponentController::setLoiterModeChannelIndex(int index)
+void PX4AdvancedFlightModesController::setLoiterModeChannelIndex(int index)
 {
     int channel = _channelIndexToChannel(index);
     
@@ -709,7 +709,7 @@ void FlightModesComponentController::setLoiterModeChannelIndex(int index)
 
 }
 
-void FlightModesComponentController::setReturnModeChannelIndex(int index)
+void PX4AdvancedFlightModesController::setReturnModeChannelIndex(int index)
 {
     getParameterFact(-1, "RC_MAP_RETURN_SW")->setRawValue(_channelIndexToChannel(index));
     _recalcModeSelections();
@@ -718,7 +718,7 @@ void FlightModesComponentController::setReturnModeChannelIndex(int index)
 
 }
 
-void FlightModesComponentController::setOffboardModeChannelIndex(int index)
+void PX4AdvancedFlightModesController::setOffboardModeChannelIndex(int index)
 {
     getParameterFact(-1, "RC_MAP_OFFB_SW")->setRawValue(_channelIndexToChannel(index));
     _recalcModeSelections();
@@ -727,7 +727,7 @@ void FlightModesComponentController::setOffboardModeChannelIndex(int index)
 
 }
 
-void FlightModesComponentController::generateThresholds(void)
+void PX4AdvancedFlightModesController::generateThresholds(void)
 {
     // Reset all thresholds to 0.0
     

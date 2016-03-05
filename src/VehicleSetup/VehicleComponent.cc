@@ -62,8 +62,10 @@ void VehicleComponent::setupTriggerSignals(void)
 {
     // Watch for changed on trigger list params
     foreach (const QString &paramName, setupCompleteChangedTriggerList()) {
-        Fact* fact = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName);
-        connect(fact, &Fact::valueChanged, this, &VehicleComponent::_triggerUpdated);
+        if (_autopilot->parameterExists(FactSystem::defaultComponentId, paramName)) {
+            Fact* fact = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName);
+            connect(fact, &Fact::valueChanged, this, &VehicleComponent::_triggerUpdated);
+        }
     }
 }
 

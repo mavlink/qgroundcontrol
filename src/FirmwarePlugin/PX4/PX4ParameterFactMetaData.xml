@@ -2,8 +2,7 @@
 <parameters>
   <version>3</version>
   <parameter_version_major>1</parameter_version_major>
-  <parameter_version_minor>1</parameter_version_minor>
-  <group name="UAVCAN Motor Parameters" no_code_generation="true">
+  <parameter_version_minor>1</parameter_version_minor>  <group name="UAVCAN Motor Parameters" no_code_generation="true">
     <parameter default="75" name="ctl_bw" type="INT32">
       <short_desc>Speed controller bandwidth</short_desc>
       <long_desc>Speed controller bandwidth, in Hz. Higher values result in faster speed and current rise times, but may result in overshoot and higher current consumption. For fixed-wing aircraft, this value should be less than 50 Hz; for multirotors, values up to 100 Hz may provide improvements in responsiveness.</long_desc>
@@ -3583,6 +3582,33 @@ replay messages for logging</short_desc>
     </parameter>
   </group>
   <group name="Radio Switches">
+    <parameter default="0" name="RC_MAP_FLTMODE" type="INT32">
+      <short_desc>Single channel flight mode selection</short_desc>
+      <long_desc>If this parameter is non-zero, flight modes are only selected by this channel and are assigned to six slots.</long_desc>
+      <min>0</min>
+      <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 3</value>
+        <value code="2">RC Channel 2</value>
+        <value code="5">RC Channel 5</value>
+        <value code="4">RC Channel 4</value>
+        <value code="7">RC Channel 7</value>
+        <value code="6">RC Channel 6</value>
+        <value code="9">RC Channel 9</value>
+        <value code="8">RC Channel 8</value>
+      </values>
+    </parameter>
     <parameter default="0" name="RC_MAP_MODE_SW" type="INT32">
       <short_desc>Mode switch channel mapping</short_desc>
       <long_desc>This is the main flight mode selector. The channel index (starting from 1 for channel 1) indicates which channel should be used for deciding about the main mode. A value of zero indicates the switch is not assigned.</long_desc>
@@ -4775,121 +4801,118 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
     <parameter default="0.1" name="RV_YAW_P" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>
     </parameter>
-    <parameter default="0" name="COM_FLTMODE_CH" type="INT32">
-      <short_desc>COM_FLTMODE_CH</short_desc>
-    </parameter>
-    <parameter default="0" name="COM_FLTMODE1" type="INT32">
+    <parameter default="-1" name="COM_FLTMODE1" type="INT32">
       <short_desc>First flightmode slot (1000-1160)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / TAKEOFF</value>
-        <value code="10">RATTITUDE</value>
-        <value code="12">AUTO / LAND</value>
-        <value code="1">MANUAL</value>
-        <value code="0">Unassigned</value>
-        <value code="3">POSITION CONTROL</value>
-        <value code="2">ALTITUDE CONTROL</value>
-        <value code="5">AUTO / PAUSE</value>
-        <value code="4">AUTO / MISSION</value>
-        <value code="7">ACRO</value>
-        <value code="6">RETURN TO LAUNCH</value>
-        <value code="9">STABILIZED</value>
-        <value code="8">OFFBOARD</value>
+        <value code="11">AUTO / LAND</value>
+        <value code="10">AUTO / TAKEOFF</value>
+        <value code="1">ALTITUDE CONTROL</value>
+        <value code="0">MANUAL</value>
+        <value code="3">AUTO / MISSION</value>
+        <value code="2">POSITION CONTROL</value>
+        <value code="-1">Unassigned</value>
+        <value code="4">AUTO / PAUSE</value>
+        <value code="7">OFFBOARD</value>
+        <value code="6">ACRO</value>
+        <value code="9">RATTITUDE</value>
+        <value code="5">RETURN TO LAUNCH</value>
+        <value code="8">STABILIZED</value>
       </values>
     </parameter>
-    <parameter default="0" name="COM_FLTMODE2" type="INT32">
+    <parameter default="-1" name="COM_FLTMODE2" type="INT32">
       <short_desc>Second flightmode slot (1160-1320)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / TAKEOFF</value>
-        <value code="10">RATTITUDE</value>
-        <value code="12">AUTO / LAND</value>
-        <value code="1">MANUAL</value>
-        <value code="0">Unassigned</value>
-        <value code="3">POSITION CONTROL</value>
-        <value code="2">ALTITUDE CONTROL</value>
-        <value code="5">AUTO / PAUSE</value>
-        <value code="4">AUTO / MISSION</value>
-        <value code="7">ACRO</value>
-        <value code="6">RETURN TO LAUNCH</value>
-        <value code="9">STABILIZED</value>
-        <value code="8">OFFBOARD</value>
+        <value code="11">AUTO / LAND</value>
+        <value code="10">AUTO / TAKEOFF</value>
+        <value code="1">ALTITUDE CONTROL</value>
+        <value code="0">MANUAL</value>
+        <value code="3">AUTO / MISSION</value>
+        <value code="2">POSITION CONTROL</value>
+        <value code="-1">Unassigned</value>
+        <value code="4">AUTO / PAUSE</value>
+        <value code="7">OFFBOARD</value>
+        <value code="6">ACRO</value>
+        <value code="9">RATTITUDE</value>
+        <value code="5">RETURN TO LAUNCH</value>
+        <value code="8">STABILIZED</value>
       </values>
     </parameter>
-    <parameter default="0" name="COM_FLTMODE3" type="INT32">
+    <parameter default="-1" name="COM_FLTMODE3" type="INT32">
       <short_desc>Third flightmode slot (1320-1480)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / TAKEOFF</value>
-        <value code="10">RATTITUDE</value>
-        <value code="12">AUTO / LAND</value>
-        <value code="1">MANUAL</value>
-        <value code="0">Unassigned</value>
-        <value code="3">POSITION CONTROL</value>
-        <value code="2">ALTITUDE CONTROL</value>
-        <value code="5">AUTO / PAUSE</value>
-        <value code="4">AUTO / MISSION</value>
-        <value code="7">ACRO</value>
-        <value code="6">RETURN TO LAUNCH</value>
-        <value code="9">STABILIZED</value>
-        <value code="8">OFFBOARD</value>
+        <value code="11">AUTO / LAND</value>
+        <value code="10">AUTO / TAKEOFF</value>
+        <value code="1">ALTITUDE CONTROL</value>
+        <value code="0">MANUAL</value>
+        <value code="3">AUTO / MISSION</value>
+        <value code="2">POSITION CONTROL</value>
+        <value code="-1">Unassigned</value>
+        <value code="4">AUTO / PAUSE</value>
+        <value code="7">OFFBOARD</value>
+        <value code="6">ACRO</value>
+        <value code="9">RATTITUDE</value>
+        <value code="5">RETURN TO LAUNCH</value>
+        <value code="8">STABILIZED</value>
       </values>
     </parameter>
-    <parameter default="0" name="COM_FLTMODE4" type="INT32">
+    <parameter default="-1" name="COM_FLTMODE4" type="INT32">
       <short_desc>Fourth flightmode slot (1480-1640)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / TAKEOFF</value>
-        <value code="10">RATTITUDE</value>
-        <value code="12">AUTO / LAND</value>
-        <value code="1">MANUAL</value>
-        <value code="0">Unassigned</value>
-        <value code="3">POSITION CONTROL</value>
-        <value code="2">ALTITUDE CONTROL</value>
-        <value code="5">AUTO / PAUSE</value>
-        <value code="4">AUTO / MISSION</value>
-        <value code="7">ACRO</value>
-        <value code="6">RETURN TO LAUNCH</value>
-        <value code="9">STABILIZED</value>
-        <value code="8">OFFBOARD</value>
+        <value code="11">AUTO / LAND</value>
+        <value code="10">AUTO / TAKEOFF</value>
+        <value code="1">ALTITUDE CONTROL</value>
+        <value code="0">MANUAL</value>
+        <value code="3">AUTO / MISSION</value>
+        <value code="2">POSITION CONTROL</value>
+        <value code="-1">Unassigned</value>
+        <value code="4">AUTO / PAUSE</value>
+        <value code="7">OFFBOARD</value>
+        <value code="6">ACRO</value>
+        <value code="9">RATTITUDE</value>
+        <value code="5">RETURN TO LAUNCH</value>
+        <value code="8">STABILIZED</value>
       </values>
     </parameter>
-    <parameter default="0" name="COM_FLTMODE5" type="INT32">
+    <parameter default="-1" name="COM_FLTMODE5" type="INT32">
       <short_desc>Fift flightmode slot (1640-1800)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / TAKEOFF</value>
-        <value code="10">RATTITUDE</value>
-        <value code="12">AUTO / LAND</value>
-        <value code="1">MANUAL</value>
-        <value code="0">Unassigned</value>
-        <value code="3">POSITION CONTROL</value>
-        <value code="2">ALTITUDE CONTROL</value>
-        <value code="5">AUTO / PAUSE</value>
-        <value code="4">AUTO / MISSION</value>
-        <value code="7">ACRO</value>
-        <value code="6">RETURN TO LAUNCH</value>
-        <value code="9">STABILIZED</value>
-        <value code="8">OFFBOARD</value>
+        <value code="11">AUTO / LAND</value>
+        <value code="10">AUTO / TAKEOFF</value>
+        <value code="1">ALTITUDE CONTROL</value>
+        <value code="0">MANUAL</value>
+        <value code="3">AUTO / MISSION</value>
+        <value code="2">POSITION CONTROL</value>
+        <value code="-1">Unassigned</value>
+        <value code="4">AUTO / PAUSE</value>
+        <value code="7">OFFBOARD</value>
+        <value code="6">ACRO</value>
+        <value code="9">RATTITUDE</value>
+        <value code="5">RETURN TO LAUNCH</value>
+        <value code="8">STABILIZED</value>
       </values>
     </parameter>
-    <parameter default="0" name="COM_FLTMODE6" type="INT32">
+    <parameter default="-1" name="COM_FLTMODE6" type="INT32">
       <short_desc>Sixt flightmode slot (1800-2000)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / TAKEOFF</value>
-        <value code="10">RATTITUDE</value>
-        <value code="12">AUTO / LAND</value>
-        <value code="1">MANUAL</value>
-        <value code="0">Unassigned</value>
-        <value code="3">POSITION CONTROL</value>
-        <value code="2">ALTITUDE CONTROL</value>
-        <value code="5">AUTO / PAUSE</value>
-        <value code="4">AUTO / MISSION</value>
-        <value code="7">ACRO</value>
-        <value code="6">RETURN TO LAUNCH</value>
-        <value code="9">STABILIZED</value>
-        <value code="8">OFFBOARD</value>
+        <value code="11">AUTO / LAND</value>
+        <value code="10">AUTO / TAKEOFF</value>
+        <value code="1">ALTITUDE CONTROL</value>
+        <value code="0">MANUAL</value>
+        <value code="3">AUTO / MISSION</value>
+        <value code="2">POSITION CONTROL</value>
+        <value code="-1">Unassigned</value>
+        <value code="4">AUTO / PAUSE</value>
+        <value code="7">OFFBOARD</value>
+        <value code="6">ACRO</value>
+        <value code="9">RATTITUDE</value>
+        <value code="5">RETURN TO LAUNCH</value>
+        <value code="8">STABILIZED</value>
       </values>
     </parameter>
     <parameter default="-1.0" name="TEST_MIN" type="FLOAT">
