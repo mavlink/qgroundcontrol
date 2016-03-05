@@ -44,7 +44,7 @@ QGC_LOGGING_CATEGORY(ParameterLoaderVerboseLog, "ParameterLoaderVerboseLog")
 
 Fact ParameterLoader::_defaultFact;
 
-const char* ParameterLoader::_cachedMetaDataFilePrefix = "ParamaterFactMetaData";
+const char* ParameterLoader::_cachedMetaDataFilePrefix = "ParameterFactMetaData";
 
 ParameterLoader::ParameterLoader(Vehicle* vehicle)
     : QObject(vehicle)

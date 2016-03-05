@@ -590,7 +590,8 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
     src/AutoPilotPlugins/PX4/AirframeComponentController.h \
     src/AutoPilotPlugins/PX4/FlightModesComponent.h \
-    src/AutoPilotPlugins/PX4/FlightModesComponentController.h \
+    src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.h \
+    src/AutoPilotPlugins/PX4/PX4SimpleFlightModesController.h \
     src/AutoPilotPlugins/PX4/PowerComponent.h \
     src/AutoPilotPlugins/PX4/PowerComponentController.h \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
@@ -646,7 +647,8 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \
     src/AutoPilotPlugins/PX4/AirframeComponentController.cc \
     src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
-    src/AutoPilotPlugins/PX4/FlightModesComponentController.cc \
+    src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc \
+    src/AutoPilotPlugins/PX4/PX4SimpleFlightModesController.cc \
     src/AutoPilotPlugins/PX4/PowerComponent.cc \
     src/AutoPilotPlugins/PX4/PowerComponentController.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
