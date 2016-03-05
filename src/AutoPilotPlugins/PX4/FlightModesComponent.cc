@@ -63,18 +63,30 @@ bool FlightModesComponent::requiresSetup(void) const
 
 bool FlightModesComponent::setupComplete(void) const
 {
-    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ||
-            _autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->rawValue().toInt() != 0;
+    if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
+        return true;
+    }
+
+    if (_autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->rawValue().toInt() != 0 ||
+            (_autopilot->parameterExists(FactSystem::defaultComponentId, "RC_MAP_FLTMODE") && _autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_FLTMODE")->rawValue().toInt() != 0)) {
+        return true;
+    }
+
+    return false;
 }
 
 QStringList FlightModesComponent::setupCompleteChangedTriggerList(void) const
 {
-    return QStringList("RC_MAP_MODE_SW");
+    QStringList list;
+
+    list << QStringLiteral("RC_MAP_MODE_SW") << QStringLiteral("RC_MAP_FLTMODE");
+
+    return list;
 }
 
 QUrl FlightModesComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/FlightModesComponent.qml");
+    return QUrl::fromUserInput("qrc:/qml/PX4FlightModes.qml");
 }
 
 QUrl FlightModesComponent::summaryQmlSource(void) const

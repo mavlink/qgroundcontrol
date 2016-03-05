@@ -24,7 +24,7 @@
 #include "PX4AutoPilotPlugin.h"
 #include "AutoPilotPluginManager.h"
 #include "PX4AirframeLoader.h"
-#include "FlightModesComponentController.h"
+#include "PX4AdvancedFlightModesController.h"
 #include "AirframeComponentController.h"
 #include "UAS.h"
 #include "FirmwarePlugin/PX4/PX4ParameterMetaData.h"  // FIXME: Hack
