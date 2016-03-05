@@ -80,19 +80,25 @@ class APMFirmwarePlugin : public FirmwarePlugin
     
 public:
     // Overrides from FirmwarePlugin
-    virtual bool isCapable(FirmwareCapabilities capabilities);
-    virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
-    virtual QStringList flightModes(void);
-    virtual QString flightMode(uint8_t base_mode, uint32_t custom_mode);
-    virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
-    virtual int manualControlReservedButtonCount(void);
-    virtual void adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
-    virtual void initializeVehicle(Vehicle* vehicle);
-    virtual bool sendHomePositionToVehicle(void);
-    virtual void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
-    virtual QString getDefaultComponentIdParam(void) const { return QString("SYSID_SW_TYPE"); }
-    virtual QList<MAV_CMD> supportedMissionCommands(void);
-    void missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const final;
+
+    QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) final;
+    QList<MAV_CMD> supportedMissionCommands(void) final;
+
+    bool        isCapable(FirmwareCapabilities capabilities) final;
+    QStringList flightModes(void) final;
+    QString     flightMode(uint8_t base_mode, uint32_t custom_mode) final;
+    bool        setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
+    int         manualControlReservedButtonCount(void) final;
+    void        adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
+    void        initializeVehicle(Vehicle* vehicle) final;
+    bool        sendHomePositionToVehicle(void) final;
+    void        addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;
+    QString     getDefaultComponentIdParam(void) const final { return QString("SYSID_SW_TYPE"); }
+    void        missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const final;
+    QString     getVersionParam(void) final { return QStringLiteral("SYSID_SW_MREV"); }
+    QString     internalParameterMetaDataFile   (void) final { return QString(":/FirmwarePlugin/APM/APMParameterFactMetaData.xml"); }
+    void        getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) final { APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
+    QObject*    loadParameterMetaData           (const QString& metaDataFile);
 
 protected:
     /// All access to singleton is through stack specific implementation
@@ -109,7 +115,6 @@ private:
     APMFirmwareVersion      _firmwareVersion;
     bool                    _textSeverityAdjustmentNeeded;
     QList<APMCustomMode>    _supportedModes;
-    APMParameterMetaData    _parameterMetaData;
 };
 
 #endif

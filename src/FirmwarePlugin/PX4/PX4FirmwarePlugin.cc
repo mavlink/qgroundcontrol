@@ -25,6 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "PX4FirmwarePlugin.h"
+#include "PX4ParameterMetaData.h"
 #include "AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h"    // FIXME: Hack
 
 #include <QDebug>
@@ -204,9 +205,15 @@ bool PX4FirmwarePlugin::sendHomePositionToVehicle(void)
     return false;
 }
 
-void PX4FirmwarePlugin::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
+void PX4FirmwarePlugin::addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType)
 {
-    _parameterMetaData.addMetaDataToFact(fact, vehicleType);
+    PX4ParameterMetaData* px4MetaData = qobject_cast<PX4ParameterMetaData*>(parameterMetaData);
+
+    if (px4MetaData) {
+        px4MetaData->addMetaDataToFact(fact, vehicleType);
+    } else {
+        qWarning() << "Internal error: pointer passed to PX4FirmwarePlugin::addMetaDataToFact not PX4ParameterMetaData";
+    }
 }
 
 QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
@@ -232,4 +239,11 @@ void PX4FirmwarePlugin::missionCommandOverrides(QString& commonJsonFilename, QSt
     commonJsonFilename = QStringLiteral(":/json/PX4/MavCmdInfoCommon.json");
     fixedWingJsonFilename = QStringLiteral(":/json/PX4/MavCmdInfoFixedWing.json");
     multiRotorJsonFilename = QStringLiteral(":/json/PX4/MavCmdInfoMultiRotor.json");
+}
+
+QObject* PX4FirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
+{
+    PX4ParameterMetaData* metaData = new PX4ParameterMetaData;
+    metaData->loadParameterFactMetaDataFile(metaDataFile);
+    return metaData;
 }

@@ -1,6 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <parameters>
   <version>3</version>
+  <parameter_version_major>1</parameter_version_major>
+  <parameter_version_minor>1</parameter_version_minor>
   <group name="UAVCAN Motor Parameters" no_code_generation="true">
     <parameter default="75" name="ctl_bw" type="INT32">
       <short_desc>Speed controller bandwidth</short_desc>
@@ -1267,21 +1269,21 @@ replay messages for logging</short_desc>
       <short_desc>Enable or disable usage of terrain estimate during landing</short_desc>
       <long_desc>0: disabled, 1: enabled</long_desc>
     </parameter>
-    <parameter default="2.5" name="FW_FLARE_PMIN" type="FLOAT">
+    <parameter default="2.5" name="FW_LND_FL_PMIN" type="FLOAT">
       <short_desc>Flare, minimum pitch</short_desc>
       <long_desc>Minimum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
       <min>0</min>
       <max>15.0</max>
       <unit>degrees</unit>
     </parameter>
-    <parameter default="15.0" name="FW_FLARE_PMAX" type="FLOAT">
+    <parameter default="15.0" name="FW_LND_FL_PMAX" type="FLOAT">
       <short_desc>Flare, maximum pitch</short_desc>
       <long_desc>Maximum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
       <min>0</min>
       <max>45.0</max>
       <unit>degrees</unit>
     </parameter>
-    <parameter default="1.3" name="FW_AIRSPD_SCALE" type="FLOAT">
+    <parameter default="1.3" name="FW_LND_AIRSPD_SC" type="FLOAT">
       <short_desc>Landing airspeed scale factor</short_desc>
       <long_desc>Multiplying this factor with the minimum airspeed of the plane gives the target airspeed the landing approach.</long_desc>
       <min>1.0</min>
@@ -2001,7 +2003,7 @@ replay messages for logging</short_desc>
       <max>1.0</max>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="1.0" name="MPC_XY_P" type="FLOAT">
+    <parameter default="1.25" name="MPC_XY_P" type="FLOAT">
       <short_desc>Proportional gain for horizontal position error</short_desc>
       <min>0.0</min>
       <decimal>2</decimal>
@@ -2022,12 +2024,14 @@ replay messages for logging</short_desc>
       <min>0.0</min>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="5.0" name="MPC_XY_VEL_MAX" type="FLOAT">
+    <parameter default="8.0" name="MPC_XY_VEL_MAX" type="FLOAT">
       <short_desc>Maximum horizontal velocity</short_desc>
       <long_desc>Maximum horizontal velocity in AUTO mode and endpoint for position stabilized mode (POSCTRL).</long_desc>
       <min>0.0</min>
+      <max>20.0</max>
       <unit>m/s</unit>
       <decimal>2</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="0.5" name="MPC_XY_FF" type="FLOAT">
       <short_desc>Horizontal velocity feed forward</short_desc>
@@ -2109,12 +2113,13 @@ replay messages for logging</short_desc>
       <unit>Hz</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="6.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
+    <parameter default="10.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
       <short_desc>Maximum horizonal acceleration in velocity controlled modes</short_desc>
       <min>2.0</min>
-      <max>10.0</max>
+      <max>15.0</max>
       <unit>m/s/s</unit>
       <decimal>2</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="0.1" name="MPP_THR_MIN" type="FLOAT">
       <short_desc>Minimum thrust</short_desc>

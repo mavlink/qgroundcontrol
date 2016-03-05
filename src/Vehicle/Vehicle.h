@@ -641,6 +641,7 @@ private:
     bool                _mapTrajectoryHaveFirstCoordinate;
     static const int    _mapTrajectoryMsecsBetweenPoints = 1000;
 
+    // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;
     AutoPilotPluginManager*     _autopilotPluginManager;
     JoystickManager*            _joystickManager;
