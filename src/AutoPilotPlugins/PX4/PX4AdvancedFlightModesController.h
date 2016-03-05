@@ -24,8 +24,8 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef FLIGHTMODESCOMPONENTCONTROLLER_H
-#define FLIGHTMODESCOMPONENTCONTROLLER_H
+#ifndef PX4AdvancedFlightModesController_H
+#define PX4AdvancedFlightModesController_H
 
 #include <QObject>
 #include <QQuickItem>
@@ -37,12 +37,12 @@
 #include "FactPanelController.h"
 
 /// MVC Controller for FlightModesComponent.qml.
-class FlightModesComponentController : public FactPanelController
+class PX4AdvancedFlightModesController : public FactPanelController
 {
     Q_OBJECT
     
 public:
-    FlightModesComponentController(void);
+    PX4AdvancedFlightModesController(void);
     
     Q_PROPERTY(bool validConfiguration MEMBER _validConfiguration CONSTANT)
     Q_PROPERTY(QString configurationErrors MEMBER _configurationErrors CONSTANT)

@@ -34,9 +34,13 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
-QGCView {
-    id:         qgcView
-    viewPanel:  panel
+/// PX4 Advanced Flight Mode configuration
+Item {
+    id: root
+
+    // The following properties must be pushed in from the Loader
+    //property var qgcView      - QGCView control
+    //property var qgcViewPanel - QGCViewPanel control
 
     readonly property int monitorThresholdCharWidth: 8  // Character width of Monitor and Threshold labels
 
@@ -120,13 +124,11 @@ QGCView {
 
     readonly property real modeSpacing: ScreenTools.defaultFontPixelHeight / 3
 
-    property Fact rcInMode: controller.getParameterFact(-1, "COM_RC_IN_MODE")
-
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
-    FlightModesComponentController {
+    PX4AdvancedFlightModesController {
         id:         controller
-        factPanel:  panel
+        factPanel:  qgcViewPanel
 
         onModeRowsChanged: recalcModePositions()
     }
@@ -137,9 +139,6 @@ QGCView {
 
         onTriggered: {
             recalcModePositions()
-            if (rcInMode.value == 1) {
-                showDialog(joystickEnabledDialogComponent, title, qgcView.showDialogDefaultWidth, 0)
-            }
         }
     }
 
@@ -194,225 +193,233 @@ QGCView {
         scrollItem.height = nextY
     }
 
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
+    Component {
+        id: joystickEnabledDialogComponent
 
-        Component {
-            id: joystickEnabledDialogComponent
-
-            QGCViewMessage {
-                message: "Flight Mode Config is disabled since you have a Joystick enabled."
-            }
+        QGCViewMessage {
+            message: "Flight Mode Config is disabled since you have a Joystick enabled."
         }
+    }
 
-        ScrollView {
-            id:                         scroll
-            anchors.fill:               parent
-            horizontalScrollBarPolicy:  Qt.ScrollBarAlwaysOff
+    ScrollView {
+        id:                         scroll
+        anchors.fill:               parent
+        horizontalScrollBarPolicy:  Qt.ScrollBarAlwaysOff
+
+        Item {
+            id:     scrollItem
+            width:  scroll.viewport.width
 
             Item {
-                id:     scrollItem
-                width:  scroll.viewport.width
+                id:             helpApplyRow
+                width:          parent.width
+                height:         Math.max(helpText.contentHeight, applyButton.y + applyButton.height)
 
-                Item {
-                    id:             helpApplyRow
-                    width:          parent.width
-                    height:         Math.max(helpText.contentHeight, applyButton.height)
+                QGCLabel {
+                    id:                     helpText
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.left:           parent.left
+                    anchors.right:          buttonColumn.left
+                    text:                   topHelpText
+                    font.pixelSize:         ScreenTools.defaultFontPixelSize
+                    wrapMode:               Text.WordWrap
+                }
 
-                    QGCLabel {
-                        id:                     helpText
-                        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-                        anchors.left:           parent.left
-                        anchors.right:          applyButton.left
-                        text:                   topHelpText
-                        font.pixelSize:         ScreenTools.defaultFontPixelSize
-                        wrapMode:               Text.WordWrap
+                Column {
+                    id:                     buttonColumn
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.right:          parent.right
+                    spacing:                ScreenTools.defaultFontPixelHeight / 4
+
+                    QGCButton {
+                        text: "Use Simple Flight Modes"
+                        visible: controller.parameterExists(-1, "RC_MAP_FLTMODE")
+                        onClicked: {
+                            controller.getParameterFact(-1, "RC_MAP_MODE_SW").value = 0
+                            controller.getParameterFact(-1, "RC_MAP_FLTMODE").value = 5
+                        }
                     }
 
                     QGCButton {
                         id:                     applyButton
-                        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-                        anchors.right:          parent.right
                         text:                   "Generate Thresholds"
-
                         onClicked: controller.generateThresholds()
                     }
                 }
+            }
 
-                Item {
-                    id:             lastSpacer
-                    anchors.top:    helpApplyRow.bottom
-                    height:         ScreenTools.defaultFontPixelHeight
-                    width:          10
-                }
+            Item {
+                id:             lastSpacer
+                anchors.top:    helpApplyRow.bottom
+                height:         ScreenTools.defaultFontPixelHeight
+                width:          10
+            }
 
-                ModeSwitchDisplay {
-                    id:                     manualMode
-                    anchors.top:            lastSpacer.bottom
-                    flightModeName:         controller.fixedWing ? fwManualModeName : mrManualModeName
-                    flightModeDescription:  controller.fixedWing ? fwManualModeDescription : mrManualModeDescription
-                    rcValue:                controller.manualModeRcValue
-                    modeChannelIndex:       controller.manualModeChannelIndex
-                    modeChannelEnabled:     true
-                    modeSelected:           controller.manualModeSelected
-                    thresholdValue:         controller.manualModeThreshold
-                    thresholdDragEnabled:   false
+            ModeSwitchDisplay {
+                id:                     manualMode
+                anchors.top:            lastSpacer.bottom
+                flightModeName:         controller.fixedWing ? fwManualModeName : mrManualModeName
+                flightModeDescription:  controller.fixedWing ? fwManualModeDescription : mrManualModeDescription
+                rcValue:                controller.manualModeRcValue
+                modeChannelIndex:       controller.manualModeChannelIndex
+                modeChannelEnabled:     true
+                modeSelected:           controller.manualModeSelected
+                thresholdValue:         controller.manualModeThreshold
+                thresholdDragEnabled:   false
 
-                    onModeChannelIndexSelected: controller.manualModeChannelIndex = index
-                }
+                onModeChannelIndexSelected: controller.manualModeChannelIndex = index
+            }
 
-                ModeSwitchDisplay {
-                    id:                     assistMode
-                    visible:                controller.assistModeVisible
-                    flightModeName:         assistModeName
-                    flightModeDescription:  assistModeDescription
-                    rcValue:                controller.assistModeRcValue
-                    modeChannelIndex:       controller.assistModeChannelIndex
-                    modeChannelEnabled:     false
-                    modeSelected:           controller.assistModeSelected
-                    thresholdValue:         controller.assistModeThreshold
-                    thresholdDragEnabled:   true
+            ModeSwitchDisplay {
+                id:                     assistMode
+                visible:                controller.assistModeVisible
+                flightModeName:         assistModeName
+                flightModeDescription:  assistModeDescription
+                rcValue:                controller.assistModeRcValue
+                modeChannelIndex:       controller.assistModeChannelIndex
+                modeChannelEnabled:     false
+                modeSelected:           controller.assistModeSelected
+                thresholdValue:         controller.assistModeThreshold
+                thresholdDragEnabled:   true
 
-                    onThresholdValueChanged: controller.assistModeThreshold = thresholdValue
+                onThresholdValueChanged: controller.assistModeThreshold = thresholdValue
 
-                    Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
-                }
+                Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
+            }
 
-                ModeSwitchDisplay {
-                    id:                     autoMode
-                    visible:                controller.autoModeVisible
-                    flightModeName:         autoModeName
-                    flightModeDescription:  autoModeDescription
-                    rcValue:                controller.autoModeRcValue
-                    modeChannelIndex:       controller.autoModeChannelIndex
-                    modeChannelEnabled:     false
-                    modeSelected:           controller.autoModeSelected
-                    thresholdValue:         controller.autoModeThreshold
-                    thresholdDragEnabled:   true
+            ModeSwitchDisplay {
+                id:                     autoMode
+                visible:                controller.autoModeVisible
+                flightModeName:         autoModeName
+                flightModeDescription:  autoModeDescription
+                rcValue:                controller.autoModeRcValue
+                modeChannelIndex:       controller.autoModeChannelIndex
+                modeChannelEnabled:     false
+                modeSelected:           controller.autoModeSelected
+                thresholdValue:         controller.autoModeThreshold
+                thresholdDragEnabled:   true
 
-                    onThresholdValueChanged: controller.autoModeThreshold = thresholdValue
+                onThresholdValueChanged: controller.autoModeThreshold = thresholdValue
 
-                    Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
-                }
+                Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
+            }
 
-                ModeSwitchDisplay {
-                    id:                     acroMode
-                    flightModeName:         controller.fixedWing ? fwAcroModeName : mrAcroModeName
-                    flightModeDescription:  controller.fixedWing ? fwAcroModeDescription : mrAcroModeDescription
-                    rcValue:                controller.acroModeRcValue
-                    modeChannelIndex:       controller.acroModeChannelIndex
-                    modeChannelEnabled:     true
-                    modeSelected:           controller.acroModeSelected
-                    thresholdValue:         controller.acroModeThreshold
-                    thresholdDragEnabled:   true
+            ModeSwitchDisplay {
+                id:                     acroMode
+                flightModeName:         controller.fixedWing ? fwAcroModeName : mrAcroModeName
+                flightModeDescription:  controller.fixedWing ? fwAcroModeDescription : mrAcroModeDescription
+                rcValue:                controller.acroModeRcValue
+                modeChannelIndex:       controller.acroModeChannelIndex
+                modeChannelEnabled:     true
+                modeSelected:           controller.acroModeSelected
+                thresholdValue:         controller.acroModeThreshold
+                thresholdDragEnabled:   true
 
-                    onModeChannelIndexSelected:  controller.acroModeChannelIndex = index
-                    onThresholdValueChanged:    controller.acroModeThreshold = thresholdValue
+                onModeChannelIndexSelected:  controller.acroModeChannelIndex = index
+                onThresholdValueChanged:    controller.acroModeThreshold = thresholdValue
 
-                    Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
-                }
+                Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
+            }
 
-                ModeSwitchDisplay {
-                    id:                     altCtlMode
-                    flightModeName:         altCtlModeName
-                    flightModeDescription:  controller.fixedWing ? fwAltCtlModeDescription : mrAltCtlModeDescription
-                    rcValue:                controller.altCtlModeRcValue
-                    modeChannelIndex:       controller.altCtlModeChannelIndex
-                    modeChannelEnabled:     false
-                    modeSelected:           controller.altCtlModeSelected
-                    thresholdValue:         controller.altCtlModeThreshold
-                    thresholdDragEnabled:   !controller.assistModeVisible
+            ModeSwitchDisplay {
+                id:                     altCtlMode
+                flightModeName:         altCtlModeName
+                flightModeDescription:  controller.fixedWing ? fwAltCtlModeDescription : mrAltCtlModeDescription
+                rcValue:                controller.altCtlModeRcValue
+                modeChannelIndex:       controller.altCtlModeChannelIndex
+                modeChannelEnabled:     false
+                modeSelected:           controller.altCtlModeSelected
+                thresholdValue:         controller.altCtlModeThreshold
+                thresholdDragEnabled:   !controller.assistModeVisible
 
-                    onThresholdValueChanged:    controller.altCtlModeThreshold = thresholdValue
+                onThresholdValueChanged:    controller.altCtlModeThreshold = thresholdValue
 
-                    Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
-                }
+                Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
+            }
 
-                ModeSwitchDisplay {
-                    id:                     posCtlMode
-                    flightModeName:         posCtlModeName
-                    flightModeDescription:  controller.fixedWing ? fwPosCtlModeDescription : mrPosCtlModeDescription
-                    rcValue:                controller.posCtlModeRcValue
-                    modeChannelIndex:       controller.posCtlModeChannelIndex
-                    modeChannelEnabled:     true
-                    modeSelected:           controller.posCtlModeSelected
-                    thresholdValue:         controller.posCtlModeThreshold
-                    thresholdDragEnabled:   true
+            ModeSwitchDisplay {
+                id:                     posCtlMode
+                flightModeName:         posCtlModeName
+                flightModeDescription:  controller.fixedWing ? fwPosCtlModeDescription : mrPosCtlModeDescription
+                rcValue:                controller.posCtlModeRcValue
+                modeChannelIndex:       controller.posCtlModeChannelIndex
+                modeChannelEnabled:     true
+                modeSelected:           controller.posCtlModeSelected
+                thresholdValue:         controller.posCtlModeThreshold
+                thresholdDragEnabled:   true
 
-                    onModeChannelIndexSelected:  controller.posCtlModeChannelIndex = index
-                    onThresholdValueChanged:    controller.posCtlModeThreshold = thresholdValue
+                onModeChannelIndexSelected:  controller.posCtlModeChannelIndex = index
+                onThresholdValueChanged:    controller.posCtlModeThreshold = thresholdValue
 
-                    Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
-                }
+                Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
+            }
 
-                ModeSwitchDisplay {
-                    id:                     missionMode
-                    flightModeName:         missionModeName
-                    flightModeDescription:  missionModeDescription
-                    rcValue:                controller.missionModeRcValue
-                    modeChannelIndex:       controller.missionModeChannelIndex
-                    modeChannelEnabled:     false
-                    modeSelected:           controller.missionModeSelected
-                    thresholdValue:         controller.missionModeThreshold
-                    thresholdDragEnabled:   !controller.autoModeVisible
+            ModeSwitchDisplay {
+                id:                     missionMode
+                flightModeName:         missionModeName
+                flightModeDescription:  missionModeDescription
+                rcValue:                controller.missionModeRcValue
+                modeChannelIndex:       controller.missionModeChannelIndex
+                modeChannelEnabled:     false
+                modeSelected:           controller.missionModeSelected
+                thresholdValue:         controller.missionModeThreshold
+                thresholdDragEnabled:   !controller.autoModeVisible
 
-                    onThresholdValueChanged: controller.missionModeThreshold = thresholdValue
+                onThresholdValueChanged: controller.missionModeThreshold = thresholdValue
 
-                    Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
-                }
+                Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
+            }
 
-                ModeSwitchDisplay {
-                    id:                     loiterMode
-                    flightModeName:         loiterModeName
-                    flightModeDescription:  controller.fixedWing ? fwLoiterModeDescription : mrLoiterModeDescription
-                    rcValue:                controller.loiterModeRcValue
-                    modeChannelIndex:       controller.loiterModeChannelIndex
-                    modeChannelEnabled:     true
-                    modeSelected:           controller.loiterModeSelected
-                    thresholdValue:         controller.loiterModeThreshold
-                    thresholdDragEnabled:   true
+            ModeSwitchDisplay {
+                id:                     loiterMode
+                flightModeName:         loiterModeName
+                flightModeDescription:  controller.fixedWing ? fwLoiterModeDescription : mrLoiterModeDescription
+                rcValue:                controller.loiterModeRcValue
+                modeChannelIndex:       controller.loiterModeChannelIndex
+                modeChannelEnabled:     true
+                modeSelected:           controller.loiterModeSelected
+                thresholdValue:         controller.loiterModeThreshold
+                thresholdDragEnabled:   true
 
-                    onModeChannelIndexSelected:  controller.loiterModeChannelIndex = index
-                    onThresholdValueChanged:    controller.loiterModeThreshold = thresholdValue
+                onModeChannelIndexSelected:  controller.loiterModeChannelIndex = index
+                onThresholdValueChanged:    controller.loiterModeThreshold = thresholdValue
 
-                    Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
-                }
+                Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
+            }
 
-                ModeSwitchDisplay {
-                    id:                     returnMode
-                    flightModeName:         returnModeName
-                    flightModeDescription:  returnModeDescription
-                    rcValue:                controller.returnModeRcValue
-                    modeChannelIndex:       controller.returnModeChannelIndex
-                    modeChannelEnabled:     true
-                    modeSelected:           controller.returnModeSelected
-                    thresholdValue:         controller.returnModeThreshold
-                    thresholdDragEnabled:   true
+            ModeSwitchDisplay {
+                id:                     returnMode
+                flightModeName:         returnModeName
+                flightModeDescription:  returnModeDescription
+                rcValue:                controller.returnModeRcValue
+                modeChannelIndex:       controller.returnModeChannelIndex
+                modeChannelEnabled:     true
+                modeSelected:           controller.returnModeSelected
+                thresholdValue:         controller.returnModeThreshold
+                thresholdDragEnabled:   true
 
-                    onModeChannelIndexSelected:  controller.returnModeChannelIndex = index
-                    onThresholdValueChanged:    controller.returnModeThreshold = thresholdValue
+                onModeChannelIndexSelected:  controller.returnModeChannelIndex = index
+                onThresholdValueChanged:    controller.returnModeThreshold = thresholdValue
 
-                    Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
-                }
+                Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
+            }
 
-                ModeSwitchDisplay {
-                    id:                     offboardMode
-                    flightModeName:         offboardModeName
-                    flightModeDescription:  offboardModeDescription
-                    rcValue:                controller.offboardModeRcValue
-                    modeChannelIndex:       controller.offboardModeChannelIndex
-                    modeChannelEnabled:     true
-                    modeSelected:           controller.offboardModeSelected
-                    thresholdValue:         controller.offboardModeThreshold
-                    thresholdDragEnabled:   true
+            ModeSwitchDisplay {
+                id:                     offboardMode
+                flightModeName:         offboardModeName
+                flightModeDescription:  offboardModeDescription
+                rcValue:                controller.offboardModeRcValue
+                modeChannelIndex:       controller.offboardModeChannelIndex
+                modeChannelEnabled:     true
+                modeSelected:           controller.offboardModeSelected
+                thresholdValue:         controller.offboardModeThreshold
+                thresholdDragEnabled:   true
 
-                    onModeChannelIndexSelected:  controller.offboardModeChannelIndex = index
-                    onThresholdValueChanged:    controller.offboardModeThreshold = thresholdValue
+                onModeChannelIndexSelected:  controller.offboardModeChannelIndex = index
+                onThresholdValueChanged:    controller.offboardModeThreshold = thresholdValue
 
-                    Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
-                }
-            } // Item
-        } // Scroll View
-    } // QGCViewPanel
-} // QGCView
+                Behavior on y { PropertyAnimation { easing.type: Easing.InOutQuad; duration: 1000 } }
+            }
+        } // Item
+    } // Scroll View
+} // Item
