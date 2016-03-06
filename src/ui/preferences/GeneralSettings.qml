@@ -231,7 +231,7 @@ Rectangle {
                 }
 
                 QGCCheckBox {
-                    text:       "3DR Radio"
+                    text:       "SiK Radio"
                     visible:    !ScreenTools.isiOS
                     checked:    QGroundControl.linkManager.autoconnect3DRRadio
                     onClicked:  QGroundControl.linkManager.autoconnect3DRRadio = checked
