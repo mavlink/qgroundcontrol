@@ -94,34 +94,6 @@ void SerialLink::writeBytes(const char* data, qint64 size)
 }
 
 /**
- * @brief Read a number of bytes from the interface.
- *
- * @param data Pointer to the data byte array to write the bytes to
- * @param maxLength The maximum number of bytes to write
- **/
-void SerialLink::readBytes()
-{
-    if(_port && _port->isOpen()) {
-        const qint64 maxLength = 2048;
-        char data[maxLength];
-        _dataMutex.lock();
-        qint64 numBytes = _port->bytesAvailable();
-
-        if (numBytes > 0) {
-            /* Read as much data in buffer as possible without overflow */
-            if(maxLength < numBytes) numBytes = maxLength;
-
-            _logInputDataRate(numBytes, QDateTime::currentMSecsSinceEpoch());
-
-            _port->read(data, numBytes);
-            QByteArray b(data, numBytes);
-            emit bytesReceived(this, b);
-        }
-        _dataMutex.unlock();
-    }
-}
-
-/**
  * @brief Disconnect the connection.
  *
  * @return True if connection has been disconnected, false if connection couldn't be disconnected.
@@ -267,8 +239,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
 void SerialLink::_readBytes(void)
 {
     qint64 byteCount = _port->bytesAvailable();
-    if (byteCount)
-    {
+    if (byteCount) {
         QByteArray buffer;
         buffer.resize(byteCount);
         _port->read(buffer.data(), buffer.size());

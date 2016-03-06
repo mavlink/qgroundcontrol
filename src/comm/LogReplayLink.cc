@@ -150,11 +150,6 @@ void LogReplayLink::_replayError(const QString& errorMsg)
     emit communicationError(_errorTitle, errorMsg);
 }
 
-void LogReplayLink::readBytes(void)
-{
-    // FIXME: This is a bad virtual from LinkInterface?
-}
-
 /// Since this is log replay, we just drops writes on the floor
 void LogReplayLink::writeBytes(const char* bytes, qint64 cBytes)
 {
