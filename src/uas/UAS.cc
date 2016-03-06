@@ -279,47 +279,16 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit valueChanged(uasId, name.arg("custom_mode"), "bits", state.custom_mode, time);
             emit valueChanged(uasId, name.arg("system_status"), "-", state.system_status, time);
 
-            QString audiostring = QString("System %1").arg(uasId);
-            QString stateAudio = "";
-            QString navModeAudio = "";
-            bool statechanged = false;
-
             if ((state.system_status != this->status) && state.system_status != MAV_STATE_UNINIT)
             {
-                statechanged = true;
                 this->status = state.system_status;
                 getStatusForCode((int)state.system_status, uasState, stateDescription);
                 emit statusChanged(this, uasState, stateDescription);
                 emit statusChanged(this->status);
-
-                // Adjust for better audio
-                if (uasState == QString("STANDBY")) uasState = QString("standing by");
-                if (uasState == QString("EMERGENCY")) uasState = QString("emergency condition");
-                if (uasState == QString("CRITICAL")) uasState = QString("critical condition");
-                if (uasState == QString("SHUTDOWN")) uasState = QString("shutting down");
-
-                stateAudio = uasState;
             }
 
             // We got the mode
             receivedMode = true;
-
-            // AUDIO
-            if (statechanged)
-            {
-                // Output the one message
-                audiostring += stateAudio;
-            }
-
-            if (statechanged && ((int)state.system_status == (int)MAV_STATE_CRITICAL || state.system_status == (int)MAV_STATE_EMERGENCY))
-            {
-                _say(QString("Emergency for system %1").arg(this->getUASID()), GAudioOutput::AUDIO_SEVERITY_EMERGENCY);
-                QTimer::singleShot(3000, qgcApp()->toolbox()->audioOutput(), SLOT(startEmergency()));
-            }
-            else if (statechanged)
-            {
-                _say(audiostring.toLower());
-            }
         }
 
             break;
