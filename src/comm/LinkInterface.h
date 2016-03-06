@@ -233,16 +233,6 @@ protected:
             _logDataRateToBuffer(_outDataWriteAmounts, _outDataWriteTimes, &_outDataIndex, byteCount, time);
     }
     
-protected slots:
-
-    /**
-     * @brief Read a number of bytes from the interface.
-     *
-     * @param bytes The pointer to write the bytes to
-     * @param maxLength The maximum length which can be written
-     **/
-    virtual void readBytes() = 0;
-
 private:
     /**
      * @brief logDataRateToBuffer Stores transmission times/amounts for statistics
