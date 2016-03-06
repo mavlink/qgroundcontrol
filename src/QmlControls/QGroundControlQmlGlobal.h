@@ -76,8 +76,9 @@ public:
 
     Q_PROPERTY(Fact*    offlineEditingFirmwareType READ offlineEditingFirmwareType CONSTANT)
 
-    Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition CONSTANT)
-    Q_PROPERTY(QGeoCoordinate flightMapPosition MEMBER _flightMapPosition NOTIFY flightMapPositionChanged)
+    Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
+    Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
+    Q_PROPERTY(int            flightMapZoom         MEMBER _flightMapZoom       NOTIFY flightMapZoomChanged)
 
     /// @ return: true: experimental survey ip code is turned on
     Q_PROPERTY(bool experimentalSurvey READ experimentalSurvey WRITE setExperimentalSurvey NOTIFY experimentalSurveyChanged)
@@ -152,6 +153,7 @@ signals:
     void isVersionCheckEnabledChanged   (bool enabled);
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
+    void flightMapZoomChanged           (int flightMapZoom);
     void experimentalSurveyChanged      (bool experimentalSurvey);
 
 private:
@@ -160,11 +162,12 @@ private:
     LinkManager*            _linkManager;
     MissionCommands*        _missionCommands;
     MultiVehicleManager*    _multiVehicleManager;
-    QGCMapEngineManager*     _mapEngineManager;
+    QGCMapEngineManager*    _mapEngineManager;
 
     bool _virtualTabletJoystick;
 
-    QGeoCoordinate _flightMapPosition;
+    QGeoCoordinate  _flightMapPosition;
+    int             _flightMapZoom;
 
     SettingsFact    _offlineEditingFirmwareTypeFact;
     FactMetaData    _offlineEditingFirmwareTypeMetaData;
