@@ -89,9 +89,11 @@ LinkManager::LinkManager(QGCApplication* app)
     _autoconnect3DRRadio =  settings.value(_autoconnect3DRRadioKey, true).toBool();
     _autoconnectPX4Flow =   settings.value(_autoconnectPX4FlowKey, true).toBool();
 
+#ifndef __ios__
     _activeLinkCheckTimer.setInterval(_activeLinkCheckTimeoutMSecs);
     _activeLinkCheckTimer.setSingleShot(false);
     connect(&_activeLinkCheckTimer, &QTimer::timeout, this, &LinkManager::_activeLinkCheck);
+#endif
 }
 
 LinkManager::~LinkManager()
@@ -849,6 +851,7 @@ bool LinkManager::isBluetoothAvailable(void)
     return qgcApp()->isBluetoothAvailable();
 }
 
+#ifndef __ios__
 void LinkManager::_activeLinkCheck(void)
 {
     SerialLink* link = NULL;
@@ -892,3 +895,4 @@ void LinkManager::_activeLinkCheck(void)
                                   QStringLiteral("Your Vehicle is not responding. If this continues shutdown QGroundControl, restart the Vehicle letting it boot completely, then start QGroundControl."));
     }
 }
+#endif
