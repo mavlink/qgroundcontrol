@@ -83,6 +83,10 @@ public:
     QString         cookedUnits             (void) const { return _cookedUnits; }
     bool            rebootRequired          (void) const { return _rebootRequired; }
 
+    /// Amount to increment value when used in controls such as spin button or slider with detents.
+    /// NaN for no increment available.
+    double          increment               (void) const { return _increment; }
+
     Translator      rawTranslator           (void) const { return _rawTranslator; }
     Translator      cookedTranslator        (void) const { return _cookedTranslator; }
 
@@ -104,6 +108,7 @@ public:
     void setShortDescription(const QString& shortDescription)   { _shortDescription = shortDescription; }
     void setRawUnits        (const QString& rawUnits);
     void setRebootRequired  (bool rebootRequired)               { _rebootRequired = rebootRequired; }
+    void setIncrement       (double increment)                  { _increment = increment; }
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
 
@@ -156,6 +161,7 @@ private:
     Translator      _rawTranslator;
     Translator      _cookedTranslator;
     bool            _rebootRequired;
+    double          _increment;
 
     struct BuiltInTranslation_s {
         const char* rawUnits;

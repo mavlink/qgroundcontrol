@@ -552,3 +552,13 @@ QString Fact::enumOrValueString(void)
     }
     return QString();
 }
+
+double Fact::increment(void) const
+{
+    if (_metaData) {
+        return _metaData->increment();
+    } else {
+        qWarning() << "Meta data pointer missing";
+    }
+    return std::numeric_limits<double>::quiet_NaN();
+}
