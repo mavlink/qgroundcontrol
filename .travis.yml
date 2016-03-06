@@ -25,6 +25,9 @@ matrix:
         - os: osx
             osx_image: xcode7
             env: SPEC=macx-clang CONFIG=installer SHADOW_BUILD_DIR=/tmp/build_macos_install
+        - os: osx
+            osx_image: xcode7
+            env: SPEC=ios CONFIG=release SHADOW_BUILD_DIR=/tmp/build_ios
         - os: android
             language: android
             env: SPEC=android-g++ CONFIG=installer SHADOW_BUILD_DIR=/tmp/build_android_install
@@ -124,8 +127,13 @@ before_script:
 script:
     - cd ${TRAVIS_BUILD_DIR} && ./tools/update_android_version.sh
     - echo 'Building QGroundControl' && echo -en 'travis_fold:start:script.1\\r'
-    - if [ "${CONFIG}" != "doxygen" ]; then
-        cd ${SHADOW_BUILD_DIR} && make -j4;
+    - if [ "${CONFIG}" != "doxygen"  && "${SPEC}" != "ios" ]; then
+        cd ${SHADOW_BUILD_DIR} &&
+        make -j4;
+    fi
+    - if [ "${SPEC}" = "ios" ]; then
+        cd ${SHADOW_BUILD_DIR} &&
+        xcodebuild -configuration Release;
     fi
     - if [ "${CONFIG}" = "doxygen" ]; then
         cd ${TRAVIS_BUILD_DIR}/src && doxygen documentation.dox;
