@@ -121,11 +121,6 @@ MockLink::~MockLink(void)
     _disconnect();
 }
 
-void MockLink::readBytes(void)
-{
-    // FIXME: This is a bad virtual from LinkInterface?
-}
-
 bool MockLink::_connect(void)
 {
     if (!_connected) {

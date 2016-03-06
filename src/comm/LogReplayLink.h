@@ -114,10 +114,6 @@ signals:
     void _pauseOnThread(void);
     void _setAccelerationFactorOnThread(int factor);
 
-protected slots:
-    // FIXME: This should not be part of LinkInterface. It is an internal link implementation detail.
-    virtual void readBytes(void);
-
 private slots:
     void _readNextLogEntry(void);
     void _play(void);

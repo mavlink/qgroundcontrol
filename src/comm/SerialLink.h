@@ -158,8 +158,6 @@ public:
     bool    disconnect(void);
 
 public slots:
-
-    void readBytes();
     /**
      * @brief Write a number of bytes to the interface.
      *
