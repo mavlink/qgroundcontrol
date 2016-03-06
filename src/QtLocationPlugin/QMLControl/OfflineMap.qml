@@ -252,15 +252,21 @@ Rectangle {
             anchors.top:    parent.top
             anchors.bottom: bottomRect.top
             color:          (__qgcPal.globalTheme === QGCPalette.Light) ? "black" : "#98aca4"
+
             Map {
                 id:                 _map
                 anchors.fill:       parent
                 anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.15
-                zoomLevel:          10
                 center:             QGroundControl.defaultMapPosition
                 gesture.flickDeceleration:  3000
                 gesture.activeGestures:     MapGestureArea.ZoomGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
                 plugin: Plugin { name: "QGroundControl" }
+
+                Component.onCompleted: {
+                    center = QGroundControl.flightMapPosition
+                    zoomLevel = QGroundControl.flightMapZoom
+                }
+
                 onCenterChanged: {
                     handleChanges()
                     checkSanity()
@@ -282,6 +288,7 @@ Rectangle {
                     anchors.fill: parent
                 }
             }
+
             Rectangle {
                 width:              ScreenTools.defaultFontPixelHeight * 16
                 height:             ScreenTools.defaultFontPixelHeight * 9
