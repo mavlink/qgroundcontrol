@@ -60,10 +60,7 @@ Item {
     readonly property string mrManualModeName:          "Stabilized/Main"
     readonly property string fwManualModeDescription:   "The pilot has full control of the aircraft, no assistance is provided. " +
                                                         "The Main mode switch must always be assigned to a channel in order to fly"
-    readonly property string mrManualModeDescription:   "Roll and Pitch control angle of multi-rotor in respective direction. " +
-                                                        "Centering Roll/Pitch will return multirotor to level attitude. " +
-                                                        "Position is not automatically held, multi-rotor will continue drifting in the direction it was previously travelling. " +
-                                                        "Altitude is controlled fully by pilot using the Throttle stick. " +
+    readonly property string mrManualModeDescription:   "The pilot has full control of the aircraft, only attitude is stabilized. " +
                                                         "The Main mode switch must always be assigned to a channel in order to fly"
 
     readonly property string assistModeName:            "Assist"
@@ -76,48 +73,31 @@ Item {
 
     readonly property string fwAcroModeName:            "Stabilized"
     readonly property string mrAcroModeName:            "Acro"
-    readonly property string fwAcroModeDescription:     "Roll and Pitch control angle of aircraft in respective direction. " +
-                                                        "Centering Roll/Pitch will return the aircraft to a level attitude. " +
-                                                        "Neither altitude nor direction is automatically controlled. " +
-                                                        "Both Throttle and Yaw and in full control of pilot."
-    readonly property string mrAcroModeDescription:     "Roll and Pitch control angular rate of change of multi-rotor in respective direction. " +
-                                                        "This allows for multi-rotor to rotate through a full 360 degrees in roll and/or pitch. " +
-                                                        "Centering Roll/Pitch will return the multirotor to a level attitude. " +
-                                                        "Position is not automatically held, multi-rotor will continue drifting in the direction it was previously travelling. " +
-                                                        "Altitude is under manual control of pilot using the Throttle stick."
+    readonly property string fwAcroModeDescription:     "The angular rates are controlled, but not the attitude"
+    readonly property string mrAcroModeDescription:     "The angular rates are controlled, but not the attitude"
 
     readonly property string altCtlModeName:            "Altitude Control"
-    readonly property string fwAltCtlModeDescription:   "Current Altitude is maintained automatically when Pitch is centered. " +
-                                                        "Roll and Pitch centered gives level flight, but does not maintain straight line direction against wind. " +
-                                                        "Throttle controls speed, Pitch controls climb/sink rate, Roll controls turn rate. " +
-                                                        "Position Control and Attitude Control must always be on the same channel."
+    readonly property string fwAltCtlModeDescription:   "Roll stick controls banking, pitch stick altitude" +
+                                                        "Throttle stick controls speed." +
+                                                        "With no stick inputs the plane holds heading, but drifts off in wind."
     readonly property string mrAltCtlModeDescription:   "Same as Stablized mode except that Throttle controls climb/sink rate. Centered Throttle holds altitude steady."
 
     readonly property string posCtlModeName:            "Position Control"
-    readonly property string fwPosCtlModeDescription:   "Current Altitude is maintained automatically when Pitch is centered. " +
-                                                        "Roll and Pitch centered gives level flight in a straight line compensating against wind. " +
-                                                        "Throttle controls speed, Pitch controls climb/sink rate, Roll controls turn rate. " +
-                                                        "Position Control and Attitude Control must always be on the same channel."
-    readonly property string mrPosCtlModeDescription:   "Roll and Pitch control left-right and front-back speed over ground respectively. " +
-                                                        "Centering Roll/Pitch will level and hold position. " +
-                                                        "Yaw controls yaw rate as in Stablized mode. " +
-                                                        "Centered throttle holds current altitude. " +
-                                                        "Throttle above/below center controls climb/sink rate. " +
-                                                        "Position Control and Attitude Control must always be on the same channel."
+    readonly property string fwPosCtlModeDescription:   "Roll stick controls banking, pitch stick altitude" +
+                                                        "Throttle stick controls speed." +
+                                                        "With no stick inputs the plane flies a straight line, even in wind."
+    readonly property string mrPosCtlModeDescription:   "Roll and Pitch sticks control sideways and forward speed" +
+                                                        "Throttle stick controls climb / sink rade. "
 
-    readonly property string missionModeName:           "Mission"
-    readonly property string missionModeDescription:    "The aircraft obeys the programmed mission sent by QGroundControl. " +
-                                                        "If no mission was sent, aircraft will Loiter at current position instead."
+    readonly property string missionModeName:           "Auto Mission"
+    readonly property string missionModeDescription:    "The aircraft obeys the programmed mission sent by QGroundControl. "
 
-    readonly property string loiterModeName:            "Loiter"
-    readonly property string fwLoiterModeDescription:   "The aircraft flies in a circle around the current position at the current altitude. " +
-                                                        "Loiter and Mission must always be on the same channel."
-    readonly property string mrLoiterModeDescription:   "The multirotor hovers at the current position and altitude. " +
-                                                        "Loiter and Mission must always be on the same channel."
+    readonly property string loiterModeName:            "Auto Pause"
+    readonly property string fwLoiterModeDescription:   "The aircraft flies in a circle around the current position at the current altitude. "
+    readonly property string mrLoiterModeDescription:   "The multirotor hovers at the current position and altitude. "
 
     readonly property string returnModeName:            "Return"
-    readonly property string returnModeDescription:     "The vehicle returns to the home position, loiters and then lands. " +
-                                                        "The settings which control this sequence can be found under Setup - Safety."
+    readonly property string returnModeDescription:     "The vehicle returns to the home position, loiters and then lands. "
 
     readonly property string offboardModeName:          "Offboard"
     readonly property string offboardModeDescription:   "All flight control aspects are controlled by an offboard system."
@@ -232,7 +212,7 @@ Item {
                     spacing:                ScreenTools.defaultFontPixelHeight / 4
 
                     QGCButton {
-                        text: "Use Simple Flight Modes"
+                        text: "Use Single Channel Mode Selection"
                         visible: controller.parameterExists(-1, "RC_MAP_FLTMODE")
                         onClicked: {
                             controller.getParameterFact(-1, "RC_MAP_MODE_SW").value = 0
