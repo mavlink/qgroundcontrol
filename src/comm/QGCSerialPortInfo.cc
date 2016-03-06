@@ -66,7 +66,7 @@ QGCSerialPortInfo::BoardType_t QGCSerialPortInfo::boardType(void) const
             break;
         case threeDRRadioVendorId:
             if (productIdentifier() == threeDRRadioProductId) {
-                qCDebug(QGCSerialPortInfoLog) << "Found 3DR Radio";
+                qCDebug(QGCSerialPortInfoLog) << "Found SiK Radio";
                 boardType = BoardType3drRadio;
             }
             break;

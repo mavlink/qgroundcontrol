@@ -148,7 +148,7 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
         _startFlashWhenBootloaderFound = false;
         break;
     case QGCSerialPortInfo::BoardType3drRadio:
-        _foundBoardTypeName = "3DR Radio";
+        _foundBoardTypeName = "SiK Radio";
         if (!firstAttempt) {
             // Radio always flashes latest firmware, so we can start right away without
             // any further user input.
