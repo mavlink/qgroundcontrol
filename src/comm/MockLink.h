@@ -157,10 +157,6 @@ signals:
 public slots:
     virtual void writeBytes(const char *bytes, qint64 cBytes);
 
-protected slots:
-    // FIXME: This should not be part of LinkInterface. It is an internal link implementation detail.
-    virtual void readBytes(void);
-
 private slots:
     void _run1HzTasks(void);
     void _run10HzTasks(void);
