@@ -2,7 +2,8 @@
 <parameters>
   <version>3</version>
   <parameter_version_major>1</parameter_version_major>
-  <parameter_version_minor>1</parameter_version_minor>  <group name="UAVCAN Motor Parameters" no_code_generation="true">
+  <parameter_version_minor>3</parameter_version_minor>
+  <group name="UAVCAN Motor Parameters" no_code_generation="true">
     <parameter default="75" name="ctl_bw" type="INT32">
       <short_desc>Speed controller bandwidth</short_desc>
       <long_desc>Speed controller bandwidth, in Hz. Higher values result in faster speed and current rise times, but may result in overshoot and higher current consumption. For fixed-wing aircraft, this value should be less than 50 Hz; for multirotors, values up to 100 Hz may provide improvements in responsiveness.</long_desc>
@@ -303,9 +304,11 @@ velocity</short_desc>
     </parameter>
     <parameter default="-1.0" name="BAT_V_SCALING" type="FLOAT">
       <short_desc>Scaling factor for battery voltage sensor on FMU v2</short_desc>
+      <decimal>8</decimal>
     </parameter>
     <parameter default="-1.0" name="BAT_C_SCALING" type="FLOAT">
       <short_desc>Scaling factor for battery current sensor</short_desc>
+      <decimal>8</decimal>
     </parameter>
   </group>
   <group name="Camera trigger">
@@ -3344,10 +3347,18 @@ replay messages for logging</short_desc>
       <short_desc>Enable relay control of relay 1 mapped to the Spektrum receiver power supply</short_desc>
       <min>0</min>
       <max>1</max>
+      <values>
+        <value code="1">Relay controls DSM power</value>
+        <value code="0">Disabled</value>
+      </values>
     </parameter>
     <parameter default="-1" name="RC_DSM_BIND" type="INT32">
       <short_desc>DSM binding trigger</short_desc>
-      <long_desc>-1 = Idle, 0 = Start DSM2 bind, 1 = Start DSMX bind</long_desc>
+      <values>
+        <value code="1">Start DSMX bind</value>
+        <value code="0">Start DSM2 bind</value>
+        <value code="-1">Inactive</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_CHAN_CNT" type="INT32">
       <short_desc>RC channel count</short_desc>
@@ -3386,7 +3397,7 @@ replay messages for logging</short_desc>
       <max>18</max>
     </parameter>
     <parameter default="0" name="RC_MAP_AUX1" type="INT32">
-      <short_desc>Auxiliary switch 1 channel mapping</short_desc>
+      <short_desc>AUX1 channel</short_desc>
       <long_desc>Default function: Camera pitch</long_desc>
       <min>0</min>
       <max>18</max>
@@ -3400,20 +3411,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_AUX2" type="INT32">
-      <short_desc>Auxiliary switch 2 channel mapping</short_desc>
+      <short_desc>AUX2 channel</short_desc>
       <long_desc>Default function: Camera roll</long_desc>
       <min>0</min>
       <max>18</max>
@@ -3427,20 +3438,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_AUX3" type="INT32">
-      <short_desc>Auxiliary switch 3 channel mapping</short_desc>
+      <short_desc>AUX3 Channel</short_desc>
       <long_desc>Default function: Camera azimuth / yaw</long_desc>
       <min>0</min>
       <max>18</max>
@@ -3454,20 +3465,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_PARAM1" type="INT32">
-      <short_desc>Channel which changes a parameter</short_desc>
+      <short_desc>PARAM1 tuning channel</short_desc>
       <long_desc>Can be used for parameter tuning with the RC. This one is further referenced as the 1st parameter channel. Set to 0 to deactivate *</long_desc>
       <min>0</min>
       <max>18</max>
@@ -3481,20 +3492,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_PARAM2" type="INT32">
-      <short_desc>Channel which changes a parameter</short_desc>
+      <short_desc>PARAM2 tuning channel</short_desc>
       <long_desc>Can be used for parameter tuning with the RC. This one is further referenced as the 2nd parameter channel. Set to 0 to deactivate *</long_desc>
       <min>0</min>
       <max>18</max>
@@ -3508,20 +3519,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_PARAM3" type="INT32">
-      <short_desc>Channel which changes a parameter</short_desc>
+      <short_desc>PARAM3 tuning channel</short_desc>
       <long_desc>Can be used for parameter tuning with the RC. This one is further referenced as the 3th parameter channel. Set to 0 to deactivate *</long_desc>
       <min>0</min>
       <max>18</max>
@@ -3535,16 +3546,16 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_FAILS_THR" type="INT32">
@@ -3559,6 +3570,27 @@ replay messages for logging</short_desc>
       <long_desc>0: do not read RSSI from input channel 1-18: read RSSI from specified input channel Specify the range for RSSI input with RC_RSSI_PWM_MIN and RC_RSSI_PWM_MAX parameters.</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">RC Channel 11</value>
+        <value code="10">RC Channel 10</value>
+        <value code="13">RC Channel 13</value>
+        <value code="12">RC Channel 12</value>
+        <value code="15">RC Channel 15</value>
+        <value code="14">RC Channel 14</value>
+        <value code="17">RC Channel 17</value>
+        <value code="16">RC Channel 16</value>
+        <value code="18">RC Channel 18</value>
+        <value code="1">RC Channel 01</value>
+        <value code="0">Unassigned</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
+      </values>
     </parameter>
     <parameter default="1000" name="RC_RSSI_PWM_MAX" type="INT32">
       <short_desc>Max input value for RSSI reading</short_desc>
@@ -3597,16 +3629,16 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_MODE_SW" type="INT32">
@@ -3624,20 +3656,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_RETURN_SW" type="INT32">
-      <short_desc>Return switch channel mapping</short_desc>
+      <short_desc>Return switch channel</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -3650,20 +3682,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_RATT_SW" type="INT32">
-      <short_desc>Rattitude switch channel mapping</short_desc>
+      <short_desc>Rattitude switch channel</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -3676,20 +3708,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_POSCTL_SW" type="INT32">
-      <short_desc>Posctl switch channel mapping</short_desc>
+      <short_desc>Position Control switch channel</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -3702,20 +3734,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_LOITER_SW" type="INT32">
-      <short_desc>Loiter switch channel mapping</short_desc>
+      <short_desc>Loiter switch channel</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -3728,20 +3760,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_ACRO_SW" type="INT32">
-      <short_desc>Acro switch channel mapping</short_desc>
+      <short_desc>Acro switch channel</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -3754,20 +3786,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_OFFB_SW" type="INT32">
-      <short_desc>Offboard switch channel mapping</short_desc>
+      <short_desc>Offboard switch channel</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -3780,20 +3812,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_KILL_SW" type="INT32">
-      <short_desc>Kill switch channel mapping</short_desc>
+      <short_desc>Kill switch channel</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -3806,20 +3838,20 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_FLAPS" type="INT32">
-      <short_desc>Flaps channel mapping</short_desc>
+      <short_desc>Flaps channel</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -3832,16 +3864,16 @@ replay messages for logging</short_desc>
         <value code="17">RC Channel 17</value>
         <value code="16">RC Channel 16</value>
         <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 1</value>
+        <value code="1">RC Channel 01</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 3</value>
-        <value code="2">RC Channel 2</value>
-        <value code="5">RC Channel 5</value>
-        <value code="4">RC Channel 4</value>
-        <value code="7">RC Channel 7</value>
-        <value code="6">RC Channel 6</value>
-        <value code="9">RC Channel 9</value>
-        <value code="8">RC Channel 8</value>
+        <value code="3">RC Channel 03</value>
+        <value code="2">RC Channel 02</value>
+        <value code="5">RC Channel 05</value>
+        <value code="4">RC Channel 04</value>
+        <value code="7">RC Channel 07</value>
+        <value code="6">RC Channel 06</value>
+        <value code="9">RC Channel 09</value>
+        <value code="8">RC Channel 08</value>
       </values>
     </parameter>
     <parameter default="0.25" name="RC_ASSIST_TH" type="FLOAT">
@@ -4061,6 +4093,35 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <long_desc>An internal magnetometer will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
       <max>30</max>
+      <values>
+        <value code="24">Pitch 90°</value>
+        <value code="25">Pitch 270°</value>
+        <value code="20">Roll 270°</value>
+        <value code="21">Roll 270°, Yaw 45°</value>
+        <value code="22">Roll 270°, Yaw 90°</value>
+        <value code="23">Roll 270°, Yaw 135°</value>
+        <value code="1">Yaw 45°</value>
+        <value code="0">No rotation</value>
+        <value code="3">Yaw 135°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="7">Yaw 315°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="9">Roll 180°, Yaw 45°</value>
+        <value code="8">Roll 180°</value>
+        <value code="11">Roll 180°, Yaw 135°</value>
+        <value code="10">Roll 180°, Yaw 90°</value>
+        <value code="13">Roll 180°, Yaw 225°</value>
+        <value code="12">Pitch 180°</value>
+        <value code="15">Roll 180°, Yaw 315°</value>
+        <value code="14">Roll 180°, Yaw 270°</value>
+        <value code="17">Roll 90°, Yaw 45°</value>
+        <value code="16">Roll 90°</value>
+        <value code="19">Roll 90°, Yaw 135°</value>
+        <value code="18">Roll 90°, Yaw 90°</value>
+        <value code="-1">Internal mag</value>
+      </values>
     </parameter>
     <parameter default="0.0" name="CAL_MAG0_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
@@ -4148,6 +4209,35 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <long_desc>An internal magnetometer will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
       <max>30</max>
+      <values>
+        <value code="24">Pitch 90°</value>
+        <value code="25">Pitch 270°</value>
+        <value code="20">Roll 270°</value>
+        <value code="21">Roll 270°, Yaw 45°</value>
+        <value code="22">Roll 270°, Yaw 90°</value>
+        <value code="23">Roll 270°, Yaw 135°</value>
+        <value code="1">Yaw 45°</value>
+        <value code="0">No rotation</value>
+        <value code="3">Yaw 135°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="7">Yaw 315°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="9">Roll 180°, Yaw 45°</value>
+        <value code="8">Roll 180°</value>
+        <value code="11">Roll 180°, Yaw 135°</value>
+        <value code="10">Roll 180°, Yaw 90°</value>
+        <value code="13">Roll 180°, Yaw 225°</value>
+        <value code="12">Pitch 180°</value>
+        <value code="15">Roll 180°, Yaw 315°</value>
+        <value code="14">Roll 180°, Yaw 270°</value>
+        <value code="17">Roll 90°, Yaw 45°</value>
+        <value code="16">Roll 90°</value>
+        <value code="19">Roll 90°, Yaw 135°</value>
+        <value code="18">Roll 90°, Yaw 90°</value>
+        <value code="-1">Internal mag</value>
+      </values>
     </parameter>
     <parameter default="0.0" name="CAL_MAG1_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
@@ -4235,6 +4325,35 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <long_desc>An internal magnetometer will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
       <max>30</max>
+      <values>
+        <value code="24">Pitch 90°</value>
+        <value code="25">Pitch 270°</value>
+        <value code="20">Roll 270°</value>
+        <value code="21">Roll 270°, Yaw 45°</value>
+        <value code="22">Roll 270°, Yaw 90°</value>
+        <value code="23">Roll 270°, Yaw 135°</value>
+        <value code="1">Yaw 45°</value>
+        <value code="0">No rotation</value>
+        <value code="3">Yaw 135°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="7">Yaw 315°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="9">Roll 180°, Yaw 45°</value>
+        <value code="8">Roll 180°</value>
+        <value code="11">Roll 180°, Yaw 135°</value>
+        <value code="10">Roll 180°, Yaw 90°</value>
+        <value code="13">Roll 180°, Yaw 225°</value>
+        <value code="12">Pitch 180°</value>
+        <value code="15">Roll 180°, Yaw 315°</value>
+        <value code="14">Roll 180°, Yaw 270°</value>
+        <value code="17">Roll 90°, Yaw 45°</value>
+        <value code="16">Roll 90°</value>
+        <value code="19">Roll 90°, Yaw 135°</value>
+        <value code="18">Roll 90°, Yaw 90°</value>
+        <value code="-1">Internal mag</value>
+      </values>
     </parameter>
     <parameter default="0.0" name="CAL_MAG2_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
@@ -4309,11 +4428,49 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     </parameter>
     <parameter default="0" name="SENS_BOARD_ROT" type="INT32">
       <short_desc>Board rotation</short_desc>
-      <long_desc>This parameter defines the rotation of the FMU board relative to the platform. Possible values are: 0 = No rotation 1 = Yaw 45° 2 = Yaw 90° 3 = Yaw 135° 4 = Yaw 180° 5 = Yaw 225° 6 = Yaw 270° 7 = Yaw 315° 8 = Roll 180° 9 = Roll 180°, Yaw 45° 10 = Roll 180°, Yaw 90° 11 = Roll 180°, Yaw 135° 12 = Pitch 180° 13 = Roll 180°, Yaw 225° 14 = Roll 180°, Yaw 270° 15 = Roll 180°, Yaw 315° 16 = Roll 90° 17 = Roll 90°, Yaw 45° 18 = Roll 90°, Yaw 90° 19 = Roll 90°, Yaw 135° 20 = Roll 270° 21 = Roll 270°, Yaw 45° 22 = Roll 270°, Yaw 90° 23 = Roll 270°, Yaw 135° 24 = Pitch 90° 25 = Pitch 270°</long_desc>
+      <long_desc>This parameter defines the rotation of the FMU board relative to the platform.</long_desc>
+      <values>
+        <value code="24">Pitch 90°</value>
+        <value code="25">Pitch 270°</value>
+        <value code="20">Roll 270°</value>
+        <value code="21">Roll 270°, Yaw 45°</value>
+        <value code="22">Roll 270°, Yaw 90°</value>
+        <value code="23">Roll 270°, Yaw 135°</value>
+        <value code="1">Yaw 45°</value>
+        <value code="0">No rotation</value>
+        <value code="3">Yaw 135°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="7">Yaw 315°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="9">Roll 180°, Yaw 45°</value>
+        <value code="8">Roll 180°</value>
+        <value code="11">Roll 180°, Yaw 135°</value>
+        <value code="10">Roll 180°, Yaw 90°</value>
+        <value code="13">Roll 180°, Yaw 225°</value>
+        <value code="12">Pitch 180°</value>
+        <value code="15">Roll 180°, Yaw 315°</value>
+        <value code="14">Roll 180°, Yaw 270°</value>
+        <value code="17">Roll 90°, Yaw 45°</value>
+        <value code="16">Roll 90°</value>
+        <value code="19">Roll 90°, Yaw 135°</value>
+        <value code="18">Roll 90°, Yaw 90°</value>
+      </values>
     </parameter>
     <parameter default="0" name="SENS_FLOW_ROT" type="INT32">
       <short_desc>PX4Flow board rotation</short_desc>
-      <long_desc>This parameter defines the rotation of the PX4FLOW board relative to the platform. Zero rotation is defined as Y on flow board pointing towards front of vehicle Possible values are: 0 = No rotation 1 = Yaw 45° 2 = Yaw 90° 3 = Yaw 135° 4 = Yaw 180° 5 = Yaw 225° 6 = Yaw 270° 7 = Yaw 315°</long_desc>
+      <long_desc>This parameter defines the rotation of the PX4FLOW board relative to the platform. Zero rotation is defined as Y on flow board pointing towards front of vehicle</long_desc>
+      <values>
+        <value code="1">Yaw 45°</value>
+        <value code="0">No rotation</value>
+        <value code="3">Yaw 135°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="7">Yaw 315°</value>
+        <value code="6">Yaw 270°</value>
+      </values>
     </parameter>
     <parameter default="0.0" name="SENS_BOARD_Y_OFF" type="FLOAT">
       <short_desc>Board rotation Y (Pitch) offset</short_desc>
@@ -4332,13 +4489,44 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     </parameter>
     <parameter default="0" name="SENS_EXT_MAG_ROT" type="INT32">
       <short_desc>External magnetometer rotation</short_desc>
-      <long_desc>This parameter defines the rotation of the external magnetometer relative to the platform (not relative to the FMU). See SENS_BOARD_ROT for possible values.</long_desc>
+      <values>
+        <value code="24">Pitch 90°</value>
+        <value code="25">Pitch 270°</value>
+        <value code="20">Roll 270°</value>
+        <value code="21">Roll 270°, Yaw 45°</value>
+        <value code="22">Roll 270°, Yaw 90°</value>
+        <value code="23">Roll 270°, Yaw 135°</value>
+        <value code="1">Yaw 45°</value>
+        <value code="0">No rotation</value>
+        <value code="3">Yaw 135°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="7">Yaw 315°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="9">Roll 180°, Yaw 45°</value>
+        <value code="8">Roll 180°</value>
+        <value code="11">Roll 180°, Yaw 135°</value>
+        <value code="10">Roll 180°, Yaw 90°</value>
+        <value code="13">Roll 180°, Yaw 225°</value>
+        <value code="12">Pitch 180°</value>
+        <value code="15">Roll 180°, Yaw 315°</value>
+        <value code="14">Roll 180°, Yaw 270°</value>
+        <value code="17">Roll 90°, Yaw 45°</value>
+        <value code="16">Roll 90°</value>
+        <value code="19">Roll 90°, Yaw 135°</value>
+        <value code="18">Roll 90°, Yaw 90°</value>
+      </values>
     </parameter>
     <parameter default="0" name="SENS_EXT_MAG" type="INT32">
-      <short_desc>Set usage of external magnetometer</short_desc>
-      <long_desc>* Set to 0 (default) to auto-detect (will try to get the external as primary) * Set to 1 to force the external magnetometer as primary * Set to 2 to force the internal magnetometer as primary</long_desc>
+      <short_desc>Select primary magnetometer</short_desc>
       <min>0</min>
       <max>2</max>
+      <values>
+        <value code="1">External is primary Mag</value>
+        <value code="0">Auto-select Mag</value>
+        <value code="2">Internal is primary Mag</value>
+      </values>
     </parameter>
   </group>
   <group name="Sensor Enable">
@@ -4346,6 +4534,11 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>Enable Lidar-Lite (LL40LS) pwm driver</short_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="1">Enabled</value>
+        <value code="0">Disabled</value>
+      </values>
     </parameter>
   </group>
   <group name="Subscriber Example">
@@ -4566,6 +4759,12 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <long_desc>Time in seconds after which transition will be cancelled. Disabled if set to 0.</long_desc>
       <min>0.0</min>
       <max>30.0</max>
+    </parameter>
+    <parameter default="2.0" name="VT_TRANS_MIN_TM" type="FLOAT">
+      <short_desc>Front transition minimum time</short_desc>
+      <long_desc>Minimum time in seconds for front transition.</long_desc>
+      <min>0.0</min>
+      <max>10.0</max>
     </parameter>
   </group>
   <group name="mTECS">
