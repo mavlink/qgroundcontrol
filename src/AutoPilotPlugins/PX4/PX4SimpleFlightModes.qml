@@ -108,8 +108,6 @@ Item {
                                     spacing: ScreenTools.defaultFontPixelWidth
 
                                     property int index:         modelData + 1
-                                    property var pwmStrings:    [ "PWM 0 - 1230", "PWM 1231 - 1360", "PWM 1361 - 1490", "PWM 1491 - 1620", "PWM 1621 - 1749", "PWM 1750 +"]
-
 
                                     QGCLabel {
                                         anchors.baseline:   modeCombo.baseline
@@ -122,11 +120,6 @@ Item {
                                         width:      ScreenTools.defaultFontPixelWidth * 20
                                         fact:       controller.getParameterFact(-1, "COM_FLTMODE" + index)
                                         indexModel: false
-                                    }
-
-                                    QGCLabel {
-                                        anchors.baseline:   modeCombo.baseline
-                                        text:               pwmStrings[modelData]
                                     }
                                 }
                             } // Repeater - Flight Modes
@@ -182,7 +175,7 @@ Item {
             } // Row - Settings
 
             QGCButton {
-                text: "Use Advanced Flight Modes"
+                text: "Use Multi Channel Mode Selection"
                 onClicked: {
                     controller.getParameterFact(-1, "RC_MAP_MODE_SW").value = 5
                     controller.getParameterFact(-1, "RC_MAP_FLTMODE").value = 0
