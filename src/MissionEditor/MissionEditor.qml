@@ -758,7 +758,7 @@ QGCView {
             spacing:    _margin
 
             QGCLabel {
-                width:      columnHolder.width
+                width:      sendSaveRow.width
                 wrapMode:   Text.WordWrap
                 text:       syncNeeded && !controller.autoSync ?
                                 "You have unsaved changed to you mission. You should send to your vehicle, or save to a file:" :
@@ -766,6 +766,7 @@ QGCView {
             }
 
             Row {
+                id:         sendSaveRow
                 visible:    true //autoSyncCheckBox.enabled && autoSyncCheckBox.checked
                 spacing:    ScreenTools.defaultFontPixelWidth
 

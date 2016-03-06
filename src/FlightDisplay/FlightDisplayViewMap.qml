@@ -44,8 +44,12 @@ FlightMap {
     property bool   _activeVehicleCoordinateValid:  multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.coordinateValid : false
     property var    activeVehicleCoordinate:        multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.coordinate : QtPositioning.coordinate()
 
-    Component.onCompleted: QGroundControl.flightMapPosition = center
+    Component.onCompleted: {
+        QGroundControl.flightMapPosition = center
+        QGroundControl.flightMapZoom = zoomLevel
+    }
     onCenterChanged: QGroundControl.flightMapPosition = center
+    onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
 
     onActiveVehicleCoordinateChanged: {
         if (_followVehicle && _activeVehicleCoordinateValid && activeVehicleCoordinate.isValid) {
