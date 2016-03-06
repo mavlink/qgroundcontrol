@@ -184,7 +184,7 @@ public:
 
     Fact* voltage                   (void) { return &_voltageFact; }
     Fact* percentRemaining          (void) { return &_percentRemainingFact; }
-    Fact* percentRemainingAnnounce  (void) { return &_percentRemainingAnnounceFact; }
+    Fact* percentRemainingAnnounce  (void);
     Fact* mahConsumed               (void) { return &_mahConsumedFact; }
     Fact* current                   (void) { return &_currentFact; }
     Fact* temperature               (void) { return &_temperatureFact; }
@@ -220,7 +220,9 @@ private:
     Fact            _temperatureFact;
     Fact            _cellCountFact;
 
-    static SettingsFact    _percentRemainingAnnounceFact;
+    /// This fact is global to all Vehicles. We must allocated the first time we need it so we don't
+    /// run into QSettings application setup ordering issues.
+    static SettingsFact* _percentRemainingAnnounceFact;
 };
 
 class Vehicle : public FactGroup
