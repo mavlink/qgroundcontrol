@@ -122,7 +122,7 @@ QGCView {
                                 anchors.right:      parent.right
                                 minimumValue:       min
                                 maximumValue:       max
-                                stepSize:           step
+                                stepSize:           isNaN(fact.increment) ? step : fact.increment
                                 tickmarksEnabled:   true
 
                                 property Fact fact: controller.getParameterFact(-1, param)

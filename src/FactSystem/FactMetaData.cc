@@ -52,6 +52,7 @@ FactMetaData::FactMetaData(QObject* parent)
     , _rawTranslator(_defaultTranslator)
     , _cookedTranslator(_defaultTranslator)
     , _rebootRequired(false)
+    , _increment(std::numeric_limits<double>::quiet_NaN())
 {
 
 }
@@ -70,6 +71,7 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _rawTranslator(_defaultTranslator)
     , _cookedTranslator(_defaultTranslator)
     , _rebootRequired(false)
+    , _increment(std::numeric_limits<double>::quiet_NaN())
 {
 
 }
@@ -103,6 +105,7 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _rawTranslator          = other._rawTranslator;
     _cookedTranslator       = other._cookedTranslator;
     _rebootRequired         = other._rebootRequired;
+    _increment              = other._increment;
 
     return *this;
 }
