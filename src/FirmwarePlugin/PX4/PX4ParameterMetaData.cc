@@ -306,6 +306,17 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                                                              << " type:" << metaData->type() << " value:" << enumValueStr
                                                              << " error:" << errorString;
                         }
+                    } else if (elementName == "increment") {
+                        Q_ASSERT(metaData);
+                        double  increment;
+                        bool    ok;
+                        QString text = xml.readElementText();
+                        increment = text.toDouble(&ok);
+                        if (ok) {
+                            metaData->setIncrement(increment);
+                        } else {
+                            qCWarning(PX4ParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << text;
+                        }
                     } else {
                         qDebug() << "Unknown element in XML: " << elementName;
                     }

@@ -580,6 +580,17 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
         }
     }
 
+    if (!rawMetaData->incrementSize.isEmpty()) {
+        double  increment;
+        bool    ok;
+        increment = rawMetaData->incrementSize.toDouble(&ok);
+        if (ok) {
+            metaData->setIncrement(increment);
+        } else {
+            qCDebug(APMParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << rawMetaData->incrementSize;
+        }
+    }
+
     // FixMe:: not handling increment size as their is no place for it in FactMetaData and no ui
     fact->setMetaData(metaData);
 }
