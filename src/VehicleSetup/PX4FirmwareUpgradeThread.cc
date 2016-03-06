@@ -218,14 +218,15 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QGCSerialPortInfo& po
 
     
     _bootloaderPort = new QextSerialPort(QextSerialPort::Polling);
-    Q_CHECK_PTR(_bootloaderPort);
     if (radioMode) {
         _bootloaderPort->setBaudRate(BAUD115200);
     }
 
     // Wait a little while for the USB port to initialize.
+    bool openFailed = true;
     for (int i=0; i<10; i++) {
         if (_bootloader->open(_bootloaderPort, portInfo.systemLocation())) {
+            openFailed = false;
             break;
         } else {
             QGC::SLEEP::msleep(100);
@@ -234,6 +235,16 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QGCSerialPortInfo& po
     
     if (radioMode) {
         QGC::SLEEP::msleep(2000);
+    }
+
+    if (openFailed) {
+        qCDebug(FirmwareUpgradeLog) << "Bootloader open port failed:" << _bootloader->errorString();
+        if (errorOnNotFound) {
+            emit error(_bootloader->errorString());
+        }
+        _bootloaderPort->deleteLater();
+        _bootloaderPort = NULL;
+        return false;
     }
 
     if (_bootloader->sync(_bootloaderPort)) {
