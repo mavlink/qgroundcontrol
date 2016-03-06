@@ -1461,7 +1461,7 @@ const int    VehicleBatteryFactGroup::_currentUnavailable =           -1;
 const double VehicleBatteryFactGroup::_temperatureUnavailable =       -1.0;
 const int    VehicleBatteryFactGroup::_cellCountUnavailable =         -1.0;
 
-SettingsFact VehicleBatteryFactGroup::_percentRemainingAnnounceFact (_settingsGroup, _percentRemainingAnnounceFactName, FactMetaData::valueTypeInt32, _percentRemainingAnnounceDefault);
+SettingsFact* VehicleBatteryFactGroup::_percentRemainingAnnounceFact = NULL;
 
 VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/BatteryFact.json", parent)
@@ -1473,13 +1473,13 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     , _temperatureFact              (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
     , _cellCountFact                (0, _cellCountFactName,                 FactMetaData::valueTypeInt32)
 {
-    _addFact(&_voltageFact,                     _voltageFactName);
-    _addFact(&_percentRemainingFact,            _percentRemainingFactName);
-    _addFact(&_percentRemainingAnnounceFact,    _percentRemainingAnnounceFactName);
-    _addFact(&_mahConsumedFact,                 _mahConsumedFactName);
-    _addFact(&_currentFact,                     _currentFactName);
-    _addFact(&_temperatureFact,                 _temperatureFactName);
-    _addFact(&_cellCountFact,                   _cellCountFactName);
+    _addFact(&_voltageFact,                 _voltageFactName);
+    _addFact(&_percentRemainingFact,        _percentRemainingFactName);
+    _addFact(percentRemainingAnnounce(),    _percentRemainingAnnounceFactName);
+    _addFact(&_mahConsumedFact,             _mahConsumedFactName);
+    _addFact(&_currentFact,                 _currentFactName);
+    _addFact(&_temperatureFact,             _temperatureFactName);
+    _addFact(&_cellCountFact,               _cellCountFactName);
 
     // Start out as not available
     _voltageFact.setRawValue            (_voltageUnavailable);
@@ -1493,6 +1493,14 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
 void VehicleBatteryFactGroup::setVehicle(Vehicle* vehicle)
 {
     _vehicle = vehicle;
+}
+
+Fact* VehicleBatteryFactGroup::percentRemainingAnnounce(void)
+{
+    if (!_percentRemainingAnnounceFact) {
+        _percentRemainingAnnounceFact = new SettingsFact(_settingsGroup, _percentRemainingAnnounceFactName, FactMetaData::valueTypeInt32, _percentRemainingAnnounceDefault);
+    }
+    return _percentRemainingAnnounceFact;
 }
 
 const char* VehicleWindFactGroup::_directionFactName =      "direction";
