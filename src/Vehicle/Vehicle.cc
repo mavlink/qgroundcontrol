@@ -225,9 +225,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     _batteryFactGroup.setVehicle(this);
     _windFactGroup.setVehicle(this);
     _vibrationFactGroup.setVehicle(this);
-
-    _announceArmedChanged(armed());
-    _announceflightModeChanged(flightMode());
 }
 
 // Disconnected Vehicle
