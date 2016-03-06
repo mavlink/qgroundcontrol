@@ -534,7 +534,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                     break;
                 case QGCSerialPortInfo::BoardType3drRadio:
                     if (_autoconnect3DRRadio) {
-                        pSerialConfig = new SerialConfiguration(QString("3DR Radio on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(QString("SiK Radio on %1").arg(portInfo.portName().trimmed()));
                     }
                     break;
                 default:
