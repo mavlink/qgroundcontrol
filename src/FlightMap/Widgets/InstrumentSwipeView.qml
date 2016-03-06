@@ -43,7 +43,6 @@ Item {
         anchors.bottom:             parent.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
         spacing:                    _margins
-        visible:                    multiVehicleManager.activeVehicle
 
         Rectangle {
             id:             valuesPageIndicator
