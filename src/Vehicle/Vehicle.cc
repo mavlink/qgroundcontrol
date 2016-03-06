@@ -141,6 +141,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(this, &Vehicle::_sendMessageOnThread,       this, &Vehicle::_sendMessage, Qt::QueuedConnection);
     connect(this, &Vehicle::_sendMessageOnLinkOnThread, this, &Vehicle::_sendMessageOnLink, Qt::QueuedConnection);
     connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_announceflightModeChanged);
+    connect(this, &Vehicle::armedChanged,               this, &Vehicle::_announceArmedChanged);
 
     _uas = new UAS(_mavlink, this, _firmwarePluginManager);
 
@@ -467,7 +468,7 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     if (sysStatus.battery_remaining > 0 && sysStatus.battery_remaining < _batteryFactGroup.percentRemainingAnnounce()->rawValue().toInt()) {
         if (!_lowBatteryAnnounceTimer.isValid() || _lowBatteryAnnounceTimer.elapsed() > _lowBatteryAnnounceRepeatMSecs) {
             _lowBatteryAnnounceTimer.restart();
-            _say(QString("Low battery on %1: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
+            _say(QString("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
         }
     }
 }
@@ -1288,7 +1289,7 @@ void Vehicle::_connectionLostTimeout(void)
         _connectionLost = true;
         _heardFrom = false;
         emit connectionLostChanged(true);
-        _say(QString("communication lost to %1").arg(_vehicleIdSpeech()));
+        _say(QString("%1 communication lost").arg(_vehicleIdSpeech()));
         if (_autoDisconnect) {
             disconnectInactiveVehicle();
         }
@@ -1301,7 +1302,7 @@ void Vehicle::_connectionActive(void)
     if (_connectionLost) {
         _connectionLost = false;
         emit connectionLostChanged(false);
-        _say(QString("communication regained to %1").arg(_vehicleIdSpeech()));
+        _say(QString("% 1 communication regained").arg(_vehicleIdSpeech()));
     }
 }
 
@@ -1344,14 +1345,25 @@ QString Vehicle::_vehicleIdSpeech(void)
     if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count() > 1) {
         return QString("vehicle %1").arg(id());
     } else {
-        return QStringLiteral("vehicle");
+        return QString();
     }
 }
 
 void Vehicle::_announceflightModeChanged(const QString& flightMode)
 {
-    _say(QString("%1 is now in %2 flight mode").arg(_vehicleIdSpeech()).arg(flightMode));
+    _say(QString("%1 %2 flight mode").arg(_vehicleIdSpeech()).arg(flightMode));
 }
+
+void Vehicle::_announceArmedChanged(bool armed)
+{
+    _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? QStringLiteral("armed") : QStringLiteral("disarmed")));
+}
+
+void Vehicle::clearTrajectoryPoints(void)
+{
+    _mapTrajectoryList.clearAndDeleteContents();
+}
+
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";

@@ -318,6 +318,8 @@ public:
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
     Q_INVOKABLE void disconnectInactiveVehicle(void);
 
+    Q_INVOKABLE void clearTrajectoryPoints(void);
+
     // Property accessors
 
     QGeoCoordinate coordinate(void) { return _coordinate; }
@@ -524,6 +526,7 @@ private slots:
     void _parametersReady(bool parametersReady);
     void _remoteControlRSSIChanged(uint8_t rssi);
     void _announceflightModeChanged(const QString& flightMode);
+    void _announceArmedChanged(bool armed);
 
     void _handleTextMessage                 (int newCount);
     void _handletextMessageReceived         (UASMessage* message);

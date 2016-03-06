@@ -228,3 +228,11 @@ void QmlObjectListModel::deleteListAndContents(void)
     }
     deleteLater();
 }
+
+void QmlObjectListModel::clearAndDeleteContents(void)
+{
+    for (int i=0; i<_objectList.count(); i++) {
+        _objectList[i]->deleteLater();
+    }
+    clear();
+}
