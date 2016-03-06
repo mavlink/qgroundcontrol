@@ -73,20 +73,20 @@ Item {
 
     readonly property string fwAcroModeName:            "Stabilized"
     readonly property string mrAcroModeName:            "Acro"
-    readonly property string fwAcroModeDescription:     "The angular rates are controlled, but not the attitude"
-    readonly property string mrAcroModeDescription:     "The angular rates are controlled, but not the attitude"
+    readonly property string fwAcroModeDescription:     "The angular rates are controlled, but not the attitude. "
+    readonly property string mrAcroModeDescription:     "The angular rates are controlled, but not the attitude. "
 
     readonly property string altCtlModeName:            "Altitude Control"
-    readonly property string fwAltCtlModeDescription:   "Roll stick controls banking, pitch stick altitude" +
-                                                        "Throttle stick controls speed." +
-                                                        "With no stick inputs the plane holds heading, but drifts off in wind."
-    readonly property string mrAltCtlModeDescription:   "Same as Stablized mode except that Throttle controls climb/sink rate. Centered Throttle holds altitude steady."
+    readonly property string fwAltCtlModeDescription:   "Roll stick controls banking, pitch stick altitude " +
+                                                        "Throttle stick controls speed. " +
+                                                        "With no stick inputs the plane holds heading, but drifts off in wind. "
+    readonly property string mrAltCtlModeDescription:   "Same as Stablized mode except that Throttle controls climb/sink rate. Centered Throttle holds altitude steady. "
 
     readonly property string posCtlModeName:            "Position Control"
-    readonly property string fwPosCtlModeDescription:   "Roll stick controls banking, pitch stick altitude" +
+    readonly property string fwPosCtlModeDescription:   "Roll stick controls banking, pitch stick controls altitude. " +
                                                         "Throttle stick controls speed." +
-                                                        "With no stick inputs the plane flies a straight line, even in wind."
-    readonly property string mrPosCtlModeDescription:   "Roll and Pitch sticks control sideways and forward speed" +
+                                                        "With no stick inputs the plane flies a straight line, even in wind. "
+    readonly property string mrPosCtlModeDescription:   "Roll and Pitch sticks control sideways and forward speed " +
                                                         "Throttle stick controls climb / sink rade. "
 
     readonly property string missionModeName:           "Auto Mission"
