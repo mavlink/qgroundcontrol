@@ -197,21 +197,35 @@ Item {
             z:                      QGroundControl.zOrderWidgets
 
             dropDownComponent: Component {
-                Row {
+                Column {
                     spacing: ScreenTools.defaultFontPixelWidth
 
-                    Repeater {
-                        model: QGroundControl.flightMapSettings.mapTypes
+                    Row {
+                        spacing: ScreenTools.defaultFontPixelWidth
 
-                        QGCButton {
-                            checkable:  true
-                            checked:    _flightMap ? _flightMap.mapType == text : false
-                            text:       modelData
+                        Repeater {
+                            model: QGroundControl.flightMapSettings.mapTypes
 
-                            onClicked: {
-                                _flightMap.mapType = text
-                                _dropButtonsExclusiveGroup.current = null
+                            QGCButton {
+                                checkable:  true
+                                checked:    _flightMap ? _flightMap.mapType == text : false
+                                text:       modelData
+
+                                onClicked: {
+                                    _flightMap.mapType = text
+                                    _dropButtonsExclusiveGroup.current = null
+                                }
                             }
+                        }
+                    }
+
+                    QGCButton {
+                        text:       "Clear flight trails"
+                        enabled:    QGroundControl.multiVehicleManager.activeVehicle
+
+                        onClicked: {
+                            QGroundControl.multiVehicleManager.activeVehicle.clearTrajectoryPoints()
+                            _dropButtonsExclusiveGroup.current = null
                         }
                     }
                 }
