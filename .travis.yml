@@ -33,7 +33,7 @@ before_script:
 
 script:
     - cd ${SHADOW_BUILD_DIR}
-    - xcodebuild -verbose -configuration Release --echo
+    - xcodebuild -verbose -configuration Release
 
 notifications:
   webhooks:
