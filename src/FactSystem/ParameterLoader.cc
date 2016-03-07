@@ -735,9 +735,11 @@ void ParameterLoader::writeParametersToStream(QTextStream &stream)
     foreach (int componentId, _mapParameterName2Variant.keys()) {
         foreach (const QString &paramName, _mapParameterName2Variant[componentId].keys()) {
             Fact* fact = _mapParameterName2Variant[componentId][paramName].value<Fact*>();
-            Q_ASSERT(fact);
-
-            stream << _vehicle->id() << "\t" << componentId << "\t" << paramName << "\t" << fact->rawValueString() << "\t" << QString("%1").arg(_factTypeToMavType(fact->type())) << "\n";
+            if (fact) {
+                stream << _vehicle->id() << "\t" << componentId << "\t" << paramName << "\t" << fact->rawValueStringFullPrecision() << "\t" << QString("%1").arg(_factTypeToMavType(fact->type())) << "\n";
+            } else {
+                qWarning() << "Internal error: missing fact";
+            }
         }
     }
 

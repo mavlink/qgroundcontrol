@@ -249,7 +249,7 @@ QVariantList Fact::bitmaskValues(void) const
     }
 }
 
-QString Fact::_variantToString(const QVariant& variant) const
+QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
 {
     QString valueString;
 
@@ -260,7 +260,7 @@ QString Fact::_variantToString(const QVariant& variant) const
         if (qIsNaN(fValue)) {
             valueString = QStringLiteral("--.--");
         } else {
-            valueString = QString("%1").arg(fValue, 0, 'f', decimalPlaces());
+            valueString = QString("%1").arg(fValue, 0, 'f', decimalPlaces);
         }
     }
         break;
@@ -270,7 +270,7 @@ QString Fact::_variantToString(const QVariant& variant) const
         if (qIsNaN(dValue)) {
             valueString = QStringLiteral("--.--");
         } else {
-            valueString = QString("%1").arg(dValue, 0, 'f', decimalPlaces());
+            valueString = QString("%1").arg(dValue, 0, 'f', decimalPlaces);
         }
     }
         break;
@@ -282,14 +282,20 @@ QString Fact::_variantToString(const QVariant& variant) const
     return valueString;
 }
 
+QString Fact::rawValueStringFullPrecision(void) const
+{
+    return _variantToString(rawValue(), 18);
+}
+
+
 QString Fact::rawValueString(void) const
 {
-    return _variantToString(rawValue());
+    return _variantToString(rawValue(), decimalPlaces());
 }
 
 QString Fact::cookedValueString(void) const
 {
-    return _variantToString(cookedValue());
+    return _variantToString(cookedValue(), decimalPlaces());
 }
 
 QVariant Fact::rawDefaultValue(void) const
@@ -320,7 +326,7 @@ QVariant Fact::cookedDefaultValue(void) const
 
 QString Fact::cookedDefaultValueString(void) const
 {
-    return _variantToString(cookedDefaultValue());
+    return _variantToString(cookedDefaultValue(), decimalPlaces());
 }
 
 FactMetaData::ValueType_t Fact::type(void) const
@@ -390,7 +396,7 @@ QVariant Fact::cookedMin(void) const
 
 QString Fact::cookedMinString(void) const
 {
-    return _variantToString(cookedMin());
+    return _variantToString(cookedMin(), decimalPlaces());
 }
 
 QVariant Fact::rawMax(void) const
@@ -415,7 +421,7 @@ QVariant Fact::cookedMax(void) const
 
 QString Fact::cookedMaxString(void) const
 {
-    return _variantToString(cookedMax());
+    return _variantToString(cookedMax(), decimalPlaces());
 }
 
 bool Fact::minIsDefaultForType(void) const
