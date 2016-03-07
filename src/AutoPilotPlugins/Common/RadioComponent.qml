@@ -471,6 +471,27 @@ QGCView {
                 onClicked:  showDialog(copyTrimsDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
             }
 
+            Repeater {
+                model: QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? [ "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_AUX3" ] : 0
+
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth
+
+                    property Fact fact: controller.getParameterFact(-1, modelData)
+
+                    QGCLabel {
+                        anchors.baseline:   optCombo.baseline
+                        text:               fact.shortDescription + ":"
+                    }
+
+                    FactComboBox {
+                        id:         optCombo
+                        width:      ScreenTools.defaultFontPixelWidth * 15
+                        fact:       parent.fact
+                        indexModel: false
+                    }
+                }
+            } // Repeater
         } // Column - Left Column
 
         Item {

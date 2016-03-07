@@ -89,7 +89,6 @@ private:
     void _stickMoveWaitForSettle(int channel, int value);
     void _stickMoveAutoStep(const char* functionStr, enum RadioComponentController::rcCalFunctions function, enum MoveToDirection direction, bool identifyStep);
     void _switchMinMaxStep(void);
-    void _flapsDetectStep(void);
     void _switchSelectAutoStep(const char* functionStr, RadioComponentController::rcCalFunctions function);
     bool _px4Vehicle(void) const;
     const struct RadioComponentController::FunctionInfo* _functionInfo(void) const;
