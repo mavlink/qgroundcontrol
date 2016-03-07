@@ -31,6 +31,15 @@ FactSliderPanel {
 
     sliderModel: ListModel {
         ListElement {
+            title:          "Throttle Hover"
+            description:    "Adjust throttle so hover is at mid-throttle. Slide to the left if hover is lower than throttle center. Slide to the right if hover is higher than throttle center."
+            param:          "MPC_THR_HOVER"
+            min:            0.2
+            max:            0.8
+            step:           0.01
+        }
+
+        ListElement {
             title:          "Roll sensitivity"
             description:    "Slide to the left to make roll control faster and more accurate. Slide to the right if roll oscillates or is too twitchy."
             param:          "MC_ROLL_TC"
