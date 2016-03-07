@@ -202,7 +202,9 @@ signals:
 private slots:
     void _linkConnected(void);
     void _linkDisconnected(void);
+#ifndef __ios__
     void _activeLinkCheck(void);
+#endif
 
 private:
     bool _connectionsSuspendedMsg(void);
@@ -236,9 +238,11 @@ private:
     bool _autoconnect3DRRadio;
     bool _autoconnectPX4Flow;
 
+#ifndef __ios__
     QTimer              _activeLinkCheckTimer;                  ///< Timer which checks for a vehicle showing up on a usb direct link
     QList<SerialLink*>  _activeLinkCheckList;                   ///< List of links we are waiting for a vehicle to show up on
     static const int    _activeLinkCheckTimeoutMSecs = 15000;   ///< Amount of time to wait for a heatbeat. Keep in mind ArduPilot stack heartbeat is slow to come.
+#endif
 
     static const char*  _settingsGroup;
     static const char*  _autoconnectUDPKey;
