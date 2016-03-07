@@ -95,27 +95,18 @@ void ParameterEditorController::clearRCToParam(void)
 	_uas->unsetRCToParameterMap();
 }
 
-void ParameterEditorController::saveToFile(void)
+void ParameterEditorController::saveToFile(const QString& filename)
 {
-#ifndef __mobile__
     if (!_autopilot) {
         qWarning() << "Internal error _autopilot==NULL";
         return;
     }
 
-    QString msgTitle("Save Parameters");
-    
-	QString fileName = QGCFileDialog::getSaveFileName(NULL,
-                                                      msgTitle,
-                                                      QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-                                                      "Parameter Files (*.params)",
-                                                      "params",
-                                                      true);
-	if (!fileName.isEmpty()) {
-		QFile file(fileName);
+    if (!filename.isEmpty()) {
+        QFile file(filename);
         
 		if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            qgcApp()->showMessage("Unable to create file");
+            qgcApp()->showMessage(QString("Unable to create file: %1").arg(filename));
 			return;
 		}
         
@@ -123,12 +114,23 @@ void ParameterEditorController::saveToFile(void)
 		_autopilot->writeParametersToStream(stream);
 		file.close();
 	}
+}
+
+void ParameterEditorController::saveToFilePicker(void)
+{
+#ifndef __mobile__
+    QString fileName = QGCFileDialog::getSaveFileName(NULL,
+                                                      "Save Parameters",
+                                                      QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
+                                                      "Parameter Files (*.params)",
+                                                      "params",
+                                                      true);
+    saveToFile(fileName);
 #endif
 }
 
-void ParameterEditorController::loadFromFile(void)
+void ParameterEditorController::loadFromFile(const QString& filename)
 {
-#ifndef __mobile__
     QString errors;
     
     if (!_autopilot) {
@@ -136,17 +138,11 @@ void ParameterEditorController::loadFromFile(void)
         return;
     }
 
-    QString msgTitle("Load Parameters");
-    
-	QString fileName = QGCFileDialog::getOpenFileName(NULL,
-                                                      msgTitle,
-                                                      QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-													  "Parameter Files (*.params);;All Files (*)");
-    if (!fileName.isEmpty()) {
-        QFile file(fileName);
+    if (!filename.isEmpty()) {
+        QFile file(filename);
         
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            qgcApp()->showMessage("Unable to open file");
+            qgcApp()->showMessage(QString("Unable to open file: %1").arg(filename));
             return;
         }
         
@@ -158,6 +154,16 @@ void ParameterEditorController::loadFromFile(void)
             emit showErrorMessage(errors);
         }
     }
+}
+
+void ParameterEditorController::loadFromFilePicker(void)
+{
+#ifndef __mobile__
+    QString fileName = QGCFileDialog::getOpenFileName(NULL,
+                                                      "Load Parameters",
+                                                      QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
+                                                      "Parameter Files (*.params);;All Files (*)");
+    loadFromFile(fileName);
 #endif
 }
 

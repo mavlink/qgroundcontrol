@@ -51,13 +51,12 @@ public:
     Q_INVOKABLE void start(bool editMode);
     Q_INVOKABLE void getMissionItems(void);
     Q_INVOKABLE void sendMissionItems(void);
-    Q_INVOKABLE void loadMissionFromFile(void);
-    Q_INVOKABLE void saveMissionToFile(void);
-    Q_INVOKABLE void loadMobileMissionFromFile(const QString& file);
-    Q_INVOKABLE void saveMobileMissionToFile(const QString& file);
+    Q_INVOKABLE void loadMissionFromFilePicker(void);
+    Q_INVOKABLE void loadMissionFromFile(const QString& filename);
+    Q_INVOKABLE void saveMissionToFilePicker(void);
+    Q_INVOKABLE void saveMissionToFile(const QString& filename);
     Q_INVOKABLE void removeMissionItem(int index);
     Q_INVOKABLE void removeAllMissionItems(void);
-    Q_INVOKABLE QStringList getMobileMissionFiles(void);
 
     /// Add a new simple mission item to the list
     ///     @param i: index to insert at
@@ -119,8 +118,6 @@ private:
     double _normalizeLon(double lon);
     bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
     bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
-    void _loadMissionFromFile(const QString& file);
-    void _saveMissionToFile(const QString& file);
     int _nextSequenceNumber(void);
 
 private:

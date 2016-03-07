@@ -24,17 +24,17 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-import QtQuick 2.3
-import QtQuick.Controls 1.3
-import QtQuick.Controls.Styles 1.2
-import QtQuick.Dialogs 1.2
+import QtQuick                  2.5
+import QtQuick.Controls         1.3
+import QtQuick.Dialogs          1.2
 
-import QGroundControl.Controls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.ScreenTools 1.0
-import QGroundControl.Controllers 1.0
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
+import QGroundControl               1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 
 QGCView {
     id:         qgcView
@@ -123,16 +123,26 @@ QGCView {
                             text:           "Search..."
                             onTriggered:    showDialog(searchDialogComponent, "Parameter Search", qgcView.showDialogDefaultWidth, StandardButton.Reset | StandardButton.Apply)
                         }
-                        MenuSeparator { visible: !ScreenTools.isMobile }
+                        MenuSeparator { }
                         MenuItem {
                             text:           "Load from file..."
-                            onTriggered:	controller.loadFromFile()
-                            visible:        !ScreenTools.isMobile
+                            onTriggered: {
+                                if (ScreenTools.isMobile) {
+                                    qgcView.showDialog(mobileFilePicker, "Select Parameter File", qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                                } else {
+                                    controller.loadFromFilePicker()
+                                }
+                            }
                         }
                         MenuItem {
                             text:           "Save to file..."
-                            onTriggered:	controller.saveToFile()
-                            visible:        !ScreenTools.isMobile
+                            onTriggered: {
+                                if (ScreenTools.isMobile) {
+                                    qgcView.showDialog(mobileFileSaver, "Save Parameter File", qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+                                } else {
+                                    controller.saveToFilePicker()
+                                }
+                            }
                         }
                         MenuSeparator { visible: _showRCToParam }
                         MenuItem {
@@ -375,4 +385,22 @@ QGCView {
         }
     }
 
+    Component {
+        id: mobileFilePicker
+
+        QGCMobileFileDialog {
+            fileExtension:      QGroundControl.parameterFileExtension
+            onFilenameReturned: controller.loadFromFile(filename)
+        }
+    }
+
+    Component {
+        id: mobileFileSaver
+
+        QGCMobileFileDialog {
+            openDialog:         false
+            fileExtension:      QGroundControl.parameterFileExtension
+            onFilenameReturned: controller.saveToFile(filename)
+        }
+    }
 } // QGCView
