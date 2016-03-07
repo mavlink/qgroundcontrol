@@ -116,6 +116,9 @@ public:
     QString         enumOrValueString       (void);         // This is not const, since an unknown value can modify the enum lists
     double          increment               (void) const;
 
+    /// Returns the values as a string with full 18 digit precision if float/double.
+    QString rawValueStringFullPrecision(void) const;
+
     void setRawValue        (const QVariant& value);
     void setCookedValue     (const QVariant& value);
     void setEnumIndex       (int index);
@@ -165,7 +168,7 @@ signals:
     void _containerRawValueChanged(const QVariant& value);
     
 protected:
-    QString _variantToString(const QVariant& variant) const;
+    QString _variantToString(const QVariant& variant, int decimalPlaces) const;
     void _sendValueChangedSignal(QVariant value);
 
     QString                     _name;
