@@ -67,7 +67,7 @@ install:
       && export PATH=/usr/local/opt/qt5/bin:$PATH
       ;
     elif [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" = "ios" ]]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/qt5.5.1.ios.tar.bz2
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/qt5.5.1-ios.tar.bz2
         && mkdir -p ~/qt-ios
         && tar jxf qt5.5.1.ios.tar.gz -C ~/qt-ios
         && export PATH=~/qt-ios/ios/bin:$PATH
