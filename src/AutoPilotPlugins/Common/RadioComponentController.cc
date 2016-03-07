@@ -81,9 +81,6 @@ const struct RadioComponentController::FunctionInfo RadioComponentController::_r
     { "RC_MAP_LOITER_SW" },
     { "RC_MAP_RETURN_SW" },
     { "RC_MAP_ACRO_SW" },
-    { "RC_MAP_FLAPS" },
-    { "RC_MAP_AUX1" },
-    { "RC_MAP_AUX2" },
 };
 
 const struct RadioComponentController::FunctionInfo RadioComponentController::_rgFunctionInfoAPM[RadioComponentController::rcCalFunctionMax] = {
@@ -92,9 +89,6 @@ const struct RadioComponentController::FunctionInfo RadioComponentController::_r
     { "RCMAP_PITCH" },
     { "RCMAP_YAW" },
     { "RCMAP_THROTTLE" },
-    { NULL },
-    { NULL },
-    { NULL },
     { NULL },
     { NULL },
     { NULL },
@@ -157,16 +151,7 @@ const RadioComponentController::stateMachineEntry* RadioComponentController::_ge
     static const char* msgPitchDown =       "Move the Pitch stick all the way down and hold it there...";
     static const char* msgPitchUp =         "Move the Pitch stick all the way up and hold it there...";
     static const char* msgPitchCenter =     "Allow the Pitch stick to move back to center...";
-    static const char* msgAux1Switch =      "Move the switch or dial you want to use for Aux1.\n\n"
-                                            "You can click Skip if you don't want to assign.";
-    static const char* msgAux2Switch =      "Move the switch or dial you want to use for Aux2.\n\n"
-                                            "You can click Skip if you don't want to assign.";
     static const char* msgSwitchMinMax =    "Move all the transmitter switches and/or dials back and forth to their extreme positions.";
-    static const char* msgFlapsDetect =     "Move the switch or dial you want to use for Flaps back and forth a few times. "
-                                            "Then leave the switch/dial at the position you want to use for Flaps fully extended.\n\n"
-                                            "Click Next to continue.\n"
-                                            "If you won't be using Flaps, click Skip.";
-    static const char* msgFlapsUp =         "Move the switch or dial you want to use for Flaps to the position you want to use for Flaps fully retracted.";
     static const char* msgComplete =        "All settings have been captured. Click Next to write the new parameters to your board.";
     
     static const stateMachineEntry rgStateMachinePX4[] = {
@@ -182,10 +167,6 @@ const RadioComponentController::stateMachineEntry* RadioComponentController::_ge
         { rcCalFunctionPitch,               msgPitchDown,       _imagePitchDown,    &RadioComponentController::_inputStickMin,          NULL,                                           NULL },
         { rcCalFunctionPitch,               msgPitchCenter,     _imageHome,         &RadioComponentController::_inputCenterWait,        NULL,                                           NULL },
         { rcCalFunctionMax,                 msgSwitchMinMax,    _imageSwitchMinMax, &RadioComponentController::_inputSwitchMinMax,      &RadioComponentController::_advanceState,       NULL },
-        { rcCalFunctionFlaps,               msgFlapsDetect,     _imageThrottleDown, &RadioComponentController::_inputFlapsDetect,       &RadioComponentController::_saveFlapsDown,      &RadioComponentController::_skipFlaps },
-        { rcCalFunctionFlaps,               msgFlapsUp,         _imageThrottleDown, &RadioComponentController::_inputFlapsUp,           NULL,                                           NULL },
-        { rcCalFunctionAux1,                msgAux1Switch,      _imageThrottleDown, &RadioComponentController::_inputSwitchDetect,      NULL,                                           &RadioComponentController::_advanceState },
-        { rcCalFunctionAux2,                msgAux2Switch,      _imageThrottleDown, &RadioComponentController::_inputSwitchDetect,      NULL,                                           &RadioComponentController::_advanceState },
         { rcCalFunctionMax,                 msgComplete,        _imageThrottleDown, NULL,                                               &RadioComponentController::_writeCalibration,   NULL },
     };
     
@@ -547,100 +528,6 @@ void RadioComponentController::_inputSwitchMinMax(enum rcCalFunctions function, 
     }
 }
 
-void RadioComponentController::_skipFlaps(void)
-{
-    // Flaps channel may have been identified. Clear it out.
-    for (int i=0; i<_chanCount; i++) {
-        if (_rgChannelInfo[i].function == RadioComponentController::rcCalFunctionFlaps) {
-            _rgChannelInfo[i].function = rcCalFunctionMax;
-        }
-    }
-    _rgFunctionChannelMapping[RadioComponentController::rcCalFunctionFlaps] = _chanMax();
-
-    // Skip over flap steps
-    _currentStep += 2;
-    _setupCurrentState();
-}
-
-void RadioComponentController::_saveFlapsDown(void)
-{
-    int channel = _rgFunctionChannelMapping[rcCalFunctionFlaps];
-    
-    if (channel == _chanMax()) {
-        // Channel not yet mapped, still waiting for switch to move
-        if (_unitTestMode) {
-            emit nextButtonMessageBoxDisplayed();
-        } else {
-            qgcApp()->showMessage("Flaps switch has not yet been detected.");
-        }
-        return;
-    }
-    
-    Q_ASSERT(channel != -1);
-    ChannelInfo* info = &_rgChannelInfo[channel];
-    
-    int rcValue = _rcRawValue[channel];
-    
-    // Switch detection is complete. Switch should be at flaps fully extended position.
-    
-    // Channel should be at max value, if it is below initial set point the channel is reversed.
-    info->reversed = rcValue < _rcValueSave[channel];
-    
-    if (info->reversed) {
-        _rgChannelInfo[channel].rcMin = rcValue;
-    } else {
-        _rgChannelInfo[channel].rcMax = rcValue;
-    }
-    
-    _advanceState();
-}
-
-void RadioComponentController::_inputFlapsUp(enum rcCalFunctions function, int channel, int value)
-{
-    Q_UNUSED(function);
-    
-    // FIXME: Duplication
-    
-    Q_ASSERT(function == rcCalFunctionFlaps);
-    
-    // We only care about the channel mapped to flaps
-    if (_rgFunctionChannelMapping[rcCalFunctionFlaps] != channel) {
-        return;
-    }
-    
-    if (_stickDetectChannel == _chanMax()) {
-        // Setup up to detect stick being pegged to extreme position
-        if (_rgChannelInfo[channel].reversed) {
-            if (value > _rcCalPWMCenterPoint + _rcCalMoveDelta) {
-                _stickDetectChannel = channel;
-                _stickDetectInitialValue = value;
-                _stickDetectValue = value;
-            }
-        } else {
-            if (value < _rcCalPWMCenterPoint - _rcCalMoveDelta) {
-                _stickDetectChannel = channel;
-                _stickDetectInitialValue = value;
-                _stickDetectValue = value;
-            }
-        }
-    } else {
-        // We are waiting for the selected channel to settle out
-        
-        if (_stickSettleComplete(value)) {
-            ChannelInfo* info = &_rgChannelInfo[channel];
-            
-            // Stick detection is complete. Stick should be at min position.
-            if (info->reversed) {
-                _rgChannelInfo[channel].rcMax = value;
-            } else {
-                _rgChannelInfo[channel].rcMin = value;
-            }
-            
-            _advanceState();
-        }
-    }
-}
-
 void RadioComponentController::_switchDetect(enum rcCalFunctions function, int channel, int value, bool moveToNextStep)
 {
     // If this channel is already used in a mapping we can't use it again
@@ -669,11 +556,6 @@ void RadioComponentController::_switchDetect(enum rcCalFunctions function, int c
 void RadioComponentController::_inputSwitchDetect(enum rcCalFunctions function, int channel, int value)
 {
     _switchDetect(function, channel, value, true /* move to next step after detection */);
-}
-
-void RadioComponentController::_inputFlapsDetect(enum rcCalFunctions function, int channel, int value)
-{
-    _switchDetect(function, channel, value, false /* do not move to next step after detection */);
 }
 
 /// @brief Resets internal calibration values to their initial state in preparation for a new calibration sequence.

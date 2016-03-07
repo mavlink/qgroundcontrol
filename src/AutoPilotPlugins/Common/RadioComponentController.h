@@ -159,9 +159,6 @@ private:
         rcCalFunctionLoiterSwitch,
         rcCalFunctionReturnSwitch,
         rcCalFunctionAcroSwitch,
-        rcCalFunctionFlaps,
-        rcCalFunctionAux1,
-        rcCalFunctionAux2,
         rcCalFunctionMax,
         
         // Attitude functions are roll/pitch/yaw/throttle
@@ -170,7 +167,7 @@ private:
         
         // Non-Attitude functions are everything else
         rcCalFunctionFirstNonAttitudeFunction = rcCalFunctionModeSwitch,
-        rcCalFunctionLastNonAttitudeFunction = rcCalFunctionAux2,
+        rcCalFunctionLastNonAttitudeFunction = rcCalFunctionAcroSwitch,
     };
     
     /// @brief The states of the calibration state machine.
@@ -224,15 +221,10 @@ private:
     void _inputStickMin(enum rcCalFunctions function, int channel, int value);
     void _inputCenterWait(enum rcCalFunctions function, int channel, int value);
     void _inputSwitchMinMax(enum rcCalFunctions function, int channel, int value);
-    void _inputFlapsDown(enum rcCalFunctions function, int channel, int value);
-    void _inputFlapsUp(enum rcCalFunctions function, int channel, int value);
     void _inputSwitchDetect(enum rcCalFunctions function, int channel, int value);
-    void _inputFlapsDetect(enum rcCalFunctions function, int channel, int value);
     
     void _switchDetect(enum rcCalFunctions function, int channel, int value, bool moveToNextStep);
     
-    void _saveFlapsDown(void);
-    void _skipFlaps(void);
     void _saveAllTrims(void);
     
     bool _stickSettleComplete(int value);
