@@ -79,17 +79,15 @@ const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSetting
     { RadioComponentController::rcCalFunctionYaw,			_testMinValue,      _testMaxValue,      0, true },
     { RadioComponentController::rcCalFunctionThrottle,		_testMinValue,      _testMaxValue,      0,  false },
     
-    // Channels 5-8: Not mapped to function, Simulate invalid Min/Max, since available channel Min/Max is still shown.
+    // Channels 5-11: Not mapped to function, Simulate invalid Min/Max, since available channel Min/Max is still shown.
     // These are here to skip over the flight mode functions
     { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
     { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
     { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
     { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
-    
-    // Channels 9-11: Remainder of non-flight mode switches
-    { RadioComponentController::rcCalFunctionFlaps,			_testMinValue,      _testMaxValue,      0, false },
-    { RadioComponentController::rcCalFunctionAux1,			_testMinValue,      _testMaxValue,      0, false },
-    { RadioComponentController::rcCalFunctionAux2,			_testMinValue,      _testMaxValue,      0, false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
 	
     // Channel 12 : Not mapped to function, Simulate invalid Min, valid Max
     { RadioComponentController::rcCalFunctionMax,			_testCenterValue,	_testMaxValue,      0,  false },
@@ -118,16 +116,14 @@ const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSetting
     { RadioComponentController::rcCalFunctionYaw,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               true },
     { RadioComponentController::rcCalFunctionThrottle,		_testMinValue,                              _testMaxValue,                              _testMinValue,                                  false },
     
-    // Channels 5-8: not mapped and should be set to defaults
+    // Channels 5-11: not mapped and should be set to defaults
     { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
     { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
     { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
     { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
-    
-    // Channels 9-11: Remainder of non-flight mode switches
-    { RadioComponentController::rcCalFunctionFlaps,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
-    { RadioComponentController::rcCalFunctionAux1,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
-    { RadioComponentController::rcCalFunctionAux2,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
 	
 	// Channels 12-17 are not mapped and should be set to defaults
 	{ RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
@@ -335,33 +331,6 @@ void RadioConfigTest::_switchMinMaxStep(void)
     QCOMPARE(_controller->_currentStep, saveStep + 1);
 }
 
-void RadioConfigTest::_flapsDetectStep(void)
-{
-    int channel = _rgFunctionChannelMap[RadioComponentController::rcCalFunctionFlaps];
-    
-    qCDebug(RadioConfigTestLog) << "_flapsDetectStep channel" << channel;
-    
-    // Test code can't handle reversed flaps channel
-    Q_ASSERT(!_channelSettings()[channel].reversed);
-    
-    CHK_BUTTONS(nextButtonMask | cancelButtonMask | skipButtonMask);
-    
-    int saveStep = _controller->_currentStep;
-
-    // Wiggle channel to identify
-    _stickMoveWaitForSettle(channel, _testMaxValue);
-    _stickMoveWaitForSettle(channel, _testMinValue);
-    
-    // Leave channel on full flaps down
-    _stickMoveWaitForSettle(channel, _testMaxValue);
-    
-    // User has to hit next at this step
-    QCOMPARE(_controller->_currentStep, saveStep);
-    CHK_BUTTONS(nextButtonMask | cancelButtonMask | skipButtonMask);
-    _controller->nextButtonClicked();
-    QCOMPARE(_controller->_currentStep, saveStep + 1);
-}
-
 void RadioConfigTest::_switchSelectAutoStep(const char* functionStr, RadioComponentController::rcCalFunctions function)
 {
     Q_UNUSED(functionStr);
@@ -449,12 +418,6 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
     _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToMin, false /* not identify step */);
     _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToCenter, false /* not identify step */);
     _switchMinMaxStep();
-    if (firmwareType == MAV_AUTOPILOT_PX4) {
-        _flapsDetectStep();
-        _stickMoveAutoStep("Flaps", RadioComponentController::rcCalFunctionFlaps, moveToMin, false /* not identify step */);
-        _switchSelectAutoStep("Aux1", RadioComponentController::rcCalFunctionAux1);
-        _switchSelectAutoStep("Aux2", RadioComponentController::rcCalFunctionAux2);
-    }
 
     // One more click and the parameters should get saved
     _controller->nextButtonClicked();
