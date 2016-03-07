@@ -29,7 +29,7 @@ install:
 before_script:
     - mkdir ${SHADOW_BUILD_DIR}
     - cd ${SHADOW_BUILD_DIR}
-    - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn
+    - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release
 
 script:
     - cd ${SHADOW_BUILD_DIR}
