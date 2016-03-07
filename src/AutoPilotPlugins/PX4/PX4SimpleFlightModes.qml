@@ -148,7 +148,7 @@ Item {
                             spacing:            ScreenTools.defaultFontPixelHeight
 
                             Repeater {
-                                model: [ "RC_MAP_RETURN_SW", "RC_MAP_KILL_SW", "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_AUX3", "RC_MAP_OFFB_SW" ]
+                                model: [ "RC_MAP_RETURN_SW", "RC_MAP_KILL_SW", "RC_MAP_OFFB_SW" ]
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
