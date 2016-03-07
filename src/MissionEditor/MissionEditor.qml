@@ -92,7 +92,7 @@ QGCView {
         if (ScreenTools.isMobile) {
             _root.showDialog(mobileFilePicker, "Select Mission File", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
         } else {
-            controller.loadMissionFromFile()
+            controller.loadMissionFromFilePicker()
             fitViewportToMissionItems()
         }
     }
@@ -191,23 +191,13 @@ QGCView {
     Component {
         id: mobileFilePicker
 
-        QGCViewDialog {
-            ListView {
-                anchors.margins:    _margin
-                anchors.fill:       parent
-                spacing:            _margin / 2
-                orientation:    ListView.Vertical
-                model: controller.getMobileMissionFiles()
+        QGCMobileFileDialog {
+            openDialog:     true
+            fileExtension:  QGroundControl.missionFileExtension
 
-                delegate: QGCButton {
-                    text: modelData
-
-                    onClicked: {
-                        hideDialog()
-                        controller.loadMobileMissionFromFile(modelData)
-                        fitViewportToMissionItems()
-                    }
-                }
+            onFilenameReturned: {
+                controller.loadMissionFromFile(filename)
+                fitViewportToMissionItems()
             }
         }
     }
@@ -215,24 +205,12 @@ QGCView {
     Component {
         id: mobileFileSaver
 
-        QGCViewDialog {
-            function accept() {
-                hideDialog()
-                controller.saveMobileMissionToFile(filenameTextField.text)
-            }
+        QGCMobileFileDialog {
+            openDialog:     false
+            fileExtension:  QGroundControl.missionFileExtension
 
-            Column {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        ScreenTools.defaultFontPixelHeight
-
-                QGCLabel {
-                    text: "File name:"
-                }
-
-                QGCTextField {
-                    id: filenameTextField
-                }
+            onFilenameReturned: {
+                controller.saveMissionToFile(filename)
             }
         }
     }
