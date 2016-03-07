@@ -4,42 +4,50 @@ git:
   depth: 500
 
 matrix:
-    fast_finish: true
-    include:
-        - os: osx
-          osx_image: xcode7
-          env: SHADOW_BUILD_DIR=/tmp/build_ios
+  fast_finish: true
+  include:
+  - os: osx
+    osx_image: xcode7
+    env: SHADOW_BUILD_DIR=/tmp/build_ios
 
 cache:
   directories:
-    - $HOME/.ccache
-
+  - $HOME/.ccache
 
 before_install:
-    - cd ${TRAVIS_BUILD_DIR}
-    - git fetch --unshallow && git fetch --all --tags
+- cd ${TRAVIS_BUILD_DIR}
+- git fetch --unshallow && git fetch --all --tags
 
 install:
-    - wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios.tar.bz2
-    - mkdir -p ~/qt-ios
-    - tar jxf Qt5.5.1-ios.tar.bz2 -C ~/qt-ios
-    - export PATH=~/qt-ios/ios/bin:$PATH
-
+- wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios.tar.bz2
+- mkdir -p ~/qt-ios
+- tar jxf Qt5.5.1-ios.tar.bz2 -C ~/qt-ios
+- export PATH=~/qt-ios/ios/bin:$PATH
 
 before_script:
-    - mkdir ${SHADOW_BUILD_DIR}
-    - cd ${SHADOW_BUILD_DIR}
-    - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release
+- openssl aes-256-cbc -k "$IOS_PASSWORD" -in deploy/iosCerts/QGroundControl_Distribution.mobileprovision.enc -d -a -out deploy/iosCerts/QGroundControl_Distribution.mobileprovision
+- openssl aes-256-cbc -k "$IOS_PASSWORD" -in deploy/iosCerts/dist.cer.enc -d -a -out deploy/iosCerts/dist.cer
+- openssl aes-256-cbc -k "$IOS_PASSWORD" -in deploy/iosCerts/dist.p12.enc -d -a -out deploy/iosCerts/dist.p12
+- mkdir ${SHADOW_BUILD_DIR}
+- cd ${SHADOW_BUILD_DIR}
+- qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release
 
 script:
-    - cd ${SHADOW_BUILD_DIR}
-    - xcodebuild -verbose -configuration Release
+- cd ${SHADOW_BUILD_DIR}
+- xcodebuild -configuration Release
 
 notifications:
   webhooks:
     urls:
-      - https://webhooks.gitter.im/e/60b033428ae9dc715662
-    on_success: change  # options: [always|never|change] default: always
-    on_failure: always  # options: [always|never|change] default: always
-    on_start: never     # options: [always|never|change] default: always
+    - https://webhooks.gitter.im/e/60b033428ae9dc715662
+    on_success: change
+    on_failure: always
+    on_start: never
 
+env:
+  global:
+    # IOS_PASSWORD
+    - secure: iKa3ecIuP7Y24eKsI2MxIe9wU+PZBYdTQRtbFJykDTn1GTs2jaRorJ+pMoOesVYjEDt8GLZpnPlDXzpSPTgh/D8hvLtuR6ITrIn0790GuMb/C3FIjwieuHS4ARAe3sSUXPLXka5XvFQyIr3fqOZ+5zHEpuuZAhA8PilRXLcgVl6jgqXxzpyeEJZrMHZg9CS1Eau2LiLN+ixMUnHmNKhSmJn9vDoHLesnujzCe0aPFpLS/Gzh74hwhC3gqSu6+OKgdPK6GO9XQNIievnJdnPjPvvHV0bh9URahMifagJZsUXodnIsPPvMTDaPzR7UZvJPefu4JIaehUzt/fOfquf030hL22dDKw8zZ0Ss+ApZnR3e304J8Fc2toKO2b+AwCrNnKvDKIoWyhkf8+CJdlx0r4yCuYobApE93dve/XRdjyqoZ8MZgUrTUCnWcfaUoV1DgCqBgazALp+X06cv3GyUC1u9ro1WOlaquKc43LM36WZRWXLYruMf47KVApH++69LsFZT1hu+O02HJzVhHlB9Bg+oezwJPMQv8gGErqkzNR+S/EJRf2XZGG7025Sthsg8qJs3/1XXz4pDSQU/2msunOVq2WAJ3p7jg7Ni+Nmtjx0ppKJ4WOP5pN0KzObZLeIWOCISX0DMyVBv816iOSB4rT5dOxtCTemY/5L9ghvMhT0=
+    - APP_NAME="QGroundControl"
+    - DEVELOPER_NAME="iOS Distribution: Donald Gagne (BDJKVNW2ZQ)"
+    - PROFILE_NAME="QGroundControl_Distribution"
