@@ -39,6 +39,9 @@ QGCView {
     property bool   _channel7OptionsAvailable:  controller.parameterExists(-1, "CH7_OPT")   // Not available in all firmware types
     property bool   _channel9OptionsAvailable:  controller.parameterExists(-1, "CH9_OPT")   // Not available in all firmware types
     property int    _channelOptionCount:         _channel7OptionsAvailable ? (_channel9OptionsAvailable ? 6 : 2) : 0
+    property Fact   _nullFact
+    property bool   _fltmodeChExists:           controller.parameterExists(-1, "FLTMODE_CH")
+    property Fact   _fltmodeCh:                 _fltmodeChExists ? controller.getParameterFact(-1, "FLTMODE_CH") : _nullFact
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
@@ -59,7 +62,7 @@ QGCView {
 
             QGCLabel {
                 id:             flightModeLabel
-                text:           "Channel 5 Flight Mode Settings"
+                text:           "Flight Mode Settings" + (_fltmodeChExists ? "" : " (Channel 5)")
                 font.weight:    Font.DemiBold
             }
 
@@ -75,9 +78,27 @@ QGCView {
                     id:                 flightModeColumn
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.left:       parent.left
-                    //  anchors.right:      parent.right
                     anchors.top:        parent.top
                     spacing:            ScreenTools.defaultFontPixelHeight
+
+                    Row {
+                        spacing:    _margins
+                        visible:    _fltmodeChExists
+
+                        QGCLabel {
+                            id:                 modeChannelLabel
+                            anchors.baseline:   modeChannelCombo.baseline
+                            text:               "Flight mode channel:"
+                        }
+
+                        QGCComboBox {
+                            id:             modeChannelCombo
+                            width:          ScreenTools.defaultFontPixelWidth * 15
+                            model:          [ "Not assigned", "Channel 1", "Channel 2","Channel 3","Channel 4","Channel 5","Channel 6","Channel 7","Channel 8" ]
+                            currentIndex:   _fltmodeCh.value
+                            onActivated:    _fltmodeCh.value = index
+                        }
+                    }
 
                     Repeater {
                         model:  6
