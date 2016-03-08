@@ -49,9 +49,11 @@ public:
     Q_INVOKABLE QStringList searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions);
 	
 	Q_INVOKABLE void clearRCToParam(void);
-	Q_INVOKABLE void saveToFile(void);
-	Q_INVOKABLE void loadFromFile(void);
-	Q_INVOKABLE void refresh(void);
+    Q_INVOKABLE void saveToFilePicker(void);
+    Q_INVOKABLE void loadFromFilePicker(void);
+    Q_INVOKABLE void saveToFile(const QString& filename);
+    Q_INVOKABLE void loadFromFile(const QString& filename);
+    Q_INVOKABLE void refresh(void);
     Q_INVOKABLE void resetAllToDefaults(void);
 	Q_INVOKABLE void setRCToParam(const QString& paramName);
 	

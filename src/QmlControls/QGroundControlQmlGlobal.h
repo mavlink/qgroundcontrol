@@ -80,6 +80,10 @@ public:
     Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
     Q_PROPERTY(int            flightMapZoom         MEMBER _flightMapZoom       NOTIFY flightMapZoomChanged)
 
+    Q_PROPERTY(QString  parameterFileExtension  READ parameterFileExtension CONSTANT)
+    Q_PROPERTY(QString  missionFileExtension    READ missionFileExtension   CONSTANT)
+    Q_PROPERTY(QString  telemetryFileExtension  READ telemetryFileExtension CONSTANT)
+
     /// @ return: true: experimental survey ip code is turned on
     Q_PROPERTY(bool experimentalSurvey READ experimentalSurvey WRITE setExperimentalSurvey NOTIFY experimentalSurveyChanged)
 
@@ -139,6 +143,10 @@ public:
 
     bool experimentalSurvey(void) const;
     void setExperimentalSurvey(bool experimentalSurvey);
+
+    QString parameterFileExtension(void) const  { return QGCApplication::parameterFileExtension; }
+    QString missionFileExtension(void) const    { return QGCApplication::missionFileExtension; }
+    QString telemetryFileExtension(void) const  { return QGCApplication::telemetryFileExtension; }
 
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
