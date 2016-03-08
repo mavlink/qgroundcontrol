@@ -25,9 +25,9 @@ install:
 - export PATH=~/qt-ios/ios/bin:$PATH
 
 before_script:
-- openssl aes-256-cbc -k "$IOS_PASSWORD" -in deploy/iosCerts/QGroundControl_Distribution.mobileprovision.enc -d -a -out deploy/iosCerts/QGroundControl_Distribution.mobileprovision
-- openssl aes-256-cbc -k "$IOS_PASSWORD" -in deploy/iosCerts/dist.cer.enc -d -a -out deploy/iosCerts/dist.cer
-- openssl aes-256-cbc -k "$IOS_PASSWORD" -in deploy/iosCerts/dist.p12.enc -d -a -out deploy/iosCerts/dist.p12
+- openssl aes-256-cbc -k "$IOS_PASSWORD" -in ${TRAVIS_BUILD_DIR}/deploy/iosCerts/QGroundControl_Distribution.mobileprovision.enc -d -a -out ${TRAVIS_BUILD_DIR}/deploy/iosCerts/QGroundControl_Distribution.mobileprovision
+- openssl aes-256-cbc -k "$IOS_PASSWORD" -in ${TRAVIS_BUILD_DIR}/deploy/iosCerts/dist.cer.enc -d -a -out ${TRAVIS_BUILD_DIR}/deploy/iosCerts/dist.cer
+- openssl aes-256-cbc -k "$IOS_PASSWORD" -in ${TRAVIS_BUILD_DIR}/deploy/iosCerts/dist.p12.enc -d -a -out ${TRAVIS_BUILD_DIR}/deploy/iosCerts/dist.p12
 - mkdir ${SHADOW_BUILD_DIR}
 - cd ${SHADOW_BUILD_DIR}
 - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release
