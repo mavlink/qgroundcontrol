@@ -71,6 +71,7 @@
 #include "RadioComponentController.h"
 #include "ESP8266ComponentController.h"
 #include "ScreenToolsController.h"
+#include "QGCMobileFileDialogController.h"
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
 #include "FirmwarePluginManager.h"
@@ -124,6 +125,10 @@
 #endif
 
 QGCApplication* QGCApplication::_app = NULL;
+
+const char* QGCApplication::parameterFileExtension =    "params";
+const char* QGCApplication::missionFileExtension =      "mission";
+const char* QGCApplication::telemetryFileExtension =     "tlog";
 
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
@@ -449,6 +454,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<MissionController>                  ("QGroundControl.Controllers", 1, 0, "MissionController");
     qmlRegisterType<FlightDisplayViewController>        ("QGroundControl.Controllers", 1, 0, "FlightDisplayViewController");
     qmlRegisterType<ValuesWidgetController>             ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
+    qmlRegisterType<QGCMobileFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QGCMobileFileDialogController");
 
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
@@ -462,28 +468,6 @@ void QGCApplication::_initCommon(void)
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
     qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
     qmlRegisterSingletonType<MavlinkQmlSingleton>       ("QGroundControl.Mavlink",                  1, 0, "Mavlink",                mavlinkQmlSingletonFactory);
-
-    // Show user an upgrade message if the settings version has been bumped up
-    bool settingsUpgraded = false;
-    if (settings.contains(_settingsVersionKey)) {
-        if (settings.value(_settingsVersionKey).toInt() != QGC_SETTINGS_VERSION) {
-            settingsUpgraded = true;
-        }
-    } else if (settings.allKeys().count()) {
-        // Settings version key is missing and there are settings. This is an upgrade scenario.
-        settingsUpgraded = true;
-    } else {
-        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
-    }
-
-    if (settingsUpgraded) {
-        settings.clear();
-        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
-        showMessage("The format for QGroundControl saved settings has been modified. "
-                    "Your saved settings have been reset to defaults.");
-    }
-
-    settings.sync();
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
@@ -514,6 +498,28 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     // Load known link configurations
     toolbox()->linkManager()->loadLinkConfigurationList();
+
+    // Show user an upgrade message if the settings version has been bumped up
+    bool settingsUpgraded = false;
+    if (settings.contains(_settingsVersionKey)) {
+        if (settings.value(_settingsVersionKey).toInt() != QGC_SETTINGS_VERSION) {
+            settingsUpgraded = true;
+        }
+    } else if (settings.allKeys().count()) {
+        // Settings version key is missing and there are settings. This is an upgrade scenario.
+        settingsUpgraded = true;
+    } else {
+        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
+    }
+
+    if (settingsUpgraded) {
+        settings.clear();
+        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
+        showMessage("The format for QGroundControl saved settings has been modified. "
+                    "Your saved settings have been reset to defaults.");
+    }
+
+    settings.sync();
 
     return true;
 }
