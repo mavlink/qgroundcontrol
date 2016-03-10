@@ -92,6 +92,8 @@ public:
     /// are shown next to the exitCoordinate indidcator in the ui.
     Q_PROPERTY(QmlObjectListModel*  childItems      READ childItems     CONSTANT)
 
+    Q_INVOKABLE void tryMakingCurrent();
+
     // Property accesors
     
     double altDifference    (void) const { return _altDifference; }

@@ -430,6 +430,8 @@ public:
     QString flightMode(void) const;
     void setFlightMode(const QString& flightMode);
 
+    void setCurrentMissionSequence(int seq);
+
     bool hilMode(void);
     void setHilMode(bool hilMode);
 

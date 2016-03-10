@@ -103,3 +103,8 @@ void VisualMissionItem::setAzimuth(double azimuth)
     _azimuth = azimuth;
     emit azimuthChanged(_azimuth);
 }
+
+void VisualMissionItem::tryMakingCurrent()
+{
+    _vehicle->setCurrentMissionSequence(sequenceNumber());
+}

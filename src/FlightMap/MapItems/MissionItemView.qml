@@ -42,6 +42,7 @@ MapItemView {
         z:              QGroundControl.zOrderMapItems
         missionItem:    object
         sequenceNumber: object.sequenceNumber
+        onClicked:      object.tryMakingCurrent()
 
         // These are the non-coordinate child mission items attached to this item
         Row {
@@ -55,8 +56,6 @@ MapItemView {
                     label:          object.sequenceNumber
                     isCurrentItem:  object.isCurrentItem
                     z:              2
-
-                    onClicked: setCurrentItem(object.sequenceNumber)
                 }
             }
         }
