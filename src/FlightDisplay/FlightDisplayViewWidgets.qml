@@ -38,8 +38,12 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    property var    _activeVehicle: multiVehicleManager.activeVehicle
+    property alias guidedModeBar: _guidedModeBar
+
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:   _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
+
+    readonly property real _margins: ScreenTools.defaultFontPixelHeight / 2
 
     QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
 
@@ -93,7 +97,7 @@ Item {
     QGCInstrumentWidget {
         id:                     instrumentGadget
         anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
-        anchors.right:          parent.right
+        anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
         anchors.verticalCenter: parent.verticalCenter
         visible:                !QGroundControl.virtualTabletJoystick
         size:                   getGadgetWidth()
@@ -113,7 +117,7 @@ Item {
         id:                     instrumentGadgetAlternate
         anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
         anchors.top:            parent.top
-        anchors.right:          parent.right
+        anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
         visible:                QGroundControl.virtualTabletJoystick
         width:                  getGadgetWidth()
         active:                 _activeVehicle != null
@@ -259,7 +263,232 @@ Item {
                 checked = false
             }
         }
-
     }
 
+    //-- Guided mode buttons
+    Rectangle {
+        id:                         _guidedModeBar
+        anchors.margins:            _margins
+        anchors.bottom:             parent.bottom
+        anchors.horizontalCenter:   parent.horizontalCenter
+        width:                      (guidedModeButtons.visible ? guidedModeButtons.width : guidedModeConfirm.width) + (_margins * 2)
+        height:                     (guidedModeButtons.visible ? guidedModeButtons.height : guidedModeConfirm.height) + (_margins * 2)
+        color:                      qgcPal.window
+        visible:                    _activeVehicle
+        opacity:                    0.9
+        z:                          QGroundControl.zOrderWidgets
+
+        readonly property int confirmHome:          1
+        readonly property int confirmLand:          2
+        readonly property int confirmTakeoff:       3
+        readonly property int confirmArm:           4
+        readonly property int confirmDisarm:        5
+        readonly property int confirmEmergencyStop: 6
+        readonly property int confirmChangeAlt:     7
+        readonly property int confirmGoTo:          8
+
+        property int    confirmActionCode
+        property string confirmText
+
+        function actionConfirmed() {
+            switch (confirmActionCode) {
+            case confirmHome:
+                _activeVehicle.guidedModeRTL()
+                break;
+            case confirmLand:
+                _activeVehicle.guidedModeLand()
+                break;
+            case confirmTakeoff:
+                var altitude = altitudeSlider.getValue()
+                if (!isNaN(altitude)) {
+                    _activeVehicle.guidedModeTakeoff(altitude)
+                }
+                break;
+            case confirmArm:
+                _activeVehicle.armed = true
+                break;
+            case confirmDisarm:
+                _activeVehicle.armed = false
+                break;
+            case confirmEmergencyStop:
+                _activeVehicle.emergencyStop()
+                break;
+            case confirmChangeAlt:
+                var altitude = altitudeSlider.getValue()
+                if (!isNaN(altitude)) {
+                    _activeVehicle.guidedModeChangeAltitude(altitude)
+                }
+                break;
+            case confirmGoTo:
+                _activeVehicle.guidedModeGotoLocation(_flightMap._gotoHereCoordinate)
+                break;
+            default:
+                console.warn("Internal error: unknown confirmActionCode", confirmActionCode)
+            }
+        }
+
+        function confirmAction(actionCode) {
+            confirmActionCode = actionCode
+            switch (confirmActionCode) {
+            case confirmArm:
+                _guidedModeBar.confirmText = "arm"
+                break;
+            case confirmDisarm:
+                _guidedModeBar.confirmText = "disarm"
+                break;
+            case confirmEmergencyStop:
+                _guidedModeBar.confirmText = "emergency stop"
+                break;
+            case confirmTakeoff:
+                altitudeSlider.visible = true
+                altitudeSlider.initialValue = 10
+                _guidedModeBar.confirmText = "takeoff"
+                break;
+            case confirmLand:
+                _guidedModeBar.confirmText = "land"
+                break;
+            case confirmChangeAlt:
+                altitudeSlider.visible = true
+                altitudeSlider.initialValue = _activeVehicle.altitudeAMSL.value
+                _guidedModeBar.confirmText = "altitude change"
+                break;
+            case confirmGoTo:
+                _guidedModeBar.confirmText = "move"
+                break;
+            }
+            guidedModeButtons.visible = false
+            guidedModeConfirm.visible = true
+        }
+
+        Row {
+            id:                 guidedModeButtons
+            anchors.margins:    _margins
+            anchors.top:        parent.top
+            anchors.left:       parent.left
+            spacing:            _margins
+
+            QGCButton {
+                text:       _activeVehicle.armed ? (_activeVehicle.flying ? "Emergency Stop" : "Disarm") : "Arm"
+                onClicked:  _guidedModeBar.confirmAction(_activeVehicle.armed ? (_activeVehicle.flying ? _guidedModeBar.confirmEmergencyStop : _guidedModeBar.confirmDisarm) : _guidedModeBar.confirmArm)
+            }
+
+            QGCButton {
+                text:       "RTL"
+                visible:    _activeVehicle.guidedModeSupported && _activeVehicle.flying
+                onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmHome)
+            }
+
+            QGCButton {
+                text:        _activeVehicle.flying ? "Land" : "Takeoff"
+                visible:    _activeVehicle.guidedModeSupported && _activeVehicle.armed
+                onClicked:  _guidedModeBar.confirmAction(_activeVehicle.flying ? _guidedModeBar.confirmLand : _guidedModeBar.confirmTakeoff)
+            }
+
+            QGCButton {
+                text:       "Pause"
+                visible:    _activeVehicle.pauseVehicleSupported && _activeVehicle.flying
+                onClicked:  _activeVehicle.pauseVehicle()
+            }
+
+            QGCButton {
+                text:       "Change Altitude"
+                visible:    _activeVehicle.guidedModeSupported && _activeVehicle.armed
+                onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmChangeAlt)
+            }
+        }
+
+        Row {
+            id:                 guidedModeConfirm
+            anchors.margins:    _margins
+            anchors.top:        parent.top
+            anchors.left:       parent.left
+            spacing:            _margins
+            visible:            false
+
+            QGCLabel {
+                text: "Confirm " + _guidedModeBar.confirmText + " :"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            QGCButton {
+                text: "Yes"
+                onClicked: {
+                    guidedModeConfirm.visible = false
+                    guidedModeButtons.visible = true
+                    _guidedModeBar.actionConfirmed()
+                    altitudeSlider.visible = false
+                }
+            }
+
+            QGCButton {
+                text: "No"
+                onClicked: {
+                    guidedModeConfirm.visible = false
+                    guidedModeButtons.visible = true
+                    altitudeSlider.visible = false
+                    _flightMap._gotoHereCoordinate = QtPositioning.coordinate()
+                }
+            }
+        }
+    } // Column - Vertical tool buttons
+
+    //-- Altitude slider
+    Rectangle {
+        id:                 altitudeSlider
+        anchors.margins:    _margins
+        anchors.right:      parent.right
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        color:              qgcPal.window
+        width:              ScreenTools.defaultFontPixelWidth * 10
+        opacity:            0.8
+        visible:            false
+
+        property alias initialValue:    altSlider.value
+
+        /// Returns NaN for bad value
+        function getValue() {
+            return parseFloat(altField.text)
+        }
+
+
+        Column {
+            id:                 headerColumn
+            anchors.margins:    _margins
+            anchors.top:        parent.top
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+
+            QGCLabel {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Altitude"
+            }
+
+            QGCLabel {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "meters (rel)"
+            }
+
+            QGCTextField {
+                id:             altField
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                text:           altSlider.value.toFixed(1)
+            }
+        }
+
+        Slider {
+            id:                 altSlider
+            anchors.margins:    _margins
+            anchors.top:        headerColumn.bottom
+            anchors.bottom:     parent.bottom
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            orientation:        Qt.Vertical
+            minimumValue:       0
+            maximumValue:       100
+            value:              30
+            //anchors.horizontalCenter: parent.horizontalCenter
+        }
+    }
 }

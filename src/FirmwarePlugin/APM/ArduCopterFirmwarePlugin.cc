@@ -25,6 +25,8 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "ArduCopterFirmwarePlugin.h"
+#include "QGCApplication.h"
+#include "MissionManager.h"
 
 APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)
@@ -72,4 +74,105 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
     supportedFlightModes << APMCopterMode(APMCopterMode::POS_HOLD  ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::BRAKE     ,true);
     setSupportedModes(supportedFlightModes);
+}
+
+bool ArduCopterFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+{
+    return (capabilities & (SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability)) == capabilities;
+}
+
+void ArduCopterFirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
+{
+    vehicle->setFlightMode("RTL");
+}
+
+void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)
+{
+    vehicle->setFlightMode("Land");
+}
+
+void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
+{
+    if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to takeoff, vehicle position not known."));
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd;
+
+    cmd.command = (uint16_t)MAV_CMD_NAV_TAKEOFF;
+    cmd.confirmation = 0;
+    cmd.param1 = 0.0f;
+    cmd.param2 = 0.0f;
+    cmd.param3 = 0.0f;
+    cmd.param4 = 0.0f;
+    cmd.param5 = 0.0f;
+    cmd.param6 = 0.0f;
+    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toFloat() +  altitudeRel; // AMSL meters
+    cmd.target_system = vehicle->id();
+    cmd.target_component = 0;
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+
+    vehicle->sendMessage(msg);
+}
+
+void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
+        return;
+    }
+
+    vehicle->setFlightMode("Guided");
+    QGeoCoordinate coordWithAltitude = gotoCoord;
+    coordWithAltitude.setAltitude(vehicle->altitudeRelative()->rawValue().toDouble());
+    vehicle->missionManager()->writeArduPilotGuidedMissionItem(coordWithAltitude, false /* altChangeOnly */);
+}
+
+void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to change altitude, vehicle altitude not known."));
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_set_position_target_local_ned_t cmd;
+
+    memset(&cmd, 0, sizeof(mavlink_set_position_target_local_ned_t));
+
+    cmd.target_system = vehicle->id();
+    cmd.target_component = 0;
+    cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
+    cmd.type_mask = 0xFFF8; // Only x/y/z valid
+    cmd.x = 0.0f;
+    cmd.y = 0.0f;
+    cmd.z = -(altitudeRel - vehicle->altitudeRelative()->rawValue().toDouble());
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_set_position_target_local_ned_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+
+    vehicle->sendMessage(msg);
+}
+
+bool ArduCopterFirmwarePlugin::isPaused(const Vehicle* vehicle) const
+{
+    return vehicle->flightMode() == "Brake";
+}
+
+void ArduCopterFirmwarePlugin::pauseVehicle(Vehicle* vehicle)
+{
+    vehicle->setFlightMode("Brake");
+}
+
+void ArduCopterFirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
+{
+    if (guidedMode) {
+        vehicle->setFlightMode("Guided");
+    } else {
+        pauseVehicle(vehicle);
+    }
 }

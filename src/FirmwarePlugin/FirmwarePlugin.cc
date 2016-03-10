@@ -22,8 +22,15 @@
  ======================================================================*/
 
 #include "FirmwarePlugin.h"
+#include "QGCApplication.h"
 
 #include <QDebug>
+
+bool FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+{
+    Q_UNUSED(capabilities);
+    return false;
+}
 
 QList<VehicleComponent*> FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
 {
@@ -32,7 +39,7 @@ QList<VehicleComponent*> FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* v
     return QList<VehicleComponent*>();
 }
 
-QString FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode)
+QString FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) const
 {
     QString flightMode;
     
@@ -86,11 +93,17 @@ int FirmwarePlugin::manualControlReservedButtonCount(void)
     return -1;
 }
 
-void FirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
+void FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
+{
+    Q_UNUSED(vehicle);
+    Q_UNUSED(message);    
+    // Generic plugin does no message adjustment
+}
+
+void FirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
     Q_UNUSED(message);
-    
     // Generic plugin does no message adjustment
 }
 
@@ -128,4 +141,70 @@ void FirmwarePlugin::getParameterMetaDataVersionInfo(const QString& metaDataFile
     Q_UNUSED(metaDataFile);
     majorVersion = -1;
     minorVersion = -1;
+}
+
+bool FirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
+{
+    // Not supported by generic vehicle
+    Q_UNUSED(vehicle);
+    return false;
+}
+
+void FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
+{
+    Q_UNUSED(vehicle);
+    Q_UNUSED(guidedMode);
+    qgcApp()->showMessage(QStringLiteral("Guided mode not supported by Vehicle."));
+}
+
+bool FirmwarePlugin::isPaused(const Vehicle* vehicle) const
+{
+    // Not supported by generic vehicle
+    Q_UNUSED(vehicle);
+    return false;
+}
+
+void FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
+{
+    // Not supported by generic vehicle
+    Q_UNUSED(vehicle);
+    qgcApp()->showMessage(QStringLiteral("Guided mode not supported by Vehicle."));
+}
+
+void FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
+{
+    // Not supported by generic vehicle
+    Q_UNUSED(vehicle);
+    qgcApp()->showMessage(QStringLiteral("Guided mode not supported by Vehicle."));
+}
+
+void FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
+{
+    // Not supported by generic vehicle
+    Q_UNUSED(vehicle);
+    qgcApp()->showMessage(QStringLiteral("Guided mode not supported by Vehicle."));
+}
+
+void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
+{
+    // Not supported by generic vehicle
+    Q_UNUSED(vehicle);
+    Q_UNUSED(altitudeRel);
+    qgcApp()->showMessage(QStringLiteral("Guided mode not supported by Vehicle."));
+}
+
+void FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
+{
+    // Not supported by generic vehicle
+    Q_UNUSED(vehicle);
+    Q_UNUSED(gotoCoord);
+    qgcApp()->showMessage(QStringLiteral("Guided mode not supported by Vehicle."));
+}
+
+void FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
+{
+    // Not supported by generic vehicle
+    Q_UNUSED(vehicle);
+    Q_UNUSED(altitudeRel);
+    qgcApp()->showMessage(QStringLiteral("Guided mode not supported by Vehicle."));
 }

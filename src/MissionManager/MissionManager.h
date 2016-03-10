@@ -58,6 +58,11 @@ public:
     ///     @param missionItems Items to send to vehicle
     void writeMissionItems(const QList<MissionItem*>& missionItems);
     
+    /// Writes the specified set mission items to the vehicle as an ArduPilot guided mode mission item.
+    ///     @param gotoCoord Coordinate to move to
+    ///     @param altChangeOnly true: only altitude change, false: lat/lon/alt change
+    void writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly);
+
     /// Error codes returned in error signal
     typedef enum {
         InternalError,
@@ -90,6 +95,7 @@ private:
         AckMissionCount,    ///< MISSION_COUNT message expected
         AckMissionItem,     ///< MISSION_ITEM expected
         AckMissionRequest,  ///< MISSION_REQUEST is expected, or MISSION_ACK to end sequence
+        AckGuidedItem,      ///< MISSION_ACK expected in reponse to ArduPilot guided mode single item send
     } AckType_t;
     
     void _startAckTimeout(AckType_t ack);
