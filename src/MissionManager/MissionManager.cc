@@ -300,7 +300,7 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
                                             missionItem.current,
                                             this);
 
-        if (item->command() == MAV_CMD_DO_JUMP) {
+        if (item->command() == MAV_CMD_DO_JUMP && !_vehicle->firmwarePlugin()->sendHomePositionToVehicle()) {
             // Home is in position 0
             item->setParam1((int)item->param1() + 1);
         }
