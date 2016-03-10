@@ -1136,6 +1136,16 @@ void Vehicle::setFlightMode(const QString& flightMode)
     }
 }
 
+void Vehicle::setCurrentMissionSequence(int seq)
+{
+    if (!_firmwarePlugin->sendHomePositionToVehicle()) {
+        seq--;
+    }
+    mavlink_message_t msg;
+    mavlink_msg_mission_set_current_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, id(), _compID, seq);
+    sendMessage(msg);
+}
+
 bool Vehicle::hilMode(void)
 {
     return _base_mode & MAV_MODE_FLAG_HIL_ENABLED;
