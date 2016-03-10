@@ -300,6 +300,7 @@ HEADERS += \
 }
 
 WindowsBuild|MacBuild {
+    CONFIG += precompile_header
     PRECOMPILED_HEADER += src/stable_headers.h
     HEADERS += src/stable_headers.h
 }
