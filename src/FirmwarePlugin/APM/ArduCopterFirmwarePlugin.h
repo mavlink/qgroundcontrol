@@ -64,6 +64,17 @@ class ArduCopterFirmwarePlugin : public APMFirmwarePlugin
     
 public:
     ArduCopterFirmwarePlugin(void);
+
+    // Overrides from FirmwarePlugin
+    bool isCapable(FirmwareCapabilities capabilities) final;
+    bool isPaused(const Vehicle* vehicle) const final;
+    void setGuidedMode(Vehicle* vehicle, bool guidedMode) final;
+    void pauseVehicle(Vehicle* vehicle) final;
+    void guidedModeRTL(Vehicle* vehicle) final;
+    void guidedModeLand(Vehicle* vehicle) final;
+    void guidedModeTakeoff(Vehicle* vehicle, double altitudeRel) final;
+    void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
+    void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel) final;
 };
 
 #endif

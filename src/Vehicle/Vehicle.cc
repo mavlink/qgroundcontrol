@@ -99,6 +99,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rcRSSI(0)
     , _rcRSSIstore(100.0)
     , _autoDisconnect(false)
+    , _flying(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -140,7 +141,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     connect(this, &Vehicle::_sendMessageOnThread,       this, &Vehicle::_sendMessage, Qt::QueuedConnection);
     connect(this, &Vehicle::_sendMessageOnLinkOnThread, this, &Vehicle::_sendMessageOnLink, Qt::QueuedConnection);
-    connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_announceflightModeChanged);
+    connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_handleFlightModeChanged);
     connect(this, &Vehicle::armedChanged,               this, &Vehicle::_announceArmedChanged);
 
     _uas = new UAS(_mavlink, this, _firmwarePluginManager);
@@ -376,7 +377,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
 
     // Give the plugin a change to adjust the message contents
-    _firmwarePlugin->adjustMavlinkMessage(this, &message);
+    _firmwarePlugin->adjustIncomingMavlinkMessage(this, &message);
 
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HOME_POSITION:
@@ -412,6 +413,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_VIBRATION:
         _handleVibration(message);
         break;
+    case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
+        _handleExtendedSysState(message);
+        break;
 
     // Following are ArduPilot dialect messages
 
@@ -423,6 +427,23 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     emit mavlinkMessageReceived(message);
 
     _uas->receiveMessage(message);
+}
+
+void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
+{
+    mavlink_extended_sys_state_t extendedState;
+    mavlink_msg_extended_sys_state_decode(&message, &extendedState);
+
+    switch (extendedState.landed_state) {
+        case MAV_LANDED_STATE_UNDEFINED:
+        break;
+    case MAV_LANDED_STATE_ON_GROUND:
+        setFlying(false);
+        break;
+    case MAV_LANDED_STATE_IN_AIR:
+        setFlying(true);
+        return;
+    }
 }
 
 void Vehicle::_handleVibration(mavlink_message_t& message)
@@ -703,7 +724,7 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
     }
 
     // Give the plugin a chance to adjust
-    _firmwarePlugin->adjustMavlinkMessage(this, &message);
+    _firmwarePlugin->adjustOutgoingMavlinkMessage(this, &message);
 
     static const uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
     mavlink_finalize_message_chan(&message, _mavlink->getSystemId(), _mavlink->getComponentId(), link->getMavlinkChannel(), message.len, messageKeys[message.msgid]);
@@ -1091,7 +1112,7 @@ QStringList Vehicle::flightModes(void)
     return _firmwarePlugin->flightModes();
 }
 
-QString Vehicle::flightMode(void)
+QString Vehicle::flightMode(void) const
 {
     return _firmwarePlugin->flightMode(_base_mode, _custom_mode);
 }
@@ -1302,7 +1323,7 @@ void Vehicle::_connectionActive(void)
     if (_connectionLost) {
         _connectionLost = false;
         emit connectionLostChanged(false);
-        _say(QString("% 1 communication regained").arg(_vehicleIdSpeech()));
+        _say(QString("%1 communication regained").arg(_vehicleIdSpeech()));
     }
 }
 
@@ -1349,9 +1370,10 @@ QString Vehicle::_vehicleIdSpeech(void)
     }
 }
 
-void Vehicle::_announceflightModeChanged(const QString& flightMode)
+void Vehicle::_handleFlightModeChanged(const QString& flightMode)
 {
     _say(QString("%1 %2 flight mode").arg(_vehicleIdSpeech()).arg(flightMode));
+    emit guidedModeChanged(_firmwarePlugin->isGuidedMode(this));
 }
 
 void Vehicle::_announceArmedChanged(bool armed)
@@ -1362,6 +1384,111 @@ void Vehicle::_announceArmedChanged(bool armed)
 void Vehicle::clearTrajectoryPoints(void)
 {
     _mapTrajectoryList.clearAndDeleteContents();
+}
+
+void Vehicle::setFlying(bool flying)
+{
+    if (armed() && _flying != flying) {
+        _flying = flying;
+        emit flyingChanged(flying);
+    }
+}
+
+bool Vehicle::guidedModeSupported(void) const
+{
+    return _firmwarePlugin->isCapable(FirmwarePlugin::GuidedModeCapability);
+}
+
+bool Vehicle::pauseVehicleSupported(void) const
+{
+    return _firmwarePlugin->isCapable(FirmwarePlugin::PauseVehicleCapability);
+}
+
+void Vehicle::guidedModeRTL(void)
+{
+    if (!guidedModeSupported()) {
+        qgcApp()->showMessage(QStringLiteral("Guided mode not supported by vehicle."));
+        return;
+    }
+    _firmwarePlugin->guidedModeRTL(this);
+}
+
+void Vehicle::guidedModeLand(void)
+{
+    if (!guidedModeSupported()) {
+        qgcApp()->showMessage(QStringLiteral("Guided mode not supported by vehicle."));
+        return;
+    }
+    _firmwarePlugin->guidedModeLand(this);
+}
+
+void Vehicle::guidedModeTakeoff(double altitudeRel)
+{
+    if (!guidedModeSupported()) {
+        qgcApp()->showMessage(QStringLiteral("Guided mode not supported by vehicle."));
+        return;
+    }
+    setGuidedMode(true);
+    _firmwarePlugin->guidedModeTakeoff(this, altitudeRel);
+}
+
+void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
+{
+    if (!guidedModeSupported()) {
+        qgcApp()->showMessage(QStringLiteral("Guided mode not supported by vehicle."));
+        return;
+    }
+    _firmwarePlugin->guidedModeGotoLocation(this, gotoCoord);
+}
+
+void Vehicle::guidedModeChangeAltitude(double altitudeRel)
+{
+    if (!guidedModeSupported()) {
+        qgcApp()->showMessage(QStringLiteral("Guided mode not supported by vehicle."));
+        return;
+    }
+    _firmwarePlugin->guidedModeChangeAltitude(this, altitudeRel);
+}
+
+void Vehicle::pauseVehicle(void)
+{
+    if (!pauseVehicleSupported()) {
+        qgcApp()->showMessage(QStringLiteral("Pause not supported by vehicle."));
+        return;
+    }
+    _firmwarePlugin->pauseVehicle(this);
+}
+
+bool Vehicle::guidedMode(void) const
+{
+    return _firmwarePlugin->isGuidedMode(this);
+}
+
+void Vehicle::setGuidedMode(bool guidedMode)
+{
+    return _firmwarePlugin->setGuidedMode(this, guidedMode);
+}
+
+void Vehicle::emergencyStop(void)
+{
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd;
+
+    cmd.command = (uint16_t)MAV_CMD_COMPONENT_ARM_DISARM;
+    cmd.confirmation = 0;
+    cmd.param1 = 0.0f;
+    cmd.param2 = 21196.0f;  // Magic number for emergency stop
+    cmd.param3 = 0.0f;
+    cmd.param4 = 0.0f;
+    cmd.param5 = 0.0f;
+    cmd.param6 = 0.0f;
+    cmd.param7 = 0.0f;
+    cmd.target_system = id();
+    cmd.target_component = 0;
+
+    mavlink_msg_command_long_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &cmd);
+
+    sendMessage(msg);
 }
 
 

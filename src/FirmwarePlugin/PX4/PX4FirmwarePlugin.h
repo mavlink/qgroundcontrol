@@ -43,10 +43,10 @@ public:
 
     bool        isCapable                       (FirmwareCapabilities capabilities) final;
     QStringList flightModes                     (void) final;
-    QString     flightMode                      (uint8_t base_mode, uint32_t custom_mode) final;
+    QString     flightMode                      (uint8_t base_mode, uint32_t custom_mode) const final;
     bool        setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
+    void        pauseVehicle                    (Vehicle* vehicle) final;
     int         manualControlReservedButtonCount(void) final;
-    void        adjustMavlinkMessage            (Vehicle* vehicle, mavlink_message_t* message) final;
     void        initializeVehicle               (Vehicle* vehicle) final;
     bool        sendHomePositionToVehicle       (void) final;
     void        addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;

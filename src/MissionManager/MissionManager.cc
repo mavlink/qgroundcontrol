@@ -107,6 +107,41 @@ void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
     emit inProgressChanged(true);
 }
 
+void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly)
+{
+    if (inProgress()) {
+        qCDebug(MissionManagerLog) << "writeArduPilotGuidedMissionItem called while transaction in progress";
+        return;
+    }
+
+    _writeTransactionInProgress = true;
+
+    mavlink_message_t       messageOut;
+    mavlink_mission_item_t  missionItem;
+
+    missionItem.target_system =     _vehicle->id();
+    missionItem.target_component =  0;
+    missionItem.seq =               0;
+    missionItem.command =           MAV_CMD_NAV_WAYPOINT;
+    missionItem.param1 =            0;
+    missionItem.param2 =            0;
+    missionItem.param3 =            0;
+    missionItem.param4 =            0;
+    missionItem.x =                 gotoCoord.latitude();
+    missionItem.y =                 gotoCoord.longitude();
+    missionItem.z =                 gotoCoord.altitude();
+    missionItem.frame =             MAV_FRAME_GLOBAL_RELATIVE_ALT;
+    missionItem.current =           altChangeOnly ? 3 : 2;
+    missionItem.autocontinue =      true;
+
+    mavlink_msg_mission_item_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &messageOut, &missionItem);
+
+    _dedicatedLink = _vehicle->priorityLink();
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _startAckTimeout(AckGuidedItem);
+    emit inProgressChanged(true);
+}
+
 void MissionManager::requestMissionItems(void)
 {
     qCDebug(MissionManagerLog) << "requestMissionItems read sequence";
@@ -211,8 +246,6 @@ void MissionManager::_handleMissionCount(const mavlink_message_t& message)
         }
         _requestNextMissionItem();
     }
-
-    
 }
 
 void MissionManager::_requestNextMissionItem(void)
@@ -394,6 +427,16 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
                 _finishTransaction(false);
             }
             break;
+        case AckGuidedItem:
+            // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
+            if (missionAck.type == MAV_MISSION_ACCEPTED) {
+                qCDebug(MissionManagerLog) << "_handleMissionAck guide mode item accepted";
+                _finishTransaction(true);
+            } else {
+                _sendError(VehicleError, QString("Vehicle returned error: %1. Vehicle did not accept guided item.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+                _finishTransaction(false);
+            }
+            break;
     }
 }
 
@@ -437,14 +480,16 @@ void MissionManager::_sendError(ErrorCode_t errorCode, const QString& errorMsg)
 QString MissionManager::_ackTypeToString(AckType_t ackType)
 {
     switch (ackType) {
-        case AckNone:   // State machine is idle
+        case AckNone:
             return QString("No Ack");
-        case AckMissionCount:   // MISSION_COUNT message expected
+        case AckMissionCount:
             return QString("MISSION_COUNT");
-        case AckMissionItem:  ///< MISSION_ITEM expected
+        case AckMissionItem:
             return QString("MISSION_ITEM");
-        case AckMissionRequest: ///< MISSION_REQUEST is expected, or MISSION_ACK to end sequence
+        case AckMissionRequest:
             return QString("MISSION_REQUEST");
+        case AckGuidedItem:
+            return QString("Guided Mode Item");
         default:
             qWarning(MissionManagerLog) << "Fell off end of switch statement";
             return QString("QGC Internal Error");
