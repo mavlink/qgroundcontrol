@@ -50,12 +50,14 @@ class FirmwarePlugin : public QObject
 public:
     /// Set of optional capabilites which firmware may support
     typedef enum {
-        SetFlightModeCapability,            ///< FirmwarePlugin::setFlightMode method is supported
-        MavCmdPreflightStorageCapability,   ///< MAV_CMD_PREFLIGHT_STORAGE is supported        
+        SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
+        MavCmdPreflightStorageCapability =  1 << 1, ///< MAV_CMD_PREFLIGHT_STORAGE is supported
+        PauseVehicleCapability =            1 << 2, ///< Vehicle supports pausing at current location
+        GuidedModeCapability =              1 << 3, ///< Vehicle Support guided mode commands
     } FirmwareCapabilities;
     
     /// @return true: Firmware supports all specified capabilites
-    virtual bool isCapable(FirmwareCapabilities capabilities) { Q_UNUSED(capabilities); return false; }
+    virtual bool isCapable(FirmwareCapabilities capabilities);
 
     /// Returns VehicleComponents for specified Vehicle
     ///     @param vehicle Vehicle  to associate with components
@@ -69,13 +71,42 @@ public:
     /// Returns the name for this flight mode. Flight mode names must be human readable as well as audio speakable.
     ///     @param base_mode Base mode from mavlink HEARTBEAT message
     ///     @param custom_mode Custom mode from mavlink HEARTBEAT message
-    virtual QString flightMode(uint8_t base_mode, uint32_t custom_mode);
+    virtual QString flightMode(uint8_t base_mode, uint32_t custom_mode) const;
     
     /// Sets base_mode and custom_mode to specified flight mode.
     ///     @param[out] base_mode Base mode for SET_MODE mavlink message
     ///     @param[out] custom_mode Custom mode for SET_MODE mavlink message
     virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
-    
+
+    /// Returns whether the vehicle is in guided mode or not.
+    virtual bool isGuidedMode(const Vehicle* vehicle) const;
+
+    /// Set guided flight mode
+    virtual void setGuidedMode(Vehicle* vehicle, bool guidedMode);
+
+    /// Returns whether the vehicle is paused or not.
+    virtual bool isPaused(const Vehicle* vehicle) const;
+
+    /// Causes the vehicle to stop at current position. If guide mode is supported, vehicle will be let in guide mode.
+    /// If not, vehicle will be left in Loiter.
+    virtual void pauseVehicle(Vehicle* vehicle);
+
+    /// Command vehicle to return to launch
+    virtual void guidedModeRTL(Vehicle* vehicle);
+
+    /// Command vehicle to land at current location
+    virtual void guidedModeLand(Vehicle* vehicle);
+
+    /// Command vehicle to takeoff from current location
+    ///     @param altitudeRel Relative altitude to takeoff to
+    virtual void guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
+
+    /// Command vehicle to move to specified location (altitude is included and relative)
+    virtual void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord);
+
+    /// Command vehicle to change to the specified relatice altitude
+    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel);
+
     /// FIXME: This isn't quite correct being here. All code for Joystick suvehicleTypepport is currently firmware specific
     /// not just this. I'm going to try to change that. If not, this will need to be removed.
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
@@ -89,8 +120,15 @@ public:
     /// spec implementations such that the base code can remain mavlink generic.
     ///     @param vehicle Vehicle message came from
     ///     @param message[in,out] Mavlink message to adjust if needed.
-    virtual void adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
+    virtual void adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
     
+    /// Called before any mavlink message is sent to the Vehicle so plugin can adjust any message characteristics.
+    /// This is handy to adjust or differences in mavlink spec implementations such that the base code can remain
+    /// mavlink generic.
+    ///     @param vehicle Vehicle message came from
+    ///     @param message[in,out] Mavlink message to adjust if needed.
+    virtual void adjustOutgoingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
+
     /// Called when Vehicle is first created to send any necessary mavlink messages to the firmware.
     virtual void initializeVehicle(Vehicle* vehicle);
 

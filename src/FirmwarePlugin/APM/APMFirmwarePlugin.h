@@ -84,12 +84,15 @@ public:
     QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) final;
     QList<MAV_CMD> supportedMissionCommands(void) final;
 
-    bool        isCapable(FirmwareCapabilities capabilities) final;
+    bool        isCapable(FirmwareCapabilities capabilities);
     QStringList flightModes(void) final;
-    QString     flightMode(uint8_t base_mode, uint32_t custom_mode) final;
+    QString     flightMode(uint8_t base_mode, uint32_t custom_mode) const final;
     bool        setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
+    bool        isGuidedMode(const Vehicle* vehicle) const final;
+    void        pauseVehicle(Vehicle* vehicle);
     int         manualControlReservedButtonCount(void) final;
-    void        adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
+    void        adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
+    void        adjustOutgoingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
     void        initializeVehicle(Vehicle* vehicle) final;
     bool        sendHomePositionToVehicle(void) final;
     void        addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;
@@ -111,6 +114,10 @@ private:
     static bool _isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion);
     void _setInfoSeverity(mavlink_message_t* message) const;
     QString _getMessageText(mavlink_message_t* message) const;
+    void _handleParamValue(Vehicle* vehicle, mavlink_message_t* message);
+    void _handleParamSet(Vehicle* vehicle, mavlink_message_t* message);
+    void _handleStatusText(Vehicle* vehicle, mavlink_message_t* message);
+    void _handleHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
 
     APMFirmwareVersion      _firmwareVersion;
     bool                    _textSeverityAdjustmentNeeded;

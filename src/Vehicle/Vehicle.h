@@ -287,6 +287,18 @@ public:
     Q_PROPERTY(bool                 multiRotor              READ multiRotor                             CONSTANT)
     Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                      NOTIFY autoDisconnectChanged)
 
+    /// true: Vehicle is flying, false: Vehicle is on ground
+    Q_PROPERTY(bool flying      READ flying     WRITE setFlying     NOTIFY flyingChanged)
+
+    /// true: Vehicle is in Guided mode and can respond to guided commands, false: vehicle cannot respond to direct control commands
+    Q_PROPERTY(bool guidedMode  READ guidedMode WRITE setGuidedMode NOTIFY guidedModeChanged)
+
+    /// true: Guided mode commands are supported by this vehicle
+    Q_PROPERTY(bool guidedModeSupported READ guidedModeSupported CONSTANT)
+
+    /// true: pauseVehicle command is supported
+    Q_PROPERTY(bool pauseVehicleSupported READ pauseVehicleSupported CONSTANT)
+
     // FactGroup object model properties
 
     Q_PROPERTY(Fact* roll               READ roll               CONSTANT)
@@ -321,6 +333,31 @@ public:
     Q_INVOKABLE void disconnectInactiveVehicle(void);
 
     Q_INVOKABLE void clearTrajectoryPoints(void);
+
+    /// Command vehicle to return to launch
+    Q_INVOKABLE void guidedModeRTL(void);
+
+    /// Command vehicle to land at current location
+    Q_INVOKABLE void guidedModeLand(void);
+
+    /// Command vehicle to takeoff from current location
+    Q_INVOKABLE void guidedModeTakeoff(double altitudeRel);
+
+    /// Command vehicle to move to specified location (altitude is included and relative)
+    Q_INVOKABLE void guidedModeGotoLocation(const QGeoCoordinate& gotoCoord);
+
+    /// Command vehicle to change to the specified relatice altitude
+    Q_INVOKABLE void guidedModeChangeAltitude(double altitudeRel);
+
+    /// Command vehicle to pause at current location. If vehicle supports guide mode, vehicle will be left
+    /// in guided mode after pause.
+    Q_INVOKABLE void pauseVehicle(void);
+
+    /// Command vehicle to kill all motors no matter what state
+    Q_INVOKABLE void emergencyStop(void);
+
+    bool guidedModeSupported(void) const;
+    bool pauseVehicleSupported(void) const;
 
     // Property accessors
 
@@ -390,7 +427,7 @@ public:
 
     bool flightModeSetAvailable(void);
     QStringList flightModes(void);
-    QString flightMode(void);
+    QString flightMode(void) const;
     void setFlightMode(const QString& flightMode);
 
     bool hilMode(void);
@@ -398,6 +435,9 @@ public:
 
     bool fixedWing(void) const;
     bool multiRotor(void) const;
+
+    void setFlying(bool flying);
+    void setGuidedMode(bool guidedMode);
 
     QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
 
@@ -432,14 +472,16 @@ public:
     bool            mavPresent          () { return _mav != NULL; }
     QString         currentState        () { return _currentState; }
     int             rcRSSI              () { return _rcRSSI; }
-    bool            px4Firmware         () { return _firmwareType == MAV_AUTOPILOT_PX4; }
-    bool            apmFirmware         () { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
-    bool            genericFirmware     () { return !px4Firmware() && !apmFirmware(); }
+    bool            px4Firmware         () const { return _firmwareType == MAV_AUTOPILOT_PX4; }
+    bool            apmFirmware         () const { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
+    bool            genericFirmware     () const { return !px4Firmware() && !apmFirmware(); }
     bool            connectionLost      () const { return _connectionLost; }
     bool            connectionLostEnabled() const { return _connectionLostEnabled; }
     uint            messagesReceived    () { return _messagesReceived; }
     uint            messagesSent        () { return _messagesSent; }
     uint            messagesLost        () { return _messagesLost; }
+    bool            flying              () const { return _flying; }
+    bool            guidedMode          () const;
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -484,6 +526,8 @@ signals:
     void connectionLostChanged(bool connectionLost);
     void connectionLostEnabledChanged(bool connectionLostEnabled);
     void autoDisconnectChanged(bool autoDisconnectChanged);
+    void flyingChanged(bool flying);
+    void guidedModeChanged(bool guidedMode);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -527,7 +571,7 @@ private slots:
     void _addNewMapTrajectoryPoint(void);
     void _parametersReady(bool parametersReady);
     void _remoteControlRSSIChanged(uint8_t rssi);
-    void _announceflightModeChanged(const QString& flightMode);
+    void _handleFlightModeChanged(const QString& flightMode);
     void _announceArmedChanged(bool armed);
 
     void _handleTextMessage                 (int newCount);
@@ -560,6 +604,7 @@ private:
     void _handleSysStatus(mavlink_message_t& message);
     void _handleWind(mavlink_message_t& message);
     void _handleVibration(mavlink_message_t& message);
+    void _handleExtendedSysState(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
@@ -610,6 +655,7 @@ private:
     int             _rcRSSI;
     double          _rcRSSIstore;
     bool            _autoDisconnect;    ///< true: Automatically disconnect vehicle when last connection goes away or lost heartbeat
+    bool            _flying;
 
     // Lost connection handling
     bool                _connectionLost;
