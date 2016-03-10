@@ -299,7 +299,7 @@ HEADERS += \
     src/comm/MockLinkMissionItemHandler.h \
 }
 
-WindowsBuild {
+WindowsBuild|MacBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
     HEADERS += src/stable_headers.h
 }
