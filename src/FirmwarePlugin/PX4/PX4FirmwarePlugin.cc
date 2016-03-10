@@ -111,7 +111,7 @@ QStringList PX4FirmwarePlugin::flightModes(void)
     return flightModes;
 }
 
-QString PX4FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode)
+QString PX4FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) const
 {
     QString flightMode = "Unknown";
 
@@ -178,17 +178,10 @@ int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
     return 0;   // 0 buttons reserved for rc switch simulation
 }
 
-void PX4FirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
-{
-    Q_UNUSED(vehicle);
-    Q_UNUSED(message);
-
-    // PX4 Flight Stack plugin does no message adjustment
-}
-
 bool PX4FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 {
-    return (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability)) == capabilities;
+    qDebug() << (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability | PauseVehicleCapability)) << capabilities;
+    return (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
 }
 
 void PX4FirmwarePlugin::initializeVehicle(Vehicle* vehicle)
@@ -246,4 +239,9 @@ QObject* PX4FirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
     PX4ParameterMetaData* metaData = new PX4ParameterMetaData;
     metaData->loadParameterFactMetaDataFile(metaDataFile);
     return metaData;
+}
+
+void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
+{
+    vehicle->setFlightMode("Auto: Pause");
 }

@@ -1,5 +1,5 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
  
  (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -144,12 +144,12 @@ QString APMCustomMode::modeString() const
 
 APMFirmwarePlugin::APMFirmwarePlugin(void)
 {
-     _textSeverityAdjustmentNeeded = false;
+    _textSeverityAdjustmentNeeded = false;
 }
 
 bool APMFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 {
-    return (capabilities & SetFlightModeCapability) == capabilities;
+    return (capabilities & (SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
 }
 
 QList<VehicleComponent*> APMFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
@@ -170,7 +170,7 @@ QStringList APMFirmwarePlugin::flightModes(void)
     return flightModesList;
 }
 
-QString APMFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode)
+QString APMFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) const
 {
     QString flightMode = "Unknown";
 
@@ -214,165 +214,219 @@ int APMFirmwarePlugin::manualControlReservedButtonCount(void)
     return -1;
 }
 
-void APMFirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
+void APMFirmwarePlugin::_handleParamValue(Vehicle* vehicle, mavlink_message_t* message)
+{
+    Q_UNUSED(vehicle);
+
+    mavlink_param_value_t paramValue;
+    mavlink_param_union_t paramUnion;
+
+    // APM stack passes all parameter values in mavlink_param_union_t.param_float no matter what
+    // type they are. Fix that up to correct usage.
+
+    mavlink_msg_param_value_decode(message, &paramValue);
+
+    switch (paramValue.param_type) {
+    case MAV_PARAM_TYPE_UINT8:
+        paramUnion.param_uint8 = (uint8_t)paramValue.param_value;
+        break;
+    case MAV_PARAM_TYPE_INT8:
+        paramUnion.param_int8 = (int8_t)paramValue.param_value;
+        break;
+    case MAV_PARAM_TYPE_UINT16:
+        paramUnion.param_uint16 = (uint16_t)paramValue.param_value;
+        break;
+    case MAV_PARAM_TYPE_INT16:
+        paramUnion.param_int16 = (int16_t)paramValue.param_value;
+        break;
+    case MAV_PARAM_TYPE_UINT32:
+        paramUnion.param_uint32 = (uint32_t)paramValue.param_value;
+        break;
+    case MAV_PARAM_TYPE_INT32:
+        paramUnion.param_int32 = (int32_t)paramValue.param_value;
+        break;
+    case MAV_PARAM_TYPE_REAL32:
+        paramUnion.param_float = paramValue.param_value;
+        break;
+    default:
+        qCCritical(APMFirmwarePluginLog) << "Invalid/Unsupported data type used in parameter:" << paramValue.param_type;
+    }
+
+    paramValue.param_value = paramUnion.param_float;
+
+    mavlink_msg_param_value_encode(message->sysid, message->compid, message, &paramValue);
+}
+
+void APMFirmwarePlugin::_handleParamSet(Vehicle* vehicle, mavlink_message_t* message)
+{
+    Q_UNUSED(vehicle);
+
+    mavlink_param_set_t     paramSet;
+    mavlink_param_union_t   paramUnion;
+
+    // APM stack passes all parameter values in mavlink_param_union_t.param_float no matter what
+    // type they are. Fix it back to the wrong way on the way out.
+
+    mavlink_msg_param_set_decode(message, &paramSet);
+
+    paramUnion.param_float = paramSet.param_value;
+
+    switch (paramSet.param_type) {
+    case MAV_PARAM_TYPE_UINT8:
+        paramSet.param_value = paramUnion.param_uint8;
+        break;
+    case MAV_PARAM_TYPE_INT8:
+        paramSet.param_value = paramUnion.param_int8;
+        break;
+    case MAV_PARAM_TYPE_UINT16:
+        paramSet.param_value = paramUnion.param_uint16;
+        break;
+    case MAV_PARAM_TYPE_INT16:
+        paramSet.param_value = paramUnion.param_int16;
+        break;
+    case MAV_PARAM_TYPE_UINT32:
+        paramSet.param_value = paramUnion.param_uint32;
+        break;
+    case MAV_PARAM_TYPE_INT32:
+        paramSet.param_value = paramUnion.param_int32;
+        break;
+    case MAV_PARAM_TYPE_REAL32:
+        // Already in param_float
+        break;
+    default:
+        qCCritical(APMFirmwarePluginLog) << "Invalid/Unsupported data type used in parameter:" << paramSet.param_type;
+    }
+
+    mavlink_msg_param_set_encode(message->sysid, message->compid, message, &paramSet);
+}
+
+void APMFirmwarePlugin::_handleStatusText(Vehicle* vehicle, mavlink_message_t* message)
+{
+    QString messageText;
+
+    mavlink_statustext_t statusText;
+    mavlink_msg_statustext_decode(message, &statusText);
+
+    if (!_firmwareVersion.isValid() || statusText.severity < MAV_SEVERITY_NOTICE) {
+        messageText = _getMessageText(message);
+        qCDebug(APMFirmwarePluginLog) << messageText;
+
+        if (!_firmwareVersion.isValid()) {
+            // if don't know firmwareVersion yet, try and see if this message contains it
+            if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP)) {
+                // found version string
+                _firmwareVersion = APMFirmwareVersion(messageText);
+                _textSeverityAdjustmentNeeded = _isTextSeverityAdjustmentNeeded(_firmwareVersion);
+
+                if (!_firmwareVersion.isBeta() && !_firmwareVersion.isDev()) {
+                    int supportedMajorNumber = -1;
+                    int supportedMinorNumber = -1;
+
+                    switch (vehicle->vehicleType()) {
+                    case MAV_TYPE_FIXED_WING:
+                        supportedMajorNumber = 3;
+                        supportedMinorNumber = 2;
+                        break;
+                    case MAV_TYPE_QUADROTOR:
+                    case MAV_TYPE_COAXIAL:
+                    case MAV_TYPE_HELICOPTER:
+                    case MAV_TYPE_SUBMARINE:
+                    case MAV_TYPE_HEXAROTOR:
+                    case MAV_TYPE_OCTOROTOR:
+                    case MAV_TYPE_TRICOPTER:
+                        supportedMajorNumber = 3;
+                        supportedMinorNumber = 2;
+                        break;
+                    default:
+                        break;
+                    }
+
+                    if (supportedMajorNumber != -1) {
+                        if (_firmwareVersion.majorNumber() < supportedMajorNumber || _firmwareVersion.minorNumber() < supportedMinorNumber) {
+                            qgcApp()->showMessage(QString("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
+                        }
+                    }
+                }
+            }
+        }
+
+        // APM user facing calibration messages come through as high severity, we need to parse them out
+        // and lower the severity on them so that they don't pop in the users face.
+
+        if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
+            _adjustCalibrationMessageSeverity(message);
+            return;
+        }
+    }
+
+    // adjust mesasge if needed
+    if (_textSeverityAdjustmentNeeded) {
+        _adjustSeverity(message);
+    }
+
+    if (messageText.isEmpty()) {
+        messageText = _getMessageText(message);
+    }
+
+    // The following messages are incorrectly labeled as warning message.
+    // Fixed in newer firmware (unreleased at this point), but still in older firmware.
+    if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP) ||
+            messageText.contains(APM_PX4NUTTX_REXP) || messageText.contains(APM_FRAME_REXP) || messageText.contains(APM_SYSID_REXP)) {
+        _setInfoSeverity(message);
+    }
+}
+
+void APMFirmwarePlugin::_handleHeartbeat(Vehicle* vehicle, mavlink_message_t* message)
+{
+    bool flying = false;
+
+    // We pull Vehicle::flying state from HEARTBEAT on ArduPilot. This is a firmware specific test.
+
+    if (vehicle->armed()) {
+        mavlink_heartbeat_t heartbeat;
+        mavlink_msg_heartbeat_decode(message, &heartbeat);
+
+        flying = heartbeat.system_status == MAV_STATE_ACTIVE;
+        if (!flying && vehicle->flying()) {
+            // If we were previously flying, and we go into critical or emergency assume we are still flying
+            flying = heartbeat.system_status == MAV_STATE_CRITICAL || heartbeat.system_status == MAV_STATE_EMERGENCY;
+        }
+    }
+
+    vehicle->setFlying(flying);
+}
+
+void APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     //-- Don't process messages to/from UDP Bridge. It doesn't suffer from these issues
     if (message->compid == MAV_COMP_ID_UDP_BRIDGE) {
         return;
     }
 
-    if (message->msgid == MAVLINK_MSG_ID_PARAM_VALUE) {
-        mavlink_param_value_t paramValue;
-        mavlink_param_union_t paramUnion;
-        
-        // APM stack passes all parameter values in mavlink_param_union_t.param_float no matter what
-        // type they are. Fix that up to correct usage.
-        
-        mavlink_msg_param_value_decode(message, &paramValue);
-        
-        switch (paramValue.param_type) {
-            case MAV_PARAM_TYPE_UINT8:
-                paramUnion.param_uint8 = (uint8_t)paramValue.param_value;
-                break;
-            case MAV_PARAM_TYPE_INT8:
-                paramUnion.param_int8 = (int8_t)paramValue.param_value;
-                break;
-            case MAV_PARAM_TYPE_UINT16:
-                paramUnion.param_uint16 = (uint16_t)paramValue.param_value;
-                break;
-            case MAV_PARAM_TYPE_INT16:
-                paramUnion.param_int16 = (int16_t)paramValue.param_value;
-                break;
-            case MAV_PARAM_TYPE_UINT32:
-                paramUnion.param_uint32 = (uint32_t)paramValue.param_value;
-                break;
-            case MAV_PARAM_TYPE_INT32:
-                paramUnion.param_int32 = (int32_t)paramValue.param_value;
-                break;
-            case MAV_PARAM_TYPE_REAL32:
-                paramUnion.param_float = paramValue.param_value;
-                break;
-            default:
-                qCCritical(APMFirmwarePluginLog) << "Invalid/Unsupported data type used in parameter:" << paramValue.param_type;
-        }
-        
-        paramValue.param_value = paramUnion.param_float;
-        
-        mavlink_msg_param_value_encode(message->sysid, message->compid, message, &paramValue);
-        
-    } else if (message->msgid == MAVLINK_MSG_ID_PARAM_SET) {
-        mavlink_param_set_t     paramSet;
-        mavlink_param_union_t   paramUnion;
-        
-        // APM stack passes all parameter values in mavlink_param_union_t.param_float no matter what
-        // type they are. Fix it back to the wrong way on the way out.
-        
-        mavlink_msg_param_set_decode(message, &paramSet);
-        
-        paramUnion.param_float = paramSet.param_value;
+    switch (message->msgid) {
+    case MAVLINK_MSG_ID_PARAM_VALUE:
+        _handleParamValue(vehicle, message);
+        break;
+    case MAVLINK_MSG_ID_STATUSTEXT:
+        _handleStatusText(vehicle, message);
+        break;
+    case MAVLINK_MSG_ID_HEARTBEAT:
+        _handleHeartbeat(vehicle, message);
+        break;
+    }
+}
 
-        switch (paramSet.param_type) {
-            case MAV_PARAM_TYPE_UINT8:
-                paramSet.param_value = paramUnion.param_uint8;
-                break;
-            case MAV_PARAM_TYPE_INT8:
-                paramSet.param_value = paramUnion.param_int8;
-                break;
-            case MAV_PARAM_TYPE_UINT16:
-                paramSet.param_value = paramUnion.param_uint16;
-                break;
-            case MAV_PARAM_TYPE_INT16:
-                paramSet.param_value = paramUnion.param_int16;
-                break;
-            case MAV_PARAM_TYPE_UINT32:
-                paramSet.param_value = paramUnion.param_uint32;
-                break;
-            case MAV_PARAM_TYPE_INT32:
-                paramSet.param_value = paramUnion.param_int32;
-                break;
-            case MAV_PARAM_TYPE_REAL32:
-                // Already in param_float
-                break;
-            default:
-                qCCritical(APMFirmwarePluginLog) << "Invalid/Unsupported data type used in parameter:" << paramSet.param_type;
-        }
-        
-        mavlink_msg_param_set_encode(message->sysid, message->compid, message, &paramSet);
+void APMFirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
+{
+    //-- Don't process messages to/from UDP Bridge. It doesn't suffer from these issues
+    if (message->compid == MAV_COMP_ID_UDP_BRIDGE) {
+        return;
     }
 
-    if (message->msgid == MAVLINK_MSG_ID_STATUSTEXT) {
-        QString messageText;
-
-        mavlink_statustext_t statusText;
-        mavlink_msg_statustext_decode(message, &statusText);
-
-        if (!_firmwareVersion.isValid() || statusText.severity < MAV_SEVERITY_NOTICE) {
-            messageText = _getMessageText(message);
-            qCDebug(APMFirmwarePluginLog) << messageText;
-
-            if (!_firmwareVersion.isValid()) {
-                // if don't know firmwareVersion yet, try and see if this message contains it
-                if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP)) {
-                    // found version string
-                    _firmwareVersion = APMFirmwareVersion(messageText);
-                    _textSeverityAdjustmentNeeded = _isTextSeverityAdjustmentNeeded(_firmwareVersion);
-
-                    if (!_firmwareVersion.isBeta() && !_firmwareVersion.isDev()) {
-                        int supportedMajorNumber = -1;
-                        int supportedMinorNumber = -1;
-
-                        switch (vehicle->vehicleType()) {
-                        case MAV_TYPE_FIXED_WING:
-                            supportedMajorNumber = 3;
-                            supportedMinorNumber = 2;
-                            break;
-                        case MAV_TYPE_QUADROTOR:
-                        case MAV_TYPE_COAXIAL:
-                        case MAV_TYPE_HELICOPTER:
-                        case MAV_TYPE_SUBMARINE:
-                        case MAV_TYPE_HEXAROTOR:
-                        case MAV_TYPE_OCTOROTOR:
-                        case MAV_TYPE_TRICOPTER:
-                            supportedMajorNumber = 3;
-                            supportedMinorNumber = 2;
-                            break;
-                        default:
-                            break;
-                        }
-
-                        if (supportedMajorNumber != -1) {
-                            if (_firmwareVersion.majorNumber() < supportedMajorNumber || _firmwareVersion.minorNumber() < supportedMinorNumber) {
-                                qgcApp()->showMessage(QString("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
-                            }
-                        }
-                    }
-                }
-            }
-
-            // APM user facing calibration messages come through as high severity, we need to parse them out
-            // and lower the severity on them so that they don't pop in the users face.
-
-            if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
-                _adjustCalibrationMessageSeverity(message);
-                return;
-            }
-        }
-
-        // adjust mesasge if needed
-        if (_textSeverityAdjustmentNeeded) {
-            _adjustSeverity(message);
-        }
-
-        if (messageText.isEmpty()) {
-            messageText = _getMessageText(message);
-        }
-
-        // The following messages are incorrectly labeled as warning message.
-        // Fixed in newer firmware (unreleased at this point), but still in older firmware.
-        if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP) ||
-                messageText.contains(APM_PX4NUTTX_REXP) || messageText.contains(APM_FRAME_REXP) || messageText.contains(APM_SYSID_REXP)) {
-            _setInfoSeverity(message);
-        }
+    switch (message->msgid) {
+    case MAVLINK_MSG_ID_PARAM_SET:
+        _handleParamSet(vehicle, message);
+        break;
     }
 }
 
@@ -390,26 +444,26 @@ QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message) const
 
 bool APMFirmwarePlugin::_isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion)
 {
-   if (!firmwareVersion.isValid()) {
-       return false;
-   }
+    if (!firmwareVersion.isValid()) {
+        return false;
+    }
 
-   bool adjustmentNeeded = false;
-   if (firmwareVersion.vehicleType().contains(APM_COPTER_REXP)) {
-       if (firmwareVersion < APMFirmwareVersion(MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
-           adjustmentNeeded = true;
-       }
-   } else if (firmwareVersion.vehicleType().contains(APM_PLANE_REXP)) {
-       if (firmwareVersion < APMFirmwareVersion(MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
-           adjustmentNeeded = true;
-       }
-   } else if (firmwareVersion.vehicleType().contains(APM_ROVER_REXP)) {
-       if (firmwareVersion < APMFirmwareVersion(MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
-           adjustmentNeeded = true;
-       }
-   }
+    bool adjustmentNeeded = false;
+    if (firmwareVersion.vehicleType().contains(APM_COPTER_REXP)) {
+        if (firmwareVersion < APMFirmwareVersion(MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
+            adjustmentNeeded = true;
+        }
+    } else if (firmwareVersion.vehicleType().contains(APM_PLANE_REXP)) {
+        if (firmwareVersion < APMFirmwareVersion(MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
+            adjustmentNeeded = true;
+        }
+    } else if (firmwareVersion.vehicleType().contains(APM_ROVER_REXP)) {
+        if (firmwareVersion < APMFirmwareVersion(MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
+            adjustmentNeeded = true;
+        }
+    }
 
-   return adjustmentNeeded;
+    return adjustmentNeeded;
 }
 
 void APMFirmwarePlugin::_adjustSeverity(mavlink_message_t* message) const
@@ -418,15 +472,15 @@ void APMFirmwarePlugin::_adjustSeverity(mavlink_message_t* message) const
     mavlink_statustext_t statusText;
     mavlink_msg_statustext_decode(message, &statusText);
     switch(statusText.severity) {
-        case MAV_SEVERITY_ALERT:    /* SEVERITY_LOW according to old codes */
-            statusText.severity = MAV_SEVERITY_WARNING;
-            break;
-        case MAV_SEVERITY_CRITICAL: /*SEVERITY_MEDIUM according to old codes  */
-            statusText.severity = MAV_SEVERITY_ALERT;
-            break;
-        case MAV_SEVERITY_ERROR:    /*SEVERITY_HIGH according to old codes */
-            statusText.severity = MAV_SEVERITY_CRITICAL;
-            break;
+    case MAV_SEVERITY_ALERT:    /* SEVERITY_LOW according to old codes */
+        statusText.severity = MAV_SEVERITY_WARNING;
+        break;
+    case MAV_SEVERITY_CRITICAL: /*SEVERITY_MEDIUM according to old codes  */
+        statusText.severity = MAV_SEVERITY_ALERT;
+        break;
+    case MAV_SEVERITY_ERROR:    /*SEVERITY_HIGH according to old codes */
+        statusText.severity = MAV_SEVERITY_CRITICAL;
+        break;
     }
 
     mavlink_msg_statustext_encode(message->sysid, message->compid, message, &statusText);
@@ -519,4 +573,15 @@ QObject* APMFirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
 
     APMParameterMetaData* metaData = new APMParameterMetaData;
     return metaData;
+}
+
+bool APMFirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
+{
+    return vehicle->flightMode() == "Guided";
+}
+
+void APMFirmwarePlugin::pauseVehicle(Vehicle* vehicle)
+{
+    // Best we can do in this case
+    vehicle->setFlightMode("Loiter");
 }

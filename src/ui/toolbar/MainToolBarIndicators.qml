@@ -435,53 +435,6 @@ Row {
         }
     }
 
-    //-------------------------------------------------------------------------
-    //-- Arm/Disarm
-
-    Item {
-        width:  armCol.width * 1.1
-        height: mainWindow.tbCellHeight
-        anchors.verticalCenter: parent.verticalCenter
-        Row {
-            id:                 armCol
-            spacing:            tbSpacing * 0.5
-            anchors.verticalCenter: parent.verticalCenter
-            Image {
-                width:          mainWindow.tbCellHeight * 0.5
-                height:         mainWindow.tbCellHeight * 0.5
-                fillMode:       Image.PreserveAspectFit
-                mipmap:         true
-                smooth:         true
-                source:         activeVehicle ? (activeVehicle.armed ? "/qmlimages/Disarmed.svg" : "/qmlimages/Armed.svg") : "/qmlimages/Disarmed.svg"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            QGCLabel {
-                text:           activeVehicle ? (activeVehicle.armed ? "Armed" : "Disarmed") : ""
-                font.pixelSize: tbFontLarge
-                color:          colorWhite
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-        MouseArea {
-            anchors.fill:   parent
-            onClicked: {
-                armDialog.visible = true
-            }
-        }
-        MessageDialog {
-            id:         armDialog
-            visible:    false
-            icon:       StandardIcon.Warning
-            standardButtons: StandardButton.Yes | StandardButton.No
-            title:      activeVehicle ? (activeVehicle.armed ? "Disarming Vehicle" : "Arming Vehicle") : ""
-            text:       activeVehicle ? (activeVehicle.armed ? "Do you want to disarm? This will cut power to all motors." : "Do you want to arm? This will enable all motors.") : ""
-            onYes: {
-                activeVehicle.armed = !activeVehicle.armed
-                armDialog.visible = false
-            }
-        }
-    }
-
 /*
     property var colorOrangeText: (qgcPal.globalTheme === QGCPalette.Light) ? "#b75711" : "#ea8225"
     property var colorRedText:    (qgcPal.globalTheme === QGCPalette.Light) ? "#ee1112" : "#ef2526"
