@@ -1364,6 +1364,26 @@ void Vehicle::clearTrajectoryPoints(void)
     _mapTrajectoryList.clearAndDeleteContents();
 }
 
+void Vehicle::doCommandLong(int component, MAV_CMD command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+{
+    mavlink_message_t       msg;
+    mavlink_command_long_t  cmd;
+
+    cmd.command = command;
+    cmd.confirmation = 0;
+    cmd.param1 = param1;
+    cmd.param2 = param2;
+    cmd.param3 = param3;
+    cmd.param4 = param4;
+    cmd.param5 = param5;
+    cmd.param6 = param6;
+    cmd.param7 = param7;
+    cmd.target_system = id();
+    cmd.target_component = component;
+    mavlink_msg_command_long_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &cmd);
+
+    sendMessage(msg);
+}
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
