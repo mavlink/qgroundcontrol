@@ -78,7 +78,7 @@ public:
 
     Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
     Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
-    Q_PROPERTY(int            flightMapZoom         MEMBER _flightMapZoom       NOTIFY flightMapZoomChanged)
+    Q_PROPERTY(double         flightMapZoom         MEMBER _flightMapZoom       NOTIFY flightMapZoomChanged)
 
     Q_PROPERTY(QString  parameterFileExtension  READ parameterFileExtension CONSTANT)
     Q_PROPERTY(QString  missionFileExtension    READ missionFileExtension   CONSTANT)
@@ -161,7 +161,7 @@ signals:
     void isVersionCheckEnabledChanged   (bool enabled);
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
-    void flightMapZoomChanged           (int flightMapZoom);
+    void flightMapZoomChanged           (double flightMapZoom);
     void experimentalSurveyChanged      (bool experimentalSurvey);
 
 private:
@@ -175,7 +175,7 @@ private:
     bool _virtualTabletJoystick;
 
     QGeoCoordinate  _flightMapPosition;
-    int             _flightMapZoom;
+    double             _flightMapZoom;
 
     SettingsFact    _offlineEditingFirmwareTypeFact;
     FactMetaData    _offlineEditingFirmwareTypeMetaData;
