@@ -143,18 +143,16 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
         free(worker_data.z[cur_mag]);
     }
 
-    AutoPilotPlugin* plugin = _vehicle->autopilotPlugin();
     if (result == calibrate_return_ok) {
         for (unsigned cur_mag=0; cur_mag<max_mags; cur_mag++) {
             if (rgCompassAvailable[cur_mag]) {
                 _emitVehicleTextMessage(QString("[cal] mag #%1 off: x:%2 y:%3 z:%4").arg(cur_mag).arg(-sphere_x[cur_mag]).arg(-sphere_y[cur_mag]).arg(-sphere_z[cur_mag]));
 
-                const char* offsetParam = rgCompassParams[cur_mag][0];
-                plugin->getParameterFact(-1, offsetParam)->setRawValue(-sphere_x[cur_mag]);
-                offsetParam = rgCompassParams[cur_mag][1];
-                plugin->getParameterFact(-1, offsetParam)->setRawValue(-sphere_y[cur_mag]);
-                offsetParam = rgCompassParams[cur_mag][2];
-                plugin->getParameterFact(-1, offsetParam)->setRawValue(-sphere_z[cur_mag]);
+                if (cur_mag != 2) {
+                    float sensorId;
+                    sensorId = cur_mag == 0 ? 2.0f : 5.0f;
+                    _vehicle->doCommandLong(0, MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS, sensorId, -sphere_x[cur_mag], -sphere_y[cur_mag], -sphere_z[cur_mag]);
+                }
             }
         }
     }
