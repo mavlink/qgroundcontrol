@@ -73,3 +73,9 @@ void VehicleComponent::_triggerUpdated(QVariant /*value*/)
 {
     emit setupCompleteChanged(setupComplete());
 }
+
+bool VehicleComponent::allowSetupWhileArmed(void) const
+{
+    // Default is to not allow setup while armed
+    return false;
+}
