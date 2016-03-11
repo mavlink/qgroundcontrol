@@ -80,30 +80,31 @@ QGCView {
                 font.weight:    Font.DemiBold
             }
 
-            Rectangle {
-                id:                 sliderRect
-                anchors.topMargin:  _margins / 2
+
+            Column {
+                anchors.margins:    _margins
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 anchors.top:        panelLabel.bottom
-                height:             sliderColumns.y + sliderColumns.height + _margins
-                color:              palette.windowShade
+                spacing:            _margins
 
-                Column {
-                    id:                 sliderColumns
-                    anchors.margins:    _margins
-                    anchors.left:       parent.left
-                    anchors.right:      parent.right
-                    anchors.top:        parent.top
-                    spacing:            _margins
+                Repeater {
+                    id:     sliderRepeater
+                    model:  sliderModel
 
-                    Repeater {
-                        id:     sliderRepeater
-                        model:  sliderModel
+                    Rectangle {
+                        id:                 sliderRect
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        height:             sliderColumn.y + sliderColumn.height + _margins
+                        color:              palette.windowShade
 
                         Column {
-                            anchors.left:   parent.left
-                            anchors.right:  parent.right
+                            id:                 sliderColumn
+                            anchors.margins:    _margins
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+                            anchors.top:        sliderRect.top
 
                             property alias sliderValue: slider.value
 
@@ -132,11 +133,11 @@ QGCView {
                                         fact.value = value
                                     }
                                 }
-                            }
+                            } // Slider
                         } // Column
-                    } // Repeater
-                } // Column
-            } // Rectangle
+                    } // Rectangle
+                } // Repeater
+            } // Column
         } // QGCFlickable
     } // QGCViewPanel
 } // QGCView
