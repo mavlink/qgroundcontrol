@@ -299,6 +299,7 @@ void PX4FirmwareUpgradeThreadWorker::_flash(void)
             _bootloaderPort = NULL;
             qCDebug(FirmwareUpgradeLog) << "Program failed:" << _bootloader->errorString();
             emit error(_bootloader->errorString());
+            return;
         }
         
         emit status("Verifying program...");
@@ -309,6 +310,7 @@ void PX4FirmwareUpgradeThreadWorker::_flash(void)
         } else {
             qCDebug(FirmwareUpgradeLog) << "Verify failed:" << _bootloader->errorString();
             emit error(_bootloader->errorString());
+            return;
         }
     }
     
