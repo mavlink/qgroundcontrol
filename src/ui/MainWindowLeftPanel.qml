@@ -130,7 +130,7 @@ Item {
     // This is the menu dialog panel which is anchored to the left edge
     Rectangle {
         id:             __leftMenu
-        width:          ScreenTools.defaultFontPixelWidth * 12
+        width:          ScreenTools.defaultFontPixelWidth * 14
         anchors.left:   parent.left
         anchors.top:    __topSeparator.bottom
         anchors.bottom: parent.bottom

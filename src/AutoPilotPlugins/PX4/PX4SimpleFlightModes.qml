@@ -40,6 +40,9 @@ Item {
 
     property real _margins: ScreenTools.defaultFontPixelHeight / 2
 
+    readonly property real _flightModeComboWidth:   ScreenTools.defaultFontPixelWidth * 23
+    readonly property real _channelComboWidth:      ScreenTools.defaultFontPixelWidth * 20
+
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
     PX4SimpleFlightModesController {
@@ -95,7 +98,7 @@ Item {
 
                                 FactComboBox {
                                     id:         modeChannelCombo
-                                    width:      ScreenTools.defaultFontPixelWidth * 15
+                                    width:      _channelComboWidth
                                     fact:       controller.getParameterFact(-1, "RC_MAP_FLTMODE")
                                     indexModel: false
                                 }
@@ -117,7 +120,7 @@ Item {
 
                                     FactComboBox {
                                         id:         modeCombo
-                                        width:      ScreenTools.defaultFontPixelWidth * 20
+                                        width:      _flightModeComboWidth
                                         fact:       controller.getParameterFact(-1, "COM_FLTMODE" + index)
                                         indexModel: false
                                     }
@@ -163,7 +166,7 @@ Item {
 
                                     FactComboBox {
                                         id:         optCombo
-                                        width:      ScreenTools.defaultFontPixelWidth * 15
+                                        width:      _channelComboWidth
                                         fact:       parent.fact
                                         indexModel: false
                                     }
