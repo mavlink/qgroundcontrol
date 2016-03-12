@@ -69,9 +69,9 @@ before_install:
     - cd ${TRAVIS_BUILD_DIR}
     - ./Travis/before_install.sh
 
-install:
-    - cd ${TRAVIS_BUILD_DIR}
-    - ./Travis/install.sh
+#install:
+#    - cd ${TRAVIS_BUILD_DIR}
+#    - ./Travis/install.sh
 
 before_script:
     - cd ${TRAVIS_BUILD_DIR}
