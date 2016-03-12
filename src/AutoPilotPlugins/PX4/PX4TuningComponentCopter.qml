@@ -27,7 +27,8 @@ import QtQuick.Controls     1.4
 import QGroundControl.Controls  1.0
 
 FactSliderPanel {
-    anchors.fill: parent
+    anchors.fill:   parent
+    panelTitle:     "Tuning"
 
     sliderModel: ListModel {
         ListElement {
