@@ -65,21 +65,21 @@ cache:
     - $HOME/.ccache
 
 
-before_install:
-    - cd ${TRAVIS_BUILD_DIR}
-    - ./Travis/before_install.sh
+#before_install:
+#    - cd ${TRAVIS_BUILD_DIR}
+#    - ./Travis/before_install.sh
 
-install:
-    - cd ${TRAVIS_BUILD_DIR}
-    - ./Travis/install.sh
+#install:
+#    - cd ${TRAVIS_BUILD_DIR}
+#    - ./Travis/install.sh
 
-before_script:
-    - cd ${TRAVIS_BUILD_DIR}
-    - ./Travis/before_script.sh
+#before_script:
+#    - cd ${TRAVIS_BUILD_DIR}
+#   - ./Travis/before_script.sh
 
-script:
-  - cd ${TRAVIS_BUILD_DIR}
-  - ./Travis/script.sh
+#script:
+#  - cd ${TRAVIS_BUILD_DIR}
+#  - ./Travis/script.sh
 
 after_success:
   - if [ "${TRAVIS_TAG}" ]; then export GOOGLE_PLAY_TRACK=production; else export GOOGLE_PLAY_TRACK=beta; fi
