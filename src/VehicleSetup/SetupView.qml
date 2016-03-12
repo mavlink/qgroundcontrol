@@ -101,7 +101,7 @@ Rectangle {
 
     function showVehicleComponentPanel(vehicleComponent)
     {
-        if (multiVehicleManager.activeVehicle.armed) {
+        if (multiVehicleManager.activeVehicle.armed && !vehicleComponent.allowSetupWhileArmed) {
             _messagePanelText = _armedVehicleText
             panelLoader.sourceComponent = messagePanelComponent
         } else {

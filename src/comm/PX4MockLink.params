@@ -282,6 +282,7 @@
 1	50	MPC_MANTHR_MIN	0.080	9
 1	50	MPC_THR_MAX	                        1	9
 1	50	MPC_THR_MIN	                      0.1	9
+1	50	MPC_THR_HOVER	                      0.5	9
 1	50	MPC_TILTMAX_AIR	                       45	9
 1	50	MPC_TILTMAX_LND	                       15	9
 1	50	MPC_XY_FF	                      0.5	9

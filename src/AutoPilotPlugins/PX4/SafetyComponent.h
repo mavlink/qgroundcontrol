@@ -39,18 +39,19 @@ public:
     SafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from VehicleComponent
-    virtual QStringList setupCompleteChangedTriggerList(void) const;
+    QStringList setupCompleteChangedTriggerList(void) const;
     
     // Virtuals from VehicleComponent
-    virtual QString name(void) const;
-    virtual QString description(void) const;
-    virtual QString iconResource(void) const;
-    virtual bool requiresSetup(void) const;
-    virtual bool setupComplete(void) const;
-    virtual QUrl setupSource(void) const;
-    virtual QUrl summaryQmlSource(void) const;
-    virtual QString prerequisiteSetup(void) const;
-    
+    QString name(void) const final;
+    QString description(void) const final;
+    QString iconResource(void) const final;
+    bool requiresSetup(void) const final;
+    bool setupComplete(void) const final;
+    QUrl setupSource(void) const final;
+    QUrl summaryQmlSource(void) const final;
+    QString prerequisiteSetup(void) const final;
+    bool allowSetupWhileArmed(void) const final { return true; }
+
 private:
     const QString   _name;
     QVariantList    _summaryItems;
