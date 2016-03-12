@@ -25,16 +25,13 @@ install:
 - export PATH=~/qt-ios/ios/bin:$PATH
 
 before_script:
-- openssl aes-256-cbc -k "${IOS_PASSWORD}" -in ${TRAVIS_BUILD_DIR}/deploy/iosCerts/QGroundControl_Distribution.mobileprovision.enc -d -a -out ${TRAVIS_BUILD_DIR}/deploy/iosCerts/QGroundControl_Distribution.mobileprovision
-- openssl aes-256-cbc -k "${IOS_PASSWORD}" -in ${TRAVIS_BUILD_DIR}/deploy/iosCerts/dist.cer.enc -d -a -out ${TRAVIS_BUILD_DIR}/deploy/iosCerts/dist.cer
-- openssl aes-256-cbc -k "${IOS_PASSWORD}" -in ${TRAVIS_BUILD_DIR}/deploy/iosCerts/dist.p12.enc -d -a -out ${TRAVIS_BUILD_DIR}/deploy/iosCerts/dist.p12
 - mkdir ${SHADOW_BUILD_DIR}
 - cd ${SHADOW_BUILD_DIR}
 - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release
 
 script:
 - cd ${SHADOW_BUILD_DIR}
-- xcodebuild -configuration Release
+- xcodebuild -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
 
 notifications:
   webhooks:
@@ -43,9 +40,3 @@ notifications:
     on_success: change
     on_failure: always
     on_start: never
-
-env:
-  global:
-    - APP_NAME="QGroundControl"
-    - 'DEVELOPER_NAME="iOS Distribution: Donald Gagne (BDJKVNW2ZQ)"'
-    - PROFILE_NAME="QGroundControl_Distribution"
