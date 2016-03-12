@@ -1,4 +1,4 @@
-language: cpp
+    language: cpp
 
 git:
   depth: 500
@@ -25,9 +25,10 @@ matrix:
         - os: osx
           osx_image: xcode7
           env: SPEC=macx-clang CONFIG=installer SHADOW_BUILD_DIR=/tmp/build_macos_install
-        - os: osx
-          osx_image: xcode7
-          env: SPEC=ios SHADOW_BUILD_DIR=/tmp/build_ios_install
+#        - os: android
+#          language: android
+#          env: SPEC=android-g++ CONFIG=debug SHADOW_BUILD_DIR=/tmp/build_android_debug
+#          sudo: false
         - os: android
           language: android
           env: SPEC=android-g++ CONFIG=installer SHADOW_BUILD_DIR=/tmp/build_android_install
@@ -63,23 +64,6 @@ addons:
 cache:
   directories:
     - $HOME/.ccache
-
-
-#before_install:
-#    - cd ${TRAVIS_BUILD_DIR}
-#    - ./Travis/before_install.sh
-
-#install:
-#    - cd ${TRAVIS_BUILD_DIR}
-#    - ./Travis/install.sh
-
-#before_script:
-#    - cd ${TRAVIS_BUILD_DIR}
-#   - ./Travis/before_script.sh
-
-#script:
-#  - cd ${TRAVIS_BUILD_DIR}
-#  - ./Travis/script.sh
 
 after_success:
   - if [ "${TRAVIS_TAG}" ]; then export GOOGLE_PLAY_TRACK=production; else export GOOGLE_PLAY_TRACK=beta; fi
