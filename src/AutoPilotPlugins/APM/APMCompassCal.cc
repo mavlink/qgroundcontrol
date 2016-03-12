@@ -148,9 +148,15 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
             if (rgCompassAvailable[cur_mag]) {
                 _emitVehicleTextMessage(QString("[cal] mag #%1 off: x:%2 y:%3 z:%4").arg(cur_mag).arg(-sphere_x[cur_mag]).arg(-sphere_y[cur_mag]).arg(-sphere_z[cur_mag]));
 
-                if (cur_mag != 2) {
-                    float sensorId;
-                    sensorId = cur_mag == 0 ? 2.0f : 5.0f;
+                float sensorId = 0.0f;
+                if (cur_mag == 0) {
+                    sensorId = 2.0f;
+                } else if (cur_mag == 1) {
+                    sensorId = 5.0f;
+                } else if (cur_mag == 2) {
+                    sensorId = 6.0f;
+                }
+                if (sensorId != 0.0f) {
                     _vehicle->doCommandLong(0, MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS, sensorId, -sphere_x[cur_mag], -sphere_y[cur_mag], -sphere_z[cur_mag]);
                 }
             }
@@ -704,5 +710,6 @@ void APMCompassCal::_stopCalibration(void)
 
 void APMCompassCal::_emitVehicleTextMessage(const QString& message)
 {
+    qCDebug(APMCompassCalLog()) << message;
     emit vehicleTextMessage(_vehicle->id(), 0, MAV_SEVERITY_INFO, message);
 }
