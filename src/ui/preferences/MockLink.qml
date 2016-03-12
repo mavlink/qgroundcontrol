@@ -32,17 +32,19 @@ Rectangle {
     color:          qgcPal.window
     anchors.fill:   parent
 
+    readonly property real _margins: ScreenTools.defaultFontPixelHeight
+
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     QGCFlickable {
         anchors.fill:   parent
-        contentWidth:   column.width
-        contentHeight:  column.height
+        contentWidth:   column.width + (_margins * 2)
+        contentHeight:  column.height + (_margins * 2)
         clip:           true
 
         Column {
             id:                 column
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.margins:    _margins
             anchors.left:       parent.left
             anchors.top:        parent.top
             spacing:            ScreenTools.defaultFontPixelHeight
