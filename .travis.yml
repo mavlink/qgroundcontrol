@@ -68,7 +68,7 @@ cache:
 
 before_install:
     - cd ${TRAVIS_BUILD_DIR}
-    - ./Travis/build_install.sh
+    - ./Travis/before_install.sh
 
 install:
     - cd ${TRAVIS_BUILD_DIR}
