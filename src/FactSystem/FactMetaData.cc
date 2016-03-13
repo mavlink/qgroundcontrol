@@ -534,3 +534,47 @@ void FactMetaData::setAppSettingsTranslators(void)
         }
     }
 }
+
+const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsDistanceUnitsTranslation(const QString& rawUnits)
+{
+    for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {
+        const AppSettingsTranslation_s* pAppSettingsTranslation = &_rgAppSettingsTranslations[i];
+
+        if (pAppSettingsTranslation->rawUnits == rawUnits &&
+                 (!pAppSettingsTranslation->speed && pAppSettingsTranslation->speedOrDistanceUnits == QGroundControlQmlGlobal::distanceUnits()->rawValue().toUInt())) {
+            return pAppSettingsTranslation;
+        }
+    }
+
+    return NULL;
+}
+
+QVariant FactMetaData::metersToAppSettingsDistanceUnits(const QVariant& meters)
+{
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsDistanceUnitsTranslation("m");
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->rawTranslator(meters);
+    } else {
+        return meters;
+    }
+}
+
+QVariant FactMetaData::appSettingsDistanceUnitsToMeters(const QVariant& distance)
+{
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsDistanceUnitsTranslation("m");
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->cookedTranslator(distance);
+    } else {
+        return distance;
+    }
+}
+
+QString FactMetaData::appSettingsDistanceUnitsString(void)
+{
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsDistanceUnitsTranslation("m");
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->cookedUnits;
+    } else {
+        return QStringLiteral("m");
+    }
+}
