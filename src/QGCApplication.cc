@@ -483,7 +483,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
 #ifdef __mobile__
     _qmlAppEngine = new QQmlApplicationEngine(this);
     _qmlAppEngine->addImportPath("qrc:/qml");
-    _qmlAppEngine->rootContext()->setContextProperty("multiVehicleManager", toolbox()->multiVehicleManager());
     _qmlAppEngine->rootContext()->setContextProperty("joystickManager", toolbox()->joystickManager());
     _qmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
 #else

@@ -104,7 +104,7 @@ Item {
                 opacity:            0.5
                 width:              attitudeWidget.width * 0.15
                 fillMode:           Image.PreserveAspectFit
-                visible:            QGroundControl.multiVehicleManager.activeVehicle
+                visible:            _activeVehicle
 
                 MouseArea {
                     anchors.fill:   parent

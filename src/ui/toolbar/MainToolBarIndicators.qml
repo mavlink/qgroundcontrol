@@ -322,10 +322,10 @@ Row {
 
             MenuItem {
                 checkable:      true
-                onTriggered:    multiVehicleManager.activeVehicle = vehicle
+                onTriggered:    QGroundControl.multiVehicleManager.activeVehicle = vehicle
 
                 property int vehicleId: Number(text.split(" ")[1])
-                property var vehicle:   multiVehicleManager.getVehicleById(vehicleId)
+                property var vehicle:   QGroundControl.multiVehicleManager.getVehicleById(vehicleId)
             }
         }
 
@@ -339,8 +339,8 @@ Row {
             vehicleMenuItems.length = 0
 
             // Add new items
-            for (var i=0; i<multiVehicleManager.vehicles.count; i++) {
-                var vehicle = multiVehicleManager.vehicles.get(i)
+            for (var i=0; i<QGroundControl.multiVehicleManager.vehicles.count; i++) {
+                var vehicle = QGroundControl.multiVehicleManager.vehicles.get(i)
                 var menuItem = vehicleMenuItemComponent.createObject(null, { "text": "Vehicle " + vehicle.id })
                 vehicleMenuItems.push(menuItem)
                 vehicleMenu.insertItem(i, menuItem)
@@ -350,7 +350,7 @@ Row {
         Component.onCompleted: updateVehicleMenu()
 
         Connections {
-            target:         multiVehicleManager.vehicles
+            target:         QGroundControl.multiVehicleManager.vehicles
             onCountChanged: vehicleSelectorButton.updateVehicleMenu()
         }
     }
@@ -422,7 +422,7 @@ Row {
         Component.onCompleted: updateFlightModesMenu()
 
         Connections {
-            target:                 multiVehicleManager
+            target:                 QGroundControl.multiVehicleManager
             onActiveVehicleChanged: flightModeSelector.updateFlightModesMenu
         }
 
