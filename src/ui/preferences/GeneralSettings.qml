@@ -73,6 +73,54 @@ Rectangle {
             }
 
             //-----------------------------------------------------------------
+            //-- Units
+
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth
+
+                QGCLabel {
+                    id:                 distanceUnitsLabel
+                    anchors.baseline:   distanceUnitsCombo.baseline
+                    text:               "Distance units:"
+                }
+
+                FactComboBox {
+                    id:         distanceUnitsCombo
+                    width:      ScreenTools.defaultFontPixelWidth * 10
+                    fact:       QGroundControl.distanceUnits
+                    indexModel: false
+                }
+
+                QGCLabel {
+                    anchors.baseline:   distanceUnitsCombo.baseline
+                    text:               "(requires reboot to take affect)"
+                }
+
+            }
+
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth
+
+                QGCLabel {
+                    anchors.baseline:   speedUnitsCombo.baseline
+                    width:              distanceUnitsLabel.width
+                    text:               "Speed units:"
+                }
+
+                FactComboBox {
+                    id:         speedUnitsCombo
+                    width:      ScreenTools.defaultFontPixelWidth * 20
+                    fact:       QGroundControl.speedUnits
+                    indexModel: false
+                }
+
+                QGCLabel {
+                    anchors.baseline:   distanceUnitsCombo.baseline
+                    text:               "(requires reboot to take affect)"
+                }
+            }
+
+            //-----------------------------------------------------------------
             //-- Audio preferences
             QGCCheckBox {
                 text:       "Mute all audio output"
@@ -165,8 +213,9 @@ Rectangle {
             Row {
                 spacing:    ScreenTools.defaultFontPixelWidth
                 QGCLabel {
-                    width: ScreenTools.defaultFontPixelWidth * 16
-                    text: "Map Providers"
+                    anchors.baseline:   mapProviders.baseline
+                    width:              ScreenTools.defaultFontPixelWidth * 16
+                    text:               "Map Providers:"
                 }
                 QGCComboBox {
                     id:     mapProviders
@@ -194,10 +243,12 @@ Rectangle {
             Row {
                 spacing:    ScreenTools.defaultFontPixelWidth
                 QGCLabel {
-                    width: ScreenTools.defaultFontPixelWidth * 16
-                    text: "Style"
+                    anchors.baseline:   paletteCombo.baseline
+                    width:              ScreenTools.defaultFontPixelWidth * 16
+                    text:               "Style:"
                 }
                 QGCComboBox {
+                    id: paletteCombo
                     width: ScreenTools.defaultFontPixelWidth * 16
                     model: [ "Dark", "Light" ]
                     currentIndex: QGroundControl.isDarkStyle ? 0 : 1

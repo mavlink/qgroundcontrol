@@ -31,6 +31,7 @@
 #include <QString>
 #include <QVariant>
 
+
 /// Holds the meta data associated with a Fact.
 ///
 /// Holds the meta data associated with a Fact. This is kept in a seperate object from the Fact itself
@@ -112,6 +113,12 @@ public:
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
 
+    /// Set the translators to the standard built in versions
+    void setBuiltInTranslator(void);
+
+    /// Set translators according to app settings
+    void setAppSettingsTranslators(void);
+
     /// Converts the specified raw value, validating against meta data
     ///     @param rawValue Value to convert, can be string
     ///     @param convertOnly true: convert to correct type only, do not validate against meta data
@@ -131,7 +138,6 @@ public:
 private:
     QVariant _minForType(void) const;
     QVariant _maxForType(void) const;
-    void _setBuiltInTranslator(void);
 
     // Built in translators
     static QVariant _defaultTranslator(const QVariant& from) { return from; }
@@ -139,6 +145,14 @@ private:
     static QVariant _radiansToDegrees(const QVariant& radians);
     static QVariant _centiDegreesToDegrees(const QVariant& centiDegrees);
     static QVariant _degreesToCentiDegrees(const QVariant& degrees);
+    static QVariant _metersToFeet(const QVariant& meters);
+    static QVariant _feetToMeters(const QVariant& feet);
+    static QVariant _metersPerSecondToMilesPerHour(const QVariant& metersPerSecond);
+    static QVariant _milesPerHourToMetersPerSecond(const QVariant& milesPerHour);
+    static QVariant _metersPerSecondToKilometersPerHour(const QVariant& metersPerSecond);
+    static QVariant _kilometersPerHourToMetersPerSecond(const QVariant& kilometersPerHour);
+    static QVariant _metersPerSecondToKnots(const QVariant& metersPerSecond);
+    static QVariant _knotsToMetersPerSecond(const QVariant& knots);
 
     ValueType_t     _type;                  // must be first for correct constructor init
     int             _decimalPlaces;
@@ -170,8 +184,18 @@ private:
         Translator  cookedTranslator;
 
     };
+    static const BuiltInTranslation_s _rgBuiltInTranslations[];
 
-    static const BuiltInTranslation_s _rgBuildInTranslations[];
+    struct AppSettingsTranslation_s {
+        const char* rawUnits;
+        const char* cookedUnits;
+        bool        speed;
+        uint32_t    speedOrDistanceUnits;
+        Translator  rawTranslator;
+        Translator  cookedTranslator;
+
+    };
+    static const AppSettingsTranslation_s _rgAppSettingsTranslations[];
 };
 
 #endif
