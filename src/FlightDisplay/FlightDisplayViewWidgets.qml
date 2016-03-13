@@ -341,7 +341,7 @@ Item {
                 break;
             case confirmTakeoff:
                 altitudeSlider.visible = true
-                altitudeSlider.initialValue = 10
+                altitudeSlider.setInitialValueMeters(10)
                 _guidedModeBar.confirmText = "takeoff"
                 break;
             case confirmLand:
@@ -349,7 +349,7 @@ Item {
                 break;
             case confirmChangeAlt:
                 altitudeSlider.visible = true
-                altitudeSlider.initialValue = _activeVehicle.altitudeAMSL.value
+                altitudeSlider.setInitialValueAppSettingsDistanceUnits(_activeVehicle.altitudeAMSL.value)
                 _guidedModeBar.confirmText = "altitude change"
                 break;
             case confirmGoTo:
@@ -444,13 +444,23 @@ Item {
         opacity:            0.8
         visible:            false
 
-        property alias initialValue:    altSlider.value
+        function setInitialValueMeters(meters) {
+            altSlider.value = QGroundControl.metersToAppSettingsDistanceUnits(meters)
+        }
+
+        function setInitialValueAppSettingsDistanceUnits(height) {
+            altSlider.value = height
+        }
 
         /// Returns NaN for bad value
         function getValue() {
-            return parseFloat(altField.text)
+            var value =  parseFloat(altField.text)
+            if (!isNaN(value)) {
+                return QGroundControl.appSettingsDistanceUnitsToMeters(value);
+            } else {
+                return value;
+            }
         }
-
 
         Column {
             id:                 headerColumn
@@ -461,12 +471,12 @@ Item {
 
             QGCLabel {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Altitude"
+                text: "Alt (rel)"
             }
 
             QGCLabel {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "meters (rel)"
+                text: QGroundControl.appSettingsDistanceUnitsString
             }
 
             QGCTextField {
@@ -486,9 +496,7 @@ Item {
             anchors.right:      parent.right
             orientation:        Qt.Vertical
             minimumValue:       0
-            maximumValue:       100
-            value:              30
-            //anchors.horizontalCenter: parent.horizontalCenter
+            maximumValue:       QGroundControl.metersToAppSettingsDistanceUnits(100)
         }
     }
 }

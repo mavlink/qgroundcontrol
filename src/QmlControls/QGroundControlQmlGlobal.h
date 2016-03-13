@@ -34,6 +34,7 @@
 #include "FlightMapSettings.h"
 #include "MissionCommands.h"
 #include "SettingsFact.h"
+#include "FactMetaData.h"
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -104,6 +105,9 @@ public:
     /// @ return: true: experimental survey ip code is turned on
     Q_PROPERTY(bool experimentalSurvey READ experimentalSurvey WRITE setExperimentalSurvey NOTIFY experimentalSurveyChanged)
 
+    /// Returns the string for distance units which has configued by user
+    Q_PROPERTY(QString appSettingsDistanceUnitsString READ appSettingsDistanceUnitsString CONSTANT)
+
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
@@ -117,6 +121,14 @@ public:
     Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText);
     Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText);
     Q_INVOKABLE void    stopAllMockLinks            (void);
+
+    /// Converts from meters to the user specified distance unit
+    Q_INVOKABLE QVariant metersToAppSettingsDistanceUnits(const QVariant& meters) const { return FactMetaData::metersToAppSettingsDistanceUnits(meters); }
+
+    /// Converts from user specified distance unit to meters
+    Q_INVOKABLE QVariant appSettingsDistanceUnitsToMeters(const QVariant& distance) const { return FactMetaData::appSettingsDistanceUnitsToMeters(distance); }
+
+    QString appSettingsDistanceUnitsString(void) const { return FactMetaData::appSettingsDistanceUnitsString(); }
 
     // Property accesors
 

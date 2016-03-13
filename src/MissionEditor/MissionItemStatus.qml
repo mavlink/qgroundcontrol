@@ -27,6 +27,7 @@ import QtQuick.Controls 1.3
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
+import QGroundControl               1.0
 
 Rectangle {
     property var    currentMissionItem          ///< Mission item to display status for
@@ -50,8 +51,8 @@ Rectangle {
     property real   _gradientPercent:   isNaN(_gradient) ? 0 : _gradient * 100
     property real   _azimuth:           _statusValid ? _currentMissionItem.azimuth : -1
     property bool   _statusValid:       currentMissionItem != undefined
-    property string _distanceText:      _statusValid ? _distance.toFixed(2) + " m" : ""
-    property string _altText:           _statusValid ? _altDifference.toFixed(2) + " m" : ""
+    property string _distanceText:      _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : ""
+    property string _altText:           _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : ""
     property string _gradientText:      _statusValid ? _gradientPercent.toFixed(0) + "%" : ""
     property string _azimuthText:       _statusValid ? Math.round(_azimuth) : ""
 
