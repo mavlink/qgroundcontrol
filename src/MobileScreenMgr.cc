@@ -26,6 +26,8 @@
 #include <QtAndroidExtras/QtAndroidExtras>
 #include <QtAndroidExtras/QAndroidJniObject>
 
+static const char* kJniClassName = "org/qgroundcontrol/qgchelper/UsbDeviceJNI";
+
 void MobileScreenMgr::setKeepScreenOn(bool keepScreenOn)
 {
     if (keepScreenOn) {

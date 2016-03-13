@@ -40,10 +40,6 @@ QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "MultiVehicleManagerLog")
 
 const char* MultiVehicleManager::_gcsHeartbeatEnabledKey = "gcsHeartbeatEnabled";
 
-#if defined __android__
-static const char* kJniClassName = "org/qgroundcontrol/qgchelper/UsbDeviceJNI";
-#endif
-
 MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     : QGCTool(app)
     , _activeVehicleAvailable(false)
