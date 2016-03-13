@@ -30,6 +30,13 @@
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeFact =        NULL;
+FactMetaData* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeMetaData =    NULL;
+SettingsFact* QGroundControlQmlGlobal::_distanceUnitsFact =                     NULL;
+FactMetaData* QGroundControlQmlGlobal::_distanceUnitsMetaData =                 NULL;
+SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                        NULL;
+FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                    NULL;
+
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey = "VirtualTabletJoystick";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
@@ -41,20 +48,9 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _multiVehicleManager(NULL)
     , _mapEngineManager(NULL)
     , _virtualTabletJoystick(false)
-    , _offlineEditingFirmwareTypeFact(QString(), "OfflineEditingFirmwareType", FactMetaData::valueTypeUint32, (uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA)
-    , _offlineEditingFirmwareTypeMetaData(FactMetaData::valueTypeUint32)
 {
     QSettings settings;
     _virtualTabletJoystick = settings.value(_virtualTabletJoystickKey, false). toBool();
-
-    QStringList     firmwareEnumStrings;
-    QVariantList    firmwareEnumValues;
-
-    firmwareEnumStrings << "ArduPilot Flight Stack" << "PX4 Flight Stack" << "Mavlink Generic Flight Stack";
-    firmwareEnumValues << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_PX4) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_GENERIC);
-
-    _offlineEditingFirmwareTypeMetaData.setEnumInfo(firmwareEnumStrings, firmwareEnumValues);
-    _offlineEditingFirmwareTypeFact.setMetaData(&_offlineEditingFirmwareTypeMetaData);
 
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     setParent(NULL);
@@ -223,4 +219,62 @@ void QGroundControlQmlGlobal::setExperimentalSurvey(bool experimentalSurvey)
 
     settings.setValue("ExperimentalSurvey", experimentalSurvey);
     emit experimentalSurveyChanged(experimentalSurvey);
+}
+
+Fact* QGroundControlQmlGlobal::offlineEditingFirmwareType(void)
+{
+    if (!_offlineEditingFirmwareTypeFact) {
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+
+        _offlineEditingFirmwareTypeFact = new SettingsFact(QString(), "OfflineEditingFirmwareType", FactMetaData::valueTypeUint32, (uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA);
+        _offlineEditingFirmwareTypeMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
+
+        enumStrings << "ArduPilot Flight Stack" << "PX4 Flight Stack" << "Mavlink Generic Flight Stack";
+        enumValues << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_PX4) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_GENERIC);
+
+        _offlineEditingFirmwareTypeMetaData->setEnumInfo(enumStrings, enumValues);
+        _offlineEditingFirmwareTypeFact->setMetaData(_offlineEditingFirmwareTypeMetaData);
+    }
+
+    return _offlineEditingFirmwareTypeFact;
+}
+
+Fact* QGroundControlQmlGlobal::distanceUnits(void)
+{
+    if (!_distanceUnitsFact) {
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+
+        _distanceUnitsFact = new SettingsFact(QString(), "DistanceUnits", FactMetaData::valueTypeUint32, DistanceUnitsMeters);
+        _distanceUnitsMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
+
+        enumStrings << "Feet" << "Meters";
+        enumValues << QVariant::fromValue((uint32_t)DistanceUnitsFeet) << QVariant::fromValue((uint32_t)DistanceUnitsMeters);
+
+        _distanceUnitsMetaData->setEnumInfo(enumStrings, enumValues);
+        _distanceUnitsFact->setMetaData(_distanceUnitsMetaData);
+    }
+
+    return _distanceUnitsFact;
+
+}
+
+Fact* QGroundControlQmlGlobal::speedUnits(void)
+{
+    if (!_speedUnitsFact) {
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+
+        _speedUnitsFact = new SettingsFact(QString(), "SpeedUnits", FactMetaData::valueTypeUint32, SpeedUnitsMetersPerSecond);
+        _speedUnitsMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
+
+        enumStrings << "Feet per second" << "Meters per second" << "Miles per hour" << "Kilometers per hour" << "Knots";
+        enumValues << QVariant::fromValue((uint32_t)SpeedUnitsFeetPerSecond) << QVariant::fromValue((uint32_t)SpeedUnitsMetersPerSecond) << QVariant::fromValue((uint32_t)SpeedUnitsMilesPerHour) << QVariant::fromValue((uint32_t)SpeedUnitsKilometersPerHour) << QVariant::fromValue((uint32_t)SpeedUnitsKnots);
+
+        _speedUnitsMetaData->setEnumInfo(enumStrings, enumValues);
+        _speedUnitsFact->setMetaData(_speedUnitsMetaData);
+    }
+
+    return _speedUnitsFact;
 }
