@@ -369,7 +369,7 @@ iOSBuild {
         src/audio/QGCAudioWorker_iOS.mm \
         src/MobileScreenMgr.mm \
 }
-androidBuild {
+AndroidBuild {
     SOURCES += src/MobileScreenMgr.cc \
 }
 
