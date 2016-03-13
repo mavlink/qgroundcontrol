@@ -624,21 +624,17 @@ void APMCompassCal::startCalibration(void)
 
         const char* deviceIdParam = CalWorkerThread::rgCompassParams[i][3];
         if (plugin->parameterExists(-1, deviceIdParam)) {
-            if (plugin->getParameterFact(-1, deviceIdParam)->rawValue().toInt() > 0) {
-                for (int j=0; j<3; j++) {
-                    const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
-                    if (plugin->parameterExists(-1, offsetParam)) {
-                        Fact* paramFact = plugin->getParameterFact(-1, offsetParam);
+            _calWorkerThread->rgCompassAvailable[i] = plugin->getParameterFact(-1, deviceIdParam)->rawValue().toInt() > 0;
+            for (int j=0; j<3; j++) {
+                const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
+                Fact* paramFact = plugin->getParameterFact(-1, offsetParam);
 
-                        _rgSavedCompassOffsets[i][j] = paramFact->rawValue().toFloat();
-                        paramFact->setRawValue(0.0);
-                        goto has_compass;
-                    }
-                }
+                _rgSavedCompassOffsets[i][j] = paramFact->rawValue().toFloat();
+                paramFact->setRawValue(0.0);
             }
+        } else {
+            _calWorkerThread->rgCompassAvailable[i] = false;
         }
-        _calWorkerThread->rgCompassAvailable[i] = false;
-    has_compass:
         qCDebug(APMCompassCalLog) << QStringLiteral("Compass %1 available: %2").arg(i).arg(_calWorkerThread->rgCompassAvailable[i]);
     }
 
