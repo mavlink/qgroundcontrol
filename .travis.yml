@@ -93,6 +93,7 @@ install:
       && mkdir -p ~/qt-ios
       && tar jxf Qt5.5.1-ios.tar.bz2 -C ~/qt-ios
       && export PATH=~/qt-ios/ios/bin:$PATH
+      ;
     elif [ "${TRAVIS_OS_NAME}" = "android" ]; then
          wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
       && chmod +x android-ndk-r10e-linux-x86_64.bin
