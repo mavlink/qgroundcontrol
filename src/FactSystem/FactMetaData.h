@@ -61,6 +61,15 @@ public:
 
     const FactMetaData& operator=(const FactMetaData& other);
 
+    /// Converts from meters to the user specified distance unit
+    static QVariant metersToAppSettingsDistanceUnits(const QVariant& meters);
+
+    /// Converts from user specified distance unit to meters
+    static QVariant appSettingsDistanceUnitsToMeters(const QVariant& distance);
+
+    /// Returns the string for distance units which has configued by user
+    static QString appSettingsDistanceUnitsString(void);
+
     int             decimalPlaces           (void) const { return _decimalPlaces; }
     QVariant        rawDefaultValue         (void) const;
     QVariant        cookedDefaultValue      (void) const { return _rawTranslator(rawDefaultValue()); }
@@ -154,6 +163,18 @@ private:
     static QVariant _metersPerSecondToKnots(const QVariant& metersPerSecond);
     static QVariant _knotsToMetersPerSecond(const QVariant& knots);
 
+    struct AppSettingsTranslation_s {
+        const char* rawUnits;
+        const char* cookedUnits;
+        bool        speed;
+        uint32_t    speedOrDistanceUnits;
+        Translator  rawTranslator;
+        Translator  cookedTranslator;
+
+    };
+
+    static const AppSettingsTranslation_s* _findAppSettingsDistanceUnitsTranslation(const QString& rawUnits);
+
     ValueType_t     _type;                  // must be first for correct constructor init
     int             _decimalPlaces;
     QVariant        _rawDefaultValue;
@@ -186,15 +207,6 @@ private:
     };
     static const BuiltInTranslation_s _rgBuiltInTranslations[];
 
-    struct AppSettingsTranslation_s {
-        const char* rawUnits;
-        const char* cookedUnits;
-        bool        speed;
-        uint32_t    speedOrDistanceUnits;
-        Translator  rawTranslator;
-        Translator  cookedTranslator;
-
-    };
     static const AppSettingsTranslation_s _rgAppSettingsTranslations[];
 };
 
