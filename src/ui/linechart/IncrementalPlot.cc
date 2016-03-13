@@ -254,7 +254,6 @@ void IncrementalPlot::updateScale()
     }
     setAxisScale(xBottom, xMinRange, xMaxRange);
     setAxisScale(yLeft, yMinRange, yMaxRange);
-    zoomer->setZoomBase(true);
 }
 
 void IncrementalPlot::appendData(const QString &key, double x, double y)
