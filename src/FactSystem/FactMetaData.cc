@@ -27,15 +27,30 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FactMetaData.h"
+#include "QGroundControlQmlGlobal.h"
 
 #include <QDebug>
 
 #include <limits>
 #include <cmath>
 
-const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuildInTranslations[] = {
+// Built in translations for all Facts
+const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
     { "centi-degrees",  "degrees",  FactMetaData::_centiDegreesToDegrees,   FactMetaData::_degreesToCentiDegrees },
     { "radians",        "degrees",  FactMetaData::_radiansToDegrees,        FactMetaData::_degreesToRadians },
+};
+
+// Translations driven by app settings
+const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTranslations[] = {
+    { "m",      "m",        false,  QGroundControlQmlGlobal::DistanceUnitsMeters,           FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "meters", "meters",   false,  QGroundControlQmlGlobal::DistanceUnitsMeters,           FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "m/s",    "m/s",      true,   QGroundControlQmlGlobal::SpeedUnitsMetersPerSecond,     FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "m",      "ft",       false,  QGroundControlQmlGlobal::DistanceUnitsFeet,             FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "meters", "ft",       false,  QGroundControlQmlGlobal::DistanceUnitsFeet,             FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "m/s",    "ft/s",     true,   QGroundControlQmlGlobal::SpeedUnitsFeetPerSecond,       FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "m/s",    "mph",      true,   QGroundControlQmlGlobal::SpeedUnitsMilesPerHour,        FactMetaData::_metersPerSecondToMilesPerHour,       FactMetaData::_milesPerHourToMetersPerSecond },
+    { "m/s",    "km/h",     true,   QGroundControlQmlGlobal::SpeedUnitsKilometersPerHour,   FactMetaData::_metersPerSecondToKilometersPerHour,  FactMetaData::_kilometersPerHourToMetersPerSecond },
+    { "m/s",    "kn",       true,   QGroundControlQmlGlobal::SpeedUnitsKnots,               FactMetaData::_metersPerSecondToKnots,              FactMetaData::_knotsToMetersPerSecond },
 };
 
 FactMetaData::FactMetaData(QObject* parent)
@@ -323,7 +338,7 @@ void FactMetaData::setBitmaskInfo(const QStringList& strings, const QVariantList
 
     _bitmaskStrings = strings;
     _bitmaskValues = values;
-    _setBuiltInTranslator();
+    setBuiltInTranslator();
 }
 
 void FactMetaData::addBitmaskInfo(const QString& name, const QVariant& value)
@@ -341,7 +356,7 @@ void FactMetaData::setEnumInfo(const QStringList& strings, const QVariantList& v
 
     _enumStrings = strings;
     _enumValues = values;
-    _setBuiltInTranslator();
+    setBuiltInTranslator();
 }
 
 void FactMetaData::addEnumInfo(const QString& name, const QVariant& value)
@@ -356,15 +371,15 @@ void FactMetaData::setTranslators(Translator rawTranslator, Translator cookedTra
     _cookedTranslator = cookedTranslator;
 }
 
-void FactMetaData::_setBuiltInTranslator(void)
+void FactMetaData::setBuiltInTranslator(void)
 {
     if (_enumStrings.count()) {
         // No translation if enum
         setTranslators(_defaultTranslator, _defaultTranslator);
         _cookedUnits = _rawUnits;
     } else {
-        for (size_t i=0; i<sizeof(_rgBuildInTranslations)/sizeof(_rgBuildInTranslations[0]); i++) {
-            const BuiltInTranslation_s* pBuiltInTranslation = &_rgBuildInTranslations[i];
+        for (size_t i=0; i<sizeof(_rgBuiltInTranslations)/sizeof(_rgBuiltInTranslations[0]); i++) {
+            const BuiltInTranslation_s* pBuiltInTranslation = &_rgBuiltInTranslations[i];
 
             if (pBuiltInTranslation->rawUnits == _rawUnits.toLower()) {
                 _cookedUnits = pBuiltInTranslation->cookedUnits;
@@ -394,12 +409,52 @@ QVariant FactMetaData::_degreesToCentiDegrees(const QVariant& degrees)
     return QVariant((unsigned int)(degrees.toFloat() * 100.0f));
 }
 
+QVariant FactMetaData::_metersToFeet(const QVariant& meters)
+{
+    return QVariant(meters.toDouble() * 3.28083989501);
+}
+
+QVariant FactMetaData::_feetToMeters(const QVariant& feet)
+{
+    return QVariant(feet.toDouble() * 0.305);
+}
+
+QVariant FactMetaData::_metersPerSecondToMilesPerHour(const QVariant& metersPerSecond)
+{
+    return QVariant((metersPerSecond.toDouble() * 0.000621371192) * 60.0 * 60.0);
+}
+
+QVariant FactMetaData::_milesPerHourToMetersPerSecond(const QVariant& milesPerHour)
+{
+    return QVariant((milesPerHour.toDouble() * 1609.344) / (60.0 * 60.0));
+}
+
+QVariant FactMetaData::_metersPerSecondToKilometersPerHour(const QVariant& metersPerSecond)
+{
+    return QVariant((metersPerSecond.toDouble() / 1000.0) * 60.0 * 60.0);
+}
+
+QVariant FactMetaData::_kilometersPerHourToMetersPerSecond(const QVariant& kilometersPerHour)
+{
+    return QVariant((kilometersPerHour.toDouble() * 1000.0) / (60.0 * 60.0));
+}
+
+QVariant FactMetaData::_metersPerSecondToKnots(const QVariant& metersPerSecond)
+{
+    return QVariant(metersPerSecond.toDouble() * 1.94384449244);
+}
+
+QVariant FactMetaData::_knotsToMetersPerSecond(const QVariant& knots)
+{
+    return QVariant(knots.toDouble() * 0.51444444444);
+}
+
 void FactMetaData::setRawUnits(const QString& rawUnits)
 {
     _rawUnits = rawUnits;
     _cookedUnits = rawUnits;
 
-    _setBuiltInTranslator();
+    setBuiltInTranslator();
 }
 
 FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, bool& unknownType)
@@ -460,5 +515,22 @@ size_t FactMetaData::typeToSize(ValueType_t type)
         default:
             qWarning() << "Unsupported fact value type" << type;
             return 4;
+    }
+}
+
+void FactMetaData::setAppSettingsTranslators(void)
+{
+    if (!_enumStrings.count()) {
+        for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {
+            const AppSettingsTranslation_s* pAppSettingsTranslation = &_rgAppSettingsTranslations[i];
+
+            if (pAppSettingsTranslation->rawUnits == _rawUnits.toLower() &&
+                    ((pAppSettingsTranslation->speed && pAppSettingsTranslation->speedOrDistanceUnits == QGroundControlQmlGlobal::speedUnits()->rawValue().toUInt()) ||
+                     (!pAppSettingsTranslation->speed && pAppSettingsTranslation->speedOrDistanceUnits == QGroundControlQmlGlobal::distanceUnits()->rawValue().toUInt()))) {
+                _cookedUnits = pAppSettingsTranslation->cookedUnits;
+                setTranslators(pAppSettingsTranslation->rawTranslator, pAppSettingsTranslation->cookedTranslator);
+                return;
+            }
+        }
     }
 }
