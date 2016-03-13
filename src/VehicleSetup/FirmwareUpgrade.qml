@@ -102,7 +102,7 @@ QGCView {
                 // Board was found right away, so something is already plugged in before we've started upgrade
                 statusTextArea.append(qgcUnplugText1)
                 statusTextArea.append(qgcUnplugText2)
-                multiVehicleManager.activeVehicle.autoDisconnect = true
+                QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true
             } else {
                 // We end up here when we detect a board plugged in after we've started upgrade
                 statusTextArea.append(highlightPrefix + "Found device" + highlightSuffix + ": " + controller.boardType)

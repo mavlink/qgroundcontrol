@@ -63,7 +63,7 @@ Item {
             pitchAngle:         _pitch
             width:              ScreenTools.defaultFontPixelSize * (30)
             height:             ScreenTools.defaultFontPixelSize * (30)
-            active:             multiVehicleManager.activeVehicleAvailable
+            active:             QGroundControl.multiVehicleManager.activeVehicleAvailable
             z:                  QGroundControl.zOrderWidgets
         }
         */

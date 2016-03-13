@@ -88,9 +88,9 @@ Rectangle {
             //-- Mavlink Heartbeats
             QGCCheckBox {
                 text:       "Emit heartbeat"
-                checked:    multiVehicleManager.gcsHeartBeatEnabled
+                checked:    QGroundControl.multiVehicleManager.gcsHeartBeatEnabled
                 onClicked: {
-                    multiVehicleManager.gcsHeartBeatEnabled = checked
+                    QGroundControl.multiVehicleManager.gcsHeartBeatEnabled = checked
                 }
             }
             //-----------------------------------------------------------------

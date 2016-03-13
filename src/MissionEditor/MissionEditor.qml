@@ -51,7 +51,7 @@ QGCView {
     readonly property int       _decimalPlaces:     8
     readonly property real      _horizontalMargin:  ScreenTools.defaultFontPixelWidth  / 2
     readonly property real      _margin:            ScreenTools.defaultFontPixelHeight / 2
-    readonly property var       _activeVehicle:     multiVehicleManager.activeVehicle
+    readonly property var       _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     readonly property real      _editFieldWidth:    ScreenTools.defaultFontPixelWidth * 16
     readonly property real      _rightPanelWidth:   Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
     readonly property real      _rightPanelOpacity: 0.8
@@ -68,7 +68,7 @@ QGCView {
     onActiveVehiclePositionChanged: updateMapToVehiclePosition()
 
     Connections {
-        target: multiVehicleManager
+        target: QGroundControl.multiVehicleManager
 
         onActiveVehicleChanged: {
             // When the active vehicle changes we need to allow the first vehicle position to move the map again
@@ -443,7 +443,7 @@ QGCView {
 
                 // Add the vehicles to the map
                 MapItemView {
-                    model: multiVehicleManager.vehicles
+                    model: QGroundControl.multiVehicleManager.vehicles
                     delegate:
                         VehicleMapItem {
                                 vehicle:        object
@@ -596,7 +596,7 @@ QGCView {
                                         text:       "Vehicle"
                                         enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
 
-                                        property var activeVehicle: multiVehicleManager.activeVehicle
+                                        property var activeVehicle: _activeVehicle
 
                                         onClicked: {
                                             centerMapButton.hideDropDown()
