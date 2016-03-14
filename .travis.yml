@@ -120,13 +120,13 @@ before_script:
   - ln -s /usr/bin/ccache ~/bin/gcc-4.8
   - export PATH=~/bin:$PATH
   - if [[ "${TRAVIS_OS_NAME}" = "android" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then export CONFIG=release; fi
-  - if [[ "${CONFIG}" != "doxygen" && spec != "ios" ]]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}; fi
+  - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}; fi
   - if [ "${SPEC}" = "ios" ]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release; fi
 
 script:
   - cd ${TRAVIS_BUILD_DIR} && ./tools/update_android_version.sh
   - echo 'Building QGroundControl' && echo -en 'travis_fold:start:script.1\\r'
-  - if [[ "${CONFIG}" != "doxygen" && spec != "ios" ]]; then cd ${SHADOW_BUILD_DIR} && make -j4; fi
+  - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then cd ${SHADOW_BUILD_DIR} && make -j4; fi
   - if [ "${SPEC}" = "ios" ]; then cd ${SHADOW_BUILD_DIR} && xcodebuild -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO; fi
   - if [ "${CONFIG}" = "doxygen" ]; then cd ${TRAVIS_BUILD_DIR}/src && doxygen documentation.dox; fi
   - echo -en 'travis_fold:end:script.1\\r'
