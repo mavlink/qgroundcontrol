@@ -286,6 +286,7 @@ Item {
         readonly property int confirmEmergencyStop: 6
         readonly property int confirmChangeAlt:     7
         readonly property int confirmGoTo:          8
+        readonly property int confirmRetask:        9
 
         property int    confirmActionCode
         property string confirmText
@@ -322,6 +323,9 @@ Item {
             case confirmGoTo:
                 _activeVehicle.guidedModeGotoLocation(_flightMap._gotoHereCoordinate)
                 break;
+            case confirmRetask:
+                _activeVehicle.setCurrentMissionSequence(_flightMap._retaskSequence)
+                break;
             default:
                 console.warn("Internal error: unknown confirmActionCode", confirmActionCode)
             }
@@ -354,6 +358,9 @@ Item {
                 break;
             case confirmGoTo:
                 _guidedModeBar.confirmText = "move"
+                break;
+            case confirmRetask:
+                _guidedModeBar.confirmText = "active waypoint change"
                 break;
             }
             guidedModeButtons.visible = false

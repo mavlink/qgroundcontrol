@@ -356,6 +356,9 @@ public:
     /// Command vehicle to kill all motors no matter what state
     Q_INVOKABLE void emergencyStop(void);
 
+    /// Alter the current mission item on the vehicle
+    Q_INVOKABLE void setCurrentMissionSequence(int seq);
+
     bool guidedModeSupported(void) const;
     bool pauseVehicleSupported(void) const;
 
@@ -430,7 +433,6 @@ public:
     QString flightMode(void) const;
     void setFlightMode(const QString& flightMode);
 
-    void setCurrentMissionSequence(int seq);
 
     bool hilMode(void);
     void setHilMode(bool hilMode);
