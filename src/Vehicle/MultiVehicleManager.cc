@@ -30,20 +30,15 @@
 #include "UAS.h"
 #include "QGCApplication.h"
 
-#include <QQmlEngine>
-
-#if defined __android__
-#include <QtAndroidExtras/QtAndroidExtras>
-#include <QtAndroidExtras/QAndroidJniObject>
+#ifdef __mobile__
+#include "MobileScreenMgr.h"
 #endif
+
+#include <QQmlEngine>
 
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "MultiVehicleManagerLog")
 
 const char* MultiVehicleManager::_gcsHeartbeatEnabledKey = "gcsHeartbeatEnabled";
-
-#if defined __android__
-static const char* kJniClassName = "org/qgroundcontrol/qgchelper/UsbDeviceJNI";
-#endif
 
 MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     : QGCTool(app)
@@ -126,11 +121,11 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     // Mark link as active
     link->setActive(true);
 
-#if defined __android__
+#ifdef __mobile__
     if(_vehicles.count() == 1) {
-        //-- Once a vehicle is connected, keep Android screen from going off
+        //-- Once a vehicle is connected, keep screen from going off
         qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::keepScreenOn";
-        QAndroidJniObject::callStaticMethod<void>(kJniClassName, "keepScreenOn", "()V");
+        MobileScreenMgr::setKeepScreenOn(true);
     }
 #endif
 
@@ -167,11 +162,11 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     emit parameterReadyVehicleAvailableChanged(false);
     emit vehicleRemoved(vehicle);
 
-#if defined __android__
+#ifdef __mobile__
     if(_vehicles.count() == 0) {
-        //-- Once no vehicles are connected, we no longer need to keep Android screen from going off
+        //-- Once no vehicles are connected, we no longer need to keep screen from going off
         qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::restoreScreenOn";
-        QAndroidJniObject::callStaticMethod<void>(kJniClassName, "restoreScreenOn", "()V");
+        MobileScreenMgr::setKeepScreenOn(true);
     }
 #endif
 
