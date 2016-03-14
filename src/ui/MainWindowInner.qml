@@ -53,7 +53,7 @@ Item {
     property var    gcsPosition:        QtPositioning.coordinate()  // Starts as invalid coordinate
     property var    currentPopUp:       null
     property real   currentCenterX:     0
-    property var    activeVehicle:      multiVehicleManager.activeVehicle
+    property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
     property string formatedMessage:    activeVehicle ? activeVehicle.formatedMessage : ""
 
     function showFlyView() {
@@ -232,7 +232,7 @@ Item {
         if(currentPopUp) {
             currentPopUp.close()
         }
-        if(multiVehicleManager.activeVehicleAvailable) {
+        if(QGroundControl.multiVehicleManager.activeVehicleAvailable) {
             messageText.text = activeVehicle.formatedMessages
             //-- Hack to scroll to last message
             for (var i = 0; i < activeVehicle.messageCount; i++)

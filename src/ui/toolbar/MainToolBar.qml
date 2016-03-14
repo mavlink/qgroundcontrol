@@ -45,7 +45,7 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    property var  activeVehicle:        multiVehicleManager.activeVehicle
+    property var  activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
     property var  mainWindow:           null
     property bool isMessageImportant:   activeVehicle ? !activeVehicle.messageTypeNormal && !activeVehicle.messageTypeNone : false
     property bool isBackgroundDark:     true

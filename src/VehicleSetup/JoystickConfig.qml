@@ -25,6 +25,7 @@ import QtQuick          2.2
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
 
+import QGroundControl               1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
@@ -43,7 +44,7 @@ QGCView {
     property bool               controllerCompleted:    false
     property bool               controllerAndViewReady: false
 
-    property var _activeVehicle:    multiVehicleManager.activeVehicle
+    property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
     property var _activeJoystick:   joystickManager.activeJoystick
 
     JoystickConfigController {

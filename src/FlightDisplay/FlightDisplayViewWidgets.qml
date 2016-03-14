@@ -68,7 +68,7 @@ Item {
         width:  parent.width
 
         Repeater {
-            model: multiVehicleManager.vehicles
+            model: QGroundControl.multiVehicleManager.vehicles
 
             delegate:
             QGCLabel {
@@ -180,7 +180,7 @@ Item {
                         text:       "Center map on Vehicle"
                         enabled:    _activeVehicle && !followVehicleCheckBox.checked
 
-                        property var activeVehicle: multiVehicleManager.activeVehicle
+                        property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
                         onClicked: {
                             _dropButtonsExclusiveGroup.current = null
