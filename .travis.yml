@@ -170,6 +170,7 @@ deploy:
     skip_cleanup: true
     branch: master
     on:
+      tags: true
       condition: $CONFIG = doxygen
 
 notifications:
