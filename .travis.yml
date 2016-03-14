@@ -114,7 +114,7 @@ before_script:
   - if [ "${CONFIG}" != "doxygen" ]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}; fi
 
 script:
-  - cd ${TRAVIS_BUILD_DIR} && ./tools/update_android_version.sh
+  - if [ "${TRAVIS_OS_NAME}" = "android" ]; then cd ${TRAVIS_BUILD_DIR} && ./tools/update_android_version.sh; fi
   - echo 'Building QGroundControl' && echo -en 'travis_fold:start:script.1\\r'
   - if [ "${CONFIG}" != "doxygen" ]; then cd ${SHADOW_BUILD_DIR} && make -j4; fi
   - if [ "${CONFIG}" = "doxygen" ]; then cd ${TRAVIS_BUILD_DIR}/src && doxygen documentation.dox; fi
@@ -170,6 +170,7 @@ deploy:
     skip_cleanup: true
     branch: master
     on:
+      tags: true
       condition: $CONFIG = doxygen
 
 notifications:
