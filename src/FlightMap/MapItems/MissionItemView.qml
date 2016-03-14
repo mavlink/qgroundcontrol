@@ -42,6 +42,10 @@ MapItemView {
         z:              QGroundControl.zOrderMapItems
         missionItem:    object
         sequenceNumber: object.sequenceNumber
+        onClicked: {
+            parent._retaskSequence = object.sequenceNumber
+            parent.flightWidgets.guidedModeBar.confirmAction(parent.flightWidgets.guidedModeBar.confirmRetask)
+        }
 
         // These are the non-coordinate child mission items attached to this item
         Row {
@@ -55,8 +59,6 @@ MapItemView {
                     label:          object.sequenceNumber
                     isCurrentItem:  object.isCurrentItem
                     z:              2
-
-                    onClicked: setCurrentItem(object.sequenceNumber)
                 }
             }
         }

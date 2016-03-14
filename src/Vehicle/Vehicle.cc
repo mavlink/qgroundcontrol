@@ -1490,6 +1490,16 @@ void Vehicle::emergencyStop(void)
     sendMessage(msg);
 }
 
+void Vehicle::setCurrentMissionSequence(int seq)
+{
+    if (!_firmwarePlugin->sendHomePositionToVehicle()) {
+        seq--;
+    }
+    mavlink_message_t msg;
+    mavlink_msg_mission_set_current_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, id(), _compID, seq);
+    sendMessage(msg);
+}
+
 void Vehicle::doCommandLong(int component, MAV_CMD command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
     mavlink_message_t       msg;
@@ -1510,6 +1520,7 @@ void Vehicle::doCommandLong(int component, MAV_CMD command, float param1, float 
 
     sendMessage(msg);
 }
+
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
