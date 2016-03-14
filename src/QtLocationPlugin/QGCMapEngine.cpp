@@ -45,6 +45,8 @@ Q_DECLARE_METATYPE(QList<QGCTile*>)
 static const char* kDbFileName = "qgcMapCache.db";
 static QLocale kLocale;
 
+#define CACHE_PATH_VERSION  "100"
+
 struct stQGeoTileCacheQGCMapTypes {
     const char* name;
     UrlFactory::MapType type;
@@ -157,10 +159,18 @@ QGCMapEngine::~QGCMapEngine()
 void
 QGCMapEngine::init()
 {
+    //-- Delete old style cache (if present)
 #ifdef __mobile__
-    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache55");
+    QString oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache55");
 #else
-    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
+    QString oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
+#endif
+    _wipeDirectory(oldCacheDir);
+    //-- Figure out cache path
+#ifdef __mobile__
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache" CACHE_PATH_VERSION);
+#else
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache" CACHE_PATH_VERSION);
 #endif
     if(!QDir::root().mkpath(cacheDir)) {
         qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
@@ -180,6 +190,28 @@ QGCMapEngine::init()
     }
     QGCMapTask* task = new QGCMapTask(QGCMapTask::taskInit);
     _worker.enqueueTask(task);
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGCMapEngine::_wipeDirectory(const QString& dirPath)
+{
+    bool result = true;
+    QDir dir(dirPath);
+    if (dir.exists(dirPath)) {
+        Q_FOREACH(QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst)) {
+            if (info.isDir()) {
+                result = _wipeDirectory(info.absoluteFilePath());
+            } else {
+                result = QFile::remove(info.absoluteFilePath());
+            }
+            if (!result) {
+                return result;
+            }
+        }
+        result = dir.rmdir(dirPath);
+    }
+    return result;
 }
 
 //-----------------------------------------------------------------------------

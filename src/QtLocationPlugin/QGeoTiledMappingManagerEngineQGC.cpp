@@ -194,10 +194,12 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     if (parameters.contains(QStringLiteral("mapping.cache.directory")))
         cacheDir = parameters.value(QStringLiteral("mapping.cache.directory")).toString();
     else {
-        cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
-        if(!QDir::root().mkpath(cacheDir)) {
-            qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
-            cacheDir = QDir::homePath() + QLatin1String("/.qgcmapscache/");
+        cacheDir = getQGCMapEngine()->getCachePath();
+        if(!QFileInfo(cacheDir).exists()) {
+            if(!QDir::root().mkpath(cacheDir)) {
+                qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
+                cacheDir = QDir::homePath() + QLatin1String("/.qgcmapscache/");
+            }
         }
     }
     if(!QFileInfo(cacheDir).exists()) {
