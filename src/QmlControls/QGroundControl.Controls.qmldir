@@ -32,6 +32,7 @@ QGCViewMessage          1.0 QGCViewMessage.qml
 QGCViewPanel            1.0 QGCViewPanel.qml
 RoundButton             1.0 RoundButton.qml
 SignalStrength          1.0 SignalStrength.qml
+SliderSwitch            1.0 SliderSwitch.qml
 SubMenuButton           1.0 SubMenuButton.qml
 VehicleRotationCal      1.0 VehicleRotationCal.qml
 VehicleSummaryRow       1.0 VehicleSummaryRow.qml
