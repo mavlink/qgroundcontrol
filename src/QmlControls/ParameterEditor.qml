@@ -48,7 +48,7 @@ QGCView {
     property bool   _searchFilter:      false   ///< true: showing results of search
     property var    _searchResults              ///< List of parameter names from search results
     property string _currentGroup:      ""
-    property bool   _showRCToParam:     !ScreenTools.isMobile && multiVehicleManager.activeVehicle.px4Firmware
+    property bool   _showRCToParam:     !ScreenTools.isMobile && QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
 
     ParameterEditorController {
         id: controller;

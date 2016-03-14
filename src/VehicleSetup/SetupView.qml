@@ -50,17 +50,17 @@ Rectangle {
     readonly property string    _armedVehicleText:  "This operation cannot be performed while vehicle is armed."
 
     property string _messagePanelText:              "missing message panel text"
-    property bool   _fullParameterVehicleAvailable: multiVehicleManager.parameterReadyVehicleAvailable && !multiVehicleManager.activeVehicle.missingParameters
+    property bool   _fullParameterVehicleAvailable: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !QGroundControl.multiVehicleManager.activeVehicle.missingParameters
 
     function showSummaryPanel()
     {
         if (_fullParameterVehicleAvailable) {
-            if (multiVehicleManager.activeVehicle.autopilot.vehicleComponents.length == 0) {
+            if (QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents.length == 0) {
                 panelLoader.sourceComponent = noComponentsVehicleSummaryComponent
             } else {
                 panelLoader.source = "VehicleSummary.qml";
             }
-        } else if (multiVehicleManager.parameterReadyVehicleAvailable) {
+        } else if (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable) {
             panelLoader.sourceComponent = missingParametersVehicleSummaryComponent
         } else {
             panelLoader.sourceComponent = disconnectedVehicleSummaryComponent
@@ -70,7 +70,7 @@ Rectangle {
     function showFirmwarePanel()
     {
         if (!ScreenTools.isMobile) {
-            if (multiVehicleManager.activeVehicleAvailable && multiVehicleManager.activeVehicle.armed) {
+            if (QGroundControl.multiVehicleManager.activeVehicleAvailable && QGroundControl.multiVehicleManager.activeVehicle.armed) {
                 _messagePanelText = _armedVehicleText
                 panelLoader.sourceComponent = messagePanelComponent
             } else {
@@ -81,7 +81,7 @@ Rectangle {
 
     function showJoystickPanel()
     {
-        if (multiVehicleManager.activeVehicleAvailable && multiVehicleManager.activeVehicle.armed) {
+        if (QGroundControl.multiVehicleManager.activeVehicleAvailable && QGroundControl.multiVehicleManager.activeVehicle.armed) {
             _messagePanelText = _armedVehicleText
             panelLoader.sourceComponent = messagePanelComponent
         } else {
@@ -101,7 +101,7 @@ Rectangle {
 
     function showVehicleComponentPanel(vehicleComponent)
     {
-        if (multiVehicleManager.activeVehicle.armed && !vehicleComponent.allowSetupWhileArmed) {
+        if (QGroundControl.multiVehicleManager.activeVehicle.armed && !vehicleComponent.allowSetupWhileArmed) {
             _messagePanelText = _armedVehicleText
             panelLoader.sourceComponent = messagePanelComponent
         } else {
@@ -117,7 +117,7 @@ Rectangle {
     Component.onCompleted: showSummaryPanel()
 
     Connections {
-        target: multiVehicleManager
+        target: QGroundControl.multiVehicleManager
 
         onParameterReadyVehicleAvailableChanged: {
             if (parameterReadyVehicleAvailable || summaryButton.checked || setupButtonGroup.current != firmwareButton) {
@@ -295,7 +295,7 @@ Rectangle {
 
                 Repeater {
                     id:     componentRepeater
-                    model:  _fullParameterVehicleAvailable ? multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
+                    model:  _fullParameterVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
 
                     SubMenuButton {
                         imageResource:  modelData.iconResource
@@ -313,7 +313,7 @@ Rectangle {
                 SubMenuButton {
                     setupIndicator: false
                     exclusiveGroup: setupButtonGroup
-                    visible:        multiVehicleManager.parameterReadyVehicleAvailable
+                    visible:        QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable
                     text:           "Parameters"
 
                     onClicked: showParametersPanel()

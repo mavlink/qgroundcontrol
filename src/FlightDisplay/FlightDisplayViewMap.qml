@@ -72,7 +72,7 @@ FlightMap {
 
     // Add trajectory points to the map
     MapItemView {
-        model: _mainIsMap ? multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.trajectoryPoints : 0 : 0
+        model: _mainIsMap ? _activeVehicle ? _activeVehicle.trajectoryPoints : 0 : 0
         delegate:
             MapPolyline {
             line.width: 3
@@ -87,7 +87,7 @@ FlightMap {
 
     // Add the vehicles to the map
     MapItemView {
-        model: multiVehicleManager.vehicles
+        model: QGroundControl.multiVehicleManager.vehicles
         delegate:
             VehicleMapItem {
             vehicle:        object
