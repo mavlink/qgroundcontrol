@@ -679,15 +679,7 @@ void LinechartPlot::paintRealtime()
 
         windowLock.unlock();
 
-        // Only set current view as zoombase if zoomer is not active
-        // else we could not zoom out any more
-
-        if(zoomer->zoomStack().size() < 2) {
-            zoomer->setZoomBase(true);
-        } else {
-            replot();
-        }
-
+        replot();
 
         /*
         QMap<QString, QwtPlotCurve*>::iterator i;
