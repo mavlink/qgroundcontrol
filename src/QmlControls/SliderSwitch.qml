@@ -39,6 +39,12 @@ Rectangle {
         color:      qgcPal.windowShade
         opacity:    0.8
 
+        QGCLabel {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            anchors.verticalCenter:     parent.verticalCenter
+            text: ">"
+        }
+
         MouseArea {
             id:             sliderDragArea
             anchors.fill:   parent
@@ -72,6 +78,12 @@ Rectangle {
         radius:                 _diameter / 2
         color:                  qgcPal.windowShade
         opacity:                0.8
+
+        QGCLabel {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            anchors.verticalCenter:     parent.verticalCenter
+            text: "X"
+        }
 
         MouseArea {
             anchors.fill:   parent
