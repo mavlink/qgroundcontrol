@@ -48,6 +48,7 @@ FlightMap {
     property bool   _activeVehicleCoordinateValid:  _activeVehicle ? _activeVehicle.coordinateValid : false
     property var    activeVehicleCoordinate:        _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property var    _gotoHereCoordinate:            QtPositioning.coordinate()
+    property int    _retaskSequence:                0
 
     Component.onCompleted: {
         QGroundControl.flightMapPosition = center
