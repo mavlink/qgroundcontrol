@@ -271,8 +271,8 @@ Item {
         anchors.margins:            _margins
         anchors.bottom:             parent.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
-        width:                      (guidedModeButtons.visible ? guidedModeButtons.width : guidedModeConfirm.width) + (_margins * 2)
-        height:                     (guidedModeButtons.visible ? guidedModeButtons.height : guidedModeConfirm.height) + (_margins * 2)
+        width:                      guidedModeButtons.width + (_margins * 2)
+        height:                     guidedModeButtons.height + (_margins * 2)
         color:                      qgcPal.window
         visible:                    _activeVehicle
         opacity:                    0.9
@@ -288,7 +288,6 @@ Item {
         readonly property int confirmGoTo:          8
 
         property int    confirmActionCode
-        property string confirmText
 
         function actionConfirmed() {
             switch (confirmActionCode) {
@@ -331,32 +330,32 @@ Item {
             confirmActionCode = actionCode
             switch (confirmActionCode) {
             case confirmArm:
-                _guidedModeBar.confirmText = "arm"
+                guidedModeConfirm.confirmText = "arm"
                 break;
             case confirmDisarm:
-                _guidedModeBar.confirmText = "disarm"
+                guidedModeConfirm.confirmText = "disarm"
                 break;
             case confirmEmergencyStop:
-                _guidedModeBar.confirmText = "emergency stop"
+                guidedModeConfirm.confirmText = "STOP ALL MOTORS!"
                 break;
             case confirmTakeoff:
                 altitudeSlider.visible = true
                 altitudeSlider.setInitialValueMeters(10)
-                _guidedModeBar.confirmText = "takeoff"
+                guidedModeConfirm.confirmText = "takeoff"
                 break;
             case confirmLand:
-                _guidedModeBar.confirmText = "land"
+                guidedModeConfirm.confirmText = "land"
                 break;
             case confirmChangeAlt:
                 altitudeSlider.visible = true
                 altitudeSlider.setInitialValueAppSettingsDistanceUnits(_activeVehicle.altitudeAMSL.value)
-                _guidedModeBar.confirmText = "altitude change"
+                guidedModeConfirm.confirmText = "change altitude"
                 break;
             case confirmGoTo:
-                _guidedModeBar.confirmText = "move"
+                guidedModeConfirm.confirmText = "move vehicle"
                 break;
             }
-            guidedModeButtons.visible = false
+            guidedModeBar.visible = false
             guidedModeConfirm.visible = true
         }
 
@@ -397,6 +396,7 @@ Item {
             }
         }
 
+        /*
         Row {
             id:                 guidedModeConfirm
             anchors.margins:    _margins
@@ -429,8 +429,32 @@ Item {
                     _flightMap._gotoHereCoordinate = QtPositioning.coordinate()
                 }
             }
+        }*/
+    } // Rectangle - Guided mode buttons
+
+    // Action confirmation control
+    SliderSwitch {
+        id:                         guidedModeConfirm
+        anchors.top:                _guidedModeBar.top
+        anchors.bottom:             _guidedModeBar.bottom
+        anchors.horizontalCenter:   parent.horizontalCenter
+        visible:                    false
+        z:                          QGroundControl.zOrderWidgets
+
+        onAccept: {
+            guidedModeConfirm.visible = false
+            guidedModeBar.visible = true
+            _guidedModeBar.actionConfirmed()
+            altitudeSlider.visible = false
         }
-    } // Column - Vertical tool buttons
+
+        onReject: {
+            guidedModeConfirm.visible = false
+            guidedModeBar.visible = true
+            altitudeSlider.visible = false
+            _flightMap._gotoHereCoordinate = QtPositioning.coordinate()
+        }
+    }
 
     //-- Altitude slider
     Rectangle {
