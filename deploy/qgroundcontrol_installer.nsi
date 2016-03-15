@@ -55,6 +55,17 @@ InstallDir $PROGRAMFILES\qgroundcontrol
 !insertmacro MUI_LANGUAGE "English"
 
 Section
+  ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl" "UninstallString"
+  StrCmp $R0 "" doinstall
+
+  ExecWait "$R0 /S"
+  IntCmp $0 0 doinstall
+
+  MessageBox MB_OK|MB_ICONEXCLAMATION \
+        "Could not remove a previously installed QGroundControl version.$\n$\nPlease remove it before continuing."
+  Abort
+
+doinstall:
   SetOutPath $INSTDIR
   File /r build_windows_install\release\*.*
   File deploy\px4driver.msi
@@ -112,12 +123,3 @@ Section "create Start Menu Shortcuts"
   !insertmacro DemoteShortCut "$SMPROGRAMS\$StartMenuFolder\QGroundControl (GPU Safe Mode).lnk"
 SectionEnd
 
-Function .onInit
-  ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl" "UninstallString"
-  StrCmp $R0 "" done
- 
-  MessageBox MB_OK|MB_ICONEXCLAMATION \
-  	"QGroundControl is already installed. $\n$\nYou must uninstall the previous version before installing a new one."
-  Abort
-done: 
-FunctionEnd
