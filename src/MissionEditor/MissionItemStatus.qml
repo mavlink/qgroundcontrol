@@ -127,7 +127,7 @@ Rectangle {
                         y:                          availableHeight - (availableHeight * object.altPercent)
                         small:                      true
                         isCurrentItem:              object.isCurrentItem
-                        label:                      object.homePosition ? "H" : object.sequenceNumber
+                        label:                      object.abbreviation
                         visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
                     }
 

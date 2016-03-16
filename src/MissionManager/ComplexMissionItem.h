@@ -80,6 +80,7 @@ public:
     bool            specifiesCoordinate     (void) const final;
     QString         commandDescription      (void) const final { return "Survey"; }
     QString         commandName             (void) const final { return "Survey"; }
+    QString         abbreviation            (void) const final { return "S"; }
     QGeoCoordinate  coordinate              (void) const final { return _coordinate; }
     QGeoCoordinate  exitCoordinate          (void) const final { return _exitCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }

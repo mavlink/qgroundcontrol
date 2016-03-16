@@ -99,6 +99,7 @@ public:
     bool            specifiesCoordinate     (void) const final;
     QString         commandDescription      (void) const final;
     QString         commandName             (void) const final;
+    QString         abbreviation            (void) const final;
     QGeoCoordinate  coordinate              (void) const final { return _missionItem.coordinate(); }
     QGeoCoordinate  exitCoordinate          (void) const final { return coordinate(); }
     int             sequenceNumber          (void) const final { return _missionItem.sequenceNumber(); }
