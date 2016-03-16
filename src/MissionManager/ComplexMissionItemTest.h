@@ -62,6 +62,7 @@ private:
         azimuthChangedIndex,
         commandDescriptionChangedIndex,
         commandNameChangedIndex,
+        abbreviationChangedIndex,
         coordinateChangedIndex,
         exitCoordinateChangedIndex,
         dirtyChangedIndex,
