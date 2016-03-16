@@ -480,7 +480,7 @@ Item {
         anchors.top:                _guidedModeBar.top
         anchors.bottom:             _guidedModeBar.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
-        showReject:                 true
+        //showReject:                 true
         visible:                    false
         z:                          QGroundControl.zOrderWidgets
 
