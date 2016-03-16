@@ -315,7 +315,8 @@ void MissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     setParam5(coordinate.latitude());
     setParam6(coordinate.longitude());
-    setParam7(coordinate.altitude());
+    if (coordinate.type() == QGeoCoordinate::Coordinate3D)
+        setParam7(coordinate.altitude());
 }
 
 QGeoCoordinate MissionItem::coordinate(void) const

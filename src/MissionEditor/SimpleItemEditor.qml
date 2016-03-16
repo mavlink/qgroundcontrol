@@ -47,6 +47,13 @@ Rectangle {
                                      missionItem.commandDescription)
             }
 
+            CoordinateEditor {
+                visible:   missionItem.specifiesCoordinate
+                coordItem: missionItem
+                width:     valuesColumn.width
+                spacing:   _margin
+            }
+
             Repeater {
                 model: missionItem.comboboxFacts
 
