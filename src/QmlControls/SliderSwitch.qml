@@ -8,7 +8,7 @@ import QGroundControl.Palette       1.0
 /// control on an iPhone.
 Rectangle {
     id:     _root
-    width:  label.contentWidth + (_diameter * 2) + (_border * 4)
+    width:  label.contentWidth + (_diameter * 2.5) + (_border * 4)
     radius: height /2
     color:  qgcPal.window
 
@@ -16,6 +16,7 @@ Rectangle {
     signal reject   ///< Action rejected
 
     property string confirmText ///< Text for slider
+    property bool   showReject: false
 
     property real _border: 4
     property real _diameter: height - (_border * 2)
@@ -39,11 +40,25 @@ Rectangle {
         color:      qgcPal.windowShade
         opacity:    0.8
 
+        QGCColoredImage {
+            anchors.centerIn:       parent
+            width:                  parent.width  * 0.8
+            height:                 parent.height * 0.8
+            fillMode:               Image.PreserveAspectFit
+            smooth:                 false
+            mipmap:                 false
+            color:                  qgcPal.text
+            cache:                  false
+            source:                 "/res/ArrowRight.svg"
+        }
+
+        /*
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
             anchors.verticalCenter:     parent.verticalCenter
             text: ">"
         }
+        */
 
         MouseArea {
             id:             sliderDragArea
@@ -54,7 +69,7 @@ Rectangle {
             drag.minimumX:  _border
             drag.maximumX:  _maxXDrag
 
-            property real _maxXDrag:    _root.width - ((_diameter + _border) * 2)
+            property real _maxXDrag:    _root.width - ((_diameter + _border) * (showReject ? 2 : 1))
             property bool dragActive:   drag.active
 
             onDragActiveChanged: {
@@ -78,12 +93,24 @@ Rectangle {
         radius:                 _diameter / 2
         color:                  qgcPal.windowShade
         opacity:                0.8
+        visible:                showReject
 
+        Image {
+            anchors.centerIn:       parent
+            width:                  parent.width  * 0.8
+            height:                 parent.height * 0.8
+            fillMode:               Image.PreserveAspectFit
+            smooth:                 true
+            source:                 "/res/cancel.svg"
+        }
+
+        /*
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
             anchors.verticalCenter:     parent.verticalCenter
             text: "X"
         }
+        */
 
         MouseArea {
             anchors.fill:   parent

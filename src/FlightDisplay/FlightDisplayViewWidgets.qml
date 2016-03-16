@@ -40,7 +40,7 @@ Item {
 
     property alias guidedModeBar: _guidedModeBar
 
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:   _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight / 2
@@ -330,6 +330,13 @@ Item {
             }
         }
 
+        function rejectGuidedModeConfirm() {
+            guidedModeConfirm.visible = false
+            guidedModeBar.visible = true
+            altitudeSlider.visible = false
+            _flightMap._gotoHereCoordinate = QtPositioning.coordinate()
+        }
+
         function confirmAction(actionCode) {
             confirmActionCode = actionCode
             switch (confirmActionCode) {
@@ -374,32 +381,52 @@ Item {
             spacing:            _margins
 
             QGCButton {
-                text:       _activeVehicle.armed ? (_activeVehicle.flying ? "Emergency Stop" : "Disarm") : "Arm"
-                onClicked:  _guidedModeBar.confirmAction(_activeVehicle.armed ? (_activeVehicle.flying ? _guidedModeBar.confirmEmergencyStop : _guidedModeBar.confirmDisarm) : _guidedModeBar.confirmArm)
+                text:       _activeVehicle ? (_activeVehicle.armed ? (_activeVehicle.flying ? "Emergency Stop" : "Disarm") : "Arm") : ""
+                onClicked:  {
+                    if(_activeVehicle) {
+                        _guidedModeBar.confirmAction(_activeVehicle.armed ? (_activeVehicle.flying ? _guidedModeBar.confirmEmergencyStop : _guidedModeBar.confirmDisarm) : _guidedModeBar.confirmArm)
+                    }
+                }
             }
 
             QGCButton {
                 text:       "RTL"
-                visible:    _activeVehicle.guidedModeSupported && _activeVehicle.flying
-                onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmHome)
+                visible:    _activeVehicle && _activeVehicle.guidedModeSupported && _activeVehicle.flying
+                onClicked:  {
+                    if(_activeVehicle) {
+                        _guidedModeBar.confirmAction(_guidedModeBar.confirmHome)
+                    }
+                }
             }
 
             QGCButton {
-                text:        _activeVehicle.flying ? "Land" : "Takeoff"
-                visible:    _activeVehicle.guidedModeSupported && _activeVehicle.armed
-                onClicked:  _guidedModeBar.confirmAction(_activeVehicle.flying ? _guidedModeBar.confirmLand : _guidedModeBar.confirmTakeoff)
+                text:        _activeVehicle ? (_activeVehicle.flying ? "Land" : "Takeoff") : ""
+                visible:    _activeVehicle && _activeVehicle.guidedModeSupported && _activeVehicle.armed
+                onClicked: {
+                    if(_activeVehicle) {
+                        _guidedModeBar.confirmAction(_activeVehicle.flying ? _guidedModeBar.confirmLand : _guidedModeBar.confirmTakeoff)
+                    }
+                }
             }
 
             QGCButton {
                 text:       "Pause"
-                visible:    _activeVehicle.pauseVehicleSupported && _activeVehicle.flying
-                onClicked:  _activeVehicle.pauseVehicle()
+                visible:    _activeVehicle && _activeVehicle.pauseVehicleSupported && _activeVehicle.flying
+                onClicked:  {
+                    if(_activeVehicle) {
+                        _activeVehicle.pauseVehicle()
+                    }
+                }
             }
 
             QGCButton {
                 text:       "Change Altitude"
-                visible:    _activeVehicle.guidedModeSupported && _activeVehicle.armed
-                onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmChangeAlt)
+                visible:    _activeVehicle && _activeVehicle.guidedModeSupported && _activeVehicle.armed
+                onClicked:  {
+                    if(_activeVehicle) {
+                        _guidedModeBar.confirmAction(_guidedModeBar.confirmChangeAlt)
+                    }
+                }
             }
         }
 
@@ -439,12 +466,21 @@ Item {
         }*/
     } // Rectangle - Guided mode buttons
 
+    MouseArea {
+        anchors.fill: parent
+        enabled: guidedModeConfirm.visible
+        onClicked: {
+            _guidedModeBar.rejectGuidedModeConfirm()
+        }
+    }
+
     // Action confirmation control
     SliderSwitch {
         id:                         guidedModeConfirm
         anchors.top:                _guidedModeBar.top
         anchors.bottom:             _guidedModeBar.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
+        showReject:                 true
         visible:                    false
         z:                          QGroundControl.zOrderWidgets
 
@@ -456,10 +492,7 @@ Item {
         }
 
         onReject: {
-            guidedModeConfirm.visible = false
-            guidedModeBar.visible = true
-            altitudeSlider.visible = false
-            _flightMap._gotoHereCoordinate = QtPositioning.coordinate()
+            _guidedModeBar.rejectGuidedModeConfirm()
         }
     }
 
