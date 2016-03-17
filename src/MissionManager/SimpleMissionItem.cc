@@ -180,6 +180,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::setDefaultsForCommand);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::commandNameChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::commandDescriptionChanged);
+    connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::abbreviationChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::specifiesCoordinateChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::isStandaloneCoordinateChanged);
 
@@ -300,6 +301,21 @@ QString SimpleMissionItem::commandName(void) const
     } else {
         qWarning() << "Request for command name on unknown command";
         return QString("Unknown: %1").arg(command);
+    }
+}
+
+QString SimpleMissionItem::abbreviation() const
+{
+    if (homePosition())
+        return QStringLiteral("H");
+
+    switch(command()) {
+    default:
+        return QString::number(sequenceNumber());
+    case MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF:
+        return QStringLiteral("T");
+    case MavlinkQmlSingleton::MAV_CMD_NAV_LAND:
+        return QStringLiteral("L");
     }
 }
 

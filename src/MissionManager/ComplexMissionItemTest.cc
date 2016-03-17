@@ -43,6 +43,7 @@ void ComplexMissionItemTest::init(void)
     _rgComplexMissionItemSignals[azimuthChangedIndex] =                 SIGNAL(azimuthChanged(double));
     _rgComplexMissionItemSignals[commandDescriptionChangedIndex] =      SIGNAL(commandDescriptionChanged());
     _rgComplexMissionItemSignals[commandNameChangedIndex] =             SIGNAL(commandNameChanged());
+    _rgComplexMissionItemSignals[abbreviationChangedIndex] =            SIGNAL(abbreviationChanged());
     _rgComplexMissionItemSignals[coordinateChangedIndex] =              SIGNAL(coordinateChanged(const QGeoCoordinate&));
     _rgComplexMissionItemSignals[exitCoordinateChangedIndex] =          SIGNAL(exitCoordinateChanged(const QGeoCoordinate&));
     _rgComplexMissionItemSignals[dirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
