@@ -60,7 +60,11 @@ linux {
         DEFINES += __macos__
         CONFIG += x86_64
         CONFIG -= x86
+equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
+        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+} else {
         QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+}
         QMAKE_MAC_SDK = macosx10.11
         QMAKE_CXXFLAGS += -fvisibility=hidden
     } else {

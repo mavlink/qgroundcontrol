@@ -53,7 +53,8 @@ Map {
     zoomLevel:                  18
     center:                     QGroundControl.lastKnownHomePosition
     gesture.flickDeceleration:  3000
-    gesture.activeGestures:     MapGestureArea.ZoomGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
+    // This no longer exists in Qt 5.6. The options below also happen the be the default anyway.
+    //gesture.activeGestures:     MapGestureArea.ZoomGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
 
     plugin: Plugin { name: "QGroundControl" }
 
