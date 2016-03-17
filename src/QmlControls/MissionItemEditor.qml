@@ -51,7 +51,7 @@ Rectangle {
         anchors.verticalCenter: commandPicker.verticalCenter
         anchors.leftMargin:     _margin
         anchors.left:           parent.left
-        text:                   missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
+        text:                   missionItem.abbreviation
         color:                  _outerTextColor
     }
 

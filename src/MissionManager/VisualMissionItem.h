@@ -81,6 +81,7 @@ public:
 
     Q_PROPERTY(QString  commandDescription      READ commandDescription                                 NOTIFY commandDescriptionChanged)
     Q_PROPERTY(QString  commandName             READ commandName                                        NOTIFY commandNameChanged)
+    Q_PROPERTY(QString  abbreviation            READ abbreviation                                       NOTIFY abbreviationChanged)
     Q_PROPERTY(bool     dirty                   READ dirty                  WRITE setDirty              NOTIFY dirtyChanged)                    ///< Item is dirty and requires save/send
     Q_PROPERTY(bool     isCurrentItem           READ isCurrentItem          WRITE setIsCurrentItem      NOTIFY isCurrentItemChanged)
     Q_PROPERTY(int      sequenceNumber          READ sequenceNumber         WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
@@ -118,6 +119,7 @@ public:
     virtual bool            specifiesCoordinate     (void) const = 0;
     virtual QString         commandDescription      (void) const = 0;
     virtual QString         commandName             (void) const = 0;
+    virtual QString         abbreviation            (void) const = 0;
     virtual QGeoCoordinate  coordinate              (void) const = 0;
     virtual QGeoCoordinate  exitCoordinate          (void) const = 0;
     virtual int             sequenceNumber          (void) const = 0;
@@ -140,6 +142,7 @@ signals:
     void azimuthChanged                 (double azimuth);
     void commandDescriptionChanged      (void);
     void commandNameChanged             (void);
+    void abbreviationChanged            (void);
     void coordinateChanged              (const QGeoCoordinate& coordinate);
     void exitCoordinateChanged          (const QGeoCoordinate& exitCoordinate);
     void dirtyChanged                   (bool dirty);
