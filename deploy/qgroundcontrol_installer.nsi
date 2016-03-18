@@ -58,7 +58,7 @@ Section
   ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl" "UninstallString"
   StrCmp $R0 "" doinstall
 
-  ExecWait "$R0 /S"
+  ExecWait "$R0 /S _?=$INSTDIR"
   IntCmp $0 0 doinstall
 
   MessageBox MB_OK|MB_ICONEXCLAMATION \
