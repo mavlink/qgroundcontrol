@@ -31,13 +31,14 @@
 
 #include "QGCLoggingCategory.h"
 #include "QGCToolbox.h"
+#include "MAVLinkProtocol.h"
 
 Q_DECLARE_LOGGING_CATEGORY(FollowMeLog)
 
 class FollowMe : public QGCTool
 {
     Q_OBJECT
-    
+
 public:
     FollowMe(QGCApplication* app);
     ~FollowMe();
@@ -45,8 +46,6 @@ public:
     void disable();
     void enable();
 
-signals:
-    
 private slots:
 
     void _setGPSLocation(QGeoPositionInfo geoPositionInfo);
@@ -71,8 +70,22 @@ private:
 
     QString _followMeStr;
 
-    QTimer              _gcsMotionReportTimer;             ///< Timer to emit motion reports
-    bool                _gcsMotionReportEnabled;           ///< Enabled/disable MotionReport emission
-    static const int    _gcsMotionReportRateMSecs = 1000;  ///< Motion report rate
+    QTimer              _gcsMotionReportTimer;                  ///< Timer to emit motion reports
+    bool                _gcsMotionReportEnabled;                ///< Enabled/disable MotionReport emission
+    static constexpr int    _gcsMotionReportRateMSecs = 1000;   ///< Motion report rate
     double _degreesToRadian(double deg);
+
+    // items for simulating QGC movment in jMAVSIM
+
+    struct simulated_motion_s {
+        int lon;
+        int lat;
+    }_simulated_motion[4] = {{0,500},{500,0},{0, -500},{-500, 0}};
+
+    int _simulate_motion_timer;
+    int _simulate_motion_index;
+
+    bool _simulate_motion;
+
+    void _createSimulatedMotion(mavlink_follow_target_t & follow_target);
 };

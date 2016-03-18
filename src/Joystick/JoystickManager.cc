@@ -62,6 +62,7 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
     }
 
     // Load available joysticks
+    qWarning() << "Available joysticks";
 
     qCDebug(JoystickManagerLog) << "Available joysticks";
 
@@ -75,7 +76,7 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
             axisCount = SDL_JoystickNumAxes(sdlJoystick);
             buttonCount = SDL_JoystickNumButtons(sdlJoystick);
             SDL_JoystickClose(sdlJoystick);
-
+ qWarning(JoystickManagerLog) << "\t" << name << "axes:" << axisCount << "buttons:" << buttonCount;
             qCDebug(JoystickManagerLog) << "\t" << name << "axes:" << axisCount << "buttons:" << buttonCount;
             _name2JoystickMap[name] = new Joystick(name, axisCount, buttonCount, i, _multiVehicleManager);
         } else {
@@ -104,7 +105,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
     if (name.isEmpty()) {
         name = _name2JoystickMap.first()->name();
     }
-    
+    qWarning() << "setting " << name << "active";
     setActiveJoystick(_name2JoystickMap.value(name, _name2JoystickMap.first()));
     settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
 #endif
