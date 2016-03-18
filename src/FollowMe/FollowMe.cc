@@ -46,7 +46,7 @@ FollowMe::FollowMe(QGCApplication* app)
 
     // set up the mavlink motion report timer
 
-    _gcsMotionReportTimer.setInterval(_gcsMotionReportRateMSecs);
+    _gcsMotionReportTimer.setInterval(REPORT_RATE);
     _gcsMotionReportTimer.setSingleShot(false);
     connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
 
