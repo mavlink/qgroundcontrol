@@ -1,5 +1,5 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
  
  (c) 2009 - 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -30,21 +30,25 @@
 
 FollowMe::FollowMe(QGCApplication* app)
     : QGCTool(app)
-    , _followMeStr("Auto: Follow Me")
+    , _followMeStr("Auto: Follow Me"),
+      _simulate_motion_timer(0),
+      _simulate_motion_index(0),
+      _simulate_motion(false)
 {
+    memset(&_motionReport, 0, sizeof(motionReport_s));
+
     // set up the QT position connection slot
 
     _locationInfo = QGeoPositionInfoSource::createDefaultSource(this);
-    _locationInfo->setPreferredPositioningMethods(QGeoPositionInfoSource::AllPositioningMethods);
+    _locationInfo->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
+    _locationInfo->setUpdateInterval(_locationInfo->minimumUpdateInterval());
     connect(_locationInfo, SIGNAL(positionUpdated(QGeoPositionInfo)), this, SLOT(_setGPSLocation(QGeoPositionInfo)));
 
-    // set up the motion mavlink report timer
+    // set up the mavlink motion report timer
 
     _gcsMotionReportTimer.setInterval(_gcsMotionReportRateMSecs);
     _gcsMotionReportTimer.setSingleShot(false);
     connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
-
-    // change this to a setting?
 
     enable();
 }
@@ -74,9 +78,15 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
 
         QGeoCoordinate geoCoordinate = geoPositionInfo.coordinate();
 
-        _motionReport.lat_int = geoCoordinate.latitude()*1e7;
-        _motionReport.lon_int = geoCoordinate.longitude()*1e7;
-        _motionReport.alt = geoCoordinate.altitude();
+        if(_simulate_motion == true) {
+            _motionReport.lat_int = 47.3977420*1e7;
+            _motionReport.lon_int = 8.5455941*1e7;
+            _motionReport.alt = 488.00;
+        } else {
+            _motionReport.lat_int = geoCoordinate.latitude()*1e7;
+            _motionReport.lon_int = geoCoordinate.longitude()*1e7;
+            _motionReport.alt = geoCoordinate.altitude();
+        }
 
         // get the current eph and epv
 
@@ -104,12 +114,7 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
 
             _motionReport.vx = cos(direction)*velocity;
             _motionReport.vy = sin(direction)*velocity;
-
-
-            qWarning("vel = x%f, y%f\n", _motionReport.vx, _motionReport.vy);
         }
-
-        qWarning("lat %d, lon %d alt %d\n", _motionReport.lat_int, _motionReport.lon_int, _motionReport.alt);
     }
 }
 
@@ -117,17 +122,19 @@ void FollowMe::_sendGCSMotionReport(void)
 {
     QmlObjectListModel & vehicles = *_toolbox->multiVehicleManager()->vehicles();
     MAVLinkProtocol* mavlinkProtocol = _toolbox->mavlinkProtocol();
-    mavlink_follow_target_t follow_target = {};
+    mavlink_follow_target_t follow_target;
 
-    follow_target.alt = _motionReport.alt;
-    follow_target.lat = _motionReport.lat_int;
-    follow_target.lon = _motionReport.lon_int;
-    follow_target.vel[0] = _motionReport.vx;
-    follow_target.vel[1] = _motionReport.vy;
-    follow_target.vel[2] = _motionReport.vz;
+    memset(&follow_target, 0, sizeof(mavlink_follow_target_t));
+
+    if(_simulate_motion == true) {
+        _createSimulatedMotion(follow_target);
+    } else {
+        follow_target.alt = _motionReport.alt;
+        follow_target.lat = _motionReport.lat_int;
+        follow_target.lon = _motionReport.lon_int;
+    }
 
     for (int i=0; i< vehicles.count(); i++) {
-
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
         if(vehicle->flightMode().compare(_followMeStr, Qt::CaseInsensitive) == 0) {
             mavlink_message_t message;
@@ -136,11 +143,34 @@ void FollowMe::_sendGCSMotionReport(void)
                                              &message,
                                              &follow_target);
             vehicle->sendMessage(message);
-       }
+        }
     }
 }
 
 double FollowMe::_degreesToRadian(double deg)
 {
     return deg * M_PI / 180.0;
+}
+
+void FollowMe::_createSimulatedMotion(mavlink_follow_target_t & follow_target)
+{
+    static int f_lon = 0;
+    static int f_lat = 0;
+    static float rot = 0;
+
+    rot += .1;
+
+    if(!(_simulate_motion_timer++%50)) {
+        _simulate_motion_index++;
+        if(_simulate_motion_index > 3) {
+            _simulate_motion_index = 0;
+        }
+    }
+
+    f_lon = f_lon + _simulated_motion[_simulate_motion_index].lon*sin(rot);
+    f_lat = f_lat + _simulated_motion[_simulate_motion_index].lat;
+
+    follow_target.alt = _motionReport.alt;
+    follow_target.lat = _motionReport.lat_int + f_lon;
+    follow_target.lon = _motionReport.lon_int + f_lat;
 }
