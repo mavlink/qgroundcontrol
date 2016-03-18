@@ -68,11 +68,11 @@ private:
         float pos_std_dev[3];   // -1 for unknown
     } _motionReport;
 
+    const int REPORT_RATE = 1000;        ///< Motion report rate
+
     QString _followMeStr;
 
-    QTimer              _gcsMotionReportTimer;                  ///< Timer to emit motion reports
-    bool                _gcsMotionReportEnabled;                ///< Enabled/disable MotionReport emission
-    static constexpr int    _gcsMotionReportRateMSecs = 1000;   ///< Motion report rate
+    QTimer _gcsMotionReportTimer;        ///< Timer to emit motion reports
     double _degreesToRadian(double deg);
 
     // items for simulating QGC movment in jMAVSIM
