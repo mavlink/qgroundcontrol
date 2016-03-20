@@ -29,8 +29,9 @@
 #include "Vehicle.h"
 
 FollowMe::FollowMe(QGCApplication* app)
-    : QGCTool(app)
-    , _followMeStr("Auto: Follow Me"),
+    : QGCTool(app),
+      _followMeStr("Auto: Follow Me"),
+      _simulated_motion({{0,500},{500,0},{0, -500},{-500, 0}}),
       _simulate_motion_timer(0),
       _simulate_motion_index(0),
       _simulate_motion(false)
