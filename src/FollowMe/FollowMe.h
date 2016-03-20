@@ -80,7 +80,9 @@ private:
     struct simulated_motion_s {
         int lon;
         int lat;
-    }_simulated_motion[4];
+    };
+
+    static simulated_motion_s _simulated_motion[4];
 
     int _simulate_motion_timer;
     int _simulate_motion_index;
