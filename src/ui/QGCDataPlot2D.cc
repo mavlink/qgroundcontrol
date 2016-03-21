@@ -47,6 +47,9 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 
+using std::isnan;
+using std::isinf;
+
 QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
     QWidget(parent),
     plot(new IncrementalPlot(parent)),

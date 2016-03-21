@@ -41,6 +41,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "QGCMessageBox.h"
 
+using std::isnan;
+
 QGCJSBSimLink::QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port)
     : _vehicle(vehicle)
     , socket(NULL)
