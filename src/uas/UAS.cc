@@ -39,6 +39,9 @@
 #include "Joystick.h"
 #include "QGCApplication.h"
 
+using std::isnan;
+using std::isinf;
+
 QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 
 /**

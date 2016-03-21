@@ -50,6 +50,8 @@ This file is part of the QGROUNDCONTROL project
 #include "Vehicle.h"
 #include "UAS.h"
 
+using std::isnan;
+
 // FlightGear _fgProcess start and connection is quite fragile. Uncomment the define below to get higher level of debug output
 // for tracking down problems.
 //#define DEBUG_FLIGHTGEAR_CONNECT
