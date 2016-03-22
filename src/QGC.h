@@ -51,7 +51,7 @@ inline bool isinf(T value)
 	return (value == std::numeric_limits<T>::infinity() || (-1 * value) == std::numeric_limits<T>::infinity()) && std::numeric_limits<T>::has_infinity;
 }
 #endif
-#elif defined __APPLE__
+#elif defined __APPLE__ || defined Q_OS_LINUX
 #include <cmath>
 #ifndef isnan
 #define isnan(x) std::isnan(x)
