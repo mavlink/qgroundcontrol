@@ -102,27 +102,9 @@ const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;
 class SLEEP : public QThread
 {
 public:
-    /**
-     * @brief Set a thread to sleep for seconds
-     * @param s time in seconds to sleep
-     **/
-    static void sleep(unsigned long s) {
-        QThread::sleep(s);
-    }
-    /**
-     * @brief Set a thread to sleep for milliseconds
-     * @param ms time in milliseconds to sleep
-     **/
-    static void msleep(unsigned long ms) {
-        QThread::msleep(ms);
-    }
-    /**
-     * @brief Set a thread to sleep for microseconds
-     * @param us time in microseconds to sleep
-     **/
-    static void usleep(unsigned long us) {
-        QThread::usleep(us);
-    }
+    using QThread::sleep;
+    using QThread::msleep;
+    using QThread::usleep;
 };
 
 quint32 crc32(const quint8 *src, unsigned len, unsigned state);
