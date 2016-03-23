@@ -441,7 +441,7 @@ void UAS::receiveMessage(mavlink_message_t message)
 
             setAltitudeAMSL(hud.alt);
             setGroundSpeed(hud.groundspeed);
-            if (!isnan(hud.airspeed))
+            if (!qIsNaN(hud.airspeed))
                 setAirSpeed(hud.airspeed);
             speedZ = -hud.climb;
             emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
@@ -537,7 +537,7 @@ void UAS::receiveMessage(mavlink_message_t message)
 
                     float vel = pos.vel/100.0f;
                     // Smaller than threshold and not NaN
-                    if ((vel < 1000000) && !isnan(vel) && !isinf(vel)) {
+                    if ((vel < 1000000) && !qIsNaN(vel) && !qIsInf(vel)) {
                         setGroundSpeed(vel);
                         emit speedChanged(this, groundSpeed, airSpeed, time);
                     } else {
@@ -1309,8 +1309,8 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
     if (countSinceLastTransmission++ >= 5) {
         sendCommand = true;
         countSinceLastTransmission = 0;
-    } else if ((!isnan(roll) && roll != manualRollAngle) || (!isnan(pitch) && pitch != manualPitchAngle) ||
-             (!isnan(yaw) && yaw != manualYawAngle) || (!isnan(thrust) && thrust != manualThrust) ||
+    } else if ((!qIsNaN(roll) && roll != manualRollAngle) || (!qIsNaN(pitch) && pitch != manualPitchAngle) ||
+             (!qIsNaN(yaw) && yaw != manualYawAngle) || (!qIsNaN(thrust) && thrust != manualThrust) ||
              buttons != manualButtons) {
         sendCommand = true;
 

@@ -30,40 +30,6 @@
 
 #include "QGCConfig.h"
 
-
-/* Windows fixes */
-#ifdef _MSC_VER
-#if (_MSC_VER < 1800)	/* only PRIOR to Visual Studio 2013 */
-/* Needed define for Eigen */
-//#define NOMINMAX
-#include <limits>
-template<typename T>
-inline bool isnan(T value)
-{
-	return value != value;
-
-}
-
-// requires #include <limits>
-template<typename T>
-inline bool isinf(T value)
-{
-	return (value == std::numeric_limits<T>::infinity() || (-1 * value) == std::numeric_limits<T>::infinity()) && std::numeric_limits<T>::has_infinity;
-}
-#endif
-#elif defined __APPLE__ || defined Q_OS_LINUX
-#include <cmath>
-#ifndef isnan
-#define isnan(x) std::isnan(x)
-#endif
-#ifndef isinf
-#define isinf(x) std::isinf(x)
-#endif
-#endif
-#ifdef __android__
-#define isinf(x) std::isinf(x)
-#endif
-
 namespace QGC
 {
 const static int defaultSystemId = 255;
