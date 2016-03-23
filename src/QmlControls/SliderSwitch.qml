@@ -16,7 +16,6 @@ Rectangle {
     signal reject   ///< Action rejected
 
     property string confirmText ///< Text for slider
-    property bool   showReject: false
 
     property real _border: 4
     property real _diameter: height - (_border * 2)
@@ -52,14 +51,6 @@ Rectangle {
             source:                 "/res/ArrowRight.svg"
         }
 
-        /*
-        QGCLabel {
-            anchors.horizontalCenter:   parent.horizontalCenter
-            anchors.verticalCenter:     parent.verticalCenter
-            text: ">"
-        }
-        */
-
         MouseArea {
             id:             sliderDragArea
             anchors.fill:   parent
@@ -69,7 +60,7 @@ Rectangle {
             drag.minimumX:  _border
             drag.maximumX:  _maxXDrag
 
-            property real _maxXDrag:    _root.width - ((_diameter + _border) * (showReject ? 2 : 1))
+            property real _maxXDrag:    _root.width - (_diameter + _border)
             property bool dragActive:   drag.active
 
             onDragActiveChanged: {
@@ -80,41 +71,6 @@ Rectangle {
                     slider.x = _border
                 }
             }
-        }
-    }
-
-    Rectangle {
-        id:                     cancel
-        anchors.rightMargin:    _border
-        anchors.right:          parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        height:                 _diameter
-        width:                  _diameter
-        radius:                 _diameter / 2
-        color:                  qgcPal.windowShade
-        opacity:                0.8
-        visible:                showReject
-
-        Image {
-            anchors.centerIn:       parent
-            width:                  parent.width  * 0.8
-            height:                 parent.height * 0.8
-            fillMode:               Image.PreserveAspectFit
-            smooth:                 true
-            source:                 "/res/cancel.svg"
-        }
-
-        /*
-        QGCLabel {
-            anchors.horizontalCenter:   parent.horizontalCenter
-            anchors.verticalCenter:     parent.verticalCenter
-            text: "X"
-        }
-        */
-
-        MouseArea {
-            anchors.fill:   parent
-            onClicked:      _root.reject()
         }
     }
 }
