@@ -44,6 +44,10 @@ APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable)
     enumToString.insert(LOITER,         "Loiter");
     enumToString.insert(GUIDED,         "Guided");
     enumToString.insert(INITIALIZING,   "Initializing");
+    enumToString.insert(QSTABILIZE,     "QuadPlane Stabilize");
+    enumToString.insert(QHOVER,         "QuadPlane Hover");
+    enumToString.insert(QLOITER,        "QuadPlane Loiter");
+    enumToString.insert(QLAND,          "QuadPlane Land");
 
     setEnumToStringMapping(enumToString);
 }
@@ -65,5 +69,9 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
     supportedFlightModes << APMPlaneMode(APMPlaneMode::LOITER          ,true);
     supportedFlightModes << APMPlaneMode(APMPlaneMode::GUIDED          ,true);
     supportedFlightModes << APMPlaneMode(APMPlaneMode::INITIALIZING    ,false);
+    supportedFlightModes << APMPlaneMode(APMPlaneMode::QSTABILIZE      ,true);
+    supportedFlightModes << APMPlaneMode(APMPlaneMode::QHOVER          ,true);
+    supportedFlightModes << APMPlaneMode(APMPlaneMode::QLOITER         ,true);
+    supportedFlightModes << APMPlaneMode(APMPlaneMode::QLAND           ,true);
     setSupportedModes(supportedFlightModes);
 }
