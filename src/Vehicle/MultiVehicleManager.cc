@@ -29,6 +29,7 @@
 #include "MAVLinkProtocol.h"
 #include "UAS.h"
 #include "QGCApplication.h"
+#include "FollowMe.h"
 
 #ifdef __mobile__
 #include "MobileScreenMgr.h"

@@ -35,6 +35,7 @@
 
 class FirmwarePluginManager;
 class AutoPilotPluginManager;
+class FollowMe;
 class JoystickManager;
 class QGCApplication;
 class MAVLinkProtocol;
