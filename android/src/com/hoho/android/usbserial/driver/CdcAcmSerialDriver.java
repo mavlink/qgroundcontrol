@@ -246,6 +246,13 @@ public class CdcAcmSerialDriver extends CommonUsbSerialDriver {
                 new int[] {
                     UsbId.DEVICE_PX4FMU,
                 });
+        supportedDevices.put(Integer.valueOf(UsbId.VENDOR_UBLOX),
+                new int[] {
+                    UsbId.DEVICE_UBLOX_5,
+                    UsbId.DEVICE_UBLOX_6,
+                    UsbId.DEVICE_UBLOX_7,
+                    UsbId.DEVICE_UBLOX_8,
+                });
         return supportedDevices;
     }
 
