@@ -68,25 +68,39 @@ struct Modes2Name {
     bool        canBeSet;   ///< true: Vehicle can be set to this flight mode
 };
 
+const char* PX4FirmwarePlugin::manualFlightMode =       "Manual";
+const char* PX4FirmwarePlugin::acroFlightMode =         "Acro";
+const char* PX4FirmwarePlugin::stabilizedFlightMode =   "Stabilized";
+const char* PX4FirmwarePlugin::rattitudeFlightMode =    "Rattitude";
+const char* PX4FirmwarePlugin::altCtlFlightMode =       "Altitude Control";
+const char* PX4FirmwarePlugin::posCtlFlightMode =       "Position Control";
+const char* PX4FirmwarePlugin::offboardFlightMode =     "Offboard Control";
+const char* PX4FirmwarePlugin::readyFlightMode =        "Ready";
+const char* PX4FirmwarePlugin::takeoffFlightMode =      "Takeoff";
+const char* PX4FirmwarePlugin::pauseFlightMode =        "Pause";
+const char* PX4FirmwarePlugin::missionFlightMode =      "Mission";
+const char* PX4FirmwarePlugin::rtlFlightMode =          "Return To Land";
+const char* PX4FirmwarePlugin::landingFlightMode =      "Landing";
+const char* PX4FirmwarePlugin::rtgsFlightMode =         "Return, Link Loss";
+
 /// Tranlates from PX4 custom modes to flight mode names
 
 static const struct Modes2Name rgModes2Name[] = {
-    { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                  "Manual",           true },
-    { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                  "Acro",             true },
-    { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                  "Stabilized",       true },
-    { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                  "Rattitude",        true },
-    { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                  "Altitude Control", true },
-    { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                  "Position Control", true },
-    { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                  "Offboard Control", true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,     "Auto: Ready",       false },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,   "Auto: Takeoff",       false },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,    "Auto: Pause",           true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,   "Auto: Mission",          true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,       "Auto: Return To Land",   true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      "Auto: Landing",          false },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,      "Return, Link Loss", false },
+    { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                  PX4FirmwarePlugin::manualFlightMode,        true },
+    { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                  PX4FirmwarePlugin::acroFlightMode,          true },
+    { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                  PX4FirmwarePlugin::stabilizedFlightMode,    true },
+    { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                  PX4FirmwarePlugin::rattitudeFlightMode,     true },
+    { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                  PX4FirmwarePlugin::altCtlFlightMode,        true },
+    { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                  PX4FirmwarePlugin::posCtlFlightMode,        true },
+    { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                  PX4FirmwarePlugin::offboardFlightMode,      true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,     PX4FirmwarePlugin::readyFlightMode,         false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,   PX4FirmwarePlugin::takeoffFlightMode,       false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,    PX4FirmwarePlugin::pauseFlightMode,         true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,   PX4FirmwarePlugin::missionFlightMode,       true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,       PX4FirmwarePlugin::rtlFlightMode,           true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      PX4FirmwarePlugin::landingFlightMode,       false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,      PX4FirmwarePlugin::rtgsFlightMode,          false },
 };
-
 
 QList<VehicleComponent*> PX4FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
 {
@@ -244,5 +258,5 @@ QObject* PX4FirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
 
 void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
 {
-    vehicle->setFlightMode("Auto: Pause");
+    vehicle->setFlightMode(pauseFlightMode);
 }
