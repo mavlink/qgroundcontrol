@@ -783,17 +783,17 @@ void Vehicle::setLongitude(double longitude){
 
 void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64)
 {
-    if (isinf(roll)) {
+    if (qIsInf(roll)) {
         _rollFact.setRawValue(0);
     } else {
         _rollFact.setRawValue(roll * (180.0 / M_PI));
     }
-    if (isinf(pitch)) {
+    if (qIsInf(pitch)) {
         _pitchFact.setRawValue(0);
     } else {
         _pitchFact.setRawValue(pitch * (180.0 / M_PI));
     }
-    if (isinf(yaw)) {
+    if (qIsInf(yaw)) {
         _headingFact.setRawValue(0);
     } else {
         yaw = yaw * (180.0 / M_PI);
