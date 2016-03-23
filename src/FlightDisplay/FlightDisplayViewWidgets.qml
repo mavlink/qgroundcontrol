@@ -429,41 +429,6 @@ Item {
                 }
             }
         }
-
-        /*
-        Row {
-            id:                 guidedModeConfirm
-            anchors.margins:    _margins
-            anchors.top:        parent.top
-            anchors.left:       parent.left
-            spacing:            _margins
-            visible:            false
-
-            QGCLabel {
-                text: "Confirm " + _guidedModeBar.confirmText + " :"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            QGCButton {
-                text: "Yes"
-                onClicked: {
-                    guidedModeConfirm.visible = false
-                    guidedModeButtons.visible = true
-                    _guidedModeBar.actionConfirmed()
-                    altitudeSlider.visible = false
-                }
-            }
-
-            QGCButton {
-                text: "No"
-                onClicked: {
-                    guidedModeConfirm.visible = false
-                    guidedModeButtons.visible = true
-                    altitudeSlider.visible = false
-                    _flightMap._gotoHereCoordinate = QtPositioning.coordinate()
-                }
-            }
-        }*/
     } // Rectangle - Guided mode buttons
 
     MouseArea {
@@ -480,7 +445,6 @@ Item {
         anchors.top:                _guidedModeBar.top
         anchors.bottom:             _guidedModeBar.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
-        //showReject:                 true
         visible:                    false
         z:                          QGroundControl.zOrderWidgets
 
