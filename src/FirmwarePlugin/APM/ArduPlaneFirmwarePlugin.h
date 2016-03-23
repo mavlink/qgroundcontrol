@@ -49,9 +49,13 @@ public:
         RESERVED_13   = 13, // RESERVED FOR FUTURE USE
         RESERVED_14   = 14, // RESERVED FOR FUTURE USE
         GUIDED        = 15,
-        INITIALIZING  = 16
+        INITIALIZING  = 16,
+        QSTABILIZE    = 17,
+        QHOVER        = 18,
+        QLOITER       = 19,
+        QLAND         = 20,
+        modeCount
     };
-    static const int modeCount = 17;
 
     APMPlaneMode(uint32_t mode, bool settable);
 };
