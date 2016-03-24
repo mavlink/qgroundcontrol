@@ -24,19 +24,27 @@
 #include <cmath>
 
 #include "MultiVehicleManager.h"
+#include "PX4FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
 #include "FollowMe.h"
+#include <sys/time.h>
 #include "Vehicle.h"
 
+#ifdef QT_QML_DEBUG
 FollowMe::simulated_motion_s FollowMe::_simulated_motion[4] = {{0,500},{500,0},{0, -500},{-500, 0}};
+#endif
 
 FollowMe::FollowMe(QGCApplication* app)
     : QGCTool(app),
-      _followMeStr("Auto: Follow Me"),
-      _simulate_motion_timer(0),
-      _simulate_motion_index(0),
-      _simulate_motion(false)
+      _followMeStr(PX4FirmwarePlugin::followMeFlightMode)
 {
+
+#ifdef QT_QML_DEBUG
+    _simulate_motion_timer = 0;
+    _simulate_motion_index = 0;
+    _simulate_motion = false;
+#endif
+
     memset(&_motionReport, 0, sizeof(motionReport_s));
 
     // set up the QT position connection slot
@@ -46,17 +54,30 @@ FollowMe::FollowMe(QGCApplication* app)
     _locationInfo->setUpdateInterval(_locationInfo->minimumUpdateInterval());
     connect(_locationInfo, SIGNAL(positionUpdated(QGeoPositionInfo)), this, SLOT(_setGPSLocation(QGeoPositionInfo)));
 
-    // set up the mavlink motion report timer
+    // set up the mavlink motion report timer`
 
-    _gcsMotionReportTimer.setInterval(REPORT_RATE);
+    _gcsMotionReportTimer.setInterval(_locationInfo->minimumUpdateInterval());
     _gcsMotionReportTimer.setSingleShot(false);
     connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
-
-    enable();
 }
 
 FollowMe::~FollowMe()
 {
+    disable();
+}
+
+void FollowMe::followMeHandleManager(const QString&)
+{
+    QmlObjectListModel & vehicles = *_toolbox->multiVehicleManager()->vehicles();
+
+    for (int i=0; i< vehicles.count(); i++) {
+        Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
+        if(vehicle->flightMode().compare(_followMeStr, Qt::CaseInsensitive) == 0) {
+            enable();
+            return;
+        }
+    }
+
     disable();
 }
 
@@ -80,16 +101,17 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
 
         QGeoCoordinate geoCoordinate = geoPositionInfo.coordinate();
 
+        _motionReport.lat_int = geoCoordinate.latitude()*1e7;
+        _motionReport.lon_int = geoCoordinate.longitude()*1e7;
+        _motionReport.alt = geoCoordinate.altitude();
+
+#ifdef QT_QML_DEBUG
         if(_simulate_motion == true) {
             _motionReport.lat_int = 47.3977420*1e7;
             _motionReport.lon_int = 8.5455941*1e7;
             _motionReport.alt = 488.00;
-        } else {
-            _motionReport.lat_int = geoCoordinate.latitude()*1e7;
-            _motionReport.lon_int = geoCoordinate.longitude()*1e7;
-            _motionReport.alt = geoCoordinate.altitude();
         }
-
+#endif
         // get the current eph and epv
 
         if(geoPositionInfo.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) == true) {
@@ -122,19 +144,28 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
 
 void FollowMe::_sendGCSMotionReport(void)
 {
+    struct timeval te;
     QmlObjectListModel & vehicles = *_toolbox->multiVehicleManager()->vehicles();
     MAVLinkProtocol* mavlinkProtocol = _toolbox->mavlinkProtocol();
     mavlink_follow_target_t follow_target;
 
     memset(&follow_target, 0, sizeof(mavlink_follow_target_t));
 
+    gettimeofday(&te, NULL);
+
+    follow_target.timestamp = te.tv_sec*1000LL + te.tv_usec/1000;
+    follow_target.est_capabilities = (1 << POS);
+    follow_target.position_cov[0] = _motionReport.pos_std_dev[0];
+    follow_target.position_cov[2] = _motionReport.pos_std_dev[2];
+    follow_target.alt = _motionReport.alt;
+    follow_target.lat = _motionReport.lat_int;
+    follow_target.lon = _motionReport.lon_int;
+
+#ifdef QT_QML_DEBUG
     if(_simulate_motion == true) {
         _createSimulatedMotion(follow_target);
-    } else {
-        follow_target.alt = _motionReport.alt;
-        follow_target.lat = _motionReport.lat_int;
-        follow_target.lon = _motionReport.lon_int;
     }
+#endif
 
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
@@ -154,6 +185,7 @@ double FollowMe::_degreesToRadian(double deg)
     return deg * M_PI / 180.0;
 }
 
+#ifdef QT_QML_DEBUG
 void FollowMe::_createSimulatedMotion(mavlink_follow_target_t & follow_target)
 {
     static int f_lon = 0;
@@ -176,3 +208,4 @@ void FollowMe::_createSimulatedMotion(mavlink_follow_target_t & follow_target)
     follow_target.lat = _motionReport.lat_int + f_lon;
     follow_target.lon = _motionReport.lon_int + f_lat;
 }
+#endif

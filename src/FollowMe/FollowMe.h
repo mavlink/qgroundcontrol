@@ -43,11 +43,10 @@ public:
     FollowMe(QGCApplication* app);
     ~FollowMe();
 
-    void disable();
-    void enable();
+public slots:
+    void followMeHandleManager(const QString&);
 
 private slots:
-
     void _setGPSLocation(QGeoPositionInfo geoPositionInfo);
     void _sendGCSMotionReport(void);
 
@@ -68,12 +67,24 @@ private:
         float pos_std_dev[3];   // -1 for unknown
     } _motionReport;
 
-    const int REPORT_RATE = 1000;        ///< Motion report rate
-
     QString _followMeStr;
 
     QTimer _gcsMotionReportTimer;        ///< Timer to emit motion reports
     double _degreesToRadian(double deg);
+
+    void disable();
+    void enable();
+
+    // Mavlink defined motion reporting capabilities
+
+    enum {
+        POS = 0,
+        VEL = 1,
+        ACCEL = 2,
+        ATT_RATES = 3
+    };
+
+#ifdef QT_QML_DEBUG
 
     // items for simulating QGC movment in jMAVSIM
 
@@ -90,4 +101,5 @@ private:
     bool _simulate_motion;
 
     void _createSimulatedMotion(mavlink_follow_target_t & follow_target);
+#endif
 };
