@@ -29,6 +29,7 @@
 #include "MAVLinkProtocol.h"
 #include "UAS.h"
 #include "QGCApplication.h"
+#include "FollowMe.h"
 
 #ifdef __mobile__
 #include "MobileScreenMgr.h"
@@ -49,6 +50,7 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     , _firmwarePluginManager(NULL)
     , _autopilotPluginManager(NULL)
     , _joystickManager(NULL)
+    , _followMe(NULL)
     , _mavlinkProtocol(NULL)
     , _gcsHeartbeatEnabled(true)
 {
@@ -74,11 +76,14 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
    _autopilotPluginManager =    _toolbox->autopilotPluginManager();
    _joystickManager =           _toolbox->joystickManager();
    _mavlinkProtocol =           _toolbox->mavlinkProtocol();
+   _followMe =                  _toolbox->followMe();
 
    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
    qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
 
    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
+
+   _followMe->enable();
 }
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)

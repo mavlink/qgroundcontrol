@@ -48,7 +48,8 @@ enum PX4_CUSTOM_SUB_MODE_AUTO {
     PX4_CUSTOM_SUB_MODE_AUTO_MISSION,
     PX4_CUSTOM_SUB_MODE_AUTO_RTL,
     PX4_CUSTOM_SUB_MODE_AUTO_LAND,
-    PX4_CUSTOM_SUB_MODE_AUTO_RTGS
+    PX4_CUSTOM_SUB_MODE_AUTO_RTGS,
+    PX4_CUSTOM_SUB_MODE_AUTO_FOLLOWME
 };
 
 union px4_custom_mode {
@@ -82,6 +83,7 @@ const char* PX4FirmwarePlugin::missionFlightMode =      "Mission";
 const char* PX4FirmwarePlugin::rtlFlightMode =          "Return To Land";
 const char* PX4FirmwarePlugin::landingFlightMode =      "Landing";
 const char* PX4FirmwarePlugin::rtgsFlightMode =         "Return, Link Loss";
+const char* PX4FirmwarePlugin::followMeFlightMode =     "Follow Me";
 
 /// Tranlates from PX4 custom modes to flight mode names
 
@@ -100,6 +102,7 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,       PX4FirmwarePlugin::rtlFlightMode,           true },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      PX4FirmwarePlugin::landingFlightMode,       false },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,      PX4FirmwarePlugin::rtgsFlightMode,          false },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_FOLLOWME,  PX4FirmwarePlugin::followMeFlightMode,      true },
 };
 
 QList<VehicleComponent*> PX4FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
