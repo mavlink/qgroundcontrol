@@ -73,7 +73,7 @@ QGCView {
                 anchors.right:      parent.right
                 anchors.margins:    _margins
                 wrapMode:           Text.WordWrap
-                text:               "Select you drone to load the default parameters for it. "
+                text:               qsTr("Select you drone to load the default parameters for it. ")
             }
 
             Flow {
@@ -118,7 +118,7 @@ QGCView {
                 anchors.rightMargin:    _margins
                 anchors.left:           parent.left
                 anchors.right:          applyButton.right
-                text:                   "Please select your airframe type"
+                text:                   qsTr("Please select your airframe type")
                 font.pixelSize:         ScreenTools.mediumFontPixelSize
                 wrapMode:               Text.WordWrap
             }
@@ -126,8 +126,8 @@ QGCView {
             QGCButton {
                 id:             applyButton
                 anchors.right:  parent.right
-                text:           "Load common parameters"
-                onClicked:      showDialog(applyRestartDialogComponent, "Load common parameters", qgcView.showDialogDefaultWidth, StandardButton.Close)
+                text:           qsTr("Load common parameters")
+                onClicked:      showDialog(applyRestartDialogComponent, qsTr("Load common parameters"), qgcView.showDialogDefaultWidth, StandardButton.Close)
             }
         }
 
