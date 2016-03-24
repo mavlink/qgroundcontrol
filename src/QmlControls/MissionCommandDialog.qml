@@ -41,7 +41,7 @@ QGCViewDialog {
     QGCLabel {
         id:                 categoryLabel
         anchors.baseline:   categoryCombo.baseline
-        text:               "Category:"
+        text:               qsTr("Category:")
     }
 
     QGCComboBox {
