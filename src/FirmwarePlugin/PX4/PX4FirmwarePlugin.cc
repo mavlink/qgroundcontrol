@@ -102,7 +102,7 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,       PX4FirmwarePlugin::rtlFlightMode,           true },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      PX4FirmwarePlugin::landingFlightMode,       false },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,      PX4FirmwarePlugin::rtgsFlightMode,          false },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_FOLLOWME,  PX4FirmwarePlugin::followMeFlightMode,      true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_ME, PX4FirmwarePlugin::followMeFlightMode,      true },
 };
 
 QList<VehicleComponent*> PX4FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
