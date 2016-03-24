@@ -70,7 +70,7 @@ Item {
 
                     QGCLabel {
                         id:             flightModeLabel
-                        text:           "Flight Mode Settings"
+                        text:           qsTr("Flight Mode Settings")
                         font.weight:    Font.DemiBold
                     }
 
@@ -93,7 +93,7 @@ Item {
                                 QGCLabel {
                                     id:                 modeChannelLabel
                                     anchors.baseline:   modeChannelCombo.baseline
-                                    text:               "Flight mode channel:"
+                                    text:               qsTr("Flight mode channel:")
                                 }
 
                                 FactComboBox {
@@ -114,7 +114,7 @@ Item {
 
                                     QGCLabel {
                                         anchors.baseline:   modeCombo.baseline
-                                        text:               "Flight Mode " + index + ":"
+                                        text:               qsTr("Flight Mode %1:)").arg(index)
                                         color:              controller.activeFlightMode == index ? "yellow" : qgcPal.text
                                     }
 
@@ -134,7 +134,7 @@ Item {
                     spacing: _margins
 
                     QGCLabel {
-                        text:           "Switch Settings"
+                        text:           qsTr("Switch Settings")
                         font.weight:    Font.DemiBold
                     }
 

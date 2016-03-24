@@ -67,7 +67,7 @@ QGCView {
 
         Component.onCompleted: {
             if (controller.showCustomConfigPanel) {
-                showDialog(customConfigDialogComponent, "Custom Airframe Config", qgcView.showDialogDefaultWidth, StandardButton.Reset)
+                showDialog(customConfigDialogComponent, qsTr("Custom Airframe Config"), qgcView.showDialogDefaultWidth, StandardButton.Reset)
             }
         }
     }
@@ -77,9 +77,9 @@ QGCView {
 
         QGCViewMessage {
             id:       customConfigDialog
-            message:  "Your vehicle is using a custom airframe configuration. " +
-                      "This configuration can only be modified through the Parameter Editor.\n\n" +
-                      "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
+            message:  qsTr("Your vehicle is using a custom airframe configuration. ") +
+                      qsTr("This configuration can only be modified through the Parameter Editor.\n\n") +
+                      qsTr("If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above.")
 
             property Fact sys_autostart: controller.getParameterFact(-1, "SYS_AUTOSTART")
 
@@ -104,8 +104,8 @@ QGCView {
             QGCLabel {
                 anchors.fill:   parent
                 wrapMode:       Text.WordWrap
-                text:           "Clicking “Apply” will save the changes you have made to your airframe configuration. " +
-                                "Your vehicle will also be restarted in order to complete the process."
+                text:           qsTr("Clicking “Apply” will save the changes you have made to your airframe configuration. ") +
+                                qsTr("Your vehicle will also be restarted in order to complete the process.")
             }
         }
     }
@@ -127,9 +127,9 @@ QGCView {
                 id:             helpText
                 width:          parent.width - applyButton.width - 5
                 text:           (controller.currentVehicleName != "" ?
-                                    "You've connected a " + controller.currentVehicleName :
-                                     "Airframe is not set") +
-                                ". To change this configuration, select the desired airframe below then click “Apply and Restart”."
+                                    qsTr("You've connected a %1.").arg(controller.currentVehicleName) :
+                                     qsTr("Airframe is not set.")) +
+                                qsTr("To change this configuration, select the desired airframe below then click “Apply and Restart”.")
                 font.weight:    Font.DemiBold
                 wrapMode:       Text.WordWrap
             }
@@ -137,9 +137,9 @@ QGCView {
             QGCButton {
                 id:             applyButton
                 anchors.right:  parent.right
-                text:           "Apply and Restart"
+                text:           qsTr("Apply and Restart")
 
-                onClicked:      showDialog(applyRestartDialogComponent, "Apply and Restart", qgcView.showDialogDefaultWidth, StandardButton.Apply | StandardButton.Cancel)
+                onClicked:      showDialog(applyRestartDialogComponent, qsTr("Apply and Restart"), qgcView.showDialogDefaultWidth, StandardButton.Apply | StandardButton.Cancel)
             }
         }
 
