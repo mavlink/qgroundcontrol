@@ -45,7 +45,7 @@ Item {
         spacing:    ScreenTools.defaultFontPixelHeight / 2
         QGCLabel {
             id:     serialLabel
-            text:   "Serial Link Settings"
+            text:   qsTr("Serial Link Settings")
         }
         Rectangle {
             height: 1
@@ -59,7 +59,7 @@ Item {
         Row {
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
-                text:   "Serial Port:"
+                text:   qsTr("Serial Port:")
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -79,7 +79,7 @@ Item {
                             subEditConfig.portName = QGroundControl.linkManager.serialPorts[0]
                         var index = commPortCombo.find(subEditConfig.portDisplayName)
                         if (index === -1) {
-                            console.warn("Serial Port not present", subEditConfig.portName)
+                            console.warn(qsTr("Serial Port not present"), subEditConfig.portName)
                         } else {
                             commPortCombo.currentIndex = index
                         }
@@ -92,7 +92,7 @@ Item {
         Row {
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
-                text:   "Baud Rate:"
+                text:   qsTr("Baud Rate:")
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -113,7 +113,7 @@ Item {
                     }
                     var index = baudCombo.find(baud)
                     if (index === -1) {
-                        console.warn("Baud rate name not in combo box", baud)
+                        console.warn(qsTr("Baud rate name not in combo box"), baud)
                     } else {
                         baudCombo.currentIndex = index
                     }
@@ -128,7 +128,7 @@ Item {
         //-- Advanced Serial Settings
         QGCCheckBox {
             id:     showAdvanced
-            text:   "Show Advanced Serial Settings"
+            text:   qsTr("Show Advanced Serial Settings")
         }
         Item {
             height: ScreenTools.defaultFontPixelHeight / 2
@@ -136,7 +136,7 @@ Item {
         }
         //-- Flow Control
         QGCCheckBox {
-            text:       "Enable Flow Control"
+            text:       qsTr("Enable Flow Control")
             checked:    subEditConfig ? subEditConfig.flowControl !== 0 : false
             visible:    showAdvanced.checked
             onCheckedChanged: {
@@ -150,14 +150,14 @@ Item {
             spacing:    ScreenTools.defaultFontPixelWidth
             visible:    showAdvanced.checked
             QGCLabel {
-                text:   "Parity:"
+                text:   qsTr("Parity:")
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }
             QGCComboBox {
                 id:             parityCombo
                 width:          _firstColumn
-                model:          ["None", "Even", "Odd"]
+                model:          [qsTr("None"), qsTr("Even"), qsTr("Odd")]
                 anchors.verticalCenter: parent.verticalCenter
                 onActivated: {
                     if (index != -1) {
@@ -217,7 +217,7 @@ Item {
             spacing:    ScreenTools.defaultFontPixelWidth
             visible:    showAdvanced.checked
             QGCLabel {
-                text:   "Stop Bits:"
+                text:   qsTr("Stop Bits:")
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }

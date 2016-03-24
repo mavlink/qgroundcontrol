@@ -40,7 +40,7 @@ Item {
     }
 
     QGCLabel {
-        text:       "Bluetooth Not Available"
+        text:       qsTr("Bluetooth Not Available")
         visible:    !QGroundControl.linkManager.isBluetoothAvailable
         anchors.centerIn: parent
     }
@@ -59,7 +59,7 @@ Item {
 
         QGCLabel {
             id:     btLabel
-            text:   "Bluetooth Link Settings"
+            text:   qsTr("Bluetooth Link Settings")
         }
         Rectangle {
             height: 1
@@ -73,7 +73,7 @@ Item {
         Row {
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
-                text:   "Device:"
+                text:   qsTr("Device:")
                 width:  _firstColumn
             }
             QGCLabel {
@@ -85,7 +85,7 @@ Item {
             visible:    !ScreenTools.isiOS
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
-                text:   "Address:"
+                text:   qsTr("Address:")
                 width:  _firstColumn
             }
             QGCLabel {
@@ -98,7 +98,7 @@ Item {
             width:  parent.width
         }
         QGCLabel {
-            text:   "Bluetooth Devices:"
+            text:   qsTr("Bluetooth Devices:")
         }
         Item {
             width:  hostRow.width
@@ -152,7 +152,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCButton {
                                 width:      ScreenTools.defaultFontPixelWidth * 10
-                                text:       "Scan"
+                                text:       qsTr("Scan")
                                 enabled:    subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth && !subEditConfig.scanning
                                 onClicked: {
                                     if(subEditConfig)
@@ -161,7 +161,7 @@ Item {
                             }
                             QGCButton {
                                 width:      ScreenTools.defaultFontPixelWidth * 10
-                                text:       "Stop"
+                                text:       qsTr("Stop")
                                 enabled:    subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth && subEditConfig.scanning
                                 onClicked: {
                                     if(subEditConfig)
