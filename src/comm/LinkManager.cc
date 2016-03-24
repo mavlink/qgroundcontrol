@@ -536,7 +536,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                         pSerialConfig = new SerialConfiguration(QString("PX4Flow on %1").arg(portInfo.portName().trimmed()));
                     }
                     break;
-                case QGCSerialPortInfo::BoardType3drRadio:
+                case QGCSerialPortInfo::BoardTypeSikRadio:
                     if (_autoconnect3DRRadio) {
                         pSerialConfig = new SerialConfiguration(QString("SiK Radio on %1").arg(portInfo.portName().trimmed()));
                     }
@@ -548,7 +548,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 
                 if (pSerialConfig) {
                     qCDebug(LinkManagerLog) << "New auto-connect port added: " << pSerialConfig->name() << portInfo.systemLocation();
-                    pSerialConfig->setBaud(boardType == QGCSerialPortInfo::BoardType3drRadio ? 57600 : 115200);
+                    pSerialConfig->setBaud(boardType == QGCSerialPortInfo::BoardTypeSikRadio ? 57600 : 115200);
                     pSerialConfig->setDynamic(true);
                     pSerialConfig->setPortName(portInfo.systemLocation());
                     _autoconnectConfigurations.append(pSerialConfig);

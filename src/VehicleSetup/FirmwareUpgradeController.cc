@@ -147,7 +147,7 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
         _foundBoardTypeName = "PX4 Flow";
         _startFlashWhenBootloaderFound = false;
         break;
-    case QGCSerialPortInfo::BoardType3drRadio:
+    case QGCSerialPortInfo::BoardTypeSikRadio:
         _foundBoardTypeName = "SiK Radio";
         if (!firstAttempt) {
             // Radio always flashes latest firmware, so we can start right away without
@@ -413,7 +413,7 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
     case QGCSerialPortInfo::BoardTypePX4Flow:
         boardId = Bootloader::boardIDPX4Flow;
         break;
-    case QGCSerialPortInfo::BoardType3drRadio:
+    case QGCSerialPortInfo::BoardTypeSikRadio:
         boardId = Bootloader::boardID3DRRadio;
         break;
     case QGCSerialPortInfo::BoardTypeUnknown:
