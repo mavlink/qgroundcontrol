@@ -62,7 +62,7 @@ QGCView {
 
             QGCLabel {
                 id:             flightModeLabel
-                text:           "Flight Mode Settings" + (_fltmodeChExists ? "" : " (Channel 5)")
+                text:           qsTr("Flight Mode Settings") + (_fltmodeChExists ? "" : qsTr(" (Channel 5)"))
                 font.weight:    Font.DemiBold
             }
 
@@ -88,13 +88,16 @@ QGCView {
                         QGCLabel {
                             id:                 modeChannelLabel
                             anchors.baseline:   modeChannelCombo.baseline
-                            text:               "Flight mode channel:"
+                            text:               qsTr("Flight mode channel:")
                         }
 
                         QGCComboBox {
                             id:             modeChannelCombo
                             width:          ScreenTools.defaultFontPixelWidth * 15
-                            model:          [ "Not assigned", "Channel 1", "Channel 2","Channel 3","Channel 4","Channel 5","Channel 6","Channel 7","Channel 8" ]
+                            model:          [ qsTr("Not assigned"), qsTr("Channel 1"), qsTr("Channel 2"),
+                                              qsTr("Channel 3"),    qsTr("Channel 4"), qsTr("Channel 5"),
+                                              qsTr("Channel 6"),    qsTr("Channel 7"), qsTr("Channel 8") ]
+
                             currentIndex:   _fltmodeCh.value
                             onActivated:    _fltmodeCh.value = index
                         }
@@ -112,7 +115,7 @@ QGCView {
 
                             QGCLabel {
                                 anchors.baseline:   modeCombo.baseline
-                                text:               "Flight Mode " + index + ":"
+                                text:               qsTr("Flight Mode ") + index + ":"
                                 color:              controller.activeFlightMode == index ? "yellow" : qgcPal.text
                             }
 
@@ -137,7 +140,7 @@ QGCView {
                 anchors.leftMargin: _margins
                 anchors.top:        parent.top
                 anchors.left:       flightModeSettings.right
-                text:               "Channel Options"
+                text:               qsTr("Channel Options")
                 font.weight:        Font.DemiBold
                 visible:            _channelOptionCount != 0
             }
@@ -170,7 +173,7 @@ QGCView {
 
                             QGCLabel {
                                 anchors.baseline:   optCombo.baseline
-                                text:               "Channel option " + index + ":"
+                                text:               qsTr("Channel option %1 :").arg(index)
                                 color:              controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
                             }
 

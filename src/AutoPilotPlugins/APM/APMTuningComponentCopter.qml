@@ -134,7 +134,7 @@ QGCView {
 
             QGCLabel {
                 id:         basicLabel
-                text:       "Basic Tuning"
+                text:       qsTr("Basic Tuning")
                 font.weight: Font.DemiBold
             }
 
@@ -160,12 +160,12 @@ QGCView {
                         anchors.right:  parent.right
 
                         QGCLabel {
-                            text:       "Throttle Hover"
+                            text:       qsTr("Throttle Hover")
                             font.weight: Font.DemiBold
                         }
 
                         QGCLabel {
-                            text: "How much throttle is needed to maintain a steady hover"
+                            text: qsTr("How much throttle is needed to maintain a steady hover")
                         }
 
                         Slider {
@@ -190,12 +190,12 @@ QGCView {
                         anchors.right:  parent.right
 
                         QGCLabel {
-                            text:       "Roll/Pitch Sensitivity"
+                            text:       qsTr("Roll/Pitch Sensitivity")
                             font.weight: Font.DemiBold
                         }
 
                         QGCLabel {
-                            text: "Slide to the right if the copter is sluggish or slide to the left if the copter is twitchy"
+                            text: qsTr("Slide to the right if the copter is sluggish or slide to the left if the copter is twitchy")
                         }
 
                         Slider {
@@ -223,12 +223,12 @@ QGCView {
                         anchors.right:  parent.right
 
                         QGCLabel {
-                            text:       "Climb Sensitivity"
+                            text:       qsTr("Climb Sensitivity")
                             font.weight: Font.DemiBold
                         }
 
                         QGCLabel {
-                            text: "Slide to the right to climb more aggressively or slide to the left to climb more gently"
+                            text: qsTr("Slide to the right to climb more aggressively or slide to the left to climb more gently")
                         }
 
                         Slider {
@@ -255,12 +255,12 @@ QGCView {
                         anchors.right:  parent.right
 
                         QGCLabel {
-                            text:       "RC Roll/Pitch Feel"
+                            text:       qsTr("RC Roll/Pitch Feel")
                             font.weight: Font.DemiBold
                         }
 
                         QGCLabel {
-                            text: "Slide to the left for soft control, slide to the right for crisp control"
+                            text: qsTr("Slide to the left for soft control, slide to the right for crisp control")
                         }
 
                         Slider {
@@ -286,7 +286,7 @@ QGCView {
                 id:                 autoTuneLabel
                 anchors.topMargin:  _margins
                 anchors.top:        basicTuningRect.bottom
-                text:               "AutoTune"
+                text:               qsTr("AutoTune")
                 font.weight:        Font.DemiBold
             }
 
@@ -309,7 +309,7 @@ QGCView {
                     Row {
                         spacing: _margins
 
-                        QGCLabel { text: "Axes to AutoTune:" }
+                        QGCLabel { text: qsTr("Axes to AutoTune:") }
                         FactBitmask { fact: _autoTuneAxes }
                     }
 
@@ -318,13 +318,13 @@ QGCView {
 
                         QGCLabel {
                             anchors.baseline:   autoTuneChannelCombo.baseline
-                            text:               "Channel for AutoTune switch:"
+                            text:               qsTr("Channel for AutoTune switch:")
                         }
 
                         QGCComboBox {
                             id:             autoTuneChannelCombo
                             width:          ScreenTools.defaultFontPixelWidth * 14
-                            model:          ["None", "Channel 7", "Channel 8", "Channel 9", "Channel 10", "Channel 11", "Channel 12" ]
+                            model:          [qsTr("None"), qsTr("Channel 7"), qsTr("Channel 8"), qsTr("Channel 9"), qsTr("Channel 10"), qsTr("Channel 11"), qsTr("Channel 12") ]
                             currentIndex:   _autoTuneSwitchChannelIndex
 
                             onActivated: {
