@@ -68,28 +68,28 @@ Rectangle {
         anchors.margins:    _margins
         anchors.left:       parent.left
         anchors.top:        parent.top
-        text:               "Distance: " + _distanceText
+        text:               qsTr("Distance: %1").arg(_distanceText)
     }
 
     QGCLabel {
         id:                 altLabel
         anchors.left:       distanceLabel.left
         anchors.top:        distanceLabel.bottom
-        text:               "Alt diff: " + _altText
+        text:               qsTr("Alt diff: %1").arg(_altText)
     }
 
     QGCLabel {
         id:                 gradientLabel
         anchors.left:       distanceLabel.left
         anchors.top:        altLabel.bottom
-        text:               "Gradient: " + _gradientText
+        text:               qsTr("Gradient: %1").arg(_gradientText)
     }
 
     QGCLabel {
         id:                 azimuthLabel
         anchors.left:       distanceLabel.left
         anchors.top:        gradientLabel.bottom
-        text:               "Azimuth: " + _azimuthText
+        text:               qsTr("Azimuth: %1").arg(_azimuthText)
     }
 
     QGCFlickable {
@@ -141,7 +141,6 @@ Rectangle {
                     }
                     */
                 }
-
             }
         }
     }

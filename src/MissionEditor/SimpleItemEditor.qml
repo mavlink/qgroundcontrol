@@ -41,9 +41,9 @@ Rectangle {
                 width:      parent.width
                 wrapMode:   Text.WordWrap
                 text:       missionItem.sequenceNumber == 0 ?
-                                "Planned home position." :
+                                qsTr("Planned home position.") :
                                 (missionItem.rawEdit ?
-                                     "Provides advanced access to all commands/parameters. Be very careful!" :
+                                     qsTr("Provides advanced access to all commands/parameters. Be very careful!") :
                                      missionItem.commandDescription)
             }
 

@@ -90,7 +90,7 @@ QGCView {
 
     function loadFromFile() {
         if (ScreenTools.isMobile) {
-            _root.showDialog(mobileFilePicker, "Select Mission File", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+            _root.showDialog(mobileFilePicker, qsTr("Select Mission File"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
         } else {
             controller.loadMissionFromFilePicker()
             fitViewportToMissionItems()
@@ -99,7 +99,7 @@ QGCView {
 
     function saveToFile() {
         if (ScreenTools.isMobile) {
-            _root.showDialog(mobileFileSaver, "Save Mission File", _root.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+            _root.showDialog(mobileFileSaver, qsTr("Save Mission File"), _root.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
         } else {
             controller.saveMissionToFilePicker()
         }
@@ -238,7 +238,7 @@ QGCView {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     wrapMode:       Text.WordWrap
-                    text:           "Move the selected mission item to the be after following mission item:"
+                    text:           qsTr("Move the selected mission item to the be after following mission item:")
                 }
 
                 QGCComboBox {
@@ -569,13 +569,13 @@ QGCView {
 
                         dropDownComponent: Component {
                             Column {
-                                QGCLabel { text: "Center map:" }
+                                QGCLabel { text: qsTr("Center map:") }
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
 
                                     QGCButton {
-                                        text: "Home"
+                                        text: qsTr("Home")
 
                                         onClicked: {
                                             centerMapButton.hideDropDown()
@@ -584,7 +584,7 @@ QGCView {
                                     }
 
                                     QGCButton {
-                                        text: "Mission"
+                                        text: qsTr("Mission")
 
                                         onClicked: {
                                             centerMapButton.hideDropDown()
@@ -593,7 +593,7 @@ QGCView {
                                     }
 
                                     QGCButton {
-                                        text:       "Vehicle"
+                                        text:       qsTr("Vehicle")
                                         enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
 
                                         property var activeVehicle: _activeVehicle
@@ -618,7 +618,7 @@ QGCView {
 
                         dropDownComponent: Component {
                             Column {
-                                QGCLabel { text: "Map type:" }
+                                QGCLabel { text: qsTr("Map type:") }
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
@@ -691,7 +691,7 @@ QGCView {
 
         QGCViewMessage {
             id:         syncLoadFromVehicleCheck
-            message:   "You have unsaved/unsent mission changes. Loading the mission from the Vehicle will lose these changes. Are you sure you want to load the mission from the Vehicle?"
+            message:   qsTr("You have unsaved/unsent mission changes. Loading the mission from the Vehicle will lose these changes. Are you sure you want to load the mission from the Vehicle?")
 
             function accept() {
                 hideDialog()
@@ -705,7 +705,7 @@ QGCView {
 
         QGCViewMessage {
             id:         syncLoadFromVehicleCheck
-            message:   "You have unsaved/unsent mission changes. Loading a mission from a file will lose these changes. Are you sure you want to load a mission from a file?"
+            message:   qsTr("You have unsaved/unsent mission changes. Loading a mission from a file will lose these changes. Are you sure you want to load a mission from a file?")
 
             function accept() {
                 hideDialog()
@@ -718,7 +718,7 @@ QGCView {
         id: removeAllPromptDialog
 
         QGCViewMessage {
-            message: "Are you sure you want to delete all mission items?"
+            message: qsTr("Are you sure you want to delete all mission items?")
 
             function accept() {
                 itemDragger.clearItem()
@@ -739,8 +739,8 @@ QGCView {
                 width:      sendSaveRow.width
                 wrapMode:   Text.WordWrap
                 text:       syncNeeded && !controller.autoSync ?
-                                "You have unsaved changed to you mission. You should send to your vehicle, or save to a file:" :
-                                "Sync:"
+                                qsTr("You have unsaved changed to you mission. You should send to your vehicle, or save to a file:") :
+                                qsTr("Sync:")
             }
 
             Row {
@@ -749,7 +749,7 @@ QGCView {
                 spacing:    ScreenTools.defaultFontPixelWidth
 
                 QGCButton {
-                    text:       "Send to vehicle"
+                    text:       qsTr("Send to vehicle")
                     enabled:    _activeVehicle && !controller.syncInProgress
 
                     onClicked: {
@@ -759,13 +759,13 @@ QGCView {
                 }
 
                 QGCButton {
-                    text:       "Load from vehicle"
+                    text:       qsTr("Load from vehicle")
                     enabled:    _activeVehicle && !controller.syncInProgress
 
                     onClicked: {
                         syncButton.hideDropDown()
                         if (syncNeeded) {
-                            _root.showDialog(syncLoadFromVehicleOverwrite, "Mission overwrite", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                            _root.showDialog(syncLoadFromVehicleOverwrite, qsTr("Mission overwrite"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                         } else {
                             loadFromVehicle()
                         }
@@ -777,7 +777,7 @@ QGCView {
                 spacing: ScreenTools.defaultFontPixelWidth
 
                 QGCButton {
-                    text:       "Save to file..."
+                    text:       qsTr("Save to file...")
                     enabled:    !controller.syncInProgress
 
                     onClicked: {
@@ -787,13 +787,13 @@ QGCView {
                 }
 
                 QGCButton {
-                    text:       "Load from file..."
+                    text:       qsTr("Load from file...")
                     enabled:    !controller.syncInProgress
 
                     onClicked: {
                         syncButton.hideDropDown()
                         if (syncNeeded) {
-                            _root.showDialog(syncLoadFromFileOverwrite, "Mission overwrite", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                            _root.showDialog(syncLoadFromFileOverwrite, qsTr("Mission overwrite"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                         } else {
                             loadFromFile()
                         }
@@ -802,10 +802,10 @@ QGCView {
             }
 
             QGCButton {
-                text:       "Remove all"
+                text:       qsTr("Remove all")
                 onClicked:  {
                     syncButton.hideDropDown()
-                    _root.showDialog(removeAllPromptDialog, "Delete all", _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                    _root.showDialog(removeAllPromptDialog, qsTr("Delete all"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                 }
             }
 
