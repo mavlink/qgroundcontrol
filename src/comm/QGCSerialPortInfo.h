@@ -44,7 +44,7 @@ public:
         BoardTypePX4FMUV2,
         BoardTypePX4FMUV4,
         BoardTypePX4Flow,
-        BoardType3drRadio,
+        BoardTypeSikRadio,
         BoardTypeAeroCore,
         BoardTypeUnknown
     } BoardType_t;
@@ -65,6 +65,9 @@ public:
     static const int threeDRRadioVendorId =                 1027;   ///< Vendor ID for 3DR Radio
     static const int threeDRRadioProductId =                24597;  ///< Product ID for 3DR Radio
 
+    static const int siLabsRadioVendorId =                  0x10c4; ///< Vendor ID for SILabs Radio
+    static const int siLabsRadioProductId =                 0xea60; ///< Product ID for SILabs Radio
+
     QGCSerialPortInfo(void);
     QGCSerialPortInfo(const QSerialPort & port);
 
@@ -79,6 +82,7 @@ public:
     /// @return true: Board is currently in bootloader
     bool isBootloader(void) const;
 
+private:
 };
 
 #endif
