@@ -67,7 +67,7 @@ QGCView {
         id: sensorModel
 
         ListElement {
-            text:       "Power Module 90A"
+            text:       qsTr("Power Module 90A")
             voltPin:    2
             currPin:    3
             voltMult:   10.1
@@ -75,7 +75,7 @@ QGCView {
         }
 
         ListElement {
-            text:       "Power Module HV"
+            text:       qsTr("Power Module HV")
             voltPin:    2
             currPin:    3
             voltMult:   12.02
@@ -91,7 +91,7 @@ QGCView {
         }
 
         ListElement {
-            text:       "Other"
+            text:       qsTr("Other")
         }
     }
 
@@ -110,7 +110,7 @@ QGCView {
                 anchors.margins:    _margins
                 anchors.left:       parent.left
                 anchors.baseline:   monitorCombo.baseline
-                text:               "Battery monitor:"
+                text:               qsTr("Battery monitor:")
             }
 
             FactComboBox {
@@ -128,7 +128,7 @@ QGCView {
                 anchors.margins:    _margins
                 anchors.left:       parent.left
                 anchors.baseline:   capacityField.baseline
-                text:               "Battery capacity:"
+                text:               qsTr("Battery capacity:")
             }
 
             FactTextField {
@@ -146,7 +146,7 @@ QGCView {
                 anchors.margins:    _margins
                 anchors.left:       parent.left
                 anchors.baseline:   sensorCombo.baseline
-                text:               "Power sensor:"
+                text:               qsTr("Power sensor:")
             }
 
             QGCComboBox {
@@ -174,7 +174,7 @@ QGCView {
                 anchors.margins:    _margins
                 anchors.left:       parent.left
                 anchors.baseline:   currPinCombo.baseline
-                text:               "Current pin:"
+                text:               qsTr("Current pin:")
                 visible:            _showAdvanced
             }
 
@@ -194,7 +194,7 @@ QGCView {
                 anchors.margins:    _margins
                 anchors.left:       parent.left
                 anchors.baseline:   voltPinCombo.baseline
-                text:               "Voltage pin:"
+                text:              qsTr("Voltage pin:")
                 visible:            _showAdvanced
             }
 
@@ -214,7 +214,7 @@ QGCView {
                 anchors.margins:    _margins
                 anchors.left:       parent.left
                 anchors.baseline:   voltMultField.baseline
-                text:               "Voltage multiplier:"
+                text:               qsTr("Voltage multiplier:")
                 visible:            _showAdvanced
             }
 
@@ -233,7 +233,7 @@ QGCView {
                 anchors.margins:    _margins
                 anchors.left:       parent.left
                 anchors.baseline:   ampPerVoltField.baseline
-                text:               "Amps per volt:"
+                text:               qsTr("Amps per volt:")
                 visible:            _showAdvanced
             }
 
