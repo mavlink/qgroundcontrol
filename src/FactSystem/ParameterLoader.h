@@ -134,12 +134,12 @@ private:
     void _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
     void _writeLocalParamCache(int uasId, int componentId);
     void _tryCacheHashLoad(int uasId, int componentId, QVariant hash_value);
-    void _addMetaDataToAll(void);
+    void _addMetaDataToDefaultComponent(void);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
     void _saveToEEPROM(void);
-    void _checkInitialLoadComplete(void);
+    void _checkInitialLoadComplete(bool failIfNoDefaultComponent);
 
     LinkInterface* _dedicatedLink; ///< Parameter protocol stays on this link
     
@@ -153,14 +153,15 @@ private:
     /// Second mapping is group name, to Fact
     QMap<int, QMap<QString, QStringList> > _mapGroup2ParameterName;
     
-    bool        _parametersReady;           ///< true: full set of parameters correctly loaded
-    bool        _initialLoadComplete;       ///< true: Initial load of all parameters complete, whether succesful or not
-    bool        _saveRequired;              ///< true: _saveToEEPROM should be called
+    bool        _parametersReady;               ///< true: full set of parameters correctly loaded
+    bool        _initialLoadComplete;           ///< true: Initial load of all parameters complete, whether succesful or not
+    bool        _waitingForDefaultComponent;    ///< true: last chance wait for default component params
+    bool        _saveRequired;                  ///< true: _saveToEEPROM should be called
     int         _defaultComponentId;
-    QString     _defaultComponentIdParam;   ///< Parameter which identifies default component
-    QString     _versionParam;              ///< Parameter which contains parameter set version
-    int         _parameterSetMajorVersion;  ///< Version for parameter set, -1 if not known
-    QObject*    _parameterMetaData;         ///< Opaque data from FirmwarePlugin::loadParameterMetaDataCall
+    QString     _defaultComponentIdParam;       ///< Parameter which identifies default component
+    QString     _versionParam;                  ///< Parameter which contains parameter set version
+    int         _parameterSetMajorVersion;      ///< Version for parameter set, -1 if not known
+    QObject*    _parameterMetaData;             ///< Opaque data from FirmwarePlugin::loadParameterMetaDataCall
 
     static const int _maxInitialLoadRetry = 10;                  ///< Maximum a retries on initial index based load
     
