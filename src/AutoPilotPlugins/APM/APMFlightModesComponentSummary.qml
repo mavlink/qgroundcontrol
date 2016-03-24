@@ -26,32 +26,32 @@ FactPanel {
         anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: "Flight Mode 1:"
+            labelText: qsTr("Flight Mode 1:")
             valueText: flightMode1.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: "Flight Mode 2:"
+            labelText: qsTr("Flight Mode 2:")
             valueText: flightMode2.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: "Flight Mode 3:"
+            labelText: qsTr("Flight Mode 3:")
             valueText: flightMode3.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: "Flight Mode 4:"
+            labelText: qsTr("Flight Mode 4:")
             valueText: flightMode4.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: "Flight Mode 5:"
+            labelText: qsTr("Flight Mode 5:")
             valueText: flightMode5.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: "Flight Mode 6:"
+            labelText: qsTr("Flight Mode 6:")
             valueText: flightMode6.enumStringValue
         }
     }

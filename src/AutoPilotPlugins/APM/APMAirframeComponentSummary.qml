@@ -27,7 +27,7 @@ FactPanel {
 
         VehicleSummaryRow {
             id: nameRow;
-            labelText: "Frame Type:"
+            labelText: qsTr("Frame Type:")
             valueText: sysIdFact.valueString === "0" ? "Plus"
                      : sysIdFact.valueString === "1" ? "X"
                      : sysIdFact.valueString === "2" ? "V"
