@@ -67,7 +67,7 @@ FocusScope {
             QGCLabel {
                 anchors.fill:   parent
                 wrapMode:       Text.WordWrap
-                text:           __errorMsg.length ? __errorMsg : "Parameters(s) missing: " + __missingParams
+                text:           __errorMsg.length ? __errorMsg : qsTr("Parameters(s) missing: %1").arg(__missingParams)
             }
         }
     }
