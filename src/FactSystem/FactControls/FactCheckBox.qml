@@ -14,7 +14,7 @@ QGCCheckBox {
     partiallyCheckedEnabled: fact.value != checkedValue && fact.value != uncheckedValue
     checkedState: fact.value == checkedValue ? Qt.Checked : (fact.value == uncheckedValue ? Qt.Unchecked : Qt.PartiallyChecked)
 
-    text: "Label"
+    text: qsTr("Label")
 
     onClicked: {
         fact.value = checked ? checkedValue : uncheckedValue
