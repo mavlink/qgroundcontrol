@@ -35,17 +35,6 @@ namespace QGC
 const static int defaultSystemId = 255;
 const static int defaultComponentId = 0;
 
-const QColor colorCyan(55, 154, 195);
-const QColor colorRed(154, 20, 20);
-const QColor colorGreen(20, 200, 20);
-const QColor colorYellow(255, 255, 0);
-const QColor colorOrange(255, 140, 0);
-const QColor colorMagenta(255, 0, 55);
-const QColor colorDarkWhite(240, 240, 240);
-const QColor colorDarkYellow(180, 180, 0);
-const QColor colorBackground("#050508");
-const QColor colorBlack(0, 0, 0);
-
 /**
  * @brief Get the current ground time in microseconds.
  * @note This does not have microsecond precision, it is limited to millisecond precision.
@@ -67,6 +56,7 @@ const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;
 
 class SLEEP : public QThread
 {
+    Q_OBJECT
 public:
     using QThread::sleep;
     using QThread::msleep;
