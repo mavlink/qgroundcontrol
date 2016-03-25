@@ -67,6 +67,7 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
     
     // Compass triggers
     triggers << "COMPASS_DEV_ID" << "COMPASS_DEV_ID2" << "COMPASS_DEV_ID3"
+             << "COMPASS_USE" << "COMPASS_USE2" << "COMPASS_USE3"
              << "COMPASS_OFS_X" << "COMPASS_OFS_X" << "COMPASS_OFS_X"
              << "COMPASS_OFS2_X" << "COMPASS_OFS2_X" << "COMPASS_OFS2_X"
              << "COMPASS_OFS3_X" << "COMPASS_OFS3_X" << "COMPASS_OFS3_X";
@@ -103,16 +104,19 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
 {
     const size_t cCompass = 3;
     const size_t cOffset = 3;
-    QStringList devicesIds;
+    QStringList rgDevicesIds;
+    QStringList rgCompassUse;
     QStringList rgOffsets[cCompass];
 
-    devicesIds << QStringLiteral("COMPASS_DEV_ID") << QStringLiteral("COMPASS_DEV_ID2") << QStringLiteral("COMPASS_DEV_ID3");
+    rgDevicesIds << QStringLiteral("COMPASS_DEV_ID") << QStringLiteral("COMPASS_DEV_ID2") << QStringLiteral("COMPASS_DEV_ID3");
+    rgCompassUse << QStringLiteral("COMPASS_USE") << QStringLiteral("COMPASS_USE2") << QStringLiteral("COMPASS_USE3");
     rgOffsets[0] << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_Y") << QStringLiteral("COMPASS_OFS_Z");
     rgOffsets[1] << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_Y") << QStringLiteral("COMPASS_OFS2_Z");
     rgOffsets[2] << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_Y") << QStringLiteral("COMPASS_OFS3_Z");
 
     for (size_t i=0; i<cCompass; i++) {
-        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, devicesIds[i])->rawValue().toInt() != 0) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgDevicesIds[i])->rawValue().toInt() != 0 &&
+            _autopilot->getParameterFact(FactSystem::defaultComponentId, rgCompassUse[i])->rawValue().toInt() != 0) {
             for (size_t j=0; j<cOffset; j++) {
                 if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
                     return true;

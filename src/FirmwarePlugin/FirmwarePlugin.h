@@ -120,7 +120,8 @@ public:
     /// spec implementations such that the base code can remain mavlink generic.
     ///     @param vehicle Vehicle message came from
     ///     @param message[in,out] Mavlink message to adjust if needed.
-    virtual void adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
+    /// @return false: skip message, true: process message
+    virtual bool adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
     
     /// Called before any mavlink message is sent to the Vehicle so plugin can adjust any message characteristics.
     /// This is handy to adjust or differences in mavlink spec implementations such that the base code can remain
