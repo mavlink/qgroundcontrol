@@ -88,14 +88,12 @@ install:
     elif [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" != "ios" ]]; then
          wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang.tar.bz2
       && mkdir -p ~/qt-mac-clang
-      && tar jxf Qt5.5.1-mac-clang.tar.bz2 -C ~/qt-mac-clang
-      && export PATH=~/qt-mac-clang/clang_64/bin:$PATH
+      && tar jxf Qt5.5.1-mac-clang.tar.bz2 -C ~/qt-install
       ;
     elif [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" = "ios" ]]; then
          wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios.tar.bz2
       && mkdir -p ~/qt-ios
-      && tar jxf Qt5.5.1-ios.tar.bz2 -C ~/qt-ios
-      && export PATH=~/qt-ios/ios/bin:$PATH
+      && tar jxf Qt5.5.1-ios.tar.bz2 -C ~/qt-install
       ;
     elif [ "${TRAVIS_OS_NAME}" = "android" ]; then
          wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
@@ -105,8 +103,7 @@ install:
       && export ANDROID_NDK_ROOT=`pwd`/android-ndk-r10e
       && export ANDROID_SDK_ROOT=/usr/local/android-sdk
       && wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2
-      && tar jxf Qt5.5.1-linux.tar.bz2 -C /tmp
-      && export PATH=/tmp/Qt/5.5/android_armv7/bin:$PATH
+      && tar jxf Qt5.5.1-linux.tar.bz2 -C ~/qt-install
       ;
     fi
 
@@ -120,8 +117,8 @@ before_script:
   - ln -s /usr/bin/ccache ~/bin/gcc-4.8
   - export PATH=~/bin:$PATH
   - if [[ "${TRAVIS_OS_NAME}" = "android" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then export CONFIG=release; fi
-  - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}; fi
-  - if [ "${SPEC}" = "ios" ]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release; fi
+  - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && ~/qt-install/qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}; fi
+  - if [ "${SPEC}" = "ios" ]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && ~/qt-install/qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release; fi
 
 script:
   - if [ "${TRAVIS_OS_NAME}" = "android" ]; then cd ${TRAVIS_BUILD_DIR} && ./tools/update_android_version.sh; fi
