@@ -377,7 +377,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
 
     // Give the plugin a change to adjust the message contents
-    _firmwarePlugin->adjustIncomingMavlinkMessage(this, &message);
+    if (!_firmwarePlugin->adjustIncomingMavlinkMessage(this, &message)) {
+        return;
+    }
 
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HOME_POSITION:
