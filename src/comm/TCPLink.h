@@ -154,7 +154,7 @@ public:
 
 private slots:
     // From LinkInterface
-    void writeBytes(const QByteArray data);
+    void _writeBytes(const QByteArray data);
 
 public slots:
     void waitForBytesWritten(int msecs);

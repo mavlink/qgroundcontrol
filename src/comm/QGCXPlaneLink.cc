@@ -448,7 +448,7 @@ Eigen::Matrix3f euler_to_wRo(double yaw, double pitch, double roll) {
   return wRo;
 }
 
-void QGCXPlaneLink::writeBytes(const QByteArray data)
+void QGCXPlaneLink::_writeBytes(const QByteArray data)
 {
     if (data.isEmpty()) return;
 

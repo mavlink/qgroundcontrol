@@ -73,7 +73,7 @@ public slots:
     virtual bool disconnectSimulation() = 0;
 
 private slots:
-    virtual void writeBytes(const QByteArray) = 0;
+    virtual void _writeBytes(const QByteArray) = 0;
 
 protected:
     virtual void setName(QString name) = 0;
@@ -81,7 +81,7 @@ protected:
     QGCHilLink() :
         QThread()
     {
-        connect(this, &QGCHilLink::_invokeWriteBytes, this, &QGCHilLink::writeBytes);
+        connect(this, &QGCHilLink::_invokeWriteBytes, this, &QGCHilLink::_writeBytes);
     }
 
 signals:

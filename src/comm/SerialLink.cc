@@ -82,7 +82,7 @@ bool SerialLink::_isBootloader()
     return false;
 }
 
-void SerialLink::writeBytes(const QByteArray data)
+void SerialLink::_writeBytes(const QByteArray data)
 {
     if(_port && _port->isOpen()) {
         _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());

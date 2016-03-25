@@ -172,7 +172,7 @@ void XbeeLink::_disconnect(void)
 	emit disconnected();
 }
 
-void XbeeLink::writeBytes(const QByteArray bytes)
+void XbeeLink::_writeBytes(const QByteArray bytes)
 {
 	if(!xbee_nsenddata(this->m_xbeeCon,const_cast<char*>(bytes.data()),bytes.size())) // return value of 0 is successful written
 	{

@@ -88,7 +88,7 @@ void TCPLink::_writeDebugBytes(const QByteArray data)
 }
 #endif
 
-void TCPLink::writeBytes(const QByteArray data)
+void TCPLink::_writeBytes(const QByteArray data)
 {
 #ifdef TCPLINK_READWRITE_DEBUG
     _writeDebugBytes(data);

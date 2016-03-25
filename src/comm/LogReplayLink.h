@@ -99,7 +99,7 @@ public:
     bool disconnect(void);
 
 private slots:
-    virtual void writeBytes(const QByteArray bytes);
+    virtual void _writeBytes(const QByteArray bytes);
 
 signals:
     void logFileStats(bool logTimestamped, int logDurationSecs, int binaryBaudRate);

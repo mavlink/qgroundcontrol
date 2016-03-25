@@ -163,7 +163,7 @@ public slots:
     }
 
 private slots:
-    virtual void writeBytes(const QByteArray) = 0;
+    virtual void _writeBytes(const QByteArray) = 0;
     
 signals:
     void autoconnectChanged(bool autoconnect);
@@ -220,7 +220,7 @@ protected:
         memset(_outDataWriteAmounts,0, sizeof(_outDataWriteAmounts));
         memset(_outDataWriteTimes,  0, sizeof(_outDataWriteTimes));
         
-        QObject::connect(this, &LinkInterface::_invokeWriteBytes, this, &LinkInterface::writeBytes);
+        QObject::connect(this, &LinkInterface::_invokeWriteBytes, this, &LinkInterface::_writeBytes);
         qRegisterMetaType<LinkInterface*>("LinkInterface*");
     }
 
