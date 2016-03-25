@@ -122,7 +122,7 @@ before_script:
   - ln -s /usr/bin/ccache ~/bin/gcc-4.8
   - export PATH=~/bin:$PATH
   - if [[ "${TRAVIS_OS_NAME}" = "android" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then export CONFIG=release; fi
-  - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && ~/qt-install/qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}; fi
+  - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && ~/qt-install/$QMAKE_PATH/bin/qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}; fi
   - if [ "${SPEC}" = "ios" ]; then mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR} && ~/qt-install/$QMAKE_PATH/bin/qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release; fi
 
 script:
