@@ -89,18 +89,13 @@ QString BluetoothLink::getName() const
     return _config->name();
 }
 
-void BluetoothLink::writeBytes(const char* data, qint64 size)
-{
-    _sendBytes(data, size);
-}
-
-void BluetoothLink::_sendBytes(const char* data, qint64 size)
+void BluetoothLink::writeBytes(const QByteArray bytes)
 {
     if(_targetSocket)
     {
         if(_targetSocket->isWritable())
         {
-            if(_targetSocket->write(data, size) > 0) {
+            if(_targetSocket->write(bytes) > 0) {
                 _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
             }
             else

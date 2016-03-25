@@ -733,7 +733,7 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     int len = mavlink_msg_to_send_buffer(buffer, &message);
 
-    link->writeBytes((const char*)buffer, len);
+    link->writeBytesSafe((const char*)buffer, len);
     _messagesSent++;
     emit messagesSentChanged();
 }
