@@ -112,7 +112,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
 #if 0
     // Handy for testing retry logic
     static int counter = 0;
-    if (counter++ & 0x3) {
+    if (counter++ & 0x8) {
         qCDebug(ParameterLoaderLog) << "Artificial discard" << counter;
         return;
     }
@@ -131,9 +131,6 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
         return;
     }
     _dataMutex.lock();
-
-    // Restart our waiting for param timer
-    _waitingParamTimeoutTimer.start();
 
     // Update our total parameter counts
     if (!_paramCountMap.contains(componentId)) {
@@ -168,6 +165,14 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     if (_waitingReadParamIndexMap[componentId].count() == 1) {
         // We need to know when we get the last param from a component in order to complete setup
         componentParamsComplete = true;
+    }
+
+    if (_waitingReadParamIndexMap[componentId].contains(parameterId) ||
+        _waitingReadParamNameMap[componentId].contains(parameterName) ||
+        _waitingWriteParamNameMap[componentId].contains(parameterName)) {
+        // We were waiting for this parameter, restart wait timer. Otherwise it is a spurious parameter update which
+        // means we should not reset the wait timer.
+        _waitingParamTimeoutTimer.start();
     }
 
     // Remove this parameter from the waiting lists
