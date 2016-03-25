@@ -149,6 +149,9 @@ void UDPLink::removeHost(const QString& host)
 
 void UDPLink::writeBytes(const QByteArray data)
 {
+    if (!_socket)
+        return;
+
     QStringList goneHosts;
     // Send to all connected systems
     QString host;
