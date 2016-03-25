@@ -93,6 +93,9 @@ void TCPLink::writeBytes(const QByteArray data)
 #ifdef TCPLINK_READWRITE_DEBUG
     _writeDebugBytes(data);
 #endif
+    if (!_socket)
+        return;
+
     _socket->write(data);
     _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
 }
