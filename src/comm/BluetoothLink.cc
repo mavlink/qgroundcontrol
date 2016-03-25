@@ -89,7 +89,7 @@ QString BluetoothLink::getName() const
     return _config->name();
 }
 
-void BluetoothLink::writeBytes(const QByteArray bytes)
+void BluetoothLink::_writeBytes(const QByteArray bytes)
 {
     if(_targetSocket)
     {

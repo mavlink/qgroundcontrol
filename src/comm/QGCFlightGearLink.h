@@ -129,7 +129,7 @@ private slots:
      * @param data Pointer to the data byte array
      * @param size The size of the bytes array
      **/
-    void writeBytes(const QByteArray data);
+    void _writeBytes(const QByteArray data);
 
 public slots:
     bool connectSimulation();

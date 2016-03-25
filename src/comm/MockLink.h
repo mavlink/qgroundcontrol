@@ -151,7 +151,7 @@ public:
     static MockLink* startAPMArduPlaneMockLink   (bool sendStatusText);
 
 private slots:
-    virtual void writeBytes(const QByteArray bytes);
+    virtual void _writeBytes(const QByteArray bytes);
 
 private slots:
     void _run1HzTasks(void);

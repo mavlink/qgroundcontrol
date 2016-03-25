@@ -147,7 +147,7 @@ void UDPLink::removeHost(const QString& host)
     _config->removeHost(host);
 }
 
-void UDPLink::writeBytes(const QByteArray data)
+void UDPLink::_writeBytes(const QByteArray data)
 {
     if (!_socket)
         return;

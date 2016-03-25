@@ -255,7 +255,7 @@ void QGCJSBSimLink::updateControls(quint64 time, float rollAilerons, float pitch
     //qDebug() << "Updated controls" << state;
 }
 
-void QGCJSBSimLink::writeBytes(const QByteArray data)
+void QGCJSBSimLink::_writeBytes(const QByteArray data)
 {
     //#define QGCJSBSimLink_DEBUG
 #ifdef QGCJSBSimLink_DEBUG

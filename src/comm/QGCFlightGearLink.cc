@@ -244,7 +244,7 @@ void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float p
     }
 }
 
-void QGCFlightGearLink::writeBytes(const QByteArray data)
+void QGCFlightGearLink::_writeBytes(const QByteArray data)
 {
     //#define QGCFlightGearLink_DEBUG
 #ifdef QGCFlightGearLink_DEBUG

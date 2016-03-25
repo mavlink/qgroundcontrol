@@ -46,7 +46,7 @@ public:
     qint64 getCurrentInDataRate() const;
 
 private slots: // virtual functions from LinkInterface
-	void writeBytes(const QByteArray bytes);
+	void _writeBytes(const QByteArray bytes);
 
 protected slots: // virtual functions from LinkInterface
 	void readBytes();

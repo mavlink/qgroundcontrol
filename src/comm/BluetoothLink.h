@@ -193,7 +193,7 @@ private:
     void _restartConnection     ();
 
 private slots:
-    void    writeBytes          (const QByteArray bytes);
+    void _writeBytes            (const QByteArray bytes);
 
 private:
     void _createSocket          ();
