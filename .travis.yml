@@ -90,7 +90,7 @@ install:
          wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang.tar.bz2
       && mkdir -p ~/qt-install
       && tar jxf Qt5.5.1-mac-clang.tar.bz2 -C ~/qt-install
-      && export QMAKE_PATH=clang_64
+      && export QMAKE_PATH=Qt5.5-mac-clang/5.5/clang_64
       ;
     elif [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" = "ios" ]]; then
          wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios.tar.bz2
