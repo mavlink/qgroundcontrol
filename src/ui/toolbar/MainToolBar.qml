@@ -569,18 +569,21 @@ Rectangle {
             font.pixelSize:         tbFontLarge
             font.weight:            Font.DemiBold
             color:                  colorRed
-            anchors.left:           parent.left
+            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+            anchors.right:          disconnectButton.left
             anchors.verticalCenter: parent.verticalCenter
             visible:                parent.vehicleConnectionLost
 
         }
 
         QGCButton {
+            id:                     disconnectButton
             anchors.rightMargin:     mainWindow.tbSpacing * 2
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
             text:                   "Disconnect"
             visible:                parent.vehicleConnectionLost
+            primary:                true
             onClicked:              activeVehicle.disconnectInactiveVehicle()
         }
     }
