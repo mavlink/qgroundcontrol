@@ -165,9 +165,7 @@ public:
     LinkConfiguration* getLinkConfiguration() { return _config; }
 
 public slots:
-
     void    readBytes               ();
-    void    writeBytes              (const char* data, qint64 length);
     void    deviceConnected         ();
     void    deviceDisconnected      ();
     void    deviceError             (QBluetoothSocket::SocketError error);
@@ -193,7 +191,11 @@ private:
 
     bool _hardwareConnect       ();
     void _restartConnection     ();
-    void _sendBytes             (const char* data, qint64 size);
+
+private slots:
+    void _writeBytes            (const QByteArray bytes);
+
+private:
     void _createSocket          ();
 
 private:

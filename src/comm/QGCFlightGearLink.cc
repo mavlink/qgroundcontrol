@@ -234,7 +234,7 @@ void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float p
     {
         QString state("%1\t%2\t%3\t%4\t%5\n");
         state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
-        writeBytes(state.toLatin1().constData(), state.length());
+        emit _invokeWriteBytes(state.toLatin1());
         //qDebug() << "Updated controls" << rollAilerons << pitchElevator << yawRudder << throttle;
         //qDebug() << "Updated controls" << state;
     }
@@ -244,13 +244,13 @@ void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float p
     }
 }
 
-void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
+void QGCFlightGearLink::_writeBytes(const QByteArray data)
 {
     //#define QGCFlightGearLink_DEBUG
 #ifdef QGCFlightGearLink_DEBUG
     QString bytes;
     QString ascii;
-    for (int i=0; i<size; i++)
+    for (int i=0, size = data.size(); i<size; i++)
     {
         unsigned char v = data[i];
         bytes.append(QString().sprintf("%02x ", v));
@@ -267,7 +267,7 @@ void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
     qDebug() << bytes;
     qDebug() << "ASCII:" << ascii;
 #endif
-    if (connectState && _udpCommSocket) _udpCommSocket->writeDatagram(data, size, currentHost, currentPort);
+    if (connectState && _udpCommSocket) _udpCommSocket->writeDatagram(data, currentHost, currentPort);
 }
 
 /**

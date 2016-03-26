@@ -115,7 +115,6 @@ MockLink::MockLink(MockConfiguration* config)
     moveToThread(this);
 
     _loadParams();
-    QObject::connect(this, &MockLink::_incomingBytes, this, &MockLink::_handleIncomingBytes);
 }
 
 MockLink::~MockLink(void)
@@ -314,16 +313,7 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t& msg)
 }
 
 /// @brief Called when QGC wants to write bytes to the MAV
-void MockLink::writeBytes(const char* bytes, qint64 cBytes)
-{
-    // Package up the data so we can signal it over to the right thread
-    QByteArray byteArray(bytes, cBytes);
-
-    emit _incomingBytes(byteArray);
-}
-
-/// @brief Handles bytes from QGC on the thread
-void MockLink::_handleIncomingBytes(const QByteArray bytes)
+void MockLink::_writeBytes(const QByteArray bytes)
 {
     if (_inNSH) {
         _handleIncomingNSHBytes(bytes.constData(), bytes.count());

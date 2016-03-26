@@ -151,16 +151,24 @@ public slots:
      *
      * If the underlying communication is packet oriented,
      * one write command equals a datagram. In case of serial
-     * communication arbitrary byte lengths can be written
+     * communication arbitrary byte lengths can be written. The method ensures
+     * thread safety regardless of the underlying LinkInterface implementation.
      *
      * @param bytes The pointer to the byte array containing the data
      * @param length The length of the data array
      **/
-    virtual void writeBytes(const char *bytes, qint64 length) = 0;
+    void writeBytesSafe(const char *bytes, int length)
+    {
+        emit _invokeWriteBytes(QByteArray(bytes, length));
+    }
+
+private slots:
+    virtual void _writeBytes(const QByteArray) = 0;
     
 signals:
     void autoconnectChanged(bool autoconnect);
     void activeChanged(bool active);
+    void _invokeWriteBytes(QByteArray);
 
     /**
      * @brief New data arrived
@@ -212,6 +220,7 @@ protected:
         memset(_outDataWriteAmounts,0, sizeof(_outDataWriteAmounts));
         memset(_outDataWriteTimes,  0, sizeof(_outDataWriteTimes));
         
+        QObject::connect(this, &LinkInterface::_invokeWriteBytes, this, &LinkInterface::_writeBytes);
         qRegisterMetaType<LinkInterface*>("LinkInterface*");
     }
 

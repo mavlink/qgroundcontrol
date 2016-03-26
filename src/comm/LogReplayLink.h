@@ -98,8 +98,8 @@ public:
     bool connect(void);
     bool disconnect(void);
 
-public slots:
-    virtual void writeBytes(const char *bytes, qint64 cBytes);
+private slots:
+    virtual void _writeBytes(const QByteArray bytes);
 
 signals:
     void logFileStats(bool logTimestamped, int logDurationSecs, int binaryBaudRate);

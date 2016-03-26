@@ -82,11 +82,11 @@ bool SerialLink::_isBootloader()
     return false;
 }
 
-void SerialLink::writeBytes(const char* data, qint64 size)
+void SerialLink::_writeBytes(const QByteArray data)
 {
     if(_port && _port->isOpen()) {
-        _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
-        _port->write(data, size);
+        _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
+        _port->write(data);
     } else {
         // Error occured
         _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(getName()));

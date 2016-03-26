@@ -151,10 +151,9 @@ void LogReplayLink::_replayError(const QString& errorMsg)
 }
 
 /// Since this is log replay, we just drops writes on the floor
-void LogReplayLink::writeBytes(const char* bytes, qint64 cBytes)
+void LogReplayLink::_writeBytes(const QByteArray bytes)
 {
     Q_UNUSED(bytes);
-    Q_UNUSED(cBytes);
 }
 
 /// Parses a BigEndian quint64 timestamp

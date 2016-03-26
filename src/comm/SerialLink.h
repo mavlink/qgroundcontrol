@@ -157,15 +157,16 @@ public:
     bool    connect(void);
     bool    disconnect(void);
 
-public slots:
+private slots:
     /**
      * @brief Write a number of bytes to the interface.
      *
      * @param data Pointer to the data byte array
      * @param size The size of the bytes array
      **/
-    void writeBytes(const char* data, qint64 length);
+    void _writeBytes(const QByteArray data);
 
+public slots:
     void linkError(QSerialPort::SerialPortError error);
 
 protected:
