@@ -28,6 +28,7 @@
 #include <QThread>
 #include <QGeoPositionInfo>
 #include <QGeoPositionInfoSource>
+#include <QElapsedTimer>
 
 #include "QGCLoggingCategory.h"
 #include "QGCToolbox.h"
@@ -52,6 +53,7 @@ private slots:
 
 private:
     QGeoPositionInfoSource * _locationInfo;
+    QElapsedTimer runTime;
 
     struct motionReport_s {
         uint32_t timestamp;     // time since boot

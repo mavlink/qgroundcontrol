@@ -21,13 +21,13 @@
  
  ======================================================================*/
 
+#include <QElapsedTimer>
 #include <cmath>
 
 #include "MultiVehicleManager.h"
 #include "PX4FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
 #include "FollowMe.h"
-#include <sys/time.h>
 #include "Vehicle.h"
 
 #ifdef QT_QML_DEBUG
@@ -59,11 +59,13 @@ FollowMe::FollowMe(QGCApplication* app)
     _gcsMotionReportTimer.setInterval(_locationInfo->minimumUpdateInterval());
     _gcsMotionReportTimer.setSingleShot(false);
     connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
+
+    runTime.start();
 }
 
 FollowMe::~FollowMe()
 {
-    disable();
+   // disable();
 }
 
 void FollowMe::followMeHandleManager(const QString&)
@@ -144,16 +146,13 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
 
 void FollowMe::_sendGCSMotionReport(void)
 {
-    struct timeval te;
     QmlObjectListModel & vehicles = *_toolbox->multiVehicleManager()->vehicles();
     MAVLinkProtocol* mavlinkProtocol = _toolbox->mavlinkProtocol();
     mavlink_follow_target_t follow_target;
 
     memset(&follow_target, 0, sizeof(mavlink_follow_target_t));
 
-    gettimeofday(&te, NULL);
-
-    follow_target.timestamp = te.tv_sec*1000LL + te.tv_usec/1000;
+    follow_target.timestamp = runTime.nsecsElapsed()*1e-6;
     follow_target.est_capabilities = (1 << POS);
     follow_target.position_cov[0] = _motionReport.pos_std_dev[0];
     follow_target.position_cov[2] = _motionReport.pos_std_dev[2];
