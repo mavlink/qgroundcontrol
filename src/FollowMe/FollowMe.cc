@@ -50,22 +50,26 @@ FollowMe::FollowMe(QGCApplication* app)
     // set up the QT position connection slot
 
     _locationInfo = QGeoPositionInfoSource::createDefaultSource(this);
-    _locationInfo->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
-    _locationInfo->setUpdateInterval(_locationInfo->minimumUpdateInterval());
-    connect(_locationInfo, SIGNAL(positionUpdated(QGeoPositionInfo)), this, SLOT(_setGPSLocation(QGeoPositionInfo)));
 
-    // set up the mavlink motion report timer`
+    if(_locationInfo != 0) {
 
-    _gcsMotionReportTimer.setInterval(_locationInfo->minimumUpdateInterval());
-    _gcsMotionReportTimer.setSingleShot(false);
-    connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
+        _locationInfo->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
+        _locationInfo->setUpdateInterval(_locationInfo->minimumUpdateInterval());
+        connect(_locationInfo, SIGNAL(positionUpdated(QGeoPositionInfo)), this, SLOT(_setGPSLocation(QGeoPositionInfo)));
 
-    runTime.start();
+        // set up the mavlink motion report timer`
+
+        _gcsMotionReportTimer.setInterval(_locationInfo->minimumUpdateInterval());
+        _gcsMotionReportTimer.setSingleShot(false);
+        connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
+
+        runTime.start();
+    }
 }
 
 FollowMe::~FollowMe()
 {
-   // disable();
+    disable();
 }
 
 void FollowMe::followMeHandleManager(const QString&)
@@ -85,14 +89,18 @@ void FollowMe::followMeHandleManager(const QString&)
 
 void FollowMe::enable()
 {
-    _locationInfo->startUpdates();
-    _gcsMotionReportTimer.start();
+    if(_locationInfo != 0) {
+        _locationInfo->startUpdates();
+        _gcsMotionReportTimer.start();
+    }
 }
 
 void FollowMe::disable()
 {
-    _locationInfo->stopUpdates();
-    _gcsMotionReportTimer.stop();
+    if(_locationInfo != 0) {
+        _locationInfo->stopUpdates();
+        _gcsMotionReportTimer.stop();
+    }
 }
 
 void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
