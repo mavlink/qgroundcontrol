@@ -201,13 +201,14 @@ public slots:
 
     void readBytes();
 
+private slots:
     /*!
      * @brief Write a number of bytes to the interface.
      *
      * @param data Pointer to the data byte array
      * @param size The size of the bytes array
      **/
-    void writeBytes(const char* data, qint64 length);
+    void _writeBytes(const QByteArray data);
 
 protected:
 
@@ -235,12 +236,6 @@ private:
 #endif
 
     bool                _running;
-    QMutex              _mutex;
-    QQueue<QByteArray*> _outQueue;
-
-    bool _dequeBytes    ();
-    void _sendBytes     (const char* data, qint64 size);
-
 };
 
 #endif // UDPLINK_H

@@ -64,12 +64,25 @@ public slots:
      * @param data Pointer to the data byte array
      * @param size The size of the bytes array
      **/
-    virtual void writeBytes(const char* data, qint64 length) = 0;
+    void writeBytesSafe(const char* data, int length)
+    {
+        emit _invokeWriteBytes(QByteArray(data, length));
+    }
+
     virtual bool connectSimulation() = 0;
     virtual bool disconnectSimulation() = 0;
 
+private slots:
+    virtual void _writeBytes(const QByteArray) = 0;
+
 protected:
     virtual void setName(QString name) = 0;
+
+    QGCHilLink() :
+        QThread()
+    {
+        connect(this, &QGCHilLink::_invokeWriteBytes, this, &QGCHilLink::_writeBytes);
+    }
 
 signals:
     /**
@@ -130,6 +143,9 @@ signals:
 
     /** @brief Sensor leve HIL state changed */
     void sensorHilChanged(bool enabled);
+
+    /** @brief Helper signal to force execution on the correct thread */
+    void _invokeWriteBytes(QByteArray);
 };
 
 #endif // QGCHILLINK_H
