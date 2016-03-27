@@ -286,6 +286,7 @@ public:
     Q_PROPERTY(bool                 fixedWing               READ fixedWing                              CONSTANT)
     Q_PROPERTY(bool                 multiRotor              READ multiRotor                             CONSTANT)
     Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                      NOTIFY autoDisconnectChanged)
+    Q_PROPERTY(QString              prearmError             READ prearmError        WRITE setPrearmError NOTIFY prearmErrorChanged)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying      READ flying     WRITE setFlying     NOTIFY flyingChanged)
@@ -443,6 +444,9 @@ public:
     void setFlying(bool flying);
     void setGuidedMode(bool guidedMode);
 
+    QString prearmError(void) const { return _prearmError; }
+    void setPrearmError(const QString& prearmError);
+
     QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
 
     int  flowImageIndex() { return _flowImageIndex; }
@@ -533,6 +537,7 @@ signals:
     void autoDisconnectChanged(bool autoDisconnectChanged);
     void flyingChanged(bool flying);
     void guidedModeChanged(bool guidedMode);
+    void prearmErrorChanged(const QString& prearmError);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -594,6 +599,7 @@ private slots:
     /** @brief A new camera image has arrived */
     void _imageReady                        (UASInterface* uas);
     void _connectionLostTimeout(void);
+    void _prearmErrorTimeout(void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -661,6 +667,10 @@ private:
     double          _rcRSSIstore;
     bool            _autoDisconnect;    ///< true: Automatically disconnect vehicle when last connection goes away or lost heartbeat
     bool            _flying;
+
+    QString             _prearmError;
+    QTimer              _prearmErrorTimer;
+    static const int    _prearmErrorTimeoutMSecs = 35 * 1000;   ///< Take away prearm error after 35 seconds
 
     // Lost connection handling
     bool                _connectionLost;
