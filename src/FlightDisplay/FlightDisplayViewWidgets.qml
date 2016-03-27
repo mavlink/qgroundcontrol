@@ -61,24 +61,28 @@ Item {
         id: _dropButtonsExclusiveGroup
     }
 
-    //-- Vehicle GPS lock display
+    //-- Map warnings
     Column {
-        id:     gpsLockColumn
-        y:      (parent.height - height) / 2
-        width:  parent.width
+        anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.verticalCenter:     parent.verticalCenter
+        spacing:                    ScreenTools.defaultFontPixelHeight
 
-        Repeater {
-            model: QGroundControl.multiVehicleManager.vehicles
+        QGCLabel {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            visible:                    _activeVehicle && !_activeVehicle.coordinateValid
+            z:                          QGroundControl.zOrderTopMost
+            color:                      mapPal.text
+            font.pixelSize:             ScreenTools.largeFontPixelSize
+            text:                       "No GPS Lock for Vehicle"
+        }
 
-            delegate:
-                QGCLabel {
-                width:                  gpsLockColumn.width
-                horizontalAlignment:    Text.AlignHCenter
-                visible:                !object.coordinateValid
-                text:                   "No GPS Lock for Vehicle #" + object.id
-                z:                      QGroundControl.zOrderMapItems - 2
-                color:                  mapPal.text
-            }
+        QGCLabel {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            visible:                    _activeVehicle && !_activeVehicle.coordinateValid
+            z:                          QGroundControl.zOrderTopMost
+            color:                      mapPal.text
+            font.pixelSize:             ScreenTools.largeFontPixelSize
+            text:                       _activeVehicle ? _activeVehicle.prearmError : ""
         }
     }
 
