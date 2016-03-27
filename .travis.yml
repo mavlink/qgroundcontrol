@@ -86,10 +86,13 @@ install:
       && sh -e /etc/init.d/xvfb start
       ;
     elif [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" != "ios" ]]; then
-         brew update;
-         brew update
-      && brew install qt5
-      && export PATH=/usr/local/opt/qt5/bin:$PATH
+         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang.tar.bz2
+      && mkdir -p ~/qt
+      && tar jxf Qt5.5.1-mac-clang.tar.bz2 -C ~/qt
+      && export QT_DIR=Qt5.5-mac-clang/5.5/clang_64
+      && export PATH=~/qt/$QT_DIR/bin:$PATH
+      && export QT_QPA_PLATFORM_PLUGIN_PATH=~/qt/$QT_DIR/plugins
+      && export QML2_IMPORT_PATH=~/qt/$QT_DIR/qml
       ;
     elif [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" = "ios" ]]; then
          wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios.tar.bz2
