@@ -168,6 +168,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     _refreshTimer->setInterval(UPDATE_TIMER);
     _refreshTimer->start(UPDATE_TIMER);
 
+    // PreArm Error self-destruct timer
+    connect(&_prearmErrorTimer, &QTimer::timeout, this, &Vehicle::_prearmErrorTimeout);
+    _prearmErrorTimer.setInterval(_prearmErrorTimeoutMSecs);
+    _prearmErrorTimer.setSingleShot(true);
+
     // Connection Lost time
     _connectionLostTimer.setInterval(Vehicle::_connectionLostTimeoutMSecs);
     _connectionLostTimer.setSingleShot(false);
@@ -1526,6 +1531,19 @@ void Vehicle::doCommandLong(int component, MAV_CMD command, float param1, float 
     sendMessage(msg);
 }
 
+void Vehicle::setPrearmError(const QString& prearmError)
+{
+    _prearmError = prearmError;
+    emit prearmErrorChanged(_prearmError);
+    if (!_prearmError.isEmpty()) {
+        _prearmErrorTimer.start();
+    }
+}
+
+void Vehicle::_prearmErrorTimeout(void)
+{
+    setPrearmError(QString());
+}
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
