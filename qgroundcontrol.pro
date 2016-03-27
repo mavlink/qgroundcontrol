@@ -187,6 +187,7 @@ INCLUDEPATH += \
     src/FlightMap/Widgets \
     src/input \
     src/Joystick \
+    src/FollowMe \
     src/lib/qmapcontrol \
     src/MissionEditor \
     src/MissionManager \
@@ -251,6 +252,7 @@ HEADERS += \
     src/HomePositionManager.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
+    src/FollowMe/FollowMe.h \
     src/JsonHelper.h \
     src/LogCompressor.h \
     src/MG.h \
@@ -393,6 +395,7 @@ SOURCES += \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
     src/JsonHelper.cc \
+    src/FollowMe/FollowMe.cc \
     src/LogCompressor.cc \
     src/main.cc \
     src/MissionManager/MissionCommandList.cc \

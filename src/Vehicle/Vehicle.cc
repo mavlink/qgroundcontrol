@@ -35,6 +35,7 @@
 #include "QGCApplication.h"
 #include "QGCImageProvider.h"
 #include "GAudioOutput.h"
+#include "FollowMe.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -143,7 +144,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(this, &Vehicle::_sendMessageOnLinkOnThread, this, &Vehicle::_sendMessageOnLink, Qt::QueuedConnection);
     connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_handleFlightModeChanged);
     connect(this, &Vehicle::armedChanged,               this, &Vehicle::_announceArmedChanged);
-
     _uas = new UAS(_mavlink, this, _firmwarePluginManager);
 
     setLatitude(_uas->getLatitude());
@@ -159,6 +159,9 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     connect(_autopilotPlugin, &AutoPilotPlugin::parametersReadyChanged,     this, &Vehicle::_parametersReady);
     connect(_autopilotPlugin, &AutoPilotPlugin::missingParametersChanged,   this, &Vehicle::missingParametersChanged);
+
+    // connect this vehicle to the follow me handle manager
+    connect(this, &Vehicle::flightModeChanged,qgcApp()->toolbox()->followMe(), &FollowMe::followMeHandleManager);
 
     // Refresh timer
     connect(_refreshTimer, &QTimer::timeout, this, &Vehicle::_checkUpdate);
