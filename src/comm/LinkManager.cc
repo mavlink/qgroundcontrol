@@ -69,7 +69,7 @@ LinkManager::LinkManager(QGCApplication* app)
     , _configUpdateSuspended(false)
     , _configurationsLoaded(false)
     , _connectionsSuspended(false)
-    , _mavlinkChannelsUsedBitMask(0)
+    , _mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
     , _mavlinkProtocol(NULL)
     , _autoconnectUDP(true)
     , _autoconnectPixhawk(true)
