@@ -74,6 +74,7 @@ public:
     static const char* rtlFlightMode;
     static const char* landingFlightMode;
     static const char* rtgsFlightMode;
+    static const char* followMeFlightMode;
 };
 
 #endif
