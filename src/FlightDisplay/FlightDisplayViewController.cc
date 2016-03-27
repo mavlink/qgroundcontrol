@@ -40,7 +40,7 @@ FlightDisplayViewController::FlightDisplayViewController(QObject *parent)
      * This is the receiving end of an UDP RTP stream. The sender can be setup with this command:
      *
      * gst-launch-1.0 uvch264src initial-bitrate=1000000 average-bitrate=1000000 iframe-period=1000 name=src auto-start=true src.vidsrc ! \
-     * video/x-h264,width=1280,height=720,framerate=24/1 ! h264parse ! rtph264pay ! udpsink host=192.168.1.9 port=5000
+     * video/x-h264,width=1280,height=720,framerate=24/1 ! h264parse ! rtph264pay ! udpsink host=192.168.1.9 port=5600
      *
      * Where the main parameters are:
      *
@@ -63,7 +63,7 @@ FlightDisplayViewController::FlightDisplayViewController(QObject *parent)
      */
     _videoSurface = new VideoSurface;
     _videoReceiver = new VideoReceiver(this);
-    _videoReceiver->setUri(QLatin1Literal("udp://0.0.0.0:5000"));
+    _videoReceiver->setUri(QLatin1Literal("udp://0.0.0.0:5600"));   // Port 5600=Solo UDP port, if you change you will break Solo video support
 #if defined(QGC_GST_STREAMING)
     _videoReceiver->setVideoSink(_videoSurface->videoSink());
     connect(&_frameTimer, &QTimer::timeout, this, &FlightDisplayViewController::_updateTimer);
