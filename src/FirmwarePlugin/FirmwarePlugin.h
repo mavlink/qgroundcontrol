@@ -56,6 +56,9 @@ public:
         GuidedModeCapability =              1 << 3, ///< Vehicle Support guided mode commands
     } FirmwareCapabilities;
     
+    /// Called when Vehicle is first created to send any necessary mavlink messages to the firmware.
+    virtual void initializeVehicle(Vehicle* vehicle);
+
     /// @return true: Firmware supports all specified capabilites
     virtual bool isCapable(FirmwareCapabilities capabilities);
 
@@ -129,9 +132,6 @@ public:
     ///     @param vehicle Vehicle message came from
     ///     @param message[in,out] Mavlink message to adjust if needed.
     virtual void adjustOutgoingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
-
-    /// Called when Vehicle is first created to send any necessary mavlink messages to the firmware.
-    virtual void initializeVehicle(Vehicle* vehicle);
 
     /// Determines how to handle the first item of the mission item list. Internally to QGC the first item
     /// is always the home position.
