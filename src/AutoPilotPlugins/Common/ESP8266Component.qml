@@ -42,7 +42,7 @@ QGCView {
 
     property int                _firstColumn:   ScreenTools.defaultFontPixelWidth * 20
     property int                _secondColumn:  ScreenTools.defaultFontPixelWidth * 12
-    readonly property string    dialogTitle:    "controller WiFi Bridge"
+    readonly property string    dialogTitle:    qsTr("controller WiFi Bridge")
     property int                stStatus:       XMLHttpRequest.UNSENT
     property int                stErrorCount:   0
     property bool               stEnabled:      false
@@ -75,7 +75,7 @@ QGCView {
             if (stStatus === XMLHttpRequest.DONE) {
                 var objectArray = JSON.parse(req.responseText);
                 if (objectArray.errors !== undefined) {
-                    console.log("Error fetching WiFi Bridge Status: " + objectArray.errors[0].message)
+                    console.log(qsTr("Error fetching WiFi Bridge Status: %1").arg(objectArray.errors[0].message))
                     stErrorCount = stErrorCount + 1
                     if(stErrorCount < 2 && stEnabled)
                         timer.start()
@@ -129,7 +129,7 @@ QGCView {
                 spacing:        ScreenTools.defaultFontPixelHeight * 0.5
 
                 QGCLabel {
-                    text: "WiFi Bridge Settings"
+                    text: qsTr("WiFi Bridge Settings")
                     font.weight: Font.DemiBold
                 }
 
@@ -152,7 +152,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:           "WiFi Channel"
+                                    text:           qsTr("WiFi Channel")
                                     width:          _firstColumn
                                     anchors.baseline: channelField.baseline
                                 }
@@ -169,7 +169,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:           "WiFi SSID"
+                                    text:           qsTr("WiFi SSID")
                                     width:          _firstColumn
                                     anchors.baseline: ssidField.baseline
                                     }
@@ -186,7 +186,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:           "WiFi Password"
+                                    text:           qsTr("WiFi Password")
                                     width:          _firstColumn
                                     anchors.baseline: passwordField.baseline
                                     }
@@ -203,7 +203,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:           "UART Baud Rate"
+                                    text:           qsTr("UART Baud Rate")
                                     width:          _firstColumn
                                     anchors.baseline:   baudField.baseline
                                 }
@@ -220,7 +220,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:           "QGC UDP Port"
+                                    text:           qsTr("QGC UDP Port")
                                     width:          _firstColumn
                                     anchors.baseline: qgcportField.baseline
                                 }
@@ -248,13 +248,13 @@ QGCView {
                             spacing:            ScreenTools.defaultFontPixelHeight / 2
                             visible:            false
                             QGCLabel {
-                                text:           "Bridge/Vehicle Link"
+                                text:           qsTr("Bridge/Vehicle Link")
                                 font.weight:    Font.DemiBold
                             }
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:       "Messages Received"
+                                    text:       qsTr("Messages Received")
                                     width:      _firstColumn
                                 }
                                 QGCLabel {
@@ -264,7 +264,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:       "Messages Lost"
+                                    text:       qsTr("Messages Lost")
                                     width:      _firstColumn
                                 }
                                 QGCLabel {
@@ -274,7 +274,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:       "Messages Sent"
+                                    text:       qsTr("Messages Sent")
                                     width:      _firstColumn
                                 }
                                 QGCLabel {
@@ -287,13 +287,13 @@ QGCView {
                                 color:          palette.text
                             }
                             QGCLabel {
-                                text:           "Bridge/QGC Link"
+                                text:           qsTr("Bridge/QGC Link")
                                 font.weight:    Font.DemiBold
                             }
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:       "Messages Received"
+                                    text:       qsTr("Messages Received")
                                     width:      _firstColumn
                                 }
                                 QGCLabel {
@@ -303,7 +303,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:       "Messages Lost"
+                                    text:       qsTr("Messages Lost")
                                     width:      _firstColumn
                                 }
                                 QGCLabel {
@@ -313,7 +313,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:       "Messages Sent"
+                                    text:       qsTr("Messages Sent")
                                     width:      _firstColumn
                                 }
                                 QGCLabel {
@@ -326,13 +326,13 @@ QGCView {
                                 color:          palette.text
                             }
                             QGCLabel {
-                                text:           "QGC/Bridge Link"
+                                text:           qsTr("QGC/Bridge Link")
                                 font.weight:    Font.DemiBold
                             }
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:       "Messages Received"
+                                    text:       qsTr("Messages Received")
                                     width:      _firstColumn
                                 }
                                 QGCLabel {
@@ -342,7 +342,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:       "Messages Lost"
+                                    text:       qsTr("Messages Lost")
                                     width:      _firstColumn
                                 }
                                 QGCLabel {
@@ -352,7 +352,7 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
-                                    text:       "Messages Sent"
+                                    text:       qsTr("Messages Sent")
                                     width:      _firstColumn
                                 }
                                 QGCLabel {
@@ -365,14 +365,14 @@ QGCView {
                 Row {
                     spacing: ScreenTools.defaultFontPixelWidth * 1.5
                     QGCButton {
-                        text:   "Restore Defaults"
+                        text:   qsTr("Restore Defaults")
                         width:  ScreenTools.defaultFontPixelWidth * 16
                         onClicked: {
                             controller.restoreDefaults()
                         }
                     }
                     QGCButton {
-                        text:           "Restart WiFi Bridge"
+                        text:           qsTr("Restart WiFi Bridge")
                         enabled:        !controller.busy
                         width:          ScreenTools.defaultFontPixelWidth * 16
                         onClicked: {
@@ -383,8 +383,8 @@ QGCView {
                             visible:    false
                             icon:       StandardIcon.Warning
                             standardButtons: StandardButton.Yes | StandardButton.No
-                            title:      "Reboot WiFi Bridge"
-                            text:       "This will restart the WiFi Bridge so the settings you've changed can take effect. Note that you may have to change your computer WiFi settings and QGroundControl link settings to match these changes. Are you sure you want to restart it?"
+                            title:      qsTr("Reboot WiFi Bridge")
+                            text:       qsTr("This will restart the WiFi Bridge so the settings you've changed can take effect. Note that you may have to change your computer WiFi settings and QGroundControl link settings to match these changes. Are you sure you want to restart it?")
                             onYes: {
                                 controller.reboot()
                                 rebootDialog.visible = false
@@ -395,7 +395,7 @@ QGCView {
                         }
                     }
                     QGCButton {
-                        text:   stEnabled ? "Hide Status" : "Show Status"
+                        text:   stEnabled ? qsTr("Hide Status") : qsTr("Show Status")
                         width:  ScreenTools.defaultFontPixelWidth * 16
                         onClicked: {
                             stEnabled = !stEnabled
@@ -408,7 +408,7 @@ QGCView {
                         }
                     }
                     QGCButton {
-                        text:       "Reset Counters"
+                        text:       qsTr("Reset Counters")
                         visible:    stEnabled
                         enabled:    stEnabled
                         width:      ScreenTools.defaultFontPixelWidth * 16

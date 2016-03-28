@@ -115,9 +115,9 @@ QGCView {
 
     MessageDialog {
         id:     px4JoystickSupport
-        text:   "Joystick support requires MAVLink MANUAL_CONTROL support. " +
-                "The firmware you are running does not normally support this. " +
-                "It will only work if you have modified the firmware to add MANUAL_CONTROL support."
+        text:   qsTr("Joystick support requires MAVLink MANUAL_CONTROL support. ") +
+                qsTr("The firmware you are running does not normally support this. ") +
+                qsTr("It will only work if you have modified the firmware to add MANUAL_CONTROL support.")
     }
 
     Connections {

@@ -74,7 +74,7 @@ QGCViewDialog {
             property alias replaceMessageShown: replaceMessage.visible
 
             QGCLabel {
-                text: "File name:"
+                text: qsTr("File name:")
             }
 
             QGCTextField {
@@ -86,7 +86,7 @@ QGCViewDialog {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 wrapMode:       Text.WordWrap
-                text:           "File names must end with ." + fileExtension + " file extension. If missing it will be added."
+                text:           qsTr("File names must end with .%1 file extension. If missing it will be added.").arg(fileExtension)
             }
 
             QGCLabel {
@@ -94,7 +94,7 @@ QGCViewDialog {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 wrapMode:       Text.WordWrap
-                text:           "The file " + filename + " exists. Click Save again to replace it."
+                text:           qsTr("The file %1 exists. Click Save again to replace it.").arg(filename)
                 visible:        false
                 color:          qgcPal.warningText
             }
@@ -125,7 +125,7 @@ QGCViewDialog {
             }
 
             QGCLabel {
-                text:       "No files"
+                text:       qsTr("No files")
                 visible:    controller.getFiles(fileExtension).length == 0
             }
         }

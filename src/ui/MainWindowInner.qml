@@ -125,8 +125,8 @@ Item {
 
     MessageDialog {
         id:                 unsavedMissionCloseDialog
-        title:              "QGroundControl close"
-        text:               "You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?"
+        title:              qsTr("QGroundControl close")
+        text:               qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?")
         standardButtons:    StandardButton.Yes | StandardButton.No
         modality:           Qt.ApplicationModal
         visible:            false
@@ -144,8 +144,8 @@ Item {
 
     MessageDialog {
         id:                 activeConnectionsCloseDialog
-        title:              "QGroundControl close"
-        text:               "There are still active connections to vehicles. Do you want to disconnect these before closing?"
+        title:              qsTr("QGroundControl close")
+        text:               qsTr("There are still active connections to vehicles. Do you want to disconnect these before closing?")
         standardButtons:    StandardButton.Yes | StandardButton.Cancel
         modality:           Qt.ApplicationModal
         visible:            false
@@ -239,7 +239,7 @@ Item {
                 messageFlick.flick(0,-5000)
             activeVehicle.resetMessages()
         } else {
-            messageText.text = "No Messages"
+            messageText.text = qsTr("No Messages")
         }
         currentPopUp = messageArea
         messageArea.visible = true

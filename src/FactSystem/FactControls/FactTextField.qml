@@ -29,7 +29,7 @@ QGCTextField {
                 fact.value = text
             } else {
                 _validateString = text
-                qgcView.showDialog(editorDialogComponent, "Invalid Parameter Value", qgcView.showDialogDefaultWidth, StandardButton.Save)
+                qgcView.showDialog(editorDialogComponent, qsTr("Invalid Parameter Value"), qgcView.showDialogDefaultWidth, StandardButton.Save)
             }
         } else {
             fact.value = text

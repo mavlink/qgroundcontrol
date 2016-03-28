@@ -43,7 +43,7 @@ Rectangle {
         }
 
         QGCLabel {
-            text:       "Fly a grid pattern over a defined area."
+            text:       qsTr("Fly a grid pattern over a defined area.")
             wrapMode:   Text.WordWrap
         }
 

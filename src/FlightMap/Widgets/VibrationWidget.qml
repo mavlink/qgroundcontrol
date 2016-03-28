@@ -60,7 +60,7 @@ QGCFlickable {
         QGCLabel {
             id:     title
             color:  textColor
-            text:   "Vibe"
+            text:   qsTr("Vibe")
             anchors.horizontalCenter: barRow.horizontalCenter
         }
 
@@ -84,7 +84,7 @@ QGCFlickable {
                 QGCLabel {
                     id:     xBarLabel
                     color:  textColor
-                    text:   "X"
+                    text:   qsTr("X")
                     anchors.horizontalCenter: xBar.horizontalCenter
                 }
             }
@@ -102,7 +102,7 @@ QGCFlickable {
                 QGCLabel {
                     anchors.horizontalCenter: yBar.horizontalCenter
                     color:  textColor
-                    text:   "Y"
+                    text:   qsTr("Y")
                 }
             }
 
@@ -119,7 +119,7 @@ QGCFlickable {
                 QGCLabel {
                     anchors.horizontalCenter: zBar.horizontalCenter
                     color:  textColor
-                    text:   "Z"
+                    text:   qsTr("Z")
                 }
             }
         } // Row
@@ -141,7 +141,7 @@ QGCFlickable {
             anchors.left:       barRow.right
             anchors.right:      parent.right
             color:              textColor
-            text:               "Clip count"
+            text:               qsTr("Clip count")
             horizontalAlignment: Text.AlignHCenter
         }
 
@@ -151,17 +151,17 @@ QGCFlickable {
             anchors.horizontalCenter: clipLabel.horizontalCenter
 
             QGCLabel {
-                text: "Accel 1: " + (_activeVehicle ? _activeVehicle.vibration.clipCount1.valueString : "")
+                text: qsTr("Accel 1: ") + (_activeVehicle ? _activeVehicle.vibration.clipCount1.valueString : "")
                 color: textColor
             }
 
             QGCLabel {
-                text: "Accel 2: " + (_activeVehicle ? _activeVehicle.vibration.clipCount2.valueString : "")
+                text: qsTr("Accel 2: ") + (_activeVehicle ? _activeVehicle.vibration.clipCount2.valueString : "")
                 color: textColor
             }
 
             QGCLabel {
-                text: "Accel 2: " + (_activeVehicle ? _activeVehicle.vibration.clipCount3.valueString : "")
+                text: qsTr("Accel 2: ") + (_activeVehicle ? _activeVehicle.vibration.clipCount3.valueString : "")
                 color: textColor
             }
         }
@@ -175,7 +175,7 @@ QGCFlickable {
 
             QGCLabel {
                 anchors.fill:   parent
-                text:           "Not Available"
+                text:           qsTr("Not Available")
                 color:          textColor
                 horizontalAlignment:    Text.AlignHCenter
                 verticalAlignment:      Text.AlignVCenter

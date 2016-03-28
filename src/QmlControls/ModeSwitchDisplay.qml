@@ -104,7 +104,7 @@ Rectangle {
                     width:              ScreenTools.defaultFontPixelWidth * monitorThresholdCharWidth
                     height:             ScreenTools.defaultFontPixelHeight
                     verticalAlignment:  Text.AlignVCenter
-                    text:               "Monitor:"
+                    text:               qsTr("Monitor:")
                 }
 
                 Item {
@@ -144,7 +144,7 @@ Rectangle {
                     width:              ScreenTools.defaultFontPixelWidth * monitorThresholdCharWidth
                     height:             ScreenTools.defaultFontPixelHeight
                     verticalAlignment:  Text.AlignVCenter
-                    text:               "Threshold:"
+                    text:               qsTr("Threshold:")
                 }
 
 

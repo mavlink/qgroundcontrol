@@ -39,7 +39,7 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
-    readonly property string    dialogTitle:            "Radio"
+    readonly property string    dialogTitle:            qsTr("Radio")
     readonly property real      labelToMonitorMargin:   defaultTextWidth * 3
 
     property bool controllerCompleted:      false
@@ -76,7 +76,7 @@ QGCView {
         }
 
         onChannelCountChanged:              updateChannelCount()
-        onFunctionMappingChangedAPMReboot:    showMessage("Reboot required", "Your stick mappings have changed, you must reboot the vehicle for correct operation.", StandardButton.Ok)
+        onFunctionMappingChangedAPMReboot:    showMessage(qsTr("Reboot required"), qsTr("Your stick mappings have changed, you must reboot the vehicle for correct operation."), StandardButton.Ok)
     }
 
     onCompleted: {
@@ -95,7 +95,7 @@ QGCView {
             id: copyTrimsDialogComponent
 
             QGCViewMessage {
-                message: "Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."
+                message: qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero.")
 
                 function accept() {
                     hideDialog()
@@ -108,8 +108,8 @@ QGCView {
             id: zeroTrimsDialogComponent
 
             QGCViewMessage {
-                message: "Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n" +
-                         (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : "Please ensure all motor power is disconnected AND all props are removed from the vehicle.")
+                message: qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
+                         (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle.")))
 
                 function accept() {
                     hideDialog()
@@ -122,7 +122,7 @@ QGCView {
             id: channelCountDialogComponent
 
             QGCViewMessage {
-                message: controller.channelCount == 0 ? "Please turn on transmitter." : controller.minChannelCount + " channels or more are needed to fly."
+                message: controller.channelCount == 0 ? qsTr("Please turn on transmitter.") : qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount)
             }
         }
 
@@ -147,21 +147,21 @@ QGCView {
                     QGCLabel {
                         width:      parent.width
                         wrapMode:   Text.WordWrap
-                        text:       "Click Ok to place your Spektrum receiver in the bind mode. Select the specific receiver type below:"
+                        text:       qsTr("Click Ok to place your Spektrum receiver in the bind mode. Select the specific receiver type below:")
                     }
 
                     ExclusiveGroup { id: radioGroup }
 
                     QGCRadioButton {
                         exclusiveGroup: radioGroup
-                        text:           "DSM2 Mode"
+                        text:           qsTr("DSM2 Mode")
 
                         property int bindMode: RadioComponentController.DSM2
                     }
 
                     QGCRadioButton {
                         exclusiveGroup: radioGroup
-                        text:           "DSMX (7 channels or less)"
+                        text:           qsTr("DSMX (7 channels or less)")
 
                         property int bindMode: RadioComponentController.DSMX7
                     }
@@ -169,7 +169,7 @@ QGCView {
                     QGCRadioButton {
                         exclusiveGroup: radioGroup
                         checked:        true
-                        text:           "DSMX (8 channels or more)"
+                        text:           qsTr("DSMX (8 channels or more)")
 
                         property int bindMode: RadioComponentController.DSMX8
                     }
@@ -221,7 +221,7 @@ QGCView {
                     anchors.fill:           parent
                     horizontalAlignment:    Text.AlignHCenter
                     verticalAlignment:      Text.AlignVCenter
-                    text:                   "Not Mapped"
+                    text:                   qsTr("Not Mapped")
                     visible:                !mapped
                 }
 
@@ -267,7 +267,7 @@ QGCView {
                 width:      parent.width
                 spacing:    5
 
-                QGCLabel { text: "Attitude Controls" }
+                QGCLabel { text: qsTr("Attitude Controls") }
 
                 Item {
                     width:  parent.width
@@ -276,7 +276,7 @@ QGCView {
                     QGCLabel {
                         id:     rollLabel
                         width:  defaultTextWidth * 10
-                        text:   "Roll"
+                        text:   qsTr("Roll")
                     }
 
                     Loader {
@@ -366,7 +366,7 @@ QGCView {
                     QGCLabel {
                         id:     throttleLabel
                         width:  defaultTextWidth * 10
-                        text:   "Throttle"
+                        text:   qsTr("Throttle")
                     }
 
                     Loader {
@@ -397,7 +397,7 @@ QGCView {
                 QGCButton {
                     id:         skipButton
                     showBorder: true
-                    text:       "Skip"
+                    text:       qsTr("Skip")
 
                     onClicked: controller.skipButtonClicked()
                 }
@@ -405,7 +405,7 @@ QGCView {
                 QGCButton {
                     id:         cancelButton
                     showBorder: true
-                    text:       "Cancel"
+                    text:       qsTr("Cancel")
 
                     onClicked: controller.cancelButtonClicked()
                 }
@@ -414,10 +414,10 @@ QGCView {
                     id:         nextButton
                     primary:    true
                     showBorder: true
-                    text:       "Calibrate"
+                    text:       qsTr("Calibrate")
 
                     onClicked: {
-                        if (text == "Calibrate") {
+                        if (text == qsTr("Calibrate")) {
                             showDialog(zeroTrimsDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                         } else {
                             controller.nextButtonClicked()
@@ -445,20 +445,20 @@ QGCView {
                 border.width:   1
             }
 
-            QGCLabel { text: "Additional Radio setup:" }
+            QGCLabel { text: qsTr("Additional Radio setup:") }
 
             Row {
                 spacing: 10
 
                 QGCLabel {
                     anchors.baseline:   bindButton.baseline
-                    text:               "Place Spektrum satellite receiver in bind mode:"
+                    text:               qsTr("Place Spektrum satellite receiver in bind mode:")
                 }
 
                 QGCButton {
                     id:         bindButton
                     showBorder: true
-                    text:       "Spektrum Bind"
+                    text:       qsTr("Spektrum Bind")
 
                     onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
@@ -466,7 +466,7 @@ QGCView {
 
             QGCButton {
                 showBorder: true
-                text:       "Copy Trims"
+                text:       qsTr("Copy Trims")
                 visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
                 onClicked:  showDialog(copyTrimsDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
             }
@@ -514,7 +514,7 @@ QGCView {
 
                 QGCRadioButton {
                     exclusiveGroup: modeGroup
-                    text:           "Mode 1"
+                    text:           qsTr("Mode 1")
                     checked:        controller.transmitterMode == 1
 
                     onClicked: controller.transmitterMode = 1
@@ -522,7 +522,7 @@ QGCView {
 
                 QGCRadioButton {
                     exclusiveGroup: modeGroup
-                    text:           "Mode 2"
+                    text:           qsTr("Mode 2")
                     checked:        controller.transmitterMode == 2
 
                     onClicked: controller.transmitterMode = 2
@@ -542,7 +542,7 @@ QGCView {
                 width:      parent.width
                 spacing:    5
 
-                QGCLabel { text: "Channel Monitor" }
+                QGCLabel { text: qsTr("Channel Monitor") }
 
                 Connections {
                     target: controller
