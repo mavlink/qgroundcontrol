@@ -21,18 +21,21 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-import QtQuick 2.5
-import QtQuick.Controls 1.2
-import QtGraphicalEffects 1.0
-import QtQuick.Controls.Styles 1.2
-import QtQuick.Dialogs 1.1
+import QtQuick                  2.5
+import QtQuick.Controls         1.2
+import QtGraphicalEffects       1.0
+import QtQuick.Controls.Styles  1.2
+import QtQuick.Dialogs          1.1
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette       1.0
 
 Row {
     spacing:  tbSpacing * 2
+
+    QGCPalette { id: qgcPal }
 
     function getSatStrength(hdop) {
         if (hdop <= 1.0)
@@ -99,23 +102,24 @@ Row {
             id:                 criticalMessage
             anchors.fill:       parent
             visible:            activeVehicle ? (activeVehicle.messageCount > 0 && isMessageImportant) : false
+
             Image {
                 source:         "/qmlimages/Yield.svg"
                 height:         mainWindow.tbCellHeight * 0.75
                 fillMode:       Image.PreserveAspectFit
-                mipmap:         true
-                smooth:         true
                 cache:          false
                 visible:        isMessageImportant
                 anchors.verticalCenter:   parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
             }
+
             SequentialAnimation {
                 id:    loopAnimation
                 loops: Animation.Infinite
                 NumberAnimation { target: criticalMessage; property: "opacity"; duration: 1000; from: 0.25; to: 1 }
                 NumberAnimation { target: criticalMessage; property: "opacity"; duration: 1000; from: 1; to: 0.25 }
             }
+
             onVisibleChanged: {
                 if(messages.visible) {
                     loopAnimation.start()
@@ -128,21 +132,15 @@ Row {
         Item {
             anchors.fill:       parent
             visible:            !criticalMessage.visible
-            Image {
-                id:             messageIcon
-                source:         "/qmlimages/Megaphone.svg"
-                height:         mainWindow.tbCellHeight * 0.5
-                fillMode:       Image.PreserveAspectFit
-                mipmap:         true
-                smooth:         true
-                visible:        false
+
+            QGCColoredImage {
+                id:         messageIcon
+                source:     "/qmlimages/Megaphone.svg"
+                height:     mainWindow.tbCellHeight * 0.5
+                fillMode:   Image.PreserveAspectFit
+                color:      getMessageColor()
                 anchors.verticalCenter:   parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
-            }
-            ColorOverlay {
-                anchors.fill:   messageIcon
-                source:         messageIcon
-                color:          getMessageColor()
             }
         }
 
@@ -163,32 +161,35 @@ Row {
         Row {
             id:     gpsRow
             height: parent.height
-            Image {
+
+            QGCColoredImage {
                 id:             gpsIcon
                 source:         "/qmlimages/Gps.svg"
                 fillMode:       Image.PreserveAspectFit
-                mipmap:         true
-                smooth:         true
                 width:          mainWindow.tbCellHeight * 0.65
                 height:         mainWindow.tbCellHeight * 0.5
                 opacity:        (activeVehicle && activeVehicle.gps.count.value >= 0) ? 1 : 0.5
+                color:          qgcPal.buttonText
                 anchors.verticalCenter: parent.verticalCenter
             }
+
             SignalStrength {
                 size:           mainWindow.tbCellHeight * 0.5
                 percent:        activeVehicle ? getSatStrength(activeVehicle.gps.hdop.value) : ""
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
+
         QGCLabel {
-            text:           activeVehicle ? activeVehicle.gps.hdop.valueString : ""
-            visible:        activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
-            font.pixelSize: tbFontSmall
-            color:          colorWhite
-            anchors.top:    parent.top
+            anchors.top:        parent.top
             anchors.leftMargin: gpsIcon.width
-            anchors.left:   parent.left
+            anchors.left:       parent.left
+            visible:            activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
+            font.pixelSize:     tbFontSmall
+            color:              qgcPal.buttonText
+            text:               activeVehicle ? activeVehicle.gps.hdop.valueString : ""
         }
+
         MouseArea {
             anchors.fill:   parent
             onClicked: {
@@ -204,25 +205,28 @@ Row {
         id:     rcRssi
         width:  rssiRow.width * 1.1
         height: mainWindow.tbCellHeight
+
         Row {
             id:     rssiRow
             height: parent.height
-            Image {
-                source:         "/qmlimages/RC.svg"
-                fillMode:       Image.PreserveAspectFit
-                mipmap:         true
-                smooth:         true
+
+            QGCColoredImage {
                 width:          mainWindow.tbCellHeight * 0.65
                 height:         mainWindow.tbCellHeight * 0.5
+                source:         "/qmlimages/RC.svg"
+                fillMode:       Image.PreserveAspectFit
                 opacity:        activeVehicle ? (activeVehicle.rcRSSI < 1 ? 0.5 : 1) : 0.5
+                color:          qgcPal.buttonText
                 anchors.verticalCenter: parent.verticalCenter
             }
+
             SignalStrength {
-                size:           mainWindow.tbCellHeight * 0.5
-                percent:        activeVehicle ? activeVehicle.rcRSSI : 0
+                size:       mainWindow.tbCellHeight * 0.5
+                percent:    activeVehicle ? activeVehicle.rcRSSI : 0
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
+
         MouseArea {
             anchors.fill:   parent
             onClicked: {
@@ -239,23 +243,17 @@ Row {
         width:      telemIcon.width
         height:     mainWindow.tbCellHeight
         visible:    _controller.telemetryLRSSI < 0
-        Image {
-            id:             telemIcon
-            source:         "/qmlimages/TelemRSSI.svg"
-            fillMode:       Image.PreserveAspectFit
-            mipmap:         true
-            smooth:         true
-            height:         parent.height * 0.5
-            width:          height * 1.5
-            visible:        false
+
+        QGCColoredImage {
+            id:         telemIcon
+            height:     parent.height * 0.5
+            width:      height * 1.5
+            source:     "/qmlimages/TelemRSSI.svg"
+            fillMode:   Image.PreserveAspectFit
+            color:      qgcPal.buttonText
             anchors.verticalCenter: parent.verticalCenter
         }
-        ColorOverlay {
-            id:             telemOverlay
-            anchors.fill:   telemIcon
-            source:         telemIcon
-            color:          getRSSIColor(_controller.telemetryLRSSI)
-        }
+
         MouseArea {
             anchors.fill:   parent
             onClicked: {
@@ -268,22 +266,24 @@ Row {
     //-------------------------------------------------------------------------
     //-- Battery Indicator
     Item {
-        id: batteryStatus
-        width:  battRow.width * 1.1
-        height: mainWindow.tbCellHeight
-        opacity: (activeVehicle && activeVehicle.battery.voltage.value >= 0) ? 1 : 0.5
+        id:         batteryStatus
+        width:      battRow.width * 1.1
+        height:     mainWindow.tbCellHeight
+        opacity:    (activeVehicle && activeVehicle.battery.voltage.value >= 0) ? 1 : 0.5
+
         Row {
-            id:         battRow
-            height:     mainWindow.tbCellHeight
+            id:     battRow
+            height: mainWindow.tbCellHeight
             anchors.horizontalCenter: parent.horizontalCenter
-            Image {
-                source:         "/qmlimages/Battery.svg"
-                fillMode:       Image.PreserveAspectFit
-                mipmap:         true
-                smooth:         true
-                height:         mainWindow.tbCellHeight * 0.65
+
+            QGCColoredImage {
+                height:     mainWindow.tbCellHeight * 0.65
+                source:     "/qmlimages/Battery.svg"
+                fillMode:   Image.PreserveAspectFit
+                color:      qgcPal.buttonText
                 anchors.verticalCenter: parent.verticalCenter
             }
+
             QGCLabel {
                 text:           getBatteryPercentageText()
                 font.pixelSize: tbFontLarge
@@ -291,6 +291,7 @@ Row {
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
+
         MouseArea {
             anchors.fill:   parent
             onClicked: {
@@ -363,24 +364,26 @@ Row {
         width:  selectorRow.width * 1.1
         height: mainWindow.tbCellHeight
         anchors.verticalCenter: parent.verticalCenter
+
         Row {
             id:                 selectorRow
             spacing:            tbSpacing
             anchors.verticalCenter:   parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
-            Image {
-                width:          mainWindow.tbCellHeight * 0.65
-                height:         mainWindow.tbCellHeight * 0.65
-                fillMode:       Image.PreserveAspectFit
-                mipmap:         true
-                smooth:         true
-                source:         "/qmlimages/Quad.svg"
+
+            QGCColoredImage {
+                width:      mainWindow.tbCellHeight * 0.65
+                height:     mainWindow.tbCellHeight * 0.65
+                fillMode:   Image.PreserveAspectFit
+                source:     "/qmlimages/Quad.svg"
+                color:      qgcPal.buttonText
                 anchors.verticalCenter: parent.verticalCenter
             }
+
             QGCLabel {
                 text:           activeVehicle ? activeVehicle.flightMode : "N/A"
                 font.pixelSize: tbFontLarge
-                color:          colorWhite
+                color:          qgcPal.buttonText
                 anchors.verticalCenter: parent.verticalCenter
             }
         }

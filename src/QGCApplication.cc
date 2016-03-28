@@ -656,13 +656,12 @@ void QGCApplication::_loadCurrentStyle(void)
     }
 
     if (success && !_styleIsDark) {
-        qDebug() << "LOADING LIGHT";
         // Load the slave light stylesheet.
         QFile styleSheet(_lightStyleFile);
         if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
             styles += styleSheet.readAll();
         } else {
-            qDebug() << "Unable to load slave light sheet:";
+            qWarning() << "Unable to load slave light sheet:";
             success = false;
         }
     }
