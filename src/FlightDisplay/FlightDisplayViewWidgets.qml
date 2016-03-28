@@ -40,12 +40,14 @@ Item {
 
     property alias guidedModeBar: _guidedModeBar
 
-    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _isSatellite:   _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+    property bool   _lightWidgetBorders:    _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight / 2
 
     QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
+    QGCPalette { id: qgcPal }
 
     function getGadgetWidth() {
         if(ScreenTools.isMobile) {
@@ -111,7 +113,7 @@ Item {
         pitchAngle:             _pitch
         groundSpeedFact:        _groundSpeedFact
         airSpeedFact:           _airSpeedFact
-        isSatellite:            _isSatellite
+        lightBorders:           _lightWidgetBorders
         z:                      QGroundControl.zOrderWidgets
         qgcView:                parent.parent.qgcView
         maxHeight:              parent.height - (anchors.margins * 2)
@@ -156,12 +158,13 @@ Item {
 
         //-- Map Center Control
         DropButton {
-            id:                     centerMapDropButton
-            dropDirection:          dropRight
-            buttonImage:            "/qmlimages/MapCenter.svg"
-            viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
-            exclusiveGroup:         _dropButtonsExclusiveGroup
-            z:                      QGroundControl.zOrderWidgets
+            id:                 centerMapDropButton
+            dropDirection:      dropRight
+            buttonImage:        "/qmlimages/MapCenter.svg"
+            viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+            exclusiveGroup:     _dropButtonsExclusiveGroup
+            z:                  QGroundControl.zOrderWidgets
+            lightBorders:       _lightWidgetBorders
 
             dropDownComponent: Component {
                 Row {
@@ -197,12 +200,13 @@ Item {
 
         //-- Map Type Control
         DropButton {
-            id:                     mapTypeButton
-            dropDirection:          dropRight
-            buttonImage:            "/qmlimages/MapType.svg"
-            viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
-            exclusiveGroup:         _dropButtonsExclusiveGroup
-            z:                      QGroundControl.zOrderWidgets
+            id:                 mapTypeButton
+            dropDirection:      dropRight
+            buttonImage:        "/qmlimages/MapType.svg"
+            viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+            exclusiveGroup:     _dropButtonsExclusiveGroup
+            z:                  QGroundControl.zOrderWidgets
+            lightBorders:       _lightWidgetBorders
 
             dropDownComponent: Component {
                 Column {
@@ -247,6 +251,8 @@ Item {
             buttonImage:        "/qmlimages/ZoomPlus.svg"
             exclusiveGroup:     _dropButtonsExclusiveGroup
             z:                  QGroundControl.zOrderWidgets
+            lightBorders:       _lightWidgetBorders
+
             onClicked: {
                 if(_flightMap)
                     _flightMap.zoomLevel += 0.5
@@ -261,6 +267,8 @@ Item {
             buttonImage:        "/qmlimages/ZoomMinus.svg"
             exclusiveGroup:     _dropButtonsExclusiveGroup
             z:                  QGroundControl.zOrderWidgets
+            lightBorders:       _lightWidgetBorders
+
             onClicked: {
                 if(_flightMap)
                     _flightMap.zoomLevel -= 0.5
@@ -278,7 +286,7 @@ Item {
         width:                      guidedModeColumn.width + (_margins * 2)
         height:                     guidedModeColumn.height + (_margins * 2)
         radius:                     _margins
-        color:                      qgcPal.window
+        color:                      _lightWidgetBorders ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
         visible:                    _activeVehicle
         opacity:                    0.9
         z:                          QGroundControl.zOrderWidgets

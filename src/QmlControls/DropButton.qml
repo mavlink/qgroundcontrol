@@ -15,6 +15,7 @@ Item {
     property int    dropDirection:      dropDown
     property alias  dropDownComponent:  dropDownLoader.sourceComponent
     property real   viewportMargins:    0
+    property alias  lightBorders:       roundButton.lightBorders
 
     width:  radius * 2
     height: radius * 2

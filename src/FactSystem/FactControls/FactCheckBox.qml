@@ -11,8 +11,6 @@ QGCCheckBox {
     property variant checkedValue: 1
     property variant uncheckedValue: 0
 
-    property var __qgcpal: QGCPalette { colorGroupEnabled: true }
-
     partiallyCheckedEnabled: fact.value != checkedValue && fact.value != uncheckedValue
     checkedState: fact.value == checkedValue ? Qt.Checked : (fact.value == uncheckedValue ? Qt.Unchecked : Qt.PartiallyChecked)
 
