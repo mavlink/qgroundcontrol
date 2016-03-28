@@ -36,16 +36,13 @@ import QGroundControl.Palette               1.0
 
 Rectangle {
     id:                 _generalRoot
-    color:              __qgcPal.window
+    color:              qgcPal.window
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
     property Fact _percentRemainingAnnounce: QGroundControl.multiVehicleManager.disconnectedVehicle.battery.percentRemainingAnnounce
 
-    QGCPalette {
-        id:                 qgcPal
-        colorGroupEnabled:  enabled
-    }
+    QGCPalette { id: qgcPal }
 
     QGCFlickable {
         clip:               true
@@ -115,7 +112,7 @@ Rectangle {
                 }
 
                 QGCLabel {
-                    anchors.baseline:   distanceUnitsCombo.baseline
+                    anchors.baseline:   speedUnitsCombo.baseline
                     text:               "(requires reboot to take affect)"
                 }
             }
@@ -250,12 +247,11 @@ Rectangle {
                 QGCComboBox {
                     id: paletteCombo
                     width: ScreenTools.defaultFontPixelWidth * 16
-                    model: [ "Dark", "Light" ]
+                    model: [ "Indoor", "Outdoor" ]
                     currentIndex: QGroundControl.isDarkStyle ? 0 : 1
                     onActivated: {
                         if (index != -1) {
                             currentIndex = index
-                            console.log((index === 0) ? "Now it's Dark" : "Now it's Light")
                             QGroundControl.isDarkStyle = index === 0 ? true : false
                         }
                     }

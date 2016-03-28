@@ -35,13 +35,10 @@ import QGroundControl.Palette               1.0
 
 Rectangle {
     id:             __mavlinkRoot
-    color:          __qgcPal.window
+    color:          qgcPal.window
     anchors.fill:   parent
 
-    QGCPalette {
-        id:                 qgcPal
-        colorGroupEnabled:  enabled
-    }
+    QGCPalette { id: qgcPal }
 
     QGCFlickable {
         clip:               true
