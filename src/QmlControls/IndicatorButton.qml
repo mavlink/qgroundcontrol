@@ -9,8 +9,6 @@ import QGroundControl.ScreenTools   1.0
 // indicator on the right edge.
 
 QGCButton {
-    showBorder: true
-
     property bool indicatorGreen: false
 
     Rectangle {

@@ -397,22 +397,33 @@ Rectangle {
         }
     }
 
+    Rectangle {
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.bottom: parent.bottom
+        height:         1
+        color:          "black"
+    }
+
     //---------------------------------------------
     // Toolbar Row
     Row {
-        id:             viewRow
-        height:         mainWindow.tbCellHeight
-        spacing:        mainWindow.tbSpacing
-        anchors.left:   parent.left
+        id:                     viewRow
+        height:                 mainWindow.tbCellHeight
+        spacing:                mainWindow.tbSpacing
+        anchors.left:           parent.left
         anchors.leftMargin:     mainWindow.tbSpacing
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.bottomMargin:   1
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
 
         ExclusiveGroup { id: mainActionGroup }
 
         QGCToolBarButton {
             id:                 preferencesButton
             width:              mainWindow.tbButtonWidth
-            height:             mainWindow.tbCellHeight
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
             source:             "/qmlimages/Hamburger.svg"
             onClicked: {
                 mainWindow.showLeftMenu();
@@ -423,7 +434,8 @@ Rectangle {
         QGCToolBarButton {
             id:                 setupButton
             width:              mainWindow.tbButtonWidth
-            height:             mainWindow.tbCellHeight
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/Gears.svg"
             onClicked:          toolBar.showSetupView()
@@ -432,7 +444,8 @@ Rectangle {
         QGCToolBarButton {
             id:                 planButton
             width:              mainWindow.tbButtonWidth
-            height:             mainWindow.tbCellHeight
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/Plan.svg"
             onClicked:          toolBar.showPlanView()
@@ -441,7 +454,8 @@ Rectangle {
         QGCToolBarButton {
             id:                 flyButton
             width:              mainWindow.tbButtonWidth
-            height:             mainWindow.tbCellHeight
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/PaperPlane.svg"
             onClicked:          toolBar.showFlyView()
