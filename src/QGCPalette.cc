@@ -34,7 +34,7 @@ QList<QGCPalette*>   QGCPalette::_paletteObjects;
 QGCPalette::Theme QGCPalette::_theme = QGCPalette::Dark;
 
 QColor QGCPalette::_window[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#f9f8f4"), QColor("#f9f8f4") },
+    { QColor("#ffffff"), QColor("#ffffff") },
     { QColor(0x22, 0x22, 0x22), QColor(0x22, 0x22, 0x22) }
 };
 
@@ -59,7 +59,7 @@ QColor QGCPalette::_warningText[QGCPalette::_cThemes][QGCPalette::_cColorGroups]
 };
 
 QColor QGCPalette::_button[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#ffffff"), QColor("#91d1e4") },
+    { QColor("#ffffff"),  QColor("#ffffff") },
     { QColor(0x58, 0x58, 0x58), QColor(98, 98, 100) },
 };
 

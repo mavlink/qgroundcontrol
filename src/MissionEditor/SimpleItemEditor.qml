@@ -38,13 +38,14 @@ Rectangle {
             spacing:        _margin
 
             QGCLabel {
-                width:      parent.width
-                wrapMode:   Text.WordWrap
-                text:       missionItem.sequenceNumber == 0 ?
-                                "Planned home position." :
-                                (missionItem.rawEdit ?
-                                     "Provides advanced access to all commands/parameters. Be very careful!" :
-                                     missionItem.commandDescription)
+                width:          parent.width
+                wrapMode:       Text.WordWrap
+                font.pixelSize: ScreenTools.smallFontPixelHeight
+                text:           missionItem.sequenceNumber == 0 ?
+                                    "Planned home position." :
+                                    (missionItem.rawEdit ?
+                                        "Provides advanced access to all commands/parameters. Be very careful!" :
+                                        missionItem.commandDescription)
             }
 
             Repeater {

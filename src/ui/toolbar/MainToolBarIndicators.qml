@@ -371,15 +371,6 @@ Row {
             anchors.verticalCenter:   parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
 
-            QGCColoredImage {
-                width:      mainWindow.tbCellHeight * 0.65
-                height:     mainWindow.tbCellHeight * 0.65
-                fillMode:   Image.PreserveAspectFit
-                source:     "/qmlimages/Quad.svg"
-                color:      qgcPal.buttonText
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
             QGCLabel {
                 text:           activeVehicle ? activeVehicle.flightMode : "N/A"
                 font.pixelSize: tbFontLarge
