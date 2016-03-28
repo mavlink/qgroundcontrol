@@ -9,9 +9,10 @@ Item {
     id: _root
 
     signal          clicked()
-    property alias  buttonImage:        button.source
-    property real   radius:             ScreenTools.defaultFontPixelHeight * 1.5
-    property bool   rotateImage:        false
+    property alias  buttonImage:    button.source
+    property real   radius:         ScreenTools.defaultFontPixelHeight * 1.5
+    property bool   rotateImage:    false
+    property bool   lightBorders:   true
 
     width:  radius * 2
     height: radius * 2
@@ -40,15 +41,17 @@ Item {
         anchors.fill:   parent
         radius:         width / 2
         border.width:   ScreenTools.defaultFontPixelHeight * 0.0625
-        border.color:   "white"
-        color:          checked ? qgcPal.mapButtonHighlight : qgcPal.mapButton
+        border.color:   lightBorders ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
+        color:          checked ? qgcPal.buttonHighlight : qgcPal.button
 
-        Image {
+        QGCColoredImage {
             id:             button
             anchors.fill:   parent
             fillMode:       Image.PreserveAspectFit
             mipmap:         true
             smooth:         true
+            color:          checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+
             RotationAnimation on rotation {
                 id: imageRotation
                 loops: Animation.Infinite
