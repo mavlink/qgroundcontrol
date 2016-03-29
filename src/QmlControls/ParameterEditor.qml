@@ -101,12 +101,40 @@ QGCView {
                     anchors.right:  parent.right
                     height: ScreenTools.defaultFontPixelHeight * 1.75
                     onClicked: {
-                        _searchFilter = false
-                        hideDialog()
+                        searchFor.text = ""
                     }
                 }
+
+                Row {
+                    anchors.right: tools.left
+                    visible: !ScreenTools.isMobile;
+
+                    QGCLabel {
+                        font.weight: Font.DemiBold
+                        text:   "Filter By:"
+                        height: ScreenTools.defaultFontPixelHeight * 1.75
+                    }
+
+                    QGCTextField {
+                        id:                 searchFor
+                        anchors.topMargin:  defaultTextHeight / 3
+                        width:              ScreenTools.defaultFontPixelWidth * 20
+
+                        onTextChanged: {
+                            console.log(text)
+                            if (text.length == 0) {
+                                _searchFilter = false;
+                            } else {
+                                _searchResults = controller.searchParametersForComponent(-1, text, true, true)
+                                _searchFilter = true
+                            }
+                        }
+                    }
+                }
+
                 QGCButton {
                     text:           qsTr("Tools")
+                    id: toolsButton
                     visible:        !_searchFilter
                     anchors.right:  parent.right
                     height: ScreenTools.defaultFontPixelHeight * 1.75
@@ -122,6 +150,7 @@ QGCView {
                         MenuItem {
                             text:           qsTr("Search...")
                             onTriggered:    showDialog(searchDialogComponent, qsTr("Parameter Search"), qgcView.showDialogDefaultWidth, StandardButton.Reset | StandardButton.Apply)
+                            visible: ScreenTools.isMobile;
                         }
                         MenuSeparator { }
                         MenuItem {
