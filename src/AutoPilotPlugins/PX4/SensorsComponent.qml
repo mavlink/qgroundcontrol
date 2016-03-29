@@ -355,7 +355,6 @@ QGCView {
 
                 QGCButton {
                     id:         cancelButton
-                    showBorder: true
                     text:       "Cancel"
                     enabled:    false
                     onClicked:  controller.cancelCalibration()

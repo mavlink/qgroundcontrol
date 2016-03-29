@@ -403,7 +403,6 @@ QGCView {
 
             QGCButton {
                 id:         nextButton
-                showBorder: true
                 text:       "Next"
                 enabled:    false
                 onClicked:  controller.nextClicked()
@@ -411,7 +410,6 @@ QGCView {
 
             QGCButton {
                 id:         cancelButton
-                showBorder: true
                 text:       "Cancel"
                 enabled:    false
                 onClicked:  controller.cancelCalibration()
