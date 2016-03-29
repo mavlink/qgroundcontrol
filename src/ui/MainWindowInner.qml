@@ -48,7 +48,6 @@ Item {
     property int    tbCellHeight:       tbHeight * 0.75
     property real   tbSpacing:          ScreenTools.isMobile ? width * 0.00824 : 9.54
     property real   tbButtonWidth:      tbCellHeight * 1.35
-    property real   availableHeight:    height - tbHeight
     property real   menuButtonWidth:    (tbButtonWidth * 2) + (tbSpacing * 4) + 1
     property var    gcsPosition:        QtPositioning.coordinate()  // Starts as invalid coordinate
     property var    currentPopUp:       null
@@ -284,21 +283,29 @@ Item {
     }
 
     FlightDisplayView {
-        id:                 flightView
-        anchors.fill:       parent
-        availableHeight:    mainWindow.availableHeight
-        visible:            true
+        id:             flightView
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.top:    toolBar.bottom
+        anchors.bottom: parent.bottom
+        visible:        true
     }
 
     Loader {
         id:                 planViewLoader
-        anchors.fill:       parent
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.top:    toolBar.bottom
+        anchors.bottom: parent.bottom
         visible:            false
     }
 
     Loader {
         id:                 setupViewLoader
-        anchors.fill:       parent
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.top:    toolBar.bottom
+        anchors.bottom: parent.bottom
         visible:            false
     }
 

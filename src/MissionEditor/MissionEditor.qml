@@ -43,7 +43,6 @@ QGCView {
     property bool syncNeeded: controller.visualItems.dirty // Unsaved changes, visible to parent container
 
     viewPanel:          panel
-    topDialogMargin:    height - mainWindow.availableHeight
 
     // zOrder comes from the Loader in MainWindow.qml
     z: QGroundControl.zOrderTopMost
@@ -458,7 +457,7 @@ QGCView {
                 // Mission Item Editor
                 Item {
                     id:             missionItemEditor
-                    height:         mainWindow.availableHeight
+                    anchors.top:    parent.top
                     anchors.bottom: parent.bottom
                     anchors.right:  parent.right
                     width:          _rightPanelWidth
@@ -510,19 +509,13 @@ QGCView {
                     }
                 }
 
-                Item {
-                    id:     toolbarSpacer
-                    height: mainWindow.tbHeight
-                    width:  1
-                }
-
                 //-- Vertical Tool Buttons
                 Column {
-                    id:                         toolColumn
-                    anchors.margins:            ScreenTools.defaultFontPixelHeight
-                    anchors.left:               parent.left
-                    anchors.top:                toolbarSpacer.bottom
-                    spacing:                    ScreenTools.defaultFontPixelHeight
+                    id:                 toolColumn
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    spacing:            ScreenTools.defaultFontPixelHeight
 
                     RoundButton {
                         id:             addMissionItemsButton

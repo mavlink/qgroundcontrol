@@ -396,7 +396,6 @@ QGCView {
 
                 QGCButton {
                     id:         skipButton
-                    showBorder: true
                     text:       "Skip"
 
                     onClicked: controller.skipButtonClicked()
@@ -404,7 +403,6 @@ QGCView {
 
                 QGCButton {
                     id:         cancelButton
-                    showBorder: true
                     text:       "Cancel"
 
                     onClicked: controller.cancelButtonClicked()
@@ -413,7 +411,6 @@ QGCView {
                 QGCButton {
                     id:         nextButton
                     primary:    true
-                    showBorder: true
                     text:       "Calibrate"
 
                     onClicked: {
@@ -457,7 +454,6 @@ QGCView {
 
                 QGCButton {
                     id:         bindButton
-                    showBorder: true
                     text:       "Spektrum Bind"
 
                     onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
@@ -465,7 +461,6 @@ QGCView {
             }
 
             QGCButton {
-                showBorder: true
                 text:       "Copy Trims"
                 visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
                 onClicked:  showDialog(copyTrimsDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)

@@ -24,8 +24,9 @@ This file is part of the QGROUNDCONTROL project
 import QtQuick          2.4
 import QtQuick.Controls 1.2
 
-import QGroundControl.Controls  1.0
-import QGroundControl.Palette   1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 
 Item {
     id: _root
@@ -33,6 +34,8 @@ Item {
     property alias          source:  icon.source
     property bool           checked: false
     property ExclusiveGroup exclusiveGroup:  null
+
+    readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight / 2
 
     signal   clicked()
 
@@ -44,20 +47,25 @@ Item {
         }
     }
 
-    Rectangle {
-        anchors.fill:   parent
-        color:          qgcPal.buttonHighlight
-        visible:        checked
+    QGCColoredImage {
+        id:                     icon
+        anchors.left:           parent.left
+        anchors.right:          parent.right
+        anchors.topMargin:      _topBottomMargins
+        anchors.bottomMargin:   _topBottomMargins
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        fillMode:               Image.PreserveAspectFit
+        color:                  checked ? qgcPal.buttonHighlight : qgcPal.buttonText
     }
 
-    QGCColoredImage {
-        id:         icon
-        width:      parent.height * 0.9
-        height:     parent.height * 0.9
-        fillMode:   Image.PreserveAspectFit
-        color:      checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-        anchors.verticalCenter:     parent.verticalCenter
-        anchors.horizontalCenter:   parent.horizontalCenter
+    Rectangle {
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.bottom: parent.bottom
+        height:         _topBottomMargins / 3
+        color:          qgcPal.buttonHighlight
+        visible:        checked
     }
 
     MouseArea {

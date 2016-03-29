@@ -202,7 +202,7 @@ QGCView {
                         height:                 voltageCol.height
                         fillMode:               Image.PreserveAspectFit
                         smooth:                 true
-                        color:                  palette.button
+                        color:                  palette.text
                         cache:                  false
                         source:                 getBatteryImage();
                     }
