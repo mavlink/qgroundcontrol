@@ -35,7 +35,7 @@ Rectangle {
     property real   expandedWidth               ///< Width of control when expanded
 
     width:      _expanded ? expandedWidth : _collapsedWidth
-    height:     azimuthLabel.y + azimuthLabel.height + _margins
+    height:     valueGrid.height + _margins
     radius:     ScreenTools.defaultFontPixelWidth
     color:      qgcPal.window
     opacity:    0.80
@@ -43,7 +43,7 @@ Rectangle {
 
     readonly property real margins: ScreenTools.defaultFontPixelWidth
 
-    property real   _collapsedWidth:    distanceLabel.width + (margins * 2)
+    property real   _collapsedWidth:    valueGrid.width + (margins * 2)
     property bool   _expanded:          true
     property real   _distance:          _statusValid ? _currentMissionItem.distance : 0
     property real   _altDifference:     _statusValid ? _currentMissionItem.altDifference : 0
@@ -63,39 +63,31 @@ Rectangle {
         onClicked:      _expanded = !_expanded
     }
 
-    QGCLabel {
-        id:                 distanceLabel
+    Grid {
+        id:                 valueGrid
         anchors.margins:    _margins
         anchors.left:       parent.left
         anchors.top:        parent.top
-        text:               "Distance: " + _distanceText
-    }
+        columns:            2
+        columnSpacing:      _margins
 
-    QGCLabel {
-        id:                 altLabel
-        anchors.left:       distanceLabel.left
-        anchors.top:        distanceLabel.bottom
-        text:               "Alt diff: " + _altText
-    }
+        QGCLabel { text: "Distance:" }
+        QGCLabel { text: _distanceText }
 
-    QGCLabel {
-        id:                 gradientLabel
-        anchors.left:       distanceLabel.left
-        anchors.top:        altLabel.bottom
-        text:               "Gradient: " + _gradientText
-    }
+        QGCLabel { text: "Alt diff:" }
+        QGCLabel { text: _altText }
 
-    QGCLabel {
-        id:                 azimuthLabel
-        anchors.left:       distanceLabel.left
-        anchors.top:        gradientLabel.bottom
-        text:               "Azimuth: " + _azimuthText
+        QGCLabel { text: "Gradient:" }
+        QGCLabel { text: _gradientText }
+
+        QGCLabel { text: "Azimuth:" }
+        QGCLabel { text: _azimuthText }
     }
 
     QGCFlickable {
         anchors.leftMargin:     _margins
         anchors.rightMargin:    _margins
-        anchors.left:           distanceLabel.right
+        anchors.left:           valueGrid.right
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
