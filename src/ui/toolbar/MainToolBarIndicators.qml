@@ -95,13 +95,13 @@ Row {
         id:         messages
         width:      mainWindow.tbCellHeight
         height:     mainWindow.tbCellHeight
-        visible:    activeVehicle ? activeVehicle.messageCount : false
+        visible:    activeVehicle && activeVehicle.messageCount
         anchors.verticalCenter: parent.verticalCenter
 
         Item {
             id:                 criticalMessage
             anchors.fill:       parent
-            visible:            activeVehicle ? (activeVehicle.messageCount > 0 && isMessageImportant) : false
+            visible:            activeVehicle && activeVehicle.messageCount > 0 && isMessageImportant
 
             Image {
                 source:         "/qmlimages/Yield.svg"
@@ -137,6 +137,7 @@ Row {
                 id:         messageIcon
                 source:     "/qmlimages/Megaphone.svg"
                 height:     mainWindow.tbCellHeight * 0.5
+                width:      height
                 fillMode:   Image.PreserveAspectFit
                 color:      getMessageColor()
                 anchors.verticalCenter:   parent.verticalCenter
