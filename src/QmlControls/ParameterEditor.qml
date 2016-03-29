@@ -101,11 +101,36 @@ QGCView {
                     anchors.right:  parent.right
                     height: ScreenTools.defaultFontPixelHeight * 1.75
                     onClicked: {
-                        _searchFilter = false
-                        hideDialog()
+                        searchFor.text = ""
                     }
                 }
+
+                QGCLabel {
+                    font.weight: Font.DemiBold
+                    text:   "Filter By:"
+                    anchors.right: searchFor.left
+                    height: ScreenTools.defaultFontPixelHeight * 1.75
+                }
+
+                QGCTextField {
+                    id:                 searchFor
+                    anchors.topMargin:  defaultTextHeight / 3
+                    anchors.right:      toolsButton.left
+                    width:              ScreenTools.defaultFontPixelWidth * 20
+
+                    onTextChanged: {
+                        console.log(text)
+                        if (text.length == 0) {
+                            _searchFilter = false;
+                        } else {
+                            _searchResults = controller.searchParametersForComponent(-1, text, true, true)
+                            _searchFilter = true
+                        }
+                    }
+                }
+
                 QGCButton {
+                    id: toolsButton
                     text:           "Tools"
                     visible:        !_searchFilter
                     anchors.right:  parent.right
@@ -118,10 +143,6 @@ QGCView {
                         MenuItem {
                             text:           "Reset all to defaults"
                             onTriggered:	controller.resetAllToDefaults()
-                        }
-                        MenuItem {
-                            text:           "Search..."
-                            onTriggered:    showDialog(searchDialogComponent, "Parameter Search", qgcView.showDialogDefaultWidth, StandardButton.Reset | StandardButton.Apply)
                         }
                         MenuSeparator { }
                         MenuItem {
@@ -344,44 +365,6 @@ QGCView {
         ParameterEditorDialog {
             fact:           _editorDialogFact
             showRCToParam:  _showRCToParam
-        }
-    }
-
-    Component {
-        id: searchDialogComponent
-
-        QGCViewDialog {
-
-            function accept() {
-                _searchResults = controller.searchParametersForComponent(-1, searchFor.text, true /*searchInName.checked*/, true /*searchInDescriptions.checked*/)
-                _searchFilter = true
-                hideDialog()
-            }
-
-            function reject() {
-                _searchFilter = false
-                hideDialog()
-            }
-
-            QGCLabel {
-                id:     searchForLabel
-                text:   "Search for:"
-            }
-
-            QGCTextField {
-                id:                 searchFor
-                anchors.topMargin:  defaultTextHeight / 3
-                anchors.top:        searchForLabel.bottom
-                width:              ScreenTools.defaultFontPixelWidth * 20
-            }
-
-            QGCLabel {
-                anchors.topMargin:  defaultTextHeight
-                anchors.top:        searchFor.bottom
-                width:              parent.width
-                wrapMode:           Text.WordWrap
-                text:               "Hint: Leave 'Search For' blank and click Apply to list all parameters sorted by name."
-            }
         }
     }
 
