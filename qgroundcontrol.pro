@@ -310,6 +310,7 @@ HEADERS += \
     src/QmlControls/QGCImageProvider.h \
     src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
+    src/SimulatedPosition.h
 
 DebugBuild {
 HEADERS += \
@@ -462,6 +463,7 @@ SOURCES += \
     src/QmlControls/QGCImageProvider.cc \
     src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
+    src/SimulatedPosition.cc
 
 DebugBuild {
 SOURCES += \

@@ -32,6 +32,7 @@ import QGroundControl.Controls              1.0
 import QGroundControl.FlightDisplay         1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
+import QGroundControl.QGCPositionManager   1.0
 
 /// Inner common QML for mainWindow
 Item {
@@ -176,18 +177,16 @@ Item {
 
 
     //-- Detect tablet position
-    PositionSource {
-        id:             positionSource
-        updateInterval: 1000
-        active:         true
+    Connections {
+        target: QGroundControl.qgcPositionManger.positionSource
 
-        onPositionChanged: {
-            if(positionSource.valid) {
-                if(positionSource.position.coordinate.latitude) {
-                    if(Math.abs(positionSource.position.coordinate.latitude)  > 0.001) {
-                        if(positionSource.position.coordinate.longitude) {
-                            if(Math.abs(positionSource.position.coordinate.longitude)  > 0.001) {
-                                gcsPosition = positionSource.position.coordinate
+        onLastPositionUpdated: {
+            if(valid) {
+                if(lastPosition.latitude) {
+                    if(Math.abs(lastPosition.latitude)  > 0.001) {
+                        if(lastPosition.longitude) {
+                            if(Math.abs(lastPosition.longitude)  > 0.001) {
+                                gcsPosition = QtPositioning.coordinate(lastPosition.latitude,lastPosition.longitude)
                             }
                         }
                     }

@@ -30,7 +30,6 @@
 #include <QGeoPositionInfoSource>
 #include <QElapsedTimer>
 
-#include "QGCLoggingCategory.h"
 #include "QGCToolbox.h"
 #include "MAVLinkProtocol.h"
 
@@ -43,6 +42,8 @@ class FollowMe : public QGCTool
 public:
     FollowMe(QGCApplication* app);
     ~FollowMe();
+    void disable();
+    void enable();
 
 public slots:
     void followMeHandleManager(const QString&);
@@ -69,13 +70,8 @@ private:
         float pos_std_dev[3];   // -1 for unknown
     } _motionReport;
 
-    QString _followMeStr;
-
     QTimer _gcsMotionReportTimer;        ///< Timer to emit motion reports
     double _degreesToRadian(double deg);
-
-    void disable();
-    void enable();
 
     // Mavlink defined motion reporting capabilities
 
@@ -85,23 +81,4 @@ private:
         ACCEL = 2,
         ATT_RATES = 3
     };
-
-#ifdef QT_QML_DEBUG
-
-    // items for simulating QGC movment in jMAVSIM
-
-    struct simulated_motion_s {
-        int lon;
-        int lat;
-    };
-
-    static simulated_motion_s _simulated_motion[4];
-
-    int _simulate_motion_timer;
-    int _simulate_motion_index;
-
-    bool _simulate_motion;
-
-    void _createSimulatedMotion(mavlink_follow_target_t & follow_target);
-#endif
 };
