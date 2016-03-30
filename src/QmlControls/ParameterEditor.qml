@@ -70,6 +70,7 @@ QGCView {
                 id:     header
                 width:  parent.width
                 height: ScreenTools.defaultFontPixelHeight * 1.75
+
                 QGCLabel {
                     text:           "Search Results"
                     visible:        _searchFilter
@@ -104,18 +105,20 @@ QGCView {
                         searchFor.text = ""
                     }
                 }
-
                 QGCLabel {
                     font.weight: Font.DemiBold
                     text:   "Filter By:"
-                    anchors.right: searchFor.left
-                    height: ScreenTools.defaultFontPixelHeight * 1.75
+                    anchors.right:   searchFor.left
+                    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                    anchors.verticalCenter: parent.verticalCenter
                 }
 
                 QGCTextField {
                     id:                 searchFor
                     anchors.topMargin:  defaultTextHeight / 3
                     anchors.right:      toolsButton.left
+                    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                    anchors.bottom: toolsButton.bottom
                     width:              ScreenTools.defaultFontPixelWidth * 20
 
                     onTextChanged: {
