@@ -47,7 +47,18 @@ QGCViewDialog {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     function accept() {
-        if (factCombo.visible) {
+        if (bitmaskEditor.visible) {
+            var value = 0;
+            for (var i = 0; i < fact.bitmaskValues.length; ++i) {
+                var checkbox = bitmaskEditor.itemAt(i)
+                if (checkbox.checked) {
+                    value |= fact.bitmaskValues[i];
+                }
+            }
+            fact.value = value;
+            fact.valueChanged(fact.value)
+        }
+        else if (factCombo.visible) {
             fact.enumIndex = factCombo.currentIndex
             hideDialog()
         } else {
@@ -127,13 +138,24 @@ QGCViewDialog {
                 visible:        _showCombo
                 model:          fact.enumStrings
 
-                property bool _showCombo: fact.enumStrings.length != 0 && !validate
+                property bool _showCombo: fact.enumStrings.length != 0 && fact.bitmaskStrings.length == 0 && !validate
 
                 Component.onCompleted: {
                     // We can't bind directly to fact.enumIndex since that would add an unknown value
                     // if there are no enum strings.
                     if (_showCombo) {
                         currentIndex = fact.enumIndex
+                    }
+                }
+            }
+
+            Column {
+                Repeater {
+                    id: bitmaskEditor
+                    model: fact.bitmaskStrings
+                    delegate : QGCCheckBox {
+                        text : modelData
+                        checked : fact.value & fact.bitmaskValues[index]
                     }
                 }
             }
