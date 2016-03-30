@@ -70,6 +70,7 @@ QGCView {
                 id:     header
                 width:  parent.width
                 height: ScreenTools.defaultFontPixelHeight * 1.75
+
                 QGCLabel {
                     text:           qsTr("Search Results")
                     visible:        _searchFilter
@@ -104,7 +105,6 @@ QGCView {
                         searchFor.text = ""
                     }
                 }
-
                 Row {
                     anchors.right: tools.left
                     visible: !ScreenTools.isMobile;
