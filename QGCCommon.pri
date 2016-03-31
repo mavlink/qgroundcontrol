@@ -167,6 +167,10 @@ MacBuild | LinuxBuild {
     WarningsAsErrorsOn {
         QMAKE_CXXFLAGS_WARN_ON += -Werror
     }
+    MacBuild {
+        # Latest clang version has a buggy check for this which cause Qt headers to throw warnings on qmap.h
+        QMAKE_CXXFLAGS_WARN_ON += -Wno-return-stack-address
+    }
 }
 
 WindowsBuild {
