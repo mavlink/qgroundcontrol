@@ -156,6 +156,15 @@ QGCViewDialog {
                     delegate : QGCCheckBox {
                         text : modelData
                         checked : fact.value & fact.bitmaskValues[index]
+                        function check_uncheck_all() {
+                            if (text.toLowerCase() == "all") {
+                                for (var i = 0; i < fact.bitmaskValues.length; ++i) {
+                                    bitmaskEditor.itemAt(i).checked = checked;
+                                }
+                            }
+                        }
+                        onCheckedChanged: check_uncheck_all()
+                        Component.onCompleted: check_uncheck_all()
                     }
                 }
             }
