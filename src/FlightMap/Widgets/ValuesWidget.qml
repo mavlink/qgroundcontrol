@@ -23,6 +23,8 @@ This file is part of the QGROUNDCONTROL project
 
 import QtQuick          2.4
 import QtQuick.Dialogs  1.2
+import QtQuick.Controls 1.4
+import QtQuick.Layouts 1.1
 
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
@@ -201,8 +203,9 @@ QGCFlickable {
             Repeater {
                 model: factGroup ? factGroup.factNames : 0
 
-                Row {
+                RowLayout {
                     spacing: _margins
+                    width: _root.width
 
                     property string propertyName: factGroupName + "." + modelData
 
@@ -252,9 +255,14 @@ QGCFlickable {
                         onClicked:  updateValues()
                     }
 
-                    QGCCheckBox {
+                    QGCLabel {
+                        text: qsTr("Large")
+                        Layout.fillWidth: true
+                        horizontalAlignment :Text.AlignRight
+                    }
+
+                    Switch {
                         id:         _largeCheckBox
-                        text:       "large"
                         checked:    listContains(controller.largeValues, propertyName)
                         enabled:    _addCheckBox.checked
                         onClicked:  updateValues()
