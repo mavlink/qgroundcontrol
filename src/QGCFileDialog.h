@@ -134,7 +134,7 @@ public:
 private slots:
     /// @brief The exec slot is private because we only want QGCFileDialog users to use the static methods. Otherwise it will break
     ///        unit testing.
-    int exec(void) { return QGCFileDialog::exec(); }
+    int exec(void) { return QFileDialog::exec(); }
     
 private:
     static void    _validate(Options& options);
