@@ -67,28 +67,28 @@ QStringList ParameterEditorController::getParametersForGroup(int componentId, QS
 	return groupMap[componentId][group];
 }
 
-QStringList ParameterEditorController::searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions)
+QList<QObject*> ParameterEditorController::searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions)
 {
-    QStringList list;
+    QList<QObject*> list;
 
     if (searchText.isEmpty()) {
-        list = _autopilot->parameterNames(componentId);
-        list.sort();
-        return list;
+        foreach(const QString &paramName, _autopilot->parameterNames(componentId)) {
+            Fact* fact = _autopilot->getParameterFact(componentId, paramName);
+            list.push_back(fact);
+        }
+        goto exit;
     }
 
     foreach(const QString &paramName, _autopilot->parameterNames(componentId)) {
+        Fact* fact = _autopilot->getParameterFact(componentId, paramName);
         if (searchInName && paramName.contains(searchText, Qt::CaseInsensitive)) {
-            list += paramName;
-        } else if (searchInDescriptions) {
-            Fact* fact = _autopilot->getParameterFact(componentId, paramName);
-            if ( fact->shortDescription().contains(searchText, Qt::CaseInsensitive) || fact->longDescription().contains(searchText, Qt::CaseInsensitive)){
-                list += paramName;
-            }
+            list.push_back(fact);
+        } else if (searchInDescriptions && ( fact->shortDescription().contains(searchText, Qt::CaseInsensitive) || fact->longDescription().contains(searchText, Qt::CaseInsensitive))) {
+            list.push_back(fact);
         }
     }
 
-    list.sort();
+    exit:
     return list;
 }
 
