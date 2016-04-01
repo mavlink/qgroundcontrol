@@ -18,8 +18,8 @@ QGCTextField {
     property Fact   fact:           null
     property string _validateString
 
-
     // At this point all Facts are numeric
+    validator: DoubleValidator {}
     inputMethodHints:   Qt.ImhFormattedNumbersOnly
 
     onEditingFinished: {
