@@ -70,22 +70,25 @@ QStringList ParameterEditorController::getParametersForGroup(int componentId, QS
 QStringList ParameterEditorController::searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions)
 {
     QStringList list;
-    
+
+    if (searchText.isEmpty()) {
+        list = _autopilot->parameterNames(componentId);
+        list.sort();
+        return list;
+    }
+
     foreach(const QString &paramName, _autopilot->parameterNames(componentId)) {
-        if (searchText.isEmpty()) {
+        if (searchInName && paramName.contains(searchText, Qt::CaseInsensitive)) {
             list += paramName;
-        } else {
+        } else if (searchInDescriptions) {
             Fact* fact = _autopilot->getParameterFact(componentId, paramName);
-            
-            if (searchInName && fact->name().contains(searchText, Qt::CaseInsensitive)) {
-                list += paramName;
-            } else if (searchInDescriptions && (fact->shortDescription().contains(searchText, Qt::CaseInsensitive) || fact->longDescription().contains(searchText, Qt::CaseInsensitive))) {
+            if ( fact->shortDescription().contains(searchText, Qt::CaseInsensitive) || fact->longDescription().contains(searchText, Qt::CaseInsensitive)){
                 list += paramName;
             }
         }
     }
+
     list.sort();
-    
     return list;
 }
 
