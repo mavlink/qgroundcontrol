@@ -122,7 +122,6 @@ QGCView {
                     width:              ScreenTools.defaultFontPixelWidth * 20
 
                     onTextChanged: {
-                        console.log(text)
                         if (text.length == 0) {
                             _searchFilter = false;
                         } else {
@@ -294,13 +293,73 @@ QGCView {
                 clip:           true
                 Loader {
                     id:                 factRowsLoader
-                    sourceComponent:    factRowsComponent
+                    sourceComponent:    filterRowComponent
                     property int    componentId:       -1
-                    property var    parameterNames:    _searchResults
+                    property var    currentModel:    _searchResults
                 }
             }
         }
     }
+
+    //---------------------------------------------
+    // FilterRowComponent
+    Component {
+        id: filterRowComponent
+        Column {
+            spacing: Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
+            Repeater {
+                model: currentModel
+                Rectangle {
+                    height: _rowHeight
+                    width:  _rowWidth
+                    color:  Qt.rgba(0,0,0,0)
+                    Row {
+                        id:     factRow
+                        spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
+                        anchors.verticalCenter: parent.verticalCenter
+                        QGCLabel {
+                            id:     nameLabel
+                            width:  ScreenTools.defaultFontPixelWidth  * 20
+                            text:   modelData.name
+                            clip:   true
+                        }
+                        QGCLabel {
+                            id:     valueLabel
+                            width:  ScreenTools.defaultFontPixelWidth  * 20
+                            color:  modelData.defaultValueAvailable ? (modelData.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText) : __qgcPal.text
+                            text:   modelData.enumStrings.length == 0 ? modelData.valueString + " " + modelData.units : modelData.enumStringValue
+                            clip:   true
+                        }
+                        QGCLabel {
+                            text:   modelData.shortDescription
+                        }
+                        Component.onCompleted: {
+                            if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
+                               _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
+                            }
+                        }
+                    }
+                    Rectangle {
+                        width:  _rowWidth
+                        height: 1
+                        color:  __qgcPal.text
+                        opacity: 0.15
+                        anchors.bottom: parent.bottom
+                        anchors.left:   parent.left
+                    }
+                    MouseArea {
+                        anchors.fill:       parent
+                        acceptedButtons:    Qt.LeftButton
+                        onClicked: {
+                            _editorDialogFact = factRow.modelFact
+                            showDialog(editorDialogComponent, "Parameter Editor", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     //---------------------------------------------
     // Paremeters view
