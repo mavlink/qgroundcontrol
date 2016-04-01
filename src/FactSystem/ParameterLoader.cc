@@ -467,13 +467,7 @@ Fact* ParameterLoader::getFact(int componentId, const QString& name)
 
 QStringList ParameterLoader::parameterNames(int componentId)
 {
-    QStringList names;
-
-    foreach(const QString &paramName, _mapParameterName2Variant[_actualComponentId(componentId)].keys()) {
-        names << paramName;
-    }
-
-    return names;
+    return _mapParameterName2Variant[_actualComponentId(componentId)].keys();
 }
 
 void ParameterLoader::_setupGroupMap(void)
