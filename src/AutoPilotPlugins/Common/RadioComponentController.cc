@@ -786,16 +786,20 @@ void RadioComponentController::_writeCalibration(void)
             paramFact->setRawValue((float)info->rcMax);
         }
 
-        // APM has a backwards interpretation of "reversed" on the Pitch control. So be careful.
-        float reversedParamValue;
-        if (_px4Vehicle() || info->function != rcCalFunctionPitch) {
-            reversedParamValue = info->reversed ? -1.0f : 1.0f;
-        } else {
-            reversedParamValue = info->reversed ? 1.0f : -1.0f;
-        }
-        paramFact = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel));
-        if (paramFact) {
-            paramFact->setRawValue(reversedParamValue);
+        // For multi-rotor we can determine reverse setting during radio cal. For anything other than multi-rotor, servo installation
+        // may affect channel reversing so we can't automatically determine it.
+        if (_vehicle->multiRotor()) {
+            // APM multi-rotor has a backwards interpretation of "reversed" on the Pitch control. So be careful.
+            float reversedParamValue;
+            if (_px4Vehicle() || info->function != rcCalFunctionPitch) {
+                reversedParamValue = info->reversed ? -1.0f : 1.0f;
+            } else {
+                reversedParamValue = info->reversed ? 1.0f : -1.0f;
+            }
+            paramFact = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel));
+            if (paramFact) {
+                paramFact->setRawValue(reversedParamValue);
+            }
         }
     }
     
