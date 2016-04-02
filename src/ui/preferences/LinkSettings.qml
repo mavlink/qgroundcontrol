@@ -32,7 +32,7 @@ import QGroundControl.Palette               1.0
 
 Rectangle {
     id:                 _linkRoot
-    color:              __qgcPal.window
+    color:              qgcPal.window
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
@@ -176,7 +176,7 @@ Rectangle {
     Component {
         id: commSettings
         Rectangle {
-            color:          __qgcPal.window
+            color:          qgcPal.window
             anchors.fill:   parent
             Component.onCompleted: {
                 // If editing, create copy for editing
