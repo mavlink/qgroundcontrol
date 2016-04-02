@@ -36,7 +36,7 @@ import QGroundControl.Palette               1.0
 
 Rectangle {
     id:                 _offlineMapRoot
-    color:              __qgcPal.window
+    color:              qgcPal.window
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
@@ -58,6 +58,8 @@ Rectangle {
 
     readonly property real minZoomLevel: 3
     readonly property real maxZoomLevel: 20
+
+    QGCPalette { id: qgcpal }
 
     Component.onCompleted: {
         QGroundControl.mapEngineManager.loadTileSets()
@@ -161,7 +163,7 @@ Rectangle {
         id:         _offlineMapTopRect
         width:      parent.width
         height:     labelTitle.height + ScreenTools.defaultFontPixelHeight
-        color:      __qgcPal.window
+        color:      qgcPal.window
         anchors.top: parent.top
         Row {
             spacing: ScreenTools.defaultFontPixelHeight * 2
@@ -240,7 +242,7 @@ Rectangle {
     //-- Offline Map Definition
     Rectangle {
         id:                 _mapView
-        color:              __qgcPal.window
+        color:              qgcPal.window
         width:              parent.width
         anchors.top:        _offlineMapTopRect.bottom
         anchors.bottom:     parent.bottom
@@ -251,7 +253,7 @@ Rectangle {
             width:          parent.width
             anchors.top:    parent.top
             anchors.bottom: bottomRect.top
-            color:          (__qgcPal.globalTheme === QGCPalette.Light) ? "black" : "#98aca4"
+            color:          (qgcPal.globalTheme === QGCPalette.Light) ? "black" : "#98aca4"
 
             Map {
                 id:                 _map
@@ -332,7 +334,7 @@ Rectangle {
             id:     bottomRect
             width:  parent.width
             height: _controlRow.height + (ScreenTools.defaultFontPixelHeight * 2)
-            color:  __qgcPal.window
+            color:  qgcPal.window
             anchors.bottom: parent.bottom
             Row {
                 id: _controlRow
@@ -621,7 +623,7 @@ Rectangle {
     }
     Rectangle {
         id:                 _infoView
-        color:              __qgcPal.windowShade
+        color:              qgcPal.windowShade
         width:              parent.width
         anchors.top:        _offlineMapTopRect.bottom
         anchors.bottom:     parent.bottom
@@ -644,7 +646,7 @@ Rectangle {
                 Rectangle {
                     width:      infoWidth
                     height:     nameLabel.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    color:      __qgcPal.window
+                    color:      qgcPal.window
                     radius:     ScreenTools.defaultFontPixelHeight * 0.5
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
@@ -663,7 +665,7 @@ Rectangle {
                     id:         infoRect
                     width:      infoWidth
                     height:     infoGrid.height + (ScreenTools.defaultFontPixelHeight * 4)
-                    color:      __qgcPal.window
+                    color:      qgcPal.window
                     radius:     ScreenTools.defaultFontPixelHeight * 0.5
                     anchors.horizontalCenter: parent.horizontalCenter
                     GridLayout {
@@ -804,7 +806,7 @@ Rectangle {
     }
     Rectangle {
         id:                 _optionsView
-        color:              __qgcPal.windowShade
+        color:              qgcPal.windowShade
         width:              parent.width
         anchors.top:        _offlineMapTopRect.bottom
         anchors.bottom:     parent.bottom
@@ -834,7 +836,7 @@ Rectangle {
                 Rectangle {
                     width:      infoWidth
                     height:     optionsLabel.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    color:      __qgcPal.window
+                    color:      qgcPal.window
                     radius:     ScreenTools.defaultFontPixelHeight * 0.5
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
@@ -848,7 +850,7 @@ Rectangle {
                     id:         optionsRect
                     width:      optionsGrid.width  + (ScreenTools.defaultFontPixelWidth * 4)
                     height:     optionsGrid.height + (ScreenTools.defaultFontPixelHeight * 4)
-                    color:      __qgcPal.window
+                    color:      qgcPal.window
                     radius:     ScreenTools.defaultFontPixelHeight * 0.5
                     anchors.horizontalCenter: parent.horizontalCenter
                     GridLayout {
@@ -890,7 +892,7 @@ Rectangle {
                             Layout.columnSpan:  2
                             Layout.fillWidth:   true
                             implicitHeight:     1
-                            color:              __qgcPal.text
+                            color:              qgcPal.text
                         }
                         QGCLabel {
                             text: "MapBox Access Token"
