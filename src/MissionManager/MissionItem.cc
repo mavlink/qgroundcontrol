@@ -203,6 +203,10 @@ bool MissionItem::load(const QJsonObject& json, QString& errorString)
         return false;
     }
 
+    // Make sure to set these first since they can signal other changes
+    setFrame((MAV_FRAME)json[_jsonFrameKey].toInt());
+    setCommand((MAV_CMD)json[_jsonCommandKey].toInt());
+
     QGeoCoordinate coordinate;
     if (!JsonHelper::toQGeoCoordinate(json[_jsonCoordinateKey], coordinate, true /* altitudeRequired */, errorString)) {
         return false;
@@ -213,8 +217,6 @@ bool MissionItem::load(const QJsonObject& json, QString& errorString)
 
     setIsCurrentItem(false);
     setSequenceNumber(json[_jsonIdKey].toInt());
-    setFrame((MAV_FRAME)json[_jsonFrameKey].toInt());
-    setCommand((MAV_CMD)json[_jsonCommandKey].toInt());
     setParam1(json[_jsonParam1Key].toDouble());
     setParam2(json[_jsonParam2Key].toDouble());
     setParam3(json[_jsonParam3Key].toDouble());
