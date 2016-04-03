@@ -26,6 +26,7 @@
 
 #include "UnitTest.h"
 #include "MultiSignalSpy.h"
+#include "MissionItem.h"
 
 /// Unit test for the MissionItem Object
 class MissionItemTest : public UnitTest
@@ -40,8 +41,13 @@ private slots:
     void _testSignals(void);
     void _testFactSignals(void);
     void _testLoadFromStream(void);
+    void _testSimpleLoadFromStream(void);
     void _testLoadFromJson(void);
+    void _testSimpleLoadFromJson(void);
     void _testSaveToJson(void);
+
+private:
+    void _checkExpectedMissionItem(const MissionItem& missionItem);
 };
 
 #endif
