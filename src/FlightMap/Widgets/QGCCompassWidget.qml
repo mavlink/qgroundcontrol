@@ -89,7 +89,7 @@ Item {
             color:              Qt.rgba(0,0,0,0.65)
 
             QGCLabel {
-                text:           active ? heading.toFixed(0) : "OFF"
+                text:           active ? heading.toFixed(0) : qsTr("OFF")
                 font.weight:    active ? Font.DemiBold : Font.Light
                 font.pixelSize: _fontSize < 1 ? 1 : _fontSize;
                 color:          "white"

@@ -31,7 +31,7 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: qsTr("Compass 0:")
-            valueText: mag0IdFact ? (mag0IdFact.value === 0 ? qsTr("Setup required") : ("Ready")) : ""
+            valueText: mag0IdFact ? (mag0IdFact.value === 0 ? qsTr("Setup required") : qsTr("Ready")) : ""
         }
 
         VehicleSummaryRow {
