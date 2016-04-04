@@ -54,7 +54,7 @@ Item {
 
         QGCLabel {
             id:     udpLabel
-            text:   "UDP Link Settings"
+            text:   qsTr("UDP Link Settings")
         }
         Rectangle {
             height: 1
@@ -68,7 +68,7 @@ Item {
         Row {
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
-                text:   "Listening Port:"
+                text:   qsTr("Listening Port:")
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -91,7 +91,7 @@ Item {
             width:  parent.width
         }
         QGCLabel {
-            text:   "Target Hosts:"
+            text:   qsTr("Target Hosts:")
         }
         Item {
             width:  hostRow.width
@@ -165,7 +165,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCButton {
                                 width:      ScreenTools.defaultFontPixelWidth * 10
-                                text:       "Add"
+                                text:       qsTr("Add")
                                 onClicked: {
                                     if(hostField.visible && hostField.text !== "") {
                                         subEditConfig.addHost(hostField.text)
@@ -178,7 +178,7 @@ Item {
                             QGCButton {
                                 width:      ScreenTools.defaultFontPixelWidth * 10
                                 enabled:    _udpSetting._currentHost && _udpSetting._currentHost !== ""
-                                text:       "Remove"
+                                text:       qsTr("Remove")
                                 onClicked: {
                                     subEditConfig.removeHost(_udpSetting._currentHost)
                                 }

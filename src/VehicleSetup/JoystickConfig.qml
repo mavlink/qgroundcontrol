@@ -39,7 +39,7 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
-    readonly property string    dialogTitle:            "Joystick Config"
+    readonly property string    dialogTitle:            qsTr("Joystick Config")
     readonly property real      labelToMonitorMargin:   defaultTextWidth * 3
     property bool               controllerCompleted:    false
     property bool               controllerAndViewReady: false
@@ -122,7 +122,7 @@ QGCView {
                     anchors.fill:           parent
                     horizontalAlignment:    Text.AlignHCenter
                     verticalAlignment:      Text.AlignVCenter
-                    text:                   "Not Mapped"
+                    text:                   qsTr("Not Mapped")
                     visible:                !mapped
                 }
 
@@ -150,7 +150,7 @@ QGCView {
         QGCLabel {
             id:             header
             font.pixelSize: ScreenTools.mediumFontPixelSize
-            text:           "JOYSTICK"
+            text:           qsTr("JOYSTICK")
         }
 
         Item {
@@ -174,7 +174,7 @@ QGCView {
                 width:      parent.width
                 spacing:    5
 
-                QGCLabel { text: "Attitude Controls" }
+                QGCLabel { text: qsTr("Attitude Controls") }
 
                 Item {
                     width:  parent.width
@@ -183,7 +183,7 @@ QGCView {
                     QGCLabel {
                         id:     rollLabel
                         width:  defaultTextWidth * 10
-                        text:   "Roll"
+                        text:   qsTr("Roll")
                     }
 
                     Loader {
@@ -213,7 +213,7 @@ QGCView {
                     QGCLabel {
                         id:     pitchLabel
                         width:  defaultTextWidth * 10
-                        text:   "Pitch"
+                        text:   qsTr("Pitch")
                     }
 
                     Loader {
@@ -243,7 +243,7 @@ QGCView {
                     QGCLabel {
                         id:     yawLabel
                         width:  defaultTextWidth * 10
-                        text:   "Yaw"
+                        text:   qsTr("Yaw")
                     }
 
                     Loader {
@@ -273,7 +273,7 @@ QGCView {
                     QGCLabel {
                         id:     throttleLabel
                         width:  defaultTextWidth * 10
-                        text:   "Throttle"
+                        text:   qsTr("Throttle")
                     }
 
                     Loader {
@@ -303,14 +303,14 @@ QGCView {
 
                 QGCButton {
                     id:     skipButton
-                    text:   "Skip"
+                    text:   qsTr("Skip")
 
                     onClicked: controller.skipButtonClicked()
                 }
 
                 QGCButton {
                     id:     cancelButton
-                    text:   "Cancel"
+                    text:   qsTr("Cancel")
 
                     onClicked: controller.cancelButtonClicked()
                 }
@@ -318,7 +318,7 @@ QGCView {
                 QGCButton {
                     id:         nextButton
                     primary:    true
-                    text:       "Calibrate"
+                    text:       qsTr("Calibrate")
 
                     onClicked: controller.nextButtonClicked()
                 }
@@ -348,7 +348,7 @@ QGCView {
                     width:      parent.width / 2
                     spacing:    ScreenTools.defaultFontPixelHeight
 
-                    QGCLabel { text: "Additional Joystick settings:" }
+                    QGCLabel { text: qsTr("Additional Joystick settings:") }
 
                     Column {
                         width:      parent.width
@@ -357,7 +357,7 @@ QGCView {
 
                         QGCCheckBox {
                             enabled:    _activeJoystick.calibrated
-                            text:       _activeJoystick.calibrated ? "Enable joystick input" : "Enable/Disable not allowed (Calibrate First)"
+                            text:       _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable/Disable not allowed (Calibrate First)")
                             checked:    _activeVehicle.joystickEnabled
 
                             onClicked:  _activeVehicle.joystickEnabled = checked
@@ -370,7 +370,7 @@ QGCView {
                             QGCLabel {
                                 id:                 activeJoystickLabel
                                 anchors.baseline:   joystickCombo.baseline
-                                text:               "Active joystick:"
+                                text:               qsTr("Active joystick:")
                             }
 
                             QGCComboBox {
@@ -383,7 +383,7 @@ QGCView {
                                 Component.onCompleted: {
                                     var index = joystickCombo.find(joystickManager.activeJoystickName)
                                     if (index == -1) {
-                                        console.warn("Active joystick name not in combo", joystickManager.activeJoystickName)
+                                        console.warn(qsTr("Active joystick name not in combo"), joystickManager.activeJoystickName)
                                     } else {
                                         joystickCombo.currentIndex = index
                                     }
@@ -398,7 +398,7 @@ QGCView {
 
                             QGCRadioButton {
                                 exclusiveGroup: throttleModeExclusiveGroup
-                                text:           "Center stick is zero throttle"
+                                text:           qsTr("Center stick is zero throttle")
                                 checked:        _activeJoystick.throttleMode == 0
 
                                 onClicked: _activeJoystick.throttleMode = 0
@@ -406,7 +406,7 @@ QGCView {
 
                             QGCRadioButton {
                                 exclusiveGroup: throttleModeExclusiveGroup
-                                text:           "Full down stick is zero throttle"
+                                text:           qsTr("Full down stick is zero throttle")
                                 checked:        _activeJoystick.throttleMode == 1
 
                                 onClicked: _activeJoystick.throttleMode = 1
@@ -416,7 +416,7 @@ QGCView {
                         QGCCheckBox {
                             id:         advancedSettings
                             checked:    _activeVehicle.joystickMode != 0
-                            text:       "Advanced settings (careful!)"
+                            text:       qsTr("Advanced settings (careful!)")
 
                             onClicked: {
                                 if (!checked) {
@@ -433,7 +433,7 @@ QGCView {
                             QGCLabel {
                                 id:                 joystickModeLabel
                                 anchors.baseline:   joystickModeCombo.baseline
-                                text:               "Joystick mode:"
+                                text:               qsTr("Joystick mode:")
                             }
 
                             QGCComboBox {
@@ -463,7 +463,7 @@ QGCView {
                         }
                     }
 
-                    QGCLabel { text: "Button actions:" }
+                    QGCLabel { text: qsTr("Button actions:") }
 
                     Column {
                         width:      parent.width
@@ -471,7 +471,7 @@ QGCView {
 
                         QGCLabel {
                             visible: _activeVehicle.manualControlReservedButtonCount != 0
-                            text: "Buttons 0-" + reservedButtonCount + " reserved for firmware use"
+                            text: qsTr("Buttons 0-%1 reserved for firmware use").arg(reservedButtonCount)
 
                             property int reservedButtonCount: _activeVehicle.manualControlReservedButtonCount == -1 ? _activeJoystick.buttonCount : _activeVehicle.manualControlReservedButtonCount
                         }
@@ -547,7 +547,7 @@ QGCView {
                 width:      parent.width
                 spacing:    5
 
-                QGCLabel { text: "Axis Monitor" }
+                QGCLabel { text: qsTr("Axis Monitor") }
 
                 Connections {
                     target: controller
@@ -595,7 +595,7 @@ QGCView {
                 width:      parent.width
                 spacing:    ScreenTools.defaultFontPixelHeight
 
-                QGCLabel { text: "Button Monitor" }
+                QGCLabel { text: qsTr("Button Monitor") }
 
                 Connections {
                     target: _activeJoystick
