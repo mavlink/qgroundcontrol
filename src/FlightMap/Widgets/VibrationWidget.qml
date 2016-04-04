@@ -84,7 +84,7 @@ QGCFlickable {
                 QGCLabel {
                     id:     xBarLabel
                     color:  textColor
-                    text:   qsTr("X")
+                    text:   "X"
                     anchors.horizontalCenter: xBar.horizontalCenter
                 }
             }
@@ -102,7 +102,7 @@ QGCFlickable {
                 QGCLabel {
                     anchors.horizontalCenter: yBar.horizontalCenter
                     color:  textColor
-                    text:   qsTr("Y")
+                    text:   "Y"
                 }
             }
 
@@ -119,7 +119,7 @@ QGCFlickable {
                 QGCLabel {
                     anchors.horizontalCenter: zBar.horizontalCenter
                     color:  textColor
-                    text:   qsTr("Z")
+                    text:   "Z"
                 }
             }
         } // Row
