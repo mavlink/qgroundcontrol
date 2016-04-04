@@ -119,6 +119,16 @@ QColor QGCPalette::_mapWidgetBorderDark[QGCPalette::_cThemes][QGCPalette::_cColo
     { QColor(0, 0, 0), QColor(0, 0, 0) },
 };
 
+QColor QGCPalette::_brandingPurple[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#4A2C6D"), QColor("#4A2C6D") },
+    { QColor("#4A2C6D"), QColor("#4A2C6D") },
+};
+
+QColor QGCPalette::_brandingBlue[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#48D6FF"), QColor("#48D6FF") },
+    { QColor("#48D6FF"), QColor("#48D6FF") },
+};
+
 QGCPalette::QGCPalette(QObject* parent) :
     QObject(parent),
     _colorGroupEnabled(true)
