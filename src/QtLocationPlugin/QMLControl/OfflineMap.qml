@@ -841,7 +841,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
                         id:     optionsLabel
-                        text:   "Offline Map Options"
+                        text:   qsTr("Offline Map Options")
                         font.pixelSize:     ScreenTools.isAndroid ? ScreenTools.mediumFontPixelSize : ScreenTools.largeFontPixelSize
                         anchors.centerIn:   parent
                     }

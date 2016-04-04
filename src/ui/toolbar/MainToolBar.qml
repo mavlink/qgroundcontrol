@@ -213,7 +213,7 @@ Rectangle {
 
                 QGCLabel {
                     id:         gpsLabel
-                    text:       (activeVehicle && activeVehicle.gps.count.value >= 0) ? "GPS Status" : "GPS Data Unavailable"
+                    text:       (activeVehicle && activeVehicle.gps.count.value >= 0) ? qsTr("GPS Status") : qsTr("GPS Data Unavailable")
                     font.weight:Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
@@ -226,16 +226,16 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     columns: 2
 
-                    QGCLabel { text: "GPS Count:" }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.count.valueString : "N/A" }
-                    QGCLabel { text: "GPS Lock:" }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.lock.enumStringValue : "N/A" }
-                    QGCLabel { text: "HDOP:" }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.hdop.valueString : "--.--" }
-                    QGCLabel { text: "VDOP:" }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.vdop.valueString : "--.--" }
-                    QGCLabel { text: "Course Over Ground:" }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.courseOverGround.valueString : "--.--" }
+                    QGCLabel { text: qsTr("GPS Count:") }
+                    QGCLabel { text: activeVehicle ? activeVehicle.gps.count.valueString : qsTr("N/A", "No data to display") }
+                    QGCLabel { text: qsTr("GPS Lock:") }
+                    QGCLabel { text: activeVehicle ? activeVehicle.gps.lock.enumStringValue : qsTr("N/A", "No data to display") }
+                    QGCLabel { text: qsTr("HDOP:") }
+                    QGCLabel { text: activeVehicle ? activeVehicle.gps.hdop.valueString : qsTr("--.--", "No data to display") }
+                    QGCLabel { text: qsTr("VDOP:") }
+                    QGCLabel { text: activeVehicle ? activeVehicle.gps.vdop.valueString : qsTr("--.--", "No data to display") }
+                    QGCLabel { text: qsTr("Course Over Ground:") }
+                    QGCLabel { text: activeVehicle ? activeVehicle.gps.courseOverGround.valueString : qsTr("--.--", "No data to display") }
                 }
             }
 
@@ -267,7 +267,7 @@ Rectangle {
 
                 QGCLabel {
                     id:         battLabel
-                    text:       "Battery Status"
+                    text:       qsTr("Battery Status")
                     font.weight:Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
@@ -279,9 +279,9 @@ Rectangle {
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    QGCLabel { text: "Voltage:" }
+                    QGCLabel { text: qsTr("Voltage:") }
                     QGCLabel { text: (activeVehicle && activeVehicle.battery.voltage.value != -1) ? (activeVehicle.battery.voltage.valueString + " " + activeVehicle.battery.voltage.units) : "N/A" }
-                    QGCLabel { text: "Accumulated Consumption:" }
+                    QGCLabel { text: qsTr("Accumulated Consumption:") }
                     QGCLabel { text: (activeVehicle && activeVehicle.battery.mahConsumed.value != -1) ? (activeVehicle.battery.mahConsumed.valueString + " " + activeVehicle.battery.mahConsumed.units) : "N/A" }
                 }
             }
@@ -314,7 +314,7 @@ Rectangle {
 
                 QGCLabel {
                     id:         rssiLabel
-                    text:       activeVehicle ? (activeVehicle.rcRSSI > 0 ? "RC RSSI Status" : "RC RSSI Data Unavailable") : "N/A"
+                    text:       activeVehicle ? (activeVehicle.rcRSSI > 0 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data avaliable")
                     font.weight:Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
@@ -327,7 +327,7 @@ Rectangle {
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    QGCLabel { text: "RSSI:" }
+                    QGCLabel { text: qsTr("RSSI:") }
                     QGCLabel { text: activeVehicle ? (activeVehicle.rcRSSI + "%") : 0 }
                 }
             }
@@ -360,7 +360,7 @@ Rectangle {
 
                 QGCLabel {
                     id:             telemLabel
-                    text:           "Telemetry RSSI Status"
+                    text:           qsTr("Telemetry RSSI Status")
                     font.weight:    Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
@@ -372,19 +372,19 @@ Rectangle {
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    QGCLabel { text: "Local RSSI:" }
+                    QGCLabel { text: qsTr("Local RSSI:") }
                     QGCLabel { text: _controller.telemetryLRSSI + " dBm" }
-                    QGCLabel { text: "Remote RSSI:" }
+                    QGCLabel { text: qsTr("Remote RSSI:") }
                     QGCLabel { text: _controller.telemetryRRSSI + " dBm" }
-                    QGCLabel { text: "RX Errors:" }
+                    QGCLabel { text: qsTr("RX Errors:") }
                     QGCLabel { text: _controller.telemetryRXErrors }
-                    QGCLabel { text: "Errors Fixed:" }
+                    QGCLabel { text: qsTr("Errors Fixed:") }
                     QGCLabel { text: _controller.telemetryFixed }
-                    QGCLabel { text: "TX Buffer:" }
+                    QGCLabel { text: qsTr("TX Buffer:") }
                     QGCLabel { text: _controller.telemetryTXBuffer }
-                    QGCLabel { text: "Local Noise:" }
+                    QGCLabel { text: qsTr("Local Noise:") }
                     QGCLabel { text: _controller.telemetryLNoise }
-                    QGCLabel { text: "Remote Noise:" }
+                    QGCLabel { text: qsTr("Remote Noise:") }
                     QGCLabel { text: _controller.telemetryRNoise }
                 }
             }
@@ -493,7 +493,7 @@ Rectangle {
 
         QGCLabel {
             id:                     connectionLost
-            text:                   "COMMUNICATION LOST"
+            text:                   qsTr("COMMUNICATION LOST")
             font.pixelSize:         tbFontLarge
             font.weight:            Font.DemiBold
             color:                  colorRed
@@ -509,7 +509,7 @@ Rectangle {
             anchors.rightMargin:     mainWindow.tbSpacing * 2
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text:                   "Disconnect"
+            text:                   qsTr("Disconnect")
             visible:                parent.vehicleConnectionLost
             primary:                true
             onClicked:              activeVehicle.disconnectInactiveVehicle()
