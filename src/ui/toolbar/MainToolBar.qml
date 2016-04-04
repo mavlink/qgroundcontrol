@@ -428,12 +428,14 @@ Rectangle {
             anchors.bottom:         parent.bottom
             source:                 qgcPal.globalTheme == QGCPalette.Light ? "/res/QGCLogoBlack" : "/res/QGCLogoWhite"
             fillMode:               Image.PreserveAspectFit
+            smooth:                 true
+            mipmap:                 true
+            antialiasing:           true
 
             readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight / 2
 
             MouseArea {
                 anchors.fill: parent
-
                 onClicked: mainWindow.showLeftMenu()
             }
         }

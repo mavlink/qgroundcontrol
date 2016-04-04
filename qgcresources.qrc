@@ -147,8 +147,8 @@
         <file alias="Pause">resources/Pause.svg</file>
         <file alias="Play">resources/Play.svg</file>
         <file alias="PowerButton">resources/PowerButton.svg</file>
-        <file alias="QGCLogoWhite">resources/QGCLogoWhite.png</file>
-        <file alias="QGCLogoBlack">resources/QGCLogoBlack.png</file>
+        <file alias="QGCLogoWhite">resources/QGCLogoWhite.svg</file>
+        <file alias="QGCLogoBlack">resources/QGCLogoBlack.svg</file>
         <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
         <file alias="SplashScreen">resources/SplashScreen.png</file>
         <file alias="Stop">resources/Stop.svg</file>
