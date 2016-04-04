@@ -20,10 +20,8 @@
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
  
  ======================================================================*/
-#include <QQmlEngine>
 #include <QElapsedTimer>
 #include <cmath>
-#include <QQuickView>
 
 #include "MultiVehicleManager.h"
 #include "PX4FirmwarePlugin.h"
@@ -70,7 +68,7 @@ void FollowMe::enable()
 
     // set up the mavlink motion report timer`
 
-    _gcsMotionReportTimer.setInterval(1000);
+    _gcsMotionReportTimer.setInterval(_toolbox->qgcPositionManager()->updateInterval());
     _gcsMotionReportTimer.setSingleShot(false);
     connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
 

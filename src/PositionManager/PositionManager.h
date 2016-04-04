@@ -1,7 +1,4 @@
-﻿#pragma once
-
-#include <QtPositioning/qgeopositioninfosource.h>
-/*=====================================================================
+﻿/*=====================================================================
 
  QGroundControl Open Source Ground Control Station
 
@@ -23,8 +20,11 @@
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
  ======================================================================*/
+#pragma once
+
+#include <QtPositioning/qgeopositioninfosource.h>
+
 #include <QVariant>
-#include <QMutex>
 
 #include "QGCToolbox.h"
 #include "SimulatedPosition.h"
