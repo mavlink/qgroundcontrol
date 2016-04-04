@@ -301,7 +301,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       mountAngLabel.right
                     anchors.baseline:   mountAngMinField.baseline
-                    text:               "min"
+                    text:               qsTr("min")
                     enabled:            directionEnabled
                 }
 
@@ -409,7 +409,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   gimbalTypeCombo.baseline
-                    text:               "Type:"
+                    text:               qsTr("Type:")
                 }
 
                 FactComboBox {
