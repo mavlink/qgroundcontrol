@@ -36,13 +36,13 @@ This file is part of the QGROUNDCONTROL project
 #include <QUdpSocket>
 #include <QtPlugin>
 #include <QStringListModel>
-#include "AppMessagesDialog.h"
 #include "QGCApplication.h"
 
 #define  SINGLE_INSTANCE_PORT   14499
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
+    #include "AppMessagesDialog.h"
 #endif
 
 #ifdef QT_DEBUG
@@ -116,6 +116,9 @@ int main(int argc, char *argv[])
 {
 
 #ifndef __mobile__
+    // install the message handler
+    AppMessagesDialog::installHandler();
+
     //-- Test for another instance already running. If that's the case, we simply exit.
     QHostAddress host("127.0.0.1");
     QUdpSocket socket;
@@ -133,8 +136,6 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-    // install the message handler
-    AppMessagesDialog::installHandler();
 #ifdef Q_OS_WIN
     // Set our own OpenGL buglist
     qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");

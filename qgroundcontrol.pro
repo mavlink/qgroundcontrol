@@ -297,8 +297,7 @@ HEADERS += \
     src/AutoPilotPlugins/APM/APMAirframeLoader.h \
     src/QmlControls/QGCImageProvider.h \
     src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.h \
-    src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
-    src/ViewWidgets/AppMessagesDialog.h
+    src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h
 
 DebugBuild {
 HEADERS += \
@@ -371,6 +370,7 @@ HEADERS += \
     src/ViewWidgets/LogDownload.h \
     src/ViewWidgets/LogDownloadController.h \
     src/ViewWidgets/ViewWidgetController.h \
+    src/ViewWidgets/AppMessagesDialog.h
 }
 
 iOSBuild {
@@ -437,8 +437,7 @@ SOURCES += \
     src/AutoPilotPlugins/APM/APMAirframeLoader.cc \
     src/QmlControls/QGCImageProvider.cc \
     src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.cc \
-    src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
-    src/ViewWidgets/AppMessagesDialog.cc
+    src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc
 
 DebugBuild {
 SOURCES += \
@@ -504,6 +503,7 @@ SOURCES += \
     src/ViewWidgets/LogDownload.cc \
     src/ViewWidgets/LogDownloadController.cc \
     src/ViewWidgets/ViewWidgetController.cc \
+    src/ViewWidgets/AppMessagesDialog.cc
 }
 
 #
