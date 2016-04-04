@@ -66,6 +66,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInfoWidget.h"
 #include "HILDockWidget.h"
 #include "LogDownload.h"
+#include "AppMessagesDialog.h"
 #endif
 
 #ifndef __ios__
@@ -88,7 +89,8 @@ enum DockWidgetTypes {
     INFO_VIEW,
     HIL_CONFIG,
     ANALYZE,
-    LOG_DOWNLOAD
+    LOG_DOWNLOAD,
+    DEBUG_MESSAGES
 };
 
 static const char *rgDockWidgetNames[] = {
@@ -99,7 +101,8 @@ static const char *rgDockWidgetNames[] = {
     "Info View",
     "HIL Config",
     "Analyze",
-    "Log Download"
+    "Log Download",
+    "Debug Messages"
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -306,7 +309,7 @@ void MainWindow::_buildCommonWidgets(void)
         const char* pDockWidgetName = rgDockWidgetNames[i];
 
         // Add to menu
-        QAction* action = new QAction(tr(pDockWidgetName), NULL);
+        QAction* action = new QAction(tr(pDockWidgetName), this);
         action->setCheckable(true);
         action->setData(i);
         connect(action, &QAction::triggered, this, &MainWindow::_showDockWidgetAction);
@@ -351,6 +354,9 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
                 break;
             case LOG_DOWNLOAD:
                 widget = new LogDownload(widgetName, action, this);
+                break;
+            case DEBUG_MESSAGES:
+                widget = new AppMessagesDialog(widgetName, action, this);
                 break;
             case STATUS_DETAILS:
                 widget = new UASInfoWidget(widgetName, action, this);
@@ -418,10 +424,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     _storeCurrentViewState();
     storeSettings();
-
-    //-- TODO: This effectively causes the QGCApplication destructor to not being able
-    //   to access the pointer it is trying to delete.
-    _instance = NULL;
 
     emit mainWindowClosed();
 }

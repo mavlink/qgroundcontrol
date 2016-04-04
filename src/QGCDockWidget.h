@@ -41,7 +41,7 @@ public:
 	
 protected:
     QString             _title;
-	QAction*            _action;
+	QPointer<QAction>   _action;
     static const char*  _settingsGroup;
 };
 
