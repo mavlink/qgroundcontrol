@@ -42,7 +42,7 @@ Item {
         color:          Qt.rgba(0,0,0,0.75)
         visible:        !_controller.videoRunning
         QGCLabel {
-            text:               "NO VIDEO"
+            text:               qsTr("NO VIDEO")
             font.weight:        Font.DemiBold
             color:              "white"
             font.pixelSize:     _mainIsMap ? 12 * ScreenTools.fontHRatio : 20 * ScreenTools.fontHRatio

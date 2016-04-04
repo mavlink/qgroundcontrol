@@ -27,38 +27,38 @@ FactPanel {
         anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: "Roll:"
-            valueText: mapRollFact ? (mapRollFact.value === 0 ? "Setup required" : mapRollFact.valueString) : ""
+            labelText: qsTr("Roll:")
+            valueText: mapRollFact ? (mapRollFact.value === 0 ? qsTr("Setup required") : mapRollFact.valueString) : ""
         }
 
         VehicleSummaryRow {
-            labelText: "Pitch:"
-            valueText: mapPitchFact ? (mapPitchFact.value === 0 ? "Setup required" : mapPitchFact.valueString) : ""
+            labelText: qsTr("Pitch:")
+            valueText: mapPitchFact ? (mapPitchFact.value === 0 ? qsTr("Setup required") : mapPitchFact.valueString) : ""
         }
 
         VehicleSummaryRow {
-            labelText: "Yaw:"
-            valueText: mapYawFact ? (mapYawFact.value === 0 ? "Setup required" : mapYawFact.valueString) : ""
+            labelText: qsTr("Yaw:")
+            valueText: mapYawFact ? (mapYawFact.value === 0 ? qsTr("Setup required") : mapYawFact.valueString) : ""
         }
 
         VehicleSummaryRow {
-            labelText: "Throttle:"
-            valueText: mapThrottleFact ? (mapThrottleFact.value === 0 ? "Setup required" : mapThrottleFact.valueString) : ""
+            labelText: qsTr("Throttle:")
+            valueText: mapThrottleFact ? (mapThrottleFact.value === 0 ? qsTr("Setup required") : mapThrottleFact.valueString) : ""
         }
 
         VehicleSummaryRow {
-            labelText: "Flaps:"
-            valueText: mapFlapsFact ? (mapFlapsFact.value === 0 ? "Disabled" : mapFlapsFact.valueString) : ""
+            labelText: qsTr("Flaps:")
+            valueText: mapFlapsFact ? (mapFlapsFact.value === 0 ? qsTr("Disabled") : mapFlapsFact.valueString) : ""
         }
 
         VehicleSummaryRow {
-            labelText: "Aux1:"
-            valueText: mapAux1Fact ? (mapAux1Fact.value === 0 ? "Disabled" : mapAux1Fact.valueString) : ""
+            labelText: qsTr("Aux1:")
+            valueText: mapAux1Fact ? (mapAux1Fact.value === 0 ? qsTr("Disabled") : mapAux1Fact.valueString) : ""
         }
 
         VehicleSummaryRow {
-            labelText: "Aux2:"
-            valueText: mapAux2Fact ? (mapAux2Fact.value === 0 ? "Disabled" : mapAux2Fact.valueString) : ""
+            labelText: qsTr("Aux2:")
+            valueText: mapAux2Fact ? (mapAux2Fact.value === 0 ? qsTr("Disabled") : mapAux2Fact.valueString) : ""
         }
     }
 }

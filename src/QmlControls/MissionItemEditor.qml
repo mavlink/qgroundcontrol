@@ -73,12 +73,12 @@ Rectangle {
                 id: hamburgerMenu
 
                 MenuItem {
-                    text:           "Insert"
+                    text:           qsTr("Insert")
                     onTriggered:    insert(missionItem.sequenceNumber)
                 }
 
                 MenuItem {
-                    text:           "Delete"
+                    text:           qsTr("Delete")
                     onTriggered:    remove()
                 }
 
@@ -87,7 +87,7 @@ Rectangle {
                 }
 
                 MenuItem {
-                    text:       "Show all values"
+                    text:       qsTr("Show all values")
                     checkable:  true
                     checked:    missionItem.isSimpleItem ? missionItem.rawEdit : false
                     visible:    missionItem.isSimpleItem
@@ -97,7 +97,7 @@ Rectangle {
                             if (missionItem.friendlyEditAllowed) {
                                 missionItem.rawEdit = false
                             } else {
-                                qgcView.showMessage("Mission Edit", "You have made changes to the mission item which cannot be shown in Simple Mode", StandardButton.Ok)
+                                qgcView.showMessage(qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"), StandardButton.Ok)
                             }
                         } else {
                             missionItem.rawEdit = true
@@ -126,14 +126,14 @@ Rectangle {
             }
         }
 
-        onClicked:              qgcView.showDialog(commandDialog, "Select Mission Command", qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+        onClicked:              qgcView.showDialog(commandDialog, qsTr("Select Mission Command"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
     }
 
     QGCLabel {
         anchors.fill:       commandPicker
         visible:            missionItem.sequenceNumber == 0 || !missionItem.isCurrentItem || !missionItem.isSimpleItem
         verticalAlignment:  Text.AlignVCenter
-        text:               missionItem.sequenceNumber == 0 ? "Home Position" : (missionItem.isSimpleItem ? missionItem.commandName : "Survey")
+        text:               missionItem.sequenceNumber == 0 ? qsTr("Home Position") : (missionItem.isSimpleItem ? missionItem.commandName : qsTr("Survey"))
         color:              _outerTextColor
     }
 

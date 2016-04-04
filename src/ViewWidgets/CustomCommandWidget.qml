@@ -96,12 +96,12 @@ QGCView {
                 anchors.bottom:     parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCButton {
-                    text:       "Load Custom Qml file..."
+                    text:       qsTr("Load Custom Qml file...")
                     width:      ScreenTools.defaultFontPixelWidth * 22
                     onClicked:  controller.selectQmlFile()
                 }
                 QGCButton {
-                    text:       "Reset"
+                    text:       qsTr("Reset")
                     width:      ScreenTools.defaultFontPixelWidth * 22
                     onClicked: {
                         controller.clearQmlFile()

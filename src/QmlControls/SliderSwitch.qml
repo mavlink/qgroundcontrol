@@ -26,7 +26,7 @@ Rectangle {
         id: label
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.verticalCenter:     parent.verticalCenter
-        text:   "Slide to " + confirmText
+        text:   qsTr("Slide to %1").arg(confirmText)
     }
 
     Rectangle {

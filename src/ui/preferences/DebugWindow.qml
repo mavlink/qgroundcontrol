@@ -55,7 +55,7 @@ QGCView {
             anchors.left:    parent.left
             columns: 2
             Text {
-                text:   "Qt Platform:"
+                text:   qsTr("Qt Platform:")
                 color:  qgcPal.text
             }
             Text {
@@ -63,7 +63,7 @@ QGCView {
                 color:  qgcPal.text
             }
             Text {
-                text:   "Default font width:"
+                text:   qsTr("Default font width:")
                 color:  qgcPal.text
             }
             Text {
@@ -71,7 +71,7 @@ QGCView {
                 color:  qgcPal.text
             }
             Text {
-                text:   "Default font height:"
+                text:   qsTr("Default font height:")
                 color:  qgcPal.text
             }
             Text {
@@ -79,7 +79,7 @@ QGCView {
                 color:  qgcPal.text
             }
             Text {
-                text:   "Default font pixel size:"
+                text:   qsTr("Default font pixel size:")
                 color:  qgcPal.text
             }
             Text {
@@ -87,7 +87,7 @@ QGCView {
                 color:  qgcPal.text
             }
             Text {
-                text:   "Default font point size:"
+                text:   qsTr("Default font point size:")
                 color:  qgcPal.text
             }
             Text {
@@ -95,7 +95,7 @@ QGCView {
                 color:  qgcPal.text
             }
             Text {
-                text:   "QML Screen Desktop:"
+                text:   qsTr("QML Screen Desktop:")
                 color:  qgcPal.text
             }
             Text {
@@ -103,7 +103,7 @@ QGCView {
                 color:  qgcPal.text
             }
             Text {
-                text:   "QML Screen Size:"
+                text:   qsTr("QML Screen Size:")
                 color:  qgcPal.text
             }
             Text {
@@ -111,7 +111,7 @@ QGCView {
                 color:  qgcPal.text
             }
             Text {
-                text:   "QML Pixel Density:"
+                text:   qsTr("QML Pixel Density:")
                 color:  qgcPal.text
             }
             Text {
@@ -119,7 +119,7 @@ QGCView {
                 color:  qgcPal.text
             }
             Text {
-                text:   "QML Pixel Ratio:"
+                text:   qsTr("QML Pixel Ratio:")
                 color:  qgcPal.text
             }
             Text {

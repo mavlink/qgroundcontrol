@@ -36,7 +36,7 @@ Rectangle {
     property bool calInProgress: false
 
     // Text to show while calibration is in progress
-    property string calInProgressText: "Hold Still"
+    property string calInProgressText: qsTr("Hold Still")
 
     // Image source
     property var imageSource: ""
@@ -49,7 +49,7 @@ Rectangle {
 
     Rectangle {
         readonly property int inset: 5
-        property string calText: calInProgress ? calInProgressText : (calValid ? "Completed" : "Incomplete")
+        property string calText: calInProgress ? calInProgressText : (calValid ? qsTr("Completed") : qsTr("Incomplete"))
 
         x:      inset
         y:      inset

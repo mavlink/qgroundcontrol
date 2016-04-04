@@ -45,7 +45,7 @@ Item {
         width:      parent.width
         spacing:    ScreenTools.defaultFontPixelHeight / 2
         QGCLabel {
-            text:   "Log Replay Link Settings"
+            text:   qsTr("Log Replay Link Settings")
         }
         Item {
             height: ScreenTools.defaultFontPixelHeight / 2
@@ -54,7 +54,7 @@ Item {
         Row {
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
-                text:   "Log File:"
+                text:   qsTr("Log File:")
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -65,7 +65,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
             QGCButton {
-                text:   "Browse"
+                text:   qsTr("Browse")
                 onClicked: {
                     fileDialog.visible = true
                 }
@@ -73,7 +73,7 @@ Item {
         }
         FileDialog {
             id:         fileDialog
-            title:      "Please choose a file"
+            title:      qsTr("Please choose a file")
             folder:     shortcuts.home
             visible:    false
             selectExisting: true

@@ -30,23 +30,23 @@ FactPanel {
         anchors.fill:       parent
         anchors.margins:    8
         VehicleSummaryRow {
-            labelText: "Firmware Version:"
+            labelText: qsTr("Firmware Version:")
             valueText: esp8266.version
         }
         VehicleSummaryRow {
-            labelText: "WiFi Channel:"
+            labelText: qsTr("WiFi Channel:")
             valueText: wifiChannel ? wifiChannel.valueString : ""
         }
         VehicleSummaryRow {
-            labelText: "WiFi SSID:"
+            labelText: qsTr("WiFi SSID:")
             valueText: esp8266.wifiSSID
         }
         VehicleSummaryRow {
-            labelText: "WiFi Password:"
+            labelText: qsTr("WiFi Password:")
             valueText: esp8266.wifiPassword
         }
         VehicleSummaryRow {
-            labelText: "UART Baud Rate:"
+            labelText: qsTr("UART Baud Rate:")
             valueText: uartBaud ? uartBaud.valueString : ""
         }
     }

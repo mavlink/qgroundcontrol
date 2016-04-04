@@ -64,7 +64,7 @@ Item {
         width:      mockLinkSettings.width
         spacing:    ScreenTools.defaultFontPixelHeight / 2
         QGCLabel {
-            text:   "Mock Link Settings"
+            text:   qsTr("Mock Link Settings")
         }
         Item {
             height: ScreenTools.defaultFontPixelHeight / 2
@@ -72,7 +72,7 @@ Item {
         }
         QGCCheckBox {
             id:         sendStatus
-            text:       "Send Status Text and Voice"
+            text:       qsTr("Send Status Text and Voice")
             checked:    false
         }
         Item {
@@ -83,19 +83,19 @@ Item {
             ExclusiveGroup { id: autoPilotGroup }
             QGCRadioButton {
                 id:         px4Firmware
-                text:       "PX4 Firmware"
+                text:       qsTr("PX4 Firmware")
                 checked:    false
                 exclusiveGroup: autoPilotGroup
             }
             QGCRadioButton {
                 id:         apmFirmware
-                text:       "APM Firmware"
+                text:       qsTr("APM Firmware")
                 checked:    false
                 exclusiveGroup: autoPilotGroup
             }
             QGCRadioButton {
                 id:         genericFirmware
-                text:       "Generic Firmware"
+                text:       qsTr("Generic Firmware")
                 checked:    false
                 exclusiveGroup: autoPilotGroup
             }
@@ -105,7 +105,7 @@ Item {
             width:  parent.width
         }
         QGCLabel {
-            text:       "APM Vehicle Type"
+            text:       qsTr("APM Vehicle Type")
             visible:    apmFirmware.checked
         }
         ColumnLayout {
@@ -113,13 +113,13 @@ Item {
             ExclusiveGroup { id: apmVehicleGroup }
             QGCRadioButton {
                 id:     copterVehicle
-                text:   "ArduCopter"
+                text:   qsTr("ArduCopter")
                 checked:    false
                 exclusiveGroup: apmVehicleGroup
             }
             QGCRadioButton {
                 id:     planeVehicle
-                text:   "ArduPlane"
+                text:   qsTr("ArduPlane")
                 checked:    false
                 exclusiveGroup: apmVehicleGroup
             }
