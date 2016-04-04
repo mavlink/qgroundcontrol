@@ -94,7 +94,10 @@ QT += \
 
 #  testlib is needed even in release flavor for QSignalSpy support
 QT += testlib
-
+ReleaseBuild {
+    # We don't need the testlib console in release mode
+    QT.testlib.CONFIG -= console
+}
 #
 # OS Specific settings
 #
@@ -295,6 +298,7 @@ HEADERS += \
     src/QmlControls/QGCImageProvider.h \
     src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
+    src/ViewWidgets/AppMessagesDialog.h
 
 DebugBuild {
 HEADERS += \
@@ -434,6 +438,7 @@ SOURCES += \
     src/QmlControls/QGCImageProvider.cc \
     src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
+    src/ViewWidgets/AppMessagesDialog.cc
 
 DebugBuild {
 SOURCES += \
