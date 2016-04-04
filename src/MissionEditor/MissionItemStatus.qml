@@ -82,6 +82,7 @@ Rectangle {
 
         QGCLabel { text: qsTr("Azimuth:") }
         QGCLabel { text: _azimuthText }
+    }
 
     QGCFlickable {
         anchors.leftMargin:     _margins
