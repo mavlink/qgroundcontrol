@@ -47,7 +47,7 @@ Rectangle {
     readonly property real      _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
     readonly property real      _margin:            Math.round(_defaultTextHeight / 2)
     readonly property real      _buttonWidth:       Math.round(_defaultTextWidth * 18)
-    readonly property string    _armedVehicleText:  "This operation cannot be performed while vehicle is armed."
+    readonly property string    _armedVehicleText:  qsTr("This operation cannot be performed while vehicle is armed.")
 
     property string _messagePanelText:              "missing message panel text"
     property bool   _fullParameterVehicleAvailable: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !QGroundControl.multiVehicleManager.activeVehicle.missingParameters
