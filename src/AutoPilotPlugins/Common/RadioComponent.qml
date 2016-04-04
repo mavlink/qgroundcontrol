@@ -306,7 +306,7 @@ QGCView {
                     QGCLabel {
                         id:     pitchLabel
                         width:  defaultTextWidth * 10
-                        text:   "Pitch"
+                        text:   qsTr("Pitch")
                     }
 
                     Loader {
@@ -336,7 +336,7 @@ QGCView {
                     QGCLabel {
                         id:     yawLabel
                         width:  defaultTextWidth * 10
-                        text:   "Yaw"
+                        text:   qsTr("Yaw")
                     }
 
                     Loader {
