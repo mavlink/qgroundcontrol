@@ -85,7 +85,7 @@ QGCViewDialog {
             QGCLabel {
                 width:      parent.width
                 wrapMode:   Text.WordWrap
-                text:       fact.shortDescription ? fact.shortDescription : "Description missing"
+                text:       fact.shortDescription ? fact.shortDescription : qsTr("Description missing")
             }
 
             QGCLabel {
