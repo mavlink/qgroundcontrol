@@ -419,15 +419,22 @@ Rectangle {
 
         ExclusiveGroup { id: mainActionGroup }
 
-        QGCToolBarButton {
-            id:                 preferencesButton
-            width:              mainWindow.tbButtonWidth
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            source:             "/qmlimages/Hamburger.svg"
-            onClicked: {
-                mainWindow.showLeftMenu();
-                preferencesButton.checked = false;
+        Image {
+            id:                     preferencesButton
+            width:                  mainWindow.tbButtonWidth
+            anchors.topMargin:      _topBottomMargins
+            anchors.bottomMargin:   _topBottomMargins
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            source:                 qgcPal.globalTheme == QGCPalette.Light ? "/res/QGCLogoBlack" : "/res/QGCLogoWhite"
+            fillMode:               Image.PreserveAspectFit
+
+            readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight / 2
+
+            MouseArea {
+                anchors.fill: parent
+
+                onClicked: mainWindow.showLeftMenu()
             }
         }
 
