@@ -93,7 +93,7 @@ QGCView {
             delegate:        delegateItem
         }
 
-        Button {
+        QGCButton {
             id:  followTail
             anchors.bottom:  parent.bottom
             anchors.right:   parent.right
