@@ -334,7 +334,7 @@ Rectangle {
                 anchors.right:      parent.right
                 QGCButton {
                     width:      ScreenTools.defaultFontPixelWidth * 10
-                    text:       "OK"
+                    text:       qsTr("OK")
                     enabled:    nameField.text !== ""
                     onClicked: {
                         // Save editting
