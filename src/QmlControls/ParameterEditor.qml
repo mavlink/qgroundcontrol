@@ -330,7 +330,7 @@ QGCView {
                         acceptedButtons:    Qt.LeftButton
                         onClicked: {
                             _editorDialogFact = factRow.modelFact
-                            showDialog(editorDialogComponent, "Parameter Editor", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
+                            showDialog(editorDialogComponent, qsTr("Parameter Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
                         }
                     }
                 }
@@ -365,7 +365,7 @@ QGCView {
 
             QGCLabel {
                 id:     searchForLabel
-                text:   "Search for:"
+                text:   qsTr("Search for:")
             }
 
             QGCTextField {
@@ -380,7 +380,7 @@ QGCView {
                 anchors.top:        searchFor.bottom
                 width:              parent.width
                 wrapMode:           Text.WordWrap
-                text:               "Hint: Leave 'Search For' blank and click Apply to list all parameters sorted by name."
+                text:               qsTr("Hint: Leave 'Search For' blank and click Apply to list all parameters sorted by name.")
             }
         }
     }

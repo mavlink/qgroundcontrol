@@ -75,7 +75,7 @@ Item {
             z:                          QGroundControl.zOrderTopMost
             color:                      mapPal.text
             font.pixelSize:             ScreenTools.largeFontPixelSize
-            text:                       "No GPS Lock for Vehicle"
+            text:                       qsTr("No GPS Lock for Vehicle")
         }
 
         QGCLabel {
@@ -421,7 +421,7 @@ Item {
                 guidedModeConfirm.confirmText = qsTr("land")
                 break;
             case confirmHome:
-                guidedModeConfirm.confirmText = "return to launch"
+                guidedModeConfirm.confirmText = qsTr("return to launch")
                 break;
             case confirmChangeAlt:
                 altitudeSlider.visible = true

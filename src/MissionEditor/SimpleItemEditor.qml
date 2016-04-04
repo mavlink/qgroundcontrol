@@ -114,7 +114,7 @@ Rectangle {
             }
 
             QGCButton {
-                text:       "Move Home to map center"
+                text:       qsTr("Move Home to map center")
                 visible:    missionItem.homePosition
                 onClicked:  editorRoot.moveHomeToMapCenter()
                 anchors.horizontalCenter: parent.horizontalCenter
