@@ -43,11 +43,7 @@ Button {
         repeat:     true
 
         onTriggered: {
-            if (__lastGlobalMouseX != ScreenTools.mouseX() || __lastGlobalMouseY != ScreenTools.mouseY()) {
-                __forceHoverOff = true
-            } else {
-                __forceHoverOff = false
-            }
+            __forceHoverOff = (__lastGlobalMouseX != ScreenTools.mouseX() || __lastGlobalMouseY != ScreenTools.mouseY());
         }
     }
 
