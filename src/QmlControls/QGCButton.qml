@@ -33,8 +33,8 @@ Button {
             __lastGlobalMouseX = ScreenTools.mouseX()
             __lastGlobalMouseY = ScreenTools.mouseY()
         }
-        onEntered: { __forceHoverOff; false; hoverTimer.start() }
-        onExited: { __forceHoverOff; false; hoverTimer.stop() }
+        onEntered: { __forceHoverOff = false; hoverTimer.start() }
+        onExited: { __forceHoverOff = false; hoverTimer.stop() }
     }
 
     Timer {
