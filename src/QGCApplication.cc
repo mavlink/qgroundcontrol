@@ -104,6 +104,7 @@
 #include "ValuesWidgetController.h"
 #include "AppMessages.h"
 #include "SimulatedPosition.h"
+#include "PositionManager.h"
 #include "FollowMe.h"
 
 #ifndef __ios__

@@ -178,7 +178,7 @@ Item {
 
     //-- Detect tablet position
     Connections {
-        target: QGroundControl.qgcPositionManger.positionSource
+        target: QGroundControl.qgcPositionManger
 
         onLastPositionUpdated: {
             if(valid) {

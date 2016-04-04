@@ -39,7 +39,7 @@
 #include "UASMessageHandler.h"
 #include "QGCMapEngineManager.h"
 #include "FollowMe.h"
-#include "SimulatedPosition.h"
+#include "PositionManager.h"
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
     : _audioOutput(NULL)
