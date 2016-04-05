@@ -21,7 +21,7 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-#include "AppMessagesDialog.h"
+#include "AppMessages.h"
 #include <QStringListModel>
 #include <iostream>
 
@@ -46,18 +46,12 @@ static void msgHandler(QtMsgType type, const QMessageLogContext &context, const 
     if( type == QtFatalMsg ) abort();
 }
 
-
-AppMessagesDialog::AppMessagesDialog(const QString &title, QAction *action, QWidget *parent) :
-    QGCQmlWidgetHolder(title, action, parent)
-{
-    resize(800, 600);
-    setContextPropertyObject("debugMessageModel", &debug_strings);
-    setSource(QUrl::fromUserInput("qrc:/qml/AppMessagesDialog.qml"));
-    loadSettings();
-}
-
-void AppMessagesDialog::installHandler()
+void AppMessages::installHandler()
 {
     old_handler = qInstallMessageHandler(msgHandler);
 }
 
+QStringListModel& AppMessages::getModel()
+{
+    return debug_strings;
+}

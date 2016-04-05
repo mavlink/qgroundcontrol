@@ -66,7 +66,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInfoWidget.h"
 #include "HILDockWidget.h"
 #include "LogDownload.h"
-#include "AppMessagesDialog.h"
+#include "AppMessages.h"
 #endif
 
 #ifndef __ios__
@@ -89,8 +89,7 @@ enum DockWidgetTypes {
     INFO_VIEW,
     HIL_CONFIG,
     ANALYZE,
-    LOG_DOWNLOAD,
-    DEBUG_MESSAGES
+    LOG_DOWNLOAD
 };
 
 static const char *rgDockWidgetNames[] = {
@@ -101,8 +100,7 @@ static const char *rgDockWidgetNames[] = {
     "Info View",
     "HIL Config",
     "Analyze",
-    "Log Download",
-    "Debug Messages"
+    "Log Download"
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -167,6 +165,7 @@ MainWindow::MainWindow()
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     _mainQmlWidgetHolder->setContextPropertyObject("controller", this);
+    _mainQmlWidgetHolder->setContextPropertyObject("debugMessageModel", &AppMessages::getModel());
     _mainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
 
     // Image provider
@@ -354,9 +353,6 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
                 break;
             case LOG_DOWNLOAD:
                 widget = new LogDownload(widgetName, action, this);
-                break;
-            case DEBUG_MESSAGES:
-                widget = new AppMessagesDialog(widgetName, action, this);
                 break;
             case STATUS_DETAILS:
                 widget = new UASInfoWidget(widgetName, action, this);

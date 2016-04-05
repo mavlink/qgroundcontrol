@@ -216,6 +216,19 @@ Item {
                 QGCButton {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
+                    text:           "Console"
+                    exclusiveGroup: panelActionGroup
+                    onClicked: {
+                        if(__rightPanel.source != "QGroundControl/Controls/AppMessages.qml") {
+                            __rightPanel.source = "QGroundControl/Controls/AppMessages.qml"
+                        }
+                        checked = true
+                    }
+                }
+
+                QGCButton {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
                     text:           "Mock Link"
                     visible:        ScreenTools.isDebug
                     exclusiveGroup: panelActionGroup

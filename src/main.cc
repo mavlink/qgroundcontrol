@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
-    #include "AppMessagesDialog.h"
+    #include "AppMessages.h"
 #endif
 
 #ifdef QT_DEBUG
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 
 #ifndef __mobile__
     // install the message handler
-    AppMessagesDialog::installHandler();
+    AppMessages::installHandler();
 
     //-- Test for another instance already running. If that's the case, we simply exit.
     QHostAddress host("127.0.0.1");
