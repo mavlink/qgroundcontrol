@@ -37,12 +37,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QtPlugin>
 #include <QStringListModel>
 #include "QGCApplication.h"
+#include "AppMessages.h"
 
 #define  SINGLE_INSTANCE_PORT   14499
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
-    #include "AppMessages.h"
 #endif
 
 #ifdef QT_DEBUG
@@ -114,11 +114,10 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
 int main(int argc, char *argv[])
 {
-
-#ifndef __mobile__
     // install the message handler
     AppMessages::installHandler();
 
+#ifndef __mobile__
     //-- Test for another instance already running. If that's the case, we simply exit.
     QHostAddress host("127.0.0.1");
     QUdpSocket socket;
