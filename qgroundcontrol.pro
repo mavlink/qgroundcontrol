@@ -307,6 +307,7 @@ HEADERS += \
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
     HEADERS += src/stable_headers.h
+    CONFIG -= silent
 }
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
