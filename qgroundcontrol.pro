@@ -64,7 +64,8 @@ LinuxBuild {
 
 CONFIG += qt \
     thread \
-    c++11
+    c++11 \
+    silent
 
 QT += \
     concurrent \
@@ -306,6 +307,7 @@ HEADERS += \
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
     HEADERS += src/stable_headers.h
+    CONFIG -= silent
 }
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
