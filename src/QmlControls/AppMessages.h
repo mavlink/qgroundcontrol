@@ -23,15 +23,11 @@ This file is part of the QGROUNDCONTROL project
 
 #pragma once
 
-#include "QGCQmlWidgetHolder.h"
-
 class QStringListModel;
 
-class AppMessagesDialog : public QGCQmlWidgetHolder
+class AppMessages
 {
-    Q_OBJECT
 public:
-    AppMessagesDialog(const QString& title, QAction* action, QWidget *parent = 0);
-
     static void installHandler();
+    static QStringListModel& getModel();
 };
