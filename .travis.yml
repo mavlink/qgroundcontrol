@@ -188,6 +188,10 @@ script:
     fi
 
 after_success:
+  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "installer" ]]; then
+        ${TRAVIS_BUILD_DIR}/deploy/create_linux_appimage.sh
+        ;
+    fi
   - if [ "${TRAVIS_TAG}" ]; then
         export GOOGLE_PLAY_TRACK=production;
     else
