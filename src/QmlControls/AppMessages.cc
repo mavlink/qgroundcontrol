@@ -22,11 +22,14 @@ This file is part of the QGROUNDCONTROL project
 ======================================================================*/
 
 #include "AppMessages.h"
+#include <QFile>
 #include <QStringListModel>
-#include <iostream>
+#include <QtConcurrent>
+#include <QTextStream>
 
+AppLogModel AppLogModel::instance;
 static QtMessageHandler old_handler;
-static QStringListModel debug_strings;
+static AppLogModel &debug_strings = AppLogModel::getModel();
 
 static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -51,7 +54,33 @@ void AppMessages::installHandler()
     old_handler = qInstallMessageHandler(msgHandler);
 }
 
-QStringListModel& AppMessages::getModel()
+AppLogModel *AppMessages::getModel()
 {
-    return debug_strings;
+    return &AppLogModel::getModel();
+}
+
+AppLogModel& AppLogModel::getModel()
+{
+    return instance;
+}
+
+AppLogModel::AppLogModel() : QStringListModel()
+{
+}
+
+void AppLogModel::writeMessages(const QUrl dest_file)
+{
+    const QString writebuffer(stringList().join('\n').append('\n'));
+
+    QtConcurrent::run([dest_file, writebuffer] {
+        emit instance.writeStarted();
+        bool success = false;
+        QFile file(dest_file.toLocalFile());
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&file);
+            out << writebuffer;
+            success = out.status() == QTextStream::Ok;
+        }
+        emit instance.writeFinished(success);
+    });
 }

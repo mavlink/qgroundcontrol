@@ -165,7 +165,7 @@ MainWindow::MainWindow()
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     _mainQmlWidgetHolder->setContextPropertyObject("controller", this);
-    _mainQmlWidgetHolder->setContextPropertyObject("debugMessageModel", &AppMessages::getModel());
+    _mainQmlWidgetHolder->setContextPropertyObject("debugMessageModel", AppMessages::getModel());
     _mainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
 
     // Image provider

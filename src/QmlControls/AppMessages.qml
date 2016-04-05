@@ -93,8 +93,44 @@ QGCView {
             delegate:        delegateItem
         }
 
+        FileDialog {
+            id:             writeDialog
+            folder:         shortcuts.home
+            nameFilters:    ["Log files (*.txt)", "All Files (*)"]
+            selectExisting: false
+            title:          "Select log save file"
+            onAccepted: {
+                debugMessageModel.writeMessages(fileUrl);
+                visible = false;
+            }
+            onRejected:     visible = false
+        }
+
+        Connections {
+            target:          debugMessageModel
+            onWriteStarted:  writeButton.enabled = false;
+            onWriteFinished: writeButton.enabled = true;
+        }
+
         QGCButton {
-            id:  followTail
+            id:              writeButton
+            anchors.bottom:  parent.bottom
+            anchors.left:    parent.left
+            anchors.margins: ScreenTools.defaultFontPixelWidth
+            onClicked:       writeDialog.visible = true
+            text:            "Save App Log"
+        }
+
+        BusyIndicator {
+            id:              writeBusy
+            anchors.bottom:  writeButton.bottom
+            anchors.left:    writeButton.right
+            height:          writeButton.height
+            visible:        !writeButton.enabled
+        }
+
+        QGCButton {
+            id:              followTail
             anchors.bottom:  parent.bottom
             anchors.right:   parent.right
             anchors.margins: ScreenTools.defaultFontPixelWidth
