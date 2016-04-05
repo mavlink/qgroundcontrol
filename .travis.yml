@@ -164,7 +164,7 @@ script:
   - echo -en 'travis_fold:start:script.1\\r'
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
         cd ${SHADOW_BUILD_DIR} &&
-        make -j4 | sed 's/${TRAVIS_BUILD_DIR}/-/'
+        make --silent -j4 | sed 's/${TRAVIS_BUILD_DIR}/-/'
         ;
     fi
   - if [ "${SPEC}" = "ios" ]; then
