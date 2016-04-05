@@ -23,11 +23,31 @@ This file is part of the QGROUNDCONTROL project
 
 #pragma once
 
-class QStringListModel;
+#include <QObject>
+#include <QStringListModel>
+#include <QUrl>
+
+class AppLogModel : public QStringListModel
+{
+    Q_OBJECT
+public:
+    static AppLogModel& getModel();
+
+    Q_INVOKABLE void writeMessages(const QUrl dest_file);
+
+signals:
+    void writeStarted();
+    void writeFinished(bool success);
+
+private:
+    AppLogModel();
+    static AppLogModel instance;
+};
+
 
 class AppMessages
 {
 public:
     static void installHandler();
-    static QStringListModel& getModel();
+    static AppLogModel* getModel();
 };
