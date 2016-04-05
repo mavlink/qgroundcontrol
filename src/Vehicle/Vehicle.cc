@@ -1262,9 +1262,14 @@ void Vehicle::disconnectInactiveVehicle(void)
 {
     // Vehicle is no longer communicating with us, disconnect all links
 
+
     LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
     for (int i=0; i<_links.count(); i++) {
-        linkMgr->disconnectLink(_links[i]);
+        // FIXME: This linkInUse check is a hack fix for multiple vehicles on the same link.
+        // The real fix requires significant restructuring which will come later.
+        if (!qgcApp()->toolbox()->multiVehicleManager()->linkInUse(_links[i], this)) {
+            linkMgr->disconnectLink(_links[i]);
+        }
     }
 }
 
