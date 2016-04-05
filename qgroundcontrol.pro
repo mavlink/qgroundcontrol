@@ -64,7 +64,8 @@ LinuxBuild {
 
 CONFIG += qt \
     thread \
-    c++11
+    c++11 \
+    silent
 
 QT += \
     concurrent \
