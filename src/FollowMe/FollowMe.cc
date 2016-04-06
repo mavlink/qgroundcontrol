@@ -31,17 +31,15 @@
 #include "PositionManager.h"
 
 FollowMe::FollowMe(QGCApplication* app)
-    : QGCTool(app),
-      _locationInfo(nullptr)
+    : QGCTool(app)
 {
     memset(&_motionReport, 0, sizeof(motionReport_s));
-
     runTime.start();
 }
 
 FollowMe::~FollowMe()
 {
-    disable();
+    _disable();
 }
 
 void FollowMe::followMeHandleManager(const QString&)
@@ -51,15 +49,15 @@ void FollowMe::followMeHandleManager(const QString&)
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
         if(vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
-            enable();
+            _enable();
             return;
         }
     }
 
-    disable();
+    _disable();
 }
 
-void FollowMe::enable()
+void FollowMe::_enable()
 {
     connect(_toolbox->qgcPositionManager(),
             SIGNAL(positionInfoUpdated(QGeoPositionInfo)),
@@ -75,7 +73,7 @@ void FollowMe::enable()
     _gcsMotionReportTimer.start();
 }
 
-void FollowMe::disable()
+void FollowMe::_disable()
 {
     disconnect(_toolbox->qgcPositionManager(),
                SIGNAL(positionInfoUpdated(QGeoPositionInfo)),

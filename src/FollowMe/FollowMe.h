@@ -42,8 +42,6 @@ class FollowMe : public QGCTool
 public:
     FollowMe(QGCApplication* app);
     ~FollowMe();
-    void disable();
-    void enable();
 
 public slots:
     void followMeHandleManager(const QString&);
@@ -53,8 +51,8 @@ private slots:
     void _sendGCSMotionReport(void);
 
 private:
-    QGeoPositionInfoSource * _locationInfo;
-    QElapsedTimer runTime;
+    QElapsedTimer runTime;    
+    QTimer _gcsMotionReportTimer;   // Timer to emit motion reports
 
     struct motionReport_s {
         uint32_t timestamp;     // time since boot
@@ -70,9 +68,6 @@ private:
         float pos_std_dev[3];   // -1 for unknown
     } _motionReport;
 
-    QTimer _gcsMotionReportTimer;        ///< Timer to emit motion reports
-    double _degreesToRadian(double deg);
-
     // Mavlink defined motion reporting capabilities
 
     enum {
@@ -81,4 +76,9 @@ private:
         ACCEL = 2,
         ATT_RATES = 3
     };
+
+    void _disable();
+    void _enable();
+
+    double _degreesToRadian(double deg);
 };
