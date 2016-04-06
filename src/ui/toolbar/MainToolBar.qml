@@ -403,6 +403,31 @@ Rectangle {
         anchors.bottom: parent.bottom
         height:         1
         color:          "black"
+        visible:        qgcPal.globalTheme == QGCPalette.Light
+    }
+
+    //---------------------------------------------
+    // Logo (Preferences Button)
+    Rectangle {
+        id:                     preferencesButton
+        width:                  mainWindow.tbButtonWidth * 1.25
+        height:                 parent.height
+        anchors.top:            parent.top
+        anchors.left:           parent.left
+        color:                  "#4A2C6D"
+        Image {
+            height:                 mainWindow.tbCellHeight
+            anchors.centerIn:       parent
+            source:                 "/res/QGCLogoWhite"
+            fillMode:               Image.PreserveAspectFit
+            smooth:                 true
+            mipmap:                 true
+            antialiasing:           true
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: mainWindow.showLeftMenu()
+        }
     }
 
     //---------------------------------------------
@@ -411,34 +436,13 @@ Rectangle {
         id:                     viewRow
         height:                 mainWindow.tbCellHeight
         spacing:                mainWindow.tbSpacing
-        anchors.left:           parent.left
+        anchors.left:           preferencesButton.right
         anchors.leftMargin:     mainWindow.tbSpacing
         anchors.bottomMargin:   1
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
 
         ExclusiveGroup { id: mainActionGroup }
-
-        Image {
-            id:                     preferencesButton
-            width:                  mainWindow.tbButtonWidth
-            anchors.topMargin:      _topBottomMargins
-            anchors.bottomMargin:   _topBottomMargins
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            source:                 qgcPal.globalTheme == QGCPalette.Light ? "/res/QGCLogoBlack" : "/res/QGCLogoWhite"
-            fillMode:               Image.PreserveAspectFit
-            smooth:                 true
-            mipmap:                 true
-            antialiasing:           true
-
-            readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight / 2
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: mainWindow.showLeftMenu()
-            }
-        }
 
         QGCToolBarButton {
             id:                 setupButton
