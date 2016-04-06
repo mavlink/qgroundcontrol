@@ -31,13 +31,15 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
-QGCView {
-    viewPanel: panel
-    id: logwindow
+Rectangle {
+    id:              logwindow
+    anchors.fill:    parent
+    anchors.margins: ScreenTools.defaultFontPixelWidth
+    color:           qgcPal.window
+
     property bool loaded: false
 
     QGCPalette { id: qgcPal }
-
 
     Connections {
         target: debugMessageModel
@@ -70,78 +72,67 @@ QGCView {
         }
     }
 
-    QGCViewPanel {
-        id:               panel
-        anchors.fill:     parent
-
-        Rectangle {
-            anchors.fill: parent
-            color: qgcPal.window
+    ListView {
+        Component.onCompleted: {
+            loaded = true
         }
+        anchors.top:     parent.top
+        anchors.left:    parent.left
+        anchors.right:   parent.right
+        anchors.bottom:  followTail.top
+        anchors.bottomMargin: ScreenTools.defaultFontPixelWidth
+        clip:            true
+        id:              listview
+        model:           debugMessageModel
+        delegate:        delegateItem
+    }
 
-        ListView {
-            Component.onCompleted: {
-                loaded = true
-            }
-            anchors.margins: ScreenTools.defaultFontPixelHeight
-            anchors.top:     parent.top
-            anchors.left:    parent.left
-            anchors.right:   parent.right
-            anchors.bottom:  followTail.top
-            id:              listview
-            model:           debugMessageModel
-            delegate:        delegateItem
+    FileDialog {
+        id:             writeDialog
+        folder:         shortcuts.home
+        nameFilters:    ["Log files (*.txt)", "All Files (*)"]
+        selectExisting: false
+        title:          "Select log save file"
+        onAccepted: {
+            debugMessageModel.writeMessages(fileUrl);
+            visible = false;
         }
+        onRejected:     visible = false
+    }
 
-        FileDialog {
-            id:             writeDialog
-            folder:         shortcuts.home
-            nameFilters:    ["Log files (*.txt)", "All Files (*)"]
-            selectExisting: false
-            title:          "Select log save file"
-            onAccepted: {
-                debugMessageModel.writeMessages(fileUrl);
-                visible = false;
-            }
-            onRejected:     visible = false
-        }
+    Connections {
+        target:          debugMessageModel
+        onWriteStarted:  writeButton.enabled = false;
+        onWriteFinished: writeButton.enabled = true;
+    }
 
-        Connections {
-            target:          debugMessageModel
-            onWriteStarted:  writeButton.enabled = false;
-            onWriteFinished: writeButton.enabled = true;
-        }
+    QGCButton {
+        id:              writeButton
+        anchors.bottom:  parent.bottom
+        anchors.left:    parent.left
+        onClicked:       writeDialog.visible = true
+        text:            "Save App Log"
+    }
 
-        QGCButton {
-            id:              writeButton
-            anchors.bottom:  parent.bottom
-            anchors.left:    parent.left
-            anchors.margins: ScreenTools.defaultFontPixelWidth
-            onClicked:       writeDialog.visible = true
-            text:            "Save App Log"
-        }
+    BusyIndicator {
+        id:              writeBusy
+        anchors.bottom:  writeButton.bottom
+        anchors.left:    writeButton.right
+        height:          writeButton.height
+        visible:        !writeButton.enabled
+    }
 
-        BusyIndicator {
-            id:              writeBusy
-            anchors.bottom:  writeButton.bottom
-            anchors.left:    writeButton.right
-            height:          writeButton.height
-            visible:        !writeButton.enabled
-        }
+    QGCButton {
+        id:              followTail
+        anchors.bottom:  parent.bottom
+        anchors.right:   parent.right
+        text:            "Show Latest"
+        checkable:       true
+        checked:         true
 
-        QGCButton {
-            id:              followTail
-            anchors.bottom:  parent.bottom
-            anchors.right:   parent.right
-            anchors.margins: ScreenTools.defaultFontPixelWidth
-            text:            "Show Latest"
-            checkable:       true
-            checked:         true
-
-            onCheckedChanged: {
-                if (checked && loaded) {
-                    listview.positionViewAtEnd();
-                }
+        onCheckedChanged: {
+            if (checked && loaded) {
+                listview.positionViewAtEnd();
             }
         }
     }
