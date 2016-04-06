@@ -21,15 +21,18 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
+
+// Allows QGlobalStatic to work on this translation unit
+#define _LOG_CTOR_ACCESS_ public
 #include "AppMessages.h"
 #include <QFile>
 #include <QStringListModel>
 #include <QtConcurrent>
 #include <QTextStream>
 
-AppLogModel AppLogModel::instance;
+Q_GLOBAL_STATIC(AppLogModel, debug_model)
+
 static QtMessageHandler old_handler;
-static AppLogModel &debug_strings = AppLogModel::getModel();
 
 static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -38,9 +41,7 @@ static void msgHandler(QtMsgType type, const QMessageLogContext &context, const 
 
     // Avoid recursion
     if (!QString(context.category).startsWith("qt.quick")) {
-        const int line = debug_strings.rowCount();
-        debug_strings.insertRows(line, 1);
-        debug_strings.setData(debug_strings.index(line), output, Qt::DisplayRole);
+        debug_model->log(output);
     }
 
     if (old_handler != nullptr) {
@@ -52,20 +53,24 @@ static void msgHandler(QtMsgType type, const QMessageLogContext &context, const 
 void AppMessages::installHandler()
 {
     old_handler = qInstallMessageHandler(msgHandler);
+
+    // Force creation of debug model on installing thread
+    Q_UNUSED(*debug_model);
 }
 
 AppLogModel *AppMessages::getModel()
 {
-    return &AppLogModel::getModel();
-}
-
-AppLogModel& AppLogModel::getModel()
-{
-    return instance;
+    return debug_model;
 }
 
 AppLogModel::AppLogModel() : QStringListModel()
 {
+#ifdef __mobile__
+    Qt::ConnectionType contype = Qt::QueuedConnection;
+#else
+    Qt::ConnectionType contype = Qt::AutoConnection;
+#endif
+    connect(this, &AppLogModel::emitLog, this, &AppLogModel::threadsafeLog, contype);
 }
 
 void AppLogModel::writeMessages(const QUrl dest_file)
@@ -73,7 +78,7 @@ void AppLogModel::writeMessages(const QUrl dest_file)
     const QString writebuffer(stringList().join('\n').append('\n'));
 
     QtConcurrent::run([dest_file, writebuffer] {
-        emit instance.writeStarted();
+        emit debug_model->writeStarted();
         bool success = false;
         QFile file(dest_file.toLocalFile());
         if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -81,6 +86,18 @@ void AppLogModel::writeMessages(const QUrl dest_file)
             out << writebuffer;
             success = out.status() == QTextStream::Ok;
         }
-        emit instance.writeFinished(success);
+        emit debug_model->writeFinished(success);
     });
+}
+
+void AppLogModel::log(const QString message)
+{
+    emit debug_model->emitLog(message);
+}
+
+void AppLogModel::threadsafeLog(const QString message)
+{
+    const int line = rowCount();
+    insertRows(line, 1);
+    setData(index(line), message, Qt::DisplayRole);
 }
