@@ -328,7 +328,12 @@ Item {
             id:             guidedModeHideTimer
             interval:       7000
             running:        true
-            onTriggered:    _guidedModeBar.state = "Hidden"
+
+            onTriggered: {
+                if (ScreenTools.isShortScreen) {
+                    _guidedModeBar.state = "Hidden"
+                }
+            }
         }
 
         readonly property int confirmHome:          1
