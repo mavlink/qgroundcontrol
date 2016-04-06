@@ -87,7 +87,7 @@ Item {
             if (mouse.x < xDragStart) {
                 if (xValuesPageSave == 0) {
                     valuesPage.x = -valuesPage.width
-                    _root.height = vibrationPage.height + pageIndicatorRow.anchors.topMargin + pageIndicatorRow.height
+                    _root.height = Qt.binding(function() { return vibrationPage.height + pageIndicatorRow.anchors.topMargin + pageIndicatorRow.height } )
                     valuesPageIndicator.color = "transparent"
                     vibrationPageIndicator.color = textColor
                 } else {
@@ -96,7 +96,7 @@ Item {
             } else {
                 if (xValuesPageSave != 0) {
                     valuesPage.x = 0
-                    _root.height = valuesPage.height + pageIndicatorRow.anchors.topMargin + pageIndicatorRow.height
+                    _root.height = Qt.binding(function() { return valuesPage.height + pageIndicatorRow.anchors.topMargin + pageIndicatorRow.height } )
                     valuesPageIndicator.color = textColor
                     vibrationPageIndicator.color = "transparent"
                 } else {
