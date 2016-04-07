@@ -105,13 +105,14 @@ install:
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang.tar.bz2 &&
         tar jxf Qt5.5.1-mac-clang.tar.bz2 -C /tmp &&
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
-        sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
         export QT_DIR=Qt5.5-mac-clang/5.5/clang_64 &&
         export PATH=/tmp/$QT_DIR/bin:$PATH &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
         export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml
         ;
     fi
+# This belonds in the osx build once I figure out how to add it to the installer
+# sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" = "ios" ]]; then
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios.tar.bz2 &&
         tar jxf Qt5.5.1-ios.tar.bz2 -C /tmp &&
