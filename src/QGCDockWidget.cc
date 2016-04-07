@@ -47,6 +47,8 @@ void QGCDockWidget::closeEvent(QCloseEvent* event)
         saveSettings();
         event->ignore();
         _action->trigger();
+    } else {
+        QWidget::closeEvent(event);
     }
 }
 

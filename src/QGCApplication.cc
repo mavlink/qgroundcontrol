@@ -36,6 +36,7 @@
 #include <QPainter>
 #include <QStyleFactory>
 #include <QAction>
+#include <QStringListModel>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -100,6 +101,7 @@
 #include "LogDownloadController.h"
 #include "PX4AirframeLoader.h"
 #include "ValuesWidgetController.h"
+#include "AppMessages.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -484,6 +486,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     _qmlAppEngine = new QQmlApplicationEngine(this);
     _qmlAppEngine->addImportPath("qrc:/qml");
     _qmlAppEngine->rootContext()->setContextProperty("joystickManager", toolbox()->joystickManager());
+    _qmlAppEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
     _qmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
 #else
     // Start the user interface

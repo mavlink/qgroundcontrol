@@ -26,6 +26,7 @@
 
 #include <QDockWidget>
 #include <QAction>
+#include <QPointer>
 
 class QGCDockWidget : public QWidget {
     Q_OBJECT
@@ -38,10 +39,10 @@ public:
     void saveSettings(void);
 
     void closeEvent(QCloseEvent* event);
-	
+
 protected:
     QString             _title;
-	QAction*            _action;
+    QPointer<QAction>   _action;
     static const char*  _settingsGroup;
 };
 
