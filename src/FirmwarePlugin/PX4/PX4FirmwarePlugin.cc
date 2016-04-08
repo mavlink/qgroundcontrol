@@ -198,7 +198,6 @@ int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
 
 bool PX4FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 {
-    qDebug() << (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability | PauseVehicleCapability)) << capabilities;
     return (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
 }
 
