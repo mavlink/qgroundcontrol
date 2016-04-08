@@ -32,8 +32,10 @@
 #include "FirmwarePlugin.h"
 #include "UAS.h"
 
+#include <QEasingCurve>
 #include <QFile>
 #include <QDebug>
+#include <QVariantAnimation>
 
 /* types for local parameter cache */
 typedef QPair<int, QVariant> ParamTypeVal;
@@ -711,6 +713,26 @@ void ParameterLoader::_tryCacheHashLoad(int uasId, int componentId, QVariant has
         mavlink_message_t msg;
         mavlink_msg_param_set_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &p);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+
+        // Give the user some feedback things loaded properly
+        QVariantAnimation *ani = new QVariantAnimation(this);
+        ani->setEasingCurve(QEasingCurve::OutCubic);
+        ani->setStartValue(0.0);
+        ani->setEndValue(1.0);
+        ani->setDuration(750);
+
+        connect(ani, &QVariantAnimation::valueChanged, [this](const QVariant &value) {
+            emit parameterListProgress(value.toFloat());
+        });
+
+        // Hide 500ms after animation finishes
+        connect(ani, &QVariantAnimation::finished, [this](){
+            QTimer::singleShot(500, [this]() {
+                emit parameterListProgress(0);
+            });
+        });
+
+        ani->start(QAbstractAnimation::DeleteWhenStopped);
     }
 }
 
