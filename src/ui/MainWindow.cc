@@ -282,6 +282,10 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
+    // This needs to happen before we get into the QWidget dtor
+    // otherwise  the QML engine reads freed data and tries to
+    // destroy MainWindow a second time.
+    delete _mainQmlWidgetHolder;
     _instance = NULL;
 }
 
