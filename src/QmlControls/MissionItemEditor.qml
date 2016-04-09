@@ -82,6 +82,11 @@ Rectangle {
                     onTriggered:    remove()
                 }
 
+                MenuItem {
+                    text:           "Change command..."
+                    onTriggered:    commandPicker.clicked()
+                }
+
                 MenuSeparator {
                     visible: missionItem.isSimpleItem
                 }
@@ -111,10 +116,12 @@ Rectangle {
 
     QGCButton {
         id:                     commandPicker
+        anchors.topMargin:      _margin / 2
         anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.left:           label.right
-        anchors.right:          hamburger.left
+        anchors.top:            parent.top
+        //anchors.right:          hamburger.left
         visible:                missionItem.sequenceNumber != 0 && missionItem.isCurrentItem && !missionItem.rawEdit && missionItem.isSimpleItem
         text:                   missionItem.commandName
 
