@@ -536,11 +536,16 @@ void ParameterLoader::_waitingParamTimeout(void)
             foreach(const QString &paramName, _waitingWriteParamNameMap[componentId].keys()) {
                 paramsRequested = true;
                 _waitingWriteParamNameMap[componentId][paramName]++;   // Bump retry count
-                _writeParameterRaw(componentId, paramName, _vehicle->autopilotPlugin()->getFact(FactSystem::ParameterProvider, componentId, paramName)->rawValue());
-                qCDebug(ParameterLoaderLog) << "Write resend for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingWriteParamNameMap[componentId][paramName] << ")";
-
-                if (++batchCount > maxBatchSize) {
-                    goto Out;
+                if (_waitingWriteParamNameMap[componentId][paramName] <= _maxReadWriteRetry) {
+                    _writeParameterRaw(componentId, paramName, _vehicle->autopilotPlugin()->getFact(FactSystem::ParameterProvider, componentId, paramName)->rawValue());
+                    qCDebug(ParameterLoaderLog) << "Write resend for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingWriteParamNameMap[componentId][paramName] << ")";
+                    if (++batchCount > maxBatchSize) {
+                        goto Out;
+                    }
+                } else {
+                    // Exceeded max retry count, notify user
+                    _waitingWriteParamNameMap[componentId].remove(paramName);
+                    qgcApp()->showMessage(tr("Parameter write failed: comp:%1 param:%2").arg(componentId).arg(paramName));
                 }
             }
         }
@@ -551,11 +556,16 @@ void ParameterLoader::_waitingParamTimeout(void)
             foreach(const QString &paramName, _waitingReadParamNameMap[componentId].keys()) {
                 paramsRequested = true;
                 _waitingReadParamNameMap[componentId][paramName]++;   // Bump retry count
-                _readParameterRaw(componentId, paramName, -1);
-                qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingReadParamNameMap[componentId][paramName] << ")";
-
-                if (++batchCount > maxBatchSize) {
-                    goto Out;
+                if (_waitingReadParamNameMap[componentId][paramName] <= _maxReadWriteRetry) {
+                    _readParameterRaw(componentId, paramName, -1);
+                    qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingReadParamNameMap[componentId][paramName] << ")";
+                    if (++batchCount > maxBatchSize) {
+                        goto Out;
+                    }
+                } else {
+                    // Exceeded max retry count, notify user
+                    _waitingReadParamNameMap[componentId].remove(paramName);
+                    qgcApp()->showMessage(tr("Parameter read failed: comp:%1 param:%2").arg(componentId).arg(paramName));
                 }
             }
         }
@@ -585,6 +595,8 @@ void ParameterLoader::_readParameterRaw(int componentId, const QString& paramNam
 
 void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramName, const QVariant& value)
 {
+    return;
+
     mavlink_param_set_t     p;
     mavlink_param_union_t   union_value;
 
