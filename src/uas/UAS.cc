@@ -38,6 +38,7 @@
 #include "Vehicle.h"
 #include "Joystick.h"
 #include "QGCApplication.h"
+#include "MissionCommands.h"
 
 QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 
@@ -610,34 +611,32 @@ void UAS::receiveMessage(mavlink_message_t message)
         {
             mavlink_command_ack_t ack;
             mavlink_msg_command_ack_decode(&message, &ack);
+
             emit commandAck(this, message.compid, ack.command, ack.result);
-            switch (ack.result)
-            {
-            case MAV_RESULT_ACCEPTED:
-            {
-                // Do not confirm each command positively, as it spams the console.
-                // emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_INFO, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
+
+            QString commandName;
+            MavCmdInfo* cmdInfo = qgcApp()->toolbox()->missionCommands()->getMavCmdInfo((MAV_CMD)ack.command, _vehicle);
+            if (cmdInfo) {
+                commandName = cmdInfo->friendlyName();
+            } else {
+                commandName = ack.command;
             }
-                break;
+
+            switch (ack.result) {
             case MAV_RESULT_TEMPORARILY_REJECTED:
-            {
-                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_WARNING, tr("FAILURE: Temporarily rejected CMD: %1").arg(ack.command));
-            }
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_WARNING, tr("%1 temporarily rejected").arg(commandName));
                 break;
             case MAV_RESULT_DENIED:
-            {
-                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_ERROR, tr("FAILURE: Denied CMD: %1").arg(ack.command));
-            }
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_ERROR, tr("%1 denied").arg(commandName));
                 break;
             case MAV_RESULT_UNSUPPORTED:
-            {
-                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_WARNING, tr("FAILURE: Unsupported CMD: %1").arg(ack.command));
-            }
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_WARNING, tr("%1 unsupported").arg(commandName));
                 break;
             case MAV_RESULT_FAILED:
-            {
-                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_ERROR, tr("FAILURE: Failed CMD: %1").arg(ack.command));
-            }
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_ERROR, tr("%1 failed").arg(commandName));
+                break;
+            default:
+                // Do nothing
                 break;
             }
         }

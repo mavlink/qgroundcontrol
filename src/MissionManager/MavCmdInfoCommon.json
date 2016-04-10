@@ -392,7 +392,7 @@
             }
         },
         { "id": 159, "rawName": "MAV_CMD_CONDITION_LAST", "friendlyName": "MAV_CMD_CONDITION_LAST" },
-        { "id": 176, "rawName": "MAV_CMD_DO_SET_MODE", "friendlyName": "MAV_CMD_DO_SET_MODE" },
+        { "id": 176, "rawName": "MAV_CMD_DO_SET_MODE", "friendlyName": "Set mode" },
         {
             "id":           177,
             "rawName":      "MAV_CMD_DO_JUMP",
@@ -804,7 +804,7 @@
         },
         { "id": 252, "rawName": "MAV_CMD_OVERRIDE_GOTO", "friendlyName": "MAV_CMD_OVERRIDE_GOTO" },
         { "id": 300, "rawName": "MAV_CMD_MISSION_START", "friendlyName": "MAV_CMD_MISSION_START" },
-        { "id": 400, "rawName": "MAV_CMD_COMPONENT_ARM_DISARM", "friendlyName": "MAV_CMD_COMPONENT_ARM_DISARM" },
+        { "id": 400, "rawName": "MAV_CMD_COMPONENT_ARM_DISARM", "friendlyName": "Arm/Disarm" },
         { "id": 2000, "rawName": "MAV_CMD_IMAGE_START_CAPTURE", "friendlyName": "MAV_CMD_IMAGE_START_CAPTURE" },
         { "id": 2001, "rawName": "MAV_CMD_IMAGE_STOP_CAPTURE", "friendlyName": "MAV_CMD_IMAGE_STOP_CAPTURE" },
         { "id": 2003, "rawName": "MAV_CMD_DO_TRIGGER_CONTROL", "friendlyName": "MAV_CMD_DO_TRIGGER_CONTROL" },
