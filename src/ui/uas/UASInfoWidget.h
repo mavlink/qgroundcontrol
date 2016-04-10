@@ -54,12 +54,15 @@ public:
 public slots:
     void updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds);
     void updateCPULoad(UASInterface* uas, double load);
-    /** 
-	 * @brief Set the loss rate of packets received by the MAV.
-	 * @param uasId UNUSED
-	 * @param receiveLoss A percentage value (0-100) of how many message the UAS has failed to receive.
-	 */
+    /**
+     * @brief Set the loss rate of packets received by the MAV.
+     * @param uasId UNUSED
+     * @param receiveLoss A percentage value (0-100) of how many message the UAS has failed to receive.
+     */
     void updateReceiveLoss(int uasId, float receiveLoss);
+
+    void updateSeqLossPercent(int uasId, float seqLoss);
+    void updateSeqLossTotal(int uasId, int seqLossTotal);
 
     /**
 	 * @brief Set the loss rate of packets sent from the MAV 
@@ -79,7 +82,6 @@ public slots:
 
 protected:
 
-    UASInterface* activeUAS;
 
     // Configuration variables
     int voltageDecimals;
@@ -110,6 +112,9 @@ private slots:
 private:
     Ui::uasInfo ui;
 
+    UASInterface*   _activeUAS;
+    float           _seqLossPercent;
+    int             _seqLossTotal;
 };
 
 #endif // _UASINFOWIDGET_H_
