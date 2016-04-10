@@ -95,6 +95,7 @@ public:
     Q_INVOKABLE void calibrateLevel(void);
     Q_INVOKABLE void calibrateAirspeed(void);
     Q_INVOKABLE void cancelCalibration(void);
+    Q_INVOKABLE bool usingUDPLink(void);
     
     bool fixedWing(void);
     
