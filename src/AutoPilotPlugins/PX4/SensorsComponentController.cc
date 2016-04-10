@@ -413,6 +413,11 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         emit orientationCalSidesRotateChanged();
         return;
     }
+
+    if (text.endsWith("side already completed")) {
+        _orientationCalAreaHelpText->setProperty("text", "Orientation already completed, place you vehicle into one of the incomplete orientations shown below and hold it still");
+        return;
+    }
     
     QString calCompletePrefix("calibration done:");
     if (text.startsWith(calCompletePrefix)) {
