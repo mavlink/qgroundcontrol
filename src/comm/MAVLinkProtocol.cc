@@ -63,7 +63,11 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
     , _linkMgr(NULL)
     , _multiVehicleManager(NULL)
 {
-
+    memset(&totalReceiveCounter, 0, sizeof(totalReceiveCounter));
+    memset(&totalLossCounter, 0, sizeof(totalLossCounter));
+    memset(&totalErrorCounter, 0, sizeof(totalErrorCounter));
+    memset(&currReceiveCounter, 0, sizeof(currReceiveCounter));
+    memset(&currLossCounter, 0, sizeof(currLossCounter));
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()
@@ -357,11 +361,12 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             {
                 // Calculate new loss ratio
                 // Receive loss
-                float receiveLoss = (double)currLossCounter[mavlinkChannel]/(double)(currReceiveCounter[mavlinkChannel]+currLossCounter[mavlinkChannel]);
-                receiveLoss *= 100.0f;
+                float receiveLossPercent = (double)currLossCounter[mavlinkChannel]/(double)(currReceiveCounter[mavlinkChannel]+currLossCounter[mavlinkChannel]);
+                receiveLossPercent *= 100.0f;
                 currLossCounter[mavlinkChannel] = 0;
                 currReceiveCounter[mavlinkChannel] = 0;
-                emit receiveLossChanged(message.sysid, receiveLoss);
+                emit receiveLossPercentChanged(message.sysid, receiveLossPercent);
+                emit receiveLossTotalChanged(message.sysid, totalLossCounter[mavlinkChannel]);
             }
 
             // The packet is emitted as a whole, as it is only 255 - 261 bytes short
