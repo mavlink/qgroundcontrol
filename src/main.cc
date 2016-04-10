@@ -115,7 +115,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_UNIX
-    //FOrce writing to the console on UNIX/BSD devices
+    //Force writing to the console on UNIX/BSD devices
     if (!qEnvironmentVariableIsSet("QT_LOGGING_TO_CONSOLE"))
         qputenv("QT_LOGGING_TO_CONSOLE", "1");
 #endif
