@@ -242,8 +242,9 @@ signals:
     void actionGuardChanged(bool enabled);
     /** @brief Emitted if action request timeout changed */
     void actionRetransmissionTimeoutChanged(int ms);
-    /** @brief Update the packet loss from one system */
-    void receiveLossChanged(int uasId, float loss);
+
+    void receiveLossPercentChanged(int uasId, float lossPercent);
+    void receiveLossTotalChanged(int uasId, int totalLoss);
 
     /**
      * @brief Emitted if a new radio status packet received
