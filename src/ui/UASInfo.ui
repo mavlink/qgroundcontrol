@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>230</width>
+    <width>243</width>
     <height>161</height>
    </rect>
   </property>
@@ -16,8 +16,17 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0,100" columnstretch="0,0,0,0,0,0,0">
-   <property name="margin">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0,100,0" columnstretch="0,0,0,0,0,0,0">
+   <property name="leftMargin">
+    <number>3</number>
+   </property>
+   <property name="topMargin">
+    <number>3</number>
+   </property>
+   <property name="rightMargin">
+    <number>3</number>
+   </property>
+   <property name="bottomMargin">
     <number>3</number>
    </property>
    <property name="spacing">
@@ -288,14 +297,14 @@
     </widget>
    </item>
    <item row="3" column="0">
-    <widget class="QLabel" name="label_3">
+    <widget class="QLabel" name="label_seq">
      <property name="text">
-      <string>MCU Load</string>
+      <string>MAV Seq Loss</string>
      </property>
     </widget>
    </item>
    <item row="3" column="1">
-    <spacer name="horizontalSpacer_4">
+    <spacer name="horizontalSpacer_seq">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -311,7 +320,7 @@
     </spacer>
    </item>
    <item row="3" column="2">
-    <widget class="QLabel" name="loadLabel">
+    <widget class="QLabel" name="seqLossLabel">
      <property name="text">
       <string>0</string>
      </property>
@@ -324,7 +333,7 @@
     </widget>
    </item>
    <item row="3" column="3">
-    <widget class="QLabel" name="label_9">
+    <widget class="QLabel" name="label_seq1">
      <property name="text">
       <string>%</string>
      </property>
@@ -337,6 +346,178 @@
     </widget>
    </item>
    <item row="3" column="4" colspan="2">
+    <widget class="QProgressBar" name="seqLossBar">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+       <horstretch>10</horstretch>
+       <verstretch>18</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="baseSize">
+      <size>
+       <width>0</width>
+       <height>18</height>
+      </size>
+     </property>
+     <property name="value">
+      <number>0</number>
+     </property>
+     <property name="textVisible">
+      <bool>true</bool>
+     </property>
+     <property name="format">
+      <string>%p%</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+       <widget class="QLabel" name="label_seqcnt">
+           <property name="text">
+               <string>Seq Loss Cnt</string>
+           </property>
+       </widget>
+   </item>
+   <item row="4" column="1">
+       <spacer name="horizontalSpacer_seqcnt">
+           <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+               <enum>QSizePolicy::Maximum</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+               <size>
+                   <width>13</width>
+                   <height>15</height>
+               </size>
+           </property>
+       </spacer>
+   </item>
+   <item row="4" column="2">
+       <widget class="QLabel" name="seqcntLossLabel">
+           <property name="text">
+               <string>0</string>
+           </property>
+           <property name="textFormat">
+               <enum>Qt::AutoText</enum>
+           </property>
+           <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+       </widget>
+   </item>
+   <item row="4" column="3">
+       <widget class="QLabel" name="label_seqcnt1">
+           <property name="text">
+               <string></string>
+           </property>
+           <property name="textFormat">
+               <enum>Qt::AutoText</enum>
+           </property>
+           <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           </property>
+       </widget>
+   </item>
+   <item row="4" column="4" colspan="2">
+       <widget class="QProgressBar" name="seqcntLossBar">
+           <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                   <horstretch>10</horstretch>
+                   <verstretch>18</verstretch>
+               </sizepolicy>
+           </property>
+           <property name="minimumSize">
+               <size>
+                   <width>100</width>
+                   <height>0</height>
+               </size>
+           </property>
+           <property name="maximumSize">
+               <size>
+                   <width>16777215</width>
+                   <height>20</height>
+               </size>
+           </property>
+           <property name="baseSize">
+               <size>
+                   <width>0</width>
+                   <height>18</height>
+               </size>
+           </property>
+           <property name="value">
+               <number>0</number>
+           </property>
+           <property name="textVisible">
+               <bool>true</bool>
+           </property>
+           <property name="format">
+               <string>%p%</string>
+           </property>
+       </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>MCU Load</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <spacer name="horizontalSpacer_4">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Maximum</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>13</width>
+       <height>15</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="5" column="2">
+    <widget class="QLabel" name="loadLabel">
+     <property name="text">
+      <string>0</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="3">
+    <widget class="QLabel" name="label_9">
+     <property name="text">
+      <string>%</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="4" colspan="2">
     <widget class="QProgressBar" name="loadBar">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -373,44 +554,27 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="0" colspan="6">
-    <widget class="Line" name="line">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="0" colspan="7">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Expanding</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="6" column="0" colspan="6">
-    <widget class="QLabel" name="errorLabel">
-     <property name="text">
-      <string>No error status received yet</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
+   <item row="6" column="0">
     <widget class="QLabel" name="label_4">
      <property name="text">
       <string>CPU Load</string>
      </property>
     </widget>
    </item>
-   <item row="4" column="2">
+   <item row="6" column="1">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>13</width>
+       <height>15</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="6" column="2">
     <widget class="QLabel" name="label_5">
      <property name="text">
       <string>0</string>
@@ -420,14 +584,14 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="3">
+   <item row="6" column="3">
     <widget class="QLabel" name="label_10">
      <property name="text">
       <string>%</string>
      </property>
     </widget>
    </item>
-   <item row="4" column="4" colspan="2">
+   <item row="6" column="4" colspan="2">
     <widget class="QProgressBar" name="progressBar">
      <property name="maximumSize">
       <size>
@@ -446,18 +610,35 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
-    <spacer name="horizontalSpacer">
+   <item row="7" column="0" colspan="6">
+    <widget class="Line" name="line">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>13</width>
-       <height>15</height>
-      </size>
+    </widget>
+   </item>
+   <item row="8" column="0" colspan="6">
+    <widget class="QLabel" name="errorLabel">
+     <property name="text">
+      <string>No error status received yet</string>
      </property>
-    </spacer>
+    </widget>
+   </item>
+   <item row="9" column="0" colspan="7">
+       <spacer name="verticalSpacer">
+           <property name="orientation">
+               <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeType">
+               <enum>QSizePolicy::Expanding</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+               <size>
+                   <width>0</width>
+                   <height>0</height>
+               </size>
+           </property>
+       </spacer>
    </item>
   </layout>
  </widget>
