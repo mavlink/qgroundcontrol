@@ -595,8 +595,6 @@ void ParameterLoader::_readParameterRaw(int componentId, const QString& paramNam
 
 void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramName, const QVariant& value)
 {
-    return;
-
     mavlink_param_set_t     p;
     mavlink_param_union_t   union_value;
 
