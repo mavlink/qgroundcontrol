@@ -167,7 +167,7 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     if(_vehicles.count() == 0) {
         //-- Once no vehicles are connected, we no longer need to keep screen from going off
         qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::restoreScreenOn";
-        MobileScreenMgr::setKeepScreenOn(true);
+        MobileScreenMgr::setKeepScreenOn(false);
     }
 #endif
 
