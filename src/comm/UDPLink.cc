@@ -189,8 +189,8 @@ void UDPLink::_writeBytes(const QByteArray data)
 void UDPLink::readBytes()
 {
     QByteArray databuffer;
-    while (_socket->hasPendingDatagrams())
-    {
+
+    do {
         QByteArray datagram;
         datagram.resize(_socket->pendingDatagramSize());
         QHostAddress sender;
@@ -198,19 +198,22 @@ void UDPLink::readBytes()
         _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
         databuffer.append(datagram);
         //-- Wait a bit before sending it over
-        if(databuffer.size() > 10 * 1024) {
-            emit bytesReceived(this, databuffer);
-            databuffer.clear();
-        }
+        // disabling this temporarily to ensure
+        // we're sending the MAVLink protocol only once
+//        if (databuffer.size() > 10 * 1024) {
+//            emit bytesReceived(this, databuffer);
+//            databuffer.clear();
+//        }
         _logInputDataRate(datagram.length(), QDateTime::currentMSecsSinceEpoch());
         // TODO This doesn't validade the sender. Anything sending UDP packets to this port gets
         // added to the list and will start receiving datagrams from here. Even a port scanner
         // would trigger this.
         // Add host to broadcast list if not yet present, or update its port
         _config->addHost(sender.toString(), (int)senderPort);
-    }
+    } while (_socket->hasPendingDatagrams());
+
     //-- Send whatever is left
-    if(databuffer.size()) {
+    if (databuffer.size()) {
         emit bytesReceived(this, databuffer);
     }
 }
@@ -272,7 +275,7 @@ bool UDPLink::_hardwareConnect()
         _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);
 #endif
         _registerZeroconf(_config->localPort(), kZeroconfRegistration);
-        QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
+        QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes, Qt::QueuedConnection);
         emit connected();
     } else {
         emit communicationError("UDP Link Error", "Error binding UDP port");
