@@ -846,7 +846,7 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
                                   accelCal,                         // accel cal
                                   airspeedCal,                      // airspeed cal
                                   escCal);                          // esc cal
-    _vehicle->sendMessage(msg);
+    _vehicle->sendMessageOnPriorityLink(msg);
 }
 
 void UAS::stopCalibration(void)
@@ -870,7 +870,7 @@ void UAS::stopCalibration(void)
                                   0,                                // accel cal
                                   0,                                // airspeed cal
                                   0);                               // unused
-    _vehicle->sendMessage(msg);
+    _vehicle->sendMessageOnPriorityLink(msg);
 }
 
 void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
@@ -905,7 +905,7 @@ void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
                                   0,
                                   0,
                                   0);
-    _vehicle->sendMessage(msg);
+    _vehicle->sendMessageOnPriorityLink(msg);
 }
 
 void UAS::stopBusConfig(void)
@@ -929,7 +929,7 @@ void UAS::stopBusConfig(void)
                                   0,
                                   0,
                                   0);
-    _vehicle->sendMessage(msg);
+    _vehicle->sendMessageOnPriorityLink(msg);
 }
 
 /**

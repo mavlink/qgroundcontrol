@@ -74,7 +74,11 @@ SensorsComponentController::SensorsComponentController(void) :
     _unknownFirmwareVersion(false),
     _waitingForCancel(false)
 {
+}
 
+bool SensorsComponentController::usingUDPLink(void)
+{
+    return _vehicle->priorityLink()->getLinkConfiguration()->type() == LinkConfiguration::TypeUdp;
 }
 
 /// Appends the specified text to the status log area in the ui
