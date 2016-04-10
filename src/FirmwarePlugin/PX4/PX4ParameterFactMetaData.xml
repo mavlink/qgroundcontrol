@@ -2,7 +2,7 @@
 <parameters>
   <version>3</version>
   <parameter_version_major>1</parameter_version_major>
-  <parameter_version_minor>3</parameter_version_minor>
+  <parameter_version_minor>4</parameter_version_minor>
   <group name="UAVCAN Motor Parameters" no_code_generation="true">
     <parameter default="75" name="ctl_bw" type="INT32">
       <short_desc>Speed controller bandwidth</short_desc>
@@ -205,13 +205,12 @@
     <parameter default="0.0" name="ATT_MAG_DECL" type="FLOAT">
       <short_desc>Magnetic declination, in degrees</short_desc>
       <long_desc>This parameter is not used in normal operation, as the declination is looked up based on the GPS coordinates of the vehicle.</long_desc>
-      <unit>degrees</unit>
+      <unit>deg</unit>
       <decimal>2</decimal>
     </parameter>
     <parameter default="1" name="ATT_MAG_DECL_A" type="INT32">
       <short_desc>Enable automatic GPS based declination compensation</short_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0" name="ATT_EXT_HDG_M" type="INT32">
       <short_desc>External heading usage mode (from Motion capture/Vision)
@@ -219,12 +218,16 @@ Set to 1 to use heading estimate from vision.
 Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>2</max>
+      <values>
+        <value code="1">Vision</value>
+        <value code="0">None</value>
+        <value code="2">Motion Capture</value>
+      </values>
     </parameter>
-    <parameter default="2" name="ATT_ACC_COMP" type="INT32">
+    <parameter default="1" name="ATT_ACC_COMP" type="INT32">
       <short_desc>Enable acceleration compensation based on GPS
 velocity</short_desc>
-      <min>1</min>
-      <max>2</max>
+      <boolean />
     </parameter>
     <parameter default="0.05" name="ATT_BIAS_MAX" type="FLOAT">
       <short_desc>Gyro bias limit</short_desc>
@@ -310,6 +313,10 @@ velocity</short_desc>
       <short_desc>Scaling factor for battery current sensor</short_desc>
       <decimal>8</decimal>
     </parameter>
+    <parameter default="-1.0" name="BAT_C_OFFSET" type="FLOAT">
+      <short_desc>Offset for battery current sensor</short_desc>
+      <decimal>8</decimal>
+    </parameter>
   </group>
   <group name="Camera trigger">
     <parameter default="40.0" name="TRIG_INTERVAL" type="FLOAT">
@@ -317,24 +324,34 @@ velocity</short_desc>
       <long_desc>This parameter sets the time between two consecutive trigger events</long_desc>
       <min>4.0</min>
       <max>10000.0</max>
-      <unit>milliseconds</unit>
+      <unit>ms</unit>
     </parameter>
     <parameter default="0" name="TRIG_POLARITY" type="INT32">
       <short_desc>Camera trigger polarity</short_desc>
       <long_desc>This parameter sets the polarity of the trigger (0 = ACTIVE_LOW, 1 = ACTIVE_HIGH )</long_desc>
       <min>0</min>
       <max>1</max>
+      <values>
+        <value code="1">ACTIVE_HIGH</value>
+        <value code="0">ACTIVE_LOW</value>
+      </values>
     </parameter>
     <parameter default="0.5" name="TRIG_ACT_TIME" type="FLOAT">
       <short_desc>Camera trigger activation time</short_desc>
       <long_desc>This parameter sets the time the trigger needs to pulled high or low.</long_desc>
-      <unit>milliseconds</unit>
+      <unit>ms</unit>
     </parameter>
     <parameter default="0" name="TRIG_MODE" type="INT32">
       <short_desc>Camera trigger mode</short_desc>
       <long_desc>0 disables the trigger, 1 sets it to enabled on command, 2 always on, 3 distance based, 4 distance based enabled on command</long_desc>
       <min>0</min>
       <max>4</max>
+      <values>
+        <value code="1">CMD</value>
+        <value code="0">Disable</value>
+        <value code="3">Distance</value>
+        <value code="2">Always</value>
+      </values>
     </parameter>
     <parameter default="12" name="TRIG_PINS" type="INT32">
       <short_desc>Camera trigger pin</short_desc>
@@ -346,7 +363,7 @@ velocity</short_desc>
       <short_desc>Camera trigger distance</short_desc>
       <long_desc>Sets the distance at which to trigger the camera.</long_desc>
       <min>0</min>
-      <unit>meters</unit>
+      <unit>m</unit>
     </parameter>
   </group>
   <group name="Circuit Breaker">
@@ -355,73 +372,77 @@ velocity</short_desc>
       <long_desc>Setting this parameter to 894281 will disable the power valid checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>894281</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="CBRK_RATE_CTRL" type="INT32">
       <short_desc>Circuit breaker for rate controller output</short_desc>
       <long_desc>Setting this parameter to 140253 will disable the rate controller uORB publication. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>140253</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="CBRK_IO_SAFETY" type="INT32">
       <short_desc>Circuit breaker for IO safety</short_desc>
       <long_desc>Setting this parameter to 22027 will disable IO safety. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>22027</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="CBRK_AIRSPD_CHK" type="INT32">
       <short_desc>Circuit breaker for airspeed sensor</short_desc>
       <long_desc>Setting this parameter to 162128 will disable the check for an airspeed sensor. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>162128</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="121212" name="CBRK_FLIGHTTERM" type="INT32">
       <short_desc>Circuit breaker for flight termination</short_desc>
       <long_desc>Setting this parameter to 121212 will disable the flight termination action. --&gt; The IO driver will not do flight termination if requested by the FMU WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>121212</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="284953" name="CBRK_ENGINEFAIL" type="INT32">
       <short_desc>Circuit breaker for engine failure detection</short_desc>
-      <long_desc>Setting this parameter to 284953 will disable the engine failure detection. If the aircraft is in engine failure mode the enine failure flag will be set to healthy WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
+      <long_desc>Setting this parameter to 284953 will disable the engine failure detection. If the aircraft is in engine failure mode the engine failure flag will be set to healthy WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>284953</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="240024" name="CBRK_GPSFAIL" type="INT32">
       <short_desc>Circuit breaker for GPS failure detection</short_desc>
       <long_desc>Setting this parameter to 240024 will disable the GPS failure detection. If this check is enabled, then the sensor check will fail if the GPS module is missing. It will also check for excessive signal noise on the GPS receiver and warn the user if detected. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>240024</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="CBRK_BUZZER" type="INT32">
       <short_desc>Circuit breaker for disabling buzzer</short_desc>
       <long_desc>Setting this parameter to 782097 will disable the buzzer audio notification. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>782097</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="CBRK_USB_CHK" type="INT32">
       <short_desc>Circuit breaker for USB link check</short_desc>
       <long_desc>Setting this parameter to 197848 will disable the USB connected checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>197848</max>
+      <reboot_required>true</reboot_required>
     </parameter>
   </group>
   <group name="Commander">
     <parameter default="0" name="COM_DL_LOSS_EN" type="INT32">
-      <short_desc>Datalink loss mode enabled</short_desc>
+      <short_desc>Datalink loss failsafe</short_desc>
       <long_desc>Set to 1 to enable actions triggered when the datalink is lost.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <values>
-        <value code="1">ON: Datalink failse</value>
-        <value code="0">OFF: No Datalink failsafe</value>
-      </values>
+      <boolean />
     </parameter>
     <parameter default="10" name="COM_DL_LOSS_T" type="INT32">
       <short_desc>Datalink loss time threshold</short_desc>
       <long_desc>After this amount of seconds without datalink the data link lost mode triggers</long_desc>
       <min>0</min>
-      <max>30</max>
-      <unit>second</unit>
+      <max>300</max>
+      <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
@@ -430,7 +451,7 @@ velocity</short_desc>
       <long_desc>After a data link loss: after this this amount of seconds with a healthy datalink the 'datalink loss' flag is set back to false</long_desc>
       <min>0</min>
       <max>30</max>
-      <unit>second</unit>
+      <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
@@ -447,7 +468,7 @@ velocity</short_desc>
       <long_desc>Engine failure triggers only below this current value</long_desc>
       <min>0.0</min>
       <max>50.0</max>
-      <unit>ampere</unit>
+      <unit>A</unit>
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
@@ -456,7 +477,7 @@ velocity</short_desc>
       <long_desc>Engine failure triggers only if the throttle threshold and the current to throttle threshold are violated for this time</long_desc>
       <min>0.0</min>
       <max>60.0</max>
-      <unit>second</unit>
+      <unit>s</unit>
       <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
@@ -465,7 +486,7 @@ velocity</short_desc>
       <long_desc>After this amount of seconds without RC connection the rc lost flag is set to true</long_desc>
       <min>0</min>
       <max>35</max>
-      <unit>second</unit>
+      <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
@@ -474,7 +495,7 @@ velocity</short_desc>
       <long_desc>The home position will be set if the estimated positioning accuracy is below the threshold.</long_desc>
       <min>2</min>
       <max>15</max>
-      <unit>meter</unit>
+      <unit>m</unit>
       <decimal>2</decimal>
       <increment>0.5</increment>
     </parameter>
@@ -483,27 +504,22 @@ velocity</short_desc>
       <long_desc>The home position will be set if the estimated positioning accuracy is below the threshold.</long_desc>
       <min>5</min>
       <max>25</max>
-      <unit>meter</unit>
+      <unit>m</unit>
       <decimal>2</decimal>
       <increment>0.5</increment>
     </parameter>
     <parameter default="1" name="COM_AUTOS_PAR" type="INT32">
       <short_desc>Autosaving of params</short_desc>
       <long_desc>If not equal to zero the commander will automatically save parameters to persistent storage once changed. Default is on, as the interoperability with currently deployed GCS solutions depends on parameters being sticky. Developers can default it to off.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <values>
-        <value code="1">Enabled</value>
-        <value code="0">Disabled</value>
-      </values>
+      <boolean />
     </parameter>
     <parameter default="0" name="COM_RC_IN_MODE" type="INT32">
       <short_desc>RC control input mode</short_desc>
-      <long_desc>The default value of 0 requires a valid RC transmitter setup. Setting this to 1 disables RC input handling and the associated checks. A value of 2 will generate RC control data from manual input received via MAVLink instead of directly forwarding the manual input data.</long_desc>
+      <long_desc>The default value of 0 requires a valid RC transmitter setup. Setting this to 1 allows joystick control and disables RC input handling and the associated checks. A value of 2 will generate RC control data from manual input received via MAVLink instead of directly forwarding the manual input data.</long_desc>
       <min>0</min>
       <max>2</max>
       <values>
-        <value code="1">Disable RC Input Checks</value>
+        <value code="1">Joystick/No RC Checks</value>
         <value code="0">RC Transmitter</value>
         <value code="2">Virtual RC by Joystick</value>
       </values>
@@ -513,7 +529,7 @@ velocity</short_desc>
       <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. A value of zero means that automatic disarming is disabled.</long_desc>
       <min>0</min>
       <max>20</max>
-      <unit>second</unit>
+      <unit>s</unit>
       <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
@@ -523,21 +539,21 @@ velocity</short_desc>
       <short_desc>Comms hold wait time</short_desc>
       <long_desc>The amount of time in seconds the system should wait at the comms hold waypoint</long_desc>
       <min>0.0</min>
-      <unit>seconds</unit>
+      <unit>s</unit>
     </parameter>
     <parameter default="-266072120" name="NAV_DLL_CH_LAT" type="INT32">
       <short_desc>Comms hold Lat</short_desc>
       <long_desc>Latitude of comms hold waypoint</long_desc>
       <min>-900000000</min>
       <max>900000000</max>
-      <unit>degrees * 1e7</unit>
+      <unit>deg * 1e7</unit>
     </parameter>
     <parameter default="1518453890" name="NAV_DLL_CH_LON" type="INT32">
       <short_desc>Comms hold Lon</short_desc>
       <long_desc>Longitude of comms hold waypoint</long_desc>
       <min>-1800000000</min>
       <max>1800000000</max>
-      <unit>degrees * 1e7</unit>
+      <unit>deg * 1e7</unit>
     </parameter>
     <parameter default="600.0" name="NAV_DLL_CH_ALT" type="FLOAT">
       <short_desc>Comms hold alt</short_desc>
@@ -550,7 +566,7 @@ velocity</short_desc>
       <short_desc>Airfield hole wait time</short_desc>
       <long_desc>The amount of time in seconds the system should wait at the airfield home waypoint</long_desc>
       <min>0.0</min>
-      <unit>seconds</unit>
+      <unit>s</unit>
     </parameter>
     <parameter default="2" name="NAV_DLL_N" type="INT32">
       <short_desc>Number of allowed Datalink timeouts</short_desc>
@@ -561,22 +577,21 @@ velocity</short_desc>
     <parameter default="0" name="NAV_DLL_CHSK" type="INT32">
       <short_desc>Skip comms hold wp</short_desc>
       <long_desc>If set to 1 the system will skip the comms hold wp on data link loss and will directly fly to airfield home</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="-265847810" name="NAV_AH_LAT" type="INT32">
       <short_desc>Airfield home Lat</short_desc>
       <long_desc>Latitude of airfield home waypoint</long_desc>
       <min>-900000000</min>
       <max>900000000</max>
-      <unit>degrees * 1e7</unit>
+      <unit>deg * 1e7</unit>
     </parameter>
     <parameter default="1518423250" name="NAV_AH_LON" type="INT32">
       <short_desc>Airfield home Lon</short_desc>
       <long_desc>Longitude of airfield home waypoint</long_desc>
       <min>-1800000000</min>
       <max>1800000000</max>
-      <unit>degrees * 1e7</unit>
+      <unit>deg * 1e7</unit>
     </parameter>
     <parameter default="600.0" name="NAV_AH_ALT" type="FLOAT">
       <short_desc>Airfield home alt</short_desc>
@@ -611,19 +626,10 @@ velocity</short_desc>
       <unit>ms</unit>
     </parameter>
     <parameter default="21" name="EKF2_GPS_CHECK" type="INT32">
-      <short_desc>Integer bitmask controlling GPS checks. Set bits to 1 to enable checks. Checks enabled by the following bit positions
-0 : Minimum required sat count set by EKF2_REQ_NSATS
-1 : Minimum required GDoP set by EKF2_REQ_GDOP
-2 : Maximum allowed horizontal position error set by EKF2_REQ_EPH
-3 : Maximum allowed vertical position error set by EKF2_REQ_EPV
-4 : Maximum allowed speed error set by EKF2_REQ_SACC
-5 : Maximum allowed horizontal position rate set by EKF2_REQ_HDRIFT. This check can only be used if the vehciel is stationary during alignment.
-6 : Maximum allowed vertical position rate set by EKF2_REQ_VDRIFT. This check can only be used if the vehciel is stationary during alignment.
-7 : Maximum allowed horizontal speed set by EKF2_REQ_HDRIFT. This check can only be used if the vehciel is stationary during alignment.
-8 : Maximum allowed vertical velocity discrepancy set by EKF2_REQ_VDRIFT</short_desc>
+      <short_desc>Integer bitmask controlling GPS checks</short_desc>
+      <long_desc>Set bits to 1 to enable checks. Checks enabled by the following bit positions 0 : Minimum required sat count set by EKF2_REQ_NSATS 1 : Minimum required GDoP set by EKF2_REQ_GDOP 2 : Maximum allowed horizontal position error set by EKF2_REQ_EPH 3 : Maximum allowed vertical position error set by EKF2_REQ_EPV 4 : Maximum allowed speed error set by EKF2_REQ_SACC 5 : Maximum allowed horizontal position rate set by EKF2_REQ_HDRIFT. This check can only be used if the vehciel is stationary during alignment. 6 : Maximum allowed vertical position rate set by EKF2_REQ_VDRIFT. This check can only be used if the vehciel is stationary during alignment. 7 : Maximum allowed horizontal speed set by EKF2_REQ_HDRIFT. This check can only be used if the vehciel is stationary during alignment. 8 : Maximum allowed vertical velocity discrepancy set by EKF2_REQ_VDRIFT</long_desc>
       <min>0</min>
       <max>511</max>
-      <unit />
     </parameter>
     <parameter default="5.0" name="EKF2_REQ_EPH" type="FLOAT">
       <short_desc>Required EPH to use GPS</short_desc>
@@ -647,13 +653,11 @@ velocity</short_desc>
       <short_desc>Required satellite count to use GPS</short_desc>
       <min>4</min>
       <max>12</max>
-      <unit />
     </parameter>
     <parameter default="2.5" name="EKF2_REQ_GDOP" type="FLOAT">
       <short_desc>Required GDoP to use GPS</short_desc>
       <min>1.5</min>
       <max>5.0</max>
-      <unit />
     </parameter>
     <parameter default="0.3" name="EKF2_REQ_HDRIFT" type="FLOAT">
       <short_desc>Maximum horizontal drift speed to use GPS</short_desc>
@@ -667,10 +671,10 @@ velocity</short_desc>
       <max>1.5</max>
       <unit>m/s</unit>
     </parameter>
-    <parameter default="1.0e-3" name="EKF2_GYR_NOISE" type="FLOAT">
+    <parameter default="6.0e-2" name="EKF2_GYR_NOISE" type="FLOAT">
       <short_desc>Rate gyro noise for covariance prediction</short_desc>
       <min>0.0001</min>
-      <max>0.01</max>
+      <max>0.1</max>
       <unit>rad/s</unit>
     </parameter>
     <parameter default="0.25" name="EKF2_ACC_NOISE" type="FLOAT">
@@ -679,26 +683,31 @@ velocity</short_desc>
       <max>1.0</max>
       <unit>m/s/s</unit>
     </parameter>
-    <parameter default="7.0e-5" name="EKF2_GYR_B_NOISE" type="FLOAT">
+    <parameter default="2.5e-6" name="EKF2_GYR_B_NOISE" type="FLOAT">
       <short_desc>Process noise for delta angle bias prediction</short_desc>
       <min>0.0</min>
       <max>0.0001</max>
       <unit>rad/s</unit>
     </parameter>
-    <parameter default="1.0e-4" name="EKF2_ACC_B_NOISE" type="FLOAT">
+    <parameter default="3.0e-5" name="EKF2_ACC_B_NOISE" type="FLOAT">
       <short_desc>Process noise for delta velocity z bias prediction</short_desc>
       <min>0.0</min>
       <max>0.01</max>
       <unit>m/s/s</unit>
     </parameter>
-    <parameter default="3.0e-3" name="EKF2_GYR_S_NOISE" type="FLOAT">
+    <parameter default="3.0e-4" name="EKF2_GYR_S_NOISE" type="FLOAT">
       <short_desc>Process noise for delta angle scale factor prediction</short_desc>
       <min>0.0</min>
       <max>0.01</max>
-      <unit>None</unit>
     </parameter>
-    <parameter default="2.5e-2" name="EKF2_MAG_B_NOISE" type="FLOAT">
-      <short_desc>Process noise for sensor bias and earth magnetic field prediction</short_desc>
+    <parameter default="5.0e-4" name="EKF2_MAG_B_NOISE" type="FLOAT">
+      <short_desc>Process noise for body magnetic field prediction</short_desc>
+      <min>0.0</min>
+      <max>0.1</max>
+      <unit>Gauss/s</unit>
+    </parameter>
+    <parameter default="2.5e-3" name="EKF2_MAG_E_NOISE" type="FLOAT">
+      <short_desc>Process noise for earth magnetic field prediction</short_desc>
       <min>0.0</min>
       <max>0.1</max>
       <unit>Gauss/s</unit>
@@ -715,7 +724,7 @@ velocity</short_desc>
       <max>5.0</max>
       <unit>m/s</unit>
     </parameter>
-    <parameter default="1.0" name="EKF2_GPS_P_NOISE" type="FLOAT">
+    <parameter default="0.5" name="EKF2_GPS_P_NOISE" type="FLOAT">
       <short_desc>Measurement noise for gps position</short_desc>
       <min>0.01</min>
       <max>10.0</max>
@@ -733,7 +742,7 @@ velocity</short_desc>
       <max>15.0</max>
       <unit>m</unit>
     </parameter>
-    <parameter default="0.17" name="EKF2_HEAD_NOISE" type="FLOAT">
+    <parameter default="0.3" name="EKF2_HEAD_NOISE" type="FLOAT">
       <short_desc>Measurement noise for magnetic heading fusion</short_desc>
       <min>0.01</min>
       <max>1.0</max>
@@ -745,11 +754,17 @@ velocity</short_desc>
       <max>1.0</max>
       <unit>Gauss</unit>
     </parameter>
+    <parameter default="1.4" name="EKF2_EAS_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for airspeed fusion</short_desc>
+      <min>0.5</min>
+      <max>5.0</max>
+      <unit>m/s</unit>
+    </parameter>
     <parameter default="0" name="EKF2_MAG_DECL" type="FLOAT">
       <short_desc>Magnetic declination</short_desc>
-      <unit>degrees</unit>
+      <unit>deg</unit>
     </parameter>
-    <parameter default="3.0" name="EKF2_HDG_GATE" type="FLOAT">
+    <parameter default="2.6" name="EKF2_HDG_GATE" type="FLOAT">
       <short_desc>Gate size for magnetic heading fusion</short_desc>
       <min>1.0</min>
       <unit>SD</unit>
@@ -760,44 +775,107 @@ velocity</short_desc>
       <unit>SD</unit>
     </parameter>
     <parameter default="7" name="EKF2_DECL_TYPE" type="INT32">
-      <short_desc>Integer bitmask controlling handling of magnetic declination. Set bits to in the following positions to enable functions.
-0 : Set to true to use the declination from the geo_lookup library when the GPS position becomes available, set to false to always use the EKF2_MAG_DECL value.
-1 : Set to true to save the EKF2_MAG_DECL parameter to the value returned by the EKF when the vehicle disarms.
-2 : Set to true to always use the declination as an observaton when 3-axis magnetometer fusion is being used</short_desc>
+      <short_desc>Integer bitmask controlling handling of magnetic declination</short_desc>
+      <long_desc>Set bits in the following positions to enable functions. 0 : Set to true to use the declination from the geo_lookup library when the GPS position becomes available, set to false to always use the EKF2_MAG_DECL value. 1 : Set to true to save the EKF2_MAG_DECL parameter to the value returned by the EKF when the vehicle disarms. 2 : Set to true to always use the declination as an observaton when 3-axis magnetometer fusion is being used.</long_desc>
       <min>0</min>
       <max>7</max>
-      <unit />
     </parameter>
     <parameter default="0" name="EKF2_MAG_TYPE" type="INT32">
-      <short_desc>Integer controlling the type of magnetometer fusion used - magnetic heading or 3-axis magnetometer.
-0 : determine the best fusion method to use automatically - heading fusion on-ground and 3-axis fusion in-flight
-1 : always use magnetic heading fusion
-2 : always use 3-axis fusion
-Other values  will disable magnetometer fusion completely</short_desc>
-      <min>0</min>
-      <max>2</max>
-      <unit>None</unit>
+      <short_desc>Type of magnetometer fusion</short_desc>
+      <long_desc>Integer controlling the type of magnetometer fusion used - magnetic heading or 3-axis magnetometer. If set to automatic: heading fusion on-ground and 3-axis fusion in-flight</long_desc>
+      <values>
+        <value code="1">Magnetic heading</value>
+        <value code="0">Automatic</value>
+        <value code="3">2-D projection</value>
+        <value code="2">3-axis fusion</value>
+        <value code="4">None</value>
+      </values>
     </parameter>
-    <parameter default="3.0" name="EKF2_BARO_GATE" type="FLOAT">
+    <parameter default="5.0" name="EKF2_BARO_GATE" type="FLOAT">
       <short_desc>Gate size for barometric height fusion</short_desc>
       <min>1.0</min>
       <unit>SD</unit>
     </parameter>
-    <parameter default="3.0" name="EKF2_GPS_P_GATE" type="FLOAT">
+    <parameter default="5.0" name="EKF2_GPS_P_GATE" type="FLOAT">
       <short_desc>Gate size for GPS horizontal position fusion</short_desc>
       <min>1.0</min>
       <unit>SD</unit>
     </parameter>
-    <parameter default="3.0" name="EKF2_GPS_V_GATE" type="FLOAT">
+    <parameter default="5.0" name="EKF2_GPS_V_GATE" type="FLOAT">
       <short_desc>Gate size for GPS velocity fusion</short_desc>
       <min>1.0</min>
       <unit>SD</unit>
     </parameter>
     <parameter default="0" name="EKF2_REC_RPL" type="INT32">
-      <short_desc>A value of 1 indicates that the ekf2 module will publish
-replay messages for logging</short_desc>
+      <short_desc>Replay mode</short_desc>
+      <long_desc>A value of 1 indicates that the ekf2 module will publish replay messages for logging.</long_desc>
+      <boolean />
+    </parameter>
+    <parameter default="1" name="EKF2_AID_MASK" type="INT32">
+      <short_desc>Integer bitmask controlling which external aiding sources will be used</short_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Set to true to use GPS data if available 1 : Set to true to use optical flow data if available</long_desc>
       <min>0</min>
-      <max>1</max>
+      <max>3</max>
+    </parameter>
+    <parameter default="0" name="EKF2_HGT_MODE" type="INT32">
+      <short_desc>Determines the primary source of height data used by the EKF</short_desc>
+      <long_desc>The range sensor option should only be used when for operation over a flat surface as the local NED origin will move up and down with ground level.</long_desc>
+      <values>
+        <value code="1">Reserved (GPS)</value>
+        <value code="0">Barometric pressure</value>
+        <value code="2">Range sensor</value>
+      </values>
+    </parameter>
+    <parameter default="0.1" name="EKF2_RNG_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for range finder fusion</short_desc>
+      <min>0.01</min>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="5.0" name="EKF2_RNG_GATE" type="FLOAT">
+      <short_desc>Gate size for range finder fusion</short_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+    </parameter>
+    <parameter default="0.1" name="EKF2_MIN_RNG" type="FLOAT">
+      <short_desc>Minimum valid range for the range finder</short_desc>
+      <min>0.01</min>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.15" name="EKF2_OF_N_MIN" type="FLOAT">
+      <short_desc>Measurement noise for the optical flow sensor when it's reported quality metric is at the maximum</short_desc>
+      <min>0.05</min>
+      <unit>rad/s</unit>
+    </parameter>
+    <parameter default="0.5" name="EKF2_OF_N_MAX" type="FLOAT">
+      <short_desc>Measurement noise for the optical flow sensor</short_desc>
+      <long_desc>(when it's reported quality metric is at the minimum set by EKF2_OF_QMIN). The following condition must be met: EKF2_OF_N_MAXN &gt;= EKF2_OF_N_MIN</long_desc>
+      <min>0.05</min>
+      <unit>rad/s</unit>
+    </parameter>
+    <parameter default="1" name="EKF2_OF_QMIN" type="INT32">
+      <short_desc>Optical Flow data will only be used if the sensor reports a quality metric &gt;= EKF2_OF_QMIN</short_desc>
+      <min>0</min>
+      <max>255</max>
+    </parameter>
+    <parameter default="3.0" name="EKF2_OF_GATE" type="FLOAT">
+      <short_desc>Gate size for optical flow fusion</short_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+    </parameter>
+    <parameter default="2.5" name="EKF2_OF_RMAX" type="FLOAT">
+      <short_desc>Optical Flow data will not fused if the magnitude of the flow rate &gt; EKF2_OF_RMAX</short_desc>
+      <min>1.0</min>
+      <unit>rad/s</unit>
+    </parameter>
+    <parameter default="5.0" name="EKF2_TERR_NOISE" type="FLOAT">
+      <short_desc>Terrain altitude process noise - accounts for instability in vehicle height estimate</short_desc>
+      <min>0.5</min>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="0.5" name="EKF2_TERR_GRAD" type="FLOAT">
+      <short_desc>Magnitude of terrain gradient</short_desc>
+      <min>0.0</min>
+      <unit>m/m</unit>
     </parameter>
   </group>
   <group name="FW Attitude Control">
@@ -806,26 +884,28 @@ replay messages for logging</short_desc>
       <long_desc>This defines the latency between a roll step input and the achieved setpoint (inverse to a P gain). Half a second is a good start value and fits for most average systems. Smaller systems may require smaller values, but as this will wear out servos faster, the value should only be decreased as needed.</long_desc>
       <min>0.4</min>
       <max>1.0</max>
-      <unit>seconds</unit>
+      <unit>s</unit>
     </parameter>
     <parameter default="0.4" name="FW_P_TC" type="FLOAT">
       <short_desc>Attitude Pitch Time Constant</short_desc>
       <long_desc>This defines the latency between a pitch step input and the achieved setpoint (inverse to a P gain). Half a second is a good start value and fits for most average systems. Smaller systems may require smaller values, but as this will wear out servos faster, the value should only be decreased as needed.</long_desc>
       <min>0.2</min>
       <max>1.0</max>
-      <unit>seconds</unit>
+      <unit>s</unit>
     </parameter>
     <parameter default="0.08" name="FW_PR_P" type="FLOAT">
       <short_desc>Pitch rate proportional gain</short_desc>
       <long_desc>This defines how much the elevator input will be commanded depending on the current body angular rate error.</long_desc>
       <min>0.005</min>
       <max>1.0</max>
+      <unit>%/rad/s</unit>
     </parameter>
     <parameter default="0.02" name="FW_PR_I" type="FLOAT">
       <short_desc>Pitch rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.005</min>
       <max>0.5</max>
+      <unit>%/rad</unit>
     </parameter>
     <parameter default="60.0" name="FW_P_RMAX_POS" type="FLOAT">
       <short_desc>Maximum positive / up pitch rate</short_desc>
@@ -846,24 +926,28 @@ replay messages for logging</short_desc>
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>%</unit>
     </parameter>
     <parameter default="0.05" name="FW_RR_P" type="FLOAT">
       <short_desc>Roll rate proportional Gain</short_desc>
       <long_desc>This defines how much the aileron input will be commanded depending on the current body angular rate error.</long_desc>
       <min>0.005</min>
       <max>1.0</max>
+      <unit>%/rad/s</unit>
     </parameter>
     <parameter default="0.01" name="FW_RR_I" type="FLOAT">
       <short_desc>Roll rate integrator Gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.005</min>
       <max>0.2</max>
+      <unit>%/rad</unit>
     </parameter>
     <parameter default="0.2" name="FW_RR_IMAX" type="FLOAT">
       <short_desc>Roll Integrator Anti-Windup</short_desc>
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>%</unit>
     </parameter>
     <parameter default="70.0" name="FW_R_RMAX" type="FLOAT">
       <short_desc>Maximum Roll Rate</short_desc>
@@ -877,18 +961,21 @@ replay messages for logging</short_desc>
       <long_desc>This defines how much the rudder input will be commanded depending on the current body angular rate error.</long_desc>
       <min>0.005</min>
       <max>1.0</max>
+      <unit>%/rad/s</unit>
     </parameter>
     <parameter default="0.0" name="FW_YR_I" type="FLOAT">
       <short_desc>Yaw rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
       <max>50.0</max>
+      <unit>%/rad</unit>
     </parameter>
     <parameter default="0.2" name="FW_YR_IMAX" type="FLOAT">
       <short_desc>Yaw rate integrator limit</short_desc>
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>%</unit>
     </parameter>
     <parameter default="0.0" name="FW_Y_RMAX" type="FLOAT">
       <short_desc>Maximum Yaw Rate</short_desc>
@@ -902,18 +989,21 @@ replay messages for logging</short_desc>
       <long_desc>This defines how much the wheel steering input will be commanded depending on the current body angular rate error.</long_desc>
       <min>0.005</min>
       <max>1.0</max>
+      <unit>%/rad/s</unit>
     </parameter>
     <parameter default="0.1" name="FW_WR_I" type="FLOAT">
       <short_desc>Wheel steering rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
       <max>50.0</max>
+      <unit>%/rad</unit>
     </parameter>
     <parameter default="1.0" name="FW_WR_IMAX" type="FLOAT">
       <short_desc>Wheel steering rate integrator limit</short_desc>
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>%</unit>
     </parameter>
     <parameter default="0.0" name="FW_W_RMAX" type="FLOAT">
       <short_desc>Maximum wheel steering rate</short_desc>
@@ -927,24 +1017,28 @@ replay messages for logging</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output. Use this to obtain a tigher response of the controller without introducing noise amplification.</long_desc>
       <min>0.0</min>
       <max>10.0</max>
+      <unit>%/rad/s</unit>
     </parameter>
     <parameter default="0.5" name="FW_PR_FF" type="FLOAT">
       <short_desc>Pitch rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
       <min>0.0</min>
       <max>10.0</max>
+      <unit>%/rad/s</unit>
     </parameter>
     <parameter default="0.3" name="FW_YR_FF" type="FLOAT">
       <short_desc>Yaw rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
       <min>0.0</min>
       <max>10.0</max>
+      <unit>%/rad/s</unit>
     </parameter>
     <parameter default="0.2" name="FW_WR_FF" type="FLOAT">
       <short_desc>Wheel steering rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
       <min>0.0</min>
       <max>10.0</max>
+      <unit>%/rad/s</unit>
     </parameter>
     <parameter default="1000.0" name="FW_YCO_VMIN" type="FLOAT">
       <short_desc>Minimal speed for yaw coordination</short_desc>
@@ -956,7 +1050,10 @@ replay messages for logging</short_desc>
       <long_desc>The param value sets the method used to calculate the yaw rate 0: open-loop zero lateral acceleration based on kinematic constraints 1: closed-loop: try to reduce lateral acceleration to 0 by measuring the acceleration</long_desc>
       <min>0</min>
       <max>1</max>
-      <unit>m/s</unit>
+      <values>
+        <value code="1">closed-loop</value>
+        <value code="0">open-loop</value>
+      </values>
     </parameter>
     <parameter default="10.0" name="FW_AIRSPD_MIN" type="FLOAT">
       <short_desc>Minimum Airspeed</short_desc>
@@ -1018,22 +1115,166 @@ replay messages for logging</short_desc>
       <max>1.0</max>
     </parameter>
   </group>
-  <group name="Fixed Wing TECS">
+  <group name="FW L1 Control">
+    <parameter default="20.0" name="FW_L1_PERIOD" type="FLOAT">
+      <short_desc>L1 period</short_desc>
+      <long_desc>This is the L1 distance and defines the tracking point ahead of the aircraft its following. A value of 18-25 meters works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
+      <min>12.0</min>
+      <max>50.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.75" name="FW_L1_DAMPING" type="FLOAT">
+      <short_desc>L1 damping</short_desc>
+      <long_desc>Damping factor for L1 control.</long_desc>
+      <min>0.6</min>
+      <max>0.9</max>
+    </parameter>
+    <parameter default="0.6" name="FW_THR_CRUISE" type="FLOAT">
+      <short_desc>Cruise throttle</short_desc>
+      <long_desc>This is the throttle setting required to achieve the desired cruise speed. Most airframes have a value of 0.5-0.7.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+    </parameter>
+    <parameter default="0.0" name="FW_THR_SLEW_MAX" type="FLOAT">
+      <short_desc>Throttle max slew rate</short_desc>
+      <long_desc>Maximum slew rate for the commanded throttle</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+    </parameter>
+    <parameter default="-45.0" name="FW_P_LIM_MIN" type="FLOAT">
+      <short_desc>Negative pitch limit</short_desc>
+      <long_desc>The minimum negative pitch the controller will output.</long_desc>
+      <min>-60.0</min>
+      <max>0.0</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter default="45.0" name="FW_P_LIM_MAX" type="FLOAT">
+      <short_desc>Positive pitch limit</short_desc>
+      <long_desc>The maximum positive pitch the controller will output.</long_desc>
+      <min>0.0</min>
+      <max>60.0</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter default="50.0" name="FW_R_LIM" type="FLOAT">
+      <short_desc>Controller roll limit</short_desc>
+      <long_desc>The maximum roll the controller will output.</long_desc>
+      <min>35.0</min>
+      <max>65.0</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter default="1.0" name="FW_THR_MAX" type="FLOAT">
+      <short_desc>Throttle limit max</short_desc>
+      <long_desc>This is the maximum throttle % that can be used by the controller. For overpowered aircraft, this should be reduced to a value that provides sufficient thrust to climb at the maximum pitch angle PTCH_MAX.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+    </parameter>
+    <parameter default="0.0" name="FW_THR_MIN" type="FLOAT">
+      <short_desc>Throttle limit min</short_desc>
+      <long_desc>This is the minimum throttle % that can be used by the controller. For electric aircraft this will normally be set to zero, but can be set to a small non-zero value if a folding prop is fitted to prevent the prop from folding and unfolding repeatedly in-flight or to provide some aerodynamic drag from a turning prop to improve the descent rate. For aircraft with internal combustion engine this parameter should be set for desired idle rpm.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+    </parameter>
+    <parameter default="0.15" name="FW_THR_IDLE" type="FLOAT">
+      <short_desc>Idle throttle</short_desc>
+      <long_desc>This is the minimum throttle while on the ground For aircraft with internal combustion engine this parameter should be set above desired idle rpm.</long_desc>
+      <min>0.0</min>
+      <max>0.4</max>
+    </parameter>
+    <parameter default="1.0" name="FW_THR_LND_MAX" type="FLOAT">
+      <short_desc>Throttle limit value before flare</short_desc>
+      <long_desc>This throttle value will be set as throttle limit at FW_LND_TLALT, before arcraft will flare.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+    </parameter>
+    <parameter default="10.0" name="FW_CLMBOUT_DIFF" type="FLOAT">
+      <short_desc>Climbout Altitude difference</short_desc>
+      <long_desc>If the altitude error exceeds this parameter, the system will climb out with maximum throttle and minimum airspeed until it is closer than this distance to the desired altitude. Mostly used for takeoff waypoints / modes. Set to 0 to disable climbout mode (not recommended).</long_desc>
+      <min>0.0</min>
+      <max>150.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="5.0" name="FW_T_CLMB_MAX" type="FLOAT">
+      <short_desc>Maximum climb rate</short_desc>
+      <long_desc>This is the best climb rate that the aircraft can achieve with the throttle set to THR_MAX and the airspeed set to the default value. For electric aircraft make sure this number can be achieved towards the end of flight when the battery voltage has reduced. The setting of this parameter can be checked by commanding a positive altitude change of 100m in loiter, RTL or guided mode. If the throttle required to climb is close to THR_MAX and the aircraft is maintaining airspeed, then this parameter is set correctly. If the airspeed starts to reduce, then the parameter is set to high, and if the throttle demand required to climb and maintain speed is noticeably less than FW_THR_MAX, then either FW_T_CLMB_MAX should be increased or FW_THR_MAX reduced.</long_desc>
+      <min>2.0</min>
+      <max>10.0</max>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="5.0" name="FW_LND_ANG" type="FLOAT">
+      <short_desc>Landing slope angle</short_desc>
+      <min>1.0</min>
+      <max>15.0</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter default="10.0" name="FW_LND_HVIRT" type="FLOAT">
+      <short_desc>FW_LND_HVIRT</short_desc>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="8.0" name="FW_LND_FLALT" type="FLOAT">
+      <short_desc>Landing flare altitude (relative to landing altitude)</short_desc>
+      <min>0.0</min>
+      <max>25.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="-1.0" name="FW_LND_TLALT" type="FLOAT">
+      <short_desc>Landing throttle limit altitude (relative landing altitude)</short_desc>
+      <long_desc>Default of -1.0 lets the system default to applying throttle limiting at 2/3 of the flare altitude.</long_desc>
+      <min>-1.0</min>
+      <max>30.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="15.0" name="FW_LND_HHDIST" type="FLOAT">
+      <short_desc>Landing heading hold horizontal distance</short_desc>
+      <min>0</min>
+      <max>30.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0" name="FW_LND_USETER" type="INT32">
+      <short_desc>Enable or disable usage of terrain estimate during landing</short_desc>
+      <long_desc>0: disabled, 1: enabled</long_desc>
+      <boolean />
+    </parameter>
+    <parameter default="2.5" name="FW_LND_FL_PMIN" type="FLOAT">
+      <short_desc>Flare, minimum pitch</short_desc>
+      <long_desc>Minimum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
+      <min>0</min>
+      <max>15.0</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter default="15.0" name="FW_LND_FL_PMAX" type="FLOAT">
+      <short_desc>Flare, maximum pitch</short_desc>
+      <long_desc>Maximum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
+      <min>0</min>
+      <max>45.0</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter default="1.3" name="FW_LND_AIRSPD_SC" type="FLOAT">
+      <short_desc>Landing airspeed scale factor</short_desc>
+      <long_desc>Multiplying this factor with the minimum airspeed of the plane gives the target airspeed the landing approach.</long_desc>
+      <min>1.0</min>
+      <max>1.5</max>
+    </parameter>
+  </group>
+  <group name="FW TECS">
     <parameter default="2.0" name="FW_T_SINK_MIN" type="FLOAT">
       <short_desc>Minimum descent rate</short_desc>
       <long_desc>This is the sink rate of the aircraft with the throttle set to THR_MIN and flown at the same airspeed as used to measure FW_T_CLMB_MAX.</long_desc>
+      <unit>m/s</unit>
     </parameter>
     <parameter default="5.0" name="FW_T_SINK_MAX" type="FLOAT">
       <short_desc>Maximum descent rate</short_desc>
       <long_desc>This sets the maximum descent rate that the controller will use. If this value is too large, the aircraft can over-speed on descent. This should be set to a value that can be achieved without exceeding the lower pitch angle limit and without over-speeding the aircraft.</long_desc>
+      <unit>m/s</unit>
     </parameter>
     <parameter default="5.0" name="FW_T_TIME_CONST" type="FLOAT">
       <short_desc>TECS time constant</short_desc>
       <long_desc>This is the time constant of the TECS control algorithm (in seconds). Smaller values make it faster to respond, larger values make it slower to respond.</long_desc>
+      <unit>s</unit>
     </parameter>
     <parameter default="8.0" name="FW_T_THRO_CONST" type="FLOAT">
       <short_desc>TECS Throttle time constant</short_desc>
       <long_desc>This is the time constant of the TECS throttle control algorithm (in seconds). Smaller values make it faster to respond, larger values make it slower to respond.</long_desc>
+      <unit>s</unit>
     </parameter>
     <parameter default="0.5" name="FW_T_THR_DAMP" type="FLOAT">
       <short_desc>Throttle damping factor</short_desc>
@@ -1045,15 +1286,18 @@ replay messages for logging</short_desc>
     </parameter>
     <parameter default="7.0" name="FW_T_VERT_ACC" type="FLOAT">
       <short_desc>Maximum vertical acceleration</short_desc>
-      <long_desc>This is the maximum vertical acceleration (in metres/second square) either up or down that the controller will use to correct speed or height errors. The default value of 7 m/s/s (equivalent to +- 0.7 g) allows for reasonably aggressive pitch changes if required to recover from under-speed conditions.</long_desc>
+      <long_desc>This is the maximum vertical acceleration (in m/s/s) either up or down that the controller will use to correct speed or height errors. The default value of 7 m/s/s (equivalent to +- 0.7 g) allows for reasonably aggressive pitch changes if required to recover from under-speed conditions.</long_desc>
+      <unit>m/s/s</unit>
     </parameter>
     <parameter default="3.0" name="FW_T_HGT_OMEGA" type="FLOAT">
       <short_desc>Complementary filter "omega" parameter for height</short_desc>
       <long_desc>This is the cross-over frequency (in radians/second) of the complementary filter used to fuse vertical acceleration and barometric height to obtain an estimate of height rate and height. Increasing this frequency weights the solution more towards use of the barometer, whilst reducing it weights the solution more towards use of the accelerometer data.</long_desc>
+      <unit>rad/s</unit>
     </parameter>
     <parameter default="2.0" name="FW_T_SPD_OMEGA" type="FLOAT">
       <short_desc>Complementary filter "omega" parameter for speed</short_desc>
       <long_desc>This is the cross-over frequency (in radians/second) of the complementary filter used to fuse longitudinal acceleration and airspeed to obtain an improved airspeed estimate. Increasing this frequency weights the solution more towards use of the arispeed sensor, whilst reducing it weights the solution more towards use of the accelerometer data.</long_desc>
+      <unit>rad/s</unit>
     </parameter>
     <parameter default="15.0" name="FW_T_RLL2THR" type="FLOAT">
       <short_desc>Roll -&gt; Throttle feedforward</short_desc>
@@ -1062,6 +1306,8 @@ replay messages for logging</short_desc>
     <parameter default="1.0" name="FW_T_SPDWEIGHT" type="FLOAT">
       <short_desc>Speed &lt;--&gt; Altitude priority</short_desc>
       <long_desc>This parameter adjusts the amount of weighting that the pitch control applies to speed vs height errors. Setting it to 0.0 will cause the pitch control to control height and ignore speed errors. This will normally improve height accuracy but give larger airspeed errors. Setting it to 2.0 will cause the pitch control loop to control speed and ignore height errors. This will normally reduce airspeed errors, but give larger height errors. The default value of 1.0 allows the pitch control to simultaneously control height and speed. Note to Glider Pilots - set this parameter to 2.0 (The glider will adjust its pitch angle to maintain airspeed, ignoring changes in height).</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
     </parameter>
     <parameter default="0.0" name="FW_T_PTCH_DAMP" type="FLOAT">
       <short_desc>Pitch damping factor</short_desc>
@@ -1082,7 +1328,7 @@ replay messages for logging</short_desc>
       <short_desc>Loiter time</short_desc>
       <long_desc>The amount of time in seconds the system should do open loop loiter and wait for gps recovery before it goes into flight termination.</long_desc>
       <min>0.0</min>
-      <unit>seconds</unit>
+      <unit>s</unit>
     </parameter>
     <parameter default="15.0" name="NAV_GPSF_R" type="FLOAT">
       <short_desc>Open loop loiter roll</short_desc>
@@ -1111,18 +1357,33 @@ replay messages for logging</short_desc>
       <long_desc>0 = none, 1 = warning (default), 2 = loiter, 3 = return to launch, 4 = fight termination</long_desc>
       <min>0</min>
       <max>4</max>
+      <values>
+        <value code="1">Warning</value>
+        <value code="0">None</value>
+        <value code="3">Return</value>
+        <value code="2">Loiter</value>
+        <value code="4">Terminate</value>
+      </values>
     </parameter>
     <parameter default="0" name="GF_ALTMODE" type="INT32">
       <short_desc>Geofence altitude mode</short_desc>
       <long_desc>Select which altitude reference should be used 0 = WGS84, 1 = AMSL</long_desc>
       <min>0</min>
       <max>1</max>
+      <values>
+        <value code="1">AMSL</value>
+        <value code="0">WGS84</value>
+      </values>
     </parameter>
     <parameter default="0" name="GF_SOURCE" type="INT32">
       <short_desc>Geofence source</short_desc>
       <long_desc>Select which position source should be used. Selecting GPS instead of global position makes sure that there is no dependence on the position estimator 0 = global position, 1 = GPS</long_desc>
       <min>0</min>
       <max>1</max>
+      <values>
+        <value code="1">GPS</value>
+        <value code="0">GPOS</value>
+      </values>
     </parameter>
     <parameter default="-1" name="GF_COUNT" type="INT32">
       <short_desc>Geofence counter limit</short_desc>
@@ -1134,162 +1395,32 @@ replay messages for logging</short_desc>
       <short_desc>Max horizontal distance in meters</short_desc>
       <long_desc>Set to &gt; 0 to activate a geofence action if horizontal distance to home exceeds this value.</long_desc>
       <min>-1</min>
-      <unit>meters</unit>
+      <unit>m</unit>
     </parameter>
     <parameter default="-1" name="GF_MAX_VER_DIST" type="INT32">
       <short_desc>Max vertical distance in meters</short_desc>
       <long_desc>Set to &gt; 0 to activate a geofence action if vertical distance to home exceeds this value.</long_desc>
       <min>-1</min>
-      <unit>meters</unit>
+      <unit>m</unit>
     </parameter>
   </group>
   <group name="Gimbal">
     <parameter default="0" name="GMB_USE_MNT" type="INT32">
       <short_desc>Consider mount operation mode</short_desc>
       <long_desc>If set to 1, mount mode will be enforced.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0" name="GMB_AUX_MNT_CHN" type="INT32">
       <short_desc>Auxiliary switch to set mount operation mode</short_desc>
       <long_desc>Set to 0 to disable manual mode control. If set to an auxiliary switch: Switch off means the gimbal is put into safe/locked position. Switch on means the gimbal can move freely, and landing gear will be retracted if applicable.</long_desc>
       <min>0</min>
       <max>3</max>
-    </parameter>
-  </group>
-  <group name="L1 Control">
-    <parameter default="20.0" name="FW_L1_PERIOD" type="FLOAT">
-      <short_desc>L1 period</short_desc>
-      <long_desc>This is the L1 distance and defines the tracking point ahead of the aircraft its following. A value of 18-25 meters works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
-      <min>12.0</min>
-      <max>50.0</max>
-    </parameter>
-    <parameter default="0.75" name="FW_L1_DAMPING" type="FLOAT">
-      <short_desc>L1 damping</short_desc>
-      <long_desc>Damping factor for L1 control.</long_desc>
-      <min>0.6</min>
-      <max>0.9</max>
-    </parameter>
-    <parameter default="0.6" name="FW_THR_CRUISE" type="FLOAT">
-      <short_desc>Cruise throttle</short_desc>
-      <long_desc>This is the throttle setting required to achieve the desired cruise speed. Most airframes have a value of 0.5-0.7.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-    </parameter>
-    <parameter default="0.0" name="FW_THR_SLEW_MAX" type="FLOAT">
-      <short_desc>Throttle max slew rate</short_desc>
-      <long_desc>Maximum slew rate for the commanded throttle</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-    </parameter>
-    <parameter default="-45.0" name="FW_P_LIM_MIN" type="FLOAT">
-      <short_desc>Negative pitch limit</short_desc>
-      <long_desc>The minimum negative pitch the controller will output.</long_desc>
-      <min>-60.0</min>
-      <max>0.0</max>
-      <unit>degrees</unit>
-    </parameter>
-    <parameter default="45.0" name="FW_P_LIM_MAX" type="FLOAT">
-      <short_desc>Positive pitch limit</short_desc>
-      <long_desc>The maximum positive pitch the controller will output.</long_desc>
-      <min>0.0</min>
-      <max>60.0</max>
-      <unit>degrees</unit>
-    </parameter>
-    <parameter default="50.0" name="FW_R_LIM" type="FLOAT">
-      <short_desc>Controller roll limit</short_desc>
-      <long_desc>The maximum roll the controller will output.</long_desc>
-      <min>35.0</min>
-      <max>65.0</max>
-      <unit>degrees</unit>
-    </parameter>
-    <parameter default="1.0" name="FW_THR_MAX" type="FLOAT">
-      <short_desc>Throttle limit max</short_desc>
-      <long_desc>This is the maximum throttle % that can be used by the controller. For overpowered aircraft, this should be reduced to a value that provides sufficient thrust to climb at the maximum pitch angle PTCH_MAX.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-    </parameter>
-    <parameter default="0.0" name="FW_THR_MIN" type="FLOAT">
-      <short_desc>Throttle limit min</short_desc>
-      <long_desc>This is the minimum throttle % that can be used by the controller. For electric aircraft this will normally be set to zero, but can be set to a small non-zero value if a folding prop is fitted to prevent the prop from folding and unfolding repeatedly in-flight or to provide some aerodynamic drag from a turning prop to improve the descent rate. For aircraft with internal combustion engine this parameter should be set for desired idle rpm.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-    </parameter>
-    <parameter default="0.15" name="FW_THR_IDLE" type="FLOAT">
-      <short_desc>Idle throttle</short_desc>
-      <long_desc>This is the minimum throttle while on the ground For aircraft with internal combustion engine this parameter should be set above desired idle rpm.</long_desc>
-      <min>0.0</min>
-      <max>0.4</max>
-    </parameter>
-    <parameter default="1.0" name="FW_THR_LND_MAX" type="FLOAT">
-      <short_desc>Throttle limit value before flare</short_desc>
-      <long_desc>This throttle value will be set as throttle limit at FW_LND_TLALT, before arcraft will flare.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-    </parameter>
-    <parameter default="10.0" name="FW_CLMBOUT_DIFF" type="FLOAT">
-      <short_desc>Climbout Altitude difference</short_desc>
-      <long_desc>If the altitude error exceeds this parameter, the system will climb out with maximum throttle and minimum airspeed until it is closer than this distance to the desired altitude. Mostly used for takeoff waypoints / modes. Set to zero to disable climbout mode (not recommended).</long_desc>
-      <min>0.0</min>
-      <max>150.0</max>
-    </parameter>
-    <parameter default="5.0" name="FW_T_CLMB_MAX" type="FLOAT">
-      <short_desc>Maximum climb rate</short_desc>
-      <long_desc>This is the best climb rate that the aircraft can achieve with the throttle set to THR_MAX and the airspeed set to the default value. For electric aircraft make sure this number can be achieved towards the end of flight when the battery voltage has reduced. The setting of this parameter can be checked by commanding a positive altitude change of 100m in loiter, RTL or guided mode. If the throttle required to climb is close to THR_MAX and the aircraft is maintaining airspeed, then this parameter is set correctly. If the airspeed starts to reduce, then the parameter is set to high, and if the throttle demand required to climb and maintain speed is noticeably less than FW_THR_MAX, then either FW_T_CLMB_MAX should be increased or FW_THR_MAX reduced.</long_desc>
-      <min>2.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="5.0" name="FW_LND_ANG" type="FLOAT">
-      <short_desc>Landing slope angle</short_desc>
-      <min>1.0</min>
-      <max>15.0</max>
-      <unit>degrees</unit>
-    </parameter>
-    <parameter default="10.0" name="FW_LND_HVIRT" type="FLOAT">
-      <short_desc>FW_LND_HVIRT</short_desc>
-    </parameter>
-    <parameter default="8.0" name="FW_LND_FLALT" type="FLOAT">
-      <short_desc>Landing flare altitude (relative to landing altitude)</short_desc>
-      <min>0.0</min>
-      <max>25.0</max>
-      <unit>meters</unit>
-    </parameter>
-    <parameter default="-1.0" name="FW_LND_TLALT" type="FLOAT">
-      <short_desc>Landing throttle limit altitude (relative landing altitude)</short_desc>
-      <long_desc>Default of -1.0f lets the system default to applying throttle limiting at 2/3 of the flare altitude.</long_desc>
-      <min>-1.0</min>
-      <max>30.0</max>
-      <unit>meters</unit>
-    </parameter>
-    <parameter default="15.0" name="FW_LND_HHDIST" type="FLOAT">
-      <short_desc>Landing heading hold horizontal distance</short_desc>
-      <min>0</min>
-      <max>30.0</max>
-      <unit>meters</unit>
-    </parameter>
-    <parameter default="0" name="FW_LND_USETER" type="INT32">
-      <short_desc>Enable or disable usage of terrain estimate during landing</short_desc>
-      <long_desc>0: disabled, 1: enabled</long_desc>
-    </parameter>
-    <parameter default="2.5" name="FW_LND_FL_PMIN" type="FLOAT">
-      <short_desc>Flare, minimum pitch</short_desc>
-      <long_desc>Minimum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
-      <min>0</min>
-      <max>15.0</max>
-      <unit>degrees</unit>
-    </parameter>
-    <parameter default="15.0" name="FW_LND_FL_PMAX" type="FLOAT">
-      <short_desc>Flare, maximum pitch</short_desc>
-      <long_desc>Maximum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
-      <min>0</min>
-      <max>45.0</max>
-      <unit>degrees</unit>
-    </parameter>
-    <parameter default="1.3" name="FW_LND_AIRSPD_SC" type="FLOAT">
-      <short_desc>Landing airspeed scale factor</short_desc>
-      <long_desc>Multiplying this factor with the minimum airspeed of the plane gives the target airspeed the landing approach.</long_desc>
-      <min>1.0</min>
-      <max>1.5</max>
+      <values>
+        <value code="1">AUX1</value>
+        <value code="0">Disable</value>
+        <value code="3">AUX3</value>
+        <value code="2">AUX2</value>
+      </values>
     </parameter>
   </group>
   <group name="Land Detector">
@@ -1305,7 +1436,7 @@ replay messages for logging</short_desc>
     </parameter>
     <parameter default="20.0" name="LNDMC_ROT_MAX" type="FLOAT">
       <short_desc>Multicopter max rotation</short_desc>
-      <long_desc>Maximum allowed around each axis allowed in the landed state (degrees per second)</long_desc>
+      <long_desc>Maximum allowed angular velocity around each axis allowed in the landed state.</long_desc>
       <unit>deg/s</unit>
     </parameter>
     <parameter default="0.15" name="LNDMC_THR_MAX" type="FLOAT">
@@ -1348,22 +1479,25 @@ replay messages for logging</short_desc>
       <short_desc>Enable launch detection</short_desc>
       <min>0</min>
       <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="30.0" name="LAUN_CAT_A" type="FLOAT">
       <short_desc>Catapult accelerometer threshold</short_desc>
-      <long_desc>LAUN_CAT_A * LAUN_CAT_T serves as threshold to trigger launch detection.</long_desc>
+      <long_desc>LAUN_CAT_A for LAUN_CAT_T serves as threshold to trigger launch detection.</long_desc>
       <min>0</min>
+      <unit>m/s/s</unit>
     </parameter>
     <parameter default="0.05" name="LAUN_CAT_T" type="FLOAT">
       <short_desc>Catapult time threshold</short_desc>
-      <long_desc>LAUN_CAT_A * LAUN_CAT_T serves as threshold to trigger launch detection.</long_desc>
+      <long_desc>LAUN_CAT_A for LAUN_CAT_T serves as threshold to trigger launch detection.</long_desc>
       <min>0</min>
+      <unit>s</unit>
     </parameter>
     <parameter default="0.0" name="LAUN_CAT_MDEL" type="FLOAT">
       <short_desc>Motor delay</short_desc>
       <long_desc>Delay between starting attitude control and powering up the throttle (giving throttle control to the controller) Before this timespan is up the throttle will be set to FW_THR_IDLE, set to 0 to deactivate</long_desc>
       <min>0</min>
-      <unit>seconds</unit>
+      <unit>s</unit>
     </parameter>
     <parameter default="30.0" name="LAUN_CAT_PMAX" type="FLOAT">
       <short_desc>Maximum pitch before the throttle is powered up (during motor delay phase)</short_desc>
@@ -1376,27 +1510,59 @@ replay messages for logging</short_desc>
   <group name="Local Position Estimator">
     <parameter default="1" name="LPE_ENABLED" type="INT32">
       <short_desc>Enable local position estimator</short_desc>
+      <boolean />
     </parameter>
     <parameter default="1" name="LPE_INTEGRATE" type="INT32">
       <short_desc>Enable accelerometer integration for prediction</short_desc>
+      <boolean />
+    </parameter>
+    <parameter default="0.0" name="LPE_FLW_OFF_Z" type="FLOAT">
+      <short_desc>Optical flow z offset from center</short_desc>
+      <min>-1</min>
+      <max>1</max>
+      <unit>m</unit>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.01" name="LPE_FLW_XY" type="FLOAT">
       <short_desc>Optical flow xy standard deviation</short_desc>
       <min>0.01</min>
       <max>1</max>
       <unit>m</unit>
+      <decimal>3</decimal>
     </parameter>
-    <parameter default="0.2" name="LPE_SNR_Z" type="FLOAT">
+    <parameter default="75" name="LPE_FLW_QMIN" type="INT32">
+      <short_desc>Optical flow minimum quality threshold</short_desc>
+      <min>0</min>
+      <max>255</max>
+      <decimal>0</decimal>
+    </parameter>
+    <parameter default="0.05" name="LPE_SNR_Z" type="FLOAT">
       <short_desc>Sonar z standard deviation</short_desc>
       <min>0.01</min>
       <max>1</max>
       <unit>m</unit>
+      <decimal>3</decimal>
+    </parameter>
+    <parameter default="0.00" name="LPE_SNR_OFF_Z" type="FLOAT">
+      <short_desc>Sonar z offset from center of vehicle +down</short_desc>
+      <min>-1</min>
+      <max>1</max>
+      <unit>m</unit>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.03" name="LPE_LDR_Z" type="FLOAT">
       <short_desc>Lidar z standard deviation</short_desc>
       <min>0.01</min>
       <max>1</max>
       <unit>m</unit>
+      <decimal>3</decimal>
+    </parameter>
+    <parameter default="0.00" name="LPE_LDR_OFF_Z" type="FLOAT">
+      <short_desc>Lidar z offset from center of vehicle +down</short_desc>
+      <min>-1</min>
+      <max>1</max>
+      <unit>m</unit>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.0454" name="LPE_ACC_XY" type="FLOAT">
       <short_desc>Accelerometer xy standard deviation</short_desc>
@@ -1404,6 +1570,7 @@ replay messages for logging</short_desc>
       <min>0.00001</min>
       <max>2</max>
       <unit>m/s^2</unit>
+      <decimal>4</decimal>
     </parameter>
     <parameter default="0.0454" name="LPE_ACC_Z" type="FLOAT">
       <short_desc>Accelerometer z standard deviation</short_desc>
@@ -1411,91 +1578,119 @@ replay messages for logging</short_desc>
       <min>0.00001</min>
       <max>2</max>
       <unit>m/s^2</unit>
+      <decimal>4</decimal>
     </parameter>
     <parameter default="1.0" name="LPE_BAR_Z" type="FLOAT">
       <short_desc>Barometric presssure altitude z standard deviation</short_desc>
       <min>0.01</min>
       <max>3</max>
       <unit>m</unit>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter default="0.25" name="LPE_GPS_DELAY" type="FLOAT">
+      <short_desc>GPS delay compensaton</short_desc>
+      <min>0</min>
+      <max>0.4</max>
+      <unit>sec</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="2.0" name="LPE_GPS_XY" type="FLOAT">
       <short_desc>GPS xy standard deviation</short_desc>
       <min>0.01</min>
       <max>5</max>
       <unit>m</unit>
+      <decimal>2</decimal>
     </parameter>
-    <parameter default="10.0" name="LPE_GPS_Z" type="FLOAT">
+    <parameter default="100.0" name="LPE_GPS_Z" type="FLOAT">
       <short_desc>GPS z standard deviation</short_desc>
       <min>0.01</min>
-      <max>20</max>
+      <max>200</max>
       <unit>m</unit>
+      <decimal>2</decimal>
     </parameter>
-    <parameter default="0.275" name="LPE_GPS_VXY" type="FLOAT">
+    <parameter default="0.25" name="LPE_GPS_VXY" type="FLOAT">
       <short_desc>GPS xy velocity standard deviation</short_desc>
       <min>0.01</min>
       <max>2</max>
       <unit>m/s</unit>
+      <decimal>3</decimal>
     </parameter>
-    <parameter default="0.237" name="LPE_GPS_VZ" type="FLOAT">
+    <parameter default="0.25" name="LPE_GPS_VZ" type="FLOAT">
       <short_desc>GPS z velocity standard deviation</short_desc>
       <min>0.01</min>
       <max>2</max>
       <unit>m/s</unit>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="3.0" name="LPE_EPH_MAX" type="FLOAT">
       <short_desc>GPS max eph</short_desc>
       <min>1.0</min>
       <max>5.0</max>
       <unit>m</unit>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.5" name="LPE_VIS_XY" type="FLOAT">
       <short_desc>Vision xy standard deviation</short_desc>
       <min>0.01</min>
       <max>1</max>
       <unit>m</unit>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.5" name="LPE_VIS_Z" type="FLOAT">
       <short_desc>Vision z standard deviation</short_desc>
       <min>0.01</min>
       <max>2</max>
       <unit>m</unit>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0" name="LPE_NO_VISION" type="INT32">
       <short_desc>Circuit breaker to disable vision input</short_desc>
       <long_desc>Set to the appropriate key (328754) to disable vision input.</long_desc>
       <min>0</min>
       <max>1</max>
+      <decimal>0</decimal>
     </parameter>
     <parameter default="0.05" name="LPE_VIC_P" type="FLOAT">
       <short_desc>Vicon position standard deviation</short_desc>
       <min>0.01</min>
       <max>1</max>
       <unit>m</unit>
+      <decimal>3</decimal>
     </parameter>
-    <parameter default="0.0" name="LPE_PN_P" type="FLOAT">
-      <short_desc>Position propagation process noise power (variance*sampling rate)</short_desc>
+    <parameter default="0.1" name="LPE_PN_P" type="FLOAT">
+      <short_desc>Position propagation noise density</short_desc>
       <min>0</min>
       <max>1</max>
-      <unit>(m/s^2)-s</unit>
+      <unit>m/s/sqrt(Hz)</unit>
+      <decimal>8</decimal>
     </parameter>
-    <parameter default="0.0" name="LPE_PN_V" type="FLOAT">
-      <short_desc>Velocity propagation process noise power (variance*sampling rate)</short_desc>
-      <min>0</min>
-      <max>5</max>
-      <unit>(m/s)-s</unit>
-    </parameter>
-    <parameter default="1e-8" name="LPE_PN_B" type="FLOAT">
-      <short_desc>Accel bias propagation process noise power (variance*sampling rate)</short_desc>
+    <parameter default="0.1" name="LPE_PN_V" type="FLOAT">
+      <short_desc>Velocity propagation noise density</short_desc>
       <min>0</min>
       <max>1</max>
-      <unit>(m/s)-s</unit>
+      <unit>(m/s)/s/sqrt(Hz)</unit>
+      <decimal>8</decimal>
     </parameter>
-    <parameter default="1000.0" name="LPE_BETA_MAX" type="FLOAT">
-      <short_desc>Fault detection threshold, for chi-squared dist</short_desc>
-      <long_desc>TODO add separate params for 1 dof, 3 dof, and 6 dof beta or false alarm rate in false alarms/hr</long_desc>
-      <min>3</min>
-      <max>1000</max>
-      <unit />
+    <parameter default="1e-3" name="LPE_PN_B" type="FLOAT">
+      <short_desc>Accel bias propagation noise density</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>(m/s^2)/s/sqrt(Hz)</unit>
+      <decimal>8</decimal>
+    </parameter>
+    <parameter default="1e-3" name="LPE_PN_T" type="FLOAT">
+      <short_desc>Terrain random walk noise density</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>m/s/sqrt(Hz)</unit>
+      <decimal>3</decimal>
+    </parameter>
+    <parameter default="0.1" name="LPE_FGYRO_HP" type="FLOAT">
+      <short_desc>Flow gyro high pass filter cut off frequency</short_desc>
+      <min>0</min>
+      <max>2</max>
+      <unit>Hz</unit>
+      <decimal>3</decimal>
     </parameter>
   </group>
   <group name="MAVLink">
@@ -1522,10 +1717,12 @@ replay messages for logging</short_desc>
     <parameter default="0" name="MAV_USEHILGPS" type="INT32">
       <short_desc>Use/Accept HIL GPS message even if not in HIL mode</short_desc>
       <long_desc>If set to 1 incoming HIL GPS messages are parsed.</long_desc>
+      <boolean />
     </parameter>
     <parameter default="1" name="MAV_FWDEXTSP" type="INT32">
       <short_desc>Forward external setpoint messages</short_desc>
       <long_desc>If set to 1 incoming external setpoint messages will be directly forwarded to the controllers if in offboard control mode</long_desc>
+      <boolean />
     </parameter>
     <parameter default="1" name="MAV_TEST_PAR" type="INT32">
       <short_desc>Test parameter</short_desc>
@@ -1537,74 +1734,101 @@ replay messages for logging</short_desc>
   <group name="MKBLCTRL Testmode">
     <parameter default="0" name="MKBLCTRL_TEST" type="INT32">
       <short_desc>Enables testmode (Identify) of MKBLCTRL Driver</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <values>
+        <value code="1">Enabled</value>
+        <value code="0">Disabled</value>
+      </values>
     </parameter>
   </group>
   <group name="Mission">
-    <parameter default="2.5" name="MIS_TAKEOFF_ALT" type="FLOAT">
+    <parameter default="10.0" name="MIS_TAKEOFF_ALT" type="FLOAT">
       <short_desc>Take-off altitude</short_desc>
-      <long_desc>Even if first waypoint has altitude less then MIS_TAKEOFF_ALT above home position, system will climb to MIS_TAKEOFF_ALT on takeoff, then go to waypoint.</long_desc>
-      <unit>meters</unit>
+      <long_desc>This is the minimum altitude the system will take off to.</long_desc>
+      <min>0</min>
+      <max>80</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="1.2" name="MIS_LTRMIN_ALT" type="FLOAT">
+      <short_desc>Minimum Loiter altitude</short_desc>
+      <long_desc>This is the minimum altitude the system will always obey. The intent is to stay out of ground effect.</long_desc>
+      <min>0</min>
+      <max>80</max>
+      <unit>m</unit>
     </parameter>
     <parameter default="1" name="MIS_ONBOARD_EN" type="INT32">
       <short_desc>Enable persistent onboard mission storage</short_desc>
       <long_desc>When enabled, missions that have been uploaded by the GCS are stored and reloaded after reboot persistently.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="900" name="MIS_DIST_1WP" type="FLOAT">
       <short_desc>Maximal horizontal distance from home to first waypoint</short_desc>
       <long_desc>Failsafe check to prevent running mission stored from previous flight at a new takeoff location. Set a value of zero or less to disable. The mission will not be started if the current waypoint is more distant than MIS_DIS_1WP from the current position.</long_desc>
       <min>0</min>
       <max>1000</max>
+      <unit>m</unit>
     </parameter>
     <parameter default="1" name="MIS_ALTMODE" type="INT32">
       <short_desc>Altitude setpoint mode</short_desc>
       <long_desc>0: the system will follow a zero order hold altitude setpoint 1: the system will follow a first order hold altitude setpoint values follow the definition in enum mission_altitude_mode</long_desc>
       <min>0</min>
       <max>1</max>
+      <values>
+        <value code="1">First Order Hold</value>
+        <value code="0">Zero Order Hold</value>
+      </values>
     </parameter>
     <parameter default="1" name="MIS_YAWMODE" type="INT32">
       <short_desc>Multirotor only. Yaw setpoint mode</short_desc>
-      <long_desc>0: Set the yaw heading to the yaw value specified for the destination waypoint. 1: Maintain a yaw heading pointing towards the next waypoint. 2: Maintain a yaw heading that always points to the home location. 3: Maintain a yaw heading that always points away from the home location (ie: back always faces home). The values are defined in the enum mission_altitude_mode</long_desc>
+      <long_desc>The values are defined in the enum mission_altitude_mode</long_desc>
       <min>0</min>
       <max>3</max>
+      <values>
+        <value code="1">Heading towards waypoint</value>
+        <value code="0">Heading as set by waypoint</value>
+        <value code="3">Heading away from home</value>
+        <value code="2">Heading towards home</value>
+      </values>
     </parameter>
     <parameter default="-1.0" name="MIS_YAW_TMT" type="FLOAT">
       <short_desc>Time in seconds we wait on reaching target heading at a waypoint if it is forced</short_desc>
       <long_desc>If set &gt; 0 it will ignore the target heading for normal waypoint acceptance. If the waypoint forces the heading the timeout will matter. For example on VTOL forwards transiton. Mainly useful for VTOLs that have less yaw authority and might not reach target yaw in wind. Disabled by default.</long_desc>
       <min>-1</min>
       <max>20</max>
+      <unit>s</unit>
+      <increment>1</increment>
     </parameter>
     <parameter default="12.0" name="MIS_YAW_ERR" type="FLOAT">
       <short_desc>Max yaw error in degree needed for waypoint heading acceptance</short_desc>
       <min>0</min>
       <max>90</max>
+      <unit>deg</unit>
+      <increment>1</increment>
     </parameter>
     <parameter default="50.0" name="NAV_LOITER_RAD" type="FLOAT">
       <short_desc>Loiter radius (FW only)</short_desc>
       <long_desc>Default value of loiter radius for missions, loiter, RTL, etc. (fixedwing only).</long_desc>
       <min>25</min>
       <max>1000</max>
-      <unit>meter</unit>
+      <unit>m</unit>
     </parameter>
     <parameter default="10.0" name="NAV_ACC_RAD" type="FLOAT">
       <short_desc>Acceptance Radius</short_desc>
       <long_desc>Default acceptance radius, overridden by acceptance radius of waypoint if set.</long_desc>
       <min>0.05</min>
       <max>200.0</max>
-      <unit>meter</unit>
+      <unit>m</unit>
     </parameter>
     <parameter default="0" name="NAV_DLL_OBC" type="INT32">
       <short_desc>Set OBC mode for data link loss</short_desc>
-      <long_desc>If set to 1 the behaviour on data link loss is set to a mode according to the OBC rules</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <long_desc>If set to 1 the behaviour on data link loss is set to a mode according to the Outback Challenge (OBC) rules</long_desc>
+      <boolean />
     </parameter>
     <parameter default="0" name="NAV_RCL_OBC" type="INT32">
       <short_desc>Set OBC mode for rc loss</short_desc>
-      <long_desc>If set to 1 the behaviour on data link loss is set to a mode according to the OBC rules</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <long_desc>If set to 1 the behaviour on data link loss is set to a mode according to the Outback Challenge (OBC) rules</long_desc>
+      <boolean />
     </parameter>
   </group>
   <group name="Multicopter Attitude Control">
@@ -1613,6 +1837,7 @@ replay messages for logging</short_desc>
       <long_desc>Reduce if the system is too twitchy, increase if the response is too slow and sluggish.</long_desc>
       <min>0.15</min>
       <max>0.25</max>
+      <unit>s</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -1621,6 +1846,7 @@ replay messages for logging</short_desc>
       <long_desc>Reduce if the system is too twitchy, increase if the response is too slow and sluggish.</long_desc>
       <min>0.15</min>
       <max>0.25</max>
+      <unit>s</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -1644,6 +1870,7 @@ replay messages for logging</short_desc>
       <short_desc>Roll rate I gain</short_desc>
       <long_desc>Roll rate integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
       <min>0.0</min>
+      <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter default="0.003" name="MC_ROLLRATE_D" type="FLOAT">
@@ -1681,7 +1908,7 @@ replay messages for logging</short_desc>
       <short_desc>Pitch rate I gain</short_desc>
       <long_desc>Pitch rate integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
       <min>0.0</min>
-      <decimal>2</decimal>
+      <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter default="0.003" name="MC_PITCHRATE_D" type="FLOAT">
@@ -1808,7 +2035,6 @@ replay messages for logging</short_desc>
       <long_desc>Manual input needed in order to override attitude control rate setpoints and instead pass manual stick inputs as rate setpoints</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <unit />
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -2010,7 +2236,7 @@ replay messages for logging</short_desc>
       <min>0.0</min>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="0.1" name="MPC_XY_VEL_P" type="FLOAT">
+    <parameter default="0.065" name="MPC_XY_VEL_P" type="FLOAT">
       <short_desc>Proportional gain for horizontal velocity error</short_desc>
       <min>0.0</min>
       <decimal>2</decimal>
@@ -2026,9 +2252,16 @@ replay messages for logging</short_desc>
       <min>0.0</min>
       <decimal>3</decimal>
     </parameter>
+    <parameter default="5.0" name="MPC_XY_CRUISE" type="FLOAT">
+      <short_desc>Nominal horizontal velocity</short_desc>
+      <long_desc>Normal horizontal velocity in AUTO mode and endpoint for position stabilized mode (POSCTRL).</long_desc>
+      <min>0.0</min>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+    </parameter>
     <parameter default="8.0" name="MPC_XY_VEL_MAX" type="FLOAT">
       <short_desc>Maximum horizontal velocity</short_desc>
-      <long_desc>Maximum horizontal velocity in AUTO mode and endpoint for position stabilized mode (POSCTRL).</long_desc>
+      <long_desc>Maximum horizontal velocity in AUTO mode.</long_desc>
       <min>0.0</min>
       <max>20.0</max>
       <unit>m/s</unit>
@@ -2047,7 +2280,7 @@ replay messages for logging</short_desc>
       <long_desc>Limits maximum tilt in AUTO and POSCTRL modes during flight.</long_desc>
       <min>0.0</min>
       <max>90.0</max>
-      <unit>degree</unit>
+      <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter default="12.0" name="MPC_TILTMAX_LND" type="FLOAT">
@@ -2055,7 +2288,7 @@ replay messages for logging</short_desc>
       <long_desc>Limits maximum tilt angle on landing.</long_desc>
       <min>0.0</min>
       <max>90.0</max>
-      <unit>degree</unit>
+      <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter default="0.5" name="MPC_LAND_SPEED" type="FLOAT">
@@ -2074,27 +2307,26 @@ replay messages for logging</short_desc>
       <short_desc>Max manual roll</short_desc>
       <min>0.0</min>
       <max>90.0</max>
-      <unit>degree</unit>
+      <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter default="35.0" name="MPC_MAN_P_MAX" type="FLOAT">
       <short_desc>Max manual pitch</short_desc>
       <min>0.0</min>
       <max>90.0</max>
-      <unit>degree</unit>
+      <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter default="200.0" name="MPC_MAN_Y_MAX" type="FLOAT">
       <short_desc>Max manual yaw rate</short_desc>
       <min>0.0</min>
-      <unit>degree / s</unit>
+      <unit>deg/s</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter default="0.1" name="MPC_HOLD_XY_DZ" type="FLOAT">
       <short_desc>Deadzone of X,Y sticks where position hold is enabled</short_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <unit>%</unit>
       <decimal>2</decimal>
     </parameter>
     <parameter default="0.8" name="MPC_HOLD_MAX_XY" type="FLOAT">
@@ -2217,113 +2449,98 @@ replay messages for logging</short_desc>
     <parameter default="0" name="PWM_AUX_REV1" type="INT32">
       <short_desc>Invert direction of aux output channel 1</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV2" type="INT32">
       <short_desc>Invert direction of aux output channel 2</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV3" type="INT32">
       <short_desc>Invert direction of aux output channel 3</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV4" type="INT32">
       <short_desc>Invert direction of aux output channel 4</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV5" type="INT32">
       <short_desc>Invert direction of aux output channel 5</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV6" type="INT32">
       <short_desc>Invert direction of aux output channel 6</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV1" type="INT32">
       <short_desc>Invert direction of main output channel 1</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV2" type="INT32">
       <short_desc>Invert direction of main output channel 2</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV3" type="INT32">
       <short_desc>Invert direction of main output channel 3</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV4" type="INT32">
       <short_desc>Invert direction of main output channel 4</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV5" type="INT32">
       <short_desc>Invert direction of main output channel 5</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV6" type="INT32">
       <short_desc>Invert direction of main output channel 6</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV7" type="INT32">
       <short_desc>Invert direction of main output channel 7</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV8" type="INT32">
       <short_desc>Invert direction of main output channel 8</short_desc>
       <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_SBUS_MODE" type="INT32">
       <short_desc>Enable S.BUS out</short_desc>
       <long_desc>Set to 1 to enable S.BUS version 1 output instead of RSSI.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="1000" name="PWM_MIN" type="INT32">
       <short_desc>Set the minimum PWM for the MAIN outputs</short_desc>
       <long_desc>IMPORTANT: CHANGING THIS PARAMETER REQUIRES A COMPLETE SYSTEM REBOOT IN ORDER TO APPLY THE CHANGES. COMPLETELY POWER-CYCLE THE SYSTEM TO PUT CHANGES INTO EFFECT. Set to 1000 for industry default or 900 to increase servo travel.</long_desc>
       <min>800</min>
       <max>1400</max>
-      <unit>microseconds</unit>
+      <unit>us</unit>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="2000" name="PWM_MAX" type="INT32">
@@ -2331,7 +2548,7 @@ replay messages for logging</short_desc>
       <long_desc>IMPORTANT: CHANGING THIS PARAMETER REQUIRES A COMPLETE SYSTEM REBOOT IN ORDER TO APPLY THE CHANGES. COMPLETELY POWER-CYCLE THE SYSTEM TO PUT CHANGES INTO EFFECT. Set to 2000 for industry default or 2100 to increase servo travel.</long_desc>
       <min>1600</min>
       <max>2200</max>
-      <unit>microseconds</unit>
+      <unit>us</unit>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="PWM_DISARMED" type="INT32">
@@ -2339,7 +2556,7 @@ replay messages for logging</short_desc>
       <long_desc>IMPORTANT: CHANGING THIS PARAMETER REQUIRES A COMPLETE SYSTEM REBOOT IN ORDER TO APPLY THE CHANGES. COMPLETELY POWER-CYCLE THE SYSTEM TO PUT CHANGES INTO EFFECT. This is the PWM pulse the autopilot is outputting if not armed. The main use of this parameter is to silence ESCs when they are disarmed.</long_desc>
       <min>0</min>
       <max>2200</max>
-      <unit>microseconds</unit>
+      <unit>us</unit>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="1000" name="PWM_AUX_MIN" type="INT32">
@@ -2347,7 +2564,7 @@ replay messages for logging</short_desc>
       <long_desc>IMPORTANT: CHANGING THIS PARAMETER REQUIRES A COMPLETE SYSTEM REBOOT IN ORDER TO APPLY THE CHANGES. COMPLETELY POWER-CYCLE THE SYSTEM TO PUT CHANGES INTO EFFECT. Set to 1000 for default or 900 to increase servo travel</long_desc>
       <min>800</min>
       <max>1400</max>
-      <unit>microseconds</unit>
+      <unit>us</unit>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="2000" name="PWM_AUX_MAX" type="INT32">
@@ -2355,7 +2572,7 @@ replay messages for logging</short_desc>
       <long_desc>IMPORTANT: CHANGING THIS PARAMETER REQUIRES A COMPLETE SYSTEM REBOOT IN ORDER TO APPLY THE CHANGES. COMPLETELY POWER-CYCLE THE SYSTEM TO PUT CHANGES INTO EFFECT. Set to 2000 for default or 2100 to increase servo travel</long_desc>
       <min>1600</min>
       <max>2200</max>
-      <unit>microseconds</unit>
+      <unit>us</unit>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="1000" name="PWM_AUX_DISARMED" type="INT32">
@@ -2363,7 +2580,7 @@ replay messages for logging</short_desc>
       <long_desc>IMPORTANT: CHANGING THIS PARAMETER REQUIRES A COMPLETE SYSTEM REBOOT IN ORDER TO APPLY THE CHANGES. COMPLETELY POWER-CYCLE THE SYSTEM TO PUT CHANGES INTO EFFECT. This is the PWM pulse the autopilot is outputting if not armed. The main use of this parameter is to silence ESCs when they are disarmed.</long_desc>
       <min>0</min>
       <max>2200</max>
-      <unit>microseconds</unit>
+      <unit>us</unit>
       <reboot_required>true</reboot_required>
     </parameter>
   </group>
@@ -2373,35 +2590,33 @@ replay messages for logging</short_desc>
       <long_desc>This parameter encodes the ground drag coefficient and the corresponding decrease in wind speed from the plane altitude to ground altitude.</long_desc>
       <min>0.001</min>
       <max>0.1</max>
-      <unit>unknown</unit>
     </parameter>
     <parameter default="120.0" name="BD_TURNRADIUS" type="FLOAT">
       <short_desc>Plane turn radius</short_desc>
       <long_desc>The planes known minimal turn radius - use a higher value to make the plane maneuver more distant from the actual drop position. This is to ensure the wings are level during the drop.</long_desc>
       <min>30.0</min>
       <max>500.0</max>
-      <unit>meter</unit>
+      <unit>m</unit>
     </parameter>
     <parameter default="30.0" name="BD_PRECISION" type="FLOAT">
       <short_desc>Drop precision</short_desc>
       <long_desc>If the system is closer than this distance on passing over the drop position, it will release the payload. This is a safeguard to prevent a drop out of the required accuracy.</long_desc>
       <min>1.0</min>
       <max>80.0</max>
-      <unit>meter</unit>
+      <unit>m</unit>
     </parameter>
     <parameter default="0.1" name="BD_OBJ_CD" type="FLOAT">
       <short_desc>Payload drag coefficient of the dropped object</short_desc>
       <long_desc>The drag coefficient (cd) is the typical drag constant for air. It is in general object specific, but the closest primitive shape to the actual object should give good results: http://en.wikipedia.org/wiki/Drag_coefficient</long_desc>
       <min>0.08</min>
       <max>1.5</max>
-      <unit>meter</unit>
     </parameter>
     <parameter default="0.6" name="BD_OBJ_MASS" type="FLOAT">
       <short_desc>Payload mass</short_desc>
       <long_desc>A typical small toy ball: 0.025 kg OBC water bottle: 0.6 kg</long_desc>
       <min>0.001</min>
       <max>5.0</max>
-      <unit>kilogram</unit>
+      <unit>kg</unit>
     </parameter>
     <parameter default="0.00311724531" name="BD_OBJ_SURFACE" type="FLOAT">
       <short_desc>Payload front surface area</short_desc>
@@ -2417,30 +2632,35 @@ replay messages for logging</short_desc>
       <long_desc>The delay in milliseconds of the velocity estimate from GPS.</long_desc>
       <min>0</min>
       <max>1000</max>
+      <unit>ms</unit>
     </parameter>
     <parameter default="210" name="PE_POS_DELAY_MS" type="INT32">
       <short_desc>Position estimate delay</short_desc>
       <long_desc>The delay in milliseconds of the position estimate from GPS.</long_desc>
       <min>0</min>
       <max>1000</max>
+      <unit>ms</unit>
     </parameter>
     <parameter default="350" name="PE_HGT_DELAY_MS" type="INT32">
       <short_desc>Height estimate delay</short_desc>
       <long_desc>The delay in milliseconds of the height estimate from the barometer.</long_desc>
       <min>0</min>
       <max>1000</max>
+      <unit>ms</unit>
     </parameter>
     <parameter default="30" name="PE_MAG_DELAY_MS" type="INT32">
       <short_desc>Mag estimate delay</short_desc>
       <long_desc>The delay in milliseconds of the magnetic field estimate from the magnetometer.</long_desc>
       <min>0</min>
       <max>1000</max>
+      <unit>ms</unit>
     </parameter>
     <parameter default="210" name="PE_TAS_DELAY_MS" type="INT32">
       <short_desc>True airspeeed estimate delay</short_desc>
       <long_desc>The delay in milliseconds of the airspeed estimate.</long_desc>
       <min>0</min>
       <max>1000</max>
+      <unit>ms</unit>
     </parameter>
     <parameter default="0.9" name="PE_GPS_ALT_WGT" type="FLOAT">
       <short_desc>GPS vs. barometric altitude update weight</short_desc>
@@ -2693,14 +2913,12 @@ replay messages for logging</short_desc>
     <parameter default="0" name="INAV_DISAB_MOCAP" type="FLOAT">
       <short_desc>Disable mocap (set 0 if using fake gps)</short_desc>
       <long_desc>Disable mocap</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0" name="INAV_LIDAR_EST" type="FLOAT">
       <short_desc>Enable LIDAR for altitude estimation</short_desc>
       <long_desc>Enable LIDAR for altitude estimation</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0.0" name="INAV_LIDAR_OFF" type="FLOAT">
       <short_desc>LIDAR calibration offset</short_desc>
@@ -2713,13 +2931,13 @@ replay messages for logging</short_desc>
       <short_desc>Disable vision input</short_desc>
       <long_desc>Set to the appropriate key (328754) to disable vision input.</long_desc>
       <min>0</min>
-      <max>1</max>
+      <max>328754</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="1" name="INAV_ENABLED" type="INT32">
       <short_desc>INAV enabled</short_desc>
       <long_desc>If set to 1, use INAV for position estimation. Else the system uses the combined attitude / position filter framework.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
   </group>
   <group name="Radio Calibration">
@@ -2921,6 +3139,7 @@ replay messages for logging</short_desc>
       <long_desc>Minimum value for this channel.</long_desc>
       <min>800.0</min>
       <max>1500.0</max>
+      <unit>us</unit>
     </parameter>
     <parameter default="1500" name="RC6_TRIM" type="FLOAT">
       <short_desc>RC Channel 6 Trim</short_desc>
@@ -2953,6 +3172,7 @@ replay messages for logging</short_desc>
       <long_desc>Minimum value for this channel.</long_desc>
       <min>800.0</min>
       <max>1500.0</max>
+      <unit>us</unit>
     </parameter>
     <parameter default="1500" name="RC7_TRIM" type="FLOAT">
       <short_desc>RC Channel 7 Trim</short_desc>
@@ -3354,6 +3574,8 @@ replay messages for logging</short_desc>
     </parameter>
     <parameter default="-1" name="RC_DSM_BIND" type="INT32">
       <short_desc>DSM binding trigger</short_desc>
+      <min>-1</min>
+      <max>1</max>
       <values>
         <value code="1">Start DSMX bind</value>
         <value code="0">Start DSM2 bind</value>
@@ -3367,34 +3589,117 @@ replay messages for logging</short_desc>
       <max>18</max>
     </parameter>
     <parameter default="1" name="RC_TH_USER" type="INT32">
-      <short_desc>RC mode switch threshold automaic distribution</short_desc>
+      <short_desc>RC mode switch threshold automatic distribution</short_desc>
       <long_desc>This parameter is used by Ground Station software to specify whether the threshold values for flight mode switches were automatically calculated. 0 indicates that the threshold values were set by the user. Any other value indicates that the threshold value where automatically set by the ground station software. It is only meant for ground station use.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0" name="RC_MAP_ROLL" type="INT32">
       <short_desc>Roll control channel mapping</short_desc>
       <long_desc>The channel index (starting from 1 for channel 1) indicates which channel should be used for reading roll inputs from. A value of zero indicates the switch is not assigned.</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_PITCH" type="INT32">
       <short_desc>Pitch control channel mapping</short_desc>
       <long_desc>The channel index (starting from 1 for channel 1) indicates which channel should be used for reading pitch inputs from. A value of zero indicates the switch is not assigned.</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_THROTTLE" type="INT32">
       <short_desc>Throttle control channel mapping</short_desc>
       <long_desc>The channel index (starting from 1 for channel 1) indicates which channel should be used for reading throttle inputs from. A value of zero indicates the switch is not assigned.</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_YAW" type="INT32">
       <short_desc>Yaw control channel mapping</short_desc>
       <long_desc>The channel index (starting from 1 for channel 1) indicates which channel should be used for reading yaw inputs from. A value of zero indicates the switch is not assigned.</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
+      </values>
     </parameter>
     <parameter default="0" name="RC_MAP_AUX1" type="INT32">
       <short_desc>AUX1 channel</short_desc>
@@ -3402,25 +3707,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_AUX2" type="INT32">
@@ -3429,25 +3734,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_AUX3" type="INT32">
@@ -3456,25 +3761,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_PARAM1" type="INT32">
@@ -3483,25 +3788,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_PARAM2" type="INT32">
@@ -3510,25 +3815,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_PARAM3" type="INT32">
@@ -3537,25 +3842,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_FAILS_THR" type="INT32">
@@ -3571,25 +3876,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="1000" name="RC_RSSI_PWM_MAX" type="INT32">
@@ -3610,7 +3915,7 @@ replay messages for logging</short_desc>
       <short_desc>Loiter Time</short_desc>
       <long_desc>The amount of time in seconds the system should loiter at current position before termination Set to -1 to make the system skip loitering</long_desc>
       <min>-1.0</min>
-      <unit>seconds</unit>
+      <unit>s</unit>
     </parameter>
   </group>
   <group name="Radio Switches">
@@ -3620,25 +3925,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_MODE_SW" type="INT32">
@@ -3647,25 +3952,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_RETURN_SW" type="INT32">
@@ -3673,25 +3978,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_RATT_SW" type="INT32">
@@ -3699,25 +4004,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_POSCTL_SW" type="INT32">
@@ -3725,25 +4030,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_LOITER_SW" type="INT32">
@@ -3751,25 +4056,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_ACRO_SW" type="INT32">
@@ -3777,25 +4082,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_OFFB_SW" type="INT32">
@@ -3803,25 +4108,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_KILL_SW" type="INT32">
@@ -3829,25 +4134,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_FLAPS" type="INT32">
@@ -3855,25 +4160,25 @@ replay messages for logging</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
-        <value code="11">RC Channel 11</value>
-        <value code="10">RC Channel 10</value>
-        <value code="13">RC Channel 13</value>
-        <value code="12">RC Channel 12</value>
-        <value code="15">RC Channel 15</value>
-        <value code="14">RC Channel 14</value>
-        <value code="17">RC Channel 17</value>
-        <value code="16">RC Channel 16</value>
-        <value code="18">RC Channel 18</value>
-        <value code="1">RC Channel 01</value>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
         <value code="0">Unassigned</value>
-        <value code="3">RC Channel 03</value>
-        <value code="2">RC Channel 02</value>
-        <value code="5">RC Channel 05</value>
-        <value code="4">RC Channel 04</value>
-        <value code="7">RC Channel 07</value>
-        <value code="6">RC Channel 06</value>
-        <value code="9">RC Channel 09</value>
-        <value code="8">RC Channel 08</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
       </values>
     </parameter>
     <parameter default="0.25" name="RC_ASSIST_TH" type="FLOAT">
@@ -3937,35 +4242,38 @@ replay messages for logging</short_desc>
       <long_desc>Altitude to fly back in RTL in meters</long_desc>
       <min>0</min>
       <max>150</max>
-      <unit>meters</unit>
+      <unit>m</unit>
     </parameter>
     <parameter default="30" name="RTL_DESCEND_ALT" type="FLOAT">
       <short_desc>RTL loiter altitude</short_desc>
       <long_desc>Stay at this altitude above home position after RTL descending. Land (i.e. slowly descend) from this altitude if autolanding allowed.</long_desc>
       <min>2</min>
       <max>100</max>
-      <unit>meters</unit>
+      <unit>m</unit>
     </parameter>
     <parameter default="-1.0" name="RTL_LAND_DELAY" type="FLOAT">
       <short_desc>RTL delay</short_desc>
-      <long_desc>Delay after descend before landing in RTL mode. If set to -1 the system will not land but loiter at NAV_LAND_ALT.</long_desc>
+      <long_desc>Delay after descend before landing in RTL mode. If set to -1 the system will not land but loiter at RTL_DESCEND_ALT.</long_desc>
       <min>-1</min>
       <max>300</max>
-      <unit>seconds</unit>
+      <unit>s</unit>
     </parameter>
   </group>
   <group name="Runway Takeoff">
     <parameter default="0" name="RWTO_TKOFF" type="INT32">
       <short_desc>Enable or disable runway takeoff with landing gear</short_desc>
       <long_desc>0: disabled, 1: enabled</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0" name="RWTO_HDG" type="INT32">
       <short_desc>Specifies which heading should be held during runnway takeoff</short_desc>
       <long_desc>0: airframe heading, 1: heading towards takeoff waypoint</long_desc>
       <min>0</min>
       <max>1</max>
+      <values>
+        <value code="1">Waypoint</value>
+        <value code="0">Airframe</value>
+      </values>
     </parameter>
     <parameter default="5.0" name="RWTO_NAV_ALT" type="FLOAT">
       <short_desc>Altitude AGL at which we have enough ground clearance to allow some roll.
@@ -4020,32 +4328,44 @@ FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</short_desc>
       <short_desc>Logging rate</short_desc>
       <long_desc>A value of -1 indicates the commandline argument should be obeyed. A value of 0 sets the minimum rate, any other value is interpreted as rate in Hertz. This parameter is only read out before logging starts (which commonly is before arming).</long_desc>
       <min>-1</min>
-      <max>100</max>
+      <max>250</max>
+      <unit>Hz</unit>
     </parameter>
     <parameter default="-1" name="SDLOG_EXT" type="INT32">
       <short_desc>Enable extended logging mode</short_desc>
-      <long_desc>A value of -1 indicates the commandline argument should be obeyed. A value of 0 disables extended logging mode, a value of 1 enables it. This parameter is only read out before logging starts (which commonly is before arming).</long_desc>
+      <long_desc>A value of -1 indicates the command line argument should be obeyed. A value of 0 disables extended logging mode, a value of 1 enables it. This parameter is only read out before logging starts (which commonly is before arming).</long_desc>
       <min>-1</min>
       <max>1</max>
+      <values>
+        <value code="1">Enable</value>
+        <value code="0">Disable</value>
+        <value code="-1">Command Line</value>
+      </values>
     </parameter>
     <parameter default="1" name="SDLOG_GPSTIME" type="INT32">
       <short_desc>Use timestamps only if GPS 3D fix is available</short_desc>
       <long_desc>A value of 1 constrains the log folder creation to only use the time stamp if a 3D GPS lock is present.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0" name="SDLOG_UTC_OFFSET" type="INT32">
       <short_desc>UTC offset (unit: min)</short_desc>
       <long_desc>the difference in hours and minutes from Coordinated Universal Time (UTC) for a your place and date. for example, In case of South Korea(UTC+09:00), UTC offset is 540 min (9*60) refer to https://en.wikipedia.org/wiki/List_of_UTC_time_offsets</long_desc>
       <min>-1000</min>
       <max>1000</max>
+      <unit>min</unit>
     </parameter>
-    <parameter default="0" name="SDLOG_PRIO_BOOST" type="INT32">
+    <parameter default="2" name="SDLOG_PRIO_BOOST" type="INT32">
       <short_desc>Give logging app higher thread priority to avoid data loss.
 This is used for gathering replay logs for the ekf2 module</short_desc>
       <long_desc>A value of 0 indicates that the default priority is used. Increasing the parameter in steps of one increases the priority.</long_desc>
       <min>0</min>
       <max>3</max>
+      <values>
+        <value code="1">Default priority</value>
+        <value code="0">Low priority</value>
+        <value code="3">Max priority</value>
+        <value code="2">Medium priority</value>
+      </values>
     </parameter>
   </group>
   <group name="Sensor Calibration">
@@ -4461,6 +4781,7 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     <parameter default="0" name="SENS_FLOW_ROT" type="INT32">
       <short_desc>PX4Flow board rotation</short_desc>
       <long_desc>This parameter defines the rotation of the PX4FLOW board relative to the platform. Zero rotation is defined as Y on flow board pointing towards front of vehicle</long_desc>
+      <reboot_required>true</reboot_required>
       <values>
         <value code="1">Yaw 45°</value>
         <value code="0">No rotation</value>
@@ -4475,17 +4796,17 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     <parameter default="0.0" name="SENS_BOARD_Y_OFF" type="FLOAT">
       <short_desc>Board rotation Y (Pitch) offset</short_desc>
       <long_desc>This parameter defines a rotational offset in degrees around the Y (Pitch) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
-      <unit>degrees</unit>
+      <unit>deg</unit>
     </parameter>
     <parameter default="0.0" name="SENS_BOARD_X_OFF" type="FLOAT">
       <short_desc>Board rotation X (Roll) offset</short_desc>
       <long_desc>This parameter defines a rotational offset in degrees around the X (Roll) axis It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
-      <unit>degrees</unit>
+      <unit>deg</unit>
     </parameter>
     <parameter default="0.0" name="SENS_BOARD_Z_OFF" type="FLOAT">
       <short_desc>Board rotation Z (YAW) offset</short_desc>
       <long_desc>This parameter defines a rotational offset in degrees around the Z (Yaw) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
-      <unit>degrees</unit>
+      <unit>deg</unit>
     </parameter>
     <parameter default="0" name="SENS_EXT_MAG_ROT" type="INT32">
       <short_desc>External magnetometer rotation</short_desc>
@@ -4532,27 +4853,30 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
   <group name="Sensor Enable">
     <parameter default="0" name="SENS_EN_LL40LS" type="INT32">
       <short_desc>Enable Lidar-Lite (LL40LS) pwm driver</short_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <reboot_required>true</reboot_required>
-      <values>
-        <value code="1">Enabled</value>
-        <value code="0">Disabled</value>
-      </values>
     </parameter>
   </group>
   <group name="Subscriber Example">
     <parameter default="100" name="SUB_INTERV" type="INT32">
       <short_desc>Interval of one subscriber in the example in ms</short_desc>
+      <unit>ms</unit>
     </parameter>
     <parameter default="3.14" name="SUB_TESTF" type="FLOAT">
       <short_desc>Float Demonstration Parameter in the Example</short_desc>
     </parameter>
   </group>
   <group name="System">
+    <parameter default="15" name="LED_RGB_MAXBRT" type="INT32">
+      <short_desc>RGB Led brightness limit</short_desc>
+      <long_desc>Set to 0 to disable, 1 for minimum brightness up to 15 (max)</long_desc>
+      <min>0</min>
+      <max>15</max>
+    </parameter>
     <parameter default="0" name="SYS_AUTOSTART" type="INT32">
       <short_desc>Auto-start script index</short_desc>
       <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Defines the auto-start script used to bootstrap the system.</long_desc>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="SYS_AUTOCONFIG" type="INT32">
       <short_desc>Automatically configure default values</short_desc>
@@ -4598,6 +4922,12 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <long_desc>Allowed values: 0 - UAVCAN disabled. 1 - Enabled support for UAVCAN actuators and sensors. 2 - Enabled support for dynamic node ID allocation and firmware update. 3 - Sets the motor control outputs to UAVCAN and enables support for dynamic node ID allocation and firmware update.</long_desc>
       <min>0</min>
       <max>3</max>
+      <values>
+        <value code="1">Enabled</value>
+        <value code="0">Disabled</value>
+        <value code="3">Motors/Update</value>
+        <value code="2">Dynamic ID/Update</value>
+      </values>
     </parameter>
     <parameter default="1" name="UAVCAN_NODE_ID" type="INT32">
       <short_desc>UAVCAN Node ID</short_desc>
@@ -4609,6 +4939,7 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
       <min>20000</min>
       <max>1000000</max>
+      <unit>bit/s</unit>
     </parameter>
   </group>
   <group name="VTOL Attitude Control">
@@ -4616,163 +4947,225 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>Target throttle value for pusher/puller motor during the transition to fw mode</short_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.0" name="VT_TILT_MC" type="FLOAT">
       <short_desc>Position of tilt servo in mc mode</short_desc>
-      <long_desc>Position of tilt servo in mc mode</long_desc>
       <min>0.0</min>
-      <max>1</max>
+      <max>1.0</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.3" name="VT_TILT_TRANS" type="FLOAT">
       <short_desc>Position of tilt servo in transition mode</short_desc>
-      <long_desc>Position of tilt servo in transition mode</long_desc>
       <min>0.0</min>
-      <max>1</max>
+      <max>1.0</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="1.0" name="VT_TILT_FW" type="FLOAT">
       <short_desc>Position of tilt servo in fw mode</short_desc>
-      <long_desc>Position of tilt servo in fw mode</long_desc>
       <min>0.0</min>
-      <max>1</max>
+      <max>1.0</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.5" name="VT_TRANS_P2_DUR" type="FLOAT">
       <short_desc>Duration of front transition phase 2</short_desc>
       <long_desc>Time in seconds it should take for the rotors to rotate forward completely from the point when the plane has picked up enough airspeed and is ready to go into fixed wind mode.</long_desc>
       <min>0.1</min>
-      <max>2</max>
+      <max>5.0</max>
+      <unit>s</unit>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0" name="VT_FW_MOT_OFFID" type="INT32">
       <short_desc>The channel number of motors that must be turned off in fixed wing mode</short_desc>
       <min>0</min>
       <max>12345678</max>
+      <decimal>0</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="0" name="VT_MOT_COUNT" type="INT32">
       <short_desc>VTOL number of engines</short_desc>
       <min>0</min>
+      <max>8</max>
+      <decimal>0</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="900" name="VT_IDLE_PWM_MC" type="INT32">
       <short_desc>Idle speed of VTOL when in multicopter mode</short_desc>
       <min>900</min>
+      <max>2000</max>
+      <unit>us</unit>
+      <decimal>0</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="10.0" name="VT_MC_ARSPD_MIN" type="FLOAT">
       <short_desc>Minimum airspeed in multicopter mode</short_desc>
       <long_desc>This is the minimum speed of the air flowing over the control surfaces.</long_desc>
       <min>0.0</min>
+      <max>30.0</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter default="30.0" name="VT_MC_ARSPD_MAX" type="FLOAT">
       <short_desc>Maximum airspeed in multicopter mode</short_desc>
       <long_desc>This is the maximum speed of the air flowing over the control surfaces.</long_desc>
       <min>0.0</min>
+      <max>30.0</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter default="10.0" name="VT_MC_ARSPD_TRIM" type="FLOAT">
       <short_desc>Trim airspeed when in multicopter mode</short_desc>
       <long_desc>This is the airflow over the control surfaces for which no airspeed scaling is applied in multicopter mode.</long_desc>
       <min>0.0</min>
+      <max>30.0</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter default="0" name="VT_FW_PERM_STAB" type="INT32">
       <short_desc>Permanent stabilization in fw mode</short_desc>
       <long_desc>If set to one this parameter will cause permanent attitude stabilization in fw mode. This parameter has been introduced for pure convenience sake.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0.0" name="VT_FW_PITCH_TRIM" type="FLOAT">
       <short_desc>Fixed wing pitch trim</short_desc>
       <long_desc>This parameter allows to adjust the neutral elevon position in fixed wing mode.</long_desc>
-      <min>-1</min>
-      <max>1</max>
+      <min>-1.0</min>
+      <max>1.0</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="120.0" name="VT_POWER_MAX" type="FLOAT">
       <short_desc>Motor max power</short_desc>
       <long_desc>Indicates the maximum power the motor is able to produce. Used to calculate propeller efficiency map.</long_desc>
       <min>1</min>
+      <max>10000</max>
+      <unit>W</unit>
+      <decimal>0</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="0.0" name="VT_PROP_EFF" type="FLOAT">
       <short_desc>Propeller efficiency parameter</short_desc>
       <long_desc>Influences propeller efficiency at different power settings. Should be tuned beforehand.</long_desc>
       <min>0.0</min>
-      <max>0.9</max>
+      <max>1.0</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0.3" name="VT_ARSP_LP_GAIN" type="FLOAT">
       <short_desc>Total airspeed estimate low-pass filter gain</short_desc>
       <long_desc>Gain for tuning the low-pass filter for the total airspeed estimate</long_desc>
       <min>0.0</min>
-      <max>0.99</max>
+      <max>1.0</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0" name="VT_TYPE" type="INT32">
       <short_desc>VTOL Type (Tailsitter=0, Tiltrotor=1, Standard=2)</short_desc>
       <min>0</min>
       <max>2</max>
+      <decimal>0</decimal>
+      <values>
+        <value code="1">Tiltrotor</value>
+        <value code="0">Tailsitter</value>
+        <value code="2">Standard</value>
+      </values>
     </parameter>
     <parameter default="0" name="VT_ELEV_MC_LOCK" type="INT32">
       <short_desc>Lock elevons in multicopter mode</short_desc>
       <long_desc>If set to 1 the elevons are locked in multicopter mode</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="3.0" name="VT_F_TRANS_DUR" type="FLOAT">
       <short_desc>Duration of a front transition</short_desc>
       <long_desc>Time in seconds used for a transition</long_desc>
-      <min>0.0</min>
-      <max>5</max>
+      <min>0.00</min>
+      <max>10.00</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="2.0" name="VT_B_TRANS_DUR" type="FLOAT">
       <short_desc>Duration of a back transition</short_desc>
       <long_desc>Time in seconds used for a back transition</long_desc>
-      <min>0.0</min>
-      <max>5</max>
+      <min>0.00</min>
+      <max>10.00</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="8.0" name="VT_ARSP_BLEND" type="FLOAT">
       <short_desc>Transition blending airspeed</short_desc>
       <long_desc>Airspeed at which we can start blending both fw and mc controls. Set to 0 to disable.</long_desc>
-      <min>0.0</min>
-      <max>20.0</max>
+      <min>0.00</min>
+      <max>30.00</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="10.0" name="VT_ARSP_TRANS" type="FLOAT">
       <short_desc>Transition airspeed</short_desc>
       <long_desc>Airspeed at which we can switch to fw mode</long_desc>
-      <min>1.0</min>
-      <max>20</max>
+      <min>0.00</min>
+      <max>30.00</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="0" name="VT_OPT_RECOV_EN" type="INT32">
       <short_desc>Enable optimal recovery strategy for pitch-weak tailsitters</short_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0" name="VT_WV_LND_EN" type="INT32">
       <short_desc>Enable weather-vane mode landings for missions</short_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0.15" name="VT_WV_YAWR_SCL" type="FLOAT">
       <short_desc>Weather-vane yaw rate scale</short_desc>
       <long_desc>The desired yawrate from the controller will be scaled in order to avoid yaw fighting against the wind.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <min>0.0</min>
+      <max>1.0</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0" name="VT_WV_LTR_EN" type="INT32">
       <short_desc>Enable weather-vane mode for loiter</short_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="15.0" name="VT_TRANS_TIMEOUT" type="FLOAT">
       <short_desc>Front transition timeout</short_desc>
       <long_desc>Time in seconds after which transition will be cancelled. Disabled if set to 0.</long_desc>
-      <min>0.0</min>
-      <max>30.0</max>
+      <min>0.00</min>
+      <max>30.00</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter default="2.0" name="VT_TRANS_MIN_TM" type="FLOAT">
       <short_desc>Front transition minimum time</short_desc>
       <long_desc>Minimum time in seconds for front transition.</long_desc>
       <min>0.0</min>
       <max>10.0</max>
+      <unit>s</unit>
+    </parameter>
+    <parameter default="1" name="VT_NAV_FORCE_VT" type="INT32">
+      <short_desc>Force VTOL mode takeoff and land</short_desc>
+      <min>0</min>
+      <max>1</max>
     </parameter>
   </group>
   <group name="mTECS">
     <parameter default="0" name="MT_ENABLED" type="INT32">
       <short_desc>mTECS enabled</short_desc>
       <long_desc>Set to 1 to enable mTECS</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
     </parameter>
     <parameter default="0.7" name="MT_THR_FF" type="FLOAT">
       <short_desc>Total Energy Rate Control Feedforward
@@ -4844,9 +5237,11 @@ Maps the integrated energy distribution rate error to the pitch setpoint</short_
     </parameter>
     <parameter default="1.0" name="MT_ALT_LP" type="FLOAT">
       <short_desc>Lowpass (cutoff freq.) for altitude</short_desc>
+      <unit>Hz</unit>
     </parameter>
     <parameter default="1.0" name="MT_FPA_LP" type="FLOAT">
       <short_desc>Lowpass (cutoff freq.) for the flight path angle</short_desc>
+      <unit>Hz</unit>
     </parameter>
     <parameter default="0.3" name="MT_FPA_P" type="FLOAT">
       <short_desc>P gain for the altitude control
@@ -4898,11 +5293,11 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
     </parameter>
     <parameter default="-40.0" name="MT_ACC_MIN" type="FLOAT">
       <short_desc>Minimal acceleration (air)</short_desc>
-      <unit>m/s^2</unit>
+      <unit>m/s/s</unit>
     </parameter>
     <parameter default="40.0" name="MT_ACC_MAX" type="FLOAT">
       <short_desc>Maximal acceleration (air)</short_desc>
-      <unit>m/s^2</unit>
+      <unit>m/s/s</unit>
     </parameter>
     <parameter default="1.0" name="MT_TKF_THR_MIN" type="FLOAT">
       <short_desc>Minimal throttle during takeoff</short_desc>
@@ -4982,12 +5377,6 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
     </parameter>
   </group>
   <group name="Miscellaneous">
-    <parameter default="15" name="LED_RGB_MAXBRT" type="INT32">
-      <short_desc>RGB Led brightness limit</short_desc>
-      <long_desc>Set to 0 to disable, 1 for minimum brightness up to 15 (max)</long_desc>
-      <min>0</min>
-      <max>15</max>
-    </parameter>
     <parameter default="0.1" name="EXFW_HDNG_P" type="FLOAT">
       <short_desc>EXFW_HDNG_P</short_desc>
     </parameter>
@@ -5004,114 +5393,114 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
       <short_desc>First flightmode slot (1000-1160)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / LAND</value>
-        <value code="10">AUTO / TAKEOFF</value>
-        <value code="1">ALTITUDE CONTROL</value>
-        <value code="0">MANUAL</value>
-        <value code="3">AUTO / MISSION</value>
-        <value code="2">POSITION CONTROL</value>
+        <value code="11">Land</value>
+        <value code="10">Takeoff</value>
+        <value code="1">Altitude</value>
+        <value code="0">Manual</value>
+        <value code="3">Mission</value>
+        <value code="2">Position</value>
         <value code="-1">Unassigned</value>
-        <value code="4">AUTO / PAUSE</value>
-        <value code="7">OFFBOARD</value>
-        <value code="6">ACRO</value>
-        <value code="9">RATTITUDE</value>
-        <value code="5">RETURN TO LAUNCH</value>
-        <value code="8">STABILIZED</value>
+        <value code="4">Hold</value>
+        <value code="7">Offboard</value>
+        <value code="6">Acro</value>
+        <value code="9">Rattitude</value>
+        <value code="5">Return</value>
+        <value code="8">Stabilized</value>
       </values>
     </parameter>
     <parameter default="-1" name="COM_FLTMODE2" type="INT32">
       <short_desc>Second flightmode slot (1160-1320)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / LAND</value>
-        <value code="10">AUTO / TAKEOFF</value>
-        <value code="1">ALTITUDE CONTROL</value>
-        <value code="0">MANUAL</value>
-        <value code="3">AUTO / MISSION</value>
-        <value code="2">POSITION CONTROL</value>
+        <value code="11">Land</value>
+        <value code="10">Takeoff</value>
+        <value code="1">Altitude</value>
+        <value code="0">Manual</value>
+        <value code="3">Mission</value>
+        <value code="2">Position</value>
         <value code="-1">Unassigned</value>
-        <value code="4">AUTO / PAUSE</value>
-        <value code="7">OFFBOARD</value>
-        <value code="6">ACRO</value>
-        <value code="9">RATTITUDE</value>
-        <value code="5">RETURN TO LAUNCH</value>
-        <value code="8">STABILIZED</value>
+        <value code="4">Hold</value>
+        <value code="7">Offboard</value>
+        <value code="6">Acro</value>
+        <value code="9">Rattitude</value>
+        <value code="5">Return</value>
+        <value code="8">Stabilized</value>
       </values>
     </parameter>
     <parameter default="-1" name="COM_FLTMODE3" type="INT32">
       <short_desc>Third flightmode slot (1320-1480)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / LAND</value>
-        <value code="10">AUTO / TAKEOFF</value>
-        <value code="1">ALTITUDE CONTROL</value>
-        <value code="0">MANUAL</value>
-        <value code="3">AUTO / MISSION</value>
-        <value code="2">POSITION CONTROL</value>
+        <value code="11">Land</value>
+        <value code="10">Takeoff</value>
+        <value code="1">Altitude</value>
+        <value code="0">Manual</value>
+        <value code="3">Mission</value>
+        <value code="2">Position</value>
         <value code="-1">Unassigned</value>
-        <value code="4">AUTO / PAUSE</value>
-        <value code="7">OFFBOARD</value>
-        <value code="6">ACRO</value>
-        <value code="9">RATTITUDE</value>
-        <value code="5">RETURN TO LAUNCH</value>
-        <value code="8">STABILIZED</value>
+        <value code="4">Hold</value>
+        <value code="7">Offboard</value>
+        <value code="6">Acro</value>
+        <value code="9">Rattitude</value>
+        <value code="5">Return</value>
+        <value code="8">Stabilized</value>
       </values>
     </parameter>
     <parameter default="-1" name="COM_FLTMODE4" type="INT32">
       <short_desc>Fourth flightmode slot (1480-1640)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / LAND</value>
-        <value code="10">AUTO / TAKEOFF</value>
-        <value code="1">ALTITUDE CONTROL</value>
-        <value code="0">MANUAL</value>
-        <value code="3">AUTO / MISSION</value>
-        <value code="2">POSITION CONTROL</value>
+        <value code="11">Land</value>
+        <value code="10">Takeoff</value>
+        <value code="1">Altitude</value>
+        <value code="0">Manual</value>
+        <value code="3">Mission</value>
+        <value code="2">Position</value>
         <value code="-1">Unassigned</value>
-        <value code="4">AUTO / PAUSE</value>
-        <value code="7">OFFBOARD</value>
-        <value code="6">ACRO</value>
-        <value code="9">RATTITUDE</value>
-        <value code="5">RETURN TO LAUNCH</value>
-        <value code="8">STABILIZED</value>
+        <value code="4">Hold</value>
+        <value code="7">Offboard</value>
+        <value code="6">Acro</value>
+        <value code="9">Rattitude</value>
+        <value code="5">Return</value>
+        <value code="8">Stabilized</value>
       </values>
     </parameter>
     <parameter default="-1" name="COM_FLTMODE5" type="INT32">
       <short_desc>Fift flightmode slot (1640-1800)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / LAND</value>
-        <value code="10">AUTO / TAKEOFF</value>
-        <value code="1">ALTITUDE CONTROL</value>
-        <value code="0">MANUAL</value>
-        <value code="3">AUTO / MISSION</value>
-        <value code="2">POSITION CONTROL</value>
+        <value code="11">Land</value>
+        <value code="10">Takeoff</value>
+        <value code="1">Altitude</value>
+        <value code="0">Manual</value>
+        <value code="3">Mission</value>
+        <value code="2">Position</value>
         <value code="-1">Unassigned</value>
-        <value code="4">AUTO / PAUSE</value>
-        <value code="7">OFFBOARD</value>
-        <value code="6">ACRO</value>
-        <value code="9">RATTITUDE</value>
-        <value code="5">RETURN TO LAUNCH</value>
-        <value code="8">STABILIZED</value>
+        <value code="4">Hold</value>
+        <value code="7">Offboard</value>
+        <value code="6">Acro</value>
+        <value code="9">Rattitude</value>
+        <value code="5">Return</value>
+        <value code="8">Stabilized</value>
       </values>
     </parameter>
     <parameter default="-1" name="COM_FLTMODE6" type="INT32">
-      <short_desc>Sixt flightmode slot (1800-2000)</short_desc>
+      <short_desc>Sixth flightmode slot (1800-2000)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <values>
-        <value code="11">AUTO / LAND</value>
-        <value code="10">AUTO / TAKEOFF</value>
-        <value code="1">ALTITUDE CONTROL</value>
-        <value code="0">MANUAL</value>
-        <value code="3">AUTO / MISSION</value>
-        <value code="2">POSITION CONTROL</value>
+        <value code="11">Land</value>
+        <value code="10">Takeoff</value>
+        <value code="1">Altitude</value>
+        <value code="0">Manual</value>
+        <value code="3">Mission</value>
+        <value code="2">Position</value>
         <value code="-1">Unassigned</value>
-        <value code="4">AUTO / PAUSE</value>
-        <value code="7">OFFBOARD</value>
-        <value code="6">ACRO</value>
-        <value code="9">RATTITUDE</value>
-        <value code="5">RETURN TO LAUNCH</value>
-        <value code="8">STABILIZED</value>
+        <value code="4">Hold</value>
+        <value code="7">Offboard</value>
+        <value code="6">Acro</value>
+        <value code="9">Rattitude</value>
+        <value code="5">Return</value>
+        <value code="8">Stabilized</value>
       </values>
     </parameter>
     <parameter default="-1.0" name="TEST_MIN" type="FLOAT">
@@ -5167,6 +5556,27 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
       <long_desc>The RC mapping index indicates which channel is used for failsafe If 0, whichever channel is mapped to throttle is used otherwise the value indicates the specific rc channel to use</long_desc>
       <min>0</min>
       <max>18</max>
+      <values>
+        <value code="11">Channel 11</value>
+        <value code="10">Channel 10</value>
+        <value code="13">Channel 13</value>
+        <value code="12">Channel 12</value>
+        <value code="15">Channel 15</value>
+        <value code="14">Channel 14</value>
+        <value code="17">Channel 17</value>
+        <value code="16">Channel 16</value>
+        <value code="18">Channel 18</value>
+        <value code="1">Channel 1</value>
+        <value code="0">Unassigned</value>
+        <value code="3">Channel 3</value>
+        <value code="2">Channel 2</value>
+        <value code="5">Channel 5</value>
+        <value code="4">Channel 4</value>
+        <value code="7">Channel 7</value>
+        <value code="6">Channel 6</value>
+        <value code="9">Channel 9</value>
+        <value code="8">Channel 8</value>
+      </values>
     </parameter>
   </group>
 </parameters>
