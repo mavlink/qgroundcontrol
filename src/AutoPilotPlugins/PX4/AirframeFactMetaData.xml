@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <airframes>
   <version>1</version>
+  <airframe_version_major>1</airframe_version_major>
   <airframe_version_minor>1</airframe_version_minor>
   <airframe_group image="HelicopterCoaxial" name="Coaxial Helicopter">
     <airframe id="15001" maintainer="Emmanuel Roussel" name="Coaxial Helicopter (such as Esky Lama v4 or Esky Big Lama)">
@@ -390,6 +391,14 @@
     <airframe id="13002" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="BirdsEyeView Aerobotics FireFly6">
       <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
       <type>VTOL Tiltrotor</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="AirframeUnknown" name="custom">
+    <airframe id="20000" maintainer="Julian Oes &lt;julian@oes.ch&gt;&#10;This startup can be used on Pixhawk/Pixfalcon/Pixracer for the&#10;passthrough of RC input and PWM output." name="Passthrough mode for Snapdragon">
+      <maintainer>Julian Oes &lt;julian@oes.ch&gt;
+This startup can be used on Pixhawk/Pixfalcon/Pixracer for the
+passthrough of RC input and PWM output.</maintainer>
+      <type>custom</type>
     </airframe>
   </airframe_group>
 </airframes>
