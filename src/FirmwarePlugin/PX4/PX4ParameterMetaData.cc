@@ -318,7 +318,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                             qCWarning(PX4ParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << text;
                         }
                     } else {
-                        qDebug() << "Unknown element in XML: " << elementName;
+                        qCDebug(PX4ParameterMetaDataLog) << "Unknown element in XML: " << elementName;
                     }
                 }
             }
