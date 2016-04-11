@@ -48,8 +48,7 @@ ESP8266ComponentController::ESP8266ComponentController()
     _baudRates.append("460800");
     _baudRates.append("921600");
     connect(&_timer, &QTimer::timeout, this, &ESP8266ComponentController::_processTimeout);
-    UASInterface* uas = dynamic_cast<UASInterface*>(_vehicle->uas());
-    connect(uas, &UASInterface::commandAck, this, &ESP8266ComponentController::_commandAck);
+    connect(_vehicle, &Vehicle::commandLongAck, this, &ESP8266ComponentController::_commandAck);
     Fact* ssid = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID4");
     connect(ssid, &Fact::valueChanged, this, &ESP8266ComponentController::_ssidChanged);
     Fact* paswd = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD4");
@@ -286,7 +285,7 @@ ESP8266ComponentController::_processTimeout()
 
 //-----------------------------------------------------------------------------
 void
-ESP8266ComponentController::_commandAck(UASInterface*, uint8_t compID, uint16_t command, uint8_t result)
+ESP8266ComponentController::_commandAck(uint8_t compID, uint16_t command, uint8_t result)
 {
     if(compID == MAV_COMP_ID_UDP_BRIDGE) {
         if(result != MAV_RESULT_ACCEPTED) {

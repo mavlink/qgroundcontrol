@@ -86,7 +86,7 @@ signals:
 
 private slots:
     void        _processTimeout     ();
-    void        _commandAck         (UASInterface* uas, uint8_t compID, uint16_t command, uint8_t result);
+    void        _commandAck         (uint8_t compID, uint16_t command, uint8_t result);
     void        _ssidChanged        (QVariant value);
     void        _passwordChanged    (QVariant value);
     void        _baudChanged        (QVariant value);
