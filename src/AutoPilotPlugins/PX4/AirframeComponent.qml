@@ -126,9 +126,10 @@ QGCView {
             QGCLabel {
                 id:             helpText
                 width:          parent.width - applyButton.width - 5
-                text:           "You've connected a " +
-                                controller.currentVehicleName +
-                                ". If you’d like to change this configuration, select the desired airframe below then click “Apply and Restart”."
+                text:           (controller.currentVehicleName != "" ?
+                                    "You've connected a " + controller.currentVehicleName :
+                                     "Airframe is not set") +
+                                ". To change this configuration, select the desired airframe below then click “Apply and Restart”."
                 font.weight:    Font.DemiBold
                 wrapMode:       Text.WordWrap
             }
