@@ -51,35 +51,35 @@ FactPanel {
     function setFailsafeThrEnableText() {
         switch (_failsafeThrEnable.value) {
         case 0:
-            _failsafeThrEnableText = "Disabled"
+            _failsafeThrEnableText = qsTr("Disabled")
             break
         case 1:
-            _failsafeThrEnableText = "Always RTL"
+            _failsafeThrEnableText = qsTr("Always RTL")
             break
         case 2:
-            _failsafeThrEnableText = "Continue with Mission in Auto Mode"
+            _failsafeThrEnableText = qsTr("Continue with Mission in Auto Mode")
             break
         case 3:
-            _failsafeThrEnableText = "Always Land"
+            _failsafeThrEnableText = qsTr("Always Land")
             break
         default:
-            _failsafeThrEnableText = "Unknown"
+            _failsafeThrEnableText = qsTr("Unknown")
         }
     }
 
     function setFailsafeBattEnableText() {
         switch (_failsafeBattEnable.value) {
         case 0:
-            _failsafeBattEnableText = "Disabled"
+            _failsafeBattEnableText = qsTr("Disabled")
             break
         case 1:
-            _failsafeBattEnableText = "Land"
+            _failsafeBattEnableText = qsTr("Land")
             break
         case 2:
-            _failsafeBattEnableText = "Return to Launch"
+            _failsafeBattEnableText = qsTr("Return to Launch")
             break
         default:
-            _failsafeThrEnableText = "Unknown"
+            _failsafeThrEnableText = qsTr("Unknown")
         }
     }
 
@@ -88,54 +88,54 @@ FactPanel {
         anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: "Arming Checks:"
-            valueText:  _armingCheck.value & 1 ? "Enabled" : "Some disabled"
+            labelText: qsTr("Arming Checks:")
+            valueText:  _armingCheck.value & 1 ? qsTr("Enabled") : qsTr("Some disabled")
         }
 
         VehicleSummaryRow {
-            labelText: "Throttle failsafe:"
+            labelText: qsTr("Throttle failsafe:")
             valueText:  _failsafeThrEnableText
         }
 
         VehicleSummaryRow {
-            labelText: "Battery failsafe:"
+            labelText: qsTr("Battery failsafe:")
             valueText:  _failsafeBattEnableText
         }
 
         VehicleSummaryRow {
-            labelText: "GeoFence:"
+            labelText: qsTr("GeoFence:")
             valueText: _fenceEnable.value == 0 || _fenceType == 0 ?
-                           "Disabled" :
+                           qsTr("Disabled") :
                            (_fenceType.value == 1 ?
-                                "Altitude" :
-                                (_fenceType.value == 2 ? "Circle" : "Altitude,Circle"))
+                                qsTr("Altitude") :
+                                (_fenceType.value == 2 ? qsTr("Circle") : qsTr("Altitude,Circle")))
         }
 
         VehicleSummaryRow {
-            labelText: "GeoFence:"
+            labelText: qsTr("GeoFence:")
             valueText: _fenceAction.value == 0 ?
-                           "Report only" :
-                           (_fenceAction.value == 1 ? "RTL or Land" : "Unknown")
+                           qsTr("Report only") :
+                           (_fenceAction.value == 1 ? qsTr("RTL or Land") : qsTr("Unknown"))
             visible:    _fenceEnable.value != 0
         }
 
         VehicleSummaryRow {
-            labelText: "RTL min alt:"
-            valueText: _rtlAltFact.value == 0 ? "current" : _rtlAltFact.valueString
+            labelText: qsTr("RTL min alt:")
+            valueText: _rtlAltFact.value == 0 ? qsTr("current") : _rtlAltFact.valueString
         }
 
         VehicleSummaryRow {
-            labelText: "RTL loiter time:"
+            labelText: qsTr("RTL loiter time:")
             valueText: _rtlLoitTimeFact.valueString
         }
 
         VehicleSummaryRow {
-            labelText: "RTL final alt:"
-            valueText: _rtlAltFinalFact.value == 0 ? "Land" : _rtlAltFinalFact.valueString
+            labelText: qsTr("RTL final alt:")
+            valueText: _rtlAltFinalFact.value == 0 ? qsTr("Land") : _rtlAltFinalFact.valueString
         }
 
         VehicleSummaryRow {
-            labelText: "Descent speed:"
+            labelText: qsTr("Descent speed:")
             valueText: _landSpeedFact.valueString
         }
     }

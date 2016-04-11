@@ -33,8 +33,8 @@ Button {
             __lastGlobalMouseX = ScreenTools.mouseX()
             __lastGlobalMouseY = ScreenTools.mouseY()
         }
-        onEntered: { __forceHoverOff; false; hoverTimer.start() }
-        onExited: { __forceHoverOff; false; hoverTimer.stop() }
+        onEntered: { __forceHoverOff = false; hoverTimer.start() }
+        onExited: { __forceHoverOff = false; hoverTimer.stop() }
     }
 
     Timer {
@@ -43,11 +43,7 @@ Button {
         repeat:     true
 
         onTriggered: {
-            if (__lastGlobalMouseX != ScreenTools.mouseX() || __lastGlobalMouseY != ScreenTools.mouseY()) {
-                __forceHoverOff = true
-            } else {
-                __forceHoverOff = false
-            }
+            __forceHoverOff = (__lastGlobalMouseX != ScreenTools.mouseX() || __lastGlobalMouseY != ScreenTools.mouseY());
         }
     }
 

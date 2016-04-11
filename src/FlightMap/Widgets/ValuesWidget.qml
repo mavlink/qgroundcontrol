@@ -52,7 +52,7 @@ QGCFlickable {
     }
 
     function showPicker() {
-        qgcView.showDialog(propertyPicker, "Value Widget Setup", qgcView.showDialogDefaultWidth, StandardButton.Ok)
+        qgcView.showDialog(propertyPicker, qsTr("Value Widget Setup"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
     }
 
     function listContains(list, value) {
@@ -163,7 +163,7 @@ QGCFlickable {
 
                 QGCLabel {
                     id:     _label
-                    text:   "Select the values you want to display:"
+                    text:   qsTr("Select the values you want to display:")
                 }
 
                 Loader {
@@ -195,7 +195,7 @@ QGCFlickable {
             QGCLabel {
                 width:      parent.width
                 wrapMode:   Text.WordWrap
-                text:       factGroup ? factGroupName : "Vehicle must be connected to assign values."
+                text:       factGroup ? factGroupName : qsTr("Vehicle must be connected to assign values.")
             }
 
             Repeater {
@@ -254,7 +254,7 @@ QGCFlickable {
 
                     QGCCheckBox {
                         id:         _largeCheckBox
-                        text:       "large"
+                        text:       qsTr("large")
                         checked:    listContains(controller.largeValues, propertyName)
                         enabled:    _addCheckBox.checked
                         onClicked:  updateValues()
