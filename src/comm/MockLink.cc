@@ -786,6 +786,7 @@ void MockLink::_handleFTP(const mavlink_message_t& msg)
 void MockLink::_handleCommandLong(const mavlink_message_t& msg)
 {
     mavlink_command_long_t request;
+    uint8_t commandResult;
 
     mavlink_msg_command_long_decode(&msg, &request);
 
@@ -795,7 +796,18 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         } else {
             _mavBaseMode |= MAV_MODE_FLAG_SAFETY_ARMED;
         }
+        commandResult = MAV_RESULT_ACCEPTED;
+    } else {
+        commandResult = MAV_RESULT_UNSUPPORTED;
     }
+
+    mavlink_message_t commandAck;
+    mavlink_msg_command_ack_pack(_vehicleSystemId,
+                                 _vehicleComponentId,
+                                 &commandAck,
+                                 request.command,
+                                 commandResult);
+    respondWithMavlinkMessage(commandAck);
 }
 
 void MockLink::setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode)

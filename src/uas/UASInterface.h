@@ -322,9 +322,6 @@ signals:
     // Log Download Signals
     void logEntry   (UASInterface* uas, uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
     void logData    (UASInterface* uas, uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data);
-
-    /** @brief Command Ack */
-    void commandAck (UASInterface* uas, uint8_t compID, uint16_t command, uint8_t result);
 };
 
 Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0")
