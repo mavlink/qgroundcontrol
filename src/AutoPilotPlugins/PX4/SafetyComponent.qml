@@ -45,9 +45,10 @@ QGCView {
 
     property real _margins: ScreenTools.defaultFontPixelHeight
 
-    property Fact _fenceAction: controller.getParameterFact(-1, "GF_ACTION")
-    property Fact _fenceRadius: controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
-    property Fact _fenceAlt:    controller.getParameterFact(-1, "GF_MAX_VER_DIST")
+    property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
+    property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
+    property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
+    property Fact _rtlLandDelay:    controller.getParameterFact(-1, "RTL_LAND_DELAY")
 
     QGCViewPanel {
         id:             panel
@@ -245,26 +246,47 @@ QGCView {
                     showUnits:          true
                 }
 
-                QGCCheckBox {
-                    id:                 homeLoiterCheckbox
+                QGCLabel {
+                    id:                 returnHomeLabel
+                    anchors.topMargin:  _margins
+                    anchors.top:        climbField.bottom
+                    anchors.left:       climbLabel.left
+                    text:               "Return Home, then:"
+                }
+
+                ExclusiveGroup { id: homeLoiterGroup }
+
+                QGCRadioButton {
+                    id:                 homeLoiterNoLandRadio
+                    anchors.topMargin:  _margins
+                    anchors.top:        returnHomeLabel.bottom
+                    anchors.left:       climbLabel.left
+                    checked:            _rtlLandDelay.value < 0
+                    exclusiveGroup:     homeLoiterGroup
+                    text:               "Loiter at Home altitude, do not land"
+
+                    onClicked: _rtlLandDelay.value = -1
+                }
+
+                QGCRadioButton {
+                    id:                 homeLoiterLandRadio
                     anchors.baseline:   landDelayField.baseline
                     anchors.left:       climbLabel.left
-                    checked:            fact.value > 0
+                    checked:            _rtlLandDelay.value >= 0
+                    exclusiveGroup:     homeLoiterGroup
                     text:               "Loiter at Home altitude for"
 
-                    property Fact fact: controller.getParameterFact(-1, "RTL_LAND_DELAY")
-
-                    onClicked: fact.value = checked ? 60 : -1
+                    onClicked: _rtlLandDelay.value = 60
                 }
 
                 FactTextField {
                     id:                 landDelayField
                     anchors.margins:    _margins
-                    anchors.left:       homeLoiterCheckbox.right
-                    anchors.top:        climbField.bottom
+                    anchors.left:       homeLoiterLandRadio.right
+                    anchors.top:        homeLoiterNoLandRadio.bottom
                     fact:               controller.getParameterFact(-1, "RTL_LAND_DELAY")
                     showUnits:          true
-                    enabled:            homeLoiterCheckbox.checked === true
+                    enabled:            homeLoiterLandRadio.checked === true
                 }
 
                 QGCLabel {
@@ -272,7 +294,7 @@ QGCView {
                     anchors.baseline:   descendField.baseline
                     anchors.left:       climbLabel.left
                     color:              palette.text
-                    enabled:            homeLoiterCheckbox.checked === true
+                    enabled:            homeLoiterLandRadio.checked === true
                 }
 
                 FactTextField {
@@ -281,7 +303,7 @@ QGCView {
                     anchors.left:       landDelayField.left
                     anchors.top:        landDelayField.bottom
                     fact:               controller.getParameterFact(-1, "RTL_DESCEND_ALT")
-                    enabled:            homeLoiterCheckbox.checked === true
+                    enabled:            homeLoiterLandRadio.checked === true
                     showUnits:          true
                 }
             }
