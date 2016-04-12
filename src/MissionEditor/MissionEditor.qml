@@ -742,7 +742,7 @@ QGCView {
                 width:      sendSaveRow.width
                 wrapMode:   Text.WordWrap
                 text:       syncNeeded && !controller.autoSync ?
-                                "You have unsaved changed to you mission. You should send to your vehicle, or save to a file:" :
+                                "You have unsaved changes to you mission. You should send to your vehicle, or save to a file:" :
                                 "Sync:"
             }
 

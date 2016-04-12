@@ -18,7 +18,7 @@
 # -------------------------------------------------
 
 exists($${OUT_PWD}/qgroundcontrol.pro) {
-    error("You must use shadow build.")
+    error("You must use shadow build (e.g. mkdir build; cd build; qmake ../qgroundcontrol.pro).")
 }
 
 message(Qt version $$[QT_VERSION])
