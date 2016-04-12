@@ -114,7 +114,8 @@ Item {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                mainWindow.hideLeftMenu()
+                if (!__animateShowDialog.running)
+                    mainWindow.hideLeftMenu()
             }
         }
     }
@@ -264,7 +265,8 @@ Item {
         anchors.right:  parent.right
         height:         toolBar.height
         onClicked: {
-            mainWindow.hideLeftMenu()
+            if (!__animateShowDialog.running)
+                mainWindow.hideLeftMenu()
         }
     }
 
@@ -311,8 +313,10 @@ Item {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    __rightPanel.source = ""
-                    mainWindow.hideLeftMenu()
+                    if (!__animateShowDialog.running) {
+                        __rightPanel.source = ""
+                        mainWindow.hideLeftMenu()
+                    }
                 }
             }
 
