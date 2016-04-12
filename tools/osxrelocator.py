@@ -26,7 +26,7 @@ OTOOL_CMD = 'otool'
 
 
 def shell_call(cmd, cmd_dir='.', fail=True):
-    print "call", cmd
+    #print("call", cmd)
     try:
         ret = subprocess.check_call(
                 cmd, cwd=cmd_dir,
@@ -40,7 +40,7 @@ def shell_call(cmd, cmd_dir='.', fail=True):
 
 
 def shell_check_call(cmd):
-    print "ccall", cmd
+    #print("ccall", cmd)
     try:
         process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE)
@@ -54,6 +54,7 @@ class OSXRelocator(object):
     '''
     Wrapper for OS X's install_name_tool and otool commands to help
     relocating shared libraries.
+
     It parses lib/ /libexec and bin/ directories, changes the prefix path of
     the shared libraries that an object file uses and changes it's library
     ID if the file is a shared library.
@@ -61,19 +62,19 @@ class OSXRelocator(object):
 
     def __init__(self, root, lib_prefix, new_lib_prefix, recursive):
         self.root = root
-        self.lib_prefix = self._fix_path(lib_prefix)
-        self.new_lib_prefix = self._fix_path(new_lib_prefix)
+        self.lib_prefix = self._fix_path(lib_prefix).encode('utf-8')
+        self.new_lib_prefix = self._fix_path(new_lib_prefix).encode('utf-8')
         self.recursive = recursive
 
     def relocate(self):
-        self.parse_dir(self.root, filters=['', '.dylib', '.so', '0'])
+        self.parse_dir(self.root, filters=['', '.dylib', '.so'])
 
     def relocate_file(self, object_file, id=None):
         self.change_libs_path(object_file)
         self.change_id(object_file, id)
 
     def change_id(self, object_file, id=None):
-        id = id or object_file.replace(self.lib_prefix, self.new_lib_prefix)
+        id = id or object_file.replace(self.lib_prefix.decode('utf-8'), self.new_lib_prefix.decode('utf-8'))
         filename = os.path.basename(object_file)
         if not (filename.endswith('so') or filename.endswith('dylib')):
             return
@@ -105,13 +106,13 @@ class OSXRelocator(object):
     @staticmethod
     def list_shared_libraries(object_file):
         cmd = [OTOOL_CMD, "-L", object_file]
-        res = shell_check_call(cmd).split('\n')
+        res = shell_check_call(cmd).split(b'\n')
         # We don't use the first line
         libs = res[1:]
         # Remove the first character tabulation
         libs = [x[1:] for x in libs]
         # Remove the version info
-        libs = [x.split(' ', 1)[0] for x in libs]
+        libs = [x.split(b' ', 1)[0] for x in libs]
         return libs
 
     @staticmethod
@@ -157,4 +158,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
