@@ -69,41 +69,35 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 void initializeVideoStreaming(int &argc, char* argv[])
 {
 #if defined(QGC_GST_STREAMING)
-    // Initialize GStreamer
-    GError* error = NULL;
-    if (!gst_init_check(&argc, &argv, &error)) {
-        qCritical() << "gst_init_check() failed: " << error->message;
-        g_error_free(error);
-    }
-    // Our own plugin
-    GST_PLUGIN_STATIC_REGISTER(QGC_VIDEOSINK_PLUGIN);
-    // The static plugins we use
-#if defined(__mobile__)
-    GST_PLUGIN_STATIC_REGISTER(coreelements);
-    GST_PLUGIN_STATIC_REGISTER(libav);
-    GST_PLUGIN_STATIC_REGISTER(rtp);
-    GST_PLUGIN_STATIC_REGISTER(udp);
-    GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
-    GST_PLUGIN_STATIC_REGISTER(x264);
-#endif
-
-#ifdef __macos__
-#ifdef QGC_INSTALL_RELEASE
-    QString currentDir = QCoreApplication::applicationDirPath();
-    qgcputenv("GST_PLUGIN_SCANNER",           currentDir, "/gst-plugin-scanner");
-    qgcputenv("GTK_PATH",                     currentDir, "/../Frameworks/GStreamer.framework/Versions/Current");
-    qgcputenv("GIO_EXTRA_MODULES",            currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gio/modules");
-    qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0",   currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_SYSTEM_PATH",       currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_PATH_1_0",          currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_PATH",              currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-//    QStringList env = QProcessEnvironment::systemEnvironment().keys();
-//    foreach(const QString &key, env) {
-//        qDebug() << key << QProcessEnvironment::systemEnvironment().value(key);
-//    }
-#endif
-#endif
-
+    #ifdef __macos__
+        #ifdef QGC_INSTALL_RELEASE
+            QString currentDir = QCoreApplication::applicationDirPath();
+            qgcputenv("GST_PLUGIN_SCANNER",           currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner");
+            qgcputenv("GTK_PATH",                     currentDir, "/../Frameworks/GStreamer.framework/Versions/Current");
+            qgcputenv("GIO_EXTRA_MODULES",            currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gio/modules");
+            qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0",   currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+            qgcputenv("GST_PLUGIN_SYSTEM_PATH",       currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+            qgcputenv("GST_PLUGIN_PATH_1_0",          currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+            qgcputenv("GST_PLUGIN_PATH",              currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+        #endif
+    #endif
+        // Initialize GStreamer
+        GError* error = NULL;
+        if (!gst_init_check(&argc, &argv, &error)) {
+            qCritical() << "gst_init_check() failed: " << error->message;
+            g_error_free(error);
+        }
+        // Our own plugin
+        GST_PLUGIN_STATIC_REGISTER(QGC_VIDEOSINK_PLUGIN);
+        // The static plugins we use
+    #if defined(__mobile__)
+        GST_PLUGIN_STATIC_REGISTER(coreelements);
+        GST_PLUGIN_STATIC_REGISTER(libav);
+        GST_PLUGIN_STATIC_REGISTER(rtp);
+        GST_PLUGIN_STATIC_REGISTER(udp);
+        GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
+        GST_PLUGIN_STATIC_REGISTER(x264);
+    #endif
 #else
     Q_UNUSED(argc);
     Q_UNUSED(argv);

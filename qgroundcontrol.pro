@@ -65,7 +65,15 @@ LinuxBuild {
 CONFIG += qt \
     thread \
     c++11 \
+
+contains(DEFINES, ENABLE_VERBOSE_OUTPUT) {
+    message("Enable verbose compiler output (manual override from command line)")
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, ENABLE_VERBOSE_OUTPUT) {
+    message("Enable verbose compiler output (manual override from user_config.pri)")
+} else {
+CONFIG += \
     silent
+}
 
 QT += \
     concurrent \
