@@ -31,8 +31,7 @@ install:
           }
       }
       While ($Stoploop -eq $false)
-
-  - cmd: "c:\nsis.exe" /S
+  - c:\nsis.exe /S
 
 build_script:
   - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && C:\Qt\5.5\msvc2013\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
