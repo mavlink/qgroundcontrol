@@ -38,6 +38,7 @@ enum PX4_CUSTOM_MAIN_MODE {
     PX4_CUSTOM_MAIN_MODE_ACRO,
     PX4_CUSTOM_MAIN_MODE_OFFBOARD,
     PX4_CUSTOM_MAIN_MODE_STABILIZED,
+    PX4_CUSTOM_MAIN_MODE_AIRSPD,
     PX4_CUSTOM_MAIN_MODE_RATTITUDE
 };
 
@@ -74,6 +75,7 @@ const char* PX4FirmwarePlugin::acroFlightMode =         "Acro";
 const char* PX4FirmwarePlugin::stabilizedFlightMode =   "Stabilized";
 const char* PX4FirmwarePlugin::rattitudeFlightMode =    "Rattitude";
 const char* PX4FirmwarePlugin::altCtlFlightMode =       "Altitude Control";
+const char* PX4FirmwarePlugin::airSpdFlightMode =       "Airspeed";
 const char* PX4FirmwarePlugin::posCtlFlightMode =       "Position Control";
 const char* PX4FirmwarePlugin::offboardFlightMode =     "Offboard Control";
 const char* PX4FirmwarePlugin::readyFlightMode =        "Ready";
@@ -93,6 +95,7 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                  PX4FirmwarePlugin::stabilizedFlightMode,    true },
     { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                  PX4FirmwarePlugin::rattitudeFlightMode,     true },
     { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                  PX4FirmwarePlugin::altCtlFlightMode,        true },
+    { PX4_CUSTOM_MAIN_MODE_AIRSPD,      0,                                  PX4FirmwarePlugin::airSpdFlightMode,        true },
     { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                  PX4FirmwarePlugin::posCtlFlightMode,        true },
     { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                  PX4FirmwarePlugin::offboardFlightMode,      true },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,     PX4FirmwarePlugin::readyFlightMode,         false },
