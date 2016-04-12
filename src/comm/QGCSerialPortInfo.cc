@@ -39,6 +39,7 @@ static const struct VIDPIDMapInfo_s {
     { QGCSerialPortInfo::px4VendorId,           QGCSerialPortInfo::AeroCoreProductId,                   QGCSerialPortInfo::BoardTypeAeroCore,   "Found AeroCore" },
     { QGCSerialPortInfo::threeDRRadioVendorId,  QGCSerialPortInfo::threeDRRadioProductId,               QGCSerialPortInfo::BoardTypeSikRadio,   "Found SiK Radio" },
     { QGCSerialPortInfo::siLabsRadioVendorId,   QGCSerialPortInfo::siLabsRadioProductId,                QGCSerialPortInfo::BoardTypeSikRadio,   "Found SiK Radio" },
+    { QGCSerialPortInfo::ubloxRTKVendorId,      QGCSerialPortInfo::ubloxRTKProductId,                   QGCSerialPortInfo::BoardTypeRTKGPS,     "Found RTK GPS" },
 };
 
 QGCSerialPortInfo::QGCSerialPortInfo(void) :
@@ -127,4 +128,11 @@ bool QGCSerialPortInfo::isBootloader(void) const
 {
     // FIXME: Check SerialLink bootloade detect code which is different
     return boardTypePixhawk() && description().contains("BL");
+}
+
+bool QGCSerialPortInfo::canFlash(void)
+{
+    BoardType_t boardType = this->boardType();
+
+    return boardType != QGCSerialPortInfo::BoardTypeUnknown && boardType != QGCSerialPortInfo::BoardTypeRTKGPS;
 }

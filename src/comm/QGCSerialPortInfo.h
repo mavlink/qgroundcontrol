@@ -46,6 +46,7 @@ public:
         BoardTypePX4Flow,
         BoardTypeSikRadio,
         BoardTypeAeroCore,
+        BoardTypeRTKGPS,
         BoardTypeUnknown
     } BoardType_t;
 
@@ -68,6 +69,9 @@ public:
     static const int siLabsRadioVendorId =                  0x10c4; ///< Vendor ID for SILabs Radio
     static const int siLabsRadioProductId =                 0xea60; ///< Product ID for SILabs Radio
 
+    static const int ubloxRTKVendorId =                     5446;   ///< Vendor ID for ublox RTK
+    static const int ubloxRTKProductId =                    424;    ///< Product ID for ublox RTK
+
     QGCSerialPortInfo(void);
     QGCSerialPortInfo(const QSerialPort & port);
 
@@ -75,6 +79,9 @@ public:
     static QList<QGCSerialPortInfo> availablePorts(void);
 
     BoardType_t boardType(void) const;
+
+    /// @return true: we can flash this board type
+    bool canFlash(void);
 
     /// @return true: board is a Pixhawk board
     bool boardTypePixhawk(void) const;
