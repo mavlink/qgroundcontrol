@@ -56,7 +56,7 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
 FactMetaData::FactMetaData(QObject* parent)
     : QObject(parent)
     , _type(valueTypeInt32)
-    , _decimalPlaces(defaultDecimalPlaces)
+    , _decimalPlaces(unknownDecimalPlaces)
     , _rawDefaultValue(0)
     , _defaultValueAvailable(false)
     , _group("*Default Group")
@@ -75,7 +75,7 @@ FactMetaData::FactMetaData(QObject* parent)
 FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     : QObject(parent)
     , _type(type)
-    , _decimalPlaces(defaultDecimalPlaces)
+    , _decimalPlaces(unknownDecimalPlaces)
     , _rawDefaultValue(0)
     , _defaultValueAvailable(false)
     , _group("*Default Group")
@@ -577,4 +577,34 @@ QString FactMetaData::appSettingsDistanceUnitsString(void)
     } else {
         return QStringLiteral("m");
     }
+}
+
+int FactMetaData::decimalPlaces(void) const
+{
+    int actualDecimalPlaces = defaultDecimalPlaces;
+    int incrementDecimalPlaces = unknownDecimalPlaces;
+
+    // First determine decimal places from increment
+    double increment = this->increment();
+    if (!qIsNaN(increment)) {
+        double integralPart;
+
+        // Get the fractional part only
+        increment = fabs(modf(increment, &integralPart));
+        if (increment == 0.0) {
+            // No fractional part, so no decimal places
+            incrementDecimalPlaces = 0;
+        } else {
+            incrementDecimalPlaces = -ceil(log10(increment));
+        }
+    }
+
+    // Correct decimal places is the larger of the two, increment or meta data value
+    if (incrementDecimalPlaces != unknownDecimalPlaces && _decimalPlaces == unknownDecimalPlaces) {
+        actualDecimalPlaces = incrementDecimalPlaces;
+    } else {
+        actualDecimalPlaces = qMax(_decimalPlaces, incrementDecimalPlaces);
+    }
+
+    return actualDecimalPlaces;
 }

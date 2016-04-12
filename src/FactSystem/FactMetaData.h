@@ -70,7 +70,7 @@ public:
     /// Returns the string for distance units which has configued by user
     static QString appSettingsDistanceUnitsString(void);
 
-    int             decimalPlaces           (void) const { return _decimalPlaces; }
+    int             decimalPlaces           (void) const;
     QVariant        rawDefaultValue         (void) const;
     QVariant        cookedDefaultValue      (void) const { return _rawTranslator(rawDefaultValue()); }
     bool            defaultValueAvailable   (void) const { return _defaultValueAvailable; }
@@ -139,7 +139,8 @@ public:
     /// Same as convertAndValidateRaw except for cookedValue input
     bool convertAndValidateCooked(const QVariant& cookedValue, bool convertOnly, QVariant& typedValue, QString& errorString);
 
-    static const int defaultDecimalPlaces = 3;
+    static const int defaultDecimalPlaces = 3;  ///< Default value for decimal places if not specified/known
+    static const int unknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
 
     static ValueType_t stringToType(const QString& typeString, bool& unknownType);
     static size_t typeToSize(ValueType_t type);

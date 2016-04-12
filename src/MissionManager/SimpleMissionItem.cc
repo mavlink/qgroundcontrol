@@ -322,16 +322,16 @@ QString SimpleMissionItem::abbreviation() const
 void SimpleMissionItem::_clearParamMetaData(void)
 {
     _param1MetaData.setRawUnits("");
-    _param1MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
+    _param1MetaData.setDecimalPlaces(FactMetaData::unknownDecimalPlaces);
     _param1MetaData.setBuiltInTranslator();
     _param2MetaData.setRawUnits("");
-    _param2MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
+    _param2MetaData.setDecimalPlaces(FactMetaData::unknownDecimalPlaces);
     _param2MetaData.setBuiltInTranslator();
     _param3MetaData.setRawUnits("");
-    _param3MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
+    _param3MetaData.setDecimalPlaces(FactMetaData::unknownDecimalPlaces);
     _param3MetaData.setBuiltInTranslator();
     _param4MetaData.setRawUnits("");
-    _param4MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
+    _param4MetaData.setDecimalPlaces(FactMetaData::unknownDecimalPlaces);
     _param4MetaData.setBuiltInTranslator();
 }
 
