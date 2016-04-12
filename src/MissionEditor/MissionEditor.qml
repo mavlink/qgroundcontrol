@@ -287,6 +287,7 @@ QGCView {
                         if (addMissionItemsButton.checked) {
                             var sequenceNumber = controller.insertSimpleMissionItem(coordinate, controller.visualItems.count)
                             setCurrentItem(sequenceNumber)
+                            editorListView.positionViewAtIndex(editorListView.count - 1, ListView.Contain)
                         } else {
                             editorMap.mapClicked(coordinate)
                         }
@@ -464,6 +465,13 @@ QGCView {
                     opacity:        _rightPanelOpacity
                     z:              QGroundControl.zOrderTopMost
 
+                    MouseArea {
+                         // This MouseArea prevents the Map below it from getting Mouse events. Without this
+                         // things like mousewheel will scroll the Flickable and then scroll the map as well.
+                         anchors.fill:       editorListView
+                         onWheel:            wheel.accepted = true
+                     }
+
                     ListView {
                         id:             editorListView
                         anchors.left:   parent.left
@@ -494,6 +502,16 @@ QGCView {
                             }
 
                             onMoveHomeToMapCenter: controller.visualItems.get(0).coordinate = editorMap.center
+
+                            Connections {
+                                target: object
+
+                                onIsCurrentItemChanged: {
+                                    if (object.isCurrentItem) {
+                                        editorListView.positionViewAtIndex(index, ListView.Contain)
+                                    }
+                                }
+                            }
                         }
                     } // ListView
                 } // Item - Mission Item editor
