@@ -17,8 +17,14 @@ install:
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x86
   - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.5\msvc2013\bin;%PATH%
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
-  - ps: Start-FileDownload https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/nsis-3.0rc1-setup.exe -FileName nsis.exe
-  - nsis.exe /S
+  - ps: |
+      Write-Host "Installing NSIS..." -ForegroundColor Cyan
+      $exePath = "$($env:USERPROFILE)\nsis-3.0rc1-setup.exe"
+      Write-Host "Downloading..."
+      (New-Object Net.WebClient).DownloadFile('https://storage.googleapis.com/appveyor-download-cache/nsis/nsis-3.0rc1-setup.exe', $exePath)
+      Write-Host "Installing..."
+      cmd /c start /wait $exePath /S
+      Write-Host "Installed" -ForegroundColor Green
 
 build_script:
   - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && C:\Qt\5.5\msvc2013\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
