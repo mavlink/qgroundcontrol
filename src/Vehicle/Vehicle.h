@@ -542,6 +542,7 @@ signals:
     void flyingChanged(bool flying);
     void guidedModeChanged(bool guidedMode);
     void prearmErrorChanged(const QString& prearmError);
+    void commandLongAck(uint8_t compID, uint16_t command, uint8_t result);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -620,6 +621,7 @@ private:
     void _handleWind(mavlink_message_t& message);
     void _handleVibration(mavlink_message_t& message);
     void _handleExtendedSysState(mavlink_message_t& message);
+    void _handleCommandAck(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);

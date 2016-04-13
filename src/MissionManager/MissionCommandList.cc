@@ -243,7 +243,6 @@ bool MissionCommandList::contains(MAV_CMD command) const
 MavCmdInfo* MissionCommandList::getMavCmdInfo(MAV_CMD command) const
 {
     if (!contains(command)) {
-        qWarning() << "Unknown command" << command;
         return NULL;
     }
 
