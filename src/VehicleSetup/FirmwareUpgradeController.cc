@@ -416,8 +416,8 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
     case QGCSerialPortInfo::BoardTypeSikRadio:
         boardId = Bootloader::boardID3DRRadio;
         break;
-    case QGCSerialPortInfo::BoardTypeUnknown:
-        qWarning() << "Internal error";
+    default:
+        qWarning() << "Internal error: invalid board type for flashing" << boardType;
         boardId = Bootloader::boardIDPX4FMUV2;
         break;
     }
