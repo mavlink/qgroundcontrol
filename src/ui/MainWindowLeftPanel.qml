@@ -217,7 +217,7 @@ Item {
                 QGCButton {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
-                    text:           "Console"
+                    text:           qsTr("Console")
                     exclusiveGroup: panelActionGroup
                     onClicked: {
                         if(__rightPanel.source != "QGroundControl/Controls/AppMessages.qml") {
