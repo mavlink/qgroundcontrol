@@ -65,7 +65,6 @@ public:
     static const char* stabilizedFlightMode;
     static const char* rattitudeFlightMode;
     static const char* altCtlFlightMode;
-    static const char* airSpdFlightMode;
     static const char* posCtlFlightMode;
     static const char* offboardFlightMode;
     static const char* readyFlightMode;
