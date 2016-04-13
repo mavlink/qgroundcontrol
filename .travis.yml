@@ -71,6 +71,7 @@ cache:
 
 
 before_install:
+  - if [[ "${TRAVIS_PULL_REQUEST}" = "false" && "${CONFIG}" = "debug" ]]; then exit 0; fi
   - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow
   - git fetch --all --tags
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
