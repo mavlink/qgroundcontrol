@@ -50,27 +50,27 @@ Rectangle {
             spacing:            ScreenTools.defaultFontPixelHeight
 
             QGCButton {
-                text:       "PX4 Vehicle"
+                text:       qsTr("PX4 Vehicle")
                 onClicked:  QGroundControl.startPX4MockLink(sendStatusText.checked)
             }
             QGCButton {
-                text:       "APM ArduCopter Vehicle"
+                text:       qsTr("APM ArduCopter Vehicle")
                 onClicked:  QGroundControl.startAPMArduCopterMockLink(sendStatusText.checked)
             }
             QGCButton {
-                text:       "APM ArduPlane Vehicle"
+                text:       qsTr("APM ArduPlane Vehicle")
                 onClicked:  QGroundControl.startAPMArduPlaneMockLink(sendStatusText.checked)
             }
             QGCButton {
-                text:       "Generic Vehicle"
+                text:       qsTr("Generic Vehicle")
                 onClicked:  QGroundControl.startGenericMockLink(sendStatusText.checked)
             }
             QGCCheckBox {
                 id:     sendStatusText
-                text:   "Send status text + voice"
+                text:   qsTr("Send status text + voice")
             }
             QGCButton {
-                text:       "Stop All MockLinks"
+                text:       qsTr("Stop All MockLinks")
                 onClicked:  QGroundControl.stopAllMockLinks()
             }
         }

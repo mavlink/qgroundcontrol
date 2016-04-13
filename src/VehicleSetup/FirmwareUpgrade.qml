@@ -38,6 +38,10 @@ QGCView {
     id:         qgcView
     viewPanel:  panel
 
+    // Those user visible strings are hard to translate because we can't send the
+    // HTML strings to translation as this can create a security risk. we need to find
+    // a better way to hightlight them, or use less hightlights.
+
     // User visible strings
     readonly property string title:             "FIRMWARE"
     readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
@@ -55,7 +59,7 @@ QGCView {
     property string firmwareName
 
     function cancelFlash() {
-        statusTextArea.append(highlightPrefix + "Upgrade cancelled" + highlightSuffix)
+        statusTextArea.append(highlightPrefix + qsTr("Upgrade cancelled") + highlightSuffix)
         statusTextArea.append("------------------------------------------")
         controller.cancel()
     }
@@ -105,7 +109,7 @@ QGCView {
                 QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true
             } else {
                 // We end up here when we detect a board plugged in after we've started upgrade
-                statusTextArea.append(highlightPrefix + "Found device" + highlightSuffix + ": " + controller.boardType)
+                statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
                 if (controller.boardType == "Pixhawk" || controller.boardType == "AeroCore" || controller.boardType == "PX4 Flow" || controller.boardType == "PX4 FMU V1") {
                     showDialog(pixhawkFirmwareSelectDialog, title, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
@@ -162,19 +166,19 @@ QGCView {
                 id: firmwareTypeList
 
                 ListElement {
-                    text:           "Standard Version (stable)";
+                    text:           qsTr("Standard Version (stable)")
                     firmwareType:   FirmwareUpgradeController.StableFirmware
                 }
                 ListElement {
-                    text:           "Beta Testing (beta)";
+                    text:           qsTr("Beta Testing (beta)")
                     firmwareType:   FirmwareUpgradeController.BetaFirmware
                 }
                 ListElement {
-                    text:           "Developer Build (master)";
+                    text:           qsTr("Developer Build (master)")
                     firmwareType:   FirmwareUpgradeController.DeveloperFirmware
                 }
                 ListElement {
-                    text:           "Custom firmware file...";
+                    text:           qsTr("Custom firmware file...")
                     firmwareType:   FirmwareUpgradeController.CustomFirmware
                 }
             }
@@ -183,11 +187,11 @@ QGCView {
                 id: px4FlowTypeList
 
                 ListElement {
-                    text:           "Standard Version (stable)";
+                    text:           qsTr("Standard Version (stable)")
                     firmwareType:   FirmwareUpgradeController.StableFirmware
                 }
                 ListElement {
-                    text:           "Custom firmware file...";
+                    text:           qsTr("Custom firmware file...")
                     firmwareType:   FirmwareUpgradeController.CustomFirmware
                 }
             }
@@ -217,7 +221,7 @@ QGCView {
                     id:             px4FlightStack
                     checked:        true
                     exclusiveGroup: firmwareGroup
-                    text:           "PX4 Flight Stack"
+                    text:           qsTr("PX4 Flight Stack")
                     visible:        !px4Flow
 
                     onClicked: parent.firmwareVersionChanged(firmwareTypeList)
@@ -226,7 +230,7 @@ QGCView {
                 QGCRadioButton {
                     id:             apmFlightStack
                     exclusiveGroup: firmwareGroup
-                    text:           "ArduPilot Flight Stack"
+                    text:           qsTr("ArduPilot Flight Stack")
                     visible:        !px4Flow
 
                     onClicked: parent.firmwareVersionChanged(firmwareTypeList)
@@ -253,7 +257,7 @@ QGCView {
 
                     QGCCheckBox {
                         id:         _advanced
-                        text:       "Advanced settings"
+                        text:       qsTr("Advanced settings")
                         checked:    px4Flow ? true : false
 
                         onClicked: {
@@ -274,7 +278,7 @@ QGCView {
                     width:      parent.width
                     wrapMode:   Text.WordWrap
                     visible:    showFirmwareTypeSelection
-                    text:       px4Flow ? "Select which version of the firmware you would like to install:" : "Select which version of the above flight stack you would like to install:"
+                    text:       px4Flow ? qsTr("Select which version of the firmware you would like to install:") : qsTr("Select which version of the above flight stack you would like to install:")
                 }
 
                 QGCComboBox {
@@ -288,18 +292,18 @@ QGCView {
                         controller.selectedFirmwareType = index
                         if (model.get(index).firmwareType == FirmwareUpgradeController.BetaFirmware) {
                             firmwareVersionWarningLabel.visible = true
-                            firmwareVersionWarningLabel.text = "WARNING: BETA FIRMWARE. " +
-                                    "This firmware version is ONLY intended for beta testers. " +
-                                    "Although it has received FLIGHT TESTING, it represents actively changed code. " +
-                                    "Do NOT use for normal operation."
+                            firmwareVersionWarningLabel.text = qsTr("WARNING: BETA FIRMWARE. ") +
+                                    qsTr("This firmware version is ONLY intended for beta testers. ") +
+                                    qsTr("Although it has received FLIGHT TESTING, it represents actively changed code. ") +
+                                    qsTr("Do NOT use for normal operation.")
                         } else if (model.get(index).firmwareType == FirmwareUpgradeController.DeveloperFirmware) {
                             firmwareVersionWarningLabel.visible = true
-                            firmwareVersionWarningLabel.text = "WARNING: CONTINUOUS BUILD FIRMWARE. " +
-                                    "This firmware has NOT BEEN FLIGHT TESTED. " +
-                                    "It is only intended for DEVELOPERS. " +
-                                    "Run bench tests without props first. " +
-                                    "Do NOT fly this without additonal safety precautions. " +
-                                    "Follow the mailing list actively when using it."
+                            firmwareVersionWarningLabel.text = qsTr("WARNING: CONTINUOUS BUILD FIRMWARE. ") +
+                                    qsTr("This firmware has NOT BEEN FLIGHT TESTED. ") +
+                                    qsTr("It is only intended for DEVELOPERS. ") +
+                                    qsTr("Run bench tests without props first. ") +
+                                    qsTr("Do NOT fly this without additonal safety precautions. ") +
+                                    qsTr("Follow the mailing list actively when using it.")
                         } else {
                             firmwareVersionWarningLabel.visible = false
                         }

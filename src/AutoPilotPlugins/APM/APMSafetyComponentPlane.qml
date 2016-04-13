@@ -64,7 +64,7 @@ QGCView {
 
             QGCLabel {
                 id:         failsafeTriggersLabel
-                text:       "Failsafe Triggers"
+                text:       qsTr("Failsafe Triggers")
                 font.weight: Font.DemiBold
             }
 
@@ -83,7 +83,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   throttlePWMField.baseline
-                    text:               "Throttle PWM threshold:"
+                    text:               qsTr("Throttle PWM threshold:")
                     checked:            _failsafeThrEnable.value == 1
 
                     onClicked: _failsafeThrEnable.value = (checked ? 1 : 0)
@@ -104,7 +104,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   voltageField.baseline
-                    text:               "Voltage threshold:"
+                    text:               qsTr("Voltage threshold:")
                     checked:            _failsafeBattVoltage.value != 0
 
                     onClicked: _failsafeBattVoltage.value = checked ? 10.5 : 0
@@ -125,7 +125,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   mahField.baseline
-                    text:               "MAH threshold:"
+                    text:               qsTr("MAH threshold:")
                     checked:            _failsafeBattMah.value != 0
 
                     onClicked: _failsafeBattMah.value = checked ? 600 : 0
@@ -146,7 +146,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.top:        mahField.bottom
-                    text:               "GCS failsafe"
+                    text:               qsTr("GCS failsafe")
                     checked:            _failsafeGCSEnable.value != 0
 
                     onClicked: _failsafeGCSEnable.value = checked ? 1 : 0
@@ -157,7 +157,7 @@ QGCView {
                 id:                 rtlLabel
                 anchors.leftMargin: _margins
                 anchors.left:        failsafeTriggerSettings.right
-                text:               "Return to Launch"
+                text:               qsTr("Return to Launch")
                 font.weight:        Font.DemiBold
             }
 
@@ -175,7 +175,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.top:        parent.top
-                    text:               "Return at current altitude"
+                    text:               qsTr("Return at current altitude")
                     checked:            _rtlAltFact.value < 0
                     exclusiveGroup:     returnAltRadioGroup
 
@@ -187,7 +187,7 @@ QGCView {
                     anchors.topMargin:  _margins / 2
                     anchors.left:       returnAtCurrentRadio.left
                     anchors.top:        returnAtCurrentRadio.bottom
-                    text:               "Return at specified altitude:"
+                    text:               qsTr("Return at specified altitude:")
                     exclusiveGroup:     returnAltRadioGroup
                     checked:            _rtlAltFact.value >= 0
 
