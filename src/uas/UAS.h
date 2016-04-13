@@ -370,8 +370,6 @@ protected: //COMMENTS FOR TEST UNIT
     float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
 
     /// BASIC UAS TYPE, NAME AND STATE
-    uint8_t base_mode;                 ///< The current mode of the MAV
-    uint32_t custom_mode;         ///< The current mode of the MAV
     int status;                   ///< The current status of the MAV
 
     /// TIMEKEEPING
