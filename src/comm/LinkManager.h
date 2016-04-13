@@ -202,6 +202,7 @@ signals:
 private slots:
     void _linkConnected(void);
     void _linkDisconnected(void);
+    void _linkConnectionRemoved(LinkInterface* link);
 #ifndef __ios__
     void _activeLinkCheck(void);
 #endif

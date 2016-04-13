@@ -170,6 +170,9 @@ signals:
     void activeChanged(bool active);
     void _invokeWriteBytes(QByteArray);
 
+    /// Signalled when a link suddenly goes away due to it being removed by for example pulling the cable to the connection.
+    void connectionRemoved(LinkInterface* link);
+
     /**
      * @brief New data arrived
      *
