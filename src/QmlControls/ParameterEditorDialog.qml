@@ -85,7 +85,7 @@ QGCViewDialog {
             QGCLabel {
                 width:      parent.width
                 wrapMode:   Text.WordWrap
-                text:       fact.shortDescription ? fact.shortDescription : "Description missing"
+                text:       fact.shortDescription ? fact.shortDescription : qsTr("Description missing")
             }
 
             QGCLabel {
@@ -111,7 +111,7 @@ QGCViewDialog {
                 QGCButton {
                     anchors.baseline:   valueField.baseline
                     visible:            fact.defaultValueAvailable
-                    text:               "Reset to default"
+                    text:               qsTr("Reset to default")
 
                     onClicked: {
                         fact.value = fact.defaultValue
@@ -143,15 +143,15 @@ QGCViewDialog {
             Row {
                 spacing: defaultTextWidth
 
-                QGCLabel { text: "Units:" }
-                QGCLabel { text: fact.units ? fact.units : "none" }
+                QGCLabel { text: qsTr("Units:") }
+                QGCLabel { text: fact.units ? fact.units : qsTr("none") }
             }
 
             Row {
                 spacing: defaultTextWidth
                 visible: !fact.minIsDefaultForType
 
-                QGCLabel { text: "Minimum value:" }
+                QGCLabel { text: qsTr("Minimum value:") }
                 QGCLabel { text: fact.minString }
             }
 
@@ -159,35 +159,35 @@ QGCViewDialog {
                 spacing: defaultTextWidth
                 visible: !fact.maxIsDefaultForType
 
-                QGCLabel { text: "Maximum value:" }
+                QGCLabel { text: qsTr("Maximum value:") }
                 QGCLabel { text: fact.maxString }
             }
 
             Row {
                 spacing: defaultTextWidth
 
-                QGCLabel { text: "Default value:" }
-                QGCLabel { text: fact.defaultValueAvailable ? fact.defaultValueString : "none" }
+                QGCLabel { text: qsTr("Default value:") }
+                QGCLabel { text: fact.defaultValueAvailable ? fact.defaultValueString : qsTr("none") }
             }
 
             QGCLabel {
                 width:      parent.width
                 wrapMode:   Text.WordWrap
-                text:       "Warning: Modifying parameters while vehicle is in flight can lead to vehicle instability and possible vehicle loss. " +
-                            "Make sure you know what you are doing and double-check your values before Save!"
+                text:       qsTr("Warning: Modifying parameters while vehicle is in flight can lead to vehicle instability and possible vehicle loss. ") +
+                            qsTr("Make sure you know what you are doing and double-check your values before Save!")
             }
 
             QGCLabel {
                 id:         validationError
                 width:      parent.width
                 wrapMode:   Text.WordWrap
-                color:      "yellow"
+                color:      qsTr("yellow")
             }
 
             QGCCheckBox {
                 id:         forceSave
                 visible:    false
-                text:       "Force save (dangerous!)"
+                text:       qsTr("Force save (dangerous!)")
             }
 
             Row {
@@ -204,7 +204,7 @@ QGCViewDialog {
 
                 QGCCheckBox {
                     id:     _advanced
-                    text:   "Advanced settings"
+                    text:   qsTr("Advanced settings")
                 }
 
                 Rectangle {
@@ -216,7 +216,7 @@ QGCViewDialog {
             }
 
             QGCButton {
-                text:           "Set RC to Param..."
+                text:           qsTr("Set RC to Param...")
                 visible:        _advanced.checked && !validate && showRCToParam
                 onClicked:      controller.setRCToParam(fact.name)
             }

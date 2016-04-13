@@ -43,7 +43,7 @@ Rectangle {
         }
 
         QGCLabel {
-            text:       "Fly a grid pattern over a defined area."
+            text:       qsTr("Fly a grid pattern over a defined area.")
             wrapMode:   Text.WordWrap
         }
 
@@ -73,7 +73,7 @@ Rectangle {
 
         QGCCheckBox {
             anchors.left:   parent.left
-            text:           "Relative altitude"
+            text:           qsTr("Relative altitude")
             checked:        missionItem.gridAltitudeRelative
             onClicked:      missionItem.gridAltitudeRelative = checked
         }
@@ -81,7 +81,7 @@ Rectangle {
         QGCCheckBox {
             id:                 cameraTrigger
             anchors.left:       parent.left
-            text:               "Camera trigger:"
+            text:               qsTr("Camera trigger:")
             checked:            missionItem.cameraTrigger
             onClicked:          missionItem.cameraTrigger = checked
         }
@@ -96,7 +96,7 @@ Rectangle {
             QGCLabel {
                 anchors.baseline:   textField.baseline
                 anchors.left:       parent.left
-                text:               "Distance:"
+                text:               qsTr("Distance:")
             }
 
             FactTextField {
@@ -109,7 +109,7 @@ Rectangle {
         }
 
         QGCButton {
-            text: _addPointsMode ? "Finish Polygon" : "Draw Polygon"
+            text: _addPointsMode ? qsTr("Finish Polygon") : qsTr("Draw Polygon")
             onClicked: {
                 if (_addPointsMode) {
                     _addPointsMode = false

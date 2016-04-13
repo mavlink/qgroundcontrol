@@ -63,7 +63,7 @@ QGCView {
 
             QGCLabel {
                 id:             triggerLabel
-                text:           "Triggers For Return Home"
+                text:           qsTr("Triggers For Return Home")
                 font.weight:    Font.DemiBold
             }
 
@@ -78,7 +78,7 @@ QGCView {
                 color:                  palette.windowShade
 
                 QGCLabel {
-                    text:               "RC Transmitter Signal Loss: Return Home after"
+                    text:               qsTr("RC Transmitter Signal Loss: Return Home after")
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   rcLossField.baseline
@@ -101,7 +101,7 @@ QGCView {
                     fact:               controller.getParameterFact(-1, "COM_DL_LOSS_EN")
                     checkedValue:       1
                     uncheckedValue:     0
-                    text:               "Telemetry Signal Timeout: Return Home after"
+                    text:               qsTr("Telemetry Signal Timeout: Return Home after")
                 }
 
                 FactTextField {
@@ -121,7 +121,7 @@ QGCView {
                 anchors.leftMargin: _margins
                 anchors.left:       triggerSettings.right
                 anchors.top:        parent.top
-                text:               "GeoFence"
+                text:               qsTr("GeoFence")
                 font.weight:        Font.DemiBold
             }
 
@@ -139,7 +139,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   fenceActionCombo.baseline
-                    text:               "Action on breach:"
+                    text:               qsTr("Action on breach:")
                 }
 
                 FactComboBox {
@@ -148,7 +148,7 @@ QGCView {
                     anchors.left:       fenceActionLabel.right
                     anchors.top:        parent.top
                     width:              fenceAltMaxField.width
-                    model:              [ "None", "Warning", "Loiter", "Return Home", "Flight termination" ]
+                    model:              [ qsTr("None"), qsTr("Warning"), qsTr("Loiter"), qsTr("Return Home"), qsTr("Flight termination") ]
                     fact:               _fenceAction
                 }
 
@@ -156,7 +156,7 @@ QGCView {
                     id:                 fenceRadiusCheckBox
                     anchors.left:       fenceActionLabel.left
                     anchors.baseline:   fenceRadiusField.baseline
-                    text:               "Max radius:"
+                    text:               qsTr("Max radius:")
                     checked:            _fenceRadius.value >= 0
 
                     onClicked: _fenceRadius.value = checked ? 100 : -1
@@ -176,7 +176,7 @@ QGCView {
                     id:                 fenceAltMaxCheckBox
                     anchors.left:       fenceActionLabel.left
                     anchors.baseline:   fenceAltMaxField.baseline
-                    text:               "Max altitude:"
+                    text:               qsTr("Max altitude:")
                     checked:            _fenceAlt.value >= 0
 
                     onClicked: _fenceAlt.value = checked ? 100 : -1
@@ -197,7 +197,7 @@ QGCView {
                 id:                 rtlLabel
                 anchors.topMargin:  _margins
                 anchors.top:        triggerSettings.bottom
-                text:               "Return Home Settings"
+                text:               qsTr("Return Home Settings")
                 font.weight:        Font.DemiBold
             }
 
@@ -234,7 +234,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       icon.right
                     anchors.baseline:   climbField.baseline
-                    text:               "Climb to altitude of"
+                    text:               qsTr("Climb to altitude of")
                 }
 
                 FactTextField {
@@ -274,8 +274,7 @@ QGCView {
                     anchors.left:       climbLabel.left
                     checked:            _rtlLandDelay.value >= 0
                     exclusiveGroup:     homeLoiterGroup
-                    text:               "Loiter at Home altitude for"
-
+                    text:               qsTr("Loiter at Home altitude for")
                     onClicked: _rtlLandDelay.value = 60
                 }
 
@@ -290,7 +289,7 @@ QGCView {
                 }
 
                 QGCLabel {
-                    text:               "Home loiter altitude"
+                    text:               qsTr("Home loiter altitude")
                     anchors.baseline:   descendField.baseline
                     anchors.left:       climbLabel.left
                     color:              palette.text
@@ -315,7 +314,7 @@ QGCView {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 font.pixelSize:     ScreenTools.mediumFontPixelSize
-                text:               "Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.";
+                text:               qsTr("Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.")
                 visible:            fact.value !== 0
                 wrapMode:           Text.Wrap
 
@@ -329,7 +328,7 @@ QGCView {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 font.pixelSize:     ScreenTools.mediumFontPixelSize
-                text:               "Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.";
+                text:               qsTr("Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.")
                 visible:            fact.value !== 0
                 wrapMode:           Text.Wrap
 

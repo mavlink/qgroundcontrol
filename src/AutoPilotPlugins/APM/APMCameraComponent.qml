@@ -175,17 +175,17 @@ QGCView {
 
     ListModel {
         id: gimbalOutModel
-        ListElement { text: "Disabled"; value: 0 }
-        ListElement { text: "Channel 5"; value: 5 }
-        ListElement { text: "Channel 6"; value: 6 }
-        ListElement { text: "Channel 7"; value: 7 }
-        ListElement { text: "Channel 8"; value: 8 }
-        ListElement { text: "Channel 9"; value: 9 }
-        ListElement { text: "Channel 10"; value: 10 }
-        ListElement { text: "Channel 11"; value: 11 }
-        ListElement { text: "Channel 12"; value: 12 }
-        ListElement { text: "Channel 13"; value: 13 }
-        ListElement { text: "Channel 14"; value: 14 }
+        ListElement { text: qsTr("Disabled"); value: 0 }
+        ListElement { text: qsTr("Channel 5"); value: 5 }
+        ListElement { text: qsTr("Channel 6"); value: 6 }
+        ListElement { text: qsTr("Channel 7"); value: 7 }
+        ListElement { text: qsTr("Channel 8"); value: 8 }
+        ListElement { text: qsTr("Channel 9"); value: 9 }
+        ListElement { text: qsTr("Channel 10"); value: 10 }
+        ListElement { text: qsTr("Channel 11"); value: 11 }
+        ListElement { text: qsTr("Channel 12"); value: 12 }
+        ListElement { text: qsTr("Channel 13"); value: 13 }
+        ListElement { text: qsTr("Channel 14"); value: 14 }
     }
 
     Component {
@@ -210,7 +210,7 @@ QGCView {
 
             QGCLabel {
                 id:         directionLabel
-                text:       "Gimbal " + directionTitle
+                text:       qsTr("Gimbal ") + directionTitle
                 font.weight: Font.DemiBold
             }
 
@@ -228,7 +228,7 @@ QGCView {
                     anchors.topMargin:  _margins
                     anchors.left:       servoReverseCheckBox.left
                     anchors.top:        parent.top
-                    text:               "Stabilize"
+                    text:               qsTr("Stabilize")
                     fact:               mountStabFact
                     checkedValue:       1
                     uncheckedValue:     0
@@ -240,7 +240,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.top:        mountStabCheckBox.bottom
                     anchors.right:       parent.right
-                    text:               "Servo reverse"
+                    text:               qsTr("Servo reverse")
                     checkedValue:       1
                     uncheckedValue:     0
                     fact:               servoReverseFact
@@ -252,7 +252,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   gimbalOutCombo.baseline
-                    text:               "Output channel:"
+                    text:               qsTr("Output channel:")
                 }
 
                 QGCComboBox {
@@ -272,7 +272,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   mountRcInCombo.baseline
-                    text:               "Input channel:"
+                    text:               qsTr("Input channel:")
                     enabled:            directionEnabled
                 }
 
@@ -292,7 +292,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   mountAngMinField.baseline
-                    text:               "Gimbal angle limits:"
+                    text:               qsTr("Gimbal angle limits:")
                     enabled:            directionEnabled
                 }
 
@@ -301,7 +301,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       mountAngLabel.right
                     anchors.baseline:   mountAngMinField.baseline
-                    text:               "min"
+                    text:               qsTr("min")
                     enabled:            directionEnabled
                 }
 
@@ -319,7 +319,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       mountAngMinField.right
                     anchors.baseline:   mountAngMinField.baseline
-                    text:               "max"
+                    text:               qsTr("max")
                     enabled:            directionEnabled
                 }
 
@@ -337,7 +337,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   servoPWMMinField.baseline
-                    text:               "Servo PWM limits:"
+                    text:               qsTr("Servo PWM limits:")
                     enabled:            directionEnabled
                 }
 
@@ -345,7 +345,7 @@ QGCView {
                     id:                 servoPWMMinLabel
                     anchors.left:       mountAngMinLabel.left
                     anchors.baseline:   servoPWMMinField.baseline
-                    text:               "min"
+                    text:               qsTr("min")
                     enabled:            directionEnabled
                 }
 
@@ -364,7 +364,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       servoPWMMinField.right
                     anchors.baseline:   servoPWMMinField.baseline
-                    text:               "max"
+                    text:               qsTr("max")
                     enabled:            directionEnabled
                 }
 
@@ -392,7 +392,7 @@ QGCView {
 
             QGCLabel {
                 id:             settingsLabel
-                text:           "Gimbal Settings"
+                text:           qsTr("Gimbal Settings")
                 font.weight:    Font.DemiBold
             }
 
@@ -409,7 +409,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   gimbalTypeCombo.baseline
-                    text:               "Type:"
+                    text:               qsTr("Type:")
                 }
 
                 FactComboBox {
@@ -431,7 +431,7 @@ QGCView {
                     anchors.right:          parent.right
                     anchors.top:            gimbalTypeCombo.bottom
                     wrapMode:               Text.WordWrap
-                    text:                   "Gimbal Type changes takes affect next reboot of autopilot"
+                    text:                   qsTr("Gimbal Type changes takes affect next reboot of autopilot")
                 }
 
                 QGCLabel {
@@ -439,7 +439,7 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.baseline:   gimbalModeCombo.baseline
-                    text:               "Default Mode:"
+                    text:               qsTr("Default Mode:")
                 }
 
                 FactComboBox {
@@ -469,7 +469,7 @@ QGCView {
                 id:                 gimbalDirectionTiltLoader
                 sourceComponent:    gimbalDirectionSettings
 
-                property string directionTitle:     "Tilt"
+                property string directionTitle:     qsTr("Tilt")
                 property bool   directionEnabled:   _tiltEnabled
                 property int    gimbalOutIndex:     0
                 property Fact   mountRcInFact:      _mountRCInTilt
@@ -488,7 +488,7 @@ QGCView {
                 anchors.top:        gimbalDirectionTiltLoader.bottom
                 sourceComponent:    gimbalDirectionSettings
 
-                property string directionTitle:     "Roll"
+                property string directionTitle:     qsTr("Roll")
                 property bool   directionEnabled:   _rollEnabled
                 property int    gimbalOutIndex:     0
                 property Fact   mountRcInFact:      _mountRCInRoll
@@ -507,7 +507,7 @@ QGCView {
                 anchors.top:        gimbalDirectionRollLoader.bottom
                 sourceComponent:    gimbalDirectionSettings
 
-                property string directionTitle:     "Pan"
+                property string directionTitle:     qsTr("Pan")
                 property bool   directionEnabled:   _panEnabled
                 property int    gimbalOutIndex:     0
                 property Fact   mountRcInFact:      _mountRCInPan

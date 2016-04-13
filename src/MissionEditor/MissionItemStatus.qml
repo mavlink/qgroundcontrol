@@ -71,16 +71,16 @@ Rectangle {
         columns:            2
         columnSpacing:      _margins
 
-        QGCLabel { text: "Distance:" }
+        QGCLabel { text: qsTr("Distance:") }
         QGCLabel { text: _distanceText }
 
-        QGCLabel { text: "Alt diff:" }
+        QGCLabel { text: qsTr("Alt diff:") }
         QGCLabel { text: _altText }
 
-        QGCLabel { text: "Gradient:" }
+        QGCLabel { text: qsTr("Gradient:") }
         QGCLabel { text: _gradientText }
 
-        QGCLabel { text: "Azimuth:" }
+        QGCLabel { text: qsTr("Azimuth:") }
         QGCLabel { text: _azimuthText }
     }
 
@@ -133,7 +133,6 @@ Rectangle {
                     }
                     */
                 }
-
             }
         }
     }

@@ -119,7 +119,7 @@ FlightMap {
 
         sourceItem: MissionItemIndexLabel {
             isCurrentItem:  true
-            label:          "G"
+            label:          qsTr("G", "Goto here waypoint") // second string is translator's hint.
         }
     }
 
