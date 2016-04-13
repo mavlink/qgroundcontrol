@@ -141,7 +141,7 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QGCSerialPortInfo& port
         qCDebug(FirmwareUpgradeVerboseLog) << "\tproduct ID:" << info.productIdentifier();
         
         boardType = info.boardType();
-        if (boardType != QGCSerialPortInfo::BoardTypeUnknown) {
+        if (info.canFlash()) {
             portInfo = info;
             return true;
         }
