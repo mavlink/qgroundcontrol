@@ -494,6 +494,8 @@ public:
     uint            messagesLost        () { return _messagesLost; }
     bool            flying              () const { return _flying; }
     bool            guidedMode          () const;
+    uint8_t         baseMode            () const { return _base_mode; }
+    uint32_t        customMode          () const { return _custom_mode; }
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
