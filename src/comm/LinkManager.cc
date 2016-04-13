@@ -214,8 +214,12 @@ void LinkManager::_addLink(LinkInterface* link)
 
     _mavlinkProtocol->resetMetadataForLink(link);
 
-    connect(link, &LinkInterface::connected,    this, &LinkManager::_linkConnected);
-    connect(link, &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
+    connect(link, &LinkInterface::connected,            this, &LinkManager::_linkConnected);
+    connect(link, &LinkInterface::disconnected,         this, &LinkManager::_linkDisconnected);
+
+    // This connection is queued since it will cloe the link. So we want the link emitter to return otherwise we would
+    // close the link our from under itself.
+    connect(link, &LinkInterface::connectionRemoved,    this, &LinkManager::_linkConnectionRemoved, Qt::QueuedConnection);
 }
 
 void LinkManager::disconnectAll(void)
@@ -239,7 +243,9 @@ bool LinkManager::connectLink(LinkInterface* link)
 
 void LinkManager::disconnectLink(LinkInterface* link)
 {
-    Q_ASSERT(link);
+    if (!link || !_links.contains(link)) {
+        return;
+    }
 
     link->_disconnect();
     LinkConfiguration* config = link->getLinkConfiguration();
@@ -304,6 +310,12 @@ void LinkManager::_linkConnected(void)
 void LinkManager::_linkDisconnected(void)
 {
     emit linkDisconnected((LinkInterface*)sender());
+}
+
+void LinkManager::_linkConnectionRemoved(LinkInterface* link)
+{
+    // Link has been removed from system, disconnect it automatically
+    disconnectLink(link);
 }
 
 void LinkManager::suspendConfigurationUpdates(bool suspend)
