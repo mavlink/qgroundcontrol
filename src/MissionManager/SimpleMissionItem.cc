@@ -389,7 +389,8 @@ QmlObjectListModel* SimpleMissionItem::textFieldFacts(void)
                 paramMetaData->setRawUnits(paramInfo->units());
                 paramMetaData->setAppSettingsTranslators();
                 paramFact->setMetaData(paramMetaData);
-                model->append(paramFact);
+                if ((i != 5 && i != 6) || !specifiesCoordinate())
+                    model->append(paramFact);
 
                 if (i == 7) {
                     altitudeAdded = true;
