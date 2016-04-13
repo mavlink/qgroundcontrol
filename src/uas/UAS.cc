@@ -58,8 +58,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     receiveDropRate(0),
     sendDropRate(0),
 
-    base_mode(0),
-    custom_mode(0),
     status(-1),
 
     startTime(QGC::groundTimeMilliseconds()),
@@ -1440,6 +1438,7 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
     if (!_vehicle) {
         return;
     }
+    const uint8_t base_mode = _vehicle->baseMode();
 
    // If system has manual inputs enabled and is armed
     if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
@@ -1686,7 +1685,7 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
         return;
     }
 
-    if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
+    if (_vehicle->hilMode())
     {
         float q[4];
 
@@ -1766,7 +1765,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
         return;
     }
 
-    if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
+    if (_vehicle->hilMode())
     {
         float xacc_corrupt = addZeroMeanNoise(xacc, xacc_var);
         float yacc_corrupt = addZeroMeanNoise(yacc, yacc_var);
@@ -1817,7 +1816,7 @@ void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, floa
     Q_UNUSED(quality);
     Q_UNUSED(ground_distance);
 
-    if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
+    if (_vehicle->hilMode())
     {
 #if 0
         mavlink_message_t msg;
@@ -1849,7 +1848,7 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
     if (QGC::groundTimeMilliseconds() - lastSendTimeGPS < 100)
         return;
 
-    if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
+    if (_vehicle->hilMode())
     {
         float course = cog;
         // map to 0..2pi
