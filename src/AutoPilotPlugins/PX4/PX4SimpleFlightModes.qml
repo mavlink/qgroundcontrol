@@ -53,11 +53,11 @@ Item {
     QGCFlickable {
         anchors.fill:   parent
         clip:           true
-        contentWidth:   contentColumn.width
-        contentHeight:  contentColumn.height
+        contentWidth:   column2.x + column2.width
+        contentHeight:  Math.max(column1.height, column2.height)
 
         Column {
-            id:         contentColumn
+            id:         column1
             spacing:    _margins
 
             Row {
@@ -131,7 +131,8 @@ Item {
                 } // Column - Flight mode settings
 
                 Column {
-                    spacing: _margins
+                    id:         column2
+                    spacing:    _margins
 
                     QGCLabel {
                         text:           qsTr("Switch Settings")
@@ -139,6 +140,7 @@ Item {
                     }
 
                     Rectangle {
+                        id:     switchSettingsRect
                         width:  switchSettingsColumn.width + (_margins * 2)
                         height: switchSettingsColumn.height + ScreenTools.defaultFontPixelHeight
                         color:  qgcPal.windowShade
@@ -174,6 +176,10 @@ Item {
                             } // Repeater
                         } // Column
                     } // Rectangle
+
+                    RCChannelMonitor {
+                        width: switchSettingsRect.width
+                    }
                 } // Column - Switch settings
             } // Row - Settings
 
