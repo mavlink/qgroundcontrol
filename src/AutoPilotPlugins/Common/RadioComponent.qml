@@ -532,53 +532,9 @@ QGCView {
                     source:     controller.imageHelp
                 }
 
-                // Channel monitor
-                Column {
+                RCChannelMonitor {
                     width:      parent.width
-                    spacing:    5
-
-                    QGCLabel { text: qsTr("Channel Monitor") }
-
-                    Connections {
-                        target: controller
-
-                        onChannelRCValueChanged: {
-                            if (channelMonitorRepeater.itemAt(channel)) {
-                                channelMonitorRepeater.itemAt(channel).loader.item.rcValue = rcValue
-                            }
-                        }
-                    }
-
-                    Repeater {
-                        id:     channelMonitorRepeater
-                        model:  controller.channelCount
-                        width:  parent.width
-
-                        Row {
-                            spacing:    5
-
-                            // Need this to get to loader from Connections above
-                            property Item loader: theLoader
-
-                            QGCLabel {
-                                id:     channelLabel
-                                text:   modelData + 1
-                            }
-
-                            Loader {
-                                id:                     theLoader
-                                anchors.verticalCenter: channelLabel.verticalCenter
-                                height:                 qgcView.defaultTextHeight
-                                width:                  200
-                                sourceComponent:        channelMonitorDisplayComponent
-
-                                property real defaultTextWidth:     qgcView.defaultTextWidth
-                                property bool mapped:               true
-                                readonly property bool reversed:    false
-                            }
-                        }
-                    }
-                } // Column - Channel Monitor
+                }
             } // Column - Right Column
         } // QGCFlickable
     } // QGCViewPanel
