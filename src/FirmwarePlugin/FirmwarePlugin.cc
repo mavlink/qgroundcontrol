@@ -212,7 +212,9 @@ void FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeR
 
 const FirmwarePlugin::remapParamNameMajorVersionMap_t& FirmwarePlugin::paramNameRemapMajorVersionMap(void) const
 {
-    return remapParamNameMajorVersionMap_t();
+    static const remapParamNameMajorVersionMap_t remap;
+
+    return remap;
 }
 
 int FirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
