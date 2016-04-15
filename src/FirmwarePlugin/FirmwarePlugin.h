@@ -55,6 +55,21 @@ public:
         PauseVehicleCapability =            1 << 2, ///< Vehicle supports pausing at current location
         GuidedModeCapability =              1 << 3, ///< Vehicle Support guided mode commands
     } FirmwareCapabilities;
+
+    /// Maps from on parameter name to another
+    ///     key:    parameter name to translate from
+    ///     value:  mapped parameter name
+    typedef QMap<QString, QString> remapParamNameMap_t;
+
+    /// Maps from firmware minor version to remapParamNameMap_t entry
+    ///     key:    firmware minor version
+    ///     value:  remapParamNameMap_t entry
+    typedef QMap<int, remapParamNameMap_t> remapParamNameMinorVersionRemapMap_t;
+
+    /// Maps from firmware major version number to remapParamNameMinorVersionRemapMap_t entry
+    ///     key:    firmware major version
+    ///     value:  remapParamNameMinorVersionRemapMap_t entry
+    typedef QMap<int, remapParamNameMinorVersionRemapMap_t> remapParamNameMajorVersionMap_t;
     
     /// Called when Vehicle is first created to send any necessary mavlink messages to the firmware.
     virtual void initializeVehicle(Vehicle* vehicle);
@@ -171,6 +186,11 @@ public:
     ///     @param[out] multiRotorJsonFilename Filename for multi rotor overrides
     virtual void missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const;
 
+    /// Returns the mapping structure which is used to map from one parameter name to another based on firmware version.
+    virtual const remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const;
+
+    /// Returns the highest major version number that is known to the remap for this specified major version.
+    virtual int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const;
 };
 
 #endif
