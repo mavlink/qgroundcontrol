@@ -70,6 +70,7 @@ public:
     APMParameterMetaData(void);
 
     void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
+    void loadParameterFactMetaDataFile(const QString& metaDataFile);
 
     static void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion);
 
@@ -86,7 +87,6 @@ private:
         XmlStateDone
     };    
 
-    void _loadParameterFactMetaData();
     QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
     bool skipXMLBlock(QXmlStreamReader& xml, const QString& blockName);
     bool parseParameterAttributes(QXmlStreamReader& xml, APMFactMetaDataRaw *rawMetaData);

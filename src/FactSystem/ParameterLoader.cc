@@ -30,6 +30,7 @@
 #include "QGCApplication.h"
 #include "UASMessageHandler.h"
 #include "FirmwarePlugin.h"
+#include "APMFirmwarePlugin.h"
 #include "UAS.h"
 
 #include <QEasingCurve>
@@ -904,11 +905,20 @@ void ParameterLoader::_addMetaDataToDefaultComponent(void)
          return;
      }
 
-    // Load best parameter meta data set
+     QString metaDataFile;
      int majorVersion, minorVersion;
-     QString metaDataFile = parameterMetaDataFile(_vehicle->firmwareType(), _parameterSetMajorVersion, majorVersion, minorVersion);
+     if (_vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+         // Parameter versioning is still not really figured out correctly. We need to handle ArduPilot specially based on vehicle version.
+         // The current three version are hardcoded in.
+         metaDataFile = ((APMFirmwarePlugin*)_vehicle->firmwarePlugin())->getParameterMetaDataFile(_vehicle);
+         qCDebug(ParameterLoaderLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile;
+     } else {
+         // Load best parameter meta data set
+         metaDataFile = parameterMetaDataFile(_vehicle->firmwareType(), _parameterSetMajorVersion, majorVersion, minorVersion);
+         qCDebug(ParameterLoaderLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile << majorVersion << minorVersion;
+     }
+
      _parameterMetaData = _vehicle->firmwarePlugin()->loadParameterMetaData(metaDataFile);
-     qCDebug(ParameterLoaderLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile << majorVersion << minorVersion;
 
     // Loop over all parameters in default component adding meta data
     QVariantMap& factMap = _mapParameterName2Variant[_defaultComponentId];
