@@ -313,44 +313,44 @@ bool APMFirmwarePlugin::_handleStatusText(Vehicle* vehicle, mavlink_message_t* m
     mavlink_statustext_t statusText;
     mavlink_msg_statustext_decode(message, &statusText);
 
-    if (!_firmwareVersion.isValid() || statusText.severity < MAV_SEVERITY_NOTICE) {
+    if (vehicle->firmwareMajorVersion() == -1 || statusText.severity < MAV_SEVERITY_NOTICE) {
         messageText = _getMessageText(message);
         qCDebug(APMFirmwarePluginLog) << messageText;
 
-        if (!_firmwareVersion.isValid() && !messageText.contains(APM_SOLO_REXP)) {
+        if (!messageText.contains(APM_SOLO_REXP)) {
             // if don't know firmwareVersion yet, try and see if this message contains it
             if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP)) {
                 // found version string
-                _firmwareVersion = APMFirmwareVersion(messageText);
-                _textSeverityAdjustmentNeeded = _isTextSeverityAdjustmentNeeded(_firmwareVersion);
+                APMFirmwareVersion firmwareVersion(messageText);
+                _textSeverityAdjustmentNeeded = _isTextSeverityAdjustmentNeeded(firmwareVersion);
 
-                if (!_firmwareVersion.isBeta() && !_firmwareVersion.isDev()) {
-                    int supportedMajorNumber = -1;
-                    int supportedMinorNumber = -1;
+                vehicle->setFirmwareVersion(firmwareVersion.majorNumber(), firmwareVersion.minorNumber(), firmwareVersion.patchNumber());
 
-                    switch (vehicle->vehicleType()) {
-                    case MAV_TYPE_FIXED_WING:
-                        supportedMajorNumber = 3;
-                        supportedMinorNumber = 2;
-                        break;
-                    case MAV_TYPE_QUADROTOR:
-                    case MAV_TYPE_COAXIAL:
-                    case MAV_TYPE_HELICOPTER:
-                    case MAV_TYPE_SUBMARINE:
-                    case MAV_TYPE_HEXAROTOR:
-                    case MAV_TYPE_OCTOROTOR:
-                    case MAV_TYPE_TRICOPTER:
-                        supportedMajorNumber = 3;
-                        supportedMinorNumber = 2;
-                        break;
-                    default:
-                        break;
-                    }
+                int supportedMajorNumber = -1;
+                int supportedMinorNumber = -1;
 
-                    if (supportedMajorNumber != -1) {
-                        if (_firmwareVersion.majorNumber() < supportedMajorNumber || _firmwareVersion.minorNumber() < supportedMinorNumber) {
-                            qgcApp()->showMessage(QString("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
-                        }
+                switch (vehicle->vehicleType()) {
+                case MAV_TYPE_FIXED_WING:
+                    supportedMajorNumber = 3;
+                    supportedMinorNumber = 2;
+                    break;
+                case MAV_TYPE_QUADROTOR:
+                case MAV_TYPE_COAXIAL:
+                case MAV_TYPE_HELICOPTER:
+                case MAV_TYPE_SUBMARINE:
+                case MAV_TYPE_HEXAROTOR:
+                case MAV_TYPE_OCTOROTOR:
+                case MAV_TYPE_TRICOPTER:
+                    supportedMajorNumber = 3;
+                    supportedMinorNumber = 2;
+                    break;
+                default:
+                    break;
+                }
+
+                if (supportedMajorNumber != -1) {
+                    if (firmwareVersion.majorNumber() < supportedMajorNumber || firmwareVersion.minorNumber() < supportedMinorNumber) {
+                        qgcApp()->showMessage(QString("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
                     }
                 }
             }
@@ -601,7 +601,8 @@ QObject* APMFirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
 {
     Q_UNUSED(metaDataFile);
 
-    APMParameterMetaData* metaData = new APMParameterMetaData;
+    APMParameterMetaData* metaData = new APMParameterMetaData();
+    metaData->loadParameterFactMetaDataFile(metaDataFile);
     return metaData;
 }
 
@@ -629,4 +630,33 @@ void APMFirmwarePlugin::_soloVideoHandshake(Vehicle* vehicle)
 void APMFirmwarePlugin::_artooSocketError(QAbstractSocket::SocketError socketError)
 {
     qgcApp()->showMessage(tr("Error during Solo video link setup: %1").arg(socketError));
+}
+
+QString APMFirmwarePlugin::getParameterMetaDataFile(Vehicle* vehicle)
+{
+    switch (vehicle->vehicleType()) {
+    case MAV_TYPE_QUADROTOR:
+    case MAV_TYPE_HEXAROTOR:
+    case MAV_TYPE_OCTOROTOR:
+    case MAV_TYPE_TRICOPTER:
+    case MAV_TYPE_COAXIAL:
+    case MAV_TYPE_HELICOPTER:
+        if (vehicle->firmwareMajorVersion() < 3 || (vehicle->firmwareMajorVersion() == 3 && vehicle->firmwareMinorVersion() <= 3)) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.3.xml");
+        } else {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.4.xml");
+        }
+    case MAV_TYPE_FIXED_WING:
+        if (vehicle->firmwareMajorVersion() < 3 || (vehicle->firmwareMajorVersion() == 3 && vehicle->firmwareMinorVersion() <= 3)) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.3.xml");
+        } else {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.5.xml");
+        }
+    case MAV_TYPE_GROUND_ROVER:
+    case MAV_TYPE_SURFACE_BOAT:
+    case MAV_TYPE_SUBMARINE:
+        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.0.xml");
+    default:
+        return QString();
+    }
 }

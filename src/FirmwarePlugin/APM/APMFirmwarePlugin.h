@@ -105,6 +105,8 @@ public:
     void        getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) final { APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
     QObject*    loadParameterMetaData           (const QString& metaDataFile);
 
+    QString     getParameterMetaDataFile(Vehicle* vehicle);
+
 protected:
     /// All access to singleton is through stack specific implementation
     APMFirmwarePlugin(void);
@@ -125,7 +127,6 @@ private:
     void _handleHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
     void _soloVideoHandshake(Vehicle* vehicle);
 
-    APMFirmwareVersion      _firmwareVersion;
     bool                    _textSeverityAdjustmentNeeded;
     QList<APMCustomMode>    _supportedModes;
     QMap<QString, QTime>    _noisyPrearmMap;
