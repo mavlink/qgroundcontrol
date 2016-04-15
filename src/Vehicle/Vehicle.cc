@@ -121,6 +121,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _messageSeq(0)
     , _compID(0)
     , _heardFrom(false)
+    , _firmwareMajorVersion(-1)
+    , _firmwareMinorVersion(-1)
+    , _firmwarePatchVersion(-1)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -288,6 +291,9 @@ Vehicle::Vehicle(QObject* parent)
     , _messageSeq(0)
     , _compID(0)
     , _heardFrom(false)
+    , _firmwareMajorVersion(-1)
+    , _firmwareMinorVersion(-1)
+    , _firmwarePatchVersion(-1)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -1585,6 +1591,13 @@ void Vehicle::setPrearmError(const QString& prearmError)
 void Vehicle::_prearmErrorTimeout(void)
 {
     setPrearmError(QString());
+}
+
+void Vehicle::setFirmwareVersion(int majorVersion, int minorVersion, int patchVersion)
+{
+    _firmwareMajorVersion = majorVersion;
+    _firmwareMinorVersion = minorVersion;
+    _firmwarePatchVersion = patchVersion;
 }
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";

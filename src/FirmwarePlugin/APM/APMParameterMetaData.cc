@@ -37,8 +37,7 @@ QGC_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog,    "APMParameterMetaDataVer
 APMParameterMetaData::APMParameterMetaData(void)
     : _parameterMetaDataLoaded(false)
 {
-    // APM meta data is not yet versioned
-    _loadParameterFactMetaData();
+
 }
 
 /// Converts a string to a typed QVariant
@@ -123,10 +122,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
     return vehicleName;
 }
 
-/// Load Parameter Fact meta data
-///
-/// The meta data comes from firmware parameters.xml file.
-void APMParameterMetaData::_loadParameterFactMetaData()
+void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaDataFile)
 {
     if (_parameterMetaDataLoaded) {
         return;
@@ -136,17 +132,9 @@ void APMParameterMetaData::_loadParameterFactMetaData()
     QRegExp parameterCategories = QRegExp("ArduCopter|ArduPlane|APMrover2|AntennaTracker");
     QString currentCategory;
 
-    QString parameterFilename;
+    qCDebug(APMParameterMetaDataLog) << "Loading parameter meta data:" << metaDataFile;
 
-    // Fixme:: always picking up the bundled xml, we would like to update it from web
-    // just not sure right now as the xml is in bad shape.
-    if (parameterFilename.isEmpty() || !QFile(parameterFilename).exists()) {
-        parameterFilename = ":/FirmwarePlugin/APM/APMParameterFactMetaData.xml";
-    }
-
-    qCDebug(APMParameterMetaDataLog) << "Loading parameter meta data:" << parameterFilename;
-
-    QFile xmlFile(parameterFilename);
+    QFile xmlFile(metaDataFile);
     Q_ASSERT(xmlFile.exists());
 
     bool success = xmlFile.open(QIODevice::ReadOnly);
@@ -591,15 +579,18 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
         }
     }
 
-    // FixMe:: not handling increment size as their is no place for it in FactMetaData and no ui
     fact->setMetaData(metaData);
 }
 
 void APMParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
 {
-    Q_UNUSED(metaDataFile);
-
-    // Versioning not yet supported
     majorVersion = -1;
     minorVersion = -1;
+
+    // Meta data version is hacked in for now based on file name
+    QRegExp regExp(".*\\.(\\d)\\.(\\d)\\.xml$");
+    if (regExp.exactMatch(metaDataFile) && regExp.captureCount() == 2) {
+        majorVersion = regExp.cap(2).toInt();
+        minorVersion = 0;
+    }
 }
