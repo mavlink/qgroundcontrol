@@ -313,7 +313,7 @@ bool APMFirmwarePlugin::_handleStatusText(Vehicle* vehicle, mavlink_message_t* m
     mavlink_statustext_t statusText;
     mavlink_msg_statustext_decode(message, &statusText);
 
-    if (vehicle->firmwareMajorVersion() == -1 || statusText.severity < MAV_SEVERITY_NOTICE) {
+    if (vehicle->firmwareMajorVersion() == Vehicle::versionNotSetValue || statusText.severity < MAV_SEVERITY_NOTICE) {
         messageText = _getMessageText(message);
         qCDebug(APMFirmwarePluginLog) << messageText;
 

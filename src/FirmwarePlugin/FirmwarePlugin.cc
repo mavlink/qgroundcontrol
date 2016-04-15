@@ -209,3 +209,16 @@ void FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeR
     Q_UNUSED(altitudeRel);
     qgcApp()->showMessage(QStringLiteral("Guided mode not supported by Vehicle."));
 }
+
+const FirmwarePlugin::remapParamNameMajorVersionMap_t& FirmwarePlugin::paramNameRemapMajorVersionMap(void) const
+{
+    static const remapParamNameMajorVersionMap_t remap;
+
+    return remap;
+}
+
+int FirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
+{
+    Q_UNUSED(majorVersionNumber);
+    return 0;
+}

@@ -524,6 +524,7 @@ public:
     int firmwareMinorVersion(void) const { return _firmwareMinorVersion; }
     int firmwarePatchVersion(void) const { return _firmwarePatchVersion; }
     void setFirmwareVersion(int majorVersion, int minorVersion, int patchVersion);
+    static const int versionNotSetValue = -1;
 
 public slots:
     void setLatitude(double latitude);

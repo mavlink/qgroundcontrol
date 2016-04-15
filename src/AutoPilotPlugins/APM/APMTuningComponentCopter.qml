@@ -41,10 +41,10 @@ QGCView {
 
     property Fact _throttleMid: controller.getParameterFact(-1, "THR_MID")
     property Fact _rcFeel:      controller.getParameterFact(-1, "RC_FEEL_RP")
-    property Fact _rateRollP:   controller.getParameterFact(-1, "RATE_RLL_P")
-    property Fact _rateRollI:   controller.getParameterFact(-1, "RATE_RLL_I")
-    property Fact _ratePitchP:  controller.getParameterFact(-1, "RATE_PIT_P")
-    property Fact _ratePitchI:  controller.getParameterFact(-1, "RATE_PIT_I")
+    property Fact _rateRollP:   controller.getParameterFact(-1, "r.ATC_RAT_RLL_P")
+    property Fact _rateRollI:   controller.getParameterFact(-1, "r.ATC_RAT_RLL_I")
+    property Fact _ratePitchP:  controller.getParameterFact(-1, "r.ATC_RAT_PIT_P")
+    property Fact _ratePitchI:  controller.getParameterFact(-1, "r.ATC_RAT_PIT_I")
     property Fact _rateClimbP:  controller.getParameterFact(-1, "ACCEL_Z_P")
     property Fact _rateClimbI:  controller.getParameterFact(-1, "ACCEL_Z_I")
 
