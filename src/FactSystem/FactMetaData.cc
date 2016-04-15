@@ -147,7 +147,7 @@ void FactMetaData::setRawDefaultValue(const QVariant& rawDefaultValue)
 
 void FactMetaData::setRawMin(const QVariant& rawMin)
 {
-    if (rawMin > _minForType()) {
+    if (rawMin >= _minForType()) {
         _rawMin = rawMin;
         _minIsDefaultForType = false;
     } else {
