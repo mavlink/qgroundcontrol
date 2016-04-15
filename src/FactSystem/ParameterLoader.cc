@@ -416,8 +416,10 @@ void ParameterLoader::refreshParameter(int componentId, const QString& name)
     Q_ASSERT(_waitingReadParamNameMap.contains(componentId));
 
     if (_waitingReadParamNameMap.contains(componentId)) {
-        _waitingReadParamNameMap[componentId].remove(name); // Remove old wait entry if there
-        _waitingReadParamNameMap[componentId][name] = 0;    // Add new wait entry and update retry count
+        QString mappedParamName = _remapParamNameToVersion(name);
+
+        _waitingReadParamNameMap[componentId].remove(mappedParamName);  // Remove old wait entry if there
+        _waitingReadParamNameMap[componentId][mappedParamName] = 0;     // Add new wait entry and update retry count
         emit restartWaitingParamTimer();
     }
 
@@ -444,7 +446,7 @@ bool ParameterLoader::parameterExists(int componentId, const QString&  name)
 
     componentId = _actualComponentId(componentId);
     if (_mapParameterName2Variant.contains(componentId)) {
-        ret = _mapParameterName2Variant[componentId].contains(name);
+        ret = _mapParameterName2Variant[componentId].contains(_remapParamNameToVersion(name));
     }
 
     return ret;
@@ -454,12 +456,13 @@ Fact* ParameterLoader::getFact(int componentId, const QString& name)
 {
     componentId = _actualComponentId(componentId);
 
-    if (!_mapParameterName2Variant.contains(componentId) || !_mapParameterName2Variant[componentId].contains(name)) {
-        qgcApp()->reportMissingParameter(componentId, name);
+    QString mappedParamName = _remapParamNameToVersion(name);
+    if (!_mapParameterName2Variant.contains(componentId) || !_mapParameterName2Variant[componentId].contains(mappedParamName)) {
+        qgcApp()->reportMissingParameter(componentId, mappedParamName);
         return &_defaultFact;
     }
 
-    return _mapParameterName2Variant[componentId][name].value<Fact*>();
+    return _mapParameterName2Variant[componentId][mappedParamName].value<Fact*>();
 }
 
 QStringList ParameterLoader::parameterNames(int componentId)
@@ -1162,4 +1165,53 @@ void ParameterLoader::cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPIL
         QFile newFile(metaDataFile);
         newFile.copy(cacheFile.fileName());
     }
+}
+
+/// Remap a parameter from one firmware version to another
+QString ParameterLoader::_remapParamNameToVersion(const QString& paramName)
+{
+    QString mappedParamName;
+
+    if (!paramName.startsWith(QStringLiteral("r."))) {
+        // No version mapping wanted
+        return paramName;
+    }
+
+    int majorVersion = _vehicle->firmwareMajorVersion();
+    int minorVersion = _vehicle->firmwareMinorVersion();
+
+    qCDebug(ParameterLoaderLog) << "_remapParamNameToVersion" << paramName << majorVersion << minorVersion;
+
+    mappedParamName = paramName.right(paramName.count() - 2);
+
+    if (majorVersion == Vehicle::versionNotSetValue) {
+        // Vehicle version unknown
+        return mappedParamName;
+    }
+
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t& majorVersionRemap = _vehicle->firmwarePlugin()->paramNameRemapMajorVersionMap();
+
+    if (!majorVersionRemap.contains(majorVersion)) {
+        // No mapping for this major version
+        qCDebug(ParameterLoaderLog) << "_remapParamNameToVersion: no major version mapping";
+        return mappedParamName;
+    }
+
+    const FirmwarePlugin::remapParamNameMinorVersionRemapMap_t& remapMinorVersion = majorVersionRemap[majorVersion];
+
+    // We must map from the highest known minor version to one above the vehicle's minor version
+
+    for (int currentMinorVersion=_vehicle->firmwarePlugin()->remapParamNameHigestMinorVersionNumber(majorVersion); currentMinorVersion>minorVersion; currentMinorVersion--) {
+        if (remapMinorVersion.contains(currentMinorVersion)) {
+            const FirmwarePlugin::remapParamNameMap_t& remap = remapMinorVersion[currentMinorVersion];
+
+            if (remap.contains(mappedParamName)) {
+                QString toParamName = remap[mappedParamName];
+                qCDebug(ParameterLoaderLog) << "_remapParamNameToVersion: remapped currentMinor:from:to"<< currentMinorVersion << mappedParamName << toParamName;
+                mappedParamName = toParamName;
+            }
+        }
+    }
+
+    return mappedParamName;
 }

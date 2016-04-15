@@ -28,6 +28,9 @@
 #include "QGCApplication.h"
 #include "MissionManager.h"
 
+bool ArduCopterFirmwarePlugin::_remapParamNameIntialized = false;
+FirmwarePlugin::remapParamNameMajorVersionMap_t ArduCopterFirmwarePlugin::_remapParamName;
+
 APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)
 {
@@ -74,6 +77,38 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
     supportedFlightModes << APMCopterMode(APMCopterMode::POS_HOLD  ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::BRAKE     ,true);
     setSupportedModes(supportedFlightModes);
+
+    if (!_remapParamNameIntialized) {
+        FirmwarePlugin::remapParamNameMap_t& remap = _remapParamName[3][4];
+
+        remap["ATC_ANG_RLL_P"] =    QStringLiteral("STB_RLL_P");
+        remap["ATC_ANG_PIT_P"] =    QStringLiteral("STB_PIT_P");
+        remap["ATC_ANG_YAW_P"] =    QStringLiteral("STB_YAW_P");
+
+        remap["ATC_RAT_RLL_P"] =    QStringLiteral("RATE_RLL_P");
+        remap["ATC_RAT_RLL_I"] =    QStringLiteral("RATE_RLL_I");
+        remap["ATC_RAT_RLL_IMAX"] = QStringLiteral("RATE_RLL_IMAX");
+        remap["ATC_RAT_RLL_D"] =    QStringLiteral("RATE_RLL_D");
+        remap["ATC_RAT_RLL_FILT"] = QStringLiteral("RATE_RLL_FILT_HZ");
+
+        remap["ATC_RAT_PIT_P"] =    QStringLiteral("RATE_PIT_P");
+        remap["ATC_RAT_PIT_I"] =    QStringLiteral("RATE_PIT_I");
+        remap["ATC_RAT_PIT_IMAX"] = QStringLiteral("RATE_PIT_IMAX");
+        remap["ATC_RAT_PIT_D"] =    QStringLiteral("RATE_PIT_D");
+        remap["ATC_RAT_PIT_FILT"] = QStringLiteral("RATE_PIT_FILT_HZ");
+
+        remap["ATC_RAT_YAW_P"] =    QStringLiteral("RATE_YAW_P");
+        remap["ATC_RAT_YAW_I"] =    QStringLiteral("RATE_YAW_I");
+        remap["ATC_RAT_YAW_IMAX"] = QStringLiteral("RATE_YAW_IMAX");
+        remap["ATC_RAT_YAW_D"] =    QStringLiteral("RATE_YAW_D");
+        remap["ATC_RAT_YAW_FILT"] = QStringLiteral("RATE_YAW_FILT_HZ");
+    }
+}
+
+int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
+{
+    // Remapping supports up to 3.4
+    return majorVersionNumber == 3 ? 4: Vehicle::versionNotSetValue;
 }
 
 bool ArduCopterFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
