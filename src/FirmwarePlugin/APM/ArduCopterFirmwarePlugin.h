@@ -75,6 +75,12 @@ public:
     void guidedModeTakeoff(Vehicle* vehicle, double altitudeRel) final;
     void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
     void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel) final;
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
+    virtual int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+
+private:
+    static bool _remapParamNameIntialized;
+    static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
 };
 
 #endif

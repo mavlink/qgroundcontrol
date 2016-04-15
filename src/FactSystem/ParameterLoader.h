@@ -135,6 +135,7 @@ private:
     void _writeLocalParamCache(int uasId, int componentId);
     void _tryCacheHashLoad(int uasId, int componentId, QVariant hash_value);
     void _addMetaDataToDefaultComponent(void);
+    QString _remapParamNameToVersion(const QString& paramName);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
@@ -171,7 +172,7 @@ private:
     QMap<int, QMap<QString, int> >  _waitingReadParamNameMap;   ///< Key: Component id, Value: Map { Key: parameter name still waiting for, Value: retry count }
     QMap<int, QMap<QString, int> >  _waitingWriteParamNameMap;  ///< Key: Component id, Value: Map { Key: parameter name still waiting for, Value: retry count }
     QMap<int, QList<int> >          _failedReadParamIndexMap;   ///< Key: Component id, Value: failed parameter index
-    
+
     int _totalParamCount;   ///< Number of parameters across all components
     
     QTimer _initialRequestTimeoutTimer;
