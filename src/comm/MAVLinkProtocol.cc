@@ -270,6 +270,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                      */
                     rssi    = qMin(qMax(qRound(static_cast<qreal>(rssi)    / 1.9 - 127.0), - 120), 0);
                     remrssi = qMin(qMax(qRound(static_cast<qreal>(remrssi) / 1.9 - 127.0), - 120), 0);
+                } else {
+                    rssi = (int8_t) rstatus.rssi;
+                    remrssi = (int8_t) rstatus.remrssi;
                 }
 
                 emit radioStatusChanged(link, rstatus.rxerrors, rstatus.fixed, rssi, remrssi,
