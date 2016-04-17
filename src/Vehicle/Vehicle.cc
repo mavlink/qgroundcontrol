@@ -43,6 +43,8 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 #define DEFAULT_LAT  38.965767f
 #define DEFAULT_LON -120.083923f
 
+extern const char* guided_mode_not_supported_by_vehicle;
+
 const char* Vehicle::_settingsGroup =               "Vehicle%1";        // %1 replaced with mavlink system id
 const char* Vehicle::_joystickModeSettingsKey =     "JoystickMode";
 const char* Vehicle::_joystickEnabledSettingsKey =  "JoystickEnabled";
@@ -1465,7 +1467,7 @@ bool Vehicle::pauseVehicleSupported(void) const
 void Vehicle::guidedModeRTL(void)
 {
     if (!guidedModeSupported()) {
-        qgcApp()->showMessage(QStringLiteral("Guided mode not supported by vehicle."));
+        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     _firmwarePlugin->guidedModeRTL(this);
@@ -1474,7 +1476,7 @@ void Vehicle::guidedModeRTL(void)
 void Vehicle::guidedModeLand(void)
 {
     if (!guidedModeSupported()) {
-        qgcApp()->showMessage(QStringLiteral("Guided mode not supported by vehicle."));
+        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     _firmwarePlugin->guidedModeLand(this);
@@ -1483,7 +1485,7 @@ void Vehicle::guidedModeLand(void)
 void Vehicle::guidedModeTakeoff(double altitudeRel)
 {
     if (!guidedModeSupported()) {
-        qgcApp()->showMessage(QStringLiteral("Guided mode not supported by vehicle."));
+        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     setGuidedMode(true);
@@ -1493,7 +1495,7 @@ void Vehicle::guidedModeTakeoff(double altitudeRel)
 void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
 {
     if (!guidedModeSupported()) {
-        qgcApp()->showMessage(QStringLiteral("Guided mode not supported by vehicle."));
+        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     _firmwarePlugin->guidedModeGotoLocation(this, gotoCoord);
@@ -1502,7 +1504,7 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
 void Vehicle::guidedModeChangeAltitude(double altitudeRel)
 {
     if (!guidedModeSupported()) {
-        qgcApp()->showMessage(QStringLiteral("Guided mode not supported by vehicle."));
+        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     _firmwarePlugin->guidedModeChangeAltitude(this, altitudeRel);
