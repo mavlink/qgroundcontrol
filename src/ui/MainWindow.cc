@@ -278,6 +278,11 @@ MainWindow::MainWindow()
 #ifndef __mobile__
     _loadVisibleWidgetsSettings();
 #endif
+    //-- Enable message handler display of messages in main window
+    UASMessageHandler* msgHandler = qgcApp()->toolbox()->uasMessageHandler();
+    if(msgHandler) {
+        msgHandler->showErrorsInToolbar();
+    }
 }
 
 MainWindow::~MainWindow()

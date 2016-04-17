@@ -953,35 +953,6 @@ void ParameterLoader::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
     // We aren't waiting for any more initial parameter updates, initial parameter loading is complete
     _initialLoadComplete = true;
 
-    // Check for any errors during vehicle boot
-
-    UASMessageHandler* msgHandler = qgcApp()->toolbox()->uasMessageHandler();
-    if (msgHandler->getErrorCountTotal()) {
-        QString errors;
-        bool firstError = true;
-        bool errorsFound = false;
-
-        msgHandler->lockAccess();
-        foreach (UASMessage* msg, msgHandler->messages()) {
-            if (msg->severityIsError()) {
-                if (!firstError) {
-                    errors += "<br>";
-                }
-                errors += " - ";
-                errors += msg->getText();
-                firstError = false;
-                errorsFound = true;
-            }
-        }
-        msgHandler->showErrorsInToolbar();
-        msgHandler->unlockAccess();
-
-        if (errorsFound) {
-            QString errorMsg = QString("<b>Critical safety issue detected:</b><br>%1").arg(errors);
-            qgcApp()->showMessage(errorMsg);
-        }
-    }
-
     // Check for index based load failures
     QString indexList;
     bool initialLoadFailures = false;
