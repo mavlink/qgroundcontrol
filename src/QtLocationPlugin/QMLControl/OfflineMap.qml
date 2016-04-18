@@ -44,10 +44,14 @@ Rectangle {
 
     property string mapKey:        "lastMapType"
 
-    property string mapType:        QGroundControl.mapEngineManager.loadSetting(mapKey, "Google Street Map")
-    property int    mapMargin:      (ScreenTools.defaultFontPixelHeight * 0.2).toFixed(0)
-    property real   infoWidth:      Math.max(Math.max(nameLabel.width, descLabel.width), (ScreenTools.defaultFontPixelWidth * 40))
-    property bool   isDefaultSet:   _offlineMapRoot._currentSelection && _offlineMapRoot._currentSelection.defaultSet
+    property string mapType:            QGroundControl.mapEngineManager.loadSetting(mapKey, "Google Street Map")
+    property int    mapMargin:          (ScreenTools.defaultFontPixelHeight * 0.2).toFixed(0)
+    property real   infoWidth:          Math.max(infoCol.width, (ScreenTools.defaultFontPixelWidth * 40))
+    property bool   isDefaultSet:       _offlineMapRoot._currentSelection && _offlineMapRoot._currentSelection.defaultSet
+    property bool   isMapInteractive:   true
+    property var    savedCenter:        undefined
+    property real   savedZoom:          3
+    property string savedMapType:       ""
 
     property real oldlon0:      0
     property real oldlon1:      0
@@ -64,6 +68,7 @@ Rectangle {
     Component.onCompleted: {
         QGroundControl.mapEngineManager.loadTileSets()
         updateMap()
+        savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2))
     }
 
     Connections {
@@ -79,19 +84,21 @@ Rectangle {
     ExclusiveGroup { id: setGroup }
 
     function handleChanges() {
-        var xl = mapMargin
-        var yl = mapMargin
-        var xr = _map.width.toFixed(0)  - mapMargin
-        var yr = _map.height.toFixed(0) - mapMargin
-        var c0 = _map.toCoordinate(Qt.point(xl, yl))
-        var c1 = _map.toCoordinate(Qt.point(xr, yr))
-        if(oldlon0 !== c0.longitude || oldlat0 !== c0.latitude || oldlon1 !== c1.longitude || oldlat1 !== c1.latitude || oldz0 !== _slider0.value || oldz1 !== _slider1.value) {
-            QGroundControl.mapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, _slider0.value, _slider1.value, mapType)
+        if(isMapInteractive) {
+            var xl = mapMargin
+            var yl = mapMargin
+            var xr = _map.width.toFixed(0)  - mapMargin
+            var yr = _map.height.toFixed(0) - mapMargin
+            var c0 = _map.toCoordinate(Qt.point(xl, yl))
+            var c1 = _map.toCoordinate(Qt.point(xr, yr))
+            if(oldlon0 !== c0.longitude || oldlat0 !== c0.latitude || oldlon1 !== c1.longitude || oldlat1 !== c1.latitude || oldz0 !== _slider0.value || oldz1 !== _slider1.value) {
+                QGroundControl.mapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, _slider0.value, _slider1.value, mapType)
+            }
         }
     }
 
     function checkSanity() {
-        if(QGroundControl.mapEngineManager.crazySize) {
+        if(isMapInteractive && QGroundControl.mapEngineManager.crazySize) {
             _slider1.value = _slider1.value - 1
             handleChanges()
         }
@@ -108,6 +115,7 @@ Rectangle {
     }
 
     function showOptions() {
+        _map.visible = false
         _tileSetList.visible = false
         _infoView.visible = false
         _mapView.visible = false
@@ -115,6 +123,7 @@ Rectangle {
     }
 
     function showMap() {
+        _map.visible = true
         _tileSetList.visible = false
         _infoView.visible = false
         _mapView.visible = true
@@ -122,6 +131,7 @@ Rectangle {
     }
 
     function showList() {
+        _map.visible = false
         _tileSetList.visible = true
         _infoView.visible = false
         _mapView.visible = false
@@ -130,12 +140,69 @@ Rectangle {
 
     function showInfo() {
         if(_currentSelection && !_offlineMapRoot._currentSelection.deleting) {
-            _tileSetList.visible = false
-            _mapView.visible = false
-            _infoView.visible = true
-            _optionsView.visible = false
+            enterInfoView()
         } else
             showList()
+    }
+
+    function toRadian(deg) {
+        return deg * Math.PI / 180
+    }
+
+    function toDegree(rad) {
+        return rad * 180 / Math.PI
+    }
+
+    function midPoint(lat1, lat2, lon1, lon2) {
+        var dLon = toRadian(lon2 - lon1);
+        lat1 = toRadian(lat1);
+        lat2 = toRadian(lat2);
+        lon1 = toRadian(lon1);
+        var Bx = Math.cos(lat2) * Math.cos(dLon);
+        var By = Math.cos(lat2) * Math.sin(dLon);
+        var lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + Bx) * (Math.cos(lat1) + Bx) + By * By));
+        var lon3 = lon1 + Math.atan2(By, Math.cos(lat1) + Bx);
+        return QtPositioning.coordinate(toDegree(lat3), toDegree(lon3))
+    }
+
+    function enterInfoView() {
+        if(!isDefaultSet) {
+            isMapInteractive = false
+            savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2))
+            savedZoom = _map.zoomLevel
+            savedMapType = mapType
+            _map.visible = true
+            mapType = _offlineMapRoot._currentSelection.mapTypeStr
+            _map.center = midPoint(_offlineMapRoot._currentSelection.topleftLat, _offlineMapRoot._currentSelection.bottomRightLat, _offlineMapRoot._currentSelection.topleftLon, _offlineMapRoot._currentSelection.bottomRightLon)
+            _map.zoomLevel = _offlineMapRoot._currentSelection.minZoom
+            var p = _map.fromCoordinate(QtPositioning.coordinate(_offlineMapRoot._currentSelection.topleftLat, _offlineMapRoot._currentSelection.topleftLon), false)
+            console.log(_map.zoomLevel + " " + p)
+            while ((isNaN(p.x) || isNaN(p.y) || (p.x > 25 && p.y > 25)) && _map.zoomLevel < _offlineMapRoot._currentSelection.maxZoom) {
+                _map.zoomLevel = _map.zoomLevel + 1
+                p = _map.fromCoordinate(QtPositioning.coordinate(_offlineMapRoot._currentSelection.topleftLat, _offlineMapRoot._currentSelection.topleftLon), false)
+                console.log(_map.zoomLevel + " " + p)
+            }
+        }
+        _tileSetList.visible = false
+        _mapView.visible = false
+        _infoView.visible = true
+        _optionsView.visible = false
+        if(isDefaultSet) {
+            _infoView.color = qgcPal.windowShade
+            _infoNameRect.color = qgcPal.window
+            _infoRect.color = qgcPal.window
+        } else {
+            _infoView.color = Qt.rgba(0,0,0,0)
+            _infoNameRect.color = Qt.rgba(_infoNameRect.color.r, _infoNameRect.color.g, _infoNameRect.color.b, 0.85)
+            _infoRect.color = Qt.rgba(_infoRect.color.r, _infoRect.color.g, _infoRect.color.b, 0.85)
+        }
+    }
+
+    function leaveInfoView() {
+        _map.center = savedCenter
+        _map.zoomLevel = savedZoom
+        mapType = savedMapType
+        isMapInteractive = true
     }
 
     ExclusiveGroup {
@@ -144,7 +211,9 @@ Rectangle {
 
     onMapTypeChanged: {
         updateMap()
-        QGroundControl.mapEngineManager.saveSetting(mapKey, mapType)
+        if(isMapInteractive) {
+            QGroundControl.mapEngineManager.saveSetting(mapKey, mapType)
+        }
     }
 
     MessageDialog {
@@ -181,6 +250,53 @@ Rectangle {
                 visible:    _mapView.visible
                 anchors.verticalCenter: parent.verticalCenter
             }
+        }
+    }
+
+    Map {
+        id:                 _map
+        anchors.top:        _offlineMapTopRect.bottom
+        anchors.left:       parent.left
+        anchors.bottom:     parent.bottom
+        anchors.margins:    mapMargin
+        width:              parent.width - ScreenTools.defaultFontPixelWidth
+        center:             QGroundControl.defaultMapPosition
+        visible:            false
+        gesture.flickDeceleration:  3000
+        gesture.activeGestures:     MapGestureArea.ZoomGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
+        plugin: Plugin { name: "QGroundControl" }
+
+        Rectangle {
+            color: Qt.rgba(0,0,0,0)
+            border.color: "black"
+            border.width: 1
+            anchors.fill: parent
+        }
+
+        Component.onCompleted: {
+            center = QGroundControl.flightMapPosition
+            zoomLevel = QGroundControl.flightMapZoom
+        }
+
+        onCenterChanged: {
+            handleChanges()
+            checkSanity()
+        }
+        onZoomLevelChanged: {
+            handleChanges()
+            checkSanity()
+        }
+        onWidthChanged: {
+            handleChanges()
+            checkSanity()
+        }
+        onHeightChanged: {
+            handleChanges()
+            checkSanity()
+        }
+        // Used to make pinch zoom work
+        MouseArea {
+            anchors.fill: parent
         }
     }
 
@@ -240,57 +356,18 @@ Rectangle {
     }
 
     //-- Offline Map Definition
-    Rectangle {
+    Item {
         id:                 _mapView
-        color:              qgcPal.window
         width:              parent.width
         anchors.top:        _offlineMapTopRect.bottom
         anchors.bottom:     parent.bottom
         anchors.margins:    ScreenTools.defaultFontPixelWidth
         visible:            false
 
-        Rectangle {
+        //-- Zoom Preview Maps
+        Item {
             width:          parent.width
             anchors.top:    parent.top
-            anchors.bottom: bottomRect.top
-            color:          (qgcPal.globalTheme === QGCPalette.Light) ? "black" : "#98aca4"
-
-            Map {
-                id:                 _map
-                anchors.fill:       parent
-                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.15
-                center:             QGroundControl.defaultMapPosition
-                gesture.flickDeceleration:  3000
-                gesture.activeGestures:     MapGestureArea.ZoomGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
-                plugin: Plugin { name: "QGroundControl" }
-
-                Component.onCompleted: {
-                    center = QGroundControl.flightMapPosition
-                    zoomLevel = QGroundControl.flightMapZoom
-                }
-
-                onCenterChanged: {
-                    handleChanges()
-                    checkSanity()
-                }
-                onZoomLevelChanged: {
-                    handleChanges()
-                    checkSanity()
-                }
-                onWidthChanged: {
-                    handleChanges()
-                    checkSanity()
-                }
-                onHeightChanged: {
-                    handleChanges()
-                    checkSanity()
-                }
-                // Used to make pinch zoom work
-                MouseArea {
-                    anchors.fill: parent
-                }
-            }
-
             Rectangle {
                 width:              ScreenTools.defaultFontPixelHeight * 16
                 height:             ScreenTools.defaultFontPixelHeight * 9
@@ -330,11 +407,17 @@ Rectangle {
                 }
             }
         }
+        //-- Tile set settings
         Rectangle {
             id:     bottomRect
-            width:  parent.width
+            width:  _controlRow.width  + (ScreenTools.defaultFontPixelWidth  * 2)
             height: _controlRow.height + (ScreenTools.defaultFontPixelHeight * 2)
             color:  qgcPal.window
+            radius: ScreenTools.defaultFontPixelWidth * 0.5
+            anchors.horizontalCenter: parent.horizontalCenter
+            Component.onCompleted: {
+                color = Qt.rgba(color.r, color.g, color.b, 0.85)
+            }
             anchors.bottom: parent.bottom
             Row {
                 id: _controlRow
@@ -621,6 +704,7 @@ Rectangle {
             }
         }
     }
+    //-- Show info on current selected map tile set
     Rectangle {
         id:                 _infoView
         color:              qgcPal.windowShade
@@ -644,25 +728,31 @@ Rectangle {
                     width:      1
                 }
                 Rectangle {
+                    id:         _infoNameRect
                     width:      infoWidth
-                    height:     nameLabel.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    height:     infoCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     color:      qgcPal.window
                     radius:     ScreenTools.defaultFontPixelHeight * 0.5
                     anchors.horizontalCenter: parent.horizontalCenter
-                    QGCLabel {
-                        id:     nameLabel
-                        text:   _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.name : ""
-                        font.pixelSize:   ScreenTools.isAndroid ? ScreenTools.mediumFontPixelSize : ScreenTools.largeFontPixelSize
+                    Column {
+                        id:         infoCol
+                        spacing:    ScreenTools.defaultFontPixelHeight
                         anchors.centerIn: parent
+                        QGCLabel {
+                            id:     nameLabel
+                            text:   _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.name : ""
+                            font.pixelSize:   ScreenTools.isAndroid ? ScreenTools.mediumFontPixelSize : ScreenTools.largeFontPixelSize
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        QGCLabel {
+                            id:     descLabel
+                            text:   _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.description : ""
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
                     }
                 }
-                QGCLabel {
-                    id:     descLabel
-                    text:   _offlineMapRoot._currentSelection ? _offlineMapRoot._currentSelection.description : ""
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
                 Rectangle {
-                    id:         infoRect
+                    id:         _infoRect
                     width:      infoWidth
                     height:     infoGrid.height + (ScreenTools.defaultFontPixelHeight * 4)
                     color:      qgcPal.window
@@ -765,6 +855,7 @@ Rectangle {
                                 return ""
                             }
                             onYes: {
+                                leaveInfoView()
                                 if(_offlineMapRoot._currentSelection)
                                     QGroundControl.mapEngineManager.deleteTileSet(_offlineMapRoot._currentSelection)
                                 deleteDialog.visible = false
@@ -798,7 +889,10 @@ Rectangle {
                     QGCButton {
                         text:       qsTr("Back")
                         width:      ScreenTools.defaultFontPixelWidth * 18
-                        onClicked:  showList()
+                        onClicked: {
+                            leaveInfoView()
+                            showList()
+                        }
                     }
                 }
             }
