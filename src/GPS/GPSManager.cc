@@ -23,7 +23,6 @@
 
 #include "GPSManager.h"
 #include <QDebug>
-#include <cinttypes>
 
 GPSManager::GPSManager(QGCApplication* app)
     : QGCTool(app)
@@ -62,9 +61,9 @@ void GPSManager::setupGPS(const QString& device)
 
 void GPSManager::GPSPositionUpdate(GPSPositionMessage msg)
 {
-    qDebug("GPS: got position update: alt=%i, long=%i, lat=%i, time=%" PRIu64,
+    qDebug("GPS: got position update: alt=%i, long=%i, lat=%i",
             msg.position_data.alt, msg.position_data.lon,
-            msg.position_data.lat, msg.position_data.time_utc_usec);
+            msg.position_data.lat);
 }
 void GPSManager::GPSSatelliteUpdate(GPSSatelliteMessage msg)
 {
