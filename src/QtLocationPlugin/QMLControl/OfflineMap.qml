@@ -26,8 +26,8 @@ import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
 import QtQuick.Dialogs          1.1
 import QtQuick.Layouts          1.2
-import QtLocation               5.3
-import QtPositioning            5.3
+import QtLocation               5.5
+import QtPositioning            5.5
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -174,14 +174,15 @@ Rectangle {
             _map.visible = true
             mapType = _offlineMapRoot._currentSelection.mapTypeStr
             _map.center = midPoint(_offlineMapRoot._currentSelection.topleftLat, _offlineMapRoot._currentSelection.bottomRightLat, _offlineMapRoot._currentSelection.topleftLon, _offlineMapRoot._currentSelection.bottomRightLon)
-            _map.zoomLevel = _offlineMapRoot._currentSelection.minZoom
-            var p = _map.fromCoordinate(QtPositioning.coordinate(_offlineMapRoot._currentSelection.topleftLat, _offlineMapRoot._currentSelection.topleftLon), false)
-            console.log(_map.zoomLevel + " " + p)
-            while ((isNaN(p.x) || isNaN(p.y) || (p.x > 25 && p.y > 25)) && _map.zoomLevel < _offlineMapRoot._currentSelection.maxZoom) {
-                _map.zoomLevel = _map.zoomLevel + 1
-                p = _map.fromCoordinate(QtPositioning.coordinate(_offlineMapRoot._currentSelection.topleftLat, _offlineMapRoot._currentSelection.topleftLon), false)
-                console.log(_map.zoomLevel + " " + p)
-            }
+            //-- Delineate Set Region
+            var x0 = _offlineMapRoot._currentSelection.topleftLon
+            var x1 = _offlineMapRoot._currentSelection.bottomRightLon
+            var y0 = _offlineMapRoot._currentSelection.topleftLat
+            var y1 = _offlineMapRoot._currentSelection.bottomRightLat
+            mapBoundary.topLeft     = QtPositioning.coordinate(y0, x0)
+            mapBoundary.bottomRight = QtPositioning.coordinate(y1, x1)
+            mapBoundary.visible = true
+            _map.fitViewportToMapItems()
         }
         _tileSetList.visible = false
         _mapView.visible = false
@@ -199,6 +200,7 @@ Rectangle {
     }
 
     function leaveInfoView() {
+        mapBoundary.visible = false
         _map.center = savedCenter
         _map.zoomLevel = savedZoom
         mapType = savedMapType
@@ -271,6 +273,15 @@ Rectangle {
             border.color: "black"
             border.width: 1
             anchors.fill: parent
+        }
+
+        MapRectangle {
+            id:             mapBoundary
+            border.width:   2
+            border.color:   "red"
+            color:          Qt.rgba(1,0,0,0.05)
+            smooth:         true
+            antialiasing:   true
         }
 
         Component.onCompleted: {
