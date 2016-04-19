@@ -55,6 +55,8 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
 
     int flightModeChannel = getParameterFact(-1, "RC_MAP_FLTMODE")->rawValue().toInt() - 1;
 
+    int flightModeReversed = getParameterFact(1, QString("RC%1_REV").arg(flightModeChannel + 1))->rawValue().toInt();
+
     if (flightModeChannel < 0 || flightModeChannel > channelCount) {
         return;
     }
@@ -63,7 +65,7 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
     int channelValue = pwmValues[flightModeChannel];
     if (channelValue != -1) {
         bool found = false;
-        int rgThreshold[] = { 1230, 1360, 1490, 1620, 1749 };
+        int rgThreshold[] = { 1200, 1360, 1490, 1620, 1900 };
         for (int i=0; i<5; i++) {
             if (channelValue <= rgThreshold[i]) {
                 _activeFlightMode = i + 1;
@@ -71,9 +73,15 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
                 break;
             }
         }
+
         if (!found) {
             _activeFlightMode = 6;
         }
+
+        if (flightModeReversed == -1) {
+            _activeFlightMode = 6 - (_activeFlightMode - 1);
+        }
     }
+
     emit activeFlightModeChanged(_activeFlightMode);
 }
