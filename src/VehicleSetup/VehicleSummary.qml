@@ -117,19 +117,11 @@ Rectangle {
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 
                         // Title bar
-                        Rectangle {
+                        QGCButton {
                             id:     titleBar
                             width:  parent.width
                             height: titleHeight
-                            color:  qgcPal.windowShade
-
-                            // Title text
-                            QGCLabel {
-                                anchors.fill:           parent
-                                verticalAlignment:      TextEdit.AlignVCenter
-                                horizontalAlignment:    TextEdit.AlignHCenter
-                                text:                   capitalizeWords(modelData.name)
-                            }
+                            text:                   capitalizeWords(modelData.name)
 
                             // Setup indicator
                             Rectangle {
@@ -141,6 +133,10 @@ Rectangle {
                                 radius:                 width / 2
                                 color:                  modelData.setupComplete ? "#00d932" : "red"
                                 visible:                modelData.requiresSetup
+                            }
+
+                            onClicked : {
+                                setupView.showVehicleComponentPanel(modelData)
                             }
                         }
 

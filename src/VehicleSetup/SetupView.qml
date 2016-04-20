@@ -38,6 +38,7 @@ import QGroundControl.MultiVehicleManager   1.0
 Rectangle {
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
+    id: setupView
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -110,6 +111,13 @@ Rectangle {
                 panelLoader.sourceComponent = messagePanelComponent
             } else {
                 panelLoader.source = vehicleComponent.setupSource
+                for(var i = 0; i < componentRepeater.count; i++) {
+                    var obj = componentRepeater.itemAt(i);
+                    if (obj.text === vehicleComponent.name) {
+                        obj.checked = true;
+                        break;
+                    }
+                }
             }
         }
     }
