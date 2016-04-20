@@ -261,15 +261,6 @@ HEADERS += \
     src/FlightDisplay/FlightDisplayViewController.h \
     src/FlightMap/FlightMapSettings.h \
     src/FlightMap/Widgets/ValuesWidgetController.h \
-    src/GPS/Drivers/src/gps_helper.h \
-    src/GPS/Drivers/src/ubx.h \
-    src/GPS/definitions.h \
-    src/GPS/vehicle_gps_position.h \
-    src/GPS/satellite_info.h \
-    src/GPS/RTCM/RTCMMavlink.h \
-    src/GPS/GPSManager.h \
-    src/GPS/GPSPositionMessage.h \
-    src/GPS/GPSProvider.h \
     src/GAudioOutput.h \
     src/HomePositionManager.h \
     src/Joystick/Joystick.h \
@@ -387,6 +378,15 @@ HEADERS += \
     src/ui/uas/UASQuickViewItem.h \
     src/ui/uas/UASQuickViewItemSelect.h \
     src/ui/uas/UASQuickViewTextItem.h \
+    src/GPS/Drivers/src/gps_helper.h \
+    src/GPS/Drivers/src/ubx.h \
+    src/GPS/definitions.h \
+    src/GPS/vehicle_gps_position.h \
+    src/GPS/satellite_info.h \
+    src/GPS/RTCM/RTCMMavlink.h \
+    src/GPS/GPSManager.h \
+    src/GPS/GPSPositionMessage.h \
+    src/GPS/GPSProvider.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/ViewWidgets/CustomCommandWidget.h \
     src/ViewWidgets/CustomCommandWidgetController.h \
@@ -416,11 +416,6 @@ SOURCES += \
     src/FlightDisplay/FlightDisplayViewController.cc \
     src/FlightMap/FlightMapSettings.cc \
     src/FlightMap/Widgets/ValuesWidgetController.cc \
-    src/GPS/Drivers/src/gps_helper.cpp \
-    src/GPS/Drivers/src/ubx.cpp \
-    src/GPS/RTCM/RTCMMavlink.cc \
-    src/GPS/GPSManager.cc \
-    src/GPS/GPSProvider.cc \
     src/GAudioOutput.cc \
     src/HomePositionManager.cc \
     src/Joystick/Joystick.cc \
@@ -526,6 +521,11 @@ SOURCES += \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickViewItemSelect.cc \
     src/ui/uas/UASQuickViewTextItem.cc \
+    src/GPS/Drivers/src/gps_helper.cpp \
+    src/GPS/Drivers/src/ubx.cpp \
+    src/GPS/RTCM/RTCMMavlink.cc \
+    src/GPS/GPSManager.cc \
+    src/GPS/GPSProvider.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \
