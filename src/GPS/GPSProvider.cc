@@ -51,37 +51,49 @@ void GPSProvider::run()
     unsigned int baudrate;
     GPSHelper* gpsHelper = nullptr;
 
-	while (!_requestStop) {
+    while (!_requestStop) {
 
-	    if (gpsHelper) {
-	        delete gpsHelper;
-	        gpsHelper = nullptr;
-	    }
+        if (gpsHelper) {
+            delete gpsHelper;
+            gpsHelper = nullptr;
+        }
 
-	    gpsHelper = new GPSDriverUBX(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
+        gpsHelper = new GPSDriverUBX(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
 
-	    if (gpsHelper->configure(baudrate, GPSHelper::OutputMode::RTCM) == 0) {
+        if (gpsHelper->configure(baudrate, GPSHelper::OutputMode::RTCM) == 0) {
 
-	        /* reset report */
-	        memset(&_reportGpsPos, 0, sizeof(_reportGpsPos));
-	        int helperRet;
+            /* reset report */
+            memset(&_reportGpsPos, 0, sizeof(_reportGpsPos));
 
-	        while ((helperRet = gpsHelper->receive(TIMEOUT_5HZ)) > 0 && !_requestStop) {
+            //In rare cases it can happen that we get an error from the driver (eg. checksum failure) due to
+            //bus errors or buggy firmware. In this case we want to try multiple times before giving up.
+            int numTries = 0;
 
-	            if (helperRet & 1) {
-	                publishGPSPosition();
-	            }
+            while (!_requestStop && numTries < 3) {
+                int helperRet = gpsHelper->receive(TIMEOUT_5HZ);
 
-	            if (_pReportSatInfo && (helperRet & 2)) {
-	                publishGPSSatellite();
-	            }
-	        }
-	        if (_serial->error() != QSerialPort::NoError) {
-	            break;
-	        }
-	    }
-	}
-	qDebug() << "Exiting GPS thread";
+                if (helperRet > 0) {
+                    numTries = 0;
+
+                    if (helperRet & 1) {
+                        publishGPSPosition();
+                        numTries = 0;
+                    }
+
+                    if (_pReportSatInfo && (helperRet & 2)) {
+                        publishGPSSatellite();
+                        numTries = 0;
+                    }
+                } else {
+                    ++numTries;
+                }
+            }
+            if (_serial->error() != QSerialPort::NoError && _serial->error() != QSerialPort::TimeoutError) {
+                break;
+            }
+        }
+    }
+    qDebug() << "Exiting GPS thread";
 }
 
 GPSProvider::GPSProvider(const QString& device, bool enableSatInfo, const std::atomic_bool& requestStop)
@@ -118,13 +130,13 @@ void GPSProvider::gotRTCMData(uint8_t* data, size_t len)
 
 int GPSProvider::callbackEntry(GPSCallbackType type, void *data1, int data2, void *user)
 {
-	GPSProvider *gps = (GPSProvider *)user;
-	return gps->callback(type, data1, data2);
+    GPSProvider *gps = (GPSProvider *)user;
+    return gps->callback(type, data1, data2);
 }
 
 int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
 {
-	switch (type) {
+    switch (type) {
         case GPSCallbackType::readDeviceData: {
             int timeout = *((int *) data1);
             if (!_serial->waitForReadyRead(timeout))
@@ -159,5 +171,5 @@ int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
             break;
     }
 
-	return 0;
+    return 0;
 }
