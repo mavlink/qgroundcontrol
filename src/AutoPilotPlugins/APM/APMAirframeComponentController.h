@@ -70,6 +70,7 @@ signals:
 
 public slots:
     APMAirframeType *currentAirframeType() const;
+    Q_INVOKABLE QString currentAirframeTypeName() const;
     APMAirframe *currentAirframe() const;
     void setCurrentAirframeType(APMAirframeType *t);
     void setCurrentAirframe(APMAirframe *t);

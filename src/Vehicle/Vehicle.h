@@ -395,6 +395,7 @@ public:
     int id(void) { return _id; }
     MAV_AUTOPILOT firmwareType(void) const { return _firmwareType; }
     MAV_TYPE vehicleType(void) const { return _vehicleType; }
+    Q_INVOKABLE QString vehicleTypeName(void) const;
 
     /// Returns the highest quality link available to the Vehicle
     LinkInterface* priorityLink(void);
