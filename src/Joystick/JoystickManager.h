@@ -31,6 +31,14 @@
 
 #include <QVariantList>
 
+#ifdef __android__
+    #include <jni.h>
+    #include <QtCore/private/qjni_p.h>
+    #include <QtCore/private/qjnihelpers_p.h>
+    #include <QtAndroidExtras/QtAndroidExtras>
+    #include <QtAndroidExtras/QAndroidJniObject>
+#endif
+
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
 class QGCApplicaiton;
@@ -78,6 +86,12 @@ private:
     
     static const char * _settingsGroup;
     static const char * _settingsKeyActiveJoystick;
+
+#ifdef __android__
+    void computePossibleButtons();
+    int * _possibleButtons;
+    QMutex m_mutex;
+#endif
 };
 
 #endif
