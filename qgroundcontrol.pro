@@ -266,6 +266,7 @@ HEADERS += \
     src/HomePositionManager.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
+    src/VehicleSetup/JoystickConfigController.h \
     src/FollowMe/FollowMe.h \
     src/PositionManager/SimulatedPosition.h \
     src/JsonHelper.h \
@@ -390,7 +391,6 @@ HEADERS += \
     src/GPS/GPSManager.h \
     src/GPS/GPSPositionMessage.h \
     src/GPS/GPSProvider.h \
-    src/VehicleSetup/JoystickConfigController.h \
     src/ViewWidgets/CustomCommandWidget.h \
     src/ViewWidgets/CustomCommandWidgetController.h \
     src/ViewWidgets/LogDownload.h \
@@ -423,6 +423,7 @@ SOURCES += \
     src/HomePositionManager.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
+    src/VehicleSetup/JoystickConfigController.cc \
     src/JsonHelper.cc \
     src/FollowMe/FollowMe.cc \
     src/LogCompressor.cc \
@@ -531,7 +532,6 @@ SOURCES += \
     src/GPS/RTCM/RTCMMavlink.cc \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
-    src/VehicleSetup/JoystickConfigController.cc \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \
     src/ViewWidgets/LogDownload.cc \
