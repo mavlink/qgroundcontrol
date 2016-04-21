@@ -193,6 +193,7 @@ Item {
                     anchors.right:  parent.right
                     text:           qsTr("Offline Maps")
                     exclusiveGroup: panelActionGroup
+                    visible:        !ScreenTools.isTinyScreen
                     onClicked: {
                         if(__rightPanel.source != "OfflineMap.qml") {
                             __rightPanel.source = "OfflineMap.qml"
@@ -282,6 +283,7 @@ Item {
 
     //-- Main Setting Display Area
     Rectangle {
+        id:             settingDisplayArea
         anchors.left:   __verticalSeparator.right
         width:          mainWindow.width - __leftMenu.width - __verticalSeparator.width
         height:         parent.height - toolBar.height - __topSeparator.height
