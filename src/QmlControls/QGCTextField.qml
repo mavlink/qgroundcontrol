@@ -31,6 +31,7 @@ TextField {
     }
 
     style: TextFieldStyle {
+        font.pixelSize: ScreenTools.defaultFontPixelSize
         background: Item {
             id: backgroundItem
 

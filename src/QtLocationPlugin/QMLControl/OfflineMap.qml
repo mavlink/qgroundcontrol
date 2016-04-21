@@ -579,27 +579,27 @@ Rectangle {
                             Label {
                                 text:   qsTr("Tile Count")
                                 color:  "black"
-                                width:  ScreenTools.defaultFontPixelWidth * 12
+                                width:  ScreenTools.defaultFontPixelWidth * 8
                                 font.pixelSize: ScreenTools.smallFontPixelSize
                                 horizontalAlignment: Text.AlignHCenter
                             }
                             Label {
                                 text:  QGroundControl.mapEngineManager.tileCountStr
                                 color: "black"
-                                width: ScreenTools.defaultFontPixelWidth * 12
+                                width: ScreenTools.defaultFontPixelWidth * 8
                                 horizontalAlignment: Text.AlignHCenter
                             }
                             Label {
                                 text:   qsTr("Set Size (Est)")
                                 color:  "black"
-                                width:  ScreenTools.defaultFontPixelWidth * 12
+                                width:  ScreenTools.defaultFontPixelWidth * 8
                                 font.pixelSize: ScreenTools.smallFontPixelSize
                                 horizontalAlignment: Text.AlignHCenter
                             }
                             Label {
                                 text:  QGroundControl.mapEngineManager.tileSizeStr
                                 color: "black"
-                                width: ScreenTools.defaultFontPixelWidth * 12
+                                width: ScreenTools.defaultFontPixelWidth * 8
                                 horizontalAlignment: Text.AlignHCenter
                             }
                         }
@@ -618,7 +618,7 @@ Rectangle {
                         }
                         QGCTextField {
                             id:     setName
-                            width:  ScreenTools.defaultFontPixelWidth * 24
+                            width:  ScreenTools.defaultFontPixelWidth * 20
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -633,7 +633,7 @@ Rectangle {
                         QGCTextField {
                             id:     setDescription
                             text:   qsTr("Description")
-                            width:  ScreenTools.defaultFontPixelWidth * 24
+                            width:  ScreenTools.defaultFontPixelWidth * 20
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -647,7 +647,7 @@ Rectangle {
                         }
                         QGCComboBox {
                             id:         mapCombo
-                            width:      ScreenTools.defaultFontPixelWidth * 24
+                            width:      ScreenTools.defaultFontPixelWidth * 20
                             model:      QGroundControl.mapEngineManager.mapList
                             onActivated: {
                                 mapType = textAt(index)
@@ -668,7 +668,7 @@ Rectangle {
                 }
                 Item {
                     height: 1
-                    width:  ScreenTools.defaultFontPixelWidth * 1.5
+                    width:  ScreenTools.defaultFontPixelWidth
                 }
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
