@@ -266,7 +266,7 @@ QGCTileSet
 QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, UrlFactory::MapType mapType)
 {
     if(zoom <  1) zoom = 1;
-    if(zoom > 18) zoom = 18;
+    if(zoom > MAX_MAP_ZOOM) zoom = MAX_MAP_ZOOM;
     QGCTileSet set;
     set.tileX0 = long2tileX(topleftLon,     zoom);
     set.tileY0 = lat2tileY(topleftLat,      zoom);
