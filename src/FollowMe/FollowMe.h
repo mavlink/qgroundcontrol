@@ -77,6 +77,8 @@ private:
         ATT_RATES = 3
     };
 
+    uint8_t estimatation_capabilities;
+
     void _disable();
     void _enable();
 

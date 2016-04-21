@@ -31,10 +31,13 @@
 #include "PositionManager.h"
 
 FollowMe::FollowMe(QGCApplication* app)
-    : QGCTool(app)
+    : QGCTool(app), estimatation_capabilities(0)
 {
     memset(&_motionReport, 0, sizeof(motionReport_s));
     runTime.start();
+
+    _gcsMotionReportTimer.setSingleShot(false);
+    connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
 }
 
 FollowMe::~FollowMe()
@@ -64,12 +67,7 @@ void FollowMe::_enable()
             this,
             SLOT(_setGPSLocation(QGeoPositionInfo)));
 
-    // set up the mavlink motion report timer`
-
     _gcsMotionReportTimer.setInterval(_toolbox->qgcPositionManager()->updateInterval());
-    _gcsMotionReportTimer.setSingleShot(false);
-    connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
-
     _gcsMotionReportTimer.start();
 }
 
@@ -95,6 +93,8 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
         _motionReport.lon_int = geoCoordinate.longitude()*1e7;
         _motionReport.alt = geoCoordinate.altitude();
 
+        estimatation_capabilities |= (1 << POS);
+
         // get the current eph and epv
 
         if(geoPositionInfo.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) == true) {
@@ -103,7 +103,7 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
 
         if(geoPositionInfo.hasAttribute(QGeoPositionInfo::VerticalAccuracy) == true) {
             _motionReport.pos_std_dev[2] = geoPositionInfo.attribute(QGeoPositionInfo::VerticalAccuracy);
-        }
+        }                
 
         // calculate z velocity if it's availible
 
@@ -116,11 +116,17 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
         if((geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction)   == true) &&
            (geoPositionInfo.hasAttribute(QGeoPositionInfo::GroundSpeed) == true)) {
 
+            estimatation_capabilities |= (1 << VEL);
+
             qreal direction = _degreesToRadian(geoPositionInfo.attribute(QGeoPositionInfo::Direction));
             qreal velocity = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
 
             _motionReport.vx = cos(direction)*velocity;
             _motionReport.vy = sin(direction)*velocity;
+
+        } else {
+            _motionReport.vx = 0.0f;
+            _motionReport.vy = 0.0f;
         }
     }
 }
@@ -134,12 +140,16 @@ void FollowMe::_sendGCSMotionReport(void)
     memset(&follow_target, 0, sizeof(mavlink_follow_target_t));
 
     follow_target.timestamp = runTime.nsecsElapsed()*1e-6;
-    follow_target.est_capabilities = (1 << POS);
+    follow_target.est_capabilities = estimatation_capabilities;
     follow_target.position_cov[0] = _motionReport.pos_std_dev[0];
     follow_target.position_cov[2] = _motionReport.pos_std_dev[2];
     follow_target.alt = _motionReport.alt;
     follow_target.lat = _motionReport.lat_int;
     follow_target.lon = _motionReport.lon_int;
+    follow_target.vel[0] = _motionReport.vx;
+    follow_target.vel[1] = _motionReport.vy;
+
+    qWarning("Mavlink Sending  %d %d", _motionReport.lat_int, _motionReport.lon_int);
 
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
