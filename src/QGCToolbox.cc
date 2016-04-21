@@ -26,6 +26,9 @@
 #include "FirmwarePluginManager.h"
 #include "FlightMapSettings.h"
 #include "GAudioOutput.h"
+#ifndef __mobile__
+#include "GPSManager.h"
+#endif /* __mobile */
 #include "HomePositionManager.h"
 #include "JoystickManager.h"
 #include "LinkManager.h"
@@ -59,6 +62,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _factSystem =               new FactSystem(app);
     _firmwarePluginManager =    new FirmwarePluginManager(app);
     _flightMapSettings =        new FlightMapSettings(app);
+#ifndef __mobile__
+    _gpsManager =               new GPSManager(app);
+#endif /* __mobile */
     _homePositionManager =      new HomePositionManager(app);
     _imageProvider =            new QGCImageProvider(app);
     _joystickManager =          new JoystickManager(app);
@@ -75,6 +81,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
     _flightMapSettings->setToolbox(this);
+#ifndef __mobile__
+    _gpsManager->setToolbox(this);
+#endif /* __mobile */
     _homePositionManager->setToolbox(this);
     _imageProvider->setToolbox(this);
     _joystickManager->setToolbox(this);
@@ -85,6 +94,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _mapEngineManager->setToolbox(this);
     _uasMessageHandler->setToolbox(this);
     _followMe->setToolbox(this);
+
+    //FIXME: make this configurable...
+    //_gpsManager->setupGPS("ttyACM0");
 }
 
 QGCToolbox::~QGCToolbox()
