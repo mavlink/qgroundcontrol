@@ -63,7 +63,6 @@ public:
         ThrottleModeMax
     } ThrottleMode_t;
     
-#ifndef __mobile__
     Q_PROPERTY(QString name READ name CONSTANT)
     
     Q_PROPERTY(bool calibrated MEMBER _calibrated NOTIFY calibratedChanged)
@@ -174,7 +173,6 @@ private:
     bool                _pollingStartedForCalibration;
 
     MultiVehicleManager*    _multiVehicleManager;
-#endif // __mobile__
     
 private:
     static const char*  _rgFunctionSettingsKey[maxFunction];
