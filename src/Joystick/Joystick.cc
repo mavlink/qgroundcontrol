@@ -29,6 +29,7 @@
 #include <QSettings>
 
 #ifndef __mobile__
+    #define __sdljoystick__
     #ifdef Q_OS_MAC
         #include <SDL.h>
     #else
@@ -52,7 +53,6 @@ const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
 };
 
 Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlIndex, MultiVehicleManager* multiVehicleManager)
-#ifndef __mobile__
     : _sdlIndex(sdlIndex)
     , _exitThread(false)
     , _name(name)
@@ -68,15 +68,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     , _activeVehicle(NULL)
     , _pollingStartedForCalibration(false)
     , _multiVehicleManager(multiVehicleManager)
-#endif // __mobile__
 {
-#ifdef __mobile__
-    Q_UNUSED(name)
-    Q_UNUSED(axisCount)
-    Q_UNUSED(buttonCount)
-    Q_UNUSED(sdlIndex)
-    Q_UNUSED(multiVehicleManager)
-#else
+
     _rgAxisValues = new int[_axisCount];
     _rgCalibration = new Calibration_t[_axisCount];
     _rgButtonValues = new bool[_buttonCount];
@@ -90,20 +83,17 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     }
     
     _loadSettings();
-#endif // __mobile __
+
 }
 
 Joystick::~Joystick()
 {
-#ifndef __mobile__
     delete _rgAxisValues;
     delete _rgCalibration;
     delete _rgButtonValues;
     delete _rgButtonActions;
-#endif
 }
 
-#ifndef __mobile__
 
 void Joystick::_loadSettings(void)
 {
@@ -257,6 +247,7 @@ float Joystick::_adjustRange(int value, Calibration_t calibration)
 
 void Joystick::run(void)
 {
+#ifdef __sdljoystick__
     SDL_Joystick* sdlJoystick = SDL_JoystickOpen(_sdlIndex);
     
     if (!sdlJoystick) {
@@ -363,6 +354,7 @@ void Joystick::run(void)
     }
     
     SDL_JoystickClose(sdlJoystick);
+#endif
 }
 
 void Joystick::startPolling(Vehicle* vehicle)
@@ -579,4 +571,3 @@ bool Joystick::_validButton(int button)
     return button >= 0 && button < _buttonCount;
 }
 
-#endif // __mobile__

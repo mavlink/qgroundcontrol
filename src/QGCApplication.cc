@@ -103,6 +103,7 @@
 #include "PX4AirframeLoader.h"
 #include "ValuesWidgetController.h"
 #include "AppMessages.h"
+#include "JoystickConfigController.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -112,7 +113,6 @@
     #include "QGCFileDialog.h"
     #include "QGCMessageBox.h"
     #include "FirmwareUpgradeController.h"
-    #include "JoystickConfigController.h"
     #include "MainWindow.h"
 #endif
 
@@ -459,12 +459,11 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<ValuesWidgetController>             ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
     qmlRegisterType<QGCMobileFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QGCMobileFileDialogController");
     qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
-
+    qmlRegisterType<JoystickConfigController>           ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
     qmlRegisterType<FirmwareUpgradeController>      ("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
-    qmlRegisterType<JoystickConfigController>       ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
     qmlRegisterType<LogDownloadController>          ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
 #endif
 
