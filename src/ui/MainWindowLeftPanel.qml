@@ -193,6 +193,7 @@ Item {
                     anchors.right:  parent.right
                     text:           qsTr("Offline Maps")
                     exclusiveGroup: panelActionGroup
+                    visible:        !ScreenTools.isTinyScreen
                     onClicked: {
                         if(__rightPanel.source != "OfflineMap.qml") {
                             __rightPanel.source = "OfflineMap.qml"
