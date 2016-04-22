@@ -45,9 +45,7 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
-
-
+    property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
     property bool _mainIsMap:           _controller.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
     property bool _isPipVisible:        _controller.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
 
@@ -225,7 +223,10 @@ QGCView {
         Loader {
             id:             widgetsLoader
             z:              _panel.z + 4
-            anchors.fill:   parent
+            height:         ScreenTools.availableHeight
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            anchors.bottom: parent.bottom
             asynchronous:   true
             visible:        status == Loader.Ready
 
@@ -238,11 +239,11 @@ QGCView {
             id:                         multiTouchItem
             z:                          _panel.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
-            height:                     Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
+            height:                     Math.min(ScreenTools.availableHeight * 0.25, ScreenTools.defaultFontPixelWidth * 16)
             visible:                    QGroundControl.virtualTabletJoystick
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
-            anchors.horizontalCenter:   parent.horizontalCenter
+            anchors.horizontalCenter:   widgetsLoader.horizontalCenter
             source:                     "qrc:/qml/VirtualJoystick.qml"
             active:                     QGroundControl.virtualTabletJoystick
         }

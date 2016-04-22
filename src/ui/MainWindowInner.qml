@@ -55,6 +55,10 @@ Item {
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
     property string formatedMessage:    activeVehicle ? activeVehicle.formatedMessage : ""
 
+    onHeightChanged: {
+        ScreenTools.availableHeight = parent.height - toolBar.height
+    }
+
     function showFlyView() {
         if(currentPopUp) {
             currentPopUp.close()
@@ -276,19 +280,18 @@ Item {
         opaqueBackground:   leftPanel.visible
         isBackgroundDark:   flightView.isBackgroundDark
         z:                  QGroundControl.zOrderTopMost
-
         onShowSetupView:    mainWindow.showSetupView()
         onShowPlanView:     mainWindow.showPlanView()
         onShowFlyView:      mainWindow.showFlyView()
+        Component.onCompleted: {
+            ScreenTools.availableHeight = parent.height - toolBar.height
+        }
     }
 
     FlightDisplayView {
-        id:             flightView
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        anchors.top:    toolBar.bottom
-        anchors.bottom: parent.bottom
-        visible:        true
+        id:                 flightView
+        anchors.fill:       parent
+        visible:            true
     }
 
     Loader {
