@@ -296,19 +296,16 @@ Item {
 
     Loader {
         id:                 planViewLoader
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        anchors.top:    toolBar.bottom
-        anchors.bottom: parent.bottom
+        anchors.fill:       parent
         visible:            false
     }
 
     Loader {
         id:                 setupViewLoader
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        anchors.top:    toolBar.bottom
-        anchors.bottom: parent.bottom
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        toolBar.bottom
+        anchors.bottom:     parent.bottom
         visible:            false
     }
 
