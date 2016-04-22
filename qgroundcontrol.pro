@@ -312,6 +312,11 @@ HEADERS += \
     src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
 
+AndroidBuild {
+HEADERS += \
+    src/Joystick/JoystickAndroid.h \
+}
+
 DebugBuild {
 HEADERS += \
     src/comm/MockLink.h \
@@ -344,6 +349,7 @@ HEADERS += \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
+    src/Joystick/JoystickSDL.h \
     src/QGCFileDialog.h \
     src/QGCMessageBox.h \
     src/uas/FileManager.h \
@@ -400,8 +406,10 @@ iOSBuild {
         src/audio/QGCAudioWorker_iOS.mm \
         src/MobileScreenMgr.mm \
 }
+
 AndroidBuild {
     SOURCES += src/MobileScreenMgr.cc \
+        src/Joystick/JoystickAndroid.cc \
 }
 
 
@@ -497,6 +505,7 @@ SOURCES += \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
+    src/Joystick/JoystickSDL.cc \
     src/ui/HILDockWidget.cc \
     src/ui/linechart/ChartPlot.cc \
     src/ui/linechart/IncrementalPlot.cc \

@@ -31,14 +31,6 @@
 
 #include <QVariantList>
 
-#ifdef __android__
-    #include <jni.h>
-    #include <QtCore/private/qjni_p.h>
-    #include <QtCore/private/qjnihelpers_p.h>
-    #include <QtAndroidExtras/QtAndroidExtras>
-    #include <QtAndroidExtras/QAndroidJniObject>
-#endif
-
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
 class QGCApplicaiton;
@@ -49,6 +41,7 @@ class JoystickManager : public QGCTool
     
 public:
     JoystickManager(QGCApplication* app);
+    ~JoystickManager();
 
     /// List of available joysticks
     Q_PROPERTY(QVariantList joysticks READ joysticks CONSTANT)
@@ -86,12 +79,6 @@ private:
     
     static const char * _settingsGroup;
     static const char * _settingsKeyActiveJoystick;
-
-#ifdef __android__
-    void computePossibleButtons();
-    int * _possibleButtons;
-    QMutex m_mutex;
-#endif
 };
 
 #endif
