@@ -89,7 +89,7 @@ void Joystick::run(void)
     open();
 
     while (!_exitThread) {
-	update();
+        update();
 
         // Update axes
         for (int axisIndex=0; axisIndex<_axisCount; axisIndex++) {
@@ -143,9 +143,9 @@ void Joystick::run(void)
 
             // We only send the buttons the firmwware has reserved
             int reservedButtonCount = _activeVehicle->manualControlReservedButtonCount();
-            if (reservedButtonCount == -1) {
+            if (reservedButtonCount == -1)
                 reservedButtonCount = _buttonCount;
-            }
+
 
             quint16 newButtonBits = 0;      // New set of button which are down
             quint16 buttonPressedBits = 0;  // Buttons pressed for manualControl signal

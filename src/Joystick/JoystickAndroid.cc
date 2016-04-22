@@ -49,20 +49,20 @@ JoystickAndroid::JoystickAndroid(const QString& name, int id, MultiVehicleManage
     axisValue = new int[_axisCount];
     axisCode = new int[_axisCount];
     for (i=0;i<_axisCount;i++) { 
-	QAndroidJniObject range = rangeListNative.callObjectMethod("get", "()Landroid/view/InputDevice/MotionRange;");
-	if (range.isValid())
-		axisCode[i] = range.callMethod<jint>("getAxis");
-	axisValue[i] = 0;
+        QAndroidJniObject range = rangeListNative.callObjectMethod("get", "()Landroid/view/InputDevice/MotionRange;");
+        if (range.isValid())
+            axisCode[i] = range.callMethod<jint>("getAxis");
+        axisValue[i] = 0;
     }
 
-    qDebug() << "joystick constructor:" << _name;
+    _axisCount = 4;
 
+    qDebug() << "axis:" <<_axisCount << "buttons:" <<_buttonCount;
     QtAndroidPrivate::registerGenericMotionEventListener(this);
     QtAndroidPrivate::registerKeyEventListener(this);
 }
 
 JoystickAndroid::~JoystickAndroid() {
-    qDebug() << "joystick destructor" << _name;
 
     delete btnCode;
     delete axisCode;
@@ -150,11 +150,11 @@ bool JoystickAndroid::update(void)
 }
 
 bool JoystickAndroid::getButton(int i) {
-    return btnValue[ btnCode[i] ]; 
+    return btnValue[ i ];
 }
 
 int JoystickAndroid::getAxis(int i) {
-    return axisValue[ axisCode[i] ]; 
+    return axisValue[ i ];
 }
 
 
