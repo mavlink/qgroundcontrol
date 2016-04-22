@@ -39,9 +39,9 @@ class Joystick : public QThread
     Q_OBJECT
     
 public:
-    Joystick(const QString& name, int axisCount, int buttonCount, int sdlIndex, MultiVehicleManager* multiVehicleManager);
+    Joystick(const QString& name, int axisCount, int buttonCount, MultiVehicleManager* multiVehicleManager);
     ~Joystick();
-    
+
     typedef struct {
         int     min;
         int     max;
@@ -136,7 +136,7 @@ signals:
     
     void buttonActionTriggered(int action);
     
-private:
+protected:
     void _saveSettings(void);
     void _loadSettings(void);
     float _adjustRange(int value, Calibration_t calibration);
@@ -144,11 +144,18 @@ private:
     bool _validAxis(int axis);
     bool _validButton(int button);
 
+private:
+    virtual bool open() = 0;
+    virtual void close() = 0;
+    virtual bool update() = 0;
+
+    virtual bool getButton(int i) = 0;
+    virtual int getAxis(int i) = 0;
+
     // Override from QThread
     virtual void run(void);
 
-private:
-    int     _sdlIndex;      ///< Index for SDL_JoystickOpen
+protected:
     
     bool    _exitThread;    ///< true: signal thread to exit
     
