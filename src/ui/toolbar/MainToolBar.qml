@@ -41,7 +41,7 @@ import QGroundControl.Controllers           1.0
 
 Rectangle {
     id:         toolBar
-    color:      qgcPal.window
+    color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.8) : Qt.rgba(0,0,0,0.75)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -424,6 +424,15 @@ Rectangle {
             mipmap:                 true
             antialiasing:           true
         }
+        /* Experimenting with a white/black divider
+        Rectangle {
+            color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
+            height: parent.height
+            width:  1
+            anchors.right:  parent.right
+            anchors.top:    parent.top
+        }
+        */
         MouseArea {
             anchors.fill: parent
             onClicked: mainWindow.showLeftMenu()
