@@ -279,6 +279,7 @@ Rectangle {
                 setupComplete:  joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
                 exclusiveGroup: setupButtonGroup
                 visible:        _fullParameterVehicleAvailable && joystickManager.joysticks.length != 0
+		//visible:	true
                 text:           "Joystick"
 
                 onClicked: showJoystickPanel()
