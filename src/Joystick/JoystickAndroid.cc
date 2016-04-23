@@ -8,46 +8,42 @@ int JoystickAndroid::_androidBtnListCount;
 int *JoystickAndroid::_androidBtnList;
 QMutex JoystickAndroid::m_mutex;
 
-JoystickAndroid::JoystickAndroid(const QString& name, int id, MultiVehicleManager* multiVehicleManager)
-    : Joystick(name,0,0,multiVehicleManager) //buttonCount and axisCount is computed below
+JoystickAndroid::JoystickAndroid(const QAndroidJniObject &inputDevice, const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager)
+    : Joystick(name,axisCount,buttonCount,multiVehicleManager)
     , deviceId(id)
 {
     int i;
     
     QAndroidJniEnvironment env;
 
-    QAndroidJniObject inputDevice = QAndroidJniObject::callStaticObjectMethod("android/view/InputDevice", "getDevice", "(I)Landroid/view/InputDevice;", id);
+    //if we define inputDevice in here this will fail for some reason, hence passing through argument
+    //QAndroidJniObject inputDevice = QAndroidJniObject::callStaticObjectMethod("android/view/InputDevice", "getDevice", "(I)Landroid/view/InputDevice;", id);
 
-    //get number of buttons
-    jintArray a = env->NewIntArray(_androidBtnListCount);
-    env->SetIntArrayRegion(a,0,_androidBtnListCount,_androidBtnList);
 
-    QAndroidJniObject btns = inputDevice.callObjectMethod("hasKeys", "([I)[Z", a);
+    //set button mapping (number->code)
+    jintArray b = env->NewIntArray(_androidBtnListCount);
+    env->SetIntArrayRegion(b,0,_androidBtnListCount,_androidBtnList);
+
+    QAndroidJniObject btns = inputDevice.callObjectMethod("hasKeys", "([I)[Z", b);
     jbooleanArray jSupportedButtons = btns.object<jbooleanArray>();
-    int btn_sz = env->GetArrayLength(jSupportedButtons);
     jboolean* supportedButtons = env->GetBooleanArrayElements(jSupportedButtons, nullptr);
-    _buttonCount=0;
-    for (i=0;i<btn_sz;i++) 
-        if (supportedButtons[i]) _buttonCount++;
-
     //create a mapping table (btnCode) that maps button number with button code
     btnValue = new bool[_buttonCount];
     btnCode = new int[_buttonCount];
     int c = 0;
-    for (i=0;i<btn_sz;i++) 
+    for (i=0;i<_androidBtnListCount;i++)
         if (supportedButtons[i]) {
-		btnValue[c] = false;
-        btnCode[c] = _androidBtnList[i];
-		c++;
-	}
+            btnValue[c] = false;
+            btnCode[c] = _androidBtnList[i];
+            c++;
+        }
 
     env->ReleaseBooleanArrayElements(jSupportedButtons, supportedButtons, 0);
 
-    //get number of axis
-    QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
-    _axisCount = rangeListNative.callMethod<jint>("size");
+    //set axis mapping (number->code)
     axisValue = new int[_axisCount];
     axisCode = new int[_axisCount];
+    QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
     for (i=0;i<_axisCount;i++) { 
         QAndroidJniObject range = rangeListNative.callObjectMethod("get", "()Landroid/view/InputDevice/MotionRange;");
         if (range.isValid())
@@ -55,7 +51,6 @@ JoystickAndroid::JoystickAndroid(const QString& name, int id, MultiVehicleManage
         axisValue[i] = 0;
     }
 
-    _axisCount = 4;
 
     qDebug() << "axis:" <<_axisCount << "buttons:" <<_buttonCount;
     QtAndroidPrivate::registerGenericMotionEventListener(this);
@@ -63,7 +58,6 @@ JoystickAndroid::JoystickAndroid(const QString& name, int id, MultiVehicleManage
 }
 
 JoystickAndroid::~JoystickAndroid() {
-
     delete btnCode;
     delete axisCode;
     delete btnValue;
@@ -79,7 +73,7 @@ bool JoystickAndroid::handleKeyEvent(jobject event) {
     const int _deviceId = ev.callMethod<jint>("getDeviceId", "()I");
     if (_deviceId!=deviceId) return false;
  
-    qDebug() << "handleKeyEvent!" << deviceId;
+    //qDebug() << "handleKeyEvent!" << deviceId;
     return true;
 }
 
@@ -89,7 +83,7 @@ bool JoystickAndroid::handleGenericMotionEvent(jobject event) {
     const int _deviceId = ev.callMethod<jint>("getDeviceId", "()I");
     if (_deviceId!=deviceId) return false;
  
-    qDebug() << "handleMotionEvent!" << deviceId;
+    //qDebug() << "handleMotionEvent!" << deviceId;
     return true;
 }
 
@@ -104,13 +98,13 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
     QAndroidJniEnvironment env;
     QAndroidJniObject o = QAndroidJniObject::callStaticObjectMethod<jintArray>("android/view/InputDevice", "getDeviceIds");
     jintArray jarr = o.object<jintArray>();
-    size_t sz = env->GetArrayLength(jarr);
+    int sz = env->GetArrayLength(jarr);
     jint *buff = env->GetIntArrayElements(jarr, nullptr);
 
     int SOURCE_GAMEPAD = QAndroidJniObject::getStaticField<jint>("android/view/InputDevice", "SOURCE_GAMEPAD");
     int SOURCE_JOYSTICK = QAndroidJniObject::getStaticField<jint>("android/view/InputDevice", "SOURCE_JOYSTICK");
 
-    for (size_t i = 0; i < sz; ++i) {
+    for (int i = 0; i < sz; ++i) {
         QAndroidJniObject inputDevice = QAndroidJniObject::callStaticObjectMethod("android/view/InputDevice", "getDevice", "(I)Landroid/view/InputDevice;", buff[i]);
         int sources = inputDevice.callMethod<jint>("getSources", "()I");
         if (((sources & SOURCE_GAMEPAD) != SOURCE_GAMEPAD) //check if the input device is interesting to us
@@ -121,13 +115,29 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
         QString name = inputDevice.callObjectMethod("getName", "()Ljava/lang/String;").toString();
 
 
-	if (joystickFound) { //skipping {
-		qWarning() << "Skipping joystick:" << name;
-		continue;
-	}
+        if (joystickFound) { //skipping {
+            qWarning() << "Skipping joystick:" << name;
+            continue;
+        }
 
-        qDebug() << "\t" << name << "id:" << buff[i];
-        ret[name] = new JoystickAndroid(name, buff[i], _multiVehicleManager);
+        //get number of axis
+        QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
+        int axisCount = rangeListNative.callMethod<jint>("size");
+
+        //get number of buttons
+        jintArray a = env->NewIntArray(_androidBtnListCount);
+        env->SetIntArrayRegion(a,0,_androidBtnListCount,_androidBtnList);
+        QAndroidJniObject btns = inputDevice.callObjectMethod("hasKeys", "([I)[Z", a);
+        jbooleanArray jSupportedButtons = btns.object<jbooleanArray>();
+        jboolean* supportedButtons = env->GetBooleanArrayElements(jSupportedButtons, nullptr);
+        int buttonCount = 0;
+        for (i=0;i<_androidBtnListCount;i++)
+            if (supportedButtons[i]) buttonCount++;
+        env->ReleaseBooleanArrayElements(jSupportedButtons, supportedButtons, 0);
+
+        qDebug() << "\t" << name << "id:" << buff[i] << "axes:" << axisCount << "buttons:" << buttonCount;
+
+        ret[name] = new JoystickAndroid(inputDevice, name, axisCount, buttonCount, buff[i], _multiVehicleManager);
         joystickFound = true;
     }
 
