@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 #include "PX4AutoPilotPlugin.h"
@@ -44,7 +44,7 @@ enum PX4_CUSTOM_MAIN_MODE {
     PX4_CUSTOM_MAIN_MODE_OFFBOARD,
     PX4_CUSTOM_MAIN_MODE_STABILIZED,
     PX4_CUSTOM_MAIN_MODE_RATTITUDE
-    
+
 };
 
 enum PX4_CUSTOM_SUB_MODE_AUTO {
@@ -80,10 +80,10 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     _incorrectParameterVersion(false)
 {
     Q_ASSERT(vehicle);
-    
+
     _airframeFacts = new PX4AirframeLoader(this, _vehicle->uas(), this);
     Q_CHECK_PTR(_airframeFacts);
-    
+
     PX4AirframeLoader::loadAirframeMetaData();
 }
 
@@ -96,28 +96,28 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         Q_ASSERT(_vehicle);
-        
+
         if (parametersReady()) {
             _airframeComponent = new AirframeComponent(_vehicle, this);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
-            
+
             _radioComponent = new PX4RadioComponent(_vehicle, this);
             _radioComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
 
-            _flightModesComponent = new FlightModesComponent(_vehicle, this);
-            _flightModesComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
-            
             _sensorsComponent = new SensorsComponent(_vehicle, this);
             _sensorsComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
-            
+
+            _flightModesComponent = new FlightModesComponent(_vehicle, this);
+            _flightModesComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
+
             _powerComponent = new PowerComponent(_vehicle, this);
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
-            
+
             _safetyComponent = new SafetyComponent(_vehicle, this);
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
@@ -136,7 +136,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             qWarning() << "Call to vehicleCompenents prior to parametersReady";
         }
     }
-    
+
     return _components;
 }
 
@@ -150,8 +150,8 @@ void PX4AutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
         _incorrectParameterVersion = true;
         qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
                               "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
-	}
-	
+    }
+
     _parametersReady = true;
     _missingParameters = missingParameters;
     emit missingParametersChanged(_missingParameters);
