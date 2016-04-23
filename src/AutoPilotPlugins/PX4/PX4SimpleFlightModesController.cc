@@ -55,7 +55,11 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
 
     Fact* pFact = getParameterFact(-1, "RC_MAP_FLTMODE");
     if(!pFact) {
+#if defined _MSC_VER
+        qCritical() << "RC_MAP_FLTMODE Fact is NULL in" << __FILE__ << __LINE__;
+#else
         qCritical() << "RC_MAP_FLTMODE Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+#endif
         return;
     }
 
@@ -63,7 +67,11 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
 
     pFact = getParameterFact(-1, QString("RC%1_REV").arg(flightModeChannel + 1));
     if(!pFact) {
-        qCritical() << QString("RC%1_REV").arg(flightModeChannel + 1) << "is NULL in" << __func__ << __FILE__ << __LINE__;
+#if defined _MSC_VER
+        qCritical() << QString("RC%1_REV").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
+#else
+        qCritical() << QString("RC%1_REV").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+#endif
         return;
     }
 
