@@ -15,7 +15,7 @@
 class JoystickAndroid : public Joystick, public QtAndroidPrivate::GenericMotionEventListener, public QtAndroidPrivate::KeyEventListener
 {
 public:
-    JoystickAndroid(const QAndroidJniObject &inputDevice, const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager);
+    JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager);
     ~JoystickAndroid();
 
     static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager); 
@@ -36,10 +36,11 @@ private:
     bool *btnValue;
     int *axisValue;
 
-    static void _buttonList();
+    static void _initStatic();
     static int * _androidBtnList; //list of all possible android buttons
     static int _androidBtnListCount;
 
+    static int ACTION_DOWN, ACTION_UP;
     static QMutex m_mutex;
 
     int deviceId;
