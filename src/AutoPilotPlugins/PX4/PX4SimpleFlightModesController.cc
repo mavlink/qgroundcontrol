@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 #include "PX4SimpleFlightModesController.h"
@@ -53,9 +53,21 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
     }
     emit rcChannelValuesChanged();
 
-    int flightModeChannel = getParameterFact(-1, "RC_MAP_FLTMODE")->rawValue().toInt() - 1;
+    Fact* pFact = getParameterFact(-1, "RC_MAP_FLTMODE");
+    if(!pFact) {
+        qCritical() << "RC_MAP_FLTMODE Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+        return;
+    }
 
-    int flightModeReversed = getParameterFact(1, QString("RC%1_REV").arg(flightModeChannel + 1))->rawValue().toInt();
+    int flightModeChannel = pFact->rawValue().toInt() - 1;
+
+    pFact = getParameterFact(-1, QString("RC%1_REV").arg(flightModeChannel + 1));
+    if(!pFact) {
+        qCritical() << QString("RC%1_REV").arg(flightModeChannel + 1) << "is NULL in" << __func__ << __FILE__ << __LINE__;
+        return;
+    }
+
+    int flightModeReversed = pFact->rawValue().toInt();
 
     if (flightModeChannel < 0 || flightModeChannel > channelCount) {
         return;
