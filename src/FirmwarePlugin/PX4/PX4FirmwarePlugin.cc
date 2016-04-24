@@ -79,7 +79,7 @@ const char* PX4FirmwarePlugin::posCtlFlightMode =       "Position Control";
 const char* PX4FirmwarePlugin::offboardFlightMode =     "Offboard Control";
 const char* PX4FirmwarePlugin::readyFlightMode =        "Ready";
 const char* PX4FirmwarePlugin::takeoffFlightMode =      "Takeoff";
-const char* PX4FirmwarePlugin::pauseFlightMode =        "Pause";
+const char* PX4FirmwarePlugin::pauseFlightMode =        "Hold";
 const char* PX4FirmwarePlugin::missionFlightMode =      "Mission";
 const char* PX4FirmwarePlugin::rtlFlightMode =          "Return To Land";
 const char* PX4FirmwarePlugin::landingFlightMode =      "Landing";
@@ -261,7 +261,30 @@ QObject* PX4FirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
 
 void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
 {
+    // kick it into hold mode
     vehicle->setFlightMode(pauseFlightMode);
+
+    // then tell it to loiter at the current position
+    // above the takeoff (home) position
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd = {};
+
+    cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
+    cmd.confirmation = 0;
+    cmd.param1 = -1.0f;
+    cmd.param2 = 0.0;
+    cmd.param3 = 0.0f;
+    cmd.param4 = NAN;
+    cmd.param5 = NAN;
+    cmd.param6 = NAN;
+    cmd.param7 = NAN;
+    cmd.target_system = vehicle->id();
+    cmd.target_component = 0;
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+
+    vehicle->sendMessage(msg);
 }
 
 void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
