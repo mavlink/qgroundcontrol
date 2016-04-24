@@ -26,6 +26,7 @@
 
 #include "PX4FirmwarePlugin.h"
 #include "PX4ParameterMetaData.h"
+#include "QGCApplication.h"
 #include "AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h"    // FIXME: Hack
 
 #include <QDebug>
@@ -198,7 +199,7 @@ int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
 
 bool PX4FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 {
-    return (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
+    return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
 }
 
 void PX4FirmwarePlugin::initializeVehicle(Vehicle* vehicle)
@@ -261,4 +262,114 @@ QObject* PX4FirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
 void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
 {
     vehicle->setFlightMode(pauseFlightMode);
+}
+
+void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
+{
+    vehicle->setFlightMode(rtlFlightMode);
+}
+
+void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
+{
+    vehicle->setFlightMode(landingFlightMode);
+}
+
+void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
+{
+    Q_UNUSED(altitudeRel);
+    if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to takeoff, vehicle position not known."));
+        return;
+    }
+
+    vehicle->setFlightMode(takeoffFlightMode);
+
+    // For later use
+#if 0
+    mavlink_message_t msg;
+    mavlink_command_int_t cmd = {};
+
+    cmd.command = (uint16_t)MAV_CMD_NAV_TAKEOFF;
+    cmd.confirmation = 0;
+    cmd.frame = MAV_FRAME_LOCAL_OFFSET_NED;
+    cmd.param1 = 0.0f;
+    cmd.param2 = 0.0f;
+    cmd.param3 = 0.0f;
+    cmd.param4 = 0.0f;
+    cmd.param5 = 0.0f;
+    cmd.param6 = 0.0f;
+    cmd.param7 = -altitudeRel; // AMSL meters
+    cmd.target_system = vehicle->id();
+    cmd.target_component = 0;
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_int_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+
+    vehicle->sendMessage(msg);
+#endif
+}
+
+void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd = {};
+
+    cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
+    cmd.confirmation = 0;
+    cmd.param1 = -1.0f;
+    cmd.param2 = MAV_DO_REPOSITION_FLAGS_CHANGE_MODE;
+    cmd.param3 = 0.0f;
+    cmd.param4 = NAN;
+    cmd.param5 = gotoCoord.latitude() * 1e7;
+    cmd.param6 = gotoCoord.longitude() * 1e7;
+    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toDouble();
+    cmd.target_system = vehicle->id();
+    cmd.target_component = 0;
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+
+    vehicle->sendMessage(msg);
+}
+
+void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to change altitude, vehicle altitude not known."));
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd = {};
+
+    cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
+    cmd.confirmation = 0;
+    cmd.param1 = -1.0f;
+    cmd.param2 = MAV_DO_REPOSITION_FLAGS_CHANGE_MODE;
+    cmd.param3 = 0.0f;
+    cmd.param4 = NAN;
+    cmd.param5 = NAN;
+    cmd.param6 = NAN;
+    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toDouble() + altitudeRel;
+    cmd.target_system = vehicle->id();
+    cmd.target_component = 0;
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+
+    vehicle->sendMessage(msg);
+}
+
+void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
+{
+    if (guidedMode) {
+        vehicle->setFlightMode("Pause");
+    } else {
+        pauseVehicle(vehicle);
+    }
 }
