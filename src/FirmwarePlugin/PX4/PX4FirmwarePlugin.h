@@ -45,7 +45,13 @@ public:
     QStringList flightModes                     (void) final;
     QString     flightMode                      (uint8_t base_mode, uint32_t custom_mode) const final;
     bool        setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
-    void        pauseVehicle                    (Vehicle* vehicle) final;
+    void        setGuidedMode(Vehicle* vehicle, bool guidedMode) final;
+    void        pauseVehicle(Vehicle* vehicle) final;
+    void        guidedModeRTL(Vehicle* vehicle) final;
+    void        guidedModeLand(Vehicle* vehicle) final;
+    void        guidedModeTakeoff(Vehicle* vehicle, double altitudeRel) final;
+    void        guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
+    void        guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel) final;
     int         manualControlReservedButtonCount(void) final;
     void        initializeVehicle               (Vehicle* vehicle) final;
     bool        sendHomePositionToVehicle       (void) final;
