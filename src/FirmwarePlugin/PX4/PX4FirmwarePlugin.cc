@@ -26,6 +26,7 @@
 
 #include "PX4FirmwarePlugin.h"
 #include "PX4ParameterMetaData.h"
+#include "QGCApplication.h"
 #include "AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h"    // FIXME: Hack
 
 #include <QDebug>
@@ -78,7 +79,7 @@ const char* PX4FirmwarePlugin::posCtlFlightMode =       "Position Control";
 const char* PX4FirmwarePlugin::offboardFlightMode =     "Offboard Control";
 const char* PX4FirmwarePlugin::readyFlightMode =        "Ready";
 const char* PX4FirmwarePlugin::takeoffFlightMode =      "Takeoff";
-const char* PX4FirmwarePlugin::pauseFlightMode =        "Pause";
+const char* PX4FirmwarePlugin::pauseFlightMode =        "Hold";
 const char* PX4FirmwarePlugin::missionFlightMode =      "Mission";
 const char* PX4FirmwarePlugin::rtlFlightMode =          "Return To Land";
 const char* PX4FirmwarePlugin::landingFlightMode =      "Landing";
@@ -198,7 +199,7 @@ int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
 
 bool PX4FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 {
-    return (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
+    return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
 }
 
 void PX4FirmwarePlugin::initializeVehicle(Vehicle* vehicle)
@@ -260,5 +261,144 @@ QObject* PX4FirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
 
 void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
 {
+    // kick it into hold mode
     vehicle->setFlightMode(pauseFlightMode);
+
+    // then tell it to loiter at the current position
+    // above the takeoff (home) position
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd;
+
+    cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
+    cmd.confirmation = 0;
+    cmd.param1 = -1.0f;
+    cmd.param2 = 0.0;
+    cmd.param3 = 0.0f;
+    cmd.param4 = NAN;
+    cmd.param5 = NAN;
+    cmd.param6 = NAN;
+    cmd.param7 = NAN;
+    cmd.target_system = vehicle->id();
+    cmd.target_component = 0;
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+
+    vehicle->sendMessage(msg);
+}
+
+void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
+{
+    vehicle->setFlightMode(rtlFlightMode);
+}
+
+void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
+{
+    vehicle->setFlightMode(landingFlightMode);
+}
+
+void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
+{
+    Q_UNUSED(altitudeRel);
+    if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to takeoff, vehicle position not known."));
+        return;
+    }
+
+    // tell the system first to take off in its internal,
+    // airframe specific takeoff action
+    vehicle->setFlightMode(takeoffFlightMode);
+
+    // then tell it to loiter at the user-selected location
+    // above the takeoff (home) position
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd;
+
+    cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
+    cmd.confirmation = 0;
+    cmd.param1 = -1.0f;
+    cmd.param2 = 0.0;
+    cmd.param3 = 0.0f;
+    cmd.param4 = NAN;
+    cmd.param5 = NAN;
+    cmd.param6 = NAN;
+    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toDouble() + altitudeRel;
+    cmd.target_system = vehicle->id();
+    cmd.target_component = 0;
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+
+    vehicle->sendMessage(msg);
+}
+
+void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd;
+
+    cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
+    cmd.confirmation = 0;
+    cmd.param1 = -1.0f;
+    cmd.param2 = MAV_DO_REPOSITION_FLAGS_CHANGE_MODE;
+    cmd.param3 = 0.0f;
+    cmd.param4 = NAN;
+    cmd.param5 = gotoCoord.latitude() * 1e7;
+    cmd.param6 = gotoCoord.longitude() * 1e7;
+    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toDouble();
+    cmd.target_system = vehicle->id();
+    cmd.target_component = 0;
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+
+    vehicle->sendMessage(msg);
+}
+
+void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to change altitude, vehicle altitude not known."));
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd;
+
+    cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
+    cmd.confirmation = 0;
+    cmd.param1 = -1.0f;
+    cmd.param2 = MAV_DO_REPOSITION_FLAGS_CHANGE_MODE;
+    cmd.param3 = 0.0f;
+    cmd.param4 = NAN;
+    cmd.param5 = NAN;
+    cmd.param6 = NAN;
+    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toDouble() + altitudeRel;
+    cmd.target_system = vehicle->id();
+    cmd.target_component = 0;
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+
+    vehicle->sendMessage(msg);
+}
+
+void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
+{
+    if (guidedMode) {
+        vehicle->setFlightMode(pauseFlightMode);
+    } else {
+        pauseVehicle(vehicle);
+    }
+}
+
+bool PX4FirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
+{
+    // Not supported by generic vehicle
+    return (vehicle->flightMode() == pauseFlightMode);
 }
