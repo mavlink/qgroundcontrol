@@ -149,8 +149,6 @@ void FollowMe::_sendGCSMotionReport(void)
     follow_target.vel[0] = _motionReport.vx;
     follow_target.vel[1] = _motionReport.vy;
 
-    qWarning("Mavlink Sending  %d %d", _motionReport.lat_int, _motionReport.lon_int);
-
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
         if(vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
