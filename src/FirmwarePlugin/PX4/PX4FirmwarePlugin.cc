@@ -267,7 +267,7 @@ void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
     // then tell it to loiter at the current position
     // above the takeoff (home) position
     mavlink_message_t msg;
-    mavlink_command_long_t cmd = {};
+    mavlink_command_long_t cmd;
 
     cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
     cmd.confirmation = 0;
@@ -312,7 +312,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     // then tell it to loiter at the user-selected location
     // above the takeoff (home) position
     mavlink_message_t msg;
-    mavlink_command_long_t cmd = {};
+    mavlink_command_long_t cmd;
 
     cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
     cmd.confirmation = 0;
@@ -340,7 +340,7 @@ void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
     }
 
     mavlink_message_t msg;
-    mavlink_command_long_t cmd = {};
+    mavlink_command_long_t cmd;
 
     cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
     cmd.confirmation = 0;
@@ -368,7 +368,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     }
 
     mavlink_message_t msg;
-    mavlink_command_long_t cmd = {};
+    mavlink_command_long_t cmd;
 
     cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
     cmd.confirmation = 0;
