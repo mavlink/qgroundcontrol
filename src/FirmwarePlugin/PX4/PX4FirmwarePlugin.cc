@@ -282,31 +282,31 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
         return;
     }
 
+    // tell the system first to take off in its internal,
+    // airframe specific takeoff action
     vehicle->setFlightMode(takeoffFlightMode);
 
-    // For later use
-#if 0
+    // then tell it to loiter at the user-selected location
+    // above the takeoff (home) position
     mavlink_message_t msg;
-    mavlink_command_int_t cmd = {};
+    mavlink_command_long_t cmd = {};
 
-    cmd.command = (uint16_t)MAV_CMD_NAV_TAKEOFF;
+    cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
     cmd.confirmation = 0;
-    cmd.frame = MAV_FRAME_LOCAL_OFFSET_NED;
-    cmd.param1 = 0.0f;
-    cmd.param2 = 0.0f;
+    cmd.param1 = -1.0f;
+    cmd.param2 = 0.0;
     cmd.param3 = 0.0f;
-    cmd.param4 = 0.0f;
-    cmd.param5 = 0.0f;
-    cmd.param6 = 0.0f;
-    cmd.param7 = -altitudeRel; // AMSL meters
+    cmd.param4 = NAN;
+    cmd.param5 = NAN;
+    cmd.param6 = NAN;
+    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toDouble() + altitudeRel;
     cmd.target_system = vehicle->id();
     cmd.target_component = 0;
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_command_int_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
 
     vehicle->sendMessage(msg);
-#endif
 }
 
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
@@ -368,8 +368,14 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
 {
     if (guidedMode) {
-        vehicle->setFlightMode("Pause");
+        vehicle->setFlightMode(pauseFlightMode);
     } else {
         pauseVehicle(vehicle);
     }
+}
+
+bool PX4FirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
+{
+    // Not supported by generic vehicle
+    return (vehicle->flightMode() == pauseFlightMode);
 }

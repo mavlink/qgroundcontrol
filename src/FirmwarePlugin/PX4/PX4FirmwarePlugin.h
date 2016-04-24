@@ -52,6 +52,7 @@ public:
     void        guidedModeTakeoff(Vehicle* vehicle, double altitudeRel) final;
     void        guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
     void        guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel) final;
+    bool        isGuidedMode(const Vehicle* vehicle) const;
     int         manualControlReservedButtonCount(void) final;
     void        initializeVehicle               (Vehicle* vehicle) final;
     bool        sendHomePositionToVehicle       (void) final;
