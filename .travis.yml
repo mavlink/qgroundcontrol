@@ -165,7 +165,6 @@ script:
         ;
     fi
   - echo 'Building QGroundControl'
-  - echo -en 'travis_fold:start:script.1\\r'
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
         cd ${SHADOW_BUILD_DIR} &&
         make -j4 | sed 's/${TRAVIS_BUILD_DIR}/-/'
@@ -181,7 +180,6 @@ script:
         doxygen documentation.dox
         ;
     fi
-  - echo -en 'travis_fold:end:script.1\\r'
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then
         ${SHADOW_BUILD_DIR}/debug/qgroundcontrol --unittest
         ;
