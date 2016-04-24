@@ -43,6 +43,7 @@ class QGCMapEngineManager;
 class QGCApplication;
 class QGCImageProvider;
 class UASMessageHandler;
+class QGCPositionManager;
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox {
@@ -65,6 +66,7 @@ public:
     QGCImageProvider*           imageProvider()                 { return _imageProvider; }
     UASMessageHandler*          uasMessageHandler(void)         { return _uasMessageHandler; }
     FollowMe*                   followMe(void)                  { return _followMe; }
+    QGCPositionManager*         qgcPositionManager(void)        { return _qgcPositionManager; }
 
 private:
     GAudioOutput*               _audioOutput;
@@ -83,6 +85,7 @@ private:
     QGCMapEngineManager*         _mapEngineManager;
     UASMessageHandler*          _uasMessageHandler;
     FollowMe*                   _followMe;
+    QGCPositionManager*         _qgcPositionManager;
 };
 
 /// This is the base class for all tools

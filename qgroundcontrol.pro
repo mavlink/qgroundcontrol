@@ -218,6 +218,7 @@ INCLUDEPATH += \
     src/ViewWidgets \
     src/QtLocationPlugin \
     src/QtLocationPlugin/QMLControl \
+    src/PositionManager \
 
 FORMS += \
     src/ui/MainWindow.ui \
@@ -266,6 +267,7 @@ HEADERS += \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
     src/FollowMe/FollowMe.h \
+    src/PositionManager/SimulatedPosition.h \
     src/JsonHelper.h \
     src/LogCompressor.h \
     src/MG.h \
@@ -310,6 +312,7 @@ HEADERS += \
     src/QmlControls/QGCImageProvider.h \
     src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
+    src/PositionManager/PositionManager.h
 
 DebugBuild {
 HEADERS += \
@@ -462,6 +465,8 @@ SOURCES += \
     src/QmlControls/QGCImageProvider.cc \
     src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
+    src/PositionManager/SimulatedPosition.cc \
+    src/PositionManager/PositionManager.cpp
 
 DebugBuild {
 SOURCES += \
