@@ -281,20 +281,20 @@ void MissionItemTest::_testLoadFromJson(void)
 {
     MissionItem missionItem;
     QString     errorString;
-    QJsonArray  coordinateArray = { -10.0, -20.0, -30.0 };
-    QJsonObject jsonObject
-    {
-        { "autoContinue",   true },
-        { "command",        80 },
-        { "frame",          3 },
-        { "id",             10 },
-        { "param1",         10 },
-        { "param2",         20 },
-        { "param3",         30 },
-        { "param4",         40 },
-        { "type",           "missionItem" },
-        { "coordinate",     coordinateArray },
-    };
+    QJsonArray  coordinateArray;
+    coordinateArray << -10.0 << -20.0 <<-30.0;
+    QJsonObject jsonObject;
+    jsonObject.insert("autoContinue", true);
+    jsonObject.insert("command", 80);
+    jsonObject.insert("frame", 3);
+    jsonObject.insert("id", 10);
+    jsonObject.insert("param1", 10);
+    jsonObject.insert("param2", 20);
+    jsonObject.insert("param3", 30);
+    jsonObject.insert("param4", 40);
+    jsonObject.insert("type", "missionItem");
+    jsonObject.insert("coordinate", coordinateArray);
+
 
     // Test missing key detection
 
@@ -317,7 +317,8 @@ void MissionItemTest::_testLoadFromJson(void)
     QVERIFY(!errorString.isEmpty());
     qDebug() << errorString;
 
-    QJsonArray  badCoordinateArray = { -10.0, -20.0 };
+    QJsonArray  badCoordinateArray;
+    badCoordinateArray << -10.0 << -20.0 ;
     badObject = jsonObject;
     badObject.remove("coordinate");
     badObject["coordinate"] = badCoordinateArray;
@@ -325,19 +326,22 @@ void MissionItemTest::_testLoadFromJson(void)
     QVERIFY(!errorString.isEmpty());
     qDebug() << errorString;
 
-    badCoordinateArray = { -10.0, -20.0, true };
+    QJsonArray badCoordinateArray_second;
+    badCoordinateArray_second << -10.0 << -20.0 << true;
     badObject = jsonObject;
     badObject.remove("coordinate");
-    badObject["coordinate"] = badCoordinateArray;
+    badObject["coordinate"] = badCoordinateArray_second;
     QCOMPARE(missionItem.load(badObject, errorString), false);
     QVERIFY(!errorString.isEmpty());
     qDebug() << errorString;
 
-    QJsonArray  badCoordinateArray2 = { 1, 2 };
-    badCoordinateArray = { -10.0, -20.0, badCoordinateArray2 };
+    QJsonArray  badCoordinateArray2;
+    badCoordinateArray2 << 1 << 2;
+    QJsonArray badCoordinateArray_third;
+    badCoordinateArray_third << -10.0 << -20.0 << badCoordinateArray2;
     badObject = jsonObject;
     badObject.remove("coordinate");
-    badObject["coordinate"] = badCoordinateArray;
+    badObject["coordinate"] = badCoordinateArray_third;
     QCOMPARE(missionItem.load(badObject, errorString), false);
     QVERIFY(!errorString.isEmpty());
     qDebug() << errorString;
@@ -364,20 +368,19 @@ void MissionItemTest::_testSimpleLoadFromJson(void)
 
     SimpleMissionItem simpleMissionItem(NULL);
     QString     errorString;
-    QJsonArray  coordinateArray = { -10.0, -20.0, -30.0 };
-    QJsonObject jsonObject
-    {
-        { "autoContinue",   true },
-        { "command",        80 },
-        { "frame",          3 },
-        { "id",             10 },
-        { "param1",         10 },
-        { "param2",         20 },
-        { "param3",         30 },
-        { "param4",         40 },
-        { "type",           "missionItem" },
-        { "coordinate",     coordinateArray },
-    };
+    QJsonArray  coordinateArray;
+    coordinateArray << -10.0 << -20.0 << -30.0;
+    QJsonObject jsonObject;
+    jsonObject.insert("autoContinue", true);
+    jsonObject.insert("command", 80);
+    jsonObject.insert("frame", 3);
+    jsonObject.insert("id", 10);
+    jsonObject.insert("param1", 10);
+    jsonObject.insert("param2", 20);
+    jsonObject.insert("param3", 30);
+    jsonObject.insert("param4", 40);
+    jsonObject.insert("type", "missionItem");
+    jsonObject.insert("coordinate", coordinateArray);
 
 
     QVERIFY(simpleMissionItem.load(jsonObject, errorString));
