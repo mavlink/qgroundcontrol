@@ -134,7 +134,7 @@ void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitu
     }
 
     mavlink_message_t msg;
-    mavlink_command_long_t cmd;
+    mavlink_command_long_t cmd = {};
 
     cmd.command = (uint16_t)MAV_CMD_NAV_TAKEOFF;
     cmd.confirmation = 0;
