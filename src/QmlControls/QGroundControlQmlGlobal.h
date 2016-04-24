@@ -35,6 +35,7 @@
 #include "MissionCommands.h"
 #include "SettingsFact.h"
 #include "FactMetaData.h"
+#include "SimulatedPosition.h"
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -72,6 +73,7 @@ public:
     Q_PROPERTY(MissionCommands*     missionCommands     READ missionCommands        CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager    READ mapEngineManager       CONSTANT)
+    Q_PROPERTY(QGCPositionManager*  qgcPositionManger   READ qgcPositionManger      CONSTANT)
 
     Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -137,7 +139,8 @@ public:
     LinkManager*            linkManager         ()      { return _linkManager; }
     MissionCommands*        missionCommands     ()      { return _missionCommands; }
     MultiVehicleManager*    multiVehicleManager ()      { return _multiVehicleManager; }
-    QGCMapEngineManager*     mapEngineManager  ()      { return _mapEngineManager; }
+    QGCMapEngineManager*    mapEngineManager    ()      { return _mapEngineManager; }
+    QGCPositionManager*     qgcPositionManger   ()      { return _qgcPositionManager; }
 
     qreal                   zOrderTopMost       ()      { return 1000; }
     qreal                   zOrderWidgets       ()      { return 100; }
@@ -202,6 +205,7 @@ private:
     MissionCommands*        _missionCommands;
     MultiVehicleManager*    _multiVehicleManager;
     QGCMapEngineManager*    _mapEngineManager;
+    QGCPositionManager*     _qgcPositionManager;
 
     bool _virtualTabletJoystick;
 
