@@ -2,7 +2,7 @@
 <parameters>
   <version>3</version>
   <parameter_version_major>1</parameter_version_major>
-  <parameter_version_minor>5</parameter_version_minor>
+  <parameter_version_minor>6</parameter_version_minor>
   <group name="UAVCAN Motor Parameters" no_code_generation="true">
     <parameter default="75" name="ctl_bw" type="INT32">
       <short_desc>Speed controller bandwidth</short_desc>
@@ -280,6 +280,7 @@ velocity</short_desc>
       <long_desc>Sets the threshold (between 0 and 1, which is equivalent to between 0 and 100%) when the battery will be reported as low. This has to be higher than the critical threshold.</long_desc>
       <min>0.15</min>
       <max>0.5</max>
+      <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -288,6 +289,7 @@ velocity</short_desc>
       <long_desc>Sets the threshold (between 0 and 1, which is equivalent to between 0 and 100%) when the battery will be reported as critically low. This has to be lower than the low threshold. This threshold commonly will trigger RTL or landing.</long_desc>
       <min>0.05</min>
       <max>0.14</max>
+      <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -449,7 +451,7 @@ velocity</short_desc>
     <parameter default="10" name="COM_DL_LOSS_T" type="INT32">
       <short_desc>Datalink loss time threshold</short_desc>
       <long_desc>After this amount of seconds without datalink the data link lost mode triggers</long_desc>
-      <min>0</min>
+      <min>5</min>
       <max>300</max>
       <unit>s</unit>
       <decimal>1</decimal>
@@ -459,7 +461,7 @@ velocity</short_desc>
       <short_desc>Datalink regain time threshold</short_desc>
       <long_desc>After a data link loss: after this this amount of seconds with a healthy datalink the 'datalink loss' flag is set back to false</long_desc>
       <min>0</min>
-      <max>30</max>
+      <max>3</max>
       <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -1268,6 +1270,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>This is the throttle setting required to achieve the desired cruise speed. Most airframes have a value of 0.5-0.7.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>norm</unit>
     </parameter>
     <parameter default="0.0" name="FW_THR_SLEW_MAX" type="FLOAT">
       <short_desc>Throttle max slew rate</short_desc>
@@ -1301,24 +1304,28 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>This is the maximum throttle % that can be used by the controller. For overpowered aircraft, this should be reduced to a value that provides sufficient thrust to climb at the maximum pitch angle PTCH_MAX.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>norm</unit>
     </parameter>
     <parameter default="0.0" name="FW_THR_MIN" type="FLOAT">
       <short_desc>Throttle limit min</short_desc>
       <long_desc>This is the minimum throttle % that can be used by the controller. For electric aircraft this will normally be set to zero, but can be set to a small non-zero value if a folding prop is fitted to prevent the prop from folding and unfolding repeatedly in-flight or to provide some aerodynamic drag from a turning prop to improve the descent rate. For aircraft with internal combustion engine this parameter should be set for desired idle rpm.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>norm</unit>
     </parameter>
     <parameter default="0.15" name="FW_THR_IDLE" type="FLOAT">
       <short_desc>Idle throttle</short_desc>
       <long_desc>This is the minimum throttle while on the ground For aircraft with internal combustion engine this parameter should be set above desired idle rpm.</long_desc>
       <min>0.0</min>
       <max>0.4</max>
+      <unit>norm</unit>
     </parameter>
     <parameter default="1.0" name="FW_THR_LND_MAX" type="FLOAT">
       <short_desc>Throttle limit value before flare</short_desc>
       <long_desc>This throttle value will be set as throttle limit at FW_LND_TLALT, before arcraft will flare.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>norm</unit>
     </parameter>
     <parameter default="10.0" name="FW_CLMBOUT_DIFF" type="FLOAT">
       <short_desc>Climbout Altitude difference</short_desc>
@@ -1562,34 +1569,43 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <short_desc>Multicopter max climb rate</short_desc>
       <long_desc>Maximum vertical velocity allowed in the landed state (m/s up and down)</long_desc>
       <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="1.50" name="LNDMC_XY_VEL_MAX" type="FLOAT">
       <short_desc>Multicopter max horizontal velocity</short_desc>
       <long_desc>Maximum horizontal velocity allowed in the landed state (m/s)</long_desc>
       <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="20.0" name="LNDMC_ROT_MAX" type="FLOAT">
       <short_desc>Multicopter max rotation</short_desc>
       <long_desc>Maximum allowed angular velocity around each axis allowed in the landed state.</long_desc>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="0.15" name="LNDMC_THR_MAX" type="FLOAT">
       <short_desc>Multicopter max throttle</short_desc>
       <long_desc>Maximum actuator output on throttle allowed in the landed state</long_desc>
       <min>0.1</min>
       <max>0.5</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="2.0" name="LNDMC_FFALL_THR" type="FLOAT">
       <short_desc>Multicopter specific force threshold</short_desc>
       <long_desc>Multicopter threshold on the specific force measured by accelerometers in m/s^2 for free-fall detection</long_desc>
       <min>0.1</min>
       <max>10</max>
+      <unit>m/s^2</unit>
+      <decimal>2</decimal>
     </parameter>
-    <parameter default="300" name="LNDMC_FFALL_TRIG" type="INT32">
+    <parameter default="0.3" name="LNDMC_FFALL_TTRI" type="FLOAT">
       <short_desc>Multicopter free-fall trigger time</short_desc>
       <long_desc>Milliseconds that freefall conditions have to hold before triggering a freefall. Minimal value is limited by LAND_DETECTOR_UPDATE_RATE=50Hz in landDetector.h</long_desc>
-      <min>20</min>
-      <max>5000</max>
+      <min>0.02</min>
+      <max>5</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="5.0" name="LNDFW_VEL_XY_MAX" type="FLOAT">
       <short_desc>Fixedwing max horizontal velocity</short_desc>
@@ -1597,6 +1613,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.5</min>
       <max>10</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="10.0" name="LNDFW_VEL_Z_MAX" type="FLOAT">
       <short_desc>Fixedwing max climb rate</short_desc>
@@ -1604,6 +1621,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>5</min>
       <max>20</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="4.0" name="LNDFW_VELI_MAX" type="FLOAT">
       <short_desc>Fixedwing max short-term velocity</short_desc>
@@ -1611,6 +1629,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>2</min>
       <max>10</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="8.00" name="LNDFW_AIRSPD_MAX" type="FLOAT">
       <short_desc>Airspeed max</short_desc>
@@ -1618,6 +1637,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>4</min>
       <max>20</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
   </group>
   <group name="Launch detection">
@@ -1979,7 +1999,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     </parameter>
     <parameter default="0" name="NAV_DLL_ACT" type="INT32">
       <short_desc>Set data link loss failsafe mode</short_desc>
-      <long_desc>The data link loss failsafe will only be entered after a timeout, set by COM_RC_LOSS_T in seconds. Once the timeout occurs the selected action will be executed. Setting this parameter to 4 will enable CASA Outback Challenge rules, which are only recommended to participants of that competition.</long_desc>
+      <long_desc>The data link loss failsafe will only be entered after a timeout, set by COM_DL_LOSS_T in seconds. Once the timeout occurs the selected action will be executed. Setting this parameter to 4 will enable CASA Outback Challenge rules, which are only recommended to participants of that competition.</long_desc>
       <values>
         <value code="1">Loiter</value>
         <value code="0">Disabled</value>
@@ -2321,31 +2341,38 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>It's recommended to set it &gt; 0 to avoid free fall with zero thrust.</long_desc>
       <min>0.05</min>
       <max>1.0</max>
-      <decimal>3</decimal>
+      <unit>norm</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.5" name="MPC_THR_HOVER" type="FLOAT">
       <short_desc>Hover thrust</short_desc>
       <long_desc>Vertical thrust required to hover. This value is mapped to center stick for manual throttle control. With this value set to the thrust required to hover, transition from manual to ALTCTL mode while hovering will occur with the throttle stick near center, which is then interpreted as (near) zero demand for vertical speed.</long_desc>
       <min>0.2</min>
       <max>0.8</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.1" name="MPC_ALTCTL_DZ" type="FLOAT">
       <short_desc>ALTCTL throttle curve breakpoint</short_desc>
       <long_desc>Halfwidth of deadband or reduced sensitivity center portion of curve. This is the halfwidth of the center region of the ALTCTL throttle curve. It extends from center-dz to center+dz.</long_desc>
       <min>0.0</min>
       <max>0.2</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.0" name="MPC_ALTCTL_DY" type="FLOAT">
       <short_desc>ALTCTL throttle curve breakpoint height</short_desc>
       <long_desc>Controls the slope of the reduced sensitivity region. This is the height of the ALTCTL throttle curve at center-dz and center+dz.</long_desc>
       <min>0.0</min>
       <max>0.2</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.9" name="MPC_THR_MAX" type="FLOAT">
       <short_desc>Maximum thrust in auto thrust control</short_desc>
       <long_desc>Limit max allowed thrust. Setting a value of one can put the system into actuator saturation as no spread between the motors is possible any more. A value of 0.8 - 0.9 is recommended.</long_desc>
       <min>0.0</min>
       <max>0.95</max>
+      <unit>norm</unit>
       <decimal>2</decimal>
     </parameter>
     <parameter default="0.08" name="MPC_MANTHR_MIN" type="FLOAT">
@@ -2353,13 +2380,15 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>Minimum vertical thrust. It's recommended to set it &gt; 0 to avoid free fall with zero thrust.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <decimal>3</decimal>
+      <unit>norm</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.9" name="MPC_MANTHR_MAX" type="FLOAT">
       <short_desc>Maximum manual thrust</short_desc>
       <long_desc>Limit max allowed thrust. Setting a value of one can put the system into actuator saturation as no spread between the motors is possible any more. A value of 0.8 - 0.9 is recommended.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>norm</unit>
       <decimal>2</decimal>
     </parameter>
     <parameter default="1.0" name="MPC_Z_P" type="FLOAT">
