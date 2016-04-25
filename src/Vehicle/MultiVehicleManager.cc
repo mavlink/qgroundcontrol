@@ -84,7 +84,8 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)
 {
-    if (_ignoreVehicleIds.contains(vehicleId) || getVehicleById(vehicleId)) {
+    if (_ignoreVehicleIds.contains(vehicleId) || getVehicleById(vehicleId)
+            || vehicleId == 0) {
         return;
     }
 
