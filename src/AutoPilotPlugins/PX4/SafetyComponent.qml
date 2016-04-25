@@ -128,7 +128,7 @@ QGCView {
                             }
                             Row {
                                 QGCLabel {
-                                    anchors.baseline:   batLowLevelField.baseline
+                                    anchors.baseline:   batCritLevelField.baseline
                                     width:              _middleRowWidth
                                     text:               qsTr("Battery Failsafe Level:")
                                 }
