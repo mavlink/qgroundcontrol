@@ -109,7 +109,7 @@ QGCView {
                                 FactComboBox {
                                     id:                 lowBattCombo
                                     width:              _editFieldWidth
-                                    model:              [ qsTr("No Action"), qsTr("Return To Land") ]
+                                    //model:              [ qsTr("No Action"), qsTr("Return To Land") ]
                                     fact:               _lowBattAction
                                 }
                             }
@@ -121,7 +121,7 @@ QGCView {
                                 }
                                 FactTextField {
                                     id:                 batLowLevelField
-                                    fact:               controller.getParameterFact(-1, "COM_DISARM_LAND")
+                                    fact:               controller.getParameterFact(-1, "BAT_LOW_THR")
                                     showUnits:          true
                                     width:              _editFieldWidth
                                 }
@@ -166,7 +166,7 @@ QGCView {
                                 FactComboBox {
                                     id:                 rcLossCombo
                                     width:              _editFieldWidth
-                                    model:              [ qsTr("Loiter"), qsTr("Return To Land"), qsTr("Land at current position") ]
+                                    //model:              [ qsTr("Loiter"), qsTr("Return To Land"), qsTr("Land at current position") ]
                                     fact:               _rcLossAction
                                 }
                             }
@@ -242,7 +242,7 @@ QGCView {
                                 FactComboBox {
                                     id:                 fenceActionCombo
                                     width:              _editFieldWidth
-                                    model:              [ qsTr("None"), qsTr("Warning"), qsTr("Loiter"), qsTr("Return Home"), qsTr("Flight termination") ]
+                                    //model:              [ qsTr("None"), qsTr("Warning"), qsTr("Loiter"), qsTr("Return Home"), qsTr("Flight termination") ]
                                     fact:               _fenceAction
                                 }
                             }
