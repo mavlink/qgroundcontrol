@@ -46,7 +46,6 @@ QGCView {
     property real _margins:         ScreenTools.defaultFontPixelHeight
     property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 22
     property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 18
-    property bool _fixedWing:       controller.fixedWing
 
     property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
     property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
@@ -54,6 +53,7 @@ QGCView {
     property Fact _rtlLandDelay:    controller.getParameterFact(-1, "RTL_LAND_DELAY")
     property Fact _lowBattAction:   controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
     property Fact _rcLossAction:    controller.getParameterFact(-1, "NAV_RCL_ACT")
+    property Fact _dlLossAction:    controller.getParameterFact(-1, "NAV_DLL_ACT")
 
     QGCViewPanel {
         id:             panel
@@ -100,7 +100,7 @@ QGCView {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             Row {
-                                visible:                !_fixedWing
+                                visible:                !controller.fixedWing
                                 QGCLabel {
                                     anchors.baseline:   lowBattCombo.baseline
                                     width:              _middleRowWidth
@@ -109,8 +109,8 @@ QGCView {
                                 FactComboBox {
                                     id:                 lowBattCombo
                                     width:              _editFieldWidth
-                                    //model:              [ qsTr("No Action"), qsTr("Return To Land") ]
                                     fact:               _lowBattAction
+                                    indexModel:         false
                                 }
                             }
                             Row {
@@ -166,8 +166,8 @@ QGCView {
                                 FactComboBox {
                                     id:                 rcLossCombo
                                     width:              _editFieldWidth
-                                    //model:              [ qsTr("Loiter"), qsTr("Return To Land"), qsTr("Land at current position") ]
                                     fact:               _rcLossAction
+                                    indexModel:         false
                                 }
                             }
                             Row {
@@ -183,24 +183,63 @@ QGCView {
                                     width:              _editFieldWidth
                                 }
                             }
-                            /*
-                                This is defined in the parameter specification but it is not clear how it is used.
-                                The actions above (RTL, Loiter, and Land At Current Position) makes its meaning
-                                ambiguous. Loiter before RTL and/or Land At Current Position? What if the action
-                                is set to "Loiter"? What happens after the timeout?
+                        }
+                    }
+                }
+                /*
+                   **** Data Link Loss ****
+                */
+                QGCLabel {
+                    text:                               qsTr("Data Link Loss Trigger")
+                    font.weight:                        Font.DemiBold
+                }
+                Rectangle {
+                    color:                              palette.windowShade
+                    width:                              rtlSettings.width
+                    height:                             dlLossRow.height + _margins * 2
+                    Row {
+                        id:                             dlLossRow
+                        spacing:                        _margins
+                        anchors.verticalCenter:         parent.verticalCenter
+                        Item { width: _margins * 0.5; height: 1; }
+                        Image {
+                            height:                     ScreenTools.defaultFontPixelWidth * 6
+                            width:                      ScreenTools.defaultFontPixelWidth * 20
+                            mipmap:                     true
+                            fillMode:                   Image.PreserveAspectFit
+                            source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/DatalinkLossLight.svg" : "/qmlimages/DatalinkLoss.svg"
+                            anchors.verticalCenter:     parent.verticalCenter
+                        }
+                        Item { width: _margins * 0.5; height: 1; }
+                        Column {
+                            spacing:                    _margins * 0.5
+                            anchors.verticalCenter:     parent.verticalCenter
                             Row {
                                 QGCLabel {
-                                    anchors.baseline:   rcLossLoiterField.baseline
+                                    anchors.baseline:   dlLossCombo.baseline
                                     width:              _middleRowWidth
-                                    text:               qsTr("RC Loss Loiter Period:")
+                                    text:               qsTr("Action:")
                                 }
-                                FactTextField {
-                                    id:                 rcLossLoiterField
-                                    fact:               controller.getParameterFact(-1, "NAV_RCL_LT")
-                                    showUnits:          true
+                                FactComboBox {
+                                    id:                 dlLossCombo
+                                    width:              _editFieldWidth
+                                    fact:               _dlLossAction
+                                    indexModel:         false
                                 }
                             }
-                            */
+                            Row {
+                                QGCLabel {
+                                    anchors.baseline:   dlLossField.baseline
+                                    width:              _middleRowWidth
+                                    text:               qsTr("Data Link Loss Timeout:")
+                                }
+                                FactTextField {
+                                    id:                 dlLossField
+                                    fact:               controller.getParameterFact(-1, "COM_DL_LOSS_T")
+                                    showUnits:          true
+                                    width:              _editFieldWidth
+                                }
+                            }
                         }
                     }
                 }
@@ -242,8 +281,8 @@ QGCView {
                                 FactComboBox {
                                     id:                 fenceActionCombo
                                     width:              _editFieldWidth
-                                    //model:              [ qsTr("None"), qsTr("Warning"), qsTr("Loiter"), qsTr("Return Home"), qsTr("Flight termination") ]
                                     fact:               _fenceAction
+                                    indexModel:         false
                                 }
                             }
                             Row {
@@ -308,7 +347,7 @@ QGCView {
                             width:                      ScreenTools.defaultFontPixelWidth * 20
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     _fixedWing ? "/qmlimages/ReturnToHomeAltitude.svg" : "/qmlimages/ReturnToHomeAltitudeCopter.svg"
+                            source:                     controller.fixedWing ? "/qmlimages/ReturnToHomeAltitude.svg" : "/qmlimages/ReturnToHomeAltitudeCopter.svg"
                             anchors.verticalCenter:     parent.verticalCenter
                         }
                         Item { width: _margins * 0.5; height: 1; }
@@ -422,7 +461,7 @@ QGCView {
                             width:                      ScreenTools.defaultFontPixelWidth * 20
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     _fixedWing ? "/qmlimages/LandMode.svg" : "/qmlimages/LandModeCopter.svg"
+                            source:                     controller.fixedWing ? "/qmlimages/LandMode.svg" : "/qmlimages/LandModeCopter.svg"
                             anchors.verticalCenter:     parent.verticalCenter
                         }
                         Item {
@@ -433,7 +472,7 @@ QGCView {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             Row {
-                                visible:                !_fixedWing
+                                visible:                !controller.fixedWing
                                 QGCLabel {
                                     anchors.baseline:   landVelField.baseline
                                     width:              _middleRowWidth
@@ -462,25 +501,6 @@ QGCView {
                         }
                     }
                 }
-                /*  Don't know about these
-                QGCLabel {
-                    id:                 navRclObc
-                    font.pixelSize:     ScreenTools.mediumFontPixelSize
-                    text:               qsTr("Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.")
-                    visible:            fact.value !== 0
-                    wrapMode:           Text.Wrap
-                    property Fact fact: controller.getParameterFact(-1, "NAV_RCL_OBC")
-                }
-
-                QGCLabel {
-                    id:                 navDllObc
-                    font.pixelSize:     ScreenTools.mediumFontPixelSize
-                    text:               qsTr("Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.")
-                    visible:            fact.value !== 0
-                    wrapMode:           Text.Wrap
-                    property Fact fact: controller.getParameterFact(-1, "NAV_DLL_OBC")
-                }
-                */
             }
         }
     }

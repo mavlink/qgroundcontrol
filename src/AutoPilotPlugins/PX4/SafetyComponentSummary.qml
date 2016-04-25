@@ -17,8 +17,10 @@ FactPanel {
     property Fact returnAltFact:    controller.getParameterFact(-1, "RTL_RETURN_ALT")
     property Fact descendAltFact:   controller.getParameterFact(-1, "RTL_DESCEND_ALT")
     property Fact landDelayFact:    controller.getParameterFact(-1, "RTL_LAND_DELAY")
-    property Fact commDLLossFact:   controller.getParameterFact(-1, "COM_DL_LOSS_EN")
     property Fact commRCLossFact:   controller.getParameterFact(-1, "COM_RC_LOSS_T")
+    property Fact lowBattAction:    controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
+    property Fact rcLossAction:     controller.getParameterFact(-1, "NAV_RCL_ACT")
+    property Fact dataLossAction:   controller.getParameterFact(-1, "NAV_DLL_ACT")
 
     Column {
         anchors.fill:       parent
@@ -35,18 +37,24 @@ FactPanel {
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("RTL loiter delay:")
-            valueText: landDelayFact ? (landDelayFact.value < 0 ? qsTr("Disabled") : landDelayFact.valueString) : ""
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Telemetry loss RTL:")
-            valueText: commDLLossFact ? (commDLLossFact.value != -1 ? qsTr("Disabled") : commDLLossFact.valueString) : ""
-        }
-
-        VehicleSummaryRow {
             labelText: qsTr("RC loss RTL (seconds):")
             valueText: commRCLossFact ? commRCLossFact.valueString : ""
         }
+
+        VehicleSummaryRow {
+            labelText: qsTr("RC loss action:")
+            valueText: rcLossAction ? rcLossAction.enumStringValue : ""
+        }
+
+        VehicleSummaryRow {
+            labelText: qsTr("Link loss action:")
+            valueText: dataLossAction ? dataLossAction.enumStringValue : ""
+        }
+
+        VehicleSummaryRow {
+            labelText: qsTr("Low battery action:")
+            valueText: lowBattAction ? lowBattAction.enumStringValue : ""
+        }
+
     }
 }
