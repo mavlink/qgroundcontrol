@@ -36,9 +36,9 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 
 Rectangle {
+    id: setupView
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
-    id: setupView
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -303,7 +303,6 @@ Rectangle {
                     exclusiveGroup: setupButtonGroup
                     text:           modelData.name
                     visible:        modelData.setupSource.toString() != ""
-
 
                     onClicked: showVehicleComponentPanel(modelData)
                 }
