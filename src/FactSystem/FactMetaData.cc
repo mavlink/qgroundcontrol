@@ -38,6 +38,7 @@
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
     { "centi-degrees",  "degrees",  FactMetaData::_centiDegreesToDegrees,   FactMetaData::_degreesToCentiDegrees },
     { "radians",        "degrees",  FactMetaData::_radiansToDegrees,        FactMetaData::_degreesToRadians },
+    { "norm",           "%",  FactMetaData::_normToPercent,           FactMetaData::_percentToNorm },
 };
 
 // Translations driven by app settings
@@ -447,6 +448,16 @@ QVariant FactMetaData::_metersPerSecondToKnots(const QVariant& metersPerSecond)
 QVariant FactMetaData::_knotsToMetersPerSecond(const QVariant& knots)
 {
     return QVariant(knots.toDouble() * 0.51444444444);
+}
+
+QVariant FactMetaData::_percentToNorm(const QVariant& percent)
+{
+    return QVariant(percent.toDouble() / 100.0);
+}
+
+QVariant FactMetaData::_normToPercent(const QVariant& normalized)
+{
+    return QVariant(normalized.toDouble() * 100.0);
 }
 
 void FactMetaData::setRawUnits(const QString& rawUnits)

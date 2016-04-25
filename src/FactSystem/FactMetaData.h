@@ -163,6 +163,8 @@ private:
     static QVariant _kilometersPerHourToMetersPerSecond(const QVariant& kilometersPerHour);
     static QVariant _metersPerSecondToKnots(const QVariant& metersPerSecond);
     static QVariant _knotsToMetersPerSecond(const QVariant& knots);
+    static QVariant _percentToNorm(const QVariant& percent);
+    static QVariant _normToPercent(const QVariant& normalized);
 
     struct AppSettingsTranslation_s {
         const char* rawUnits;
