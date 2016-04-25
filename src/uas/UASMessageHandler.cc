@@ -200,7 +200,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     if (_multiComp) {
         compString = QString(" COMP:%1").arg(compId);
     }
-    message->_setFormatedText(QString("<font style=\"%1\">[%2%3]%4 %5</font></p>").arg(style).arg(dateString).arg(compString).arg(severityText).arg(text));
+    message->_setFormatedText(QString("<p><font style=\"%1\">[%2%3]%4 %5</font></p>").arg(style).arg(dateString).arg(compString).arg(severityText).arg(text));
 
     if (message->severityIsError()) {
         _latestError = severityText + " " + text;
