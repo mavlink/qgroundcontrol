@@ -30,12 +30,11 @@ QGCPositionManager::QGCPositionManager(QGCApplication* app) :
     _defaultSource = QGeoPositionInfoSource::createDefaultSource(this);
     _simulatedSource = new SimulatedPosition();
 
-    // if the default source is not availble for whatever reason
-    // fall back to a simulated source
+    // Enable this to get a simulated target on desktop
 
-    if(_defaultSource == nullptr) {
-        _defaultSource = _simulatedSource;
-    }
+    // if (_defaultSource == nullptr) {
+    //     _defaultSource = _simulatedSource;
+    // }
 
     setPositionSource(QGCPositionSource::GPS);
 }
@@ -61,7 +60,7 @@ int QGCPositionManager::updateInterval() const
 
 void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource source)
 {
-    if(_currentSource != nullptr) {
+    if (_currentSource != nullptr) {
         _currentSource->stopUpdates();
         disconnect(_currentSource, SIGNAL(positionUpdated(QGeoPositionInfo)), this, SLOT(positionUpdated(QGeoPositionInfo)));
     }
@@ -78,11 +77,13 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
         break;
     }
 
-    _updateInterval = _currentSource->minimumUpdateInterval();
-    _currentSource->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
-    _currentSource->setUpdateInterval(_updateInterval);
-    _currentSource->startUpdates();
+    if (_currentSource != nullptr) {
+        _updateInterval = _currentSource->minimumUpdateInterval();
+        _currentSource->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
+        _currentSource->setUpdateInterval(_updateInterval);
+        _currentSource->startUpdates();
 
-    connect(_currentSource, SIGNAL(positionUpdated(QGeoPositionInfo)), this, SLOT(positionUpdated(QGeoPositionInfo)));
+        connect(_currentSource, SIGNAL(positionUpdated(QGeoPositionInfo)), this, SLOT(positionUpdated(QGeoPositionInfo)));
+    }
 }
 
