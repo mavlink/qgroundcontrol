@@ -117,11 +117,24 @@ QGCView {
                                 QGCLabel {
                                     anchors.baseline:   batLowLevelField.baseline
                                     width:              _middleRowWidth
-                                    text:               qsTr("Battery Low Level:")
+                                    text:               qsTr("Battery Warn Level:")
                                 }
                                 FactTextField {
                                     id:                 batLowLevelField
                                     fact:               controller.getParameterFact(-1, "BAT_LOW_THR")
+                                    showUnits:          true
+                                    width:              _editFieldWidth
+                                }
+                            }
+                            Row {
+                                QGCLabel {
+                                    anchors.baseline:   batLowLevelField.baseline
+                                    width:              _middleRowWidth
+                                    text:               qsTr("Battery Failsafe Level:")
+                                }
+                                FactTextField {
+                                    id:                 batCritLevelField
+                                    fact:               controller.getParameterFact(-1, "BAT_CRIT_THR")
                                     showUnits:          true
                                     width:              _editFieldWidth
                                 }
