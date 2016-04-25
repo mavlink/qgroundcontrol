@@ -158,6 +158,8 @@ private slots:
 
 private:
     UASInterface*           _activeUAS;
+    int                     _activeComponent;
+    bool                    _multiComp;
     QVector<UASMessage*>    _messages;
     QMutex                  _mutex;
     int                     _errorCount;

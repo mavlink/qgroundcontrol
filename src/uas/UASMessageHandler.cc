@@ -55,6 +55,8 @@ bool UASMessage::severityIsError()
 UASMessageHandler::UASMessageHandler(QGCApplication* app)
     : QGCTool(app)
     , _activeUAS(NULL)
+    , _activeComponent(-1)
+    , _multiComp(false)
     , _errorCount(0)
     , _errorCountTotal(0)
     , _warningCount(0)
@@ -127,6 +129,14 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
 
     _mutex.lock();
 
+    if (_activeComponent < 0) {
+        _activeComponent = compId;
+    }
+
+    if (compId != _activeComponent) {
+        _multiComp = true;
+    }
+
     // So first determine the styling based on the severity.
     QString style;
     switch (severity)
@@ -186,14 +196,22 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     // Finally preppend the properly-styled text with a timestamp.
     QString dateString = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
     UASMessage* message = new UASMessage(compId, severity, text);
-    message->_setFormatedText(QString("<p style=\"color:#e0e0f0\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
-    _messages.append(message);
-    int count = _messages.count();
+    QString compString("");
+    if (_multiComp) {
+        compString = QString(" COMP:%1").arg(compId);
+    }
+    message->_setFormatedText(QString("<p><font style=\"%1\">[%2%3]%4 %5</font></p>").arg(style).arg(dateString).arg(compString).arg(severityText).arg(text));
+
     if (message->severityIsError()) {
         _latestError = severityText + " " + text;
     }
+
     _mutex.unlock();
+
     emit textMessageReceived(message);
+
+    _messages.append(message);
+    int count = _messages.count();
     emit textMessageCountChanged(count);
 
     if (_showErrorsInToolbar && message->severityIsError()) {
