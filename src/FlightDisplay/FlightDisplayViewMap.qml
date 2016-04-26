@@ -39,6 +39,7 @@ FlightMap {
     id:             flightMap
     anchors.fill:   parent
     mapName:        _mapName
+    showScale:      QGroundControl.flightMapSettings.showScaleOnFlyView
 
     property alias  missionController: _missionController
     property var    flightWidgets
