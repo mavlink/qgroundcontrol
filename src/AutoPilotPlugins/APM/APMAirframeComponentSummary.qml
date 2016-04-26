@@ -28,11 +28,11 @@ FactPanel {
         VehicleSummaryRow {
             id: nameRow;
             labelText: qsTr("Frame Type:")
-            valueText: sysIdFact.valueString === "0" ? "Plus"
+            valueText: controller.currentAirframeTypeName() + " " + (sysIdFact.valueString === "0" ? "Plus"
                      : sysIdFact.valueString === "1" ? "X"
                      : sysIdFact.valueString === "2" ? "V"
                      : sysIdFact.valueString == "3" ? "H"
-                     :/* Fact.value == 10 */ "New Y6";
+                     : /* Fact.value == 10 */  "New Y6");
 
         }
     }

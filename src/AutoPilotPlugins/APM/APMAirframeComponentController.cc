@@ -188,6 +188,11 @@ APMAirframeType *APMAirframeComponentController::currentAirframeType() const
     return _currentAirframeType;
 }
 
+QString APMAirframeComponentController::currentAirframeTypeName() const
+{
+    return _vehicle->vehicleTypeName();
+}
+
 APMAirframe *APMAirframeComponentController::currentAirframe() const
 {
     return _currentAirframe;

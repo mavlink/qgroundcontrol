@@ -36,6 +36,7 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 
 Rectangle {
+    id: setupView
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
 
@@ -110,6 +111,13 @@ Rectangle {
                 panelLoader.sourceComponent = messagePanelComponent
             } else {
                 panelLoader.source = vehicleComponent.setupSource
+                for(var i = 0; i < componentRepeater.count; i++) {
+                    var obj = componentRepeater.itemAt(i);
+                    if (obj.text === vehicleComponent.name) {
+                        obj.checked = true;
+                        break;
+                    }
+                }
             }
         }
     }
@@ -295,7 +303,6 @@ Rectangle {
                     exclusiveGroup: setupButtonGroup
                     text:           modelData.name
                     visible:        modelData.setupSource.toString() != ""
-
 
                     onClicked: showVehicleComponentPanel(modelData)
                 }
