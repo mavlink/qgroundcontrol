@@ -40,7 +40,9 @@ Rectangle {
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
-    property Fact _percentRemainingAnnounce: QGroundControl.multiVehicleManager.disconnectedVehicle.battery.percentRemainingAnnounce
+    property Fact _percentRemainingAnnounce:    QGroundControl.multiVehicleManager.disconnectedVehicle.battery.percentRemainingAnnounce
+    property real _firstLabelWidth:             ScreenTools.defaultFontPixelWidth * 16
+    property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 22
 
     QGCPalette { id: qgcPal }
 
@@ -76,16 +78,16 @@ Rectangle {
                 spacing:    ScreenTools.defaultFontPixelWidth
 
                 QGCLabel {
-                    id:                 distanceUnitsLabel
+                    width:              _firstLabelWidth
                     anchors.baseline:   distanceUnitsCombo.baseline
                     text:               qsTr("Distance units:")
                 }
 
                 FactComboBox {
-                    id:         distanceUnitsCombo
-                    width:      ScreenTools.defaultFontPixelWidth * 10
-                    fact:       QGroundControl.distanceUnits
-                    indexModel: false
+                    id:                 distanceUnitsCombo
+                    width:              _editFieldWidth
+                    fact:               QGroundControl.distanceUnits
+                    indexModel:         false
                 }
 
                 QGCLabel {
@@ -96,19 +98,19 @@ Rectangle {
             }
 
             Row {
-                spacing:    ScreenTools.defaultFontPixelWidth
+                spacing:                ScreenTools.defaultFontPixelWidth
 
                 QGCLabel {
                     anchors.baseline:   speedUnitsCombo.baseline
-                    width:              distanceUnitsLabel.width
+                    width:              _firstLabelWidth
                     text:               qsTr("Speed units:")
                 }
 
                 FactComboBox {
-                    id:         speedUnitsCombo
-                    width:      ScreenTools.defaultFontPixelWidth * 20
-                    fact:       QGroundControl.speedUnits
-                    indexModel: false
+                    id:                 speedUnitsCombo
+                    width:              _editFieldWidth
+                    fact:               QGroundControl.speedUnits
+                    indexModel:         false
                 }
 
                 QGCLabel {
@@ -117,6 +119,17 @@ Rectangle {
                 }
             }
 
+            //-----------------------------------------------------------------
+            //-- Scale on Flight View
+            QGCCheckBox {
+                text:       qsTr("Show scale on Fly View")
+                onClicked: {
+                    QGroundControl.flightMapSettings.showScaleOnFlyView = checked
+                }
+                Component.onCompleted: {
+                    checked = QGroundControl.flightMapSettings.showScaleOnFlyView
+                }
+            }
             //-----------------------------------------------------------------
             //-- Audio preferences
             QGCCheckBox {
@@ -211,13 +224,13 @@ Rectangle {
                 spacing:    ScreenTools.defaultFontPixelWidth
                 QGCLabel {
                     anchors.baseline:   mapProviders.baseline
-                    width:              ScreenTools.defaultFontPixelWidth * 16
+                    width:              _firstLabelWidth
                     text:               qsTr("Map Providers:")
                 }
                 QGCComboBox {
-                    id:     mapProviders
-                    width:  ScreenTools.defaultFontPixelWidth * 16
-                    model:  QGroundControl.flightMapSettings.mapProviders
+                    id:                 mapProviders
+                    width:              _editFieldWidth
+                    model:              QGroundControl.flightMapSettings.mapProviders
                     Component.onCompleted: {
                         var index = mapProviders.find(QGroundControl.flightMapSettings.mapProvider)
                         if (index < 0) {
@@ -241,14 +254,14 @@ Rectangle {
                 spacing:    ScreenTools.defaultFontPixelWidth
                 QGCLabel {
                     anchors.baseline:   paletteCombo.baseline
-                    width:              ScreenTools.defaultFontPixelWidth * 16
+                    width:              _firstLabelWidth
                     text:               qsTr("Style:")
                 }
                 QGCComboBox {
-                    id: paletteCombo
-                    width: ScreenTools.defaultFontPixelWidth * 16
-                    model: [ qsTr("Indoor"), qsTr("Outdoor") ]
-                    currentIndex: QGroundControl.isDarkStyle ? 0 : 1
+                    id:                 paletteCombo
+                    width:              _editFieldWidth
+                    model:              [ qsTr("Indoor"), qsTr("Outdoor") ]
+                    currentIndex:       QGroundControl.isDarkStyle ? 0 : 1
                     onActivated: {
                         if (index != -1) {
                             currentIndex = index
