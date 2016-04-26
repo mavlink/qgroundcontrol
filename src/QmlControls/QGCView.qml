@@ -43,8 +43,6 @@ FactPanel {
 
     property var viewPanel
 
-    property bool __useAvailableHeight: false
-
     /// This is signalled when the top level Item reaches Component.onCompleted. This allows
     /// the view subcomponent to connect to this signal and do work once the full ui is ready
     /// to go.
@@ -136,12 +134,10 @@ FactPanel {
     readonly property int showDialogFullWidth:      -1  ///< Use for full width dialog
     readonly property int showDialogDefaultWidth:   40  ///< Use for default dialog width
 
-    function showDialog(component, title, charWidth, buttons, useAvailableHeight) {
+    function showDialog(component, title, charWidth, buttons) {
         if (__checkForEarlyDialog(title)) {
             return
         }
-
-        __useAvailableHeight = typeof useAvailableHeight !== 'undefined' ? useAvailableHeight : false
 
         __stopAllAnimations()
 
@@ -282,7 +278,7 @@ FactPanel {
         // This covers the parent with an transparent section
         Rectangle {
             id:             __transparentSection
-            height:         __useAvailableHeight ? ScreenTools.availableHeight : parent.height
+            height:         ScreenTools.availableHeight ? ScreenTools.availableHeight : parent.height
             anchors.bottom: parent.bottom
             anchors.left:   parent.left
             anchors.right:  __dialogPanel.left
@@ -295,7 +291,7 @@ FactPanel {
             id:                 __dialogPanel
             width:              __dialogCharWidth == showDialogFullWidth ? parent.width : defaultTextWidth * __dialogCharWidth
             anchors.topMargin:  topDialogMargin
-            height:             __useAvailableHeight ? ScreenTools.availableHeight : parent.height
+            height:             ScreenTools.availableHeight ? ScreenTools.availableHeight : parent.height
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
             color:              __qgcPal.windowShadeDark
@@ -330,7 +326,9 @@ FactPanel {
                     anchors.right:  parent.right
                     primary:        true
 
-                    onClicked: __dialogComponentLoader.item.accept()
+                    onClicked: {
+                       __dialogComponentLoader.item.accept()
+                    }
                 }
             }
 

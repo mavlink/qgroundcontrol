@@ -57,13 +57,17 @@ Item {
     property string formatedMessage:    activeVehicle ? activeVehicle.formatedMessage : ""
 
     onHeightChanged: {
-        ScreenTools.availableHeight = parent.height - toolBar.height
+        //-- We only deal with the available height if within the Fly or Plan view
+        if(!setupViewLoader.visible) {
+            ScreenTools.availableHeight = parent.height - toolBar.height
+        }
     }
 
     function showFlyView() {
         if(currentPopUp) {
             currentPopUp.close()
         }
+        ScreenTools.availableHeight = parent.height - toolBar.height
         flightView.visible          = true
         setupViewLoader.visible     = false
         planViewLoader.visible      = false
@@ -77,6 +81,7 @@ Item {
         if (planViewLoader.source   != _planViewSource) {
             planViewLoader.source   = _planViewSource
         }
+        ScreenTools.availableHeight = parent.height - toolBar.height
         flightView.visible          = false
         setupViewLoader.visible     = false
         planViewLoader.visible      = true
@@ -87,6 +92,8 @@ Item {
         if(currentPopUp) {
             currentPopUp.close()
         }
+        //-- In setup view, the full height is available. Set to 0 so it is ignored.
+        ScreenTools.availableHeight = 0
         if (setupViewLoader.source  != _setupViewSource) {
             setupViewLoader.source  = _setupViewSource
         }
