@@ -17,10 +17,6 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
-#QMAKE_CFLAGS_DEBUG  += -g
-#QMAKE_CXXFLAGS += -g
-#QMAKE_CXXFLAGS_DEBUG += -g
-
 exists($${OUT_PWD}/qgroundcontrol.pro) {
     error("You must use shadow build (e.g. mkdir build; cd build; qmake ../qgroundcontrol.pro).")
 }
