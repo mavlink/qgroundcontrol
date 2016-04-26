@@ -47,6 +47,7 @@ QGCViewDialog {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     function accept() {
+        /*
         if (bitmaskEditor.visible) {
             var value = 0;
             for (var i = 0; i < fact.bitmaskValues.length; ++i) {
@@ -58,12 +59,12 @@ QGCViewDialog {
             fact.value = value;
             fact.valueChanged(fact.value)
         }
-        else if (factCombo.visible) {
+        else */ if (factCombo.visible) {
             fact.enumIndex = factCombo.currentIndex
             hideDialog()
         } else {
             var errorString = fact.validate(valueField.text, forceSave.checked)
-            if (errorString == "") {
+            if (errorString === "") {
                 fact.value = valueField.text
                 fact.valueChanged(fact.value)
                 hideDialog()
@@ -96,7 +97,7 @@ QGCViewDialog {
             QGCLabel {
                 width:      parent.width
                 wrapMode:   Text.WordWrap
-                text:       fact.shortDescription ? fact.shortDescription : qsTr("Description missing")
+                text:       fact.shortDescription ? fact.shortDescription : qsTr("Parameter Description (not defined)")
             }
 
             QGCLabel {
