@@ -1,6 +1,167 @@
 {
     "version": 1,
-
     "mavCmdInfo": [
+        {
+            "id": 16,
+            "rawName": "MAV_CMD_NAV_WAYPOINT",
+            "friendlyName": "Waypoint",
+            "description": "Travel to a position in 3D space.",
+            "specifiesCoordinate": true,
+            "friendlyEdit": true,
+            "category": "Basic",
+            "param1": {
+                "label": "Hold:",
+                "units": "seconds",
+                "default": 0,
+                "decimalPlaces": 0
+            },
+            "param7": {
+                "label": "Altitude:",
+                "units": "meters",
+                "default": 50,
+                "decimalPlaces": 0
+            }
+        },
+        {
+            "id": 17,
+            "rawName": "MAV_CMD_NAV_LOITER_UNLIM",
+            "friendlyName": "Loiter",
+            "description": "Travel to a position and Loiter around the specified radius indefinitely.",
+            "specifiesCoordinate": true,
+            "friendlyEdit": true,
+            "category": "Loiter",
+            "param3": {
+                "label": "Radius:",
+                "units": "meters",
+                "default": 100,
+                "decimalPlaces": 0
+            },
+            "param7": {
+                "label": "Altitude:",
+                "units": "meters",
+                "default": 50,
+                "decimalPlaces": 0
+            }
+        },
+        {
+            "id": 18,
+            "rawName": "MAV_CMD_NAV_LOITER_TURNS",
+            "friendlyName": "Loiter (turns)",
+            "description": "Travel to a position and Loiter around the specified radius for a number of turns.",
+            "specifiesCoordinate": true,
+            "friendlyEdit": true,
+            "category": "Loiter",
+            "param1": {
+                "label": "Turns:",
+                "default": 1,
+                "decimalPlaces": 0
+            },
+            "param3": {
+                "label": "Radius:",
+                "units": "meters",
+                "default": 100,
+                "decimalPlaces": 0
+            },
+            "param7": {
+                "label": "Altitude:",
+                "units": "meters",
+                "default": 50,
+                "decimalPlaces": 0
+            }
+        },
+        {
+            "id": 19,
+            "rawName": "MAV_CMD_NAV_LOITER_TIME",
+            "friendlyName": "Loiter (time)",
+            "description": "Travel to a position and Loiter around the specified radius for a number of seconds.",
+            "specifiesCoordinate": true,
+            "friendlyEdit": true,
+            "category": "Loiter",
+            "param1": {
+                "label": "Seconds:",
+                "units": "seconds",
+                "default": 30,
+                "decimalPlaces": 1
+            },
+            "param3": {
+                "label": "Radius:",
+                "units": "meters",
+                "default": 100,
+                "decimalPlaces": 0
+            },
+            "param7": {
+                "label": "Altitude:",
+                "units": "meters",
+                "default": 50,
+                "decimalPlaces": 0
+            }
+        },
+        {
+            "id": 21,
+            "rawName": "MAV_CMD_NAV_LAND",
+            "friendlyName": "Land",
+            "description": "Land vehicle at the specified location.",
+            "specifiesCoordinate": true,
+            "friendlyEdit": true,
+            "category": "Basic",
+            "param1": {
+                "label": "Abort Alt:",
+                "units": "meters",
+                "default": 25,
+                "decimalPlaces": 0
+            },
+            "param4": {
+                "label": "Heading:",
+                "units": "radians",
+                "default": 0,
+                "decimalPlaces": 2
+            },
+            "param7": {
+                "label": "Altitude:",
+                "units": "meters",
+                "default": 0,
+                "decimalPlaces": 1
+            }
+        },
+        {
+            "id": 22,
+            "rawName": "MAV_CMD_NAV_TAKEOFF",
+            "friendlyName": "Takeoff",
+            "description": "Take off from the ground and travel towards the specified position.",
+            "specifiesCoordinate": true,
+            "friendlyEdit": true,
+            "category": "Basic",
+            "param1": {
+                "label": "Pitch:",
+                "units": "degrees",
+                "default": 0,
+                "decimalPlaces": 0
+            },
+            "param4": {
+                "label": "Heading:",
+                "units": "radians",
+                "default": 0,
+                "decimalPlaces": 1
+            },
+            "param7": {
+                "label": "Altitude:",
+                "units": "meters",
+                "default": 25,
+                "decimalPlaces": 0
+            }
+        },
+        {
+            "id":           206,
+            "rawName":      "MAV_CMD_DO_SET_CAM_TRIGG_DIST",
+            "friendlyName": "Camera trigger distance",
+            "description":  "Set camera trigger distance.",
+            "category":     "Camera",
+            "param1": {
+                "label":            "Distance:",
+                "default":          25,
+                "units":            "meters",
+                "decimalPlaces":    1
+            }
+        }
     ]
 }
