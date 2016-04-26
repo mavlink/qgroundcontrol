@@ -47,7 +47,6 @@ QGCViewDialog {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     function accept() {
-        /*
         if (bitmaskEditor.visible) {
             var value = 0;
             for (var i = 0; i < fact.bitmaskValues.length; ++i) {
@@ -58,8 +57,9 @@ QGCViewDialog {
             }
             fact.value = value;
             fact.valueChanged(fact.value)
+            hideDialog();
         }
-        else */ if (factCombo.visible) {
+        else if (factCombo.visible) {
             fact.enumIndex = factCombo.currentIndex
             hideDialog()
         } else {
@@ -152,10 +152,11 @@ QGCViewDialog {
 
             Column {
                 spacing: ScreenTools.defaultFontPixelHeight / 2
-
+                visible: fact.bitmaskStrings.length > 0 ? true : false;
                 Repeater {
                     id: bitmaskEditor
                     model: fact.bitmaskStrings
+
                     delegate : QGCCheckBox {
                         text : modelData
                         checked : fact.value & fact.bitmaskValues[index]
