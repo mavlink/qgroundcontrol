@@ -37,13 +37,15 @@ public:
     FlightMapSettings(QGCApplication* app);
 
     /// mapProvider is either Bing, Google or Open to specify to set of maps available
-    Q_PROPERTY(QString      mapProvider     READ mapProvider    WRITE setMapProvider NOTIFY mapProviderChanged)
+    Q_PROPERTY(QString      mapProvider         READ mapProvider    WRITE setMapProvider NOTIFY mapProviderChanged)
 
     /// Map providers
-    Q_PROPERTY(QStringList  mapProviders    READ mapProviders   CONSTANT)
+    Q_PROPERTY(QStringList  mapProviders        READ mapProviders   CONSTANT)
 
     /// Map types associated with current map provider
-    Q_PROPERTY(QStringList  mapTypes        MEMBER _mapTypes    NOTIFY mapTypesChanged)
+    Q_PROPERTY(QStringList  mapTypes            MEMBER _mapTypes    NOTIFY mapTypesChanged)
+
+    Q_PROPERTY(bool         showScaleOnFlyView  READ showScaleOnFlyView WRITE setShowScaleOnFlyView NOTIFY showScaleOnFlyViewChanged)
 
     Q_INVOKABLE QString     mapTypeForMapName   (const QString& mapName);
     Q_INVOKABLE void        setMapTypeForMapName(const QString& mapName, const QString& mapType);
@@ -63,15 +65,19 @@ public:
 
     QStringList mapProviders() { return _supportedMapProviders; }
 
+    bool    showScaleOnFlyView          ();
+    void    setShowScaleOnFlyView       (bool show);
+
 signals:
-    void mapProviderChanged(const QString& mapProvider);
-    void mapTypesChanged(const QStringList& mapTypes);
+    void    mapProviderChanged          (const QString& mapProvider);
+    void    mapTypesChanged             (const QStringList& mapTypes);
+    void    showScaleOnFlyViewChanged   ();
 
 private:
-    void _storeSettings(void);
-    void _loadSettings(void);
+    void    _storeSettings              (void);
+    void    _loadSettings               (void);
 
-    void _setMapTypesForCurrentProvider(void);
+    void    _setMapTypesForCurrentProvider(void);
 
     QString     _mapProvider;               ///< Current map provider
     QStringList _supportedMapProviders;
@@ -81,6 +87,7 @@ private:
     static const char* _settingsGroup;
     static const char* _mapProviderKey;
     static const char* _mapTypeKey;
+    static const char* _showScaleOnFlyViewKey;
 };
 
 #endif
