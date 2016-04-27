@@ -66,6 +66,17 @@
       <maintainer>Simon Wilks &lt;simon@px4.io&gt;</maintainer>
       <type>Flying Wing</type>
     </airframe>
+    <airframe id="3036" maintainer="Simon Wilks &lt;simon@px4.io&gt;" name="Sparkle Tech Pigeon">
+      <maintainer>Simon Wilks &lt;simon@px4.io&gt;</maintainer>
+      <type>Flying Wing</type>
+      <url>http://www.sparkletech.hk/</url>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output name="MAIN1">left aileron</output>
+      <output name="MAIN2">right aileron</output>
+      <output name="MAIN4">throttle</output>
+    </airframe>
     <airframe id="3100" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="TBS Caipirinha">
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Flying Wing</type>
@@ -234,6 +245,13 @@
     </airframe>
     <airframe id="4050" maintainer="Mark Whitehorn &lt;kd0aij@gmail.com&gt;" name="Generic 250 Racer">
       <maintainer>Mark Whitehorn &lt;kd0aij@gmail.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
+    <airframe id="4060" maintainer="James Goppert &lt;james.goppert@gmail.com&gt;" name="DJI Matrice 100">
+      <maintainer>James Goppert &lt;james.goppert@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
       <output name="AUX1">feed-through of RC AUX1 channel</output>
       <output name="AUX2">feed-through of RC AUX2 channel</output>
