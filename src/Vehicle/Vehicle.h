@@ -521,9 +521,9 @@ public:
     bool containsLink(LinkInterface* link) { return _links.contains(link); }
     void doCommandLong(int component, MAV_CMD command, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
-    int firmwareMajorVersion(void) const { return _firmwareMajorVersion; }
-    int firmwareMinorVersion(void) const { return _firmwareMinorVersion; }
-    int firmwarePatchVersion(void) const { return _firmwarePatchVersion; }
+    Q_INVOKABLE int firmwareMajorVersion(void) const { return _firmwareMajorVersion; }
+    Q_INVOKABLE int firmwareMinorVersion(void) const { return _firmwareMinorVersion; }
+    Q_INVOKABLE int firmwarePatchVersion(void) const { return _firmwarePatchVersion; }
     void setFirmwareVersion(int majorVersion, int minorVersion, int patchVersion);
     static const int versionNotSetValue = -1;
 
