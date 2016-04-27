@@ -41,7 +41,8 @@ public:
     GPSManager(QGCApplication* app);
     ~GPSManager();
 
-    void setupGPS(const QString& device);
+    void connectGPS(const QString& device);
+    bool connected(void) const { return _gpsProvider != nullptr; }
 
 private slots:
     void GPSPositionUpdate(GPSPositionMessage msg);

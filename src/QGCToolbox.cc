@@ -47,6 +47,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     , _factSystem(NULL)
     , _firmwarePluginManager(NULL)
     , _flightMapSettings(NULL)
+#ifndef __mobile
+    , _gpsManager(NULL)
+#endif
     , _homePositionManager(NULL)
     , _imageProvider(NULL)
     , _joystickManager(NULL)
@@ -97,8 +100,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _mapEngineManager->setToolbox(this);
     _uasMessageHandler->setToolbox(this);
     _followMe->setToolbox(this);
-    //FIXME: make this configurable...
-    //_gpsManager->setupGPS("ttyACM0");
     _qgcPositionManager->setToolbox(this);
 }
 

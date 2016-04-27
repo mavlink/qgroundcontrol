@@ -309,6 +309,12 @@ Rectangle {
                     checked:    QGroundControl.linkManager.autoconnectUDP
                     onClicked:  QGroundControl.linkManager.autoconnectUDP = checked
                 }
+
+                QGCCheckBox {
+                    text:       qsTr("RTK GPS")
+                    checked:    QGroundControl.linkManager.autoconnectRTKGPS
+                    onClicked:  QGroundControl.linkManager.autoconnectRTKGPS = checked
+                }
             }
 
             Item {
