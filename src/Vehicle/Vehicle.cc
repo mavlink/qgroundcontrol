@@ -1636,6 +1636,11 @@ void Vehicle::setFirmwareVersion(int majorVersion, int minorVersion, int patchVe
     _firmwarePatchVersion = patchVersion;
 }
 
+void Vehicle::rebootVehicle()
+{
+    doCommandLong(id(), MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+}
+
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
 const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
