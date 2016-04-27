@@ -550,8 +550,9 @@ velocity</short_desc>
       <decimal>0</decimal>
       <increment>1</increment>
       <values>
-        <value code="1">RTL on low battery</value>
-        <value code="0">No action</value>
+        <value code="1">Return to Land</value>
+        <value code="0">Warning</value>
+        <value code="2">Land at current position</value>
       </values>
     </parameter>
   </group>
