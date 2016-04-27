@@ -67,6 +67,9 @@ public:
     UASMessageHandler*          uasMessageHandler(void)         { return _uasMessageHandler; }
     FollowMe*                   followMe(void)                  { return _followMe; }
     QGCPositionManager*         qgcPositionManager(void)        { return _qgcPositionManager; }
+#ifndef __mobile__
+    GPSManager*                 gpsManager(void)                { return _gpsManager; }
+#endif
 
 private:
     GAudioOutput*               _audioOutput;
@@ -74,7 +77,9 @@ private:
     FactSystem*                 _factSystem;
     FirmwarePluginManager*      _firmwarePluginManager;
     FlightMapSettings*          _flightMapSettings;
+#ifndef __mobile__
     GPSManager*                 _gpsManager;
+#endif
     HomePositionManager*        _homePositionManager;
     QGCImageProvider*           _imageProvider;
     JoystickManager*            _joystickManager;

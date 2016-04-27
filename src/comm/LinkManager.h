@@ -78,6 +78,7 @@ public:
     Q_PROPERTY(bool autoconnectPixhawk                  READ autoconnectPixhawk                 WRITE setAutoconnectPixhawk     NOTIFY autoconnectPixhawkChanged)
     Q_PROPERTY(bool autoconnect3DRRadio                 READ autoconnect3DRRadio                WRITE setAutoconnect3DRRadio    NOTIFY autoconnect3DRRadioChanged)
     Q_PROPERTY(bool autoconnectPX4Flow                  READ autoconnectPX4Flow                 WRITE setAutoconnectPX4Flow     NOTIFY autoconnectPX4FlowChanged)
+    Q_PROPERTY(bool autoconnectRTKGPS                   READ autoconnectRTKGPS                  WRITE setAutoconnectRTKGPS      NOTIFY autoconnectRTKGPSChanged)
     Q_PROPERTY(bool isBluetoothAvailable                READ isBluetoothAvailable               CONSTANT)
 
     /// LinkInterface Accessor
@@ -107,6 +108,7 @@ public:
     bool autoconnectPixhawk         (void)  { return _autoconnectPixhawk; }
     bool autoconnect3DRRadio        (void)  { return _autoconnect3DRRadio; }
     bool autoconnectPX4Flow         (void)  { return _autoconnectPX4Flow; }
+    bool autoconnectRTKGPS          (void)  { return _autoconnectRTKGPS; }
     bool isBluetoothAvailable       (void);
 
     QmlObjectListModel* links               (void) { return &_links; }
@@ -120,6 +122,7 @@ public:
     void setAutoconnectPixhawk  (bool autoconnect);
     void setAutoconnect3DRRadio (bool autoconnect);
     void setAutoconnectPX4Flow  (bool autoconnect);
+    void setAutoconnectRTKGPS   (bool autoconnect);
 
     /// Load list of link configurations from disk
     void loadLinkConfigurationList();
@@ -173,10 +176,11 @@ public:
     virtual void setToolbox(QGCToolbox *toolbox);
 
 signals:
-    void autoconnectUDPChanged(bool autoconnect);
-    void autoconnectPixhawkChanged(bool autoconnect);
-    void autoconnect3DRRadioChanged(bool autoconnect);
-    void autoconnectPX4FlowChanged(bool autoconnect);
+    void autoconnectUDPChanged      (bool autoconnect);
+    void autoconnectPixhawkChanged  (bool autoconnect);
+    void autoconnect3DRRadioChanged (bool autoconnect);
+    void autoconnectPX4FlowChanged  (bool autoconnect);
+    void autoconnectRTKGPSChanged   (bool autoconnect);
 
     void newLink(LinkInterface* link);
 
@@ -212,6 +216,7 @@ private:
     void _updateAutoConnectLinks(void);
     void _updateSerialPorts();
     void _fixUnnamed(LinkConfiguration* config);
+    bool _setAutoconnectWorker(bool& currentAutoconnect, bool newAutoconnect, const char* autoconnectKey);
 
 #ifndef __ios__
     SerialConfiguration* _autoconnectConfigurationsContainsPort(const QString& portName);
@@ -238,6 +243,7 @@ private:
     bool _autoconnectPixhawk;
     bool _autoconnect3DRRadio;
     bool _autoconnectPX4Flow;
+    bool _autoconnectRTKGPS;
 
 #ifndef __ios__
     QTimer              _activeLinkCheckTimer;                  ///< Timer which checks for a vehicle showing up on a usb direct link
@@ -250,6 +256,7 @@ private:
     static const char*  _autoconnectPixhawkKey;
     static const char*  _autoconnect3DRRadioKey;
     static const char*  _autoconnectPX4FlowKey;
+    static const char*  _autoconnectRTKGPSKey;
     static const char*  _defaultUPDLinkName;
     static const int    _autoconnectUpdateTimerMSecs;
     static const int    _autoconnectConnectDelayMSecs;
