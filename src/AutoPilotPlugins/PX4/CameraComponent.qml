@@ -49,8 +49,9 @@ QGCView {
     property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 18
 
     property Fact _camTriggerMode:  controller.getParameterFact(-1, "TRIG_MODE")
+    property Fact _camTriggerPol:   controller.getParameterFact(-1, "TRIG_POLARITY", false) // Don't bitch about missing as these only exist if trigger mode is enabled
+    property Fact _auxPins:         controller.getParameterFact(-1, "TRIG_PINS",     false) // Ditto
 
-    property bool _hasFacts:        false
     property bool _rebooting:       false
     property var  _auxChannels:     [ 0, 0, 0, 0, 0, 0]
 
@@ -61,28 +62,24 @@ QGCView {
     }
 
     function setAuxPins() {
-        var values = []
-        for(var i = 0; i < 6; i++) {
-            if(_auxChannels[i]) {
-                values.push((i+1).toString())
+        if(_auxPins) {
+            var values = ""
+            for(var i = 0; i < 6; i++) {
+                if(_auxChannels[i]) {
+                    values += ((i+1).toString())
+                }
             }
+            _auxPins.value = parseInt(values)
         }
-        var auxFact = controller.getParameterFact(-1, "TRIG_PINS")
-        auxFact.value = parseInt(values)
-        console.log(values)
     }
 
     Component.onCompleted: {
-        _hasFacts = _camTriggerMode.value > 0
-        if(_hasFacts) {
+        if(_auxPins) {
             clearAuxArray()
-            var auxFact = controller.getParameterFact(-1, "TRIG_PINS")
-            var values  = auxFact.value.toString()
-            console.log(values)
+            var values  = _auxPins.value.toString()
             for(var i = 0; i < values.length; i++) {
                 var b = parseInt(values[i]) - 1
                 if(b >= 0 && b < 6) {
-                    console.log(b)
                     _auxChannels[b] = 1
                 }
             }
@@ -110,6 +107,7 @@ QGCView {
                 anchors.right:      parent.right
                 text:               qsTr("Apply and Restart")
                 onClicked:      {
+                    //-- This will reboot the vehicle! We're set not to allow changes if armed.
                     QGroundControl.multiVehicleManager.activeVehicle.rebootVehicle()
                     applyAndRestart.visible = false
                     _rebooting = true
@@ -120,14 +118,14 @@ QGCView {
             clip:                                       true
             anchors.top:                                applyAndRestart.visible ? applyAndRestart.bottom : parent.top
             anchors.bottom:                             parent.bottom
-            anchors.horizontalCenter:                   parent.horizontalCenter
-            width:                                      mainCol.width
+            anchors.left:                               parent.left
+            anchors.right:                              parent.right
             contentHeight:                              mainCol.height
-            contentWidth:                               mainCol.width
             flickableDirection:                         Flickable.VerticalFlick
             Column {
                 id:                                     mainCol
                 spacing:                                _margins
+                anchors.horizontalCenter:               parent.horizontalCenter
                 /*
                    **** Camera Trigger ****
                 */
@@ -185,10 +183,10 @@ QGCView {
                                 }
                                 FactTextField {
                                     id:                 timeIntervalField
-                                    fact:               _hasFacts ? controller.getParameterFact(-1, "TRIG_INTERVAL") : null
+                                    fact:               controller.getParameterFact(-1, "TRIG_INTERVAL", false)
                                     showUnits:          true
                                     width:              _editFieldWidth
-                                    enabled:            _hasFacts && _camTriggerMode.value === 2
+                                    enabled:            _auxPins && _camTriggerMode.value === 2
                                 }
                             }
                             Row {
@@ -200,10 +198,10 @@ QGCView {
                                 }
                                 FactTextField {
                                     id:                 trigDistField
-                                    fact:               _hasFacts ? controller.getParameterFact(-1, "TRIG_DISTANCE") : null
+                                    fact:               controller.getParameterFact(-1, "TRIG_DISTANCE", false)
                                     showUnits:          true
                                     width:              _editFieldWidth
-                                    enabled:            _hasFacts && _camTriggerMode.value === 3
+                                    enabled:            _auxPins && _camTriggerMode.value === 3
                                 }
                             }
                         }
@@ -216,20 +214,17 @@ QGCView {
                 QGCLabel {
                     text:                               qsTr("Hardware Settings")
                     font.weight:                        Font.DemiBold
-                    visible:                            _hasFacts
+                    visible:                            _auxPins
                 }
                 Rectangle {
                     color:                              palette.windowShade
                     width:                              camTrigRect.width
                     height:                             camHardwareRow.height + _margins * 2
-                    visible:                            _hasFacts
+                    visible:                            _auxPins
                     Row {
                         id:                             camHardwareRow
                         spacing:                        _margins
                         anchors.verticalCenter:         parent.verticalCenter
-
-                        property Fact _camTriggerPol:   controller.getParameterFact(-1, "TRIG_POLARITY")
-
                         Item { width: _margins * 0.5; height: 1; }
                         Item {
                             height:                     ScreenTools.defaultFontPixelWidth * 10
@@ -258,13 +253,23 @@ QGCView {
                                                 width:          ScreenTools.defaultFontPixelWidth * 2
                                                 height:         ScreenTools.defaultFontPixelWidth * 2
                                                 border.color:   palette.text
-                                                color:          _auxChannels[model.index] ? "green" : palette.windowShadeDark
+                                                color:  {
+                                                    if(_auxPins) {
+                                                        var pins = _auxPins.value.toString()
+                                                        var pin  = (model.index + 1).toString()
+                                                        if(pins.indexOf(pin) < 0)
+                                                            return palette.windowShadeDark
+                                                        else
+                                                            return "green"
+                                                    } else {
+                                                        return palette.windowShade
+                                                    }
+                                                }
                                                 MouseArea {
                                                     anchors.fill: parent
                                                     onClicked: {
                                                         _auxChannels[model.index] = 1 - _auxChannels[model.index]
                                                         auxPin.color = _auxChannels[model.index] ? "green" : palette.windowShadeDark
-                                                        console.log(model.index + " " + _auxChannels[model.index])
                                                         setAuxPins()
                                                     }
                                                 }
@@ -288,20 +293,28 @@ QGCView {
                                     spacing:            _margins * 0.5
                                     ExclusiveGroup { id: polarityGroup }
                                     QGCRadioButton {
-                                        checked:        _hasFacts && camHardwareRow._camTriggerPol.value === 0
+                                        checked:        _camTriggerPol && _camTriggerPol.value === 0
                                         exclusiveGroup: polarityGroup
                                         text:           "Low (0V)"
-                                        onClicked:      _camTriggerPol.value = 0
+                                        onClicked: {
+                                            if(_camTriggerPol) {
+                                                _camTriggerPol.value = 0
+                                            }
+                                        }
                                     }
                                     QGCRadioButton {
-                                        checked:        _hasFacts && camHardwareRow._camTriggerPol.value > 0
+                                        checked:        _camTriggerPol && _camTriggerPol.value > 0
                                         exclusiveGroup: polarityGroup
                                         text:           "High (3.3V)"
-                                        onClicked:      _camTriggerPol.value = 1
+                                        onClicked: {
+                                            if(_camTriggerPol) {
+                                                _camTriggerPol.value = 1
+                                            }
+                                        }
                                     }
                                 }
                             }
-                            Item { width: 1; height: _margins; }
+                            Item { width: 1; height: _margins * 0.5; }
                             Row {
                                 QGCLabel {
                                     text:               qsTr("Trigger Period")
@@ -311,7 +324,7 @@ QGCView {
                                 }
                                 FactTextField {
                                     id:                 trigPeriodField
-                                    fact:               controller.getParameterFact(-1, "TRIG_ACT_TIME")
+                                    fact:               controller.getParameterFact(-1, "TRIG_ACT_TIME", false)
                                     showUnits:          true
                                     width:              _editFieldWidth
                                 }
