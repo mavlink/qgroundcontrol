@@ -36,7 +36,7 @@ FactSliderPanel {
             description:    qsTr("Adjust throttle so hover is at mid-throttle. Slide to the left if hover is lower than throttle center. Slide to the right if hover is higher than throttle center.")
             param:          "MPC_THR_HOVER"
             min:            20
-            max:            60
+            max:            80
             step:           1
         }
 
