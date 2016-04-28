@@ -60,16 +60,13 @@ QGCView {
         anchors.fill:   parent
         QGCFlickable {
             clip:                                       true
-            anchors.top:                                parent.top
-            anchors.bottom:                             parent.bottom
-            anchors.horizontalCenter:                   parent.horizontalCenter
-            width:                                      mainCol.width
+            anchors.fill:   parent
             contentHeight:                              mainCol.height
-            contentWidth:                               mainCol.width
             flickableDirection:                         Flickable.VerticalFlick
             Column {
                 id:                                     mainCol
                 spacing:                                _margins
+                anchors.horizontalCenter:               parent.horizontalCenter
                 /*
                    **** Low Battery ****
                 */
@@ -514,6 +511,7 @@ QGCView {
                         }
                     }
                 }
+                Item { width: 1; height: _margins * 0.5; }
             }
         }
     }
