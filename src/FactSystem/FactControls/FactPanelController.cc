@@ -129,14 +129,15 @@ void FactPanelController::_checkForMissingFactPanel(void)
     }
 }
 
-Fact* FactPanelController::getParameterFact(int componentId, const QString& name)
+Fact* FactPanelController::getParameterFact(int componentId, const QString& name, bool reportMissing)
 {
     if (_autopilot && _autopilot->parameterExists(componentId, name)) {
         Fact* fact = _autopilot->getParameterFact(componentId, name);
         QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
         return fact;
     } else {
-        _reportMissingParameter(componentId, name);
+        if(reportMissing)
+            _reportMissingParameter(componentId, name);
         return NULL;
     }
 }

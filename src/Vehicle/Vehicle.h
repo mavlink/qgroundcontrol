@@ -360,6 +360,9 @@ public:
     /// Alter the current mission item on the vehicle
     Q_INVOKABLE void setCurrentMissionSequence(int seq);
 
+    /// Reboot vehicle
+    Q_INVOKABLE void rebootVehicle();
+
     bool guidedModeSupported(void) const;
     bool pauseVehicleSupported(void) const;
 
