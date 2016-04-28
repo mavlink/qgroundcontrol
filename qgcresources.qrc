@@ -48,6 +48,7 @@
         <file alias="arrow-down.png">src/QmlControls/arrow-down.png</file>
         <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/Images/FlightModesComponentIcon.png</file>
+        <file alias="CameraTrigger.svg">src/AutoPilotPlugins/PX4/Images/CameraTrigger.svg</file>
         <file alias="CameraComponentIcon.png">src/AutoPilotPlugins/PX4/Images/CameraComponentIcon.png</file>
         <file alias="DatalinkLoss.svg">src/AutoPilotPlugins/PX4/Images/DatalinkLoss.svg</file>
         <file alias="DatalinkLossLight.svg">src/AutoPilotPlugins/PX4/Images/DatalinkLossLight.svg</file>
