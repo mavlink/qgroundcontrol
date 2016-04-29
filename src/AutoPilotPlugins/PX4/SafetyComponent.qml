@@ -54,6 +54,7 @@ QGCView {
     property Fact _lowBattAction:   controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
     property Fact _rcLossAction:    controller.getParameterFact(-1, "NAV_RCL_ACT")
     property Fact _dlLossAction:    controller.getParameterFact(-1, "NAV_DLL_ACT")
+    property Fact _disarmLandDelay: controller.getParameterFact(-1, "COM_DISARM_LAND")
 
     QGCViewPanel {
         id:             panel
@@ -72,7 +73,7 @@ QGCView {
                 */
                 Item { width: 1; height: _margins * 0.5; }
                 QGCLabel {
-                    text:                               qsTr("Low Battery Trigger")
+                    text:                               qsTr("Low Battery Failsafe Trigger")
                     font.weight:                        Font.DemiBold
                 }
                 Rectangle {
@@ -101,7 +102,7 @@ QGCView {
                                 QGCLabel {
                                     anchors.baseline:   lowBattCombo.baseline
                                     width:              _middleRowWidth
-                                    text:               qsTr("Action:")
+                                    text:               qsTr("Failsafe Action:")
                                 }
                                 FactComboBox {
                                     id:                 lowBattCombo
@@ -143,7 +144,7 @@ QGCView {
                    **** RC Loss ****
                 */
                 QGCLabel {
-                    text:                               qsTr("RC Loss Trigger")
+                    text:                               qsTr("RC Loss Failsafe Trigger")
                     font.weight:                        Font.DemiBold
                 }
                 Rectangle {
@@ -171,7 +172,7 @@ QGCView {
                                 QGCLabel {
                                     anchors.baseline:   rcLossCombo.baseline
                                     width:              _middleRowWidth
-                                    text:               qsTr("Action:")
+                                    text:               qsTr("Failsafe Action:")
                                 }
                                 FactComboBox {
                                     id:                 rcLossCombo
@@ -200,7 +201,7 @@ QGCView {
                    **** Data Link Loss ****
                 */
                 QGCLabel {
-                    text:                               qsTr("Data Link Loss Trigger")
+                    text:                               qsTr("Data Link Loss Failsafe Trigger")
                     font.weight:                        Font.DemiBold
                 }
                 Rectangle {
@@ -228,7 +229,7 @@ QGCView {
                                 QGCLabel {
                                     anchors.baseline:   dlLossCombo.baseline
                                     width:              _middleRowWidth
-                                    text:               qsTr("Action:")
+                                    text:               qsTr("Failsafe Action:")
                                 }
                                 FactComboBox {
                                     id:                 dlLossCombo
@@ -257,7 +258,7 @@ QGCView {
                    **** Geofence ****
                 */
                 QGCLabel {
-                    text:                               qsTr("Geofence Trigger")
+                    text:                               qsTr("Geofence Failsafe Trigger")
                     font.weight:                        Font.DemiBold
                 }
                 Rectangle {
@@ -496,15 +497,19 @@ QGCView {
                                 }
                             }
                             Row {
-                                QGCLabel {
+                                QGCCheckBox {
+                                    id:                 disarmDelayCheckBox
                                     anchors.baseline:   disarmField.baseline
-                                    width:              _middleRowWidth
                                     text:               qsTr("Disarm After:")
+                                    checked:            _disarmLandDelay.value > 0
+                                    onClicked:          _disarmLandDelay.value = checked ? 2 : 0
+                                    width:              _middleRowWidth
                                 }
                                 FactTextField {
                                     id:                 disarmField
-                                    fact:               controller.getParameterFact(-1, "COM_DISARM_LAND")
                                     showUnits:          true
+                                    fact:               _disarmLandDelay
+                                    enabled:            disarmDelayCheckBox.checked
                                     width:              _editFieldWidth
                                 }
                             }
