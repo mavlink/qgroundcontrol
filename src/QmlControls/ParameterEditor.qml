@@ -96,45 +96,54 @@ QGCView {
                     anchors.leftMargin: ScreenTools.defaultFontPixelWidth
                     anchors.verticalCenter: parent.verticalCenter
                 }
+
                 QGCButton {
                     text:           qsTr("Back")
                     visible:        _searchFilter
                     anchors.right:  parent.right
                     height: ScreenTools.defaultFontPixelHeight * 1.75
                     onClicked: {
-                        searchFor.text = ""
+                        if (ScreenTools.isMobile)
+                            searchFor.text = ""
+                        else
+                            quickSearch.text = ""
                     }
                 }
-                Row {
-                    anchors.right: tools.left
-                    visible: !ScreenTools.isMobile;
 
-                    QGCLabel {
-                        font.weight: Font.DemiBold
-                        text:   "Filter By:"
-                        height: ScreenTools.defaultFontPixelHeight * 1.75
-                    }
+                QGCLabel {
+                    id :                    filterLabel
+                    anchors.right:          quickSearch.left
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.weight:            Font.DemiBold
+                    height:                 ScreenTools.defaultFontPixelHeight * 1.75
+                    visible:                !ScreenTools.isMobile
+                    text:                   qsTr("Filter By:")
+                }
 
-                    QGCTextField {
-                        id:                 searchFor
-                        anchors.topMargin:  defaultTextHeight / 3
-                        width:              ScreenTools.defaultFontPixelWidth * 20
+                QGCTextField {
+                    id:                  quickSearch
+                    anchors.right:       toolsButton.left
+                    anchors.topMargin:   defaultTextHeight / 3
+                    anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
+                    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                    width:               ScreenTools.defaultFontPixelWidth * 20
+                    visible:            !ScreenTools.isMobile
 
-                        onTextChanged: {
-                            console.log(text)
-                            if (text.length == 0) {
-                                _searchFilter = false;
-                            } else {
-                                _searchResults = controller.searchParametersForComponent(-1, text, true, true)
-                                _searchFilter = true
-                            }
+                    onTextChanged: {
+                        console.log(text)
+                        if (text.length == 0) {
+                            _searchFilter = false;
+                        } else {
+                            _searchResults = controller.searchParametersForComponent(-1, text, true, true)
+                            _searchFilter = true
                         }
                     }
                 }
 
                 QGCButton {
-                    text:           qsTr("Tools")
                     id: toolsButton
+                    text:           qsTr("Tools")
                     visible:        !_searchFilter
                     anchors.right:  parent.right
                     height: ScreenTools.defaultFontPixelHeight * 1.75
