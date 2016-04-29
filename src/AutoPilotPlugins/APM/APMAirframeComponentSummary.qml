@@ -35,5 +35,10 @@ FactPanel {
                      : /* Fact.value == 10 */  "New Y6");
 
         }
+
+        VehicleSummaryRow {
+            labelText: qsTr("Firmware Version:")
+            valueText: activeVehicle.firmwareMajorVersion() + "." + activeVehicle.firmwareMinorVersion() + "." + activeVehicle.firmwarePatchVersion()
+        }
     }
 }

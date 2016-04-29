@@ -38,5 +38,10 @@ FactPanel {
             labelText: qsTr("Vehicle:")
             valueText: autoStartSet ? controller.currentVehicleName : qsTr("Setup required")
         }
+
+        VehicleSummaryRow {
+            labelText: qsTr("Firmware Version:")
+            valueText: activeVehicle.firmwareMajorVersion() + "." + activeVehicle.firmwareMinorVersion() + "." + activeVehicle.firmwarePatchVersion()
+        }
     }
 }

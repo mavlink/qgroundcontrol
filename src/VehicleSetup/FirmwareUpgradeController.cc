@@ -706,7 +706,6 @@ void FirmwareUpgradeController::_loadAPMVersions(QGCSerialPortInfo::BoardType_t 
     }
 }
 
-
 void FirmwareUpgradeController::_apmVersionDownloadFinished(QString remoteFile, QString localFile)
 {
     qCDebug(FirmwareUpgradeLog) << "Download complete" << remoteFile << localFile;

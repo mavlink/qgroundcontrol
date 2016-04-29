@@ -106,6 +106,7 @@ QGCView {
                 // Board was found right away, so something is already plugged in before we've started upgrade
                 statusTextArea.append(qgcUnplugText1)
                 statusTextArea.append(qgcUnplugText2)
+                statusTextArea.append(qsTr("Current Firmware: ") + activeVehicle.firmwareMajorVersion() + "." + activeVehicle.firmwareMinorVersion() + "." + activeVehicle.firmwarePatchVersion())
                 QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true
             } else {
                 // We end up here when we detect a board plugged in after we've started upgrade
