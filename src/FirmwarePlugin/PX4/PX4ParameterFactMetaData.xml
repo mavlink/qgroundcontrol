@@ -293,11 +293,11 @@ velocity</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter default="0.07" name="BAT_V_LOAD_DROP" type="FLOAT">
+    <parameter default="0.25" name="BAT_V_LOAD_DROP" type="FLOAT">
       <short_desc>Voltage drop per cell on 100% load</short_desc>
       <long_desc>This implicitely defines the internal resistance to maximum current ratio and assumes linearity.</long_desc>
-      <min>0.0</min>
-      <max>1.5</max>
+      <min>0.07</min>
+      <max>0.5</max>
       <unit>V</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
@@ -1594,14 +1594,6 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <unit>deg/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter default="0.15" name="LNDMC_THR_MAX" type="FLOAT">
-      <short_desc>Multicopter max throttle</short_desc>
-      <long_desc>Maximum actuator output on throttle allowed in the landed state</long_desc>
-      <min>0.1</min>
-      <max>0.5</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-    </parameter>
     <parameter default="2.0" name="LNDMC_FFALL_THR" type="FLOAT">
       <short_desc>Multicopter specific force threshold</short_desc>
       <long_desc>Multicopter threshold on the specific force measured by accelerometers in m/s^2 for free-fall detection</long_desc>
@@ -1612,7 +1604,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     </parameter>
     <parameter default="0.3" name="LNDMC_FFALL_TTRI" type="FLOAT">
       <short_desc>Multicopter free-fall trigger time</short_desc>
-      <long_desc>Milliseconds that freefall conditions have to hold before triggering a freefall. Minimal value is limited by LAND_DETECTOR_UPDATE_RATE=50Hz in landDetector.h</long_desc>
+      <long_desc>Seconds (decimal) that freefall conditions have to met before triggering a freefall. Minimal value is limited by LAND_DETECTOR_UPDATE_RATE=50Hz in landDetector.h</long_desc>
       <min>0.02</min>
       <max>5</max>
       <unit>s</unit>
@@ -5142,17 +5134,18 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       </values>
     </parameter>
     <parameter default="157600" name="SYS_COMPANION" type="INT32">
-      <short_desc>Companion computer interface</short_desc>
-      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Configures the baud rate of the companion computer interface. Set to zero to disable, set to these values to enable (NO OTHER VALUES SUPPORTED!) 921600: enables onboard mode at 921600 baud, 8N1. 57600: enables onboard mode at 57600 baud, 8N1. 157600: enables OSD mode at 57600 baud, 8N1.</long_desc>
+      <short_desc>Enable TELEM2 as companion computer link</short_desc>
+      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Configures the baud rate of the TELEM2 connector as companion computer interface. Set to zero to disable, set to these values to enable (NO OTHER VALUES SUPPORTED!).</long_desc>
       <min>0</min>
-      <max>921600</max>
+      <max>1921600</max>
       <reboot_required>true</reboot_required>
       <values>
-        <value code="357600">Telemetry (57600 baud, 8N1)</value>
+        <value code="357600">Normal Telemetry (57600 baud, 8N1)</value>
+        <value code="157600">OSD (57600 baud, 8N1)</value>
         <value code="257600">Command Receiver (57600 baud, 8N1)</value>
+        <value code="1921600">ESP8266 (921600 baud, 8N1)</value>
         <value code="57600">Companion Link (57600 baud, 8N1)</value>
         <value code="921600">Companion Link (921600 baud, 8N1)</value>
-        <value code="157600">OSD (57600 baud, 8N1)</value>
       </values>
     </parameter>
     <parameter default="1" name="SYS_PARAM_VER" type="INT32">
