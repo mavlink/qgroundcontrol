@@ -2,7 +2,7 @@
 <parameters>
   <version>3</version>
   <parameter_version_major>1</parameter_version_major>
-  <parameter_version_minor>6</parameter_version_minor>
+  <parameter_version_minor>7</parameter_version_minor>
   <group name="UAVCAN Motor Parameters" no_code_generation="true">
     <parameter default="75" name="ctl_bw" type="INT32">
       <short_desc>Speed controller bandwidth</short_desc>
@@ -341,32 +341,38 @@ velocity</short_desc>
       <min>4.0</min>
       <max>10000.0</max>
       <unit>ms</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="0" name="TRIG_POLARITY" type="INT32">
       <short_desc>Camera trigger polarity</short_desc>
-      <long_desc>This parameter sets the polarity of the trigger (0 = ACTIVE_LOW, 1 = ACTIVE_HIGH )</long_desc>
+      <long_desc>This parameter sets the polarity of the trigger (0 = active low, 1 = active high )</long_desc>
       <min>0</min>
       <max>1</max>
       <values>
-        <value code="1">ACTIVE_HIGH</value>
-        <value code="0">ACTIVE_LOW</value>
+        <value code="1">Active high</value>
+        <value code="0">Active low</value>
       </values>
     </parameter>
     <parameter default="0.5" name="TRIG_ACT_TIME" type="FLOAT">
       <short_desc>Camera trigger activation time</short_desc>
       <long_desc>This parameter sets the time the trigger needs to pulled high or low.</long_desc>
+      <min>0.1</min>
+      <max>3</max>
       <unit>ms</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="0" name="TRIG_MODE" type="INT32">
       <short_desc>Camera trigger mode</short_desc>
-      <long_desc>0 disables the trigger, 1 sets it to enabled on command, 2 always on, 3 distance based, 4 distance based enabled on command</long_desc>
+      <long_desc>0 disables the trigger, 1 sets it to enabled on command, 2 time based and always on, 3 distance based and always on, 4 distance based and started / stopped via mission or command.</long_desc>
       <min>0</min>
       <max>4</max>
+      <reboot_required>true</reboot_required>
       <values>
-        <value code="1">CMD</value>
+        <value code="1">On invididual commands</value>
         <value code="0">Disable</value>
-        <value code="3">Distance</value>
-        <value code="2">Always</value>
+        <value code="3">Distance based, always on</value>
+        <value code="2">Time based, always on</value>
+        <value code="4">Distance, mission controlled</value>
       </values>
     </parameter>
     <parameter default="12" name="TRIG_PINS" type="INT32">
@@ -374,12 +380,16 @@ velocity</short_desc>
       <long_desc>Selects which pin is used, ranges from 1 to 6 (AUX1-AUX6)</long_desc>
       <min>1</min>
       <max>123456</max>
+      <decimal>0</decimal>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="25.0" name="TRIG_DISTANCE" type="FLOAT">
       <short_desc>Camera trigger distance</short_desc>
       <long_desc>Sets the distance at which to trigger the camera.</long_desc>
       <min>0</min>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
     </parameter>
   </group>
   <group name="Circuit Breaker">
