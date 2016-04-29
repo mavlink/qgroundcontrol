@@ -1634,6 +1634,9 @@ void Vehicle::setFirmwareVersion(int majorVersion, int minorVersion, int patchVe
     _firmwareMajorVersion = majorVersion;
     _firmwareMinorVersion = minorVersion;
     _firmwarePatchVersion = patchVersion;
+    emit firmwareMajorVersionChanged(_firmwareMajorVersion);
+    emit firmwareMinorVersionChanged(_firmwareMinorVersion);
+    emit firmwarePatchVersionChanged(_firmwarePatchVersion);
 }
 
 void Vehicle::rebootVehicle()

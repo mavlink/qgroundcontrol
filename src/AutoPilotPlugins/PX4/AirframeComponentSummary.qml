@@ -41,7 +41,7 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: qsTr("Firmware Version:")
-            valueText: activeVehicle.firmwareMajorVersion() + "." + activeVehicle.firmwareMinorVersion() + "." + activeVehicle.firmwarePatchVersion()
+            valueText: activeVehicle.firmwareMajorVersion + "." + activeVehicle.firmwareMinorVersion + "." + activeVehicle.firmwarePatchVersion
         }
     }
 }

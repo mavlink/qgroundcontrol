@@ -316,6 +316,10 @@ public:
     Q_PROPERTY(FactGroup* wind      READ windFactGroup      CONSTANT)
     Q_PROPERTY(FactGroup* vibration READ vibrationFactGroup CONSTANT)
 
+    Q_PROPERTY(int firmwareMajorVersion READ firmwareMajorVersion NOTIFY firmwareMajorVersionChanged)
+    Q_PROPERTY(int firmwareMinorVersion READ firmwareMinorVersion NOTIFY firmwareMinorVersionChanged)
+    Q_PROPERTY(int firmwarePatchVersion READ firmwarePatchVersion NOTIFY firmwarePatchVersionChanged)
+
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 
@@ -524,9 +528,9 @@ public:
     bool containsLink(LinkInterface* link) { return _links.contains(link); }
     void doCommandLong(int component, MAV_CMD command, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
-    Q_INVOKABLE int firmwareMajorVersion(void) const { return _firmwareMajorVersion; }
-    Q_INVOKABLE int firmwareMinorVersion(void) const { return _firmwareMinorVersion; }
-    Q_INVOKABLE int firmwarePatchVersion(void) const { return _firmwarePatchVersion; }
+    int firmwareMajorVersion(void) const { return _firmwareMajorVersion; }
+    int firmwareMinorVersion(void) const { return _firmwareMinorVersion; }
+    int firmwarePatchVersion(void) const { return _firmwarePatchVersion; }
     void setFirmwareVersion(int majorVersion, int minorVersion, int patchVersion);
     static const int versionNotSetValue = -1;
 
@@ -575,6 +579,10 @@ signals:
     void currentStateChanged    ();
     void flowImageIndexChanged  ();
     void rcRSSIChanged          (int rcRSSI);
+
+    void firmwareMajorVersionChanged(int major);
+    void firmwareMinorVersionChanged(int minor);
+    void firmwarePatchVersionChanged(int patch);
 
     /// New RC channel values
     ///     @param channelCount Number of available channels, cMaxRcChannels max
