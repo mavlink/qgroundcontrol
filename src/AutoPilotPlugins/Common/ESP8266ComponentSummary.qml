@@ -25,6 +25,7 @@ FactPanel {
     property Fact wifiHostPort:     controller.getParameterFact(esp8266.componentID, "WIFI_UDP_HPORT")
     property Fact wifiClientPort:   controller.getParameterFact(esp8266.componentID, "WIFI_UDP_CPORT")
     property Fact uartBaud:         controller.getParameterFact(esp8266.componentID, "UART_BAUDRATE")
+    property Fact wifiMode:         controller.getParameterFact(esp8266.componentID, "WIFI_MODE", false) //-- Don't bitch if missing
 
     Column {
         anchors.fill:       parent
@@ -34,16 +35,28 @@ FactPanel {
             valueText: esp8266.version
         }
         VehicleSummaryRow {
+            labelText: qsTr("WiFi Mode:")
+            valueText: wifiMode ? (wifiMode.value === 0 ? "AP Mode" : "Station Mode") : "AP Mode"
+        }
+        VehicleSummaryRow {
             labelText: qsTr("WiFi Channel:")
             valueText: wifiChannel ? wifiChannel.valueString : ""
         }
         VehicleSummaryRow {
-            labelText: qsTr("WiFi SSID:")
+            labelText: qsTr("WiFi AP SSID:")
             valueText: esp8266.wifiSSID
         }
         VehicleSummaryRow {
-            labelText: qsTr("WiFi Password:")
+            labelText: qsTr("WiFi AP Password:")
             valueText: esp8266.wifiPassword
+        }
+        VehicleSummaryRow {
+            labelText: qsTr("WiFi STA SSID:")
+            valueText: esp8266.wifiSSIDSta
+        }
+        VehicleSummaryRow {
+            labelText: qsTr("WiFi STA Password:")
+            valueText: esp8266.wifiPasswordSta
         }
         VehicleSummaryRow {
             labelText: qsTr("UART Baud Rate:")
