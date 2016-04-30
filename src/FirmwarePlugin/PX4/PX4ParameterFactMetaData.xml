@@ -2,7 +2,7 @@
 <parameters>
   <version>3</version>
   <parameter_version_major>1</parameter_version_major>
-  <parameter_version_minor>7</parameter_version_minor>
+  <parameter_version_minor>8</parameter_version_minor>
   <group name="UAVCAN Motor Parameters" no_code_generation="true">
     <parameter default="75" name="ctl_bw" type="INT32">
       <short_desc>Speed controller bandwidth</short_desc>
@@ -261,41 +261,41 @@ velocity</short_desc>
       <short_desc>Offset for battery current sensor</short_desc>
       <decimal>8</decimal>
     </parameter>
-    <parameter default="3.35" name="BAT_V_EMPTY" type="FLOAT">
-      <short_desc>Empty cell voltage</short_desc>
-      <long_desc>Defines the voltage where a single cell of the battery is considered empty.</long_desc>
+    <parameter default="3.5" name="BAT_V_EMPTY" type="FLOAT">
+      <short_desc>Empty cell voltage (5C load)</short_desc>
+      <long_desc>Defines the voltage where a single cell of the battery is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
       <unit>V</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter default="4.2" name="BAT_V_CHARGED" type="FLOAT">
-      <short_desc>Full cell voltage</short_desc>
-      <long_desc>Defines the voltage where a single cell of the battery is considered full.</long_desc>
+    <parameter default="4.1" name="BAT_V_CHARGED" type="FLOAT">
+      <short_desc>Full cell voltage (5C load)</short_desc>
+      <long_desc>Defines the voltage where a single cell of the battery is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
       <unit>V</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter default="0.18" name="BAT_LOW_THR" type="FLOAT">
+    <parameter default="0.15" name="BAT_LOW_THR" type="FLOAT">
       <short_desc>Low threshold</short_desc>
-      <long_desc>Sets the threshold (between 0 and 1, which is equivalent to between 0 and 100%) when the battery will be reported as low. This has to be higher than the critical threshold.</long_desc>
-      <min>0.15</min>
-      <max>0.5</max>
+      <long_desc>Sets the threshold when the battery will be reported as low. This has to be higher than the critical threshold.</long_desc>
+      <min>0.12</min>
+      <max>0.4</max>
       <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter default="0.09" name="BAT_CRIT_THR" type="FLOAT">
+    <parameter default="0.07" name="BAT_CRIT_THR" type="FLOAT">
       <short_desc>Critical threshold</short_desc>
-      <long_desc>Sets the threshold (between 0 and 1, which is equivalent to between 0 and 100%) when the battery will be reported as critically low. This has to be lower than the low threshold. This threshold commonly will trigger RTL or landing.</long_desc>
+      <long_desc>Sets the threshold when the battery will be reported as critically low. This has to be lower than the low threshold. This threshold commonly will trigger RTL or landing.</long_desc>
       <min>0.05</min>
-      <max>0.14</max>
+      <max>0.1</max>
       <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter default="0.25" name="BAT_V_LOAD_DROP" type="FLOAT">
-      <short_desc>Voltage drop per cell on 100% load</short_desc>
-      <long_desc>This implicitely defines the internal resistance to maximum current ratio and assumes linearity.</long_desc>
+      <short_desc>Voltage drop per cell on full throttle</short_desc>
+      <long_desc>This implicitely defines the internal resistance to maximum current ratio and assumes linearity. A good value to use is the difference between the 5C and 20-25C load.</long_desc>
       <min>0.07</min>
       <max>0.5</max>
       <unit>V</unit>
@@ -5140,9 +5140,11 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <max>1921600</max>
       <reboot_required>true</reboot_required>
       <values>
+        <value code="10">FrSky Telemetry</value>
         <value code="357600">Normal Telemetry (57600 baud, 8N1)</value>
-        <value code="157600">OSD (57600 baud, 8N1)</value>
         <value code="257600">Command Receiver (57600 baud, 8N1)</value>
+        <value code="157600">OSD (57600 baud, 8N1)</value>
+        <value code="0">Disabled</value>
         <value code="1921600">ESP8266 (921600 baud, 8N1)</value>
         <value code="57600">Companion Link (57600 baud, 8N1)</value>
         <value code="921600">Companion Link (921600 baud, 8N1)</value>
