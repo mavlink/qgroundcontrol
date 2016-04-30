@@ -71,12 +71,10 @@ QGCView {
             url = url + "?r=1"
             stResetCounters = false
         }
-        console.log(url)
         req.open("GET", url);
         req.onreadystatechange = function() {
             stStatus = req.readyState;
             if (stStatus === XMLHttpRequest.DONE) {
-                console.log(req.responseText)
                 var objectArray = JSON.parse(req.responseText);
                 if (objectArray.errors !== undefined) {
                     console.log(qsTr("Error fetching WiFi Bridge Status: %1").arg(objectArray.errors[0].message))
