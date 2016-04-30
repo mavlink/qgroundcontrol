@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009, 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 
@@ -45,26 +45,28 @@ namespace Ui {
 class ESP8266ComponentController : public FactPanelController
 {
     Q_OBJECT
-    
+
 public:
     ESP8266ComponentController      ();
     ~ESP8266ComponentController     ();
 
     Q_PROPERTY(int              componentID     READ componentID                            CONSTANT)
     Q_PROPERTY(QString          version         READ version                                NOTIFY versionChanged)
+    Q_PROPERTY(QString          wifiIPAddress   READ wifiIPAddress                          CONSTANT)
     Q_PROPERTY(QString          wifiSSID        READ wifiSSID       WRITE setWifiSSID       NOTIFY wifiSSIDChanged)
     Q_PROPERTY(QString          wifiPassword    READ wifiPassword   WRITE setWifiPassword   NOTIFY wifiPasswordChanged)
     Q_PROPERTY(QStringList      wifiChannels    READ wifiChannels                           CONSTANT)
     Q_PROPERTY(QStringList      baudRates       READ baudRates                              CONSTANT)
     Q_PROPERTY(int              baudIndex       READ baudIndex      WRITE setBaudIndex      NOTIFY baudIndexChanged)
     Q_PROPERTY(bool             busy            READ busy                                   NOTIFY busyChanged)
-    Q_PROPERTY(Vehicle*         vehicle         READ vehicle        CONSTANT)
+    Q_PROPERTY(Vehicle*         vehicle         READ vehicle                                CONSTANT)
 
     Q_INVOKABLE void restoreDefaults();
     Q_INVOKABLE void reboot         ();
 
     int             componentID     () { return MAV_COMP_ID_UDP_BRIDGE; }
     QString         version         ();
+    QString         wifiIPAddress   ();
     QString         wifiSSID        ();
     QString         wifiPassword    ();
     QStringList     wifiChannels    () { return _channels; }
@@ -100,6 +102,7 @@ private:
     QTimer      _timer;
     QStringList _channels;
     QStringList _baudRates;
+    QString     _ipAddress;
 
     enum {
         WAIT_FOR_NOTHING,

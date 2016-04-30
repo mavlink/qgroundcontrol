@@ -41,7 +41,7 @@ QGCView {
     QGCPalette { id: palette; colorGroupEnabled: panel.enabled }
 
     property int                _firstColumn:   ScreenTools.defaultFontPixelWidth * 20
-    property int                _secondColumn:  ScreenTools.defaultFontPixelWidth * 12
+    property int                _secondColumn:  ScreenTools.defaultFontPixelWidth * 18
     readonly property string    dialogTitle:    qsTr("controller WiFi Bridge")
     property int                stStatus:       XMLHttpRequest.UNSENT
     property int                stErrorCount:   0
@@ -64,15 +64,19 @@ QGCView {
     function updateStatus() {
         timer.stop()
         var req = new XMLHttpRequest;
-        var url = "http://192.168.4.1/status.json"
+        var url = "http://"
+        url += controller.wifiIPAddress
+        url += "/status.json"
         if(stResetCounters) {
             url = url + "?r=1"
             stResetCounters = false
         }
+        console.log(url)
         req.open("GET", url);
         req.onreadystatechange = function() {
             stStatus = req.readyState;
             if (stStatus === XMLHttpRequest.DONE) {
+                console.log(req.responseText)
                 var objectArray = JSON.parse(req.responseText);
                 if (objectArray.errors !== undefined) {
                     console.log(qsTr("Error fetching WiFi Bridge Status: %1").arg(objectArray.errors[0].message))
@@ -107,6 +111,7 @@ QGCView {
         timer.triggered.connect(updateStatus)
     }
 
+    property Fact wifiMode:     controller.getParameterFact(controller.componentID, "WIFI_MODE",      false) //-- Don't bitch about missing as this is new
     property Fact wifiChannel:  controller.getParameterFact(controller.componentID, "WIFI_CHANNEL")
     property Fact hostPort:     controller.getParameterFact(controller.componentID, "WIFI_UDP_HPORT")
     property Fact clientPort:   controller.getParameterFact(controller.componentID, "WIFI_UDP_CPORT")
@@ -150,6 +155,24 @@ QGCView {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing:            ScreenTools.defaultFontPixelHeight / 2
                             Row {
+                                visible:            wifiMode
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                QGCLabel {
+                                    text:           qsTr("WiFi Mode")
+                                    width:          _firstColumn
+                                    anchors.baseline: modeField.baseline
+                                }
+                                QGCComboBox {
+                                    id:             modeField
+                                    width:          _secondColumn
+                                    model:          ["Access Point Mode", "Station Mode"]
+                                    currentIndex:   wifiMode ? wifiMode.value : 0
+                                    onActivated: {
+                                        wifiMode.value = index
+                                    }
+                                }
+                            }
+                            Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 QGCLabel {
                                     text:           qsTr("WiFi Channel")
@@ -159,6 +182,7 @@ QGCView {
                                 QGCComboBox {
                                     id:             channelField
                                     width:          _secondColumn
+                                    enabled:        wifiMode && wifiMode.value === 0
                                     model:          controller.wifiChannels
                                     currentIndex:   wifiChannel ? wifiChannel.value - 1 : 0
                                     onActivated: {
@@ -395,8 +419,8 @@ QGCView {
                         }
                     }
                     QGCButton {
-                        text:   stEnabled ? qsTr("Hide Status") : qsTr("Show Status")
-                        width:  ScreenTools.defaultFontPixelWidth * 16
+                        text:       stEnabled ? qsTr("Hide Status") : qsTr("Show Status")
+                        width:      ScreenTools.defaultFontPixelWidth * 16
                         onClicked: {
                             stEnabled = !stEnabled
                             if(stEnabled)
