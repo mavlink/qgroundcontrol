@@ -30,6 +30,8 @@
 #include "QGCApplication.h"
 #include "UAS.h"
 
+#include <QHostAddress>
+
 QGC_LOGGING_CATEGORY(ESP8266ComponentControllerLog, "ESP8266ComponentControllerLog")
 
 #define MAX_RETRIES 5
@@ -165,6 +167,94 @@ ESP8266ComponentController::setWifiPassword(QString password)
     f3->setRawValue(QVariant(u));
     memcpy(&u, &tmp[12], sizeof(uint32_t));
     f4->setRawValue(QVariant(u));
+}
+
+//-----------------------------------------------------------------------------
+QString
+ESP8266ComponentController::wifiSSIDSta()
+{
+    if(!parameterExists(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSIDSTA1")) {
+        return QString();
+    }
+    uint32_t s1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSIDSTA1")->rawValue().toUInt();
+    uint32_t s2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSIDSTA2")->rawValue().toUInt();
+    uint32_t s3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSIDSTA3")->rawValue().toUInt();
+    uint32_t s4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSIDSTA4")->rawValue().toUInt();
+    char tmp[20];
+    memcpy(&tmp[0],  &s1, sizeof(uint32_t));
+    memcpy(&tmp[4],  &s2, sizeof(uint32_t));
+    memcpy(&tmp[8],  &s3, sizeof(uint32_t));
+    memcpy(&tmp[12], &s4, sizeof(uint32_t));
+    return QString(tmp);
+}
+
+//-----------------------------------------------------------------------------
+void
+ESP8266ComponentController::setWifiSSIDSta(QString ssid)
+{
+    if(parameterExists(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSIDSTA1")) {
+        char tmp[20];
+        memset(tmp, 0, sizeof(tmp));
+        std::string	sid = ssid.toStdString();
+        strncpy(tmp, sid.c_str(), sizeof(tmp));
+        Fact* f1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSIDSTA1");
+        Fact* f2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSIDSTA2");
+        Fact* f3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSIDSTA3");
+        Fact* f4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSIDSTA4");
+        uint32_t u;
+        memcpy(&u, &tmp[0], sizeof(uint32_t));
+        f1->setRawValue(QVariant(u));
+        memcpy(&u, &tmp[4], sizeof(uint32_t));
+        f2->setRawValue(QVariant(u));
+        memcpy(&u, &tmp[8], sizeof(uint32_t));
+        f3->setRawValue(QVariant(u));
+        memcpy(&u, &tmp[12], sizeof(uint32_t));
+        f4->setRawValue(QVariant(u));
+    }
+}
+
+//-----------------------------------------------------------------------------
+QString
+ESP8266ComponentController::wifiPasswordSta()
+{
+    if(!parameterExists(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PWDSTA1")) {
+        return QString();
+    }
+    uint32_t s1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PWDSTA1")->rawValue().toUInt();
+    uint32_t s2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PWDSTA2")->rawValue().toUInt();
+    uint32_t s3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PWDSTA3")->rawValue().toUInt();
+    uint32_t s4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PWDSTA4")->rawValue().toUInt();
+    char tmp[20];
+    memcpy(&tmp[0],  &s1, sizeof(uint32_t));
+    memcpy(&tmp[4],  &s2, sizeof(uint32_t));
+    memcpy(&tmp[8],  &s3, sizeof(uint32_t));
+    memcpy(&tmp[12], &s4, sizeof(uint32_t));
+    return QString(tmp);
+}
+
+//-----------------------------------------------------------------------------
+void
+ESP8266ComponentController::setWifiPasswordSta(QString password)
+{
+    if(parameterExists(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PWDSTA1")) {
+        char tmp[20];
+        memset(tmp, 0, sizeof(tmp));
+        std::string	pwd = password.toStdString();
+        strncpy(tmp, pwd.c_str(), sizeof(tmp));
+        Fact* f1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PWDSTA1");
+        Fact* f2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PWDSTA2");
+        Fact* f3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PWDSTA3");
+        Fact* f4 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PWDSTA4");
+        uint32_t u;
+        memcpy(&u, &tmp[0], sizeof(uint32_t));
+        f1->setRawValue(QVariant(u));
+        memcpy(&u, &tmp[4], sizeof(uint32_t));
+        f2->setRawValue(QVariant(u));
+        memcpy(&u, &tmp[8], sizeof(uint32_t));
+        f3->setRawValue(QVariant(u));
+        memcpy(&u, &tmp[12], sizeof(uint32_t));
+        f4->setRawValue(QVariant(u));
+    }
 }
 
 //-----------------------------------------------------------------------------

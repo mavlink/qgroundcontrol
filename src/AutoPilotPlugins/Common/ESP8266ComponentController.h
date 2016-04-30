@@ -50,16 +50,18 @@ public:
     ESP8266ComponentController      ();
     ~ESP8266ComponentController     ();
 
-    Q_PROPERTY(int              componentID     READ componentID                            CONSTANT)
-    Q_PROPERTY(QString          version         READ version                                NOTIFY versionChanged)
-    Q_PROPERTY(QString          wifiIPAddress   READ wifiIPAddress                          CONSTANT)
-    Q_PROPERTY(QString          wifiSSID        READ wifiSSID       WRITE setWifiSSID       NOTIFY wifiSSIDChanged)
-    Q_PROPERTY(QString          wifiPassword    READ wifiPassword   WRITE setWifiPassword   NOTIFY wifiPasswordChanged)
-    Q_PROPERTY(QStringList      wifiChannels    READ wifiChannels                           CONSTANT)
-    Q_PROPERTY(QStringList      baudRates       READ baudRates                              CONSTANT)
-    Q_PROPERTY(int              baudIndex       READ baudIndex      WRITE setBaudIndex      NOTIFY baudIndexChanged)
-    Q_PROPERTY(bool             busy            READ busy                                   NOTIFY busyChanged)
-    Q_PROPERTY(Vehicle*         vehicle         READ vehicle                                CONSTANT)
+    Q_PROPERTY(int              componentID     READ componentID                                    CONSTANT)
+    Q_PROPERTY(QString          version         READ version                                        NOTIFY versionChanged)
+    Q_PROPERTY(QString          wifiIPAddress   READ wifiIPAddress                                  CONSTANT)
+    Q_PROPERTY(QString          wifiSSID        READ wifiSSID           WRITE setWifiSSID           NOTIFY wifiSSIDChanged)
+    Q_PROPERTY(QString          wifiPassword    READ wifiPassword       WRITE setWifiPassword       NOTIFY wifiPasswordChanged)
+    Q_PROPERTY(QString          wifiSSIDSta     READ wifiSSIDSta        WRITE setWifiSSIDSta        NOTIFY wifiSSIDStaChanged)
+    Q_PROPERTY(QString          wifiPasswordSta READ wifiPasswordSta    WRITE setWifiPasswordSta    NOTIFY wifiPasswordStaChanged)
+    Q_PROPERTY(QStringList      wifiChannels    READ wifiChannels                                   CONSTANT)
+    Q_PROPERTY(QStringList      baudRates       READ baudRates                                      CONSTANT)
+    Q_PROPERTY(int              baudIndex       READ baudIndex          WRITE setBaudIndex          NOTIFY baudIndexChanged)
+    Q_PROPERTY(bool             busy            READ busy                                           NOTIFY busyChanged)
+    Q_PROPERTY(Vehicle*         vehicle         READ vehicle                                        CONSTANT)
 
     Q_INVOKABLE void restoreDefaults();
     Q_INVOKABLE void reboot         ();
@@ -69,6 +71,8 @@ public:
     QString         wifiIPAddress   ();
     QString         wifiSSID        ();
     QString         wifiPassword    ();
+    QString         wifiSSIDSta     ();
+    QString         wifiPasswordSta ();
     QStringList     wifiChannels    () { return _channels; }
     QStringList     baudRates       () { return _baudRates; }
     int             baudIndex       ();
@@ -77,14 +81,18 @@ public:
 
     void        setWifiSSID         (QString id);
     void        setWifiPassword     (QString pwd);
+    void        setWifiSSIDSta      (QString id);
+    void        setWifiPasswordSta  (QString pwd);
     void        setBaudIndex        (int idx);
 
 signals:
-    void        versionChanged      ();
-    void        wifiSSIDChanged     ();
-    void        wifiPasswordChanged ();
-    void        baudIndexChanged    ();
-    void        busyChanged         ();
+    void        versionChanged          ();
+    void        wifiSSIDChanged         ();
+    void        wifiPasswordChanged     ();
+    void        wifiSSIDStaChanged      ();
+    void        wifiPasswordStaChanged  ();
+    void        baudIndexChanged        ();
+    void        busyChanged             ();
 
 private slots:
     void        _processTimeout     ();

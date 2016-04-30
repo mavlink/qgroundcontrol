@@ -145,6 +145,8 @@
         <file alias="TelemRSSI.svg">src/ui/toolbar/Images/TelemRSSI.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
         <file alias="CogWheel.svg">src/MissionManager/CogWheel.svg</file>
+        <file alias="StationMode.svg">src/AutoPilotPlugins/Common/Images/StationMode.svg</file>
+        <file alias="APMode.svg">src/AutoPilotPlugins/Common/Images/APMode.svg</file>
     </qresource>
     <qresource prefix="/res">
         <file alias="AntennaRC">resources/Antenna_RC.svg</file>
