@@ -31,6 +31,7 @@
 #include "UAS.h"
 
 #include <QHostAddress>
+#include <QtEndian>
 
 QGC_LOGGING_CATEGORY(ESP8266ComponentControllerLog, "ESP8266ComponentControllerLog")
 
@@ -82,7 +83,7 @@ ESP8266ComponentController::wifiIPAddress()
 {
     if(_ipAddress.isEmpty()) {
         if(parameterExists(MAV_COMP_ID_UDP_BRIDGE, "WIFI_IPADDRESS")) {
-            QHostAddress address(ntohl(getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_IPADDRESS")->rawValue().toUInt()));
+            QHostAddress address(qFromBigEndian(getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_IPADDRESS")->rawValue().toUInt()));
             _ipAddress = address.toString();
         } else {
             _ipAddress = "192.168.4.1";
