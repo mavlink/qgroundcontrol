@@ -44,7 +44,7 @@ const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
 };
 
 Joystick::Joystick(const QString& name, int axisCount, int buttonCount, MultiVehicleManager* multiVehicleManager)
-    , _exitThread(false)
+    : _exitThread(false)
     , _name(name)
     , _axisCount(axisCount)
     , _buttonCount(buttonCount)
