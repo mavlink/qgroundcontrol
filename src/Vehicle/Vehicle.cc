@@ -99,8 +99,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _navigationTargetBearing(0.0f)
     , _refreshTimer(new QTimer(this))
     , _updateCount(0)
-    , _rcRSSI(0)
-    , _rcRSSIstore(100.0)
+    , _rcRSSI(255)
+    , _rcRSSIstore(255)
     , _autoDisconnect(false)
     , _flying(false)
     , _connectionLost(false)
@@ -270,8 +270,8 @@ Vehicle::Vehicle(QObject* parent)
     , _navigationTargetBearing(0.0f)
     , _refreshTimer(new QTimer(this))
     , _updateCount(0)
-    , _rcRSSI(0)
-    , _rcRSSIstore(100.0)
+    , _rcRSSI(255)
+    , _rcRSSIstore(255)
     , _autoDisconnect(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
@@ -1336,6 +1336,10 @@ void Vehicle::_imageReady(UASInterface*)
 
 void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
 {
+    if (_rcRSSIstore < 0 || _rcRSSIstore > 100) {
+        _rcRSSIstore = rssi;
+    }
+
     // Low pass to git rid of jitter
     _rcRSSIstore = (_rcRSSIstore * 0.9f) + ((float)rssi * 0.1);
     uint8_t filteredRSSI = (uint8_t)ceil(_rcRSSIstore);
