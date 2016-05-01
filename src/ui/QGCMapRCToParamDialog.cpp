@@ -41,17 +41,22 @@ QGCMapRCToParamDialog::QGCMapRCToParamDialog(QString param_id, UASInterface *mav
     , ui(new Ui::QGCMapRCToParamDialog)
 {
     ui->setupUi(this);
+
+    // refresh the parameter from onboard to make sure the current value is used
+    AutoPilotPlugin* autopilot = _multiVehicleManager->getVehicleById(mav->getUASID())->autopilotPlugin();
+    Q_ASSERT(autopilot);
+    Fact* paramFact = autopilot->getParameterFact(FactSystem::defaultComponentId, param_id);
     
+    ui->minValueDoubleSpinBox->setValue(paramFact->rawMin().toDouble());
+    ui->maxValueDoubleSpinBox->setValue(paramFact->rawMax().toDouble());
+
     // only enable ok button when param was refreshed
     QPushButton *okButton = ui->buttonBox->button(QDialogButtonBox::Ok);
     okButton->setEnabled(false);
 
     ui->paramIdLabel->setText(param_id);
 
-    // refresh the parameter from onboard to make sure the current value is used
-    AutoPilotPlugin* autopilot = _multiVehicleManager->getVehicleById(mav->getUASID())->autopilotPlugin();
-    Q_ASSERT(autopilot);
-    connect(autopilot->getParameterFact(FactSystem::defaultComponentId, param_id), &Fact::valueChanged, this, &QGCMapRCToParamDialog::_parameterUpdated);
+    connect(paramFact, &Fact::valueChanged, this, &QGCMapRCToParamDialog::_parameterUpdated);
     autopilot->refreshParameter(FactSystem::defaultComponentId, param_id);
 }
 
