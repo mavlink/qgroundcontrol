@@ -139,6 +139,7 @@ bool JoystickAndroid::handleKeyEvent(jobject event) {
         if (btnCode[i]==keyCode) {
             if (action==ACTION_DOWN) btnValue[i] = true;
             if (action==ACTION_UP) btnValue[i] = false;
+            qWarning() << "Btn:"<<i;
             return true;
         }
     }
