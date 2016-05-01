@@ -320,6 +320,11 @@ HEADERS += \
     src/Joystick/JoystickAndroid.h \
 }
 
+AndroidBuild {
+HEADERS += \
+    src/Joystick/JoystickAndroid.h \
+}
+
 DebugBuild {
 HEADERS += \
     src/comm/MockLink.h \
