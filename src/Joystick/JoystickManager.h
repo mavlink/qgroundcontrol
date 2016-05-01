@@ -41,6 +41,7 @@ class JoystickManager : public QGCTool
     
 public:
     JoystickManager(QGCApplication* app);
+    ~JoystickManager();
 
     /// List of available joysticks
     Q_PROPERTY(QVariantList joysticks READ joysticks CONSTANT)

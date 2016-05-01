@@ -28,14 +28,6 @@
 
 #include <QSettings>
 
-#ifndef __mobile__
-    #ifdef Q_OS_MAC
-        #include <SDL.h>
-    #else
-        #include <SDL/SDL.h>
-    #endif
-#endif
-
 QGC_LOGGING_CATEGORY(JoystickLog, "JoystickLog")
 QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
 
@@ -51,10 +43,8 @@ const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "ThrottleAxis"
 };
 
-Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlIndex, MultiVehicleManager* multiVehicleManager)
-#ifndef __mobile__
-    : _sdlIndex(sdlIndex)
-    , _exitThread(false)
+Joystick::Joystick(const QString& name, int axisCount, int buttonCount, MultiVehicleManager* multiVehicleManager)
+    : _exitThread(false)
     , _name(name)
     , _axisCount(axisCount)
     , _buttonCount(buttonCount)
@@ -68,15 +58,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     , _activeVehicle(NULL)
     , _pollingStartedForCalibration(false)
     , _multiVehicleManager(multiVehicleManager)
-#endif // __mobile__
 {
-#ifdef __mobile__
-    Q_UNUSED(name)
-    Q_UNUSED(axisCount)
-    Q_UNUSED(buttonCount)
-    Q_UNUSED(sdlIndex)
-    Q_UNUSED(multiVehicleManager)
-#else
+
     _rgAxisValues = new int[_axisCount];
     _rgCalibration = new Calibration_t[_axisCount];
     _rgButtonValues = new bool[_buttonCount];
@@ -90,20 +73,121 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     }
     
     _loadSettings();
-#endif // __mobile __
+
 }
 
 Joystick::~Joystick()
 {
-#ifndef __mobile__
     delete _rgAxisValues;
     delete _rgCalibration;
     delete _rgButtonValues;
     delete _rgButtonActions;
-#endif
 }
 
-#ifndef __mobile__
+void Joystick::run(void)
+{
+    open();
+
+    while (!_exitThread) {
+        update();
+
+        // Update axes
+        for (int axisIndex=0; axisIndex<_axisCount; axisIndex++) {
+            int newAxisValue = getAxis(axisIndex);
+            // Calibration code requires signal to be emitted even if value hasn't changed
+            _rgAxisValues[axisIndex] = newAxisValue;
+            emit rawAxisValueChanged(axisIndex, newAxisValue);
+        }
+
+        // Update buttons
+        for (int buttonIndex=0; buttonIndex<_buttonCount; buttonIndex++) {
+            bool newButtonValue = getButton(buttonIndex);
+            if (newButtonValue != _rgButtonValues[buttonIndex]) {
+                _rgButtonValues[buttonIndex] = newButtonValue;
+                emit rawButtonPressedChanged(buttonIndex, newButtonValue);
+            }
+        }
+
+        if (_calibrationMode != CalibrationModeCalibrating) {
+            int     axis = _rgFunctionAxis[rollFunction];
+            float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
+
+                    axis = _rgFunctionAxis[pitchFunction];
+            float   pitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
+
+                    axis = _rgFunctionAxis[yawFunction];
+            float   yaw = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
+
+                    axis = _rgFunctionAxis[throttleFunction];
+            float   throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
+
+            float roll_limited = std::max(static_cast<float>(-M_PI_4), std::min(roll, static_cast<float>(M_PI_4)));
+            float pitch_limited = std::max(static_cast<float>(-M_PI_4), std::min(pitch, static_cast<float>(M_PI_4)));
+            float yaw_limited = std::max(static_cast<float>(-M_PI_4), std::min(yaw, static_cast<float>(M_PI_4)));
+            float throttle_limited = std::max(static_cast<float>(-M_PI_4), std::min(throttle, static_cast<float>(M_PI_4)));
+
+            // Map from unit circle to linear range and limit
+            roll =      std::max(-1.0f, std::min(tanf(asinf(roll_limited)), 1.0f));
+            pitch =     std::max(-1.0f, std::min(tanf(asinf(pitch_limited)), 1.0f));
+            yaw =       std::max(-1.0f, std::min(tanf(asinf(yaw_limited)), 1.0f));
+            throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle_limited)), 1.0f));
+
+            // Adjust throttle to 0:1 range
+            if (_throttleMode == ThrottleModeCenterZero) {
+                throttle = std::max(0.0f, throttle);
+            } else {
+                throttle = (throttle + 1.0f) / 2.0f;
+            }
+
+            // Set up button pressed information
+
+            // We only send the buttons the firmwware has reserved
+            int reservedButtonCount = _activeVehicle->manualControlReservedButtonCount();
+            if (reservedButtonCount == -1)
+                reservedButtonCount = _buttonCount;
+
+
+            quint16 newButtonBits = 0;      // New set of button which are down
+            quint16 buttonPressedBits = 0;  // Buttons pressed for manualControl signal
+
+            for (int buttonIndex=0; buttonIndex<_buttonCount; buttonIndex++) {
+                quint16 buttonBit = 1 << buttonIndex;
+
+                if (!_rgButtonValues[buttonIndex]) {
+                    // Button up, just record it
+                    newButtonBits |= buttonBit;
+                } else {
+                    if (_lastButtonBits & buttonBit) {
+                        // Button was up last time through, but is now down which indicates a button press
+                        qCDebug(JoystickLog) << "button triggered" << buttonIndex;
+
+                        if (buttonIndex >= reservedButtonCount) {
+                            // Button is above firmware reserved set
+                            QString buttonAction =_rgButtonActions[buttonIndex];
+                            if (!buttonAction.isEmpty()) {
+                                _buttonAction(buttonAction);
+                            }
+                        }
+                    }
+
+                    // Mark the button as pressed as long as its pressed
+                    buttonPressedBits |= buttonBit;
+                }
+            }
+
+            _lastButtonBits = newButtonBits;
+
+            //qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle;
+
+            emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
+        }
+
+        // Sleep, update rate of joystick is approx. 25 Hz (1000 ms / 25 = 40 ms)
+        QGC::SLEEP::msleep(40);
+    }
+
+    close();
+}
 
 void Joystick::_loadSettings(void)
 {
@@ -255,115 +339,6 @@ float Joystick::_adjustRange(int value, Calibration_t calibration)
 }
 
 
-void Joystick::run(void)
-{
-    SDL_Joystick* sdlJoystick = SDL_JoystickOpen(_sdlIndex);
-    
-    if (!sdlJoystick) {
-        qCWarning(JoystickLog) << "SDL_JoystickOpen failed:" << SDL_GetError();
-        return;
-    }
-    
-    while (!_exitThread) {
-        SDL_JoystickUpdate();
-
-        // Update axes
-        for (int axisIndex=0; axisIndex<_axisCount; axisIndex++) {
-            int newAxisValue = SDL_JoystickGetAxis(sdlJoystick, axisIndex);
-            // Calibration code requires signal to be emitted even if value hasn't changed
-            _rgAxisValues[axisIndex] = newAxisValue;
-            emit rawAxisValueChanged(axisIndex, newAxisValue);
-        }
-        
-        // Update buttons
-        for (int buttonIndex=0; buttonIndex<_buttonCount; buttonIndex++) {
-            bool newButtonValue = !!SDL_JoystickGetButton(sdlJoystick, buttonIndex);
-            if (newButtonValue != _rgButtonValues[buttonIndex]) {
-                _rgButtonValues[buttonIndex] = newButtonValue;
-                emit rawButtonPressedChanged(buttonIndex, newButtonValue);
-            }
-        }
-        
-        if (_calibrationMode != CalibrationModeCalibrating) {
-            int     axis = _rgFunctionAxis[rollFunction];
-            float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
-            
-                    axis = _rgFunctionAxis[pitchFunction];
-            float   pitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
-            
-                    axis = _rgFunctionAxis[yawFunction];
-            float   yaw = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
-
-                    axis = _rgFunctionAxis[throttleFunction];
-            float   throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
-
-            float roll_limited = std::max(static_cast<float>(-M_PI_4), std::min(roll, static_cast<float>(M_PI_4)));
-            float pitch_limited = std::max(static_cast<float>(-M_PI_4), std::min(pitch, static_cast<float>(M_PI_4)));
-            float yaw_limited = std::max(static_cast<float>(-M_PI_4), std::min(yaw, static_cast<float>(M_PI_4)));
-            float throttle_limited = std::max(static_cast<float>(-M_PI_4), std::min(throttle, static_cast<float>(M_PI_4)));
-
-            // Map from unit circle to linear range and limit
-            roll =      std::max(-1.0f, std::min(tanf(asinf(roll_limited)), 1.0f));
-            pitch =     std::max(-1.0f, std::min(tanf(asinf(pitch_limited)), 1.0f));
-            yaw =       std::max(-1.0f, std::min(tanf(asinf(yaw_limited)), 1.0f));
-            throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle_limited)), 1.0f));
-            
-            // Adjust throttle to 0:1 range
-            if (_throttleMode == ThrottleModeCenterZero) {
-                throttle = std::max(0.0f, throttle);
-            } else {                
-                throttle = (throttle + 1.0f) / 2.0f;
-            }
-            
-            // Set up button pressed information
-            
-            // We only send the buttons the firmwware has reserved
-            int reservedButtonCount = _activeVehicle->manualControlReservedButtonCount();
-            if (reservedButtonCount == -1) {
-                reservedButtonCount = _buttonCount;
-            }
-            
-            quint16 newButtonBits = 0;      // New set of button which are down
-            quint16 buttonPressedBits = 0;  // Buttons pressed for manualControl signal
-            
-            for (int buttonIndex=0; buttonIndex<_buttonCount; buttonIndex++) {
-                quint16 buttonBit = 1 << buttonIndex;
-                
-                if (!_rgButtonValues[buttonIndex]) {
-                    // Button up, just record it
-                    newButtonBits |= buttonBit;
-                } else {
-                    if (_lastButtonBits & buttonBit) {
-                        // Button was up last time through, but is now down which indicates a button press
-                        qCDebug(JoystickLog) << "button triggered" << buttonIndex;
-                        
-                        if (buttonIndex >= reservedButtonCount) {
-                            // Button is above firmware reserved set
-                            QString buttonAction =_rgButtonActions[buttonIndex];
-                            if (!buttonAction.isEmpty()) {
-                                _buttonAction(buttonAction);
-                            }
-                        }
-                    }
-
-                    // Mark the button as pressed as long as its pressed
-                    buttonPressedBits |= buttonBit;
-                }
-            }
-            
-            _lastButtonBits = newButtonBits;
-            
-            qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle;
-            
-            emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
-        }
-        
-        // Sleep, update rate of joystick is approx. 25 Hz (1000 ms / 25 = 40 ms)
-        QGC::SLEEP::msleep(40);
-    }
-    
-    SDL_JoystickClose(sdlJoystick);
-}
 
 void Joystick::startPolling(Vehicle* vehicle)
 {
@@ -579,4 +554,3 @@ bool Joystick::_validButton(int button)
     return button >= 0 && button < _buttonCount;
 }
 
-#endif // __mobile__
