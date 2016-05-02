@@ -469,7 +469,7 @@ QGCView {
                 }
 
                 Repeater {
-                    model: QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? [ "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_AUX3" ] : 0
+                    model: QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? [ "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"] : 0
 
                     Row {
                         spacing: ScreenTools.defaultFontPixelWidth

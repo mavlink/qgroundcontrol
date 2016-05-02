@@ -55,6 +55,7 @@ QGCView {
     property Fact _rcLossAction:    controller.getParameterFact(-1, "NAV_RCL_ACT")
     property Fact _dlLossAction:    controller.getParameterFact(-1, "NAV_DLL_ACT")
     property Fact _disarmLandDelay: controller.getParameterFact(-1, "COM_DISARM_LAND")
+    property Fact _landSpeedMC: controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
 
     QGCViewPanel {
         id:             panel
@@ -483,7 +484,7 @@ QGCView {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             Row {
-                                visible:                !controller.fixedWing
+                                visible:                _landSpeedMC !== -1
                                 QGCLabel {
                                     anchors.baseline:   landVelField.baseline
                                     width:              _middleRowWidth
@@ -491,7 +492,7 @@ QGCView {
                                 }
                                 FactTextField {
                                     id:                 landVelField
-                                    fact:               controller.getParameterFact(-1, "MPC_LAND_SPEED")
+                                    fact:               _landSpeedMC
                                     showUnits:          true
                                     width:              _editFieldWidth
                                 }
