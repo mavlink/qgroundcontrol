@@ -126,9 +126,12 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _tuningComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
 
-            _cameraComponent = new CameraComponent(_vehicle, this);
-            _cameraComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue((VehicleComponent*)_cameraComponent));
+            //-- Is there support for cameras?
+            if(factExists(FactSystem::ParameterProvider, _vehicle->id(), "TRIG_MODE")) {
+                _cameraComponent = new CameraComponent(_vehicle, this);
+                _cameraComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_cameraComponent));
+            }
 
             //-- Is there an ESP8266 Connected?
             if(factExists(FactSystem::ParameterProvider, MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {

@@ -13,10 +13,10 @@ Item {
 
     readonly property real defaultFontPixelSize:    _textMeasure.fontHeight * ScreenToolsController.defaultFontPixelSizeRatio
     readonly property real defaultFontPixelHeight:  defaultFontPixelSize
-    readonly property real defaultFontPixelWidth:   _textMeasure.fontWidth
-    readonly property real smallFontPixelSize:      defaultFontPixelSize * ScreenToolsController.smallFontPixelSizeRatio
+    readonly property real defaultFontPixelWidth:   _textMeasure.fontWidth  * ScreenToolsController.defaultFontPixelSizeRatio
+    readonly property real smallFontPixelSize:      defaultFontPixelSize    * ScreenToolsController.smallFontPixelSizeRatio
     readonly property real smallFontPixelHeight:    smallFontPixelSize
-    readonly property real smallFontPixelWidth:     defaultFontPixelWidth * ScreenToolsController.smallFontPixelSizeRatio
+    readonly property real smallFontPixelWidth:     defaultFontPixelWidth   * ScreenToolsController.smallFontPixelSizeRatio
 
     // To proportionally scale fonts
 
