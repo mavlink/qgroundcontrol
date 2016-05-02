@@ -41,10 +41,10 @@ QGCView {
     QGCPalette { id: palette; colorGroupEnabled: panel.enabled }
 
     property real _margins:         ScreenTools.defaultFontPixelHeight
-    property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 18
-    property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 18
-    property real _labelWidth:      ScreenTools.defaultFontPixelWidth * 10
-    property real _statusWidth:     ScreenTools.defaultFontPixelWidth * 5
+    property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 22
+    property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 20
+    property real _labelWidth:      ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 10 : ScreenTools.defaultFontPixelWidth * 12
+    property real _statusWidth:     ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 7  : ScreenTools.defaultFontPixelWidth * 8
 
     readonly property string    dialogTitle:    qsTr("controller WiFi Bridge")
     property int                stStatus:       XMLHttpRequest.UNSENT
@@ -139,19 +139,17 @@ QGCView {
                     height:                             settingsRow.height  + _margins * 2
                     Row {
                         id:                             settingsRow
-                        spacing:                        _margins
+                        spacing:                        _margins * 4
                         anchors.centerIn:               parent
-                        Item { width: _margins * 0.5; height: 1; }
                         QGCColoredImage {
                             color:                      palette.text
-                            height:                     ScreenTools.defaultFontPixelWidth * 10
                             width:                      ScreenTools.defaultFontPixelWidth * 12
+                            height:                     width * 1.45
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
                             source:                     wifiMode ? (wifiMode.value === 0 ? "/qmlimages/APMode.svg" : "/qmlimages/StationMode.svg") : "/qmlimages/APMode.svg"
                             anchors.verticalCenter:     parent.verticalCenter
                         }
-                        Item { width: _margins * 0.5; height: 1; }
                         Column {
                             spacing:                        _margins * 0.5
                             anchors.verticalCenter:         parent.verticalCenter
@@ -458,7 +456,7 @@ QGCView {
                     anchors.horizontalCenter:           parent.horizontalCenter
                     QGCButton {
                         text:                           qsTr("Restore Defaults")
-                        width:                          ScreenTools.defaultFontPixelWidth * 16
+                        width:                          _editFieldWidth
                         onClicked: {
                             controller.restoreDefaults()
                         }
@@ -466,7 +464,7 @@ QGCView {
                     QGCButton {
                         text:                           qsTr("Restart WiFi Bridge")
                         enabled:                        !controller.busy
-                        width:                          ScreenTools.defaultFontPixelWidth * 16
+                        width:                          _editFieldWidth
                         onClicked: {
                             rebootDialog.visible = true
                         }
@@ -488,7 +486,7 @@ QGCView {
                     }
                     QGCButton {
                         text:                           qsTr("Reset Counters")
-                        width:                          ScreenTools.defaultFontPixelWidth * 16
+                        width:                          _editFieldWidth
                         onClicked: {
                             stResetCounters = true;
                             updateStatus()

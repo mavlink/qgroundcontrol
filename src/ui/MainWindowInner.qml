@@ -354,6 +354,8 @@ Item {
         color:              Qt.rgba(0,0,0,0.8)
         visible:            false
         radius:             ScreenTools.defaultFontPixelHeight * 0.5
+        border.color:       qgcPal.text
+        border.width:       2
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.top:                parent.top
         anchors.topMargin:          tbHeight + ScreenTools.defaultFontPixelHeight
@@ -420,6 +422,8 @@ Item {
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.bottom:             parent.bottom
         anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight
+        border.color:       qgcPal.text
+        border.width:       2
 
         MouseArea {
             // This MouseArea prevents the Map below it from getting Mouse events. Without this

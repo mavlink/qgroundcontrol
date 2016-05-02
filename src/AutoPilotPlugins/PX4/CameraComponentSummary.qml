@@ -25,7 +25,7 @@ FactPanel {
         anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: qsTr("Camera trigger mode:")
+            labelText: qsTr("Trigger mode:")
             valueText: _camTriggerMode ? _camTriggerMode.enumStringValue : ""
         }
 

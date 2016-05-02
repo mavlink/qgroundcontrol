@@ -25,6 +25,7 @@
 ///     @author Gus Grubba <mavlink@grubba.com>
 
 #include "ScreenToolsController.h"
+#include <QScreen>
 
 #ifdef Q_OS_WIN
 const double ScreenToolsController::_defaultFontPixelSizeRatio  = 1.0;
@@ -42,5 +43,4 @@ const double ScreenToolsController::_largeFontPixelSizeRatio    = 1.66;
 
 ScreenToolsController::ScreenToolsController()
 {
-
 }
