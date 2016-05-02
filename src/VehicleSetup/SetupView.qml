@@ -225,6 +225,7 @@ Rectangle {
         anchors.bottom:     parent.bottom
         contentHeight:      buttonColumn.height
         flickableDirection: Flickable.VerticalFlick
+        clip:               true
 
         Column {
             id:         buttonColumn
