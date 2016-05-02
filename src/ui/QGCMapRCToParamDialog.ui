@@ -35,7 +35,7 @@
      <x>9</x>
      <y>9</y>
      <width>381</width>
-     <height>271</height>
+     <height>296</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout">
@@ -52,7 +52,7 @@
     <item row="1" column="0">
      <widget class="QLabel" name="rcParamChannelInfoLabel">
       <property name="text">
-       <string>RC-Parameter Channel (Knob No.)</string>
+       <string>Parameter Tuning ID</string>
       </property>
      </widget>
     </item>
@@ -81,13 +81,6 @@
       </item>
      </widget>
     </item>
-    <item row="2" column="0">
-     <widget class="QLabel" name="label2">
-      <property name="text">
-       <string>to</string>
-      </property>
-     </widget>
-    </item>
     <item row="3" column="0">
      <widget class="QLabel" name="paramIdInfoLabel">
       <property name="text">
@@ -112,7 +105,7 @@
     <item row="5" column="0">
      <widget class="QLabel" name="scaleInfoLabel">
       <property name="text">
-       <string>Scale</string>
+       <string>Scale (keep default)</string>
       </property>
      </widget>
     </item>
@@ -126,7 +119,7 @@
     <item row="6" column="0">
      <widget class="QLabel" name="value0InfoLabel">
       <property name="text">
-       <string>Initial Value</string>
+       <string>Center value</string>
       </property>
      </widget>
     </item>
@@ -211,6 +204,13 @@
        </size>
       </property>
      </spacer>
+    </item>
+    <item row="2" column="0" colspan="2">
+     <widget class="QLabel" name="label2">
+      <property name="text">
+       <string>Tuning IDs can be mapped to channels in the RC settings</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

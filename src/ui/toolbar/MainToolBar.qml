@@ -314,14 +314,14 @@ Rectangle {
 
                 QGCLabel {
                     id:         rssiLabel
-                    text:       activeVehicle ? (activeVehicle.rcRSSI > 0 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data avaliable")
+                    text:       activeVehicle ? (activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data avaliable")
                     font.weight:Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 GridLayout {
                     id:                 rcrssiGrid
-                    visible:            activeVehicle && activeVehicle.rcRSSI > 0
+                    visible:            activeVehicle && activeVehicle.rcRSSI != 255
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     columns:            2
