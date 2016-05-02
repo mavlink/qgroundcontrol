@@ -42,6 +42,8 @@ QGCViewDialog {
     property bool   validate:       false
     property string validateValue
 
+    property real   _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 20
+
     ParameterEditorController { id: controller; factPanel: parent }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
@@ -124,6 +126,7 @@ QGCViewDialog {
                 QGCButton {
                     anchors.baseline:   valueField.baseline
                     visible:            fact.defaultValueAvailable
+                    width:              _editFieldWidth
                     text:               qsTr("Reset to default")
 
                     onClicked: {
@@ -244,6 +247,7 @@ QGCViewDialog {
 
             QGCButton {
                 text:           qsTr("Set RC to Param...")
+                width:          _editFieldWidth
                 visible:        _advanced.checked && !validate && showRCToParam
                 onClicked:      controller.setRCToParam(fact.name)
             }

@@ -37,7 +37,7 @@ Rectangle {
     anchors.fill:   parent
     color:          qgcPal.window
 
-    property real _minSummaryW:     ScreenTools.defaultFontPixelWidth * 30
+    property real _minSummaryW:     ScreenTools.defaultFontPixelWidth * 40
     property real _summaryBoxWidth: _minSummaryW
     property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth
 
@@ -93,6 +93,7 @@ Rectangle {
                 wrapMode:		Text.WordWrap
                 color:			setupComplete ? qgcPal.text : qgcPal.warningText
                 font.weight:    Font.DemiBold
+                horizontalAlignment: Text.AlignHCenter
                 text:           setupComplete ?
                     qsTr("Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component.") :
                     qsTr("WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left.")
@@ -112,7 +113,7 @@ Rectangle {
                         width:      _summaryBoxWidth
                         height:     ScreenTools.defaultFontPixelHeight * 13
                         color:      qgcPal.window
-                        visible:    modelData.summaryQmlSource.toString() != ""
+                        visible:    modelData.summaryQmlSource.toString() !== ""
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 
@@ -121,14 +122,14 @@ Rectangle {
                             id:     titleBar
                             width:  parent.width
                             height: titleHeight
-                            text:                   capitalizeWords(modelData.name)
+                            text:   capitalizeWords(modelData.name)
 
                             // Setup indicator
                             Rectangle {
-                                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 3
+                                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 0.5
                                 anchors.right:          parent.right
                                 anchors.verticalCenter: parent.verticalCenter
-                                width:                  ScreenTools.defaultFontPixelWidth
+                                width:                  ScreenTools.defaultFontPixelWidth * 1.5
                                 height:                 width
                                 radius:                 width / 2
                                 color:                  modelData.setupComplete ? "#00d932" : "red"
