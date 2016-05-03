@@ -264,7 +264,7 @@ bool UDPLink::_hardwareConnect()
     _connectState = _socket->bind(host, _config->localPort(), QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
     if (_connectState) {
         //-- Make sure we have a large enough IO buffers
-#ifdef __mobile
+#ifdef __mobile__
         _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
         _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
 #else
