@@ -46,7 +46,7 @@ QGCView {
     property Fact battHighVolt:     controller.getParameterFact(-1, "BAT_V_CHARGED")
     property Fact battLowVolt:      controller.getParameterFact(-1, "BAT_V_EMPTY")
     property Fact battVoltLoadDrop: controller.getParameterFact(-1, "BAT_V_LOAD_DROP")
-    property Fact uavcanEnable:   controller.getParameterFact(-1, "UAVCAN_ENABLE", false)
+    property Fact uavcanEnable:     controller.getParameterFact(-1, "UAVCAN_ENABLE", false)
 
     readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
     readonly property string highlightSuffix:   "</font>"
@@ -269,8 +269,8 @@ QGCView {
                 }
 
                 QGCCheckBox {
-                    id:     showUAVCAN
-                    text:   qsTr("Show UAVCAN Settings")
+                    id:         showUAVCAN
+                    text:       qsTr("Show UAVCAN Settings")
                     visible:    uavcanEnable !== -1
                 }
 
@@ -296,7 +296,7 @@ QGCView {
                         FactCheckBox {
                             id:                 uavcanEnabledCheckBox
                             width:              ScreenTools.defaultFontPixelWidth * 20
-                            fact:               _uavcanEnabled
+                            fact:               uavcanEnable
                             checkedValue:       3
                             uncheckedValue:     0
                             text:               qsTr("Enable UAVCAN as the default MAIN output bus (requires autopilot restart)")
