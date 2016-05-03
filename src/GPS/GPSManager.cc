@@ -36,7 +36,7 @@ GPSManager::~GPSManager()
     cleanup();
 }
 
-void GPSManager::setupGPS(const QString& device)
+void GPSManager::connectGPS(const QString& device)
 {
     Q_ASSERT(_toolbox);
 

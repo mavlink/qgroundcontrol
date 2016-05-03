@@ -90,7 +90,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     }
     
     _loadSettings();
-#endif // __mobile __
+#endif // __mobile__
 }
 
 Joystick::~Joystick()
