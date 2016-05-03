@@ -314,10 +314,10 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             } else if (text == "mag") {
                 _magCalInProgress = true;
                 _orientationCalDownSideVisible = true;
-                _orientationCalUpsideDownSideVisible = true;
+                _orientationCalUpsideDownSideVisible = false;
                 _orientationCalLeftSideVisible = true;
-                _orientationCalRightSideVisible = true;
-                _orientationCalTailDownSideVisible = true;
+                _orientationCalRightSideVisible = false;
+                _orientationCalTailDownSideVisible = false;
                 _orientationCalNoseDownSideVisible = true;
             } else if (text == "gyro") {
                 _gyroCalInProgress = true;
