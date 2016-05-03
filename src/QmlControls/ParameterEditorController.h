@@ -46,7 +46,7 @@ public:
 	
 	Q_INVOKABLE QStringList getGroupsForComponent(int componentId);
 	Q_INVOKABLE QStringList getParametersForGroup(int componentId, QString group);
-    Q_INVOKABLE QStringList searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions);
+    Q_INVOKABLE QList<QObject*> searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions);
 	
 	Q_INVOKABLE void clearRCToParam(void);
     Q_INVOKABLE void saveToFilePicker(void);

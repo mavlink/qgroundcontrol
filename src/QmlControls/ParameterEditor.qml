@@ -70,6 +70,7 @@ QGCView {
                 id:     header
                 width:  parent.width
                 height: ScreenTools.defaultFontPixelHeight * 1.75
+
                 QGCLabel {
                     text:           qsTr("Search Results")
                     visible:        _searchFilter
@@ -95,17 +96,53 @@ QGCView {
                     anchors.leftMargin: ScreenTools.defaultFontPixelWidth
                     anchors.verticalCenter: parent.verticalCenter
                 }
+
                 QGCButton {
                     text:           qsTr("Back")
                     visible:        _searchFilter
                     anchors.right:  parent.right
                     height: ScreenTools.defaultFontPixelHeight * 1.75
                     onClicked: {
-                        _searchFilter = false
-                        hideDialog()
+                        if (ScreenTools.isMobile)
+                            searchFor.text = ""
+                        else
+                            quickSearch.text = ""
                     }
                 }
+
+                QGCLabel {
+                    id :                    filterLabel
+                    anchors.right:          quickSearch.left
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.weight:            Font.DemiBold
+                    height:                 ScreenTools.defaultFontPixelHeight * 1.75
+                    visible:                !ScreenTools.isMobile
+                    text:                   qsTr("Filter By:")
+                }
+
+                QGCTextField {
+                    id:                  quickSearch
+                    anchors.right:       toolsButton.left
+                    anchors.topMargin:   defaultTextHeight / 3
+                    anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
+                    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                    width:               ScreenTools.defaultFontPixelWidth * 20
+                    visible:            !ScreenTools.isMobile
+
+                    onTextChanged: {
+                        console.log(text)
+                        if (text.length == 0) {
+                            _searchFilter = false;
+                        } else {
+                            _searchResults = controller.searchParametersForComponent(-1, text, true, true)
+                            _searchFilter = true
+                        }
+                    }
+                }
+
                 QGCButton {
+                    id: toolsButton
                     text:           qsTr("Tools")
                     visible:        !_searchFilter
                     anchors.right:  parent.right
@@ -122,6 +159,7 @@ QGCView {
                         MenuItem {
                             text:           qsTr("Search...")
                             onTriggered:    showDialog(searchDialogComponent, qsTr("Parameter Search"), qgcView.showDialogDefaultWidth, StandardButton.Reset | StandardButton.Apply)
+                            visible: ScreenTools.isMobile;
                         }
                         MenuSeparator { }
                         MenuItem {
@@ -270,13 +308,73 @@ QGCView {
                 clip:           true
                 Loader {
                     id:                 factRowsLoader
-                    sourceComponent:    factRowsComponent
+                    sourceComponent:    filterRowComponent
                     property int    componentId:       -1
-                    property var    parameterNames:    _searchResults
+                    property var    currentModel:    _searchResults
                 }
             }
         }
     }
+
+    //---------------------------------------------
+    // FilterRowComponent
+    Component {
+        id: filterRowComponent
+        Column {
+            spacing: Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
+            Repeater {
+                model: currentModel
+                Rectangle {
+                    height: _rowHeight
+                    width:  _rowWidth
+                    color:  Qt.rgba(0,0,0,0)
+                    Row {
+                        id:     factRow
+                        spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
+                        anchors.verticalCenter: parent.verticalCenter
+                        QGCLabel {
+                            id:     nameLabel
+                            width:  ScreenTools.defaultFontPixelWidth  * 20
+                            text:   modelData.name
+                            clip:   true
+                        }
+                        QGCLabel {
+                            id:     valueLabel
+                            width:  ScreenTools.defaultFontPixelWidth  * 20
+                            color:  modelData.defaultValueAvailable ? (modelData.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText) : __qgcPal.text
+                            text:   modelData.enumStrings.length == 0 ? modelData.valueString + " " + modelData.units : modelData.enumStringValue
+                            clip:   true
+                        }
+                        QGCLabel {
+                            text:   modelData.shortDescription
+                        }
+                        Component.onCompleted: {
+                            if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
+                               _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
+                            }
+                        }
+                    }
+                    Rectangle {
+                        width:  _rowWidth
+                        height: 1
+                        color:  __qgcPal.text
+                        opacity: 0.15
+                        anchors.bottom: parent.bottom
+                        anchors.left:   parent.left
+                    }
+                    MouseArea {
+                        anchors.fill:       parent
+                        acceptedButtons:    Qt.LeftButton
+                        onClicked: {
+                            _editorDialogFact = factRow.modelFact
+                            showDialog(editorDialogComponent, "Parameter Editor", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     //---------------------------------------------
     // Paremeters view
