@@ -175,9 +175,9 @@ Map {
         width:                      scaleImageLeft.width + scaleImage.width + scaleImageRight.width
         anchors {
             bottom:                 parent.bottom
-            bottomMargin:           ScreenTools.defaultFontPixelSize * (0.66)
+            bottomMargin:           ScreenTools.defaultFontPixelHeight * (0.66)
             right:                  parent.right
-            rightMargin:            ScreenTools.defaultFontPixelSize * (0.33)
+            rightMargin:            ScreenTools.defaultFontPixelHeight * (0.33)
         }
         Image {
             id:                     scaleImageLeft
@@ -204,7 +204,7 @@ Map {
             horizontalAlignment:    Text.AlignHCenter
             anchors.bottom:         parent.bottom
             anchors.right:          parent.right
-            anchors.bottomMargin:   ScreenTools.defaultFontPixelSize * (0.83)
+            anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.83)
             text: "0 m"
         }
         Component.onCompleted: {
@@ -300,9 +300,9 @@ Map {
         z: 1000
         anchors {
             bottom: parent.bottom;
-            bottomMargin:   ScreenTools.defaultFontPixelSize * (1.25)
-            rightMargin:    ScreenTools.defaultFontPixelSize * (1.66)
-            leftMargin:     ScreenTools.defaultFontPixelSize * (1.66)
+            bottomMargin:   ScreenTools.defaultFontPixelHeight * (1.25)
+            rightMargin:    ScreenTools.defaultFontPixelHeight * (1.66)
+            leftMargin:     ScreenTools.defaultFontPixelHeight * (1.66)
             left: parent.left
         }
         width: parent.width - anchors.rightMargin - anchors.leftMargin

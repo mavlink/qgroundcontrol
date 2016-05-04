@@ -91,7 +91,7 @@ QGCView {
                 font.family:    ScreenTools.normalFontFamily
             }
             Text {
-                text:   _textMeasure.font.pixelSize
+                text:   _textMeasure.font.pointSize
                 color:  qgcPal.text
                 font.family:    ScreenTools.normalFontFamily
             }

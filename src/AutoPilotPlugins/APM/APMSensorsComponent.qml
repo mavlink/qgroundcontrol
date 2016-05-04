@@ -64,8 +64,8 @@ QGCView {
     readonly property string _badCompassCalText: "The calibration for Compass %1 appears to be poor. " +
                                                  "Check the compass position within your vehicle and re-do the calibration."
 
-    readonly property int sideBarH1PointSize:  ScreenTools.mediumFontPixelSize
-    readonly property int mainTextH1PointSize: ScreenTools.mediumFontPixelSize // Seems to be unused
+    readonly property int sideBarH1PointSize:  ScreenTools.mediumFontPointSize
+    readonly property int mainTextH1PointSize: ScreenTools.mediumFontPointSize // Seems to be unused
 
     readonly property int rotationColumnWidth: 250
 
@@ -269,7 +269,7 @@ QGCView {
 
         Column {
             QGCLabel {
-                font.pixelSize: sideBarH1PointSize
+                font.pointSize: sideBarH1PointSize
                 text:           qsTr("Set Orientations")
             }
 
@@ -459,7 +459,7 @@ QGCView {
                     anchors.left:       orientationCalArea.left
                     width:              parent.width
                     wrapMode:           Text.WordWrap
-                    font.pixelSize:     ScreenTools.mediumFontPixelSize
+                    font.pointSize:     ScreenTools.mediumFontPointSize
                 }
 
                 Flow {

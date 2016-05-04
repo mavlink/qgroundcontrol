@@ -14,7 +14,7 @@ Button {
     text: "Button"  ///< Pass in your own button text
 
     checkable:      true
-    implicitHeight: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 5 : ScreenTools.defaultFontPixelHeight * 2.5
+    implicitHeight: ScreenTools.defaultFontPixelHeight * 2.5
 
     style: ButtonStyle {
         id: buttonStyle

@@ -149,7 +149,7 @@ QGCView {
 
         QGCLabel {
             id:             header
-            font.pixelSize: ScreenTools.mediumFontPixelSize
+            font.pointSize: ScreenTools.mediumFontPointSize
             text:           qsTr("JOYSTICK")
         }
 

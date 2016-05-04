@@ -43,7 +43,7 @@ QGCView {
     QGCPalette { id: __qgcPal; colorGroupEnabled: true }
 
     property Fact   _editorDialogFact: Fact { }
-    property int    _rowHeight:         ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 4 : ScreenTools.defaultFontPixelHeight * 2
+    property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10      // Dynamic adjusted at runtime
     property bool   _searchFilter:      false   ///< true: showing results of search
     property var    _searchResults              ///< List of parameter names from search results

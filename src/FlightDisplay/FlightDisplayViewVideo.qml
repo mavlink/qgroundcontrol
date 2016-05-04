@@ -45,7 +45,7 @@ Item {
             text:               qsTr("NO VIDEO")
             font.family:        ScreenTools.demiboldFontFamily
             color:              "white"
-            font.pixelSize:     _mainIsMap ? 12 * ScreenTools.fontHRatio : 20 * ScreenTools.fontHRatio
+            font.pointSize:     _mainIsMap ? 12 * ScreenTools.fontHRatio : 20 * ScreenTools.fontHRatio
             anchors.centerIn:   parent
         }
     }
@@ -61,8 +61,8 @@ Item {
             visible:            !_mainIsMap
             rollAngle:          _roll
             pitchAngle:         _pitch
-            width:              ScreenTools.defaultFontPixelSize * (30)
-            height:             ScreenTools.defaultFontPixelSize * (30)
+            width:              ScreenTools.defaultFontPixelHeight * (30)
+            height:             ScreenTools.defaultFontPixelHeight * (30)
             active:             QGroundControl.multiVehicleManager.activeVehicleAvailable
             z:                  QGroundControl.zOrderWidgets
         }

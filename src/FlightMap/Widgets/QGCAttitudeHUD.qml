@@ -85,6 +85,6 @@ Item {
         pitchAngle:         _pitchAngle
         rollAngle:          _rollAngle
         color:              Qt.rgba(0,0,0,0)
-        size:               ScreenTools.defaultFontPixelSize * (10)
+        size:               ScreenTools.defaultFontPixelHeight * (10)
     }
 }

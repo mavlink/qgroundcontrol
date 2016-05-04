@@ -503,7 +503,7 @@ Rectangle {
         QGCLabel {
             id:                     connectionLost
             text:                   qsTr("COMMUNICATION LOST")
-            font.pixelSize:         tbFontLarge
+            font.pointSize:         tbFontLarge
             font.family:            ScreenTools.demiboldFontFamily
             color:                  colorRed
             anchors.rightMargin:    ScreenTools.defaultFontPixelWidth

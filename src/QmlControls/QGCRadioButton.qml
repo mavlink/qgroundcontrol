@@ -28,7 +28,7 @@ RadioButton {
             Text {
                 id:             text
                 text:           control.text
-                font.pixelSize: ScreenTools.defaultFontPixelSize
+                font.pointSize: ScreenTools.defaultFontPointSize
                 font.family:    ScreenTools.normalFontFamily
                 antialiasing:   true
                 color:          control.__qgcPal.text

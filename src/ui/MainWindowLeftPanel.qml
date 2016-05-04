@@ -155,7 +155,7 @@ Item {
                 anchors.right:          parent.right
                 anchors.topMargin:      _margins
                 anchors.top:            parent.top
-                spacing:                 ScreenTools.defaultFontPixelHeight
+                spacing:                ScreenTools.defaultFontPixelHeight * 0.5
 
                 QGCLabel {
                     text:           qsTr("Preferences")
@@ -163,6 +163,7 @@ Item {
                 }
 
                 QGCButton {
+                    height:         ScreenTools.defaultFontPixelHeight * 2
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     text:           qsTr("General")
@@ -176,6 +177,7 @@ Item {
                 }
 
                 QGCButton {
+                    height:         ScreenTools.defaultFontPixelHeight * 2
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     text:           qsTr("Comm Links")
@@ -189,6 +191,7 @@ Item {
                 }
 
                 QGCButton {
+                    height:         ScreenTools.defaultFontPixelHeight * 2
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     text:           qsTr("Offline Maps")
@@ -202,6 +205,7 @@ Item {
                 }
 
                 QGCButton {
+                    height:         ScreenTools.defaultFontPixelHeight * 2
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     text:           qsTr("MavLink")
@@ -215,6 +219,7 @@ Item {
                 }
 
                 QGCButton {
+                    height:         ScreenTools.defaultFontPixelHeight * 2
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     text:           qsTr("Console")
@@ -228,6 +233,7 @@ Item {
                 }
 
                 QGCButton {
+                    height:         ScreenTools.defaultFontPixelHeight * 2
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     text:           qsTr("Mock Link")
@@ -242,6 +248,7 @@ Item {
                 }
 
                 QGCButton {
+                    height:         ScreenTools.defaultFontPixelHeight * 2
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     text:           qsTr("Debug")
@@ -301,7 +308,7 @@ Item {
             height:          __closeButtonSize
             anchors.right:   parent.right
             anchors.top:     parent.top
-            anchors.margins: ScreenTools.defaultFontPixelSize * 0.5
+            anchors.margins: ScreenTools.defaultFontPixelHeight * 0.5
             QGCColoredImage {
                 source:       "/res/XDelete.svg"
                 mipmap:       true

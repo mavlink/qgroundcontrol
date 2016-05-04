@@ -341,7 +341,7 @@ QGCView {
         QGCLabel {
             id:             titleLabel
             text:           title
-            font.pixelSize: ScreenTools.mediumFontPixelSize
+            font.pointSize: ScreenTools.mediumFontPointSize
         }
 
         ProgressBar {
@@ -359,7 +359,7 @@ QGCView {
             width:              parent.width
             readOnly:           true
             frameVisible:       false
-            font.pixelSize:     ScreenTools.defaultFontPixelSize
+            font.pointSize:     ScreenTools.defaultFontPointSize
             textFormat:         TextEdit.RichText
             text:               welcomeText
 

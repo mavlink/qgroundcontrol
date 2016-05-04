@@ -28,16 +28,11 @@
 #define ScreenToolsController_H
 
 #include "QGCApplication.h"
-
 #include <QQuickItem>
 #include <QCursor>
 
 /*!
     @brief Screen helper tools for QML widgets
-    To use its functions, you need to import the module with the following line:
-    @code
-
-    @endcode
 */
 
 /// This Qml control is used to return screen parameters
@@ -52,58 +47,43 @@ public:
     Q_PROPERTY(bool     isMobile            READ isMobile       CONSTANT)
     Q_PROPERTY(bool     testHighDPI         READ testHighDPI    CONSTANT)
     Q_PROPERTY(bool     isDebug             READ isDebug        CONSTANT)
-
-    //! Used to trigger a \c Canvas element repaint.
-    /*!
-      There is a bug as of Qt 5.4 where a Canvas element defined within a QQuickWidget does not receive
-      repaint events. QGC's main window will emit these signals when a \c Canvas element needs to be
-      repainted.
-      If you use a \c Canvas element inside some QML widget, you can use this code to handle repaint:
-      @code
-      import QGroundControl.ScreenToolsController 1.0
-      ...
-        Canvas {
-            id: myCanvas
-            height: 40
-            width:  40
-            Connections {
-                target: ScreenToolsController
-                onRepaintRequestedChanged: {
-                    myCanvas.requestPaint();
-                }
-            }
-            onPaint: {
-                var context = getContext("2d");
-                ...
-            }
-        }
-      @endcode
-     */
+    Q_PROPERTY(bool     isMacOS             READ isMacOS        CONSTANT)
+    Q_PROPERTY(bool     isLinux             READ isLinux        CONSTANT)
 
     // Returns current mouse position
     Q_INVOKABLE int mouseX(void) { return QCursor::pos().x(); }
     Q_INVOKABLE int mouseY(void) { return QCursor::pos().y(); }
 
-    // Used to adjust default font size on an OS basis
-    Q_PROPERTY(double defaultFontPixelSizeRatio   MEMBER _defaultFontPixelSizeRatio     CONSTANT)
-
-    // Used to calculate font sizes based on default font size
-    Q_PROPERTY(double smallFontPixelSizeRatio   MEMBER _smallFontPixelSizeRatio     CONSTANT)
-    Q_PROPERTY(double mediumFontPixelSizeRatio  MEMBER _mediumFontPixelSizeRatio    CONSTANT)
-    Q_PROPERTY(double largeFontPixelSizeRatio   MEMBER _largeFontPixelSizeRatio     CONSTANT)
-
 #if defined (__android__)
     bool    isAndroid           () { return true;  }
     bool    isiOS               () { return false; }
     bool    isMobile            () { return true;  }
+    bool    isLinux             () { return false; }
+    bool    isMacOS             () { return false; }
 #elif defined(__ios__)
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return true; }
     bool    isMobile            () { return true; }
+    bool    isLinux             () { return false; }
+    bool    isMacOS             () { return false; }
+#elif defined(__macos__)
+    bool    isAndroid           () { return false; }
+    bool    isiOS               () { return false; }
+    bool    isMobile            () { return qgcApp()->fakeMobile(); }
+    bool    isLinux             () { return false; }
+    bool    isMacOS             () { return true; }
+#elif defined(Q_OS_LINUX)
+    bool    isAndroid           () { return false; }
+    bool    isiOS               () { return false; }
+    bool    isMobile            () { return qgcApp()->fakeMobile(); }
+    bool    isLinux             () { return true; }
+    bool    isMacOS             () { return false; }
 #else
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return false; }
     bool    isMobile            () { return qgcApp()->fakeMobile(); }
+    bool    isLinux             () { return false; }
+    bool    isMacOS             () { return false; }
 #endif
 
 #ifdef QT_DEBUG
@@ -114,11 +94,6 @@ public:
     bool testHighDPI            () { return false; }
 #endif
 
-private:
-    static const double _defaultFontPixelSizeRatio;
-    static const double _smallFontPixelSizeRatio;
-    static const double _mediumFontPixelSizeRatio;
-    static const double _largeFontPixelSizeRatio;
 };
 
 #endif

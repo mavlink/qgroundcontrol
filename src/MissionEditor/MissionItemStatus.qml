@@ -98,18 +98,18 @@ Rectangle {
             id:             graphRow
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
-            spacing:        ScreenTools.smallFontPixelWidth
+            spacing:        ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
 
             Repeater {
                 model: missionItems
 
                 Item {
                     height:     graphRow.height
-                    width:      ScreenTools.smallFontPixelWidth * 2
+                    width:      ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio * 2
                     visible:    object.specifiesCoordinate && !object.isStandaloneCoordinate
 
 
-                    property real availableHeight: height - ScreenTools.smallFontPixelHeight - indicator.height
+                    property real availableHeight: height - (ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio) - indicator.height
 
                     property bool graphAbsolute:    true
 
@@ -128,7 +128,7 @@ Rectangle {
                     QGCLabel {
                         anchors.bottom:             parent.bottom
                         anchors.horizontalCenter:   parent.horizontalCenter
-                        font.pixelSize:             ScreenTools.smallFontPixelSize
+                        font.pointSize:             ScreenTools.smallFontPointSize
                         text:                       (object.relativeAltitude ? "" : "=") + object.coordinate.altitude.toFixed(0)
                     }
                     */

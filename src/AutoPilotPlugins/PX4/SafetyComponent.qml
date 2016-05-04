@@ -44,8 +44,8 @@ QGCView {
     QGCPalette { id: palette; colorGroupEnabled: enabled }
 
     property real _margins:         ScreenTools.defaultFontPixelHeight
-    property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 24
-    property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 18
+    property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 20
+    property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 14
 
     property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
     property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
