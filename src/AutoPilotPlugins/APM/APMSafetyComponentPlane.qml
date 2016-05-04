@@ -65,7 +65,7 @@ QGCView {
             QGCLabel {
                 id:         failsafeTriggersLabel
                 text:       qsTr("Failsafe Triggers")
-                font.weight: Font.DemiBold
+                font.family: ScreenTools.demiboldFontFamily
             }
 
             Rectangle {
@@ -158,7 +158,7 @@ QGCView {
                 anchors.leftMargin: _margins
                 anchors.left:        failsafeTriggerSettings.right
                 text:               qsTr("Return to Launch")
-                font.weight:        Font.DemiBold
+                font.family:        ScreenTools.demiboldFontFamily
             }
 
             Rectangle {

@@ -77,7 +77,7 @@ QGCView {
             QGCLabel {
                 id:             panelLabel
                 text:           panelTitle
-                font.weight:    Font.DemiBold
+                font.family:    ScreenTools.demiboldFontFamily
             }
 
 
@@ -111,7 +111,7 @@ QGCView {
 
                             QGCLabel {
                                 text:           title
-                                font.weight:    Font.DemiBold
+                                font.family:    ScreenTools.demiboldFontFamily
                             }
 
                             QGCLabel {

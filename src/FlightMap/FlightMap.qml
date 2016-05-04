@@ -200,7 +200,7 @@ Map {
         QGCLabel {
             id: scaleText
             color:                  isSatelliteMap ? "white" : "black"
-            font.weight:            Font.DemiBold
+            font.family:            ScreenTools.demiboldFontFamily
             horizontalAlignment:    Text.AlignHCenter
             anchors.bottom:         parent.bottom
             anchors.right:          parent.right

@@ -131,7 +131,7 @@ QGCView {
                 */
                 QGCLabel {
                     text:                               qsTr("Camera Trigger Settings")
-                    font.weight:                        Font.DemiBold
+                    font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
                     id:                                 camTrigRect
@@ -213,7 +213,7 @@ QGCView {
                 Item { width: 1; height: _margins * 0.5; }
                 QGCLabel {
                     text:                               qsTr("Hardware Settings")
-                    font.weight:                        Font.DemiBold
+                    font.family:                        ScreenTools.demiboldFontFamily
                     visible:                            _auxPins
                 }
                 Rectangle {

@@ -53,6 +53,10 @@ Rectangle {
     property real   savedZoom:          3
     property string savedMapType:       ""
 
+    property real   _newSetMiddleLabel: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 10 : ScreenTools.defaultFontPixelWidth * 14
+    property real   _newSetMiddleField: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 18 : ScreenTools.defaultFontPixelWidth * 20
+    property real   _netSetSliderWidth: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 12 : ScreenTools.defaultFontPixelWidth * 14
+
     property real oldlon0:      0
     property real oldlon1:      0
     property real oldlat0:      0
@@ -323,14 +327,14 @@ Rectangle {
             id:                 _cacheList
             width:              Math.min(parent.width, (ScreenTools.defaultFontPixelWidth  * 50).toFixed(0))
             anchors.margins:    ScreenTools.defaultFontPixelWidth
-            spacing:            (ScreenTools.defaultFontPixelHeight * 0.5).toFixed(0)
+            spacing:            ScreenTools.defaultFontPixelHeight * 0.5
             anchors.horizontalCenter: parent.horizontalCenter
 
             OfflineMapButton {
                 text:           qsTr("Add new set")
                 anchors.left:   parent.left
                 anchors.right:  parent.right
-                height:         (ScreenTools.defaultFontPixelHeight * 2).toFixed(0)
+                height:         ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 4 : ScreenTools.defaultFontPixelHeight * 2
                 onClicked: {
                     _offlineMapRoot._currentSelection = null
                     showMap()
@@ -344,7 +348,7 @@ Rectangle {
                     complete:       object.complete
                     anchors.left:   parent.left
                     anchors.right:  parent.right
-                    height:         (ScreenTools.defaultFontPixelHeight * 2).toFixed(0)
+                    height:         ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 4 : ScreenTools.defaultFontPixelHeight * 2
                     onClicked: {
                         _offlineMapRoot._currentSelection = object
                         showInfo()
@@ -451,18 +455,20 @@ Rectangle {
                                 Column {
                                     anchors.verticalCenter: parent.verticalCenter
                                     Label {
-                                        text:   qsTr("Min")
-                                        color:  "black"
-                                        width:  ScreenTools.defaultFontPixelWidth * 5
-                                        font.pixelSize: ScreenTools.smallFontPixelSize
-                                        horizontalAlignment: Text.AlignHCenter
+                                        text:                   qsTr("Min")
+                                        color:                  "black"
+                                        width:                  ScreenTools.defaultFontPixelWidth * 5
+                                        font.pixelSize:         ScreenTools.smallFontPixelSize
+                                        horizontalAlignment:    Text.AlignHCenter
+                                        font.family:            ScreenTools.normalFontFamily
                                     }
                                     Label {
-                                        text:   qsTr("Zoom")
-                                        color:  "black"
-                                        width:  ScreenTools.defaultFontPixelWidth * 5
-                                        font.pixelSize: ScreenTools.smallFontPixelSize
-                                        horizontalAlignment: Text.AlignHCenter
+                                        text:                   qsTr("Zoom")
+                                        color:                  "black"
+                                        width:                  ScreenTools.defaultFontPixelWidth * 5
+                                        font.family:            ScreenTools.normalFontFamily
+                                        font.pixelSize:         ScreenTools.smallFontPixelSize
+                                        horizontalAlignment:    Text.AlignHCenter
                                     }
                                 }
                                 Slider {
@@ -476,7 +482,7 @@ Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     style: SliderStyle {
                                         groove: Rectangle {
-                                            implicitWidth:  ScreenTools.defaultFontPixelWidth * 12
+                                            implicitWidth:  ScreenTools.defaultFontPixelWidth * 14
                                             implicitHeight: 4
                                             color:          "gray"
                                             radius:         4
@@ -490,8 +496,9 @@ Rectangle {
                                             implicitHeight: ScreenTools.isAndroid ? 60 : 30
                                             radius:         10
                                             Label {
-                                                text:  _slider0.value
-                                                anchors.centerIn: parent
+                                                text:               _slider0.value
+                                                anchors.centerIn:   parent
+                                                font.family:        ScreenTools.normalFontFamily
                                             }
                                         }
                                     }
@@ -515,17 +522,19 @@ Rectangle {
                                 Column {
                                     anchors.verticalCenter: parent.verticalCenter
                                     Label {
-                                        text:   qsTr("Max")
-                                        color:  "black"
-                                        width:  ScreenTools.defaultFontPixelWidth * 5
+                                        text:           qsTr("Max")
+                                        color:          "black"
+                                        width:          ScreenTools.defaultFontPixelWidth * 5
                                         font.pixelSize: ScreenTools.smallFontPixelSize
+                                        font.family:    ScreenTools.normalFontFamily
                                         horizontalAlignment: Text.AlignHCenter
                                     }
                                     Label {
-                                        text:   qsTr("Zoom")
-                                        color:  "black"
-                                        width:  ScreenTools.defaultFontPixelWidth * 5
+                                        text:           qsTr("Zoom")
+                                        color:          "black"
+                                        width:          ScreenTools.defaultFontPixelWidth * 5
                                         font.pixelSize: ScreenTools.smallFontPixelSize
+                                        font.family:    ScreenTools.normalFontFamily
                                         horizontalAlignment: Text.AlignHCenter
                                     }
                                 }
@@ -540,7 +549,7 @@ Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     style: SliderStyle {
                                         groove: Rectangle {
-                                            implicitWidth:  ScreenTools.defaultFontPixelWidth * 12
+                                            implicitWidth:  ScreenTools.defaultFontPixelWidth * 14
                                             implicitHeight: 4
                                             color:          "gray"
                                             radius:         4
@@ -554,8 +563,9 @@ Rectangle {
                                             implicitHeight: ScreenTools.isAndroid ? 60 : 30
                                             radius:         10
                                             Label {
-                                                text:  _slider1.value
-                                                anchors.centerIn: parent
+                                                text:               _slider1.value
+                                                font.family:        ScreenTools.normalFontFamily
+                                                anchors.centerIn:   parent
                                             }
                                         }
                                     }
@@ -577,29 +587,33 @@ Rectangle {
                             spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                             anchors.verticalCenter: parent.verticalCenter
                             Label {
-                                text:   qsTr("Tile Count")
-                                color:  "black"
-                                width:  ScreenTools.defaultFontPixelWidth * 8
+                                text:           qsTr("Tile Count")
+                                color:          "black"
+                                width:          ScreenTools.defaultFontPixelWidth * 12
                                 font.pixelSize: ScreenTools.smallFontPixelSize
+                                font.family:    ScreenTools.normalFontFamily
                                 horizontalAlignment: Text.AlignHCenter
                             }
                             Label {
-                                text:  QGroundControl.mapEngineManager.tileCountStr
-                                color: "black"
-                                width: ScreenTools.defaultFontPixelWidth * 8
+                                text:           QGroundControl.mapEngineManager.tileCountStr
+                                color:          "black"
+                                width:          ScreenTools.defaultFontPixelWidth * 12
+                                font.family:    ScreenTools.normalFontFamily
                                 horizontalAlignment: Text.AlignHCenter
                             }
                             Label {
-                                text:   qsTr("Set Size (Est)")
-                                color:  "black"
-                                width:  ScreenTools.defaultFontPixelWidth * 8
+                                text:           qsTr("Set Size (Est)")
+                                color:          "black"
+                                width:          ScreenTools.defaultFontPixelWidth * 12
                                 font.pixelSize: ScreenTools.smallFontPixelSize
+                                font.family:    ScreenTools.normalFontFamily
                                 horizontalAlignment: Text.AlignHCenter
                             }
                             Label {
-                                text:  QGroundControl.mapEngineManager.tileSizeStr
-                                color: "black"
-                                width: ScreenTools.defaultFontPixelWidth * 8
+                                text:           QGroundControl.mapEngineManager.tileSizeStr
+                                color:          "black"
+                                width:          ScreenTools.defaultFontPixelWidth * 12
+                                font.family:    ScreenTools.normalFontFamily
                                 horizontalAlignment: Text.AlignHCenter
                             }
                         }
@@ -609,45 +623,45 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                     Row {
-                        spacing:        ScreenTools.defaultFontPixelWidth * 2
+                        spacing:        ScreenTools.defaultFontPixelWidth
                         QGCLabel {
                             text:   qsTr("Name:")
-                            width:  ScreenTools.defaultFontPixelWidth * 10
+                            width:  _newSetMiddleLabel
                             anchors.verticalCenter: parent.verticalCenter
                             horizontalAlignment: Text.AlignRight
                         }
                         QGCTextField {
                             id:     setName
-                            width:  ScreenTools.defaultFontPixelWidth * 20
+                            width:  _newSetMiddleField
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
                     Row {
-                        spacing: ScreenTools.defaultFontPixelWidth * 2
+                        spacing: ScreenTools.defaultFontPixelWidth
                         QGCLabel {
-                            text:  qsTr("Description:")
-                            width:  ScreenTools.defaultFontPixelWidth * 10
+                            text:   qsTr("Description:")
+                            width:  _newSetMiddleLabel
                             anchors.verticalCenter: parent.verticalCenter
                             horizontalAlignment: Text.AlignRight
                         }
                         QGCTextField {
                             id:     setDescription
                             text:   qsTr("Description")
-                            width:  ScreenTools.defaultFontPixelWidth * 20
+                            width:  _newSetMiddleField
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
                     Row {
-                        spacing: ScreenTools.defaultFontPixelWidth * 2
+                        spacing: ScreenTools.defaultFontPixelWidth
                         QGCLabel {
-                            text:  qsTr("Map Type:")
-                            width:  ScreenTools.defaultFontPixelWidth * 10
+                            text:   qsTr("Map Type:")
+                            width:  _newSetMiddleLabel
                             anchors.verticalCenter: parent.verticalCenter
                             horizontalAlignment: Text.AlignRight
                         }
                         QGCComboBox {
                             id:         mapCombo
-                            width:      ScreenTools.defaultFontPixelWidth * 20
+                            width:      _newSetMiddleField
                             model:      QGroundControl.mapEngineManager.mapList
                             onActivated: {
                                 mapType = textAt(index)
@@ -676,7 +690,7 @@ Rectangle {
                     QGCButton {
                         text:  qsTr("Download")
                         enabled: setName.text.length > 0
-                        width: ScreenTools.defaultFontPixelWidth * 10
+                        width: ScreenTools.defaultFontPixelWidth * 12
                         onClicked: {
                             if(QGroundControl.mapEngineManager.findName(setName.text)) {
                                 duplicateName.visible = true
@@ -693,7 +707,7 @@ Rectangle {
                     }
                     QGCButton {
                         text:  qsTr("Cancel")
-                        width: ScreenTools.defaultFontPixelWidth * 10
+                        width: ScreenTools.defaultFontPixelWidth * 12
                         onClicked: {
                             showList()
                         }
@@ -1037,7 +1051,7 @@ Rectangle {
                     QGCLabel {
                         id:     optionsLabel
                         text:   qsTr("Offline Map Options")
-                        font.pixelSize:     ScreenTools.isAndroid ? ScreenTools.mediumFontPixelSize : ScreenTools.largeFontPixelSize
+                        font.pixelSize:     ScreenTools.largeFontPixelSize
                         anchors.centerIn:   parent
                     }
                 }

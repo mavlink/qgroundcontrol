@@ -183,12 +183,13 @@ Row {
 
         QGCLabel {
             anchors.top:        parent.top
-            anchors.leftMargin: gpsIcon.width
-            anchors.left:       parent.left
+            //anchors.leftMargin: gpsIcon.width
+            //anchors.left:       parent.left
+            anchors.right:      gpsRow.right
             visible:            activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
             font.pixelSize:     tbFontSmall
             color:              qgcPal.buttonText
-            text:               activeVehicle ? activeVehicle.gps.hdop.valueString : ""
+            text:               activeVehicle ? activeVehicle.gps.hdop.value.toFixed(0) : ""
         }
 
         MouseArea {
@@ -470,7 +471,7 @@ Row {
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment: Text.AlignRight
             font.pixelSize: ScreenTools.smallFontPixelSize
-            font.weight: Font.DemiBold
+            font.family: ScreenTools.demiboldFontFamily
             color: colorWhite
         }
     }
@@ -503,7 +504,7 @@ Row {
                 QGCLabel {
                     text: 'R '
                     font.pixelSize: ScreenTools.smallFontPixelSize
-                    font.weight: Font.DemiBold
+                    font.family: ScreenTools.demiboldFontFamily
                     color: colorWhite
                 }
                 QGCLabel {
@@ -511,7 +512,7 @@ Row {
                     width: getProportionalDimmension(30)
                     horizontalAlignment: Text.AlignRight
                     font.pixelSize: ScreenTools.smallFontPixelSize
-                    font.weight: Font.DemiBold
+                    font.family: ScreenTools.demiboldFontFamily
                     color: colorWhite
                 }
             }
@@ -520,7 +521,7 @@ Row {
                 QGCLabel {
                     text: 'L '
                     font.pixelSize: ScreenTools.smallFontPixelSize
-                    font.weight: Font.DemiBold
+                    font.family: ScreenTools.demiboldFontFamily
                     color: colorWhite
                 }
                 QGCLabel {
@@ -528,7 +529,7 @@ Row {
                     width: getProportionalDimmension(30)
                     horizontalAlignment: Text.AlignRight
                     font.pixelSize: ScreenTools.smallFontPixelSize
-                    font.weight: Font.DemiBold
+                    font.family: ScreenTools.demiboldFontFamily
                     color: colorWhite
                 }
             }

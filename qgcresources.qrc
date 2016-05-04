@@ -1,4 +1,9 @@
 <RCC>
+    <qresource prefix="/fonts">
+        <file alias="opensans">resources/fonts/OpenSans-Regular.ttf</file>
+        <file alias="opensans-demibold">resources/fonts/OpenSans-Semibold.ttf</file>
+    </qresource>
+
     <qresource prefix="/qmlimages">
         <file alias="AirframeComponentIcon.png">src/AutoPilotPlugins/Common/Images/AirframeComponentIcon.png</file>
 
