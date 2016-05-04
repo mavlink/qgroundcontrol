@@ -93,7 +93,7 @@ QGCViewDialog {
                 QGCLabel {
                     text:           mavCmdInfo.friendlyName
                     color:          textColor
-                    font.weight:    Font.DemiBold
+                    font.family:    ScreenTools.demiboldFontFamily
                 }
 
                 QGCLabel {

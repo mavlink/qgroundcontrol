@@ -50,6 +50,7 @@ FactPanel {
             labelText: qsTr("WiFi AP Password:")
             valueText: esp8266.wifiPassword
         }
+        /* Too much info makes it all crammed
         VehicleSummaryRow {
             labelText: qsTr("WiFi STA SSID:")
             valueText: esp8266.wifiSSIDSta
@@ -58,6 +59,7 @@ FactPanel {
             labelText: qsTr("WiFi STA Password:")
             valueText: esp8266.wifiPasswordSta
         }
+        */
         VehicleSummaryRow {
             labelText: qsTr("UART Baud Rate:")
             valueText: uartBaud ? uartBaud.valueString : ""

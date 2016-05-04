@@ -11,6 +11,7 @@ Text {
     property bool enabled: true
 
     font.pixelSize: ScreenTools.defaultFontPixelSize
+    font.family:    ScreenTools.normalFontFamily
     color:          __qgcPal.text
     antialiasing:   true
 }

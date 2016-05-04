@@ -133,7 +133,7 @@ Item {
     // This is the menu dialog panel which is anchored to the left edge
     Rectangle {
         id:             __leftMenu
-        width:          ScreenTools.defaultFontPixelWidth * 14
+        width:          ScreenTools.defaultFontPixelWidth * 16
         anchors.left:   parent.left
         anchors.top:    __topSeparator.bottom
         anchors.bottom: parent.bottom
@@ -193,7 +193,6 @@ Item {
                     anchors.right:  parent.right
                     text:           qsTr("Offline Maps")
                     exclusiveGroup: panelActionGroup
-                    visible:        !ScreenTools.isTinyScreen
                     onClicked: {
                         if(__rightPanel.source != "OfflineMap.qml") {
                             __rightPanel.source = "OfflineMap.qml"

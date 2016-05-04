@@ -135,7 +135,7 @@ QGCView {
             QGCLabel {
                 id:         basicLabel
                 text:       qsTr("Basic Tuning")
-                font.weight: Font.DemiBold
+                font.family: ScreenTools.demiboldFontFamily
             }
 
             Rectangle {
@@ -161,7 +161,7 @@ QGCView {
 
                         QGCLabel {
                             text:       qsTr("Throttle Hover")
-                            font.weight: Font.DemiBold
+                            font.family: ScreenTools.demiboldFontFamily
                         }
 
                         QGCLabel {
@@ -191,7 +191,7 @@ QGCView {
 
                         QGCLabel {
                             text:       qsTr("Roll/Pitch Sensitivity")
-                            font.weight: Font.DemiBold
+                            font.family: ScreenTools.demiboldFontFamily
                         }
 
                         QGCLabel {
@@ -224,7 +224,7 @@ QGCView {
 
                         QGCLabel {
                             text:       qsTr("Climb Sensitivity")
-                            font.weight: Font.DemiBold
+                            font.family: ScreenTools.demiboldFontFamily
                         }
 
                         QGCLabel {
@@ -256,7 +256,7 @@ QGCView {
 
                         QGCLabel {
                             text:       qsTr("RC Roll/Pitch Feel")
-                            font.weight: Font.DemiBold
+                            font.family: ScreenTools.demiboldFontFamily
                         }
 
                         QGCLabel {
@@ -287,7 +287,7 @@ QGCView {
                 anchors.topMargin:  _margins
                 anchors.top:        basicTuningRect.bottom
                 text:               qsTr("AutoTune")
-                font.weight:        Font.DemiBold
+                font.family:        ScreenTools.demiboldFontFamily
             }
 
             Rectangle {

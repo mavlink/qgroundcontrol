@@ -43,7 +43,7 @@ QGCView {
     QGCPalette { id: __qgcPal; colorGroupEnabled: true }
 
     property Fact   _editorDialogFact: Fact { }
-    property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
+    property int    _rowHeight:         ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 4 : ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10      // Dynamic adjusted at runtime
     property bool   _searchFilter:      false   ///< true: showing results of search
     property var    _searchResults              ///< List of parameter names from search results
@@ -53,7 +53,6 @@ QGCView {
     ParameterEditorController {
         id:         controller;
         factPanel:  panel
-
         onShowErrorMessage: {
             showMessage(qsTr("Parameter Load Errors"), errorMsg, StandardButton.Ok)
         }
@@ -76,7 +75,6 @@ QGCView {
                 anchors.top:    searchText.top
                 anchors.bottom: searchText.bottom
                 text:           qsTr("Filter by:")
-
                 onClicked: {
                     _searchResults = controller.searchParametersForComponent(-1, searchText.text)
                     _searchFilter = true
@@ -184,7 +182,7 @@ QGCView {
                             spacing: Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
                             QGCLabel {
                                 text: qsTr("Component #: %1)").arg(componentId.toString())
-                                font.weight: Font.DemiBold
+                                font.family: ScreenTools.demiboldFontFamily
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
                             ExclusiveGroup { id: groupGroup }

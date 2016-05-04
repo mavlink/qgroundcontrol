@@ -62,12 +62,13 @@ Rectangle {
             width:  listview.width
 
             Text {
+                id:             field
+                text:           display
+                color:          qgcPal.text
+                width:          parent.width
+                wrapMode:       Text.Wrap
+                font.family:    ScreenTools.normalFontFamily
                 anchors.verticalCenter: parent.verticalCenter
-                id:       field
-                text:     display
-                color:    qgcPal.text
-                width:    parent.width
-                wrapMode: Text.Wrap
             }
         }
     }

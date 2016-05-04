@@ -90,7 +90,7 @@ Item {
 
             QGCLabel {
                 text:           active ? heading.toFixed(0) : qsTr("OFF")
-                font.weight:    active ? Font.DemiBold : Font.Light
+                font.family:    active ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
                 font.pixelSize: _fontSize < 1 ? 1 : _fontSize;
                 color:          "white"
                 anchors.centerIn: parent
