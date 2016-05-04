@@ -8,7 +8,7 @@ import QGroundControl.ScreenTools 1.0
 
 Button {
 
-    property bool primary:      false                                   ///< primary button for a group of buttons
+    property bool   primary:                false                                   ///< primary button for a group of buttons
 
     property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
     property bool   _showHighlight:     (pressed | hovered | checked) && !__forceHoverOff
@@ -60,7 +60,13 @@ Button {
             background: Item {
                 property bool down: control.pressed || (control.checkable && control.checked)
                 implicitWidth: Math.round(TextSingleton.implicitHeight * 4.5)
-                implicitHeight: ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 2.5 : Math.max(25, Math.round(TextSingleton.implicitHeight * 1.2))
+                 implicitHeight: {
+                    if(ScreenTools.isTinyScreen)
+                        return ScreenTools.defaultFontPixelHeight * 3.5
+                    if(ScreenTools.isMobile)
+                        return ScreenTools.defaultFontPixelHeight * 2.5
+                    return Math.max(25, Math.round(TextSingleton.implicitHeight * 1.2))
+                }
 
                 Rectangle {
                     anchors.fill:   parent
@@ -103,9 +109,8 @@ Button {
                         antialiasing:   true
                         text:           control.text
                         font.pixelSize: ScreenTools.defaultFontPixelSize
-
+                        font.family:    ScreenTools.normalFontFamily
                         anchors.verticalCenter: parent.verticalCenter
-
                         color: _showHighlight ?
                             control._qgcPal.buttonHighlightText :
                             (primary ? control._qgcPal.primaryButtonText : control._qgcPal.buttonText)

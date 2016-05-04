@@ -96,7 +96,7 @@ QGCFlickable {
                     width:                  parent.width
                     horizontalAlignment:    Text.AlignHCenter
                     font.pixelSize:         ScreenTools.largeFontPixelSize * (largeValue ? 1.3 : 1.0)
-                    font.weight:            largeValue ? Font.ExtraBold : Font.Normal
+                    font.family:            largeValue ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
                     fontSizeMode:           Text.HorizontalFit
                     color:                  textColor
                     text:                   fact.valueString

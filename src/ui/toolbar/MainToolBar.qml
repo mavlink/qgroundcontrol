@@ -134,7 +134,7 @@ Rectangle {
 
     */
 
-    readonly property real  tbFontSmall:    10 * ScreenTools.fontHRatio
+    readonly property real  tbFontSmall:     8 * ScreenTools.fontHRatio
     readonly property real  tbFontNormal:   12 * ScreenTools.fontHRatio
     readonly property real  tbFontLarge:    18 * ScreenTools.fontHRatio
 
@@ -212,9 +212,9 @@ Rectangle {
                 anchors.centerIn:   parent
 
                 QGCLabel {
-                    id:         gpsLabel
-                    text:       (activeVehicle && activeVehicle.gps.count.value >= 0) ? qsTr("GPS Status") : qsTr("GPS Data Unavailable")
-                    font.weight:Font.DemiBold
+                    id:             gpsLabel
+                    text:           (activeVehicle && activeVehicle.gps.count.value >= 0) ? qsTr("GPS Status") : qsTr("GPS Data Unavailable")
+                    font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
@@ -266,9 +266,9 @@ Rectangle {
                 anchors.centerIn:   parent
 
                 QGCLabel {
-                    id:         battLabel
-                    text:       qsTr("Battery Status")
-                    font.weight:Font.DemiBold
+                    id:             battLabel
+                    text:           qsTr("Battery Status")
+                    font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
@@ -313,9 +313,9 @@ Rectangle {
                 anchors.centerIn:   parent
 
                 QGCLabel {
-                    id:         rssiLabel
-                    text:       activeVehicle ? (activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data avaliable")
-                    font.weight:Font.DemiBold
+                    id:             rssiLabel
+                    text:           activeVehicle ? (activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data avaliable")
+                    font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
@@ -361,7 +361,7 @@ Rectangle {
                 QGCLabel {
                     id:             telemLabel
                     text:           qsTr("Telemetry RSSI Status")
-                    font.weight:    Font.DemiBold
+                    font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
@@ -504,7 +504,7 @@ Rectangle {
             id:                     connectionLost
             text:                   qsTr("COMMUNICATION LOST")
             font.pixelSize:         tbFontLarge
-            font.weight:            Font.DemiBold
+            font.family:            ScreenTools.demiboldFontFamily
             color:                  colorRed
             anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
             anchors.right:          disconnectButton.left

@@ -10,7 +10,7 @@ Item {
 
     signal          clicked()
     property alias  buttonImage:    button.source
-    property real   radius:         ScreenTools.defaultFontPixelHeight * 1.5
+    property real   radius:         ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 2.5 : ScreenTools.defaultFontPixelHeight * 1.5
     property bool   rotateImage:    false
     property bool   lightBorders:   true
 
