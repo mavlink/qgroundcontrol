@@ -80,7 +80,7 @@ QGCView {
             QGCLabel {
                 id:         failsafeLabel
                 text:       qsTr("Failsafe Triggers")
-                font.weight: Font.DemiBold
+                font.family: ScreenTools.demiboldFontFamily
             }
 
             Rectangle {
@@ -217,7 +217,7 @@ QGCView {
                 anchors.left:       failsafeSettings.right
                 anchors.top:        parent.top
                 text:               qsTr("GeoFence")
-                font.weight:        Font.DemiBold
+                font.family:        ScreenTools.demiboldFontFamily
             }
 
             Rectangle {
@@ -342,7 +342,7 @@ QGCView {
                 anchors.topMargin:  _margins
                 anchors.top:        geoFenceSettings.bottom
                 text:               qsTr("Return to Launch")
-                font.weight:        Font.DemiBold
+                font.family:        ScreenTools.demiboldFontFamily
             }
 
             Rectangle {
@@ -475,7 +475,7 @@ QGCView {
                 anchors.left:       parent.left
                 anchors.top:        rtlSettings.bottom
                 text:               qsTr("Arming Checks")
-                font.weight:        Font.DemiBold
+                font.family:        ScreenTools.demiboldFontFamily
             }
 
             Rectangle {

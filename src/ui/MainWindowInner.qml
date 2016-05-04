@@ -368,10 +368,11 @@ Item {
             pixelAligned:       true
             clip:               true
             TextEdit {
-                id:         messageText
-                readOnly:   true
-                textFormat: TextEdit.RichText
-                color:      "white"
+                id:             messageText
+                readOnly:       true
+                textFormat:     TextEdit.RichText
+                color:          "white"
+                font.family:    ScreenTools.normalFontFamily
             }
         }
         //-- Dismiss System Message
@@ -379,8 +380,8 @@ Item {
             anchors.margins:    ScreenTools.defaultFontPixelHeight
             anchors.top:        parent.top
             anchors.right:      parent.right
-            width:              ScreenTools.defaultFontPixelHeight * 1.5
-            height:             ScreenTools.defaultFontPixelHeight * 1.5
+            width:              ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 2.5 : ScreenTools.defaultFontPixelHeight * 1.5
+            height:             width
             source:             "/res/XDelete.svg"
             fillMode:           Image.PreserveAspectFit
             mipmap:             true
@@ -404,7 +405,8 @@ Item {
                 criticalMessageText.text = ""
                 //-- Show all messages in queue
                 for (var i = 0; i < mainWindow.messageQueue.length; i++) {
-                    criticalMessageText.append(mainWindow.messageQueue[i])
+                    var text = mainWindow.messageQueue[i]
+                    criticalMessageText.append(text)
                 }
                 //-- Clear it
                 mainWindow.messageQueue = []
@@ -449,7 +451,7 @@ Item {
                 anchors.left:   parent.left
                 readOnly:       true
                 textFormat:     TextEdit.RichText
-                font.weight:    Font.DemiBold
+                font.family:    ScreenTools.demiboldFontFamily
                 wrapMode:       TextEdit.WordWrap
                 color:          qgcPal.warningText
             }
@@ -461,12 +463,11 @@ Item {
             anchors.margins:    ScreenTools.defaultFontPixelHeight
             anchors.top:        parent.top
             anchors.right:      parent.right
-            width:              ScreenTools.defaultFontPixelHeight * 1.5
-            height:             ScreenTools.defaultFontPixelHeight * 1.5
+            width:              ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 2.5 : ScreenTools.defaultFontPixelHeight * 1.5
+            height:             width
             source:             "/res/XDelete.svg"
             fillMode:           Image.PreserveAspectFit
             color:              qgcPal.warningText
-
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {

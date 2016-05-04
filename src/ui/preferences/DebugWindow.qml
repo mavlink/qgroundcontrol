@@ -44,9 +44,10 @@ QGCView {
         anchors.fill:   parent
 
         Text {
-            id:     _textMeasure
-            text:   "X"
-            color:  qgcPal.window
+            id:             _textMeasure
+            text:           "X"
+            color:          qgcPal.window
+            font.family:    ScreenTools.normalFontFamily
         }
 
         GridLayout {
@@ -57,74 +58,92 @@ QGCView {
             Text {
                 text:   qsTr("Qt Platform:")
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   Qt.platform.os
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   qsTr("Default font width:")
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   _textMeasure.contentWidth
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   qsTr("Default font height:")
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   _textMeasure.contentHeight
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   qsTr("Default font pixel size:")
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   _textMeasure.font.pixelSize
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   qsTr("Default font point size:")
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   _textMeasure.font.pointSize
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   qsTr("QML Screen Desktop:")
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   Screen.desktopAvailableWidth + " x " + Screen.desktopAvailableHeight
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   qsTr("QML Screen Size:")
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   Screen.width + " x " + Screen.height
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   qsTr("QML Pixel Density:")
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   Screen.pixelDensity
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   qsTr("QML Pixel Ratio:")
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
             Text {
                 text:   Screen.devicePixelRatio
                 color:  qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
             }
         }
 

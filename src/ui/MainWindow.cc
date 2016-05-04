@@ -141,6 +141,14 @@ MainWindow::MainWindow()
     Q_ASSERT(_instance == NULL);
     _instance = this;
 
+    //-- Load fonts
+    if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
+        qWarning() << "Could not load /fonts/opensans font";
+    }
+    if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
+        qWarning() << "Could not load /fonts/opensans-demibold font";
+    }
+
     // Qt 4/5 on Ubuntu does place the native menubar correctly so on Linux we revert back to in-window menu bar.
 #ifdef Q_OS_LINUX
     menuBar()->setNativeMenuBar(false);

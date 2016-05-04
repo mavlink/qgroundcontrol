@@ -63,7 +63,7 @@ QGCView {
             QGCLabel {
                 id:             flightModeLabel
                 text:           qsTr("Flight Mode Settings") + (_fltmodeChExists ? "" : qsTr(" (Channel 5)"))
-                font.weight:    Font.DemiBold
+                font.family:    ScreenTools.demiboldFontFamily
             }
 
             Rectangle {
@@ -141,7 +141,7 @@ QGCView {
                 anchors.top:        parent.top
                 anchors.left:       flightModeSettings.right
                 text:               qsTr("Channel Options")
-                font.weight:        Font.DemiBold
+                font.family:        ScreenTools.demiboldFontFamily
                 visible:            _channelOptionCount != 0
             }
 

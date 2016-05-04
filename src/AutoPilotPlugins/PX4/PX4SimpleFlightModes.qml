@@ -71,7 +71,7 @@ Item {
                     QGCLabel {
                         id:             flightModeLabel
                         text:           qsTr("Flight Mode Settings")
-                        font.weight:    Font.DemiBold
+                        font.family:    ScreenTools.demiboldFontFamily
                     }
 
                     Rectangle {
@@ -136,7 +136,7 @@ Item {
 
                     QGCLabel {
                         text:           qsTr("Switch Settings")
-                        font.weight:    Font.DemiBold
+                        font.family:    ScreenTools.demiboldFontFamily
                     }
 
                     Rectangle {

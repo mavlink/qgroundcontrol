@@ -35,11 +35,13 @@ import QGroundControl.Palette               1.0
 Rectangle {
     id:             _summaryRoot
     anchors.fill:   parent
+    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+    anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
     color:          qgcPal.window
 
-    property real _minSummaryW:     ScreenTools.defaultFontPixelWidth * 40
+    property real _minSummaryW:     ScreenTools.defaultFontPixelWidth * 42
     property real _summaryBoxWidth: _minSummaryW
-    property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth
+    property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth * 2
 
     function computeSummaryBoxSize() {
         var sw  = 0
@@ -51,7 +53,7 @@ Rectangle {
         } else {
             _summaryBoxSpace = 0
             if(idx > 1) {
-                _summaryBoxSpace = ScreenTools.defaultFontPixelWidth
+                _summaryBoxSpace = ScreenTools.defaultFontPixelWidth * 2
                 sw = _summaryBoxSpace * (idx - 1)
             }
             rw = _summaryRoot.width - sw
@@ -92,7 +94,7 @@ Rectangle {
                 width:			parent.width
                 wrapMode:		Text.WordWrap
                 color:			setupComplete ? qgcPal.text : qgcPal.warningText
-                font.weight:    Font.DemiBold
+                font.family:    ScreenTools.demiboldFontFamily
                 horizontalAlignment: Text.AlignHCenter
                 text:           setupComplete ?
                     qsTr("Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component.") :
@@ -111,11 +113,16 @@ Rectangle {
                     // Outer summary item rectangle
                     Rectangle {
                         width:      _summaryBoxWidth
-                        height:     ScreenTools.defaultFontPixelHeight * 13
-                        color:      qgcPal.window
+                        height:     ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 20 : ScreenTools.defaultFontPixelHeight * 13
+                        color:      qgcPal.windowShade
                         visible:    modelData.summaryQmlSource.toString() !== ""
+                        border.width: 1
+                        border.color: qgcPal.text
+                        Component.onCompleted: {
+                            border.color = Qt.rgba(border.color.r, border.color.g, border.color.b, 0.1)
+                        }
 
-                        readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
+                        readonly property real titleHeight: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 4 : ScreenTools.defaultFontPixelHeight * 2
 
                         // Title bar
                         QGCButton {
@@ -126,21 +133,19 @@ Rectangle {
 
                             // Setup indicator
                             Rectangle {
-                                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 0.5
+                                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
                                 anchors.right:          parent.right
                                 anchors.verticalCenter: parent.verticalCenter
-                                width:                  ScreenTools.defaultFontPixelWidth * 1.5
+                                width:                  ScreenTools.defaultFontPixelWidth * 1.75
                                 height:                 width
                                 radius:                 width / 2
                                 color:                  modelData.setupComplete ? "#00d932" : "red"
                                 visible:                modelData.requiresSetup
                             }
-
                             onClicked : {
                                 setupView.showVehicleComponentPanel(modelData)
                             }
                         }
-
                         // Summary Qml
                         Rectangle {
                             anchors.top:    titleBar.bottom

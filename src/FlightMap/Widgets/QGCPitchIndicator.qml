@@ -71,7 +71,7 @@ Rectangle {
                         anchors.horizontalCenterOffset: -(_longDash * 0.8)
                         anchors.verticalCenter: parent.verticalCenter
                         smooth: true
-                        font.weight: Font.DemiBold
+                        font.family: ScreenTools.demiboldFontFamily
                         font.pixelSize: _fontSize < 1 ? 1 : _fontSize;
                         text: _pitch
                         color: "white"
@@ -82,7 +82,7 @@ Rectangle {
                         anchors.horizontalCenterOffset: (_longDash * 0.8)
                         anchors.verticalCenter: parent.verticalCenter
                         smooth: true
-                        font.weight: Font.DemiBold
+                        font.family: ScreenTools.demiboldFontFamily
                         font.pixelSize: _fontSize < 1 ? 1 : _fontSize;
                         text: _pitch
                         color: "white"

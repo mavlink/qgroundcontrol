@@ -49,7 +49,7 @@ QGCView {
         QGCLabel {
             id:             titleLabel
             text:           qsTr("PX4Flow Camera")
-            font.weight:    Font.DemiBold
+            font.family:    ScreenTools.demiboldFontFamily
         }
 
         Image {
