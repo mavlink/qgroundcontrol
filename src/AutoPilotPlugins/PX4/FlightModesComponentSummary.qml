@@ -22,7 +22,7 @@ FactPanel {
 
     Loader {
         anchors.fill:       parent
-        anchors.margins:    8
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
         sourceComponent:    _simpleMode ? simple : advanced
     }
 

@@ -113,7 +113,7 @@ Rectangle {
                     // Outer summary item rectangle
                     Rectangle {
                         width:      _summaryBoxWidth
-                        height:     ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 20 : ScreenTools.defaultFontPixelHeight * 13
+                        height:     ScreenTools.defaultFontPixelHeight * 13
                         color:      qgcPal.windowShade
                         visible:    modelData.summaryQmlSource.toString() !== ""
                         border.width: 1
@@ -122,7 +122,7 @@ Rectangle {
                             border.color = Qt.rgba(border.color.r, border.color.g, border.color.b, 0.1)
                         }
 
-                        readonly property real titleHeight: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 4 : ScreenTools.defaultFontPixelHeight * 2
+                        readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 
                         // Title bar
                         QGCButton {

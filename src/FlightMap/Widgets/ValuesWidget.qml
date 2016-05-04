@@ -79,7 +79,6 @@ QGCFlickable {
             model: _activeVehicle ? controller.largeValues : 0
 
             Column {
-                id:     valueColumn
                 width:  _largeColumn.width
 
                 property Fact fact: _activeVehicle.getFact(modelData.replace("Vehicle.", ""))
@@ -95,7 +94,7 @@ QGCFlickable {
                 QGCLabel {
                     width:                  parent.width
                     horizontalAlignment:    Text.AlignHCenter
-                    font.pixelSize:         ScreenTools.largeFontPixelSize * (largeValue ? 1.3 : 1.0)
+                    font.pointSize:         ScreenTools.mediumFontPointSize * (largeValue ? 1.3 : 1.0)
                     font.family:            largeValue ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
                     fontSizeMode:           Text.HorizontalFit
                     color:                  textColor
@@ -117,7 +116,6 @@ QGCFlickable {
             model: _activeVehicle ? controller.smallValues : 0
 
             Column {
-                id:     valueColumn
                 width:  (_root.width / 2) - (_margins / 2) - 0.1
                 clip:   true
 
@@ -126,7 +124,7 @@ QGCFlickable {
                 QGCLabel {
                     width:                  parent.width
                     horizontalAlignment:    Text.AlignHCenter
-                    font.pixelSize:         ScreenTools.smallFontPixelSize
+                    font.pointSize:         ScreenTools.smallFontPointSize * 0.75
                     fontSizeMode:           Text.HorizontalFit
                     color:                  textColor
                     text:                   fact.shortDescription
@@ -141,7 +139,7 @@ QGCFlickable {
                 QGCLabel {
                     width:                  parent.width
                     horizontalAlignment:    Text.AlignHCenter
-                    font.pixelSize:         ScreenTools.smallFontPixelSize
+                    font.pointSize:         ScreenTools.smallFontPointSize * 0.75
                     fontSizeMode:           Text.HorizontalFit
                     color:                  textColor
                     text:                   fact.units

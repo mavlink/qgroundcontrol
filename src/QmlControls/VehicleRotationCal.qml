@@ -69,7 +69,7 @@ Rectangle {
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            font.pixelSize:         ScreenTools.mediumFontPixelSize
+            font.pointSize:         ScreenTools.mediumFontPointSize
             text:                   calInProgress ? calInProgressText : (calValid ? qsTr("Completed") : qsTr("Incomplete"))
         }
     }

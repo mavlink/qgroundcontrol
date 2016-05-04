@@ -187,7 +187,7 @@ Row {
             //anchors.left:       parent.left
             anchors.right:      gpsRow.right
             visible:            activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
-            font.pixelSize:     tbFontSmall
+            font.pointSize:     tbFontSmall
             color:              qgcPal.buttonText
             text:               activeVehicle ? activeVehicle.gps.hdop.value.toFixed(0) : ""
         }
@@ -288,7 +288,7 @@ Row {
 
             QGCLabel {
                 text:           getBatteryPercentageText()
-                font.pixelSize: tbFontLarge
+                font.pointSize: tbFontLarge
                 color:          getBatteryColor()
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -309,7 +309,7 @@ Row {
     //-- Vehicle Selector
     QGCButton {
         id:                     vehicleSelectorButton
-        width:                  ScreenTools.defaultFontPixelSize * 8
+        width:                  ScreenTools.defaultFontPixelHeight * 8
         text:                   "Vehicle " + (activeVehicle ? activeVehicle.id : "None")
         visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
         anchors.verticalCenter: parent.verticalCenter
@@ -375,7 +375,7 @@ Row {
 
             QGCLabel {
                 text:           activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
-                font.pixelSize: tbFontLarge
+                font.pointSize: tbFontLarge
                 color:          qgcPal.buttonText
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -470,7 +470,7 @@ Row {
             anchors.rightMargin: getProportionalDimmension(6)
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment: Text.AlignRight
-            font.pixelSize: ScreenTools.smallFontPixelSize
+            font.pointSize: ScreenTools.smallFontPointSize
             font.family: ScreenTools.demiboldFontFamily
             color: colorWhite
         }
@@ -503,7 +503,7 @@ Row {
                 anchors.right: parent.right
                 QGCLabel {
                     text: 'R '
-                    font.pixelSize: ScreenTools.smallFontPixelSize
+                    font.pointSize: ScreenTools.smallFontPointSize
                     font.family: ScreenTools.demiboldFontFamily
                     color: colorWhite
                 }
@@ -511,7 +511,7 @@ Row {
                     text: _controller.telemetryRRSSI + 'dBm'
                     width: getProportionalDimmension(30)
                     horizontalAlignment: Text.AlignRight
-                    font.pixelSize: ScreenTools.smallFontPixelSize
+                    font.pointSize: ScreenTools.smallFontPointSize
                     font.family: ScreenTools.demiboldFontFamily
                     color: colorWhite
                 }
@@ -520,7 +520,7 @@ Row {
                 anchors.right: parent.right
                 QGCLabel {
                     text: 'L '
-                    font.pixelSize: ScreenTools.smallFontPixelSize
+                    font.pointSize: ScreenTools.smallFontPointSize
                     font.family: ScreenTools.demiboldFontFamily
                     color: colorWhite
                 }
@@ -528,7 +528,7 @@ Row {
                     text: _controller.telemetryLRSSI + 'dBm'
                     width: getProportionalDimmension(30)
                     horizontalAlignment: Text.AlignRight
-                    font.pixelSize: ScreenTools.smallFontPixelSize
+                    font.pointSize: ScreenTools.smallFontPointSize
                     font.family: ScreenTools.demiboldFontFamily
                     color: colorWhite
                 }

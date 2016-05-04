@@ -19,7 +19,7 @@ Rectangle {
     border.color:   "white"
     color:          isCurrentItem ? "green" : qgcPal.mapButtonHighlight
 
-    property real _width: small ? ScreenTools.smallFontPixelSize * 1.5 : ScreenTools.mediumFontPixelSize * 1.5
+    property real _width: small ? ScreenTools.smallFontPointSize * 1.5 : ScreenTools.mediumFontPointSize * 1.5
 
     QGCPalette { id: qgcPal }
 
@@ -35,6 +35,6 @@ Rectangle {
         horizontalAlignment:    Text.AlignHCenter
         verticalAlignment:      Text.AlignVCenter
         color:                  "white"
-        font.pixelSize:         small ? ScreenTools.smallFontPixelSize : ScreenTools.mediumFontPixelSize
+        font.pointSize:         small ? ScreenTools.smallFontPointSize : ScreenTools.mediumFontPointSize
     }
 }

@@ -201,7 +201,7 @@ Item {
                     anchors.left:           parent.left
                     anchors.right:          buttonColumn.left
                     text:                   topHelpText
-                    font.pixelSize:         ScreenTools.defaultFontPixelSize
+                    font.pointSize:         ScreenTools.defaultFontPointSize
                     wrapMode:               Text.WordWrap
                 }
 

@@ -46,7 +46,7 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
-        anchors.margins:    8
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
 
         VehicleSummaryRow {
             labelText: qsTr("Compass 1:")

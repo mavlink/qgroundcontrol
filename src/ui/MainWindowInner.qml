@@ -45,7 +45,7 @@ Item {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    property real   tbHeight:           ScreenTools.isMobile ? (ScreenTools.isTinyScreen ? (mainWindow.width * 0.0666) : (mainWindow.width * 0.05)) : ScreenTools.defaultFontPixelSize * 4
+    property real   tbHeight:           ScreenTools.isMobile ? (ScreenTools.isTinyScreen ? (mainWindow.width * 0.0666) : (mainWindow.width * 0.05)) : ScreenTools.defaultFontPixelHeight * 4
     property int    tbCellHeight:       tbHeight * 0.75
     property real   tbSpacing:          ScreenTools.isMobile ? width * 0.00824 : 9.54
     property real   tbButtonWidth:      tbCellHeight * 1.35
@@ -373,6 +373,7 @@ Item {
                 textFormat:     TextEdit.RichText
                 color:          "white"
                 font.family:    ScreenTools.normalFontFamily
+                font.pointSize: ScreenTools.defaultFontPointSize
             }
         }
         //-- Dismiss System Message
@@ -380,7 +381,7 @@ Item {
             anchors.margins:    ScreenTools.defaultFontPixelHeight
             anchors.top:        parent.top
             anchors.right:      parent.right
-            width:              ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 2.5 : ScreenTools.defaultFontPixelHeight * 1.5
+            width:              ScreenTools.defaultFontPixelHeight * 1.5
             height:             width
             source:             "/res/XDelete.svg"
             fillMode:           Image.PreserveAspectFit
@@ -451,6 +452,7 @@ Item {
                 anchors.left:   parent.left
                 readOnly:       true
                 textFormat:     TextEdit.RichText
+                font.pointSize: ScreenTools.defaultFontPointSize
                 font.family:    ScreenTools.demiboldFontFamily
                 wrapMode:       TextEdit.WordWrap
                 color:          qgcPal.warningText
@@ -463,7 +465,7 @@ Item {
             anchors.margins:    ScreenTools.defaultFontPixelHeight
             anchors.top:        parent.top
             anchors.right:      parent.right
-            width:              ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 2.5 : ScreenTools.defaultFontPixelHeight * 1.5
+            width:              ScreenTools.defaultFontPixelHeight * 1.5
             height:             width
             source:             "/res/XDelete.svg"
             fillMode:           Image.PreserveAspectFit
