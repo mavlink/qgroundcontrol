@@ -1,24 +1,24 @@
 /*=====================================================================
 
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 /// @file
@@ -37,18 +37,20 @@ static const QRegExp APM_COPTER_REXP("^(ArduCopter|APM:Copter)");
 static const QRegExp APM_SOLO_REXP("^(APM:Copter solo-)");
 static const QRegExp APM_PLANE_REXP("^(ArduPlane|APM:Plane)");
 static const QRegExp APM_ROVER_REXP("^(ArduRover|APM:Rover)");
+static const QRegExp APM_SUB_REXP("^(ArduSub|APM:Sub)");
 static const QRegExp APM_PX4NUTTX_REXP("^PX4: .*NuttX: .*");
 static const QRegExp APM_FRAME_REXP("^Frame: ");
 static const QRegExp APM_SYSID_REXP("^PX4v2 ");
 
 // Regex to parse version text coming from APM, gives out firmware type, major, minor and patch level numbers
-static const QRegExp VERSION_REXP("^(APM:Copter|APM:Plane|APM:Rover|ArduCopter|ArduPlane|ArduRover) +[vV](\\d*)\\.*(\\d*)*\\.*(\\d*)*");
+static const QRegExp VERSION_REXP("^(APM:Copter|APM:Plane|APM:Rover|APM:Sub|ArduCopter|ArduPlane|ArduRover|ArduSub) +[vV](\\d*)\\.*(\\d*)*\\.*(\\d*)*");
 
 // minimum firmware versions that don't suffer from mavlink severity inversion bug.
 // https://github.com/diydrones/apm_planner/issues/788
 static const QString MIN_SOLO_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Copter solo-1.2.0");
 static const QString MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Copter V3.4.0");
 static const QString MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Plane V3.4.0");
+static const QString MIN_SUB_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Sub V3.4.0");
 static const QString MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Rover V2.6.0");
 
 const char* APMFirmwarePlugin::_artooIP =                   "10.1.1.1"; ///< IP address of ARTOO controller
@@ -161,12 +163,12 @@ bool APMFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 QList<VehicleComponent*> APMFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
 {
     Q_UNUSED(vehicle);
-    
+
     return QList<VehicleComponent*>();
 }
 
 QStringList APMFirmwarePlugin::flightModes(void)
-{   
+{
     QStringList flightModesList;
     foreach (const APMCustomMode& customMode, _supportedModes) {
         if (customMode.canBeSet()) {
@@ -319,7 +321,7 @@ bool APMFirmwarePlugin::_handleStatusText(Vehicle* vehicle, mavlink_message_t* m
 
         if (!messageText.contains(APM_SOLO_REXP)) {
             // if don't know firmwareVersion yet, try and see if this message contains it
-            if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP)) {
+            if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP) || messageText.contains(APM_SUB_REXP)) {
                 // found version string
                 APMFirmwareVersion firmwareVersion(messageText);
                 _textSeverityAdjustmentNeeded = _isTextSeverityAdjustmentNeeded(firmwareVersion);
@@ -376,7 +378,7 @@ bool APMFirmwarePlugin::_handleStatusText(Vehicle* vehicle, mavlink_message_t* m
 
     // The following messages are incorrectly labeled as warning message.
     // Fixed in newer firmware (unreleased at this point), but still in older firmware.
-    if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP) ||
+    if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP) || messageText.contains(APM_SUB_REXP) ||
             messageText.contains(APM_PX4NUTTX_REXP) || messageText.contains(APM_FRAME_REXP) || messageText.contains(APM_SYSID_REXP)) {
         _setInfoSeverity(message);
     }
@@ -489,6 +491,10 @@ bool APMFirmwarePlugin::_isTextSeverityAdjustmentNeeded(const APMFirmwareVersion
         }
     } else if (firmwareVersion.vehicleType().contains(APM_ROVER_REXP)) {
         if (firmwareVersion < APMFirmwareVersion(MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
+            adjustmentNeeded = true;
+        }
+    } else if (firmwareVersion.vehicleType().contains(APM_SUB_REXP)) {
+        if (firmwareVersion < APMFirmwareVersion(MIN_SUB_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
             adjustmentNeeded = true;
         }
     }
@@ -654,8 +660,9 @@ QString APMFirmwarePlugin::getParameterMetaDataFile(Vehicle* vehicle)
         }
     case MAV_TYPE_GROUND_ROVER:
     case MAV_TYPE_SURFACE_BOAT:
-    case MAV_TYPE_SUBMARINE:
         return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.0.xml");
+    case MAV_TYPE_SUBMARINE:
+        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.4.xml");
     default:
         return QString();
     }
