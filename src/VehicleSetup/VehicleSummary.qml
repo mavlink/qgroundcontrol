@@ -151,8 +151,9 @@ Rectangle {
                             anchors.top:    titleBar.bottom
                             width:          parent.width
                             Loader {
-                                anchors.fill:   parent
-                                source:         modelData.summaryQmlSource
+                                anchors.fill:       parent
+                                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                                source:             modelData.summaryQmlSource
                             }
                         }
                     }

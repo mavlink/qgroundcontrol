@@ -24,7 +24,6 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
 
         VehicleSummaryRow {
             labelText: qsTr("RTL min alt:")

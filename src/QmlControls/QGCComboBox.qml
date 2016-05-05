@@ -9,7 +9,7 @@ import QGroundControl.ScreenTools 1.0
 ComboBox {
     property var    _qgcPal:        QGCPalette { colorGroupEnabled: enabled }
     property bool   _showHighlight: pressed | hovered
-    property bool   _showBorder:    _qgcPal.globalTheme == QGCPalette.Light
+    property bool   _showBorder:    _qgcPal.globalTheme === QGCPalette.Light
 
     style: ComboBoxStyle {
         font.pointSize: ScreenTools.defaultFontPointSize
