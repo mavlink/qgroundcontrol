@@ -54,15 +54,15 @@ Item {
     property Fact   groundSpeedFact:    _emptyFact
     property Fact   airSpeedFact:       _emptyFact
 
-    property real   _defaultSize:   ScreenTools.defaultFontPixelSize * (9)
+    property real   _defaultSize:   ScreenTools.defaultFontPixelHeight * (9)
 
     property color  _backgroundColor:   qgcPal.window
-    property real   _spacing:           ScreenTools.defaultFontPixelSize * 0.33
+    property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
     property real   _topBottomMargin:   (size * 0.05) / 2
     property real   _availableValueHeight: maxHeight - (attitudeWidget.height + _spacer1.height + _spacer2.height + (_spacing * 4)) - (_showCompass ? compass.height : 0)
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
-    readonly property bool _showCompass:    !ScreenTools.isShortScreen
+    readonly property bool _showCompass:    true // !ScreenTools.isShortScreen
 
     QGCPalette { id: qgcPal }
 
@@ -108,8 +108,8 @@ Item {
                 mipmap:             true
                 opacity:            0.5
                 width:              attitudeWidget.width * 0.15
+                sourceSize.width:   width
                 fillMode:           Image.PreserveAspectFit
-
                 MouseArea {
                     anchors.fill:   parent
                     hoverEnabled:   true

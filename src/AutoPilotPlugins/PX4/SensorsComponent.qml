@@ -409,7 +409,7 @@ QGCView {
                         anchors.left:       orientationCalArea.left
                         width:              parent.width
                         wrapMode:           Text.WordWrap
-                        font.pixelSize:     ScreenTools.mediumFontPixelSize
+                        font.pointSize:     ScreenTools.mediumFontPointSize
                     }
 
                     Flow {

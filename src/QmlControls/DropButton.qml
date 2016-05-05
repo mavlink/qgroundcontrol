@@ -11,7 +11,7 @@ Item {
     signal          clicked()
     property alias  buttonImage:        roundButton.buttonImage
     property alias  rotateImage:        roundButton.rotateImage
-    property real   radius:             ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 2.5 : ScreenTools.defaultFontPixelHeight * 1.5
+    property real   radius:             ScreenTools.defaultFontPixelHeight * 1.25
     property int    dropDirection:      dropDown
     property alias  dropDownComponent:  dropDownLoader.sourceComponent
     property real   viewportMargins:    0
@@ -160,7 +160,6 @@ Item {
     RoundButton {
         id:             roundButton
         radius:         parent.width / 2
-
         onClicked:  {
             _root.clicked()
         }

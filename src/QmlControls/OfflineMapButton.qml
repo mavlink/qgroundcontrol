@@ -60,6 +60,7 @@ Rectangle
         QGCColoredImage {
             width:      sizeLabel.height * 0.8
             height:     sizeLabel.height * 0.8
+            sourceSize.height:  height
             source:     "/res/buttonRight.svg"
             mipmap:     true
             fillMode:   Image.PreserveAspectFit

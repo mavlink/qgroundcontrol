@@ -73,7 +73,7 @@ int UASQuickViewTextItem::minValuePixelSize()
     QFont valuefont = valueLabel->font();
     QFont titlefont = titleLabel->font();
     valuefont.setPixelSize(this->height());
-    titlefont.setPixelSize(valuefont.pixelSize() * 0.75);
+    titlefont.setPixelSize(valuefont.pointSize() * 0.75);
     //spacerItem->setGeometry(QRect(0,0,20,this->height()/10.0));
 
     QFontMetrics metrics(valuefont);
@@ -91,27 +91,27 @@ int UASQuickViewTextItem::minValuePixelSize()
             fit = true;
         else
         {
-            if (valuefont.pixelSize() - 1 <= 6)
+            if (valuefont.pointSize() - 1 <= 6)
             {
                 fit = true;
                 valuefont.setPixelSize(6);
             }
             else
             {
-                valuefont.setPixelSize(valuefont.pixelSize() - 1);
+                valuefont.setPixelSize(valuefont.pointSize() - 1);
             }
-            //titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
-            //qDebug() << "Point size:" << valuefont.pixelSize() << valueLabel->width() << valueLabel->height();
+            //titlefont.setPixelSize(valuefont.pointSize() / 2.0);
+            //qDebug() << "Point size:" << valuefont.pointSize() << valueLabel->width() << valueLabel->height();
         }
     }
-    return valuefont.pixelSize();
+    return valuefont.pointSize();
 }
 void UASQuickViewTextItem::setValuePixelSize(int size)
 {
     QFont valuefont = valueLabel->font();
     QFont titlefont = titleLabel->font();
     valuefont.setPixelSize(size);
-    titlefont.setPixelSize(valuefont.pixelSize() * 0.75);
+    titlefont.setPixelSize(valuefont.pointSize() * 0.75);
     valueLabel->setFont(valuefont);
     titleLabel->setFont(titlefont);
     update();
@@ -126,7 +126,7 @@ void UASQuickViewTextItem::resizeEvent(QResizeEvent *event)
     QFont valuefont = valueLabel->font();
     QFont titlefont = titleLabel->font();
     valuefont.setPixelSize(this->height());
-    titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
+    titlefont.setPixelSize(valuefont.pointSize() / 2.0);
     //spacerItem->setGeometry(QRect(0,0,20,this->height()/10.0));
 
     QFontMetrics metrics(valuefont);
@@ -144,20 +144,20 @@ void UASQuickViewTextItem::resizeEvent(QResizeEvent *event)
             fit = true;
         else
         {
-            if (valuefont.pixelSize()-5 <= 0)
+            if (valuefont.pointSize()-5 <= 0)
             {
                 fit = true;
                 valuefont.setPixelSize(5);
             }
             else
             {
-                valuefont.setPixelSize(valuefont.pixelSize() - 5);
+                valuefont.setPixelSize(valuefont.pointSize() - 5);
             }
-            //titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
-            //qDebug() << "Point size:" << valuefont.pixelSize() << valueLabel->width() << valueLabel->height();
+            //titlefont.setPixelSize(valuefont.pointSize() / 2.0);
+            //qDebug() << "Point size:" << valuefont.pointSize() << valueLabel->width() << valueLabel->height();
         }
     }
-titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
+titlefont.setPixelSize(valuefont.pointSize() / 2.0);
     valueLabel->setFont(valuefont);
     titleLabel->setFont(titlefont);
     update();

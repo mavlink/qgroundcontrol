@@ -12,7 +12,7 @@ Button {
 
     property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
     property bool   _showHighlight:     (pressed | hovered | checked) && !__forceHoverOff
-    property bool   _showBorder:        _qgcPal.globalTheme == QGCPalette.Light
+    property bool   _showBorder:        _qgcPal.globalTheme === QGCPalette.Light
 
     // This fixes the issue with button hover where if a Button is near the edge oa QQuickWidget you can
     // move the mouse fast enough such that the MouseArea does not trigger an onExited. This is turn
@@ -43,30 +43,24 @@ Button {
         repeat:     true
 
         onTriggered: {
-            __forceHoverOff = (__lastGlobalMouseX != ScreenTools.mouseX() || __lastGlobalMouseY != ScreenTools.mouseY());
+            __forceHoverOff = (__lastGlobalMouseX !== ScreenTools.mouseX() || __lastGlobalMouseY !== ScreenTools.mouseY());
         }
     }
 
     style: ButtonStyle {
             /*! The padding between the background and the label components. */
             padding {
-                top: 4
-                left: 4
-                right:  control.menu !== null ? Math.round(TextSingleton.implicitHeight * 0.5) : 4
+                top:    4
+                left:   4
+                right:  control.menu !== null ? Math.round(ScreenTools.defaultFontPixelHeight * 0.5) : 4
                 bottom: 4
             }
 
             /*! This defines the background of the button. */
             background: Item {
                 property bool down: control.pressed || (control.checkable && control.checked)
-                implicitWidth: Math.round(TextSingleton.implicitHeight * 4.5)
-                 implicitHeight: {
-                    if(ScreenTools.isTinyScreen)
-                        return ScreenTools.defaultFontPixelHeight * 3.5
-                    if(ScreenTools.isMobile)
-                        return ScreenTools.defaultFontPixelHeight * 2.5
-                    return Math.max(25, Math.round(TextSingleton.implicitHeight * 1.2))
-                }
+                implicitWidth:      Math.round(ScreenTools.defaultFontPixelWidth * 4.5)
+                implicitHeight:     Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
 
                 Rectangle {
                     anchors.fill:   parent
@@ -90,7 +84,7 @@ Button {
 
             /*! This defines the label of the button.  */
             label: Item {
-                implicitWidth: row.implicitWidth
+                implicitWidth:  row.implicitWidth
                 implicitHeight: row.implicitHeight
                 baselineOffset: row.y + text.y + text.baselineOffset
 
@@ -108,7 +102,7 @@ Button {
                         id:             text
                         antialiasing:   true
                         text:           control.text
-                        font.pixelSize: ScreenTools.defaultFontPixelSize
+                        font.pointSize: ScreenTools.defaultFontPointSize
                         font.family:    ScreenTools.normalFontFamily
                         anchors.verticalCenter: parent.verticalCenter
                         color: _showHighlight ?

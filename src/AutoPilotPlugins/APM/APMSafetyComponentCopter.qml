@@ -361,6 +361,7 @@ QGCView {
                     anchors.top:        parent.top
                     height:             ScreenTools.defaultFontPixelWidth * 20
                     width:              ScreenTools.defaultFontPixelWidth * 20
+                    sourceSize.width:   width
                     mipmap:             true
                     fillMode:           Image.PreserveAspectFit
                     visible:            false
