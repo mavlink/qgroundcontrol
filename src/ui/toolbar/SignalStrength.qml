@@ -57,9 +57,10 @@ Item {
     }
 
     QGCColoredImage {
-        source:         getIcon()
-        fillMode:       Image.PreserveAspectFit
-        anchors.fill:   parent
-        color:          qgcPal.buttonText
+        source:             getIcon()
+        fillMode:           Image.PreserveAspectFit
+        anchors.fill:       parent
+        color:              qgcPal.buttonText
+        sourceSize.height:  size
     }
 }

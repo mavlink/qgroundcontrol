@@ -123,7 +123,7 @@ Item {
         anchors.top:            parent.top
         anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
         visible:                QGroundControl.virtualTabletJoystick
-        width:                  getGadgetWidth()
+        width:                  ScreenTools.isTinyScreen ? getGadgetWidth() * 2 : getGadgetWidth()
         active:                 _activeVehicle != null
         heading:                _heading
         rollAngle:              _roll

@@ -64,6 +64,7 @@ Item {
             source:             "/qmlimages/compassInstrumentAirplane.svg"
             mipmap:             true
             width:              size * 0.75
+            sourceSize.width:   width
             fillMode:           Image.PreserveAspectFit
             anchors.centerIn:   parent
             transform: Rotation {
@@ -79,6 +80,7 @@ Item {
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             anchors.fill:       parent
+            sourceSize.height:  parent.height
         }
 
         Rectangle {

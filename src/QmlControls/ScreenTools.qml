@@ -13,19 +13,17 @@ Item {
 
     property real availableHeight:          0
 
-    property real defaultFontPointSize:     1
-    property real defaultFontPixelHeight:   1
-    property real defaultFontPixelWidth:    1
-    property real smallFontPointSize:       1
-    property real mediumFontPointSize:      1
-    property real largeFontPointSize:       1
+    //-- These are computed at runtime
+    property real defaultFontPointSize:     10
+    property real defaultFontPixelHeight:   10
+    property real defaultFontPixelWidth:    10
+    property real smallFontPointSize:       10
+    property real mediumFontPointSize:      10
+    property real largeFontPointSize:       10
 
     readonly property real smallFontPointRatio:      0.75
     readonly property real mediumFontPointRatio:     1.25
     readonly property real largeFontPointRatio:      1.5
-
-    // Font scaling based on system font
-    readonly property real  fontHRatio: _textMeasure.fontHeight / _defaultFont.fontHeight
 
     property bool isAndroid:        ScreenToolsController.isAndroid
     property bool isiOS:            ScreenToolsController.isiOS
@@ -68,9 +66,12 @@ Item {
                     return 14;
                 }
             } else {
-                //-- Linux and Mac OS we use a slightly smaller font
-                if(ScreenToolsController.isMacOS || ScreenToolsController.isLinux)
+                //-- Mac OS
+                if(ScreenToolsController.isMacOS)
                     return _defaultFont.font.pointSize - 1
+                //-- Linux
+                if(ScreenToolsController.isLinux)
+                    return _defaultFont.font.pointSize - 3.25
                 else
                     return _defaultFont.font.pointSize
             }

@@ -267,7 +267,6 @@ Rectangle {
         center:             QGroundControl.defaultMapPosition
         visible:            false
         gesture.flickDeceleration:  3000
-        gesture.activeGestures:     MapGestureArea.ZoomGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
         plugin: Plugin { name: "QGroundControl" }
 
         Rectangle {

@@ -146,6 +146,7 @@ QGCView {
                             color:                      palette.text
                             width:                      ScreenTools.defaultFontPixelWidth * 12
                             height:                     width * 1.45
+                            sourceSize.height:          width * 1.45
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
                             source:                     wifiMode ? (wifiMode.value === 0 ? "/qmlimages/APMode.svg" : "/qmlimages/StationMode.svg") : "/qmlimages/APMode.svg"

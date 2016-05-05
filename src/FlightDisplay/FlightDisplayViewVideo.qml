@@ -45,7 +45,7 @@ Item {
             text:               qsTr("NO VIDEO")
             font.family:        ScreenTools.demiboldFontFamily
             color:              "white"
-            font.pointSize:     _mainIsMap ? 12 * ScreenTools.fontHRatio : 20 * ScreenTools.fontHRatio
+            font.pointSize:     _mainIsMap ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
             anchors.centerIn:   parent
         }
     }

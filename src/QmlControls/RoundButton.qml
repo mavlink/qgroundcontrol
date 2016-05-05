@@ -10,7 +10,7 @@ Item {
 
     signal          clicked()
     property alias  buttonImage:    button.source
-    property real   radius:         ScreenTools.defaultFontPixelHeight * 1.5
+    property real   radius:         ScreenTools.defaultFontPixelHeight * 1.25
     property bool   rotateImage:    false
     property bool   lightBorders:   true
 
@@ -45,12 +45,13 @@ Item {
         color:          checked ? qgcPal.buttonHighlight : qgcPal.button
 
         QGCColoredImage {
-            id:             button
-            anchors.fill:   parent
-            fillMode:       Image.PreserveAspectFit
-            mipmap:         true
-            smooth:         true
-            color:          checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            id:                 button
+            anchors.fill:       parent
+            sourceSize.height:  parent.height
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            color:              checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
 
             RotationAnimation on rotation {
                 id: imageRotation
