@@ -19,15 +19,9 @@ Rectangle {
     border.color:   "white"
     color:          isCurrentItem ? "green" : qgcPal.mapButtonHighlight
 
-    property real _width: small ? ScreenTools.smallFontPointSize * 1.5 : ScreenTools.mediumFontPointSize * 1.5
+    property real _width: small ? ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio * 1.75 : ScreenTools.defaultFontPixelHeight * 1.75
 
     QGCPalette { id: qgcPal }
-
-    MouseArea {
-        anchors.fill: parent
-
-        onClicked: parent.clicked()
-    }
 
     QGCLabel {
         id:                     _label
@@ -35,6 +29,12 @@ Rectangle {
         horizontalAlignment:    Text.AlignHCenter
         verticalAlignment:      Text.AlignVCenter
         color:                  "white"
-        font.pointSize:         small ? ScreenTools.smallFontPointSize : ScreenTools.mediumFontPointSize
+        font.pointSize:         small ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
     }
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: parent.clicked()
+    }
+
 }
