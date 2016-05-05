@@ -40,9 +40,9 @@ Rectangle {
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
-    property var    _currentSelection: null
+    property var    _currentSelection:  null
 
-    property string mapKey:        "lastMapType"
+    property string mapKey:             "lastMapType"
 
     property string mapType:            QGroundControl.mapEngineManager.loadSetting(mapKey, "Google Street Map")
     property int    mapMargin:          (ScreenTools.defaultFontPixelHeight * 0.2).toFixed(0)
@@ -53,9 +53,9 @@ Rectangle {
     property real   savedZoom:          3
     property string savedMapType:       ""
 
-    property real   _newSetMiddleLabel: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 10 : ScreenTools.defaultFontPixelWidth * 14
+    property real   _newSetMiddleLabel: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 10 : ScreenTools.defaultFontPixelWidth * 12
     property real   _newSetMiddleField: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 16 : ScreenTools.defaultFontPixelWidth * 20
-    property real   _netSetSliderWidth: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth *  8 : ScreenTools.defaultFontPixelWidth * 14
+    property real   _netSetSliderWidth: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth *  8 : ScreenTools.defaultFontPixelWidth * 16
 
     property real oldlon0:      0
     property real oldlon1:      0
@@ -1056,7 +1056,7 @@ Rectangle {
                 }
                 Rectangle {
                     id:         optionsRect
-                    width:      optionsGrid.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                    width:      optionsGrid.width  + (ScreenTools.defaultFontPixelWidth  * 4)
                     height:     optionsGrid.height + (ScreenTools.defaultFontPixelHeight * 4)
                     color:      qgcPal.window
                     radius:     ScreenTools.defaultFontPixelHeight * 0.5
@@ -1089,17 +1089,17 @@ Rectangle {
                         Item {
                             Layout.columnSpan:  2
                             Layout.fillWidth:   true
-                            implicitHeight:     ScreenTools.defaultFontPixelHeight * 1.5
+                            height:             ScreenTools.defaultFontPixelHeight * 1.5
                             QGCLabel {
                                 anchors.centerIn: parent
                                 text: qsTr("Memory cache changes require a restart to take effect.")
-                                font.pointSize: ScreenTools.defaultFontPointSize * 0.85
+                                font.pointSize: ScreenTools.smallFontPointSize
                             }
                         }
                         Rectangle {
                             Layout.columnSpan:  2
                             Layout.fillWidth:   true
-                            implicitHeight:     1
+                            height:             1
                             color:              qgcPal.text
                         }
                         QGCLabel {
@@ -1107,18 +1107,17 @@ Rectangle {
                         }
                         QGCTextField {
                             id:                 mapBoxToken
-                            Layout.fillWidth:   true
                             maximumLength:      256
-                            implicitWidth :     ScreenTools.defaultFontPixelWidth * 30
+                            width:              ScreenTools.defaultFontPixelWidth * 30
                         }
                         Item {
                             Layout.columnSpan:  2
                             Layout.fillWidth:   true
-                            implicitHeight:     ScreenTools.defaultFontPixelHeight * 1.5
+                            height:             ScreenTools.defaultFontPixelHeight * 1.5
                             QGCLabel {
                                 anchors.centerIn: parent
                                 text: qsTr("With an access token, you can use MapBox Maps.")
-                                font.pointSize: ScreenTools.defaultFontPointSize * 0.85
+                                font.pointSize: ScreenTools.smallFontPointSize
                             }
                         }
                     }

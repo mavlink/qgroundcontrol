@@ -124,7 +124,7 @@ QGCFlickable {
                 QGCLabel {
                     width:                  parent.width
                     horizontalAlignment:    Text.AlignHCenter
-                    font.pointSize:         ScreenTools.smallFontPointSize * 0.75
+                    font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
                     fontSizeMode:           Text.HorizontalFit
                     color:                  textColor
                     text:                   fact.shortDescription
@@ -139,7 +139,7 @@ QGCFlickable {
                 QGCLabel {
                     width:                  parent.width
                     horizontalAlignment:    Text.AlignHCenter
-                    font.pointSize:         ScreenTools.smallFontPointSize * 0.75
+                    font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
                     fontSizeMode:           Text.HorizontalFit
                     color:                  textColor
                     text:                   fact.units
@@ -245,20 +245,20 @@ QGCFlickable {
                     }
 
                     QGCCheckBox {
-                        id:         _addCheckBox
-                        text:       factGroup.getFact(modelData).shortDescription
-                        checked:    _largeCheckBox.checked || listContains(controller.smallValues, propertyName)
-                        onClicked:  updateValues()
+                        id:                     _addCheckBox
+                        text:                   factGroup.getFact(modelData).shortDescription
+                        checked:                listContains(controller.smallValues, propertyName) || _largeCheckBox.checked
+                        onClicked:              updateValues()
                         Layout.fillWidth:       true
                         Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth * 20
                     }
 
                     QGCCheckBox {
-                        id:         _largeCheckBox
-                        text:       qsTr("Large")
-                        checked:    listContains(controller.largeValues, propertyName)
-                        enabled:    _addCheckBox.checked
-                        onClicked:  updateValues()
+                        id:                     _largeCheckBox
+                        text:                   qsTr("Large")
+                        checked:                listContains(controller.largeValues, propertyName)
+                        enabled:                _addCheckBox.checked
+                        onClicked:              updateValues()
                     }
                 }
             }
@@ -267,12 +267,10 @@ QGCFlickable {
 
             Repeater {
                 model: factGroup ? factGroup.factGroupNames : 0
-
                 Loader {
                     sourceComponent: factGroupList
-
                     property var    factGroup:      _root ? _root.parent.factGroup.getFactGroup(modelData) : undefined
-                    property string factGroupName:  _root ? _root.parent.factGroupName + "." + modelData : undefined
+                    property string factGroupName:  _root ? _root.parent.factGroupName + "." + modelData : ""
                 }
             }
         }
