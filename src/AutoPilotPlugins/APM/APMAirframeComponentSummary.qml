@@ -22,7 +22,6 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
         VehicleSummaryRow {
             id: nameRow;
             labelText: qsTr("Frame Type:")

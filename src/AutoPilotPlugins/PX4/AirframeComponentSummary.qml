@@ -10,7 +10,6 @@ import QGroundControl.Palette 1.0
 FactPanel {
     id:                 panel
     anchors.fill:       parent
-    anchors.margins:    ScreenTools.defaultFontPixelWidth
     color:              qgcPal.windowShadeDark
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
