@@ -57,6 +57,7 @@ Item {
         visible:        !isHidden
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
+        sourceSize.height:  height
         MouseArea {
             anchors.fill: parent
             onClicked: {
@@ -78,6 +79,7 @@ Item {
         Image {
             width:              parent.width  * 0.75
             height:             parent.height * 0.75
+            sourceSize.height:  height
             source:             "/res/buttonRight.svg"
             mipmap:             true
             fillMode:           Image.PreserveAspectFit

@@ -108,8 +108,8 @@ Item {
                 mipmap:             true
                 opacity:            0.5
                 width:              attitudeWidget.width * 0.15
+                sourceSize.width:   width
                 fillMode:           Image.PreserveAspectFit
-
                 MouseArea {
                     anchors.fill:   parent
                     hoverEnabled:   true

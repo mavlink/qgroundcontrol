@@ -45,7 +45,7 @@ Item {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    property real   tbHeight:           ScreenTools.isMobile ? (ScreenTools.isTinyScreen ? (mainWindow.width * 0.0666) : (mainWindow.width * 0.05)) : ScreenTools.defaultFontPixelHeight * 4
+    property real   tbHeight:           ScreenTools.isMobile ? (ScreenTools.isTinyScreen ? (mainWindow.width * 0.0666) : (mainWindow.width * 0.05)) : ScreenTools.defaultFontPixelHeight * 3
     property int    tbCellHeight:       tbHeight * 0.75
     property real   tbSpacing:          ScreenTools.isMobile ? width * 0.00824 : 9.54
     property real   tbButtonWidth:      tbCellHeight * 1.35
@@ -383,6 +383,7 @@ Item {
             anchors.right:      parent.right
             width:              ScreenTools.defaultFontPixelHeight * 1.5
             height:             width
+            sourceSize.height:  height
             source:             "/res/XDelete.svg"
             fillMode:           Image.PreserveAspectFit
             mipmap:             true
@@ -418,7 +419,7 @@ Item {
         }
 
         width:              mainWindow.width  * 0.55
-        height:             ScreenTools.defaultFontPixelHeight * ScreenTools.fontHRatio * 6
+        height:             ScreenTools.defaultFontPixelHeight * 6
         color:              qgcPal.window
         visible:            false
         radius:             ScreenTools.defaultFontPixelHeight * 0.5
@@ -467,6 +468,7 @@ Item {
             anchors.right:      parent.right
             width:              ScreenTools.defaultFontPixelHeight * 1.5
             height:             width
+            sourceSize.height:  height
             source:             "/res/XDelete.svg"
             fillMode:           Image.PreserveAspectFit
             color:              qgcPal.warningText
@@ -485,6 +487,7 @@ Item {
             anchors.right:      parent.right
             width:              ScreenTools.defaultFontPixelHeight * 1.5
             height:             ScreenTools.defaultFontPixelHeight * 1.5
+            sourceSize.height:  height
             source:             "/res/ArrowDown.svg"
             fillMode:           Image.PreserveAspectFit
             visible:            criticalMessageText.lineCount > 5

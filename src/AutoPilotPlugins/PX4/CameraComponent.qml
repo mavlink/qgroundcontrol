@@ -147,6 +147,7 @@ QGCView {
                             color:                      palette.text
                             height:                     ScreenTools.defaultFontPixelWidth * 10
                             width:                      ScreenTools.defaultFontPixelWidth * 20
+                            sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
                             source:                     "/qmlimages/CameraTrigger.svg"
