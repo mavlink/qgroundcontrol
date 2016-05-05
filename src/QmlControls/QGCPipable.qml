@@ -55,8 +55,9 @@ Item {
         anchors.left:   parent.left
         anchors.bottom: parent.bottom
         visible:        !isHidden
-        height:         ScreenTools.defaultFontPixelSize * 2.5
-        width:          ScreenTools.defaultFontPixelSize * 2.5
+        height:         ScreenTools.defaultFontPixelHeight * 2.5
+        width:          ScreenTools.defaultFontPixelHeight * 2.5
+        sourceSize.height:  height
         MouseArea {
             anchors.fill: parent
             onClicked: {
@@ -70,14 +71,15 @@ Item {
         id:                     openPIP
         anchors.left :          parent.left
         anchors.bottom:         parent.bottom
-        height:                 ScreenTools.defaultFontPixelSize * 2
-        width:                  ScreenTools.defaultFontPixelSize * 2
-        radius:                 ScreenTools.defaultFontPixelSize / 3
+        height:                 ScreenTools.defaultFontPixelHeight * 2
+        width:                  ScreenTools.defaultFontPixelHeight * 2
+        radius:                 ScreenTools.defaultFontPixelHeight / 3
         visible:                isHidden
         color:                  isDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
         Image {
             width:              parent.width  * 0.75
             height:             parent.height * 0.75
+            sourceSize.height:  height
             source:             "/res/buttonRight.svg"
             mipmap:             true
             fillMode:           Image.PreserveAspectFit

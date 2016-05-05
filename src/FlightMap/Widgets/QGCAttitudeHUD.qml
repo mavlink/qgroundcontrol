@@ -48,25 +48,27 @@ Item {
 
     Image {
         id: rollDial
-        anchors     { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter}
-        source:     "/qmlimages/rollDialWhite.svg"
-        mipmap:     true
-        width:      parent.width
-        fillMode:   Image.PreserveAspectFit
+        anchors { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter }
+        source:             "/qmlimages/rollDialWhite.svg"
+        mipmap:             true
+        width:              parent.width
+        sourceSize.width:   width
+        fillMode:           Image.PreserveAspectFit
         transform: Rotation {
-            origin.x: rollDial.width / 2
-            origin.y: rollDial.height
-            angle:   -_rollAngle
+            origin.x:       rollDial.width / 2
+            origin.y:       rollDial.height
+            angle:          -_rollAngle
         }
     }
 
     Image {
         id: pointer
-        anchors     { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter}
-        source:     "/qmlimages/rollPointerWhite.svg"
-        mipmap:     true
-        width:      rollDial.width
-        fillMode:   Image.PreserveAspectFit
+        anchors { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter }
+        source:             "/qmlimages/rollPointerWhite.svg"
+        mipmap:             true
+        width:              rollDial.width
+        sourceSize.width:   width
+        fillMode:           Image.PreserveAspectFit
     }
 
     Image {
@@ -75,6 +77,7 @@ Item {
         source:             "/qmlimages/crossHair.svg"
         mipmap:             true
         width:              parent.width
+        sourceSize.width:   width
         fillMode:           Image.PreserveAspectFit
     }
 
@@ -85,6 +88,6 @@ Item {
         pitchAngle:         _pitchAngle
         rollAngle:          _rollAngle
         color:              Qt.rgba(0,0,0,0)
-        size:               ScreenTools.defaultFontPixelSize * (10)
+        size:               ScreenTools.defaultFontPixelHeight * (10)
     }
 }

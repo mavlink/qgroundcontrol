@@ -47,7 +47,6 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
-        anchors.margins:    8
 
         VehicleSummaryRow {
             labelText: qsTr("Battery Full:")

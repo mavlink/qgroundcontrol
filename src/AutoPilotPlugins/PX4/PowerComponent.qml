@@ -201,6 +201,7 @@ QGCView {
                         x:                      voltageCol.firstColumnWidth + textEditWidth + (ScreenTools.defaultFontPixelWidth * 3)
                         width:                  height * 0.75
                         height:                 voltageCol.height
+                        sourceSize.height:      height
                         fillMode:               Image.PreserveAspectFit
                         smooth:                 true
                         color:                  palette.text

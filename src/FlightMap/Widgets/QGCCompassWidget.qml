@@ -40,9 +40,9 @@ Item {
     property real heading:  0
     property real size:     _defaultSize
 
-    property real _defaultSize: ScreenTools.defaultFontPixelSize * (10)
+    property real _defaultSize: ScreenTools.defaultFontPixelHeight * (10)
     property real _sizeRatio:   ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
-    property int  _fontSize:    ScreenTools.defaultFontPixelSize * _sizeRatio
+    property int  _fontSize:    ScreenTools.defaultFontPointSize * _sizeRatio
 
     width:                  size
     height:                 size
@@ -64,6 +64,7 @@ Item {
             source:             "/qmlimages/compassInstrumentAirplane.svg"
             mipmap:             true
             width:              size * 0.75
+            sourceSize.width:   width
             fillMode:           Image.PreserveAspectFit
             anchors.centerIn:   parent
             transform: Rotation {
@@ -79,6 +80,7 @@ Item {
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             anchors.fill:       parent
+            sourceSize.height:  parent.height
         }
 
         Rectangle {
@@ -91,7 +93,7 @@ Item {
             QGCLabel {
                 text:           active ? heading.toFixed(0) : qsTr("OFF")
                 font.family:    active ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
-                font.pixelSize: _fontSize < 1 ? 1 : _fontSize;
+                font.pointSize: _fontSize < 8 ? 8 : _fontSize;
                 color:          "white"
                 anchors.centerIn: parent
             }

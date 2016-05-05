@@ -39,7 +39,7 @@ Rectangle {
     anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
     color:          qgcPal.window
 
-    property real _minSummaryW:     ScreenTools.defaultFontPixelWidth * 42
+    property real _minSummaryW:     ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 28 : ScreenTools.defaultFontPixelWidth * 36
     property real _summaryBoxWidth: _minSummaryW
     property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth * 2
 
@@ -113,7 +113,7 @@ Rectangle {
                     // Outer summary item rectangle
                     Rectangle {
                         width:      _summaryBoxWidth
-                        height:     ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 20 : ScreenTools.defaultFontPixelHeight * 13
+                        height:     ScreenTools.defaultFontPixelHeight * 13
                         color:      qgcPal.windowShade
                         visible:    modelData.summaryQmlSource.toString() !== ""
                         border.width: 1
@@ -122,7 +122,7 @@ Rectangle {
                             border.color = Qt.rgba(border.color.r, border.color.g, border.color.b, 0.1)
                         }
 
-                        readonly property real titleHeight: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 4 : ScreenTools.defaultFontPixelHeight * 2
+                        readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 
                         // Title bar
                         QGCButton {
@@ -151,8 +151,9 @@ Rectangle {
                             anchors.top:    titleBar.bottom
                             width:          parent.width
                             Loader {
-                                anchors.fill:   parent
-                                source:         modelData.summaryQmlSource
+                                anchors.fill:       parent
+                                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                                source:             modelData.summaryQmlSource
                             }
                         }
                     }

@@ -50,13 +50,13 @@ Rectangle {
     property real   _innerRadius: (width - (_topBottomMargin * 3)) / 4
     property real   _outerRadius: _innerRadius + _topBottomMargin
 
-    property real   _defaultSize:   ScreenTools.defaultFontPixelSize * (9)
+    property real   _defaultSize:   ScreenTools.defaultFontPixelHeight * (9)
 
     property real   _sizeRatio:     ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
-    property real   _bigFontSize:   ScreenTools.defaultFontPixelSize * 2.5  * _sizeRatio
-    property real   _normalFontSize:ScreenTools.defaultFontPixelSize * 1.5  * _sizeRatio
-    property real   _labelFontSize: ScreenTools.defaultFontPixelSize * 0.75 * _sizeRatio
-    property real   _spacing:       ScreenTools.defaultFontPixelSize * 0.33
+    property real   _bigFontSize:   ScreenTools.defaultFontPointSize * 2.5  * _sizeRatio
+    property real   _normalFontSize:ScreenTools.defaultFontPointSize * 1.5  * _sizeRatio
+    property real   _labelFontSize: ScreenTools.defaultFontPointSize * 0.75 * _sizeRatio
+    property real   _spacing:       ScreenTools.defaultFontPixelHeight * 0.33
     property real   _topBottomMargin: (size * 0.05) / 2
 
     QGCAttitudeWidget {

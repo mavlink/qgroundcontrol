@@ -19,15 +19,8 @@ TextField {
 
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
-    textColor:  __qgcPal.textFieldText
-
-    height: {
-        if(ScreenTools.isTinyScreen)
-            return ScreenTools.defaultFontPixelHeight * 3.5
-        if(ScreenTools.isMobile)
-            return ScreenTools.defaultFontPixelHeight * 2.5
-        return implicitHeight
-    }
+    textColor:          __qgcPal.textFieldText
+    height:             Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
 
     Label {
         id:             unitsLabelWidthGenerator
@@ -39,7 +32,7 @@ TextField {
     }
 
     style: TextFieldStyle {
-        font.pixelSize: ScreenTools.defaultFontPixelSize
+        font.pointSize: ScreenTools.defaultFontPointSize
         background: Item {
             id: backgroundItem
 
@@ -68,7 +61,7 @@ TextField {
                 width:          unitsLabelWidthGenerator.width
 
                 text:           control.unitsLabel
-                font.pixelSize: ScreenTools.defaultFontPixelSize
+                font.pointSize: ScreenTools.defaultFontPointSize
                 font.family:    ScreenTools.normalFontFamily
                 antialiasing:   true
 

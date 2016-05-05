@@ -45,8 +45,8 @@ QGCView {
     QGCPalette { id: palette; colorGroupEnabled: enabled }
 
     property real _margins:         ScreenTools.defaultFontPixelHeight
-    property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 20
-    property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 20
+    property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 16
+    property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 16
 
     property Fact _camTriggerMode:  controller.getParameterFact(-1, "TRIG_MODE")
     property Fact _camTriggerPol:   controller.getParameterFact(-1, "TRIG_POLARITY", false) // Don't bitch about missing as these only exist if trigger mode is enabled
@@ -147,6 +147,7 @@ QGCView {
                             color:                      palette.text
                             height:                     ScreenTools.defaultFontPixelWidth * 10
                             width:                      ScreenTools.defaultFontPixelWidth * 20
+                            sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
                             source:                     "/qmlimages/CameraTrigger.svg"

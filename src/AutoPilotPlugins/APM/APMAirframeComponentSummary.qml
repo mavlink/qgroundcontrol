@@ -20,11 +20,8 @@ FactPanel {
 
     property Fact sysIdFact:        controller.getParameterFact(-1, "FRAME")
 
-
     Column {
-        anchors.fill: parent
-        anchors.margins: 8
-
+        anchors.fill:       parent
         VehicleSummaryRow {
             id: nameRow;
             labelText: qsTr("Frame Type:")
