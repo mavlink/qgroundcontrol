@@ -20,7 +20,7 @@ TextField {
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
     textColor:          __qgcPal.textFieldText
-    height:             Math.max(25, Math.round(unitsLabel.implicitHeight * 1.2))
+    height:             Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
 
     Label {
         id:             unitsLabelWidthGenerator

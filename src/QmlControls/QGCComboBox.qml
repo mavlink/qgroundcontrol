@@ -18,8 +18,8 @@ ComboBox {
                     control._qgcPal.buttonText
 
         background: Item {
-            implicitWidth:  Math.round(TextSingleton.implicitHeight * 4.5)
-            implicitHeight: Math.max(25, Math.round(TextSingleton.implicitHeight * 1.2))
+            implicitWidth:  Math.round(ScreenTools.defaultFontPixelWidth * 4.5)
+            implicitHeight: Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
 
             Rectangle {
                 anchors.fill:   parent

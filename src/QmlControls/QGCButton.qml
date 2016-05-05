@@ -12,7 +12,7 @@ Button {
 
     property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
     property bool   _showHighlight:     (pressed | hovered | checked) && !__forceHoverOff
-    property bool   _showBorder:        _qgcPal.globalTheme == QGCPalette.Light
+    property bool   _showBorder:        _qgcPal.globalTheme === QGCPalette.Light
 
     // This fixes the issue with button hover where if a Button is near the edge oa QQuickWidget you can
     // move the mouse fast enough such that the MouseArea does not trigger an onExited. This is turn
@@ -43,7 +43,7 @@ Button {
         repeat:     true
 
         onTriggered: {
-            __forceHoverOff = (__lastGlobalMouseX != ScreenTools.mouseX() || __lastGlobalMouseY != ScreenTools.mouseY());
+            __forceHoverOff = (__lastGlobalMouseX !== ScreenTools.mouseX() || __lastGlobalMouseY !== ScreenTools.mouseY());
         }
     }
 
@@ -52,15 +52,15 @@ Button {
             padding {
                 top:    4
                 left:   4
-                right:  control.menu !== null ? Math.round(TextSingleton.implicitHeight * 0.5) : 4
+                right:  control.menu !== null ? Math.round(ScreenTools.defaultFontPixelHeight * 0.5) : 4
                 bottom: 4
             }
 
             /*! This defines the background of the button. */
             background: Item {
                 property bool down: control.pressed || (control.checkable && control.checked)
-                implicitWidth:      Math.round(TextSingleton.implicitHeight * 4.5)
-                implicitHeight:     Math.max(25, Math.round(TextSingleton.implicitHeight * 1.2))
+                implicitWidth:      Math.round(ScreenTools.defaultFontPixelWidth * 4.5)
+                implicitHeight:     Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
 
                 Rectangle {
                     anchors.fill:   parent

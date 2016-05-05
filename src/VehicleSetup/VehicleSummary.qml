@@ -39,7 +39,7 @@ Rectangle {
     anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
     color:          qgcPal.window
 
-    property real _minSummaryW:     ScreenTools.defaultFontPixelWidth * 42
+    property real _minSummaryW:     ScreenTools.defaultFontPixelWidth * 36
     property real _summaryBoxWidth: _minSummaryW
     property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth * 2
 
