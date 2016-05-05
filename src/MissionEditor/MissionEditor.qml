@@ -496,6 +496,7 @@ QGCView {
                         orientation:    ListView.Vertical
                         model:          controller.visualItems
                         cacheBuffer:    height * 2
+                        clip:           true
 
                         delegate: MissionItemEditor {
                             missionItem:    object
