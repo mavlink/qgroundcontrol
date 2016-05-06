@@ -229,9 +229,16 @@ Item {
         }
     }
 
+    function formatMessage(message) {
+        message = message.replace(new RegExp("<#E>", "g"), "color: #f95e5e; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        message = message.replace(new RegExp("<#I>", "g"), "color: #f9b55e; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        message = message.replace(new RegExp("<#N>", "g"), "color: #ffffff; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        return message;
+    }
+
     onFormatedMessageChanged: {
         if(messageArea.visible) {
-            messageText.append(formatedMessage)
+            messageText.append(formatMessage(formatedMessage))
             //-- Hack to scroll down
             messageFlick.flick(0,-500)
         }
@@ -242,7 +249,7 @@ Item {
             currentPopUp.close()
         }
         if(QGroundControl.multiVehicleManager.activeVehicleAvailable) {
-            messageText.text = activeVehicle.formatedMessages
+            messageText.text = formatMessage(activeVehicle.formatedMessages)
             //-- Hack to scroll to last message
             for (var i = 0; i < activeVehicle.messageCount; i++)
                 messageFlick.flick(0,-5000)
@@ -342,13 +349,11 @@ Item {
     //-- System Message Area
     Rectangle {
         id:                 messageArea
-
         function close() {
             currentPopUp = null
             messageText.text    = ""
             messageArea.visible = false
         }
-
         width:              mainWindow.width  * 0.5
         height:             mainWindow.height * 0.5
         color:              Qt.rgba(0,0,0,0.8)
@@ -359,6 +364,13 @@ Item {
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.top:                parent.top
         anchors.topMargin:          tbHeight + ScreenTools.defaultFontPixelHeight
+        MouseArea {
+            // This MouseArea prevents the Map below it from getting Mouse events. Without this
+            // things like mousewheel will scroll the Flickable and then scroll the map as well.
+            anchors.fill:       parent
+            preventStealing:    true
+            onWheel:            wheel.accepted = true
+        }
         QGCFlickable {
             id:                 messageFlick
             anchors.margins:    ScreenTools.defaultFontPixelHeight
@@ -372,13 +384,11 @@ Item {
                 readOnly:       true
                 textFormat:     TextEdit.RichText
                 color:          "white"
-                font.family:    ScreenTools.normalFontFamily
-                font.pointSize: ScreenTools.defaultFontPointSize
             }
         }
         //-- Dismiss System Message
         Image {
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
             anchors.top:        parent.top
             anchors.right:      parent.right
             width:              ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
@@ -395,7 +405,30 @@ Item {
                 }
             }
         }
+        //-- Clear Messages
+        Image {
+            anchors.bottom:     parent.bottom
+            anchors.right:      parent.right
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
+            height:             ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
+            width:              height
+            sourceSize.height:   height
+            source:             "/res/TrashDelete.svg"
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            MouseArea {
+                anchors.fill:   parent
+                onClicked: {
+                    if(QGroundControl.multiVehicleManager.activeVehicleAvailable) {
+                        activeVehicle.clearMessages();
+                        messageArea.close()
+                    }
+                }
+            }
+        }
     }
+
     //-------------------------------------------------------------------------
     //-- Critical Message Area
     Rectangle {
@@ -463,7 +496,7 @@ Item {
         //-- Dismiss Critical Message
         QGCColoredImage {
             id:                 criticalClose
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
             anchors.top:        parent.top
             anchors.right:      parent.right
             width:              ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
@@ -482,7 +515,7 @@ Item {
 
         //-- More text below indicator
         QGCColoredImage {
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
             width:              ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight

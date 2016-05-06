@@ -126,8 +126,6 @@
         <file alias="MapSyncChanged.svg">src/FlightMap/Images/MapSyncChanged.svg</file>
         <file alias="MapType.svg">src/FlightMap/Images/MapType.svg</file>
         <file alias="MapTypeBlack.svg">src/FlightMap/Images/MapTypeBlack.svg</file>
-        <file alias="TrashDelete.svg">src/FlightMap/Images/TrashDelete.svg</file>
-        <file alias="TrashDeleteBlack.svg">src/FlightMap/Images/TrashDeleteBlack.svg</file>
         <file alias="Armed.svg">src/ui/toolbar/Images/Armed.svg</file>
         <file alias="Battery.svg">src/ui/toolbar/Images/Battery.svg</file>
         <file alias="Connect.svg">src/ui/toolbar/Images/Connect.svg</file>
@@ -174,6 +172,7 @@
         <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
         <file alias="SplashScreen">resources/SplashScreen.png</file>
         <file alias="Stop">resources/Stop.svg</file>
+        <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
 </qresource>
