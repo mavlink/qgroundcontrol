@@ -229,9 +229,16 @@ Item {
         }
     }
 
+    function formatMessage(message) {
+        message = message.replace(new RegExp("<#E>", "g"), "color: #f95e5e; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        message = message.replace(new RegExp("<#I>", "g"), "color: #f9b55e; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        message = message.replace(new RegExp("<#N>", "g"), "color: #ffffff; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        return message;
+    }
+
     onFormatedMessageChanged: {
         if(messageArea.visible) {
-            messageText.append(formatedMessage)
+            messageText.append(formatMessage(formatedMessage))
             //-- Hack to scroll down
             messageFlick.flick(0,-500)
         }
@@ -242,7 +249,7 @@ Item {
             currentPopUp.close()
         }
         if(QGroundControl.multiVehicleManager.activeVehicleAvailable) {
-            messageText.text = activeVehicle.formatedMessages
+            messageText.text = formatMessage(activeVehicle.formatedMessages)
             //-- Hack to scroll to last message
             for (var i = 0; i < activeVehicle.messageCount; i++)
                 messageFlick.flick(0,-5000)
@@ -372,13 +379,11 @@ Item {
                 readOnly:       true
                 textFormat:     TextEdit.RichText
                 color:          "white"
-                font.family:    ScreenTools.normalFontFamily
-                font.pointSize: ScreenTools.defaultFontPointSize
             }
         }
         //-- Dismiss System Message
         Image {
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            //anchors.margins:    ScreenTools.defaultFontPixelHeight
             anchors.top:        parent.top
             anchors.right:      parent.right
             width:              ScreenTools.defaultFontPixelHeight * 1.5
