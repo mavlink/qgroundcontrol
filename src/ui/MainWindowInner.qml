@@ -361,7 +361,7 @@ Item {
         color:              Qt.rgba(0,0,0,0.8)
         visible:            false
         radius:             ScreenTools.defaultFontPixelHeight * 0.5
-        border.color:       qgcPal.text
+        border.color:       "#808080"
         border.width:       2
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.top:                parent.top
@@ -386,9 +386,9 @@ Item {
             //anchors.margins:    ScreenTools.defaultFontPixelHeight
             anchors.top:        parent.top
             anchors.right:      parent.right
-            width:              ScreenTools.defaultFontPixelHeight * 1.5
+            width:              ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
             height:             width
-            sourceSize.height:  height
+            sourceSize.height:  width
             source:             "/res/XDelete.svg"
             fillMode:           Image.PreserveAspectFit
             mipmap:             true
@@ -425,13 +425,13 @@ Item {
 
         width:              mainWindow.width  * 0.55
         height:             ScreenTools.defaultFontPixelHeight * 6
-        color:              qgcPal.window
+        color:              "#eecc44"
         visible:            false
         radius:             ScreenTools.defaultFontPixelHeight * 0.5
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.bottom:             parent.bottom
         anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight
-        border.color:       qgcPal.text
+        border.color:       "#808080"
         border.width:       2
 
         MouseArea {
@@ -461,7 +461,7 @@ Item {
                 font.pointSize: ScreenTools.defaultFontPointSize
                 font.family:    ScreenTools.demiboldFontFamily
                 wrapMode:       TextEdit.WordWrap
-                color:          qgcPal.warningText
+                color:          "black"
             }
         }
 
@@ -471,12 +471,12 @@ Item {
             anchors.margins:    ScreenTools.defaultFontPixelHeight
             anchors.top:        parent.top
             anchors.right:      parent.right
-            width:              ScreenTools.defaultFontPixelHeight * 1.5
+            width:              ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
             height:             width
-            sourceSize.height:  height
+            sourceSize.height:  width
             source:             "/res/XDelete.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              qgcPal.warningText
+            color:              "black"
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
@@ -490,13 +490,13 @@ Item {
             anchors.margins:    ScreenTools.defaultFontPixelHeight
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
-            width:              ScreenTools.defaultFontPixelHeight * 1.5
-            height:             ScreenTools.defaultFontPixelHeight * 1.5
-            sourceSize.height:  height
+            width:              ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
+            height:             width
+            sourceSize.height:  width
             source:             "/res/ArrowDown.svg"
             fillMode:           Image.PreserveAspectFit
             visible:            criticalMessageText.lineCount > 5
-            color:              qgcPal.warningText
+            color:              "black"
 
             MouseArea {
                 anchors.fill:   parent
