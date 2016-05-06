@@ -37,7 +37,8 @@ FactMetaData* QGroundControlQmlGlobal::_distanceUnitsMetaData =                 
 SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                        NULL;
 FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                    NULL;
 
-const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey = "VirtualTabletJoystick";
+const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
+const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseFontPointSize";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     : QGCTool(app)
@@ -48,9 +49,11 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _multiVehicleManager(NULL)
     , _mapEngineManager(NULL)
     , _virtualTabletJoystick(false)
+    , _baseFontPointSize(0.0)
 {
     QSettings settings;
-    _virtualTabletJoystick = settings.value(_virtualTabletJoystickKey, false). toBool();
+    _virtualTabletJoystick  = settings.value(_virtualTabletJoystickKey, false).toBool();
+    _baseFontPointSize      = settings.value(_baseFontPointSizeKey, 0.0).toDouble();
 
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     setParent(NULL);
@@ -204,6 +207,16 @@ void QGroundControlQmlGlobal::setVirtualTabletJoystick(bool enabled)
         settings.setValue(_virtualTabletJoystickKey, enabled);
         _virtualTabletJoystick = enabled;
         emit virtualTabletJoystickChanged(enabled);
+    }
+}
+
+void QGroundControlQmlGlobal::setBaseFontPointSize(qreal size)
+{
+    if (size >= 6.0 && size <= 48.0) {
+        QSettings settings;
+        settings.setValue(_baseFontPointSizeKey, size);
+        _baseFontPointSize = size;
+        emit baseFontPointSizeChanged(size);
     }
 }
 
