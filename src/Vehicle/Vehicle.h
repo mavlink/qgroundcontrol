@@ -363,6 +363,9 @@ public:
     /// Reboot vehicle
     Q_INVOKABLE void rebootVehicle();
 
+    /// Clear Messages
+    Q_INVOKABLE void clearMessages();
+
     bool guidedModeSupported(void) const;
     bool pauseVehicleSupported(void) const;
 

@@ -87,7 +87,11 @@ void UASMessageViewWidget::handleTextMessage(UASMessage *message)
         // Turn off updates while we're appending content to avoid breaking the autoscroll behavior
         msgWidget->setUpdatesEnabled(false);
         QScrollBar *scroller = msgWidget->verticalScrollBar();
-        msgWidget->appendHtml(message->getFormatedText());
+        QString messages = message->getFormatedText();
+        messages = messages.replace("<#E>", "color: #f95e5e; font: monospace;");
+        messages = messages.replace("<#I>", "color: #f9b55e; font: monospace;");
+        messages = messages.replace("<#N>", "color: #ffffff; font: monospace;");
+        msgWidget->appendHtml(messages);
         // Ensure text area scrolls correctly
         scroller->setValue(scroller->maximum());
         msgWidget->setUpdatesEnabled(true);
