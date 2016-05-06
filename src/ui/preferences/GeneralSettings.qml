@@ -72,6 +72,70 @@ Rectangle {
             }
 
             //-----------------------------------------------------------------
+            //-- Base UI Font Point Size
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth
+                QGCLabel {
+                    width:              _firstLabelWidth
+                    text:               qsTr("Base UI font size:")
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
+                    Rectangle {
+                        width:              baseFontEdit.height
+                        height:             width
+                        color:              qgcPal.button
+                        QGCLabel {
+                            text:           "-"
+                            anchors.centerIn: parent
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if(ScreenTools.defaultFontPointSize > 6)
+                                    QGroundControl.baseFontPointSize = QGroundControl.baseFontPointSize - 1
+                            }
+                        }
+                    }
+                    QGCTextField {
+                        id:                 baseFontEdit
+                        width:              _editFieldWidth - (height * 2)
+                        text:               QGroundControl.baseFontPointSize
+                        showUnits:          true
+                        unitsLabel:         "pt"
+                        maximumLength:      6
+                        validator:          DoubleValidator {bottom: 6.0; top: 48.0; decimals: 2;}
+                        onEditingFinished: {
+                            var point = parseFloat(text)
+                            if(point >= 6.0 && point <= 48.0)
+                                QGroundControl.baseFontPointSize = point;
+                        }
+                    }
+                    Rectangle {
+                        width:              baseFontEdit.height
+                        height:             width
+                        color:              qgcPal.button
+                        QGCLabel {
+                            text:           "+"
+                            anchors.centerIn: parent
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if(ScreenTools.defaultFontPointSize < 49)
+                                    QGroundControl.baseFontPointSize = QGroundControl.baseFontPointSize + 1
+                            }
+                        }
+                    }
+                }
+                QGCLabel {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text:               qsTr("(requires reboot to take affect)")
+                }
+            }
+
+            //-----------------------------------------------------------------
             //-- Units
 
             Row {

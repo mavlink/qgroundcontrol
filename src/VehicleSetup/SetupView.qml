@@ -238,16 +238,22 @@ Rectangle {
 
             Connections {
                 target: componentRepeater
-
                 onModelChanged: buttonColumn.reflowWidths()
             }
 
+            // I don't know why this does not work
+            Connections {
+                target: QGroundControl
+                onBaseFontPointSizeChanged: buttonColumn.reflowWidths()
+            }
+
             function reflowWidths() {
-                for (var i=0; i<children.length; i++) {
-                    _maxButtonWidth = Math.max(_maxButtonWidth, children[i].width)
+                buttonColumn._maxButtonWidth = 0
+                for (var i = 0; i < children.length; i++) {
+                    buttonColumn._maxButtonWidth = Math.max(buttonColumn._maxButtonWidth, children[i].width)
                 }
-                for (var i=0; i<children.length; i++) {
-                    children[i].width = _maxButtonWidth
+                for (var j = 0; j < children.length; j++) {
+                    children[j].width = buttonColumn._maxButtonWidth
                 }
             }
 

@@ -4,6 +4,7 @@ import QtQuick 2.4
 import QtQuick.Controls 1.2
 import QtQuick.Window 2.2
 
+import QGroundControl                       1.0
 import QGroundControl.ScreenToolsController 1.0
 
 Item {
@@ -35,6 +36,17 @@ Item {
     readonly property string normalFontFamily:      "opensans"
     readonly property string demiboldFontFamily:    "opensans-demibold"
 
+    /* This mostly works but for some reason, reflowWidths() in SetupView doesn't change size.
+       I've disabled (in release builds) until I figure out why. Changes require a restart for now.
+    */
+    Connections {
+        target: QGroundControl
+        onBaseFontPointSizeChanged: {
+            if(ScreenToolsController.isDebug)
+                setBasePointSize(QGroundControl.baseFontPointSize)
+        }
+    }
+
     function mouseX() {
         return ScreenToolsController.mouseX()
     }
@@ -43,48 +55,61 @@ Item {
         return ScreenToolsController.mouseY()
     }
 
+    function setBasePointSize(pointSize) {
+        _textMeasure.font.pointSize = pointSize
+        defaultFontPointSize    = pointSize
+        defaultFontPixelHeight  = _textMeasure.fontHeight
+        defaultFontPixelWidth   = _textMeasure.fontWidth
+        smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
+        mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
+        largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
+    }
+
     Text {
         id:     _defaultFont
         text:   "X"
-        property real fontHeight: contentHeight
     }
 
     Text {
         id:     _textMeasure
         text:   "X"
         font.family:    normalFontFamily
-        font.pointSize: {
-            if(ScreenToolsController.isMobile) {
-                // Small Devices
-                if((Screen.width / Screen.pixelDensity) < 120) {
-                    return 11;
-                // iOS
-                } else if(ScreenToolsController.isiOS) {
-                    return 13;
-                // Android
-                } else {
-                    return 14;
-                }
-            } else {
-                //-- Mac OS
-                if(ScreenToolsController.isMacOS)
-                    return _defaultFont.font.pointSize - 1
-                //-- Linux
-                if(ScreenToolsController.isLinux)
-                    return _defaultFont.font.pointSize - 3.25
-                else
-                    return _defaultFont.font.pointSize
-            }
-        }
         property real   fontWidth:    contentWidth
         property real   fontHeight:   contentHeight
         Component.onCompleted: {
-            defaultFontPointSize    = _textMeasure.font.pointSize
-            defaultFontPixelHeight  = _textMeasure.fontHeight
-            defaultFontPixelWidth   = _textMeasure.fontWidth
-            smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
-            mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
-            largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
+            var baseSize = QGroundControl.baseFontPointSize;
+            //-- If this is the first time (not saved in settings)
+            if(baseSize < 6 || baseSize > 48) {
+                //-- Init base size base on the platform
+                if(ScreenToolsController.isMobile) {
+                    // Small Devices
+                    if((Screen.width / Screen.pixelDensity) < 120)
+                        baseSize = 11;
+                    // iOS
+                    else if(ScreenToolsController.isiOS)
+                        baseSize = 13;
+                    // Android
+                    else
+                        baseSize = 14;
+                } else {
+                    //-- Mac OS
+                    if(ScreenToolsController.isMacOS)
+                        baseSize = _defaultFont.font.pointSize;
+                    //-- Linux
+                    else if(ScreenToolsController.isLinux)
+                        baseSize = _defaultFont.font.pointSize - 3.25;
+                    //-- Windows
+                    else
+                        baseSize = _defaultFont.font.pointSize;
+                }
+                QGroundControl.baseFontPointSize = baseSize
+                //-- Release build doesn't get signal
+                if(!ScreenToolsController.isDebug)
+                    _screenTools.setBasePointSize(baseSize);
+            } else {
+                //-- Set size saved in settings
+                _screenTools.setBasePointSize(baseSize);
+            }
         }
     }
 }
