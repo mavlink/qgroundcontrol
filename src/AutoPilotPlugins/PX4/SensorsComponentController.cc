@@ -312,13 +312,25 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
                 _orientationCalTailDownSideVisible = true;
                 _orientationCalNoseDownSideVisible = true;
             } else if (text == "mag") {
+
+                // Work out what the autopilot is configured to
+                int sides = 0;
+
+                if (_autopilot->parameterExists(FactSystem::defaultComponentId, "CAL_MAG_SIDES")) {
+                    // Read the requested calibration directions off the system
+                    sides = _autopilot->getParameterFact(FactSystem::defaultComponentId, "CAL_MAG_SIDES")->rawValue().toFloat();
+                } else {
+                    // There is no valid setting, default to all six sides
+                    sides = (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0);
+                }
+
                 _magCalInProgress = true;
-                _orientationCalDownSideVisible = true;
-                _orientationCalUpsideDownSideVisible = false;
-                _orientationCalLeftSideVisible = true;
-                _orientationCalRightSideVisible = false;
-                _orientationCalTailDownSideVisible = false;
-                _orientationCalNoseDownSideVisible = true;
+                _orientationCalTailDownSideVisible =   ((sides & (1 << 0)) > 0);
+                _orientationCalNoseDownSideVisible =   ((sides & (1 << 1)) > 0);
+                _orientationCalLeftSideVisible =       ((sides & (1 << 2)) > 0);
+                _orientationCalRightSideVisible =      ((sides & (1 << 3)) > 0);
+                _orientationCalUpsideDownSideVisible = ((sides & (1 << 4)) > 0);
+                _orientationCalDownSideVisible =       ((sides & (1 << 5)) > 0);
             } else if (text == "gyro") {
                 _gyroCalInProgress = true;
                 _orientationCalDownSideVisible = true;
