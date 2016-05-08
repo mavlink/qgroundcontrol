@@ -372,6 +372,10 @@
       <maintainer>Sander Smeets &lt;sander@droneslab.com&gt;</maintainer>
       <type>Standard VTOL</type>
     </airframe>
+    <airframe id="13009" maintainer="Andreas Antener &lt;andreas@uaventure.com&gt;" name="Sparkle Tech Ranger VTOL">
+      <maintainer>Andreas Antener &lt;andreas@uaventure.com&gt;</maintainer>
+      <type>Standard VTOL</type>
+    </airframe>
   </airframe_group>
   <airframe_group image="YPlus" name="Tricopter Y+">
     <airframe id="14001" maintainer="Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;" name="Generic Tricopter Y+ Geometry">
