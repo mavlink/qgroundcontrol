@@ -596,7 +596,8 @@ int FactMetaData::decimalPlaces(void) const
     int incrementDecimalPlaces = unknownDecimalPlaces;
 
     // First determine decimal places from increment
-    double increment = this->increment();
+    double increment = _rawTranslator(this->increment()).toDouble();
+    qDebug() << "increment:" << increment;
     if (!qIsNaN(increment)) {
         double integralPart;
 
@@ -614,7 +615,18 @@ int FactMetaData::decimalPlaces(void) const
     if (incrementDecimalPlaces != unknownDecimalPlaces && _decimalPlaces == unknownDecimalPlaces) {
         actualDecimalPlaces = incrementDecimalPlaces;
     } else {
-        actualDecimalPlaces = qMax(_decimalPlaces, incrementDecimalPlaces);
+
+        int settingsDecimalPlaces = _decimalPlaces;
+        double ctest = _rawTranslator(1.0).toDouble();
+
+        settingsDecimalPlaces += -log10(ctest);
+
+        qDebug() << "Decimal" << settingsDecimalPlaces;
+
+        settingsDecimalPlaces = qMin(25, settingsDecimalPlaces);
+        settingsDecimalPlaces = qMax(0, settingsDecimalPlaces);
+
+        actualDecimalPlaces = qMax(settingsDecimalPlaces, incrementDecimalPlaces);
     }
 
     return actualDecimalPlaces;
