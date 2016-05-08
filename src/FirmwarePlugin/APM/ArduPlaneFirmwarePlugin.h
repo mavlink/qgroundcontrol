@@ -54,6 +54,7 @@ public:
         QHOVER        = 18,
         QLOITER       = 19,
         QLAND         = 20,
+        QRTL          = 21,
         modeCount
     };
 
