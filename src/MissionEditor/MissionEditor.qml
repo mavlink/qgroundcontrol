@@ -26,6 +26,7 @@ import QtQuick.Controls 1.3
 import QtQuick.Dialogs  1.2
 import QtLocation       5.3
 import QtPositioning    5.3
+import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
 import QGroundControl.FlightMap     1.0
@@ -49,7 +50,7 @@ QGCView {
 
     readonly property int       _decimalPlaces:     8
     readonly property real      _horizontalMargin:  ScreenTools.defaultFontPixelWidth  / 2
-    readonly property real      _margin:            ScreenTools.defaultFontPixelHeight / 2
+    readonly property real      _margin:            ScreenTools.defaultFontPixelHeight * 0.5
     readonly property var       _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     readonly property real      _editFieldWidth:    ScreenTools.defaultFontPixelWidth * 16
     readonly property real      _rightPanelWidth:   Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
@@ -601,35 +602,31 @@ QGCView {
 
                         dropDownComponent: Component {
                             Column {
+                                spacing: ScreenTools.defaultFontPixelWidth * 0.5
                                 QGCLabel { text: qsTr("Center map:") }
-
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
-
                                     QGCButton {
                                         text: qsTr("Home")
-
+                                        width:  ScreenTools.defaultFontPixelWidth * 10
                                         onClicked: {
                                             centerMapButton.hideDropDown()
                                             editorMap.center = controller.visualItems.get(0).coordinate
                                         }
                                     }
-
                                     QGCButton {
                                         text: qsTr("Mission")
-
+                                        width:  ScreenTools.defaultFontPixelWidth * 10
                                         onClicked: {
                                             centerMapButton.hideDropDown()
                                             fitViewportToMissionItems()
                                         }
                                     }
-
                                     QGCButton {
                                         text:       qsTr("Vehicle")
+                                        width:      ScreenTools.defaultFontPixelWidth * 10
                                         enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
-
                                         property var activeVehicle: _activeVehicle
-
                                         onClicked: {
                                             centerMapButton.hideDropDown()
                                             editorMap.center = activeVehicle.coordinate
@@ -651,20 +648,17 @@ QGCView {
 
                         dropDownComponent: Component {
                             Column {
+                                spacing: _margin
                                 QGCLabel { text: qsTr("Map type:") }
-
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
-
                                     Repeater {
                                         model: QGroundControl.flightMapSettings.mapTypes
-
                                         QGCButton {
                                             checkable:      true
-                                            checked:        editorMap.mapType == text
+                                            checked:        editorMap.mapType === text
                                             text:           modelData
                                             exclusiveGroup: _mapTypeButtonsExclusiveGroup
-
                                             onClicked: {
                                                 editorMap.mapType = text
                                                 checked = true
@@ -724,11 +718,9 @@ QGCView {
 
     Component {
         id: syncLoadFromVehicleOverwrite
-
         QGCViewMessage {
             id:         syncLoadFromVehicleCheck
             message:   qsTr("You have unsaved/unsent mission changes. Loading the mission from the Vehicle will lose these changes. Are you sure you want to load the mission from the Vehicle?")
-
             function accept() {
                 hideDialog()
                 loadFromVehicle()
@@ -738,11 +730,9 @@ QGCView {
 
     Component {
         id: syncLoadFromFileOverwrite
-
         QGCViewMessage {
             id:         syncLoadFromVehicleCheck
             message:   qsTr("You have unsaved/unsent mission changes. Loading a mission from a file will lose these changes. Are you sure you want to load a mission from a file?")
-
             function accept() {
                 hideDialog()
                 loadFromFile()
@@ -752,10 +742,8 @@ QGCView {
 
     Component {
         id: removeAllPromptDialog
-
         QGCViewMessage {
             message: qsTr("Are you sure you want to delete all mission items?")
-
             function accept() {
                 itemDragger.clearItem()
                 controller.removeAllMissionItems()
@@ -766,38 +754,36 @@ QGCView {
 
     Component {
         id: syncDropDownComponent
-
         Column {
             id:         columnHolder
             spacing:    _margin
-
             QGCLabel {
-                width:      sendSaveRow.width
+                width:      sendSaveGrid.width
                 wrapMode:   Text.WordWrap
                 text:       syncNeeded && !controller.autoSync ?
                                 qsTr("You have unsaved changed to you mission. You should send to your vehicle, or save to a file:") :
                                 qsTr("Sync:")
             }
-
-            Row {
-                id:         sendSaveRow
-                visible:    true //autoSyncCheckBox.enabled && autoSyncCheckBox.checked
-                spacing:    ScreenTools.defaultFontPixelWidth
-
+            GridLayout {
+                id:                 sendSaveGrid
+                columns:            2
+                anchors.margins:    _margin
+                rowSpacing:         _margin
+                columnSpacing:      ScreenTools.defaultFontPixelWidth
+                visible:            true //autoSyncCheckBox.enabled && autoSyncCheckBox.checked
                 QGCButton {
-                    text:       qsTr("Send to vehicle")
-                    enabled:    _activeVehicle && !controller.syncInProgress
-
+                    text:               qsTr("Send To Vehicle")
+                    Layout.fillWidth:   true
+                    enabled:            _activeVehicle && !controller.syncInProgress
                     onClicked: {
                         syncButton.hideDropDown()
                         controller.sendMissionItems()
                     }
                 }
-
                 QGCButton {
-                    text:       qsTr("Load from vehicle")
-                    enabled:    _activeVehicle && !controller.syncInProgress
-
+                    text:               qsTr("Load From Vehicle")
+                    Layout.fillWidth:   true
+                    enabled:            _activeVehicle && !controller.syncInProgress
                     onClicked: {
                         syncButton.hideDropDown()
                         if (syncNeeded) {
@@ -807,25 +793,19 @@ QGCView {
                         }
                     }
                 }
-            }
-
-            Row {
-                spacing: ScreenTools.defaultFontPixelWidth
-
                 QGCButton {
-                    text:       qsTr("Save to file...")
-                    enabled:    !controller.syncInProgress
-
+                    text:               qsTr("Save To File...")
+                    Layout.fillWidth:   true
+                    enabled:            !controller.syncInProgress
                     onClicked: {
                         syncButton.hideDropDown()
                         saveToFile()
                     }
                 }
-
                 QGCButton {
-                    text:       qsTr("Load from file...")
-                    enabled:    !controller.syncInProgress
-
+                    text:               qsTr("Load From File...")
+                    Layout.fillWidth:   true
+                    enabled:            !controller.syncInProgress
                     onClicked: {
                         syncButton.hideDropDown()
                         if (syncNeeded) {
@@ -835,15 +815,16 @@ QGCView {
                         }
                     }
                 }
-            }
-
-            QGCButton {
-                text:       qsTr("Remove all")
-                onClicked:  {
-                    syncButton.hideDropDown()
-                    _root.showDialog(removeAllPromptDialog, qsTr("Delete all"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                QGCButton {
+                    text:               qsTr("Remove All")
+                    Layout.fillWidth:   true
+                    onClicked:  {
+                        syncButton.hideDropDown()
+                        _root.showDialog(removeAllPromptDialog, qsTr("Delete all"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                    }
                 }
             }
+
 
 /*
         FIXME: autoSync is temporarily disconnected since it's still buggy
