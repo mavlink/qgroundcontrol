@@ -10,7 +10,7 @@ Item {
 
     signal          clicked()
     property alias  buttonImage:    button.source
-    property real   radius:         ScreenTools.defaultFontPixelHeight * 1.25
+    property real   radius:         ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.75 : ScreenTools.defaultFontPixelHeight * 1.25
     property bool   rotateImage:    false
     property bool   lightBorders:   true
 
@@ -54,12 +54,12 @@ Item {
             color:              checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
 
             RotationAnimation on rotation {
-                id: imageRotation
-                loops: Animation.Infinite
-                from: 0
-                to: 360
-                duration: 500
-                running: false
+                id:             imageRotation
+                loops:          Animation.Infinite
+                from:           0
+                to:             360
+                duration:       500
+                running:        false
             }
 
             MouseArea {

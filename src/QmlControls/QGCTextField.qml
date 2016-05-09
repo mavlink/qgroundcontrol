@@ -20,12 +20,12 @@ TextField {
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
     textColor:          __qgcPal.textFieldText
-    height:             Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
+    height:             ScreenTools.isMobile ? Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 2)) : Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
 
     Label {
         id:             unitsLabelWidthGenerator
         text:           unitsLabel
-        width:          contentWidth + ((parent.__contentHeight/3)*2)
+        width:          contentWidth + parent.__contentHeight * 0.666
         visible:        false
         antialiasing:   true
         font.family:    ScreenTools.normalFontFamily
@@ -37,15 +37,15 @@ TextField {
             id: backgroundItem
 
             Rectangle {
-                anchors.fill: parent
-                anchors.bottomMargin: -1
-                color: "#44ffffff"
+                anchors.fill:           parent
+                anchors.bottomMargin:   -1
+                color:                  "#44ffffff"
             }
 
             Rectangle {
-                anchors.fill: parent
-                border.color: control.activeFocus ? "#47b" : "#999"
-                color: __qgcPal.textField
+                anchors.fill:           parent
+                border.color:           control.activeFocus ? "#47b" : "#999"
+                color:                  __qgcPal.textField
             }
 
             Text {
@@ -70,7 +70,7 @@ TextField {
             }
         }
 
-        padding.right: control.showUnits ? unitsLabelWidthGenerator.width : control.__contentHeight/3
+        padding.right: control.showUnits ? unitsLabelWidthGenerator.width : control.__contentHeight * 0.333
     }
 
     onActiveFocusChanged: {

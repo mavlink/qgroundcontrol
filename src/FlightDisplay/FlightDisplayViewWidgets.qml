@@ -218,9 +218,9 @@ Item {
 
                             QGCButton {
                                 checkable:  true
-                                checked:    _flightMap ? _flightMap.mapType == text : false
+                                checked:    _flightMap ? _flightMap.mapType === text : false
                                 text:       modelData
-
+                                width:      clearButton.width
                                 onClicked: {
                                     _flightMap.mapType = text
                                     _dropButtonsExclusiveGroup.current = null
@@ -230,9 +230,9 @@ Item {
                     }
 
                     QGCButton {
-                        text:       qsTr("Clear flight trails")
+                        id:         clearButton
+                        text:       qsTr("Clear Flight Trails")
                         enabled:    QGroundControl.multiVehicleManager.activeVehicle
-
                         onClicked: {
                             QGroundControl.multiVehicleManager.activeVehicle.clearTrajectoryPoints()
                             _dropButtonsExclusiveGroup.current = null
