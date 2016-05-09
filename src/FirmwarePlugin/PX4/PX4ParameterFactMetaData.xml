@@ -286,7 +286,7 @@ velocity</short_desc>
       <decimal>8</decimal>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="3.5" name="BAT_V_EMPTY" type="FLOAT">
+    <parameter default="3.4" name="BAT_V_EMPTY" type="FLOAT">
       <short_desc>Empty cell voltage (5C load)</short_desc>
       <long_desc>Defines the voltage where a single cell of the battery is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
       <unit>V</unit>
@@ -294,7 +294,7 @@ velocity</short_desc>
       <increment>0.01</increment>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="4.1" name="BAT_V_CHARGED" type="FLOAT">
+    <parameter default="4.05" name="BAT_V_CHARGED" type="FLOAT">
       <short_desc>Full cell voltage (5C load)</short_desc>
       <long_desc>Defines the voltage where a single cell of the battery is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
       <unit>V</unit>
@@ -322,7 +322,7 @@ velocity</short_desc>
       <increment>0.01</increment>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0.25" name="BAT_V_LOAD_DROP" type="FLOAT">
+    <parameter default="0.3" name="BAT_V_LOAD_DROP" type="FLOAT">
       <short_desc>Voltage drop per cell on full throttle</short_desc>
       <long_desc>This implicitely defines the internal resistance to maximum current ratio and assumes linearity. A good value to use is the difference between the 5C and 20-25C load.</long_desc>
       <min>0.07</min>
@@ -2153,7 +2153,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <max>240</max>
       <scope>modules/mavlink</scope>
     </parameter>
-    <parameter default="1" name="MAV_TYPE" type="INT32">
+    <parameter default="2" name="MAV_TYPE" type="INT32">
       <short_desc>MAVLink airframe type</short_desc>
       <min>1</min>
       <scope>modules/mavlink</scope>
@@ -2707,6 +2707,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <max>0.95</max>
       <unit>norm</unit>
       <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.08" name="MPC_MANTHR_MIN" type="FLOAT">
@@ -2716,6 +2717,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <max>1.0</max>
       <unit>norm</unit>
       <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.9" name="MPC_MANTHR_MAX" type="FLOAT">
@@ -2725,30 +2727,35 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <max>1.0</max>
       <unit>norm</unit>
       <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="1.0" name="MPC_Z_P" type="FLOAT">
       <short_desc>Proportional gain for vertical position error</short_desc>
       <min>0.0</min>
+      <max>1.5</max>
       <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.2" name="MPC_Z_VEL_P" type="FLOAT">
       <short_desc>Proportional gain for vertical velocity error</short_desc>
-      <min>0.0</min>
+      <min>0.1</min>
+      <max>0.4</max>
       <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.02" name="MPC_Z_VEL_I" type="FLOAT">
       <short_desc>Integral gain for vertical velocity error</short_desc>
       <long_desc>Non zero value allows hovering thrust estimation on stabilized or autonomous takeoff.</long_desc>
-      <min>0.0</min>
+      <min>0.01</min>
+      <max>0.1</max>
       <decimal>3</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.0" name="MPC_Z_VEL_D" type="FLOAT">
       <short_desc>Differential gain for vertical velocity error</short_desc>
       <min>0.0</min>
+      <max>0.1</max>
       <decimal>3</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
@@ -2772,12 +2779,14 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     <parameter default="1.25" name="MPC_XY_P" type="FLOAT">
       <short_desc>Proportional gain for horizontal position error</short_desc>
       <min>0.0</min>
+      <max>2.0</max>
       <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
-    <parameter default="0.065" name="MPC_XY_VEL_P" type="FLOAT">
+    <parameter default="0.09" name="MPC_XY_VEL_P" type="FLOAT">
       <short_desc>Proportional gain for horizontal velocity error</short_desc>
-      <min>0.0</min>
+      <min>0.06</min>
+      <max>0.15</max>
       <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
@@ -2785,21 +2794,25 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <short_desc>Integral gain for horizontal velocity error</short_desc>
       <long_desc>Non-zero value allows to resist wind.</long_desc>
       <min>0.0</min>
+      <max>0.1</max>
       <decimal>3</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.01" name="MPC_XY_VEL_D" type="FLOAT">
       <short_desc>Differential gain for horizontal velocity error. Small values help reduce fast oscillations. If value is too big oscillations will appear again</short_desc>
-      <min>0.0</min>
+      <min>0.005</min>
+      <max>0.1</max>
       <decimal>3</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="5.0" name="MPC_XY_CRUISE" type="FLOAT">
       <short_desc>Nominal horizontal velocity</short_desc>
       <long_desc>Normal horizontal velocity in AUTO modes (includes also RTL / hold / etc.) and endpoint for position stabilized mode (POSCTRL).</long_desc>
-      <min>0.0</min>
+      <min>3.0</min>
+      <max>20.0</max>
       <unit>m/s</unit>
       <decimal>2</decimal>
+      <increment>1</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="8.0" name="MPC_XY_VEL_MAX" type="FLOAT">
@@ -2840,14 +2853,15 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     </parameter>
     <parameter default="0.5" name="MPC_LAND_SPEED" type="FLOAT">
       <short_desc>Landing descend rate</short_desc>
-      <min>0.0</min>
+      <min>0.2</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="1.5" name="MPC_TKO_SPEED" type="FLOAT">
       <short_desc>Takeoff climb rate</short_desc>
-      <min>0.0</min>
+      <min>1</min>
+      <max>5</max>
       <unit>m/s</unit>
       <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
@@ -2871,6 +2885,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     <parameter default="200.0" name="MPC_MAN_Y_MAX" type="FLOAT">
       <short_desc>Max manual yaw rate</short_desc>
       <min>0.0</min>
+      <max>400</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <scope>modules/mc_pos_control</scope>
@@ -2885,6 +2900,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     <parameter default="0.8" name="MPC_HOLD_MAX_XY" type="FLOAT">
       <short_desc>Maximum horizontal velocity for which position hold is enabled (use 0 to disable check)</short_desc>
       <min>0.0</min>
+      <max>3.0</max>
       <unit>m/s</unit>
       <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
@@ -2892,6 +2908,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     <parameter default="0.6" name="MPC_HOLD_MAX_Z" type="FLOAT">
       <short_desc>Maximum vertical velocity for which position hold is enabled (use 0 to disable check)</short_desc>
       <min>0.0</min>
+      <max>3.0</max>
       <unit>m/s</unit>
       <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
@@ -2899,6 +2916,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     <parameter default="5.0" name="MPC_VELD_LP" type="FLOAT">
       <short_desc>Low pass filter cut freq. for numerical velocity derivative</short_desc>
       <min>0.0</min>
+      <max>10</max>
       <unit>Hz</unit>
       <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
@@ -5672,6 +5690,18 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     <parameter default="0" name="CAL_MAG_PRIME" type="INT32">
       <short_desc>Primary mag ID</short_desc>
       <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="63" name="CAL_MAG_SIDES" type="INT32">
+      <short_desc>Bitfield selecting mag sides for calibration</short_desc>
+      <long_desc>DETECT_ORIENTATION_TAIL_DOWN = 1 DETECT_ORIENTATION_NOSE_DOWN = 2 DETECT_ORIENTATION_LEFT = 4 DETECT_ORIENTATION_RIGHT = 8 DETECT_ORIENTATION_UPSIDE_DOWN = 16 DETECT_ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
+      <min>34</min>
+      <max>63</max>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="34">Two side calibration</value>
+        <value code="63">Six side calibration</value>
+        <value code="38">Three side calibration</value>
+      </values>
     </parameter>
     <parameter default="0" name="CAL_BARO_PRIME" type="INT32">
       <short_desc>Primary baro ID</short_desc>
