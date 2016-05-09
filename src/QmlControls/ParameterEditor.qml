@@ -71,18 +71,18 @@ QGCView {
             height:         searchText.height + ScreenTools.defaultFontPixelHeight / 3
             spacing:        ScreenTools.defaultFontPixelWidth
 
+            QGCTextField {
+                id: searchText
+            }
+
             QGCButton {
                 anchors.top:    searchText.top
                 anchors.bottom: searchText.bottom
-                text:           qsTr("Filter by:")
+                text:           qsTr("Search")
                 onClicked: {
                     _searchResults = controller.searchParametersForComponent(-1, searchText.text)
                     _searchFilter = true
                 }
-            }
-
-            QGCTextField {
-                id: searchText
             }
 
             QGCButton {
