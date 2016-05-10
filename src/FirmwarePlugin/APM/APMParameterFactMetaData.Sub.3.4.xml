@@ -1754,12 +1754,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1773,6 +1778,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN0_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -1783,12 +1789,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1802,6 +1813,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -1814,12 +1826,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1833,6 +1850,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN1_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -1843,12 +1861,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1862,6 +1885,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -1874,12 +1898,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1893,6 +1922,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN2_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -1903,12 +1933,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1922,6 +1957,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -1934,12 +1970,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1953,6 +1994,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN3_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -1963,12 +2005,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1982,6 +2029,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -1994,12 +2042,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2013,6 +2066,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN4_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2023,12 +2077,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2042,6 +2101,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2054,12 +2114,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2073,6 +2138,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN5_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2083,12 +2149,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2102,6 +2173,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2114,12 +2186,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2133,6 +2210,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN6_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2143,12 +2221,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2162,6 +2245,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2174,12 +2258,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2193,6 +2282,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN7_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2203,12 +2293,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2222,6 +2317,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2234,12 +2330,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2253,6 +2354,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN8_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2263,12 +2365,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2282,6 +2389,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2294,12 +2402,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2313,6 +2426,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN9_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2323,12 +2437,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2342,6 +2461,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2354,12 +2474,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2373,6 +2498,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN10_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2383,12 +2509,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2402,6 +2533,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2414,12 +2546,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2433,6 +2570,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN11_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2443,12 +2581,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2462,6 +2605,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2474,12 +2618,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2493,6 +2642,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN12_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2503,12 +2653,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2522,6 +2677,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2534,12 +2690,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2553,6 +2714,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN13_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2563,12 +2725,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2582,6 +2749,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2594,12 +2762,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2613,6 +2786,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN14_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2623,12 +2797,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2642,6 +2821,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
@@ -2654,12 +2834,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2673,6 +2858,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN15_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2683,12 +2869,17 @@
 <value code="3">arm</value>
 <value code="4">disarm</value>
 <value code="5">mode_toggle</value>
-<value code="6">mode_stab</value>
-<value code="7">mode_althold</value>
+<value code="6">enter_mode_1</value>
+<value code="7">enter_mode_2</value>
+<value code="8">enter_mode_3</value>
+<value code="9">enter_mode_4</value>
+<value code="10">enter_mode_5</value>
+<value code="11">enter_mode_6</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
+<value code="25">camera_source_toggle</value>
 <value code="31">light1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2702,6 +2893,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
+<value code="48">input_hold_toggle</value>
 </values>
 </param>
 </parameters>
