@@ -453,7 +453,7 @@ Item {
 
                 QGCButton {
                     text:       (_activeVehicle && _activeVehicle.armed) ? (_activeVehicle.flying ? qsTr("Emergency Stop") : qsTr("Disarm")) :  qsTr("Arm")
-                    visible: (_activeVehicle && _activeVehicle.homePositionAvailable)
+                    visible: (_activeVehicle && _activeVehicle.coordinateValid)
                     onClicked:  _guidedModeBar.confirmAction(_activeVehicle.armed ? (_activeVehicle.flying ? _guidedModeBar.confirmEmergencyStop : _guidedModeBar.confirmDisarm) : _guidedModeBar.confirmArm)
                 }
 
