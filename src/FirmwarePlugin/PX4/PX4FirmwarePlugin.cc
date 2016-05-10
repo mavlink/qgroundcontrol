@@ -258,11 +258,6 @@ QObject* PX4FirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
 
 void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
 {
-    // kick it into hold mode
-    vehicle->setFlightMode(pauseFlightMode);
-
-    QGC::SLEEP::msleep(200);
-
     // then tell it to loiter at the current position
     mavlink_message_t msg;
     mavlink_command_long_t cmd;
@@ -270,7 +265,7 @@ void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
     cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
     cmd.confirmation = 0;
     cmd.param1 = -1.0f;
-    cmd.param2 = 0.0;
+    cmd.param2 = MAV_DO_REPOSITION_FLAGS_CHANGE_MODE;
     cmd.param3 = 0.0f;
     cmd.param4 = NAN;
     cmd.param5 = NAN;
@@ -324,7 +319,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
     vehicle->sendMessage(msg);
 
-    QGC::SLEEP::msleep(200);
+    QGC::SLEEP::msleep(300);
 
     // trigger take off
     vehicle->setFlightMode(takeoffFlightMode);
