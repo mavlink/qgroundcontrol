@@ -304,7 +304,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     mavlink_message_t msg;
     mavlink_command_long_t cmd;
 
-    cmd.command = (uint16_t)MAV_CMD_DO_REPOSITION;
+    cmd.command = (uint16_t)MAV_CMD_NAV_TAKEOFF;
     cmd.confirmation = 0;
     cmd.param1 = -1.0f;
     cmd.param2 = 0.0f;
@@ -318,11 +318,6 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 
     mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
     vehicle->sendMessage(msg);
-
-    QGC::SLEEP::msleep(300);
-
-    // trigger take off
-    vehicle->setFlightMode(takeoffFlightMode);
 }
 
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
