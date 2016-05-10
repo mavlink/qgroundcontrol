@@ -416,7 +416,7 @@ Item {
                 guidedModeConfirm.confirmText = qsTr("land")
                 break;
             case confirmHome:
-                guidedModeConfirm.confirmText = qsTr("return to launch")
+                guidedModeConfirm.confirmText = qsTr("return to land")
                 break;
             case confirmChangeAlt:
                 altitudeSlider.visible = true
@@ -440,6 +440,13 @@ Item {
             anchors.top:        parent.top
             anchors.left:       parent.left
             spacing:            _margins
+
+            QGCLabel {
+                anchors.horizontalCenter: parent.horizontalCenter
+                color:      qgcPal.button
+                text:       "Click in map to move vehicle"
+                visible:    _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
+            }
 
             Row {
                 spacing: _margins
@@ -477,13 +484,6 @@ Item {
                     onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmChangeAlt)
                 }
             } // Row
-
-            QGCLabel {
-                anchors.horizontalCenter: parent.horizontalCenter
-                color:      qgcPal.button
-                text:       "Click in map to move vehicle"
-                visible:    _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
-            }
         } // Column
     } // Rectangle - Guided mode buttons
 
