@@ -55,7 +55,6 @@ Rectangle {
         MouseArea {
             id:             sliderDragArea
             anchors.fill:   parent
-            onClicked:      _root.accept()
             drag.target:    slider
             drag.axis:      Drag.XAxis
             drag.minimumX:  _border
