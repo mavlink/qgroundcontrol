@@ -59,7 +59,7 @@ You need to install Qt like this instead of using packages from say a Linux dist
 
 #### Vagrant
 
-A Vagrantfile is provided to build QGroundControl using the [Vagrant](https://www.vagrantup.com/) system.  This will produce a native Linux build which can be run in the Vagrant Virtual Machine or on the host machine if it is compatible.
+A Vagrantfile is provided to build QGroundControl using the [Vagrant](https://www.vagrantup.com/) system. This will produce a native Linux build which can be run in the Vagrant Virtual Machine or on the host machine if it is compatible.
 
 * [Download](https://www.vagrantup.com/downloads.html) Vagrant
 * [Install](https://www.vagrantup.com/docs/getting-started/) Vagrant
