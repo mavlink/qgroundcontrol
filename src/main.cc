@@ -112,7 +112,11 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
  * @return exit code, 0 for normal exit and !=0 for error cases
  */
 
+#ifdef Q_OS_IOS
+extern "C" int qtmn(int argc, char *argv[])
+#else
 int main(int argc, char *argv[])
+#endif
 {
 #ifdef Q_OS_UNIX
     //Force writing to the console on UNIX/BSD devices
