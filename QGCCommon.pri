@@ -199,7 +199,9 @@ WindowsBuild {
 ReleaseBuild {
     DEFINES += QT_NO_DEBUG
     CONFIG += force_debug_info  # Enable debugging symbols on release builds
-    CONFIG += ltcg              # Turn on link time code generation
+    !iOSBuild {
+        CONFIG += ltcg              # Turn on link time code generation
+    }
 
     WindowsBuild {
         # Enable function level linking and enhanced optimized debugging
