@@ -178,11 +178,15 @@ MacBuild | LinuxBuild {
 }
 
 WindowsBuild {
+    QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
+    QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
+    QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
+    QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
     QMAKE_CXXFLAGS_WARN_ON += /W3 \
         /wd4996 \   # silence warnings about deprecated strcpy and whatnot
         /wd4005 \   # silence warnings about macro redefinition
-        /wd4290 \   # ignore exception specifications
-        /Zc:strictStrings-  # work around win 8.1 sdk sapi.h problem
+        /wd4290     # ignore exception specifications
+
     WarningsAsErrorsOn {
         QMAKE_CXXFLAGS_WARN_ON += /WX
     }
@@ -194,14 +198,21 @@ WindowsBuild {
 
 ReleaseBuild {
     DEFINES += QT_NO_DEBUG
-    WindowsBuild {
-        # Use link time code generation for better optimization (I believe this is supported in MSVC Express, but not 100% sure)
-        QMAKE_LFLAGS_LTCG = /LTCG
-        QMAKE_CFLAGS_LTCG = -GL
+    CONFIG += force_debug_info  # Enable debugging symbols on release builds
+    !iOSBuild {
+        CONFIG += ltcg              # Turn on link time code generation
+    }
 
-        # Turn on debugging information so we can collect good crash dumps from release builds
-        QMAKE_CXXFLAGS_RELEASE += /Zi
-        QMAKE_LFLAGS_RELEASE += /DEBUG
+    WindowsBuild {
+        # Enable function level linking and enhanced optimized debugging
+        QMAKE_CFLAGS_RELEASE   += /Gy /Zo
+        QMAKE_CXXFLAGS_RELEASE += /Gy /Zo
+        QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO   += /Gy /Zo
+        QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO += /Gy /Zo
+
+        # Eliminate duplicate COMDATs
+        QMAKE_LFLAGS_RELEASE += /OPT:ICF
+        QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO += /OPT:ICF
     }
 }
 
