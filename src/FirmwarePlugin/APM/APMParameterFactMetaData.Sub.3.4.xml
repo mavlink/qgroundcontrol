@@ -383,7 +383,7 @@
 <param humanName="Simple mode bitmask" name="ArduSub:SIMPLE" documentation="Bitmask which holds which flight modes use simple heading mode (eg bit 0 = 1 means Flight Mode 0 uses simple mode)" user="Advanced">
 </param>
 <param humanName="Log bitmask" name="ArduSub:LOG_BITMASK" documentation="4 byte bitmap of log types to enable" user="Standard">
-<field name="Bitmask">0:ATTITUDE_FAST,1:ATTITUDE_MED,2:GPS,3:PM,4:CTUN,5:NTUN,6:RCIN,7:IMU,8:CMD,9:CURRENT,10:RCOUT,11:OPTFLOW,12:PID,13:COMPASS,14:INAV,15:CAMERA,16:WHEN_DISARMED,17:MOTBATT,18:IMU_FAST,19:IMU_RAW</field>
+<field name="Bitmask">0:ATTITUDE_FAST,1:ATTITUDE_MED,2:GPS,3:PM,4:CTUN,5:NTUN,6:RCIN,7:IMU,8:CMD,9:CURRENT,10:RCOUT,11:OPTFLOW,12:PID,13:COMPASS,14:INAV,15:CAMERA,17:MOTBATT,18:IMU_FAST,19:IMU_RAW</field>
 <values>
 <value code="830">Default</value>
 <value code="894">Default+RCIN</value>
@@ -391,7 +391,6 @@
 <value code="1854">Default+Motors</value>
 <value code="-6146">NearlyAll-AC315</value>
 <value code="45054">NearlyAll</value>
-<value code="131070">All+DisarmedLogging</value>
 <value code="131071">All+FastATT</value>
 <value code="262142">All+MotBatt</value>
 <value code="393214">All+FastIMU</value>
@@ -1193,6 +1192,30 @@
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
 <value code="32">HeliTailRSC</value>
+<value code="33">Motor1</value>
+<value code="34">Motor2</value>
+<value code="35">Motor3</value>
+<value code="36">Motor4</value>
+<value code="37">Motor5</value>
+<value code="38">Motor6</value>
+<value code="39">Motor7</value>
+<value code="40">Motor8</value>
+<value code="51">RCIN1</value>
+<value code="52">RCIN2</value>
+<value code="53">RCIN3</value>
+<value code="54">RCIN4</value>
+<value code="55">RCIN5</value>
+<value code="56">RCIN6</value>
+<value code="57">RCIN7</value>
+<value code="58">RCIN8</value>
+<value code="59">RCIN9</value>
+<value code="60">RCIN10</value>
+<value code="61">RCIN11</value>
+<value code="62">RCIN12</value>
+<value code="63">RCIN13</value>
+<value code="64">RCIN14</value>
+<value code="65">RCIN15</value>
+<value code="66">RCIN16</value>
 </values>
 </param>
 </parameters>
@@ -1254,6 +1277,30 @@
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
 <value code="32">HeliTailRSC</value>
+<value code="33">Motor1</value>
+<value code="34">Motor2</value>
+<value code="35">Motor3</value>
+<value code="36">Motor4</value>
+<value code="37">Motor5</value>
+<value code="38">Motor6</value>
+<value code="39">Motor7</value>
+<value code="40">Motor8</value>
+<value code="51">RCIN1</value>
+<value code="52">RCIN2</value>
+<value code="53">RCIN3</value>
+<value code="54">RCIN4</value>
+<value code="55">RCIN5</value>
+<value code="56">RCIN6</value>
+<value code="57">RCIN7</value>
+<value code="58">RCIN8</value>
+<value code="59">RCIN9</value>
+<value code="60">RCIN10</value>
+<value code="61">RCIN11</value>
+<value code="62">RCIN12</value>
+<value code="63">RCIN13</value>
+<value code="64">RCIN14</value>
+<value code="65">RCIN15</value>
+<value code="66">RCIN16</value>
 </values>
 </param>
 </parameters>
@@ -1315,6 +1362,30 @@
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
 <value code="32">HeliTailRSC</value>
+<value code="33">Motor1</value>
+<value code="34">Motor2</value>
+<value code="35">Motor3</value>
+<value code="36">Motor4</value>
+<value code="37">Motor5</value>
+<value code="38">Motor6</value>
+<value code="39">Motor7</value>
+<value code="40">Motor8</value>
+<value code="51">RCIN1</value>
+<value code="52">RCIN2</value>
+<value code="53">RCIN3</value>
+<value code="54">RCIN4</value>
+<value code="55">RCIN5</value>
+<value code="56">RCIN6</value>
+<value code="57">RCIN7</value>
+<value code="58">RCIN8</value>
+<value code="59">RCIN9</value>
+<value code="60">RCIN10</value>
+<value code="61">RCIN11</value>
+<value code="62">RCIN12</value>
+<value code="63">RCIN13</value>
+<value code="64">RCIN14</value>
+<value code="65">RCIN15</value>
+<value code="66">RCIN16</value>
 </values>
 </param>
 </parameters>
@@ -1376,6 +1447,30 @@
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
 <value code="32">HeliTailRSC</value>
+<value code="33">Motor1</value>
+<value code="34">Motor2</value>
+<value code="35">Motor3</value>
+<value code="36">Motor4</value>
+<value code="37">Motor5</value>
+<value code="38">Motor6</value>
+<value code="39">Motor7</value>
+<value code="40">Motor8</value>
+<value code="51">RCIN1</value>
+<value code="52">RCIN2</value>
+<value code="53">RCIN3</value>
+<value code="54">RCIN4</value>
+<value code="55">RCIN5</value>
+<value code="56">RCIN6</value>
+<value code="57">RCIN7</value>
+<value code="58">RCIN8</value>
+<value code="59">RCIN9</value>
+<value code="60">RCIN10</value>
+<value code="61">RCIN11</value>
+<value code="62">RCIN12</value>
+<value code="63">RCIN13</value>
+<value code="64">RCIN14</value>
+<value code="65">RCIN15</value>
+<value code="66">RCIN16</value>
 </values>
 </param>
 </parameters>
@@ -1437,6 +1532,30 @@
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
 <value code="32">HeliTailRSC</value>
+<value code="33">Motor1</value>
+<value code="34">Motor2</value>
+<value code="35">Motor3</value>
+<value code="36">Motor4</value>
+<value code="37">Motor5</value>
+<value code="38">Motor6</value>
+<value code="39">Motor7</value>
+<value code="40">Motor8</value>
+<value code="51">RCIN1</value>
+<value code="52">RCIN2</value>
+<value code="53">RCIN3</value>
+<value code="54">RCIN4</value>
+<value code="55">RCIN5</value>
+<value code="56">RCIN6</value>
+<value code="57">RCIN7</value>
+<value code="58">RCIN8</value>
+<value code="59">RCIN9</value>
+<value code="60">RCIN10</value>
+<value code="61">RCIN11</value>
+<value code="62">RCIN12</value>
+<value code="63">RCIN13</value>
+<value code="64">RCIN14</value>
+<value code="65">RCIN15</value>
+<value code="66">RCIN16</value>
 </values>
 </param>
 </parameters>
@@ -1498,6 +1617,30 @@
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
 <value code="32">HeliTailRSC</value>
+<value code="33">Motor1</value>
+<value code="34">Motor2</value>
+<value code="35">Motor3</value>
+<value code="36">Motor4</value>
+<value code="37">Motor5</value>
+<value code="38">Motor6</value>
+<value code="39">Motor7</value>
+<value code="40">Motor8</value>
+<value code="51">RCIN1</value>
+<value code="52">RCIN2</value>
+<value code="53">RCIN3</value>
+<value code="54">RCIN4</value>
+<value code="55">RCIN5</value>
+<value code="56">RCIN6</value>
+<value code="57">RCIN7</value>
+<value code="58">RCIN8</value>
+<value code="59">RCIN9</value>
+<value code="60">RCIN10</value>
+<value code="61">RCIN11</value>
+<value code="62">RCIN12</value>
+<value code="63">RCIN13</value>
+<value code="64">RCIN14</value>
+<value code="65">RCIN15</value>
+<value code="66">RCIN16</value>
 </values>
 </param>
 </parameters>
@@ -1559,6 +1702,30 @@
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
 <value code="32">HeliTailRSC</value>
+<value code="33">Motor1</value>
+<value code="34">Motor2</value>
+<value code="35">Motor3</value>
+<value code="36">Motor4</value>
+<value code="37">Motor5</value>
+<value code="38">Motor6</value>
+<value code="39">Motor7</value>
+<value code="40">Motor8</value>
+<value code="51">RCIN1</value>
+<value code="52">RCIN2</value>
+<value code="53">RCIN3</value>
+<value code="54">RCIN4</value>
+<value code="55">RCIN5</value>
+<value code="56">RCIN6</value>
+<value code="57">RCIN7</value>
+<value code="58">RCIN8</value>
+<value code="59">RCIN9</value>
+<value code="60">RCIN10</value>
+<value code="61">RCIN11</value>
+<value code="62">RCIN12</value>
+<value code="63">RCIN13</value>
+<value code="64">RCIN14</value>
+<value code="65">RCIN15</value>
+<value code="66">RCIN16</value>
 </values>
 </param>
 </parameters>
@@ -1620,6 +1787,30 @@
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
 <value code="32">HeliTailRSC</value>
+<value code="33">Motor1</value>
+<value code="34">Motor2</value>
+<value code="35">Motor3</value>
+<value code="36">Motor4</value>
+<value code="37">Motor5</value>
+<value code="38">Motor6</value>
+<value code="39">Motor7</value>
+<value code="40">Motor8</value>
+<value code="51">RCIN1</value>
+<value code="52">RCIN2</value>
+<value code="53">RCIN3</value>
+<value code="54">RCIN4</value>
+<value code="55">RCIN5</value>
+<value code="56">RCIN6</value>
+<value code="57">RCIN7</value>
+<value code="58">RCIN8</value>
+<value code="59">RCIN9</value>
+<value code="60">RCIN10</value>
+<value code="61">RCIN11</value>
+<value code="62">RCIN12</value>
+<value code="63">RCIN13</value>
+<value code="64">RCIN14</value>
+<value code="65">RCIN15</value>
+<value code="66">RCIN16</value>
 </values>
 </param>
 </parameters>
@@ -1681,6 +1872,30 @@
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
 <value code="32">HeliTailRSC</value>
+<value code="33">Motor1</value>
+<value code="34">Motor2</value>
+<value code="35">Motor3</value>
+<value code="36">Motor4</value>
+<value code="37">Motor5</value>
+<value code="38">Motor6</value>
+<value code="39">Motor7</value>
+<value code="40">Motor8</value>
+<value code="51">RCIN1</value>
+<value code="52">RCIN2</value>
+<value code="53">RCIN3</value>
+<value code="54">RCIN4</value>
+<value code="55">RCIN5</value>
+<value code="56">RCIN6</value>
+<value code="57">RCIN7</value>
+<value code="58">RCIN8</value>
+<value code="59">RCIN9</value>
+<value code="60">RCIN10</value>
+<value code="61">RCIN11</value>
+<value code="62">RCIN12</value>
+<value code="63">RCIN13</value>
+<value code="64">RCIN14</value>
+<value code="65">RCIN15</value>
+<value code="66">RCIN16</value>
 </values>
 </param>
 </parameters>
@@ -1742,6 +1957,30 @@
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
 <value code="32">HeliTailRSC</value>
+<value code="33">Motor1</value>
+<value code="34">Motor2</value>
+<value code="35">Motor3</value>
+<value code="36">Motor4</value>
+<value code="37">Motor5</value>
+<value code="38">Motor6</value>
+<value code="39">Motor7</value>
+<value code="40">Motor8</value>
+<value code="51">RCIN1</value>
+<value code="52">RCIN2</value>
+<value code="53">RCIN3</value>
+<value code="54">RCIN4</value>
+<value code="55">RCIN5</value>
+<value code="56">RCIN6</value>
+<value code="57">RCIN7</value>
+<value code="58">RCIN8</value>
+<value code="59">RCIN9</value>
+<value code="60">RCIN10</value>
+<value code="61">RCIN11</value>
+<value code="62">RCIN12</value>
+<value code="63">RCIN13</value>
+<value code="64">RCIN14</value>
+<value code="65">RCIN15</value>
+<value code="66">RCIN16</value>
 </values>
 </param>
 </parameters>
@@ -4396,6 +4635,18 @@
 </param>
 <param humanName="Maximum DataFlash File Backend buffer size (in kilobytes)" name="LOG_FILE_BUFSIZE" documentation='The DataFlash_File backend uses a buffer to store data before writing to the block device.  Raising this value may reduce "gaps" in your SD card logging.  This buffer size may be reduced depending on available memory.  PixHawk requires at least 4 kilobytes.  Maximum value available here is 64 kilobytes.' user="Standard">
 </param>
+<param humanName="Enable logging while disarmed" name="LOG_DISARMED" documentation="If LOG_DISARMED is set to 1 then logging will be enabled while disarmed. This can make for very large logfiles but can help a lot when tracking down startup issues" user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
+<param humanName="Enable logging of information needed for Replay" name="LOG_REPLAY" documentation="If LOG_REPLAY is set to 1 then the EKF2 state estimator will log detailed information needed for diagnosing problems with the Kalman filter. It is suggested that you also raise LOG_FILE_BUFSIZE to give more buffer space for logging and use a high quality microSD card to ensure no sensor data is lost" user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
 </parameters>
 <parameters name="BATT">
 <param humanName="Battery monitoring" name="BATT_MONITOR" documentation="Controls enabling monitoring of the battery's voltage and current" user="Standard">
@@ -5239,6 +5490,14 @@
 <field name="Range">0.5 50.0</field>
 <field name="Units">m/s</field>
 </param>
+<param humanName="EKF sensor logging IMU mask" name="EK2_LOG_MASK" documentation="This sets the IMU mask of sensors to do full logging for" user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1">FirstIMU</value>
+<value code="3">FirstAndSecondIMU</value>
+<value code="7">AllIMUs</value>
+</values>
+</param>
 </parameters>
 <parameters name="MIS_">
 <param humanName="Total mission commands" name="MIS_TOTAL" documentation="The number of mission mission items that has been loaded by the ground station. Do not change this manually." user="Advanced">
@@ -5306,6 +5565,8 @@
 <value code="6">BBB-PRU</value>
 <value code="7">LightWareI2C</value>
 <value code="8">LightWareSerial</value>
+<value code="9">Bebop</value>
+<value code="10">MAVLink</value>
 </values>
 </param>
 <param humanName="Rangefinder pin" name="RNGFND_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port." user="Standard">
@@ -5396,6 +5657,8 @@
 <value code="6">BBB-PRU</value>
 <value code="7">LightWareI2C</value>
 <value code="8">LightWareSerial</value>
+<value code="9">Bebop</value>
+<value code="10">MAVLink</value>
 </values>
 </param>
 <param humanName="Rangefinder pin" name="RNGFND2_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port." user="Advanced">
@@ -5490,6 +5753,8 @@
 <value code="6">BBB-PRU</value>
 <value code="7">LightWareI2C</value>
 <value code="8">LightWareSerial</value>
+<value code="9">Bebop</value>
+<value code="10">MAVLink</value>
 </values>
 </param>
 <param humanName="Rangefinder pin" name="RNGFND3_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port.">
@@ -5580,6 +5845,8 @@
 <value code="6">BBB-PRU</value>
 <value code="7">LightWareI2C</value>
 <value code="8">LightWareSerial</value>
+<value code="9">Bebop</value>
+<value code="10">MAVLink</value>
 </values>
 </param>
 <param humanName="Rangefinder pin" name="RNGFND4_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port.">
@@ -5706,19 +5973,6 @@
 <value code=" 1">CompanionComputer</value>
 <value code=" 2">IRLock</value>
 </values>
-</param>
-<param humanName="Precision Land horizontal speed maximum in cm/s" name="PRECLAND_SPEED" documentation="Precision Land horizontal speed maximum in cm/s" user="Advanced">
-<field name="Range">0 500</field>
-</param>
-<param humanName="Precision landing velocity controller P gain" name="PRECLAND_VEL_P" documentation="Precision landing velocity controller P gain" user="Advanced">
-<field name="Range">0.100 5.000</field>
-</param>
-<param humanName="Precision landing velocity controller I gain" name="PRECLAND_VEL_I" documentation="Precision landing velocity controller I gain" user="Advanced">
-<field name="Range">0.100 5.000</field>
-</param>
-<param humanName="Precision landing velocity controller I gain maximum" name="PRECLAND_VEL_IMAX" documentation="Precision landing velocity controller I gain maximum" user="Standard">
-<field name="Range">0 1000</field>
-<field name="Units">cm/s</field>
 </param>
 </parameters>
 <parameters name="RPM">
