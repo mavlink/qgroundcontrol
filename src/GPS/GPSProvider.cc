@@ -18,9 +18,25 @@
 #include "Drivers/src/gps_helper.h"
 #include "definitions.h"
 
+//#define SIMULATE_RTCM_OUTPUT //if defined, generate simulated RTCM messages
+                               //additionally make sure to call connectGPS(""), eg. from QGCToolbox.cc
+
 
 void GPSProvider::run()
 {
+#ifdef SIMULATE_RTCM_OUTPUT
+        const int fakeMsgLengths[3] = { 30, 170, 240 };
+        uint8_t* fakeData = new uint8_t[fakeMsgLengths[2]];
+        while (!_requestStop) {
+            for (int i = 0; i < 3; ++i) {
+                gotRTCMData((uint8_t*) fakeData, fakeMsgLengths[i]);
+                msleep(4);
+            }
+            msleep(100);
+        }
+        delete[] fakeData;
+#endif /* SIMULATE_RTCM_OUTPUT */
+
     if (_serial) delete _serial;
 
     _serial = new QSerialPort();
