@@ -181,7 +181,7 @@ QGCView {
                             readonly property int componentId: parseInt(modelData)
                             spacing: Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
                             QGCLabel {
-                                text: qsTr("Component #: %1)").arg(componentId.toString())
+                                text: qsTr("Component #: %1").arg(componentId.toString())
                                 font.family: ScreenTools.demiboldFontFamily
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
