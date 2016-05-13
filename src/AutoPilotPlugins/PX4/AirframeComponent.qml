@@ -79,7 +79,7 @@ QGCView {
             id:       customConfigDialog
             message:  qsTr("Your vehicle is using a custom airframe configuration. ") +
                       qsTr("This configuration can only be modified through the Parameter Editor.\n\n") +
-                      qsTr("If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above.")
+                      qsTr("If you want to reset your airframe configuration and select a standard configuration, click 'Reset' above.")
 
             property Fact sys_autostart: controller.getParameterFact(-1, "SYS_AUTOSTART")
 
