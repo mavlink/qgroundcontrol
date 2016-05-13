@@ -27,10 +27,11 @@ Each time you pull new source to your repository you should run `git submodule u
 ### Supported Builds
 
 #### Native Builds
-QGroundControl builds are supported for OSX, Linux, Windows and Android. QGroundControl uses [Qt](http://www.qt.io) as it's cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as it's default build environment.
+QGroundControl builds are supported for OSX, Linux, Windows, iOS and Android. QGroundControl uses [Qt](http://www.qt.io) as it's cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as it's default build environment.
 * OSX: OSX 10.7 or higher, 64 bit, clang compiler
 * Ubuntu: 64 bit, gcc compiler
 * Windows: Vista or higher, 32 bit, [Visual Studio 2013 compiler](http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop)
+* iOS: 8.0 and higher
 * Android: Jelly Bean (4.1) and higher
 * Qt version: 5.5.1 (or higher)
 
@@ -39,8 +40,6 @@ You need to install Qt like this instead of using packages from say a Linux dist
 * Download the [Qt installer](http://www.qt.io/download-open-source)
     * Ubuntu: Set the downloaded file to executable using:`chmod +x`. Install to default location for use with ./qgroundcontrol-start.sh. If you install Qt to a non-default location you will need to modify qgroundcontrol-start.sh in order to run downloaded builds.
     * Windows: Default installer not quite correct, use [this](http://download.qt.io/official_releases/qt/5.5/5.5.1/qt-opensource-windows-x86-msvc2013-5.5.1.exe) instead
-
-
 
 ###### Install additional packages:
 * Ubuntu: sudo apt-get install espeak libespeak-dev libudev-dev libsdl1.2-dev
@@ -56,6 +55,7 @@ You need to install Qt like this instead of using packages from say a Linux dist
     * Ubuntu: Desktop Qt 5.5.1 GCC bit
     * Windows: Desktop Qt 5.5.1 MSVC2013 32bit
     * Android: Android for armeabi-v7a (GCC 4.9, Qt 5.5.1)
+* Note: iOS builds must be built using xCode: http://doc.qt.io/qt-5/ios-support.html
 
 #### Vagrant
 
