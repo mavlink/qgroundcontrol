@@ -107,9 +107,6 @@ FactPanel {
         } else if (buttons & StandardButton.Abort) {
             __rejectButton.text = qsTr("Abort")
             __rejectButton.visible = true
-        } else if (buttons & StandardButton.Reset) {
-            __rejectButton.text = qsTr("Reset")
-            __rejectButton.visible = true
         }
     }
 
