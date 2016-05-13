@@ -34,7 +34,6 @@ LinkManagerTest::LinkManagerTest(void) :
     _linkMgr(NULL),
     _multiSpy(NULL)
 {
-    
 }
 
 void LinkManagerTest::init(void)

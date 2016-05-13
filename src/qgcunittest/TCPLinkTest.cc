@@ -21,15 +21,15 @@
  
  ======================================================================*/
 
-#include "TCPLinkTest.h"
-#include "TCPLoopBackServer.h"
-
 /// @file
 ///     @brief TCPLink class unit test
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-TCPLinkUnitTest::TCPLinkUnitTest(void)
+#include "TCPLinkTest.h"
+#include "TCPLoopBackServer.h"
+
+TCPLinkTest::TCPLinkTest(void)
     : _config(NULL)
     , _link(NULL)
     , _multiSpy(NULL)
@@ -40,7 +40,7 @@ TCPLinkUnitTest::TCPLinkUnitTest(void)
 }
 
 // Called before every test
-void TCPLinkUnitTest::init(void)
+void TCPLinkTest::init(void)
 {
     UnitTest::init();
     
@@ -62,7 +62,7 @@ void TCPLinkUnitTest::init(void)
 }
 
 // Called after every test
-void TCPLinkUnitTest::cleanup(void)
+void TCPLinkTest::cleanup(void)
 {
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_link);
@@ -78,7 +78,7 @@ void TCPLinkUnitTest::cleanup(void)
     UnitTest::cleanup();
 }
 
-void TCPLinkUnitTest::_properties_test(void)
+void TCPLinkTest::_properties_test(void)
 {
     Q_ASSERT(_config);
     Q_ASSERT(_link);
@@ -88,7 +88,7 @@ void TCPLinkUnitTest::_properties_test(void)
     // Test no longer valid
 }
 
-void TCPLinkUnitTest::_nameChangedSignal_test(void)
+void TCPLinkTest::_nameChangedSignal_test(void)
 {
     // Test no longer valid
     Q_ASSERT(_config);
@@ -96,7 +96,7 @@ void TCPLinkUnitTest::_nameChangedSignal_test(void)
     Q_ASSERT(_multiSpy);
 }
 
-void TCPLinkUnitTest::_connectFail_test(void)
+void TCPLinkTest::_connectFail_test(void)
 {
     Q_ASSERT(_config);
     Q_ASSERT(_link);
@@ -128,7 +128,7 @@ void TCPLinkUnitTest::_connectFail_test(void)
     _multiSpy->clearSignalByIndex(communicationErrorSignalIndex);
 }
 
-void TCPLinkUnitTest::_connectSucceed_test(void)
+void TCPLinkTest::_connectSucceed_test(void)
 {
     Q_ASSERT(_link);
     Q_ASSERT(_multiSpy);

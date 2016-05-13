@@ -33,12 +33,12 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class TCPLinkUnitTest : public UnitTest
+class TCPLinkTest : public UnitTest
 {
     Q_OBJECT
 
 public:
-    TCPLinkUnitTest(void);
+    TCPLinkTest(void);
     
 signals:
     void waitForBytesWritten(int msecs);
