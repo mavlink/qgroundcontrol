@@ -167,8 +167,9 @@ QList<VehicleComponent*> APMFirmwarePlugin::componentsForVehicle(AutoPilotPlugin
     return QList<VehicleComponent*>();
 }
 
-QStringList APMFirmwarePlugin::flightModes(void)
+QStringList APMFirmwarePlugin::flightModes(Vehicle* vehicle)
 {
+    Q_UNUSED(vehicle)
     QStringList flightModesList;
     foreach (const APMCustomMode& customMode, _supportedModes) {
         if (customMode.canBeSet()) {
