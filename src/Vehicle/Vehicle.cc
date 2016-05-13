@@ -1193,7 +1193,7 @@ bool Vehicle::flightModeSetAvailable(void)
 
 QStringList Vehicle::flightModes(void)
 {
-    return _firmwarePlugin->flightModes();
+    return _firmwarePlugin->flightModes(this);
 }
 
 QString Vehicle::flightMode(void) const
