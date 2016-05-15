@@ -213,13 +213,13 @@ Row {
                 sourceSize.height: height
                 source:         "/qmlimages/RC.svg"
                 fillMode:       Image.PreserveAspectFit
-                opacity:        activeVehicle ? (activeVehicle.rcRSSI < 1 ? 0.5 : 1) : 0.5
+                opacity:        activeVehicle ? (((activeVehicle.rcRSSI < 1) || (activeVehicle.rcRSSI > 100)) ? 0.5 : 1) : 0.5
                 color:          qgcPal.buttonText
                 anchors.verticalCenter: parent.verticalCenter
             }
             SignalStrength {
                 size:       mainWindow.tbCellHeight * 0.5
-                percent:    activeVehicle ? activeVehicle.rcRSSI : 0
+                percent:    activeVehicle ? ((activeVehicle.rcRSSI > 100) ? 0 : activeVehicle.rcRSSI) : 0
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
