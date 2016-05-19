@@ -175,7 +175,7 @@
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
-</qresource>
+    </qresource>
     <qresource prefix="/res/firmware">
         <file alias="px4.png">resources/firmware/px4.png</file>
         <file alias="apm.png">resources/firmware/apm.png</file>
@@ -266,6 +266,7 @@
         <file alias="APMParameterFactMetaData.Copter.3.3.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.3.xml</file>
         <file alias="APMParameterFactMetaData.Copter.3.4.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.4.xml</file>
         <file alias="APMParameterFactMetaData.Rover.3.0.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.0.xml</file>
+        <file alias="APMParameterFactMetaData.Sub.3.4.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.4.xml</file>
     </qresource>
     <qresource prefix="/FirmwarePlugin/PX4">
         <file alias="PX4ParameterFactMetaData.xml">src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml</file>
