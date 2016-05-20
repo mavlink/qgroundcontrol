@@ -549,6 +549,12 @@ void LinkManager::_updateAutoConnectLinks(void)
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
+                case QGCSerialPortInfo::BoardTypeMINDPXFMUV2:
+                    if (_autoconnectPixhawk) {
+                        pSerialConfig = new SerialConfiguration(QString("MindPX on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig->setUsbDirect(true);
+                    }
+                    break;
                 case QGCSerialPortInfo::BoardTypePX4Flow:
                     if (_autoconnectPX4Flow) {
                         pSerialConfig = new SerialConfiguration(QString("PX4Flow on %1").arg(portInfo.portName().trimmed()));
