@@ -47,6 +47,7 @@ public:
         BoardTypeSikRadio,
         BoardTypeAeroCore,
         BoardTypeRTKGPS,
+        BoardTypeMINDPXFMUV2,
         BoardTypeUnknown
     } BoardType_t;
 
@@ -62,6 +63,8 @@ public:
     static const int AeroCoreProductId =                    4097;   ///< Product ID for the AeroCore board
     
     static const int px4FlowProductId =                     21;     ///< Product ID for PX4 Flow board
+
+    static const int MindPXFMUV2ProductId =                 48;     ///< Product ID for the MindPX V2 board
 
     static const int threeDRRadioVendorId =                 1027;   ///< Vendor ID for 3DR Radio
     static const int threeDRRadioProductId =                24597;  ///< Product ID for 3DR Radio

@@ -110,7 +110,7 @@ QGCView {
             } else {
                 // We end up here when we detect a board plugged in after we've started upgrade
                 statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
-                if (controller.boardType == "Pixhawk" || controller.boardType == "AeroCore" || controller.boardType == "PX4 Flow" || controller.boardType == "PX4 FMU V1") {
+                if (controller.boardType == "Pixhawk" || controller.boardType == "AeroCore" || controller.boardType == "PX4 Flow" || controller.boardType == "PX4 FMU V1" || controller.boardType == "MindPX") {
                     showDialog(pixhawkFirmwareSelectDialog, title, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
             }

@@ -143,6 +143,10 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
         _foundBoardTypeName = "AeroCore";
         _startFlashWhenBootloaderFound = false;
         break;
+    case QGCSerialPortInfo::BoardTypeMINDPXFMUV2:
+        _foundBoardTypeName = "MindPX";
+        _startFlashWhenBootloaderFound = false;
+        break;
     case QGCSerialPortInfo::BoardTypePX4Flow:
         _foundBoardTypeName = "PX4 Flow";
         _startFlashWhenBootloaderFound = false;
@@ -318,6 +322,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackAPM, DeveloperFirmware, RoverFirmware,          "http://firmware.ardupilot.org/Rover/latest/PX4/APMrover2-v1.px4"}
     };
 
+    //////////////////////////////////// MindPXFMUV2 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgMindPXFMUV2FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/mindpx-v2_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/mindpx-v2_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/mindpx-v2_default.px4"},
+    };
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
         { PX4Flow, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
@@ -353,6 +363,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgPX4FMUV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
+    size = sizeof(rgMindPXFMUV2FirmwareArray)/sizeof(rgMindPXFMUV2FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgMindPXFMUV2FirmwareArray[i];
+        _rgMindPXFMUV2Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
     size = sizeof(rgPX4FLowFirmwareArray)/sizeof(rgPX4FLowFirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgPX4FLowFirmwareArray[i];
@@ -386,6 +402,8 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         return &_rgPX4FMUV4Firmware;
     case Bootloader::boardIDAeroCore:
         return &_rgAeroCoreFirmware;
+    case Bootloader::boardIDMINDPXFMUV2:
+        return &_rgMindPXFMUV2Firmware;
     case Bootloader::boardID3DRRadio:
         return &_rg3DRRadioFirmware;
     default:
@@ -409,6 +427,9 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         break;
     case QGCSerialPortInfo::BoardTypeAeroCore:
         boardId = Bootloader::boardIDAeroCore;
+        break;
+    case QGCSerialPortInfo::BoardTypeMINDPXFMUV2:
+        boardId = Bootloader::boardIDMINDPXFMUV2;
         break;
     case QGCSerialPortInfo::BoardTypePX4Flow:
         boardId = Bootloader::boardIDPX4Flow;
