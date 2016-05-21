@@ -117,6 +117,7 @@ exists ($$PWD/.git) {
 
 DEFINES += GIT_TAG=\"\\\"$$GIT_DESCRIBE\\\"\"
 DEFINES += GIT_HASH=\"\\\"$$GIT_HASH\\\"\"
+DEFINES += EIGEN_MPL2_ONLY
 
 # Installer configuration
 
