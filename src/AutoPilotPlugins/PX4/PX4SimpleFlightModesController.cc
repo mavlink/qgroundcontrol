@@ -75,7 +75,55 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
         return;
     }
 
-    int flightModeReversed = pFact->rawValue().toInt();
+    int pwmRev = pFact->rawValue().toInt();
+
+    pFact = getParameterFact(-1, QString("RC%1_MIN").arg(flightModeChannel + 1));
+    if(!pFact) {
+#if defined _MSC_VER
+        qCritical() << QString("RC%1_MIN").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
+#else
+        qCritical() << QString("RC%1_MIN").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+#endif
+        return;
+    }
+
+    int pwmMin = pFact->rawValue().toInt();
+
+    pFact = getParameterFact(-1, QString("RC%1_MAX").arg(flightModeChannel + 1));
+    if(!pFact) {
+#if defined _MSC_VER
+        qCritical() << QString("RC%1_MAX").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
+#else
+        qCritical() << QString("RC%1_MAX").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+#endif
+        return;
+    }
+
+    int pwmMax = pFact->rawValue().toInt();
+
+    pFact = getParameterFact(-1, QString("RC%1_TRIM").arg(flightModeChannel + 1));
+    if(!pFact) {
+#if defined _MSC_VER
+        qCritical() << QString("RC%1_TRIM").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
+#else
+        qCritical() << QString("RC%1_TRIM").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+#endif
+        return;
+    }
+
+    int pwmTrim = pFact->rawValue().toInt();
+
+    pFact = getParameterFact(-1, QString("RC%1_DZ").arg(flightModeChannel + 1));
+    if(!pFact) {
+#if defined _MSC_VER
+        qCritical() << QString("RC%1_DZ").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
+#else
+        qCritical() << QString("RC%1_DZ").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+#endif
+        return;
+    }
+
+    int pwmDz = pFact->rawValue().toInt();
 
     if (flightModeChannel < 0 || flightModeChannel > channelCount) {
         return;
@@ -83,24 +131,52 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
 
     _activeFlightMode = 0;
     int channelValue = pwmValues[flightModeChannel];
+
     if (channelValue != -1) {
-        bool found = false;
-        int rgThreshold[] = { 1200, 1360, 1490, 1620, 1900 };
-        for (int i=0; i<5; i++) {
-            if (channelValue <= rgThreshold[i]) {
-                _activeFlightMode = i + 1;
-                found = true;
-                break;
-            }
+        /* the half width of the range of a slot is the total range
+         * divided by the number of slots, again divided by two
+         */
+
+        const unsigned num_slots = 6;
+
+        const float slot_width_half = 2.0f / num_slots / 2.0f;
+
+        /* min is -1, max is +1, range is 2. We offset below min and max */
+        const float slot_min = -1.0f - 0.05f;
+        const float slot_max = 1.0f + 0.05f;
+
+        /* the slot gets mapped by first normalizing into a 0..1 interval using min
+         * and max. Then the right slot is obtained by multiplying with the number of
+         * slots. And finally we add half a slot width to ensure that integer rounding
+         * will take us to the correct final index.
+         */
+
+        float calibrated_value;
+
+        if (channelValue > (pwmTrim + pwmDz)) {
+            calibrated_value = (channelValue - pwmTrim - pwmDz) / (float)(
+                          pwmMax - pwmTrim - pwmDz);
+
+        } else if (channelValue < (pwmTrim - pwmDz)) {
+            calibrated_value = (channelValue - pwmTrim + pwmDz) / (float)(
+                          pwmTrim - pwmMin - pwmDz);
+
+        } else {
+            /* in the configured dead zone, output zero */
+            calibrated_value = 0.0f;
         }
 
-        if (!found) {
-            _activeFlightMode = 6;
+        calibrated_value *= pwmRev;
+
+        _activeFlightMode = (((((calibrated_value - slot_min) * num_slots) + slot_width_half) /
+                     (slot_max - slot_min)) + (1.0f / num_slots));
+
+        if (_activeFlightMode >= static_cast<int>(num_slots)) {
+            _activeFlightMode = num_slots - 1;
         }
 
-        if (flightModeReversed == -1) {
-            _activeFlightMode = 6 - (_activeFlightMode - 1);
-        }
+        // move to 1-based index
+        _activeFlightMode++;
     }
 
     emit activeFlightModeChanged(_activeFlightMode);
