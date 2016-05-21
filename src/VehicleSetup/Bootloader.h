@@ -80,6 +80,7 @@ public:
     static const int boardIDPX4Flow = 6;    ///< PX4 Flow board
     static const int boardIDAeroCore = 98;  ///< Gumstix AeroCore board
     static const int boardID3DRRadio = 78;  ///< 3DR Radio
+    static const int boardIDMINDPXFMUV2 = 88;  ///< MindPX V2 board
     
 signals:
     /// @brief Signals progress indicator for long running bootloader utility routines
