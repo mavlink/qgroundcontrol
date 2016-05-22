@@ -53,7 +53,10 @@ addons:
     - ubuntu-toolchain-r-test
     packages:
     - ccache
+    - debhelper
+    - devscripts
     - doxygen
+    - dput
     - espeak
     - g++-4.8
     - gcc-4.8
