@@ -1,7 +1,7 @@
 language: cpp
 
 git:
-  depth: 99999
+  depth: 1000
 
 env:
   global:
