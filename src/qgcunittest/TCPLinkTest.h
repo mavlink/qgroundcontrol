@@ -48,8 +48,6 @@ private slots:
     void init(void);
     void cleanup(void);
     
-    void _properties_test(void);
-    void _nameChangedSignal_test(void);
     void _connectFail_test(void);
     void _connectSucceed_test(void);
   
@@ -58,10 +56,10 @@ private:
         bytesReceivedSignalIndex = 0,
         connectedSignalIndex,
         disconnectedSignalIndex,
-        nameChangedSignalIndex,
+        //nameChangedSignalIndex,
         communicationErrorSignalIndex,
         communicationUpdateSignalIndex,
-        deleteLinkSignalIndex,
+        //deleteLinkSignalIndex,
         maxSignalIndex
     };
     
@@ -69,10 +67,10 @@ private:
         bytesReceivedSignalMask =       1 << bytesReceivedSignalIndex,
         connectedSignalMask =           1 << connectedSignalIndex,
         disconnectedSignalMask =        1 << disconnectedSignalIndex,
-        nameChangedSignalMask =         1 << nameChangedSignalIndex,
+        //nameChangedSignalMask =         1 << nameChangedSignalIndex,
         communicationErrorSignalMask =  1 << communicationErrorSignalIndex,
         communicationUpdateSignalMask = 1 << communicationUpdateSignalIndex,
-        deleteLinkSignalMask =          1 << deleteLinkSignalIndex,
+        //deleteLinkSignalMask =          1 << deleteLinkSignalIndex,
     };
     
     TCPConfiguration*   _config;
