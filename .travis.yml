@@ -1,7 +1,7 @@
 language: cpp
 
 git:
-  depth: 500
+  depth: 1000
 
 env:
   global:
@@ -13,7 +13,7 @@ matrix:
     fast_finish: true
     include:
         - os: linux
-          env: SPEC=linux-g++-64 CONFIG=debug
+          env: SPEC=linux-g++-64 CONFIG=debug QT_FATAL_WARNINGS=1
           sudo: required
           dist: trusty
         - os: linux
