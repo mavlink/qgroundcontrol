@@ -39,6 +39,9 @@
 #include "RadioConfigTest.h"
 #include "SetupViewTest.h"
 #include "MavlinkLogTest.h"
+#include "MainWindowTest.h"
+#include "FileManagerTest.h"
+#include "TCPLinkTest.h"
 
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
@@ -54,19 +57,15 @@ UT_REGISTER_TEST(ComplexMissionItemTest)
 UT_REGISTER_TEST(MissionControllerTest)
 UT_REGISTER_TEST(MissionManagerTest)
 UT_REGISTER_TEST(RadioConfigTest)
+UT_REGISTER_TEST(TCPLinkTest)
+UT_REGISTER_TEST(FileManagerTest)
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.
 
-// Why is this one off?
-//UT_REGISTER_TEST(FileManagerTest)
+// works, but causes other tests to fail
+//UT_REGISTER_TEST(SetupViewTest)
 
 // FIXME: Temporarily disabled until this can be stabilized
 //UT_REGISTER_TEST(MainWindowTest)
 
-// This unit test has gotten too flaky to run reliably under TeamCity. Removing for now till there is
-// time to debug.
-//UT_REGISTER_TEST(TCPLinkUnitTest)
-
-// Windows based unit tests are not working correctly. Needs major reword to support.
-//UT_REGISTER_TEST(SetupViewTest)

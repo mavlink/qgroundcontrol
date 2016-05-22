@@ -21,8 +21,8 @@
  
  ======================================================================*/
 
-#ifndef TCPLINKTEST_H
-#define TCPLINKTEST_H
+#ifndef FLIGHTGEARTEST_H
+#define FLIGHTGEARTEST_H
 
 #include "UnitTest.h"
 #include "TCPLink.h"
