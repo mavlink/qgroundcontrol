@@ -8,21 +8,18 @@ version=${long_version:1}
 dir_version=${short_version:1}
 echo $version
 
-debchange -v ${version} --distribution trusty
+debchange -v ${version} --distribution trusty --package qgroundcontrol --create --empty
 
-qmake -r qgroundcontrol.pro
-make git_ver
-
-rsync -av --delete --exclude={.git,build-release,release,Makefile\*} . ${tmpdir}/qgroundcontrol-${dir_version}/
+rsync -a --delete --exclude={build-release,release,Makefile\*} . ${tmpdir}/qgroundcontrol-${dir_version}/
 
 cd ${tmpdir}
 tar pczf qgroundcontrol_${dir_version}.orig.tar.gz qgroundcontrol-${dir_version}
 
 cd ${tmpdir}/qgroundcontrol-${dir_version}/
-debuild -S
+debuild -S -uc -us
 
-dput ppa:qgroundcontrol/ppa ${tmpdir}/qgroundcontrol_${version}_source.changes
+# build locally
+debuild --prepend-path=/usr/lib/ccache -uc -us -sa -B -i -I -j4
 
-
-# test building the source deb locally
-#debuild --prepend-path=/usr/lib/ccache -sa
+# upload to launchpad
+#dput -f ppa:qgroundcontrol/ppa ${tmpdir}/qgroundcontrol_${version}_source.changes
