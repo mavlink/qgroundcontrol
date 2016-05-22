@@ -6,36 +6,33 @@ git:
 env:
   global:
     # ANDROID_STOREPASS
-    secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE=
+    - secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE=
+	- SHADOW_BUILD_DIR: /tmp/shadow_build_dir
 
 matrix:
     fast_finish: true
     include:
         - os: linux
-          env: SPEC=linux-g++-64 CONFIG=debug SHADOW_BUILD_DIR=/tmp/build_linux_debug
+          env: SPEC=linux-g++-64 CONFIG=debug
           sudo: required
           dist: trusty
         - os: linux
-          env: SPEC=linux-g++-64 CONFIG=installer SHADOW_BUILD_DIR=/tmp/build_linux_install
+          env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required 
           dist: trusty
         - os: osx
           osx_image: xcode7
-          env: SPEC=macx-clang CONFIG=debug QT_FATAL_WARNINGS=1 SHADOW_BUILD_DIR=/tmp/build_macos_debug
+          env: SPEC=macx-clang CONFIG=debug QT_FATAL_WARNINGS=1
         - os: osx
           osx_image: xcode7
-          env: SPEC=macx-clang CONFIG=installer SHADOW_BUILD_DIR=/tmp/build_macos_install
+          env: SPEC=macx-clang CONFIG=installer
           sudo: required
         - os: osx
           osx_image: xcode7
-          env: SPEC=ios SHADOW_BUILD_DIR=/tmp/build_ios
-#        - os: android
-#          language: android
-#          env: SPEC=android-g++ CONFIG=debug SHADOW_BUILD_DIR=/tmp/build_android_debug
-#          sudo: false
+          env: SPEC=ios
         - os: android
           language: android
-          env: SPEC=android-g++ CONFIG=installer SHADOW_BUILD_DIR=/tmp/build_android_install
+          env: SPEC=android-g++ CONFIG=installer
           sudo: false
         - os: linux
           env: CONFIG=doxygen
