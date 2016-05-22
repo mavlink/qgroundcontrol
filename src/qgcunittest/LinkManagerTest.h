@@ -21,8 +21,8 @@
  
  ======================================================================*/
 
-#ifndef UASUNITTEST_H
-#define UASUNITTEST_H
+#ifndef LINKMANAGERTEST_H
+#define LINKMANAGERTEST_H
 
 #include "UnitTest.h"
 #include "LinkManager.h"
@@ -36,7 +36,7 @@
 class LinkManagerTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     LinkManagerTest(void);
     
@@ -48,7 +48,7 @@ private slots:
     void _delete_test(void);
     void _addSignals_test(void);
     void _deleteSignals_test(void);
-    
+
 private:
     enum {
         newLinkSignalIndex = 0,

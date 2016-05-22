@@ -46,7 +46,7 @@
 
 //#define TCPLINK_READWRITE_DEBUG   // Use to debug data reads/writes
 
-class TCPLinkUnitTest;
+class TCPLinkTest;
 
 #define QGC_TCP_PORT 5760
 
@@ -128,7 +128,7 @@ class TCPLink : public LinkInterface
 {
     Q_OBJECT
 
-    friend class TCPLinkUnitTest;
+    friend class TCPLinkTest;
     friend class TCPConfiguration;
     friend class LinkManager;
 
