@@ -57,6 +57,7 @@ UT_REGISTER_TEST(MissionControllerTest)
 UT_REGISTER_TEST(MissionItemTest)
 UT_REGISTER_TEST(MissionManagerTest)
 UT_REGISTER_TEST(RadioConfigTest)
+UT_REGISTER_TEST(SetupViewTest)
 UT_REGISTER_TEST(SimpleMissionItemTest)
 UT_REGISTER_TEST(TCPLinkTest)
 
@@ -66,5 +67,3 @@ UT_REGISTER_TEST(TCPLinkTest)
 // FIXME: Temporarily disabled until this can be stabilized
 //UT_REGISTER_TEST(MainWindowTest)
 
-// Windows based unit tests are not working correctly. Needs major reword to support.
-//UT_REGISTER_TEST(SetupViewTest)
