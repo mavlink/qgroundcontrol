@@ -43,26 +43,28 @@
 #include "FileManagerTest.h"
 #include "TCPLinkTest.h"
 
-UT_REGISTER_TEST(ComplexMissionItemTest)
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
 UT_REGISTER_TEST(FileDialogTest)
-UT_REGISTER_TEST(FileManagerTest)
 UT_REGISTER_TEST(FlightGearUnitTest)
 UT_REGISTER_TEST(GeoTest)
 UT_REGISTER_TEST(LinkManagerTest)
 UT_REGISTER_TEST(MavlinkLogTest)
 UT_REGISTER_TEST(MessageBoxTest)
-UT_REGISTER_TEST(MissionControllerTest)
 UT_REGISTER_TEST(MissionItemTest)
+UT_REGISTER_TEST(SimpleMissionItemTest)
+UT_REGISTER_TEST(ComplexMissionItemTest)
+UT_REGISTER_TEST(MissionControllerTest)
 UT_REGISTER_TEST(MissionManagerTest)
 UT_REGISTER_TEST(RadioConfigTest)
-UT_REGISTER_TEST(SetupViewTest)
-UT_REGISTER_TEST(SimpleMissionItemTest)
 UT_REGISTER_TEST(TCPLinkTest)
+UT_REGISTER_TEST(FileManagerTest)
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.
+
+// works, but causes other tests to fail
+//UT_REGISTER_TEST(SetupViewTest)
 
 // FIXME: Temporarily disabled until this can be stabilized
 //UT_REGISTER_TEST(MainWindowTest)
