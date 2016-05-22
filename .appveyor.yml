@@ -5,9 +5,9 @@ build:
 
 environment:
   matrix:
-  - BUILD: 'Debug'
-    CONFIG: debug
-    SHADOW_BUILD_DIR: $(APPVEYOR_BUILD_FOLDER)\build_windows_debug
+#  - BUILD: 'Debug'
+#    CONFIG: debug
+#    SHADOW_BUILD_DIR: $(APPVEYOR_BUILD_FOLDER)\build_windows_debug
   - BUILD: 'Release'
     CONFIG: installer
     SHADOW_BUILD_DIR: $(APPVEYOR_BUILD_FOLDER)\build_windows_install
