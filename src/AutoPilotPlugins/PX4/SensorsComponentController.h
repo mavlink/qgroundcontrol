@@ -44,8 +44,6 @@ class SensorsComponentController : public FactPanelController
 public:
     SensorsComponentController(void);
     
-    Q_PROPERTY(bool fixedWing READ fixedWing CONSTANT)
-    
     Q_PROPERTY(QQuickItem* statusLog MEMBER _statusLog)
     Q_PROPERTY(QQuickItem* progressBar MEMBER _progressBar)
     
@@ -96,8 +94,6 @@ public:
     Q_INVOKABLE void calibrateAirspeed(void);
     Q_INVOKABLE void cancelCalibration(void);
     Q_INVOKABLE bool usingUDPLink(void);
-    
-    bool fixedWing(void);
     
 signals:
     void showGyroCalAreaChanged(void);
