@@ -100,7 +100,7 @@ QGCView {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             Row {
-                                visible:                !controller.fixedWing
+                                visible:                !controller.vehicle.fixedWing
                                 QGCLabel {
                                     anchors.baseline:   lowBattCombo.baseline
                                     width:              _middleRowWidth
@@ -364,7 +364,7 @@ QGCView {
                             sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     controller.fixedWing ? "/qmlimages/ReturnToHomeAltitude.svg" : "/qmlimages/ReturnToHomeAltitudeCopter.svg"
+                            source:                     controller.vehicle.fixedWing ? "/qmlimages/ReturnToHomeAltitude.svg" : "/qmlimages/ReturnToHomeAltitudeCopter.svg"
                             anchors.verticalCenter:     parent.verticalCenter
                         }
                         Item { width: _margins * 0.5; height: 1; }
@@ -479,7 +479,7 @@ QGCView {
                             sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     controller.fixedWing ? "/qmlimages/LandMode.svg" : "/qmlimages/LandModeCopter.svg"
+                            source:                     controller.vehicle.fixedWing ? "/qmlimages/LandMode.svg" : "/qmlimages/LandModeCopter.svg"
                             anchors.verticalCenter:     parent.verticalCenter
                         }
                         Item {
