@@ -46,6 +46,8 @@ UrlFactory::UrlFactory()
     if (langs.length() > 0) {
         _language = langs[0];
     }
+
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
     // Google version strings
     _versionGoogleMap            = "m@336";
     _versionGoogleSatellite      = "194";
@@ -446,7 +448,7 @@ UrlFactory::_tryCorrectGoogleVersions(QNetworkAccessManager*  networkManager)
         QNetworkRequest qheader;
         QNetworkProxy proxy = networkManager->proxy();
         QNetworkProxy tProxy;
-        tProxy.setType(QNetworkProxy::NoProxy);
+        tProxy.setType(QNetworkProxy::DefaultProxy);
         networkManager->setProxy(tProxy);
         QString url = "http://maps.google.com/maps";
         qheader.setUrl(QUrl(url));
