@@ -67,6 +67,11 @@ void FactPanelController::setFactPanel(QQuickItem* panel)
     _delayedMissingParams.clear();
 }
 
+bool FactPanelController::fixedWing() const
+{
+    return _vehicle ? _vehicle->fixedWing() : false;
+}
+
 void FactPanelController::_notifyPanelMissingParameter(const QString& missingParam)
 {
     if (_factPanel) {

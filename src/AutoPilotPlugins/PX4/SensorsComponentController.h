@@ -44,7 +44,7 @@ class SensorsComponentController : public FactPanelController
 public:
     SensorsComponentController(void);
     
-    Q_PROPERTY(bool fixedWing READ fixedWing CONSTANT)
+    Q_PROPERTY(bool fixedWing READ fixedWing)
     
     Q_PROPERTY(QQuickItem* statusLog MEMBER _statusLog)
     Q_PROPERTY(QQuickItem* progressBar MEMBER _progressBar)

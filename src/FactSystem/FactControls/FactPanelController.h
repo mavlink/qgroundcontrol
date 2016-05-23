@@ -46,12 +46,14 @@ public:
     FactPanelController(void);
 
     Q_PROPERTY(QQuickItem* factPanel READ factPanel WRITE setFactPanel)
+    Q_PROPERTY(bool fixedWing READ fixedWing)
 
     Q_INVOKABLE Fact*   getParameterFact    (int componentId, const QString& name, bool reportMissing = true);
     Q_INVOKABLE bool    parameterExists     (int componentId, const QString& name);
 
     QQuickItem* factPanel(void);
     void setFactPanel(QQuickItem* panel);
+    bool fixedWing(void) const;
 
 protected:
     /// Checks for existence of the specified parameters
