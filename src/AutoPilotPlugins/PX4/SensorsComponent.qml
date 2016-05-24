@@ -348,7 +348,7 @@ QGCView {
                     id:             airspeedButton
                     width:          parent.buttonWidth
                     text:           qsTr("Airspeed")
-                    visible:        controller.fixedWing
+                    visible:        controller.vehicle.fixedWing && controller.getParameterFact(-1, "CBRK_AIRSPD_CHK").value != 162128
                     indicatorGreen: sens_dpres_off.value != 0
 
                     onClicked: {

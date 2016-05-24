@@ -467,23 +467,6 @@ void SensorsComponentController::_refreshParams(void)
     _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "SENS_");
 }
 
-bool SensorsComponentController::fixedWing(void)
-{
-    switch (_vehicle->vehicleType()) {
-        case MAV_TYPE_FIXED_WING:
-        case MAV_TYPE_VTOL_DUOROTOR:
-        case MAV_TYPE_VTOL_QUADROTOR:
-        case MAV_TYPE_VTOL_TILTROTOR:
-        case MAV_TYPE_VTOL_RESERVED2:
-        case MAV_TYPE_VTOL_RESERVED3:
-        case MAV_TYPE_VTOL_RESERVED4:
-        case MAV_TYPE_VTOL_RESERVED5:
-            return true;
-        default:
-            return false;
-    }
-}
-
 void SensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)
 {
     _showOrientationCalArea = show;

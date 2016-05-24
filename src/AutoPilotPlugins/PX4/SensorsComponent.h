@@ -53,6 +53,8 @@ public:
 private:
     const QString   _name;
     QVariantList    _summaryItems;
+
+    static const char* _airspeedBreaker;
 };
 
 #endif
