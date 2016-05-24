@@ -614,8 +614,8 @@ int FactMetaData::decimalPlaces(void) const
     if (incrementDecimalPlaces != unknownDecimalPlaces && _decimalPlaces == unknownDecimalPlaces) {
         actualDecimalPlaces = incrementDecimalPlaces;
     } else {
-
-        int settingsDecimalPlaces = _decimalPlaces;
+        // Adjust decimal places for cooked translation
+        int settingsDecimalPlaces = _decimalPlaces == unknownDecimalPlaces ? defaultDecimalPlaces : _decimalPlaces;
         double ctest = _rawTranslator(1.0).toDouble();
 
         settingsDecimalPlaces += -log10(ctest);
