@@ -185,6 +185,7 @@ private:
     void _sendGpsRawInt(void);
     void _sendVibration(void);
     void _sendStatusTextMessages(void);
+    void _respondWithAutopilotVersion(void);
 
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 

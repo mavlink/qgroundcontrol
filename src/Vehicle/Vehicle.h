@@ -316,6 +316,12 @@ public:
     Q_PROPERTY(FactGroup* wind      READ windFactGroup      CONSTANT)
     Q_PROPERTY(FactGroup* vibration READ vibrationFactGroup CONSTANT)
 
+    Q_PROPERTY(int firmwareMajorVersion READ firmwareMajorVersion NOTIFY firmwareMajorVersionChanged)
+    Q_PROPERTY(int firmwareMinorVersion READ firmwareMinorVersion NOTIFY firmwareMinorVersionChanged)
+    Q_PROPERTY(int firmwarePatchVersion READ firmwarePatchVersion NOTIFY firmwarePatchVersionChanged)
+    Q_PROPERTY(int firmwareVersionType READ firmwareVersionType NOTIFY firmwareVersionTypeChanged)
+    Q_PROPERTY(QString firmwareVersionTypeString READ firmwareVersionTypeString NOTIFY firmwareVersionTypeChanged)
+
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 
@@ -530,7 +536,9 @@ public:
     int firmwareMajorVersion(void) const { return _firmwareMajorVersion; }
     int firmwareMinorVersion(void) const { return _firmwareMinorVersion; }
     int firmwarePatchVersion(void) const { return _firmwarePatchVersion; }
-    void setFirmwareVersion(int majorVersion, int minorVersion, int patchVersion);
+    int firmwareVersionType(void) const { return _firmwareVersionType; }
+    QString firmwareVersionTypeString(void) const;
+    void setFirmwareVersion(int majorVersion, int minorVersion, int patchVersion, FIRMWARE_VERSION_TYPE versionType = FIRMWARE_VERSION_TYPE_OFFICIAL);
     static const int versionNotSetValue = -1;
 
 public slots:
@@ -578,6 +586,11 @@ signals:
     void currentStateChanged    ();
     void flowImageIndexChanged  ();
     void rcRSSIChanged          (int rcRSSI);
+
+    void firmwareMajorVersionChanged(int major);
+    void firmwareMinorVersionChanged(int minor);
+    void firmwarePatchVersionChanged(int patch);
+    void firmwareVersionTypeChanged(int type);
 
     /// New RC channel values
     ///     @param channelCount Number of available channels, cMaxRcChannels max
@@ -637,6 +650,7 @@ private:
     void _handleVibration(mavlink_message_t& message);
     void _handleExtendedSysState(mavlink_message_t& message);
     void _handleCommandAck(mavlink_message_t& message);
+    void _handleAutopilotVersion(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
@@ -747,6 +761,7 @@ private:
     int _firmwareMajorVersion;
     int _firmwareMinorVersion;
     int _firmwarePatchVersion;
+    FIRMWARE_VERSION_TYPE _firmwareVersionType;
 
     static const int    _lowBatteryAnnounceRepeatMSecs; // Amount of time in between each low battery announcement
     QElapsedTimer       _lowBatteryAnnounceTimer;
