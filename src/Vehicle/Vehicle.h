@@ -316,6 +316,10 @@ public:
     Q_PROPERTY(FactGroup* wind      READ windFactGroup      CONSTANT)
     Q_PROPERTY(FactGroup* vibration READ vibrationFactGroup CONSTANT)
 
+    Q_PROPERTY(int firmwareMajorVersion READ firmwareMajorVersion NOTIFY firmwareMajorVersionChanged)
+    Q_PROPERTY(int firmwareMinorVersion READ firmwareMinorVersion NOTIFY firmwareMinorVersionChanged)
+    Q_PROPERTY(int firmwarePatchVersion READ firmwarePatchVersion NOTIFY firmwarePatchVersionChanged)
+
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 
@@ -578,6 +582,10 @@ signals:
     void currentStateChanged    ();
     void flowImageIndexChanged  ();
     void rcRSSIChanged          (int rcRSSI);
+
+    void firmwareMajorVersionChanged(int major);
+    void firmwareMinorVersionChanged(int minor);
+    void firmwarePatchVersionChanged(int patch);
 
     /// New RC channel values
     ///     @param channelCount Number of available channels, cMaxRcChannels max
