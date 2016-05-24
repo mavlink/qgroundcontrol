@@ -107,7 +107,7 @@ QString FlightModesComponent::prerequisiteSetup(void) const
             return plugin->airframeComponent()->name();
         } else if (!plugin->radioComponent()->setupComplete()) {
             return plugin->radioComponent()->name();
-        } else if (!plugin->sensorsComponent()->setupComplete()) {
+        } else if (!plugin->vehicle()->hilMode() && !plugin->sensorsComponent()->setupComplete()) {
             return plugin->sensorsComponent()->name();
         }
     }
