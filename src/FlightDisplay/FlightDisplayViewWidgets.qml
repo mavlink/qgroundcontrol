@@ -61,6 +61,10 @@ Item {
         id: _dropButtonsExclusiveGroup
     }
 
+    ExclusiveGroup {
+        id: _mapTypeButtonsExclusiveGroup
+    }
+
     //-- Map warnings
     Column {
         anchors.horizontalCenter:   parent.horizontalCenter
@@ -217,12 +221,14 @@ Item {
                             model: QGroundControl.flightMapSettings.mapTypes
 
                             QGCButton {
-                                checkable:  true
-                                checked:    _flightMap ? _flightMap.mapType === text : false
-                                text:       modelData
-                                width:      clearButton.width
+                                checkable:      true
+                                checked:        _flightMap ? _flightMap.mapType === text : false
+                                text:               modelData
+                                width:          clearButton.width
+                                exclusiveGroup: _mapTypeButtonsExclusiveGroup
                                 onClicked: {
                                     _flightMap.mapType = text
+                                    checked = true
                                     _dropButtonsExclusiveGroup.current = null
                                 }
                             }
