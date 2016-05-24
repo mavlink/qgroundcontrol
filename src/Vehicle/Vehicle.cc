@@ -470,7 +470,7 @@ void Vehicle::_handleAutopilotVersion(mavlink_message_t& message)
         minorVersion = (autopilotVersion.flight_sw_version >> (8*2)) & 0xFF;
         patchVersion = (autopilotVersion.flight_sw_version >> (8*1)) & 0xFF;
         versionType = (FIRMWARE_VERSION_TYPE)((autopilotVersion.flight_sw_version >> (8*0)) & 0xFF);
-        setFirmwareVersion(majorVersion, minorVersion, patchVersion);
+        setFirmwareVersion(majorVersion, minorVersion, patchVersion, versionType);
     }
 }
 
