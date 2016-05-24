@@ -803,6 +803,10 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
     case MAV_CMD_PREFLIGHT_STORAGE:
         commandResult = MAV_RESULT_ACCEPTED;
         break;
+    case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
+        commandResult = MAV_RESULT_ACCEPTED;
+        _respondWithAutopilotVersion();
+        break;
     }
 
     mavlink_message_t commandAck;
@@ -812,6 +816,31 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
                                  request.command,
                                  commandResult);
     respondWithMavlinkMessage(commandAck);
+}
+
+void MockLink::_respondWithAutopilotVersion(void)
+{
+    mavlink_message_t msg;
+
+    uint8_t customVersion[8];
+    memset(customVersion, 0, sizeof(customVersion));
+
+    // Only flight_sw_version is supported a this point
+    mavlink_msg_autopilot_version_pack(_vehicleSystemId,
+                                       _vehicleComponentId,
+                                       &msg,
+                                       0,                                           // capabilities,
+                                       (1 << (8*3)) | FIRMWARE_VERSION_TYPE_DEV,    // flight_sw_version,
+                                       0,                                           // middleware_sw_version,
+                                       0,                                           // os_sw_version,
+                                       0,                                           // board_version,
+                                       (uint8_t *)&customVersion,                   // flight_custom_version,
+                                       (uint8_t *)&customVersion,                   // middleware_custom_version,
+                                       (uint8_t *)&customVersion,                   // os_custom_version,
+                                       0,                                           // vendor_id,
+                                       0,                                           // product_id,
+                                       0);                                          // uid
+    respondWithMavlinkMessage(msg);
 }
 
 void MockLink::setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode)
