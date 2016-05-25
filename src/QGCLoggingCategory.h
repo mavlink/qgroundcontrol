@@ -44,18 +44,36 @@ Q_DECLARE_LOGGING_CATEGORY(ParameterLoaderLog)
     static QGCLoggingCategory qgcCategory ## name (__VA_ARGS__); \
     Q_LOGGING_CATEGORY(name, __VA_ARGS__)
 
-class QGCLoggingCategoryRegister
+class QGCLoggingCategoryRegister : public QObject
 {
+    Q_OBJECT
+
 public:
     static QGCLoggingCategoryRegister* instance(void);
-    
+
+    /// Registers the specified logging category to the system.
     void registerCategory(const char* category) { _registeredCategories << category; }
-    const QStringList& registeredCategories(void) { return _registeredCategories; }
-    
+
+    /// Returns the list of available logging category names.
+    Q_INVOKABLE QStringList registeredCategories(void);
+
+    /// Turns on/off logging for the specified category. State is saved in app settings.
+    Q_INVOKABLE void setCategoryLoggingOn(const QString& category, bool enable);
+
+    /// Returns true if logging is turned on for the specified category.
+    Q_INVOKABLE bool categoryLoggingOn(const QString& category);
+
+    /// Sets the logging filters rules from saved settings.
+    ///     @param commandLineLogggingOptions Logging options which were specified on the command line
+    void setFilterRulesFromSettings(const QString& commandLineLoggingOptions);
+
 private:
     QGCLoggingCategoryRegister(void) { }
     
     QStringList _registeredCategories;
+    QString     _commandLineLoggingOptions;
+
+    static const char* _filterRulesSettingsGroup;
 };
         
 class QGCLoggingCategory
