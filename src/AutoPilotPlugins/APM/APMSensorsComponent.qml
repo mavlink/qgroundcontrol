@@ -391,8 +391,6 @@ QGCView {
                 onClicked: {
                     if (controller.accelSetupNeeded) {
                         showMessage(qsTr("Calibrate Compass"), qsTr("Accelerometer must be calibrated prior to Compass."), StandardButton.Ok)
-                    } else if (compass3Id.value != 0 && compass3Use.value !=0) {
-                        showMessage(qsTr("Unabled to calibrate"), qsTr("Support for calibrating compass 3 is currently not supported by QGroundControl."), StandardButton.Ok)
                     } else {
                         preCalibrationDialogType = "compass"
                         preCalibrationDialogHelp = compassHelp
