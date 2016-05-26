@@ -103,6 +103,8 @@ public:
 
     /// If this file is newer than anything in the cache, cache it as the latest version
     static void cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPILOT firmwareType);
+
+    int defaultComponenentId(void) { return _defaultComponentId; }
     
 signals:
     /// Signalled when the full set of facts are ready
