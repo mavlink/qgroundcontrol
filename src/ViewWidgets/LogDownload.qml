@@ -34,7 +34,8 @@ import QGroundControl.ScreenTools   1.0
 QGCView {
     viewPanel:  panel
 
-    property real _margins: ScreenTools.defaultFontPixelHeight
+    property real _margins:         ScreenTools.defaultFontPixelHeight
+    property real _butttonWidth:    ScreenTools.defaultFontPixelWidth * 10
 
     LogDownloadController {
         id:         controller
@@ -136,6 +137,7 @@ QGCView {
             anchors.right:      parent.right
             enabled:            !controller.requestingList && !controller.downloadingLogs
             text:               qsTr("Refresh")
+            width:              _butttonWidth
             onClicked: {
                 controller.refresh()
             }
@@ -148,6 +150,7 @@ QGCView {
             anchors.right:      parent.right
             enabled:            !controller.requestingList && !controller.downloadingLogs && tableView.selection.count > 0
             text:               qsTr("Download")
+            width:              _butttonWidth
             onClicked: {
                 //-- Clear selection
                 for(var i = 0; i < controller.model.count; i++) {
@@ -171,6 +174,7 @@ QGCView {
             anchors.right:      parent.right
             enabled:            !controller.requestingList && !controller.downloadingLogs && controller.model.count > 0
             text:               qsTr("Erase All")
+            width:              _butttonWidth
             onClicked: {
                 eraseAllDialog.visible = true
             }
@@ -197,6 +201,7 @@ QGCView {
             anchors.top:        eraseAllButton.bottom
             anchors.right:      parent.right
             text:               qsTr("Cancel")
+            width:              _butttonWidth
             enabled:            controller.requestingList || controller.downloadingLogs
             onClicked: {
                 controller.cancel()
