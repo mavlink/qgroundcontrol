@@ -302,34 +302,5 @@ Item {
             id:             __rightPanel
             anchors.fill:   parent
         }
-        //-- Dismiss it all
-        Item {
-            id:              closeButton
-            width:           __closeButtonSize
-            height:          __closeButtonSize
-            anchors.right:   parent.right
-            anchors.top:     parent.top
-            anchors.margins: ScreenTools.defaultFontPixelHeight * 0.5
-            QGCColoredImage {
-                source:       "/res/XDelete.svg"
-                mipmap:       true
-                fillMode:     Image.PreserveAspectFit
-                color:        qgcPal.text
-                width:        parent.width  * 0.75
-                height:       parent.height * 0.75
-                sourceSize.height: height
-                anchors.centerIn: parent
-            }
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    if (!__animateShowDialog.running) {
-                        __rightPanel.source = ""
-                        mainWindow.hideLeftMenu()
-                    }
-                }
-            }
-
-        }
     }
 }
