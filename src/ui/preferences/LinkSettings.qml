@@ -151,7 +151,6 @@ Rectangle {
             enabled:    _currentSelection && !_currentSelection.link
             onClicked: {
                 QGroundControl.linkManager.createConnectedLink(_currentSelection)
-                settingsMenu.closeSettings()
             }
         }
         QGCButton {
