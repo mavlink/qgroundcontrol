@@ -541,6 +541,8 @@ public:
     void setFirmwareVersion(int majorVersion, int minorVersion, int patchVersion, FIRMWARE_VERSION_TYPE versionType = FIRMWARE_VERSION_TYPE_OFFICIAL);
     static const int versionNotSetValue = -1;
 
+    int defaultComponentId(void);
+
 public slots:
     void setLatitude(double latitude);
     void setLongitude(double longitude);
