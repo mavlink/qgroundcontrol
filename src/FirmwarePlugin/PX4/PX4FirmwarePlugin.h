@@ -42,7 +42,7 @@ public:
     QList<MAV_CMD> supportedMissionCommands(void) final;
 
     bool        isCapable                       (FirmwareCapabilities capabilities) final;
-    QStringList flightModes                     (void) final;
+    QStringList flightModes                     (Vehicle* vehicle) final;
     QString     flightMode                      (uint8_t base_mode, uint32_t custom_mode) const final;
     bool        setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
     void        setGuidedMode(Vehicle* vehicle, bool guidedMode) final;
