@@ -210,7 +210,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_parameterLoader, &ParameterLoader::parameterListProgress, _autopilotPlugin, &AutoPilotPlugin::parameterListProgress);
 
     // Ask the vehicle for firmware version info
-    doCommandLong(MAV_COMP_ID_ALL, MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, 1 /* request firmware version */);
+    doCommandLong(defaultComponentId(), MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, 1 /* request firmware version */);
 
     _firmwarePlugin->initializeVehicle(this);
 
@@ -1691,10 +1691,14 @@ QString Vehicle::firmwareVersionTypeString(void) const
     }
 }
 
-
 void Vehicle::rebootVehicle()
 {
     doCommandLong(id(), MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+}
+
+int Vehicle::defaultComponentId(void)
+{
+    return _parameterLoader->defaultComponenentId();
 }
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
