@@ -31,7 +31,6 @@
 APMFlightModesComponentController::APMFlightModesComponentController(void)
     : _activeFlightMode(0)
     , _channelCount(Vehicle::cMaxRcChannels)
-    , _fixedWing(_vehicle->vehicleType() == MAV_TYPE_FIXED_WING)
 {
     QStringList usedParams;
     usedParams << QStringLiteral("FLTMODE1") << QStringLiteral("FLTMODE2") << QStringLiteral("FLTMODE3")

@@ -42,8 +42,6 @@ class APMSensorsComponentController : public FactPanelController
 public:
     APMSensorsComponentController(void);
 
-    Q_PROPERTY(bool fixedWing READ fixedWing CONSTANT)
-    
     Q_PROPERTY(QQuickItem* statusLog MEMBER _statusLog)
     Q_PROPERTY(QQuickItem* progressBar MEMBER _progressBar)
     
@@ -92,8 +90,6 @@ public:
     Q_INVOKABLE void calibrateAccel(void);
     Q_INVOKABLE void cancelCalibration(void);
     Q_INVOKABLE void nextClicked(void);
-
-    bool fixedWing(void);
 
     bool compassSetupNeeded(void) const;
     bool accelSetupNeeded(void) const;
