@@ -61,7 +61,7 @@ PX4AdvancedFlightModesController::PX4AdvancedFlightModesController(void) :
 void PX4AdvancedFlightModesController::_init(void)
 {
     // FIXME: What about VTOL? That confuses the whole Flight Mode naming scheme
-    _fixedWing = _vehicle->vehicleType() == MAV_TYPE_FIXED_WING;
+    _fixedWing = _vehicle->fixedWing();
     
     // We need to know min and max for channel in order to calculate percentage range
     for (int channel=0; channel<_chanMax; channel++) {

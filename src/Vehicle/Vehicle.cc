@@ -1445,6 +1445,22 @@ bool Vehicle::multiRotor(void) const
     }
 }
 
+bool Vehicle::vtol(void) const
+{
+    switch (vehicleType()) {
+    case MAV_TYPE_VTOL_DUOROTOR:
+    case MAV_TYPE_VTOL_QUADROTOR:
+    case MAV_TYPE_VTOL_TILTROTOR:
+    case MAV_TYPE_VTOL_RESERVED2:
+    case MAV_TYPE_VTOL_RESERVED3:
+    case MAV_TYPE_VTOL_RESERVED4:
+    case MAV_TYPE_VTOL_RESERVED5:
+        return true;
+    default:
+        return false;
+    }
+}
+
 void Vehicle::_setCoordinateValid(bool coordinateValid)
 {
     if (coordinateValid != _coordinateValid) {
