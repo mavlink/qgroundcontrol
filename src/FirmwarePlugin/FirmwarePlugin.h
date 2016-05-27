@@ -84,7 +84,10 @@ public:
     virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
     
     /// Returns the list of available flight modes
-    virtual QStringList flightModes(void) { return QStringList(); }
+    virtual QStringList flightModes(Vehicle* vehicle) {
+		Q_UNUSED(vehicle);
+		return QStringList();
+	}
     
     /// Returns the name for this flight mode. Flight mode names must be human readable as well as audio speakable.
     ///     @param base_mode Base mode from mavlink HEARTBEAT message

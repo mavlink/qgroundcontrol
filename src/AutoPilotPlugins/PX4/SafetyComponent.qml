@@ -490,7 +490,7 @@ QGCView {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             Row {
-                                visible:                _landSpeedMC !== -1
+                                visible:                !controller.vehicle.fixedWing && (_landSpeedMC !== -1)
                                 QGCLabel {
                                     anchors.baseline:   landVelField.baseline
                                     width:              _middleRowWidth
