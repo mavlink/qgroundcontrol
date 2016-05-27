@@ -45,7 +45,6 @@ public:
     Q_PROPERTY(int      activeFlightMode            READ activeFlightMode       NOTIFY activeFlightModeChanged)
     Q_PROPERTY(int      channelCount                MEMBER _channelCount        CONSTANT)
     Q_PROPERTY(QVariantList channelOptionEnabled    READ channelOptionEnabled   NOTIFY channelOptionEnabledChanged)
-    Q_PROPERTY(bool     fixedWing                   MEMBER _fixedWing           CONSTANT)
 
     int activeFlightMode(void) const { return _activeFlightMode; }
     QVariantList channelOptionEnabled(void) const { return _rgChannelOptionEnabled; }
@@ -61,7 +60,6 @@ private:
     int             _activeFlightMode;
     int             _channelCount;
     QVariantList    _rgChannelOptionEnabled;
-    bool            _fixedWing;
 };
 
 #endif
