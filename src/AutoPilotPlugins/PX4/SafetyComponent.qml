@@ -100,7 +100,6 @@ QGCView {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             Row {
-                                visible:                !controller.vehicle.fixedWing
                                 QGCLabel {
                                     anchors.baseline:   lowBattCombo.baseline
                                     width:              _middleRowWidth
