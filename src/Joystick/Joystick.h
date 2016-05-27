@@ -39,7 +39,7 @@ class Joystick : public QThread
     Q_OBJECT
     
 public:
-    Joystick(const QString& name, int axisCount, int buttonCount, int sdlIndex, MultiVehicleManager* multiVehicleManager);
+    Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, int sdlIndex, MultiVehicleManager* multiVehicleManager);
     ~Joystick();
     
     typedef struct {
@@ -68,7 +68,7 @@ public:
     
     Q_PROPERTY(bool calibrated MEMBER _calibrated NOTIFY calibratedChanged)
     
-    Q_PROPERTY(int buttonCount  READ buttonCount    CONSTANT)
+    Q_PROPERTY(int totalButtonCount  READ totalButtonCount    CONSTANT)
     Q_PROPERTY(int axisCount    READ axisCount      CONSTANT)
     
     Q_PROPERTY(QStringList actions READ actions CONSTANT)
@@ -82,7 +82,7 @@ public:
     // Property accessors
 
     int axisCount(void) { return _axisCount; }
-    int buttonCount(void) { return _buttonCount; }
+    int totalButtonCount(void) { return _totalButtonCount; }
     
     /// Start the polling thread which will in turn emit joystick signals
     void startPolling(Vehicle* vehicle);
@@ -157,6 +157,9 @@ private:
     bool    _calibrated;
     int     _axisCount;
     int     _buttonCount;
+    int     _hatCount;
+    int     _hatButtonCount;
+    int     _totalButtonCount;
     
     CalibrationMode_t   _calibrationMode;
     
