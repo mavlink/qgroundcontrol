@@ -51,13 +51,16 @@ const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "ThrottleAxis"
 };
 
-Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlIndex, MultiVehicleManager* multiVehicleManager)
+Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, int sdlIndex, MultiVehicleManager* multiVehicleManager)
 #ifndef __mobile__
     : _sdlIndex(sdlIndex)
     , _exitThread(false)
     , _name(name)
     , _axisCount(axisCount)
     , _buttonCount(buttonCount)
+    , _hatCount(hatCount)
+    , _hatButtonCount(4*hatCount)
+    , _totalButtonCount(_buttonCount+_hatButtonCount)
     , _calibrationMode(CalibrationModeOff)
     , _rgAxisValues(NULL)
     , _rgCalibration(NULL)
@@ -74,18 +77,19 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     Q_UNUSED(name)
     Q_UNUSED(axisCount)
     Q_UNUSED(buttonCount)
+    Q_UNUSED(hatCount)
     Q_UNUSED(sdlIndex)
     Q_UNUSED(multiVehicleManager)
 #else
     _rgAxisValues = new int[_axisCount];
     _rgCalibration = new Calibration_t[_axisCount];
-    _rgButtonValues = new bool[_buttonCount];
-    _rgButtonActions = new QString[_buttonCount];
+    _rgButtonValues = new bool[_totalButtonCount];
+    _rgButtonActions = new QString[_totalButtonCount];
 
     for (int i=0; i<_axisCount; i++) {
         _rgAxisValues[i] = 0;
     }
-    for (int i=0; i<_buttonCount; i++) {
+    for (int i=0; i<_totalButtonCount; i++) {
         _rgButtonValues[i] = false;
     }
     
@@ -283,6 +287,21 @@ void Joystick::run(void)
                 emit rawButtonPressedChanged(buttonIndex, newButtonValue);
             }
         }
+
+        // Update hat - append hat buttons to the end of the normal button list
+        quint8 hatButtons[] = {SDL_HAT_UP,SDL_HAT_DOWN,SDL_HAT_LEFT,SDL_HAT_RIGHT};
+        for (int hatIndex=0; hatIndex<_hatCount; hatIndex++) {
+            for (int hatButtonIndex=0; hatButtonIndex<int(sizeof(hatButtons)); hatButtonIndex++) {
+                // Create new index value that includes the normal button list
+                int rgButtonValueIndex = hatIndex*sizeof(hatButtons) + hatButtonIndex + _buttonCount;
+                // Get hat value from SDL - Only recognize the values in hatButtonMask
+                bool newButtonValue = !!(SDL_JoystickGetHat(sdlJoystick, hatIndex) & hatButtons[hatButtonIndex]);
+                if (newButtonValue != _rgButtonValues[rgButtonValueIndex]) {
+                    _rgButtonValues[rgButtonValueIndex] = newButtonValue;
+                    emit rawButtonPressedChanged(rgButtonValueIndex, newButtonValue);
+                }
+            }
+        }
         
         if (_calibrationMode != CalibrationModeCalibrating) {
             int     axis = _rgFunctionAxis[rollFunction];
@@ -320,13 +339,13 @@ void Joystick::run(void)
             // We only send the buttons the firmwware has reserved
             int reservedButtonCount = _activeVehicle->manualControlReservedButtonCount();
             if (reservedButtonCount == -1) {
-                reservedButtonCount = _buttonCount;
+                reservedButtonCount = _totalButtonCount;
             }
             
             quint16 newButtonBits = 0;      // New set of button which are down
             quint16 buttonPressedBits = 0;  // Buttons pressed for manualControl signal
             
-            for (int buttonIndex=0; buttonIndex<_buttonCount; buttonIndex++) {
+            for (int buttonIndex=0; buttonIndex<_totalButtonCount; buttonIndex++) {
                 quint16 buttonBit = 1 << buttonIndex;
                 
                 if (!_rgButtonValues[buttonIndex]) {
@@ -354,7 +373,7 @@ void Joystick::run(void)
             _lastButtonBits = newButtonBits;
             
             qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle;
-            
+
             emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
         }
         
@@ -576,7 +595,7 @@ bool Joystick::_validAxis(int axis)
 
 bool Joystick::_validButton(int button)
 {
-    return button >= 0 && button < _buttonCount;
+    return button >= 0 && button < _totalButtonCount;
 }
 
 #endif // __mobile__
