@@ -75,7 +75,7 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
     QStringList triggers;
     
     triggers << "CAL_MAG0_ID" << "CAL_GYRO0_ID" << "CAL_ACC0_ID" << "CBRK_AIRSPD_CHK";
-    if (_vehicle->fixedWing() && _autopilot->getParameterFact(FactSystem::defaultComponentId, _airspeedBreaker)->rawValue().toInt() != 162128) {
+    if ((_vehicle->fixedWing() || _vehicle->vtol()) && _autopilot->getParameterFact(FactSystem::defaultComponentId, _airspeedBreaker)->rawValue().toInt() != 162128) {
         triggers << "SENS_DPRES_OFF";
     }
     
@@ -91,16 +91,10 @@ QUrl SensorsComponent::summaryQmlSource(void) const
 {
     QString summaryQml;
     
-    switch (_vehicle->vehicleType()) {
-        case MAV_TYPE_FIXED_WING:
-        case MAV_TYPE_VTOL_DUOROTOR:
-        case MAV_TYPE_VTOL_QUADROTOR:
-        case MAV_TYPE_VTOL_TILTROTOR:
-            summaryQml = "qrc:/qml/SensorsComponentSummaryFixedWing.qml";
-            break;
-        default:
-            summaryQml = "qrc:/qml/SensorsComponentSummary.qml";
-            break;
+    if (_vehicle->fixedWing() || _vehicle->vtol()) {
+        summaryQml = "qrc:/qml/SensorsComponentSummaryFixedWing.qml";
+    } else {
+        summaryQml = "qrc:/qml/SensorsComponentSummary.qml";
     }
     
     return QUrl::fromUserInput(summaryQml);
