@@ -317,6 +317,14 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                         } else {
                             qCWarning(PX4ParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << text;
                         }
+
+                    } else if (elementName == "boolean") {
+                        QVariant    enumValue;
+                        metaData->convertAndValidateRaw(1, false /* validate */, enumValue, errorString);
+                        metaData->addEnumInfo(tr("Enabled"), enumValue);
+                        metaData->convertAndValidateRaw(0, false /* validate */, enumValue, errorString);
+                        metaData->addEnumInfo(tr("Disabled"), enumValue);
+
                     } else {
                         qCDebug(PX4ParameterMetaDataLog) << "Unknown element in XML: " << elementName;
                     }
