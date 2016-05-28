@@ -268,9 +268,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
-    // Set up our logging filters
-    QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
-
     // Set up timer for delayed missing fact display
     _missingParamsDelayedDisplayTimer.setSingleShot(true);
     _missingParamsDelayedDisplayTimer.setInterval(_missingParamsDelayedDisplayTimerTimeout);
@@ -324,6 +321,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         paramDir.removeRecursively();
         paramDir.mkpath(paramDir.absolutePath());
     }
+
+    // Set up our logging filters
+    QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
 
     _lastKnownHomePosition.setLatitude(settings.value(_lastKnownHomePositionLatKey, 37.803784).toDouble());
     _lastKnownHomePosition.setLongitude(settings.value(_lastKnownHomePositionLonKey, -122.462276).toDouble());
