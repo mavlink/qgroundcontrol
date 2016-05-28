@@ -282,6 +282,16 @@ void Joystick::run(void)
             pitch =     std::max(-1.0f, std::min(tanf(asinf(pitch_limited)), 1.0f));
             yaw =       std::max(-1.0f, std::min(tanf(asinf(yaw_limited)), 1.0f));
             throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle_limited)), 1.0f));
+            
+            // Exponential (0% to -50% range like most RC radios)
+            // 0 for no exponential
+            // -0.5 for strong exponential
+            float expo = -0.35;
+
+            // Calculate new RPY with exponential applied
+            roll =      -expo*powf(roll,3) + (1+expo)*roll;
+            pitch =     -expo*powf(pitch,3) + (1+expo)*pitch;
+            yaw =       -expo*powf(yaw,3) + (1+expo)*yaw;
 
             // Adjust throttle to 0:1 range
             if (_throttleMode == ThrottleModeCenterZero) {
