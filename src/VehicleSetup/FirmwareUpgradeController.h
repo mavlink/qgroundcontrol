@@ -111,6 +111,7 @@ public:
     Q_PROPERTY(QString          boardType                   MEMBER _foundBoardTypeName                                  NOTIFY boardFound)
     Q_PROPERTY(FirmwareType_t   selectedFirmwareType        READ selectedFirmwareType   WRITE setSelectedFirmwareType   NOTIFY selectedFirmwareTypeChanged)
     Q_PROPERTY(QStringList      apmAvailableVersions        READ apmAvailableVersions                                   NOTIFY apmAvailableVersionsChanged)
+    Q_PROPERTY(QString          px4StableVersion            READ px4StableVersion                                       NOTIFY px4StableVersionChanged)
 
     /// TextArea for log output
     Q_PROPERTY(QQuickItem* statusLog READ statusLog WRITE setStatusLog)
@@ -150,6 +151,7 @@ public:
     QString firmwareTypeAsString(FirmwareType_t type) const;
 
     QStringList apmAvailableVersions(void);
+    QString px4StableVersion(void) { return _px4StableVersion; }
 
 signals:
     void boardFound(void);
@@ -160,6 +162,7 @@ signals:
     void error(void);
     void selectedFirmwareTypeChanged(FirmwareType_t firmwareType);
     void apmAvailableVersionsChanged(void);
+    void px4StableVersionChanged(const QString& px4StableVersion);
     
 private slots:
     void _downloadProgress(qint64 curr, qint64 total);
@@ -178,6 +181,8 @@ private slots:
     void _eraseComplete(void);
     void _eraseProgressTick(void);
     void _apmVersionDownloadFinished(QString remoteFile, QString localFile);
+    void _px4StableGithubDownloadFinished(QString remoteFile, QString localFile);
+    void _px4StableGithubDownloadError(QString errorMsg);
 
 private:
     void _getFirmwareFile(FirmwareIdentifier firmwareId);
@@ -188,6 +193,7 @@ private:
     void _loadAPMVersions(QGCSerialPortInfo::BoardType_t boardType);
     QHash<FirmwareIdentifier, QString>* _firmwareHashForBoardId(int boardId);
     QHash<FirmwareIdentifier, QString>* _firmwareHashForBoardType(QGCSerialPortInfo::BoardType_t boardType);
+    void _determinePX4StableVersion(void);
 
     QString _portName;
     QString _portDescription;
@@ -243,6 +249,8 @@ private:
     FirmwareType_t                  _selectedFirmwareType;
 
     FirmwareImage*  _image;
+
+    QString _px4StableVersion;  // Version strange for latest PX4 stable
 };
 
 // global hashing function
