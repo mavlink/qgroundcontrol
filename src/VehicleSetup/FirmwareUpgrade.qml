@@ -221,7 +221,7 @@ QGCView {
                     id:             px4FlightStack
                     checked:        true
                     exclusiveGroup: firmwareGroup
-                    text:           qsTr("PX4 Flight Stack")
+                    text:           qsTr("PX4 Flight Stack ") + controller.px4StableVersion
                     visible:        !px4Flow
 
                     onClicked: parent.firmwareVersionChanged(firmwareTypeList)
