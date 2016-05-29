@@ -26,16 +26,18 @@
 
 #include "APMAirframeComponentController.h"
 #include "APMAirframeComponentAirframes.h"
-#include "APMRemoteParamsDownloader.h"
 #include "QGCMAVLink.h"
 #include "MultiVehicleManager.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
+#include "QGCFileDownload.h"
 
 #include <QVariant>
 #include <QQmlProperty>
 #include <QStandardPaths>
 #include <QDir>
+#include <QJsonParseError>
+#include <QJsonObject>
 
 bool APMAirframeComponentController::_typesRegistered = false;
 
@@ -94,12 +96,14 @@ void APMAirframeComponentController::_fillAirFrames()
     emit loadAirframesCompleted();
 }
 
-void APMAirframeComponentController::_finishVehicleSetup() {
-    QDir dataLocation = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).at(0)
-           + QDir::separator() + qApp->applicationName();
-
-    QFile parametersFile(dataLocation.absoluteFilePath(_currentAirframe->params()));
-    parametersFile.open(QIODevice::ReadOnly);
+void APMAirframeComponentController::_loadParametersFromDownloadFile(const QString& downloadedParamFile)
+{
+    QFile parametersFile(downloadedParamFile);
+    if (!parametersFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "Unable to open downloaded parameter file" << downloadedParamFile << parametersFile.errorString();
+        qgcApp()->restoreOverrideCursor();
+        return;
+    }
 
     QTextStream reader(&parametersFile);
 
@@ -115,9 +119,7 @@ void APMAirframeComponentController::_finishVehicleSetup() {
             param->setRawValue(QVariant::fromValue(aux.at(1)));
         }
     }
-    qgcApp()->setOverrideCursor(Qt::ArrowCursor);
-    sender()->deleteLater();
-    emit currentAirframeChanged(_currentAirframe);
+    qgcApp()->restoreOverrideCursor();
 }
 
 APMAirframeType::APMAirframeType(const QString& name, const QString& imageResource, int type, QObject* parent) :
@@ -193,19 +195,6 @@ QString APMAirframeComponentController::currentAirframeTypeName() const
     return _vehicle->vehicleTypeName();
 }
 
-APMAirframe *APMAirframeComponentController::currentAirframe() const
-{
-    return _currentAirframe;
-}
-
-void APMAirframeComponentController::setCurrentAirframe(APMAirframe *t)
-{
-    _currentAirframe = t;
-    qgcApp()->setOverrideCursor(Qt::WaitCursor);
-    APMRemoteParamsDownloader *paramDownloader = new APMRemoteParamsDownloader(_currentAirframe->params());
-    connect(paramDownloader, &APMRemoteParamsDownloader::finished, this, &APMAirframeComponentController::_finishVehicleSetup);
-}
-
 void APMAirframeComponentController::setCurrentAirframeType(APMAirframeType *t)
 {
     Fact *param = getParameterFact(-1, QStringLiteral("FRAME"));
@@ -213,3 +202,61 @@ void APMAirframeComponentController::setCurrentAirframeType(APMAirframeType *t)
     param->setRawValue(t->type());
 }
 
+void APMAirframeComponentController::loadParameters(const QString& paramFile)
+{
+    qgcApp()->setOverrideCursor(Qt::WaitCursor);
+
+    QString paramFileUrl = QStringLiteral("https://api.github.com/repos/ArduPilot/ardupilot/contents/Tools/Frame_params/%1?ref=master");
+
+    QGCFileDownload* downloader = new QGCFileDownload(this);
+    connect(downloader, &QGCFileDownload::downloadFinished, this, &APMAirframeComponentController::_githubJsonDownloadFinished);
+    connect(downloader, &QGCFileDownload::error, this, &APMAirframeComponentController::_githubJsonDownloadError);
+    downloader->download(paramFileUrl.arg(paramFile));
+}
+
+void APMAirframeComponentController::_githubJsonDownloadFinished(QString remoteFile, QString localFile)
+{
+    Q_UNUSED(remoteFile);
+
+    QFile jsonFile(localFile);
+    if (!jsonFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "Unable to open github json file" << localFile << jsonFile.errorString();
+        qgcApp()->restoreOverrideCursor();
+        return;
+    }
+    QByteArray bytes = jsonFile.readAll();
+    jsonFile.close();
+
+    QJsonParseError jsonParseError;
+    QJsonDocument doc = QJsonDocument::fromJson(bytes, &jsonParseError);
+    if (jsonParseError.error != QJsonParseError::NoError) {
+        qWarning() <<  "Unable to open json document" << localFile << jsonParseError.errorString();
+        qgcApp()->restoreOverrideCursor();
+        return;
+    }
+    QJsonObject json = doc.object();
+
+    QGCFileDownload* downloader = new QGCFileDownload(this);
+    connect(downloader, &QGCFileDownload::downloadFinished, this, &APMAirframeComponentController::_paramFileDownloadFinished);
+    connect(downloader, &QGCFileDownload::error, this, &APMAirframeComponentController::_paramFileDownloadError);
+    downloader->download(json["download_url"].toString());
+}
+
+void APMAirframeComponentController::_githubJsonDownloadError(QString errorMsg)
+{
+    qgcApp()->showMessage(tr("Param file github json download failed: % 1").arg(errorMsg));
+    qgcApp()->restoreOverrideCursor();
+}
+
+void APMAirframeComponentController::_paramFileDownloadFinished(QString remoteFile, QString localFile)
+{
+    Q_UNUSED(remoteFile);
+
+    _loadParametersFromDownloadFile(localFile);
+}
+
+void APMAirframeComponentController::_paramFileDownloadError(QString errorMsg)
+{
+    qgcApp()->showMessage(tr("Param file download failed: % 1").arg(errorMsg));
+    qgcApp()->restoreOverrideCursor();
+}
