@@ -903,8 +903,6 @@ void ParameterLoader::_addMetaDataToDefaultComponent(void)
      }
 
      if (_parameterMetaData) {
-         // This should only be called once
-         qWarning() << "Internal Error: ParameterLoader::_addMetaDataToAll with _parameterMetaData non NULL";
          return;
      }
 
