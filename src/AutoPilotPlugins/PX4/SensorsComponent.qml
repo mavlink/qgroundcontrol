@@ -40,8 +40,8 @@ QGCView {
     // Help text which is shown both in the status text area prior to pressing a cal button and in the
     // pre-calibration dialog.
 
-    readonly property string boardRotationText: qsTr("If the autopilot is mounted in flight direction, leave the default value (ROTATION_NONE)")
-    readonly property string compassRotationText: qsTr("If the compass or GPS module is mounted in flight direction, leave the default value (ROTATION_NONE)")
+    readonly property string boardRotationText: qsTr("If the orientation is in the direction of flight, select ROTATION_NONE.")
+    readonly property string compassRotationText: qsTr("If the orientation is in the direction of flight, select ROTATION_NONE.")
 
     readonly property string compassHelp:   qsTr("For Compass calibration you will need to rotate your vehicle through a number of positions. Most users prefer to do this wirelessly with the telemetry link.")
     readonly property string gyroHelp:      qsTr("For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.")
@@ -469,19 +469,22 @@ QGCView {
                     anchors.leftMargin: ScreenTools.defaultFontPixelWidth
                     anchors.left:       orientationCalArea.right
                     x:                  parent.width - rotationColumnWidth
-                    spacing:            ScreenTools.defaultFontPixelWidth
+                    spacing:            ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text:           qsTr("Set Orientations")
+                    }
+
+                    QGCLabel {
+                        width:      parent.width
+                        wrapMode:   Text.WordWrap
+                        text:       boardRotationText
+                    }
 
                     Column {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
                         QGCLabel {
-                            text: qsTr("Autopilot Orientation")
-                        }
-
-                        QGCLabel {
-                            width:      parent.width
-                            wrapMode:   Text.WordWrap
-                            text: boardRotationText
+                            text: qsTr("Autpilot Orientation:")
                         }
 
                         FactComboBox {
@@ -493,14 +496,12 @@ QGCView {
                     }
 
                     Column {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
                         // Compass 0 rotation
                         Component {
                             id: compass0ComponentLabel2
 
                             QGCLabel {
-                                text: qsTr("External Compass Orientation")
+                                text: qsTr("External Compass Orientation:")
                             }
                         }
 
@@ -520,14 +521,12 @@ QGCView {
                     }
 
                     Column {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
                         // Compass 1 rotation
                         Component {
                             id: compass1ComponentLabel2
 
                             QGCLabel {
-                                text: qsTr("External Compass 1 Orientation")
+                                text: qsTr("External Compass 1 Orientation:")
                             }
                         }
 
