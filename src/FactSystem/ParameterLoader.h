@@ -144,8 +144,6 @@ private:
     void _saveToEEPROM(void);
     void _checkInitialLoadComplete(bool failIfNoDefaultComponent);
 
-    LinkInterface* _dedicatedLink; ///< Parameter protocol stays on this link
-    
     /// First mapping is by component id
     /// Second mapping is parameter name, to Fact* in QVariant
     QMap<int, QVariantMap>            _mapParameterName2Variant;
