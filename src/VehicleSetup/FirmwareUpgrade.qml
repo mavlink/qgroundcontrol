@@ -111,7 +111,7 @@ QGCView {
                 // We end up here when we detect a board plugged in after we've started upgrade
                 statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
                 if (controller.boardType == "Pixhawk" || controller.boardType == "AeroCore" || controller.boardType == "PX4 Flow" || controller.boardType == "PX4 FMU V1" || controller.boardType == "MindPX") {
-                    showDialog(pixhawkFirmwareSelectDialog, title, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                    showDialog(pixhawkFirmwareSelectDialogComponent, title, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
             }
         }
@@ -130,13 +130,33 @@ QGCView {
     }
 
     Component {
-        id: pixhawkFirmwareSelectDialog
+        id: pixhawkFirmwareSelectDialogComponent
 
         QGCViewDialog {
-            anchors.fill: parent
+            id:             pixhawkFirmwareSelectDialog
+            anchors.fill:   parent
 
-            property bool showFirmwareTypeSelection: _advanced.checked
-            property bool px4Flow:              controller.boardType == "PX4 Flow"
+            property bool showFirmwareTypeSelection:    _advanced.checked
+            property bool px4Flow:                      controller.boardType == "PX4 Flow"
+
+            function updatePX4VersionDisplay() {
+                var versionString = ""
+                if (_advanced.checked) {
+                    switch (controller.selectedFirmwareType) {
+                    case FirmwareUpgradeController.StableFirmware:
+                        versionString = controller.px4StableVersion
+                        break
+                    case FirmwareUpgradeController.BetaFirmware:
+                        versionString = controller.px4BetaVersion
+                        break
+                    }
+                } else {
+                    versionString = controller.px4StableVersion
+                }
+                px4FlightStack.text = qsTr("PX4 Flight Stack ") + versionString
+            }
+
+            Component.onCompleted: updatePX4VersionDisplay()
 
             function accept() {
                 hideDialog()
@@ -221,7 +241,7 @@ QGCView {
                     id:             px4FlightStack
                     checked:        true
                     exclusiveGroup: firmwareGroup
-                    text:           qsTr("PX4 Flight Stack ") + controller.px4StableVersion
+                    text:           qsTr("PX4 Flight Stack ")
                     visible:        !px4Flow
 
                     onClicked: parent.firmwareVersionChanged(firmwareTypeList)
@@ -263,6 +283,7 @@ QGCView {
                         onClicked: {
                             firmwareVersionCombo.currentIndex = 0
                             firmwareVersionWarningLabel.visible = false
+                            updatePX4VersionDisplay()
                         }
                     }
 
@@ -307,6 +328,7 @@ QGCView {
                         } else {
                             firmwareVersionWarningLabel.visible = false
                         }
+                        updatePX4VersionDisplay()
                     }
                 }
 
@@ -318,8 +340,7 @@ QGCView {
                 }
             } // Column
         } // QGCViewDialog
-    } // Component - pixhawkFirmwareSelectDialog
-
+    } // Component - pixhawkFirmwareSelectDialogComponent
 
     Component {
         id: firmwareWarningDialog

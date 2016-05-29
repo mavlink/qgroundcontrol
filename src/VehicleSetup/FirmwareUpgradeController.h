@@ -112,6 +112,7 @@ public:
     Q_PROPERTY(FirmwareType_t   selectedFirmwareType        READ selectedFirmwareType   WRITE setSelectedFirmwareType   NOTIFY selectedFirmwareTypeChanged)
     Q_PROPERTY(QStringList      apmAvailableVersions        READ apmAvailableVersions                                   NOTIFY apmAvailableVersionsChanged)
     Q_PROPERTY(QString          px4StableVersion            READ px4StableVersion                                       NOTIFY px4StableVersionChanged)
+    Q_PROPERTY(QString          px4BetaVersion              READ px4BetaVersion                                         NOTIFY px4BetaVersionChanged)
 
     /// TextArea for log output
     Q_PROPERTY(QQuickItem* statusLog READ statusLog WRITE setStatusLog)
@@ -152,6 +153,7 @@ public:
 
     QStringList apmAvailableVersions(void);
     QString px4StableVersion(void) { return _px4StableVersion; }
+    QString px4BetaVersion(void) { return _px4BetaVersion; }
 
 signals:
     void boardFound(void);
@@ -163,7 +165,8 @@ signals:
     void selectedFirmwareTypeChanged(FirmwareType_t firmwareType);
     void apmAvailableVersionsChanged(void);
     void px4StableVersionChanged(const QString& px4StableVersion);
-    
+    void px4BetaVersionChanged(const QString& px4BetaVersion);
+
 private slots:
     void _downloadProgress(qint64 curr, qint64 total);
     void _downloadFinished(void);
@@ -181,8 +184,8 @@ private slots:
     void _eraseComplete(void);
     void _eraseProgressTick(void);
     void _apmVersionDownloadFinished(QString remoteFile, QString localFile);
-    void _px4StableGithubDownloadFinished(QString remoteFile, QString localFile);
-    void _px4StableGithubDownloadError(QString errorMsg);
+    void _px4ReleasesGithubDownloadFinished(QString remoteFile, QString localFile);
+    void _px4ReleasesGithubDownloadError(QString errorMsg);
 
 private:
     void _getFirmwareFile(FirmwareIdentifier firmwareId);
@@ -251,6 +254,7 @@ private:
     FirmwareImage*  _image;
 
     QString _px4StableVersion;  // Version strange for latest PX4 stable
+    QString _px4BetaVersion;    // Version strange for latest PX4 beta
 };
 
 // global hashing function
