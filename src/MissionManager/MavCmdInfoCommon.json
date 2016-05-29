@@ -701,7 +701,7 @@
             "rawName":      "MAV_CMD_DO_MOUNT_CONTROL",
             "friendlyName": "Control Mount",
             "description":  "Control the vehicle mount (e.g. gimbal).",
-            "category":     "Camera",
+            "category":     "Mount",
             "param1": {
                 "label":            "Lat/Pitch:",
                 "default":          0,
@@ -730,7 +730,7 @@
             "rawName":      "MAV_CMD_DO_SET_CAM_TRIGG_DIST",
             "friendlyName": "Camera trigger distance",
             "description":  "Set camera trigger distance.",
-            "category":     "Camera",
+            "category":     "Mount",
             "param1": {
                 "label":            "Distance:",
                 "default":          25,
