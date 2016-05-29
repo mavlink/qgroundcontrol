@@ -33,6 +33,8 @@
 
 #include <QStandardPaths>
 #include <QRegularExpression>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 struct FirmwareToUrlElement_t {
     FirmwareUpgradeController::AutoPilotStackType_t    stackType;
@@ -75,6 +77,7 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
 
     _initFirmwareHash();
+    _determinePX4StableVersion();
 }
 
 FirmwareUpgradeController::~FirmwareUpgradeController()
@@ -826,4 +829,41 @@ FirmwareUpgradeController::FirmwareVehicleType_t FirmwareUpgradeController::vehi
     }
 
     return _apmVehicleTypeFromCurrentVersionList[index];
+}
+
+void FirmwareUpgradeController::_determinePX4StableVersion(void)
+{
+    QGCFileDownload* downloader = new QGCFileDownload(this);
+    connect(downloader, &QGCFileDownload::downloadFinished, this, &FirmwareUpgradeController::_px4StableGithubDownloadFinished);
+    connect(downloader, &QGCFileDownload::error, this, &FirmwareUpgradeController::_px4StableGithubDownloadError);
+    downloader->download(QStringLiteral("https://api.github.com/repos/PX4/Firmware/releases/latest"));
+}
+
+void FirmwareUpgradeController::_px4StableGithubDownloadFinished(QString remoteFile, QString localFile)
+{
+    Q_UNUSED(remoteFile);
+
+    QFile jsonFile(localFile);
+    if (!jsonFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "Unable to open github json file" << localFile << jsonFile.errorString();
+        return;
+    }
+    QByteArray bytes = jsonFile.readAll();
+    jsonFile.close();
+
+    QJsonParseError jsonParseError;
+    QJsonDocument doc = QJsonDocument::fromJson(bytes, &jsonParseError);
+    if (jsonParseError.error != QJsonParseError::NoError) {
+        qWarning() <<  "Unable to open json document" << localFile << jsonParseError.errorString();
+        return;
+    }
+    QJsonObject json = doc.object();
+
+    _px4StableVersion = json["name"].toString();
+    emit px4StableVersionChanged(_px4StableVersion);
+}
+
+void FirmwareUpgradeController::_px4StableGithubDownloadError(QString errorMsg)
+{
+    qWarning() << "PX4 stable github download failed" << errorMsg;
 }
