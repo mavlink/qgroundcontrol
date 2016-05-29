@@ -50,7 +50,7 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: qsTr("Battery capacity:")
-            valueText: battCapacity.valueString
+            valueText: battCapacity.valueString + " " + battCapacity.units
         }
     }
 }

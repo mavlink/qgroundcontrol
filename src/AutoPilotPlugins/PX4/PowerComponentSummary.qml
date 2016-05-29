@@ -50,12 +50,12 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: qsTr("Battery Full:")
-            valueText: batVChargedFact ? batVChargedFact.valueString : ""
+            valueText: batVChargedFact ? batVChargedFact.valueString + " " + batVChargedFact.units : ""
         }
 
         VehicleSummaryRow {
             labelText: qsTr("Battery Empty:")
-            valueText: batVEmptyFact ? batVEmptyFact.valueString : ""
+            valueText: batVEmptyFact ? batVEmptyFact.valueString + " " + batVEmptyFact.units : ""
         }
 
         VehicleSummaryRow {
