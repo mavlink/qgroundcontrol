@@ -58,7 +58,7 @@ bool QGCFileDownload::download(const QString& remoteFile)
     localFile += "/"  + remoteFileName;
 
     QUrl remoteUrl;
-    if (remoteFile.startsWith("http:")) {
+    if (remoteFile.startsWith("http:") || remoteFile.startsWith("https:")) {
         remoteUrl.setUrl(remoteFile);
     } else {
         remoteUrl = QUrl::fromLocalFile(remoteFile);

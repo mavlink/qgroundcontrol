@@ -310,7 +310,6 @@ HEADERS += \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
     src/AutoPilotPlugins/APM/APMAirframeLoader.h \
     src/QmlControls/QGCImageProvider.h \
-    src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
     src/PositionManager/PositionManager.h
 
@@ -463,7 +462,6 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
     src/AutoPilotPlugins/APM/APMAirframeLoader.cc \
     src/QmlControls/QGCImageProvider.cc \
-    src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
     src/PositionManager/SimulatedPosition.cc \
     src/PositionManager/PositionManager.cpp
