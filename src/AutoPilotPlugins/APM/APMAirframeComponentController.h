@@ -58,7 +58,8 @@ public:
     
     Q_PROPERTY(QmlObjectListModel* airframeTypesModel MEMBER _airframeTypesModel CONSTANT)
     Q_PROPERTY(APMAirframeType* currentAirframeType READ currentAirframeType WRITE setCurrentAirframeType NOTIFY currentAirframeTypeChanged)
-    Q_PROPERTY(APMAirframe* currentAirframe READ currentAirframe WRITE setCurrentAirframe NOTIFY currentAirframeChanged)
+
+    Q_INVOKABLE void loadParameters(const QString& paramFile);
 
     int currentAirframeIndex(void);
     void setCurrentAirframeIndex(int newIndex);
@@ -66,25 +67,25 @@ public:
 signals:
     void loadAirframesCompleted();
     void currentAirframeTypeChanged(APMAirframeType* airframeType);
-    void currentAirframeChanged(APMAirframe* airframe);
 
 public slots:
     APMAirframeType *currentAirframeType() const;
     Q_INVOKABLE QString currentAirframeTypeName() const;
-    APMAirframe *currentAirframe() const;
     void setCurrentAirframeType(APMAirframeType *t);
-    void setCurrentAirframe(APMAirframe *t);
 
 private slots:
     void _fillAirFrames(void);
-    void _finishVehicleSetup(void);
     void _factFrameChanged(QVariant v);
+    void _githubJsonDownloadFinished(QString remoteFile, QString localFile);
+    void _githubJsonDownloadError(QString errorMsg);
+    void _paramFileDownloadFinished(QString remoteFile, QString localFile);
+    void _paramFileDownloadError(QString errorMsg);
 
 private:
+    void _loadParametersFromDownloadFile(const QString& downloadedParamFile);
+
     static bool _typesRegistered;
     APMAirframeType *_currentAirframeType;
-    APMAirframe *_currentAirframe;
-    int _waitParamWriteSignalCount;
     QmlObjectListModel *_airframeTypesModel;
 };
 

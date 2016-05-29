@@ -32,7 +32,6 @@
 #include "APMAirframeComponentAirframes.h"
 #include "APMAirframeComponentController.h"
 #include "APMAirframeLoader.h"
-#include "APMRemoteParamsDownloader.h"
 #include "APMFlightModesComponent.h"
 #include "APMRadioComponent.h"
 #include "APMSafetyComponent.h"
