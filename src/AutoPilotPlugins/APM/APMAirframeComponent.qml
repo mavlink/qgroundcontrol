@@ -61,9 +61,6 @@ QGCView {
                 onCurrentAirframeTypeChanged: {
                     airframePicker.model = controller.currentAirframeType.airframes;
                 }
-                onCurrentAirframeChanged : {
-                    hideDialog();
-                }
             }
 
             QGCLabel {
@@ -73,7 +70,7 @@ QGCView {
                 anchors.right:      parent.right
                 anchors.margins:    _margins
                 wrapMode:           Text.WordWrap
-                text:               qsTr("Select you drone to load the default parameters for it. ")
+                text:               qsTr("Select your drone to load the default parameters for it. ")
             }
 
             Flow {
@@ -95,7 +92,10 @@ QGCView {
                         height: (ScreenTools.defaultFontPixelHeight * 14) / 5
                         text:   controller.currentAirframeType.airframes[index].name;
 
-                        onClicked : controller.currentAirframe = controller.currentAirframeType.airframes[index]
+                        onClicked : {
+                            controller.loadParameters(controller.currentAirframeType.airframes[index].params)
+                            hideDialog()
+                        }
                     }
                 }
             }
