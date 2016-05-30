@@ -666,7 +666,7 @@
             "rawName":      "MAV_CMD_DO_MOUNT_CONFIGURE",
             "friendlyName": "Configure Mount",
             "description":  "Configure the vehicle mount (e.g. gimbal).",
-            "category":     "Mount",
+            "category":     "Advanced",
             "param1": {
                 "label":            "Mode:",
                 "default":          0,
@@ -701,7 +701,7 @@
             "rawName":      "MAV_CMD_DO_MOUNT_CONTROL",
             "friendlyName": "Control Mount",
             "description":  "Control the vehicle mount (e.g. gimbal).",
-            "category":     "Mount",
+            "category":     "Advanced",
             "param1": {
                 "label":            "Lat/Pitch:",
                 "default":          0,
