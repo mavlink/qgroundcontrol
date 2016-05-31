@@ -369,8 +369,6 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
     Q_UNUSED(systemMode);
     Q_UNUSED(navMode);
 
-    bool isFixedWing = true;
-
     if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR
         || _vehicle->vehicleType() == MAV_TYPE_HEXAROTOR
         || _vehicle->vehicleType() == MAV_TYPE_OCTOROTOR)
