@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009 - 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -24,7 +24,7 @@ This file is part of the QGROUNDCONTROL project
 /**
  * @file QGCXPlaneLink.cc
  *   Implementation of X-Plane interface
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *   @author Lorenz Meier <lm@qgroundcontrol.org>
  *
  */
 
@@ -371,7 +371,9 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
 
     bool isFixedWing = true;
 
-    if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
+    if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR
+        || mav->getSystemType() == MAV_TYPE_HEXAROTOR
+        || mav->getSystemType() == MAV_TYPE_OCTOROTOR)
     {
         qDebug() << "MAV_TYPE_QUADROTOR";
 
@@ -381,7 +383,9 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
         p.f[2] = throttle;
         p.f[3] = pitchElevator;
 
-        isFixedWing = false;
+        // Direct throttle control
+        p.index = 25;
+        writeBytesSafe((const char*)&p, sizeof(p));
     }
     else
     {
@@ -389,34 +393,26 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
         p.f[0] = -pitchElevator;
         p.f[1] = rollAilerons;
         p.f[2] = yawRudder;
-    }
 
-    if(isFixedWing)
-    {
         // Ail / Elevon / Rudder
-        p.index = 12;   // XPlane, wing sweep
+
+        // Send to group 12
+        p.index = 12;
         writeBytesSafe((const char*)&p, sizeof(p));
 
-        p.index = 8;    // XPlane, joystick? why?
+        // Send to group 8, which equals manual controls
+        p.index = 8;
         writeBytesSafe((const char*)&p, sizeof(p));
 
-        p.index = 25;   // Thrust
+        // Send throttle to all four motors
+        p.index = 25;
         memset(p.f, 0, sizeof(p.f));
         p.f[0] = throttle;
         p.f[1] = throttle;
         p.f[2] = throttle;
         p.f[3] = throttle;
-
-        // Throttle
         writeBytesSafe((const char*)&p, sizeof(p));
     }
-    else
-    {
-        qDebug() << "Transmitting p.index = 25";
-        p.index = 25;   // XPlane, throttle command.
-        writeBytesSafe((const char*)&p, sizeof(p));
-    }
-
 }
 
 Eigen::Matrix3f euler_to_wRo(double yaw, double pitch, double roll) {
