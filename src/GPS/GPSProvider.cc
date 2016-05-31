@@ -141,10 +141,11 @@ int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
 {
     switch (type) {
         case GPSCallbackType::readDeviceData: {
-            int timeout = *((int *) data1);
-            if (!_serial->waitForReadyRead(timeout))
-                return 0; //timeout
-            msleep(10); //give some more time to buffer data
+            if (_serial->bytesAvailable() == 0) {
+                int timeout = *((int *) data1);
+                if (!_serial->waitForReadyRead(timeout))
+                    return 0; //timeout
+            }
             return (int)_serial->read((char*) data1, data2);
         }
         case GPSCallbackType::writeDeviceData:
