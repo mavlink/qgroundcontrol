@@ -1505,6 +1505,19 @@ bool Vehicle::vtol(void) const
     }
 }
 
+bool Vehicle::supportsManualControl(void) const
+{
+    // PX4 Firmware supports manual control message
+    if ( px4Firmware() ) {
+        return true;
+    }
+    // ArduSub supports manual control message (identified by APM + Submarine type)
+    if ( apmFirmware() && vehicleType() == MAV_TYPE_SUBMARINE ) {
+        return true;
+    }
+    return false;
+}
+
 void Vehicle::_setCoordinateValid(bool coordinateValid)
 {
     if (coordinateValid != _coordinateValid) {
