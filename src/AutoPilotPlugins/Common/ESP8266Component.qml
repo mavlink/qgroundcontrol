@@ -168,7 +168,7 @@ QGCView {
                                 QGCComboBox {
                                     id:                     channelField
                                     width:                  _editFieldWidth
-                                    enabled:                wifiMode && wifiMode.value === 0
+                                    enabled:                wifiMode ? wifiMode.value === 0 : true
                                     model:                  controller.wifiChannels
                                     currentIndex:           wifiChannel ? wifiChannel.value - 1 : 0
                                     onActivated: {
