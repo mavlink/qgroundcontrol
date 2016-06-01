@@ -180,6 +180,8 @@ void MockLink::_loadParams(void)
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         if (_vehicleType == MAV_TYPE_FIXED_WING) {
             paramFile.setFileName(":/unittest/APMArduPlaneMockLink.params");
+        } else if (_vehicleType == MAV_TYPE_SUBMARINE ) {
+            paramFile.setFileName(":/unittest/APMArduSubMockLink.params");
         } else {
             paramFile.setFileName(":/unittest/APMArduCopterMockLink.params");
         }
@@ -1024,6 +1026,18 @@ MockLink*  MockLink::startAPMArduPlaneMockLink(bool sendStatusText, MockConfigur
 
     mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
     mockConfig->setVehicleType(MAV_TYPE_FIXED_WING);
+    mockConfig->setSendStatusText(sendStatusText);
+    mockConfig->setFailureMode(failureMode);
+
+    return _startMockLink(mockConfig);
+}
+
+MockLink*  MockLink::startAPMArduSubMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
+{
+    MockConfiguration* mockConfig = new MockConfiguration("APM ArduSub MockLink");
+
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    mockConfig->setVehicleType(MAV_TYPE_SUBMARINE);
     mockConfig->setSendStatusText(sendStatusText);
     mockConfig->setFailureMode(failureMode);
 
