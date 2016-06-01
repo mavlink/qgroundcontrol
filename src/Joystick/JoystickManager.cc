@@ -19,7 +19,10 @@
 #endif
 
 #ifdef __android__
-    #include "JoystickAndroid.h"
+    /*
+     * Android Joystick not yet supported
+     * #include "JoystickAndroid.h"
+     */
 #endif
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
@@ -54,7 +57,10 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
 #ifdef __sdljoystick__
     _name2JoystickMap = JoystickSDL::discover(_multiVehicleManager);
 #elif defined(__android__)
-    _name2JoystickMap = JoystickAndroid::discover(_multiVehicleManager);
+    /*
+     * Android Joystick not yet supported
+     * _name2JoystickMap = JoystickAndroid::discover(_multiVehicleManager);
+     */
 #endif
 
     if (!_name2JoystickMap.count()) {
