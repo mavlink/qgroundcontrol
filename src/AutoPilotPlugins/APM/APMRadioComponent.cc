@@ -87,12 +87,34 @@ QStringList APMRadioComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl APMRadioComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/RadioComponent.qml"));
+    QString qmlFile;
+
+    switch (_vehicle->vehicleType()) {
+        case MAV_TYPE_SUBMARINE:
+            qmlFile = QStringLiteral("qrc:/qml/APMNotSupported.qml");
+            break;
+        default:
+            qmlFile = QStringLiteral("qrc:/qml/RadioComponent.qml");
+            break;
+    }
+
+    return QUrl::fromUserInput(qmlFile);
 }
 
 QUrl APMRadioComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMRadioComponentSummary.qml"));
+    QString qmlFile;
+
+    switch (_vehicle->vehicleType()) {
+        case MAV_TYPE_SUBMARINE:
+            qmlFile = QStringLiteral("qrc:/qml/APMNotSupported.qml");
+            break;
+        default:
+            qmlFile = QStringLiteral("qrc:/qml/APMRadioComponentSummary.qml");
+            break;
+    }
+
+    return QUrl::fromUserInput(qmlFile);
 }
 
 QString APMRadioComponent::prerequisiteSetup(void) const
