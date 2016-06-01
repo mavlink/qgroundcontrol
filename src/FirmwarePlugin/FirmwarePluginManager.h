@@ -24,6 +24,7 @@ class QGCApplication;
 class ArduCopterFirmwarePlugin;
 class ArduPlaneFirmwarePlugin;
 class ArduRoverFirmwarePlugin;
+class ArduSubFirmwarePlugin;
 class PX4FirmwarePlugin;
 
 /// FirmwarePluginManager is a singleton which is used to return the correct FirmwarePlugin for a MAV_AUTOPILOT type.
@@ -49,6 +50,7 @@ private:
     ArduCopterFirmwarePlugin*   _arduCopterFirmwarePlugin;
     ArduPlaneFirmwarePlugin*    _arduPlaneFirmwarePlugin;
     ArduRoverFirmwarePlugin*    _arduRoverFirmwarePlugin;
+    ArduSubFirmwarePlugin*    _arduSubFirmwarePlugin;
     FirmwarePlugin*             _genericFirmwarePlugin;
     PX4FirmwarePlugin*          _px4FirmwarePlugin;
 };
