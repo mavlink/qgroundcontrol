@@ -661,13 +661,47 @@
                 "decimalPlaces":    0
             }
         },
-        { "id": 204, "rawName": "MAV_CMD_DO_MOUNT_CONFIGURE", "friendlyName": "Mount configure" },
+        {
+            "id":           204,
+            "rawName":      "MAV_CMD_DO_MOUNT_CONFIGURE",
+            "friendlyName": "Configure Mount",
+            "description":  "Configure the vehicle mount (e.g. gimbal).",
+            "category":     "Advanced",
+            "param1": {
+                "label":            "Mode:",
+                "default":          0,
+                "decimalPlaces":    0,
+                "enumStrings":      "Retract,Neutral,Mavlink Targetting,RC Targetting,GPS Point",
+                "enumValues":       "0,1,2,3,4"
+            },
+            "param2": {
+                "label":            "Stabilize Roll:",
+                "default":          0,
+                "decimalPlaces":    0,
+                "enumStrings":      "No,Yes",
+                "enumValues":       "0,1"
+            },
+            "param3": {
+                "label":            "Stabilize Pitch:",
+                "default":          0,
+                "decimalPlaces":    0,
+                "enumStrings":      "No,Yes",
+                "enumValues":       "0,1"
+            },
+            "param4": {
+                "label":            "Stabilize Yaw:",
+                "default":          0,
+                "decimalPlaces":    0,
+                "enumStrings":      "No,Yes",
+                "enumValues":       "0,1"
+            }
+        },
         {
             "id":           205,
             "rawName":      "MAV_CMD_DO_MOUNT_CONTROL",
-            "friendlyName": "Mount config",
-            "description":  "Control antenna mount or camera.",
-            "category":     "Camera",
+            "friendlyName": "Control Mount",
+            "description":  "Control the vehicle mount (e.g. gimbal).",
+            "category":     "Advanced",
             "param1": {
                 "label":            "Lat/Pitch:",
                 "default":          0,
@@ -687,7 +721,7 @@
                 "label":            "Mode:",
                 "default":          0,
                 "decimalPlaces":    0,
-                "enumStrings":      "Retract,Neutral,Mavlink Targetting,RC Targetting, GPS Point",
+                "enumStrings":      "Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point",
                 "enumValues":       "0,1,2,3,4"
             }
         },
