@@ -221,14 +221,14 @@ float Joystick::_adjustRange(int value, Calibration_t calibration)
 
 void Joystick::run(void)
 {
-    open();
+    _open();
     
     while (!_exitThread) {
-	update();
+    _update();
 
         // Update axes
         for (int axisIndex=0; axisIndex<_axisCount; axisIndex++) {
-            int newAxisValue = getAxis(axisIndex);
+            int newAxisValue = _getAxis(axisIndex);
             // Calibration code requires signal to be emitted even if value hasn't changed
             _rgAxisValues[axisIndex] = newAxisValue;
             emit rawAxisValueChanged(axisIndex, newAxisValue);
@@ -236,7 +236,7 @@ void Joystick::run(void)
         
         // Update buttons
         for (int buttonIndex=0; buttonIndex<_buttonCount; buttonIndex++) {
-            bool newButtonValue = getButton(buttonIndex);
+            bool newButtonValue = _getButton(buttonIndex);
             if (newButtonValue != _rgButtonValues[buttonIndex]) {
                 _rgButtonValues[buttonIndex] = newButtonValue;
                 emit rawButtonPressedChanged(buttonIndex, newButtonValue);
@@ -321,7 +321,7 @@ void Joystick::run(void)
         QGC::SLEEP::msleep(40);
     }
     
-    close();
+    _close();
 }
 
 void Joystick::startPolling(Vehicle* vehicle)
