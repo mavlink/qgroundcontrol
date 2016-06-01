@@ -41,6 +41,8 @@
 
 #include <QtGlobal>
 
+#define GPS_READ_BUFFER_SIZE 1024
+
 #define GPS_INFO(...) qInfo(__VA_ARGS__)
 #define GPS_WARN(...) qWarning(__VA_ARGS__)
 #define GPS_ERR(...) qCritical(__VA_ARGS__)
