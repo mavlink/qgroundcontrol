@@ -184,8 +184,7 @@
     <parameter default="0" name="ATT_J_EN" type="INT32">
       <short_desc>Moment of inertia enabled in estimator</short_desc>
       <long_desc>If set to != 0 the moment of inertia will be used in the estimator</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <boolean />
       <scope>modules/attitude_estimator_ekf</scope>
     </parameter>
   </group>
@@ -225,7 +224,7 @@
       <scope>modules/attitude_estimator_q</scope>
     </parameter>
     <parameter default="1" name="ATT_MAG_DECL_A" type="INT32">
-      <short_desc>Enable automatic GPS based declination compensation</short_desc>
+      <short_desc>Automatic GPS based declination compensation</short_desc>
       <boolean />
       <scope>modules/attitude_estimator_q</scope>
     </parameter>
@@ -243,7 +242,7 @@ Set to 2 to use heading from motion capture</short_desc>
       </values>
     </parameter>
     <parameter default="1" name="ATT_ACC_COMP" type="INT32">
-      <short_desc>Enable acceleration compensation based on GPS
+      <short_desc>Acceleration compensation based on GPS
 velocity</short_desc>
       <boolean />
       <scope>modules/attitude_estimator_q</scope>
@@ -398,13 +397,12 @@ velocity</short_desc>
     </parameter>
     <parameter default="0" name="TRIG_MODE" type="INT32">
       <short_desc>Camera trigger mode</short_desc>
-      <long_desc>0 disables the trigger, 1 sets it to enabled on command, 2 time based and always on, 3 distance based and always on, 4 distance based and started / stopped via mission or command.</long_desc>
       <min>0</min>
       <max>4</max>
       <reboot_required>true</reboot_required>
       <scope>drivers/camera_trigger</scope>
       <values>
-        <value code="1">On invididual commands</value>
+        <value code="1">On individual commands</value>
         <value code="0">Disable</value>
         <value code="3">Distance based, always on</value>
         <value code="2">Time based, always on</value>
@@ -530,8 +528,9 @@ velocity</short_desc>
       <long_desc>Engine failure triggers only above this throttle value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <decimal>1</decimal>
-      <increment>0.05</increment>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/commander</scope>
     </parameter>
     <parameter default="5.0" name="COM_EF_C2T" type="FLOAT">
@@ -539,7 +538,7 @@ velocity</short_desc>
       <long_desc>Engine failure triggers only below this current value</long_desc>
       <min>0.0</min>
       <max>50.0</max>
-      <unit>A</unit>
+      <unit>A/%</unit>
       <decimal>2</decimal>
       <increment>1</increment>
       <scope>modules/commander</scope>
@@ -602,6 +601,13 @@ velocity</short_desc>
         <value code="2">Virtual RC by Joystick</value>
       </values>
     </parameter>
+    <parameter default="1000" name="COM_RC_ARM_HYST" type="INT32">
+      <short_desc>RC input arm/disarm command duration</short_desc>
+      <long_desc>The default value of 1000 requires the stick to be held in the arm or disarm position for 1 second.</long_desc>
+      <min>100</min>
+      <max>1500</max>
+      <scope>modules/commander</scope>
+    </parameter>
     <parameter default="0" name="COM_DISARM_LAND" type="INT32">
       <short_desc>Time-out for auto disarm after landing</short_desc>
       <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. A value of zero means that automatic disarming is disabled.</long_desc>
@@ -630,7 +636,10 @@ velocity</short_desc>
       <short_desc>Comms hold wait time</short_desc>
       <long_desc>The amount of time in seconds the system should wait at the comms hold waypoint</long_desc>
       <min>0.0</min>
+      <max>3600.0</max>
       <unit>s</unit>
+      <decimal>0</decimal>
+      <increment>1</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="-266072120" name="NAV_DLL_CH_LAT" type="INT32">
@@ -655,13 +664,18 @@ velocity</short_desc>
       <min>-50</min>
       <max>30000</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="120.0" name="NAV_DLL_AH_T" type="FLOAT">
-      <short_desc>Airfield hole wait time</short_desc>
+      <short_desc>Airfield home wait time</short_desc>
       <long_desc>The amount of time in seconds the system should wait at the airfield home waypoint</long_desc>
       <min>0.0</min>
+      <max>3600.0</max>
       <unit>s</unit>
+      <decimal>0</decimal>
+      <increment>1</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="2" name="NAV_DLL_N" type="INT32">
@@ -698,6 +712,8 @@ velocity</short_desc>
       <long_desc>Altitude of airfield home waypoint</long_desc>
       <min>-50</min>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
   </group>
@@ -811,7 +827,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>2</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="6.0e-2" name="EKF2_GYR_NOISE" type="FLOAT">
+    <parameter default="1.5e-2" name="EKF2_GYR_NOISE" type="FLOAT">
       <short_desc>Rate gyro noise for covariance prediction</short_desc>
       <min>0.0001</min>
       <max>0.1</max>
@@ -819,7 +835,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>4</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0.25" name="EKF2_ACC_NOISE" type="FLOAT">
+    <parameter default="3.5e-1" name="EKF2_ACC_NOISE" type="FLOAT">
       <short_desc>Accelerometer noise for covariance prediction</short_desc>
       <min>0.01</min>
       <max>1.0</max>
@@ -827,30 +843,23 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>2</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="2.5e-6" name="EKF2_GYR_B_NOISE" type="FLOAT">
-      <short_desc>Process noise for delta angle bias prediction</short_desc>
-      <min>0.0</min>
-      <max>0.0001</max>
-      <unit>rad/s</unit>
-      <decimal>8</decimal>
-      <scope>modules/ekf2</scope>
-    </parameter>
-    <parameter default="3.0e-5" name="EKF2_ACC_B_NOISE" type="FLOAT">
-      <short_desc>Process noise for delta velocity z bias prediction</short_desc>
+    <parameter default="1.0e-3" name="EKF2_GYR_B_NOISE" type="FLOAT">
+      <short_desc>Process noise for IMU rate gyro bias prediction</short_desc>
       <min>0.0</min>
       <max>0.01</max>
-      <unit>m/s/s</unit>
-      <decimal>7</decimal>
-      <scope>modules/ekf2</scope>
-    </parameter>
-    <parameter default="3.0e-4" name="EKF2_GYR_S_NOISE" type="FLOAT">
-      <short_desc>Process noise for delta angle scale factor prediction</short_desc>
-      <min>0.0</min>
-      <max>0.01</max>
+      <unit>rad/s**2</unit>
       <decimal>6</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="5.0e-4" name="EKF2_MAG_B_NOISE" type="FLOAT">
+    <parameter default="3.0e-3" name="EKF2_ACC_B_NOISE" type="FLOAT">
+      <short_desc>Process noise for IMU accelerometer bias prediction</short_desc>
+      <min>0.0</min>
+      <max>0.01</max>
+      <unit>m/s**3</unit>
+      <decimal>6</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="1.0e-4" name="EKF2_MAG_B_NOISE" type="FLOAT">
       <short_desc>Process noise for body magnetic field prediction</short_desc>
       <min>0.0</min>
       <max>0.1</max>
@@ -858,7 +867,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>6</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="2.5e-3" name="EKF2_MAG_E_NOISE" type="FLOAT">
+    <parameter default="1.0e-3" name="EKF2_MAG_E_NOISE" type="FLOAT">
       <short_desc>Process noise for earth magnetic field prediction</short_desc>
       <min>0.0</min>
       <max>0.1</max>
@@ -898,7 +907,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>1</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="3.0" name="EKF2_BARO_NOISE" type="FLOAT">
+    <parameter default="2.0" name="EKF2_BARO_NOISE" type="FLOAT">
       <short_desc>Measurement noise for barometric altitude</short_desc>
       <min>0.01</min>
       <max>15.0</max>
@@ -964,9 +973,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <values>
         <value code="1">Magnetic heading</value>
         <value code="0">Automatic</value>
-        <value code="3">2-D projection</value>
+        <value code="3">None</value>
         <value code="2">3-axis fusion</value>
-        <value code="4">None</value>
       </values>
     </parameter>
     <parameter default="5.0" name="EKF2_BARO_GATE" type="FLOAT">
@@ -990,6 +998,13 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>1</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
+    <parameter default="3.0" name="EKF2_TAS_GATE" type="FLOAT">
+      <short_desc>Gate size for TAS fusion</short_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+      <decimal>1</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
     <parameter default="0" name="EKF2_REC_RPL" type="INT32">
       <short_desc>Replay mode</short_desc>
       <long_desc>A value of 1 indicates that the ekf2 module will publish replay messages for logging.</long_desc>
@@ -997,10 +1012,10 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <scope>modules/ekf2</scope>
     </parameter>
     <parameter default="1" name="EKF2_AID_MASK" type="INT32">
-      <short_desc>Integer bitmask controlling which external aiding sources will be used</short_desc>
-      <long_desc>Set bits in the following positions to enable: 0 : Set to true to use GPS data if available 1 : Set to true to use optical flow data if available</long_desc>
+      <short_desc>Integer bitmask controlling data fusion and aiding methods</short_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Set to true to use GPS data if available 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU bias estimation</long_desc>
       <min>0</min>
-      <max>3</max>
+      <max>15</max>
       <scope>modules/ekf2</scope>
     </parameter>
     <parameter default="0" name="EKF2_HGT_MODE" type="INT32">
@@ -1155,6 +1170,45 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>3</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
+    <parameter default="0.5" name="EKF2_TAU_VEL" type="FLOAT">
+      <short_desc>Time constant of the velocity output prediction and smoothing filter. Controls how tightly the velocity output tracks the EKF states. Set to a negative number to disable the EKF velocity state tracking. This will cause the output velocity to track the output position time derivative</short_desc>
+      <max>1.0</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0.25" name="EKF2_TAU_POS" type="FLOAT">
+      <short_desc>Time constant of the position output prediction and smoothing filter. Controls how tightly the output track the EKF states</short_desc>
+      <min>0.1</min>
+      <max>1.0</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0.1" name="EKF2_GBIAS_INIT" type="FLOAT">
+      <short_desc>1-sigma IMU gyro switch-on bias</short_desc>
+      <min>0.0</min>
+      <max>0.2</max>
+      <unit>rad/sec</unit>
+      <decimal>2</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0.2" name="EKF2_ABIAS_INIT" type="FLOAT">
+      <short_desc>1-sigma IMU accelerometer switch-on bias</short_desc>
+      <min>0.0</min>
+      <max>0.5</max>
+      <unit>m/s/s</unit>
+      <decimal>2</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0.1" name="EKF2_ANGERR_INIT" type="FLOAT">
+      <short_desc>1-sigma tilt angle uncertainty after gravity vector alignment</short_desc>
+      <min>0.0</min>
+      <max>0.5</max>
+      <unit>rad</unit>
+      <decimal>3</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
   </group>
   <group name="FW Attitude Control">
     <parameter default="0.4" name="FW_R_TC" type="FLOAT">
@@ -1163,6 +1217,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.4</min>
       <max>1.0</max>
       <unit>s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.4" name="FW_P_TC" type="FLOAT">
@@ -1171,6 +1227,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.2</min>
       <max>1.0</max>
       <unit>s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.08" name="FW_PR_P" type="FLOAT">
@@ -1179,6 +1237,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.005</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.02" name="FW_PR_I" type="FLOAT">
@@ -1187,6 +1247,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.005</min>
       <max>0.5</max>
       <unit>%/rad</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="60.0" name="FW_P_RMAX_POS" type="FLOAT">
@@ -1195,6 +1257,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="60.0" name="FW_P_RMAX_NEG" type="FLOAT">
@@ -1203,6 +1267,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.4" name="FW_PR_IMAX" type="FLOAT">
@@ -1210,7 +1276,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <unit>%</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.05" name="FW_RR_P" type="FLOAT">
@@ -1219,6 +1286,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.005</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.01" name="FW_RR_I" type="FLOAT">
@@ -1227,6 +1296,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.005</min>
       <max>0.2</max>
       <unit>%/rad</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.2" name="FW_RR_IMAX" type="FLOAT">
@@ -1234,7 +1305,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <unit>%</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="70.0" name="FW_R_RMAX" type="FLOAT">
@@ -1243,6 +1315,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.05" name="FW_YR_P" type="FLOAT">
@@ -1251,6 +1325,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.005</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.0" name="FW_YR_I" type="FLOAT">
@@ -1259,6 +1335,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>50.0</max>
       <unit>%/rad</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.2" name="FW_YR_IMAX" type="FLOAT">
@@ -1266,7 +1344,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <unit>%</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.0" name="FW_Y_RMAX" type="FLOAT">
@@ -1275,6 +1354,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.5" name="FW_WR_P" type="FLOAT">
@@ -1283,14 +1364,18 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.005</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.1" name="FW_WR_I" type="FLOAT">
       <short_desc>Wheel steering rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
-      <min>0.0</min>
-      <max>50.0</max>
+      <min>0.005</min>
+      <max>0.5</max>
       <unit>%/rad</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="1.0" name="FW_WR_IMAX" type="FLOAT">
@@ -1298,7 +1383,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <unit>%</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.0" name="FW_W_RMAX" type="FLOAT">
@@ -1307,6 +1393,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.5" name="FW_RR_FF" type="FLOAT">
@@ -1315,6 +1403,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>10.0</max>
       <unit>%/rad/s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.5" name="FW_PR_FF" type="FLOAT">
@@ -1323,6 +1413,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>10.0</max>
       <unit>%/rad/s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.3" name="FW_YR_FF" type="FLOAT">
@@ -1331,6 +1423,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>10.0</max>
       <unit>%/rad/s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.2" name="FW_WR_FF" type="FLOAT">
@@ -1339,12 +1433,18 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>10.0</max>
       <unit>%/rad/s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="1000.0" name="FW_YCO_VMIN" type="FLOAT">
       <short_desc>Minimal speed for yaw coordination</short_desc>
       <long_desc>For airspeeds above this value, the yaw rate is calculated for a coordinated turn. Set to a very high value to disable.</long_desc>
+      <min>0.0</min>
+      <max>1000.0</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0" name="FW_YCO_METHOD" type="INT32">
@@ -1358,36 +1458,14 @@ Assumes measurement is timestamped at trailing edge of integration period</short
         <value code="0">open-loop</value>
       </values>
     </parameter>
-    <parameter default="10.0" name="FW_AIRSPD_MIN" type="FLOAT">
-      <short_desc>Minimum Airspeed</short_desc>
-      <long_desc>If the airspeed falls below this value, the TECS controller will try to increase airspeed more aggressively.</long_desc>
-      <min>0.0</min>
-      <max>40</max>
-      <unit>m/s</unit>
-      <scope>modules/fw_att_control</scope>
-    </parameter>
-    <parameter default="15.0" name="FW_AIRSPD_TRIM" type="FLOAT">
-      <short_desc>Trim Airspeed</short_desc>
-      <long_desc>The TECS controller tries to fly at this airspeed.</long_desc>
-      <min>0.0</min>
-      <max>40</max>
-      <unit>m/s</unit>
-      <scope>modules/fw_att_control</scope>
-    </parameter>
-    <parameter default="20.0" name="FW_AIRSPD_MAX" type="FLOAT">
-      <short_desc>Maximum Airspeed</short_desc>
-      <long_desc>If the airspeed is above this value, the TECS controller will try to decrease airspeed more aggressively.</long_desc>
-      <min>0.0</min>
-      <max>40</max>
-      <unit>m/s</unit>
-      <scope>modules/fw_att_control</scope>
-    </parameter>
     <parameter default="0.0" name="FW_RSP_OFF" type="FLOAT">
       <short_desc>Roll Setpoint Offset</short_desc>
       <long_desc>An airframe specific offset of the roll setpoint in degrees, the value is added to the roll setpoint and should correspond to the typical cruise speed of the airframe.</long_desc>
       <min>-90.0</min>
       <max>90.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.0" name="FW_PSP_OFF" type="FLOAT">
@@ -1396,6 +1474,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>-90.0</min>
       <max>90.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="45.0" name="FW_MAN_R_MAX" type="FLOAT">
@@ -1404,6 +1484,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="45.0" name="FW_MAN_P_MAX" type="FLOAT">
@@ -1412,18 +1494,26 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="1.0" name="FW_FLAPS_SCL" type="FLOAT">
       <short_desc>Scale factor for flaps</short_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0.0" name="FW_FLAPERON_SCL" type="FLOAT">
       <short_desc>Scale factor for flaperons</short_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/fw_att_control</scope>
     </parameter>
   </group>
@@ -1434,6 +1524,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>12.0</min>
       <max>50.0</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.75" name="FW_L1_DAMPING" type="FLOAT">
@@ -1441,6 +1533,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>Damping factor for L1 control.</long_desc>
       <min>0.6</min>
       <max>0.9</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.6" name="FW_THR_CRUISE" type="FLOAT">
@@ -1449,6 +1543,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.0" name="FW_THR_SLEW_MAX" type="FLOAT">
@@ -1464,6 +1560,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>-60.0</min>
       <max>0.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="45.0" name="FW_P_LIM_MAX" type="FLOAT">
@@ -1472,6 +1570,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>60.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="50.0" name="FW_R_LIM" type="FLOAT">
@@ -1480,6 +1580,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>35.0</min>
       <max>65.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="1.0" name="FW_THR_MAX" type="FLOAT">
@@ -1488,6 +1590,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.0" name="FW_THR_MIN" type="FLOAT">
@@ -1496,6 +1600,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.15" name="FW_THR_IDLE" type="FLOAT">
@@ -1504,6 +1610,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>0.4</max>
       <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="1.0" name="FW_THR_LND_MAX" type="FLOAT">
@@ -1512,6 +1620,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="10.0" name="FW_CLMBOUT_DIFF" type="FLOAT">
@@ -1520,6 +1630,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>150.0</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="5.0" name="FW_LND_ANG" type="FLOAT">
@@ -1527,11 +1639,17 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>1.0</min>
       <max>15.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="10.0" name="FW_LND_HVIRT" type="FLOAT">
       <short_desc>FW_LND_HVIRT</short_desc>
+      <min>1.0</min>
+      <max>15.0</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="8.0" name="FW_LND_FLALT" type="FLOAT">
@@ -1539,6 +1657,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>25.0</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="-1.0" name="FW_LND_TLALT" type="FLOAT">
@@ -1547,6 +1667,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>-1.0</min>
       <max>30.0</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="15.0" name="FW_LND_HHDIST" type="FLOAT">
@@ -1554,11 +1676,12 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0</min>
       <max>30.0</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0" name="FW_LND_USETER" type="INT32">
-      <short_desc>Enable or disable usage of terrain estimate during landing</short_desc>
-      <long_desc>0: disabled, 1: enabled</long_desc>
+      <short_desc>Use terrain estimate during landing</short_desc>
       <boolean />
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
@@ -1568,6 +1691,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0</min>
       <max>15.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="15.0" name="FW_LND_FL_PMAX" type="FLOAT">
@@ -1576,80 +1701,147 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0</min>
       <max>45.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="1.3" name="FW_LND_AIRSPD_SC" type="FLOAT">
-      <short_desc>Landing airspeed scale factor</short_desc>
-      <long_desc>Multiplying this factor with the minimum airspeed of the plane gives the target airspeed the landing approach.</long_desc>
+      <short_desc>Min. airspeed scaling factor for landing</short_desc>
+      <long_desc>Multiplying this factor with the minimum airspeed of the plane gives the target airspeed the landing approach. FW_AIRSPD_MIN * FW_LND_AIRSPD_SC</long_desc>
       <min>1.0</min>
       <max>1.5</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
   </group>
   <group name="FW TECS">
+    <parameter default="10.0" name="FW_AIRSPD_MIN" type="FLOAT">
+      <short_desc>Minimum Airspeed</short_desc>
+      <long_desc>If the airspeed falls below this value, the TECS controller will try to increase airspeed more aggressively.</long_desc>
+      <min>0.0</min>
+      <max>40</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+      <scope>modules/fw_pos_control_l1</scope>
+    </parameter>
+    <parameter default="20.0" name="FW_AIRSPD_MAX" type="FLOAT">
+      <short_desc>Maximum Airspeed</short_desc>
+      <long_desc>If the airspeed is above this value, the TECS controller will try to decrease airspeed more aggressively.</long_desc>
+      <min>0.0</min>
+      <max>40</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+      <scope>modules/fw_pos_control_l1</scope>
+    </parameter>
     <parameter default="5.0" name="FW_T_CLMB_MAX" type="FLOAT">
       <short_desc>Maximum climb rate</short_desc>
       <long_desc>This is the best climb rate that the aircraft can achieve with the throttle set to THR_MAX and the airspeed set to the default value. For electric aircraft make sure this number can be achieved towards the end of flight when the battery voltage has reduced. The setting of this parameter can be checked by commanding a positive altitude change of 100m in loiter, RTL or guided mode. If the throttle required to climb is close to THR_MAX and the aircraft is maintaining airspeed, then this parameter is set correctly. If the airspeed starts to reduce, then the parameter is set to high, and if the throttle demand required to climb and maintain speed is noticeably less than FW_THR_MAX, then either FW_T_CLMB_MAX should be increased or FW_THR_MAX reduced.</long_desc>
-      <min>2.0</min>
-      <max>10.0</max>
+      <min>1.0</min>
+      <max>15.0</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="2.0" name="FW_T_SINK_MIN" type="FLOAT">
       <short_desc>Minimum descent rate</short_desc>
       <long_desc>This is the sink rate of the aircraft with the throttle set to THR_MIN and flown at the same airspeed as used to measure FW_T_CLMB_MAX.</long_desc>
+      <min>1.0</min>
+      <max>5.0</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="5.0" name="FW_T_SINK_MAX" type="FLOAT">
       <short_desc>Maximum descent rate</short_desc>
       <long_desc>This sets the maximum descent rate that the controller will use. If this value is too large, the aircraft can over-speed on descent. This should be set to a value that can be achieved without exceeding the lower pitch angle limit and without over-speeding the aircraft.</long_desc>
+      <min>2.0</min>
+      <max>15.0</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="5.0" name="FW_T_TIME_CONST" type="FLOAT">
       <short_desc>TECS time constant</short_desc>
       <long_desc>This is the time constant of the TECS control algorithm (in seconds). Smaller values make it faster to respond, larger values make it slower to respond.</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
       <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="8.0" name="FW_T_THRO_CONST" type="FLOAT">
       <short_desc>TECS Throttle time constant</short_desc>
       <long_desc>This is the time constant of the TECS throttle control algorithm (in seconds). Smaller values make it faster to respond, larger values make it slower to respond.</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
       <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.5" name="FW_T_THR_DAMP" type="FLOAT">
       <short_desc>Throttle damping factor</short_desc>
       <long_desc>This is the damping gain for the throttle demand loop. Increase to add damping to correct for oscillations in speed and height.</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.1" name="FW_T_INTEG_GAIN" type="FLOAT">
       <short_desc>Integrator gain</short_desc>
       <long_desc>This is the integrator gain on the control loop. Increasing this gain increases the speed at which speed and height offsets are trimmed out, but reduces damping and increases overshoot.</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="7.0" name="FW_T_VERT_ACC" type="FLOAT">
       <short_desc>Maximum vertical acceleration</short_desc>
       <long_desc>This is the maximum vertical acceleration (in m/s/s) either up or down that the controller will use to correct speed or height errors. The default value of 7 m/s/s (equivalent to +- 0.7 g) allows for reasonably aggressive pitch changes if required to recover from under-speed conditions.</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
       <unit>m/s/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="3.0" name="FW_T_HGT_OMEGA" type="FLOAT">
       <short_desc>Complementary filter "omega" parameter for height</short_desc>
       <long_desc>This is the cross-over frequency (in radians/second) of the complementary filter used to fuse vertical acceleration and barometric height to obtain an estimate of height rate and height. Increasing this frequency weights the solution more towards use of the barometer, whilst reducing it weights the solution more towards use of the accelerometer data.</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
       <unit>rad/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="2.0" name="FW_T_SPD_OMEGA" type="FLOAT">
       <short_desc>Complementary filter "omega" parameter for speed</short_desc>
-      <long_desc>This is the cross-over frequency (in radians/second) of the complementary filter used to fuse longitudinal acceleration and airspeed to obtain an improved airspeed estimate. Increasing this frequency weights the solution more towards use of the arispeed sensor, whilst reducing it weights the solution more towards use of the accelerometer data.</long_desc>
+      <long_desc>This is the cross-over frequency (in radians/second) of the complementary filter used to fuse longitudinal acceleration and airspeed to obtain an improved airspeed estimate. Increasing this frequency weights the solution more towards use of the airspeed sensor, whilst reducing it weights the solution more towards use of the accelerometer data.</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
       <unit>rad/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="15.0" name="FW_T_RLL2THR" type="FLOAT">
       <short_desc>Roll -&gt; Throttle feedforward</short_desc>
       <long_desc>Increasing this gain turn increases the amount of throttle that will be used to compensate for the additional drag created by turning. Ideally this should be set to  approximately 10 x the extra sink rate in m/s created by a 45 degree bank turn. Increase this gain if the aircraft initially loses energy in turns and reduce if the aircraft initially gains energy in turns. Efficient high aspect-ratio aircraft (eg powered sailplanes) can use a lower value, whereas inefficient low aspect-ratio models (eg delta wings) can use a higher value.</long_desc>
+      <min>0.0</min>
+      <max>20.0</max>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="1.0" name="FW_T_SPDWEIGHT" type="FLOAT">
@@ -1657,24 +1849,99 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>This parameter adjusts the amount of weighting that the pitch control applies to speed vs height errors. Setting it to 0.0 will cause the pitch control to control height and ignore speed errors. This will normally improve height accuracy but give larger airspeed errors. Setting it to 2.0 will cause the pitch control loop to control speed and ignore height errors. This will normally reduce airspeed errors, but give larger height errors. The default value of 1.0 allows the pitch control to simultaneously control height and speed. Note to Glider Pilots - set this parameter to 2.0 (The glider will adjust its pitch angle to maintain airspeed, ignoring changes in height).</long_desc>
       <min>0.0</min>
       <max>2.0</max>
+      <decimal>1</decimal>
+      <increment>1.0</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.0" name="FW_T_PTCH_DAMP" type="FLOAT">
       <short_desc>Pitch damping factor</short_desc>
       <long_desc>This is the damping gain for the pitch demand loop. Increase to add damping to correct for oscillations in height. The default value of 0.0 will work well provided the pitch to servo controller has been tuned properly.</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.05" name="FW_T_HRATE_P" type="FLOAT">
       <short_desc>Height rate P factor</short_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.0" name="FW_T_HRATE_FF" type="FLOAT">
       <short_desc>Height rate FF factor</short_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.02" name="FW_T_SRATE_P" type="FLOAT">
       <short_desc>Speed rate P factor</short_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/fw_pos_control_l1</scope>
+    </parameter>
+    <parameter default="15.0" name="FW_AIRSPD_TRIM" type="FLOAT">
+      <short_desc>Cruise Airspeed</short_desc>
+      <long_desc>The fixed wing controller tries to fly at this airspeed.</long_desc>
+      <min>0.0</min>
+      <max>40</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+      <scope>modules/navigator</scope>
+    </parameter>
+  </group>
+  <group name="Follow target">
+    <parameter default="8.0" name="NAV_MIN_FT_HT" type="FLOAT">
+      <short_desc>Minimum follow target altitude</short_desc>
+      <long_desc>The minimum height in meters relative to home for following a target</long_desc>
+      <min>8.0</min>
+      <unit>meters</unit>
+      <scope>modules/navigator</scope>
+    </parameter>
+    <parameter default="8.0" name="NAV_FT_DST" type="FLOAT">
+      <short_desc>Distance to follow target from</short_desc>
+      <long_desc>The distance in meters to follow the target at</long_desc>
+      <min>1.0</min>
+      <unit>meters</unit>
+      <scope>modules/navigator</scope>
+    </parameter>
+    <parameter default="1" name="NAV_FT_FS" type="INT32">
+      <short_desc>Side to follow target from</short_desc>
+      <long_desc>The side to follow the target from (front right = 0, behind = 1, front = 2, front left = 3)</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <unit>n/a</unit>
+      <scope>modules/navigator</scope>
+    </parameter>
+    <parameter default="0.5" name="NAV_FT_RS" type="FLOAT">
+      <short_desc>Dynamic filtering algorithm responsiveness to target movement
+lower numbers increase the responsiveness to changing long lat
+but also ignore less noise</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>n/a</unit>
+      <decimal>2</decimal>
+      <scope>modules/navigator</scope>
+    </parameter>
+  </group>
+  <group name="GPS">
+    <parameter default="0" name="GPS_DUMP_COMM" type="INT32">
+      <short_desc>Dump GPS communication to a file</short_desc>
+      <long_desc>If this is set to 1, all GPS communication data will be written to a file. Two files will be created, for reading and writing. All communication from startup until device disarm will be dumped.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>drivers/gps</scope>
+      <values>
+        <value code="1">Enable</value>
+        <value code="0">Disable</value>
+      </values>
     </parameter>
   </group>
   <group name="GPS Failure Navigation">
@@ -1682,7 +1949,10 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <short_desc>Loiter time</short_desc>
       <long_desc>The amount of time in seconds the system should do open loop loiter and wait for gps recovery before it goes into flight termination.</long_desc>
       <min>0.0</min>
+      <max>3600.0</max>
       <unit>s</unit>
+      <decimal>0</decimal>
+      <increment>1</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="15.0" name="NAV_GPSF_R" type="FLOAT">
@@ -1691,6 +1961,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.0</min>
       <max>30.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="0.0" name="NAV_GPSF_P" type="FLOAT">
@@ -1699,6 +1971,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>-30.0</min>
       <max>30.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="0.7" name="NAV_GPSF_TR" type="FLOAT">
@@ -1706,6 +1980,9 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>Thrust value which is set during the open loop loiter</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/navigator</scope>
     </parameter>
   </group>
@@ -1871,9 +2148,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
   </group>
   <group name="Launch detection">
     <parameter default="0" name="LAUN_ALL_ON" type="INT32">
-      <short_desc>Enable launch detection</short_desc>
-      <min>0</min>
-      <max>1</max>
+      <short_desc>Launch detection</short_desc>
       <boolean />
       <scope>lib/launchdetection</scope>
     </parameter>
@@ -1882,34 +2157,44 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>LAUN_CAT_A for LAUN_CAT_T serves as threshold to trigger launch detection.</long_desc>
       <min>0</min>
       <unit>m/s/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>lib/launchdetection</scope>
     </parameter>
     <parameter default="0.05" name="LAUN_CAT_T" type="FLOAT">
       <short_desc>Catapult time threshold</short_desc>
       <long_desc>LAUN_CAT_A for LAUN_CAT_T serves as threshold to trigger launch detection.</long_desc>
-      <min>0</min>
+      <min>0.0</min>
+      <max>5.0</max>
       <unit>s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>lib/launchdetection</scope>
     </parameter>
     <parameter default="0.0" name="LAUN_CAT_MDEL" type="FLOAT">
       <short_desc>Motor delay</short_desc>
       <long_desc>Delay between starting attitude control and powering up the throttle (giving throttle control to the controller) Before this timespan is up the throttle will be set to FW_THR_IDLE, set to 0 to deactivate</long_desc>
-      <min>0</min>
+      <min>0.0</min>
+      <max>10.0</max>
       <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>lib/launchdetection</scope>
     </parameter>
     <parameter default="30.0" name="LAUN_CAT_PMAX" type="FLOAT">
       <short_desc>Maximum pitch before the throttle is powered up (during motor delay phase)</short_desc>
       <long_desc>This is an extra limit for the maximum pitch which is imposed in the phase before the throttle turns on. This allows to limit the maximum pitch angle during a bungee launch (make the launch less steep).</long_desc>
-      <min>0</min>
-      <max>45</max>
+      <min>0.0</min>
+      <max>45.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>lib/launchdetection</scope>
     </parameter>
   </group>
   <group name="Local Position Estimator">
     <parameter default="1" name="LPE_INTEGRATE" type="INT32">
-      <short_desc>Enable accelerometer integration for prediction</short_desc>
+      <short_desc>Accelerometer integration for prediction</short_desc>
       <boolean />
       <scope>modules/local_position_estimator</scope>
     </parameter>
@@ -1995,7 +2280,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <scope>modules/local_position_estimator</scope>
     </parameter>
     <parameter default="1" name="LPE_GPS_ON" type="INT32">
-      <short_desc>Enable GPS</short_desc>
+      <short_desc>GPS</short_desc>
       <boolean />
       <scope>modules/local_position_estimator</scope>
     </parameter>
@@ -2064,7 +2349,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <scope>modules/local_position_estimator</scope>
     </parameter>
     <parameter default="1" name="LPE_VIS_ON" type="INT32">
-      <short_desc>Enabled vision correction</short_desc>
+      <short_desc>Vision correction</short_desc>
       <boolean />
       <scope>modules/local_position_estimator</scope>
     </parameter>
@@ -2146,6 +2431,15 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <max>250</max>
       <scope>modules/mavlink</scope>
     </parameter>
+    <parameter default="1" name="MAV_PROTO_VER" type="INT32">
+      <short_desc>MAVLink protocol version</short_desc>
+      <scope>modules/mavlink</scope>
+      <values>
+        <value code="1">Always use version 1</value>
+        <value code="0">Default to 1, switch to 2 if GCS sends version 2</value>
+        <value code="2">Always use version 2</value>
+      </values>
+    </parameter>
     <parameter default="0" name="MAV_RADIO_ID" type="INT32">
       <short_desc>MAVLink Radio ID</short_desc>
       <long_desc>When non-zero the MAVLink app will attempt to configure the radio to this ID and re-set the parameter to 0. If the value is negative it will reset the complete radio config to factory defaults.</long_desc>
@@ -2180,13 +2474,48 @@ Assumes measurement is timestamped at trailing edge of integration period</short
   </group>
   <group name="MKBLCTRL Testmode">
     <parameter default="0" name="MKBLCTRL_TEST" type="INT32">
-      <short_desc>Enables testmode (Identify) of MKBLCTRL Driver</short_desc>
-      <min>0</min>
-      <max>1</max>
+      <short_desc>Test mode (Identify) of MKBLCTRL Driver</short_desc>
+      <boolean />
       <scope>drivers/mkblctrl</scope>
+    </parameter>
+  </group>
+  <group name="MPU9x50 Configuration">
+    <parameter default="4" name="MPU_GYRO_LPF_ENM" type="INT32">
+      <short_desc>Low pass filter frequency for Gyro</short_desc>
+      <scope>platforms/qurt/fc_addon/mpu_spi</scope>
       <values>
-        <value code="1">Enabled</value>
-        <value code="0">Disabled</value>
+        <value code="1">MPU9X50_GYRO_LPF_184HZ</value>
+        <value code="0">MPU9X50_GYRO_LPF_250HZ</value>
+        <value code="3">MPU9X50_GYRO_LPF_41HZ</value>
+        <value code="2">MPU9X50_GYRO_LPF_92HZ</value>
+        <value code="5">MPU9X50_GYRO_LPF_10HZ</value>
+        <value code="4">MPU9X50_GYRO_LPF_20HZ</value>
+        <value code="7">MPU9X50_GYRO_LPF_3600HZ_NOLPF</value>
+        <value code="6">MPU9X50_GYRO_LPF_5HZ</value>
+      </values>
+    </parameter>
+    <parameter default="4" name="MPU_ACC_LPF_ENM" type="INT32">
+      <short_desc>Low pass filter frequency for Accelerometer</short_desc>
+      <scope>platforms/qurt/fc_addon/mpu_spi</scope>
+      <values>
+        <value code="1">MPU9X50_ACC_LPF_184HZ</value>
+        <value code="0">MPU9X50_ACC_LPF_460HZ</value>
+        <value code="3">MPU9X50_ACC_LPF_41HZ</value>
+        <value code="2">MPU9X50_ACC_LPF_92HZ</value>
+        <value code="5">MPU9X50_ACC_LPF_10HZ</value>
+        <value code="4">MPU9X50_ACC_LPF_20HZ</value>
+        <value code="7">MPU9X50_ACC_LPF_460HZ_NOLPF</value>
+        <value code="6">MPU9X50_ACC_LPF_5HZ</value>
+      </values>
+    </parameter>
+    <parameter default="2" name="MPU_SAMPLE_R_ENM" type="INT32">
+      <short_desc>Sample rate in Hz</short_desc>
+      <scope>platforms/qurt/fc_addon/mpu_spi</scope>
+      <values>
+        <value code="1">MPU9x50_SAMPLE_RATE_200HZ</value>
+        <value code="0">MPU9x50_SAMPLE_RATE_100HZ</value>
+        <value code="3">MPU9x50_SAMPLE_RATE_1000HZ</value>
+        <value code="2">MPU9x50_SAMPLE_RATE_500HZ</value>
       </values>
     </parameter>
   </group>
@@ -2197,6 +2526,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0</min>
       <max>80</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="1.2" name="MIS_LTRMIN_ALT" type="FLOAT">
@@ -2205,10 +2536,12 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0</min>
       <max>80</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="1" name="MIS_ONBOARD_EN" type="INT32">
-      <short_desc>Enable persistent onboard mission storage</short_desc>
+      <short_desc>Persistent onboard mission storage</short_desc>
       <long_desc>When enabled, missions that have been uploaded by the GCS are stored and reloaded after reboot persistently.</long_desc>
       <boolean />
       <scope>modules/navigator</scope>
@@ -2219,6 +2552,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0</min>
       <max>1000</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="1" name="MIS_ALTMODE" type="INT32">
@@ -2251,15 +2586,27 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>-1</min>
       <max>20</max>
       <unit>s</unit>
+      <decimal>1</decimal>
       <increment>1</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="12.0" name="MIS_YAW_ERR" type="FLOAT">
-      <short_desc>Max yaw error in degree needed for waypoint heading acceptance</short_desc>
+      <short_desc>Max yaw error in degrees needed for waypoint heading acceptance</short_desc>
       <min>0</min>
       <max>90</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
       <increment>1</increment>
+      <scope>modules/navigator</scope>
+    </parameter>
+    <parameter default="0" name="VT_WV_LND_EN" type="INT32">
+      <short_desc>Weather-vane mode landings for missions</short_desc>
+      <boolean />
+      <scope>modules/navigator</scope>
+    </parameter>
+    <parameter default="0" name="VT_WV_LTR_EN" type="INT32">
+      <short_desc>Weather-vane mode for loiter mode</short_desc>
+      <boolean />
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="50.0" name="NAV_LOITER_RAD" type="FLOAT">
@@ -2268,6 +2615,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>25</min>
       <max>1000</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="10.0" name="NAV_ACC_RAD" type="FLOAT">
@@ -2276,6 +2625,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <min>0.05</min>
       <max>200.0</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="0" name="NAV_DLL_ACT" type="INT32">
@@ -2672,6 +3023,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <max>1.0</max>
       <unit>norm</unit>
       <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.5" name="MPC_THR_HOVER" type="FLOAT">
@@ -2681,6 +3033,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <max>0.8</max>
       <unit>norm</unit>
       <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.1" name="MPC_ALTCTL_DZ" type="FLOAT">
@@ -2690,6 +3043,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <max>0.2</max>
       <unit>norm</unit>
       <decimal>2</decimal>
+      <increment>0.05</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.0" name="MPC_ALTCTL_DY" type="FLOAT">
@@ -2759,13 +3113,28 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>3</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
-    <parameter default="3.0" name="MPC_Z_VEL_MAX" type="FLOAT">
-      <short_desc>Maximum vertical velocity</short_desc>
+    <parameter default="3.0" name="MPC_Z_VEL_MAX_UP" type="FLOAT">
+      <short_desc>Maximum vertical ascent velocity</short_desc>
       <long_desc>Maximum vertical velocity in AUTO mode and endpoint for stabilized modes (ALTCTRL, POSCTRL).</long_desc>
-      <min>0.0</min>
+      <min>0.5</min>
       <max>8.0</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
+      <scope>modules/mc_pos_control</scope>
+    </parameter>
+    <parameter default="1.0" name="MPC_Z_VEL_MAX" type="FLOAT">
+      <short_desc>Maximum vertical descent velocity</short_desc>
+      <long_desc>Maximum vertical velocity in AUTO mode and endpoint for stabilized modes (ALTCTRL, POSCTRL).</long_desc>
+      <min>0.5</min>
+      <max>4.0</max>
+      <unit>m/s</unit>
+      <scope>modules/mc_pos_control</scope>
+    </parameter>
+    <parameter default="1.0" name="MPC_Z_VEL_MAX_DN" type="FLOAT">
+      <short_desc>Transitional support, do not change / use</short_desc>
+      <min>0.5</min>
+      <max>4.0</max>
+      <unit>m/s</unit>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.5" name="MPC_Z_FF" type="FLOAT">
@@ -3147,7 +3516,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_SBUS_MODE" type="INT32">
-      <short_desc>Enable S.BUS out</short_desc>
+      <short_desc>S.BUS out</short_desc>
       <long_desc>Set to 1 to enable S.BUS version 1 output instead of RSSI.</long_desc>
       <boolean />
       <scope>drivers/px4io</scope>
@@ -3585,14 +3954,16 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <scope>modules/position_estimator_inav</scope>
     </parameter>
     <parameter default="0" name="INAV_DISAB_MOCAP" type="FLOAT">
-      <short_desc>Disable mocap (set 0 if using fake gps)</short_desc>
-      <long_desc>Disable mocap</long_desc>
-      <boolean />
+      <short_desc>Mo-cap</short_desc>
+      <long_desc>Set to 0 if using fake GPS</long_desc>
       <scope>modules/position_estimator_inav</scope>
+      <values>
+        <value code="1">Mo-cap disabled</value>
+        <value code="0">Mo-cap enabled</value>
+      </values>
     </parameter>
     <parameter default="0" name="INAV_LIDAR_EST" type="FLOAT">
-      <short_desc>Enable LIDAR for altitude estimation</short_desc>
-      <long_desc>Enable LIDAR for altitude estimation</long_desc>
+      <short_desc>LIDAR for altitude estimation</short_desc>
       <boolean />
       <scope>modules/position_estimator_inav</scope>
     </parameter>
@@ -3611,6 +3982,13 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <max>328754</max>
       <reboot_required>true</reboot_required>
       <scope>modules/position_estimator_inav</scope>
+    </parameter>
+  </group>
+  <group name="RC Receiver Configuration">
+    <parameter default="1" name="RC_RECEIVER_TYPE" type="INT32">
+      <short_desc>RC receiver type</short_desc>
+      <long_desc>Acceptable values: - RC_RECEIVER_SPEKTRUM = 1, - RC_RECEIVER_LEMONRX = 2,</long_desc>
+      <scope>platforms/qurt/fc_addon/rc_receiver</scope>
     </parameter>
   </group>
   <group name="Radio Calibration">
@@ -4330,7 +4708,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="RC_RL1_DSM_VCC" type="INT32">
-      <short_desc>Enable relay control of relay 1 mapped to the Spektrum receiver power supply</short_desc>
+      <short_desc>Relay control of relay 1 mapped to the Spektrum receiver power supply</short_desc>
       <min>0</min>
       <max>1</max>
       <scope>modules/sensors</scope>
@@ -5140,8 +5518,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
   </group>
   <group name="Runway Takeoff">
     <parameter default="0" name="RWTO_TKOFF" type="INT32">
-      <short_desc>Enable or disable runway takeoff with landing gear</short_desc>
-      <long_desc>0: disabled, 1: enabled</long_desc>
+      <short_desc>Runway takeoff with landing gear</short_desc>
       <boolean />
       <scope>lib/runway_takeoff</scope>
     </parameter>
@@ -5164,6 +5541,8 @@ FW_CLMBOUT_DIFF if FW_CLMBOUT_DIFF &gt; 0</short_desc>
       <min>0.0</min>
       <max>100.0</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
       <scope>lib/runway_takeoff</scope>
     </parameter>
     <parameter default="1.0" name="RWTO_MAX_THR" type="FLOAT">
@@ -5171,6 +5550,9 @@ FW_CLMBOUT_DIFF if FW_CLMBOUT_DIFF &gt; 0</short_desc>
 (Can be used to test taxi on runway)</short_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>lib/runway_takeoff</scope>
     </parameter>
     <parameter default="0.0" name="RWTO_PSP" type="FLOAT">
@@ -5181,6 +5563,8 @@ to takeoff is reached</short_desc>
       <min>0.0</min>
       <max>20.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>lib/runway_takeoff</scope>
     </parameter>
     <parameter default="20.0" name="RWTO_MAX_PITCH" type="FLOAT">
@@ -5190,6 +5574,8 @@ pitch of 10 degrees during takeoff, so this must be larger if set</short_desc>
       <min>0.0</min>
       <max>60.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>lib/runway_takeoff</scope>
     </parameter>
     <parameter default="25.0" name="RWTO_MAX_ROLL" type="FLOAT">
@@ -5199,6 +5585,8 @@ navigation before we're on a safe height</short_desc>
       <min>0.0</min>
       <max>60.0</max>
       <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
       <scope>lib/runway_takeoff</scope>
     </parameter>
     <parameter default="1.3" name="RWTO_AIRSPD_SCL" type="FLOAT">
@@ -5207,10 +5595,21 @@ Pitch up will be commanded when the following airspeed is reached:
 FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</short_desc>
       <min>0.0</min>
       <max>2.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
       <scope>lib/runway_takeoff</scope>
     </parameter>
   </group>
   <group name="SD Logging">
+    <parameter default="0" name="SDLOG_UTC_OFFSET" type="INT32">
+      <short_desc>UTC offset (unit: min)</short_desc>
+      <long_desc>the difference in hours and minutes from Coordinated Universal Time (UTC) for a your place and date. for example, In case of South Korea(UTC+09:00), UTC offset is 540 min (9*60) refer to https://en.wikipedia.org/wiki/List_of_UTC_time_offsets</long_desc>
+      <min>-1000</min>
+      <max>1000</max>
+      <unit>min</unit>
+      <scope>modules/logger</scope>
+    </parameter>
     <parameter default="-1" name="SDLOG_RATE" type="INT32">
       <short_desc>Logging rate</short_desc>
       <long_desc>A value of -1 indicates the commandline argument should be obeyed. A value of 0 sets the minimum rate, any other value is interpreted as rate in Hertz. This parameter is only read out before logging starts (which commonly is before arming).</long_desc>
@@ -5220,7 +5619,7 @@ FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</short_desc>
       <scope>modules/sdlog2</scope>
     </parameter>
     <parameter default="-1" name="SDLOG_EXT" type="INT32">
-      <short_desc>Enable extended logging mode</short_desc>
+      <short_desc>Extended logging mode</short_desc>
       <long_desc>A value of -1 indicates the command line argument should be obeyed. A value of 0 disables extended logging mode, a value of 1 enables it. This parameter is only read out before logging starts (which commonly is before arming).</long_desc>
       <min>-1</min>
       <max>1</max>
@@ -5233,16 +5632,8 @@ FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</short_desc>
     </parameter>
     <parameter default="1" name="SDLOG_GPSTIME" type="INT32">
       <short_desc>Use timestamps only if GPS 3D fix is available</short_desc>
-      <long_desc>A value of 1 constrains the log folder creation to only use the time stamp if a 3D GPS lock is present.</long_desc>
+      <long_desc>Constrain the log folder creation to only use the time stamp if a 3D GPS lock is present.</long_desc>
       <boolean />
-      <scope>modules/sdlog2</scope>
-    </parameter>
-    <parameter default="0" name="SDLOG_UTC_OFFSET" type="INT32">
-      <short_desc>UTC offset (unit: min)</short_desc>
-      <long_desc>the difference in hours and minutes from Coordinated Universal Time (UTC) for a your place and date. for example, In case of South Korea(UTC+09:00), UTC offset is 540 min (9*60) refer to https://en.wikipedia.org/wiki/List_of_UTC_time_offsets</long_desc>
-      <min>-1000</min>
-      <max>1000</max>
-      <unit>min</unit>
       <scope>modules/sdlog2</scope>
     </parameter>
     <parameter default="2" name="SDLOG_PRIO_BOOST" type="INT32">
@@ -5837,16 +6228,49 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
   </group>
   <group name="Sensor Enable">
     <parameter default="0" name="SENS_EN_LL40LS" type="INT32">
-      <short_desc>Enable Lidar-Lite (LL40LS) pwm driver</short_desc>
+      <short_desc>Lidar-Lite (LL40LS) PWM</short_desc>
       <boolean />
       <reboot_required>true</reboot_required>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="SENS_EN_SF0X" type="INT32">
-      <short_desc>Enable sf0x driver</short_desc>
+      <short_desc>Lightware SF0x laser rangefinder</short_desc>
       <boolean />
       <reboot_required>true</reboot_required>
       <scope>modules/sensors</scope>
+    </parameter>
+  </group>
+  <group name="Snapdragon UART ESC">
+    <parameter default="2" name="UART_ESC_MODEL" type="INT32">
+      <short_desc>ESC model</short_desc>
+      <long_desc>See esc_model_t enum definition in uart_esc_dev.h for all supported ESC model enum values.</long_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+      <values>
+        <value code="1">ESC_350QX</value>
+        <value code="0">ESC_200QX</value>
+        <value code="2">ESC_210QC</value>
+      </values>
+    </parameter>
+    <parameter default="250000" name="UART_ESC_BAUD" type="INT32">
+      <short_desc>ESC UART baud rate</short_desc>
+      <long_desc>Default rate is 250Kbps, whic is used in off-the-shelf QRP ESC products.</long_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="4" name="UART_ESC_MOTOR1" type="INT32">
+      <short_desc>Motor 1 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="2" name="UART_ESC_MOTOR2" type="INT32">
+      <short_desc>Motor 2 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="1" name="UART_ESC_MOTOR3" type="INT32">
+      <short_desc>Motor 3 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="3" name="UART_ESC_MOTOR4" type="INT32">
+      <short_desc>Motor 4 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
     </parameter>
   </group>
   <group name="Subscriber Example">
@@ -5871,6 +6295,8 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     <parameter default="0" name="SYS_AUTOSTART" type="INT32">
       <short_desc>Auto-start script index</short_desc>
       <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Defines the auto-start script used to bootstrap the system.</long_desc>
+      <min>0</min>
+      <max>99999</max>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
@@ -5880,12 +6306,17 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <min>0</min>
       <max>1</max>
       <scope>modules/systemlib</scope>
+      <values>
+        <value code="1">Reset parameters</value>
+        <value code="0">Keep parameters</value>
+      </values>
     </parameter>
     <parameter default="1" name="SYS_USE_IO" type="INT32">
       <short_desc>Set usage of IO board</short_desc>
       <long_desc>Can be used to use a standard startup script but with a FMU only set-up. Set to 0 to force the FMU only set-up.</long_desc>
       <min>0</min>
       <max>1</max>
+      <boolean />
       <scope>modules/systemlib</scope>
     </parameter>
     <parameter default="2" name="SYS_RESTART_TYPE" type="INT32">
@@ -5894,6 +6325,11 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <min>0</min>
       <max>2</max>
       <scope>modules/systemlib</scope>
+      <values>
+        <value code="1">Data survives in-flight resets only</value>
+        <value code="0">Data survives resets</value>
+        <value code="2">Data does not survive reset</value>
+      </values>
     </parameter>
     <parameter default="0" name="SYS_MC_EST_GROUP" type="INT32">
       <short_desc>Set multicopter estimator group</short_desc>
@@ -5909,8 +6345,8 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       </values>
     </parameter>
     <parameter default="157600" name="SYS_COMPANION" type="INT32">
-      <short_desc>Enable TELEM2 as companion computer link</short_desc>
-      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Configures the baud rate of the TELEM2 connector as companion computer interface. Set to zero to disable, set to these values to enable (NO OTHER VALUES SUPPORTED!).</long_desc>
+      <short_desc>TELEM2 as companion computer link</short_desc>
+      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Configures the baud rate of the TELEM2 connector as companion computer interface.</long_desc>
       <min>0</min>
       <max>1921600</max>
       <reboot_required>true</reboot_required>
@@ -5932,11 +6368,76 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <min>0</min>
       <scope>modules/systemlib</scope>
     </parameter>
+    <parameter default="0" name="SYS_LOGGER" type="INT32">
+      <short_desc>SD logger</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/systemlib</scope>
+      <values>
+        <value code="1">new logger (experimental)</value>
+        <value code="0">sdlog2 (default)</value>
+      </values>
+    </parameter>
+  </group>
+  <group name="Testing">
+    <parameter default="-1.0" name="TEST_MIN" type="FLOAT">
+      <short_desc>TEST_MIN</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="1.0" name="TEST_MAX" type="FLOAT">
+      <short_desc>TEST_MAX</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="0.5" name="TEST_TRIM" type="FLOAT">
+      <short_desc>TEST_TRIM</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="10.0" name="TEST_HP" type="FLOAT">
+      <short_desc>TEST_HP</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="10.0" name="TEST_LP" type="FLOAT">
+      <short_desc>TEST_LP</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="0.2" name="TEST_P" type="FLOAT">
+      <short_desc>TEST_P</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="0.1" name="TEST_I" type="FLOAT">
+      <short_desc>TEST_I</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="1.0" name="TEST_I_MAX" type="FLOAT">
+      <short_desc>TEST_I_MAX</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="0.01" name="TEST_D" type="FLOAT">
+      <short_desc>TEST_D</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="10.0" name="TEST_D_LP" type="FLOAT">
+      <short_desc>TEST_D_LP</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="1.0" name="TEST_MEAN" type="FLOAT">
+      <short_desc>TEST_MEAN</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="2.0" name="TEST_DEV" type="FLOAT">
+      <short_desc>TEST_DEV</short_desc>
+      <scope>modules/controllib_test</scope>
+    </parameter>
+    <parameter default="12345678" name="TEST_PARAMS" type="INT32">
+      <short_desc>TEST_PARAMS</short_desc>
+      <scope>systemcmds/tests</scope>
+    </parameter>
   </group>
   <group name="UAVCAN">
     <parameter default="0" name="UAVCAN_ENABLE" type="INT32">
-      <short_desc>Enable UAVCAN</short_desc>
-      <long_desc>Allowed values: 0 - UAVCAN disabled. 1 - Enabled support for UAVCAN actuators and sensors. 2 - Enabled support for dynamic node ID allocation and firmware update. 3 - Sets the motor control outputs to UAVCAN and enables support for dynamic node ID allocation and firmware update.</long_desc>
+      <short_desc>UAVCAN mode</short_desc>
+      <long_desc>0 - UAVCAN disabled. 1 - Enabled support for UAVCAN actuators and sensors. 2 - Enabled support for dynamic node ID allocation and firmware update. 3 - Sets the motor control outputs to UAVCAN and enables support for dynamic node ID allocation and firmware update.</long_desc>
       <min>0</min>
       <max>3</max>
       <scope>modules/uavcan</scope>
@@ -6177,12 +6678,7 @@ to accelerate forward if necessary</short_desc>
       <scope>modules/vtol_att_control</scope>
     </parameter>
     <parameter default="0" name="VT_OPT_RECOV_EN" type="INT32">
-      <short_desc>Enable optimal recovery strategy for pitch-weak tailsitters</short_desc>
-      <boolean />
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="0" name="VT_WV_LND_EN" type="INT32">
-      <short_desc>Enable weather-vane mode landings for missions</short_desc>
+      <short_desc>Optimal recovery strategy for pitch-weak tailsitters</short_desc>
       <boolean />
       <scope>modules/vtol_att_control</scope>
     </parameter>
@@ -6193,11 +6689,6 @@ to accelerate forward if necessary</short_desc>
       <max>1.0</max>
       <decimal>3</decimal>
       <increment>0.01</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="0" name="VT_WV_LTR_EN" type="INT32">
-      <short_desc>Enable weather-vane mode for loiter</short_desc>
-      <boolean />
       <scope>modules/vtol_att_control</scope>
     </parameter>
     <parameter default="15.0" name="VT_TRANS_TIMEOUT" type="FLOAT">
@@ -6228,7 +6719,6 @@ to accelerate forward if necessary</short_desc>
   <group name="mTECS">
     <parameter default="0" name="MT_ENABLED" type="INT32">
       <short_desc>mTECS enabled</short_desc>
-      <long_desc>Set to 1 to enable mTECS</long_desc>
       <boolean />
       <scope>modules/fw_pos_control_l1/mtecs</scope>
     </parameter>
@@ -6623,54 +7113,6 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
         <value code="5">Return</value>
         <value code="8">Stabilized</value>
       </values>
-    </parameter>
-    <parameter default="-1.0" name="TEST_MIN" type="FLOAT">
-      <short_desc>TEST_MIN</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="1.0" name="TEST_MAX" type="FLOAT">
-      <short_desc>TEST_MAX</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="0.5" name="TEST_TRIM" type="FLOAT">
-      <short_desc>TEST_TRIM</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="10.0" name="TEST_HP" type="FLOAT">
-      <short_desc>TEST_HP</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="10.0" name="TEST_LP" type="FLOAT">
-      <short_desc>TEST_LP</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="0.2" name="TEST_P" type="FLOAT">
-      <short_desc>TEST_P</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="0.1" name="TEST_I" type="FLOAT">
-      <short_desc>TEST_I</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="1.0" name="TEST_I_MAX" type="FLOAT">
-      <short_desc>TEST_I_MAX</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="0.01" name="TEST_D" type="FLOAT">
-      <short_desc>TEST_D</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="10.0" name="TEST_D_LP" type="FLOAT">
-      <short_desc>TEST_D_LP</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="1.0" name="TEST_MEAN" type="FLOAT">
-      <short_desc>TEST_MEAN</short_desc>
-      <scope>modules/controllib_test</scope>
-    </parameter>
-    <parameter default="2.0" name="TEST_DEV" type="FLOAT">
-      <short_desc>TEST_DEV</short_desc>
-      <scope>modules/controllib_test</scope>
     </parameter>
     <parameter default="10.0" name="SEG_TH2V_P" type="FLOAT">
       <short_desc>SEG_TH2V_P</short_desc>

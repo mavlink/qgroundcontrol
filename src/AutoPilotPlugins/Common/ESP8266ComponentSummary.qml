@@ -38,8 +38,9 @@ FactPanel {
             valueText: wifiMode ? (wifiMode.value === 0 ? "AP Mode" : "Station Mode") : "AP Mode"
         }
         VehicleSummaryRow {
-            labelText: qsTr("WiFi Channel:")
-            valueText: wifiChannel ? wifiChannel.valueString : ""
+            labelText:  qsTr("WiFi Channel:")
+            valueText:  wifiChannel ? wifiChannel.valueString : ""
+            visible:    wifiMode ? wifiMode.value === 0 : true
         }
         VehicleSummaryRow {
             labelText: qsTr("WiFi AP SSID:")
