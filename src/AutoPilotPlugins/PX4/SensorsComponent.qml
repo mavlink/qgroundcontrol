@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 import QtQuick 2.2
 import QtQuick.Controls 1.2
@@ -40,8 +27,8 @@ QGCView {
     // Help text which is shown both in the status text area prior to pressing a cal button and in the
     // pre-calibration dialog.
 
-    readonly property string boardRotationText: qsTr("If the autopilot is mounted in flight direction, leave the default value (ROTATION_NONE)")
-    readonly property string compassRotationText: qsTr("If the compass or GPS module is mounted in flight direction, leave the default value (ROTATION_NONE)")
+    readonly property string boardRotationText: qsTr("If the orientation is in the direction of flight, select ROTATION_NONE.")
+    readonly property string compassRotationText: qsTr("If the orientation is in the direction of flight, select ROTATION_NONE.")
 
     readonly property string compassHelp:   qsTr("For Compass calibration you will need to rotate your vehicle through a number of positions. Most users prefer to do this wirelessly with the telemetry link.")
     readonly property string gyroHelp:      qsTr("For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.")
@@ -348,7 +335,7 @@ QGCView {
                     id:             airspeedButton
                     width:          parent.buttonWidth
                     text:           qsTr("Airspeed")
-                    visible:        controller.vehicle.fixedWing && controller.getParameterFact(-1, "CBRK_AIRSPD_CHK").value != 162128
+                    visible:        (controller.vehicle.fixedWing || controller.vehicle.vtol) && controller.getParameterFact(-1, "CBRK_AIRSPD_CHK").value != 162128
                     indicatorGreen: sens_dpres_off.value != 0
 
                     onClicked: {
@@ -469,19 +456,22 @@ QGCView {
                     anchors.leftMargin: ScreenTools.defaultFontPixelWidth
                     anchors.left:       orientationCalArea.right
                     x:                  parent.width - rotationColumnWidth
-                    spacing:            ScreenTools.defaultFontPixelWidth
+                    spacing:            ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text:           qsTr("Set Orientations")
+                    }
+
+                    QGCLabel {
+                        width:      parent.width
+                        wrapMode:   Text.WordWrap
+                        text:       boardRotationText
+                    }
 
                     Column {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
                         QGCLabel {
-                            text: qsTr("Autopilot Orientation")
-                        }
-
-                        QGCLabel {
-                            width:      parent.width
-                            wrapMode:   Text.WordWrap
-                            text: boardRotationText
+                            text: qsTr("Autpilot Orientation:")
                         }
 
                         FactComboBox {
@@ -493,14 +483,12 @@ QGCView {
                     }
 
                     Column {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
                         // Compass 0 rotation
                         Component {
                             id: compass0ComponentLabel2
 
                             QGCLabel {
-                                text: qsTr("External Compass Orientation")
+                                text: qsTr("External Compass Orientation:")
                             }
                         }
 
@@ -520,14 +508,12 @@ QGCView {
                     }
 
                     Column {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
                         // Compass 1 rotation
                         Component {
                             id: compass1ComponentLabel2
 
                             QGCLabel {
-                                text: qsTr("External Compass 1 Orientation")
+                                text: qsTr("External Compass 1 Orientation:")
                             }
                         }
 

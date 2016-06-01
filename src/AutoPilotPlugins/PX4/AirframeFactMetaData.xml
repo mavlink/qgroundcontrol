@@ -4,7 +4,7 @@
   <airframe_version_major>1</airframe_version_major>
   <airframe_version_minor>1</airframe_version_minor>
   <airframe_group image="HelicopterCoaxial" name="Coaxial Helicopter">
-    <airframe id="15001" maintainer="Emmanuel Roussel" name="Coaxial Helicopter (such as Esky Lama v4 or Esky Big Lama)">
+    <airframe id="15001" maintainer="Emmanuel Roussel" name="Esky (Big) Lama v4">
       <maintainer>Emmanuel Roussel</maintainer>
       <type>Coaxial Helicopter</type>
       <output name="MAIN1">Left swashplate servomotor, pitch axis</output>

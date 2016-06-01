@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -53,7 +40,6 @@ ParameterLoader::ParameterLoader(Vehicle* vehicle)
     : QObject(vehicle)
     , _vehicle(vehicle)
     , _mavlink(qgcApp()->toolbox()->mavlinkProtocol())
-    , _dedicatedLink(_vehicle->priorityLink())
     , _parametersReady(false)
     , _initialLoadComplete(false)
     , _waitingForDefaultComponent(false)
@@ -364,7 +350,7 @@ void ParameterLoader::refreshAllParameters(uint8_t componentID)
 
     mavlink_message_t msg;
     mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->id(), componentID);
-    _vehicle->sendMessageOnLink(_dedicatedLink, msg);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
     QString what = (componentID == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(componentID);
     qCDebug(ParameterLoaderLog) << "Request to refresh all parameters for component ID:" << what;
@@ -594,7 +580,7 @@ void ParameterLoader::_readParameterRaw(int componentId, const QString& paramNam
                                         componentId,                // Target component id
                                         fixedParamName,             // Named parameter being requested
                                         paramIndex);                // Parameter index being requested, -1 for named
-    _vehicle->sendMessageOnLink(_dedicatedLink, msg);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
 
 void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramName, const QVariant& value)
@@ -647,7 +633,7 @@ void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramNa
 
     mavlink_message_t msg;
     mavlink_msg_param_set_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &p);
-    _vehicle->sendMessageOnLink(_dedicatedLink, msg);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
 
 void ParameterLoader::_writeLocalParamCache(int uasId, int componentId)
@@ -757,7 +743,7 @@ void ParameterLoader::_saveToEEPROM(void)
         if (_vehicle->firmwarePlugin()->isCapable(FirmwarePlugin::MavCmdPreflightStorageCapability)) {
             mavlink_message_t msg;
             mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _vehicle->id(), 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
-            _vehicle->sendMessageOnLink(_dedicatedLink, msg);
+            _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
             qCDebug(ParameterLoaderLog) << "_saveToEEPROM";
         } else {
             qCDebug(ParameterLoaderLog) << "_saveToEEPROM skipped due to FirmwarePlugin::isCapable";
@@ -903,8 +889,6 @@ void ParameterLoader::_addMetaDataToDefaultComponent(void)
      }
 
      if (_parameterMetaData) {
-         // This should only be called once
-         qWarning() << "Internal Error: ParameterLoader::_addMetaDataToAll with _parameterMetaData non NULL";
          return;
      }
 
