@@ -20,12 +20,12 @@ public:
     static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager); 
 
 private:
-    virtual bool open();
-    virtual void close();
-    virtual bool update();
+    bool _open() final;
+    void _close() final;
+    bool _update() final;
 
-    virtual bool getButton(int i);
-    virtual int getAxis(int i);
+    bool _getButton(int i) final;
+    int _getAxis(int i) final;
 
     SDL_Joystick *sdlJoystick;
     int     _index;      ///< Index for SDL_JoystickOpen

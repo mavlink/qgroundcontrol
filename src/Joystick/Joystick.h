@@ -132,12 +132,12 @@ protected:
     bool _validButton(int button);
 
 private:
-    virtual bool open() = 0;
-    virtual void close() = 0;
-    virtual bool update() = 0;
+    virtual bool _open() = 0;
+    virtual void _close() = 0;
+    virtual bool _update() = 0;
 
-    virtual bool getButton(int i) = 0;
-    virtual int getAxis(int i) = 0;
+    virtual bool _getButton(int i) = 0;
+    virtual int _getAxis(int i) = 0;
 
     // Override from QThread
     virtual void run(void);

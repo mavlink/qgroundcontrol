@@ -42,32 +42,32 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
     return ret;
 }
 
-bool JoystickSDL::open(void) {
+bool JoystickSDL::_open(void) {
     sdlJoystick = SDL_JoystickOpen(_index);
 
     if (!sdlJoystick) {
-	qCWarning(JoystickLog) << "SDL_JoystickOpen failed:" << SDL_GetError();
-	return false;
+        qCWarning(JoystickLog) << "SDL_JoystickOpen failed:" << SDL_GetError();
+        return false;
     }
 
     return true;
 }
 
-void JoystickSDL::close(void) {
+void JoystickSDL::_close(void) {
     SDL_JoystickClose(sdlJoystick);
 }
 
-bool JoystickSDL::update(void)
+bool JoystickSDL::_update(void)
 {
     SDL_JoystickUpdate();
     return true;
 }
 
-bool JoystickSDL::getButton(int i) {
+bool JoystickSDL::_getButton(int i) {
     return !!SDL_JoystickGetButton(sdlJoystick, i);
 }
 
-int JoystickSDL::getAxis(int i) {
+int JoystickSDL::_getAxis(int i) {
     return SDL_JoystickGetAxis(sdlJoystick, i);
 }
 
