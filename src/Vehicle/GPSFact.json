@@ -25,8 +25,8 @@
             "name":             "lock",
             "shortDescription": "GPS Lock",
             "type":             "uint32",
-            "enumStrings":      "None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock",
-            "enumValues":       "0,1,2,3,4,5",
+            "enumStrings":      "None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed)",
+            "enumValues":       "0,1,2,3,4,5,6",
             "decimalPlaces":    0
         },
         {
