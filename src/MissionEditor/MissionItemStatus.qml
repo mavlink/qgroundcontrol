@@ -74,53 +74,43 @@ Rectangle {
             QGCLabel { text: _azimuthText }
         }
 
-        QGCFlickable {
+        ListView {
+            id:    statusListView
+            model: missionItems
+            highlightMoveDuration:  250
             anchors.leftMargin:     _margins
             anchors.rightMargin:    _margins
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
-            width:                  parent.width - valueGrid.width - (_margins * 2)
-            contentWidth:           graphRow.width
+            orientation:            ListView.Horizontal
+            spacing:                ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
             visible:                _expanded
+            width:                  parent.width - valueGrid.width - (_margins * 2)
             clip:                   true
+            delegate: Item {
+                height:     statusListView.height
+                width:      indicator.width
+                visible:    object.specifiesCoordinate && !object.isStandaloneCoordinate
 
-            Row {
-                id:                 graphRow
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                //anchors.margins:    ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
-                spacing:            ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
+                property real availableHeight:  height - indicator.height
+                property bool graphAbsolute:    true
 
-                Repeater {
-                    model: missionItems
+                MissionItemIndexLabel {
+                    id:                         indicator
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    y:                          availableHeight - (availableHeight * object.altPercent)
+                    small:                      true
+                    isCurrentItem:              object.isCurrentItem
+                    label:                      object.abbreviation
+                    visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
+                }
+                Connections {
+                    target: object
 
-                    Item {
-                        height:     graphRow.height
-                        width:      indicator.width
-                        visible:    object.specifiesCoordinate && !object.isStandaloneCoordinate
-
-                        property real availableHeight:  height - indicator.height
-                        property bool graphAbsolute:    true
-
-                        MissionItemIndexLabel {
-                            id:                         indicator
-                            anchors.horizontalCenter:   parent.horizontalCenter
-                            y:                          availableHeight - (availableHeight * object.altPercent)
-                            small:                      true
-                            isCurrentItem:              object.isCurrentItem
-                            label:                      object.abbreviation
-                            visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
+                    onIsCurrentItemChanged: {
+                        if (object.isCurrentItem) {
+                            statusListView.currentIndex = index
                         }
-
-                        /*
-                          Taking these off for now since there really isn't room for the numbers
-                        QGCLabel {
-                            anchors.bottom:             parent.bottom
-                            anchors.horizontalCenter:   parent.horizontalCenter
-                            font.pointSize:             ScreenTools.smallFontPointSize
-                            text:                       (object.relativeAltitude ? "" : "=") + object.coordinate.altitude.toFixed(0)
-                        }
-                        */
                     }
                 }
             }
