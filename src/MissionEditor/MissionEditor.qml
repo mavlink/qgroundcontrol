@@ -486,7 +486,6 @@ QGCView {
                         clip:           true
                         highlightMoveDuration: 250
 
-
                         delegate: MissionItemEditor {
                             missionItem:    object
                             width:          parent.width
