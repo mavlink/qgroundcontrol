@@ -75,8 +75,8 @@ Rectangle {
         }
 
         ListView {
-            id:    statusListView
-            model: missionItems
+            id:                     statusListView
+            model:                  missionItems
             highlightMoveDuration:  250
             anchors.leftMargin:     _margins
             anchors.rightMargin:    _margins
@@ -87,6 +87,7 @@ Rectangle {
             visible:                _expanded
             width:                  parent.width - valueGrid.width - (_margins * 2)
             clip:                   true
+
             delegate: Item {
                 height:     statusListView.height
                 width:      indicator.width
@@ -104,6 +105,7 @@ Rectangle {
                     label:                      object.abbreviation
                     visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
                 }
+
                 Connections {
                     target: object
 
