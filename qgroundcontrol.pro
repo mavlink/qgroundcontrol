@@ -262,6 +262,7 @@ HEADERS += \
     src/HomePositionManager.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
+    src/VehicleSetup/JoystickConfigController.h \
     src/FollowMe/FollowMe.h \
     src/PositionManager/SimulatedPosition.h \
     src/JsonHelper.h \
@@ -309,6 +310,10 @@ HEADERS += \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
     src/PositionManager/PositionManager.h
 
+AndroidBuild {
+HEADERS += \
+}
+
 DebugBuild {
 HEADERS += \
     src/comm/MockLink.h \
@@ -341,6 +346,7 @@ HEADERS += \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
+    src/Joystick/JoystickSDL.h \
     src/QGCFileDialog.h \
     src/QGCMessageBox.h \
     src/uas/FileManager.h \
@@ -385,7 +391,6 @@ HEADERS += \
     src/GPS/GPSManager.h \
     src/GPS/GPSPositionMessage.h \
     src/GPS/GPSProvider.h \
-    src/VehicleSetup/JoystickConfigController.h \
     src/ViewWidgets/CustomCommandWidget.h \
     src/ViewWidgets/CustomCommandWidgetController.h \
     src/ViewWidgets/LogDownload.h \
@@ -398,6 +403,7 @@ iOSBuild {
         src/audio/QGCAudioWorker_iOS.mm \
         src/MobileScreenMgr.mm \
 }
+
 AndroidBuild {
     SOURCES += src/MobileScreenMgr.cc \
 }
@@ -418,6 +424,7 @@ SOURCES += \
     src/HomePositionManager.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
+    src/VehicleSetup/JoystickConfigController.cc \
     src/JsonHelper.cc \
     src/FollowMe/FollowMe.cc \
     src/LogCompressor.cc \
@@ -495,6 +502,7 @@ SOURCES += \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
+    src/Joystick/JoystickSDL.cc \
     src/ui/HILDockWidget.cc \
     src/ui/linechart/ChartPlot.cc \
     src/ui/linechart/IncrementalPlot.cc \
@@ -525,7 +533,6 @@ SOURCES += \
     src/GPS/RTCM/RTCMMavlink.cc \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
-    src/VehicleSetup/JoystickConfigController.cc \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \
     src/ViewWidgets/LogDownload.cc \
