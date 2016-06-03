@@ -11,7 +11,7 @@
     <key>CFBundleIconFile</key>
     <string></string>
     <key>CFBundleIdentifier</key>
-    <string>org.QGroundControl.QGCiOS</string>
+    <string>org.QGroundControl.qgc</string>
     <key>CFBundleName</key>
     <string>QGroundControl</string>
     <key>CFBundlePackageType</key>

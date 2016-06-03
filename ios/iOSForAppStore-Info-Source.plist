@@ -51,7 +51,7 @@
         </dict>
     </dict>
     <key>CFBundleIdentifier</key>
-    <string>org.QGroundControl.QGCiOS</string>
+    <string>org.QGroundControl.qgc</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
