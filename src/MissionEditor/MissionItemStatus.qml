@@ -83,18 +83,20 @@ Rectangle {
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
             orientation:            ListView.Horizontal
-            spacing:                ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
+            spacing:                0
             visible:                _expanded
             width:                  parent.width - valueGrid.width - (_margins * 2)
             clip:                   true
 
             delegate: Item {
                 height:     statusListView.height
-                width:      indicator.width
-                visible:    object.specifiesCoordinate && !object.isStandaloneCoordinate
+                width:      display ? (indicator.width + spacing)  : 0
+                visible:    display
 
                 property real availableHeight:  height - indicator.height
                 property bool graphAbsolute:    true
+                readonly property bool display: object.specifiesCoordinate && !object.isStandaloneCoordinate
+                readonly property real spacing: ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
 
                 MissionItemIndexLabel {
                     id:                         indicator
