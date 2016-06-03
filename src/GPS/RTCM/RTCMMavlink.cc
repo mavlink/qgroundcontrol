@@ -11,7 +11,6 @@
 #include "RTCMMavlink.h"
 
 #include "MultiVehicleManager.h"
-#include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 
 #include <cstdio>
@@ -24,8 +23,6 @@ RTCMMavlink::RTCMMavlink(QGCToolbox& toolbox)
 
 void RTCMMavlink::RTCMDataUpdate(QByteArray message)
 {
-    Q_ASSERT(message.size() <= 110); //mavlink message uses a fixed-size buffer
-
     /* statistics */
     _bandwidthByteCounter += message.size();
     qint64 elapsed = _bandwidthTimer.elapsed();
@@ -34,19 +31,38 @@ void RTCMMavlink::RTCMDataUpdate(QByteArray message)
         _bandwidthTimer.restart();
         _bandwidthByteCounter = 0;
     }
+
+    const int maxMessageLength = MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN;
+    mavlink_gps_rtcm_data_t mavlinkRtcmData;
+    memset(&mavlinkRtcmData, 0, sizeof(mavlink_gps_rtcm_data_t));
+
+    if (message.size() < maxMessageLength) {
+        mavlinkRtcmData.len = message.size();
+        memcpy(&mavlinkRtcmData.data, message.data(), message.size());
+        sendMessageToVehicle(mavlinkRtcmData);
+    } else {
+        //we need to fragment
+        int start = 0;
+        while (start < message.size()) {
+            int length = std::min(message.size() - start, maxMessageLength);
+            mavlinkRtcmData.flags = 1; //fragmented
+            mavlinkRtcmData.len = length;
+            memcpy(&mavlinkRtcmData.data, message.data() + start, length);
+            sendMessageToVehicle(mavlinkRtcmData);
+            start += length;
+        }
+    }
+}
+
+void RTCMMavlink::sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg)
+{
     QmlObjectListModel& vehicles = *_toolbox.multiVehicleManager()->vehicles();
     MAVLinkProtocol* mavlinkProtocol = _toolbox.mavlinkProtocol();
-    mavlink_gps_inject_data_t mavlinkRtcmData;
-    memset(&mavlinkRtcmData, 0, sizeof(mavlink_gps_inject_data_t));
-
-    mavlinkRtcmData.len = message.size();
-    memcpy(&mavlinkRtcmData.data, message.data(), message.size());
-
     for (int i = 0; i < vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
         mavlink_message_t message;
-        mavlink_msg_gps_inject_data_encode(mavlinkProtocol->getSystemId(),
-                mavlinkProtocol->getComponentId(), &message, &mavlinkRtcmData);
+        mavlink_msg_gps_rtcm_data_encode(mavlinkProtocol->getSystemId(),
+                mavlinkProtocol->getComponentId(), &message, &msg);
         vehicle->sendMessage(message);
     }
 }
