@@ -57,6 +57,8 @@ class LogReplayLink : public LinkInterface
     friend class LinkManager;
 
 public:
+    virtual LinkConfiguration* getLinkConfiguration() { return _config; }
+
     /// @return true: log is currently playing, false: log playback is paused
     bool isPlaying(void) { return _readTickTimer.isActive(); }
 
