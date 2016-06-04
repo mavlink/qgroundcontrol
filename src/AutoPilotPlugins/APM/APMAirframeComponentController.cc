@@ -231,7 +231,7 @@ void APMAirframeComponentController::_githubJsonDownloadFinished(QString remoteF
 
 void APMAirframeComponentController::_githubJsonDownloadError(QString errorMsg)
 {
-    qgcApp()->showMessage(tr("Param file github json download failed: % 1").arg(errorMsg));
+    qgcApp()->showMessage(tr("Param file github json download failed: %1").arg(errorMsg));
     qgcApp()->restoreOverrideCursor();
 }
 
