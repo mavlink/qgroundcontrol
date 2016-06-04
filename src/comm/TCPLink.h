@@ -121,6 +121,7 @@ class TCPLink : public LinkInterface
 
 public:
     QTcpSocket* getSocket(void) { return _socket; }
+    virtual LinkConfiguration* getLinkConfiguration() { return _config; }
 
     void signalBytesWritten(void);
 

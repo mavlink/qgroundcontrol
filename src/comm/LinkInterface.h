@@ -51,10 +51,10 @@ public:
     void setActive(bool active)             { _active = active; emit activeChanged(active); }
 
     /**
-     * @brief Get link configuration (if used)
-     * @return A pointer to the instance of LinkConfiguration if supported. NULL otherwise.
+     * @brief Get link configuration
+     * @return A pointer to the instance of LinkConfiguration
      **/
-    virtual LinkConfiguration* getLinkConfiguration() { return NULL; }
+    virtual LinkConfiguration* getLinkConfiguration() = 0;
 
     /* Connection management */
 
