@@ -267,7 +267,6 @@ Item {
         z:                  QGroundControl.zOrderTopMost + 100
         active:             visible
         onVisibleChanged: {
-            console.log("Visible: " + visible)
             if(!visible) {
                 source = ""
             }

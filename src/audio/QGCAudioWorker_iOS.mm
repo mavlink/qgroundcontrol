@@ -54,7 +54,7 @@ void SpeakIOS::speak(QString msg)
     AVSpeechUtterance *utterance = [[[AVSpeechUtterance alloc] initWithString: msg_ns] autorelease];
     AVSpeechSynthesisVoice* currentVoice = [AVSpeechSynthesisVoice voiceWithLanguage:[AVSpeechSynthesisVoice currentLanguageCode]];
     utterance.voice = currentVoice;
-    //utterance.voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"en-US"];
+    utterance.voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"en-US"];
     utterance.rate  = 0.5;
     [_synth speakUtterance:utterance];
 }

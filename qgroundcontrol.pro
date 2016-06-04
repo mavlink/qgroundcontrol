@@ -117,6 +117,12 @@ iOSBuild {
     #-- Info.plist (need an "official" one for the App Store)
     ForAppStore {
         message(App Store Build)
+        #-- Create official, versioned Info.plist
+        APP_STORE = $$system(cd $${BASEDIR} && $${BASEDIR}/tools/update_ios_version.sh $${BASEDIR}/ios/iOSForAppStore-Info-Source.plist $${BASEDIR}/ios/iOSForAppStore-Info.plist)
+        APP_ERROR = $$find(APP_STORE, "Error")
+        count(APP_ERROR, 1) {
+            error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
+        }
         QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
         OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
     } else {
