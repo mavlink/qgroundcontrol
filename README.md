@@ -1,4 +1,4 @@
-# QGroundControl
+# QGroundControl Ground Control Station
 ## Open Source Micro Air Vehicle Ground Control Station
 
 [![Travis Build Status](https://travis-ci.org/mavlink/qgroundcontrol.svg?branch=master)](https://travis-ci.org/mavlink/qgroundcontrol)
