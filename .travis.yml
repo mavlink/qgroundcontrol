@@ -81,6 +81,8 @@ before_install:
         ;
     fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+        wget http://gstreamer.freedesktop.org/data/pkg/osx/1.5.2/gstreamer-1.0-devel-1.5.2-x86_64.pkg &&
+        wget http://gstreamer.freedesktop.org/data/pkg/osx/1.5.2/gstreamer-1.0-1.5.2-x86_64.pkg &&
         mkdir -p ~/Library/Preferences/QtProject/ &&
         cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/
         ;
