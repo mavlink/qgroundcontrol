@@ -285,7 +285,6 @@ QGCView {
                             if (addMissionItemsButton.checked) {
                                 var sequenceNumber = controller.insertSimpleMissionItem(coordinate, controller.visualItems.count)
                                 setCurrentItem(sequenceNumber)
-                                editorListView.positionViewAtIndex(editorListView.count - 1, ListView.Contain)
                             } else {
                                 editorMap.mapClicked(coordinate)
                             }
@@ -485,6 +484,7 @@ QGCView {
                         model:          controller.visualItems
                         cacheBuffer:    height * 2
                         clip:           true
+                        highlightMoveDuration: 250
 
                         delegate: MissionItemEditor {
                             missionItem:    object
@@ -499,11 +499,6 @@ QGCView {
                                 controller.removeMissionItem(index)
                             }
 
-                            onInsert: {
-                                var sequenceNumber = controller.insertSimpleMissionItem(editorMap.center, i)
-                                setCurrentItem(sequenceNumber)
-                            }
-
                             onMoveHomeToMapCenter: controller.visualItems.get(0).coordinate = editorMap.center
 
                             Connections {
@@ -511,7 +506,7 @@ QGCView {
 
                                 onIsCurrentItemChanged: {
                                     if (object.isCurrentItem) {
-                                        editorListView.positionViewAtIndex(index, ListView.Contain)
+                                        editorListView.currentIndex = index
                                     }
                                 }
                             }
