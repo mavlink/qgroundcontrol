@@ -151,9 +151,9 @@ Rectangle {
         anchors.topMargin:  _margin
         anchors.left:       parent.left
         anchors.top:        commandPicker.bottom
-        height:             _currentItem && item ? item.height : 0
-        source:             _currentItem ? (missionItem.isSimpleItem ? "qrc:/qml/SimpleItemEditor.qml" : "qrc:/qml/SurveyItemEditor.qml") : ""
-
+        height:             item ? item.height : 0
+        source:             missionItem.isSimpleItem ? "qrc:/qml/SimpleItemEditor.qml" : "qrc:/qml/SurveyItemEditor.qml"
+        onLoaded:         { item.visible = Qt.binding(function() { return _currentItem; }) }
         property real   availableWidth: _root.width - (_margin * 2) ///< How wide the editor should be
         property var    editorRoot:     _root
     }

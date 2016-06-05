@@ -10,7 +10,7 @@ import QGroundControl.Palette       1.0
 // Editor for Survery mission items
 Rectangle {
     id:         _root
-    height:     editorColumn.height + (_margin * 2)
+    height:     visible ? (editorColumn.height + (_margin * 2)) : 0
     width:      availableWidth
     color:      qgcPal.windowShadeDark
     radius:     _radius
