@@ -39,7 +39,6 @@
 #ifndef __ios__
 #include "SerialLink.h"
 #endif
-#include <Eigen/Geometry>
 #include "FirmwarePluginManager.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
