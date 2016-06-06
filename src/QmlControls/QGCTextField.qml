@@ -20,15 +20,14 @@ TextField {
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
     textColor:          __qgcPal.textFieldText
-    height:             ScreenTools.isMobile ? Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 2)) : Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
+    height:             Math.round(Math.max(25, ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 2.5 : 1.2)))
 
-    Label {
+    QGCLabel {
         id:             unitsLabelWidthGenerator
         text:           unitsLabel
         width:          contentWidth + parent.__contentHeight * 0.666
         visible:        false
         antialiasing:   true
-        font.family:    ScreenTools.normalFontFamily
     }
 
     style: TextFieldStyle {
