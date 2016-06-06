@@ -32,7 +32,7 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Hold:",
-                "units":            "seconds",
+                "units":            "secs",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -47,7 +47,7 @@
             "category":             "Loiter",
             "param3": {
                 "label":            "Radius:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          10.0,
                 "decimalPlaces":    2
             }
@@ -67,7 +67,7 @@
             },
             "param3": {
                 "label":            "Radius:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          10.0,
                 "decimalPlaces":    2
             }
@@ -82,13 +82,13 @@
             "category":             "Loiter",
             "param1": {
                 "label":            "Hold:",
-                "units":            "seconds",
+                "units":            "secs",
                 "default":          30,
                 "decimalPlaces":    0
             },
             "param3": {
                 "label":            "Radius:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          10.0,
                 "decimalPlaces":    2
             }
@@ -111,7 +111,7 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Abort Alt:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          25.0,
                 "decimalPlaces":    3
             },
@@ -123,7 +123,7 @@
             },
             "param7": {
                 "label":            "Altitude:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          0.0,
                 "decimalPlaces":    2
             }
@@ -169,7 +169,7 @@
             },
             "param7": {
                 "label":            "Altitude:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          55,
                 "decimalPlaces":    2
             }
@@ -191,7 +191,7 @@
             },
             "param2": {
                 "label":            "Radius:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          10.0,
                 "decimalPlaces":    2
             }
@@ -264,7 +264,7 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Hold:",
-                "units":            "seconds",
+                "units":            "secs",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -301,7 +301,7 @@
             },
             "param7": {
                 "label":            "Altitude:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          0.0,
                 "decimalPlaces":    2
             }
@@ -326,7 +326,7 @@
             "category":     "Basic",
             "param1": {
                 "label":            "Hold:",
-                "units":            "seconds",
+                "units":            "secs",
                 "default":          30,
                 "decimalPlaces":    0
             }
@@ -345,7 +345,7 @@
             },
             "param7": {
                 "label":            "Altitude:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          55,
                 "decimalPlaces":    2
             }
@@ -358,7 +358,7 @@
             "category":     "Conditionals",
             "param1": {
                 "label":            "Distance:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          0,
                 "decimalPlaces":    2
             }
@@ -488,7 +488,7 @@
             "param3": {
                 "label":            "Time:",
                 "default":          10,
-                "units":            "seconds",
+                "units":            "secs",
                 "decimalPlaces":    0
             }
         },
@@ -533,7 +533,7 @@
             "param4": {
                 "label":            "Time:",
                 "default":          10,
-                "units":            "seconds",
+                "units":            "secs",
                 "decimalPlaces":    0
             }
         },
@@ -734,7 +734,7 @@
             "param1": {
                 "label":            "Distance:",
                 "default":          25,
-                "units":            "meters",
+                "units":            "m",
                 "decimalPlaces":    2
             }
         },
@@ -818,25 +818,25 @@
             "param1": {
                 "label":            "Timeout:",
                 "default":          0,
-                "units":            "seconds",
+                "units":            "secs",
                 "decimalPlaces":    0
             },
             "param2": {
                 "label":            "Min Alt:",
                 "default":          25,
-                "units":            "m(AMSL)",
+                "units":            "m",
                 "decimalPlaces":    2
             },
             "param3": {
                 "label":            "Max Alt:",
-                "units":            "m(AMSL)",
+                "units":            "m",
                 "default":          100,
                 "decimalPlaces":    2
             },
             "param4": {
                 "label":            "H Limit:",
                 "default":          25,
-                "units":            "m(AMSL)",
+                "units":            "m",
                 "decimalPlaces":    2
             }
         },
