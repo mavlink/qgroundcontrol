@@ -83,13 +83,19 @@ Item {
             if(baseSize < 6 || baseSize > 48) {
                 //-- Init base size base on the platform
                 if(ScreenToolsController.isMobile) {
-                    // Small Devices
-                    if((Screen.width / Screen.pixelDensity) < 120)
-                        baseSize = 11;
-                    // iOS
+                    //-- Check iOS really tiny screens (iPhone 4s/5/5s)
+                    if(ScreenToolsController.isiOS && Screen.width < 570)
+                        baseSize = 9;
+                    //-- iPhone 6/6s)
+                    else if(ScreenToolsController.isiOS && Screen.width < 670)
+                        baseSize = 10;
+                    // Larger iOS (6/6s Plus or iPad)
                     else if(ScreenToolsController.isiOS)
                         baseSize = 13;
-                    // Android
+                    // Small Android Devices
+                    else if((Screen.width / Screen.pixelDensity) < 120)
+                        baseSize = 11;
+                    // Other Android
                     else
                         baseSize = 14;
                 } else {
