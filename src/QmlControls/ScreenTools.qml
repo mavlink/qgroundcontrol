@@ -84,20 +84,20 @@ Item {
                 //-- Init base size base on the platform
                 if(ScreenToolsController.isMobile) {
                     //-- Check iOS really tiny screens (iPhone 4s/5/5s)
-                    if(ScreenToolsController.isiOS && Screen.width < 570)
-                        baseSize = 9;
-                    //-- iPhone 6/6s)
-                    else if(ScreenToolsController.isiOS && Screen.width < 670)
-                        baseSize = 10;
-                    // Larger iOS (6/6s Plus or iPad)
-                    else if(ScreenToolsController.isiOS)
-                        baseSize = 13;
-                    // Small Android Devices
-                    else if((Screen.width / Screen.pixelDensity) < 120)
+                    if(ScreenToolsController.isiOS) {
+                        if(ScreenToolsController.isiOS && Screen.width < 570) {
+                            // For iPhone 4s size we don't fit with additional tweaks to fit screen,
+                            // we will just drop point size to make things fit. Correct size not yet determined.
+                            baseSize = 12;  // This will be lowered in a future pull
+                        } else {
+                            baseSize = 12;
+                        }
+                    } else if((Screen.width / Screen.pixelDensity) < 120) {
                         baseSize = 11;
                     // Other Android
-                    else
+                    } else {
                         baseSize = 14;
+                    }
                 } else {
                     //-- Mac OS
                     if(ScreenToolsController.isMacOS)
