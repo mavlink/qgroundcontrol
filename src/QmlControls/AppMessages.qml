@@ -86,13 +86,11 @@ QGCView {
                     height: Math.round(ScreenTools.defaultFontPixelHeight * 0.5 + field.height)
                     width:  listview.width
 
-                    Text {
-                        id:             field
-                        text:           display
-                        color:          qgcPal.text
-                        width:          parent.width
-                        wrapMode:       Text.Wrap
-                        font.family:    ScreenTools.normalFontFamily
+                    QGCLabel {
+                        id:         field
+                        text:       display
+                        width:      parent.width
+                        wrapMode:   Text.Wrap
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }

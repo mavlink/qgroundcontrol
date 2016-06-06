@@ -100,12 +100,12 @@ QGCView {
             anchors.fill:       parent
             clip:               true
             contentHeight:      innerColumn.height
-            contentWidth:       panel.width
+                contentWidth:       panel.width
             flickableDirection: Flickable.VerticalFlick
 
             Column {
                 id:             innerColumn
-                width:          panel.width
+                width:          parent.width
                 spacing:        ScreenTools.defaultFontPixelHeight * 0.5
 
                 QGCLabel {
@@ -185,7 +185,7 @@ QGCView {
                     QGCColoredImage {
                         id:                     batteryImage
                         anchors.verticalCenter: voltageCol.verticalCenter
-                        x:                      voltageCol.firstColumnWidth + textEditWidth + (ScreenTools.defaultFontPixelWidth * 3)
+                        x:                      voltageCol.firstColumnWidth + textEditWidth + (ScreenTools.defaultFontPixelWidth * 2)
                         width:                  height * 0.75
                         height:                 voltageCol.height
                         sourceSize.height:      height
@@ -197,25 +197,37 @@ QGCView {
                     }
 
                     Column {
-                        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
+                        id:                     batteryMinMaxColumn
+                        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
                         anchors.left:           batteryImage.right
                         anchors.verticalCenter: voltageCol.verticalCenter
                         spacing:                ScreenTools.defaultFontPixelHeight
+
+                        property real firstColumnWidth: Math.max(batteryMaxLabel.width, batteryMinLabel.contentWidth) + ScreenTools.defaultFontPixelWidth
+
                         Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
                             QGCLabel {
-                                width:  ScreenTools.defaultFontPixelWidth * 12
+                                id:     batteryMaxLabel
                                 text:   qsTr("Battery Max:")
                             }
+
                             QGCLabel {
+                                x:      batteryMinMaxColumn.firstColumnWidth
                                 text:   (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
                             }
                         }
                         Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
                             QGCLabel {
-                                width:  ScreenTools.defaultFontPixelWidth * 12
+                                id:     batteryMinLabel
                                 text:   qsTr("Battery Min:")
                             }
+
                             QGCLabel {
+                                x:      batteryMinMaxColumn.firstColumnWidth
                                 text:   (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
                             }
                         }
@@ -236,12 +248,15 @@ QGCView {
                         id :                escCalColumn
                         anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
                         anchors.left:       parent.left
+                        anchors.right:      parent.right
                         anchors.top:        parent.top
                         spacing:            ScreenTools.defaultFontPixelWidth
 
                         QGCLabel {
-                            color:  palette.warningText
-                            text:   qsTr("WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.")
+                            width:      parent.width
+                            color:      palette.warningText
+                            wrapMode:   Text.WordWrap
+                            text:       qsTr("WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.")
                         }
 
                         QGCLabel {
@@ -309,20 +324,27 @@ QGCView {
                         id:                 uavCanEscCalColumn
                         anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
                         anchors.left:       parent.left
+                        anchors.right:      parent.right
                         anchors.top:        parent.top
                         spacing:            ScreenTools.defaultFontPixelWidth
 
                         QGCLabel {
-                            color:  palette.warningText
-                            text:   qsTr("WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.")
+                            width:      parent.width
+                            wrapMode:   Text.WordWrap
+                            color:      palette.warningText
+                            text:       qsTr("WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.")
                         }
 
                         QGCLabel {
-                            text: qsTr("ESC parameters will only be accessible in the editor after assignment.")
+                            width:      parent.width
+                            wrapMode:   Text.WordWrap
+                            text:       qsTr("ESC parameters will only be accessible in the editor after assignment.")
                         }
 
                         QGCLabel {
-                            text: qsTr("Start the process, then turn each motor into its turn direction, in the order of their motor indices.")
+                            width:      parent.width
+                            wrapMode:   Text.WordWrap
+                            text:       qsTr("Start the process, then turn each motor into its turn direction, in the order of their motor indices.")
                         }
 
                         QGCButton {
