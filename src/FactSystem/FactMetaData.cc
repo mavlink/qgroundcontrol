@@ -23,8 +23,8 @@
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
-    { "centi-degrees",  "degrees",  FactMetaData::_centiDegreesToDegrees,   FactMetaData::_degreesToCentiDegrees },
-    { "radians",        "degrees",  FactMetaData::_radiansToDegrees,        FactMetaData::_degreesToRadians },
+    { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,   FactMetaData::_degreesToCentiDegrees },
+    { "radians",        "deg",  FactMetaData::_radiansToDegrees,        FactMetaData::_degreesToRadians },
     { "norm",           "%",  FactMetaData::_normToPercent,           FactMetaData::_percentToNorm },
 };
 

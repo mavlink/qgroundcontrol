@@ -11,13 +11,13 @@
             "category": "Basic",
             "param1": {
                 "label": "Hold:",
-                "units": "seconds",
+                "units": "secs",
                 "default": 0,
                 "decimalPlaces": 0
             },
             "param7": {
                 "label": "Altitude:",
-                "units": "meters",
+                "units": "m",
                 "default": 50,
                 "decimalPlaces": 0
             }
@@ -32,13 +32,13 @@
             "category": "Loiter",
             "param3": {
                 "label": "Radius:",
-                "units": "meters",
+                "units": "m",
                 "default": 100,
                 "decimalPlaces": 0
             },
             "param7": {
                 "label": "Altitude:",
-                "units": "meters",
+                "units": "m",
                 "default": 50,
                 "decimalPlaces": 0
             }
@@ -58,13 +58,13 @@
             },
             "param3": {
                 "label": "Radius:",
-                "units": "meters",
+                "units": "m",
                 "default": 100,
                 "decimalPlaces": 0
             },
             "param7": {
                 "label": "Altitude:",
-                "units": "meters",
+                "units": "m",
                 "default": 50,
                 "decimalPlaces": 0
             }
@@ -79,19 +79,19 @@
             "category": "Loiter",
             "param1": {
                 "label": "Seconds:",
-                "units": "seconds",
+                "units": "secs",
                 "default": 30,
                 "decimalPlaces": 1
             },
             "param3": {
                 "label": "Radius:",
-                "units": "meters",
+                "units": "m",
                 "default": 100,
                 "decimalPlaces": 0
             },
             "param7": {
                 "label": "Altitude:",
-                "units": "meters",
+                "units": "m",
                 "default": 50,
                 "decimalPlaces": 0
             }
@@ -106,7 +106,7 @@
             "category": "Basic",
             "param1": {
                 "label": "Abort Alt:",
-                "units": "meters",
+                "units": "m",
                 "default": 25,
                 "decimalPlaces": 0
             },
@@ -118,7 +118,7 @@
             },
             "param7": {
                 "label": "Altitude:",
-                "units": "meters",
+                "units": "m",
                 "default": 0,
                 "decimalPlaces": 1
             }
@@ -145,7 +145,7 @@
             },
             "param7": {
                 "label": "Altitude:",
-                "units": "meters",
+                "units": "m",
                 "default": 25,
                 "decimalPlaces": 0
             }
@@ -159,7 +159,7 @@
             "param1": {
                 "label":            "Distance:",
                 "default":          25,
-                "units":            "meters",
+                "units":            "m",
                 "decimalPlaces":    1
             }
         }
