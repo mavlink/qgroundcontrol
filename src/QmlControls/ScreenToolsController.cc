@@ -13,8 +13,23 @@
 
 #include "ScreenToolsController.h"
 #include <QScreen>
+#if defined(__ios__)
+#include <sys/utsname.h>
+#endif
 
 ScreenToolsController::ScreenToolsController()
 {
 
+}
+
+QString
+ScreenToolsController::iOSDevice()
+{
+#if defined(__ios__)
+    struct utsname systemInfo;
+    uname(&systemInfo);
+    return QString(systemInfo.machine);
+#else
+    return QString();
+#endif
 }

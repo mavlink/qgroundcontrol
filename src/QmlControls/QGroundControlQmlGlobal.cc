@@ -25,7 +25,7 @@ SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                        
 FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                    NULL;
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
-const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseFontPointSize";
+const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     : QGCTool(app)
