@@ -18,7 +18,7 @@
             },
             "param7": {
                 "label":            "Altitude:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          25.0,
                 "decimalPlaces":    2
             }
@@ -42,7 +42,7 @@
             "category":             "VTOL",
             "param7": {
                 "label":            "Altitude:",
-                "units":            "meters",
+                "units":            "m",
                 "default":          0.0,
                 "decimalPlaces":    2
             }

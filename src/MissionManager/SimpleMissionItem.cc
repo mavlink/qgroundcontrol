@@ -191,7 +191,7 @@ void SimpleMissionItem::_setupMetaData(void)
 
     if (!_altitudeMetaData) {
         _altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
-        _altitudeMetaData->setRawUnits("meters");
+        _altitudeMetaData->setRawUnits("m");
         _altitudeMetaData->setDecimalPlaces(2);
         _altitudeMetaData->setAppSettingsTranslators();
 
