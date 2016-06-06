@@ -63,7 +63,6 @@ Item {
         smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
         mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
         largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
-        console.log("setBasePointSize", defaultFontPixelWidth)
     }
 
     Text {
