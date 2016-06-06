@@ -157,7 +157,7 @@ Map {
     */
     Item {
         id:                         scale
-        visible:                    _map.showScale && scaleText.text !== "0 m"
+        visible:                    !ScreenTools.isTinyScreen && _map.showScale && scaleText.text !== "0 m"
         z:                          _map.z + 20
         width:                      scaleImageLeft.width + scaleImage.width + scaleImageRight.width
         anchors {
