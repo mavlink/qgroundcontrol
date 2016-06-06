@@ -25,6 +25,22 @@ install:
       Write-Host "Installing..."
       cmd /c start /wait $exePath /S
       Write-Host "Installed" -ForegroundColor Green
+  - ps: |
+      Write-Host "Installing GStreamer..." -ForegroundColor Cyan
+      $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-x86-1.8.1.msi"
+      Write-Host "Downloading..."
+      (New-Object Net.WebClient).DownloadFile('https://gstreamer.freedesktop.org/data/pkg/windows/1.8.1/gstreamer-1.0-x86-1.8.1.msi', $msiPath)
+      Write-Host "Installing..."
+      cmd /c start /wait msiexec /package $msiPath /passive
+      Write-Host "Installed" -ForegroundColor Green
+  - ps: |
+      Write-Host "Installing GStreamer dev..." -ForegroundColor Cyan
+      $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-devel-x86-1.8.1.msi"
+      Write-Host "Downloading..."
+      (New-Object Net.WebClient).DownloadFile('https://gstreamer.freedesktop.org/data/pkg/windows/1.8.1/gstreamer-1.0-devel-x86-1.8.1.msi', $msiPath)
+      Write-Host "Installing..."
+      cmd /c start /wait msiexec /package $msiPath /passive
+      Write-Host "Installed" -ForegroundColor Green
 
 build_script:
   - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && C:\Qt\5.5\msvc2013\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
