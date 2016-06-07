@@ -8,17 +8,17 @@
  ****************************************************************************/
 
 
-import QtQuick 2.5
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.2
-import QtQuick.Layouts 1.2
-import QtGraphicalEffects 1.0
+import QtQuick                  2.5
+import QtQuick.Controls         1.2
+import QtQuick.Controls.Styles  1.2
+import QtQuick.Layouts          1.2
+import QtGraphicalEffects       1.0
 
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
 
 
 QGCView {
@@ -43,6 +43,8 @@ QGCView {
     property Fact _dlLossAction:    controller.getParameterFact(-1, "NAV_DLL_ACT")
     property Fact _disarmLandDelay: controller.getParameterFact(-1, "COM_DISARM_LAND")
     property Fact _landSpeedMC:     controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
+
+    property bool _showIcons: !ScreenTools.isTinyScreen
 
     QGCViewPanel {
         id:             panel
@@ -81,8 +83,13 @@ QGCView {
                             fillMode:                   Image.PreserveAspectFit
                             source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/LowBatteryLight.svg" : "/qmlimages/LowBattery.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
-                        Item { width: _margins * 0.5; height: 1; }
+                        Item {
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
+                        }
                         Column {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
@@ -152,8 +159,13 @@ QGCView {
                             fillMode:                   Image.PreserveAspectFit
                             source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/RCLossLight.svg" : "/qmlimages/RCLoss.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
-                        Item { width: _margins * 0.5; height: 1; }
+                        Item {
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
+                        }
                         Column {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
@@ -210,8 +222,13 @@ QGCView {
                             fillMode:                   Image.PreserveAspectFit
                             source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/DatalinkLossLight.svg" : "/qmlimages/DatalinkLoss.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
-                        Item { width: _margins * 0.5; height: 1; }
+                        Item {
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
+                        }
                         Column {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
@@ -268,8 +285,13 @@ QGCView {
                             fillMode:                   Image.PreserveAspectFit
                             source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/GeoFenceLight.svg" : "/qmlimages/GeoFence.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
-                        Item { width: _margins * 0.5; height: 1; }
+                        Item {
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
+                        }
                         Column {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
@@ -352,8 +374,13 @@ QGCView {
                             fillMode:                   Image.PreserveAspectFit
                             source:                     controller.vehicle.fixedWing ? "/qmlimages/ReturnToHomeAltitude.svg" : "/qmlimages/ReturnToHomeAltitudeCopter.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
-                        Item { width: _margins * 0.5; height: 1; }
+                        Item {
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
+                        }
                         Column {
                             spacing:                    _margins * 0.5
                             Row {
@@ -467,10 +494,12 @@ QGCView {
                             fillMode:                   Image.PreserveAspectFit
                             source:                     controller.vehicle.fixedWing ? "/qmlimages/LandMode.svg" : "/qmlimages/LandModeCopter.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
                         Item {
-                            width:                      _margins * 0.5
-                            height:                     1
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
                         }
                         Column {
                             spacing:                    _margins * 0.5
