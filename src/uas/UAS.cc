@@ -588,13 +588,6 @@ void UAS::receiveMessage(mavlink_message_t message)
             setSatelliteCount(pos.satellites_visible);
         }
             break;
-        case MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN:
-        {
-            mavlink_gps_global_origin_t pos;
-            mavlink_msg_gps_global_origin_decode(&message, &pos);
-            emit homePositionChanged(uasId, pos.latitude / 10000000.0, pos.longitude / 10000000.0, pos.altitude / 1000.0);
-        }
-            break;
 
         case MAVLINK_MSG_ID_PARAM_VALUE:
         {
