@@ -433,20 +433,11 @@ QGCView {
 
                 QGCLabel { text: qsTr("Additional Radio setup:") }
 
-                Row {
-                    spacing: 10
+                QGCButton {
+                    id:         bindButton
+                    text:       qsTr("Spektrum Bind")
 
-                    QGCLabel {
-                        anchors.baseline:   bindButton.baseline
-                        text:               qsTr("Place Spektrum satellite receiver in bind mode:")
-                    }
-
-                    QGCButton {
-                        id:         bindButton
-                        text:       qsTr("Spektrum Bind")
-
-                        onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
-                    }
+                    onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
 
                 QGCButton {
@@ -488,12 +479,14 @@ QGCView {
                 id:             rightColumn
                 anchors.top:    parent.top
                 anchors.right:  parent.right
-                width:          defaultTextWidth * 35
-                spacing:        10
+                width:          Math.min(defaultTextWidth * 35, qgcView.width * 0.4)
+                spacing:        ScreenTools.defaultFontPixelHeight / 2
 
                 Row {
-                    spacing: 10
+                    spacing: ScreenTools.defaultFontPixelWidth
+
                     ExclusiveGroup { id: modeGroup }
+
                     QGCRadioButton {
                         exclusiveGroup: modeGroup
                         text:           qsTr("Mode 1")
@@ -513,14 +506,13 @@ QGCView {
 
                 Image {
                     width:      parent.width
-                    height:     defaultTextHeight * 15
                     fillMode:   Image.PreserveAspectFit
                     smooth:     true
                     source:     controller.imageHelp
                 }
 
                 RCChannelMonitor {
-                    width:      parent.width
+                    width: parent.width
                 }
             } // Column - Right Column
         } // QGCFlickable
