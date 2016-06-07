@@ -6,7 +6,7 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
-Row {
+Flow {
     spacing: ScreenTools.defaultFontPixelWidth
 
     property Fact fact: Fact { }
