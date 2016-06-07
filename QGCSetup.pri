@@ -28,11 +28,11 @@ WindowsBuild {
     # Make sure to keep both side of this if using the same set of directories
     DESTDIR_COPY_RESOURCE_LIST = $$replace(DESTDIR,"/","\\")
     BASEDIR_COPY_RESOURCE_LIST = $$replace(BASEDIR,"/","\\")
-    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\flightgear\" \"$$DESTDIR_COPY_RESOURCE_LIST\\flightgear\"
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\resources\\flightgear\" \"$$DESTDIR_COPY_RESOURCE_LIST\\flightgear\"
 } else {
     !MobileBuild {
         # Make sure to keep both sides of this if using the same set of directories
-        QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/flightgear $$DESTDIR_COPY_RESOURCE_LIST
+        QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/resources/flightgear $$DESTDIR_COPY_RESOURCE_LIST
     }
 }
 
