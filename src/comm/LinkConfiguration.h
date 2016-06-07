@@ -28,7 +28,7 @@ public:
     virtual ~LinkConfiguration() {}
 
     Q_PROPERTY(QString          name                READ name           WRITE setName           NOTIFY nameChanged)
-    Q_PROPERTY(LinkInterface*   link                READ link           WRITE setLink           NOTIFY linkChanged)
+    Q_PROPERTY(LinkInterface*   link                READ link           WRITE setLink)
     Q_PROPERTY(LinkType         linkType            READ type                                   CONSTANT)
     Q_PROPERTY(bool             dynamic             READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
     Q_PROPERTY(bool             autoConnect         READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
@@ -178,7 +178,6 @@ public:
 
 signals:
     void nameChanged        (const QString& name);
-    void linkChanged        (LinkInterface* link);
     void dynamicChanged     ();
     void autoConnectChanged ();
 
