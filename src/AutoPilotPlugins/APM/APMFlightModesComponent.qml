@@ -44,136 +44,140 @@ QGCView {
         QGCFlickable {
             anchors.fill:       parent
             clip:               true
-            flickableDirection: Flickable.VerticalFlick
-            contentHeight:      flightModeSettings.y + flightModeSettings.height
+            contentHeight:      flowLayout.height
+            contentWidth:       flowLayout.width
 
-            QGCLabel {
-                id:             flightModeLabel
-                text:           qsTr("Flight Mode Settings") + (_fltmodeChExists ? "" : qsTr(" (Channel 5)"))
-                font.family:    ScreenTools.demiboldFontFamily
-            }
-
-            Rectangle {
-                id:                 flightModeSettings
-                anchors.topMargin:  _margins
-                anchors.top:        flightModeLabel.bottom
-                width:              flightModeColumn.width + (_margins * 2)
-                height:             flightModeColumn.height + ScreenTools.defaultFontPixelHeight
-                color:              qgcPal.windowShade
+            Flow {
+                id:         flowLayout
+                width:      panel.width // parent.width doesn't work here for some reason!
+                spacing:     _margins
 
                 Column {
-                    id:                 flightModeColumn
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.left:       parent.left
-                    anchors.top:        parent.top
-                    spacing:            ScreenTools.defaultFontPixelHeight
+                    spacing: _margins
 
-                    Row {
-                        spacing:    _margins
-                        visible:    _fltmodeChExists
-
-                        QGCLabel {
-                            id:                 modeChannelLabel
-                            anchors.baseline:   modeChannelCombo.baseline
-                            text:               qsTr("Flight mode channel:")
-                        }
-
-                        QGCComboBox {
-                            id:             modeChannelCombo
-                            width:          ScreenTools.defaultFontPixelWidth * 15
-                            model:          [ qsTr("Not assigned"), qsTr("Channel 1"), qsTr("Channel 2"),
-                                              qsTr("Channel 3"),    qsTr("Channel 4"), qsTr("Channel 5"),
-                                              qsTr("Channel 6"),    qsTr("Channel 7"), qsTr("Channel 8") ]
-
-                            currentIndex:   _fltmodeCh.value
-                            onActivated:    _fltmodeCh.value = index
-                        }
+                    QGCLabel {
+                        id:             flightModeLabel
+                        text:           qsTr("Flight Mode Settings") + (_fltmodeChExists ? "" : qsTr(" (Channel 5)"))
+                        font.family:    ScreenTools.demiboldFontFamily
                     }
 
-                    Repeater {
-                        model:  6
+                    Rectangle {
+                        id:     flightModeSettings
+                        width:  flightModeColumn.width + (_margins * 2)
+                        height: flightModeColumn.height + ScreenTools.defaultFontPixelHeight
+                        color:  qgcPal.windowShade
 
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
+                        Column {
+                            id:                 flightModeColumn
+                            anchors.margins:    ScreenTools.defaultFontPixelWidth
+                            anchors.left:       parent.left
+                            anchors.top:        parent.top
+                            spacing:            ScreenTools.defaultFontPixelHeight
 
-                            property int index:         modelData + 1
-                            property var pwmStrings:    [ "PWM 0 - 1230", "PWM 1231 - 1360", "PWM 1361 - 1490", "PWM 1491 - 1620", "PWM 1621 - 1749", "PWM 1750 +"]
+                            Row {
+                                spacing:    _margins
+                                visible:    _fltmodeChExists
 
+                                QGCLabel {
+                                    id:                 modeChannelLabel
+                                    anchors.baseline:   modeChannelCombo.baseline
+                                    text:               qsTr("Flight mode channel:")
+                                }
 
-                            QGCLabel {
-                                anchors.baseline:   modeCombo.baseline
-                                text:               qsTr("Flight Mode ") + index + ":"
-                                color:              controller.activeFlightMode == index ? "yellow" : qgcPal.text
+                                QGCComboBox {
+                                    id:             modeChannelCombo
+                                    width:          ScreenTools.defaultFontPixelWidth * 15
+                                    model:          [ qsTr("Not assigned"), qsTr("Channel 1"), qsTr("Channel 2"),
+                                        qsTr("Channel 3"),    qsTr("Channel 4"), qsTr("Channel 5"),
+                                        qsTr("Channel 6"),    qsTr("Channel 7"), qsTr("Channel 8") ]
+
+                                    currentIndex:   _fltmodeCh.value
+                                    onActivated:    _fltmodeCh.value = index
+                                }
                             }
 
-                            FactComboBox {
-                                id:         modeCombo
-                                width:      ScreenTools.defaultFontPixelWidth * 15
-                                fact:       controller.getParameterFact(-1, "FLTMODE" + index)
-                                indexModel: false
-                            }
+                            Repeater {
+                                model:  6
 
-                            QGCLabel {
-                                anchors.baseline:   modeCombo.baseline
-                                text:               pwmStrings[modelData]
-                            }
-                        }
-                    } // Repeater - Flight Modes
+                                Row {
+                                    spacing: ScreenTools.defaultFontPixelWidth
+
+                                    property int index:         modelData + 1
+                                    property var pwmStrings:    [ "PWM 0 - 1230", "PWM 1231 - 1360", "PWM 1361 - 1490", "PWM 1491 - 1620", "PWM 1621 - 1749", "PWM 1750 +"]
+
+                                    QGCLabel {
+                                        anchors.baseline:   modeCombo.baseline
+                                        text:               qsTr("Flight Mode ") + index + ":"
+                                        color:              controller.activeFlightMode == index ? "yellow" : qgcPal.text
+                                    }
+
+                                    FactComboBox {
+                                        id:         modeCombo
+                                        width:      ScreenTools.defaultFontPixelWidth * 15
+                                        fact:       controller.getParameterFact(-1, "FLTMODE" + index)
+                                        indexModel: false
+                                    }
+
+                                    QGCLabel {
+                                        anchors.baseline:   modeCombo.baseline
+                                        text:               pwmStrings[modelData]
+                                    }
+                                }
+                            } // Repeater - Flight Modes
+                        } // Column - Flight Modes
+                    } // Rectangle - Flight Modes
                 } // Column - Flight Modes
-            } // Rectangle - Flight Modes
-
-            QGCLabel {
-                id:                 channelOptionsLabel
-                anchors.leftMargin: _margins
-                anchors.top:        parent.top
-                anchors.left:       flightModeSettings.right
-                text:               qsTr("Channel Options")
-                font.family:        ScreenTools.demiboldFontFamily
-                visible:            _channelOptionCount != 0
-            }
-
-            Rectangle {
-                id:                 channelOptionsSettings
-                anchors.topMargin:  _margins
-                anchors.top:        channelOptionsLabel.bottom
-                anchors.left:       channelOptionsLabel.left
-                width:              channelOptColumn.width + (_margins * 2)
-                height:             channelOptColumn.height + ScreenTools.defaultFontPixelHeight
-                color:              qgcPal.windowShade
-                visible:            _channelOptionCount != 0
 
                 Column {
-                    id:                 channelOptColumn
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.left:       parent.left
-                    anchors.top:        parent.top
-                    spacing:            ScreenTools.defaultFontPixelHeight
+                    spacing:    _margins
+                    visible:    _channelOptionCount != 0
 
-                    Repeater {
-                        model: _channelOptionCount
+                    QGCLabel {
+                        id:                 channelOptionsLabel
+                        text:               qsTr("Channel Options")
+                        font.family:        ScreenTools.demiboldFontFamily
+                    }
 
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
+                    Rectangle {
+                        id:     channelOptionsSettings
+                        width:  channelOptColumn.width + (_margins * 2)
+                        height: channelOptColumn.height + ScreenTools.defaultFontPixelHeight
+                        color:  qgcPal.windowShade
 
-                            property int index: modelData + 7
-                            property Fact nullFact: Fact { }
+                        Column {
+                            id:                 channelOptColumn
+                            anchors.margins:    ScreenTools.defaultFontPixelWidth
+                            anchors.left:       parent.left
+                            anchors.top:        parent.top
+                            spacing:            ScreenTools.defaultFontPixelHeight
 
-                            QGCLabel {
-                                anchors.baseline:   optCombo.baseline
-                                text:               qsTr("Channel option %1 :").arg(index)
-                                color:              controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
-                            }
+                            Repeater {
+                                model: _channelOptionCount
 
-                            FactComboBox {
-                                id:         optCombo
-                                width:      ScreenTools.defaultFontPixelWidth * 15
-                                fact:       controller.getParameterFact(-1, "CH" + index + "_OPT")
-                                indexModel: false
-                            }
-                        }
-                    } // Repeater -- Channel options
+                                Row {
+                                    spacing: ScreenTools.defaultFontPixelWidth
+
+                                    property int index: modelData + 7
+                                    property Fact nullFact: Fact { }
+
+                                    QGCLabel {
+                                        anchors.baseline:   optCombo.baseline
+                                        text:               qsTr("Channel option %1 :").arg(index)
+                                        color:              controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
+                                    }
+
+                                    FactComboBox {
+                                        id:         optCombo
+                                        width:      ScreenTools.defaultFontPixelWidth * 15
+                                        fact:       controller.getParameterFact(-1, "CH" + index + "_OPT")
+                                        indexModel: false
+                                    }
+                                }
+                            } // Repeater -- Channel options
+                        } // Column - Channel options
+                    } // Rectangle - Channel options
                 } // Column - Channel options
-            } // Rectangle - Channel options
+            } // Flow
         } // QGCFlickable
     } // QGCViewPanel
 } // QGCView
