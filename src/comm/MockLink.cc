@@ -158,7 +158,10 @@ void MockLink::_run1HzTasks(void)
     if (_mavlinkStarted && _connected) {
         _sendHeartBeat();
         _sendVibration();
-        _sendRCChannels();
+        if (!qgcApp()->runningUnitTests()) {
+            // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
+            _sendRCChannels();
+        }
         if (_sendHomePositionDelayCount > 0) {
             // We delay home position a bit to be more realistic
             _sendHomePositionDelayCount--;
