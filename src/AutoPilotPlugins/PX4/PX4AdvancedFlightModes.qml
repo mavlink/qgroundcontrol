@@ -29,19 +29,19 @@ Item {
     //property var qgcView      - QGCView control
     //property var qgcViewPanel - QGCViewPanel control
 
-    readonly property int monitorThresholdCharWidth: 8  // Character width of Monitor and Threshold labels
+    readonly property bool _shortText: ScreenTools.isTinyScreen
 
     // User visible strings
 
     readonly property string title:                     qsTr("FLIGHT MODES")
 
-
-    property string topHelpText:                        qsTr("Assign Flight Modes to radio control channels and adjust the thresholds for triggering them. ") +
-                                                        qsTr("You can assign multiple flight modes to a single channel. ") +
-                                                        qsTr("Turn your radio control on to test switch settings. ") +
-                                                        qsTr("The following channels: ") + controller.reservedChannels +
-                                                        qsTr(" are not available for Flight Modes since they are already in use for other functions.")
-
+    property string topHelpText: ScreenTools.isTinyScreen ?
+                                     qsTr("Assign Flight Modes to radio control channels and adjust the thresholds for triggering them.") :
+                                     (qsTr("Assign Flight Modes to radio control channels and adjust the thresholds for triggering them. ") +
+                                      qsTr("You can assign multiple flight modes to a single channel. ") +
+                                      qsTr("Turn your radio control on to test switch settings. ") +
+                                      qsTr("The following channels: ") + controller.reservedChannels +
+                                      qsTr(" are not available for Flight Modes since they are already in use for other functions."))
 
     readonly property string fwManualModeName:          qsTr("Manual/Main")
     readonly property string mrManualModeName:          qsTr("Stabilized/Main")
