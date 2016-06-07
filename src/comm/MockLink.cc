@@ -158,6 +158,10 @@ void MockLink::_run1HzTasks(void)
     if (_mavlinkStarted && _connected) {
         _sendHeartBeat();
         _sendVibration();
+        if (!qgcApp()->runningUnitTests()) {
+            // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
+            _sendRCChannels();
+        }
         if (_sendHomePositionDelayCount > 0) {
             // We delay home position a bit to be more realistic
             _sendHomePositionDelayCount--;
@@ -1026,3 +1030,26 @@ MockLink*  MockLink::startAPMArduPlaneMockLink(bool sendStatusText)
     return _startMockLink(mockConfig);
 }
 
+void MockLink::_sendRCChannels(void)
+{
+    mavlink_message_t   msg;
+
+    mavlink_msg_rc_channels_pack(_vehicleSystemId,
+                                 _vehicleComponentId,
+                                 &msg,
+                                 0,                     // time_boot_ms
+                                 8,                     // chancount
+                                 1500,                  // chan1_raw
+                                 1500,                  // chan2_raw
+                                 1500,                  // chan3_raw
+                                 1500,                  // chan4_raw
+                                 1500,                  // chan5_raw
+                                 1500,                  // chan6_raw
+                                 1500,                  // chan7_raw
+                                 1500,                  // chan8_raw
+                                 UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX,
+                                 0);                    // rssi
+
+    respondWithMavlinkMessage(msg);
+
+}

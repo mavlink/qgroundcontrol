@@ -173,6 +173,7 @@ private:
     void _sendVibration(void);
     void _sendStatusTextMessages(void);
     void _respondWithAutopilotVersion(void);
+    void _sendRCChannels(void);
 
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 
