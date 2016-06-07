@@ -303,9 +303,6 @@ signals:
     /** @brief Core specifications have changed */
     void systemSpecsChanged(int uasId);
 
-    // HOME POSITION / ORIGIN CHANGES
-    void homePositionChanged(int uas, double lat, double lon, double alt);
-
     // Log Download Signals
     void logEntry   (UASInterface* uas, uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
     void logData    (UASInterface* uas, uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data);
