@@ -449,8 +449,8 @@ QGCView {
         QGCFlickable {
             clip:           true
             anchors.fill:   parent
-            contentHeight:  gimbalDirectionPanLoader.y + gimbalDirectionPanLoader.height
-            contentWidth:   _showGimbaLSettings ? gimbalSettingsLoader.x + gimbalSettingsLoader.width : gimbalDirectionTiltLoader.x + gimbalDirectionTiltLoader.width
+            contentWidth:   gimbalDirectionTiltLoader.x + gimbalDirectionTiltLoader.width
+            contentHeight:  _showGimbaLSettings ? gimbalSettingsLoader.y + gimbalSettingsLoader.height : gimbalDirectionPanLoader.y + gimbalDirectionPanLoader.height
 
             Loader {
                 id:                 gimbalDirectionTiltLoader
@@ -510,9 +510,7 @@ QGCView {
             Loader {
                 id:                 gimbalSettingsLoader
                 anchors.margins:    _margins
-                anchors.left:       gimbalDirectionTiltLoader.right
-                anchors.top:        parent.top
-
+                anchors.top:        gimbalDirectionPanLoader.bottom
             }
         } // Flickable
     } // QGCViewPanel
