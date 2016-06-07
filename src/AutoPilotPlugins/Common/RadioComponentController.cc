@@ -123,7 +123,7 @@ RadioComponentController::~RadioComponentController()
 /// @brief Returns the state machine entry for the specified state.
 const RadioComponentController::stateMachineEntry* RadioComponentController::_getStateMachineEntry(int step) const
 {
-    static const char* msgBeginPX4 =        "Lower the Throttle stick all the way down as shown in diagram.\nReset all transmitter trims to center.\n\n"
+    static const char* msgBeginPX4 =        "Lower the Throttle stick all the way down as shown in diagram.\n\n"
                                             "It is recommended to disconnect all motors for additional safety, however, the system is designed to not arm during the calibration.\n\n"
                                             "Click Next to continue";
     static const char* msgBeginAPM =        "Lower the Throttle stick all the way down as shown in diagram.\nReset all transmitter trims to center.\n\n"
