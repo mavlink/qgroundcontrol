@@ -80,6 +80,7 @@ Rectangle {
                     width:      parent.width - x
                     wrapMode:   Text.WordWrap
                     text:       flightModeDescription
+                    visible:    !ScreenTools.isTinyScreen
                 }
             }
 
