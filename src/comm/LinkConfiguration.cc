@@ -158,5 +158,8 @@ void LinkConfiguration::setName(const QString name)
 
 void LinkConfiguration::setLink(LinkInterface* link)
 {
-    _link = link;
+    if(_link != link) {
+        _link = link;
+        emit linkChanged(link);
+    }
 }
