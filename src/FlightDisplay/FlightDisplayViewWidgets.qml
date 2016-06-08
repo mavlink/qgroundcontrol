@@ -238,7 +238,7 @@ Item {
         //-- Zoom Map In
         RoundButton {
             id:                 mapZoomPlus
-            visible:            _mainIsMap
+            visible:            !ScreenTools.isTinyScreen && _mainIsMap
             buttonImage:        "/qmlimages/ZoomPlus.svg"
             exclusiveGroup:     _dropButtonsExclusiveGroup
             z:                  QGroundControl.zOrderWidgets
@@ -253,7 +253,7 @@ Item {
         //-- Zoom Map Out
         RoundButton {
             id:                 mapZoomMinus
-            visible:            _mainIsMap
+            visible:            !ScreenTools.isTinyScreen && _mainIsMap
             buttonImage:        "/qmlimages/ZoomMinus.svg"
             exclusiveGroup:     _dropButtonsExclusiveGroup
             z:                  QGroundControl.zOrderWidgets
