@@ -6,6 +6,7 @@ QGCVideoBackground      1.0 QGCVideoBackground.qml
 
 # Widgets
 InstrumentSwipeView             1.0 InstrumentSwipeView.qml
+MapScale                        1.0 MapScale.qml
 QGCArtificialHorizon            1.0 QGCArtificialHorizon.qml
 QGCAttitudeHUD                  1.0 QGCAttitudeHUD.qml
 QGCAttitudeWidget               1.0 QGCAttitudeWidget.qml
