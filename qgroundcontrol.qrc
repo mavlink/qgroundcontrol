@@ -102,6 +102,7 @@
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
         <file alias="QGroundControl/FlightMap/qmldir">src/FlightMap/qmldir</file>
         <file alias="QGroundControl/FlightMap/FlightMap.qml">src/FlightMap/FlightMap.qml</file>
+        <file alias="QGroundControl/FlightMap/MapScale.qml">src/FlightMap/MapScale.qml</file>
         <file alias="QGroundControl/FlightMap/MissionItemIndicator.qml">src/FlightMap/MapItems/MissionItemIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/MissionItemView.qml">src/FlightMap/MapItems/MissionItemView.qml</file>
         <file alias="QGroundControl/FlightMap/MissionLineView.qml">src/FlightMap/MapItems/MissionLineView.qml</file>
