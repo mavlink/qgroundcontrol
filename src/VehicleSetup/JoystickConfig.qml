@@ -460,7 +460,7 @@ QGCView {
                             visible: _activeVehicle.manualControlReservedButtonCount != 0
                             text: qsTr("Buttons 0-%1 reserved for firmware use").arg(reservedButtonCount)
 
-                            property int reservedButtonCount: _activeVehicle.manualControlReservedButtonCount == -1 ? _activeJoystick.buttonCount : _activeVehicle.manualControlReservedButtonCount
+                            property int reservedButtonCount: _activeVehicle.manualControlReservedButtonCount == -1 ? _activeJoystick.totalButtonCount : _activeVehicle.manualControlReservedButtonCount
                         }
 
                         Repeater {
@@ -599,10 +599,10 @@ QGCView {
 
                     Repeater {
                         id:     buttonMonitorRepeater
-                        model:  _activeJoystick.buttonCount
+                        model:  _activeJoystick.totalButtonCount
 
                         Rectangle {
-                            width:          ScreenTools.defaultFontPixelHeight * 1.5
+                            width:          ScreenTools.defaultFontPixelHeight * 1.2
                             height:         width
                             border.width:   1
                             border.color:   qgcPal.text
