@@ -302,6 +302,9 @@ QGCCacheWorker::_getTileSets(QGCMapTask* mtask)
         while(query.next()) {
             QString name = query.value("name").toString();
             QString desc = query.value("description").toString();
+            //-- Original database had description as NOT NULL
+            if(desc.isEmpty())
+                desc = " ";
             QGCCachedTileSet* set = new QGCCachedTileSet(name, desc);
             set->setId(query.value("setID").toULongLong());
             set->setMapTypeStr(query.value("typeStr").toString());
@@ -409,11 +412,15 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
         quint32 actual_count = 0;
         QGCCreateTileSetTask* task = static_cast<QGCCreateTileSetTask*>(mtask);
         QSqlQuery query(*_db);
+        QString desc = task->tileSet()->description();
+        //-- Original database had description as NOT NULL
+        if(desc.isEmpty())
+            desc = " ";
         query.prepare("INSERT INTO TileSets("
             "name, description, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, numTiles, tilesSize, thumbNail, thumbW, thumbH, date"
             ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         query.addBindValue(task->tileSet()->name());
-        query.addBindValue(task->tileSet()->description());
+        query.addBindValue(desc);
         query.addBindValue(task->tileSet()->mapTypeStr());
         query.addBindValue(task->tileSet()->topleftLat());
         query.addBindValue(task->tileSet()->topleftLon());
@@ -665,7 +672,7 @@ QGCCacheWorker::_createDB()
             "CREATE TABLE IF NOT EXISTS TileSets ("
             "setID INTEGER PRIMARY KEY NOT NULL, "
             "name TEXT NOT NULL UNIQUE, "
-            "description TEXT NOT NULL, "
+            "description TEXT, "
             "typeStr TEXT, "
             "topleftLat REAL DEFAULT 0.0, "
             "topleftLon REAL DEFAULT 0.0, "
