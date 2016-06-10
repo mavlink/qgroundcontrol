@@ -30,8 +30,6 @@ Rectangle {
 
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
-    width:  200
-    height: 200
     color:  calInProgress ? "yellow" : (calValid ? "green" : "red")
 
     Rectangle {
