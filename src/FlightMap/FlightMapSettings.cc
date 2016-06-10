@@ -17,7 +17,6 @@ const char* FlightMapSettings::_defaultMapProvider      = "Bing";               
 const char* FlightMapSettings::_settingsGroup           = "FlightMapSettings";
 const char* FlightMapSettings::_mapProviderKey          = "MapProvider";
 const char* FlightMapSettings::_mapTypeKey              = "MapType";
-const char* FlightMapSettings::_showScaleOnFlyViewKey   = "ShowScaleOnFlyView";
 
 FlightMapSettings::FlightMapSettings(QGCApplication* app)
     : QGCTool(app)
@@ -90,24 +89,24 @@ void FlightMapSettings::_setMapTypesForCurrentProvider(void)
     emit mapTypesChanged(_mapTypes);
 }
 
-QString FlightMapSettings::mapTypeForMapName(const QString& mapName)
+QString FlightMapSettings::mapType(void)
 {
     QSettings settings;
 
     settings.beginGroup(_settingsGroup);
-    settings.beginGroup(mapName);
     settings.beginGroup(_mapProvider);
     return settings.value(_mapTypeKey, "Satellite Map").toString();
 }
 
-void FlightMapSettings::setMapTypeForMapName(const QString& mapName, const QString& mapType)
+void FlightMapSettings::setMapType(const QString& mapType)
 {
     QSettings settings;
 
     settings.beginGroup(_settingsGroup);
-    settings.beginGroup(mapName);
     settings.beginGroup(_mapProvider);
     settings.setValue(_mapTypeKey, mapType);
+
+    emit mapTypeChanged(mapType);
 }
 
 void FlightMapSettings::saveMapSetting (const QString &mapName, const QString& key, const QString& value)
@@ -144,20 +143,4 @@ bool FlightMapSettings::loadBoolMapSetting (const QString &mapName, const QStrin
     settings.beginGroup(_settingsGroup);
     settings.beginGroup(mapName);
     return settings.value(key, defaultValue).toBool();
-}
-
-bool FlightMapSettings::showScaleOnFlyView()
-{
-    QSettings settings;
-    settings.beginGroup(_settingsGroup);
-    bool show = settings.value(_showScaleOnFlyViewKey, true).toBool();
-    return show;
-}
-
-void FlightMapSettings::setShowScaleOnFlyView(bool show)
-{
-    QSettings settings;
-    settings.beginGroup(_settingsGroup);
-    settings.setValue(_showScaleOnFlyViewKey, show);
-    emit showScaleOnFlyViewChanged();
 }

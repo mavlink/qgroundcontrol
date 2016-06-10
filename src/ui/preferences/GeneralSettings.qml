@@ -177,17 +177,6 @@ Rectangle {
             }
 
             //-----------------------------------------------------------------
-            //-- Scale on Flight View
-            QGCCheckBox {
-                text:       qsTr("Show scale on Fly View")
-                onClicked: {
-                    QGroundControl.flightMapSettings.showScaleOnFlyView = checked
-                }
-                Component.onCompleted: {
-                    checked = QGroundControl.flightMapSettings.showScaleOnFlyView
-                }
-            }
-            //-----------------------------------------------------------------
             //-- Audio preferences
             QGCCheckBox {
                 text:       qsTr("Mute all audio output")
@@ -284,7 +273,7 @@ Rectangle {
                 QGCLabel {
                     id:                 mapProvidersLabel
                     anchors.baseline:   mapProviders.baseline
-                    text:               qsTr("Map Providers:")
+                    text:               qsTr("Map Provider:")
                 }
 
                 QGCComboBox {

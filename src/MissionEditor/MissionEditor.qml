@@ -631,13 +631,14 @@ QGCView {
                                     spacing: ScreenTools.defaultFontPixelWidth
                                     Repeater {
                                         model: QGroundControl.flightMapSettings.mapTypes
+
                                         QGCButton {
                                             checkable:      true
-                                            checked:        editorMap.mapType === text
+                                            checked:        QGroundControl.flightMapSettings.mapType === text
                                             text:           modelData
                                             exclusiveGroup: _mapTypeButtonsExclusiveGroup
                                             onClicked: {
-                                                editorMap.mapType = text
+                                                QGroundControl.flightMapSettings.mapType = text
                                                 checked = true
                                                 mapTypeButton.hideDropDown()
                                             }
@@ -674,6 +675,15 @@ QGCView {
                             checked = false
                         }
                     }
+                }
+
+                MapScale {
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight * (0.66)
+                    anchors.bottom:     waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
+                    anchors.left:       parent.left
+                    z:                  QGroundControl.zOrderWidgets
+                    mapControl:         editorMap
+                    visible:            !ScreenTools.isTinyScreen
                 }
 
                 MissionItemStatus {
