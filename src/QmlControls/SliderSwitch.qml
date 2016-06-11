@@ -23,10 +23,11 @@ Rectangle {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     QGCLabel {
-        id: label
+        id:                         label
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.verticalCenter:     parent.verticalCenter
-        text:   qsTr("Slide to %1").arg(confirmText)
+        font.pointSize:             ScreenTools.largeFontPointSize
+        text:                       qsTr("Slide to %1").arg(confirmText)
     }
 
     Rectangle {
