@@ -15,6 +15,7 @@ tar xf ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.tar.bz2
 wget -c http://ftp.us.debian.org/debian/pool/main/u/udev/udev_175-7.2_amd64.deb
 wget -c http://ftp.us.debian.org/debian/pool/main/e/espeak/espeak_1.46.02-2_amd64.deb
 wget -c http://ftp.us.debian.org/debian/pool/main/libs/libsdl1.2/libsdl1.2debian_1.2.15-5_amd64.deb
+wget -c http://ftp.us.debian.org/debian/pool/main/d/directfb/libdirectfb-1.2-9_1.2.10.0-5.1_amd64.deb
 
 cd $APP.AppDir/
 
