@@ -77,6 +77,7 @@ public:
     Q_INVOKABLE void calibrateAccel(void);
     Q_INVOKABLE void cancelCalibration(void);
     Q_INVOKABLE void nextClicked(void);
+    Q_INVOKABLE bool usingUDPLink(void);
 
     bool compassSetupNeeded(void) const;
     bool accelSetupNeeded(void) const;

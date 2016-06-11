@@ -169,6 +169,14 @@ QGCView {
         }
     }
 
+    Component.onCompleted: {
+        var usingUDP = controller.usingUDPLink()
+        if (usingUDP) {
+            console.log("onUsingUDPLink")
+            showMessage("Sensor Calibration", "Performing sensor calibration over a WiFi connection is known to be unreliable. You should disconnect and perform calibration using a direct USB connection instead.", StandardButton.Ok)
+        }
+    }
+
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
     Component {
