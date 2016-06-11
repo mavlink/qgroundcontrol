@@ -20,8 +20,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
-class QGCApplicaiton;
-
 class JoystickManager : public QGCTool
 {
     Q_OBJECT
