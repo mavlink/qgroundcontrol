@@ -24,7 +24,7 @@ Item {
 
     property variant _scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
 
-    property bool   _isSatelliteMap:    mapControl.activeMapType.name.indexOf(qsTr("Street")) == -1    ///< Scale control being displayed over satellite map
+    property bool   _isSatelliteMap:    mapControl.activeMapType.name.indexOf("Satellite") > -1 || mapControl.activeMapType.name.indexOf("Hybrid") > -1
     property var    _color:             _isSatelliteMap ? "white" : "black"
 
     function formatDistance(meters)

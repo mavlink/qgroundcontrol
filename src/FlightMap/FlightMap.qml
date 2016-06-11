@@ -32,10 +32,7 @@ Map {
     id: _map
 
     property string mapName:            'defaultMap'
-    property string mapType:            QGroundControl.flightMapSettings.mapTypeForMapName(mapName)
-//  property alias  mapWidgets:         controlWidgets
-    property bool   isSatelliteMap:     mapType == "Satellite Map" || mapType == "Hybrid Map"
-    property bool   showScale:          false
+    property bool   isSatelliteMap:     QGroundControl.flightMapSettings.mapType == "Satellite" || QGroundControl.flightMapSettings.mapType == "Hybrid"
 
     readonly property real  maxZoomLevel: 20
     property variant        scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
@@ -93,8 +90,6 @@ Map {
 
     ExclusiveGroup { id: mapTypeGroup }
 
-    Component.onCompleted: onMapTypeChanged
-
     property bool _initialMapPositionSet: false
 
     Connections {
@@ -107,15 +102,21 @@ Map {
         }
     }
 
-    onMapTypeChanged: {
-        QGroundControl.flightMapSettings.setMapTypeForMapName(mapName, mapType)
-        var fullMapName = QGroundControl.flightMapSettings.mapProvider + " " + mapType
+    function updateActiveMapType() {
+        var fullMapName = QGroundControl.flightMapSettings.mapProvider + " " + QGroundControl.flightMapSettings.mapType
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
             if (fullMapName === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
                 return
             }
         }
+    }
+
+    Component.onCompleted: updateActiveMapType()
+
+    Connections {
+        target:             QGroundControl.flightMapSettings
+        onMapTypeChanged:   updateActiveMapType()
     }
 
     MapQuickItem {
@@ -127,180 +128,4 @@ Map {
             label: "Q"
         }
     }
-
-    onWidthChanged: {
-        if(_map.showScale)
-            scaleTimer.restart()
-    }
-
-    onHeightChanged: {
-        if(_map.showScale)
-            scaleTimer.restart()
-    }
-
-    onZoomLevelChanged:{
-        if(_map.showScale)
-            scaleTimer.restart()
-    }
-
-    Timer {
-        id:         scaleTimer
-        interval:   100
-        running:    false
-        repeat:     false
-        onTriggered: {
-            _map.calculateScale()
-        }
-    }
-    /*
-        Scale
-    */
-    Item {
-        id:                         scale
-        visible:                    !ScreenTools.isTinyScreen && _map.showScale && scaleText.text !== "0 m"
-        z:                          _map.z + 20
-        width:                      scaleImageLeft.width + scaleImage.width + scaleImageRight.width
-        anchors {
-            bottom:                 parent.bottom
-            bottomMargin:           ScreenTools.defaultFontPixelHeight * (0.66)
-            right:                  parent.right
-            rightMargin:            ScreenTools.defaultFontPixelHeight * (0.33)
-        }
-        Image {
-            id:                     scaleImageLeft
-            source:                 isSatelliteMap ? "/qmlimages/scale_end.png" : "/qmlimages/scale_endLight.png"
-            anchors.bottom:         parent.bottom
-            anchors.left:           parent.left
-        }
-        Image {
-            id:                     scaleImage
-            source:                 isSatelliteMap ? "/qmlimages/scale.png" : "/qmlimages/scaleLight.png"
-            anchors.bottom:         parent.bottom
-            anchors.left:           scaleImageLeft.right
-        }
-        Image {
-            id:                     scaleImageRight
-            source:                 isSatelliteMap ? "/qmlimages/scale_end.png" : "/qmlimages/scale_endLight.png"
-            anchors.bottom:         parent.bottom
-            anchors.left:           scaleImage.right
-        }
-        QGCLabel {
-            id: scaleText
-            color:                  isSatelliteMap ? "white" : "black"
-            font.family:            ScreenTools.demiboldFontFamily
-            horizontalAlignment:    Text.AlignHCenter
-            anchors.bottom:         parent.bottom
-            anchors.right:          parent.right
-            anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.83)
-            text: "0 m"
-        }
-        Component.onCompleted: {
-            if(_map.showScale)
-                _map.calculateScale();
-        }
-    }
-
-    /*********************************************
-    /// Map control widgets
-    Column {
-        id:                 controlWidgets
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
-        anchors.right:      parent.right
-        anchors.bottom:     parent.bottom
-        spacing:            ScreenTools.defaultFontPixelWidth / 2
-        z:                  1000    // Must be on top for clicking
-        // Pinch zoom doesn't seem to be working, so zoom buttons in mobile on for now
-        //visible:            !ScreenTools.isMobile
-
-        Row {
-            layoutDirection:    Qt.RightToLeft
-            spacing:            ScreenTools.defaultFontPixelWidth / 2
-
-            readonly property real _zoomIncrement: 1.0
-            property real _buttonWidth: ScreenTools.defaultFontPixelWidth * 5
-
-            NumberAnimation {
-                id: animateZoom
-
-                property real startZoom
-                property real endZoom
-
-                target:     _map
-                properties: "zoomLevel"
-                from:       startZoom
-                to:         endZoom
-                duration:   500
-
-                easing {
-                    type: Easing.OutExpo
-                }
-            }
-
-
-            QGCButton {
-                width:  parent._buttonWidth
-                z:      QGroundControl.zOrderWidgets
-                //iconSource: "/qmlimages/ZoomPlus.svg"
-                text:   "+"
-
-                onClicked: {
-                    var endZoomLevel = _map.zoomLevel + parent._zoomIncrement
-                    if (endZoomLevel > _map.maximumZoomLevel) {
-                        endZoomLevel = _map.maximumZoomLevel
-                    }
-                    animateZoom.startZoom = _map.zoomLevel
-                    animateZoom.endZoom = endZoomLevel
-                    animateZoom.start()
-                }
-            }
-
-            QGCButton {
-                width:  parent._buttonWidth
-                z:      QGroundControl.zOrderWidgets
-                //iconSource: "/qmlimages/ZoomMinus.svg"
-                text:   "-"
-
-                onClicked: {
-                    var endZoomLevel = _map.zoomLevel - parent._zoomIncrement
-                    if (endZoomLevel < _map.minimumZoomLevel) {
-                        endZoomLevel = _map.minimumZoomLevel
-                    }
-                    animateZoom.startZoom = _map.zoomLevel
-                    animateZoom.endZoom = endZoomLevel
-                    animateZoom.start()
-                }
-            }
-        } // Row - +/- buttons
-    } // Column - Map control widgets
-*********************************************/
-
-/*
- The slider and scale display are commented out for now to try to save real estate - DonLakeFlyer
- Not sure if I'll bring them back or not. Need room for waypoint list at bottom
-
-    QGCSlider {
-        id: zoomSlider;
-        minimum: map.minimumZoomLevel;
-        maximum: map.maximumZoomLevel;
-        opacity: 1
-        visible: parent.visible
-        z: 1000
-        anchors {
-            bottom: parent.bottom;
-            bottomMargin:   ScreenTools.defaultFontPixelHeight * (1.25)
-            rightMargin:    ScreenTools.defaultFontPixelHeight * (1.66)
-            leftMargin:     ScreenTools.defaultFontPixelHeight * (1.66)
-            left: parent.left
-        }
-        width: parent.width - anchors.rightMargin - anchors.leftMargin
-        value: map.zoomLevel
-        Binding {
-            target: zoomSlider; property: "value"; value: map.zoomLevel
-        }
-        onValueChanged: {
-            map.zoomLevel = value
-        }
-    }
-*/
-
 } // Map

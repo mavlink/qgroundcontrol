@@ -26,7 +26,6 @@ FlightMap {
     id:             flightMap
     anchors.fill:   parent
     mapName:        _mapName
-    showScale:      QGroundControl.flightMapSettings.showScaleOnFlyView
 
     property alias  missionController: _missionController
     property var    flightWidgets
@@ -109,6 +108,16 @@ FlightMap {
             isCurrentItem:  true
             label:          qsTr("G", "Goto here waypoint") // second string is translator's hint.
         }
+    }    
+
+    MapScale {
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.66)
+        anchors.rightMargin:    ScreenTools.defaultFontPixelHeight * (0.33)
+        anchors.bottom:         parent.bottom
+        anchors.right:          parent.right
+        z:                      QGroundControl.zOrderWidgets
+        mapControl:             flightMap
+        visible:                !ScreenTools.isTinyScreen
     }
 
     // Handle guided mode clicks

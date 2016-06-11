@@ -31,7 +31,7 @@ QGCView {
 
     property string mapKey:             "lastMapType"
 
-    property string mapType:            QGroundControl.mapEngineManager.loadSetting(mapKey, "Google Street Map")
+    property string mapType:            QGroundControl.flightMapSettings.mapProvider + " " + QGroundControl.flightMapSettings.mapType
     property bool   isMapInteractive:   true
     property var    savedCenter:        undefined
     property real   savedZoom:          3
@@ -106,6 +106,7 @@ QGCView {
     }
 
     function addNewSet() {
+        mapType = QGroundControl.flightMapSettings.mapProvider + " " + QGroundControl.flightMapSettings.mapType
         _map.visible = true
         _tileSetList.visible = false
         infoView.visible = false
@@ -700,8 +701,8 @@ QGCView {
                                 id:             mapCombo
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
+                                model:          QGroundControl.mapEngineManager.mapList
 
-                                model:      QGroundControl.mapEngineManager.mapList
                                 onActivated: {
                                     mapType = textAt(index)
                                     if(_dropButtonsExclusiveGroup.current)
@@ -712,7 +713,7 @@ QGCView {
                                 Component.onCompleted: {
                                     var index = mapCombo.find(mapType)
                                     if (index === -1) {
-                                        console.warn(qsTr("Active map name not in combo"), mapType)
+                                        console.warn("Active map name not in combo", mapType)
                                     } else {
                                         mapCombo.currentIndex = index
                                     }
