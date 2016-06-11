@@ -450,12 +450,17 @@ QGCView {
                 Flow {
                     anchors.topMargin:  ScreenTools.defaultFontPixelWidth
                     anchors.top:        orientationCalAreaHelpText.bottom
-                    anchors.left:       orientationCalAreaHelpText.left
-                    width:              parent.width
-                    height:             parent.height - orientationCalAreaHelpText.implicitHeight
+                    anchors.bottom:     parent.bottom
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
                     spacing:            ScreenTools.defaultFontPixelWidth
 
+                    property real indicatorWidth:   (width / 3) - (spacing * 2)
+                    property real indicatorHeight:  (height / 2) - spacing
+
                     VehicleRotationCal {
+                        width:              parent.indicatorWidth
+                        height:             parent.indicatorHeight
                         visible:            controller.orientationCalDownSideVisible
                         calValid:           controller.orientationCalDownSideDone
                         calInProgress:      controller.orientationCalDownSideInProgress
@@ -463,6 +468,8 @@ QGCView {
                         imageSource:        controller.orientationCalDownSideRotate ? "qrc:///qmlimages/VehicleDownRotate.png" : "qrc:///qmlimages/VehicleDown.png"
                     }
                     VehicleRotationCal {
+                        width:              parent.indicatorWidth
+                        height:             parent.indicatorHeight
                         visible:            controller.orientationCalUpsideDownSideVisible
                         calValid:           controller.orientationCalUpsideDownSideDone
                         calInProgress:      controller.orientationCalUpsideDownSideInProgress
@@ -470,6 +477,8 @@ QGCView {
                         imageSource:        controller.orientationCalUpsideDownSideRotate ? "qrc:///qmlimages/VehicleUpsideDownRotate.png" : "qrc:///qmlimages/VehicleUpsideDown.png"
                     }
                     VehicleRotationCal {
+                        width:              parent.indicatorWidth
+                        height:             parent.indicatorHeight
                         visible:            controller.orientationCalNoseDownSideVisible
                         calValid:           controller.orientationCalNoseDownSideDone
                         calInProgress:      controller.orientationCalNoseDownSideInProgress
@@ -477,6 +486,8 @@ QGCView {
                         imageSource:        controller.orientationCalNoseDownSideRotate ? "qrc:///qmlimages/VehicleNoseDownRotate.png" : "qrc:///qmlimages/VehicleNoseDown.png"
                     }
                     VehicleRotationCal {
+                        width:              parent.indicatorWidth
+                        height:             parent.indicatorHeight
                         visible:            controller.orientationCalTailDownSideVisible
                         calValid:           controller.orientationCalTailDownSideDone
                         calInProgress:      controller.orientationCalTailDownSideInProgress
@@ -484,6 +495,8 @@ QGCView {
                         imageSource:        controller.orientationCalTailDownSideRotate ? "qrc:///qmlimages/VehicleTailDownRotate.png" : "qrc:///qmlimages/VehicleTailDown.png"
                     }
                     VehicleRotationCal {
+                        width:              parent.indicatorWidth
+                        height:             parent.indicatorHeight
                         visible:            controller.orientationCalLeftSideVisible
                         calValid:           controller.orientationCalLeftSideDone
                         calInProgress:      controller.orientationCalLeftSideInProgress
@@ -491,6 +504,8 @@ QGCView {
                         imageSource:        controller.orientationCalLeftSideRotate ? "qrc:///qmlimages/VehicleLeftRotate.png" : "qrc:///qmlimages/VehicleLeft.png"
                     }
                     VehicleRotationCal {
+                        width:              parent.indicatorWidth
+                        height:             parent.indicatorHeight
                         visible:            controller.orientationCalRightSideVisible
                         calValid:           controller.orientationCalRightSideDone
                         calInProgress:      controller.orientationCalRightSideInProgress
