@@ -579,7 +579,11 @@ APMCompassCal::APMCompassCal(void)
 
 APMCompassCal::~APMCompassCal()
 {
-
+    if (_calWorkerThread) {
+        _calWorkerThread->terminate();
+        // deleteLater so it happens on correct thread
+        _calWorkerThread->deleteLater();
+    }
 }
 
 void APMCompassCal::setVehicle(Vehicle* vehicle)
@@ -601,7 +605,7 @@ void APMCompassCal::startCalibration(void)
     // Simulate a start message
     _emitVehicleTextMessage("[cal] calibration started: mag");
 
-    _calWorkerThread = new CalWorkerThread(_vehicle, this);
+    _calWorkerThread = new CalWorkerThread(_vehicle);
     connect(_calWorkerThread, &CalWorkerThread::vehicleTextMessage, this, &APMCompassCal::vehicleTextMessage);
 
     // Clear the offset parameters so we get raw data

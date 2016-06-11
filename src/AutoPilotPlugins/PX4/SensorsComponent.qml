@@ -461,6 +461,8 @@ QGCView {
                         property real indicatorWidth:   (width / 3) - (spacing * 2)
                         property real indicatorHeight:  (height / 2) - spacing
 
+                        Component.onCompleted: console.log("indicatorWidth", indicatorWidth, "indicatorHeight", indicatorHeight)
+
                         VehicleRotationCal {
                             width:              parent.indicatorWidth
                             height:             parent.indicatorHeight
