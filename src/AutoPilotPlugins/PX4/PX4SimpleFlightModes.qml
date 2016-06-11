@@ -147,7 +147,7 @@ Item {
                                 QGCLabel {
                                     anchors.baseline:   returnCombo.baseline
                                     text:               "Return switch:"
-                                    color:              fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
+                                    color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
                                 }
 
                                 FactComboBox {
@@ -166,7 +166,7 @@ Item {
                                 QGCLabel {
                                     anchors.baseline:   killCombo.baseline
                                     text:               "Kill switch:"
-                                    color:              fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
+                                    color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
                                 }
 
                                 FactComboBox {
@@ -185,7 +185,7 @@ Item {
                                 QGCLabel {
                                     anchors.baseline:   offboardCombo.baseline
                                     text:               "Offboard switch:"
-                                    color:              fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
+                                    color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
                                 }
 
                                 FactComboBox {
