@@ -454,14 +454,10 @@ QGCView {
                         anchors.bottom:     parent.bottom
                         anchors.left:       parent.left
                         anchors.right:      parent.right
-                        width:              parent.width
-                        height:             parent.height - orientationCalAreaHelpText.implicitHeight
                         spacing:            ScreenTools.defaultFontPixelWidth / 2
 
                         property real indicatorWidth:   (width / 3) - (spacing * 2)
                         property real indicatorHeight:  (height / 2) - spacing
-
-                        Component.onCompleted: console.log("indicatorWidth", indicatorWidth, "indicatorHeight", indicatorHeight)
 
                         VehicleRotationCal {
                             width:              parent.indicatorWidth
