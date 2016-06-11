@@ -27,9 +27,11 @@ Item {
 
     property alias guidedModeBar: _guidedModeBar
 
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
-    property bool   _lightWidgetBorders:    _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _isSatellite:               _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+    property bool   _lightWidgetBorders:        _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+    property bool   _useAlternateInstruments:   QGroundControl.virtualTabletJoystick || ScreenTools.isTinyScreen
+
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight / 2
 
@@ -94,7 +96,7 @@ Item {
         anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
         anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
         anchors.verticalCenter: parent.verticalCenter
-        visible:                !QGroundControl.virtualTabletJoystick
+        visible:                !_useAlternateInstruments
         size:                   getGadgetWidth()
         active:                 _activeVehicle != null
         heading:                _heading
@@ -113,8 +115,8 @@ Item {
         anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
         anchors.top:            parent.top
         anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
-        visible:                QGroundControl.virtualTabletJoystick
-        width:                  ScreenTools.isTinyScreen ? getGadgetWidth() * 2 : getGadgetWidth()
+        visible:                _useAlternateInstruments
+        width:                  ScreenTools.isTinyScreen ? getGadgetWidth() * 1.5 : getGadgetWidth()
         active:                 _activeVehicle != null
         heading:                _heading
         rollAngle:              _roll
@@ -126,14 +128,14 @@ Item {
     }
 
     ValuesWidget {
-        anchors.topMargin:  ScreenTools.defaultFontPixelHeight
-        anchors.top:        instrumentGadgetAlternate.bottom
-        anchors.left:       instrumentGadgetAlternate.left
-        width:              getGadgetWidth()
-        qgcView:            parent.parent.qgcView
-        textColor:          _isSatellite ? "white" : "black"
-        visible:            QGroundControl.virtualTabletJoystick
-        maxHeight:          multiTouchItem.y - y
+        anchors.topMargin:          ScreenTools.defaultFontPixelHeight
+        anchors.top:                instrumentGadgetAlternate.bottom
+        anchors.horizontalCenter:   instrumentGadgetAlternate.horizontalCenter
+        width:                      getGadgetWidth()
+        qgcView:                    parent.parent.qgcView
+        textColor:                  _isSatellite ? "white" : "black"
+        visible:                    _useAlternateInstruments
+        maxHeight:                  virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.y - y : parent.height - anchors.margins - y
     }
 
     //-- Vertical Tool Buttons
