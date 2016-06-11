@@ -209,12 +209,13 @@ Item {
 
                             QGCButton {
                                 checkable:      true
-                                checked:        _flightMap ? _flightMap.mapType === text : false
-                                text:               modelData
+                                checked:        QGroundControl.flightMapSettings.mapType === text
+                                text:           modelData
                                 width:          clearButton.width
                                 exclusiveGroup: _mapTypeButtonsExclusiveGroup
+
                                 onClicked: {
-                                    _flightMap.mapType = text
+                                    QGroundControl.flightMapSettings.mapType = text
                                     checked = true
                                     _dropButtonsExclusiveGroup.current = null
                                 }
