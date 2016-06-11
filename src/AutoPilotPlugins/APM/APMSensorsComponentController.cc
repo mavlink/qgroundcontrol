@@ -464,3 +464,8 @@ bool APMSensorsComponentController::accelSetupNeeded(void) const
 {
     return _sensorsComponent->accelSetupNeeded();
 }
+
+bool APMSensorsComponentController::usingUDPLink(void)
+{
+    return _vehicle->priorityLink()->getLinkConfiguration()->type() == LinkConfiguration::TypeUdp;
+}
