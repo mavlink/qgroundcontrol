@@ -195,8 +195,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_parameterLoader, &ParameterLoader::parametersReady, _autopilotPlugin, &AutoPilotPlugin::_parametersReadyPreChecks);
     connect(_parameterLoader, &ParameterLoader::parameterListProgress, _autopilotPlugin, &AutoPilotPlugin::parameterListProgress);
 
-    // Ask the vehicle for firmware version info
-    doCommandLong(defaultComponentId(), MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, 1 /* request firmware version */);
+    // Ask the vehicle for firmware version info. This must be MAV_COMP_ID_ALL since we don't know default component id yet.
+    doCommandLong(MAV_COMP_ID_ALL, MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, 1 /* request firmware version */);
 
     _firmwarePlugin->initializeVehicle(this);
 
@@ -466,6 +466,11 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     mavlink_msg_command_ack_decode(&message, &ack);
 
     emit commandLongAck(message.compid, ack.command, ack.result);
+
+    if (ack.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES) {
+        // Disregard failures
+        return;
+    }
 
     QString commandName;
     MavCmdInfo* cmdInfo = qgcApp()->toolbox()->missionCommands()->getMavCmdInfo((MAV_CMD)ack.command, this);
