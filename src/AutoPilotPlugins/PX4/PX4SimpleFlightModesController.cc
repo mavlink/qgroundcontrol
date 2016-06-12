@@ -51,6 +51,12 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
     }
 
     int flightModeChannel = pFact->rawValue().toInt() - 1;
+    if (flightModeChannel == -1) {
+        // Flight mode channel not set, can't track active flight mode
+        _activeFlightMode = 0;
+        emit activeFlightModeChanged(_activeFlightMode);
+        return;
+    }
 
     pFact = getParameterFact(-1, QString("RC%1_REV").arg(flightModeChannel + 1));
     if(!pFact) {
