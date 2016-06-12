@@ -54,14 +54,19 @@ mv ${APPDIR}/qgroundcontrol-start.sh ${APPDIR}/AppRun
 
 # copy icon
 cp ${QGC_SRC}/resources/icons/qgroundcontrol.png ${APPDIR}/
-mkdir -p ${APPDIR}/usr/share/icons/
-cp ${QGC_SRC}/resources/icons/qgroundcontrol.png ${APPDIR}/usr/share/icons/
 
-# copy linux desktop entry
-cp ${QGC_SRC}/deploy/qgroundcontrol.desktop ${APPDIR}/
-mkdir -p ${APPDIR}/usr/share/applications/
-cp ${QGC_SRC}/deploy/qgroundcontrol.desktop ${APPDIR}/usr/share/applications/
-
+cat > ./qgroundcontrol.desktop <<\EOF
+[Desktop Entry]
+Type=Application
+Name=QGroundControl
+GenericName=Ground Control Station
+Comment=UAS ground control station
+Icon=qgroundcontrol
+Exec=AppRun
+Terminal=false
+Categories=Utility;
+Keywords=computer;
+EOF
 
 VERSION=$(strings ${APPDIR}/qgroundcontrol | grep '^v[0-9*]\.[0-9*].[0-9*]' | head -n 1)
 echo QGC Version: ${VERSION}
