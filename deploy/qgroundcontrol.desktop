@@ -5,5 +5,5 @@ GenericName=Ground Control Station
 Comment=UAS ground control station
 Icon=qgroundcontrol
 Exec=qgroundcontrol-start.sh
-Terminal=true
+Terminal=false
 Categories=Utility;
