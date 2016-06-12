@@ -17,7 +17,7 @@ Vagrant.configure(2) do |config|
   # the "dev configuration puts the build products and a suitable
   # environment into the /vagrant directory.  This allows you to run
   # qgroundcontrol on the host machine with:
-  # "cd shadow-build/release; ../../deploy/qgroundcontrol-start.sh"
+  # "cd shadow-build/release; ./qgroundcontrol-start.sh"
 
   $config_shell = <<-'SHELL'
      sudo apt-get update -y

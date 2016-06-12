@@ -199,7 +199,7 @@ script:
 
 after_success:
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "installer" ]]; then
-        ${TRAVIS_BUILD_DIR}/deploy/create_linux_appimage.sh
+        ${TRAVIS_BUILD_DIR}/deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/release ${SHADOW_BUILD_DIR}/release/package
         ;
     fi
   - if [ "${TRAVIS_TAG}" ]; then
@@ -238,6 +238,7 @@ deploy:
     file_glob: true
     file:
       - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.*
+      - ${SHADOW_BUILD_DIR}/release/package/QGroundControl.*
     skip_cleanup: true
     on:
       tags: true
