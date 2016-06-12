@@ -73,7 +73,7 @@ deploy:
       secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
     bucket: qgroundcontrol
     set_public: true
-    folder: $(APPVEYOR_REPO_BRANCH)
+    folder: builds/$(APPVEYOR_REPO_BRANCH)
     artifact: qgcinstaller
     on:
       CONFIG: installer
