@@ -49,6 +49,12 @@ cp -L libdirectfb/usr/lib/x86_64-linux-gnu/libdirectfb-1.2.so.9 ${APPDIR}/usr/li
 cp -L libdirectfb/usr/lib/x86_64-linux-gnu/libfusion-1.2.so.9 ${APPDIR}/usr/lib/x86_64-linux-gnu/
 cp -L libdirectfb/usr/lib/x86_64-linux-gnu/libdirect-1.2.so.9 ${APPDIR}/usr/lib/x86_64-linux-gnu/
 
+# copy libts-0.0-0
+wget -c --quiet http://ftp.us.debian.org/debian/pool/main/t/tslib/libts-0.0-0_1.0-11_amd64.deb
+mkdir libts
+dpkg -x libts-0.0-0_1.0-11_amd64.deb libts
+cp -L libts/usr/lib/x86_64-linux-gnu/libts-0.0.so.0 ${APPDIR}/usr/lib/x86_64-linux-gnu/
+
 # copy QGroundControl release into appimage
 cp -r ${QGC_RELEASE_DIR}/* ${APPDIR}/
 rm -rf ${APPDIR}/package
