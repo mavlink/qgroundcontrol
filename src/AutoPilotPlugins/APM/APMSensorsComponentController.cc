@@ -452,7 +452,7 @@ void APMSensorsComponentController::nextClicked(void)
     ack.result = 1;
     mavlink_msg_command_ack_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &msg, &ack);
 
-    _vehicle->sendMessage(msg);
+    _vehicle->sendMessageOnPriorityLink(msg);
 }
 
 bool APMSensorsComponentController::compassSetupNeeded(void) const

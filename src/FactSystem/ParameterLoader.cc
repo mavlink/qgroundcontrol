@@ -44,7 +44,7 @@ ParameterLoader::ParameterLoader(Vehicle* vehicle)
     , _initialLoadComplete(false)
     , _waitingForDefaultComponent(false)
     , _saveRequired(false)
-    , _defaultComponentId(FactSystem::defaultComponentId)
+    , _defaultComponentId(MAV_COMP_ID_ALL)
     , _parameterSetMajorVersion(-1)
     , _parameterMetaData(NULL)
     , _totalParamCount(0)
@@ -203,7 +203,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     int waitingParamCount = waitingReadParamIndexCount + waitingReadParamNameCount + waitingWriteParamNameCount;
     if (waitingParamCount) {
         qCDebug(ParameterLoaderLog) << "waitingParamCount:" << waitingParamCount;
-    } else if (_defaultComponentId != FactSystem::defaultComponentId) {
+    } else if (_defaultComponentId != MAV_COMP_ID_ALL) {
         // No more parameters to wait for, stop the timeout. Be careful to not stop timer if we don't have the default
         // component yet.
         _waitingParamTimeoutTimer.stop();
@@ -358,12 +358,11 @@ void ParameterLoader::refreshAllParameters(uint8_t componentID)
 
 void ParameterLoader::_determineDefaultComponentId(void)
 {
-    if (_defaultComponentId == FactSystem::defaultComponentId) {
+    if (_defaultComponentId == MAV_COMP_ID_ALL) {
         // We don't have a default component id yet. That means the plugin can't provide
         // the param to trigger off of. Instead we use the most prominent component id in
         // the set of parameters. Better than nothing!
 
-        _defaultComponentId = -1;
         int largestCompParamCount = 0;
         foreach(int componentId, _mapParameterName2Variant.keys()) {
             int compParamCount = _mapParameterName2Variant[componentId].count();
@@ -373,7 +372,7 @@ void ParameterLoader::_determineDefaultComponentId(void)
             }
         }
 
-        if (_defaultComponentId == -1) {
+        if (_defaultComponentId == MAV_COMP_ID_ALL) {
             qWarning() << "All parameters missing, unable to determine default componet id";
         }
     }
@@ -509,7 +508,7 @@ void ParameterLoader::_waitingParamTimeout(void)
         }
     }
 
-    if (!paramsRequested && _defaultComponentId == FactSystem::defaultComponentId && !_waitingForDefaultComponent) {
+    if (!paramsRequested && _defaultComponentId == MAV_COMP_ID_ALL && !_waitingForDefaultComponent) {
         // Initial load is complete but we still don't have default component params. Wait one more cycle to see if the
         // default component finally shows up.
         _waitingParamTimeoutTimer.start();
@@ -883,7 +882,7 @@ void ParameterLoader::_restartWaitingParamTimer(void)
 
 void ParameterLoader::_addMetaDataToDefaultComponent(void)
 {
-     if (_defaultComponentId == FactSystem::defaultComponentId) {
+     if (_defaultComponentId == MAV_COMP_ID_ALL) {
          // We don't know what the default component is so we can't support meta data
          return;
      }
@@ -929,7 +928,7 @@ void ParameterLoader::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
         }
     }
 
-    if (!failIfNoDefaultComponent && _defaultComponentId == FactSystem::defaultComponentId) {
+    if (!failIfNoDefaultComponent && _defaultComponentId == MAV_COMP_ID_ALL) {
         // We are still waiting for default component to show up
         return;
     }

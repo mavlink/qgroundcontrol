@@ -448,7 +448,7 @@ LogDownloadController::_requestLogData(uint8_t id, uint32_t offset, uint32_t cou
             qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
             &msg,
-            qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), MAV_COMP_ID_ALL,
+            qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId(),
             id, offset, count);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
     }
@@ -476,7 +476,7 @@ LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
             &msg,
             _vehicle->id(),
-            MAV_COMP_ID_ALL,
+            _vehicle->defaultComponentId(),
             start,
             end);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
@@ -621,7 +621,7 @@ LogDownloadController::eraseAll(void)
             qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
             &msg,
-            qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), MAV_COMP_ID_ALL);
+            qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId());
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
         refresh();
     }
