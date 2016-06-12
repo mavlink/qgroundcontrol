@@ -60,7 +60,7 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
     , m_actionGuardEnabled(false)
     , m_actionRetransmissionTimeout(100)
     , versionMismatchIgnore(false)
-    , systemId(QGC::defaultSystemId)
+    , systemId(255)
 #ifndef __mobile__
     , _logSuspendError(false)
     , _logSuspendReplay(false)
@@ -422,7 +422,7 @@ void MAVLinkProtocol::setSystemId(int id)
 /** @return Component id of this application */
 int MAVLinkProtocol::getComponentId()
 {
-    return QGC::defaultComponentId;
+    return 0;
 }
 
 /**

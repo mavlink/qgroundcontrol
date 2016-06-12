@@ -107,7 +107,7 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     mavlink_mission_item_t  missionItem;
 
     missionItem.target_system =     _vehicle->id();
-    missionItem.target_component =  0;
+    missionItem.target_component =  _vehicle->defaultComponentId();
     missionItem.seq =               0;
     missionItem.command =           MAV_CMD_NAV_WAYPOINT;
     missionItem.param1 =            0;
