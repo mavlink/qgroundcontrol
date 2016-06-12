@@ -225,7 +225,7 @@ deploy:
       secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
     bucket: qgroundcontrol
     local_dir: ${SHADOW_BUILD_DIR}/release/package
-    upload-dir: ${TRAVIS_BRANCH}
+    upload-dir: builds/${TRAVIS_BRANCH}
     acl: public_read
     region: us-west-2
     skip_cleanup: true
