@@ -36,6 +36,7 @@ public:
     Q_PROPERTY(QQuickItem* accelButton MEMBER _accelButton)
     Q_PROPERTY(QQuickItem* nextButton MEMBER _nextButton)
     Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
+    Q_PROPERTY(QQuickItem* setOrientationsButton MEMBER _setOrientationsButton)
     Q_PROPERTY(QQuickItem* orientationCalAreaHelpText MEMBER _orientationCalAreaHelpText)
 
     Q_PROPERTY(bool compassSetupNeeded  READ compassSetupNeeded NOTIFY setupNeededChanged)
@@ -123,6 +124,7 @@ private:
     QQuickItem* _accelButton;
     QQuickItem* _nextButton;
     QQuickItem* _cancelButton;
+    QQuickItem* _setOrientationsButton;
     QQuickItem* _orientationCalAreaHelpText;
     
     bool _showOrientationCalArea;

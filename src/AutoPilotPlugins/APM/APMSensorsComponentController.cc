@@ -26,6 +26,7 @@ APMSensorsComponentController::APMSensorsComponentController(void) :
     _accelButton(NULL),
     _nextButton(NULL),
     _cancelButton(NULL),
+    _setOrientationsButton(NULL),
     _showOrientationCalArea(false),
     _magCalInProgress(false),
     _accelCalInProgress(false),
@@ -85,6 +86,7 @@ void APMSensorsComponentController::_startLogCalibration(void)
     
     _compassButton->setEnabled(false);
     _accelButton->setEnabled(false);
+    _setOrientationsButton->setEnabled(false);
     if (_accelCalInProgress) {
         _nextButton->setEnabled(true);
     }
@@ -95,6 +97,7 @@ void APMSensorsComponentController::_startVisualCalibration(void)
 {
     _compassButton->setEnabled(false);
     _accelButton->setEnabled(false);
+    _setOrientationsButton->setEnabled(false);
     _cancelButton->setEnabled(true);
 
     _resetInternalState();
@@ -138,6 +141,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     
     _compassButton->setEnabled(true);
     _accelButton->setEnabled(true);
+    _setOrientationsButton->setEnabled(true);
     _nextButton->setEnabled(false);
     _cancelButton->setEnabled(false);
 

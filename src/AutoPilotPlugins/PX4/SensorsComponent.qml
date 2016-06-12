@@ -108,6 +108,7 @@ QGCView {
         airspeedButton:             airspeedButton
         levelButton:                levelButton
         cancelButton:               cancelButton
+        setOrientationsButton:      setOrientationsButton
         orientationCalAreaHelpText: orientationCalAreaHelpText
 
         onResetStatusTextArea: statusLog.text = statusTextAreaDefaultText
@@ -398,6 +399,7 @@ QGCView {
             }
 
             QGCButton {
+                id:         setOrientationsButton
                 width:      parent.buttonWidth
                 text:       qsTr("Set Orientations")
                 onClicked: showDialog(setOrientationsDialogComponent, qsTr("Set Orientations"), qgcView.showDialogDefaultWidth, StandardButton.Ok)

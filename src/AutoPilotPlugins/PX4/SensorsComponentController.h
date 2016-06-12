@@ -40,6 +40,7 @@ public:
     Q_PROPERTY(QQuickItem* airspeedButton MEMBER _airspeedButton)
     Q_PROPERTY(QQuickItem* levelButton MEMBER _levelButton)
     Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
+    Q_PROPERTY(QQuickItem* setOrientationsButton MEMBER _setOrientationsButton)
     Q_PROPERTY(QQuickItem* orientationCalAreaHelpText MEMBER _orientationCalAreaHelpText)
     
     Q_PROPERTY(bool showOrientationCalArea MEMBER _showOrientationCalArea NOTIFY showOrientationCalAreaChanged)
@@ -121,6 +122,7 @@ private:
     QQuickItem* _airspeedButton;
     QQuickItem* _levelButton;
     QQuickItem* _cancelButton;
+    QQuickItem* _setOrientationsButton;
     QQuickItem* _orientationCalAreaHelpText;
     
     bool _showGyroCalArea;
