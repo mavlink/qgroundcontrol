@@ -144,7 +144,7 @@ void FollowMe::_sendGCSMotionReport(void)
                                              mavlinkProtocol->getComponentId(),
                                              &message,
                                              &follow_target);
-            vehicle->sendMessage(message);
+            vehicle->sendMessageOnPriorityLink(message);
         }
     }
 }

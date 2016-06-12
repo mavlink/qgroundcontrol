@@ -88,8 +88,18 @@ void AutoPilotPlugin::resetAllParametersToDefaults(void)
     mavlink_message_t msg;
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->uas()->getUASID(), 0, MAV_CMD_PREFLIGHT_STORAGE, 0, 2, -1, 0, 0, 0, 0, 0);
-    _vehicle->sendMessage(msg);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(),
+                                  mavlink->getComponentId(),
+                                  &msg,
+                                  _vehicle->id(),                   // Target systeem
+                                  _vehicle->defaultComponentId(),   // Target component
+                                  MAV_CMD_PREFLIGHT_STORAGE,
+                                  0,                                // Confirmation
+                                  2,                                // 2 = Reset params to default
+                                  -1,                               // -1 = No change to mission storage
+                                  0,                                // 0 = Ignore
+                                  0, 0, 0, 0);                      // Unused
+    _vehicle->sendMessageOnPriorityLink(msg);
 }
 
 void AutoPilotPlugin::refreshAllParameters(unsigned char componentID)

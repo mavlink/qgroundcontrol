@@ -19,8 +19,6 @@
 
 namespace QGC
 {
-const static int defaultSystemId = 255;
-const static int defaultComponentId = 0;
 
 /**
  * @brief Get the current ground time in microseconds.

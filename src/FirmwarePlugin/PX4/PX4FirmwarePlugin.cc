@@ -272,12 +272,12 @@ void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
     cmd.param6 = NAN;
     cmd.param7 = NAN;
     cmd.target_system = vehicle->id();
-    cmd.target_component = 0;
+    cmd.target_component = vehicle->defaultComponentId();
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
 
-    vehicle->sendMessage(msg);
+    vehicle->sendMessageOnPriorityLink(msg);
 }
 
 void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
@@ -314,10 +314,10 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     cmd.param6 = NAN;
     cmd.param7 = vehicle->altitudeAMSL()->rawValue().toDouble() + altitudeRel;
     cmd.target_system = vehicle->id();
-    cmd.target_component = 0;
+    cmd.target_component = vehicle->defaultComponentId();
 
     mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
-    vehicle->sendMessage(msg);
+    vehicle->sendMessageOnPriorityLink(msg);
 }
 
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
@@ -340,12 +340,12 @@ void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
     cmd.param6 = gotoCoord.longitude() * 1e7;
     cmd.param7 = vehicle->altitudeAMSL()->rawValue().toDouble();
     cmd.target_system = vehicle->id();
-    cmd.target_component = 0;
+    cmd.target_component = vehicle->defaultComponentId();
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
 
-    vehicle->sendMessage(msg);
+    vehicle->sendMessageOnPriorityLink(msg);
 }
 
 void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
@@ -368,12 +368,12 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     cmd.param6 = NAN;
     cmd.param7 = vehicle->altitudeAMSL()->rawValue().toDouble() + altitudeRel;
     cmd.target_system = vehicle->id();
-    cmd.target_component = 0;
+    cmd.target_component = vehicle->defaultComponentId();
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
 
-    vehicle->sendMessage(msg);
+    vehicle->sendMessageOnPriorityLink(msg);
 }
 
 void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
