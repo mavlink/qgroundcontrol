@@ -30,6 +30,7 @@ SensorsComponentController::SensorsComponentController(void) :
     _airspeedButton(NULL),
     _levelButton(NULL),
     _cancelButton(NULL),
+    _setOrientationsButton(NULL),
     _showOrientationCalArea(false),
     _gyroCalInProgress(false),
     _magCalInProgress(false),
@@ -98,6 +99,7 @@ void SensorsComponentController::_startVisualCalibration(void)
     _accelButton->setEnabled(false);
     _airspeedButton->setEnabled(false);
     _levelButton->setEnabled(false);
+    _setOrientationsButton->setEnabled(false);
     _cancelButton->setEnabled(true);
 
     _resetInternalState();
@@ -140,6 +142,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
     _accelButton->setEnabled(true);
     _airspeedButton->setEnabled(true);
     _levelButton->setEnabled(true);
+    _setOrientationsButton->setEnabled(true);
     _cancelButton->setEnabled(false);
     
     if (code == StopCalibrationSuccess) {

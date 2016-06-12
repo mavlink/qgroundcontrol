@@ -104,8 +104,9 @@ QGCViewDialog {
                     visible:    fact.enumStrings.length == 0 || validate
                     //focus:  true
 
-                    // At this point all Facts are numeric
-                    inputMethodHints:   Qt.ImhFormattedNumbersOnly
+                    inputMethodHints:   ScreenTools.isiOS ?
+                                            Qt.ImhNone :                // iOS numeric keyboard has not done button, we can't use it
+                                            Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
                 }
 
                 QGCButton {
