@@ -15,7 +15,8 @@ Rectangle {
     signal accept   ///< Action confirmed
     signal reject   ///< Action rejected
 
-    property string confirmText ///< Text for slider
+    property string confirmText                         ///< Text for slider
+    property alias  fontPointSize: label.font.pointSize ///< Point size for text
 
     property real _border: 4
     property real _diameter: height - (_border * 2)
@@ -26,7 +27,6 @@ Rectangle {
         id:                         label
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.verticalCenter:     parent.verticalCenter
-        font.pointSize:             ScreenTools.largeFontPointSize
         text:                       qsTr("Slide to %1").arg(confirmText)
     }
 
@@ -48,6 +48,8 @@ Rectangle {
             fillMode:               Image.PreserveAspectFit
             smooth:                 false
             mipmap:                 false
+
+
             color:                  qgcPal.text
             cache:                  false
             source:                 "/res/ArrowRight.svg"
