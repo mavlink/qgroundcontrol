@@ -173,7 +173,7 @@ Row {
             visible:            activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
             font.pointSize:     ScreenTools.smallFontPointSize
             color:              qgcPal.buttonText
-            text:               activeVehicle ? activeVehicle.gps.hdop.value.toFixed(0) : ""
+            text:               activeVehicle ? activeVehicle.gps.hdop.value.toFixed(1) : ""
         }
         MouseArea {
             anchors.fill:   parent

@@ -244,10 +244,11 @@ QGCView {
                 }
 
                 QGCComboBox {
-                    id:         vehicleTypeSelectionCombo
-                    width:      200
-                    visible:    apmFlightStack.checked
-                    model:      controller.apmAvailableVersions
+                    id:             vehicleTypeSelectionCombo
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    visible:        apmFlightStack.checked
+                    model:          controller.apmAvailableVersions
                 }
 
                 Row {
@@ -291,7 +292,8 @@ QGCView {
 
                 QGCComboBox {
                     id:             firmwareVersionCombo
-                    width:          200
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
                     visible:        showFirmwareTypeSelection
                     model:          px4Flow ? px4FlowTypeList : firmwareTypeList
                     currentIndex:   controller.selectedFirmwareType

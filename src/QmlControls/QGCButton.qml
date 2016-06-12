@@ -7,8 +7,8 @@ import QGroundControl.Palette 1.0
 import QGroundControl.ScreenTools 1.0
 
 Button {
-
-    property bool   primary:                false                                   ///< primary button for a group of buttons
+    property bool primary:      false                               ///< primary button for a group of buttons
+    property real pointSize:    ScreenTools.defaultFontPointSize    ///< Point size for button text
 
     property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
     property bool   _showHighlight:     (pressed | hovered | checked) && !__forceHoverOff
@@ -102,7 +102,7 @@ Button {
                         id:             text
                         antialiasing:   true
                         text:           control.text
-                        font.pointSize: ScreenTools.defaultFontPointSize
+                        font.pointSize: pointSize
                         font.family:    ScreenTools.normalFontFamily
                         anchors.verticalCenter: parent.verticalCenter
                         color: _showHighlight ?

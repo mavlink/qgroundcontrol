@@ -223,7 +223,7 @@ QGCView {
 
         //-- Virtual Joystick
         Loader {
-            id:                         multiTouchItem
+            id:                         virtualJoystickMultiTouch
             z:                          _panel.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
             height:                     Math.min(ScreenTools.availableHeight * 0.25, ScreenTools.defaultFontPixelWidth * 16)
