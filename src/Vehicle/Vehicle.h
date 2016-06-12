@@ -400,9 +400,6 @@ public:
     /// Returns the highest quality link available to the Vehicle
     LinkInterface* priorityLink(void);
 
-    /// Sends a message to all links accociated with this vehicle
-    void sendMessage(mavlink_message_t message);
-
     /// Sends a message to the specified link
     /// @return true: message sent, false: Link no longer connected
     bool sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
@@ -563,7 +560,6 @@ signals:
     void messagesLostChanged        ();
 
     /// Used internally to move sendMessage call to main thread
-    void _sendMessageOnThread(mavlink_message_t message);
     void _sendMessageOnLinkOnThread(LinkInterface* link, mavlink_message_t message);
 
     void messageTypeChanged     ();
@@ -599,7 +595,6 @@ signals:
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
     void _linkInactiveOrDeleted(LinkInterface* link);
-    void _sendMessage(mavlink_message_t message);
     void _sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext(void);
     void _addNewMapTrajectoryPoint(void);

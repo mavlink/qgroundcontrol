@@ -306,12 +306,12 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
         mavlink_msg_heartbeat_pack(_mavlinkProtocol->getSystemId(),
                                    _mavlinkProtocol->getComponentId(),
                                    &message,
-                                   MAV_TYPE_GCS,                // MAV_TYPE
+                                   MAV_TYPE_GCS,            // MAV_TYPE
                                    MAV_AUTOPILOT_INVALID,   // MAV_AUTOPILOT
                                    MAV_MODE_MANUAL_ARMED,   // MAV_MODE
                                    0,                       // custom mode
                                    MAV_STATE_ACTIVE);       // MAV_STATE
-        vehicle->sendMessage(message);
+        vehicle->sendMessageOnPriorityLink(message);
     }
 }
 
