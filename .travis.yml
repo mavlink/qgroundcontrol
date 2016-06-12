@@ -238,7 +238,7 @@ deploy:
     file_glob: true
     file:
       - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.*
-      - ${SHADOW_BUILD_DIR}/release/package/QGroundControl.*      
+      - ${SHADOW_BUILD_DIR}/release/package/QGroundControl.*
     skip_cleanup: true
     on:
       tags: true

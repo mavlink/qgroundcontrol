@@ -54,17 +54,14 @@ mv ${APPDIR}/qgroundcontrol-start.sh ${APPDIR}/AppRun
 
 # copy icon
 cp ${QGC_SRC}/resources/icons/qgroundcontrol.png ${APPDIR}/
+mkdir -p ${APPDIR}/usr/share/icons/
+cp ${QGC_SRC}/resources/icons/qgroundcontrol.png ${APPDIR}/usr/share/icons/
 
 # copy linux desktop entry
 cp ${QGC_SRC}/deploy/qgroundcontrol.desktop ${APPDIR}/
+mkdir -p ${APPDIR}/usr/share/applications/
+cp ${QGC_SRC}/deploy/qgroundcontrol.desktop ${APPDIR}/usr/share/applications/
 
-# Add desktop integration - WORK IN PROGRESS
-cd ${APPDIR}
-mv qgroundcontrol.desktop AppRun.desktop
-XAPP=QGroundControl
-wget -O ${APPDIR}/usr/bin/AppRun.wrapper https://raw.githubusercontent.com/probonopd/AppImageKit/master/desktopintegration
-chmod a+x ${APPDIR}/usr/bin/AppRun.wrapper
-sed -i -e "s|Exec=AppRun|Exec=AppRun.wrapper|g" AppRun.desktop
 
 VERSION=$(strings ${APPDIR}/qgroundcontrol | grep '^v[0-9*]\.[0-9*].[0-9*]' | head -n 1)
 echo QGC Version: ${VERSION}
