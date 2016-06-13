@@ -284,6 +284,8 @@ Item {
         z:                          QGroundControl.zOrderWidgets
         state:                      "Shown"
 
+        property real _fontPointSize: ScreenTools.isMobile ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
+
         states: [
             State {
                 name: "Shown"
@@ -448,28 +450,28 @@ Item {
                 spacing: _margins * 2
 
                 QGCButton {
-                    pointSize:  ScreenTools.largeFontPointSize
+                    pointSize:  _guidedModeBar._fontPointSize
                     text:       (_activeVehicle && _activeVehicle.armed) ? (_activeVehicle.flying ? qsTr("Emergency Stop") : qsTr("Disarm")) :  qsTr("Arm")
                     visible:    _activeVehicle
                     onClicked:  _guidedModeBar.confirmAction(_activeVehicle.armed ? (_activeVehicle.flying ? _guidedModeBar.confirmEmergencyStop : _guidedModeBar.confirmDisarm) : _guidedModeBar.confirmArm)
                 }
 
                 QGCButton {
-                    pointSize:  ScreenTools.largeFontPointSize
+                    pointSize:  _guidedModeBar._fontPointSize
                     text:       qsTr("RTL")
                     visible:    (_activeVehicle && _activeVehicle.armed) && _activeVehicle.guidedModeSupported && _activeVehicle.flying
                     onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmHome)
                 }
 
                 QGCButton {
-                    pointSize:  ScreenTools.largeFontPointSize
+                    pointSize:  _guidedModeBar._fontPointSize
                     text:       (_activeVehicle && _activeVehicle.flying) ?  qsTr("Land"):  qsTr("Takeoff")
                     visible:    _activeVehicle && _activeVehicle.guidedModeSupported && _activeVehicle.armed
                     onClicked:  _guidedModeBar.confirmAction(_activeVehicle.flying ? _guidedModeBar.confirmLand : _guidedModeBar.confirmTakeoff)
                 }
 
                 QGCButton {
-                    pointSize:  ScreenTools.largeFontPointSize
+                    pointSize:  _guidedModeBar._fontPointSize
                     text:       qsTr("Pause")
                     visible:    (_activeVehicle && _activeVehicle.armed) && _activeVehicle.pauseVehicleSupported && _activeVehicle.flying
                     onClicked:  {
@@ -479,7 +481,7 @@ Item {
                 }
 
                 QGCButton {
-                    pointSize:  ScreenTools.largeFontPointSize
+                    pointSize:  _guidedModeBar._fontPointSize
                     text:       qsTr("Change Altitude")
                     visible:    (_activeVehicle && _activeVehicle.flying) && _activeVehicle.guidedModeSupported && _activeVehicle.armed
                     onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmChangeAlt)
@@ -503,6 +505,7 @@ Item {
         height:                     _guidedModeBar.height
         visible:                    false
         z:                          QGroundControl.zOrderWidgets
+        fontPointSize:              _guidedModeBar._fontPointSize
 
         onAccept: {
             guidedModeConfirm.visible = false
