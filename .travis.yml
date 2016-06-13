@@ -37,7 +37,8 @@ matrix:
           sudo: false
         - os: linux
           env: CONFIG=doxygen
-          sudo: false
+          sudo: required
+          dist: trusty
 
 android:
   components:
@@ -61,6 +62,9 @@ addons:
     - graphviz
     - libc6-i386
     - libespeak-dev
+    - libgstreamer-plugins-base1.0-dev
+    - libgstreamer1.0-0:amd64
+    - libgstreamer1.0-dev
     - libopenscenegraph-dev
     - libsdl1.2-dev
     - libudev-dev
