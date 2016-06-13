@@ -44,6 +44,18 @@
             "features": [
                 "disable_desktopgl"
             ]
+        },
+        {
+           "id": 6,
+           "description": "Intel(R) HD Graphics 4000 / 5500 cause crashes on orientation changes in fullscreen mode (QTBUG-49541)",
+           "vendor_id": "0x8086",
+           "device_id": [ "0x0166", "0x1616" ],
+           "os": {
+               "type": "win"
+           },
+           "features": [
+               "disable_rotation"
+           ]
         }
     ]
 }
