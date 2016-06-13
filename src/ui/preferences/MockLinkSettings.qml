@@ -24,9 +24,14 @@ Item {
 
     function saveSettings() {
         if(px4Firmware.checked)
-            subEditConfig.firmware = 12
-        else if(apmFirmware.checked)
+            subEditConfig.firmware = 12         // Hardcoded MAV_AUTOPILOT_PX4
+        else if(apmFirmware.checked) {
             subEditConfig.firmware = 3
+            if(planeVehicle.checked)
+                subEditConfig.vehicle = 1       // Hardcoded MAV_TYPE_FIXED_WING
+            else
+                subEditConfig.vehicle = 2       // Hardcoded MAV_TYPE_QUADROTOR
+        }
         else
             subEditConfig.firmware = 0
         subEditConfig.sendStatus = sendStatus.checked
