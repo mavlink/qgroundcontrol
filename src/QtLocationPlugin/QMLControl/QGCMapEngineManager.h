@@ -37,7 +37,6 @@ public:
     Q_PROPERTY(QString              tileCountStr    READ    tileCountStr    NOTIFY tileCountChanged)
     Q_PROPERTY(quint64              tileSize        READ    tileSize        NOTIFY tileSizeChanged)
     Q_PROPERTY(QString              tileSizeStr     READ    tileSizeStr     NOTIFY tileSizeChanged)
-    Q_PROPERTY(bool                 crazySize       READ    crazySize       NOTIFY crazySizeChanged)
     Q_PROPERTY(QmlObjectListModel*  tileSets        READ    tileSets        NOTIFY tileSetsChanged)
     Q_PROPERTY(QStringList          mapList         READ    mapList         CONSTANT)
     Q_PROPERTY(QString              mapboxToken     READ    mapboxToken     WRITE   setMapboxToken  NOTIFY  mapboxTokenChanged)
@@ -65,7 +64,6 @@ public:
     QString                         tileCountStr            ();
     quint64                         tileSize                () { return _totalSet.tileSize; }
     QString                         tileSizeStr             ();
-    bool                            crazySize               () { return _crazySize; }
     QStringList                     mapList                 ();
     QString                         mapboxToken             ();
     QmlObjectListModel*             tileSets                () { return &_tileSets; }
@@ -91,7 +89,6 @@ signals:
     void tileY1Changed          ();
     void tileCountChanged       ();
     void tileSizeChanged        ();
-    void crazySizeChanged       ();
     void mapboxTokenChanged     ();
     void tileSetsChanged        ();
     void maxMemCacheChanged     ();
@@ -114,7 +111,6 @@ private:
 
 private:
     QGCTileSet  _totalSet;
-    bool        _crazySize;
     double      _topleftLat;
     double      _topleftLon;
     double      _bottomRightLat;

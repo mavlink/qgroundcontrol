@@ -32,27 +32,18 @@ QGCView {
     property string mapKey:             "lastMapType"
 
     property string mapType:            QGroundControl.flightMapSettings.mapProvider + " " + QGroundControl.flightMapSettings.mapType
-    property bool   isMapInteractive:   true
+    property bool   isMapInteractive:   false
     property var    savedCenter:        undefined
     property real   savedZoom:          3
     property string savedMapType:       ""
-
-    property real   _newSetMiddleLabel: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 10 : ScreenTools.defaultFontPixelWidth * 12
-    property real   _newSetMiddleField: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 16 : ScreenTools.defaultFontPixelWidth * 20
-    property real   _netSetSliderWidth: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth *  8 : ScreenTools.defaultFontPixelWidth * 16
-
-    property real oldlon0:      0
-    property real oldlon1:      0
-    property real oldlat0:      0
-    property real oldlat1:      0
-    property int  oldz0:        0
-    property int  oldz1:        0
 
     property bool _saveRealEstate:          ScreenTools.isTinyScreen || ScreenTools.isShortScreen
     property real _adjustableFontPointSize: _saveRealEstate ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
 
     readonly property real minZoomLevel: 3
     readonly property real maxZoomLevel: 20
+
+    readonly property int _maxTilesForDownload: 60000
 
     QGCPalette { id: qgcPal }
 
@@ -78,20 +69,11 @@ QGCView {
         if(isMapInteractive) {
             var xl = 0
             var yl = 0
-            var xr = _map.width.toFixed(0)
-            var yr = _map.height.toFixed(0)
+            var xr = _map.width.toFixed(0) - 1  // Must be within boundaries of visible map
+            var yr = _map.height.toFixed(0) - 1 // Must be within boundaries of visible map
             var c0 = _map.toCoordinate(Qt.point(xl, yl))
             var c1 = _map.toCoordinate(Qt.point(xr, yr))
-            if(oldlon0 !== c0.longitude || oldlat0 !== c0.latitude || oldlon1 !== c1.longitude || oldlat1 !== c1.latitude || oldz0 !== sliderMinZoom.value || oldz1 !== sliderMaxZoom.value) {
-                QGroundControl.mapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, sliderMinZoom.value, sliderMaxZoom.value, mapType)
-            }
-        }
-    }
-
-    function checkSanity() {
-        if(isMapInteractive && QGroundControl.mapEngineManager.crazySize) {
-            sliderMaxZoom.value = sliderMaxZoom.value - 1
-            handleChanges()
+            QGroundControl.mapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, sliderMinZoom.value, sliderMaxZoom.value, mapType)
         }
     }
 
@@ -106,7 +88,10 @@ QGCView {
     }
 
     function addNewSet() {
+        isMapInteractive = true
         mapType = QGroundControl.flightMapSettings.mapProvider + " " + QGroundControl.flightMapSettings.mapType
+        resetMapToDefaults()
+        handleChanges()
         _map.visible = true
         _tileSetList.visible = false
         infoView.visible = false
@@ -115,6 +100,7 @@ QGCView {
     }
 
     function showList() {
+        isMapInteractive = false
         _map.visible = false
         _tileSetList.visible = true
         infoView.visible = false
@@ -123,6 +109,7 @@ QGCView {
     }
 
     function showInfo() {
+        isMapInteractive = false
         if(_currentSelection && !offlineMapView._currentSelection.deleting) {
             enterInfoView()
         } else
@@ -170,11 +157,11 @@ QGCView {
             _map.fitViewportToMapItems()
         }
         _tileSetList.visible = false
-        addNewSetView.visible     = false
+        addNewSetView.visible = false
         if(isDefaultSet) {
             defaultInfoView.visible = true
         } else {
-            infoView.visible= true
+            infoView.visible = true
         }
     }
 
@@ -183,7 +170,11 @@ QGCView {
         _map.center = savedCenter
         _map.zoomLevel = savedZoom
         mapType = savedMapType
-        isMapInteractive = true
+    }
+
+    function resetMapToDefaults() {
+        _map.center = QGroundControl.flightMapPosition
+        _map.zoomLevel = QGroundControl.flightMapZoom
     }
 
     ExclusiveGroup {
@@ -320,7 +311,7 @@ QGCView {
         Map {
             id:                 _map
             anchors.fill:       parent
-            center:             QGroundControl.defaultMapPosition
+            center:             QGroundControl.lastKnownHomePosition
             visible:            false
             gesture.flickDeceleration:  3000
 
@@ -335,26 +326,16 @@ QGCView {
                 antialiasing:   true
             }
 
-            Component.onCompleted: {
-                center = QGroundControl.flightMapPosition
-                zoomLevel = QGroundControl.flightMapZoom
-            }
+            Component.onCompleted: resetMapToDefaults()
 
-            onCenterChanged: {
-                handleChanges()
-                checkSanity()
-            }
-            onZoomLevelChanged: {
-                handleChanges()
-                checkSanity()
-            }
-            onWidthChanged: {
-                handleChanges()
-                checkSanity()
-            }
-            onHeightChanged: {
-                handleChanges()
-                checkSanity()
+            onCenterChanged:    handleChanges()
+            onZoomLevelChanged: handleChanges()
+            onWidthChanged:     handleChanges()
+            onHeightChanged:    handleChanges()
+
+            // Used to make pinch zoom work
+            MouseArea {
+                anchors.fill: parent
             }
 
             MapScale {
@@ -760,17 +741,6 @@ QGCView {
                                             sliderMaxZoom.value = sliderMinZoom.value
                                         }
                                         handleChanges()
-                                        checkSanity()
-                                        _map.zoomLevel = sliderMinZoom.value
-                                    }
-
-                                    onPressedChanged: {
-                                        if (pressed) {
-                                            _savedZoom = _map.zoomLevel
-                                            _map.zoomLevel = sliderMinZoom.value
-                                        } else {
-                                            _map.zoomLevel = _savedZoom
-                                        }
                                     }
                                 } // Slider - min zoom
 
@@ -791,28 +761,13 @@ QGCView {
 
                                     property real _savedZoom
 
-                                    Component.onCompleted: {
-                                        sliderMaxZoom.value = _map.zoomLevel + 2
-                                    }
+                                    Component.onCompleted: sliderMaxZoom.value = _map.zoomLevel + 2
 
                                     onValueChanged: {
                                         if(sliderMaxZoom.value < sliderMinZoom.value) {
                                             sliderMinZoom.value = sliderMaxZoom.value
                                         }
                                         handleChanges()
-                                        checkSanity()
-                                        if (pressed) {
-                                            _map.zoomLevel = sliderMaxZoom.value
-                                        }
-                                    }
-
-                                    onPressedChanged: {
-                                        if (pressed) {
-                                            _savedZoom = _map.zoomLevel
-                                            _map.zoomLevel = sliderMaxZoom.value
-                                        } else {
-                                            _map.zoomLevel = _savedZoom
-                                        }
                                     }
                                 } // Slider - max zoom
 
@@ -842,9 +797,11 @@ QGCView {
                         } // Rectangle - Zoom info
 
                         QGCButton {
-                            text:       qsTr("Download")
-                            enabled:    setName.text.length > 0
+                            text:       _tooManyTiles ? qsTr("Too many tiles") : qsTr("Download")
+                            enabled:    !_tooManyTiles && setName.text.length > 0
                             anchors.horizontalCenter: parent.horizontalCenter
+
+                            property bool _tooManyTiles: QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
 
                             onClicked: {
                                 if(QGroundControl.mapEngineManager.findName(setName.text)) {
