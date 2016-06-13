@@ -47,6 +47,7 @@ ParameterLoader::ParameterLoader(Vehicle* vehicle)
     , _defaultComponentId(MAV_COMP_ID_ALL)
     , _parameterSetMajorVersion(-1)
     , _parameterMetaData(NULL)
+    , _initialRequestRetryCount(0)
     , _totalParamCount(0)
 {
     Q_ASSERT(_vehicle);
@@ -490,7 +491,7 @@ void ParameterLoader::_waitingParamTimeout(void)
     foreach(int componentId, _waitingReadParamIndexMap.keys()) {
         foreach(int paramIndex, _waitingReadParamIndexMap[componentId].keys()) {
             _waitingReadParamIndexMap[componentId][paramIndex]++;   // Bump retry count
-            if (_waitingReadParamIndexMap[componentId][paramIndex] > _maxInitialLoadRetry) {
+            if (_waitingReadParamIndexMap[componentId][paramIndex] > _maxInitialLoadRetrySingleParam) {
                 // Give up on this index
                 _failedReadParamIndexMap[componentId] << paramIndex;
                 qCDebug(ParameterLoaderLog) << "Giving up on (componentId:" << componentId << "paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
@@ -978,9 +979,14 @@ void ParameterLoader::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
 
 void ParameterLoader::_initialRequestTimeout(void)
 {
-    qgcApp()->showMessage("Vehicle did not respond to request for parameters, retrying");
-    refreshAllParameters();
-    _initialRequestTimeoutTimer.start();
+    if (!_vehicle->genericFirmware()) {
+        // Generic vehicles (like BeBop) may not have any parameters, so don't annoy the user
+        qgcApp()->showMessage("Vehicle did not respond to request for parameters, retrying");
+    }
+    if (++_initialRequestRetryCount <= _maxInitialRequestListRetry) {
+        refreshAllParameters();
+        _initialRequestTimeoutTimer.start();
+    }
 }
 
 QString ParameterLoader::parameterMetaDataFile(MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion)
