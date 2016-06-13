@@ -74,20 +74,14 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
         QGCTileSet set = QGCMapEngine::getTileCount(z, lon0, lat0, lon1, lat1, mapType);
         _totalSet += set;
     }
-    //-- Beyond 100,000,000 tiles is just nuts
-    if(_totalSet.tileCount > 100 * 1000 * 1000) {
-        _crazySize = true;
-        emit crazySizeChanged();
-    } else {
-        _crazySize = false;
-        emit crazySizeChanged();
-        emit tileX0Changed();
-        emit tileX1Changed();
-        emit tileY0Changed();
-        emit tileY1Changed();
-        emit tileCountChanged();
-        emit tileSizeChanged();
-    }
+    emit tileX0Changed();
+    emit tileX1Changed();
+    emit tileY0Changed();
+    emit tileY1Changed();
+    emit tileCountChanged();
+    emit tileSizeChanged();
+
+    qCDebug(QGCMapEngineManagerLog) << "updateForCurrentView" << lat0 << lon0 << lat1 << lon1 << minZoom << maxZoom;
 }
 
 //-----------------------------------------------------------------------------
