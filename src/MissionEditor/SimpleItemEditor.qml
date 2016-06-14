@@ -42,7 +42,7 @@ Rectangle {
                 wrapMode:       Text.WordWrap
                 font.pointSize: ScreenTools.smallFontPointSize
                 text:           missionItem.sequenceNumber == 0 ?
-                                    qsTr("Planned home position.") :
+                                    qsTr("Planned home position. Actual home position set by Vehicle.") :
                                     (missionItem.rawEdit ?
                                         qsTr("Provides advanced access to all commands/parameters. Be very careful!") :
                                         missionItem.commandDescription)
