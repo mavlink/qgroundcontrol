@@ -22,54 +22,103 @@ Item {
 
     property var    mapControl                                                          ///< Map control for which this scale control is being used
 
-    property variant _scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
+    property variant _scaleLengthsMeters: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
+    property variant _scaleLengthsFeet: [10, 25, 50, 100, 250, 500, 1000, 2000, 3000, 4000, 5280, 5280*2, 5280*5, 5280*10, 5280*25, 5280*50, 5280*100, 5280*250, 5280*500, 5280*1000]
 
     property var _color: mapControl.isSatelliteMap ? "white" : "black"
 
-    function formatDistance(meters)
-    {
+    function formatDistanceMeters(meters) {
         var dist = Math.round(meters)
         if (dist > 1000 ){
             if (dist > 100000){
                 dist = Math.round(dist / 1000)
-            }
-            else{
+            } else {
                 dist = Math.round(dist / 100)
                 dist = dist / 10
             }
-            dist = dist + " km"
-        }
-        else{
-            dist = dist + " m"
+            dist = dist + qsTr(" km")
+        } else {
+            dist = dist + qsTr(" m")
         }
         return dist
     }
 
-    function calculateScale() {
-        var scaleLineWidth = 100
-        var coord1, coord2, dist, text, f
-        f = 0
-        coord1 = mapControl.toCoordinate(Qt.point(0, scale.y))
-        coord2 = mapControl.toCoordinate(Qt.point(scaleLineWidth, scale.y))
-        dist = Math.round(coord1.distanceTo(coord2))
-        if (dist === 0) {
+    function formatDistanceFeet(feet) {
+        var dist = Math.round(feet)
+        if (dist >= 5280) {
+            dist = Math.round(dist / 5280)
+            dist = dist
+            if (dist == 1) {
+                dist += qsTr(" mile")
+            } else {
+                dist += qsTr(" miles")
+            }
+        } else {
+            dist = dist + qsTr(" ft")
+        }
+        return dist
+    }
+
+    function calculateMetersRatio(scaleLineMeters, scaleLinePixelLength) {
+        var scaleLineRatio = 0
+
+        if (scaleLineMeters === 0) {
             // not visible
         } else {
-            for (var i = 0; i < _scaleLengths.length - 1; i++) {
-                if (dist < (_scaleLengths[i] + _scaleLengths[i+1]) / 2 ) {
-                    f = _scaleLengths[i] / dist
-                    dist = _scaleLengths[i]
+            for (var i = 0; i < _scaleLengthsMeters.length - 1; i++) {
+                if (scaleLineMeters < (_scaleLengthsMeters[i] + _scaleLengthsMeters[i+1]) / 2 ) {
+                    scaleLineRatio = _scaleLengthsMeters[i] / scaleLineMeters
+                    scaleLineMeters = _scaleLengthsMeters[i]
                     break;
                 }
             }
-            if (f === 0) {
-                f = dist / _scaleLengths[i]
-                dist = _scaleLengths[i]
+            if (scaleLineRatio === 0) {
+                scaleLineRatio = scaleLineMeters / _scaleLengthsMeters[i]
+                scaleLineMeters = _scaleLengthsMeters[i]
             }
         }
-        text = formatDistance(dist)
-        centerLine.width = (scaleLineWidth * f) - (2 * leftEnd.width)
+
+        var text = formatDistanceMeters(scaleLineMeters)
+        centerLine.width = (scaleLinePixelLength * scaleLineRatio) - (2 * leftEnd.width)
         scaleText.text = text
+    }
+
+    function calculateFeetRatio(scaleLineMeters, scaleLinePixelLength) {
+        var scaleLineRatio = 0
+        var scaleLineFeet = scaleLineMeters * 3.2808399
+
+        if (scaleLineFeet === 0) {
+            // not visible
+        } else {
+            for (var i = 0; i < _scaleLengthsFeet.length - 1; i++) {
+                if (scaleLineFeet < (_scaleLengthsFeet[i] + _scaleLengthsFeet[i+1]) / 2 ) {
+                    scaleLineRatio = _scaleLengthsFeet[i] / scaleLineFeet
+                    scaleLineFeet = _scaleLengthsFeet[i]
+                    break;
+                }
+            }
+            if (scaleLineRatio === 0) {
+                scaleLineRatio = scaleLineFeet / _scaleLengthsFeet[i]
+                scaleLineFeet = _scaleLengthsFeet[i]
+            }
+        }
+
+        var text = formatDistanceFeet(scaleLineFeet)
+        centerLine.width = (scaleLinePixelLength * scaleLineRatio) - (2 * leftEnd.width)
+        scaleText.text = text
+    }
+
+    function calculateScale() {
+        var scaleLinePixelLength = 100
+        var leftCoord = mapControl.toCoordinate(Qt.point(0, scale.y))
+        var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, scale.y))
+        var scaleLineMeters = Math.round(leftCoord.distanceTo(rightCoord))
+
+        if (QGroundControl.distanceUnits.value == QGroundControl.DistanceUnitsFeet) {
+            calculateFeetRatio(scaleLineMeters, scaleLinePixelLength)
+        } else {
+            calculateMetersRatio(scaleLineMeters, scaleLinePixelLength)
+        }
     }
 
     Connections {
