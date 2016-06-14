@@ -63,7 +63,7 @@ Item {
     readonly property string fwAcroModeDescription:     qsTr("The angular rates are controlled, but not the attitude. ")
     readonly property string mrAcroModeDescription:     qsTr("The angular rates are controlled, but not the attitude. ")
 
-    readonly property string altCtlModeName:            qsTr("Altitude Control")
+    readonly property string altCtlModeName:            qsTr("Altitude")
     readonly property string fwAltCtlModeDescription:   qsTr("Roll stick controls banking, pitch stick altitude ") +
                                                         qsTr("Throttle stick controls speed. ") +
                                                         qsTr("With no stick inputs the plane holds heading, but drifts off in wind. ")
@@ -76,10 +76,10 @@ Item {
     readonly property string mrPosCtlModeDescription:   qsTr("Roll and Pitch sticks control sideways and forward speed ") +
                                                         qsTr("Throttle stick controls climb / sink rade. ")
 
-    readonly property string missionModeName:           qsTr("Auto Mission")
+    readonly property string missionModeName:           qsTr("Mission")
     readonly property string missionModeDescription:    qsTr("The aircraft obeys the programmed mission sent by QGroundControl. ")
 
-    readonly property string loiterModeName:            qsTr("Auto Pause")
+    readonly property string loiterModeName:            qsTr("Hold")
     readonly property string fwLoiterModeDescription:   qsTr("The aircraft flies in a circle around the current position at the current altitude. ")
     readonly property string mrLoiterModeDescription:   qsTr("The multirotor hovers at the current position and altitude. ")
 

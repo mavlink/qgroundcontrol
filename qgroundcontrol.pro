@@ -664,6 +664,7 @@ HEADERS+= \
     src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h \
     src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h \
     src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h \
+    src/FirmwarePlugin/PX4/px4_custom_mode.h \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
     src/FirmwarePlugin/PX4/PX4ParameterMetaData.h \
     src/Vehicle/MultiVehicleManager.h \

@@ -18,37 +18,7 @@
 
 #include <QDebug>
 
-enum PX4_CUSTOM_MAIN_MODE {
-    PX4_CUSTOM_MAIN_MODE_MANUAL = 1,
-    PX4_CUSTOM_MAIN_MODE_ALTCTL,
-    PX4_CUSTOM_MAIN_MODE_POSCTL,
-    PX4_CUSTOM_MAIN_MODE_AUTO,
-    PX4_CUSTOM_MAIN_MODE_ACRO,
-    PX4_CUSTOM_MAIN_MODE_OFFBOARD,
-    PX4_CUSTOM_MAIN_MODE_STABILIZED,
-    PX4_CUSTOM_MAIN_MODE_RATTITUDE
-};
-
-enum PX4_CUSTOM_SUB_MODE_AUTO {
-    PX4_CUSTOM_SUB_MODE_AUTO_READY = 1,
-    PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,
-    PX4_CUSTOM_SUB_MODE_AUTO_LOITER,
-    PX4_CUSTOM_SUB_MODE_AUTO_MISSION,
-    PX4_CUSTOM_SUB_MODE_AUTO_RTL,
-    PX4_CUSTOM_SUB_MODE_AUTO_LAND,
-    PX4_CUSTOM_SUB_MODE_AUTO_RTGS,
-    PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_ME
-};
-
-union px4_custom_mode {
-    struct {
-        uint16_t reserved;
-        uint8_t main_mode;
-        uint8_t sub_mode;
-    };
-    uint32_t data;
-    float data_float;
-};
+#include "px4_custom_mode.h"
 
 struct Modes2Name {
     uint8_t     main_mode;
@@ -60,39 +30,43 @@ struct Modes2Name {
 };
 
 const char* PX4FirmwarePlugin::manualFlightMode =       "Manual";
+const char* PX4FirmwarePlugin::altCtlFlightMode =       "Altitude";
+const char* PX4FirmwarePlugin::posCtlFlightMode =       "Position";
+const char* PX4FirmwarePlugin::missionFlightMode =      "Mission";
+const char* PX4FirmwarePlugin::holdFlightMode =         "Hold";
+const char* PX4FirmwarePlugin::takeoffFlightMode =      "Takeoff";
+const char* PX4FirmwarePlugin::landingFlightMode =      "Land";
+const char* PX4FirmwarePlugin::rtlFlightMode =          "Return";
 const char* PX4FirmwarePlugin::acroFlightMode =         "Acro";
+const char* PX4FirmwarePlugin::offboardFlightMode =     "Offboard";
 const char* PX4FirmwarePlugin::stabilizedFlightMode =   "Stabilized";
 const char* PX4FirmwarePlugin::rattitudeFlightMode =    "Rattitude";
-const char* PX4FirmwarePlugin::altCtlFlightMode =       "Altitude Control";
-const char* PX4FirmwarePlugin::posCtlFlightMode =       "Position Control";
-const char* PX4FirmwarePlugin::offboardFlightMode =     "Offboard Control";
-const char* PX4FirmwarePlugin::readyFlightMode =        "Ready";
-const char* PX4FirmwarePlugin::takeoffFlightMode =      "Takeoff";
-const char* PX4FirmwarePlugin::pauseFlightMode =        "Hold";
-const char* PX4FirmwarePlugin::missionFlightMode =      "Mission";
-const char* PX4FirmwarePlugin::rtlFlightMode =          "Return To Land";
-const char* PX4FirmwarePlugin::landingFlightMode =      "Landing";
-const char* PX4FirmwarePlugin::rtgsFlightMode =         "Return, Link Loss";
 const char* PX4FirmwarePlugin::followMeFlightMode =     "Follow Me";
+
+const char* PX4FirmwarePlugin::rtgsFlightMode =         "Return to Groundstation";
+
+const char* PX4FirmwarePlugin::readyFlightMode =        "Ready"; // unused
 
 /// Tranlates from PX4 custom modes to flight mode names
 
 static const struct Modes2Name rgModes2Name[] = {
-    { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                  PX4FirmwarePlugin::manualFlightMode,        true,   true,   true},
-    { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                  PX4FirmwarePlugin::acroFlightMode,          true,   false,  true},
-    { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                  PX4FirmwarePlugin::stabilizedFlightMode,    true,   true,   true},
-    { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                  PX4FirmwarePlugin::rattitudeFlightMode,     true,   false,  true},
-    { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                  PX4FirmwarePlugin::altCtlFlightMode,        true,   true,   true},
-    { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                  PX4FirmwarePlugin::posCtlFlightMode,        true,   true,   true},
-    { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                  PX4FirmwarePlugin::offboardFlightMode,      true,   true,   true},
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,     PX4FirmwarePlugin::readyFlightMode,         false,  true,   true},
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,   PX4FirmwarePlugin::takeoffFlightMode,       false,  true,   true},
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,    PX4FirmwarePlugin::pauseFlightMode,         true,   true,   true},
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,   PX4FirmwarePlugin::missionFlightMode,       true,   true,   true},
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,       PX4FirmwarePlugin::rtlFlightMode,           true,   true,   true},
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      PX4FirmwarePlugin::landingFlightMode,       false,  true,   true},
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,      PX4FirmwarePlugin::rtgsFlightMode,          false,  true,   true},
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_ME, PX4FirmwarePlugin::followMeFlightMode,      true,   true,   true},
+    //main_mode                         sub_mode                                name                                      canBeSet  FW      MC
+    { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                      PX4FirmwarePlugin::manualFlightMode,        true,   true,   true },
+    { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                      PX4FirmwarePlugin::stabilizedFlightMode,    true,   true,   true },
+    { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                      PX4FirmwarePlugin::acroFlightMode,          true,   false,  true },
+    { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                      PX4FirmwarePlugin::rattitudeFlightMode,     true,   false,  true },
+    { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                      PX4FirmwarePlugin::altCtlFlightMode,        true,   true,   true },
+    { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                      PX4FirmwarePlugin::posCtlFlightMode,        true,   true,   true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,        PX4FirmwarePlugin::holdFlightMode,          true,   true,   true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,       PX4FirmwarePlugin::missionFlightMode,       true,   true,   true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,           PX4FirmwarePlugin::rtlFlightMode,           true,   true,   true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET, PX4FirmwarePlugin::followMeFlightMode,      true,   true,   true },
+    { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                      PX4FirmwarePlugin::offboardFlightMode,      true,   true,   true },
+    // modes that can't be directly set by the user
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,          PX4FirmwarePlugin::landingFlightMode,       false,  true,   true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,         PX4FirmwarePlugin::readyFlightMode,         false,  true,   true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,          PX4FirmwarePlugin::rtgsFlightMode,          false,  true,   true },
+    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,       PX4FirmwarePlugin::takeoffFlightMode,       false,  true,   true },
 };
 
 QList<VehicleComponent*> PX4FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
@@ -379,7 +353,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
 {
     if (guidedMode) {
-        vehicle->setFlightMode(pauseFlightMode);
+        vehicle->setFlightMode(holdFlightMode);
     } else {
         pauseVehicle(vehicle);
     }
@@ -388,6 +362,6 @@ void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
 bool PX4FirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
 {
     // Not supported by generic vehicle
-    return (vehicle->flightMode() == pauseFlightMode || vehicle->flightMode() == takeoffFlightMode
+    return (vehicle->flightMode() == holdFlightMode || vehicle->flightMode() == takeoffFlightMode
             || vehicle->flightMode() == landingFlightMode);
 }
