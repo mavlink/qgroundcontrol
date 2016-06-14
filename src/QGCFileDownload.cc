@@ -33,6 +33,12 @@ bool QGCFileDownload::download(const QString& remoteFile)
         return false;
     }
 
+    // Strip out parameters from remote filename
+    int parameterIndex = remoteFileName.indexOf("?");
+    if (parameterIndex != -1) {
+        remoteFileName  = remoteFileName.left(parameterIndex);
+    }
+
     // Determine location to download file to
     QString localFile = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
     if (localFile.isEmpty()) {
