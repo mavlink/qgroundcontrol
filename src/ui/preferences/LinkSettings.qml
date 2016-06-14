@@ -59,19 +59,6 @@ Rectangle {
             width:              _linkRoot.width
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             spacing:            ScreenTools.defaultFontPixelHeight / 2
-            QGCLabel {
-                text:   qsTr("Comm Link Settings")
-                font.pointSize: ScreenTools.mediumFontPointSize
-            }
-            Rectangle {
-                height: 1
-                width:  parent.width
-                color:  qgcPal.button
-            }
-            Item {
-                height: ScreenTools.defaultFontPixelHeight / 2
-                width:  parent.width
-            }
             Repeater {
                 model: QGroundControl.linkManager.linkConfigurations
                 delegate:
