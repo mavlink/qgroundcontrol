@@ -13,6 +13,10 @@
 
 #include <QObject>
 
+#include "QGCLoggingCategory.h"
+
+Q_DECLARE_LOGGING_CATEGORY(QGCMobileFileDialogControllerLog)
+
 class QGCMobileFileDialogController : public QObject
 {
     Q_OBJECT
@@ -31,6 +35,9 @@ public:
     ///     @param fileExtension Expected file extension, added if needed
     /// @return true: File exists at Documents location
     Q_INVOKABLE bool fileExists(const QString& filename, const QString& fileExtension);
+    
+private:
+    QString _getSaveLocation(void);
 };
 
 #endif
