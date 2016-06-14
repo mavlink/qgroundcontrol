@@ -40,15 +40,6 @@ Rectangle {
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             anchors.left:       parent.left
             anchors.top:        parent.top
-            QGCLabel {
-                text:   qsTr("MavLink Settings")
-                font.pointSize: ScreenTools.mediumFontPointSize
-            }
-            Rectangle {
-                height: 1
-                width:  parent.width
-                color:  qgcPal.button
-            }
             //-----------------------------------------------------------------
             //-- System ID
             Row {
