@@ -14,16 +14,13 @@
 #include <QDebug>
 #include <QDir>
 
+QGC_LOGGING_CATEGORY(QGCMobileFileDialogControllerLog, "QGCMobileFileDialogControllerLog")
+
 QStringList QGCMobileFileDialogController::getFiles(const QString& fileExtension)
 {
     QStringList files;
 
-    QStringList docDirs = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
-    if (docDirs.count() <= 0) {
-        qWarning() << "No Documents location";
-        return QStringList();
-    }
-    QDir fileDir = docDirs.at(0);
+    QDir fileDir(_getSaveLocation());
 
     QFileInfoList fileInfoList = fileDir.entryInfoList(QStringList(QString("*.%1").arg(fileExtension)),  QDir::Files, QDir::Name);
 
@@ -36,9 +33,8 @@ QStringList QGCMobileFileDialogController::getFiles(const QString& fileExtension
 
 QString QGCMobileFileDialogController::fullPath(const QString& filename, const QString& fileExtension)
 {
-    QStringList docDirs = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
-    if (docDirs.count() <= 0) {
-        qWarning() << "No Documents location";
+    QString saveLocation(_getSaveLocation());
+    if (saveLocation.isEmpty()) {
         return filename;
     }
 
@@ -48,8 +44,8 @@ QString QGCMobileFileDialogController::fullPath(const QString& filename, const Q
         fixedFilename += correctExtension;
     }
 
-    QString fullPath = docDirs.at(0) + QDir::separator() + fixedFilename;
-    qDebug() << fullPath;
+    QString fullPath = saveLocation + QDir::separator() + fixedFilename;
+    qCDebug(QGCMobileFileDialogControllerLog) << "Full path" << fullPath;
     return fullPath;
 }
 
@@ -57,4 +53,16 @@ bool QGCMobileFileDialogController::fileExists(const QString& filename, const QS
 {
     QFile file(fullPath(filename, fileExtension));
     return file.exists();
+}
+
+QString QGCMobileFileDialogController::_getSaveLocation(void)
+{
+    QStringList docDirs = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
+    if (docDirs.count() <= 0) {
+        qCWarning(QGCMobileFileDialogControllerLog) << "No Documents location";
+        return QString();
+    }
+    qCDebug(QGCMobileFileDialogControllerLog) << "Save directory" << docDirs.at(0);
+    
+    return docDirs.at(0);
 }
