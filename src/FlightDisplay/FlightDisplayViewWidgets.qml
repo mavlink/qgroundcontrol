@@ -441,7 +441,7 @@ Item {
 
             QGCLabel {
                 anchors.horizontalCenter: parent.horizontalCenter
-                color:      qgcPal.button
+                color:      _lightWidgetBorders ? qgcPal.mapWidgetBorderDark : qgcPal.mapWidgetBorderLight
                 text:       "Click in map to move vehicle"
                 visible:    _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
             }
