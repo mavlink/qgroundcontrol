@@ -426,7 +426,19 @@ Item {
     //-------------------------------------------------------------------------
     //-- Critical Message Area
     Rectangle {
-        id: criticalMmessageArea
+        id:                         criticalMmessageArea
+        width:                      mainWindow.width  * 0.55
+        height:                     Math.min(criticalMessageText.height + _textMargins * 2, ScreenTools.defaultFontPixelHeight * 6)
+        color:                      "#eecc44"
+        visible:                    false
+        radius:                     ScreenTools.defaultFontPixelHeight * 0.5
+        anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.top:                parent.top
+        anchors.topMargin:          tbHeight + ScreenTools.defaultFontPixelHeight / 2
+        border.color:               "#808080"
+        border.width:               2
+
+        readonly property real _textMargins: ScreenTools.defaultFontPixelHeight
 
         function close() {
             //-- Are there messages in the waiting queue?
@@ -445,17 +457,6 @@ Item {
             }
         }
 
-        width:              mainWindow.width  * 0.55
-        height:             ScreenTools.defaultFontPixelHeight * 6
-        color:              "#eecc44"
-        visible:            false
-        radius:             ScreenTools.defaultFontPixelHeight * 0.5
-        anchors.horizontalCenter:   parent.horizontalCenter
-        anchors.bottom:             parent.bottom
-        anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight
-        border.color:       "#808080"
-        border.width:       2
-
         MouseArea {
             // This MouseArea prevents the Map below it from getting Mouse events. Without this
             // things like mousewheel will scroll the Flickable and then scroll the map as well.
@@ -466,7 +467,7 @@ Item {
 
         Flickable {
             id:                 criticalMessageFlick
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.margins:    parent._textMargins
             anchors.fill:       parent
             contentHeight:      criticalMessageText.height
             contentWidth:       criticalMessageText.width
