@@ -12,13 +12,13 @@ Item {
     property real   yAxis:          0                   ///< Value range [-1,1], negative values up stick, positive values down stick
     property bool   yAxisThrottle:  false               ///< true: yAxis used for throttle, range [1,0], positive value are stick up
     property real   xPositionDelta: 0                   ///< Amount to move the control on x axis
-    property real   yPositionDelta: 0                   ///< Anount to move the control on y axis
+    property real   yPositionDelta: 0                   ///< Amount to move the control on y axis
 
     property real   _centerXY:              width / 2
     property bool   _processTouchPoints:    false
     property bool   _stickCenteredOnce:     false
     property real   stickPositionX:         _centerXY
-    property real   stickPositionY:         _centerXY
+    property real   stickPositionY:         yAxisThrottle ? height : _centerXY
 
     QGCMapPalette { id: mapPal }
 
@@ -30,7 +30,7 @@ Item {
     }
 
     onStickPositionYChanged: {
-        var yAxisTemp = stickPositionY / width
+        var yAxisTemp = stickPositionY / height
         yAxisTemp *= 2.0
         yAxisTemp -= 1.0
         if (yAxisThrottle) {
@@ -42,19 +42,28 @@ Item {
     function reCenter()
     {
         _processTouchPoints = false
+
         // Move control back to original position
         xPositionDelta = 0
         yPositionDelta = 0
+
         // Center sticks
         stickPositionX = _centerXY
-        stickPositionY = _centerXY
+        if (!yAxisThrottle) {
+            stickPositionY = _centerXY
+        }
     }
 
     function thumbDown(touchPoints)
     {
-        // Center the control around the initial thumb position
+        // Position the control around the initial thumb position
         xPositionDelta = touchPoints[0].x - _centerXY
-        yPositionDelta = touchPoints[0].y - _centerXY
+        if (yAxisThrottle) {
+            yPositionDelta = touchPoints[0].y - stickPositionY
+        } else {
+            yPositionDelta = touchPoints[0].y - _centerXY
+        }
+
         // We need to wait until we move the control to the right position before we process touch points
         _processTouchPoints = true
     }
