@@ -57,9 +57,10 @@ union px4_custom_mode {
     float data_float;
 };
 
-float MockLink::_vehicleLatitude =  47.633033f;
-float MockLink::_vehicleLongitude = -122.08794f;
-float MockLink::_vehicleAltitude =  3.5f;
+float   MockLink::_vehicleLatitude =        47.633033f;
+float   MockLink::_vehicleLongitude =       -122.08794f;
+float   MockLink::_vehicleAltitude =        3.5f;
+int     MockLink::_nextVehicleSystemId =    128;
 
 const char* MockConfiguration::_firmwareTypeKey =   "FirmwareType";
 const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
@@ -69,8 +70,8 @@ MockLink::MockLink(MockConfiguration* config)
     : _missionItemHandler(this, qgcApp()->toolbox()->mavlinkProtocol())
     , _name("MockLink")
     , _connected(false)
-    , _vehicleSystemId(128)     // FIXME: Pull from eventual parameter manager
-    , _vehicleComponentId(200)  // FIXME: magic number?
+    , _vehicleSystemId(_nextVehicleSystemId++)
+    , _vehicleComponentId(200)
     , _inNSH(false)
     , _mavlinkStarted(true)
     , _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)
@@ -80,7 +81,8 @@ MockLink::MockLink(MockConfiguration* config)
     , _fileServer(NULL)
     , _sendStatusText(false)
     , _apmSendHomePositionOnEmptyList(false)
-    , _sendHomePositionDelayCount(2)
+    , _sendHomePositionDelayCount(10)   // No home position for 4 seconds
+    , _sendGPSPositionDelayCount(100)   // No gps lock for 5 seconds
 {
     _config = config;
     if (_config) {
@@ -163,7 +165,7 @@ void MockLink::_run1HzTasks(void)
             _sendRCChannels();
         }
         if (_sendHomePositionDelayCount > 0) {
-            // We delay home position a bit to be more realistic
+            // We delay home position for better testing
             _sendHomePositionDelayCount--;
         } else {
             _sendHomePosition();
@@ -178,7 +180,12 @@ void MockLink::_run1HzTasks(void)
 void MockLink::_run10HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
-        _sendGpsRawInt();
+        if (_sendGPSPositionDelayCount > 0) {
+            // We delay gps position for better testing
+            _sendGPSPositionDelayCount--;
+        } else {
+            _sendGpsRawInt();
+        }
     }
 }
 

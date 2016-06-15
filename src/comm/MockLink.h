@@ -206,10 +206,12 @@ private:
     bool _apmSendHomePositionOnEmptyList;
 
     int _sendHomePositionDelayCount;
+    int _sendGPSPositionDelayCount;
 
-    static float _vehicleLatitude;
-    static float _vehicleLongitude;
-    static float _vehicleAltitude;
+    static float    _vehicleLatitude;
+    static float    _vehicleLongitude;
+    static float    _vehicleAltitude;
+    static int      _nextVehicleSystemId;
 };
 
 #endif
