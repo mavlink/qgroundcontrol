@@ -186,7 +186,7 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
 
     _recalcAll();
 
-    return sequenceNumber;
+    return newItem->sequenceNumber();
 }
 
 int MissionController::insertComplexMissionItem(QGeoCoordinate coordinate, int i)
@@ -202,7 +202,7 @@ int MissionController::insertComplexMissionItem(QGeoCoordinate coordinate, int i
 
     _recalcAll();
 
-    return sequenceNumber;
+    return newItem->sequenceNumber();
 }
 
 void MissionController::removeMissionItem(int index)
