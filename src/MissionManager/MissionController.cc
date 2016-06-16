@@ -629,7 +629,7 @@ void MissionController::_recalcWaypointLines(void)
     double homePositionAltitude = homeItem->coordinate().altitude();
     minAltSeen = maxAltSeen = homeItem->coordinate().altitude();
 
-    _waypointLines.clear();
+    _waypointLines.clearAndDeleteContents();
 
     bool linkBackToHome = false;
     for (int i=1; i<_visualItems->count(); i++) {
