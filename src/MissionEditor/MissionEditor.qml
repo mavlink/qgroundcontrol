@@ -500,6 +500,11 @@ QGCView {
                                 controller.removeMissionItem(index)
                             }
 
+                            onInsert: {
+                                var sequenceNumber = controller.insertSimpleMissionItem(editorMap.center, i)
+                                setCurrentItem(sequenceNumber)
+                            }
+
                             onMoveHomeToMapCenter: controller.visualItems.get(0).coordinate = editorMap.center
 
                             Connections {
