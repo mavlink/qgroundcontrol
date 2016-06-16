@@ -24,7 +24,7 @@ const int JoystickConfigController::_calDefaultMinValue =   -32768;     ///< Def
 const int JoystickConfigController::_calDefaultMaxValue =   32767;      ///< Default value for Max if not set
 const int JoystickConfigController::_calRoughCenterDelta =  500;        ///< Delta around center point which is considered to be roughly centered
 const int JoystickConfigController::_calMoveDelta =         32768/2;    ///< Amount of delta past center which is considered stick movement
-const int JoystickConfigController::_calSettleDelta =       100;        ///< Amount of delta which is considered no stick movement
+const int JoystickConfigController::_calSettleDelta =       600;        ///< Amount of delta which is considered no stick movement
 const int JoystickConfigController::_calMinDelta =          1000;       ///< Amount of delta allowed around min value to consider channel at min
 
 const int JoystickConfigController::_stickDetectSettleMSecs = 500;
