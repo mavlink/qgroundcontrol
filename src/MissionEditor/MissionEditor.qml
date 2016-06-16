@@ -81,6 +81,7 @@ QGCView {
         } else {
             controller.loadMissionFromFilePicker()
             fitViewportToMissionItems()
+            _currentMissionItem = _visualItems.get(0)
         }
     }
 
@@ -185,6 +186,7 @@ QGCView {
             onFilenameReturned: {
                 controller.loadMissionFromFile(filename)
                 fitViewportToMissionItems()
+                _currentMissionItem = _visualItems.get(0)
             }
         }
     }
