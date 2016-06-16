@@ -86,12 +86,7 @@ MAV_AUTOPILOT MissionCommands::_firmwareTypeFromVehicle(Vehicle* vehicle) const
     if (vehicle) {
         return vehicle->firmwareType();
     } else {
-        QSettings settings;
-
-        // FIXME: Hack duplicated code from QGroundControlQmlGlobal. Had to do this for now since
-        // QGroundControlQmlGlobal is not available from C++ side.
-
-        return (MAV_AUTOPILOT)settings.value("OfflineEditingFirmwareType", MAV_AUTOPILOT_ARDUPILOTMEGA).toInt();
+        return (MAV_AUTOPILOT)QGroundControlQmlGlobal::offlineEditingFirmwareType()->rawValue().toInt();
     }
 }
 
