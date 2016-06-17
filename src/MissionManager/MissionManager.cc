@@ -184,8 +184,13 @@ bool MissionManager::_stopAckTimeout(AckType_t expectedAck)
     _ackTimeoutTimer->stop();
     
     if (savedRetryAck != expectedAck) {
-        _sendError(ProtocolOrderError, QString("Vehicle responded incorrectly to mission item protocol sequence: %1:%2").arg(_ackTypeToString(savedRetryAck)).arg(_ackTypeToString(expectedAck)));
-        _finishTransaction(false);
+        if (savedRetryAck == AckNone) {
+            // Don't annoy the user with warnings about unexpected mission commands, just ignore them; ArduPilot updates home position using
+            // spurious MISSION_ITEMs.
+        } else {
+            _sendError(ProtocolOrderError, QString("Vehicle responded incorrectly to mission item protocol sequence: %1:%2").arg(_ackTypeToString(savedRetryAck)).arg(_ackTypeToString(expectedAck)));
+            _finishTransaction(false);
+        }
         success = false;
     } else {
         success = true;
