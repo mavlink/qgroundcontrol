@@ -117,7 +117,7 @@ private:
     QmlObjectListModel* _visualItems;
     QmlObjectListModel* _complexItems;
     QmlObjectListModel  _waypointLines;
-    CoordVectHashTable  _lines_table;
+    CoordVectHashTable  _linesTable;
     Vehicle*            _activeVehicle;
     bool                _autoSync;
     bool                _firstItemsFromVehicle;

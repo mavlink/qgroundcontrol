@@ -616,8 +616,8 @@ void MissionController::_recalcWaypointLines(void)
 
     qCDebug(MissionControllerLog) << "_recalcWaypointLines";
 
-    CoordVectHashTable old_table = _lines_table;
-    _lines_table.clear();
+    CoordVectHashTable old_table = _linesTable;
+    _linesTable.clear();
     _waypointLines.clear();
 
     bool linkBackToHome = false;
@@ -639,7 +639,7 @@ void MissionController::_recalcWaypointLines(void)
                 if (lastCoordinateItem != homeItem || (showHomePosition && linkBackToHome)) {
                     if (old_table.contains(pair)) {
                         // Do nothing, this segment already exists and is wired up
-                        _lines_table[pair] = old_table.take(pair);
+                        _linesTable[pair] = old_table.take(pair);
                     } else {
                         // Create a new segment and wire update notifiers
                         auto linevect       = new CoordinateVector(lastCoordinateItem->isSimpleItem() ? lastCoordinateItem->coordinate() : lastCoordinateItem->exitCoordinate(), item->coordinate(), this);
@@ -652,7 +652,7 @@ void MissionController::_recalcWaypointLines(void)
                         // FIXME: We should ideally have signals for 2D position change, alt change, and 3D position change
                         // Not optimal, but still pretty fast, do a full update of range/bearing/altitudes
                         connect(item, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcAltitudeRangeBearing);
-                        _lines_table[pair] = linevect;
+                        _linesTable[pair] = linevect;
                     }
                 }
                 lastCoordinateItem = item;
@@ -664,8 +664,8 @@ void MissionController::_recalcWaypointLines(void)
     {
         // Create a temporary QObjectList and replace the model data
         QObjectList objs;
-        objs.reserve(_lines_table.count());
-        foreach(CoordinateVector *vect, _lines_table.values()) {
+        objs.reserve(_linesTable.count());
+        foreach(CoordinateVector *vect, _linesTable.values()) {
             objs.append(vect);
         }
 
