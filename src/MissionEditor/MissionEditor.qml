@@ -426,7 +426,7 @@ QGCView {
                                 model: object.childItems
 
                                 delegate: MissionItemIndexLabel {
-                                    label:          object.sequenceNumber
+                                    label:          object.abbreviation
                                     isCurrentItem:  object.isCurrentItem
                                     z:              2
 
