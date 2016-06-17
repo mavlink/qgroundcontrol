@@ -18,4 +18,4 @@ configs:
         'spec': 'linux-g++-64'
         'shadow_build_dir': '/vagrant/shadow-build'
         'pro': '/vagrant/qgroundcontrol.pro'
-        'deps_url': 'https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies'
+        'deps_url': 'https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2'
