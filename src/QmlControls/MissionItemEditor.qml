@@ -24,7 +24,7 @@ Rectangle {
 
     signal clicked
     signal remove
-    signal insert(int i)
+    signal insert(int insertAfterIndex)
     signal moveHomeToMapCenter
 
     property bool   _currentItem:       missionItem.isCurrentItem
