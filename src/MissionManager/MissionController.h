@@ -12,6 +12,7 @@
 #define MissionController_H
 
 #include <QObject>
+#include <QHash>
 
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
@@ -19,8 +20,12 @@
 #include "MavlinkQmlSingleton.h"
 #include "VisualMissionItem.h"
 
+class CoordinateVector;
+
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
+typedef QPair<VisualMissionItem*,VisualMissionItem*> VisualItemPair;
+typedef QHash<VisualItemPair, CoordinateVector*> CoordVectHashTable;
 class MissionController : public QObject
 {
     Q_OBJECT
@@ -77,7 +82,6 @@ signals:
 
 private slots:
     void _newMissionItemsAvailableFromVehicle();
-    void _itemCoordinateChanged(const QGeoCoordinate& coordinate);
     void _itemCommandChanged(void);
     void _activeVehicleChanged(Vehicle* activeVehicle);
     void _activeVehicleHomePositionAvailableChanged(bool homePositionAvailable);
@@ -86,6 +90,7 @@ private slots:
     void _inProgressChanged(bool inProgress);
     void _currentMissionItemChanged(int sequenceNumber);
     void _recalcWaypointLines(void);
+    void _recalcAltitudeRangeBearing();
 
 private:
     void _recalcSequence(void);
@@ -97,7 +102,7 @@ private:
     void _deinitVisualItem(VisualMissionItem* item);
     void _autoSyncSend(void);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
-    void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
+    static void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     bool _findLastAltitude(double* lastAltitude);
     bool _findLastAcceptanceRadius(double* lastAcceptanceRadius);
     void _addPlannedHomePosition(QmlObjectListModel* visualItems, bool addToCenter);
@@ -112,6 +117,7 @@ private:
     QmlObjectListModel* _visualItems;
     QmlObjectListModel* _complexItems;
     QmlObjectListModel  _waypointLines;
+    CoordVectHashTable  _linesTable;
     Vehicle*            _activeVehicle;
     bool                _autoSync;
     bool                _firstItemsFromVehicle;

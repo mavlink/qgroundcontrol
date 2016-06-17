@@ -179,6 +179,15 @@ void QmlObjectListModel::append(QObject* object)
     insert(_objectList.count(), object);
 }
 
+QObjectList QmlObjectListModel::swapObjectList(QObjectList newlist)
+{
+    QObjectList oldlist(_objectList);
+    beginResetModel();
+    _objectList = newlist;
+    endResetModel();
+    return oldlist;
+}
+
 int QmlObjectListModel::count(void) const
 {
     return rowCount();

@@ -70,24 +70,32 @@ void VisualMissionItem::setIsCurrentItem(bool isCurrentItem)
 
 void VisualMissionItem::setDistance(double distance)
 {
-    _distance = distance;
-    emit distanceChanged(_distance);
+    if (!qFuzzyCompare(_distance, distance)) {
+        _distance = distance;
+        emit distanceChanged(_distance);
+    }
 }
 
 void VisualMissionItem::setAltDifference(double altDifference)
 {
-    _altDifference = altDifference;
-    emit altDifferenceChanged(_altDifference);
+    if (!qFuzzyCompare(_altDifference, altDifference)) {
+        _altDifference = altDifference;
+        emit altDifferenceChanged(_altDifference);
+    }
 }
 
 void VisualMissionItem::setAltPercent(double altPercent)
 {
-    _altPercent = altPercent;
-    emit altPercentChanged(_altPercent);
+    if (!qFuzzyCompare(_altPercent, altPercent)) {
+        _altPercent = altPercent;
+        emit altPercentChanged(_altPercent);
+    }
 }
 
 void VisualMissionItem::setAzimuth(double azimuth)
 {
-    _azimuth = azimuth;
-    emit azimuthChanged(_azimuth);
+    if (!qFuzzyCompare(_azimuth, azimuth)) {
+        _azimuth = azimuth;
+        emit azimuthChanged(_azimuth);
+    }
 }
