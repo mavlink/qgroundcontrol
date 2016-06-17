@@ -81,6 +81,7 @@ QGCView {
         } else {
             controller.loadMissionFromFilePicker()
             fitViewportToMissionItems()
+            _currentMissionItem = _visualItems.get(0)
         }
     }
 
@@ -185,6 +186,7 @@ QGCView {
             onFilenameReturned: {
                 controller.loadMissionFromFile(filename)
                 fitViewportToMissionItems()
+                _currentMissionItem = _visualItems.get(0)
             }
         }
     }
@@ -496,6 +498,11 @@ QGCView {
                             onRemove: {
                                 itemDragger.clearItem()
                                 controller.removeMissionItem(index)
+                            }
+
+                            onInsert: {
+                                var sequenceNumber = controller.insertSimpleMissionItem(editorMap.center, insertAfterIndex)
+                                setCurrentItem(sequenceNumber)
                             }
 
                             onMoveHomeToMapCenter: controller.visualItems.get(0).coordinate = editorMap.center

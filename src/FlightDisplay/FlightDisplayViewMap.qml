@@ -67,8 +67,8 @@ FlightMap {
             line.color: "red"
             z:          QGroundControl.zOrderMapItems - 1
             path: [
-                { latitude: object.coordinate1.latitude, longitude: object.coordinate1.longitude },
-                { latitude: object.coordinate2.latitude, longitude: object.coordinate2.longitude },
+                object.coordinate1,
+                object.coordinate2,
             ]
         }
     }
