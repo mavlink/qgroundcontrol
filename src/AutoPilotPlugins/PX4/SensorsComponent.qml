@@ -115,6 +115,7 @@ QGCView {
 
         onSetCompassRotations: {
             if (showCompass0Rot || showCompass1Rot || showCompass2Rot) {
+                setOrientationsDialogShowBoardOrientation = false
                 showDialog(setOrientationsDialogComponent, qsTr("Set Compass Rotation(s)"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
             }
         }
@@ -195,6 +196,8 @@ QGCView {
         }
     }
 
+    property bool setOrientationsDialogShowBoardOrientation: true
+
     Component {
         id: setOrientationsDialogComponent
 
@@ -221,6 +224,8 @@ QGCView {
                     }
 
                     Column {
+                        visible: setOrientationsDialogShowBoardOrientation
+
                         QGCLabel {
                             text: qsTr("Autopilot Orientation:")
                         }
@@ -402,7 +407,10 @@ QGCView {
                 id:         setOrientationsButton
                 width:      parent.buttonWidth
                 text:       qsTr("Set Orientations")
-                onClicked: showDialog(setOrientationsDialogComponent, qsTr("Set Orientations"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                onClicked:  {
+                    setOrientationsDialogShowBoardOrientation = true
+                    showDialog(setOrientationsDialogComponent, qsTr("Set Orientations"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                }
             }
         } // Column - Buttons
 
