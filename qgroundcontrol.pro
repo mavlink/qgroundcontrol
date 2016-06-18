@@ -297,7 +297,6 @@ HEADERS += \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/RCChannelMonitorController.h \
     src/QmlControls/ScreenToolsController.h \
-    src/QmlControls/QGCQGeoCoordinate.h \
     src/QmlControls/QGroundControlQmlGlobal.h \
     src/QmlControls/QmlObjectListModel.h \
     src/uas/UAS.h \
@@ -456,7 +455,6 @@ SOURCES += \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/RCChannelMonitorController.cc \
     src/QmlControls/ScreenToolsController.cc \
-    src/QmlControls/QGCQGeoCoordinate.cc \
     src/QmlControls/QGroundControlQmlGlobal.cc \
     src/QmlControls/QmlObjectListModel.cc \
     src/uas/UAS.cc \
