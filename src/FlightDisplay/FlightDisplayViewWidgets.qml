@@ -162,10 +162,11 @@ Item {
                     spacing: ScreenTools.defaultFontPixelWidth
 
                     QGCCheckBox {
-                        id:                 followVehicleCheckBox
-                        text:               qsTr("Follow Vehicle")
-                        checked:            _flightMap ? _flightMap._followVehicle : false
-                        anchors.baseline:   centerMapButton.baseline
+                        id:         followVehicleCheckBox
+                        text:       qsTr("Follow Vehicle")
+                        checked:    _flightMap ? _flightMap._followVehicle : false
+                        anchors.verticalCenter: parent.verticalCenter
+                        //anchors.baseline:   centerMapButton.baseline - This doesn't work correctly on mobile for some strange reason, so we center instead
 
                         onClicked: {
                             _dropButtonsExclusiveGroup.current = null
