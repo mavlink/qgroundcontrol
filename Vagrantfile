@@ -24,14 +24,15 @@ Vagrant.configure(2) do |config|
      sudo apt-get dist-upgrade -y
      sudo apt-get install -y git build-essential
      sudo apt-get install -y espeak libespeak-dev libudev-dev libsdl1.2-dev
-     sudo apt-get install -y doxygen 
+     sudo apt-get install -y doxygen
      sudo apt-get install -y gstreamer1.0* libgstreamer1.0*
 
      # taken from travis.yml
-     su - vagrant -c 'wget --continue -q %{deps_url}/%{qt_deps_tarball}'
+     echo 'Saving Qt5.5.1-linux-tar.bz2 from %{deps_url} to %{project_root_dir}'
+     su - vagrant -c 'wget --continue -q %{deps_url} -P %{project_root_dir}'
      su - vagrant -c 'rm -rf %{qt_deps_unpack_dir}'
      su - vagrant -c 'mkdir -p %{qt_deps_unpack_parent_dir}'
-     su - vagrant -c 'tar jxf "%{qt_deps_tarball}" -C  %{qt_deps_unpack_parent_dir}'
+     su - vagrant -c 'cd %{project_root_dir}; tar jxf "%{qt_deps_tarball}" -C  %{qt_deps_unpack_parent_dir}'
      su - vagrant -c 'rm -rf %{shadow_build_dir}'
      su - vagrant -c 'mkdir -p %{shadow_build_dir}'
      su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH qmake -r %{pro} -spec %{spec}"
@@ -52,6 +53,7 @@ Vagrant.configure(2) do |config|
     :spec => yaml_config['spec'],
     :deps_url => yaml_config['deps_url'],
 
+    :project_root_dir => yaml_config['project_root_dir'],
     :qt_deps_unpack_parent_dir => yaml_config['qt_deps_unpack_parent_dir'],
     :qt_deps_unpack_dir => yaml_config['qt_deps_unpack_dir'],
     :qt_deps_bin_unpack_dir => yaml_config['qt_deps_bin_unpack_dir'],
