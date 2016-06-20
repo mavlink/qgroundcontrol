@@ -1,6 +1,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# if you update this file, please consider updating .travis.yml too
+
 require 'yaml'
 
 current_dir    = File.dirname(File.expand_path(__FILE__))
