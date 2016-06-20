@@ -46,8 +46,9 @@ QGCView {
     readonly property int       _addMissionItemsButtonAutoOffTimeout:   10000
     readonly property var       _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
 
-    property var    _visualItems:          controller.visualItems
+    property var    _visualItems:           controller.visualItems
     property var    _currentMissionItem
+    property int    _currentMissionIndex:   0
     property bool   _firstVehiclePosition:  true
     property var    activeVehiclePosition:  _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property bool   _lightWidgetBorders:    editorMap.isSatelliteMap
@@ -168,6 +169,7 @@ QGCView {
             if (visualItem.sequenceNumber == sequenceNumber) {
                 _currentMissionItem = visualItem
                 _currentMissionItem.isCurrentItem = true
+                _currentMissionIndex = i
             } else {
                 visualItem.isCurrentItem = false
             }
@@ -485,6 +487,7 @@ QGCView {
                         model:          controller.visualItems
                         cacheBuffer:    height * 2
                         clip:           true
+                        currentIndex:   _currentMissionIndex
                         highlightMoveDuration: 250
 
                         delegate: MissionItemEditor {
@@ -506,16 +509,6 @@ QGCView {
                             }
 
                             onMoveHomeToMapCenter: controller.visualItems.get(0).coordinate = editorMap.center
-
-                            Connections {
-                                target: object
-
-                                onIsCurrentItemChanged: {
-                                    if (object.isCurrentItem) {
-                                        editorListView.currentIndex = index
-                                    }
-                                }
-                            }
                         }
                     } // ListView
                 } // Item - Mission Item editor
