@@ -28,7 +28,7 @@ Vagrant.configure(2) do |config|
      sudo apt-get install -y gstreamer1.0* libgstreamer1.0*
 
      # taken from travis.yml
-     echo 'Saving Qt5.5.1-linux-tar.bz2 from %{deps_url} to %{project_root_dir}'
+     echo 'Saving %{qt_deps_tarball} from %{deps_url} to %{project_root_dir}'
      su - vagrant -c 'wget --continue -q %{deps_url} -P %{project_root_dir}'
      su - vagrant -c 'rm -rf %{qt_deps_unpack_dir}'
      su - vagrant -c 'mkdir -p %{qt_deps_unpack_parent_dir}'
