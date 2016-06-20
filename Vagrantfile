@@ -30,6 +30,9 @@ Vagrant.configure(2) do |config|
      sudo apt-get install -y gstreamer1.0* libgstreamer1.0*
 
      # taken from travis.yml
+     echo 'Initialising submodules'
+     su - vagrant -c 'cd %{project_root_dir}; git submodule init && git submodule update'
+
      echo 'Saving %{qt_deps_tarball} from %{deps_url} to %{project_root_dir}'
      su - vagrant -c 'wget --continue -q %{deps_url} -P %{project_root_dir}'
      su - vagrant -c 'rm -rf %{qt_deps_unpack_dir}'
