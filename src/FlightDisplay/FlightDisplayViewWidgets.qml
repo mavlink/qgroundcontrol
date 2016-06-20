@@ -162,10 +162,11 @@ Item {
                     spacing: ScreenTools.defaultFontPixelWidth
 
                     QGCCheckBox {
-                        id:                 followVehicleCheckBox
-                        text:               qsTr("Follow Vehicle")
-                        checked:            _flightMap ? _flightMap._followVehicle : false
-                        anchors.baseline:   centerMapButton.baseline
+                        id:         followVehicleCheckBox
+                        text:       qsTr("Follow Vehicle")
+                        checked:    _flightMap ? _flightMap._followVehicle : false
+                        anchors.verticalCenter: parent.verticalCenter
+                        //anchors.baseline:   centerMapButton.baseline - This doesn't work correctly on mobile for some strange reason, so we center instead
 
                         onClicked: {
                             _dropButtonsExclusiveGroup.current = null
@@ -407,7 +408,7 @@ Item {
                 break;
             case confirmTakeoff:
                 altitudeSlider.visible = true
-                altitudeSlider.setInitialValueMeters(10)
+                altitudeSlider.setInitialValueMeters(2)
                 guidedModeConfirm.confirmText = qsTr("takeoff")
                 break;
             case confirmLand:
@@ -581,8 +582,8 @@ Item {
             anchors.left:       parent.left
             anchors.right:      parent.right
             orientation:        Qt.Vertical
-            minimumValue:       QGroundControl.metersToAppSettingsDistanceUnits((_activeVehicle && _activeVehicle.flying) ? -15 : 0)
-            maximumValue:       QGroundControl.metersToAppSettingsDistanceUnits((_activeVehicle && _activeVehicle.flying) ? 15 : 60)
+            minimumValue:       QGroundControl.metersToAppSettingsDistanceUnits(2)
+            maximumValue:       QGroundControl.metersToAppSettingsDistanceUnits((_activeVehicle && _activeVehicle.flying) ? 100 : 10)
         }
     }
 }
