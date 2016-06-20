@@ -183,13 +183,12 @@ private:
 
     static const char*  _darkStyleFile;
     static const char*  _lightStyleFile;
-    bool                _styleIsDark;      ///< true: dark style, false: light style
-
-    static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;  ///< Timeout to wait for next missing fact to come in before display
-    QTimer              _missingParamsDelayedDisplayTimer;                ///< Timer use to delay missing fact display
-    QStringList         _missingParams;                                  ///< List of missing facts to be displayed
-
-    bool				_fakeMobile;	///< true: Fake ui into displaying mobile interface
+    bool                _styleIsDark;                                       ///< true: dark style, false: light style
+    static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
+    QTimer              _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
+    QStringList         _missingParams;                                     ///< List of missing facts to be displayed
+    bool				_fakeMobile;                                        ///< true: Fake ui into displaying mobile interface
+    bool                _settingsUpgraded;                                  ///< true: Settings format has been upgrade to new version
 
 #ifdef QT_DEBUG
     bool _testHighDPI;  ///< true: double fonts sizes for simulating high dpi devices
