@@ -87,6 +87,7 @@ Rectangle {
             visible:                _expanded
             width:                  parent.width - valueGrid.width - (_margins * 2)
             clip:                   true
+            currentIndex:           _currentMissionIndex
 
             delegate: Item {
                 height:     statusListView.height
@@ -106,16 +107,6 @@ Rectangle {
                     isCurrentItem:              object.isCurrentItem
                     label:                      object.abbreviation
                     visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
-                }
-
-                Connections {
-                    target: object
-
-                    onIsCurrentItemChanged: {
-                        if (object.isCurrentItem) {
-                            statusListView.currentIndex = index
-                        }
-                    }
                 }
             }
         }
