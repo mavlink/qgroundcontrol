@@ -44,6 +44,11 @@ MissionManager::~MissionManager()
 
 void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 {
+    if (inProgress()) {
+        qCDebug(MissionManagerLog) << "writeMissionItems called while transaction in progress";
+        return;
+    }
+
     bool skipFirstItem = !_vehicle->firmwarePlugin()->sendHomePositionToVehicle();
 
     _missionItems.clear();
@@ -68,11 +73,6 @@ void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 
     qCDebug(MissionManagerLog) << "writeMissionItems count:" << _missionItems.count();
     
-    if (inProgress()) {
-        qCDebug(MissionManagerLog) << "writeMissionItems called while transaction in progress";
-        return;
-    }
-
     // Prime write list
     for (int i=0; i<_missionItems.count(); i++) {
         _itemIndicesToWrite << i;
@@ -132,6 +132,11 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
 void MissionManager::requestMissionItems(void)
 {
     qCDebug(MissionManagerLog) << "requestMissionItems read sequence";
+
+    if (inProgress()) {
+        qCDebug(MissionManagerLog) << "requestMissionItems called while transaction in progress";
+        return;
+    }
     
     mavlink_message_t               message;
     mavlink_mission_request_list_t  request;
