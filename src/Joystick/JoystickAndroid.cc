@@ -185,6 +185,9 @@ int JoystickAndroid::_getAxis(int i) {
 }
 
 uint8_t JoystickAndroid::_getHat(int hat,int i) {
+    Q_UNUSED(hat);
+    Q_UNUSED(i);
+
     return 0;
 }
 
