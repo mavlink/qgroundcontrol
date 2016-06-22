@@ -270,18 +270,33 @@ velocity</short_desc>
       <max>100000</max>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="-1.0" name="BAT_V_SCALING" type="FLOAT">
-      <short_desc>Scaling factor for battery voltage sensor on FMU v2</short_desc>
+    <parameter default="-1.0" name="BAT_CNT_V_VOLT" type="FLOAT">
+      <short_desc>Scaling from ADC counts to volt on the ADC input (battery voltage)</short_desc>
+      <long_desc>This is not the battery voltage, but the intermediate ADC voltage. A value of -1 signifies that the board defaults are used, which is highly recommended.</long_desc>
       <decimal>8</decimal>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="-1.0" name="BAT_C_SCALING" type="FLOAT">
-      <short_desc>Scaling factor for battery current sensor</short_desc>
+    <parameter default="-1.0" name="BAT_CNT_V_CURR" type="FLOAT">
+      <short_desc>Scaling from ADC counts to volt on the ADC input (battery current)</short_desc>
+      <long_desc>This is not the battery current, but the intermediate ADC voltage. A value of -1 signifies that the board defaults are used, which is highly recommended.</long_desc>
       <decimal>8</decimal>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="-1.0" name="BAT_C_OFFSET" type="FLOAT">
-      <short_desc>Offset for battery current sensor</short_desc>
+    <parameter default="0.0" name="BAT_V_OFFS_CURR" type="FLOAT">
+      <short_desc>Offset in volt as seen by the ADC input of the current sensor</short_desc>
+      <long_desc>This offset will be subtracted before calculating the battery current based on the voltage.</long_desc>
+      <decimal>8</decimal>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1.0" name="BAT_V_DIV" type="FLOAT">
+      <short_desc>Battery voltage divider (V divider)</short_desc>
+      <long_desc>This is the divider from battery voltage to 3.3V ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
+      <decimal>8</decimal>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1.0" name="BAT_A_PER_V" type="FLOAT">
+      <short_desc>Battery current per volt (A/V)</short_desc>
+      <long_desc>The voltage seen by the 3.3V ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
       <decimal>8</decimal>
       <scope>modules/sensors</scope>
     </parameter>
@@ -477,7 +492,7 @@ velocity</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="240024" name="CBRK_GPSFAIL" type="INT32">
+    <parameter default="0" name="CBRK_GPSFAIL" type="INT32">
       <short_desc>Circuit breaker for GPS failure detection</short_desc>
       <long_desc>Setting this parameter to 240024 will disable the GPS failure detection. If this check is enabled, then the sensor check will fail if the GPS module is missing. It will also check for excessive signal noise on the GPS receiver and warn the user if detected. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -618,6 +633,17 @@ velocity</short_desc>
       <increment>1</increment>
       <scope>modules/commander</scope>
     </parameter>
+    <parameter default="1" name="COM_ARM_WO_GPS" type="INT32">
+      <short_desc>Allow arming without GPS</short_desc>
+      <long_desc>The default allows to arm the vehicle without GPS signal.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>modules/commander</scope>
+      <values>
+        <value code="1">Allow arming without GPS</value>
+        <value code="0">Don't allow arming without GPS</value>
+      </values>
+    </parameter>
     <parameter default="0" name="COM_LOW_BAT_ACT" type="INT32">
       <short_desc>Battery failsafe mode</short_desc>
       <long_desc>Action the system takes on low battery. Defaults to off</long_desc>
@@ -629,6 +655,15 @@ velocity</short_desc>
         <value code="0">Warning</value>
         <value code="2">Land at current position</value>
       </values>
+    </parameter>
+    <parameter default="0.0" name="COM_OF_LOSS_T" type="FLOAT">
+      <short_desc>Time-out to wait when offboard connection is lost before triggering offboard lost action.
+See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
+      <min>0</min>
+      <max>60</max>
+      <unit>second</unit>
+      <increment>1</increment>
+      <scope>modules/commander</scope>
     </parameter>
   </group>
   <group name="Data Link Loss">
@@ -761,6 +796,14 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     </parameter>
     <parameter default="200" name="EKF2_ASP_DELAY" type="FLOAT">
       <short_desc>Airspeed measurement delay relative to IMU measurements</short_desc>
+      <min>0</min>
+      <max>300</max>
+      <unit>ms</unit>
+      <decimal>1</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="175" name="EKF2_EV_DELAY" type="FLOAT">
+      <short_desc>Vision Position Estimator delay relative to IMU measurements</short_desc>
       <min>0</min>
       <max>300</max>
       <unit>ms</unit>
@@ -1013,9 +1056,9 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     </parameter>
     <parameter default="1" name="EKF2_AID_MASK" type="INT32">
       <short_desc>Integer bitmask controlling data fusion and aiding methods</short_desc>
-      <long_desc>Set bits in the following positions to enable: 0 : Set to true to use GPS data if available 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU bias estimation</long_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Set to true to use GPS data if available 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU bias estimation 3 : Set to true to enable vision position fusion 4 : Set to true to enable vision yaw fusion *</long_desc>
       <min>0</min>
-      <max>15</max>
+      <max>28</max>
       <scope>modules/ekf2</scope>
     </parameter>
     <parameter default="0" name="EKF2_HGT_MODE" type="INT32">
@@ -1023,8 +1066,9 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <long_desc>The range sensor option should only be used when for operation over a flat surface as the local NED origin will move up and down with ground level.</long_desc>
       <scope>modules/ekf2</scope>
       <values>
-        <value code="1">Reserved (GPS)</value>
+        <value code="1">GPS</value>
         <value code="0">Barometric pressure</value>
+        <value code="3">Vision</value>
         <value code="2">Range sensor</value>
       </values>
     </parameter>
@@ -1044,6 +1088,34 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     </parameter>
     <parameter default="0.1" name="EKF2_MIN_RNG" type="FLOAT">
       <short_desc>Minimum valid range for the range finder</short_desc>
+      <min>0.01</min>
+      <unit>m</unit>
+      <decimal>2</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0.05" name="EKF2_EVP_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for vision position observations used when the vision system does not supply error estimates</short_desc>
+      <min>0.01</min>
+      <unit>m</unit>
+      <decimal>2</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0.05" name="EKF2_EVA_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for vision angle observations used when the vision system does not supply error estimates</short_desc>
+      <min>0.01</min>
+      <unit>rad</unit>
+      <decimal>2</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="5.0" name="EKF2_EV_GATE" type="FLOAT">
+      <short_desc>Gate size for vision estimate fusion</short_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+      <decimal>1</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0.01" name="EKF2_MIN_EV" type="FLOAT">
+      <short_desc>Minimum valid range for the vision estimate</short_desc>
       <min>0.01</min>
       <unit>m</unit>
       <decimal>2</decimal>
@@ -1170,8 +1242,34 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>3</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
+    <parameter default="0.0" name="EKF2_EV_POS_X" type="FLOAT">
+      <short_desc>X position of VI sensor focal point in body frame</short_desc>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0.0" name="EKF2_EV_POS_Y" type="FLOAT">
+      <short_desc>Y position of VI sensor focal point in body frame</short_desc>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0.0" name="EKF2_EV_POS_Z" type="FLOAT">
+      <short_desc>Z position of VI sensor focal point in body frame</short_desc>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0.0" name="EKF2_ARSP_THR" type="FLOAT">
+      <short_desc>Airspeed fusion threshold. A value of zero will deactivate airspeed fusion. Any other positive
+value will determine the minimum airspeed which will still be fused</short_desc>
+      <min>0.0</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
     <parameter default="0.5" name="EKF2_TAU_VEL" type="FLOAT">
-      <short_desc>Time constant of the velocity output prediction and smoothing filter. Controls how tightly the velocity output tracks the EKF states. Set to a negative number to disable the EKF velocity state tracking. This will cause the output velocity to track the output position time derivative</short_desc>
+      <short_desc>Time constant of the velocity output prediction and smoothing filter</short_desc>
       <max>1.0</max>
       <unit>s</unit>
       <decimal>2</decimal>
@@ -1616,7 +1714,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     </parameter>
     <parameter default="1.0" name="FW_THR_LND_MAX" type="FLOAT">
       <short_desc>Throttle limit value before flare</short_desc>
-      <long_desc>This throttle value will be set as throttle limit at FW_LND_TLALT, before arcraft will flare.</long_desc>
+      <long_desc>This throttle value will be set as throttle limit at FW_LND_TLALT, before aircraft will flare.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2271,7 +2369,7 @@ but also ignore less noise</short_desc>
       <decimal>4</decimal>
       <scope>modules/local_position_estimator</scope>
     </parameter>
-    <parameter default="1.0" name="LPE_BAR_Z" type="FLOAT">
+    <parameter default="3.0" name="LPE_BAR_Z" type="FLOAT">
       <short_desc>Barometric presssure altitude z standard deviation</short_desc>
       <min>0.01</min>
       <max>3</max>
@@ -2280,7 +2378,7 @@ but also ignore less noise</short_desc>
       <scope>modules/local_position_estimator</scope>
     </parameter>
     <parameter default="1" name="LPE_GPS_ON" type="INT32">
-      <short_desc>GPS</short_desc>
+      <short_desc>Enables GPS data, also forces alt init with GPS</short_desc>
       <boolean />
       <scope>modules/local_position_estimator</scope>
     </parameter>
@@ -2332,6 +2430,14 @@ but also ignore less noise</short_desc>
       <decimal>3</decimal>
       <scope>modules/local_position_estimator</scope>
     </parameter>
+    <parameter default="5.0" name="LPE_EPV_MAX" type="FLOAT">
+      <short_desc>GPS max epv</short_desc>
+      <min>1.0</min>
+      <max>5.0</max>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <scope>modules/local_position_estimator</scope>
+    </parameter>
     <parameter default="0.5" name="LPE_VIS_XY" type="FLOAT">
       <short_desc>Vision xy standard deviation</short_desc>
       <min>0.01</min>
@@ -2361,7 +2467,7 @@ but also ignore less noise</short_desc>
       <decimal>3</decimal>
       <scope>modules/local_position_estimator</scope>
     </parameter>
-    <parameter default="0.1" name="LPE_PN_P" type="FLOAT">
+    <parameter default="0.0" name="LPE_PN_P" type="FLOAT">
       <short_desc>Position propagation noise density</short_desc>
       <min>0</min>
       <max>1</max>
@@ -2369,7 +2475,7 @@ but also ignore less noise</short_desc>
       <decimal>8</decimal>
       <scope>modules/local_position_estimator</scope>
     </parameter>
-    <parameter default="0.1" name="LPE_PN_V" type="FLOAT">
+    <parameter default="0.0" name="LPE_PN_V" type="FLOAT">
       <short_desc>Velocity propagation noise density</short_desc>
       <min>0</min>
       <max>1</max>
@@ -2385,8 +2491,8 @@ but also ignore less noise</short_desc>
       <decimal>8</decimal>
       <scope>modules/local_position_estimator</scope>
     </parameter>
-    <parameter default="1e-3" name="LPE_PN_T" type="FLOAT">
-      <short_desc>Terrain random walk noise density</short_desc>
+    <parameter default="1e-1" name="LPE_PN_T" type="FLOAT">
+      <short_desc>Terrain random walk noise density, hilly/outdoor (1e-1), flat/Indoor (1e-3)</short_desc>
       <min>0</min>
       <max>1</max>
       <unit>m/s/sqrt(Hz)</unit>
@@ -2464,6 +2570,15 @@ but also ignore less noise</short_desc>
       <boolean />
       <scope>modules/mavlink</scope>
     </parameter>
+    <parameter default="0" name="MAV_BROADCAST" type="INT32">
+      <short_desc>Broadcast heartbeats on local network</short_desc>
+      <long_desc>This allows a ground control station to automatically find the drone on the local network.</long_desc>
+      <scope>modules/mavlink</scope>
+      <values>
+        <value code="1">Always broadcast</value>
+        <value code="0">Never broadcast</value>
+      </values>
+    </parameter>
     <parameter default="1" name="MAV_TEST_PAR" type="INT32">
       <short_desc>Test parameter</short_desc>
       <long_desc>This parameter is not actively used by the system. Its purpose is to allow testing the parameter interface on the communication level.</long_desc>
@@ -2520,6 +2635,28 @@ but also ignore less noise</short_desc>
     </parameter>
   </group>
   <group name="Mission">
+    <parameter default="0" name="COM_OBL_ACT" type="INT32">
+      <short_desc>Set offboard loss failsafe mode</short_desc>
+      <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
+      <scope>modules/commander</scope>
+      <values>
+        <value code="1">Loiter</value>
+        <value code="0">Land at current position</value>
+        <value code="2">Return to Land</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="COM_OBL_RC_ACT" type="INT32">
+      <short_desc>Set offboard loss failsafe mode when RC is available</short_desc>
+      <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
+      <scope>modules/commander</scope>
+      <values>
+        <value code="1">Altitude control</value>
+        <value code="0">Position control</value>
+        <value code="3">Return to Land</value>
+        <value code="2">Manual</value>
+        <value code="4">Land at current position</value>
+      </values>
+    </parameter>
     <parameter default="10.0" name="MIS_TAKEOFF_ALT" type="FLOAT">
       <short_desc>Take-off altitude</short_desc>
       <long_desc>This is the minimum altitude the system will take off to.</long_desc>
@@ -2640,7 +2777,7 @@ but also ignore less noise</short_desc>
         <value code="2">Return to Land</value>
       </values>
     </parameter>
-    <parameter default="0" name="NAV_RCL_ACT" type="INT32">
+    <parameter default="2" name="NAV_RCL_ACT" type="INT32">
       <short_desc>Set RC loss failsafe mode</short_desc>
       <long_desc>The RC loss failsafe will only be entered after a timeout, set by COM_RC_LOSS_T in seconds. If RC input checks have been disabled by setting the COM_RC_IN_MODE param it will not be triggered. Setting this parameter to 4 will enable CASA Outback Challenge rules, which are only recommended to participants of that competition.</long_desc>
       <scope>modules/navigator</scope>
@@ -6487,6 +6624,13 @@ to accelerate forward if necessary</short_desc>
       <max>2.0</max>
       <scope>modules/vtol_att_control</scope>
     </parameter>
+    <parameter default="0.0" name="VT_FW_MIN_ALT" type="FLOAT">
+      <short_desc>QuadChute</short_desc>
+      <long_desc>Minimum altitude for fixed wing flight, when in fixed wing the altitude drops below this altitude the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
+      <min>0.0</min>
+      <max>200.0</max>
+      <scope>modules/vtol_att_control</scope>
+    </parameter>
     <parameter default="0.0" name="VT_TILT_MC" type="FLOAT">
       <short_desc>Position of tilt servo in mc mode</short_desc>
       <min>0.0</min>
@@ -7073,7 +7217,7 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
       </values>
     </parameter>
     <parameter default="-1" name="COM_FLTMODE5" type="INT32">
-      <short_desc>Fift flightmode slot (1640-1800)</short_desc>
+      <short_desc>Fifth flightmode slot (1640-1800)</short_desc>
       <long_desc>If the main switch channel is in this range the selected flight mode will be applied.</long_desc>
       <scope>modules/commander</scope>
       <values>
