@@ -74,8 +74,7 @@ addons:
     - wget
 
 cache:
-  directories:
-    - $HOME/.ccache
+  ccache: true
 
 
 before_install:
@@ -131,6 +130,14 @@ install:
         export PATH=/tmp/ios/bin:$PATH
         ;
     fi
+  - if [[ "${TRAVIS_OS_NAME}" = "osx" ]]; then
+        brew update &&
+        brew update &&
+        brew install ccache &&
+        export PATH=/usr/local/opt/ccache/libexec:$PATH &&
+        export CCACHE_CPP2=1
+        ;
+    fi
   - if [ "${TRAVIS_OS_NAME}" = "android" ]; then
         wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin &&
         chmod +x android-ndk-r10e-linux-x86_64.bin &&
@@ -141,6 +148,8 @@ install:
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2 &&
         tar jxf Qt5.5.1-linux.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt/5.5/android_armv7/bin:$PATH
+        export USE_CCACHE=1 &&
+        export NDK_CCACHE=/usr/bin/ccache
         ;
     fi
 
