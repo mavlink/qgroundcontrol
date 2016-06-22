@@ -182,6 +182,7 @@ before_script:
     fi
 
 script:
+  - ccache -M 1GB; ccache -z
   - if [ "${TRAVIS_OS_NAME}" = "android" ]; then
         cd ${TRAVIS_BUILD_DIR} &&
         ./tools/update_android_version.sh
@@ -197,6 +198,7 @@ script:
         xcodebuild -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
         ;
     fi
+  - ccache -s
   - if [ "${CONFIG}" = "doxygen" ]; then
         cd ${TRAVIS_BUILD_DIR}/src &&
         doxygen documentation.dox
