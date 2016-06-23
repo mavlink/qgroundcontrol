@@ -62,18 +62,7 @@ void FactSystemTestBase::_parameter_specific_component_id_test(void)
     QVERIFY(fact != NULL);
     QVariant factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
-
-
     QCOMPARE(factValue.toInt(), 3);
-
-    // Test another component id
-    QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, 51, "COMPONENT_51"));
-    fact = _plugin->getFact(FactSystem::ParameterProvider, 51, "COMPONENT_51");
-    QVERIFY(fact != NULL);
-    factValue = fact->rawValue();
-    QCOMPARE(factValue.isValid(), true);
-
-    QCOMPARE(factValue.toInt(), 51);
 }
 
 /// Test that QML can reference a Fact
