@@ -93,9 +93,9 @@ QGCView {
     property bool compass3Use:      compass3UseParamAvailable ? compass3UseFact.value : true
 
     // Id > = signals compass available, rot < 0 signals internal compass
-    property bool showCompass1Rot: compass1Id.value > 0 && compass1External && compass1Use
-    property bool showCompass2Rot: compass2Id.value > 0 && compass2External && compass2Use
-    property bool showCompass3Rot: compass3Id.value > 0 && compass3External && compass3Use
+    property bool showCompass1: compass1Id.value > 0
+    property bool showCompass2: compass2Id.value > 0
+    property bool showCompass3: compass3Id.value > 0
 
     readonly property int _calTypeCompass:  1   ///< Calibrate compass
     readonly property int _calTypeAccel:    2   ///< Calibrate accel
@@ -133,7 +133,7 @@ QGCView {
         case _calTypeSet:
             _orientationsDialogShowCompass = true
             _orientationDialogHelp = orientationHelpSet
-            dialogTitle = qsTr("SetOrientations")
+            dialogTitle = qsTr("Sensor Settings")
             break
         }
 
@@ -304,18 +304,19 @@ QGCView {
                     }
 
                     Column {
-                        visible: _orientationsDialogShowCompass
+                        visible: _orientationsDialogShowCompass && showCompass1
 
-                        Component {
-                            id: compass1ComponentLabel
+                        FactCheckBox {
+                            text: "Use Compass 1"
+                            fact: compass1UseFact
+                        }
+
+                        Column {
+                            visible: showCompass1Rot
 
                             QGCLabel {
                                 text: qsTr("Compass 1 Orientation:")
                             }
-                        }
-
-                        Component {
-                            id: compass1ComponentCombo
 
                             FactComboBox {
                                 width:      rotationColumnWidth
@@ -323,24 +324,22 @@ QGCView {
                                 fact:       compass1Rot
                             }
                         }
-
-                        Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel : null }
-                        Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo : null }
                     }
 
                     Column {
-                        visible: _orientationsDialogShowCompass
+                        visible: _orientationsDialogShowCompass && showCompass2
 
-                        Component {
-                            id: compass2ComponentLabel
+                        FactCheckBox {
+                            text: "Use Compass 2"
+                            fact: compass2UseFact
+                        }
+
+                        Column {
+                            visible: showCompass1Rot
 
                             QGCLabel {
                                 text: qsTr("Compass 2 Orientation:")
                             }
-                        }
-
-                        Component {
-                            id: compass2ComponentCombo
 
                             FactComboBox {
                                 width:      rotationColumnWidth
@@ -348,24 +347,22 @@ QGCView {
                                 fact:       compass2Rot
                             }
                         }
-
-                        Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel : null }
-                        Loader { sourceComponent: showCompass2Rot ? compass2ComponentCombo : null }
                     }
 
                     Column {
-                        visible: _orientationsDialogShowCompass
+                        visible: _orientationsDialogShowCompass && showCompass3
 
-                        Component {
-                            id: compass3ComponentLabel
-
-                            QGCLabel {
-                                text: qsTr("Compass 3 Orientation")
-                            }
+                        FactCheckBox {
+                            text: "Use Compass 3"
+                            fact: compass3UseFact
                         }
 
-                        Component {
-                            id: compass3ComponentCombo
+                        Column {
+                            visible: showCompass3Rot
+
+                            QGCLabel {
+                                text: qsTr("Compass 3 Orientation:")
+                            }
 
                             FactComboBox {
                                 width:      rotationColumnWidth
@@ -373,8 +370,6 @@ QGCView {
                                 fact:       compass3Rot
                             }
                         }
-                        Loader { sourceComponent: showCompass3Rot ? compass3ComponentLabel : null }
-                        Loader { sourceComponent: showCompass3Rot ? compass3ComponentCombo : null }
                     }
                 } // Column
             } // QGCFlickable
@@ -434,7 +429,7 @@ QGCView {
             QGCButton {
                 id:         setOrientationsButton
                 width:      parent.buttonWidth
-                text:       qsTr("Set Orientations")
+                text:       qsTr("Sensor Settings")
                 onClicked:  showOrientationsDialog(_calTypeSet)
             }
         } // Column - Buttons
