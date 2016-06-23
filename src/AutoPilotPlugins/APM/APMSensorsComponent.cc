@@ -117,13 +117,23 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
 
 bool APMSensorsComponent::accelSetupNeeded(void) const
 {
-    QStringList offsets;
+    const size_t    cAccel = 3;
+    const size_t    cOffset = 3;
+    QStringList     rgUse;
+    QStringList     rgOffsets[cAccel];
 
-    offsets << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
+    rgUse << QStringLiteral("INS_USE") << QStringLiteral("INS_USE2") << QStringLiteral("INS_USE3");
+    rgOffsets[0] << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
+    rgOffsets[1] << QStringLiteral("INS_ACC2OFFS_X") << QStringLiteral("INS_ACC2OFFS_Y") << QStringLiteral("INS_ACC2OFFS_Z");
+    rgOffsets[2] << QStringLiteral("INS_ACC3OFFS_X") << QStringLiteral("INS_ACC3OFFS_Y") << QStringLiteral("INS_ACC3OFFS_Z");
 
-    foreach(const QString& offset, offsets) {
-        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, offset)->rawValue().toFloat() == 0.0f) {
-            return true;
+    for (size_t i=0; i<cAccel; i++) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgUse[i])->rawValue().toInt() != 0) {
+            for (size_t j=0; j<cOffset; j++) {
+                if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
+                    return true;
+                }
+            }
         }
     }
 

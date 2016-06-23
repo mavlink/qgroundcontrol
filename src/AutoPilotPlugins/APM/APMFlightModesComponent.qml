@@ -22,13 +22,16 @@ QGCView {
     id:         rootQGCView
     viewPanel:  panel
 
+    readonly property string _modeChannelParam: controller.modeChannelParam
+    readonly property string _modeParamPrefix:  controller.modeParamPrefix
+
     property real   _margins:                   ScreenTools.defaultFontPixelHeight
     property bool   _channel7OptionsAvailable:  controller.parameterExists(-1, "CH7_OPT")   // Not available in all firmware types
     property bool   _channel9OptionsAvailable:  controller.parameterExists(-1, "CH9_OPT")   // Not available in all firmware types
     property int    _channelOptionCount:         _channel7OptionsAvailable ? (_channel9OptionsAvailable ? 6 : 2) : 0
     property Fact   _nullFact
-    property bool   _fltmodeChExists:           controller.parameterExists(-1, "FLTMODE_CH")
-    property Fact   _fltmodeCh:                 _fltmodeChExists ? controller.getParameterFact(-1, "FLTMODE_CH") : _nullFact
+    property bool   _fltmodeChExists:           controller.parameterExists(-1, _modeChannelParam)
+    property Fact   _fltmodeCh:                 _fltmodeChExists ? controller.getParameterFact(-1, _modeChannelParam) : _nullFact
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
@@ -114,7 +117,7 @@ QGCView {
                                     FactComboBox {
                                         id:         modeCombo
                                         width:      ScreenTools.defaultFontPixelWidth * 15
-                                        fact:       controller.getParameterFact(-1, "FLTMODE" + index)
+                                        fact:       controller.getParameterFact(-1, _modeParamPrefix + index)
                                         indexModel: false
                                     }
 
