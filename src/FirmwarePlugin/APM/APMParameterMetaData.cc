@@ -88,7 +88,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
             break;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_SURFACE_BOAT:
-            vehicleName = "ArduRover";
+            vehicleName = "APMrover2";
             break;
         case MAV_TYPE_SUBMARINE:
             vehicleName = "ArduSub";
