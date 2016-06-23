@@ -76,10 +76,10 @@ void MissionController::_newMissionItemsAvailableFromVehicle(void)
 
     if (!_editMode || _missionItemsRequested || _visualItems->count() == 1) {
         // Fly Mode:
-        //      - Always accepts new items fromthe vehicle so Fly view is kept up to date
+        //      - Always accepts new items from the vehicle so Fly view is kept up to date
         // Edit Mode:
         //      - Either a load from vehicle was manually requested or
-        //      - The initial automatic load from a vehicle completed and the current editor it empty
+        //      - The initial automatic load from a vehicle completed and the current editor is empty
 
         QmlObjectListModel* newControllerMissionItems = new QmlObjectListModel(this);
         const QList<MissionItem*>& newMissionItems = _activeVehicle->missionManager()->missionItems();
@@ -948,6 +948,10 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
         _activeVehicle = NULL;
     }
 
+    // We always remove all items on vehicle change. This leaves a user model hole:
+    //      If the user has unsaved changes in the Plan view they will lose them
+    removeAllMissionItems();
+
     _activeVehicle = activeVehicle;
 
     if (_activeVehicle) {
@@ -959,8 +963,9 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
         connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
 
-        if (!_editMode) {
-            removeAllMissionItems();
+        if (!syncInProgress()) {
+            // We have to manually ask for the items from the Vehicle
+            getMissionItems();
         }
 
         _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
