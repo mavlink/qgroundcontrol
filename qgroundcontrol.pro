@@ -571,6 +571,7 @@ HEADERS += \
     src/qgcunittest/MavlinkLogTest.h \
     src/qgcunittest/MessageBoxTest.h \
     src/qgcunittest/MultiSignalSpy.h \
+    src/qgcunittest/ParameterLoaderTest.h \
     src/qgcunittest/RadioConfigTest.h \
     src/qgcunittest/TCPLinkTest.h \
     src/qgcunittest/TCPLoopBackServer.h \
@@ -596,6 +597,7 @@ SOURCES += \
     src/qgcunittest/MavlinkLogTest.cc \
     src/qgcunittest/MessageBoxTest.cc \
     src/qgcunittest/MultiSignalSpy.cc \
+    src/qgcunittest/ParameterLoaderTest.cc \
     src/qgcunittest/RadioConfigTest.cc \
     src/qgcunittest/TCPLinkTest.cc \
     src/qgcunittest/TCPLoopBackServer.cc \
