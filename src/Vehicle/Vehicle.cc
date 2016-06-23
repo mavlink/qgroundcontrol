@@ -1405,6 +1405,11 @@ bool Vehicle::fixedWing(void) const
     return vehicleType() == MAV_TYPE_FIXED_WING;
 }
 
+bool Vehicle::rover(void) const
+{
+    return vehicleType() == MAV_TYPE_GROUND_ROVER;
+}
+
 bool Vehicle::multiRotor(void) const
 {
     switch (vehicleType()) {
