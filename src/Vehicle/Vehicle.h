@@ -273,6 +273,7 @@ public:
     Q_PROPERTY(bool                 fixedWing               READ fixedWing                              CONSTANT)
     Q_PROPERTY(bool                 multiRotor              READ multiRotor                             CONSTANT)
     Q_PROPERTY(bool                 vtol                    READ vtol                                   CONSTANT)
+    Q_PROPERTY(bool                 rover                   READ rover                                  CONSTANT)
     Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                      NOTIFY autoDisconnectChanged)
     Q_PROPERTY(QString              prearmError             READ prearmError        WRITE setPrearmError NOTIFY prearmErrorChanged)
 
@@ -443,6 +444,7 @@ public:
     bool fixedWing(void) const;
     bool multiRotor(void) const;
     bool vtol(void) const;
+    bool rover(void) const;
 
     void setFlying(bool flying);
     void setGuidedMode(bool guidedMode);

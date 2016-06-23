@@ -29,6 +29,8 @@ class APMFlightModesComponentController : public FactPanelController
 public:
     APMFlightModesComponentController(void);
     
+    Q_PROPERTY(QString  modeParamPrefix             MEMBER _modeParamPrefix     CONSTANT)
+    Q_PROPERTY(QString  modeChannelParam            MEMBER _modeChannelParam    CONSTANT)
     Q_PROPERTY(int      activeFlightMode            READ activeFlightMode       NOTIFY activeFlightModeChanged)
     Q_PROPERTY(int      channelCount                MEMBER _channelCount        CONSTANT)
     Q_PROPERTY(QVariantList channelOptionEnabled    READ channelOptionEnabled   NOTIFY channelOptionEnabledChanged)
@@ -44,6 +46,8 @@ private slots:
     void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
     
 private:
+    QString         _modeParamPrefix;
+    QString         _modeChannelParam;
     int             _activeFlightMode;
     int             _channelCount;
     QVariantList    _rgChannelOptionEnabled;
