@@ -151,7 +151,13 @@ private:
     int         _parameterSetMajorVersion;      ///< Version for parameter set, -1 if not known
     QObject*    _parameterMetaData;             ///< Opaque data from FirmwarePlugin::loadParameterMetaDataCall
 
-    static const int _maxInitialRequestListRetry = 5;       ///< Maximum retries for request list
+    // Wait counts from previous parameter update cycle
+    int         _prevWaitingReadParamIndexCount;
+    int         _prevWaitingReadParamNameCount;
+    int         _prevWaitingWriteParamNameCount;
+
+
+    static const int _maxInitialRequestListRetry = 4;       ///< Maximum retries for request list
     int              _initialRequestRetryCount;             ///< Current retry count for request list
     static const int _maxInitialLoadRetrySingleParam = 10;  ///< Maximum retries for initial index based load of a single param
     static const int _maxReadWriteRetry = 5;                ///< Maximum retries read/write
