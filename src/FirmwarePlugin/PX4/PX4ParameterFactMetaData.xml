@@ -300,6 +300,17 @@ velocity</short_desc>
       <decimal>8</decimal>
       <scope>modules/sensors</scope>
     </parameter>
+    <parameter default="0" name="BAT_SOURCE" type="INT32">
+      <short_desc>Battery monitoring source</short_desc>
+      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="1">External</value>
+        <value code="0">Power Module</value>
+      </values>
+    </parameter>
     <parameter default="3.4" name="BAT_V_EMPTY" type="FLOAT">
       <short_desc>Empty cell voltage (5C load)</short_desc>
       <long_desc>Defines the voltage where a single cell of the battery is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
@@ -1613,6 +1624,18 @@ value will determine the minimum airspeed which will still be fused</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <scope>modules/fw_att_control</scope>
+    </parameter>
+    <parameter default="0" name="FW_ARSP_MODE" type="INT32">
+      <short_desc>Airspeed mode</short_desc>
+      <long_desc>The param value sets the method used to publish the control state airspeed. For small wings or VTOL without airspeed sensor this parameter can be used to enable flying without an airspeed reading</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <scope>modules/fw_att_control</scope>
+      <values>
+        <value code="1">use vehicle ground velocity as airspeed</value>
+        <value code="0">use measured airspeed</value>
+        <value code="2">declare airspeed invalid</value>
+      </values>
     </parameter>
   </group>
   <group name="FW L1 Control">
