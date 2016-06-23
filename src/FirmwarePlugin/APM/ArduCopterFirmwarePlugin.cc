@@ -148,7 +148,6 @@ void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QG
         return;
     }
 
-    vehicle->setFlightMode("Guided");
     QGeoCoordinate coordWithAltitude = gotoCoord;
     coordWithAltitude.setAltitude(vehicle->altitudeRelative()->rawValue().toDouble());
     vehicle->missionManager()->writeArduPilotGuidedMissionItem(coordWithAltitude, false /* altChangeOnly */);
