@@ -74,6 +74,9 @@ public:
     //          @param Expected failure response flags
     void checkExpectedMessageBox(int expectFailFlags = expectFailNoFailure);
     
+    /// Checks that the specified number of message boxes where shown. Do not call setExpectedMessageBox when using this method.
+    void checkMultipleExpectedMessageBox(int messageCount);
+
     /// @brief Check whether a message box was displayed and correctly responded to
     //          @param Expected failure response flags
     void checkExpectedFileDialog(int expectFailFlags = expectFailNoFailure);
