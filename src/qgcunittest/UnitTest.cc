@@ -198,6 +198,13 @@ void UnitTest::checkExpectedMessageBox(int expectFailFlags)
     QCOMPARE(messageBoxRespondedTo, true);
 }
 
+void UnitTest::checkMultipleExpectedMessageBox(int messageCount)
+{
+    int missedMessageBoxCount = _missedMessageBoxCount;
+    _missedMessageBoxCount = 0;
+    QCOMPARE(missedMessageBoxCount, messageCount);
+}
+
 void UnitTest::checkExpectedFileDialog(int expectFailFlags)
 {
     // Internal testing
@@ -377,7 +384,7 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
 
     // Wait for the Vehicle to get created
     QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QCOMPARE(spyVehicle.wait(5000), true);
+    QCOMPARE(spyVehicle.wait(10000), true);
     QVERIFY(qgcApp()->toolbox()->multiVehicleManager()->parameterReadyVehicleAvailable());
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     QVERIFY(_vehicle);
