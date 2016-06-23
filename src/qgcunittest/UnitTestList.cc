@@ -29,6 +29,7 @@
 #include "MainWindowTest.h"
 #include "FileManagerTest.h"
 #include "TCPLinkTest.h"
+#include "ParameterLoaderTest.h"
 
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
@@ -46,6 +47,7 @@ UT_REGISTER_TEST(MissionManagerTest)
 UT_REGISTER_TEST(RadioConfigTest)
 UT_REGISTER_TEST(TCPLinkTest)
 UT_REGISTER_TEST(FileManagerTest)
+UT_REGISTER_TEST(ParameterLoaderTest)
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.
