@@ -5,6 +5,7 @@ language: cpp
 env:
   global:
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
+    - JOBS=1
     # ANDROID_STOREPASS
     - secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE=
 
@@ -161,6 +162,14 @@ before_script:
         export CONFIG=release
         ;
     fi
+  - if [ "${TRAVIS_OS_NAME}" != "osx" ]; then
+        export JOBS=`ncpu`
+        ;
+    fi
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+        export JOBS=`sysctl -n hw.ncpu`
+        ;
+    fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
         mkdir ${SHADOW_BUILD_DIR} &&
         cd ${SHADOW_BUILD_DIR} &&
@@ -183,7 +192,7 @@ script:
     fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
         cd ${SHADOW_BUILD_DIR} &&
-        make -j4
+        make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/'
         ;
     fi
   - if [ "${SPEC}" = "ios" ]; then
