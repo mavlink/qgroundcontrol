@@ -31,6 +31,7 @@ matrix:
         - os: osx
           osx_image: xcode7
           env: SPEC=ios
+          sudo: false
         - os: android
           language: android
           env: SPEC=android-g++ CONFIG=installer
@@ -122,20 +123,17 @@ install:
         export QT_DIR=Qt5.5-mac-clang/5.5/clang_64 &&
         export PATH=/tmp/$QT_DIR/bin:$PATH &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
-        export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml
+        export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml &&
+        wget https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
+        sudo mv ccache /usr/local/bin &&
+        chmod +x /usr/local/bin/ccache &&
+        export CCACHE_CPP2=
         ;
     fi
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" = "ios" ]]; then
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios.tar.bz2 &&
         tar jxf Qt5.5.1-ios.tar.bz2 -C /tmp &&
         export PATH=/tmp/ios/bin:$PATH
-        ;
-    fi
-  - if [[ "${TRAVIS_OS_NAME}" = "osx" ]]; then
-        wget https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
-        sudo mv ccache /usr/local/bin &&
-        chmod +x /usr/local/bin/ccache &&
-        export CCACHE_CPP2=1
         ;
     fi
   - if [ "${TRAVIS_OS_NAME}" = "android" ]; then
@@ -184,7 +182,6 @@ before_script:
     fi
 
 script:
-  - ccache -M 1GB; ccache -z
   - if [ "${TRAVIS_OS_NAME}" = "android" ]; then
         cd ${TRAVIS_BUILD_DIR} &&
         ./tools/update_android_version.sh &&
@@ -192,16 +189,17 @@ script:
         ;
     fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
-        cd ${SHADOW_BUILD_DIR} && echo Building with $((JOBS+1)) workers &&
-        make -j$JOBS
+        ccache -M 1GB &&
+        ccache -z &&
+        cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
+        make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/' && $(exit ${PIPESTATUS[0]})
         ;
     fi
   - if [ "${SPEC}" = "ios" ]; then
-        cd ${SHADOW_BUILD_DIR} &&
-        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c
+        cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
+        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]})
         ;
     fi
-  - ccache -s
   - if [ "${CONFIG}" = "doxygen" ]; then
         cd ${TRAVIS_BUILD_DIR}/src &&
         doxygen documentation.dox
