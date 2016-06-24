@@ -180,7 +180,7 @@ script:
     fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
         cd ${SHADOW_BUILD_DIR} &&
-        make -j4 | sed 's/${TRAVIS_BUILD_DIR}/-/'
+        make -j4
         ;
     fi
   - if [ "${SPEC}" = "ios" ]; then
