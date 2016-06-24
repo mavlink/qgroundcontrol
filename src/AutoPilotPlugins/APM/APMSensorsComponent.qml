@@ -147,6 +147,7 @@ QGCView {
         progressBar:                progressBar
         compassButton:              compassButton
         accelButton:                accelButton
+        compassMotButton:           motorInterferenceButton
         nextButton:                 nextButton
         cancelButton:               cancelButton
         setOrientationsButton:      setOrientationsButton
@@ -171,6 +172,7 @@ QGCView {
                                                 "INS_GYROFFS_X", "INS_GYROFFS_Y", "INS_GYROFFS_Z",
                                                 "INS_GYR2OFFS_X", "INS_GYR2OFFS_Y", "INS_GYR2OFFS_Z",
                                                 "INS_GYR3OFFS_X", "INS_GYR3OFFS_Y", "INS_GYR3OFFS_Z" ]
+                showDialog(postCalibrationDialogComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
             } else if (_orientationDialogCalType == _calTypeCompass) {
                 _postCalibrationDialogText = qsTr("Compass calibration complete. ")
                 _postCalibrationDialogParams = [];
@@ -198,8 +200,8 @@ QGCView {
                     _postCalibrationDialogParams.push("COMPASS_OFS3_Y")
                     _postCalibrationDialogParams.push("COMPASS_OFS3_Z")
                 }
+                showDialog(postCalibrationDialogComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
             }
-            showDialog(postCalibrationDialogComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
         }
     }
 
@@ -376,6 +378,72 @@ QGCView {
         } // QGCViewDialog
     } // Component - orientationsDialogComponent
 
+    Component {
+        id: compassMotDialogComponent
+
+        QGCViewDialog {
+            id: compassMotDialog
+
+            function accept() {
+                controller.calibrateMotorInterference()
+                compassMotDialog.hideDialog()
+            }
+
+            QGCFlickable {
+                anchors.fill:   parent
+                contentHeight:  columnLayout.height
+                clip:           true
+
+                Column {
+                    id:                 columnLayout
+                    anchors.margins:    ScreenTools.defaultFontPixelWidth
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    anchors.top:        parent.top
+                    spacing:            ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           "This is recommended for vehicles that have only an internal compass and on vehicles where there is significant interference on the compass from the motors, power wires, etc. " +
+                                        "CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. " +
+                                        "It is technically possible to set-up CompassMot using throttle but this is not recommended."
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           "Disconnect your props, flip them over and rotate them one position around the frame. " +
+                                        "In this configuration they should push the copter down into the ground when the throttle is raised."
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           "Secure the copter (perhaps with tape) so that it does not move."
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           "Turn on your transmitter and keep throttle at zero."
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           "Click Ok to start CompassMot calibration."
+                    }
+                } // Column
+            } // QGCFlickable
+        } // QGCViewDialog
+    }
+
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
@@ -408,6 +476,13 @@ QGCView {
                         showOrientationsDialog(_calTypeCompass)
                     }
                 }
+            }
+
+            QGCButton {
+                id:         motorInterferenceButton
+                width:      parent.buttonWidth
+                text:       qsTr("CompassMot")
+                onClicked:  showDialog(compassMotDialogComponent, qsTr("CompassMot - Compass Motor Interference Calibration"), qgcView.showDialogFullWidth, StandardButton.Cancel | StandardButton.Ok)
             }
 
             QGCButton {
