@@ -36,6 +36,7 @@ matrix:
           language: android
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
+          dist: trusty
         - os: linux
           env: CONFIG=doxygen
           sudo: required
