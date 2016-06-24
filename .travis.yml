@@ -163,7 +163,7 @@ before_script:
         ;
     fi
   - if [ "${TRAVIS_OS_NAME}" != "osx" ]; then
-        export JOBS=`ncpu`
+        export JOBS=`cat /proc/cpuinfo | grep -c ^processor`
         ;
     fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
@@ -192,7 +192,7 @@ script:
     fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
         cd ${SHADOW_BUILD_DIR} &&
-        make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/'
+        make -j$((JOBS+1))
         ;
     fi
   - if [ "${SPEC}" = "ios" ]; then
