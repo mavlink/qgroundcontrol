@@ -135,8 +135,7 @@ install:
         brew update &&
         brew install ccache &&
         export PATH=/usr/local/opt/ccache/libexec:$PATH &&
-        export CCACHE_CPP2=1 &&
-        export
+        export CCACHE_CPP2=1
         ;
     fi
   - if [ "${TRAVIS_OS_NAME}" = "android" ]; then

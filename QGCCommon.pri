@@ -78,6 +78,15 @@ equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
     error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")
 }
 
+# Enable ccache where we can
+linux|macx {
+    system(which ccache) {
+        message("Found ccache, enabling")
+        QMAKE_CXX = ccache $$QMAKE_CXX
+        QMAKE_CC  = ccache $$QMAKE_CC
+    }
+}
+
 MobileBuild {
     DEFINES += __mobile__
 }
