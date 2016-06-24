@@ -202,7 +202,7 @@ script:
     fi
   - if [ "${SPEC}" = "ios" ]; then
         cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
-        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]})
         ;
     fi
   - if [ "${CONFIG}" = "doxygen" ]; then
