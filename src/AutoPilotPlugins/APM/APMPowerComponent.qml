@@ -10,6 +10,7 @@
 
 import QtQuick          2.5
 import QtQuick.Controls 1.2
+import QtQuick.Dialogs  1.2
 
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
@@ -82,6 +83,122 @@ QGCView {
         }
     }
 
+    Component {
+        id: calcVoltageMultiplierDlgComponent
+
+        QGCViewDialog {
+            id: calcVoltageMultiplierDlg
+
+            QGCFlickable {
+                anchors.fill:   parent
+                contentHeight:  column.height
+                contentWidth:   column.width
+
+                Column {
+                    id:         column
+                    width:      calcVoltageMultiplierDlg.width
+                    spacing:    ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        width:      parent.width
+                        wrapMode:   Text.WordWrap
+                        text:       "Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new voltage multiplier."
+                    }
+
+                    Grid {
+                        columns: 2
+                        spacing: ScreenTools.defaultFontPixelHeight / 2
+                        verticalItemAlignment: Grid.AlignVCenter
+
+                        QGCLabel {
+                            text: "Measured voltage:"
+                        }
+                        QGCTextField { id: measuredVoltage }
+
+                        QGCLabel { text: "Vehicle voltage:" }
+                        QGCLabel { text: controller.vehicle.battery.voltage.valueString }
+
+                        QGCLabel { text: "Voltage multiplier:" }
+                        FactLabel { fact: battVoltMult }
+                    }
+
+                    QGCButton {
+                        text: "Calculate"
+
+                        onClicked:  {
+                            var measuredVoltageValue = parseFloat(measuredVoltage.text)
+                            if (measuredVoltageValue == 0) {
+                                return
+                            }
+                            var newVoltageMultiplier = (measuredVoltageValue * battVoltMult.value) / controller.vehicle.battery.voltage.value
+                            if (newVoltageMultiplier != 0) {
+                                battVoltMult.value = newVoltageMultiplier
+                            }
+                        }
+                    }
+                } // Column
+            } // QGCFlickable
+        } // QGCViewDialog
+    } // Component - calcVoltageMultiplierDlgComponent
+
+    Component {
+        id: calcAmpsPerVoltDlgComponent
+
+        QGCViewDialog {
+            id: calcAmpsPerVoltDlg
+
+            QGCFlickable {
+                anchors.fill:   parent
+                contentHeight:  column.height
+                contentWidth:   column.width
+
+                Column {
+                    id:         column
+                    width:      calcAmpsPerVoltDlg.width
+                    spacing:    ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        width:      parent.width
+                        wrapMode:   Text.WordWrap
+                        text:       "Measure current draw using an external current meter and enter the value below. Click Calculate to set the new amps per volt value."
+                    }
+
+                    Grid {
+                        columns: 2
+                        spacing: ScreenTools.defaultFontPixelHeight / 2
+                        verticalItemAlignment: Grid.AlignVCenter
+
+                        QGCLabel {
+                            text: "Measured current:"
+                        }
+                        QGCTextField { id: measuredCurrent }
+
+                        QGCLabel { text: "Vehicle current:" }
+                        QGCLabel { text: controller.vehicle.battery.current.valueString }
+
+                        QGCLabel { text: "Amps per volt:" }
+                        FactLabel { fact: battAmpPerVolt }
+                    }
+
+                    QGCButton {
+                        text: "Calculate"
+
+                        onClicked:  {
+                            var measuredCurrentValue = parseFloat(measuredCurrent.text)
+                            if (measuredCurrentValue == 0) {
+                                return
+                            }
+                            var newAmpsPerVolt = (measuredCurrentValue * battAmpPerVolt.value) / controller.vehicle.battery.current.value
+                            if (newAmpsPerVolt != 0) {
+                                battAmpPerVolt.value = newAmpsPerVolt
+                            }
+                        }
+                    }
+                } // Column
+            } // QGCFlickable
+        } // QGCViewDialog
+    } // Component - calcAmpsPerVoltDlgComponent
+
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
@@ -90,7 +207,7 @@ QGCView {
             anchors.fill:       parent
             clip:               true
             contentWidth:       capacityField.x + capacityField.width + _margins
-            contentHeight:      (_showAdvanced ? ampPerVoltField.y + ampPerVoltField.height : sensorCombo.y + sensorCombo.height) + _margins
+            contentHeight:      (_showAdvanced ? ampPerVoltHelp.y + ampPerVoltHelp.height : sensorCombo.y + sensorCombo.height) + _margins
 
             QGCLabel {
                 id:                 monitorLabel
@@ -207,11 +324,34 @@ QGCView {
 
             FactTextField {
                 id:                 voltMultField
-                anchors.topMargin:  _margins / 2
+                anchors.topMargin:  _margins
                 anchors.top:        voltPinCombo.bottom
                 anchors.left:       capacityField.left
                 width:              capacityField.width
                 fact:               battVoltMult
+                visible:            _showAdvanced
+            }
+
+            QGCButton {
+                id:                 voltMultCalculateButton
+                anchors.margins:    _margins
+                anchors.left:       voltMultField.right
+                anchors.baseline:   voltMultField.baseline
+                text:               "Calculate"
+                visible:            _showAdvanced
+                onClicked:          showDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+            }
+
+            QGCLabel {
+                id:                 voltMultHelp
+                anchors.left:       voltMultLabel.left
+                anchors.right:      voltMultCalculateButton.right
+                anchors.topMargin:  _margins / 2
+                anchors.top:        voltMultField.bottom
+                font.pointSize:     ScreenTools.smallFontPointSize
+                wrapMode:           Text.WordWrap
+                text:               "If the battery voltage reported by the vehicle is largely different than the voltage read externally using a voltmeter you can adjust the voltage multiplier value to correct this. " +
+                                    "Click the Calculate button for help with calculating a new value."
                 visible:            _showAdvanced
             }
 
@@ -226,11 +366,34 @@ QGCView {
 
             FactTextField {
                 id:                 ampPerVoltField
-                anchors.topMargin:  _margins / 2
-                anchors.top:        voltMultField.bottom
+                anchors.topMargin:  _margins
+                anchors.top:        voltMultHelp.bottom
                 anchors.left:       capacityField.left
                 width:              capacityField.width
                 fact:               battAmpPerVolt
+                visible:            _showAdvanced
+            }
+
+            QGCButton {
+                id:                 ampPerVoltCalculateButton
+                anchors.margins:    _margins
+                anchors.left:       ampPerVoltField.right
+                anchors.baseline:   ampPerVoltField.baseline
+                text:               "Calculate"
+                visible:            _showAdvanced
+                onClicked:          showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+            }
+
+            QGCLabel {
+                id:                 ampPerVoltHelp
+                anchors.left:       ampPerVoltLabel.left
+                anchors.right:      ampPerVoltCalculateButton.right
+                anchors.topMargin:  _margins / 2
+                anchors.top:        ampPerVoltField.bottom
+                font.pointSize:     ScreenTools.smallFontPointSize
+                wrapMode:           Text.WordWrap
+                text:               "If the current draw reported by the vehicle is largely different than the current read externally using a current meter you can adjust the amps per volt value to correct this. " +
+                                    "Click the Calculate button for help with calculating a new value."
                 visible:            _showAdvanced
             }
         } // QGCFlickable
