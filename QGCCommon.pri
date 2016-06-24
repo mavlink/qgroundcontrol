@@ -21,10 +21,10 @@ linux {
         message("Linux build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
-        linux-clang {
-            message("Linux clang")
-            QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
-        }
+		linux-clang {
+			message("Linux clang")
+			QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
+		}
     } else : linux-rasp-pi2-g++ {
         message("Linux R-Pi2 build")
         CONFIG += LinuxBuild
@@ -54,7 +54,11 @@ linux {
         DEFINES += __macos__
         CONFIG += x86_64
         CONFIG -= x86
+equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
         QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+} else {
+        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+}
         QMAKE_MAC_SDK = macosx10.11
         QMAKE_CXXFLAGS += -fvisibility=hidden
     } else {
@@ -75,7 +79,7 @@ linux {
 }
 
 # Enable ccache where we can
-linux|macx|ios {
+linux|macx {
     system(which ccache) {
         message("Found ccache, enabling")
         QMAKE_CXX = ccache $$QMAKE_CXX
