@@ -1,9 +1,9 @@
 [submodule "libs/mavlink/include/mavlink/v1.0"]
 	path = libs/mavlink/include/mavlink/v1.0
-	url = https://github.com/mavlink/c_library.git
+	url = https://github.com/mavlink/c_library_v1.git
 [submodule "src/GPS/Drivers"]
 	path = src/GPS/Drivers
 	url = https://github.com/PX4/GpsDrivers.git
 [submodule "libs/mavlink/include/mavlink/v2.0"]
 	path = libs/mavlink/include/mavlink/v2.0
-	url = git://github.com/mavlink/c_library.git
+	url = git://github.com/mavlink/c_library_v2.git
