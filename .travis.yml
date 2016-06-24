@@ -152,7 +152,7 @@ install:
         tar jxf Qt5.5.1-linux.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt/5.5/android_armv7/bin:$PATH
         export USE_CCACHE=1 &&
-        export NDK_CCACHE=/usr/bin/ccache
+        export NDK_CCACHE=`which ccache`
         ;
     fi
 
@@ -197,12 +197,16 @@ script:
         ccache -M 1GB &&
         ccache -z &&
         cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
-        make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/' && $(exit ${PIPESTATUS[0]})
+        make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/' && $(exit ${PIPESTATUS[0]}) &&
+        ccache -s
         ;
     fi
   - if [ "${SPEC}" = "ios" ]; then
+        ccache -M 1GB &&
+        ccache -z &&
         cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
-        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]})
+        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]}) &&
+        ccache -s
         ;
     fi
   - if [ "${CONFIG}" = "doxygen" ]; then
