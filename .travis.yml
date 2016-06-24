@@ -104,8 +104,8 @@ before_install:
 
 install:
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" != "doxygen" ]]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2 &&
-        tar jxf Qt5.5.1-linux.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux-min.tar.bz2 &&
+        tar jxf Qt5.5.1-linux-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt/5.5/gcc_64/bin:$PATH &&
         export CXX="g++-4.8" &&
         export CC="gcc-4.8" &&
@@ -118,8 +118,8 @@ install:
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target / &&
         sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target / &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang.tar.bz2 &&
-        tar jxf Qt5.5.1-mac-clang.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang-min.tar.bz2 &&
+        tar jxf Qt5.5.1-mac-clang-min.tar.bz2 -C /tmp &&
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
         sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
         export QT_DIR=Qt5.5-mac-clang/5.5/clang_64 &&
@@ -136,8 +136,8 @@ install:
         ;
     fi
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" = "ios" ]]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios.tar.bz2 &&
-        tar jxf Qt5.5.1-ios.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios-min.tar.bz2 &&
+        tar jxf Qt5.5.1-ios-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/ios/bin:$PATH &&
         export IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang` &&
         export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++`
@@ -150,8 +150,8 @@ install:
         export PATH=`pwd`/android-ndk-r10e:$PATH &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r10e &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2 &&
-        tar jxf Qt5.5.1-linux.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux-min.tar.bz2 &&
+        tar jxf Qt5.5.1-linux-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt/5.5/android_armv7/bin:$PATH
         export USE_CCACHE=1 &&
         export NDK_CCACHE=`which ccache`
