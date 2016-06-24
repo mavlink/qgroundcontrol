@@ -32,11 +32,10 @@ matrix:
           osx_image: xcode7
           env: SPEC=ios
           sudo: false
-        - os: linux
+        - os: android
           language: android
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
-          dist: precise
         - os: linux
           env: CONFIG=doxygen
           sudo: required
