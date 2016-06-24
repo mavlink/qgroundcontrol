@@ -188,11 +188,11 @@ script:
   - if [ "${TRAVIS_OS_NAME}" = "android" ]; then
         cd ${TRAVIS_BUILD_DIR} &&
         ./tools/update_android_version.sh &&
-        export JOBS=0
+        export JOBS=3
         ;
     fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
-        cd ${SHADOW_BUILD_DIR} &&
+        cd ${SHADOW_BUILD_DIR} && echo Building with $((JOBS+1)) workers &&
         make -j$((JOBS+1))
         ;
     fi
