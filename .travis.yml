@@ -5,7 +5,7 @@ language: cpp
 env:
   global:
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
-    - JOBS=0
+    - JOBS=2
     # ANDROID_STOREPASS
     - secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE=
 
@@ -163,11 +163,11 @@ before_script:
         ;
     fi
   - if [ "${TRAVIS_OS_NAME}" != "osx" ]; then
-        export JOBS=`cat /proc/cpuinfo | grep -c ^processor`
+        export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1))
         ;
     fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-        export JOBS=`sysctl -n hw.ncpu`
+        export JOBS=$((`sysctl -n hw.ncpu`+1))
         ;
     fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
@@ -188,17 +188,17 @@ script:
   - if [ "${TRAVIS_OS_NAME}" = "android" ]; then
         cd ${TRAVIS_BUILD_DIR} &&
         ./tools/update_android_version.sh &&
-        export JOBS=3
+        export JOBS=4
         ;
     fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
         cd ${SHADOW_BUILD_DIR} && echo Building with $((JOBS+1)) workers &&
-        make -j$((JOBS+1))
+        make -j$JOBS
         ;
     fi
   - if [ "${SPEC}" = "ios" ]; then
         cd ${SHADOW_BUILD_DIR} &&
-        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c
         ;
     fi
   - ccache -s
