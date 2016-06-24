@@ -33,10 +33,11 @@ matrix:
           env: SPEC=ios
           sudo: false
         - os: linux
-          language: android
           env: SPEC=android-g++ CONFIG=installer
           sudo: required
           dist: trusty
+          group: edge
+          language: android
         - os: linux
           env: CONFIG=doxygen
           sudo: required
