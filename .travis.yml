@@ -131,10 +131,9 @@ install:
         ;
     fi
   - if [[ "${TRAVIS_OS_NAME}" = "osx" ]]; then
-        brew update &&
-        brew update &&
-        brew install ccache &&
-        export PATH=/usr/local/opt/ccache/libexec:$PATH &&
+        wget https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
+        sudo mv ccache /usr/local/bin &&
+        chmod +x /usr/local/bin/ccache &&
         export CCACHE_CPP2=1
         ;
     fi
