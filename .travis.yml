@@ -198,7 +198,7 @@ script:
     fi
   - if [ "${SPEC}" = "ios" ]; then
         cd ${SHADOW_BUILD_DIR} &&
-        xcodebuild -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
         ;
     fi
   - ccache -s
