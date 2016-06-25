@@ -766,33 +766,36 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
     int escCal = 0;
 
     switch (calType) {
-        case StartCalibrationGyro:
-            gyroCal = 1;
-            break;
-        case StartCalibrationMag:
-            magCal = 1;
-            break;
-        case StartCalibrationAirspeed:
-            airspeedCal = 1;
-            break;
-        case StartCalibrationRadio:
-            radioCal = 1;
-            break;
-        case StartCalibrationCopyTrims:
-            radioCal = 2;
-            break;
-        case StartCalibrationAccel:
-            accelCal = 1;
-            break;
-        case StartCalibrationLevel:
-            accelCal = 2;
-            break;
-        case StartCalibrationEsc:
-            escCal = 1;
-            break;
-        case StartCalibrationUavcanEsc:
-            escCal = 2;
-            break;
+    case StartCalibrationGyro:
+        gyroCal = 1;
+        break;
+    case StartCalibrationMag:
+        magCal = 1;
+        break;
+    case StartCalibrationAirspeed:
+        airspeedCal = 1;
+        break;
+    case StartCalibrationRadio:
+        radioCal = 1;
+        break;
+    case StartCalibrationCopyTrims:
+        radioCal = 2;
+        break;
+    case StartCalibrationAccel:
+        accelCal = 1;
+        break;
+    case StartCalibrationLevel:
+        accelCal = 2;
+        break;
+    case StartCalibrationEsc:
+        escCal = 1;
+        break;
+    case StartCalibrationUavcanEsc:
+        escCal = 2;
+        break;
+    case StartCalibrationCompassMot:
+        airspeedCal = 1; // ArduPilot, bit of a hack
+        break;
     }
 
     mavlink_message_t msg;
@@ -808,7 +811,7 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
                                   0,                                // ground pressure
                                   radioCal,                         // radio cal
                                   accelCal,                         // accel cal
-                                  airspeedCal,                      // airspeed cal
+                                  airspeedCal,                      // PX4: airspeed cal, ArduPilot: compass mot
                                   escCal);                          // esc cal
     _vehicle->sendMessageOnPriorityLink(msg);
 }
