@@ -12,10 +12,10 @@ env:
 matrix:
     fast_finish: true
     include:
-        - os: linux
-          env: SPEC=linux-g++-64 CONFIG=debug QT_FATAL_WARNINGS=1
-          sudo: required
-          dist: trusty
+        #- os: linux
+        #  env: SPEC=linux-g++-64 CONFIG=debug QT_FATAL_WARNINGS=1
+        #  sudo: required
+        #  dist: trusty
         - os: linux
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required 
