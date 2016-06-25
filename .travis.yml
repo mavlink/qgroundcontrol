@@ -5,6 +5,7 @@ language: cpp
 env:
   global:
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
+    - JOBS=2
     # ANDROID_STOREPASS
     - secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE=
 
@@ -30,6 +31,7 @@ matrix:
         - os: osx
           osx_image: xcode7
           env: SPEC=ios
+          sudo: false
         - os: android
           language: android
           env: SPEC=android-g++ CONFIG=installer
@@ -71,8 +73,7 @@ addons:
     - wget
 
 cache:
-  directories:
-    - $HOME/.ccache
+  ccache: true
 
 
 before_install:
@@ -92,7 +93,7 @@ before_install:
         cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/
         ;
     fi
-  - if [ "${TRAVIS_OS_NAME}" = "android" ]; then
+  - if [ "${SPEC}" = "android-g++" ]; then
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 &&
         mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
         tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2
@@ -101,8 +102,8 @@ before_install:
 
 install:
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" != "doxygen" ]]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2 &&
-        tar jxf Qt5.5.1-linux.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux-min.tar.bz2 &&
+        tar jxf Qt5.5.1-linux-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt/5.5/gcc_64/bin:$PATH &&
         export CXX="g++-4.8" &&
         export CC="gcc-4.8" &&
@@ -115,8 +116,8 @@ install:
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target / &&
         sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target / &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang.tar.bz2 &&
-        tar jxf Qt5.5.1-mac-clang.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang-min.tar.bz2 &&
+        tar jxf Qt5.5.1-mac-clang-min.tar.bz2 -C /tmp &&
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
         sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
         export QT_DIR=Qt5.5-mac-clang/5.5/clang_64 &&
@@ -125,38 +126,51 @@ install:
         export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml
         ;
     fi
-  - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" = "ios" ]]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios.tar.bz2 &&
-        tar jxf Qt5.5.1-ios.tar.bz2 -C /tmp &&
-        export PATH=/tmp/ios/bin:$PATH
+  - if [[ "${TRAVIS_OS_NAME}" = "osx" ]]; then
+        wget https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
+        sudo mv ccache /usr/local/bin &&
+        chmod +x /usr/local/bin/ccache &&
+        export CCACHE_CPP2=1
         ;
     fi
-  - if [ "${TRAVIS_OS_NAME}" = "android" ]; then
+  - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${SPEC}" = "ios" ]]; then
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios-min.tar.bz2 &&
+        tar jxf Qt5.5.1-ios-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/ios/bin:$PATH &&
+        export IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang` &&
+        export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++`
+        ;
+    fi
+  - if [ "${SPEC}" = "android-g++" ]; then
         wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin &&
         chmod +x android-ndk-r10e-linux-x86_64.bin &&
         ./android-ndk-r10e-linux-x86_64.bin > /dev/null &&
         export PATH=`pwd`/android-ndk-r10e:$PATH &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r10e &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2 &&
-        tar jxf Qt5.5.1-linux.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux-min.tar.bz2 &&
+        tar jxf Qt5.5.1-linux-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt/5.5/android_armv7/bin:$PATH
+        export USE_CCACHE=1 &&
+        export NDK_CCACHE=`which ccache`
         ;
     fi
 
 
 before_script:
 # setup ccache
-  - mkdir -p ~/bin
-  - ln -s /usr/bin/ccache ~/bin/g++
-  - ln -s /usr/bin/ccache ~/bin/g++-4.8
-  - ln -s /usr/bin/ccache ~/bin/gcc
-  - ln -s /usr/bin/ccache ~/bin/gcc-4.8
-  - export PATH=~/bin:$PATH
   - wget http://px4-travis.s3.amazonaws.com/Firmware/master/parameters.xml -O src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml
   - wget http://px4-travis.s3.amazonaws.com/Firmware/master/airframes.xml -O src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
-  - if [[ "${TRAVIS_OS_NAME}" = "android" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then
+  - if [[ "${SPEC}" = "android-g++" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then
         export CONFIG=release
+        ;
+    fi
+  - if [ "${TRAVIS_OS_NAME}" != "osx" ]; then
+        export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1))
+        ;
+    fi
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+        export JOBS=$((`sysctl -n hw.ncpu`+1))
         ;
     fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
@@ -173,19 +187,26 @@ before_script:
     fi
 
 script:
-  - if [ "${TRAVIS_OS_NAME}" = "android" ]; then
+  - if [ "${SPEC}" = "android-g++" ]; then
         cd ${TRAVIS_BUILD_DIR} &&
-        ./tools/update_android_version.sh
+        ./tools/update_android_version.sh &&
+        export JOBS=4
         ;
     fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
-        cd ${SHADOW_BUILD_DIR} &&
-        make -j4
+        ccache -M 1GB &&
+        ccache -z &&
+        cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
+        make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/' && $(exit ${PIPESTATUS[0]}) &&
+        ccache -s
         ;
     fi
   - if [ "${SPEC}" = "ios" ]; then
-        cd ${SHADOW_BUILD_DIR} &&
-        xcodebuild -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+        ccache -M 1GB &&
+        ccache -z &&
+        cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
+        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]}) &&
+        ccache -s
         ;
     fi
   - if [ "${CONFIG}" = "doxygen" ]; then
@@ -213,7 +234,7 @@ after_success:
     else
         export GOOGLE_PLAY_TRACK=none;
     fi
-  - if [[ "${TRAVIS_OS_NAME}" = "android" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_TRACK}" != "none" ]]; then
+  - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_TRACK}" != "none" ]]; then
         pip install --user google-api-python-client PyOpenSSL &&
         cd ${TRAVIS_BUILD_DIR} &&
         openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in ${TRAVIS_BUILD_DIR}/android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
