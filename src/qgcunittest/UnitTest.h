@@ -21,6 +21,7 @@
 #include <QtTest>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QElapsedTimer>
 
 #include "QGCMAVLink.h"
 #include "LinkInterface.h"
@@ -180,6 +181,7 @@ private:
     bool _unitTestRun;              ///< true: Unit Test was run
     bool _initCalled;               ///< true: UnitTest::_init was called
     bool _cleanupCalled;            ///< true: UnitTest::_cleanup was called
+    QElapsedTimer _runningTimer;
 };
 
 template <class T>

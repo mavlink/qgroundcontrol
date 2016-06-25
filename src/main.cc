@@ -17,6 +17,7 @@
 
 #include <QtGlobal>
 #include <QApplication>
+#include <QElapsedTimer>
 #include <QSslSocket>
 #include <QProcessEnvironment>
 #include <QHostAddress>
@@ -231,9 +232,12 @@ int main(int argc, char *argv[])
             if (!app->_initForUnitTests()) {
                 return -1;
             }
-
+            QElapsedTimer testTime;
+            testTime.start();
             // Run the test
             int failures = UnitTest::run(unitTestOptions);
+            auto secs = testTime.elapsed() / 1000.0;
+            qDebug() << "Testing completed in" << secs << "seconds";
             if (failures == 0) {
                 qDebug() << "ALL TESTS PASSED";
                 exitCode = 0;

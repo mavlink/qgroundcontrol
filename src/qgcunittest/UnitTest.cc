@@ -18,6 +18,7 @@
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
 #include "Vehicle.h"
+#include <QDebug>
 
 bool UnitTest::_messageBoxRespondedTo = false;
 bool UnitTest::_badResponseButton = false;
@@ -93,6 +94,7 @@ int UnitTest::run(QString& singleTest)
 ///         Make sure to call first in your derived class
 void UnitTest::init(void)
 {
+    _runningTimer.start();
     _initCalled = true;
 
     if (!_linkManager) {
@@ -139,6 +141,8 @@ void UnitTest::cleanup(void)
         QEXPECT_FAIL("", "Expecting failure due internal testing", Continue);
     }
     QCOMPARE(_missedFileDialogCount, 0);
+    auto secs = _runningTimer.elapsed() / 1000.0;
+    qDebug() << "ran for" << secs << "seconds";
 }
 
 void UnitTest::setExpectedMessageBox(QMessageBox::StandardButton response)
