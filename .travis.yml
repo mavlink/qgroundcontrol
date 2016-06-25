@@ -36,10 +36,6 @@ matrix:
           language: android
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
-        - os: linux
-          env: CONFIG=doxygen
-          sudo: required
-          dist: trusty
 
 android:
   components:
@@ -55,12 +51,10 @@ addons:
     - ccache
     - debhelper
     - devscripts
-    - doxygen
     - dput
     - espeak
     - g++-4.8
     - gcc-4.8
-    - graphviz
     - libc6-i386
     - libespeak-dev
     - libgstreamer-plugins-base1.0-dev
@@ -69,7 +63,6 @@ addons:
     - libopenscenegraph-dev
     - libsdl1.2-dev
     - libudev-dev
-    - texlive-font-utils
     - wget
 
 before_cache:
@@ -110,7 +103,7 @@ before_install:
     fi
 
 install:
-  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" != "doxygen" ]]; then
+  - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux-min.tar.bz2 &&
         tar jxf Qt5.5.1-linux-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt/5.5/gcc_64/bin:$PATH &&
@@ -183,12 +176,12 @@ before_script:
         export JOBS=$((`sysctl -n hw.ncpu`+1))
         ;
     fi
-  - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
+  - if [ "${SPEC}" != "ios" ]; then
         mkdir ${SHADOW_BUILD_DIR} &&
         cd ${SHADOW_BUILD_DIR} &&
         qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
         ;
-        fi
+    fi
   - if [ "${SPEC}" = "ios" ]; then
         mkdir ${SHADOW_BUILD_DIR} &&
         cd ${SHADOW_BUILD_DIR} &&
@@ -203,7 +196,7 @@ script:
         export JOBS=4
         ;
     fi
-  - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
+  - if [ "${SPEC}" != "ios" ]; then
         cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
         make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/' && $(exit ${PIPESTATUS[0]})
         ;
@@ -214,15 +207,12 @@ script:
         ;
     fi
   - ccache -s
-  - if [[ "${CONFIG}" = "doxygen" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
-        cd ${TRAVIS_BUILD_DIR}/src &&
-        doxygen documentation.dox
-        ;
-    fi
+  # linux unit tests
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then
         ${SHADOW_BUILD_DIR}/debug/qgroundcontrol --unittest
         ;
-        fi
+    fi
+  # osx unit tests
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then
         ${SHADOW_BUILD_DIR}/debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest
         ;
@@ -272,20 +262,6 @@ deploy:
     on:
       tags: true
       condition: $CONFIG = installer
-  - provider: s3
-    access_key_id: AKIAIVORNALE7NHD3T6Q
-    secret_access_key:
-      secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
-    bucket: qgroundcontrol
-    local_dir: ${TRAVIS_BUILD_DIR}/src/html
-    upload-dir: doxygen
-    acl: public_read
-    region: us-west-2
-    skip_cleanup: true
-    branch: master
-    on:
-      tags: true
-      condition: $CONFIG = doxygen
 
 notifications:
   webhooks:
