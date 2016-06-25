@@ -72,9 +72,18 @@ addons:
     - texlive-font-utils
     - wget
 
-cache:
-  ccache: true
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -f $HOME/.cache/pip/log/debug.log
 
+cache:
+  bundler: true
+  ccache: true
+  pip: true
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
 
 before_install:
   - if [ "${CONFIG}" = "installer" ]; then
@@ -159,6 +168,7 @@ install:
 
 before_script:
 # setup ccache
+  - ccache -M 1GB && ccache -z
   - wget http://px4-travis.s3.amazonaws.com/Firmware/master/parameters.xml -O src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml
   - wget http://px4-travis.s3.amazonaws.com/Firmware/master/airframes.xml -O src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
   - if [[ "${SPEC}" = "android-g++" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then
@@ -194,22 +204,17 @@ script:
         ;
     fi
   - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
-        ccache -M 1GB &&
-        ccache -z &&
         cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
-        make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/' && $(exit ${PIPESTATUS[0]}) &&
-        ccache -s
+        make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/' && $(exit ${PIPESTATUS[0]})
         ;
     fi
   - if [ "${SPEC}" = "ios" ]; then
-        ccache -M 1GB &&
-        ccache -z &&
         cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
-        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]}) &&
-        ccache -s
+        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]})
         ;
     fi
-  - if [ "${CONFIG}" = "doxygen" ]; then
+  - ccache -s
+  - if [[ "${CONFIG}" = "doxygen" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
         cd ${TRAVIS_BUILD_DIR}/src &&
         doxygen documentation.dox
         ;
@@ -241,9 +246,6 @@ after_success:
         ${TRAVIS_BUILD_DIR}/tools/google_play_upload.py ${GOOGLE_PLAY_TRACK} org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.apk
         ;
     fi
-
-before_deploy:
-  - rvm 1.9.3 do gem install mime-types -v 2.6.2
 
 deploy:
   - provider: s3
