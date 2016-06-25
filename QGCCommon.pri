@@ -21,10 +21,10 @@ linux {
         message("Linux build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
-		linux-clang {
-			message("Linux clang")
-			QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
-		}
+        linux-clang {
+            message("Linux clang")
+            QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
+        }
     } else : linux-rasp-pi2-g++ {
         message("Linux R-Pi2 build")
         CONFIG += LinuxBuild
@@ -76,6 +76,20 @@ equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
     QMAKE_LFLAGS += -Wl,-no_pie
 } else {
     error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")
+}
+
+# Enable ccache where we can
+linux|macx|ios {
+    system(which ccache) {
+        message("Found ccache, enabling")
+        !ios {
+            QMAKE_CXX = ccache $$QMAKE_CXX
+            QMAKE_CC  = ccache $$QMAKE_CC
+        } else {
+            QMAKE_CXX = $$PWD/tools/iosccachecc.sh
+            QMAKE_CC  = $$PWD/tools/iosccachecxx.sh
+        }
+    }
 }
 
 MobileBuild {
