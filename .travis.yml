@@ -12,10 +12,10 @@ env:
 matrix:
     fast_finish: true
     include:
-        - os: linux
-          env: SPEC=linux-g++-64 CONFIG=debug QT_FATAL_WARNINGS=1
-          sudo: required
-          dist: trusty
+        #- os: linux
+        #  env: SPEC=linux-g++-64 CONFIG=debug QT_FATAL_WARNINGS=1
+        #  sudo: required
+        #  dist: trusty
         - os: linux
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required 
@@ -36,10 +36,6 @@ matrix:
           language: android
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
-        - os: linux
-          env: CONFIG=doxygen
-          sudo: required
-          dist: trusty
 
 android:
   components:
@@ -55,12 +51,10 @@ addons:
     - ccache
     - debhelper
     - devscripts
-    - doxygen
     - dput
     - espeak
     - g++-4.8
     - gcc-4.8
-    - graphviz
     - libc6-i386
     - libespeak-dev
     - libgstreamer-plugins-base1.0-dev
@@ -69,12 +63,20 @@ addons:
     - libopenscenegraph-dev
     - libsdl1.2-dev
     - libudev-dev
-    - texlive-font-utils
     - wget
 
-cache:
-  ccache: true
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -f $HOME/.cache/pip/log/debug.log
 
+cache:
+  bundler: true
+  ccache: true
+  pip: true
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
 
 before_install:
   - if [ "${CONFIG}" = "installer" ]; then
@@ -101,7 +103,7 @@ before_install:
     fi
 
 install:
-  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" != "doxygen" ]]; then
+  - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux-min.tar.bz2 &&
         tar jxf Qt5.5.1-linux-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt/5.5/gcc_64/bin:$PATH &&
@@ -159,6 +161,7 @@ install:
 
 before_script:
 # setup ccache
+  - ccache -M 1GB && ccache -z
   - wget http://px4-travis.s3.amazonaws.com/Firmware/master/parameters.xml -O src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml
   - wget http://px4-travis.s3.amazonaws.com/Firmware/master/airframes.xml -O src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
   - if [[ "${SPEC}" = "android-g++" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then
@@ -173,12 +176,12 @@ before_script:
         export JOBS=$((`sysctl -n hw.ncpu`+1))
         ;
     fi
-  - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
+  - if [ "${SPEC}" != "ios" ]; then
         mkdir ${SHADOW_BUILD_DIR} &&
         cd ${SHADOW_BUILD_DIR} &&
         qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
         ;
-        fi
+    fi
   - if [ "${SPEC}" = "ios" ]; then
         mkdir ${SHADOW_BUILD_DIR} &&
         cd ${SHADOW_BUILD_DIR} &&
@@ -193,31 +196,23 @@ script:
         export JOBS=4
         ;
     fi
-  - if [[ "${CONFIG}" != "doxygen" && "${SPEC}" != "ios" ]]; then
-        ccache -M 1GB &&
-        ccache -z &&
+  - if [ "${SPEC}" != "ios" ]; then
         cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
-        make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/' && $(exit ${PIPESTATUS[0]}) &&
-        ccache -s
+        make -j$JOBS | sed 's/${TRAVIS_BUILD_DIR}/-/' && $(exit ${PIPESTATUS[0]})
         ;
     fi
   - if [ "${SPEC}" = "ios" ]; then
-        ccache -M 1GB &&
-        ccache -z &&
         cd ${SHADOW_BUILD_DIR} && echo Building with $JOBS workers &&
-        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]}) &&
-        ccache -s
+        xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]})
         ;
     fi
-  - if [ "${CONFIG}" = "doxygen" ]; then
-        cd ${TRAVIS_BUILD_DIR}/src &&
-        doxygen documentation.dox
-        ;
-    fi
+  - ccache -s
+  # linux unit tests
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then
         ${SHADOW_BUILD_DIR}/debug/qgroundcontrol --unittest
         ;
-        fi
+    fi
+  # osx unit tests
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then
         ${SHADOW_BUILD_DIR}/debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest
         ;
@@ -241,9 +236,6 @@ after_success:
         ${TRAVIS_BUILD_DIR}/tools/google_play_upload.py ${GOOGLE_PLAY_TRACK} org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.apk
         ;
     fi
-
-before_deploy:
-  - rvm 1.9.3 do gem install mime-types -v 2.6.2
 
 deploy:
   - provider: s3
@@ -270,20 +262,6 @@ deploy:
     on:
       tags: true
       condition: $CONFIG = installer
-  - provider: s3
-    access_key_id: AKIAIVORNALE7NHD3T6Q
-    secret_access_key:
-      secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
-    bucket: qgroundcontrol
-    local_dir: ${TRAVIS_BUILD_DIR}/src/html
-    upload-dir: doxygen
-    acl: public_read
-    region: us-west-2
-    skip_cleanup: true
-    branch: master
-    on:
-      tags: true
-      condition: $CONFIG = doxygen
 
 notifications:
   webhooks:
