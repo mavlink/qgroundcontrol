@@ -75,8 +75,9 @@ cache:
   pip: true
   directories:
     - $HOME/.cache/pip
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
+    - $HOME/.ccache
+    - $HOME/.gradle/caches
+    - $HOME/.gradle/wrapper
 
 before_install:
   - if [ "${CONFIG}" = "installer" ]; then
