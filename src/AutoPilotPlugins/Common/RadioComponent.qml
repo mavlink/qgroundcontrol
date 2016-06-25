@@ -176,6 +176,10 @@ QGCView {
                 readonly property int   __rcValueMaxJitter: 2
                 property color          __barColor:         qgcPal.windowShade
 
+                readonly property int _pwmMin:      800
+                readonly property int _pwmMax:      2200
+                readonly property int _pwmRange:    _pwmMax - _pwmMin
+
                 // Bar
                 Rectangle {
                     id:                     bar
@@ -198,7 +202,7 @@ QGCView {
                     anchors.verticalCenter: parent.verticalCenter
                     width:                  parent.height * 0.75
                     height:                 width
-                    x:                      ((Math.abs((rcValue - 1000) - (reversed ? 1000 : 0)) / 1000) * parent.width) - (width / 2)
+                    x:                      ((Math.abs((rcValue - _pwmMin) - (reversed ? _pwmMin : 0)) / _pwmRange) * parent.width) - (width / 2)
                     radius:                 width / 2
                     color:                  qgcPal.text
                     visible:                mapped
