@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<manifest package="org.mavlink.qgroundcontrol" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="2.9.4-184-gda30c6b" android:versionCode="2506" android:installLocation="auto">
+<manifest package="org.mavlink.qgroundcontrol" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="2.9.7b-362-g303a70c" android:versionCode="2888" android:installLocation="auto">
     <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="-- %%INSERT_APP_NAME%% --" android:icon="@drawable/icon">
         <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" android:name="org.qgroundcontrol.qgchelper.UsbDeviceJNI" android:label="-- %%INSERT_APP_NAME%% --" android:screenOrientation="sensorLandscape" android:launchMode="singleTask" android:keepScreenOn="true">
             <intent-filter>
