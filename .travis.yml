@@ -188,7 +188,7 @@ after_success:
 
 before_deploy:
   # create linux appimage
-  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "installer" && "${TRAVIS_BRANCH}" = "master" ]]; then
+  - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "installer" ]]; then
         ${TRAVIS_BUILD_DIR}/deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/release ${SHADOW_BUILD_DIR}/release/package;
     fi
 
