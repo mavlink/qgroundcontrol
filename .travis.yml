@@ -14,14 +14,18 @@ env:
 matrix:
     fast_finish: true
     include:
-        #- os: linux
-        #  env: SPEC=linux-g++-64 CONFIG=debug QT_FATAL_WARNINGS=1
-        #  sudo: required
-        #  dist: trusty
         - os: linux
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required 
           dist: trusty
+       #- os: linux
+       #  env: SPEC=linux-g++-64 CONFIG=debug QT_FATAL_WARNINGS=1
+       #  sudo: required
+       #  dist: trusty
+        - os: linux
+          language: android
+          env: SPEC=android-g++ CONFIG=installer
+          sudo: false
         - os: osx
           osx_image: xcode7.3
           env: SPEC=macx-clang CONFIG=debug 
@@ -32,11 +36,7 @@ matrix:
           sudo: required
         - os: osx
           osx_image: xcode7.3
-          env: SPEC=ios CONFIG+=release
-          sudo: false
-        - os: android
-          language: android
-          env: SPEC=android-g++ CONFIG=installer
+          env: SPEC=ios CONFIG=release
           sudo: false
 
 android:
@@ -63,20 +63,21 @@ addons:
     - wget
 
 cache:
-  ccache: true
   directories:
     - $HOME/.ccache
 
 before_install:
+  # fetch entire git repo to properly determine the version
   - if [ "${CONFIG}" = "installer" ]; then
         cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --all --tags;
     fi
 
-  # ccache for osx/ios
-  - if [[ "${TRAVIS_OS_NAME}" = "osx" ]]; then
+  # install ccache for osx/ios
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
         wget https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
         sudo mv ccache /usr/local/bin &&
-        chmod +x /usr/local/bin/ccache
+        chmod +x /usr/local/bin/ccache &&
+        export JOBS=$((`sysctl -n hw.ncpu`+1))
         ;
     fi
 
@@ -91,31 +92,6 @@ install:
         sh -e /etc/init.d/xvfb start &&
         mkdir -p ~/.config/QtProject/ &&
         cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/
-        ;
-    fi
-  - if [ "${SPEC}" = "macx-clang" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-1.5.2-x86_64.pkg &&
-        sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target / &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
-        sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target / &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang-min.tar.bz2 &&
-        tar jxf Qt5.5.1-mac-clang-min.tar.bz2 -C /tmp &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
-        sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
-        export QT_DIR=Qt5.5-mac-clang/5.5/clang_64 &&
-        export PATH=/tmp/$QT_DIR/bin:$PATH &&
-        export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
-        export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml &&
-        mkdir -p ~/Library/Preferences/QtProject/ &&
-        cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/
-        ;
-    fi
-  - if [ "${SPEC}" = "ios" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios-min.tar.bz2 &&
-        tar jxf Qt5.5.1-ios-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/ios/bin:$PATH &&
-        export IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang` &&
-        export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++`
         ;
     fi
   - if [ "${SPEC}" = "android-g++" ]; then
@@ -134,12 +110,33 @@ install:
         export NDK_CCACHE=`which ccache`
         ;
     fi
-
+  - if [ "${SPEC}" = "macx-clang" ]; then
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-1.5.2-x86_64.pkg &&
+        sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target / &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
+        sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target / &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang-min.tar.bz2 &&
+        tar jxf Qt5.5.1-mac-clang-min.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
+        sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
+        export QT_DIR=Qt5.5-mac-clang/5.5/clang_64 &&
+        export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
+        export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml &&
+        export PATH=/tmp/$QT_DIR/bin:$PATH &&
+        mkdir -p ~/Library/Preferences/QtProject/ &&
+        cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/
+        ;
+    fi
+  - if [ "${SPEC}" = "ios" ]; then
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios-min.tar.bz2 &&
+        tar jxf Qt5.5.1-ios-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/ios/bin:$PATH &&
+        export IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang` &&
+        export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++`
+        ;
+    fi
 
 before_script:
-  # setup ccache
-  - ccache -M 1GB && ccache -z
-
   # grab latest PX4 parameter and airframe metadata
   - wget http://px4-travis.s3.amazonaws.com/Firmware/master/parameters.xml -O src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml
   - wget http://px4-travis.s3.amazonaws.com/Firmware/master/airframes.xml -O src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
@@ -149,17 +146,17 @@ before_script:
         export CONFIG=release;
     fi
 
+  # insert QGC version in AndroidManifest.xml
+  - if [ "${SPEC}" = "android-g++" ]; then
+        cd ${TRAVIS_BUILD_DIR} && ./tools/update_android_version.sh;
+    fi
+
+  # setup ccache
+  - ccache -M 1GB && ccache -z
+
   # number of compile threads for linux
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1));
-    fi
-
-  # number of compile threads for osx
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-        export JOBS=$((`sysctl -n hw.ncpu`+1));
-    fi
-  - if [ "${SPEC}" = "android-g++" ]; then
-        cd ${TRAVIS_BUILD_DIR} && ./tools/update_android_version.sh;
     fi
 
   # run qmake
@@ -168,33 +165,29 @@ before_script:
 
 script:
   - cd ${SHADOW_BUILD_DIR}
-  # compile linux, osx, android
+
+  # compile
   - if [ "${SPEC}" != "ios" ]; then
         make -j$JOBS;
-    fi
-  - if [ "${SPEC}" = "ios" ]; then
+    else
         xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]});
     fi
   - ccache -s
 
-  # linux unit tests
+  # unit tests
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then
         ./debug/qgroundcontrol --unittest;
-    fi
-
-  # osx unit tests
-  - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then
+    elif [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then
         ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest;
     fi
 
 after_success:
   # android google play deploy
+  - export GOOGLE_PLAY_TRACK=none;
   - if [ "${TRAVIS_TAG}" ]; then
-        export GOOGLE_PLAY_TRACK=production;
+        GOOGLE_PLAY_TRACK=production;
     elif [ "${TRAVIS_BRANCH}" = "master" ]; then
-        export GOOGLE_PLAY_TRACK=beta;
-    else
-        export GOOGLE_PLAY_TRACK=none;
+        GOOGLE_PLAY_TRACK=beta;
     fi
   - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_TRACK}" != "none" ]]; then
         pip install --user google-api-python-client PyOpenSSL &&
@@ -211,6 +204,7 @@ before_deploy:
     fi
 
 deploy:
+  # upload installers to s3 if on a branch
   - provider: s3
     access_key_id: AKIAIVORNALE7NHD3T6Q
     secret_access_key:
@@ -224,6 +218,8 @@ deploy:
     on:
       all_branches: true
       condition: $CONFIG = installer
+
+  # deploy installers to Github releases if on a tag
   - provider: releases
     api-key:
       secure: K/Zqr/FCC7QvzFxYvBtCinPkacQq2ubJ2qm982+38Zf/KjibVOF1dEbVdrGZmII6Tg5DaQzNXGYkg5PvYmJgT9xRsqeQjeYIUYqYZpAt+HYWA38AVfMU8jip/1P1wmwqD469nzJOBBa8yfsMs6Ca7tBaNl/zTxCRGnAgEzqtkdQ=
