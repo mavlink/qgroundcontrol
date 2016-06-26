@@ -63,7 +63,8 @@ QGCView {
         }
 
         onChannelCountChanged:              updateChannelCount()
-        onFunctionMappingChangedAPMReboot:    showMessage(qsTr("Reboot required"), qsTr("Your stick mappings have changed, you must reboot the vehicle for correct operation."), StandardButton.Ok)
+        onFunctionMappingChangedAPMReboot:  showMessage(qsTr("Reboot required"), qsTr("Your stick mappings have changed, you must reboot the vehicle for correct operation."), StandardButton.Ok)
+        onThrottleReversedCalFailure:       showMessage(qsTr("Throttle channel reversed"), qsTr("Calibration failed. The throttle channel on your transmitter is reversed. You must correct this on your transmitter in order to complete calibration."), StandardButton.Ok)
     }
 
     onCompleted: {
