@@ -373,6 +373,7 @@ bool APMFirmwarePlugin::_handleStatusText(Vehicle* vehicle, mavlink_message_t* m
 
     if (messageText.contains(APM_SOLO_REXP)) {
         qDebug() << "Found Solo";
+        vehicle->setSoloFirmware(true);
 
         // Fix up severity
         _setInfoSeverity(message);

@@ -1196,7 +1196,7 @@ QString ParameterLoader::_remapParamNameToVersion(const QString& paramName)
 
     const FirmwarePlugin::remapParamNameMinorVersionRemapMap_t& remapMinorVersion = majorVersionRemap[majorVersion];
 
-    // We must map from the highest known minor version to one above the vehicle's minor version
+    // We must map backwards from the highest known minor version to one above the vehicle's minor version
 
     for (int currentMinorVersion=_vehicle->firmwarePlugin()->remapParamNameHigestMinorVersionNumber(majorVersion); currentMinorVersion>minorVersion; currentMinorVersion--) {
         if (remapMinorVersion.contains(currentMinorVersion)) {
