@@ -71,8 +71,6 @@ before_cache:
 
 cache:
   bundler: true
-  ccache: true
-  pip: true
   directories:
     - $HOME/.cache/pip
     - $HOME/.ccache
