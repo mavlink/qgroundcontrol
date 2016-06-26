@@ -190,6 +190,10 @@ void RadioConfigTest::_init(MAV_AUTOPILOT firmwareType)
     
     _autopilot = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_autopilot);
+
+    // This test is so quick that it tends to finish before the mission item protocol completes. This causes an error to pop up.
+    // So we wait a little to let mission items sync.
+    QTest::qWait(500);
     
     // This will instatiate the widget with an active uas with ready parameters
     _calWidget = new QGCQmlWidgetHolder(QString(), NULL);
