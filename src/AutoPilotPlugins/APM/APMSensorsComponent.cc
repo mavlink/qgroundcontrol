@@ -62,6 +62,12 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
     // Accelerometer triggers
     triggers << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
 
+    if (_autopilot->parameterExists(FactSystem::defaultComponentId, QStringLiteral("INS_USE"))) {
+        triggers << QStringLiteral("INS_USE") << QStringLiteral("INS_USE2") << QStringLiteral("INS_USE3");
+        triggers << QStringLiteral("INS_ACC2OFFS_X") << QStringLiteral("INS_ACC2OFFS_Y") << QStringLiteral("INS_ACC2OFFS_Z");
+        triggers << QStringLiteral("INS_ACC3OFFS_X") << QStringLiteral("INS_ACC3OFFS_Y") << QStringLiteral("INS_ACC3OFFS_Z");
+    }
+
     return triggers;
 }
 
