@@ -150,12 +150,10 @@ before_script:
         export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1));
     fi
 
+script:
   # run qmake
   - mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR}
   - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
-
-script:
-  - cd ${SHADOW_BUILD_DIR}
 
   # compile
   - if [ "${SPEC}" != "macx-ios-clang" ]; then
@@ -165,10 +163,10 @@ script:
     fi
   - ccache -s
 
-  # unit tests
-  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then
+  # unit tests linux/osx
+  - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
         ./debug/qgroundcontrol --unittest;
-    elif [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then
+    elif [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
         ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest;
     fi
 
