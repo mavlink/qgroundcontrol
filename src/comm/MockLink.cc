@@ -77,15 +77,13 @@ MockLink::MockLink(MockConfiguration* config)
 
     _fileServer = new MockLinkFileServer(_vehicleSystemId, _vehicleComponentId, this);
     Q_CHECK_PTR(_fileServer);
-
-    moveToThread(this);
-
-    _loadParams();
+    QObject::connect(this, &QThread::started, this, [this]() {moveToThread(this);});
 }
 
 MockLink::~MockLink(void)
 {
     _disconnect();
+    delete _config;
 }
 
 bool MockLink::_connect(void)
@@ -93,7 +91,6 @@ bool MockLink::_connect(void)
     if (!_connected) {
         _connected = true;
         start();
-        emit connected();
     }
 
     return true;
@@ -111,6 +108,9 @@ void MockLink::_disconnect(void)
 
 void MockLink::run(void)
 {
+    _loadParams();
+    emit connected();
+
     QTimer  timer1HzTasks;
     QTimer  timer10HzTasks;
     QTimer  timer500HzTasks;
@@ -121,7 +121,7 @@ void MockLink::run(void)
 
     timer1HzTasks.start(1000);
     timer10HzTasks.start(100);
-    timer500HzTasks.start(2);
+    timer500HzTasks.start(1);
 
     exec();
 
@@ -130,6 +130,7 @@ void MockLink::run(void)
     QObject::disconnect(&timer500HzTasks, &QTimer::timeout, this, &MockLink::_run500HzTasks);
 
     _missionItemHandler.shutdown();
+    moveToThread(qApp->thread());
 }
 
 void MockLink::_run1HzTasks(void)
@@ -175,74 +176,83 @@ void MockLink::_run500HzTasks(void)
 
 void MockLink::_loadParams(void)
 {
-    QFile paramFile;
+    static QHash<QString, ParamName2ValueMap> valmapcache;
+    static QHash<QString, ParamName2MavParamTypeMap> mavtypecache;
+    QString req_file(QStringLiteral(":/unittest/PX4MockLink.params"));
 
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         if (_vehicleType == MAV_TYPE_FIXED_WING) {
-            paramFile.setFileName(":/unittest/APMArduPlaneMockLink.params");
+            req_file = QStringLiteral(":/unittest/APMArduPlaneMockLink.params");
         } else {
-            paramFile.setFileName(":/unittest/APMArduCopterMockLink.params");
+            req_file = QStringLiteral(":/unittest/APMArduCopterMockLink.params");
         }
-    } else {
-        paramFile.setFileName(":/unittest/PX4MockLink.params");
     }
 
+    if (!valmapcache.contains(req_file) || !mavtypecache.contains(req_file)) {
+        qDebug() << "Cache miss";
+        QFile paramFile(req_file);
 
-    bool success = paramFile.open(QFile::ReadOnly);
-    Q_UNUSED(success);
-    Q_ASSERT(success);
+        bool success = paramFile.open(QFile::ReadOnly);
+        Q_UNUSED(success);
+        Q_ASSERT(success);
 
-    QTextStream paramStream(&paramFile);
+        QTextStream paramStream(&paramFile);
 
-    while (!paramStream.atEnd()) {
-        QString line = paramStream.readLine();
+        while (!paramStream.atEnd()) {
+            QString line = paramStream.readLine();
 
-        if (line.startsWith("#")) {
-            continue;
+            if (line.startsWith("#")) {
+                continue;
+            }
+
+            QStringList paramData = line.split("\t");
+            Q_ASSERT(paramData.count() == 5);
+
+            int componentId = paramData.at(1).toInt();
+            QString paramName = paramData.at(2);
+            QString valStr = paramData.at(3);
+            uint paramType = paramData.at(4).toUInt();
+
+            QVariant paramValue;
+            switch (paramType) {
+            case MAV_PARAM_TYPE_REAL32:
+                paramValue = QVariant(valStr.toFloat());
+                break;
+            case MAV_PARAM_TYPE_UINT32:
+                paramValue = QVariant(valStr.toUInt());
+                break;
+            case MAV_PARAM_TYPE_INT32:
+                paramValue = QVariant(valStr.toInt());
+                break;
+            case MAV_PARAM_TYPE_UINT16:
+                paramValue = QVariant((quint16)valStr.toUInt());
+                break;
+            case MAV_PARAM_TYPE_INT16:
+                paramValue = QVariant((qint16)valStr.toInt());
+                break;
+            case MAV_PARAM_TYPE_UINT8:
+                paramValue = QVariant((quint8)valStr.toUInt());
+                break;
+            case MAV_PARAM_TYPE_INT8:
+                paramValue = QVariant((qint8)valStr.toUInt());
+                break;
+            default:
+                qCritical() << "Unknown type" << paramType;
+                paramValue = QVariant(valStr.toInt());
+                break;
+            }
+
+            qCDebug(MockLinkVerboseLog) << "Loading param" << paramName << paramValue;
+
+            valmapcache[req_file][componentId][paramName] = paramValue;
+            mavtypecache[req_file][paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
         }
-
-        QStringList paramData = line.split("\t");
-        Q_ASSERT(paramData.count() == 5);
-
-        int componentId = paramData.at(1).toInt();
-        QString paramName = paramData.at(2);
-        QString valStr = paramData.at(3);
-        uint paramType = paramData.at(4).toUInt();
-
-        QVariant paramValue;
-        switch (paramType) {
-        case MAV_PARAM_TYPE_REAL32:
-            paramValue = QVariant(valStr.toFloat());
-            break;
-        case MAV_PARAM_TYPE_UINT32:
-            paramValue = QVariant(valStr.toUInt());
-            break;
-        case MAV_PARAM_TYPE_INT32:
-            paramValue = QVariant(valStr.toInt());
-            break;
-        case MAV_PARAM_TYPE_UINT16:
-            paramValue = QVariant((quint16)valStr.toUInt());
-            break;
-        case MAV_PARAM_TYPE_INT16:
-            paramValue = QVariant((qint16)valStr.toInt());
-            break;
-        case MAV_PARAM_TYPE_UINT8:
-            paramValue = QVariant((quint8)valStr.toUInt());
-            break;
-        case MAV_PARAM_TYPE_INT8:
-            paramValue = QVariant((qint8)valStr.toUInt());
-            break;
-        default:
-            qCritical() << "Unknown type" << paramType;
-            paramValue = QVariant(valStr.toInt());
-            break;
-        }
-
-        qCDebug(MockLinkVerboseLog) << "Loading param" << paramName << paramValue;
-
-        _mapParamName2Value[componentId][paramName] = paramValue;
-        _mapParamName2MavParamType[paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
     }
+    _mapParamName2Value        = valmapcache[req_file];
+    _mapParamName2MavParamType = mavtypecache[req_file];
+    _componentList = _mapParamName2Value.keys();
+    if (_componentList.size())
+        _currentComponentNames = _mapParamName2Value[_componentList.first()].keys();
 }
 
 void MockLink::_sendHeartBeat(void)
@@ -562,10 +572,9 @@ void MockLink::_paramRequestListWorker(void)
         // Initial request complete
         return;
     }
-
-    int componentId = _mapParamName2Value.keys()[_currentParamRequestListComponentIndex];
-    int cParameters = _mapParamName2Value[componentId].count();
-    QString paramName = _mapParamName2Value[componentId].keys()[_currentParamRequestListParamIndex];
+    int cParameters = _currentComponentNames.count();
+    int componentId = _componentList.value(_currentParamRequestListComponentIndex);
+    QString paramName = _currentComponentNames.value(_currentParamRequestListParamIndex);
 
     if ((_failureMode == MockConfiguration::FailMissingParamOnInitialReqest || _failureMode == MockConfiguration::FailMissingParamOnAllRequests) && paramName == _failParam) {
         qCDebug(MockLinkLog) << "Skipping param send:" << paramName;
@@ -598,11 +607,12 @@ void MockLink::_paramRequestListWorker(void)
     // Move to next param index
     if (++_currentParamRequestListParamIndex >= cParameters) {
         // We've sent the last parameter for this component, move to next component
-        if (++_currentParamRequestListComponentIndex >= _mapParamName2Value.keys().count()) {
+        if (++_currentParamRequestListComponentIndex >= _componentList.count()) {
             // We've finished sending the last parameter for the last component, request is complete
             _currentParamRequestListComponentIndex = -1;
         } else {
             _currentParamRequestListParamIndex = 0;
+            _currentComponentNames = _mapParamName2Value[_componentList.at(_currentParamRequestListComponentIndex)].keys();
         }
     }
 }

@@ -80,7 +80,8 @@ ParameterLoader::ParameterLoader(Vehicle* vehicle)
 
 ParameterLoader::~ParameterLoader()
 {
-    delete _parameterMetaData;
+    if (!qgcApp()->runningUnitTests())
+        delete _parameterMetaData;
 }
 
 /// Called whenever a parameter is updated or first seen.
@@ -937,8 +938,17 @@ void ParameterLoader::_addMetaDataToDefaultComponent(void)
          metaDataFile = parameterMetaDataFile(_vehicle->firmwareType(), _parameterSetMajorVersion, majorVersion, minorVersion);
          qCDebug(ParameterLoaderLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile << majorVersion << minorVersion;
      }
-
+#ifdef QT_DEBUG
+     static QHash<QString, QObject*> metaDataHash;
+     if (qgcApp()->runningUnitTests()) {
+         if (!metaDataHash.contains(metaDataFile)) {
+            metaDataHash[metaDataFile] = _vehicle->firmwarePlugin()->loadParameterMetaData(metaDataFile);
+         }
+         _parameterMetaData = metaDataHash[metaDataFile];
+     } else
+#endif
      _parameterMetaData = _vehicle->firmwarePlugin()->loadParameterMetaData(metaDataFile);
+
 
     // Loop over all parameters in default component adding meta data
     QVariantMap& factMap = _mapParameterName2Variant[_defaultComponentId];
