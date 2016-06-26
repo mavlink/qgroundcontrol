@@ -188,6 +188,8 @@ void RadioConfigTest::_init(MAV_AUTOPILOT firmwareType)
 {
     _connectMockLink(firmwareType);
     
+    QTest::qWait(100); // Let the signals flow through
+
     _autopilot = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_autopilot);
     
