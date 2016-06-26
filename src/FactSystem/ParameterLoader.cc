@@ -220,7 +220,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     int totalWaitingParamCount = readWaitingParamCount + waitingWriteParamNameCount;
     if (totalWaitingParamCount) {
         qCDebug(ParameterLoaderLog) << "totalWaitingParamCount:" << totalWaitingParamCount;
-    } else if (_defaultComponentId != MAV_COMP_ID_ALL) {
+    } else if (_defaultComponentId != MAV_COMP_ID_ALL || _defaultComponentIdParam.isEmpty()) {
         // No more parameters to wait for, stop the timeout. Be careful to not stop timer if we don't have the default
         // component yet.
         _waitingParamTimeoutTimer.stop();
@@ -962,7 +962,7 @@ void ParameterLoader::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
         }
     }
 
-    if (!failIfNoDefaultComponent && _defaultComponentId == MAV_COMP_ID_ALL) {
+    if (!failIfNoDefaultComponent && _defaultComponentId == MAV_COMP_ID_ALL && !_defaultComponentIdParam.isEmpty()) {
         // We are still waiting for default component to show up
         return;
     }
