@@ -964,12 +964,6 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
         connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
 
-        if (_activeVehicle->getParameterLoader()->parametersAreReady() && !syncInProgress()) {
-            // We are switching between two previously existing vehicles. We have to manually ask for the items from the Vehicle.
-            // We don't request mission items for new vehicles since that will happen autamatically.
-            getMissionItems();
-        }
-
         _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
         _activeVehicleHomePositionAvailableChanged(_activeVehicle->homePositionAvailable());
     }
