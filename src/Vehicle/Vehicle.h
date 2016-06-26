@@ -231,51 +231,52 @@ public:
 
     ~Vehicle();
 
-    Q_PROPERTY(int                  id                      READ id                                     CONSTANT)
-    Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                     CONSTANT)
-    Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                             NOTIFY coordinateChanged)
-    Q_PROPERTY(bool                 coordinateValid         READ coordinateValid                        NOTIFY coordinateValidChanged)
-    Q_PROPERTY(bool                 homePositionAvailable   READ homePositionAvailable                  NOTIFY homePositionAvailableChanged)
-    Q_PROPERTY(QGeoCoordinate       homePosition            READ homePosition                           NOTIFY homePositionChanged)
-    Q_PROPERTY(bool                 armed                   READ armed              WRITE setArmed      NOTIFY armedChanged)
-    Q_PROPERTY(bool                 flightModeSetAvailable  READ flightModeSetAvailable                 CONSTANT)
-    Q_PROPERTY(QStringList          flightModes             READ flightModes                            CONSTANT)
-    Q_PROPERTY(QString              flightMode              READ flightMode         WRITE setFlightMode NOTIFY flightModeChanged)
-    Q_PROPERTY(bool                 hilMode                 READ hilMode            WRITE setHilMode    NOTIFY hilModeChanged)
-    Q_PROPERTY(bool                 missingParameters       READ missingParameters                      NOTIFY missingParametersChanged)
-    Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                       CONSTANT)
-    Q_PROPERTY(float                latitude                READ latitude                               NOTIFY coordinateChanged)
-    Q_PROPERTY(float                longitude               READ longitude                              NOTIFY coordinateChanged)
-    Q_PROPERTY(QString              currentState            READ currentState                           NOTIFY currentStateChanged)
-    Q_PROPERTY(bool                 messageTypeNone         READ messageTypeNone                        NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool                 messageTypeNormal       READ messageTypeNormal                      NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool                 messageTypeWarning      READ messageTypeWarning                     NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool                 messageTypeError        READ messageTypeError                       NOTIFY messageTypeChanged)
-    Q_PROPERTY(int                  newMessageCount         READ newMessageCount                        NOTIFY newMessageCountChanged)
-    Q_PROPERTY(int                  messageCount            READ messageCount                           NOTIFY messageCountChanged)
-    Q_PROPERTY(QString              formatedMessages        READ formatedMessages                       NOTIFY formatedMessagesChanged)
-    Q_PROPERTY(QString              formatedMessage         READ formatedMessage                        NOTIFY formatedMessageChanged)
-    Q_PROPERTY(QString              latestError             READ latestError                            NOTIFY latestErrorChanged)
-    Q_PROPERTY(int                  joystickMode            READ joystickMode       WRITE setJoystickMode NOTIFY joystickModeChanged)
-    Q_PROPERTY(QStringList          joystickModes           READ joystickModes                          CONSTANT)
-    Q_PROPERTY(bool                 joystickEnabled         READ joystickEnabled    WRITE setJoystickEnabled NOTIFY joystickEnabledChanged)
-    Q_PROPERTY(bool                 active                  READ active             WRITE setActive     NOTIFY activeChanged)
-    Q_PROPERTY(int                  flowImageIndex          READ flowImageIndex                         NOTIFY flowImageIndexChanged)
-    Q_PROPERTY(int                  rcRSSI                  READ rcRSSI                                 NOTIFY rcRSSIChanged)
-    Q_PROPERTY(bool                 px4Firmware             READ px4Firmware                            CONSTANT)
-    Q_PROPERTY(bool                 apmFirmware             READ apmFirmware                            CONSTANT)
-    Q_PROPERTY(bool                 genericFirmware         READ genericFirmware                        CONSTANT)
-    Q_PROPERTY(bool                 connectionLost          READ connectionLost                         NOTIFY connectionLostChanged)
-    Q_PROPERTY(bool                 connectionLostEnabled   READ connectionLostEnabled  WRITE setConnectionLostEnabled NOTIFY connectionLostEnabledChanged)
-    Q_PROPERTY(uint                 messagesReceived        READ messagesReceived                       NOTIFY messagesReceivedChanged)
-    Q_PROPERTY(uint                 messagesSent            READ messagesSent                           NOTIFY messagesSentChanged)
-    Q_PROPERTY(uint                 messagesLost            READ messagesLost                           NOTIFY messagesLostChanged)
-    Q_PROPERTY(bool                 fixedWing               READ fixedWing                              CONSTANT)
-    Q_PROPERTY(bool                 multiRotor              READ multiRotor                             CONSTANT)
-    Q_PROPERTY(bool                 vtol                    READ vtol                                   CONSTANT)
-    Q_PROPERTY(bool                 rover                   READ rover                                  CONSTANT)
-    Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                      NOTIFY autoDisconnectChanged)
-    Q_PROPERTY(QString              prearmError             READ prearmError        WRITE setPrearmError NOTIFY prearmErrorChanged)
+    Q_PROPERTY(int                  id                      READ id                                                     CONSTANT)
+    Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                                     CONSTANT)
+    Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                                             NOTIFY coordinateChanged)
+    Q_PROPERTY(bool                 coordinateValid         READ coordinateValid                                        NOTIFY coordinateValidChanged)
+    Q_PROPERTY(bool                 homePositionAvailable   READ homePositionAvailable                                  NOTIFY homePositionAvailableChanged)
+    Q_PROPERTY(QGeoCoordinate       homePosition            READ homePosition                                           NOTIFY homePositionChanged)
+    Q_PROPERTY(bool                 armed                   READ armed                  WRITE setArmed                  NOTIFY armedChanged)
+    Q_PROPERTY(bool                 flightModeSetAvailable  READ flightModeSetAvailable                                 CONSTANT)
+    Q_PROPERTY(QStringList          flightModes             READ flightModes                                            CONSTANT)
+    Q_PROPERTY(QString              flightMode              READ flightMode             WRITE setFlightMode             NOTIFY flightModeChanged)
+    Q_PROPERTY(bool                 hilMode                 READ hilMode                WRITE setHilMode                NOTIFY hilModeChanged)
+    Q_PROPERTY(bool                 missingParameters       READ missingParameters                                      NOTIFY missingParametersChanged)
+    Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                                       CONSTANT)
+    Q_PROPERTY(float                latitude                READ latitude                                               NOTIFY coordinateChanged)
+    Q_PROPERTY(float                longitude               READ longitude                                              NOTIFY coordinateChanged)
+    Q_PROPERTY(QString              currentState            READ currentState                                           NOTIFY currentStateChanged)
+    Q_PROPERTY(bool                 messageTypeNone         READ messageTypeNone                                        NOTIFY messageTypeChanged)
+    Q_PROPERTY(bool                 messageTypeNormal       READ messageTypeNormal                                      NOTIFY messageTypeChanged)
+    Q_PROPERTY(bool                 messageTypeWarning      READ messageTypeWarning                                     NOTIFY messageTypeChanged)
+    Q_PROPERTY(bool                 messageTypeError        READ messageTypeError                                       NOTIFY messageTypeChanged)
+    Q_PROPERTY(int                  newMessageCount         READ newMessageCount                                        NOTIFY newMessageCountChanged)
+    Q_PROPERTY(int                  messageCount            READ messageCount                                           NOTIFY messageCountChanged)
+    Q_PROPERTY(QString              formatedMessages        READ formatedMessages                                       NOTIFY formatedMessagesChanged)
+    Q_PROPERTY(QString              formatedMessage         READ formatedMessage                                        NOTIFY formatedMessageChanged)
+    Q_PROPERTY(QString              latestError             READ latestError                                            NOTIFY latestErrorChanged)
+    Q_PROPERTY(int                  joystickMode            READ joystickMode           WRITE setJoystickMode           NOTIFY joystickModeChanged)
+    Q_PROPERTY(QStringList          joystickModes           READ joystickModes                                          CONSTANT)
+    Q_PROPERTY(bool                 joystickEnabled         READ joystickEnabled        WRITE setJoystickEnabled        NOTIFY joystickEnabledChanged)
+    Q_PROPERTY(bool                 active                  READ active                 WRITE setActive                 NOTIFY activeChanged)
+    Q_PROPERTY(int                  flowImageIndex          READ flowImageIndex                                         NOTIFY flowImageIndexChanged)
+    Q_PROPERTY(int                  rcRSSI                  READ rcRSSI                                                 NOTIFY rcRSSIChanged)
+    Q_PROPERTY(bool                 px4Firmware             READ px4Firmware                                            CONSTANT)
+    Q_PROPERTY(bool                 apmFirmware             READ apmFirmware                                            CONSTANT)
+    Q_PROPERTY(bool                 soloFirmware            READ soloFirmware           WRITE setSoloFirmware           NOTIFY soloFirmwareChanged)
+    Q_PROPERTY(bool                 genericFirmware         READ genericFirmware                                        CONSTANT)
+    Q_PROPERTY(bool                 connectionLost          READ connectionLost                                         NOTIFY connectionLostChanged)
+    Q_PROPERTY(bool                 connectionLostEnabled   READ connectionLostEnabled  WRITE setConnectionLostEnabled  NOTIFY connectionLostEnabledChanged)
+    Q_PROPERTY(uint                 messagesReceived        READ messagesReceived                                       NOTIFY messagesReceivedChanged)
+    Q_PROPERTY(uint                 messagesSent            READ messagesSent                                           NOTIFY messagesSentChanged)
+    Q_PROPERTY(uint                 messagesLost            READ messagesLost                                           NOTIFY messagesLostChanged)
+    Q_PROPERTY(bool                 fixedWing               READ fixedWing                                              CONSTANT)
+    Q_PROPERTY(bool                 multiRotor              READ multiRotor                                             CONSTANT)
+    Q_PROPERTY(bool                 vtol                    READ vtol                                                   CONSTANT)
+    Q_PROPERTY(bool                 rover                   READ rover                                                  CONSTANT)
+    Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                                      NOTIFY autoDisconnectChanged)
+    Q_PROPERTY(QString              prearmError             READ prearmError            WRITE setPrearmError            NOTIFY prearmErrorChanged)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying      READ flying     WRITE setFlying     NOTIFY flyingChanged)
@@ -529,6 +530,9 @@ public:
     void setFirmwareVersion(int majorVersion, int minorVersion, int patchVersion, FIRMWARE_VERSION_TYPE versionType = FIRMWARE_VERSION_TYPE_OFFICIAL);
     static const int versionNotSetValue = -1;
 
+    bool soloFirmware(void) const { return _soloFirmware; }
+    void setSoloFirmware(bool soloFirmware);
+
     int defaultComponentId(void);
 
 public slots:
@@ -556,6 +560,7 @@ signals:
     void guidedModeChanged(bool guidedMode);
     void prearmErrorChanged(const QString& prearmError);
     void commandLongAck(uint8_t compID, uint16_t command, uint8_t result);
+    void soloFirmwareChanged(bool soloFirmware);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -656,6 +661,7 @@ private:
     FirmwarePlugin*     _firmwarePlugin;
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;
+    bool                _soloFirmware;
 
     QList<LinkInterface*> _links;
 
