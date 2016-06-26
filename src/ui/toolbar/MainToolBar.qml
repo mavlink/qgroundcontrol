@@ -67,7 +67,7 @@ Rectangle {
     function getBatteryColor() {
         if(activeVehicle) {
             if(activeVehicle.battery.percentRemaining.value > 75) {
-                return colorGreen
+                return qgcPal.text
             }
             if(activeVehicle.battery.percentRemaining.value > 50) {
                 return colorOrange
