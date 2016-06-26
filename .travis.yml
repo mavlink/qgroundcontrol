@@ -36,7 +36,7 @@ matrix:
           sudo: required
         - os: osx
           osx_image: xcode7.3
-          env: SPEC=ios CONFIG=release
+          env: SPEC=macx-ios-clang CONFIG=release
           sudo: false
 
 android:
@@ -118,7 +118,7 @@ install:
         cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/
         ;
     fi
-  - if [ "${SPEC}" = "ios" ]; then
+  - if [ "${SPEC}" = "macx-ios-clang" ]; then
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios-min.tar.bz2 &&
         tar jxf Qt5.5.1-ios-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/ios/bin:$PATH &&
@@ -158,7 +158,7 @@ script:
   - cd ${SHADOW_BUILD_DIR}
 
   # compile
-  - if [ "${SPEC}" != "ios" ]; then
+  - if [ "${SPEC}" != "macx-ios-clang" ]; then
         make -j$JOBS;
     else
         xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]});
