@@ -67,6 +67,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _vehicleType(vehicleType)
     , _firmwarePlugin(NULL)
     , _autopilotPlugin(NULL)
+    , _mavlink(NULL)
+    , _soloFirmware(false)
     , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(NULL)
@@ -1695,6 +1697,14 @@ void Vehicle::rebootVehicle()
 int Vehicle::defaultComponentId(void)
 {
     return _parameterLoader->defaultComponenentId();
+}
+
+void Vehicle::setSoloFirmware(bool soloFirmware)
+{
+    if (soloFirmware != _soloFirmware) {
+        _soloFirmware = soloFirmware;
+        emit soloFirmwareChanged(soloFirmware);
+    }
 }
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
