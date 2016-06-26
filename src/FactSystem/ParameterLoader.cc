@@ -60,7 +60,7 @@ ParameterLoader::ParameterLoader(Vehicle* vehicle)
     connect(this, &ParameterLoader::restartWaitingParamTimer, this, &ParameterLoader::_restartWaitingParamTimer);
 
     _initialRequestTimeoutTimer.setSingleShot(true);
-    _initialRequestTimeoutTimer.setInterval(6000);
+    _initialRequestTimeoutTimer.setInterval(_initialRequestTimeoutInterval);
     connect(&_initialRequestTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::_initialRequestTimeout);
 
     _waitingParamTimeoutTimer.setSingleShot(true);

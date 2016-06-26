@@ -24,6 +24,8 @@
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
 
+class ParameterLoaderTest;
+
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -33,7 +35,7 @@ Q_DECLARE_LOGGING_CATEGORY(ParameterLoaderVerboseLog)
 class ParameterLoader : public QObject
 {
     Q_OBJECT
-    
+    friend class ParameterLoaderTest;
 public:
     /// @param uas Uas which this set of facts is associated with
     ParameterLoader(Vehicle* vehicle);
@@ -106,6 +108,9 @@ signals:
 protected:
     Vehicle*            _vehicle;
     MAVLinkProtocol*    _mavlink;
+
+    static const int _initialRequestTimeoutInterval = 6000;
+    static const int _maxInitialRequestListRetry = 4;       ///< Maximum retries for request list
     
     void _parameterUpdate(int uasId, int componentId, QString parameterName, int parameterCount, int parameterId, int mavType, QVariant value);
     void _valueUpdated(const QVariant& value);
@@ -157,7 +162,6 @@ private:
     int         _prevWaitingWriteParamNameCount;
 
 
-    static const int _maxInitialRequestListRetry = 4;       ///< Maximum retries for request list
     int              _initialRequestRetryCount;             ///< Current retry count for request list
     static const int _maxInitialLoadRetrySingleParam = 10;  ///< Maximum retries for initial index based load of a single param
     static const int _maxReadWriteRetry = 5;                ///< Maximum retries read/write

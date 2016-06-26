@@ -17,14 +17,15 @@
 void ParameterLoaderTest::_noFailureWorker(MockConfiguration::FailureMode_t failureMode)
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startPX4MockLink(false, failureMode);
-
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     QVERIFY(vehicleMgr);
+    QSignalSpy spyVehicle(vehicleMgr, SIGNAL(activeVehicleAvailableChanged(bool)));
+
+    _mockLink = MockLink::startPX4MockLink(false, failureMode);
 
     // Wait for the Vehicle to get created
-    QSignalSpy spyVehicle(vehicleMgr, SIGNAL(activeVehicleAvailableChanged(bool)));
-    QCOMPARE(spyVehicle.wait(5000), true);
+    if (spyVehicle.count() == 0)
+        QCOMPARE(spyVehicle.wait(5000), true);
     QCOMPARE(spyVehicle.count(), 1);
     QList<QVariant> arguments = spyVehicle.takeFirst();
     QCOMPARE(arguments.count(), 1);
@@ -32,17 +33,18 @@ void ParameterLoaderTest::_noFailureWorker(MockConfiguration::FailureMode_t fail
 
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
+    QSignalSpy spyProgress(vehicle->getParameterLoader(), SIGNAL(parameterListProgress(float)));
+    QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
 
     // We should get progress bar updates during load
-    QSignalSpy spyProgress(vehicle->getParameterLoader(), SIGNAL(parameterListProgress(float)));
     QCOMPARE(spyProgress.wait(2000), true);
     arguments = spyProgress.takeFirst();
     QCOMPARE(arguments.count(), 1);
     QVERIFY(arguments.at(0).toFloat() > 0.0f);
 
     // When param load is complete we get the param ready signal
-    QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QCOMPARE(spyParamsReady.wait(60000), true);
+    if (spyParamsReady.count() == 0)
+        QCOMPARE(spyParamsReady.wait(60000), true);
     arguments = spyParamsReady.takeFirst();
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toBool(), true);
@@ -68,15 +70,16 @@ void ParameterLoaderTest::_requestListMissingParamSuccess(void)
 void ParameterLoaderTest::_requestListNoResponse(void)
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
-
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     QVERIFY(vehicleMgr);
 
-    // Wait for the Vehicle to get created
     QSignalSpy spyVehicle(vehicleMgr, SIGNAL(activeVehicleAvailableChanged(bool)));
-    QCOMPARE(spyVehicle.wait(5000), true);
-    QCOMPARE(spyVehicle.count(), 1);
+    _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
+
+    // Wait for the Vehicle to get created
+    if (spyVehicle.count() == 0)
+        QCOMPARE(spyVehicle.wait(5000), true);
+
     QList<QVariant> arguments = spyVehicle.takeFirst();
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toBool(), true);
@@ -89,10 +92,10 @@ void ParameterLoaderTest::_requestListNoResponse(void)
 
     // We should not get any progress bar updates, nor a parameter ready signal
     QCOMPARE(spyProgress.wait(500), false);
-    QCOMPARE(spyParamsReady.wait(40000), false);
+    QCOMPARE(spyParamsReady.wait((ParameterLoader::_initialRequestTimeoutInterval*ParameterLoader::_maxInitialRequestListRetry) + 500), false);
 
     // User should have been notified
-    checkMultipleExpectedMessageBox(5);
+    checkMultipleExpectedMessageBox(ParameterLoader::_maxInitialRequestListRetry);
 }
 
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
@@ -101,16 +104,17 @@ void ParameterLoaderTest::_requestListMissingParamFail(void)
 {
     // Will pop error about missing params
     setExpectedMessageBox(QMessageBox::Ok);
+    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    QVERIFY(vehicleMgr);
+
+    QSignalSpy spyVehicle(vehicleMgr, SIGNAL(activeVehicleAvailableChanged(bool)));
 
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailMissingParamOnAllRequests);
 
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
-    QVERIFY(vehicleMgr);
-
     // Wait for the Vehicle to get created
-    QSignalSpy spyVehicle(vehicleMgr, SIGNAL(activeVehicleAvailableChanged(bool)));
-    QCOMPARE(spyVehicle.wait(5000), true);
+    if (spyVehicle.count() == 0)
+        QCOMPARE(spyVehicle.wait(5000), true);
     QCOMPARE(spyVehicle.count(), 1);
     QList<QVariant> arguments = spyVehicle.takeFirst();
     QCOMPARE(arguments.count(), 1);
@@ -129,7 +133,8 @@ void ParameterLoaderTest::_requestListMissingParamFail(void)
     QVERIFY(arguments.at(0).toFloat() > 0.0f);
 
     // We should get a parameters ready signal, but Vehicle should indicate missing params
-    QCOMPARE(spyParamsReady.wait(40000), true);
+    if (spyParamsReady.count() == 0)
+        QCOMPARE(spyParamsReady.wait(40000), true);
     QCOMPARE(vehicle->missingParameters(), true);
 
     // User should have been notified
