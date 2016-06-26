@@ -67,9 +67,7 @@ before_install:
   # install ccache for osx/ios
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
         wget https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
-        sudo mv ccache /usr/local/bin &&
-        chmod +x /usr/local/bin/ccache &&
-        ;
+        chmod +x ccache && sudo mv ccache /usr/local/bin;
     fi
 
   # setup ccache
