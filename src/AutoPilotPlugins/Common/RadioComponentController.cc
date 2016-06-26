@@ -325,7 +325,7 @@ void RadioComponentController::_saveAllTrims(void)
     // trims reset to correct values.
     
     for (int i=0; i<_chanCount; i++) {
-        qCDebug(RadioComponentControllerLog) << "_saveAllTrims trim" << _rcRawValue[i];
+        qCDebug(RadioComponentControllerLog) << "_saveAllTrims channel trim" << i<< _rcRawValue[i];
         _rgChannelInfo[i].rcTrim = _rcRawValue[i];
     }
     _advanceState();
@@ -751,77 +751,83 @@ void RadioComponentController::_writeCalibration(void)
     if (_px4Vehicle()) {
         _uas->stopCalibration();
     }
-    
-    _validateCalibration();
-    
-    QString minTpl("RC%1_MIN");
-    QString maxTpl("RC%1_MAX");
-    QString trimTpl("RC%1_TRIM");
-    QString revTpl("RC%1_REV");
-    
-    // Note that the rc parameters are all float, so you must cast to float in order to get the right QVariant
-    for (int chan = 0; chan<_chanMax(); chan++) {
-        struct ChannelInfo* info = &_rgChannelInfo[chan];
-        int                 oneBasedChannel = chan + 1;
-        
-        if (_px4Vehicle() && _apmPossibleMissingRCChannelParams.contains(chan+1) && !parameterExists(FactSystem::defaultComponentId, minTpl.arg(chan+1))) {
-            // RC parameters for this channel are missing from this version of APM
-            continue;
-        }
 
-        Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel));
-        if (paramFact) {
-            paramFact->setRawValue((float)info->rcTrim);
-        }
-        paramFact = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel));
-        if (paramFact) {
-            paramFact->setRawValue((float)info->rcMin);
-        }
-        paramFact = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel));
-        if (paramFact) {
-            paramFact->setRawValue((float)info->rcMax);
-        }
+    if (!_px4Vehicle() && _rgChannelInfo[_rgFunctionChannelMapping[rcCalFunctionThrottle]].reversed) {
+        // A reversed throttle could lead to dangerous power up issues if the firmware doesn't handle it absolutely correctly in all places.
+        // So in this case fail the calibration for anything other than PX4 which is known to be able to handle this correctly.
+        emit throttleReversedCalFailure();
+    } else {
+        _validateCalibration();
 
-        // For multi-rotor we can determine reverse setting during radio cal. For anything other than multi-rotor, servo installation
-        // may affect channel reversing so we can't automatically determine it.
-        if (_vehicle->multiRotor()) {
-            // APM multi-rotor has a backwards interpretation of "reversed" on the Pitch control. So be careful.
-            float reversedParamValue;
-            if (_px4Vehicle() || info->function != rcCalFunctionPitch) {
-                reversedParamValue = info->reversed ? -1.0f : 1.0f;
-            } else {
-                reversedParamValue = info->reversed ? 1.0f : -1.0f;
+        QString minTpl("RC%1_MIN");
+        QString maxTpl("RC%1_MAX");
+        QString trimTpl("RC%1_TRIM");
+        QString revTpl("RC%1_REV");
+
+        // Note that the rc parameters are all float, so you must cast to float in order to get the right QVariant
+        for (int chan = 0; chan<_chanMax(); chan++) {
+            struct ChannelInfo* info = &_rgChannelInfo[chan];
+            int                 oneBasedChannel = chan + 1;
+
+            if (_px4Vehicle() && _apmPossibleMissingRCChannelParams.contains(chan+1) && !parameterExists(FactSystem::defaultComponentId, minTpl.arg(chan+1))) {
+                // RC parameters for this channel are missing from this version of APM
+                continue;
             }
-            paramFact = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel));
+
+            Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel));
             if (paramFact) {
-                paramFact->setRawValue(reversedParamValue);
+                paramFact->setRawValue((float)info->rcTrim);
+            }
+            paramFact = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel));
+            if (paramFact) {
+                paramFact->setRawValue((float)info->rcMin);
+            }
+            paramFact = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel));
+            if (paramFact) {
+                paramFact->setRawValue((float)info->rcMax);
+            }
+
+            // For multi-rotor we can determine reverse setting during radio cal. For anything other than multi-rotor, servo installation
+            // may affect channel reversing so we can't automatically determine it.
+            if (_vehicle->multiRotor()) {
+                // APM multi-rotor has a backwards interpretation of "reversed" on the Pitch control. So be careful.
+                float reversedParamValue;
+                if (_px4Vehicle() || info->function != rcCalFunctionPitch) {
+                    reversedParamValue = info->reversed ? -1.0f : 1.0f;
+                } else {
+                    reversedParamValue = info->reversed ? 1.0f : -1.0f;
+                }
+                paramFact = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel));
+                if (paramFact) {
+                    paramFact->setRawValue(reversedParamValue);
+                }
             }
         }
-    }
-    
-    // Write function mapping parameters
-    for (size_t i=0; i<rcCalFunctionMax; i++) {
-        int32_t paramChannel;
-        if (_rgFunctionChannelMapping[i] == _chanMax()) {
-            // 0 signals no mapping
-            paramChannel = 0;
-        } else {
-            // Note that the channel value is 1-based
-            paramChannel = _rgFunctionChannelMapping[i] + 1;
-        }
-        const char* paramName = _functionInfo()[i].parameterName;
-        if (paramName) {
-            Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
 
-            if (paramFact && paramFact->rawValue().toInt() != paramChannel) {
-                paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
-                if (paramFact) {
-                    paramFact->setRawValue(paramChannel);
+        // Write function mapping parameters
+        for (size_t i=0; i<rcCalFunctionMax; i++) {
+            int32_t paramChannel;
+            if (_rgFunctionChannelMapping[i] == _chanMax()) {
+                // 0 signals no mapping
+                paramChannel = 0;
+            } else {
+                // Note that the channel value is 1-based
+                paramChannel = _rgFunctionChannelMapping[i] + 1;
+            }
+            const char* paramName = _functionInfo()[i].parameterName;
+            if (paramName) {
+                Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
+
+                if (paramFact && paramFact->rawValue().toInt() != paramChannel) {
+                    paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
+                    if (paramFact) {
+                        paramFact->setRawValue(paramChannel);
+                    }
                 }
             }
         }
     }
-    
+
     if (_px4Vehicle()) {
         // If the RC_CHAN_COUNT parameter is available write the channel count
         if (parameterExists(FactSystem::defaultComponentId, "RC_CHAN_CNT")) {

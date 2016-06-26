@@ -124,11 +124,14 @@ signals:
     void imageHelpChanged(QString source);
     void transmitterModeChanged(int mode);
     
-    // @brief Signalled when in unit test mode and a message box should be displayed by the next button
+    /// Signalled when in unit test mode and a message box should be displayed by the next button
     void nextButtonMessageBoxDisplayed(void);
 
-    // Signaled to QML to indicator reboot is required
+    /// Signalled to QML to indicate reboot is required
     void functionMappingChangedAPMReboot(void);
+
+    /// Signalled to Qml to indicate cal failure due to reversed throttle
+    void throttleReversedCalFailure(void);
 
 private slots:
     void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
