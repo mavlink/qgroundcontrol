@@ -15,16 +15,16 @@ matrix:
     fast_finish: true
     include:
         - os: linux
-          env: SPEC=linux-g++-64 CONFIG=installer
-          sudo: required 
           dist: trusty
+          env: SPEC=linux-g++-64 CONFIG=installer
+          sudo: required
         - os: android
           language: android
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
         - os: osx
           osx_image: xcode7.3
-          env: SPEC=macx-clang CONFIG=debug 
+          env: SPEC=macx-clang CONFIG=debug
           sudo: required
         - os: osx
           osx_image: xcode7.3
@@ -71,7 +71,7 @@ before_install:
     fi
 
   # setup ccache
-  - ccache -M 1GB && ccache -z
+  - ccache -M 500MB && ccache -z
 
   # compile threads
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
@@ -87,8 +87,7 @@ install:
         tar jxf Qt5.5.1-linux-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt/5.5/gcc_64/bin:$PATH &&
         export DISPLAY=:99.0 &&
-        sh -e /etc/init.d/xvfb start &&
-        mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/
+        sh -e /etc/init.d/xvfb start
         ;
     fi
 
@@ -121,8 +120,7 @@ install:
         export QT_DIR=Qt5.5-mac-clang/5.5/clang_64 &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
         export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml &&
-        export PATH=/tmp/$QT_DIR/bin:$PATH &&
-        mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/
+        export PATH=/tmp/$QT_DIR/bin:$PATH
         ;
     fi
 
@@ -137,6 +135,8 @@ install:
     fi
 
 before_script:
+  - cd ${TRAVIS_BUILD_DIR}
+
   # grab latest PX4 parameter and airframe metadata
   - wget http://px4-travis.s3.amazonaws.com/Firmware/master/parameters.xml -O src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml
   - wget http://px4-travis.s3.amazonaws.com/Firmware/master/airframes.xml -O src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
@@ -148,7 +148,7 @@ before_script:
 
   # insert QGC version in AndroidManifest.xml
   - if [ "${SPEC}" = "android-g++" ]; then
-        cd ${TRAVIS_BUILD_DIR} && ./tools/update_android_version.sh;
+        tools/update_android_version.sh;
     fi
 
 script:
@@ -166,12 +166,16 @@ script:
 
   # unit tests linux/osx
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
-        ./debug/qgroundcontrol --unittest;
+        mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
+        debug/qgroundcontrol --unittest;
     elif [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
-        ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest;
+        mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/ &&
+        debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest;
     fi
 
 after_success:
+  - cd ${TRAVIS_BUILD_DIR}
+
   # android google play deploy
   - export GOOGLE_PLAY_TRACK=none;
   - if [ "${TRAVIS_TAG}" ]; then
@@ -181,16 +185,17 @@ after_success:
     fi
   - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_TRACK}" != "none" ]]; then
         pip install --user google-api-python-client PyOpenSSL &&
-        cd ${TRAVIS_BUILD_DIR} &&
-        openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in ${TRAVIS_BUILD_DIR}/android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
-        ${TRAVIS_BUILD_DIR}/tools/google_play_upload.py ${GOOGLE_PLAY_TRACK} org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.apk
+        echo "Google Play Track:" ${GOOGLE_PLAY_TRACK} &&
+        openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
+        tools/google_play_upload.py ${GOOGLE_PLAY_TRACK} org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.apk
         ;
     fi
 
 before_deploy:
   # create linux appimage
+  - cd ${TRAVIS_BUILD_DIR}
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "installer" ]]; then
-        ${TRAVIS_BUILD_DIR}/deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/release ${SHADOW_BUILD_DIR}/release/package;
+        deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/release ${SHADOW_BUILD_DIR}/release/package;
     fi
 
 deploy:
@@ -226,6 +231,6 @@ notifications:
   webhooks:
     urls:
       - https://webhooks.gitter.im/e/60b033428ae9dc715662
-    on_success: change  # options: [always|never|change] default: always
-    on_failure: always  # options: [always|never|change] default: always
-    on_start: never     # options: [always|never|change] default: always
+    on_success: change
+    on_failure: always
+    on_start: never
