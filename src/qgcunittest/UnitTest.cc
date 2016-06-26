@@ -371,6 +371,8 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
 {
     Q_ASSERT(!_mockLink);
 
+    QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
+
     switch (autopilot) {
     case MAV_AUTOPILOT_PX4:
         _mockLink = MockLink::startPX4MockLink(false);
@@ -386,9 +388,9 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
         break;
     }
 
-    // Wait for the Vehicle to get created
-    QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QCOMPARE(spyVehicle.wait(10000), true);
+    if (spyVehicle.count() == 0)
+        // Wait for the Vehicle to get created
+        QCOMPARE(spyVehicle.wait(10000), true);
     QVERIFY(qgcApp()->toolbox()->multiVehicleManager()->parameterReadyVehicleAvailable());
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     QVERIFY(_vehicle);
@@ -401,8 +403,9 @@ void UnitTest::_disconnectMockLink(void)
 
         _linkManager->disconnectLink(_mockLink);
 
-        // Wait for link to go away
-        linkSpy.wait(1000);
+        if (linkSpy.count() == 0)
+            // Wait for link to go away
+            linkSpy.wait(1000);
         QCOMPARE(linkSpy.count(), 1);
 
         _vehicle = NULL;
