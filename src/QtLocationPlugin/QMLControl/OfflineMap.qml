@@ -246,7 +246,7 @@ QGCView {
                         id:                 maxCacheMemSize
                         maximumLength:      4
                         inputMethodHints:   Qt.ImhDigitsOnly
-                        validator:          IntValidator {bottom: 1; top: 4096;}
+                        validator:          IntValidator {bottom: 1; top: 1024;}
                         text:               QGroundControl.mapEngineManager.maxMemCache
                     }
 
