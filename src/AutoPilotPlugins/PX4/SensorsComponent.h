@@ -40,8 +40,10 @@ public:
 private:
     const QString   _name;
     QVariantList    _summaryItems;
+    QStringList     _deviceIds;
 
     static const char* _airspeedBreaker;
+    static const char* _airspeedCal;
 };
 
 #endif
