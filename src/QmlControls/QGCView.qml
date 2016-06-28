@@ -283,7 +283,7 @@ FactPanel {
             Rectangle {
                 id:     __header
                 width:  parent.width
-                height: __acceptButton.height
+                height: __acceptButton.visible ? __acceptButton.height : __rejectButton.height
                 color:  __qgcPal.windowShade
 
                 function __hidePanel() {
