@@ -16,13 +16,14 @@
 #include "QGCQmlWidgetHolder.h"
 #include "SensorsComponentController.h"
 
-const char* SensorsComponent::_airspeedBreaker = "CBRK_AIRSPD_CHK";
+const char* SensorsComponent::_airspeedBreaker =    "CBRK_AIRSPD_CHK";
+const char* SensorsComponent::_airspeedCal =        "SENS_DPRES_OFF";
 
 SensorsComponent::SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),
     _name(tr("Sensors"))
 {
-
+    _deviceIds << QStringLiteral("CAL_MAG0_ID") << QStringLiteral("CAL_GYRO0_ID") << QStringLiteral("CAL_ACC0_ID");
 }
 
 QString SensorsComponent::name(void) const
@@ -48,9 +49,17 @@ bool SensorsComponent::requiresSetup(void) const
 
 bool SensorsComponent::setupComplete(void) const
 {
-    foreach(const QString &triggerParam, setupCompleteChangedTriggerList()) {
-        if (triggerParam != _airspeedBreaker && _autopilot->getParameterFact(FactSystem::defaultComponentId, triggerParam)->rawValue().toFloat() == 0.0f) {
+    foreach (const QString &triggerParam, _deviceIds) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, triggerParam)->rawValue().toFloat() == 0.0f) {
             return false;
+        }
+    }
+
+    if (_vehicle->fixedWing() || _vehicle->vtol()) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, _airspeedBreaker)->rawValue().toInt() != 162128) {
+            if (_autopilot->getParameterFact(FactSystem::defaultComponentId, _airspeedCal)->rawValue().toFloat() == 0.0f) {
+                return false;
+            }
         }
     }
 
@@ -61,9 +70,9 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList triggers;
     
-    triggers << "CAL_MAG0_ID" << "CAL_GYRO0_ID" << "CAL_ACC0_ID" << "CBRK_AIRSPD_CHK";
-    if ((_vehicle->fixedWing() || _vehicle->vtol()) && _autopilot->getParameterFact(FactSystem::defaultComponentId, _airspeedBreaker)->rawValue().toInt() != 162128) {
-        triggers << "SENS_DPRES_OFF";
+    triggers << _deviceIds;
+    if (_vehicle->fixedWing() || _vehicle->vtol()) {
+        triggers << _airspeedCal << _airspeedBreaker;
     }
     
     return triggers;
