@@ -362,6 +362,9 @@ QGCMapEngine::getMaxMemCache()
         _maxMemCache = settings.value(kMaxMemCacheKey, 128).toUInt();
 #endif
     }
+    //-- Size in MB
+    if(_maxMemCache > 1024)
+        _maxMemCache = 1024;
     return _maxMemCache;
 }
 
@@ -369,6 +372,9 @@ QGCMapEngine::getMaxMemCache()
 void
 QGCMapEngine::setMaxMemCache(quint32 size)
 {
+    //-- Size in MB
+    if(size > 1024)
+        size = 1024;
     QSettings settings;
     settings.setValue(kMaxMemCacheKey, size);
     _maxMemCache = size;

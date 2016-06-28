@@ -230,7 +230,10 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     //-- It won't work with less than 1M of memory cache
     if(memLimit < 1024 * 1024)
         memLimit = 1024 * 1024;
-    //-- Disable Qt's disk cache (set memory cache otherwise Qtlocation won't work)
+    //-- On the other hand, Qt uses signed 32-bit integers. Limit to 1G to round it down (you don't need more than that).
+    if(memLimit > 1024 * 1024 * 1024)
+        memLimit = 1024 * 1024 * 1024;
+    //-- Disable Qt's disk cache (sort of)
 #if QT_VERSION >= 0x050600
     QAbstractGeoTileCache *pTileCache = new QGeoFileTileCache(cacheDir);
     setTileCache(pTileCache);
@@ -241,6 +244,7 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     {
         //-- We're basically telling it to use 100k of disk for cache. It doesn't like
         //   values smaller than that and I could not find a way to make it NOT cache.
+        //   We handle our own disk caching elsewhere.
         pTileCache->setMaxDiskUsage(1024 * 100);
         pTileCache->setMaxMemoryUsage(memLimit);
     }
