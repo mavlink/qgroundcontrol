@@ -41,7 +41,6 @@ UrlFactory::UrlFactory()
         _language = langs[0];
     }
 
-    QNetworkProxyFactory::setUseSystemConfiguration(true);
     // Google version strings
     _versionGoogleMap            = "m@338000000";
     _versionGoogleSatellite      = "198";
