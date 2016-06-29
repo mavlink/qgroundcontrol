@@ -387,7 +387,7 @@ Item {
 
         function rejectGuidedModeConfirm() {
             guidedModeConfirm.visible = false
-            guidedModeBar.visible = true
+            _guidedModeBar.visible = true
             altitudeSlider.visible = false
             _flightMap._gotoHereCoordinate = QtPositioning.coordinate()
             guidedModeHideTimer.restart()
@@ -429,7 +429,7 @@ Item {
                 _guidedModeBar.confirmText    = qsTr("active waypoint change")
                 break;
             }
-            guidedModeBar.visible = false
+            _guidedModeBar.visible = false
             guidedModeConfirm.visible = true
         }
 
@@ -510,7 +510,7 @@ Item {
 
         onAccept: {
             guidedModeConfirm.visible = false
-            guidedModeBar.visible = true
+            _guidedModeBar.visible = true
             _guidedModeBar.actionConfirmed()
             altitudeSlider.visible = false
             guidedModeHideTimer.restart()
