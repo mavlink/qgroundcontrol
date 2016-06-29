@@ -12,6 +12,7 @@
 
 #include <QFileInfo>
 #include <QStandardPaths>
+#include <QNetworkProxy>
 
 QGCFileDownload::QGCFileDownload(QObject* parent)
     : QNetworkAccessManager(parent)
@@ -62,6 +63,10 @@ bool QGCFileDownload::download(const QString& remoteFile)
     }
     
     QNetworkRequest networkRequest(remoteUrl);
+
+    QNetworkProxy tProxy;
+    tProxy.setType(QNetworkProxy::DefaultProxy);
+    setProxy(tProxy);
     
     // Store local file location in user attribute so we can retrieve when the download finishes
     networkRequest.setAttribute(QNetworkRequest::User, localFile);

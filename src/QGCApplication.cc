@@ -196,6 +196,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 #endif
 
+    // Setup for network proxy support
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
+
 #ifdef Q_OS_LINUX
 #ifndef __mobile__
     if (!_runningUnitTests) {
