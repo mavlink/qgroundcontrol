@@ -15,6 +15,7 @@ FactPanel {
     FactPanelController { id: controller; factPanel: panel }
 
     property Fact _camTriggerMode:  controller.getParameterFact(-1, "TRIG_MODE", false)
+    property Fact _camTriggerInterface:  controller.getParameterFact(-1, "TRIG_INTERFACE", false)
     property Fact _camTriggerPol:   controller.getParameterFact(-1, "TRIG_POLARITY", false) // Don't bitch about missing as these only exist if trigger mode is enabled
     property Fact _auxPins:         controller.getParameterFact(-1, "TRIG_PINS",     false) // Ditto
     property Fact _timeInterval:    controller.getParameterFact(-1, "TRIG_INTERVAL", false) // Ditto
@@ -22,6 +23,11 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
+
+        VehicleSummaryRow {
+            labelText: qsTr("Trigger interface:")
+            valueText: _camTriggerInterface ? _camTriggerInterface.enumStringValue : ""
+        }
 
         VehicleSummaryRow {
             labelText: qsTr("Trigger mode:")
