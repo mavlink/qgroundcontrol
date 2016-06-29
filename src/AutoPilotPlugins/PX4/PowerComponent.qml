@@ -200,9 +200,9 @@ QGCView {
                             if (measuredCurrentValue == 0) {
                                 return
                             }
-                            var newAmpsPerVolt = (measuredCurrentValue * newVoltageDivider.value) / controller.vehicle.battery.current.value
+                            var newAmpsPerVolt = (measuredCurrentValue * battAmpsPerVolt.value) / controller.vehicle.battery.current.value
                             if (newAmpsPerVolt != 0) {
-                                newVoltageDivider.value = newAmpsPerVolt
+                                battAmpsPerVolt.value = newAmpsPerVolt
                             }
                         }
                     }
