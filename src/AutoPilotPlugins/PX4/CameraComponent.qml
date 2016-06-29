@@ -36,6 +36,7 @@ QGCView {
     property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 16
 
     property Fact _camTriggerMode:  controller.getParameterFact(-1, "TRIG_MODE")
+    property Fact _camTriggerInterface:  controller.getParameterFact(-1, "TRIG_INTERFACE", false)
     property Fact _camTriggerPol:   controller.getParameterFact(-1, "TRIG_POLARITY", false) // Don't bitch about missing as these only exist if trigger mode is enabled
     property Fact _auxPins:         controller.getParameterFact(-1, "TRIG_PINS",     false) // Ditto
 
@@ -145,7 +146,6 @@ QGCView {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             Row {
-                                visible:                !controller.fixedWing
                                 QGCLabel {
                                     anchors.baseline:   camTrigCombo.baseline
                                     width:              _middleRowWidth
@@ -155,6 +155,24 @@ QGCView {
                                     id:                 camTrigCombo
                                     width:              _editFieldWidth
                                     fact:               _camTriggerMode
+                                    indexModel:         false
+                                    enabled:            !_rebooting
+                                    onActivated: {
+                                        applyAndRestart.visible = true
+                                    }
+                                }
+                            }
+                            Row {
+                                visible: _camTriggerInterface ? true : false
+                                QGCLabel {
+                                    anchors.baseline:   camInterfaceCombo.baseline
+                                    width:              _middleRowWidth
+                                    text:               qsTr("Trigger interface:")
+                                }
+                                FactComboBox {
+                                    id:                 camInterfaceCombo
+                                    width:              _editFieldWidth
+                                    fact:               _camTriggerInterface
                                     indexModel:         false
                                     enabled:            !_rebooting
                                     onActivated: {
@@ -269,6 +287,7 @@ QGCView {
                         }
                         Item { width: _margins * 0.5; height: 1; }
                         Column {
+                            visible:                    !_camTriggerInterface || (_camTriggerInterface.value === 1)
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             QGCLabel {

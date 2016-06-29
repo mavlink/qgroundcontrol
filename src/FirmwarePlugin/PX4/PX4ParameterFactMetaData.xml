@@ -392,6 +392,16 @@ velocity</short_desc>
     </parameter>
   </group>
   <group name="Camera trigger">
+    <parameter default="2" name="TRIG_INTERFACE" type="INT32">
+      <short_desc>Camera trigger Interface</short_desc>
+      <long_desc>Selects the trigger interface</long_desc>
+      <reboot_required>true</reboot_required>
+      <scope>drivers/camera_trigger</scope>
+      <values>
+        <value code="1">GPIO</value>
+        <value code="2">Seagull MAP2 (PWM)</value>
+      </values>
+    </parameter>
     <parameter default="40.0" name="TRIG_INTERVAL" type="FLOAT">
       <short_desc>Camera trigger interval</short_desc>
       <long_desc>This parameter sets the time between two consecutive trigger events</long_desc>
@@ -435,7 +445,7 @@ velocity</short_desc>
         <value code="4">Distance, mission controlled</value>
       </values>
     </parameter>
-    <parameter default="12" name="TRIG_PINS" type="INT32">
+    <parameter default="6" name="TRIG_PINS" type="INT32">
       <short_desc>Camera trigger pin</short_desc>
       <long_desc>Selects which pin is used, ranges from 1 to 6 (AUX1-AUX6)</long_desc>
       <min>1</min>
