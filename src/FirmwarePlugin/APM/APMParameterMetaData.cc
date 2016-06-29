@@ -219,7 +219,7 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 group = group.remove(QRegExp("[0-9]*$")); // remove any numbers from the end
 
                 QString shortDescription = xml.attributes().value("humanName").toString();
-                QString longDescription = xml.attributes().value("docmentation").toString();
+                QString longDescription = xml.attributes().value("documentation").toString();
                 QString userLevel = xml.attributes().value("user").toString();
 
                 qCDebug(APMParameterMetaDataVerboseLog) << "Found parameter name:" << name
