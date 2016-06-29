@@ -17,6 +17,7 @@
 #include "SimpleMissionItem.h"
 #include "ComplexMissionItem.h"
 #include "JsonHelper.h"
+#include "ParameterLoader.h"
 
 #ifndef __mobile__
 #include "QGCFileDialog.h"
@@ -962,11 +963,6 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(missionManager, &MissionManager::currentItemChanged,        this, &MissionController::_currentMissionItemChanged);
         connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
         connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
-
-        if (!syncInProgress()) {
-            // We have to manually ask for the items from the Vehicle
-            getMissionItems();
-        }
 
         _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
         _activeVehicleHomePositionAvailableChanged(_activeVehicle->homePositionAvailable());
