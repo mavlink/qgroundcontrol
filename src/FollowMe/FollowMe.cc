@@ -38,7 +38,7 @@ void FollowMe::followMeHandleManager(const QString&)
 
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
-        if(vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
+        if (vehicle->px4Firmware() && vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
             _enable();
             return;
         }
