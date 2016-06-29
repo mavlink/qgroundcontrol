@@ -202,6 +202,13 @@
       <output name="AUX2">feed-through of RC AUX2 channel</output>
       <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
+    <airframe id="4002" maintainer="James Goppert &lt;james.goppert@gmail.com&gt;" name="Lumenier QAV-R (raceblade) 5&quot; arms">
+      <maintainer>James Goppert &lt;james.goppert@gmail.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
     <airframe id="4008" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="AR.Drone Frame">
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
