@@ -23,6 +23,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QNetworkProxy>
 
 struct FirmwareToUrlElement_t {
     FirmwareUpgradeController::AutoPilotStackType_t    stackType;
@@ -533,6 +534,10 @@ void FirmwareUpgradeController::_downloadFirmware(void)
     
     _downloadManager = new QNetworkAccessManager(this);
     Q_CHECK_PTR(_downloadManager);
+    QNetworkProxy tProxy;
+    tProxy.setType(QNetworkProxy::DefaultProxy);
+    _downloadManager->setProxy(tProxy);
+
     _downloadNetworkReply = _downloadManager->get(networkRequest);
     Q_ASSERT(_downloadNetworkReply);
     connect(_downloadNetworkReply, &QNetworkReply::downloadProgress, this, &FirmwareUpgradeController::_downloadProgress);
