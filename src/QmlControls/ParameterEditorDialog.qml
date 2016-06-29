@@ -158,35 +158,46 @@ QGCViewDialog {
 
             QGCLabel { text: fact.name }
 
-            Row {
-                spacing: defaultTextWidth
+            Column {
+                spacing:        defaultTextHeight / 2
+                anchors.left:   parent.left
+                anchors.right:  parent.right
 
-                QGCLabel { text: qsTr("Units:") }
-                QGCLabel { text: fact.units ? fact.units : qsTr("none") }
-            }
+                Row {
+                    spacing: defaultTextWidth
 
-            Row {
-                spacing: defaultTextWidth
-                visible: !fact.minIsDefaultForType
+                    QGCLabel { text: qsTr("Units:") }
+                    QGCLabel { text: fact.units ? fact.units : qsTr("none") }
+                }
 
-                QGCLabel { text: qsTr("Minimum value:") }
-                QGCLabel { text: fact.minString }
-            }
+                Row {
+                    spacing: defaultTextWidth
+                    visible: !fact.minIsDefaultForType
 
-            Row {
-                spacing: defaultTextWidth
-                visible: !fact.maxIsDefaultForType
+                    QGCLabel { text: qsTr("Minimum value:") }
+                    QGCLabel { text: fact.minString }
+                }
 
-                QGCLabel { text: qsTr("Maximum value:") }
-                QGCLabel { text: fact.maxString }
-            }
+                Row {
+                    spacing: defaultTextWidth
+                    visible: !fact.maxIsDefaultForType
 
-            Row {
-                spacing: defaultTextWidth
+                    QGCLabel { text: qsTr("Maximum value:") }
+                    QGCLabel { text: fact.maxString }
+                }
 
-                QGCLabel { text: qsTr("Default value:") }
-                QGCLabel { text: fact.defaultValueAvailable ? fact.defaultValueString : qsTr("none") }
-            }
+                Row {
+                    spacing: defaultTextWidth
+
+                    QGCLabel { text: qsTr("Default value:") }
+                    QGCLabel { text: fact.defaultValueAvailable ? fact.defaultValueString : qsTr("none") }
+                }
+
+                QGCLabel {
+                    visible:    fact.rebootRequired
+                    text:       "Reboot required after change"
+                }
+            } // Column
 
             QGCLabel {
                 width:      parent.width
