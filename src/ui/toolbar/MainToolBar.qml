@@ -361,6 +361,7 @@ Rectangle {
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/Gears.svg"
+            text:               "Setup"
             onClicked:          toolBar.showSetupView()
         }
 
@@ -371,6 +372,7 @@ Rectangle {
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/Plan.svg"
+            text:               "Plan"
             onClicked:          toolBar.showPlanView()
         }
 
@@ -381,6 +383,7 @@ Rectangle {
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/PaperPlane.svg"
+            text:               "Fly"
             onClicked:          toolBar.showFlyView()
         }
     }
