@@ -4,7 +4,6 @@ language: cpp
 
 env:
   global:
-    - CCACHE_CPP2=1
     - JOBS=4
     - QT_FATAL_WARNINGS=1
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
@@ -44,7 +43,6 @@ android:
 addons:
   apt:
     packages:
-    - ccache
     - espeak
     - libespeak-dev
     - libgstreamer-plugins-base1.0-dev
@@ -54,24 +52,11 @@ addons:
     - libudev-dev
     - wget
 
-cache:
-  directories:
-    - $HOME/.ccache
-
 before_install:
   # fetch entire git repo to properly determine the version
   - if [ "${CONFIG}" = "installer" ]; then
         cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --all --tags;
     fi
-
-  # install ccache for osx/ios
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-        wget https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
-        chmod +x ccache && sudo mv ccache /usr/local/bin;
-    fi
-
-  # setup ccache
-  - ccache -M 500MB && ccache -z
 
   # compile threads
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
@@ -128,8 +113,6 @@ install:
   - if [ "${SPEC}" = "macx-ios-clang" ]; then
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios-min.tar.bz2 &&
         tar jxf Qt5.5.1-ios-min.tar.bz2 -C /tmp &&
-        export IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang` &&
-        export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++` &&
         export PATH=/tmp/ios/bin:$PATH
         ;
     fi
@@ -162,7 +145,6 @@ script:
     else
         xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]});
     fi
-  - ccache -s
 
   # unit tests linux/osx
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
