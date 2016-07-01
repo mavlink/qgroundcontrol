@@ -122,7 +122,7 @@ void Joystick::_loadSettings(void)
         qCDebug(JoystickLog) << "_loadSettings function:axis:badsettings" << function << functionAxis << badSettings;
     }
 
-    for (int button=0; button<_buttonCount; button++) {
+    for (int button=0; button<_totalButtonCount; button++) {
         _rgButtonActions << settings.value(QString(_buttonActionSettingsKey).arg(button), QString()).toString();
         qCDebug(JoystickLog) << "_loadSettings button:action" << button << _rgButtonActions[button];
     }
@@ -172,7 +172,7 @@ void Joystick::_saveSettings(void)
         qCDebug(JoystickLog) << "_saveSettings name:function:axis" << _name << function << _rgFunctionSettingsKey[function];
     }
 
-    for (int button=0; button<_buttonCount; button++) {
+    for (int button=0; button<_totalButtonCount; button++) {
         settings.setValue(QString(_buttonActionSettingsKey).arg(button), _rgButtonActions[button]);
         qCDebug(JoystickLog) << "_saveSettings button:action" << button << _rgButtonActions[button];
     }
@@ -471,7 +471,7 @@ QVariantList Joystick::buttonActions(void)
 {
     QVariantList list;
 
-    for (int button=0; button<_buttonCount; button++) {
+    for (int button=0; button<_totalButtonCount; button++) {
         list += QVariant::fromValue(_rgButtonActions[button]);
     }
 
