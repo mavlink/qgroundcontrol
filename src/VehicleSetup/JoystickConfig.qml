@@ -465,7 +465,7 @@ QGCView {
 
                         Repeater {
                             id:     buttonActionRepeater
-                            model:  _activeJoystick.buttonCount
+                            model:  _activeJoystick.totalButtonCount
 
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
