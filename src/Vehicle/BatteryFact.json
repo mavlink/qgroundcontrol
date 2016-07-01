@@ -18,7 +18,7 @@
         },
         {
             "name":             "percentRemainingAnnounce",
-            "shortDescription": "Percent",
+            "shortDescription": "Percent announce",
             "type":             "int32",
             "decimalPlaces":    0,
             "units":            "%",
