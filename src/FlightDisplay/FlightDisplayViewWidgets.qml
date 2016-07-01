@@ -503,7 +503,6 @@ Item {
         anchors.bottomMargin:       _margins
         anchors.bottom:             parent.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
-        height:                     _guidedModeBar.height
         visible:                    false
         z:                          QGroundControl.zOrderWidgets
         fontPointSize:              _guidedModeBar._fontPointSize
