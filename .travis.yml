@@ -5,6 +5,7 @@ language: cpp
 env:
   global:
     - CCACHE_CPP2=1
+    - CCACHE_DISABLE=1
     - JOBS=4
     - QT_FATAL_WARNINGS=1
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
