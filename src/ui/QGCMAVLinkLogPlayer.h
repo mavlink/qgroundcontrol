@@ -33,7 +33,9 @@ private slots:
     void _playPauseToggle(void);
     void _pause(void);
     void _setPlayheadFromSlider(int value);
+#if 0
     void _setAccelerationFromSlider(int value);
+#endif
     void _logFileStats(bool logTimestamped, int logDurationSeconds, int binaryBaudRate);
     void _playbackStarted(void);
     void _playbackPaused(void);
