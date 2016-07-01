@@ -24,18 +24,22 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(QWidget *parent) :
     // Setup buttons
     connect(_ui->selectFileButton, &QPushButton::clicked, this, &QGCMAVLinkLogPlayer::_selectLogFileForPlayback);
     connect(_ui->playButton, &QPushButton::clicked, this, &QGCMAVLinkLogPlayer::_playPauseToggle);
-    connect(_ui->speedSlider, &QSlider::valueChanged, this, &QGCMAVLinkLogPlayer::_setAccelerationFromSlider);
     connect(_ui->positionSlider, &QSlider::valueChanged, this, &QGCMAVLinkLogPlayer::_setPlayheadFromSlider);
     connect(_ui->positionSlider, &QSlider::sliderPressed, this, &QGCMAVLinkLogPlayer::_pause);
     
+#if 0
+    // Speed slider is removed from 3.0 release. Too broken to fix.
+    connect(_ui->speedSlider, &QSlider::valueChanged, this, &QGCMAVLinkLogPlayer::_setAccelerationFromSlider);
+    _ui->speedSlider->setMinimum(-100);
+    _ui->speedSlider->setMaximum(100);
+    _ui->speedSlider->setValue(0);
+#endif
+
     _enablePlaybackControls(false);
     
     _ui->positionSlider->setMinimum(0);
     _ui->positionSlider->setMaximum(100);
     
-    _ui->speedSlider->setMinimum(-100);
-    _ui->speedSlider->setMaximum(100);
-    _ui->speedSlider->setValue(0);
 }
 
 QGCMAVLinkLogPlayer::~QGCMAVLinkLogPlayer()
@@ -90,7 +94,9 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
     connect(_replayLink, &LogReplayLink::disconnected, this, &QGCMAVLinkLogPlayer::_replayLinkDisconnected);
     
     _ui->positionSlider->setValue(0);
+#if 0
     _ui->speedSlider->setValue(0);
+#endif
 }
 
 void QGCMAVLinkLogPlayer::_playbackError(void)
@@ -155,10 +161,13 @@ void QGCMAVLinkLogPlayer::_setPlayheadFromSlider(int value)
 void QGCMAVLinkLogPlayer::_enablePlaybackControls(bool enabled)
 {
     _ui->playButton->setEnabled(enabled);
+#if 0
     _ui->speedSlider->setEnabled(enabled);
+#endif
     _ui->positionSlider->setEnabled(enabled);
 }
 
+#if 0
 void QGCMAVLinkLogPlayer::_setAccelerationFromSlider(int value)
 {
     //qDebug() << value;
@@ -183,6 +192,7 @@ void QGCMAVLinkLogPlayer::_setAccelerationFromSlider(int value)
     
     _ui->speedLabel->setText(QString("Speed: %1X").arg(accelerationFactor, 5, 'f', 2, '0'));
 }
+#endif
 
 void QGCMAVLinkLogPlayer::_replayLinkDisconnected(void)
 {
