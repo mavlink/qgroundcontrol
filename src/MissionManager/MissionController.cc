@@ -17,6 +17,7 @@
 #include "SimpleMissionItem.h"
 #include "ComplexMissionItem.h"
 #include "JsonHelper.h"
+#include "ParameterLoader.h"
 
 #ifndef __mobile__
 #include "QGCFileDialog.h"
@@ -963,8 +964,9 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
         connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
 
-        if (!syncInProgress()) {
-            // We have to manually ask for the items from the Vehicle
+        if (_activeVehicle->getParameterLoader()->parametersAreReady() && !syncInProgress()) {
+            // We are switching between two previously existing vehicles. We have to manually ask for the items from the Vehicle.
+            // We don't request mission items for new vehicles since that will happen autamatically.
             getMissionItems();
         }
 
