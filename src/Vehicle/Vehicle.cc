@@ -198,7 +198,18 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_parameterLoader, &ParameterLoader::parameterListProgress, _autopilotPlugin, &AutoPilotPlugin::parameterListProgress);
 
     // Ask the vehicle for firmware version info. This must be MAV_COMP_ID_ALL since we don't know default component id yet.
-    doCommandLong(MAV_COMP_ID_ALL, MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, 1 /* request firmware version */);
+
+    mavlink_message_t       versionMsg;
+    mavlink_command_long_t  versionCmd;
+
+    versionCmd.command = MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
+    versionCmd.confirmation = 0;
+    versionCmd.param1 = 1; // Request firmware version
+    versionCmd.param2 = versionCmd.param3 = versionCmd.param4 = versionCmd.param5 = versionCmd.param6 = versionCmd.param7 = 0;
+    versionCmd.target_system = id();
+    versionCmd.target_component = MAV_COMP_ID_ALL;
+    mavlink_msg_command_long_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &versionMsg, &versionCmd);
+    sendMessageMultiple(versionMsg);
 
     _firmwarePlugin->initializeVehicle(this);
 
