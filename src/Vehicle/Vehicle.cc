@@ -1279,6 +1279,10 @@ void Vehicle::_missionManagerError(int errorCode, const QString& errorMsg)
 void Vehicle::_addNewMapTrajectoryPoint(void)
 {
     if (_mapTrajectoryHaveFirstCoordinate) {
+        // Keep three minutes of trajectory
+        if (_mapTrajectoryList.count() * _mapTrajectoryMsecsBetweenPoints > 3 * 1000 * 60) {
+            _mapTrajectoryList.removeAt(0)->deleteLater();
+        }
         _mapTrajectoryList.append(new CoordinateVector(_mapTrajectoryLastCoordinate, _coordinate, this));
     }
     _mapTrajectoryHaveFirstCoordinate = true;
