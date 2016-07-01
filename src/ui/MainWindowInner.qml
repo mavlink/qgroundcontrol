@@ -107,6 +107,7 @@ Item {
         setupViewLoader.visible     = false
         planViewLoader.visible      = false
         preferencesPanel.visible    = true
+        toolBar.checkPreferencesButton()
     }
 
     // The following are use for unit testing only

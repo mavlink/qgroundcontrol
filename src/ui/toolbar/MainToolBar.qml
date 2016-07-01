@@ -52,6 +52,10 @@ Rectangle {
 
     MainToolBarController { id: _controller }
 
+    function checkPreferencesButton() {
+        preferencesButton.checked = true
+    }
+
     function checkSetupButton() {
         setupButton.checked = true
     }
@@ -308,51 +312,29 @@ Rectangle {
     }
 
     //---------------------------------------------
-    // Logo (Preferences Button)
-    Rectangle {
-        id:                     preferencesButton
-        width:                  mainWindow.tbButtonWidth * 1.25
-        height:                 parent.height
-        anchors.top:            parent.top
-        anchors.left:           parent.left
-        color:                  "#4A2C6D"
-        Image {
-            height:                 mainWindow.tbCellHeight
-            anchors.centerIn:       parent
-            source:                 "/res/QGCLogoWhite"
-            fillMode:               Image.PreserveAspectFit
-            smooth:                 true
-            mipmap:                 true
-            antialiasing:           true
-        }
-        /* Experimenting with a white/black divider
-        Rectangle {
-            color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
-            height: parent.height
-            width:  1
-            anchors.right:  parent.right
-            anchors.top:    parent.top
-        }
-        */
-        MouseArea {
-            anchors.fill:   parent
-            onClicked:      toolBar.showPreferences()
-        }
-    }
-
-    //---------------------------------------------
     // Toolbar Row
     Row {
         id:                     viewRow
         height:                 mainWindow.tbCellHeight
         spacing:                mainWindow.tbSpacing
-        anchors.left:           preferencesButton.right
-        anchors.leftMargin:     mainWindow.tbSpacing
+        anchors.left:           parent.left
         anchors.bottomMargin:   1
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
 
         ExclusiveGroup { id: mainActionGroup }
+
+        QGCToolBarButton {
+            id:                 preferencesButton
+            width:              mainWindow.tbButtonWidth
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            exclusiveGroup:     mainActionGroup
+            source:             "/res/QGCLogoWhite"
+            logo:               true
+            text:               "Settings"
+            onClicked:          toolBar.showPreferences()
+        }
 
         QGCToolBarButton {
             id:                 setupButton
@@ -361,6 +343,7 @@ Rectangle {
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/Gears.svg"
+            text:               "Setup"
             onClicked:          toolBar.showSetupView()
         }
 
@@ -371,6 +354,7 @@ Rectangle {
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/Plan.svg"
+            text:               "Plan"
             onClicked:          toolBar.showPlanView()
         }
 
@@ -381,6 +365,7 @@ Rectangle {
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/PaperPlane.svg"
+            text:               "Fly"
             onClicked:          toolBar.showFlyView()
         }
     }
