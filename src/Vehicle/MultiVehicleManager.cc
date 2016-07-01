@@ -103,6 +103,9 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 
     _vehicles.append(vehicle);
 
+    // Send QGC heartbeat ASAP, this allows PX4 to start accepting commands
+    _sendGCSHeartbeat();
+
     emit vehicleAdded(vehicle);
 
     setActiveVehicle(vehicle);
