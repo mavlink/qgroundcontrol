@@ -312,6 +312,32 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                         metaData->convertAndValidateRaw(0, false /* validate */, enumValue, errorString);
                         metaData->addEnumInfo(tr("Disabled"), enumValue);
 
+                    } else if (elementName == "bitmask") {
+                        // doing nothing individual bits will follow anyway. May be used for sanity checking.
+
+                    } else if (elementName == "bit") {
+                        bool ok = false;
+                        unsigned char bit = xml.attributes().value("index").toString().toUInt(&ok);
+                        if (ok) {
+                            QString bitDescription = xml.readElementText();
+                            qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
+                                                             << "index:" << bit << "description:" << bitDescription;
+
+                            if (bit < 31) {
+                                QVariant bitmaskRawValue = 1 << bit;
+                                QVariant bitmaskValue;
+                                QString errorString;
+                                if (metaData->convertAndValidateRaw(bitmaskRawValue, true, bitmaskValue, errorString)) {
+                                    metaData->addBitmaskInfo(bitDescription, bitmaskValue);
+                                } else {
+                                    qCDebug(PX4ParameterMetaDataLog) << "Invalid bitmask value, name:" << metaData->name()
+                                                                     << " type:" << metaData->type() << " value:" << bitmaskValue
+                                                                     << " error:" << errorString;
+                                }
+                            } else {
+                                qCWarning(PX4ParameterMetaDataLog) << "Invalid value for bitmask, bit:" << bit;
+                            }
+                        }
                     } else {
                         qCDebug(PX4ParameterMetaDataLog) << "Unknown element in XML: " << elementName;
                     }
