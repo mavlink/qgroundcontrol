@@ -50,9 +50,11 @@ public:
         RESERVED_14       = 14,
         RESERVED_15       = 15,
         RESERVED_16       = 16,
-        RESERVED_17       = 17
+        RESERVED_17       = 17,
+        RESERVED_18       = 18,
+        MANUAL            = 19
     };
-    static const int modeCount = 18;
+    static const int modeCount = 20;
 
     APMSubMode(uint32_t mode, bool settable);
 };
