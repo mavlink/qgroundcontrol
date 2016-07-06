@@ -25,7 +25,8 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    property alias guidedModeBar: _guidedModeBar
+    property alias  guidedModeBar:  _guidedModeBar
+    property bool   gotoEnabled:    _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:               _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
@@ -444,7 +445,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 color:      _lightWidgetBorders ? qgcPal.mapWidgetBorderDark : qgcPal.mapWidgetBorderLight
                 text:       "Click in map to move vehicle"
-                visible:    _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
+                visible:    gotoEnabled
             }
 
             Row {
