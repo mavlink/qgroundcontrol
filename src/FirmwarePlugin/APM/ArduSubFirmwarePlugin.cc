@@ -32,6 +32,7 @@ APMSubMode::APMSubMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)
 {
     QMap<uint32_t,QString> enumToString;
+    enumToString.insert(MANUAL, "Manual");
     enumToString.insert(STABILIZE, "Stabilize");
     enumToString.insert(ALT_HOLD,  "Depth Hold");
 
@@ -41,6 +42,7 @@ APMSubMode::APMSubMode(uint32_t mode, bool settable) :
 ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void)
 {
     QList<APMCustomMode> supportedFlightModes;
+    supportedFlightModes << APMSubMode(APMSubMode::MANUAL ,true);
     supportedFlightModes << APMSubMode(APMSubMode::STABILIZE ,true);
     supportedFlightModes << APMSubMode(APMSubMode::ALT_HOLD  ,true);
     setSupportedModes(supportedFlightModes);
