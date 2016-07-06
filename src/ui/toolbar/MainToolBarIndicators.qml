@@ -139,12 +139,14 @@ Row {
             anchors.left:           gpsIcon.right
 
             QGCLabel {
+                anchors.horizontalCenter: hdopValue.horizontalCenter
                 visible:    activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
                 color:      qgcPal.buttonText
                 text:       activeVehicle ? activeVehicle.gps.count.valueString : ""
             }
 
             QGCLabel {
+                id:         hdopValue
                 visible:    activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
                 color:      qgcPal.buttonText
                 text:       activeVehicle ? activeVehicle.gps.hdop.value.toFixed(1) : ""
