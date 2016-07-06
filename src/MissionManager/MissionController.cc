@@ -596,7 +596,7 @@ void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionIte
     } else {
         *altDifference = 0.0;
         *azimuth = 0.0;
-        *distance = -1.0;   // Signals no values
+        *distance = 0.0;
     }
 }
 
@@ -708,7 +708,7 @@ void MissionController::_recalcAltitudeRangeBearing()
     // No values for first item
     lastCoordinateItem->setAltDifference(0.0);
     lastCoordinateItem->setAzimuth(0.0);
-    lastCoordinateItem->setDistance(-1.0);
+    lastCoordinateItem->setDistance(0.0);
 
     double minAltSeen = 0.0;
     double maxAltSeen = 0.0;
@@ -721,7 +721,7 @@ void MissionController::_recalcAltitudeRangeBearing()
 
         // Assume the worst
         item->setAzimuth(0.0);
-        item->setDistance(-1.0);
+        item->setDistance(0.0);
 
         // If we still haven't found the first coordinate item and we hit a a takeoff command link back to home
         if (firstCoordinateItem &&
