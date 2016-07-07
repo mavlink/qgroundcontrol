@@ -126,11 +126,13 @@ FlightMap {
 
         onClicked: {
             if (_activeVehicle) {
-                if (_activeVehicle.guidedMode && flightWidgets.guidedModeBar.state == "Shown") {
-                    _gotoHereCoordinate = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y))
-                    flightWidgets.guidedModeBar.confirmAction(flightWidgets.guidedModeBar.confirmGoTo)
-                } else {
+                if (flightWidgets.guidedModeBar.state != "Shown") {
                     flightWidgets.guidedModeBar.state = "Shown"
+                } else {
+                    if (flightWidgets.gotoEnabled) {
+                        _gotoHereCoordinate = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y))
+                        flightWidgets.guidedModeBar.confirmAction(flightWidgets.guidedModeBar.confirmGoTo)
+                    }
                 }
             }
         }
