@@ -243,7 +243,7 @@ public:
     Q_PROPERTY(QString              flightMode              READ flightMode             WRITE setFlightMode             NOTIFY flightModeChanged)
     Q_PROPERTY(bool                 hilMode                 READ hilMode                WRITE setHilMode                NOTIFY hilModeChanged)
     Q_PROPERTY(bool                 missingParameters       READ missingParameters                                      NOTIFY missingParametersChanged)
-    Q_PROPERTY(QVariantList         trajectoryPoints        MEMBER _mapTrajectoryPoints)
+    Q_PROPERTY(QVariantList         trajectoryPoints        READ mapTrajectoryPoints                                    NOTIFY mapTrajectoryPointsChanged)
     Q_PROPERTY(float                latitude                READ latitude                                               NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude               READ longitude                                              NOTIFY coordinateChanged)
     Q_PROPERTY(QString              currentState            READ currentState                                           NOTIFY currentStateChanged)
@@ -496,6 +496,7 @@ public:
     bool            guidedMode          () const;
     uint8_t         baseMode            () const { return _base_mode; }
     uint32_t        customMode          () const { return _custom_mode; }
+    QVariantList    mapTrajectoryPoints () const { return _mapTrajectoryPoints; }
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -559,6 +560,7 @@ signals:
     void prearmErrorChanged(const QString& prearmError);
     void commandLongAck(uint8_t compID, uint16_t command, uint8_t result);
     void soloFirmwareChanged(bool soloFirmware);
+    void mapTrajectoryPointsChanged();
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();

@@ -1309,11 +1309,12 @@ void Vehicle::_addNewMapTrajectoryPoint(void)
         _mapTrajectoryPoints.removeFirst();
     }
     _mapTrajectoryPoints.append(QVariant::fromValue(_coordinate));
+    emit mapTrajectoryPointsChanged();
 }
 
 void Vehicle::_mapTrajectoryStart(void)
 {
-    _mapTrajectoryPoints.clear();
+    clearTrajectoryPoints();
     _mapTrajectoryPoints.reserve(qRound(3 * 60 * 1000.0/_mapTrajectoryMsecsBetweenPoints));
     _mapTrajectoryTimer.start();
 }
@@ -1535,6 +1536,7 @@ void Vehicle::_announceArmedChanged(bool armed)
 void Vehicle::clearTrajectoryPoints(void)
 {
     _mapTrajectoryPoints.clear();
+    emit mapTrajectoryPointsChanged();
 }
 
 void Vehicle::setFlying(bool flying)
