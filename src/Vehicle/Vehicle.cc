@@ -521,7 +521,7 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
     mavlink_msg_extended_sys_state_decode(&message, &extendedState);
 
     switch (extendedState.landed_state) {
-        case MAV_LANDED_STATE_UNDEFINED:
+    case MAV_LANDED_STATE_UNDEFINED:
         break;
     case MAV_LANDED_STATE_ON_GROUND:
         setFlying(false);
