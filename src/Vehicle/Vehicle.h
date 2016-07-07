@@ -243,7 +243,7 @@ public:
     Q_PROPERTY(QString              flightMode              READ flightMode             WRITE setFlightMode             NOTIFY flightModeChanged)
     Q_PROPERTY(bool                 hilMode                 READ hilMode                WRITE setHilMode                NOTIFY hilModeChanged)
     Q_PROPERTY(bool                 missingParameters       READ missingParameters                                      NOTIFY missingParametersChanged)
-    Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                                       CONSTANT)
+    Q_PROPERTY(QVariantList         trajectoryPoints        MEMBER _mapTrajectoryPoints)
     Q_PROPERTY(float                latitude                READ latitude                                               NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude               READ longitude                                              NOTIFY coordinateChanged)
     Q_PROPERTY(QString              currentState            READ currentState                                           NOTIFY currentStateChanged)
@@ -452,8 +452,6 @@ public:
 
     QString prearmError(void) const { return _prearmError; }
     void setPrearmError(const QString& prearmError);
-
-    QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
 
     int  flowImageIndex() { return _flowImageIndex; }
 
@@ -732,9 +730,7 @@ private:
     int     _nextSendMessageMultipleIndex;
 
     QTimer              _mapTrajectoryTimer;
-    QmlObjectListModel  _mapTrajectoryList;
-    QGeoCoordinate      _mapTrajectoryLastCoordinate;
-    bool                _mapTrajectoryHaveFirstCoordinate;
+    QVariantList        _mapTrajectoryPoints;
     static const int    _mapTrajectoryMsecsBetweenPoints = 1000;
 
     // Toolbox references
