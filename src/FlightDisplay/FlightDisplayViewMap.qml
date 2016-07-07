@@ -59,18 +59,12 @@ FlightMap {
     }
 
     // Add trajectory points to the map
-    MapItemView {
-        model: _mainIsMap ? _activeVehicle ? _activeVehicle.trajectoryPoints : 0 : 0
-        delegate:
-            MapPolyline {
-            line.width: 3
-            line.color: "red"
-            z:          QGroundControl.zOrderMapItems - 1
-            path: [
-                object.coordinate1,
-                object.coordinate2,
-            ]
-        }
+    MapPolyline {
+        line.width: 3
+        line.color: "red"
+        z:          QGroundControl.zOrderMapItems - 1
+        path:       _mainIsMap ? _activeVehicle ? _activeVehicle.trajectoryPoints : 0 : 0
+
     }
 
     // Add the vehicles to the map

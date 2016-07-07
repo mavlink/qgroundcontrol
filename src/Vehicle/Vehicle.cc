@@ -1305,21 +1305,17 @@ void Vehicle::_missionManagerError(int errorCode, const QString& errorMsg)
 
 void Vehicle::_addNewMapTrajectoryPoint(void)
 {
-    if (_mapTrajectoryHaveFirstCoordinate) {
-        // Keep three minutes of trajectory
-        if (_mapTrajectoryList.count() * _mapTrajectoryMsecsBetweenPoints > 3 * 1000 * 60) {
-            _mapTrajectoryList.removeAt(0)->deleteLater();
-        }
-        _mapTrajectoryList.append(new CoordinateVector(_mapTrajectoryLastCoordinate, _coordinate, this));
+    if (_mapTrajectoryPoints.size() >= qRound(3 * 60 * 1000.0 / _mapTrajectoryMsecsBetweenPoints)) {
+        _mapTrajectoryPoints.removeFirst();
     }
-    _mapTrajectoryHaveFirstCoordinate = true;
-    _mapTrajectoryLastCoordinate = _coordinate;
+    _mapTrajectoryPoints.append(QVariant::fromValue(_coordinate));
+    emit mapTrajectoryPointsChanged();
 }
 
 void Vehicle::_mapTrajectoryStart(void)
 {
-    _mapTrajectoryHaveFirstCoordinate = false;
-    _mapTrajectoryList.clear();
+    clearTrajectoryPoints();
+    _mapTrajectoryPoints.reserve(qRound(3 * 60 * 1000.0/_mapTrajectoryMsecsBetweenPoints));
     _mapTrajectoryTimer.start();
 }
 
@@ -1539,7 +1535,8 @@ void Vehicle::_announceArmedChanged(bool armed)
 
 void Vehicle::clearTrajectoryPoints(void)
 {
-    _mapTrajectoryList.clearAndDeleteContents();
+    _mapTrajectoryPoints.clear();
+    emit mapTrajectoryPointsChanged();
 }
 
 void Vehicle::setFlying(bool flying)

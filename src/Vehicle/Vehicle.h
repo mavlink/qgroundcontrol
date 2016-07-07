@@ -243,7 +243,7 @@ public:
     Q_PROPERTY(QString              flightMode              READ flightMode             WRITE setFlightMode             NOTIFY flightModeChanged)
     Q_PROPERTY(bool                 hilMode                 READ hilMode                WRITE setHilMode                NOTIFY hilModeChanged)
     Q_PROPERTY(bool                 missingParameters       READ missingParameters                                      NOTIFY missingParametersChanged)
-    Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                                       CONSTANT)
+    Q_PROPERTY(QVariantList         trajectoryPoints        READ mapTrajectoryPoints                                    NOTIFY mapTrajectoryPointsChanged)
     Q_PROPERTY(float                latitude                READ latitude                                               NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude               READ longitude                                              NOTIFY coordinateChanged)
     Q_PROPERTY(QString              currentState            READ currentState                                           NOTIFY currentStateChanged)
@@ -453,8 +453,6 @@ public:
     QString prearmError(void) const { return _prearmError; }
     void setPrearmError(const QString& prearmError);
 
-    QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
-
     int  flowImageIndex() { return _flowImageIndex; }
 
     /// Requests the specified data stream from the vehicle
@@ -498,6 +496,7 @@ public:
     bool            guidedMode          () const;
     uint8_t         baseMode            () const { return _base_mode; }
     uint32_t        customMode          () const { return _custom_mode; }
+    QVariantList    mapTrajectoryPoints () const { return _mapTrajectoryPoints; }
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -561,6 +560,7 @@ signals:
     void prearmErrorChanged(const QString& prearmError);
     void commandLongAck(uint8_t compID, uint16_t command, uint8_t result);
     void soloFirmwareChanged(bool soloFirmware);
+    void mapTrajectoryPointsChanged();
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -732,9 +732,7 @@ private:
     int     _nextSendMessageMultipleIndex;
 
     QTimer              _mapTrajectoryTimer;
-    QmlObjectListModel  _mapTrajectoryList;
-    QGeoCoordinate      _mapTrajectoryLastCoordinate;
-    bool                _mapTrajectoryHaveFirstCoordinate;
+    QVariantList        _mapTrajectoryPoints;
     static const int    _mapTrajectoryMsecsBetweenPoints = 1000;
 
     // Toolbox references
