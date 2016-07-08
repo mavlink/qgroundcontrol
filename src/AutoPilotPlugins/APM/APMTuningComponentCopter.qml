@@ -275,63 +275,148 @@ QGCView {
                 }
             } // Rectangle - Basic tuning
 
-            QGCLabel {
-                id:                 autoTuneLabel
-                anchors.topMargin:  _margins
-                anchors.top:        basicTuningRect.bottom
-                text:               qsTr("AutoTune")
-                font.family:        ScreenTools.demiboldFontFamily
-            }
-
-            Rectangle {
-                id:                 autoTuneRect
+            Flow {
+                id:                 flowLayout
                 anchors.topMargin:  _margins / 2
-                anchors.left:       parent.left
-                anchors.top:        autoTuneLabel.bottom
-                width:              autoTuneColumn.x + autoTuneColumn.width + _margins
-                height:             autoTuneColumn.y + autoTuneColumn.height + _margins
-                color:              palette.windowShade
+                width:              panel.width // parent.width doesn't work here for some reason!
+                anchors.top:        basicTuningRect.bottom
+                spacing:            _margins
 
-                Column {
-                    id:                 autoTuneColumn
-                    anchors.margins:    _margins
-                    anchors.left:       parent.left
-                    anchors.top:        parent.top
-                    spacing:            _margins
+                Rectangle {
+                    height:     autoTuneLabel.height + autoTuneRect.height
+                    width:      autoTuneRect.width
+                    color:      palette.window
 
-                    Row {
-                        spacing: _margins
-
-                        QGCLabel { text: qsTr("Axes to AutoTune:") }
-                        FactBitmask { fact: _autoTuneAxes }
+                    QGCLabel {
+                        id:                 autoTuneLabel
+                        text:               qsTr("AutoTune")
+                        font.family:        ScreenTools.demiboldFontFamily
                     }
 
-                    Row {
-                        spacing:    _margins
+                    Rectangle {
+                        id:                 autoTuneRect
+                        width:              autoTuneColumn.x + autoTuneColumn.width + _margins
+                        height:             autoTuneColumn.y + autoTuneColumn.height + _margins
+                        anchors.top:        autoTuneLabel.bottom
+                        color:              palette.windowShade
 
-                        QGCLabel {
-                            anchors.baseline:   autoTuneChannelCombo.baseline
-                            text:               qsTr("Channel for AutoTune switch:")
-                        }
+                        Column {
+                            id:                 autoTuneColumn
+                            anchors.margins:    _margins
+                            anchors.left:       parent.left
+                            anchors.top:        parent.top
+                            spacing:            _margins
 
-                        QGCComboBox {
-                            id:             autoTuneChannelCombo
-                            width:          ScreenTools.defaultFontPixelWidth * 14
-                            model:          [qsTr("None"), qsTr("Channel 7"), qsTr("Channel 8"), qsTr("Channel 9"), qsTr("Channel 10"), qsTr("Channel 11"), qsTr("Channel 12") ]
-                            currentIndex:   _autoTuneSwitchChannelIndex
+                            Row {
+                                spacing: _margins
 
-                            onActivated: {
-                                var channel = index
+                                QGCLabel { text: qsTr("Axes to AutoTune:") }
+                                FactBitmask { fact: _autoTuneAxes }
+                            }
 
-                                if (channel > 0) {
-                                    channel += 6
+                            Row {
+                                spacing:    _margins
+
+                                QGCLabel {
+                                    anchors.baseline:   autoTuneChannelCombo.baseline
+                                    text:               qsTr("Channel for AutoTune switch:")
                                 }
-                                setChannelAutoTuneOption(channel)
+
+                                QGCComboBox {
+                                    id:             autoTuneChannelCombo
+                                    width:          ScreenTools.defaultFontPixelWidth * 14
+                                    model:          [qsTr("None"), qsTr("Channel 7"), qsTr("Channel 8"), qsTr("Channel 9"), qsTr("Channel 10"), qsTr("Channel 11"), qsTr("Channel 12") ]
+                                    currentIndex:   _autoTuneSwitchChannelIndex
+
+                                    onActivated: {
+                                        var channel = index
+
+                                        if (channel > 0) {
+                                            channel += 6
+                                        }
+                                        setChannelAutoTuneOption(channel)
+                                    }
+                                }
                             }
                         }
+                    } // Rectangle - AutoTune
+                } // Rectangle - AutoTuneWrap
+
+                Rectangle {
+                    height:     inFlightTuneLabel.height + channel6TuningOption.height
+                    width:      channel6TuningOption.width
+                    color:      palette.window
+
+                    QGCLabel {
+                        id:                 inFlightTuneLabel
+                        text:               qsTr("In Flight Tuning")
+                        font.family:        ScreenTools.demiboldFontFamily
                     }
-                }
-            } // Rectangle - AutoTune
+
+                    Rectangle {
+                        id:             channel6TuningOption
+                        width:          channel6TuningOptColumn.width + (_margins * 2)
+                        height:         channel6TuningOptColumn.height + ScreenTools.defaultFontPixelHeight
+                        anchors.top:    inFlightTuneLabel.bottom
+                        color:          qgcPal.windowShade
+
+                        Column {
+                            id:                 channel6TuningOptColumn
+                            anchors.margins:    ScreenTools.defaultFontPixelWidth
+                            anchors.left:       parent.left
+                            anchors.top:        parent.top
+                            spacing:            ScreenTools.defaultFontPixelHeight
+
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                property Fact nullFact: Fact { }
+
+                                QGCLabel {
+                                    anchors.baseline:   optCombo.baseline
+                                    text:               qsTr("Channel Option 6 (Tuning):")
+                                    //color:            controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
+                                }
+
+                                FactComboBox {
+                                    id:         optCombo
+                                    width:      ScreenTools.defaultFontPixelWidth * 15
+                                    fact:       controller.getParameterFact(-1, "TUNE")
+                                    indexModel: false
+                                }
+                            }
+
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                property Fact nullFact: Fact { }
+
+                                QGCLabel {
+                                    anchors.baseline:   tuneMinField.baseline
+                                    text:               qsTr("Min:")
+                                    //color:            controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
+                                }
+
+                                FactTextField {
+                                    id:                 tuneMinField
+                                    validator:          DoubleValidator {bottom: 0; top: 32767;}
+                                    fact:               controller.getParameterFact(-1, "TUNE_LOW")
+                                }
+
+                                QGCLabel {
+                                    anchors.baseline:   tuneMaxField.baseline
+                                    text:               qsTr("Max:")
+                                    //color:            controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
+                                }
+
+                                FactTextField {
+                                    id:                 tuneMaxField
+                                    validator:          DoubleValidator {bottom: 0; top: 32767;}
+                                    fact:               controller.getParameterFact(-1, "TUNE_HIGH")
+                                }
+                            }
+                        } // Column - Channel 6 Tuning option
+                    } // Rectangle - Channel 6 Tuning options
+                } // Rectangle - Channel 6 Tuning options wrap
+            } // Flow - Tune
         } // QGCFlickable
     } // QGCViewPanel
 } // QGCView
