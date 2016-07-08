@@ -19,6 +19,10 @@ matrix:
           dist: trusty
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required
+        - os: linux
+          dist: trusty
+          env: SPEC=linux-g++-64 CONFIG=debug
+          sudo: required
         - os: android
           language: android
           env: SPEC=android-g++ CONFIG=installer
