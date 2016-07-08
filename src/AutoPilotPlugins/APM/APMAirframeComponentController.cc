@@ -107,6 +107,7 @@ void APMAirframeComponentController::_loadParametersFromDownloadFile(const QStri
         }
     }
     qgcApp()->restoreOverrideCursor();
+    _autopilot->refreshAllParameters();
 }
 
 APMAirframeType::APMAirframeType(const QString& name, const QString& imageResource, int type, QObject* parent) :
