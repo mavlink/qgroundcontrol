@@ -129,19 +129,18 @@ LogDownloadController::_processDownload()
 void
 LogDownloadController::_setActiveVehicle(Vehicle* vehicle)
 {
-    if((_uas && vehicle && _uas == vehicle->uas()) || !vehicle ) {
-        return;
-    }
-    _vehicle = vehicle;
-    if (_uas) {
+    if(_uas) {
         _logEntriesModel.clear();
         disconnect(_uas, &UASInterface::logEntry, this, &LogDownloadController::_logEntry);
         disconnect(_uas, &UASInterface::logData,  this, &LogDownloadController::_logData);
         _uas = NULL;
     }
-    _uas = vehicle->uas();
-    connect(_uas, &UASInterface::logEntry, this, &LogDownloadController::_logEntry);
-    connect(_uas, &UASInterface::logData,  this, &LogDownloadController::_logData);
+    _vehicle = vehicle;
+    if(_vehicle) {
+        _uas = vehicle->uas();
+        connect(_uas, &UASInterface::logEntry, this, &LogDownloadController::_logEntry);
+        connect(_uas, &UASInterface::logData,  this, &LogDownloadController::_logData);
+    }
 }
 
 //----------------------------------------------------------------------------------------
