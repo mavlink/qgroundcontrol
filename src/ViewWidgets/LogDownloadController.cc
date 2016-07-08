@@ -675,6 +675,7 @@ void
 QGCLogModel::append(QGCLogEntry* object)
 {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
+    QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
     _logEntries.append(object);
     endInsertRows();
     emit countChanged();
@@ -688,7 +689,7 @@ QGCLogModel::clear(void)
         beginRemoveRows(QModelIndex(), 0, _logEntries.count());
         while (_logEntries.count()) {
             QGCLogEntry* entry = _logEntries.last();
-            if(entry) delete entry;
+            if(entry) entry->deleteLater();
             _logEntries.removeLast();
         }
         endRemoveRows();
