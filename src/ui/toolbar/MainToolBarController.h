@@ -90,6 +90,7 @@ private:
 
     QStringList     _toolbarMessageQueue;
     QMutex          _toolbarMessageQueueMutex;
+    QList<QMetaObject::Connection> _vehicleConnections;
 };
 
 #endif // MainToolBarController_H

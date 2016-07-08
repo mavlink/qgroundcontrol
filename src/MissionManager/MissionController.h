@@ -123,6 +123,7 @@ private:
     bool                _firstItemsFromVehicle;
     bool                _missionItemsRequested;
     bool                _queuedSend;
+    QList<QMetaObject::Connection> _vehicleConnections;
 
     static const char*  _settingsGroup;
     static const char*  _jsonVersionKey;

@@ -169,6 +169,7 @@ private:
     int                 _retries;
     int                 _apmOneBased;
     QString             _downloadPath;
+    QList<QMetaObject::Connection> _vehicleConnections;
 };
 
 #endif
