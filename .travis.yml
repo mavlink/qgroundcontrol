@@ -76,7 +76,7 @@ before_install:
     fi
 
   # setup ccache
-  - ccache -M 500MB && ccache -z
+  #- ccache -M 500MB && ccache -z
 
   # compile threads
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
@@ -167,7 +167,7 @@ script:
     else
         xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]});
     fi
-  - ccache -s
+  #- ccache -s
 
   # unit tests linux/osx
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
