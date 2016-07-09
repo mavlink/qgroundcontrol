@@ -19,7 +19,7 @@ message(Qt version $$[QT_VERSION])
 
 include(QGCCommon.pri)
 
-TARGET   = qgroundcontrol
+TARGET   = QGroundControl
 TEMPLATE = app
 
 DebugBuild {
@@ -140,7 +140,7 @@ RC_ICONS = resources/icons/qgroundcontrol.ico
 QMAKE_TARGET_COMPANY = "qgroundcontrol.org"
 QMAKE_TARGET_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
 QMAKE_TARGET_COPYRIGHT = "Copyright (C) 2016 QGroundControl Development Team. All rights reserved."
-QMAKE_TARGET_PRODUCT = "qgroundcontrol"
+QMAKE_TARGET_PRODUCT = "QGroundControl"
 
 #
 # Build-specific settings

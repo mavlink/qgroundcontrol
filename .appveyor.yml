@@ -66,6 +66,7 @@ artifacts:
     name: symbols
 
 deploy:
+# deploy continuous builds to s3
   - provider: S3
     access_key_id:
       secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
@@ -77,6 +78,7 @@ deploy:
     artifact: qgcinstaller
     on:
       CONFIG: installer
+# deploy daily build symbols to s3
   - provider: S3
     access_key_id:
       secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
@@ -89,6 +91,7 @@ deploy:
     on:
       CONFIG: installer
       appveyor_repo_tag: false
+# deploy release symbols to s3
   - provider: S3
     access_key_id:
       secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
@@ -101,12 +104,39 @@ deploy:
     on:
       CONFIG: installer
       appveyor_repo_tag: true
+# deploy tagged releases to Github releases
   - provider: GitHub
     auth_token:
       secure: dzWLqd0eTKjrAWC5LgqVnwLemmrNdddGA2ZZn/OthAP37mwCLkP2C1zil7ivmEE8
     artifact: qgcinstaller
     draft: false
     prerelease: false
+    on:
+      CONFIG: installer
+      appveyor_repo_tag: true
+# deploy tagged releases to s3 version folder
+  - provider: S3
+    access_key_id:
+      secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
+    secret_access_key:
+      secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
+    bucket: qgroundcontrol
+    set_public: true
+    folder: $(APPVEYOR_REPO_TAG)
+    artifact: qgcinstaller
+    on:
+      CONFIG: installer
+      appveyor_repo_tag: true
+# deploy tagged releases to s3 latest folder
+  - provider: S3
+    access_key_id:
+      secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
+    secret_access_key:
+      secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
+    bucket: qgroundcontrol
+    set_public: true
+    folder: latest
+    artifact: qgcinstaller
     on:
       CONFIG: installer
       appveyor_repo_tag: true
