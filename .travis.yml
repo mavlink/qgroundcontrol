@@ -172,10 +172,10 @@ script:
   # unit tests linux/osx
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
         mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
-        debug/qgroundcontrol --unittest;
+        ./debug/QGroundControl --unittest;
     elif [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
         mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/ &&
-        debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest;
+        ./debug/qgroundcontrol.app/Contents/MacOS/QGroundControl --unittest;
     fi
 
 after_success:
@@ -192,7 +192,7 @@ after_success:
         pip install --user google-api-python-client PyOpenSSL &&
         echo "Google Play Track:" ${GOOGLE_PLAY_TRACK} &&
         openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
-        tools/google_play_upload.py ${GOOGLE_PLAY_TRACK} org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.apk
+        tools/google_play_upload.py ${GOOGLE_PLAY_TRACK} org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/QGroundControl.apk
         ;
     fi
 
@@ -204,7 +204,7 @@ before_deploy:
     fi
 
 deploy:
-  # deploy installers to s3 version folder if on a branch
+  # deploy installers to s3 builds/ if on a branch
   - provider: s3
     access_key_id: AKIAIVORNALE7NHD3T6Q
     secret_access_key:
@@ -219,7 +219,7 @@ deploy:
       all_branches: true
       condition: $CONFIG = installer
 
-  # deploy installers to s3 latest if on a tag
+  # deploy installers to s3 latest/ if on a tag
   - provider: s3
     access_key_id: AKIAIVORNALE7NHD3T6Q
     secret_access_key:
@@ -227,6 +227,21 @@ deploy:
     bucket: qgroundcontrol
     local_dir: ${SHADOW_BUILD_DIR}/release/package
     upload-dir: latest
+    acl: public_read
+    region: us-west-2
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: $CONFIG = installer
+
+  # deploy tagged installers to s3 version folder
+  - provider: s3
+    access_key_id: AKIAIVORNALE7NHD3T6Q
+    secret_access_key:
+      secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
+    bucket: qgroundcontrol
+    local_dir: ${SHADOW_BUILD_DIR}/release/package
+    upload-dir: builds/${TRAVIS_BRANCH}
     acl: public_read
     region: us-west-2
     skip_cleanup: true
