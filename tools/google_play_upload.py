@@ -33,7 +33,7 @@ argparser.add_argument('release_track',
 argparser.add_argument('package_name', 
                        help='The package name. Example: com.android.sample')
 argparser.add_argument('apk_file',
-                       default='qgroundcontrol.apk',
+                       default='QGroundControl.apk',
                        help='The path to the APK file to upload.')
 
 
