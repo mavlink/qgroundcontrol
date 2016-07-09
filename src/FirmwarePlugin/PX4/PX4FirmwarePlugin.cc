@@ -199,7 +199,7 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
     QList<MAV_CMD> list;
 
     list << MAV_CMD_NAV_WAYPOINT
-         << MAV_CMD_NAV_LOITER_UNLIM << MAV_CMD_NAV_LOITER_TIME
+         << MAV_CMD_NAV_LOITER_UNLIM << MAV_CMD_NAV_LOITER_TIME << MAV_CMD_NAV_LOITER_TO_ALT
          << MAV_CMD_NAV_LAND << MAV_CMD_NAV_TAKEOFF
          << MAV_CMD_DO_JUMP
          << MAV_CMD_DO_VTOL_TRANSITION << MAV_CMD_NAV_VTOL_TAKEOFF << MAV_CMD_NAV_VTOL_LAND
@@ -207,10 +207,9 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
          << MAV_CMD_DO_SET_CAM_TRIGG_DIST
          << MAV_CMD_DO_SET_SERVO
          << MAV_CMD_DO_CHANGE_SPEED
-         << MAV_CMD_DO_SET_ROI
+         << MAV_CMD_DO_LAND_START
          << MAV_CMD_DO_MOUNT_CONFIGURE
-         << MAV_CMD_DO_MOUNT_CONTROL
-         << MAV_CMD_NAV_PATHPLANNING;
+         << MAV_CMD_DO_MOUNT_CONTROL;
 
     return list;
 }
