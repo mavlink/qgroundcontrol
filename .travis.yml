@@ -204,7 +204,7 @@ before_deploy:
     fi
 
 deploy:
-  # upload installers to s3 if on a branch
+  # deploy installers to s3 version folder if on a branch
   - provider: s3
     access_key_id: AKIAIVORNALE7NHD3T6Q
     secret_access_key:
@@ -217,6 +217,21 @@ deploy:
     skip_cleanup: true
     on:
       all_branches: true
+      condition: $CONFIG = installer
+
+  # deploy installers to s3 latest if on a tag
+  - provider: s3
+    access_key_id: AKIAIVORNALE7NHD3T6Q
+    secret_access_key:
+      secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
+    bucket: qgroundcontrol
+    local_dir: ${SHADOW_BUILD_DIR}/release/package
+    upload-dir: latest
+    acl: public_read
+    region: us-west-2
+    skip_cleanup: true
+    on:
+      tags: true
       condition: $CONFIG = installer
 
   # deploy installers to Github releases if on a tag
