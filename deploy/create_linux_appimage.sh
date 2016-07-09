@@ -14,8 +14,8 @@ if [ ! -f ${QGC_SRC}/qgroundcontrol.pro ]; then
 fi
 
 QGC_RELEASE_DIR=$2
-if [ ! -f ${QGC_RELEASE_DIR}/qgroundcontrol ]; then
-	echo 'please specify path to qgroundcontrol release as the 2nd argument'
+if [ ! -f ${QGC_RELEASE_DIR}/QGroundControl ]; then
+	echo 'please specify path to QGroundControl release as the 2nd argument'
 	exit 1
 fi
 
