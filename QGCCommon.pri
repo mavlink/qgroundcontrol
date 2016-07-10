@@ -100,27 +100,38 @@ MobileBuild {
 
 exists ($$PWD/.git) {
     GIT_DESCRIBE = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
-    GIT_HASH     = $$system(git rev-parse HEAD)
+    GIT_BRANCH   = $$system(git --git-dir $$PWD/.git --work-tree $$PWD rev-parse --abbrev-ref HEAD)
+    GIT_HASH     = $$system(git --git-dir $$PWD/.git --work-tree $$PWD rev-parse --short HEAD)
+    GIT_TIME     = $$system(git --git-dir $$PWD/.git --work-tree $$PWD show --oneline --format=\"%ci\" -s HEAD)
+
+    # determine if we're on a tag matching vX.Y.Z (stable release)
+    GIT_TAG      = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --exact-match --tags HEAD)
+    contains(GIT_TAG, v[0-9].[0-9].[0-9]) {
+        # release version "vX.Y.Z"
+        GIT_VERSION = $${GIT_DESCRIBE}
+    } else {
+        # development version "Development branch:sha date"
+        GIT_VERSION = "Development $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME}"
+    }
+
     VERSION      = $$replace(GIT_DESCRIBE, "v", "")
     VERSION      = $$replace(VERSION, "-", ".")
     VERSION      = $$section(VERSION, ".", 0, 3)
     MacBuild {
         MAC_VERSION  = $$section(VERSION, ".", 0, 2)
         MAC_BUILD    = $$section(VERSION, ".", 3, 3)
-        message(QGroundControl version $${MAC_VERSION} build $${MAC_BUILD} describe $${GIT_DESCRIBE} hash $${GIT_HASH})
+        message(QGroundControl version $${MAC_VERSION} build $${MAC_BUILD} describe $${GIT_VERSION})
     } else {
-        message(QGroundControl version $${VERSION} describe $${GIT_DESCRIBE} hash $${GIT_HASH})
+        message(QGroundControl version $${VERSION} describe $${GIT_VERSION})
     }
 } else {
-    GIT_DESCRIBE    = None
-    GIT_HASH        = None
+    GIT_VERSION     = None
     VERSION         = 0.0.0   # Marker to indicate out-of-tree build
     MAC_VERSION     = 0.0.0
     MAC_BUILD       = 0
 }
 
-DEFINES += GIT_TAG=\"\\\"$$GIT_DESCRIBE\\\"\"
-DEFINES += GIT_HASH=\"\\\"$$GIT_HASH\\\"\"
+DEFINES += GIT_VERSION=\"\\\"$$GIT_VERSION\\\"\"
 DEFINES += EIGEN_MPL2_ONLY
 
 # Installer configuration
