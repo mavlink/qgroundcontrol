@@ -29,7 +29,7 @@ installer {
         QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
         QMAKE_POST_LINK += && cd $${DESTDIR} && $$dirname(QMAKE_QMAKE)/macdeployqt qgroundcontrol.app -appstore-compliant -verbose=2 -qmldir=$${BASEDIR}/src
         QMAKE_POST_LINK += && cd $${OUT_PWD}
-        QMAKE_POST_LINK += && hdiutil create -verbose -stretch 1g -layout SPUD -srcfolder $${DESTDIR}/qgroundcontrol.app -volname QGroundControl $${DESTDIR}/package/qgroundcontrol.dmg
+        QMAKE_POST_LINK += && hdiutil create -verbose -stretch 1g -layout SPUD -srcfolder $${DESTDIR}/qgroundcontrol.app -volname QGroundControl $${DESTDIR}/package/QGroundControl.dmg
     }
     WindowsBuild {
         # The pdb moving command are commented out for now since we are including the .pdb in the installer. This makes it much
@@ -44,13 +44,13 @@ installer {
     LinuxBuild {
         #-- TODO: This uses hardcoded paths. It should use $${DESTDIR}
         QMAKE_POST_LINK += && mkdir -p release/package
-        QMAKE_POST_LINK += && tar -cjf release/package/qgroundcontrol.tar.bz2 release --exclude='package' --transform 's/release/qgroundcontrol/'
+        QMAKE_POST_LINK += && tar -cjf release/package/QGroundControl.tar.bz2 release --exclude='package' --transform 's/release/qgroundcontrol/'
     }
     AndroidBuild {
         #-- TODO: This uses hardcoded paths. It should use $${DESTDIR}
         QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
         QMAKE_POST_LINK += && make install INSTALL_ROOT=$${DESTDIR}/android-build/
-        QMAKE_POST_LINK += && androiddeployqt --input android-libqgroundcontrol.so-deployment-settings.json --output $${DESTDIR}/android-build --deployment bundled --gradle --sign $${BASEDIR}/android/android_release.keystore dagar --storepass $$(ANDROID_STOREPASS)
-        QMAKE_POST_LINK += && cp $${DESTDIR}/android-build/build/outputs/apk/android-build-release-signed.apk $${DESTDIR}/package/qgroundcontrol.apk
+        QMAKE_POST_LINK += && androiddeployqt --input android-libQGroundControl.so-deployment-settings.json --output $${DESTDIR}/android-build --deployment bundled --gradle --sign $${BASEDIR}/android/android_release.keystore dagar --storepass $$(ANDROID_STOREPASS)
+        QMAKE_POST_LINK += && cp $${DESTDIR}/android-build/build/outputs/apk/android-build-release-signed.apk $${DESTDIR}/package/QGroundControl.apk
     }
 }
