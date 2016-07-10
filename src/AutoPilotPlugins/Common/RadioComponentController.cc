@@ -403,8 +403,6 @@ void RadioComponentController::_inputStickDetect(enum rcCalFunctions function, i
         if (_stickSettleComplete(value)) {
             ChannelInfo* info = &_rgChannelInfo[channel];
             
-            qCDebug(RadioComponentControllerLog) << "_inputStickDetect settle complete, function:channel:value" << function << channel << value;
-            
             // Stick detection is complete. Stick should be at max position.
             // Map the channel to the function
             _rgFunctionChannelMapping[function] = channel;
@@ -413,6 +411,8 @@ void RadioComponentController::_inputStickDetect(enum rcCalFunctions function, i
             // Channel should be at max value, if it is below initial set point the the channel is reversed.
             info->reversed = value < _rcValueSave[channel];
             
+            qCDebug(RadioComponentControllerLog) << "_inputStickDetect settle complete, function:channel:value:reversed" << function << channel << value << info->reversed;
+
             if (info->reversed) {
                 _rgChannelInfo[channel].rcMin = value;
             } else {
@@ -885,9 +885,9 @@ void RadioComponentController::_stopCalibration(void)
 /// @brief Saves the current channel values, so that we can detect when the use moves an input.
 void RadioComponentController::_rcCalSaveCurrentValues(void)
 {
-	qCDebug(RadioComponentControllerLog) << "_rcCalSaveCurrentValues";
     for (int i = 0; i < _chanMax(); i++) {
         _rcValueSave[i] = _rcRawValue[i];
+        qCDebug(RadioComponentControllerLog) << "_rcCalSaveCurrentValues channel:value" << i << _rcValueSave[i];
     }
 }
 
