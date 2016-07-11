@@ -69,6 +69,12 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,       PX4FirmwarePlugin::takeoffFlightMode,       false,  true,   true },
 };
 
+PX4FirmwarePlugin::PX4FirmwarePlugin(void)
+    : _versionNotified(false)
+{
+
+}
+
 QList<VehicleComponent*> PX4FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
 {
     Q_UNUSED(vehicle);
@@ -364,4 +370,52 @@ bool PX4FirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
     // Not supported by generic vehicle
     return (vehicle->flightMode() == holdFlightMode || vehicle->flightMode() == takeoffFlightMode
             || vehicle->flightMode() == landingFlightMode);
+}
+
+bool PX4FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
+{
+    //-- Don't process messages to/from UDP Bridge. It doesn't suffer from these issues
+    if (message->compid == MAV_COMP_ID_UDP_BRIDGE) {
+        return true;
+    }
+
+    switch (message->msgid) {
+    case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
+        _handleAutopilotVersion(vehicle, message);
+        break;
+    }
+
+    return true;
+}
+
+void PX4FirmwarePlugin::_handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message)
+{
+    Q_UNUSED(vehicle);
+
+    if (!_versionNotified) {
+        bool notifyUser = false;
+        int supportedMajorVersion = 1;
+        int supportedMinorVersion = 4;
+        int supportedPatchVersion = 1;
+
+        mavlink_autopilot_version_t version;
+        mavlink_msg_autopilot_version_decode(message, &version);
+
+        if (version.flight_sw_version != 0) {
+            int majorVersion, minorVersion, patchVersion;
+
+            majorVersion = (version.flight_sw_version >> (8*3)) & 0xFF;
+            minorVersion = (version.flight_sw_version >> (8*2)) & 0xFF;
+            patchVersion = (version.flight_sw_version >> (8*1)) & 0xFF;
+
+            notifyUser = majorVersion < supportedMajorVersion || minorVersion < supportedMinorVersion || patchVersion < supportedPatchVersion;
+        } else {
+            notifyUser = true;
+        }
+
+        if (notifyUser) {
+            _versionNotified = true;
+            qgcApp()->showMessage(QString("QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.").arg(supportedMajorVersion).arg(supportedMinorVersion).arg(supportedPatchVersion));
+        }
+    }
 }
