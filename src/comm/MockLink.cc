@@ -794,24 +794,34 @@ void MockLink::_respondWithAutopilotVersion(void)
 {
     mavlink_message_t msg;
 
-    uint8_t customVersion[8];
-    memset(customVersion, 0, sizeof(customVersion));
+    uint8_t customVersion[8] = { };
+    uint32_t flightVersion = 0;
+    if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        flightVersion |= 3 << (8*3);
+        flightVersion |= 3 << (8*2);
+        flightVersion |= 0 << (8*1);
+        flightVersion |= FIRMWARE_VERSION_TYPE_DEV << (8*0);
+    } else if (_firmwareType == MAV_AUTOPILOT_PX4) {
+        flightVersion |= 1 << (8*3);
+        flightVersion |= 4 << (8*2);
+        flightVersion |= 1 << (8*1);
+        flightVersion |= FIRMWARE_VERSION_TYPE_DEV << (8*0);
+    }
 
-    // Only flight_sw_version is supported a this point
     mavlink_msg_autopilot_version_pack(_vehicleSystemId,
                                        _vehicleComponentId,
                                        &msg,
-                                       0,                                           // capabilities,
-                                       (1 << (8*3)) | FIRMWARE_VERSION_TYPE_DEV,    // flight_sw_version,
-                                       0,                                           // middleware_sw_version,
-                                       0,                                           // os_sw_version,
-                                       0,                                           // board_version,
-                                       (uint8_t *)&customVersion,                   // flight_custom_version,
-                                       (uint8_t *)&customVersion,                   // middleware_custom_version,
-                                       (uint8_t *)&customVersion,                   // os_custom_version,
-                                       0,                                           // vendor_id,
-                                       0,                                           // product_id,
-                                       0);                                          // uid
+                                       0,                               // capabilities,
+                                       flightVersion,                   // flight_sw_version,
+                                       0,                               // middleware_sw_version,
+                                       0,                               // os_sw_version,
+                                       0,                               // board_version,
+                                       (uint8_t *)&customVersion,       // flight_custom_version,
+                                       (uint8_t *)&customVersion,       // middleware_custom_version,
+                                       (uint8_t *)&customVersion,       // os_custom_version,
+                                       0,                               // vendor_id,
+                                       0,                               // product_id,
+                                       0);                              // uid
     respondWithMavlinkMessage(msg);
 }
 
