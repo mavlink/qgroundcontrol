@@ -22,16 +22,17 @@
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
 ///     @author Don Gagne <don@thegagnes.com>
 
-PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
-    AutoPilotPlugin(vehicle, parent),
-    _airframeComponent(NULL),
-    _radioComponent(NULL),
-    _esp8266Component(NULL),
-    _flightModesComponent(NULL),
-    _sensorsComponent(NULL),
-    _safetyComponent(NULL),
-    _powerComponent(NULL),
-    _incorrectParameterVersion(false)
+PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
+    : AutoPilotPlugin(vehicle, parent)
+    , _airframeComponent(NULL)
+    , _radioComponent(NULL)
+    , _esp8266Component(NULL)
+    , _flightModesComponent(NULL)
+    , _sensorsComponent(NULL)
+    , _safetyComponent(NULL)
+    , _powerComponent(NULL)
+    , _motorComponent(NULL)
+    , _incorrectParameterVersion(false)
 {
     Q_ASSERT(vehicle);
 
@@ -73,6 +74,13 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _powerComponent = new PowerComponent(_vehicle, this);
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
+
+#if 0
+            // Coming soon
+            _motorComponent = new MotorComponent(_vehicle, this);
+            _motorComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_motorComponent));
+#endif
 
             _safetyComponent = new SafetyComponent(_vehicle, this);
             _safetyComponent->setupTriggerSignals();

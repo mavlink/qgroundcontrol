@@ -13,6 +13,8 @@ MissionItemEditor       1.0 MissionItemEditor.qml
 MissionItemIndexLabel   1.0 MissionItemIndexLabel.qml
 MissionItemStatus       1.0 MissionItemStatus.qml
 ModeSwitchDisplay       1.0 ModeSwitchDisplay.qml
+MultiRotorMotorDisplay  1.0 MultiRotorMotorDisplay.qml
+MultiRotorMotorDisplayLegend  1.0 MultiRotorMotorDisplayLegend.qml
 ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
 RCChannelMonitor        1.0 RCChannelMonitor.qml
@@ -26,6 +28,7 @@ QGCMobileFileDialog     1.0 QGCMobileFileDialog.qml
 QGCMovableItem          1.0 QGCMovableItem.qml
 QGCPipable              1.0 QGCPipable.qml
 QGCRadioButton          1.0 QGCRadioButton.qml
+QGCSlider               1.0 QGCSlider.qml
 QGCTextField            1.0 QGCTextField.qml
 QGCToolBarButton        1.0 QGCToolBarButton.qml
 QGCView                 1.0 QGCView.qml
@@ -33,6 +36,7 @@ QGCViewDialog           1.0 QGCViewDialog.qml
 QGCViewMessage          1.0 QGCViewMessage.qml
 QGCViewPanel            1.0 QGCViewPanel.qml
 RoundButton             1.0 RoundButton.qml
+SetupPage               1.0 SetupPage.qml
 SignalStrength          1.0 SignalStrength.qml
 SliderSwitch            1.0 SliderSwitch.qml
 SubMenuButton           1.0 SubMenuButton.qml

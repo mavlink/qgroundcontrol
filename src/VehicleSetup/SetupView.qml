@@ -97,6 +97,7 @@ Rectangle {
                 _messagePanelText = vehicleComponent.prerequisiteSetup + " setup must be completed prior to " + vehicleComponent.name + " setup."
                 panelLoader.sourceComponent = messagePanelComponent
             } else {
+                panelLoader.vehicleComponent = vehicleComponent
                 panelLoader.source = vehicleComponent.setupSource
                 for(var i = 0; i < componentRepeater.count; i++) {
                     var obj = componentRepeater.itemAt(i);
@@ -324,5 +325,7 @@ Rectangle {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
+
+        property var vehicleComponent
     }
 }
