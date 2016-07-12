@@ -916,6 +916,37 @@ void Vehicle::_updateNavigationControllerData(UASInterface *uas, float, float, f
     }
 }
 
+int Vehicle::motorCount(void)
+{
+    switch (_vehicleType) {
+    case MAV_TYPE_HELICOPTER:
+        return 1;
+    case MAV_TYPE_VTOL_DUOROTOR:
+        return 2;
+    case MAV_TYPE_TRICOPTER:
+        return 3;
+    case MAV_TYPE_QUADROTOR:
+    case MAV_TYPE_VTOL_QUADROTOR:
+        return 4;
+    case MAV_TYPE_HEXAROTOR:
+        return 6;
+    case MAV_TYPE_OCTOROTOR:
+        return 8;
+    default:
+        return -1;
+    }
+}
+
+bool Vehicle::coaxialMotors(void)
+{
+    return _firmwarePlugin->multiRotorCoaxialMotors(this);
+}
+
+bool Vehicle::xConfigMotors(void)
+{
+    return _firmwarePlugin->multiRotorXConfig(this);
+}
+
 /*
  * Internal
  */
@@ -1736,6 +1767,11 @@ void Vehicle::setSoloFirmware(bool soloFirmware)
         _soloFirmware = soloFirmware;
         emit soloFirmwareChanged(soloFirmware);
     }
+}
+
+void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
+{
+    doCommandLong(defaultComponentId(), MAV_CMD_DO_MOTOR_TEST, motor, MOTOR_TEST_THROTTLE_PERCENT, percent, timeoutSecs);
 }
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";

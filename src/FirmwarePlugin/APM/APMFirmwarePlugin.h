@@ -99,6 +99,8 @@ protected:
     APMFirmwarePlugin(void);
     void setSupportedModes(QList<APMCustomMode> supportedModes);
 
+    bool _coaxialMotors;
+
 private slots:
     void _artooSocketError(QAbstractSocket::SocketError socketError);
     

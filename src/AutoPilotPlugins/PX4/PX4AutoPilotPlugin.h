@@ -21,6 +21,7 @@
 #include "SafetyComponent.h"
 #include "CameraComponent.h"
 #include "PowerComponent.h"
+#include "MotorComponent.h"
 #include "PX4TuningComponent.h"
 #include "Vehicle.h"
 
@@ -50,6 +51,7 @@ public:
     SafetyComponent*        safetyComponent(void)       { return _safetyComponent; }
     CameraComponent*        cameraComponent(void)       { return _cameraComponent; }
     PowerComponent*         powerComponent(void)        { return _powerComponent; }
+    MotorComponent*         motorComponent(void)        { return _motorComponent; }
     PX4TuningComponent*     tuningComponent(void)       { return _tuningComponent; }
 
 public slots:
@@ -67,6 +69,7 @@ private:
     SafetyComponent*        _safetyComponent;
     CameraComponent*        _cameraComponent;
     PowerComponent*         _powerComponent;
+    MotorComponent*         _motorComponent;
     PX4TuningComponent*     _tuningComponent;
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
 };

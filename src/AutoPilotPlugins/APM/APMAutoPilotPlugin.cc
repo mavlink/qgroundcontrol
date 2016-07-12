@@ -25,6 +25,7 @@
 #include "APMTuningComponent.h"
 #include "APMSensorsComponent.h"
 #include "APMPowerComponent.h"
+#include "MotorComponent.h"
 #include "APMCameraComponent.h"
 #include "ESP8266Component.h"
 
@@ -36,6 +37,7 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _cameraComponent(NULL)
     , _flightModesComponent(NULL)
     , _powerComponent(NULL)
+    , _motorComponent(NULL)
     , _radioComponent(NULL)
     , _safetyComponent(NULL)
     , _sensorsComponent(NULL)
@@ -76,6 +78,12 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _powerComponent = new APMPowerComponent(_vehicle, this);
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
+
+            if (_vehicle->multiRotor() || _vehicle->vtol()) {
+                _motorComponent = new MotorComponent(_vehicle, this);
+                _motorComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_motorComponent));
+            }
 
             _safetyComponent = new APMSafetyComponent(_vehicle, this);
             _safetyComponent->setupTriggerSignals();

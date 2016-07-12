@@ -122,7 +122,6 @@ APMCustomMode::APMCustomMode(uint32_t mode, bool settable) :
 {
 }
 
-
 void APMCustomMode::setEnumToStringMapping(const QMap<uint32_t, QString>& enumToString)
 {
     _enumToString = enumToString;
@@ -138,8 +137,10 @@ QString APMCustomMode::modeString() const
 }
 
 APMFirmwarePlugin::APMFirmwarePlugin(void)
+    : _coaxialMotors(false)
+    , _textSeverityAdjustmentNeeded(false)
 {
-    _textSeverityAdjustmentNeeded = false;
+
 }
 
 bool APMFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
@@ -380,6 +381,15 @@ bool APMFirmwarePlugin::_handleStatusText(Vehicle* vehicle, mavlink_message_t* m
 
         // Start TCP video handshake with ARTOO
         _soloVideoHandshake(vehicle);
+    } else if (messageText.contains(APM_FRAME_REXP)) {
+        // We need to parse the Frame: message in order to determine whether the motors are coaxial or not
+        QRegExp frameTypeRegex("^Frame: (\\S*)");
+        if (frameTypeRegex.indexIn(messageText) != -1) {
+            QString frameType = frameTypeRegex.cap(1);
+            if (!frameType.isEmpty() && (frameType == QStringLiteral("Y6") || frameType == QStringLiteral("OCTA_QUAD") || frameType == QStringLiteral("COAX"))) {
+                _coaxialMotors = true;
+            }
+        }
     }
 
     if (messageText.startsWith("PreArm")) {
