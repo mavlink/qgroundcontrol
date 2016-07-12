@@ -126,6 +126,7 @@ QGCMapEngine::QGCMapEngine()
     , _maxDiskCache(0)
     , _maxMemCache(0)
     , _prunning(false)
+    , _cacheWasReset(false)
 {
     qRegisterMetaType<QGCMapTask::TaskType>();
     qRegisterMetaType<QGCTile>();
@@ -144,6 +145,17 @@ QGCMapEngine::~QGCMapEngine()
 
 //-----------------------------------------------------------------------------
 void
+QGCMapEngine::_checkWipeDirectory(const QString& dirPath)
+{
+    QDir dir(dirPath);
+    if (dir.exists(dirPath)) {
+        _cacheWasReset = true;
+        _wipeDirectory(dirPath);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCMapEngine::_wipeOldCaches()
 {
     QString oldCacheDir;
@@ -152,13 +164,13 @@ QGCMapEngine::_wipeOldCaches()
 #else
     oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
 #endif
-    _wipeDirectory(oldCacheDir);
+    _checkWipeDirectory(oldCacheDir);
 #ifdef __mobile__
     oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache100");
 #else
     oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache100");
 #endif
-    _wipeDirectory(oldCacheDir);
+    _checkWipeDirectory(oldCacheDir);
 }
 
 //-----------------------------------------------------------------------------
