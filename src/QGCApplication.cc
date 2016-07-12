@@ -116,6 +116,8 @@
 #endif
 #endif
 
+#include "QGCMapEngine.h"
+
 QGCApplication* QGCApplication::_app = NULL;
 
 const char* QGCApplication::parameterFileExtension =    "params";
@@ -443,6 +445,11 @@ bool QGCApplication::_initForNormalAppBoot(void)
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
         showMessage("The format for QGroundControl saved settings has been modified. "
                     "Your saved settings have been reset to defaults.");
+    }
+
+    if (getQGCMapEngine()->wasCacheReset()) {
+        showMessage("The Offline Map Cache database has been upgraded. "
+                    "Your old map cache sets have been reset.");
     }
 
     settings.sync();
