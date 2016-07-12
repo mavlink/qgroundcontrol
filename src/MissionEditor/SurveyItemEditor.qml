@@ -43,8 +43,9 @@ Rectangle {
         }
 
         QGCLabel {
-            text:       qsTr("Fly a grid pattern over a defined area.")
-            wrapMode:   Text.WordWrap
+            wrapMode:       Text.WordWrap
+            font.pointSize: ScreenTools.smallFontPointSize
+            text:           qsTr("Work in progress, be careful!")
         }
 
         Repeater {

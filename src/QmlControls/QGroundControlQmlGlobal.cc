@@ -207,21 +207,6 @@ void QGroundControlQmlGlobal::setBaseFontPointSize(qreal size)
     }
 }
 
-bool QGroundControlQmlGlobal::experimentalSurvey(void) const
-{
-    QSettings settings;
-
-    return settings.value("ExperimentalSurvey", false).toBool();
-}
-
-void QGroundControlQmlGlobal::setExperimentalSurvey(bool experimentalSurvey)
-{
-    QSettings settings;
-
-    settings.setValue("ExperimentalSurvey", experimentalSurvey);
-    emit experimentalSurveyChanged(experimentalSurvey);
-}
-
 Fact* QGroundControlQmlGlobal::offlineEditingFirmwareType(void)
 {
     if (!_offlineEditingFirmwareTypeFact) {
