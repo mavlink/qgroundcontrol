@@ -197,3 +197,14 @@ void ArduCopterFirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
         pauseVehicle(vehicle);
     }
 }
+
+bool ArduCopterFirmwarePlugin::multiRotorCoaxialMotors(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    return _coaxialMotors;
+}
+
+bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
+{
+    return vehicle->autopilotPlugin()->getParameterFact(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
+}
