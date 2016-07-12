@@ -279,3 +279,11 @@ Fact* QGroundControlQmlGlobal::speedUnits(void)
 
     return _speedUnitsFact;
 }
+
+bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPointF line2A, QPointF line2B)
+{
+    QPointF intersectPoint;
+
+    return QLineF(line1A, line1B).intersect(QLineF(line2A, line2B), &intersectPoint) == QLineF::BoundedIntersection &&
+            intersectPoint != line1A && intersectPoint != line1B;
+}
