@@ -143,7 +143,7 @@ Rectangle {
         verticalAlignment:  Text.AlignVCenter
         text:               missionItem.sequenceNumber == 0 ?
                                 qsTr("Planned Home Position") :
-                                (missionItem.isSimpleItem ? missionItem.commandName : qsTr("Survey"))
+                                (missionItem.isSimpleItem ? missionItem.commandName : qsTr("Survey (WIP)"))
         color:              _outerTextColor
     }
 
