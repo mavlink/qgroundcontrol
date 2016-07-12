@@ -96,7 +96,7 @@ public:
     static QString              getTileHash         (UrlFactory::MapType type, int x, int y, int z);
     static UrlFactory::MapType  getTypeFromName     (const QString &name);
     static QString              bigSizeToString     (quint64 size);
-    static QString              numberToString      (quint32 number);
+    static QString              numberToString      (quint64 number);
     static int                  concurrentDownloads (UrlFactory::MapType type);
 
 private slots:
@@ -107,7 +107,8 @@ signals:
     void updateTotals           (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
 
 private:
-    bool _wipeDirectory(const QString& dirPath);
+    void _wipeOldCaches         ();
+    bool _wipeDirectory         (const QString& dirPath);
 
 private:
     QGCCacheWorker          _worker;
