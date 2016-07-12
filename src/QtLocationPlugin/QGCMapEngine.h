@@ -86,6 +86,7 @@ public:
     void                        setMaxMemCache      (quint32 size);
     const QString               getCachePath        () { return _cachePath; }
     const QString               getCacheFilename    () { return _cacheFile; }
+    bool                        wasCacheReset       () { return _cacheWasReset; }
 
     UrlFactory*                 urlFactory          () { return _urlFactory; }
 
@@ -108,6 +109,7 @@ signals:
 
 private:
     void _wipeOldCaches         ();
+    void _checkWipeDirectory    (const QString& dirPath);
     bool _wipeDirectory         (const QString& dirPath);
 
 private:
@@ -120,6 +122,7 @@ private:
     quint32                 _maxDiskCache;
     quint32                 _maxMemCache;
     bool                    _prunning;
+    bool                    _cacheWasReset;
 };
 
 extern QGCMapEngine*    getQGCMapEngine();
