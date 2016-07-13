@@ -14,6 +14,8 @@
 #include "QGroundControlQmlGlobal.h"
 
 #include <QSettings>
+#include <QLineF>
+#include <QPointF>
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 
