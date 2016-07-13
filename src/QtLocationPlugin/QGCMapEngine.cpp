@@ -32,7 +32,7 @@ Q_DECLARE_METATYPE(QList<QGCTile*>)
 static const char* kDbFileName = "qgcMapCache.db";
 static QLocale kLocale;
 
-#define CACHE_PATH_VERSION  "100"
+#define CACHE_PATH_VERSION  "300"
 
 struct stQGeoTileCacheQGCMapTypes {
     const char* name;
@@ -126,6 +126,7 @@ QGCMapEngine::QGCMapEngine()
     , _maxDiskCache(0)
     , _maxMemCache(0)
     , _prunning(false)
+    , _cacheWasReset(false)
 {
     qRegisterMetaType<QGCMapTask::TaskType>();
     qRegisterMetaType<QGCTile>();
@@ -144,15 +145,40 @@ QGCMapEngine::~QGCMapEngine()
 
 //-----------------------------------------------------------------------------
 void
+QGCMapEngine::_checkWipeDirectory(const QString& dirPath)
+{
+    QDir dir(dirPath);
+    if (dir.exists(dirPath)) {
+        _cacheWasReset = true;
+        _wipeDirectory(dirPath);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapEngine::_wipeOldCaches()
+{
+    QString oldCacheDir;
+#ifdef __mobile__
+    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache55");
+#else
+    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
+#endif
+    _checkWipeDirectory(oldCacheDir);
+#ifdef __mobile__
+    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache100");
+#else
+    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache100");
+#endif
+    _checkWipeDirectory(oldCacheDir);
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCMapEngine::init()
 {
-    //-- Delete old style cache (if present)
-#ifdef __mobile__
-    QString oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache55");
-#else
-    QString oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
-#endif
-    _wipeDirectory(oldCacheDir);
+    //-- Delete old style caches (if present)
+    _wipeOldCaches();
     //-- Figure out cache path
 #ifdef __mobile__
     QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache" CACHE_PATH_VERSION);
@@ -398,7 +424,7 @@ QGCMapEngine::bigSizeToString(quint64 size)
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngine::numberToString(quint32 number)
+QGCMapEngine::numberToString(quint64 number)
 {
     return kLocale.toString(number);
 }
@@ -408,7 +434,7 @@ void
 QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize)
 {
     emit updateTotals(totaltiles, totalsize, defaulttiles, defaultsize);
-    quint64 maxSize = getMaxDiskCache() * 1024 * 1024;
+    quint64 maxSize = (quint64)getMaxDiskCache() * 1024L * 1024L;
     if(!_prunning && defaultsize > maxSize) {
         //-- Prune Disk Cache
         _prunning = true;
