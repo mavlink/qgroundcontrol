@@ -36,6 +36,8 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
     , _dirty(false)
     , _cameraTrigger(false)
     , _gridAltitudeRelative(true)
+    , _cameraShots(0)
+    , _coveredArea(0.0)
     , _gridAltitudeFact (0, "Altitude:",        FactMetaData::valueTypeDouble)
     , _gridAngleFact    (0, "Grid angle:",      FactMetaData::valueTypeDouble)
     , _gridSpacingFact  (0, "Grid spacing:",    FactMetaData::valueTypeDouble)
@@ -50,6 +52,39 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
 
     connect(this, &ComplexMissionItem::cameraTriggerChanged, this, &ComplexMissionItem::_cameraTriggerChanged);
 }
+
+const ComplexMissionItem& ComplexMissionItem::operator=(const ComplexMissionItem& other)
+{
+    _vehicle = other._vehicle;
+
+    setIsCurrentItem(other._isCurrentItem);
+    setDirty(other._dirty);
+    setAltDifference(other._altDifference);
+    setAltPercent(other._altPercent);
+    setAzimuth(other._azimuth);
+    setDistance(other._distance);
+    setCameraShots(other._cameraShots);
+    setCoveredArea(other._coveredArea);
+
+    return *this;
+}
+
+void ComplexMissionItem::setCameraShots(int cameraShots)
+{
+    if (_cameraShots != cameraShots) {
+        _cameraShots = cameraShots;
+        emit cameraShotsChanged(_cameraShots);
+    }
+}
+
+void ComplexMissionItem::setCoveredArea(double coveredArea)
+{
+    if (!qFuzzyCompare(_coveredArea, coveredArea)) {
+        _coveredArea = coveredArea;
+        emit coveredAreaChanged(_coveredArea);
+    }
+}
+
 
 void ComplexMissionItem::clearPolygon(void)
 {
