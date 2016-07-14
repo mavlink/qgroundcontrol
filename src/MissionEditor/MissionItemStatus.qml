@@ -17,6 +17,8 @@ import QGroundControl.Palette       1.0
 import QGroundControl               1.0
 
 Rectangle {
+    readonly property var       _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+
     property var    currentMissionItem          ///< Mission item to display status for
     property var    missionItems                ///< List of all available mission items
     property real   expandedWidth               ///< Width of control when expanded
@@ -38,17 +40,18 @@ Rectangle {
     property real   _gradientPercent:   isNaN(_gradient) ? 0 : _gradient * 100
     property real   _azimuth:           _statusValid ? _currentMissionItem.azimuth : -1
     property bool   _statusValid:       currentMissionItem != undefined
-    property bool   _currentSurvey:       currentMissionItem.commandName == "Survey"
+    property bool   _vehicleValid:      _activeVehicle != undefined
+    property bool   _currentSurvey:     _currentMissionItem.commandName == "Survey"
     property string _distanceText:      _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _altText:           _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _gradientText:      _statusValid ? _gradientPercent.toFixed(0) + "%" : " "
     property string _azimuthText:       _statusValid ? Math.round(_azimuth) : " "
-    property string _numberShotsText:       _statusValid ? "783" : " "
+    property string _numberShotsText:   _statusValid ? "783" : " "
     property string _coveredAreaText:       _statusValid ? "87ha / 217acr" : " "
     property string _totalDistanceText:       _statusValid ? "30.91" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _totalTimeText:       _statusValid ? "34min 23s" : " "
     property string _maxTelemDistText:       _statusValid ? "5.23" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
-    property bool   _isVTOL:                _currentMissionItem.vehicle.vtol
+    property bool   _isVTOL:                _vehicleValid ? _activeVehicle.vtol : false
     property string _hoverDistanceText:       _statusValid ? "0.47" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _cruiseDistanceText:       _statusValid ? "30.44" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _hoverTimeText:       _statusValid ? "4min 02s" : " "
