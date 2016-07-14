@@ -25,6 +25,8 @@ class ComplexMissionItem : public VisualMissionItem
 public:
     ComplexMissionItem(Vehicle* vehicle, QObject* parent = NULL);
 
+    const ComplexMissionItem& operator=(const ComplexMissionItem& other);
+
     Q_PROPERTY(Fact*                gridAltitude            READ gridAltitude               CONSTANT)
     Q_PROPERTY(bool                 gridAltitudeRelative    MEMBER _gridAltitudeRelative    NOTIFY gridAltitudeRelativeChanged)
     Q_PROPERTY(Fact*                gridAngle               READ gridAngle                  CONSTANT)
@@ -34,6 +36,9 @@ public:
     Q_PROPERTY(QVariantList         polygonPath             READ polygonPath                NOTIFY polygonPathChanged)
     Q_PROPERTY(int                  lastSequenceNumber      READ lastSequenceNumber         NOTIFY lastSequenceNumberChanged)
     Q_PROPERTY(QVariantList         gridPoints              READ gridPoints                 NOTIFY gridPointsChanged)
+
+    Q_PROPERTY(int                  cameraShots             READ cameraShots                NOTIFY cameraShotsChanged)
+    Q_PROPERTY(double               coveredArea             READ coveredArea                NOTIFY coveredAreaChanged)
 
     Q_INVOKABLE void clearPolygon(void);
     Q_INVOKABLE void addPolygonCoordinate(const QGeoCoordinate coordinate);
@@ -46,6 +51,12 @@ public:
     Fact* gridAngle(void)       { return &_gridAngleFact; }
     Fact* gridSpacing(void)     { return &_gridSpacingFact; }
     Fact* cameraTriggerDistance(void) { return &_cameraTriggerDistanceFact; }
+
+    int     cameraShots         (void) const { return _cameraShots; }
+    double  coveredArea         (void) const { return _coveredArea; }
+
+    void setCameraShots         (int cameraShots);
+    void setCoveredArea         (double coveredArea);
 
     /// @return The last sequence number used by this item. Takes into account child items of the complex item
     int lastSequenceNumber(void) const;
@@ -91,6 +102,9 @@ signals:
     void cameraTriggerChanged           (bool cameraTrigger);
     void gridAltitudeRelativeChanged    (bool gridAltitudeRelative);
 
+    void cameraShotsChanged             (int cameraShots);
+    void coveredAreaChanged             (double coveredArea);
+
 private slots:
     void _cameraTriggerChanged(void);
 
@@ -114,6 +128,9 @@ private:
     double              _gridAngle;
     bool                _cameraTrigger;
     bool                _gridAltitudeRelative;
+
+    int                 _cameraShots;
+    double              _coveredArea;
 
     Fact    _gridAltitudeFact;
     Fact    _gridAngleFact;

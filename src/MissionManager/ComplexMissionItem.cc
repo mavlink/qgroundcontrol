@@ -36,6 +36,8 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
     , _dirty(false)
     , _cameraTrigger(false)
     , _gridAltitudeRelative(true)
+    , _cameraShots(0)
+    , _coveredArea(0.0)
     , _gridAltitudeFact (0, "Altitude:",        FactMetaData::valueTypeDouble)
     , _gridAngleFact    (0, "Grid angle:",      FactMetaData::valueTypeDouble)
     , _gridSpacingFact  (0, "Grid spacing:",    FactMetaData::valueTypeDouble)
@@ -47,9 +49,43 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
 
     connect(&_gridSpacingFact,  &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
     connect(&_gridAngleFact,    &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
+    connect(&_cameraTriggerDistanceFact,    &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
 
     connect(this, &ComplexMissionItem::cameraTriggerChanged, this, &ComplexMissionItem::_cameraTriggerChanged);
 }
+
+const ComplexMissionItem& ComplexMissionItem::operator=(const ComplexMissionItem& other)
+{
+    _vehicle = other._vehicle;
+
+    setIsCurrentItem(other._isCurrentItem);
+    setDirty(other._dirty);
+    setAltDifference(other._altDifference);
+    setAltPercent(other._altPercent);
+    setAzimuth(other._azimuth);
+    setDistance(other._distance);
+    setCameraShots(other._cameraShots);
+    setCoveredArea(other._coveredArea);
+
+    return *this;
+}
+
+void ComplexMissionItem::setCameraShots(int cameraShots)
+{
+    if (_cameraShots != cameraShots) {
+        _cameraShots = cameraShots;
+        emit cameraShotsChanged(_cameraShots);
+    }
+}
+
+void ComplexMissionItem::setCoveredArea(double coveredArea)
+{
+    if (!qFuzzyCompare(_coveredArea, coveredArea)) {
+        _coveredArea = coveredArea;
+        emit coveredAreaChanged(_coveredArea);
+    }
+}
+
 
 void ComplexMissionItem::clearPolygon(void)
 {
@@ -280,17 +316,34 @@ void ComplexMissionItem::_generateGrid(void)
         qCDebug(ComplexMissionItemLog) << _polygonPath[i].value<QGeoCoordinate>() << polygonPoints.last().x() << polygonPoints.last().y();
     }
 
+    double coveredArea = 0.0;
+    for (int i=0; i<polygonPoints.count(); i++) {
+        if (i != 0) {
+            coveredArea += polygonPoints[i - 1].x() * polygonPoints[i].y() - polygonPoints[i].x() * polygonPoints[i -1].y();
+        } else {
+            coveredArea += polygonPoints.last().x() * polygonPoints[i].y() - polygonPoints[i].x() * polygonPoints.last().y();
+        }
+    }
+    setCoveredArea(0.5 * fabs(coveredArea));
+
     // Generate grid
     _gridGenerator(polygonPoints, gridPoints);
 
+    double surveyDistance = 0.0;
     // Convert to Geo and set altitude
     for (int i=0; i<gridPoints.count(); i++) {
         QPointF& point = gridPoints[i];
+
+        if (i != 0) {
+            surveyDistance += sqrt(pow((gridPoints[i] - gridPoints[i - 1]).x(),2.0) + pow((gridPoints[i] - gridPoints[i - 1]).y(),2.0));
+        }
 
         QGeoCoordinate geoCoord;
         convertNedToGeo(-point.y(), point.x(), 0, tangentOrigin, &geoCoord);
         _gridPoints += QVariant::fromValue(geoCoord);
     }
+    setCameraShots((int)floor(surveyDistance / _cameraTriggerDistanceFact.rawValue().toDouble()));
+
     emit gridPointsChanged();
     emit lastSequenceNumberChanged(lastSequenceNumber());
 
