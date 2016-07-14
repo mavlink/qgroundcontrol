@@ -22,7 +22,7 @@ Rectangle {
     property real   expandedWidth               ///< Width of control when expanded
 
     width:      _expanded ? expandedWidth : _collapsedWidth
-    height:     valueGrid.height + (_margins * 2)
+    height:     max(valueGrid.height, valueMissionGrid.height) + (_margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth * 0.5
     color:      qgcPal.window
     opacity:    0.80
@@ -30,7 +30,7 @@ Rectangle {
 
     readonly property real margins: ScreenTools.defaultFontPixelWidth
 
-    property real   _collapsedWidth:    valueGrid.width + (margins * 2)
+    property real   _collapsedWidth:    valueGrid.width + valueMissionGrid.width + (margins * 2)
     property bool   _expanded:          true
     property real   _distance:          _statusValid ? _currentMissionItem.distance : 0
     property real   _altDifference:     _statusValid ? _currentMissionItem.altDifference : 0
@@ -42,6 +42,15 @@ Rectangle {
     property string _altText:           _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _gradientText:      _statusValid ? _gradientPercent.toFixed(0) + "%" : " "
     property string _azimuthText:       _statusValid ? Math.round(_azimuth) : " "
+    property string _numberShotsText:       _statusValid ? "783" : " "
+    property string _coveredAreaText:       _statusValid ? "87ha / 217acr" : " "
+    property string _totalDistanceText:       _statusValid ? "30.91km" : " "
+    property string _totalTimeText:       _statusValid ? "34min 23s" : " "
+    property string _maxTelemDistText:       _statusValid ? "5.23km" : " "
+    property string _hoverDistanceText:       _statusValid ? "0.47km" : " "
+    property string _cruiseDistanceText:       _statusValid ? "30.44km" : " "
+    property string _hoverTimeText:       _statusValid ? "4min 02s" : " "
+    property string _cruiseTextTime:       _statusValid ? "34min 21s" : " "
 
     readonly property real _margins:    ScreenTools.defaultFontPixelWidth
 
@@ -61,6 +70,9 @@ Rectangle {
             columnSpacing:      _margins
             anchors.verticalCenter: parent.verticalCenter
 
+            QGCLabel { text: qsTr("Selected waypoint") }
+            QGCLabel { text: qsTr(" ") }
+
             QGCLabel { text: qsTr("Distance:") }
             QGCLabel { text: _distanceText }
 
@@ -72,6 +84,12 @@ Rectangle {
 
             QGCLabel { text: qsTr("Azimuth:") }
             QGCLabel { text: _azimuthText }
+
+            QGCLabel { text: qsTr("# shots:") }
+            QGCLabel { text: _numberShotsText }
+
+            QGCLabel { text: qsTr("Covered area:") }
+            QGCLabel { text: _coveredAreaText }
         }
 
         ListView {
@@ -85,7 +103,7 @@ Rectangle {
             orientation:            ListView.Horizontal
             spacing:                0
             visible:                _expanded
-            width:                  parent.width - valueGrid.width - (_margins * 2)
+            width:                  parent.width - valueGrid.width - valueMissionGrid.width - (_margins * 2)
             clip:                   true
             currentIndex:           _currentMissionIndex
 
@@ -109,6 +127,37 @@ Rectangle {
                     visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
                 }
             }
+        }
+
+        Grid {
+            id:                 valueMissionGrid
+            columns:            2
+            columnSpacing:      _margins
+            anchors.verticalCenter: parent.verticalCenter
+
+            QGCLabel { text: qsTr("Mission stats") }
+            QGCLabel { text: qsTr(" ") }
+
+            QGCLabel { text: qsTr("Distance:") }
+            QGCLabel { text: _totalDistanceText }
+
+            QGCLabel { text: qsTr("Time:") }
+            QGCLabel { text: _totalTimeText }
+
+            QGCLabel { text: qsTr("Max telem dist:") }
+            QGCLabel { text: _maxTelemDistText }
+
+            QGCLabel { text: qsTr("Hover distance:") }
+            QGCLabel { text: _hoverDistanceText }
+
+            QGCLabel { text: qsTr("Cruise distance:") }
+            QGCLabel { text: _cruiseDistanceText }
+
+            QGCLabel { text: qsTr("Hover time:") }
+            QGCLabel { text: _hoverTimeText }
+
+            QGCLabel { text: qsTr("Cruise time:") }
+            QGCLabel { text: _cruiseTimeText }
         }
     }
 }
