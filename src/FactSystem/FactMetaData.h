@@ -57,6 +57,15 @@ public:
     /// Returns the string for distance units which has configued by user
     static QString appSettingsDistanceUnitsString(void);
 
+    /// Converts from meters to the user specified distance unit
+    static QVariant squareMetersToAppSettingsAreaUnits(const QVariant& squareMeters);
+
+    /// Converts from user specified distance unit to meters
+    static QVariant appSettingsAreaUnitsToSquareMeters(const QVariant& area);
+
+    /// Returns the string for distance units which has configued by user
+    static QString appSettingsAreaUnitsString(void);
+
     int             decimalPlaces           (void) const;
     QVariant        rawDefaultValue         (void) const;
     QVariant        cookedDefaultValue      (void) const { return _rawTranslator(rawDefaultValue()); }

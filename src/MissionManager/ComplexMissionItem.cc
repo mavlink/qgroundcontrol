@@ -49,6 +49,7 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
 
     connect(&_gridSpacingFact,  &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
     connect(&_gridAngleFact,    &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
+    connect(&_cameraTriggerDistanceFact,    &Fact::valueChanged, this, &ComplexMissionItem::_generateGrid);
 
     connect(this, &ComplexMissionItem::cameraTriggerChanged, this, &ComplexMissionItem::_cameraTriggerChanged);
 }
