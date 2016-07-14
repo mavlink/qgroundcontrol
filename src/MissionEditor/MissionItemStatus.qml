@@ -22,7 +22,7 @@ Rectangle {
     property real   expandedWidth               ///< Width of control when expanded
 
     width:      _expanded ? expandedWidth : _collapsedWidth
-    height:     max(valueGrid.height, valueMissionGrid.height) + (_margins * 2)
+    height:     Math.max(valueGrid.height, valueMissionGrid.height) + (_margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth * 0.5
     color:      qgcPal.window
     opacity:    0.80
@@ -50,7 +50,7 @@ Rectangle {
     property string _hoverDistanceText:       _statusValid ? "0.47km" : " "
     property string _cruiseDistanceText:       _statusValid ? "30.44km" : " "
     property string _hoverTimeText:       _statusValid ? "4min 02s" : " "
-    property string _cruiseTextTime:       _statusValid ? "34min 21s" : " "
+    property string _cruiseTimeText:       _statusValid ? "34min 21s" : " "
 
     readonly property real _margins:    ScreenTools.defaultFontPixelWidth
 
