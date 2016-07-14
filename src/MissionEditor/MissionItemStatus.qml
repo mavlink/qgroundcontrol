@@ -45,12 +45,12 @@ Rectangle {
     property string _azimuthText:       _statusValid ? Math.round(_azimuth) : " "
     property string _numberShotsText:       _statusValid ? "783" : " "
     property string _coveredAreaText:       _statusValid ? "87ha / 217acr" : " "
-    property string _totalDistanceText:       _statusValid ? "30.91km" : " "
+    property string _totalDistanceText:       _statusValid ? "30.91" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _totalTimeText:       _statusValid ? "34min 23s" : " "
-    property string _maxTelemDistText:       _statusValid ? "5.23km" : " "
-    property bool   _isVTOL:                false // TODO
-    property string _hoverDistanceText:       _statusValid ? "0.47km" : " "
-    property string _cruiseDistanceText:       _statusValid ? "30.44km" : " "
+    property string _maxTelemDistText:       _statusValid ? "5.23" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property bool   _isVTOL:                _currentMissionItem.vehicle.vtol
+    property string _hoverDistanceText:       _statusValid ? "0.47" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _cruiseDistanceText:       _statusValid ? "30.44" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _hoverTimeText:       _statusValid ? "4min 02s" : " "
     property string _cruiseTimeText:       _statusValid ? "34min 21s" : " "
 
