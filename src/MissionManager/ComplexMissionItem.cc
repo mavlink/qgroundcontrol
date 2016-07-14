@@ -307,17 +307,34 @@ void ComplexMissionItem::_generateGrid(void)
         qCDebug(ComplexMissionItemLog) << _polygonPath[i].value<QGeoCoordinate>() << polygonPoints.last().x() << polygonPoints.last().y();
     }
 
+    double coveredArea = 0.0;
+    for (int i=0; i<polygonPoints.count(); i++) {
+        if (i != 0) {
+            coveredArea += polygonPoints[i - 1].x() * polygonPoints[i].y() - polygonPoints[i].x() * polygonPoints[i -1].y();
+        } else {
+            coveredArea += polygonPoints.last().x() * polygonPoints[i].y() - polygonPoints[i].x() * polygonPoints.last().y();
+        }
+    }
+    setCoveredArea(0.5 * fabs(coveredArea));
+
     // Generate grid
     _gridGenerator(polygonPoints, gridPoints);
 
+    double surveyDistance = 0.0;
     // Convert to Geo and set altitude
     for (int i=0; i<gridPoints.count(); i++) {
         QPointF& point = gridPoints[i];
+
+        if (i != 0) {
+            surveyDistance += sqrt(pow((gridPoints[i] - gridPoints[i - 1]).x(),2.0) + pow((gridPoints[i] - gridPoints[i - 1]).y(),2.0));
+        }
 
         QGeoCoordinate geoCoord;
         convertNedToGeo(-point.y(), point.x(), 0, tangentOrigin, &geoCoord);
         _gridPoints += QVariant::fromValue(geoCoord);
     }
+    setCameraShots((int)floor(surveyDistance / _cameraTriggerDistanceFact.rawValue().toDouble()));
+
     emit gridPointsChanged();
     emit lastSequenceNumberChanged(lastSequenceNumber());
 
