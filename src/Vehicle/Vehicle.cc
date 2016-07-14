@@ -1637,6 +1637,15 @@ void Vehicle::guidedModeChangeAltitude(double altitudeRel)
     _firmwarePlugin->guidedModeChangeAltitude(this, altitudeRel);
 }
 
+void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude)
+{
+    if (!guidedModeSupported()) {
+        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+        return;
+    }
+    _firmwarePlugin->guidedModeOrbit(this, centerCoord, radius, velocity, altitude);
+}
+
 void Vehicle::pauseVehicle(void)
 {
     if (!pauseVehicleSupported()) {
