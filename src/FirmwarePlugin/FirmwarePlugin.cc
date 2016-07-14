@@ -183,6 +183,12 @@ void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
+void FirmwarePlugin::guidedModeOrbit(Vehicle* /*vehicle*/, const QGeoCoordinate& /*centerCoord*/, double /*radius*/, double /*velocity*/, double /*altitude*/)
+{
+    // Not supported by generic vehicle
+    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+}
+
 void FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
 {
     // Not supported by generic vehicle

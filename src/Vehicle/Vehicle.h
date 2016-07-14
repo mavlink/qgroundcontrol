@@ -349,6 +349,13 @@ public:
     /// Command vehicle to change to the specified relatice altitude
     Q_INVOKABLE void guidedModeChangeAltitude(double altitudeRel);
 
+    /// Command vehicle to orbit given center point
+    ///     @param centerCoord Center Coordinates
+    ///     @param radius Distance from vehicle to centerCoord
+    ///     @param velocity Orbit velocity (positive CW, negative CCW)
+    ///     @param altitude Desired Vehicle Altitude
+    Q_INVOKABLE void guidedModeOrbit(const QGeoCoordinate& centerCoord = QGeoCoordinate(), double radius = NAN, double velocity = NAN, double altitude = NAN);
+
     /// Command vehicle to pause at current location. If vehicle supports guide mode, vehicle will be left
     /// in guided mode after pause.
     Q_INVOKABLE void pauseVehicle(void);
