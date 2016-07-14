@@ -38,6 +38,7 @@ Rectangle {
     property real   _gradientPercent:   isNaN(_gradient) ? 0 : _gradient * 100
     property real   _azimuth:           _statusValid ? _currentMissionItem.azimuth : -1
     property bool   _statusValid:       currentMissionItem != undefined
+    property bool   _currentSurvey:       true // TODO
     property string _distanceText:      _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _altText:           _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _gradientText:      _statusValid ? _gradientPercent.toFixed(0) + "%" : " "
@@ -47,6 +48,7 @@ Rectangle {
     property string _totalDistanceText:       _statusValid ? "30.91km" : " "
     property string _totalTimeText:       _statusValid ? "34min 23s" : " "
     property string _maxTelemDistText:       _statusValid ? "5.23km" : " "
+    property bool   _isVTOL:                false // TODO
     property string _hoverDistanceText:       _statusValid ? "0.47km" : " "
     property string _cruiseDistanceText:       _statusValid ? "30.44km" : " "
     property string _hoverTimeText:       _statusValid ? "4min 02s" : " "
@@ -85,11 +87,23 @@ Rectangle {
             QGCLabel { text: qsTr("Azimuth:") }
             QGCLabel { text: _azimuthText }
 
-            QGCLabel { text: qsTr("# shots:") }
-            QGCLabel { text: _numberShotsText }
+            QGCLabel {
+                text: qsTr("# shots:")
+                visible: _currentSurvey
+            }
+            QGCLabel {
+                text: _numberShotsText
+                visible: _currentSurvey
+            }
 
-            QGCLabel { text: qsTr("Covered area:") }
-            QGCLabel { text: _coveredAreaText }
+            QGCLabel {
+                text: qsTr("Covered area:")
+                visible: _currentSurvey
+            }
+            QGCLabel {
+                text: _coveredAreaText
+                visible: _currentSurvey
+            }
         }
 
         ListView {
@@ -147,17 +161,41 @@ Rectangle {
             QGCLabel { text: qsTr("Max telem dist:") }
             QGCLabel { text: _maxTelemDistText }
 
-            QGCLabel { text: qsTr("Hover distance:") }
-            QGCLabel { text: _hoverDistanceText }
+            QGCLabel {
+                text: qsTr("Hover distance:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _hoverDistanceText
+                visible: _isVTOL
+            }
 
-            QGCLabel { text: qsTr("Cruise distance:") }
-            QGCLabel { text: _cruiseDistanceText }
+            QGCLabel {
+                text: qsTr("Cruise distance:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _cruiseDistanceText
+                visible: _isVTOL
+            }
 
-            QGCLabel { text: qsTr("Hover time:") }
-            QGCLabel { text: _hoverTimeText }
+            QGCLabel {
+                text: qsTr("Hover time:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _hoverTimeText
+                visible: _isVTOL
+            }
 
-            QGCLabel { text: qsTr("Cruise time:") }
-            QGCLabel { text: _cruiseTimeText }
+            QGCLabel {
+                text: qsTr("Cruise time:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _cruiseTimeText
+                visible: _isVTOL
+            }
         }
     }
 }
