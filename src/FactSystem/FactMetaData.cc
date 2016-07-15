@@ -36,11 +36,11 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "m^2",    "m^2",      false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m",      "ft",       false,  QGroundControlQmlGlobal::DistanceUnitsFeet,             FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "meters", "ft",       false,  QGroundControlQmlGlobal::DistanceUnitsFeet,             FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
-    { "m^2",    "km^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
-    { "m^2",    "ha",       false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_squareMetersToHectars,               FactMetaData::_hectarsToSquareMeters },
-    { "m^2",    "ft^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
-    { "m^2",    "ac",       false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_squareMetersToAcres,                 FactMetaData::_acresToSquareMeters },
-    { "m^2",    "mi^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_squareMetersToSquareMiles,           FactMetaData::_squareMilesToSquareMeters },
+    { "m^2",    "km^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareKilometers,         FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
+    { "m^2",    "ha",       false,  QGroundControlQmlGlobal::AreaUnitsHectars,         FactMetaData::_squareMetersToHectars,               FactMetaData::_hectarsToSquareMeters },
+    { "m^2",    "ft^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareFeet,         FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
+    { "m^2",    "ac",       false,  QGroundControlQmlGlobal::AreaUnitsAcres,         FactMetaData::_squareMetersToAcres,                 FactMetaData::_acresToSquareMeters },
+    { "m^2",    "mi^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareMiles,         FactMetaData::_squareMetersToSquareMiles,           FactMetaData::_squareMilesToSquareMeters },
     { "m/s",    "ft/s",     true,   QGroundControlQmlGlobal::SpeedUnitsFeetPerSecond,       FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "m/s",    "mph",      true,   QGroundControlQmlGlobal::SpeedUnitsMilesPerHour,        FactMetaData::_metersPerSecondToMilesPerHour,       FactMetaData::_milesPerHourToMetersPerSecond },
     { "m/s",    "km/h",     true,   QGroundControlQmlGlobal::SpeedUnitsKilometersPerHour,   FactMetaData::_metersPerSecondToKilometersPerHour,  FactMetaData::_kilometersPerHourToMetersPerSecond },
@@ -415,7 +415,6 @@ QVariant FactMetaData::_feetToMeters(const QVariant& feet)
 
 QVariant FactMetaData::_squareMetersToSquareKilometers(const QVariant& squareMeters)
 {
-    qWarning() << "squareMetersToSquareKilometers";
     return QVariant(squareMeters.toDouble() * 0.000001);
 }
 
@@ -591,14 +590,11 @@ void FactMetaData::setAppSettingsTranslators(void)
 
 const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsDistanceUnitsTranslation(const QString& rawUnits)
 {
-     qWarning() << "findAppSettingsDistanceUnitsTranslation(" << rawUnits << ")";
     for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {
         const AppSettingsTranslation_s* pAppSettingsTranslation = &_rgAppSettingsTranslations[i];
 
-        qWarning() << "pAppSettingsTranslation" << pAppSettingsTranslation->rawUnits << " ; " << pAppSettingsTranslation->speed << " ; " << pAppSettingsTranslation->speedOrDistanceUnits;
         if (pAppSettingsTranslation->rawUnits == rawUnits &&
                  (!pAppSettingsTranslation->speed && pAppSettingsTranslation->speedOrDistanceUnits == QGroundControlQmlGlobal::distanceUnits()->rawValue().toUInt())) {
-            qWarning() << "TRUE!";
             return pAppSettingsTranslation;
         }
     }
@@ -608,14 +604,12 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsDist
 
 const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsAreaUnitsTranslation(const QString& rawUnits)
 {
-    qWarning() << "findAppSettingsAreaUnitsTranslation(" << rawUnits << ")";
     for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {
         const AppSettingsTranslation_s* pAppSettingsTranslation = &_rgAppSettingsTranslations[i];
 
-        qWarning() << "pAppSettingsTranslation" << pAppSettingsTranslation->rawUnits << " ; " << pAppSettingsTranslation->speed << " ; " << pAppSettingsTranslation->speedOrDistanceUnits;
         if (pAppSettingsTranslation->rawUnits == rawUnits &&
-                 (!pAppSettingsTranslation->speed && pAppSettingsTranslation->speedOrDistanceUnits == QGroundControlQmlGlobal::areaUnits()->rawValue().toUInt())) {
-            qWarning() << "TRUE!";
+                 (!pAppSettingsTranslation->speed && pAppSettingsTranslation->speedOrDistanceUnits == QGroundControlQmlGlobal::areaUnits()->rawValue().toUInt())
+                ) {
             return pAppSettingsTranslation;
         }
     }
@@ -655,7 +649,6 @@ QString FactMetaData::appSettingsDistanceUnitsString(void)
 
 QVariant FactMetaData::squareMetersToAppSettingsAreaUnits(const QVariant& squareMeters)
 {
-    qWarning() << "squareMetersToAppSettingsAreaUnits";
     const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsAreaUnitsTranslation("m^2");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->rawTranslator(squareMeters);
@@ -676,7 +669,6 @@ QVariant FactMetaData::appSettingsAreaUnitsToSquareMeters(const QVariant& area)
 
 QString FactMetaData::appSettingsAreaUnitsString(void)
 {
-    qWarning() << "appSettingsAreaUnitsString";
     const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsAreaUnitsTranslation("m^2");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->cookedUnits;

@@ -45,10 +45,10 @@ public:
     };
 
     enum AreaUnits {
-        AreaUnitsSquareMeters = 0,
+        AreaUnitsSquareFeet = 0,
+        AreaUnitsSquareMeters,
         AreaUnitsSquareKilometers,
         AreaUnitsHectars,
-        AreaUnitsSquareFeet,
         AreaUnitsAcres,
         AreaUnitsSquareMiles,
     };
