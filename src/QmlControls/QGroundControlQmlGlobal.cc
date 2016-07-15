@@ -21,6 +21,8 @@ SettingsFact* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeFact =        
 FactMetaData* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeMetaData =    NULL;
 SettingsFact* QGroundControlQmlGlobal::_distanceUnitsFact =                     NULL;
 FactMetaData* QGroundControlQmlGlobal::_distanceUnitsMetaData =                 NULL;
+SettingsFact* QGroundControlQmlGlobal::_areaUnitsFact =                         NULL;
+FactMetaData* QGroundControlQmlGlobal::_areaUnitsMetaData =                     NULL;
 SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                        NULL;
 FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                    NULL;
 
@@ -243,6 +245,26 @@ Fact* QGroundControlQmlGlobal::distanceUnits(void)
     }
 
     return _distanceUnitsFact;
+
+}
+
+Fact* QGroundControlQmlGlobal::areaUnits(void)
+{
+    if (!_areaUnitsFact) {
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+
+        _areaUnitsFact = new SettingsFact(QString(), "AreaUnits", FactMetaData::valueTypeUint32, AreaUnitsSquareMeters);
+        _areaUnitsMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
+
+        enumStrings << "SquareFeet" << "SquareMeters";
+        enumValues << QVariant::fromValue((uint32_t)AreaUnitsSquareFeet) << QVariant::fromValue((uint32_t)AreaUnitsSquareMeters);
+
+        _areaUnitsMetaData->setEnumInfo(enumStrings, enumValues);
+        _areaUnitsFact->setMetaData(_areaUnitsMetaData);
+    }
+
+    return _areaUnitsFact;
 
 }
 

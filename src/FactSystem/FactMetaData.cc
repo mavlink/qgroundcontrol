@@ -34,13 +34,13 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "meters", "meters",   false,  QGroundControlQmlGlobal::DistanceUnitsMeters,           FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m/s",    "m/s",      true,   QGroundControlQmlGlobal::SpeedUnitsMetersPerSecond,     FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m^2",    "m^2",      false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "m",      "ft",       false,  QGroundControlQmlGlobal::DistanceUnitsFeet,             FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "meters", "ft",       false,  QGroundControlQmlGlobal::DistanceUnitsFeet,             FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "m^2",    "km^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKolometersToSquareMeters },
     { "m^2",    "ha",       false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_squareMetersToHectars,               FactMetaData::_hectarsToSquareMeters },
     { "m^2",    "ft^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
     { "m^2",    "ac",       false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_squareMetersToAcres,                 FactMetaData::_acresToSquareMeters },
     { "m^2",    "mi^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_squareMetersToSquareMiles,           FactMetaData::_squareMilesToSquareMeters },
-    { "m",      "ft",       false,  QGroundControlQmlGlobal::DistanceUnitsFeet,             FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
-    { "meters", "ft",       false,  QGroundControlQmlGlobal::DistanceUnitsFeet,             FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "m/s",    "ft/s",     true,   QGroundControlQmlGlobal::SpeedUnitsFeetPerSecond,       FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "m/s",    "mph",      true,   QGroundControlQmlGlobal::SpeedUnitsMilesPerHour,        FactMetaData::_metersPerSecondToMilesPerHour,       FactMetaData::_milesPerHourToMetersPerSecond },
     { "m/s",    "km/h",     true,   QGroundControlQmlGlobal::SpeedUnitsKilometersPerHour,   FactMetaData::_metersPerSecondToKilometersPerHour,  FactMetaData::_kilometersPerHourToMetersPerSecond },
@@ -596,6 +596,20 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsDist
 
         if (pAppSettingsTranslation->rawUnits == rawUnits &&
                  (!pAppSettingsTranslation->speed && pAppSettingsTranslation->speedOrDistanceUnits == QGroundControlQmlGlobal::distanceUnits()->rawValue().toUInt())) {
+            return pAppSettingsTranslation;
+        }
+    }
+
+    return NULL;
+}
+
+const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsAreaUnitsTranslation(const QString& rawUnits)
+{
+    for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {
+        const AppSettingsTranslation_s* pAppSettingsTranslation = &_rgAppSettingsTranslations[i];
+
+        if (pAppSettingsTranslation->rawUnits == rawUnits &&
+                 (!pAppSettingsTranslation->speed && pAppSettingsTranslation->speedOrDistanceUnits == QGroundControlQmlGlobal::areaUnits()->rawValue().toUInt())) {
             return pAppSettingsTranslation;
         }
     }

@@ -44,6 +44,15 @@ public:
         DistanceUnitsMeters
     };
 
+    enum AreaUnits {
+        AreaUnitsSquareMeters = 0,
+        AreaUnitsSquareKilometers,
+        AreaUnitsHectars,
+        AreaUnitsSquareFeet,
+        AreaUnitsAcres,
+        AreaUnitsSquareMiles,
+    };
+
     enum SpeedUnits {
         SpeedUnitsFeetPerSecond = 0,
         SpeedUnitsMetersPerSecond,
@@ -53,6 +62,7 @@ public:
     };
 
     Q_ENUMS(DistanceUnits)
+    Q_ENUMS(AreaUnits)
     Q_ENUMS(SpeedUnits)
 
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
@@ -83,6 +93,7 @@ public:
 
     Q_PROPERTY(Fact*    offlineEditingFirmwareType  READ offlineEditingFirmwareType CONSTANT)
     Q_PROPERTY(Fact*    distanceUnits               READ distanceUnits              CONSTANT)
+    Q_PROPERTY(Fact*    areaUnits                   READ areaUnits                  CONSTANT)
     Q_PROPERTY(Fact*    speedUnits                  READ speedUnits                 CONSTANT)
 
     Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
@@ -117,6 +128,14 @@ public:
     Q_INVOKABLE QVariant appSettingsDistanceUnitsToMeters(const QVariant& distance) const { return FactMetaData::appSettingsDistanceUnitsToMeters(distance); }
 
     QString appSettingsDistanceUnitsString(void) const { return FactMetaData::appSettingsDistanceUnitsString(); }
+
+    /// Converts from meters to the user specified area unit
+    Q_INVOKABLE QVariant squareMetersToAppSettingsAreaUnits(const QVariant& meters) const { return FactMetaData::squareMetersToAppSettingsAreaUnits(meters); }
+
+    /// Converts from user specified area unit to meters
+    Q_INVOKABLE QVariant appSettingsAreaUnitsToSquareMeters(const QVariant& area) const { return FactMetaData::appSettingsAreaUnitsToSquareMeters(area); }
+
+    QString appSettingsAreaUnitsString(void) const { return FactMetaData::appSettingsAreaUnitsString(); }
 
     /// Returns the list of available logging category names.
     Q_INVOKABLE QStringList loggingCategories(void) const { return QGCLoggingCategoryRegister::instance()->registeredCategories(); }
@@ -159,6 +178,7 @@ public:
 
     static Fact* offlineEditingFirmwareType (void);
     static Fact* distanceUnits              (void);
+    static Fact* areaUnits              (void);
     static Fact* speedUnits                 (void);
 
     //-- TODO: Make this into an actual preference.
@@ -214,6 +234,8 @@ private:
     static FactMetaData*    _offlineEditingFirmwareTypeMetaData;
     static SettingsFact*    _distanceUnitsFact;
     static FactMetaData*    _distanceUnitsMetaData;
+    static SettingsFact*    _areaUnitsFact;
+    static FactMetaData*    _areaUnitsMetaData;
     static SettingsFact*    _speedUnitsFact;
     static FactMetaData*    _speedUnitsMetaData;
 
