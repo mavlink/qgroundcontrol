@@ -154,7 +154,7 @@ private:
     static QVariant _metersToFeet(const QVariant& meters);
     static QVariant _feetToMeters(const QVariant& feet);
     static QVariant _squareMetersToSquareKilometers(const QVariant& squareMeters);
-    static QVariant _squareKolometersToSquareMeters(const QVariant& squareKilometers);
+    static QVariant _squareKilometersToSquareMeters(const QVariant& squareKilometers);
     static QVariant _squareMetersToHectars(const QVariant& squareMeters);
     static QVariant _hectarsToSquareMeters(const QVariant& hectars);
     static QVariant _squareMetersToSquareFeet(const QVariant& squareMeters);

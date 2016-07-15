@@ -257,8 +257,8 @@ Fact* QGroundControlQmlGlobal::areaUnits(void)
         _areaUnitsFact = new SettingsFact(QString(), "AreaUnits", FactMetaData::valueTypeUint32, AreaUnitsSquareMeters);
         _areaUnitsMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
 
-        enumStrings << "SquareFeet" << "SquareMeters";
-        enumValues << QVariant::fromValue((uint32_t)AreaUnitsSquareFeet) << QVariant::fromValue((uint32_t)AreaUnitsSquareMeters);
+        enumStrings << "SquareFeet" << "SquareMeters" << "SquareKilometers" << "Hectars" << "Acres" << "SquareMiles";
+        enumValues << QVariant::fromValue((uint32_t)AreaUnitsSquareFeet) << QVariant::fromValue((uint32_t)AreaUnitsSquareMeters) << QVariant::fromValue((uint32_t)AreaUnitsSquareKilometers) << QVariant::fromValue((uint32_t)AreaUnitsHectars) << QVariant::fromValue((uint32_t)AreaUnitsAcres) << QVariant::fromValue((uint32_t)AreaUnitsSquareMiles);
 
         _areaUnitsMetaData->setEnumInfo(enumStrings, enumValues);
         _areaUnitsFact->setMetaData(_areaUnitsMetaData);

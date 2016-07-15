@@ -42,13 +42,13 @@ Rectangle {
     property bool   _statusValid:       currentMissionItem != undefined
     property bool   _vehicleValid:      _activeVehicle != undefined
     property bool   _missionValid:      missionItems != undefined
-    property bool   _currentSurvey:     _statusValid ? currentMissionItem.commandName == "Survey" : false
+    property bool   _currentSurvey:     _statusValid ? _currentMissionItem.commandName == "Survey" : false
     property string _distanceText:      _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _altText:           _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _gradientText:      _statusValid ? _gradientPercent.toFixed(0) + "%" : " "
     property string _azimuthText:       _statusValid ? Math.round(_azimuth) : " "
-    property string _numberShotsText:   _currentSurvey ? currentMissionItem.cameraShots.toFixed(0) : " "
-    property string _coveredAreaText:   _currentSurvey ? currentMissionItem.coveredArea.toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString + "^2" : " "
+    property string _numberShotsText:   _currentSurvey ? _currentMissionItem.cameraShots.toFixed(0) : " "
+    property string _coveredAreaText:   _currentSurvey ? QGroundControl.squareMetersToAppSettingsAreaUnits(_currentMissionItem.coveredArea).toFixed(2) + " " + QGroundControl.appSettingsAreaUnitsString : " "
     property string _totalDistanceText: _missionValid ? "30.91" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _totalTimeText:     _missionValid ? "34min 23s" : " "
     property string _maxTelemDistText:  _missionValid ? "5.23" + " " + QGroundControl.appSettingsDistanceUnitsString : " "

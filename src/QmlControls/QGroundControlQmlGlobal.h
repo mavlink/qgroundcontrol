@@ -106,6 +106,7 @@ public:
 
     /// Returns the string for distance units which has configued by user
     Q_PROPERTY(QString appSettingsDistanceUnitsString READ appSettingsDistanceUnitsString CONSTANT)
+    Q_PROPERTY(QString appSettingsAreaUnitsString READ appSettingsAreaUnitsString CONSTANT)
 
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
@@ -178,7 +179,7 @@ public:
 
     static Fact* offlineEditingFirmwareType (void);
     static Fact* distanceUnits              (void);
-    static Fact* areaUnits              (void);
+    static Fact* areaUnits                  (void);
     static Fact* speedUnits                 (void);
 
     //-- TODO: Make this into an actual preference.
