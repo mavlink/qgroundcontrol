@@ -578,7 +578,6 @@ void FactMetaData::setAppSettingsTranslators(void)
     if (!_enumStrings.count()) {
         for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {
             const AppSettingsTranslation_s* pAppSettingsTranslation = &_rgAppSettingsTranslations[i];
-            qWarning() << pAppSettingsTranslation->rawUnits << " ; " << _rawUnits.toLower();
             if (pAppSettingsTranslation->rawUnits == _rawUnits.toLower() &&
                     ((pAppSettingsTranslation->speed && pAppSettingsTranslation->speedOrDistanceUnits == QGroundControlQmlGlobal::speedUnits()->rawValue().toUInt()) ||
                      (!pAppSettingsTranslation->speed && pAppSettingsTranslation->speedOrDistanceUnits == QGroundControlQmlGlobal::distanceUnits()->rawValue().toUInt()))) {
