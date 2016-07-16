@@ -199,6 +199,7 @@ void UASQuickView::resizeEvent(QResizeEvent *evt)
 }
 void UASQuickView::recalculateItemTextSizing()
 {
+    return;
     int minpixelsize = 65535;
     for (QMap<QString,UASQuickViewItem*>::const_iterator i = uasPropertyToLabelMap.constBegin();i!=uasPropertyToLabelMap.constEnd();i++)
     {
