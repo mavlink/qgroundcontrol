@@ -451,9 +451,11 @@ QmlObjectListModel* SimpleMissionItem::comboboxFacts(void)
 bool SimpleMissionItem::friendlyEditAllowed(void) const
 {
     if (_missionCommands->contains((MAV_CMD)command()) && _missionCommands->getMavCmdInfo((MAV_CMD)command(), _vehicle)->friendlyEdit()) {
-        if (!_missionItem.autoContinue()) {
-            return false;
-        }
+
+        // allow autoContinue to hide for now
+        //if (!_missionItem.autoContinue()) {
+        //    return false;
+        //}
 
         if (specifiesCoordinate()) {
             return _missionItem.frame() == MAV_FRAME_GLOBAL || _missionItem.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT;
@@ -539,7 +541,14 @@ void SimpleMissionItem::setDefaultsForCommand(void)
         _missionItem.setParam2(0);
     }
 
-    _missionItem.setAutoContinue(true);
+    // autoContinue after all commands except land
+    if (command == MAV_CMD_NAV_LAND) {
+        _missionItem.setAutoContinue(false);
+    } else {
+        _missionItem.setAutoContinue(true);
+    }
+
+
     _missionItem.setFrame(specifiesCoordinate() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_MISSION);
     setRawEdit(false);
 }
