@@ -19,8 +19,7 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property bool _addPointsMode:   false
-    property real _margin:          ScreenTools.defaultFontPixelWidth / 2
+    property real _margin: ScreenTools.defaultFontPixelWidth / 2
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -31,16 +30,6 @@ Rectangle {
         anchors.left:       parent.left
         anchors.right:      parent.right
         spacing:            _margin
-
-        Connections {
-            target: editorMap
-
-            onMapClicked: {
-                if (_addPointsMode) {
-                    missionItem.addPolygonCoordinate(coordinate)
-                }
-            }
-        }
 
         QGCLabel {
             wrapMode:       Text.WordWrap
@@ -109,14 +98,29 @@ Rectangle {
             }
         }
 
+        Connections {
+            target: editorMap.polygonDraw
+
+            onPolygonStarted: {
+                missionItem.clearPolygon()
+            }
+
+            onPolygonFinished: {
+                for (var i=0; i<coordinates.length; i++) {
+                    missionItem.addPolygonCoordinate(coordinates[i])
+                }
+            }
+        }
+
         QGCButton {
-            text: _addPointsMode ? qsTr("Finish Polygon") : qsTr("Draw Polygon")
+            text:       editorMap.polygonDraw.drawingPolygon ? qsTr("Finish Polygon") : qsTr("Draw Polygon")
+            enabled:    (editorMap.polygonDraw.drawingPolygon && editorMap.polygonDraw.polygonReady) || !editorMap.polygonDraw.drawingPolygon
+
             onClicked: {
-                if (_addPointsMode) {
-                    _addPointsMode = false
+                if (editorMap.polygonDraw.drawingPolygon) {
+                    editorMap.polygonDraw.finishPolygon()
                 } else {
-                    missionItem.clearPolygon()
-                    _addPointsMode = true
+                    editorMap.polygonDraw.startPolygon()
                 }
             }
         }
