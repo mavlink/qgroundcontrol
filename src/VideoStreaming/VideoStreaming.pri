@@ -68,7 +68,7 @@ LinuxBuild {
             $$GST_ROOT\\bin\\libgstvideo-1.0-0.dll \
             $$GST_ROOT\\bin\\libintl-8.dll \
             $$GST_ROOT\\bin\\liborc-0.4-0.dll \
-            $$GST_ROOT\\bin\\libwinpthread-1.dll \
+            $$GST_ROOT\\bin\\libwinpthread-1.dll
         DESTDIR_WIN = $$replace(DESTDIR, "/", "\\")
         for(COPY_FILE, COPY_FILE_LIST) {
             QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
