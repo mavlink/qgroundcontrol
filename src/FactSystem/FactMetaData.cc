@@ -404,7 +404,7 @@ QVariant FactMetaData::_metersToFeet(const QVariant& meters)
 
 QVariant FactMetaData::_feetToMeters(const QVariant& feet)
 {
-    return QVariant(feet.toDouble() * 0.305);
+    return QVariant(feet.toDouble() * 0.3048);
 }
 
 QVariant FactMetaData::_metersPerSecondToMilesPerHour(const QVariant& metersPerSecond)
