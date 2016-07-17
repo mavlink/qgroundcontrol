@@ -17,9 +17,21 @@
 #include "QGroundControlQmlGlobal.h"
 
 #include <QDebug>
+#include <QtMath>
 
 #include <limits>
 #include <cmath>
+
+// Conversion Constants
+// Time
+const qreal FactMetaData::UnitConsts_s::secondsPerHour = 3600.0;
+
+// Velocity
+const qreal FactMetaData::UnitConsts_s::knotsToKPH = 1.852; // exact, hence weird base for knotsToMetersPerSecond
+
+// Length
+const qreal FactMetaData::UnitConsts_s::milesToMeters = 1609.344;
+const qreal FactMetaData::UnitConsts_s::feetToMeters = 0.3048;
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
@@ -379,62 +391,62 @@ void FactMetaData::setBuiltInTranslator(void)
 
 QVariant FactMetaData::_degreesToRadians(const QVariant& degrees)
 {
-    return QVariant(degrees.toDouble() * (M_PI / 180.0));
+    return QVariant(qDegreesToRadians(degrees.toDouble()));
 }
 
 QVariant FactMetaData::_radiansToDegrees(const QVariant& radians)
 {
-    return QVariant(radians.toDouble() * (180 / M_PI));
+    return QVariant(qRadiansToDegrees(radians.toDouble()));
 }
 
 QVariant FactMetaData::_centiDegreesToDegrees(const QVariant& centiDegrees)
 {
-    return QVariant(centiDegrees.toFloat() / 100.0f);
+    return QVariant(centiDegrees.toReal() / 100.0);
 }
 
 QVariant FactMetaData::_degreesToCentiDegrees(const QVariant& degrees)
 {
-    return QVariant((unsigned int)(degrees.toFloat() * 100.0f));
+    return QVariant(qRound(degrees.toReal() * 100.0));
 }
 
 QVariant FactMetaData::_metersToFeet(const QVariant& meters)
 {
-    return QVariant(meters.toDouble() * 3.28083989501);
+    return QVariant(meters.toDouble() * 1.0/constants.feetToMeters);
 }
 
 QVariant FactMetaData::_feetToMeters(const QVariant& feet)
 {
-    return QVariant(feet.toDouble() * 0.305);
+    return QVariant(feet.toDouble() * constants.feetToMeters);
 }
 
 QVariant FactMetaData::_metersPerSecondToMilesPerHour(const QVariant& metersPerSecond)
 {
-    return QVariant((metersPerSecond.toDouble() * 0.000621371192) * 60.0 * 60.0);
+    return QVariant((metersPerSecond.toDouble() * 1.0/constants.milesToMeters) * constants.secondsPerHour);
 }
 
 QVariant FactMetaData::_milesPerHourToMetersPerSecond(const QVariant& milesPerHour)
 {
-    return QVariant((milesPerHour.toDouble() * 1609.344) / (60.0 * 60.0));
+    return QVariant((milesPerHour.toDouble() * constants.milesToMeters) / constants.secondsPerHour);
 }
 
 QVariant FactMetaData::_metersPerSecondToKilometersPerHour(const QVariant& metersPerSecond)
 {
-    return QVariant((metersPerSecond.toDouble() / 1000.0) * 60.0 * 60.0);
+    return QVariant((metersPerSecond.toDouble() / 1000.0) * constants.secondsPerHour);
 }
 
 QVariant FactMetaData::_kilometersPerHourToMetersPerSecond(const QVariant& kilometersPerHour)
 {
-    return QVariant((kilometersPerHour.toDouble() * 1000.0) / (60.0 * 60.0));
+    return QVariant((kilometersPerHour.toDouble() * 1000.0) / constants.secondsPerHour);
 }
 
 QVariant FactMetaData::_metersPerSecondToKnots(const QVariant& metersPerSecond)
 {
-    return QVariant(metersPerSecond.toDouble() * 1.94384449244);
+    return QVariant(metersPerSecond.toDouble() * constants.secondsPerHour / (1000.0 * constants.knotsToKPH));
 }
 
 QVariant FactMetaData::_knotsToMetersPerSecond(const QVariant& knots)
 {
-    return QVariant(knots.toDouble() * 0.51444444444);
+    return QVariant(knots.toDouble() * (constants.knotsToKPH / (1000.0 * constants.secondsPerHour)));
 }
 
 QVariant FactMetaData::_percentToNorm(const QVariant& percent)
