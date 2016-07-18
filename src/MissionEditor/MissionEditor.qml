@@ -693,6 +693,8 @@ QGCView {
                     currentMissionItem: _currentMissionItem
                     missionItems:       controller.visualItems
                     expandedWidth:      missionItemEditor.x - (ScreenTools.defaultFontPixelWidth * 2)
+                    missionDistance:    controller.missionDistance
+                    missionMaxTelemetry: controller.missionMaxTelemetry
                     visible:            !ScreenTools.isShortScreen
                 }
             } // FlightMap

@@ -44,6 +44,8 @@ MissionController::MissionController(QObject *parent)
     , _firstItemsFromVehicle(false)
     , _missionItemsRequested(false)
     , _queuedSend(false)
+    , _missionDistance(0.0)
+    , _missionMaxTelemetry(0.0)
 {
 
 }
@@ -602,6 +604,35 @@ void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionIte
     }
 }
 
+void MissionController::_calcHomeDist(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* homeItem, double* distance)
+{
+    QGeoCoordinate  currentCoord =  currentItem->coordinate();
+    QGeoCoordinate  homeCoord =     homeItem->exitCoordinate();
+    bool            distanceOk =    false;
+
+    // Convert to fixed altitudes
+
+    qCDebug(MissionControllerLog) << homeAlt
+                                  << currentItem->coordinateHasRelativeAltitude() << currentItem->coordinate().altitude()
+                                  << homeItem->exitCoordinateHasRelativeAltitude() << homeItem->exitCoordinate().altitude();
+
+    distanceOk = true;
+    if (currentItem->coordinateHasRelativeAltitude()) {
+        currentCoord.setAltitude(homeAlt + currentCoord.altitude());
+    }
+    if (homeItem->exitCoordinateHasRelativeAltitude()) {
+        homeCoord.setAltitude(homeAlt + homeCoord.altitude());
+    }
+
+    qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
+
+    if (distanceOk) {
+        *distance = homeCoord.distanceTo(currentCoord);
+    } else {
+        *distance = 0.0;
+    }
+}
+
 void MissionController::_recalcWaypointLines(void)
 {
     bool                firstCoordinateItem =   true;
@@ -717,6 +748,9 @@ void MissionController::_recalcAltitudeRangeBearing()
     const double homePositionAltitude = homeItem->coordinate().altitude();
     minAltSeen = maxAltSeen = homeItem->coordinate().altitude();
 
+    double missionDistance = 0.0;
+    double missionMaxTelemetry = 0.0;
+
     bool linkBackToHome = false;
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -762,11 +796,21 @@ void MissionController::_recalcAltitudeRangeBearing()
                     item->setAltDifference(altDifference);
                     item->setAzimuth(azimuth);
                     item->setDistance(distance);
+                    missionDistance += distance;
+
+                    _calcHomeDist(homePositionAltitude, item, homeItem, &distance);
+                    if (distance > missionMaxTelemetry) {
+                        missionMaxTelemetry = distance;
+                    }
+
                 }
                 lastCoordinateItem = item;
             }
         }
     }
+
+    setMissionDistance(missionDistance);
+    setMissionMaxTelemetry(missionMaxTelemetry);
 
     // Walk the list again calculating altitude percentages
     double altRange = maxAltSeen - minAltSeen;
@@ -1015,6 +1059,22 @@ void MissionController::setAutoSync(bool autoSync)
 #else
     Q_UNUSED(autoSync)
 #endif
+}
+
+void MissionController::setMissionDistance(double missionDistance)
+{
+    if (!qFuzzyCompare(_missionDistance, missionDistance)) {
+        _missionDistance = missionDistance;
+        emit missionDistanceChanged(_missionDistance);
+    }
+}
+
+void MissionController::setMissionMaxTelemetry(double missionMaxTelemetry)
+{
+    if (!qFuzzyCompare(_missionMaxTelemetry, missionMaxTelemetry)) {
+        _missionMaxTelemetry = missionMaxTelemetry;
+        emit missionMaxTelemetryChanged(_missionMaxTelemetry);
+    }
 }
 
 void MissionController::_dirtyChanged(bool dirty)

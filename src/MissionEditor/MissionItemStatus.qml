@@ -22,6 +22,8 @@ Rectangle {
     property var    currentMissionItem          ///< Mission item to display status for
     property var    missionItems                ///< List of all available mission items
     property real   expandedWidth               ///< Width of control when expanded
+    property real   missionDistance
+    property real   missionMaxTelemetry
 
     width:      _expanded ? expandedWidth : _collapsedWidth
     height:     Math.max(valueGrid.height, valueMissionGrid.height) + (_margins * 2)
@@ -34,25 +36,30 @@ Rectangle {
 
     property real   _collapsedWidth:    valueGrid.width + valueMissionGrid.width + (margins * 2)
     property bool   _expanded:          true
+
     property real   _distance:          _statusValid ? _currentMissionItem.distance : 0
     property real   _altDifference:     _statusValid ? _currentMissionItem.altDifference : 0
     property real   _gradient:          _statusValid || _currentMissionItem.distance == 0 ? Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) : 0
     property real   _gradientPercent:   isNaN(_gradient) ? 0 : _gradient * 100
     property real   _azimuth:           _statusValid ? _currentMissionItem.azimuth : -1
+    property real   _missionDistance:   _missionValid ? missionDistance : 0
+    property real   _missionMaxTelemetry: _missionValid ? missionMaxTelemetry : 0
+
     property bool   _statusValid:       currentMissionItem != undefined
     property bool   _vehicleValid:      _activeVehicle != undefined
     property bool   _missionValid:      missionItems != undefined
     property bool   _currentSurvey:     _statusValid ? _currentMissionItem.commandName == "Survey" : false
+    property bool   _isVTOL:            _vehicleValid ? _activeVehicle.vtol : false
+
     property string _distanceText:      _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _altText:           _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _gradientText:      _statusValid ? _gradientPercent.toFixed(0) + "%" : " "
     property string _azimuthText:       _statusValid ? Math.round(_azimuth) : " "
     property string _numberShotsText:   _currentSurvey ? _currentMissionItem.cameraShots.toFixed(0) : " "
     property string _coveredAreaText:   _currentSurvey ? QGroundControl.squareMetersToAppSettingsAreaUnits(_currentMissionItem.coveredArea).toFixed(2) + " " + QGroundControl.appSettingsAreaUnitsString : " "
-    property string _totalDistanceText: _missionValid ? "30.91" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
-    property string _totalTimeText:     _missionValid ? "34min 23s" : " "
-    property string _maxTelemDistText:  _missionValid ? "5.23" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
-    property bool   _isVTOL:            _vehicleValid ? _activeVehicle.vtol : false
+    property string _missionDistanceText: _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_missionDistance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _missionTimeText:     _missionValid ? "34min 23s" : " "
+    property string _missionMaxTelemetryText:  _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _hoverDistanceText: _missionValid ? "0.47" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _cruiseDistanceText: _missionValid ? "30.44" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _hoverTimeText:     _missionValid ? "4min 02s" : " "
@@ -157,13 +164,13 @@ Rectangle {
             QGCLabel { text: qsTr(" ") }
 
             QGCLabel { text: qsTr("Distance:") }
-            QGCLabel { text: _totalDistanceText }
+            QGCLabel { text: _missionDistanceText }
 
             QGCLabel { text: qsTr("Time:") }
-            QGCLabel { text: _totalTimeText }
+            QGCLabel { text: _missionTimeText }
 
             QGCLabel { text: qsTr("Max telem dist:") }
-            QGCLabel { text: _maxTelemDistText }
+            QGCLabel { text: _missionMaxTelemetryText }
 
             QGCLabel {
                 text: qsTr("Hover distance:")
