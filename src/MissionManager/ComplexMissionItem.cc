@@ -36,6 +36,7 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
     , _dirty(false)
     , _cameraTrigger(false)
     , _gridAltitudeRelative(true)
+    , _surveyDistance(0.0)
     , _cameraShots(0)
     , _coveredArea(0.0)
     , _gridAltitudeFact (0, "Altitude:",        FactMetaData::valueTypeDouble)
@@ -64,10 +65,19 @@ const ComplexMissionItem& ComplexMissionItem::operator=(const ComplexMissionItem
     setAltPercent(other._altPercent);
     setAzimuth(other._azimuth);
     setDistance(other._distance);
+    setSurveyDistance(other._surveyDistance);
     setCameraShots(other._cameraShots);
     setCoveredArea(other._coveredArea);
 
     return *this;
+}
+
+void ComplexMissionItem::setSurveyDistance(double surveyDistance)
+{
+    if (!qFuzzyCompare(_surveyDistance, surveyDistance)) {
+        _surveyDistance = surveyDistance;
+        emit surveyDistanceChanged(_surveyDistance);
+    }
 }
 
 void ComplexMissionItem::setCameraShots(int cameraShots)
@@ -334,6 +344,7 @@ void ComplexMissionItem::_generateGrid(void)
         convertNedToGeo(-point.y(), point.x(), 0, tangentOrigin, &geoCoord);
         _gridPoints += QVariant::fromValue(geoCoord);
     }
+    setSurveyDistance(surveyDistance);
     setCameraShots((int)floor(surveyDistance / _cameraTriggerDistanceFact.rawValue().toDouble()));
 
     emit gridPointsChanged();

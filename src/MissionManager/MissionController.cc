@@ -796,7 +796,11 @@ void MissionController::_recalcAltitudeRangeBearing()
                     item->setAltDifference(altDifference);
                     item->setAzimuth(azimuth);
                     item->setDistance(distance);
+
                     missionDistance += distance;
+                    if (!item->isSimpleItem()) {
+                        missionDistance += qobject_cast<ComplexMissionItem*>(item)->surveyDistance();
+                    }
 
                     _calcHomeDist(homePositionAltitude, item, homeItem, &distance);
                     if (distance > missionMaxTelemetry) {
@@ -965,6 +969,7 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
         // We need to track changes of lastSequenceNumber so we can recalc sequence numbers for subsequence items
         ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
         connect(complexItem, &ComplexMissionItem::lastSequenceNumberChanged, this, &MissionController::_recalcSequence);
+        connect(complexItem, &ComplexMissionItem::surveyDistanceChanged, this, &MissionController::_recalcAltitudeRangeBearing);
     }
 }
 
