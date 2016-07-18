@@ -188,6 +188,14 @@ private:
     bool            _rebootRequired;
     double          _increment;
 
+    // Exact conversion constants
+    static const struct UnitConsts_s {
+        static const qreal secondsPerHour;
+        static const qreal knotsToKPH;
+        static const qreal milesToMeters;
+        static const qreal feetToMeters;
+    } constants;
+
     struct BuiltInTranslation_s {
         const char* rawUnits;
         const char* cookedUnits;
@@ -195,6 +203,7 @@ private:
         Translator  cookedTranslator;
 
     };
+
     static const BuiltInTranslation_s _rgBuiltInTranslations[];
 
     static const AppSettingsTranslation_s _rgAppSettingsTranslations[];
