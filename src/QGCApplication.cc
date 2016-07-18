@@ -24,6 +24,7 @@
 #include <QStyleFactory>
 #include <QAction>
 #include <QStringListModel>
+#include <QSslSocket>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -443,8 +444,13 @@ bool QGCApplication::_initForNormalAppBoot(void)
     if (_settingsUpgraded) {
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
-        showMessage("The format for QGroundControl saved settings has been modified. "
-                    "Your saved settings have been reset to defaults.");
+        showMessage(tr("The format for QGroundControl saved settings has been modified. "
+                    "Your saved settings have been reset to defaults."));
+    }
+
+    if (getQGCMapEngine()->wasCacheReset()) {
+        showMessage(tr("The Offline Map Cache database has been upgraded. "
+                    "Your old map cache sets have been reset."));
     }
 
     if (getQGCMapEngine()->wasCacheReset()) {
@@ -453,6 +459,13 @@ bool QGCApplication::_initForNormalAppBoot(void)
     }
 
     settings.sync();
+
+#ifdef Q_OS_WIN
+    if (!QSslSocket::supportsSsl()) {
+        showMessage(tr("QGroundControl for Windows requires the install of OpenSSL. "
+                       "Please refer to the user manual at http://qgroundcontrol.io for instructions on download and install for Windows."));
+    }
+#endif
 
     return true;
 }

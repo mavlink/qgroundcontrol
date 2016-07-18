@@ -542,7 +542,6 @@ QGCView {
                     RoundButton {
                         id:             addShapeButton
                         buttonImage:    "/qmlimages/MapDrawShape.svg"
-                        visible:        QGroundControl.experimentalSurvey
                         lightBorders:   _lightWidgetBorders
 
                         onClicked: {

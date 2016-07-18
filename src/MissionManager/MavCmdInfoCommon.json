@@ -543,10 +543,8 @@
             "rawName":              "MAV_CMD_DO_LAND_START",
             "friendlyName":         "Land start",
             "description":          "Marker to indicate start of landing sequence.",
-            "specifiesCoordinate":  true,
-            "standaloneCoordinate": true,
             "friendlyEdit":         true,
-            "category":             "Basic"
+            "category":             "Flight control"
         },
         { "id": 190, "rawName": "MAV_CMD_DO_RALLY_LAND", "friendlyName": "Rally land" },
         { "id": 191, "rawName": "MAV_CMD_DO_GO_AROUND", "friendlyName": "Go around" },

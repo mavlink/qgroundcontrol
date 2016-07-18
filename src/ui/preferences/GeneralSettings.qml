@@ -398,14 +398,6 @@ QGCView {
                     height: ScreenTools.defaultFontPixelHeight / 2
                     width:  parent.width
                 }
-
-                //-----------------------------------------------------------------
-                //-- Experimental Survey settings
-                QGCCheckBox {
-                    text:       qsTr("Experimental Survey [WIP - no bugs reports please]")
-                    checked:    QGroundControl.experimentalSurvey
-                    onClicked:  QGroundControl.experimentalSurvey = checked
-                }
             }
         }
     } // QGCViewPanel

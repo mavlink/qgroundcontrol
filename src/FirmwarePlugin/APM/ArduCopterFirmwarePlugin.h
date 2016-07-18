@@ -64,6 +64,8 @@ public:
     void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel) final;
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     virtual int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+    virtual bool multiRotorCoaxialMotors(Vehicle* vehicle) final;
+    virtual bool multiRotorXConfig(Vehicle* vehicle) final;
 
 private:
     static bool _remapParamNameIntialized;
