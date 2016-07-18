@@ -63,7 +63,8 @@ WindowsBuild {
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
         $$BASEDIR\\libs\\lib\\sdl\\win32\\SDL.dll \
-        $$BASEDIR\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll
+        $$BASEDIR\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll \
+        $$BASEDIR\\deploy\\libeay32.dll
 
     for(COPY_FILE, COPY_FILE_LIST) {
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
