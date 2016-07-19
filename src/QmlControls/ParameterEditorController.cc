@@ -25,14 +25,20 @@
 
 /// @Brief Constructs a new ParameterEditorController Widget. This widget is used within the PX4VehicleConfig set of screens.
 ParameterEditorController::ParameterEditorController(void)
+    : _currentComponentId(_vehicle->defaultComponentId())
+    , _parameters(new QmlObjectListModel(this))
 {
-    if (_autopilot) {
-        const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
-
-        foreach (int componentId, groupMap.keys()) {
-            _componentIds += QString("%1").arg(componentId);
-        }
+    const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
+    foreach (int componentId, groupMap.keys()) {
+        _componentIds += QString("%1").arg(componentId);
     }
+
+    _currentGroup = groupMap[_currentComponentId].keys()[0];
+    _updateParameters();
+
+    connect(this, &ParameterEditorController::searchTextChanged, this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::currentComponentIdChanged, this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::currentGroupChanged, this, &ParameterEditorController::_updateParameters);
 }
 
 ParameterEditorController::~ParameterEditorController()
@@ -42,16 +48,16 @@ ParameterEditorController::~ParameterEditorController()
 
 QStringList ParameterEditorController::getGroupsForComponent(int componentId)
 {
-	const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
+    const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
 
-	return groupMap[componentId].keys();
+    return groupMap[componentId].keys();
 }
 
 QStringList ParameterEditorController::getParametersForGroup(int componentId, QString group)
 {
-	const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
-	
-	return groupMap[componentId][group];
+    const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
+
+    return groupMap[componentId][group];
 }
 
 QStringList ParameterEditorController::searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions)
@@ -78,8 +84,8 @@ QStringList ParameterEditorController::searchParametersForComponent(int componen
 
 void ParameterEditorController::clearRCToParam(void)
 {
-	Q_ASSERT(_uas);
-	_uas->unsetRCToParameterMap();
+    Q_ASSERT(_uas);
+    _uas->unsetRCToParameterMap();
 }
 
 void ParameterEditorController::saveToFile(const QString& filename)
@@ -92,15 +98,15 @@ void ParameterEditorController::saveToFile(const QString& filename)
     if (!filename.isEmpty()) {
         QFile file(filename);
         
-		if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             qgcApp()->showMessage(QString("Unable to create file: %1").arg(filename));
-			return;
-		}
+            return;
+        }
         
-		QTextStream stream(&file);
-		_autopilot->writeParametersToStream(stream);
-		file.close();
-	}
+        QTextStream stream(&file);
+        _autopilot->writeParametersToStream(stream);
+        file.close();
+    }
 }
 
 void ParameterEditorController::saveToFilePicker(void)
@@ -156,7 +162,7 @@ void ParameterEditorController::loadFromFilePicker(void)
 
 void ParameterEditorController::refresh(void)
 {
-	_autopilot->refreshAllParameters();
+    _autopilot->refreshAllParameters();
 }
 
 void ParameterEditorController::resetAllToDefaults(void)
@@ -170,8 +176,31 @@ void ParameterEditorController::setRCToParam(const QString& paramName)
 #ifdef __mobile__
     Q_UNUSED(paramName)
 #else
-	Q_ASSERT(_uas);
+    Q_ASSERT(_uas);
     QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
-	d->exec();
+    d->exec();
 #endif
+}
+
+void ParameterEditorController::_updateParameters(void)
+{
+    QObjectList newParameterList;
+
+    if (_searchText.isEmpty()) {
+        const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
+        foreach (const QString& parameter, groupMap[_currentComponentId][_currentGroup]) {
+            newParameterList.append(_autopilot->getParameterFact(_currentComponentId, parameter));
+        }
+    } else {
+        foreach(const QString &parameter, _autopilot->parameterNames(_vehicle->defaultComponentId())) {
+            Fact* fact = _autopilot->getParameterFact(_vehicle->defaultComponentId(), parameter);
+            if (fact->name().contains(_searchText, Qt::CaseInsensitive) ||
+                    fact->shortDescription().contains(_searchText, Qt::CaseInsensitive) ||
+                    fact->longDescription().contains(_searchText, Qt::CaseInsensitive)) {
+                newParameterList.append(fact);
+            }
+        }
+    }
+
+    _parameters->swapObjectList(newParameterList);
 }
