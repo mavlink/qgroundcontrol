@@ -32,9 +32,8 @@ QGCView {
     property Fact   _editorDialogFact: Fact { }
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10      // Dynamic adjusted at runtime
-    property bool   _searchFilter:      false   ///< true: showing results of search
+    property bool   _searchFilter:      searchText.text != ""   ///< true: showing results of search
     property var    _searchResults              ///< List of parameter names from search results
-    property string _currentGroup:      ""
     property bool   _showRCToParam:     !ScreenTools.isMobile && QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
 
     ParameterEditorController {
@@ -55,34 +54,24 @@ QGCView {
             id:             header
             anchors.left:   parent.left
             anchors.right:  parent.right
-            height:         searchText.height + ScreenTools.defaultFontPixelHeight / 3
             spacing:        ScreenTools.defaultFontPixelWidth
 
+            QGCLabel {
+                anchors.baseline:   clearButton.baseline
+                text:               qsTr("Search:")
+            }
+
             QGCTextField {
-                id: searchText
+                id:                 searchText
+                anchors.baseline:   clearButton.baseline
+                text:               controller.searchText
+                onDisplayTextChanged: controller.searchText = displayText
             }
 
             QGCButton {
-                anchors.top:    searchText.top
-                anchors.bottom: searchText.bottom
-                text:           qsTr("Search")
-                onClicked: {
-                    _searchResults = controller.searchParametersForComponent(-1, searchText.text)
-                    _searchFilter = true
-                }
-            }
-
-            QGCButton {
-                anchors.top:    searchText.top
-                anchors.bottom: searchText.bottom
-                text:           qsTr("Clear")
-                visible:        _searchFilter
-
-                onClicked: {
-                    searchText.text = ""
-                    _searchFilter = false
-                    hideDialog()
-                }
+                id:         clearButton
+                text:       qsTr("Clear")
+                onClicked:  searchText.text = ""
             }
         } // Row - Header
 
@@ -132,184 +121,135 @@ QGCView {
             }
         }
 
-        //---------------------------------------------
-        //-- Contents
-        Loader {
-            anchors.left:       parent.left
-            anchors.right:      parent.right
+        /// Group buttons
+        QGCFlickable {
+            id :                groupScroll
+            width:              ScreenTools.defaultFontPixelWidth * 25
             anchors.top:        header.bottom
             anchors.bottom:     parent.bottom
-            sourceComponent:    _searchFilter ? searchResultsViewComponent: groupedViewComponent
-        }
-    }
+            clip:               true
+            pixelAligned:       true
+            contentHeight:      groupedViewComponentColumn.height
+            contentWidth:       groupedViewComponentColumn.width
+            flickableDirection: Flickable.VerticalFlick
+            visible:            !_searchFilter
 
-    //-- Parameter Groups
-    Component {
-        id: groupedViewComponent
-        Row {
-            spacing: ScreenTools.defaultFontPixelWidth * 0.5
-            //-- Parameter Groups
-            QGCFlickable {
-                id :                groupScroll
-                width:              ScreenTools.defaultFontPixelWidth * 25
-                height:             parent.height
-                clip:               true
-                pixelAligned:       true
-                contentHeight:      groupedViewComponentColumn.height
-                contentWidth:       groupedViewComponentColumn.width
-                flickableDirection: Flickable.VerticalFlick
-                Column {
-                    id: groupedViewComponentColumn
-                    spacing: Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
-                    Repeater {
-                        model: controller.componentIds
-                        Column {
-                            id: componentColumn
-                            readonly property int componentId: parseInt(modelData)
-                            spacing: Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
-                            QGCLabel {
-                                text: qsTr("Component #: %1").arg(componentId.toString())
-                                font.family: ScreenTools.demiboldFontFamily
-                                anchors.horizontalCenter: parent.horizontalCenter
-                            }
-                            ExclusiveGroup { id: groupGroup }
-                            Repeater {
-                                model: controller.getGroupsForComponent(componentId)
-                                QGCButton {
-                                    width:  ScreenTools.defaultFontPixelWidth * 25
-                                    text:	modelData
-                                    height: _rowHeight
-                                    exclusiveGroup: setupButtonGroup
-                                    onClicked: {
-                                        checked = true
-                                        // Clear the rows from the component first. This allows us to change the componentId without
-                                        // breaking any bindings.
-                                        factRowsLoader.parameterNames   = [ ]
-                                        _rowWidth                       = 10
-                                        factRowsLoader.componentId      = componentId
-                                        factRowsLoader.parameterNames   = controller.getParametersForGroup(componentId, modelData)
-                                        _currentGroup                   = modelData
-                                        factScrollView.contentX         = 0
-                                        factScrollView.contentY         = 0
-                                    }
+            Column {
+                id:         groupedViewComponentColumn
+                spacing:    Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
+
+                Repeater {
+                    model: controller.componentIds
+
+                    Column {
+                        id:     componentColumn
+                        spacing: Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
+
+                        readonly property int componentId: modelData
+
+                        QGCLabel {
+                            text: qsTr("Component #: %1").arg(componentId.toString())
+                            font.family: ScreenTools.demiboldFontFamily
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+
+                        ExclusiveGroup { id: groupGroup }
+
+                        Repeater {
+                            model: controller.getGroupsForComponent(componentId)
+
+                            QGCButton {
+                                width:          ScreenTools.defaultFontPixelWidth * 25
+                                text:           groupName
+                                height:         _rowHeight
+                                exclusiveGroup: setupButtonGroup
+
+                                readonly property string groupName: modelData
+
+                                onClicked: {
+                                    checked = true
+                                    _rowWidth                       = 10
+                                    controller.currentComponentId   = componentId
+                                    controller.currentGroup         = groupName
                                 }
                             }
                         }
                     }
                 }
             }
-            Rectangle {
-                color:      __qgcPal.text
-                width:      1
-                height:     parent.height
-                opacity:    0.1
-            }
-            //-- Parameters
-            QGCFlickable {
-                id:             factScrollView
-                width:          parent.width - groupScroll.width
-                height:         parent.height
-                contentHeight:  factRowsLoader.height
-                contentWidth:   _rowWidth
-                boundsBehavior: Flickable.OvershootBounds
-                pixelAligned:   true
-                clip:           true
-                Loader {
-                    id:                 factRowsLoader
-                    sourceComponent:    factRowsComponent
-                    property int    componentId:    controller.componentIds[0]
-                    property var    parameterNames: controller.getParametersForGroup(componentId, controller.getGroupsForComponent(componentId)[0])
-                    onLoaded: {
-                        _currentGroup = controller.getGroupsForComponent(controller.componentIds[0])[0]
+        }
+
+        /// Parameter list
+        ListView {
+            id:                 editorListView
+            anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+            anchors.left:       _searchFilter ? parent.left : groupScroll.right
+            anchors.right:      parent.right
+            anchors.top:        header.bottom
+            anchors.bottom:     parent.bottom
+            orientation:        ListView.Vertical
+            model:              controller.parameters
+            cacheBuffer:        height > 0 ? height * 2 : 0
+            clip:               true
+
+            delegate: Rectangle {
+                height: _rowHeight
+                width:  _rowWidth
+                color:  Qt.rgba(0,0,0,0)
+
+                Row {
+                    id:     factRow
+                    spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    property Fact modelFact: object
+
+                    QGCLabel {
+                        id:     nameLabel
+                        width:  ScreenTools.defaultFontPixelWidth  * 20
+                        text:   factRow.modelFact.name
+                        clip:   true
+                    }
+
+                    QGCLabel {
+                        id:     valueLabel
+                        width:  ScreenTools.defaultFontPixelWidth  * 20
+                        color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText) : __qgcPal.text
+                        text:   factRow.modelFact.enumStrings.length == 0 ? factRow.modelFact.valueString + " " + factRow.modelFact.units : factRow.modelFact.enumStringValue
+                        clip:   true
+                    }
+
+                    QGCLabel {
+                        text:   factRow.modelFact.shortDescription
+                    }
+
+                    Component.onCompleted: {
+                        if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
+                            _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
+                        }
                     }
                 }
-            }
-        }
-    }
 
-    //---------------------------------------------
-    // Search result view
-    Component {
-        id: searchResultsViewComponent
-        Item {
-            QGCFlickable {
-                id:             factScrollView
-                width:          parent.width
-                height:         parent.height
-                contentHeight:  factRowsLoader.height
-                contentWidth:   _rowWidth
-                boundsBehavior: Flickable.OvershootBounds
-                pixelAligned:   true
-                clip:           true
-                Loader {
-                    id:                 factRowsLoader
-                    sourceComponent:    factRowsComponent
-                    property int    componentId:       -1
-                    property var    parameterNames:    _searchResults
-                }
-            }
-        }
-    }
-
-    //---------------------------------------------
-    // Paremeters view
-    Component {
-        id: factRowsComponent
-        Column {
-            spacing: Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
-            Repeater {
-                model: parameterNames
                 Rectangle {
-                    height: _rowHeight
                     width:  _rowWidth
-                    color:  Qt.rgba(0,0,0,0)
-                    Row {
-                        id:     factRow
-                        property Fact modelFact: controller.getParameterFact(componentId, modelData)
-                        spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
-                        anchors.verticalCenter: parent.verticalCenter
-                        QGCLabel {
-                            id:     nameLabel
-                            width:  ScreenTools.defaultFontPixelWidth  * 20
-                            text:   factRow.modelFact.name
-                            clip:   true
-                        }
-                        QGCLabel {
-                            id:     valueLabel
-                            width:  ScreenTools.defaultFontPixelWidth  * 20
-                            color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText) : __qgcPal.text
-                            text:   factRow.modelFact.enumStrings.length == 0 ? factRow.modelFact.valueString + " " + factRow.modelFact.units : factRow.modelFact.enumStringValue
-                            clip:   true
-                        }
-                        QGCLabel {
-                            text:   factRow.modelFact.shortDescription
-                        }
-                        Component.onCompleted: {
-                            if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
-                                _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
-                            }
-                        }
-                    }
-                    Rectangle {
-                        width:  _rowWidth
-                        height: 1
-                        color:  __qgcPal.text
-                        opacity: 0.15
-                        anchors.bottom: parent.bottom
-                        anchors.left:   parent.left
-                    }
-                    MouseArea {
-                        anchors.fill:       parent
-                        acceptedButtons:    Qt.LeftButton
-                        onClicked: {
-                            _editorDialogFact = factRow.modelFact
-                            showDialog(editorDialogComponent, qsTr("Parameter Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
-                        }
+                    height: 1
+                    color:  __qgcPal.text
+                    opacity: 0.15
+                    anchors.bottom: parent.bottom
+                    anchors.left:   parent.left
+                }
+
+                MouseArea {
+                    anchors.fill:       parent
+                    acceptedButtons:    Qt.LeftButton
+                    onClicked: {
+                        _editorDialogFact = factRow.modelFact
+                        showDialog(editorDialogComponent, qsTr("Parameter Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
                     }
                 }
             }
         }
-    }
+    } // QGCViewPanel
 
     Component {
         id: editorDialogComponent
@@ -317,44 +257,6 @@ QGCView {
         ParameterEditorDialog {
             fact:           _editorDialogFact
             showRCToParam:  _showRCToParam
-        }
-    }
-
-    Component {
-        id: searchDialogComponent
-
-        QGCViewDialog {
-
-            function accept() {
-                _searchResults = controller.searchParametersForComponent(-1, searchFor.text, true /*searchInName.checked*/, true /*searchInDescriptions.checked*/)
-                _searchFilter = true
-                hideDialog()
-            }
-
-            function reject() {
-                _searchFilter = false
-                hideDialog()
-            }
-
-            QGCLabel {
-                id:     searchForLabel
-                text:   qsTr("Search for:")
-            }
-
-            QGCTextField {
-                id:                 searchFor
-                anchors.topMargin:  defaultTextHeight / 3
-                anchors.top:        searchForLabel.bottom
-                width:              ScreenTools.defaultFontPixelWidth * 20
-            }
-
-            QGCLabel {
-                anchors.topMargin:  defaultTextHeight
-                anchors.top:        searchFor.bottom
-                width:              parent.width
-                wrapMode:           Text.WordWrap
-                text:               qsTr("Hint: Leave 'Search For' blank and click Apply to list all parameters sorted by name.")
-            }
         }
     }
 
