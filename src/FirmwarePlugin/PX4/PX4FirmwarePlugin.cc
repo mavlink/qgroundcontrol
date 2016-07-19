@@ -170,8 +170,11 @@ int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
     return 0;   // 0 buttons reserved for rc switch simulation
 }
 
-bool PX4FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
+    if(vehicle->multiRotor()) {
+        return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability | OrbitModeCapability)) == capabilities;
+    }
     return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
 }
 

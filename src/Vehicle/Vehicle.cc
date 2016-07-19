@@ -1223,7 +1223,7 @@ void Vehicle::setArmed(bool armed)
 
 bool Vehicle::flightModeSetAvailable(void)
 {
-    return _firmwarePlugin->isCapable(FirmwarePlugin::SetFlightModeCapability);
+    return _firmwarePlugin->isCapable(this, FirmwarePlugin::SetFlightModeCapability);
 }
 
 QStringList Vehicle::flightModes(void)
@@ -1583,12 +1583,17 @@ void Vehicle::setFlying(bool flying)
 
 bool Vehicle::guidedModeSupported(void) const
 {
-    return _firmwarePlugin->isCapable(FirmwarePlugin::GuidedModeCapability);
+    return _firmwarePlugin->isCapable(this, FirmwarePlugin::GuidedModeCapability);
 }
 
 bool Vehicle::pauseVehicleSupported(void) const
 {
-    return _firmwarePlugin->isCapable(FirmwarePlugin::PauseVehicleCapability);
+    return _firmwarePlugin->isCapable(this, FirmwarePlugin::PauseVehicleCapability);
+}
+
+bool Vehicle::orbitModeSupported() const
+{
+    return _firmwarePlugin->isCapable(this, FirmwarePlugin::OrbitModeCapability);
 }
 
 void Vehicle::guidedModeRTL(void)
@@ -1639,8 +1644,8 @@ void Vehicle::guidedModeChangeAltitude(double altitudeRel)
 
 void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude)
 {
-    if (!guidedModeSupported()) {
-        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+    if (!orbitModeSupported()) {
+        qgcApp()->showMessage(QStringLiteral("Orbit mode not supported by Vehicle."));
         return;
     }
     _firmwarePlugin->guidedModeOrbit(this, centerCoord, radius, velocity, altitude);

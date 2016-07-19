@@ -773,7 +773,7 @@ void ParameterLoader::_saveToEEPROM(void)
 {
     if (_saveRequired) {
         _saveRequired = false;
-        if (_vehicle->firmwarePlugin()->isCapable(FirmwarePlugin::MavCmdPreflightStorageCapability)) {
+        if (_vehicle->firmwarePlugin()->isCapable(_vehicle, FirmwarePlugin::MavCmdPreflightStorageCapability)) {
             mavlink_message_t msg;
             mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _vehicle->id(), 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
             _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);

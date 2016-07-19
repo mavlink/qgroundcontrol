@@ -501,7 +501,7 @@ Item {
                 QGCButton {
                     pointSize:  _guidedModeBar._fontPointSize
                     text:       qsTr("Orbit")
-                    visible:    (_activeVehicle && _activeVehicle.flying) && _activeVehicle.guidedModeSupported && _activeVehicle.armed
+                    visible:    (_activeVehicle && _activeVehicle.flying) && _activeVehicle.orbitModeSupported && _activeVehicle.armed
                     onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmOrbit)
                 }
 
