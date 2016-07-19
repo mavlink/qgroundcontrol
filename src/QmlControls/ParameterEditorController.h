@@ -20,6 +20,7 @@
 #include "AutoPilotPlugin.h"
 #include "UASInterface.h"
 #include "FactPanelController.h"
+#include "QmlObjectListModel.h"
 
 class ParameterEditorController : public FactPanelController
 {
@@ -29,7 +30,11 @@ public:
     ParameterEditorController(void);
     ~ParameterEditorController();
 
-    Q_PROPERTY(QStringList componentIds MEMBER _componentIds CONSTANT)
+    Q_PROPERTY(QString              searchText          MEMBER _searchText          NOTIFY searchTextChanged)
+    Q_PROPERTY(int                  currentComponentId  MEMBER _currentComponentId  NOTIFY currentComponentIdChanged)
+    Q_PROPERTY(QString              currentGroup        MEMBER _currentGroup        NOTIFY currentGroupChanged)
+    Q_PROPERTY(QmlObjectListModel*  parameters          MEMBER _parameters          CONSTANT)
+    Q_PROPERTY(QVariantList         componentIds        MEMBER _componentIds        CONSTANT)
 	
 	Q_INVOKABLE QStringList getGroupsForComponent(int componentId);
 	Q_INVOKABLE QStringList getParametersForGroup(int componentId, QString group);
@@ -47,10 +52,20 @@ public:
 	QList<QObject*> model(void);
     
 signals:
+    void searchTextChanged(QString searchText);
+    void currentComponentIdChanged(int componentId);
+    void currentGroupChanged(QString group);
     void showErrorMessage(const QString& errorMsg);
-	
+
+private slots:
+    void _updateParameters(void);
+
 private:
-	QStringList			_componentIds;
+    QVariantList        _componentIds;
+    QString             _searchText;
+    int                 _currentComponentId;
+    QString             _currentGroup;
+    QmlObjectListModel* _parameters;
 };
 
 #endif
