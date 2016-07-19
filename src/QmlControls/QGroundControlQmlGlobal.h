@@ -93,9 +93,6 @@ public:
     Q_PROPERTY(QString  missionFileExtension    READ missionFileExtension   CONSTANT)
     Q_PROPERTY(QString  telemetryFileExtension  READ telemetryFileExtension CONSTANT)
 
-    /// @ return: true: experimental survey ip code is turned on
-    Q_PROPERTY(bool experimentalSurvey READ experimentalSurvey WRITE setExperimentalSurvey NOTIFY experimentalSurveyChanged)
-
     /// Returns the string for distance units which has configued by user
     Q_PROPERTY(QString appSettingsDistanceUnitsString READ appSettingsDistanceUnitsString CONSTANT)
 
@@ -132,6 +129,8 @@ public:
 
     /// Updates the logging filter rules after settings have changed
     Q_INVOKABLE void updateLoggingFilterRules(void) { QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(QString()); }
+
+    Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
     // Property accesors
 
@@ -178,9 +177,6 @@ public:
     void    setIsVersionCheckEnabled    (bool enable);
     void    setMavlinkSystemID          (int  id);
 
-    bool experimentalSurvey(void) const;
-    void setExperimentalSurvey(bool experimentalSurvey);
-
     QString parameterFileExtension(void) const  { return QGCApplication::parameterFileExtension; }
     QString missionFileExtension(void) const    { return QGCApplication::missionFileExtension; }
     QString telemetryFileExtension(void) const  { return QGCApplication::telemetryFileExtension; }
@@ -200,7 +196,6 @@ signals:
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
-    void experimentalSurveyChanged      (bool experimentalSurvey);
 
 private:
     FlightMapSettings*      _flightMapSettings;

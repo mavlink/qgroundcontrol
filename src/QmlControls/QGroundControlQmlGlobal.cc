@@ -14,6 +14,8 @@
 #include "QGroundControlQmlGlobal.h"
 
 #include <QSettings>
+#include <QLineF>
+#include <QPointF>
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 
@@ -207,21 +209,6 @@ void QGroundControlQmlGlobal::setBaseFontPointSize(qreal size)
     }
 }
 
-bool QGroundControlQmlGlobal::experimentalSurvey(void) const
-{
-    QSettings settings;
-
-    return settings.value("ExperimentalSurvey", false).toBool();
-}
-
-void QGroundControlQmlGlobal::setExperimentalSurvey(bool experimentalSurvey)
-{
-    QSettings settings;
-
-    settings.setValue("ExperimentalSurvey", experimentalSurvey);
-    emit experimentalSurveyChanged(experimentalSurvey);
-}
-
 Fact* QGroundControlQmlGlobal::offlineEditingFirmwareType(void)
 {
     if (!_offlineEditingFirmwareTypeFact) {
@@ -278,4 +265,12 @@ Fact* QGroundControlQmlGlobal::speedUnits(void)
     }
 
     return _speedUnitsFact;
+}
+
+bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPointF line2A, QPointF line2B)
+{
+    QPointF intersectPoint;
+
+    return QLineF(line1A, line1B).intersect(QLineF(line2A, line2B), &intersectPoint) == QLineF::BoundedIntersection &&
+            intersectPoint != line1A && intersectPoint != line1B;
 }

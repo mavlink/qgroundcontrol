@@ -181,6 +181,12 @@ public:
 
     /// Returns the highest major version number that is known to the remap for this specified major version.
     virtual int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const;
+
+    /// @return true: Motors are coaxial like an X8 config, false: Quadcopter for example
+    virtual bool multiRotorCoaxialMotors(Vehicle* vehicle) { Q_UNUSED(vehicle); return false; }
+
+    /// @return true: X confiuration, false: Plus configuration
+    virtual bool multiRotorXConfig(Vehicle* vehicle) { Q_UNUSED(vehicle); return false; }
 };
 
 #endif
