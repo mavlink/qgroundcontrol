@@ -98,7 +98,7 @@ int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVe
     return majorVersionNumber == 3 ? 4: Vehicle::versionNotSetValue;
 }
 
-bool ArduCopterFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+bool ArduCopterFirmwarePlugin::isCapable(const Vehicle* /*vehicle*/, FirmwareCapabilities capabilities)
 {
     return (capabilities & (SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability)) == capabilities;
 }

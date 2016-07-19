@@ -15,8 +15,9 @@
 
 const char* guided_mode_not_supported_by_vehicle = "Guided mode not supported by Vehicle.";
 
-bool FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+bool FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
+    Q_UNUSED(vehicle);
     Q_UNUSED(capabilities);
     return false;
 }

@@ -40,7 +40,8 @@ public:
         SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
         MavCmdPreflightStorageCapability =  1 << 1, ///< MAV_CMD_PREFLIGHT_STORAGE is supported
         PauseVehicleCapability =            1 << 2, ///< Vehicle supports pausing at current location
-        GuidedModeCapability =              1 << 3, ///< Vehicle Support guided mode commands
+        GuidedModeCapability =              1 << 3, ///< Vehicle Supports guided mode commands
+        OrbitModeCapability =               1 << 4, ///< Vehicle Supports orbit mode
     } FirmwareCapabilities;
 
     /// Maps from on parameter name to another
@@ -62,7 +63,7 @@ public:
     virtual void initializeVehicle(Vehicle* vehicle);
 
     /// @return true: Firmware supports all specified capabilites
-    virtual bool isCapable(FirmwareCapabilities capabilities);
+    virtual bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities);
 
     /// Returns VehicleComponents for specified Vehicle
     ///     @param vehicle Vehicle  to associate with components

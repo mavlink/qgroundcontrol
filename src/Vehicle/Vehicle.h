@@ -293,6 +293,9 @@ public:
     /// true: pauseVehicle command is supported
     Q_PROPERTY(bool pauseVehicleSupported READ pauseVehicleSupported CONSTANT)
 
+    /// true: Orbit mode is supported by this vehicle
+    Q_PROPERTY(bool orbitModeSupported READ orbitModeSupported CONSTANT)
+
     // FactGroup object model properties
 
     Q_PROPERTY(Fact* roll               READ roll               CONSTANT)
@@ -380,6 +383,7 @@ public:
 
     bool guidedModeSupported(void) const;
     bool pauseVehicleSupported(void) const;
+    bool orbitModeSupported(void) const;
 
     // Property accessors
 
