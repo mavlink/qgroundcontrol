@@ -114,7 +114,7 @@ private:
     void _autoSyncSend(void);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
     static void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
-    static void _calcHomeDist(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* homeItem, double* distance);
+    static void _calcHomeDist(VisualMissionItem* currentItem, VisualMissionItem* homeItem, double* distance);
     bool _findLastAltitude(double* lastAltitude, MAV_FRAME* frame);
     bool _findLastAcceptanceRadius(double* lastAcceptanceRadius);
     void _addPlannedHomePosition(QmlObjectListModel* visualItems, bool addToCenter);

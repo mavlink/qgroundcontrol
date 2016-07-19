@@ -604,25 +604,13 @@ void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionIte
     }
 }
 
-void MissionController::_calcHomeDist(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* homeItem, double* distance)
+void MissionController::_calcHomeDist(VisualMissionItem* currentItem, VisualMissionItem* homeItem, double* distance)
 {
     QGeoCoordinate  currentCoord =  currentItem->coordinate();
     QGeoCoordinate  homeCoord =     homeItem->exitCoordinate();
     bool            distanceOk =    false;
 
-    // Convert to fixed altitudes
-
-    qCDebug(MissionControllerLog) << homeAlt
-                                  << currentItem->coordinateHasRelativeAltitude() << currentItem->coordinate().altitude()
-                                  << homeItem->exitCoordinateHasRelativeAltitude() << homeItem->exitCoordinate().altitude();
-
     distanceOk = true;
-    if (currentItem->coordinateHasRelativeAltitude()) {
-        currentCoord.setAltitude(homeAlt + currentCoord.altitude());
-    }
-    if (homeItem->exitCoordinateHasRelativeAltitude()) {
-        homeCoord.setAltitude(homeAlt + homeCoord.altitude());
-    }
 
     qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
 
@@ -802,7 +790,7 @@ void MissionController::_recalcAltitudeRangeBearing()
                         missionDistance += qobject_cast<ComplexMissionItem*>(item)->surveyDistance();
                     }
 
-                    _calcHomeDist(homePositionAltitude, item, homeItem, &distance);
+                    _calcHomeDist(item, homeItem, &distance);
                     if (distance > missionMaxTelemetry) {
                         missionMaxTelemetry = distance;
                     }
