@@ -179,7 +179,7 @@ void QmlObjectListModel::append(QObject* object)
     insert(_objectList.count(), object);
 }
 
-QObjectList QmlObjectListModel::swapObjectList(QObjectList newlist)
+QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
 {
     QObjectList oldlist(_objectList);
     beginResetModel();
