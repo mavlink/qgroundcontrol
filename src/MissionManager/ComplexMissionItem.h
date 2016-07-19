@@ -73,6 +73,11 @@ public:
     /// @return true: load success, false: load failed, errorString set
     bool load(const QJsonObject& complexObject, QString& errorString);
 
+    /// Get the point of complex mission item furthest away from a coordinate
+    ///     @param other QGeoCoordinate to which distance is calculated
+    /// @return the greatest distance from any point of the complex item to some coordinate
+    double greatestDistanceTo(const QGeoCoordinate &other) const;
+
     // Overrides from VisualMissionItem
 
     bool            dirty                   (void) const final { return _dirty; }

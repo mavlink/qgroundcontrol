@@ -776,7 +776,7 @@ void MissionController::_recalcAltitudeRangeBearing()
             if (!item->isStandaloneCoordinate()) {
                 firstCoordinateItem = false;
                 if (lastCoordinateItem != homeItem || (showHomePosition && linkBackToHome)) {
-                    double azimuth, distance, altDifference;
+                    double azimuth, distance, altDifference, telemetryDistance;
 
                     // Subsequent coordinate items link to last coordinate item. If the last coordinate item
                     // is an invalid home position we skip the line
@@ -788,11 +788,13 @@ void MissionController::_recalcAltitudeRangeBearing()
                     missionDistance += distance;
                     if (!item->isSimpleItem()) {
                         missionDistance += qobject_cast<ComplexMissionItem*>(item)->surveyDistance();
+                        telemetryDistance = qobject_cast<ComplexMissionItem*>(item)->greatestDistanceTo(homeItem->exitCoordinate());
+                    } else {
+                        _calcHomeDist(item, homeItem, &telemetryDistance);
                     }
 
-                    _calcHomeDist(item, homeItem, &distance);
-                    if (distance > missionMaxTelemetry) {
-                        missionMaxTelemetry = distance;
+                    if (telemetryDistance > missionMaxTelemetry) {
+                        missionMaxTelemetry = telemetryDistance;
                     }
 
                 }

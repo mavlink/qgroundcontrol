@@ -273,6 +273,19 @@ bool ComplexMissionItem::load(const QJsonObject& complexObject, QString& errorSt
     return true;
 }
 
+double ComplexMissionItem::greatestDistanceTo(const QGeoCoordinate &other) const
+{
+    double greatestDistance = 0.0;
+    for (int i=0; i<_gridPoints.count(); i++) {
+        QGeoCoordinate currentCoord = _gridPoints[i].value<QGeoCoordinate>();
+        double distance = currentCoord.distanceTo(other);
+        if (distance > greatestDistance) {
+            greatestDistance = distance;
+        }
+    }
+    return greatestDistance;
+}
+
 void ComplexMissionItem::_setExitCoordinate(const QGeoCoordinate& coordinate)
 {
     if (_exitCoordinate != coordinate) {
