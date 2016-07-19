@@ -128,4 +128,152 @@ Map {
             label: "Q"
         }
     }
+
+    //---- Polygon drawing code
+
+    //
+    // Usage:
+    //
+    // Connections {
+    //     target: map.polygonDraw
+    //
+    //    onPolygonStarted: {
+    //      // Polygon creation has started
+    //    }
+    //
+    //    onPolygonFinished: {
+    //      // Polygon capture complete, coordinates signal variable contains the polygon points
+    //    }
+    // }
+    //
+    // map.polygonDraqw.startPolgyon() - begin capturing a new polygon
+    // map.polygonDraqw.endPolygon() - end capture (right-click will also end capture)
+
+    // Not sure why this is needed, but trying to reference polygonDrawer directly from other code doesn't work
+    property alias polygonDraw: polygonDrawer
+
+    QGCLabel {
+        id:                     polygonHelp
+        anchors.topMargin:      parent.height - ScreenTools.availableHeight
+        anchors.top:            parent.top
+        anchors.left:           parent.left
+        anchors.right:          parent.right
+        horizontalAlignment:    Text.AlignHCenter
+        text:                   qsTr("Click to add point %1").arg(ScreenTools.isMobile || !polygonDrawer.polygonReady ? "" : qsTr("- Right Click to end polygon"))
+        visible:                polygonDrawer.drawingPolygon
+    }
+
+    MouseArea {
+        id:                 polygonDrawer
+        anchors.fill:       parent
+        acceptedButtons:    Qt.LeftButton | Qt.RightButton
+        visible:            drawingPolygon
+        z:                  1000 // Hack to fix MouseArea layering for now
+
+        property alias  drawingPolygon: polygonDrawer.hoverEnabled
+        property bool   polygonReady:   polygonDrawerPolygon.path.length > 3 ///< true: enough points have been captured to create a closed polygon
+
+        /// New polygon capture has started
+        signal polygonStarted
+
+        /// Polygon capture is complete
+        ///     @param coordinates Map coordinates for the polygon points
+        signal polygonFinished(var coordinates)
+
+        /// Begin capturing a new polygon
+        ///     polygonStarted will be signalled
+        function startPolygon() {
+            polygonDrawer.drawingPolygon = true
+            polygonDrawer._clearPolygon()
+            polygonDrawer.polygonStarted()
+        }
+
+        /// Finish capturing the polygon
+        ///     polygonFinished will be signalled
+        /// @return true: polygon completed, false: not enough points to complete polygon
+        function finishPolygon() {
+            if (!polygonDrawer.polygonReady) {
+                return false
+            }
+
+            var polygonPath = polygonDrawerPolygon.path
+            polygonPath.pop() // get rid of drag coordinate
+            polygonDrawer._clearPolygon()
+            polygonDrawer.drawingPolygon = false
+            polygonDrawer.polygonFinished(polygonPath)
+            return true
+        }
+
+        function _clearPolygon() {
+            // Simpler methods to clear the path simply don't work due to bugs. This craziness does.
+            var bogusCoord = _map.toCoordinate(Qt.point(height/2, width/2))
+            polygonDrawerPolygon.path = [ bogusCoord, bogusCoord ]
+            polygonDrawerNextPoint.path = [ bogusCoord, bogusCoord ]
+            polygonDrawerPolygon.path = [ ]
+            polygonDrawerNextPoint.path = [ ]
+        }
+
+        onClicked: {
+            if (mouse.button == Qt.LeftButton) {
+                if (polygonDrawerPolygon.path.length > 2) {
+                    // Make sure the new line doesn't intersect the existing polygon
+                    var lastSegment = polygonDrawerPolygon.path.length - 2
+                    var newLineA = _map.fromCoordinate(polygonDrawerPolygon.path[lastSegment], false /* clipToViewPort */)
+                    var newLineB = _map.fromCoordinate(polygonDrawerPolygon.path[lastSegment+1], false /* clipToViewPort */)
+                    for (var i=0; i<lastSegment; i++) {
+                        var oldLineA = _map.fromCoordinate(polygonDrawerPolygon.path[i], false /* clipToViewPort */)
+                        var oldLineB = _map.fromCoordinate(polygonDrawerPolygon.path[i+1], false /* clipToViewPort */)
+                        if (QGroundControl.linesIntersect(newLineA, newLineB, oldLineA, oldLineB)) {
+                            return;
+                        }
+                    }
+                }
+
+                var clickCoordinate = _map.toCoordinate(Qt.point(mouse.x, mouse.y))
+                var polygonPath = polygonDrawerPolygon.path
+                if (polygonPath.length == 0) {
+                    // Add first coordinate
+                    polygonPath.push(clickCoordinate)
+                } else {
+                    // Update finalized coordinate
+                    polygonPath[polygonDrawerPolygon.path.length - 1] = clickCoordinate
+                }
+                // Add next drag coordinate
+                polygonPath.push(clickCoordinate)
+                polygonDrawerPolygon.path = polygonPath
+            } else if (polygonDrawer.polygonReady) {
+                finishPolygon()
+            }
+        }
+
+        onPositionChanged: {
+            if (polygonDrawerPolygon.path.length) {
+                var dragCoordinate = _map.toCoordinate(Qt.point(mouse.x, mouse.y))
+
+                // Update drag line
+                polygonDrawerNextPoint.path = [ polygonDrawerPolygon.path[polygonDrawerPolygon.path.length - 2], dragCoordinate ]
+
+                // Update drag coordinate
+                var polygonPath = polygonDrawerPolygon.path
+                polygonPath[polygonDrawerPolygon.path.length - 1] = dragCoordinate
+                polygonDrawerPolygon.path = polygonPath
+            }
+        }
+    }
+
+    MapPolygon {
+        id:         polygonDrawerPolygon
+        color:      "blue"
+        opacity:    0.5
+        visible:    polygonDrawer.drawingPolygon
+    }
+
+    MapPolyline {
+        id:         polygonDrawerNextPoint
+        line.color: "green"
+        line.width: 5
+        visible:    polygonDrawer.drawingPolygon
+    }
+
+    //---- End Polygon Drawing code
 } // Map

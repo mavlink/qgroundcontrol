@@ -130,6 +130,8 @@ public:
     /// Updates the logging filter rules after settings have changed
     Q_INVOKABLE void updateLoggingFilterRules(void) { QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(QString()); }
 
+    Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
+
     // Property accesors
 
     FlightMapSettings*      flightMapSettings   ()      { return _flightMapSettings; }

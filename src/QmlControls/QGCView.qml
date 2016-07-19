@@ -123,6 +123,9 @@ FactPanel {
             return
         }
 
+        __rejectButton.enabled = true
+        __acceptButton.enabled = true
+
         __stopAllAnimations()
 
         __dialogCharWidth = charWidth
@@ -143,6 +146,9 @@ FactPanel {
         if (__checkForEarlyDialog(title)) {
             return
         }
+
+        __rejectButton.enabled = true
+        __acceptButton.enabled = true
 
         __stopAllAnimations()
 
@@ -302,7 +308,10 @@ FactPanel {
                     anchors.right:  __acceptButton.visible ?  __acceptButton.left : parent.right
                     anchors.bottom: parent.bottom
 
-                    onClicked: __dialogComponentLoader.item.reject()
+                    onClicked: {
+                        enabled = false // prevent multiple clicks
+                        __dialogComponentLoader.item.reject()
+                    }
                 }
 
                 QGCButton {
@@ -311,6 +320,7 @@ FactPanel {
                     primary:        true
 
                     onClicked: {
+                        enabled = false // prevent multiple clicks
                        __dialogComponentLoader.item.accept()
                     }
                 }
