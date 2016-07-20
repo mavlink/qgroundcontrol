@@ -170,8 +170,11 @@ int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
     return 0;   // 0 buttons reserved for rc switch simulation
 }
 
-bool PX4FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
+    if(vehicle->multiRotor()) {
+        return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability | OrbitModeCapability)) == capabilities;
+    }
     return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
 }
 
@@ -267,6 +270,29 @@ void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
 void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
 {
     vehicle->setFlightMode(landingFlightMode);
+}
+
+void PX4FirmwarePlugin::guidedModeOrbit(Vehicle* vehicle, const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude)
+{
+    //-- If not in "guided" mode, make it so.
+    if(!isGuidedMode(vehicle))
+        setGuidedMode(vehicle, true);
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd;
+    cmd.command = (uint16_t)MAV_CMD_SET_GUIDED_SUBMODE_CIRCLE;
+    cmd.confirmation = 0;
+    cmd.param1 = radius;
+    cmd.param2 = velocity;
+    cmd.param3 = altitude;
+    cmd.param4 = NAN;
+    cmd.param5 = centerCoord.isValid() ? centerCoord.latitude()  : NAN;
+    cmd.param6 = centerCoord.isValid() ? centerCoord.longitude() : NAN;
+    cmd.param7 = centerCoord.isValid() ? centerCoord.altitude()  : NAN;
+    cmd.target_system = vehicle->id();
+    cmd.target_component = vehicle->defaultComponentId();
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+    vehicle->sendMessageOnPriorityLink(msg);
 }
 
 void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)

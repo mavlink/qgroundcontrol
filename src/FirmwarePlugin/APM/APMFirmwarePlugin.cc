@@ -143,7 +143,7 @@ APMFirmwarePlugin::APMFirmwarePlugin(void)
 
 }
 
-bool APMFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+bool APMFirmwarePlugin::isCapable(const Vehicle* /*vehicle*/, FirmwareCapabilities capabilities)
 {
     return (capabilities & (SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
 }

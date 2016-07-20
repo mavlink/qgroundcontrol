@@ -66,14 +66,14 @@ private:
 class APMFirmwarePlugin : public FirmwarePlugin
 {
     Q_OBJECT
-    
+
 public:
     // Overrides from FirmwarePlugin
 
     QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) final;
     QList<MAV_CMD> supportedMissionCommands(void) final;
 
-    bool        isCapable(FirmwareCapabilities capabilities);
+    bool        isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities);
     QStringList flightModes(Vehicle* vehicle) final;
     QString     flightMode(uint8_t base_mode, uint32_t custom_mode) const final;
     bool        setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
@@ -103,7 +103,7 @@ protected:
 
 private slots:
     void _artooSocketError(QAbstractSocket::SocketError socketError);
-    
+
 private:
     void _adjustSeverity(mavlink_message_t* message) const;
     void _adjustCalibrationMessageSeverity(mavlink_message_t* message) const;

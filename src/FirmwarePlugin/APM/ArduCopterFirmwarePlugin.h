@@ -48,12 +48,12 @@ public:
 class ArduCopterFirmwarePlugin : public APMFirmwarePlugin
 {
     Q_OBJECT
-    
+
 public:
     ArduCopterFirmwarePlugin(void);
 
     // Overrides from FirmwarePlugin
-    bool isCapable(FirmwareCapabilities capabilities) final;
+    bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
     bool isPaused(const Vehicle* vehicle) const final;
     void setGuidedMode(Vehicle* vehicle, bool guidedMode) final;
     void pauseVehicle(Vehicle* vehicle) final;
