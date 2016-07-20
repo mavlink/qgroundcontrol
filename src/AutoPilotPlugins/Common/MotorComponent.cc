@@ -31,7 +31,7 @@ QString MotorComponent::description(void) const
 
 QString MotorComponent::iconResource(void) const
 {
-    return QStringLiteral("/qmlimages/MotorComponentIcon.png");
+    return QStringLiteral("/qmlimages/MotorComponentIcon.svg");
 }
 
 bool MotorComponent::requiresSetup(void) const
