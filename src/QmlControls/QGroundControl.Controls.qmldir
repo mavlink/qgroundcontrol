@@ -14,7 +14,6 @@ MissionItemIndexLabel   1.0 MissionItemIndexLabel.qml
 MissionItemStatus       1.0 MissionItemStatus.qml
 ModeSwitchDisplay       1.0 ModeSwitchDisplay.qml
 MultiRotorMotorDisplay  1.0 MultiRotorMotorDisplay.qml
-MultiRotorMotorDisplayLegend  1.0 MultiRotorMotorDisplayLegend.qml
 ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
 RCChannelMonitor        1.0 RCChannelMonitor.qml

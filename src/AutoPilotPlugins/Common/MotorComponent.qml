@@ -106,11 +106,6 @@ SetupPage {
                     coaxial:        controller.vehicle.coaxialMotors
                 }
 
-                MultiRotorMotorDisplayLegend {
-                    anchors.top:    parent.top
-                    anchors.bottom: parent.bottom
-                    width:          height
-                }
             } // Row
 
             QGCLabel {
