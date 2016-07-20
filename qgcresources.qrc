@@ -151,6 +151,9 @@
         <file alias="CogWheel.svg">src/MissionManager/CogWheel.svg</file>
         <file alias="StationMode.svg">src/AutoPilotPlugins/Common/Images/StationMode.svg</file>
         <file alias="APMode.svg">src/AutoPilotPlugins/Common/Images/APMode.svg</file>
+        <file alias="ArrowDirection.svg">src/AutoPilotPlugins/Common/Images/ArrowDirection.svg</file>
+        <file alias="ArrowCW.svg">src/AutoPilotPlugins/Common/Images/ArrowCW.svg</file>
+        <file alias="ArrowCCW.svg">src/AutoPilotPlugins/Common/Images/ArrowCCW.svg</file>
     </qresource>
     <qresource prefix="/res">
         <file alias="AntennaRC">resources/Antenna_RC.svg</file>

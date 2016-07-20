@@ -15,8 +15,8 @@ Item {
     property real   _rotorRadius:       motorRoot.height / 8
     property int    _motorsPerSide:     motorCount / (coaxial ? 2 : 1)
 
-    readonly property string    _cwColor:               "green"
-    readonly property string    _ccwColor:              "blue"
+    readonly property string    _cwColor:               "#15ce15"   // Green
+    readonly property string    _ccwColor:              "#1283e0"   // Blue
     readonly property var       _motorColors4Plus:      [ _ccwColor, _cwColor ]
     readonly property var       _motorColors4X:         [ _cwColor, _ccwColor ]
     readonly property var       _motorColors6:          [ _cwColor, _ccwColor ]
@@ -75,24 +75,58 @@ Item {
                 property real _armXCenter:              Math.cos(_armOffsetIndexRadians) * _armLength // adjacent = cos * hypotenuse
                 property real _armYCenter:              Math.sin(_armOffsetIndexRadians) * _armLength // opposite = sin * hypotenuse
 
-                Rectangle {id:      rotor
+                Rectangle {
+                    id:             rotor
                     anchors.fill:   parent
                     radius:         _rotorRadius
                     color:          motorColors[index & 1]
                     opacity:        topCoaxial ? 0.65 : 1.0
                     border.color:   topCoaxial ? "black" : color
-
+                    antialiasing:   true
                     readonly property bool topCoaxial: topMotors && coaxial
+                    //-- Top Directional Arrow
+                    QGCColoredImage {
+                        color:                      _qgcPal.globalTheme === QGCPalette.Light ? "black" : "white"
+                        height:                     parent.height * 0.2
+                        width:                      height
+                        sourceSize.height:          height
+                        mipmap:                     true
+                        fillMode:                   Image.PreserveAspectFit
+                        source:                     (index & 1) ? "/qmlimages/ArrowCW.svg" : "/qmlimages/ArrowCCW.svg"
+                        anchors.top:                parent.top
+                        anchors.topMargin:          height * -0.5
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                    }
+                    //-- Bottom Directional Arrow
+                    QGCColoredImage {
+                        color:                      _qgcPal.globalTheme === QGCPalette.Light ? "black" : "white"
+                        height:                     parent.height * 0.2
+                        width:                      height
+                        sourceSize.height:          height
+                        mipmap:                     true
+                        fillMode:                   Image.PreserveAspectFit
+                        source:                     (index & 1) ? "/qmlimages/ArrowCCW.svg" : "/qmlimages/ArrowCW.svg"
+                        anchors.bottom:             parent.bottom
+                        anchors.bottomMargin:       height * -0.5
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                    }
+                    transform: [
+                        Rotation {
+                            origin.x:           rotor.width  / 2
+                            origin.y:           rotor.height / 2
+                            angle:              (index & 1) ? 45 : -45
+                        }]
                 }
 
                 Rectangle {
                     anchors.horizontalCenter:   parent.horizontalCenter
                     anchors.verticalCenter:     parent.verticalCenter
-                    width:                      radius *2
-                    height:                     radius *2
-                    radius:                     ScreenTools.defaultFontPixelHeight / 2
-                    color:                      "white"
-                    border.color:               "black"
+                    width:                      radius * 2
+                    height:                     radius * 2
+                    radius:                     ScreenTools.defaultFontPixelHeight * 0.666
+                    color:                      Qt.rgba(1,1,1,1)
+                    border.color:               Qt.rgba(0,0,0,0.75)
+                    antialiasing:               true
 
                     QGCLabel {
                         anchors.fill:               parent
@@ -133,24 +167,16 @@ Item {
             property var    motorColors:    _motorColors4Top
         }
 
-        // Body direction
-        Canvas {
-            anchors.fill: parent
-
-            property real _centerX : width / 2
-            property real _centerY : height / 2
-
-            onPaint: {
-                var ctx = getContext("2d");
-                ctx.lineWidth = 3
-                ctx.strokeStyle = _qgcPal.text
-                ctx.translate(_centerX, _centerY)
-                ctx.moveTo(0, -_rotorRadius / 2);
-                ctx.lineTo(_rotorRadius / 2, _rotorRadius);
-                ctx.lineTo(-_rotorRadius / 2, _rotorRadius);
-                ctx.lineTo(0, -_rotorRadius / 2);
-                ctx.stroke();
-            }
+        QGCColoredImage {
+            color:                      _qgcPal.text
+            height:                     parent.height * 0.5
+            width:                      height * 0.55
+            sourceSize.height:          height
+            mipmap:                     true
+            fillMode:                   Image.PreserveAspectFit
+            source:                     "/qmlimages/ArrowDirection.svg"
+            anchors.centerIn:           parent
         }
+
     } // Item
 } // Item

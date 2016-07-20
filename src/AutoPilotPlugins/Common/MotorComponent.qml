@@ -106,11 +106,6 @@ SetupPage {
                     coaxial:        controller.vehicle.coaxialMotors
                 }
 
-                MultiRotorMotorDisplayLegend {
-                    anchors.top:    parent.top
-                    anchors.bottom: parent.bottom
-                    width:          height
-                }
             } // Row
 
             QGCLabel {
@@ -137,7 +132,7 @@ SetupPage {
 
                 QGCLabel {
                     color:  qgcPal.warningText
-                    text:   qsTr("Propellors are removed - Enable motor sliders")
+                    text:   qsTr("Propellers are removed - Enable motor sliders")
                 }
             } // Row
         } // Column
