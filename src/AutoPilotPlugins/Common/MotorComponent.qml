@@ -137,7 +137,7 @@ SetupPage {
 
                 QGCLabel {
                     color:  qgcPal.warningText
-                    text:   qsTr("Propellors are removed - Enable motor sliders")
+                    text:   qsTr("Propellers are removed - Enable motor sliders")
                 }
             } // Row
         } // Column

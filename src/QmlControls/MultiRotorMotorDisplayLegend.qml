@@ -9,8 +9,8 @@ Item {
     property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
     property real   _rotorRadius:       legendRoot.height / 16
 
-    readonly property string    _cwColor:               "green"
-    readonly property string    _ccwColor:              "blue"
+    readonly property string    _cwColor:               "#15ce15"   // Green
+    readonly property string    _ccwColor:              "#1283e0"   // Blue
 
     Item {
         id:             cwItem
@@ -36,7 +36,7 @@ Item {
             anchors.bottom:     parent.bottom
             verticalAlignment:  Text.AlignVCenter
             wrapMode:           Text.WordWrap
-            text:               qsTr("Clockwise rotation, use pusher propellor")
+            text:               qsTr("Clockwise rotation, use pusher propeller")
         }
     }
 
@@ -65,7 +65,7 @@ Item {
             anchors.bottom:     parent.bottom
             verticalAlignment:  Text.AlignVCenter
             wrapMode:           Text.WordWrap
-            text:               qsTr("Counter-Clockwise rotation, use normal propellor")
+            text:               qsTr("Counter Clockwise rotation, use normal propeller")
         }
     }
 } // Item
