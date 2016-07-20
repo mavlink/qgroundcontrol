@@ -15,8 +15,9 @@
 
 const char* guided_mode_not_supported_by_vehicle = "Guided mode not supported by Vehicle.";
 
-bool FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+bool FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
+    Q_UNUSED(vehicle);
     Q_UNUSED(capabilities);
     return false;
 }
@@ -180,6 +181,12 @@ void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
     Q_UNUSED(altitudeRel);
+    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+}
+
+void FirmwarePlugin::guidedModeOrbit(Vehicle* /*vehicle*/, const QGeoCoordinate& /*centerCoord*/, double /*radius*/, double /*velocity*/, double /*altitude*/)
+{
+    // Not supported by generic vehicle
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
