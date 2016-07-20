@@ -44,6 +44,8 @@ MissionController::MissionController(QObject *parent)
     , _firstItemsFromVehicle(false)
     , _missionItemsRequested(false)
     , _queuedSend(false)
+    , _missionDistance(0.0)
+    , _missionMaxTelemetry(0.0)
 {
 
 }
@@ -602,6 +604,23 @@ void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionIte
     }
 }
 
+void MissionController::_calcHomeDist(VisualMissionItem* currentItem, VisualMissionItem* homeItem, double* distance)
+{
+    QGeoCoordinate  currentCoord =  currentItem->coordinate();
+    QGeoCoordinate  homeCoord =     homeItem->exitCoordinate();
+    bool            distanceOk =    false;
+
+    distanceOk = true;
+
+    qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
+
+    if (distanceOk) {
+        *distance = homeCoord.distanceTo(currentCoord);
+    } else {
+        *distance = 0.0;
+    }
+}
+
 void MissionController::_recalcWaypointLines(void)
 {
     bool                firstCoordinateItem =   true;
@@ -717,6 +736,9 @@ void MissionController::_recalcAltitudeRangeBearing()
     const double homePositionAltitude = homeItem->coordinate().altitude();
     minAltSeen = maxAltSeen = homeItem->coordinate().altitude();
 
+    double missionDistance = 0.0;
+    double missionMaxTelemetry = 0.0;
+
     bool linkBackToHome = false;
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -754,7 +776,7 @@ void MissionController::_recalcAltitudeRangeBearing()
             if (!item->isStandaloneCoordinate()) {
                 firstCoordinateItem = false;
                 if (lastCoordinateItem != homeItem || (showHomePosition && linkBackToHome)) {
-                    double azimuth, distance, altDifference;
+                    double azimuth, distance, altDifference, telemetryDistance;
 
                     // Subsequent coordinate items link to last coordinate item. If the last coordinate item
                     // is an invalid home position we skip the line
@@ -762,11 +784,27 @@ void MissionController::_recalcAltitudeRangeBearing()
                     item->setAltDifference(altDifference);
                     item->setAzimuth(azimuth);
                     item->setDistance(distance);
+
+                    missionDistance += distance;
+                    if (!item->isSimpleItem()) {
+                        missionDistance += qobject_cast<ComplexMissionItem*>(item)->surveyDistance();
+                        telemetryDistance = qobject_cast<ComplexMissionItem*>(item)->greatestDistanceTo(homeItem->exitCoordinate());
+                    } else {
+                        _calcHomeDist(item, homeItem, &telemetryDistance);
+                    }
+
+                    if (telemetryDistance > missionMaxTelemetry) {
+                        missionMaxTelemetry = telemetryDistance;
+                    }
+
                 }
                 lastCoordinateItem = item;
             }
         }
     }
+
+    setMissionDistance(missionDistance);
+    setMissionMaxTelemetry(missionMaxTelemetry);
 
     // Walk the list again calculating altitude percentages
     double altRange = maxAltSeen - minAltSeen;
@@ -921,6 +959,7 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
         // We need to track changes of lastSequenceNumber so we can recalc sequence numbers for subsequence items
         ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
         connect(complexItem, &ComplexMissionItem::lastSequenceNumberChanged, this, &MissionController::_recalcSequence);
+        connect(complexItem, &ComplexMissionItem::surveyDistanceChanged, this, &MissionController::_recalcAltitudeRangeBearing);
     }
 }
 
@@ -1015,6 +1054,22 @@ void MissionController::setAutoSync(bool autoSync)
 #else
     Q_UNUSED(autoSync)
 #endif
+}
+
+void MissionController::setMissionDistance(double missionDistance)
+{
+    if (!qFuzzyCompare(_missionDistance, missionDistance)) {
+        _missionDistance = missionDistance;
+        emit missionDistanceChanged(_missionDistance);
+    }
+}
+
+void MissionController::setMissionMaxTelemetry(double missionMaxTelemetry)
+{
+    if (!qFuzzyCompare(_missionMaxTelemetry, missionMaxTelemetry)) {
+        _missionMaxTelemetry = missionMaxTelemetry;
+        emit missionMaxTelemetryChanged(_missionMaxTelemetry);
+    }
 }
 
 void MissionController::_dirtyChanged(bool dirty)

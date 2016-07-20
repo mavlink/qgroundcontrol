@@ -139,6 +139,29 @@ QGCView {
                 }
 
                 Row {
+                    spacing:    ScreenTools.defaultFontPixelWidth
+
+                    QGCLabel {
+                        width:              baseFontLabel.width
+                        anchors.baseline:   areaUnitsCombo.baseline
+                        text:               qsTr("Area units:")
+                    }
+
+                    FactComboBox {
+                        id:                 areaUnitsCombo
+                        width:              _editFieldWidth
+                        fact:               QGroundControl.areaUnits
+                        indexModel:         false
+                    }
+
+                    QGCLabel {
+                        anchors.baseline:   areaUnitsCombo.baseline
+                        text:               qsTr("(requires app restart)")
+                    }
+
+                }
+
+                Row {
                     spacing:                ScreenTools.defaultFontPixelWidth
 
                     QGCLabel {

@@ -40,6 +40,9 @@ public:
     Q_PROPERTY(bool                 autoSync            READ autoSync               WRITE setAutoSync   NOTIFY autoSyncChanged)
     Q_PROPERTY(bool                 syncInProgress      READ syncInProgress                             NOTIFY syncInProgressChanged)
 
+    Q_PROPERTY(double               missionDistance     READ missionDistance                            NOTIFY missionDistanceChanged)
+    Q_PROPERTY(double               missionMaxTelemetry READ missionMaxTelemetry                        NOTIFY missionMaxTelemetryChanged)
+
     Q_INVOKABLE void start(bool editMode);
     Q_INVOKABLE void getMissionItems(void);
     Q_INVOKABLE void sendMissionItems(void);
@@ -70,6 +73,12 @@ public:
     void setAutoSync(bool autoSync);
     bool syncInProgress(void);
 
+    double  missionDistance         (void) const { return _missionDistance; }
+    double  missionMaxTelemetry     (void) const { return _missionMaxTelemetry; }
+
+    void setMissionDistance         (double missionDistance );
+    void setMissionMaxTelemetry     (double missionMaxTelemetry);
+
     static const char* jsonSimpleItemsKey;  ///< Key for simple items in a json file
 
 signals:
@@ -79,6 +88,8 @@ signals:
     void autoSyncChanged(bool autoSync);
     void newItemsFromVehicle(void);
     void syncInProgressChanged(bool syncInProgress);
+    void missionDistanceChanged(double missionDistance);
+    void missionMaxTelemetryChanged(double missionMaxTelemetry);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle();
@@ -103,6 +114,7 @@ private:
     void _autoSyncSend(void);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
     static void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
+    static void _calcHomeDist(VisualMissionItem* currentItem, VisualMissionItem* homeItem, double* distance);
     bool _findLastAltitude(double* lastAltitude, MAV_FRAME* frame);
     bool _findLastAcceptanceRadius(double* lastAcceptanceRadius);
     void _addPlannedHomePosition(QmlObjectListModel* visualItems, bool addToCenter);
@@ -123,6 +135,8 @@ private:
     bool                _firstItemsFromVehicle;
     bool                _missionItemsRequested;
     bool                _queuedSend;
+    double              _missionDistance;
+    double              _missionMaxTelemetry;
 
     static const char*  _settingsGroup;
     static const char*  _jsonVersionKey;
