@@ -16,11 +16,7 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
-QGCView {
-    viewPanel: panel
-
-    property string panelTitle: "Title" ///< Title for panel
-
+Column {
     /// ListModel must contains elements which look like this:
     ///     ListElement {
     ///         title:          "Roll sensitivity"
@@ -32,12 +28,17 @@ QGCView {
     ///     }
     property ListModel sliderModel
 
-    FactPanelController { id: controller; factPanel: panel }
+    property var qgcViewPanel
+
+    property real _margins:         ScreenTools.defaultFontPixelHeight
+    property bool _loadComplete:    false
+
+    FactPanelController {
+        id:         controller
+        factPanel:  qgcViewPanel
+    }
 
     QGCPalette { id: palette; colorGroupEnabled: enabled }
-    property real _margins: ScreenTools.defaultFontPixelHeight
-
-    property bool _loadComplete: false
 
     Component.onCompleted: {
         // Qml Sliders have a strange behavior in which they first set Slider::value to some internal
@@ -51,84 +52,69 @@ QGCView {
         _loadComplete = true
     }
 
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
+    QGCLabel {
+        id:             panelLabel
+        text:           panelTitle
+        font.family:    ScreenTools.demiboldFontFamily
+    }
 
-        QGCFlickable {
-            clip:               true
-            anchors.fill:       parent
-            contentHeight:      sliderOuterColumn.y + sliderOuterColumn.height
-            flickableDirection: Flickable.VerticalFlick
+    Column {
+        id:                 sliderOuterColumn
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        spacing:            _margins
 
-            QGCLabel {
-                id:             panelLabel
-                text:           panelTitle
-                font.family:    ScreenTools.demiboldFontFamily
-            }
+        Repeater {
+            id:     sliderRepeater
+            model:  sliderModel
 
-
-            Column {
-                id:                 sliderOuterColumn
-                anchors.margins:    _margins
+            Rectangle {
+                id:                 sliderRect
                 anchors.left:       parent.left
                 anchors.right:      parent.right
-                anchors.top:        panelLabel.bottom
-                spacing:            _margins
+                height:             sliderColumn.y + sliderColumn.height + _margins
+                color:              palette.windowShade
 
-                Repeater {
-                    id:     sliderRepeater
-                    model:  sliderModel
+                property alias sliderValue: slider.value
 
-                    Rectangle {
-                        id:                 sliderRect
+                Column {
+                    id:                 sliderColumn
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    anchors.top:        sliderRect.top
+
+                    QGCLabel {
+                        text:           title
+                        font.family:    ScreenTools.demiboldFontFamily
+                    }
+
+                    QGCLabel {
+                        text:           description
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                    }
+
+                    Slider {
+                        id:                 slider
                         anchors.left:       parent.left
                         anchors.right:      parent.right
-                        height:             sliderColumn.y + sliderColumn.height + _margins
-                        color:              palette.windowShade
+                        minimumValue:       min
+                        maximumValue:       max
+                        stepSize:           isNaN(fact.increment) ? step : fact.increment
+                        tickmarksEnabled:   true
 
-                        property alias sliderValue: slider.value
+                        property Fact fact: controller.getParameterFact(-1, param)
 
-                        Column {
-                            id:                 sliderColumn
-                            anchors.margins:    _margins
-                            anchors.left:       parent.left
-                            anchors.right:      parent.right
-                            anchors.top:        sliderRect.top
-
-                            QGCLabel {
-                                text:           title
-                                font.family:    ScreenTools.demiboldFontFamily
+                        onValueChanged: {
+                            if (_loadComplete) {
+                                fact.value = value
                             }
-
-                            QGCLabel {
-                                text:           description
-                                anchors.left:   parent.left
-                                anchors.right:  parent.right
-                                wrapMode:       Text.WordWrap
-                            }
-
-                            Slider {
-                                id:                 slider
-                                anchors.left:       parent.left
-                                anchors.right:      parent.right
-                                minimumValue:       min
-                                maximumValue:       max
-                                stepSize:           isNaN(fact.increment) ? step : fact.increment
-                                tickmarksEnabled:   true
-
-                                property Fact fact: controller.getParameterFact(-1, param)
-
-                                onValueChanged: {
-                                    if (_loadComplete) {
-                                        fact.value = value
-                                    }
-                                }
-                            } // Slider
-                        } // Column
-                    } // Rectangle
-                } // Repeater
-            } // Column
-        } // QGCFlickable
-    } // QGCViewPanel
+                        }
+                    } // Slider
+                } // Column
+            } // Rectangle
+        } // Repeater
+    } // Column
 } // QGCView

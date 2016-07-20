@@ -30,8 +30,6 @@ Item {
     readonly property real _flightModeComboWidth:   ScreenTools.defaultFontPixelWidth * 13
     readonly property real _channelComboWidth:      ScreenTools.defaultFontPixelWidth * 13
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
-
     PX4SimpleFlightModesController {
         id:         controller
         factPanel:  qgcViewPanel

@@ -24,9 +24,8 @@ QString PX4RadioComponent::name(void) const
 
 QString PX4RadioComponent::description(void) const
 {
-    return tr("The Radio Component is used to setup which channels on your RC Transmitter you will use for each vehicle control such as Roll, Pitch, Yaw and Throttle. "
-              "It also allows you to assign switches and dials to the various flight modes. "
-              "Prior to flight you must also calibrate the extents for all of your channels.");
+    return tr("Radio Setup is used to calibrate your transmitter. "
+              "It also assign channels for Roll, Pitch, Yaw and Throttle vehicle control as well as determining whether they are reversed.");
 }
 
 QString PX4RadioComponent::iconResource(void) const

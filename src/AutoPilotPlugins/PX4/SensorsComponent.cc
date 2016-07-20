@@ -33,8 +33,7 @@ QString SensorsComponent::name(void) const
 
 QString SensorsComponent::description(void) const
 {
-    return tr("The Sensors Component allows you to calibrate the sensors within your vehicle. "
-              "Prior to flight you must calibrate the Magnetometer, Gyroscope and Accelerometer.");
+    return tr("Sensors Setup is used to calibrate the sensors within your vehicle.");
 }
 
 QString SensorsComponent::iconResource(void) const
