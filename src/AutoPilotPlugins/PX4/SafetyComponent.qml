@@ -16,48 +16,47 @@ import QtGraphicalEffects       1.0
 
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
 
-QGCView {
-    id:             _safetyView
-    viewPanel:      panel
-    anchors.fill:   parent
+SetupPage {
+    id:             safetyPage
+    pageComponent:  pageComponent
 
-    FactPanelController { id: controller; factPanel: panel }
+    Component {
+        id: pageComponent
 
-    QGCPalette { id: palette; colorGroupEnabled: enabled }
+        Item {
+            width:  Math.max(availableWidth, mainCol.width)
+            height: mainCol.height
 
-    property real _margins:         ScreenTools.defaultFontPixelHeight
-    property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 20
-    property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 14
+            FactPanelController {
+                id:         controller
+                factPanel:  safetyPage.viewPanel
+            }
 
-    property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
-    property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
-    property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
-    property Fact _rtlLandDelay:    controller.getParameterFact(-1, "RTL_LAND_DELAY")
-    property Fact _lowBattAction:   controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
-    property Fact _rcLossAction:    controller.getParameterFact(-1, "NAV_RCL_ACT")
-    property Fact _dlLossAction:    controller.getParameterFact(-1, "NAV_DLL_ACT")
-    property Fact _disarmLandDelay: controller.getParameterFact(-1, "COM_DISARM_LAND")
-    property Fact _landSpeedMC:     controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
+            property real _margins:         ScreenTools.defaultFontPixelHeight
+            property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 20
+            property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 14
 
-    property bool _showIcons: !ScreenTools.isTinyScreen
+            property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
+            property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
+            property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
+            property Fact _rtlLandDelay:    controller.getParameterFact(-1, "RTL_LAND_DELAY")
+            property Fact _lowBattAction:   controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
+            property Fact _rcLossAction:    controller.getParameterFact(-1, "NAV_RCL_ACT")
+            property Fact _dlLossAction:    controller.getParameterFact(-1, "NAV_DLL_ACT")
+            property Fact _disarmLandDelay: controller.getParameterFact(-1, "COM_DISARM_LAND")
+            property Fact _landSpeedMC:     controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
 
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
-        QGCFlickable {
-            clip:                                       true
-            anchors.fill:   parent
-            contentHeight:                              mainCol.height
-            flickableDirection:                         Flickable.VerticalFlick
+            property bool _showIcons: !ScreenTools.isTinyScreen
+
             Column {
                 id:                                     mainCol
                 spacing:                                _margins
                 anchors.horizontalCenter:               parent.horizontalCenter
+
                 /*
                    **** Low Battery ****
                 */
@@ -67,7 +66,7 @@ QGCView {
                     font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlSettings.width
                     height:                             lowBattRow.height + _margins * 2
                     Row {
@@ -81,7 +80,7 @@ QGCView {
                             sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/LowBatteryLight.svg" : "/qmlimages/LowBattery.svg"
+                            source:                     qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/LowBatteryLight.svg" : "/qmlimages/LowBattery.svg"
                             anchors.verticalCenter:     parent.verticalCenter
                             visible:                    _showIcons
                         }
@@ -143,7 +142,7 @@ QGCView {
                     font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlSettings.width
                     height:                             rcLossRow.height + _margins * 2
                     Row {
@@ -157,7 +156,7 @@ QGCView {
                             sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/RCLossLight.svg" : "/qmlimages/RCLoss.svg"
+                            source:                     qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/RCLossLight.svg" : "/qmlimages/RCLoss.svg"
                             anchors.verticalCenter:     parent.verticalCenter
                             visible:                    _showIcons
                         }
@@ -206,7 +205,7 @@ QGCView {
                     font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlSettings.width
                     height:                             dlLossRow.height + _margins * 2
                     Row {
@@ -220,7 +219,7 @@ QGCView {
                             sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/DatalinkLossLight.svg" : "/qmlimages/DatalinkLoss.svg"
+                            source:                     qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/DatalinkLossLight.svg" : "/qmlimages/DatalinkLoss.svg"
                             anchors.verticalCenter:     parent.verticalCenter
                             visible:                    _showIcons
                         }
@@ -269,7 +268,7 @@ QGCView {
                     font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlSettings.width
                     height:                             geofenceRow.height + _margins * 2
                     Row {
@@ -283,7 +282,7 @@ QGCView {
                             sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/GeoFenceLight.svg" : "/qmlimages/GeoFence.svg"
+                            source:                     qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/GeoFenceLight.svg" : "/qmlimages/GeoFence.svg"
                             anchors.verticalCenter:     parent.verticalCenter
                             visible:                    _showIcons
                         }
@@ -356,7 +355,7 @@ QGCView {
                 }
                 Rectangle {
                     id:                                 rtlSettings
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlRow.width  + _margins * 2
                     height:                             rtlRow.height + _margins * 2
                     Row {
@@ -366,7 +365,7 @@ QGCView {
                         Item { width: _margins * 0.5; height: 1; }
                         QGCColoredImage {
                             id:                         icon
-                            color:                      palette.text
+                            color:                      qgcPal.text
                             height:                     ScreenTools.defaultFontPixelWidth * 10
                             width:                      ScreenTools.defaultFontPixelWidth * 20
                             sourceSize.width:           width
@@ -436,7 +435,7 @@ QGCView {
                                     text:               qsTr("Loiter Time")
                                     width:              _middleRowWidth
                                     anchors.baseline:   landDelayField.baseline
-                                    color:              palette.text
+                                    color:              qgcPal.text
                                     enabled:            homeLoiterLandRadio.checked === true
                                 }
                                 FactTextField {
@@ -452,7 +451,7 @@ QGCView {
                                     text:               qsTr("Loiter Altitude")
                                     width:              _middleRowWidth
                                     anchors.baseline:   descendField.baseline
-                                    color:              palette.text
+                                    color:              qgcPal.text
                                     enabled:            homeLoiterLandRadio.checked === true || homeLoiterNoLandRadio.checked === true
                                 }
                                 FactTextField {
@@ -474,7 +473,7 @@ QGCView {
                     font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlSettings.width
                     height:                             landModeRow.height + _margins * 2
                     Row {
@@ -486,7 +485,7 @@ QGCView {
                             height:                     1
                         }
                         QGCColoredImage {
-                            color:                      palette.text
+                            color:                      qgcPal.text
                             height:                     ScreenTools.defaultFontPixelWidth * 13
                             width:                      ScreenTools.defaultFontPixelWidth * 20
                             sourceSize.width:           width
@@ -539,8 +538,8 @@ QGCView {
                     }
                 }
                 Item { width: 1; height: _margins * 0.5; }
-            }
-        }
-    }
-}
+            } // Column
+        } // Item
+    } // Component
+} // SetupPage
 

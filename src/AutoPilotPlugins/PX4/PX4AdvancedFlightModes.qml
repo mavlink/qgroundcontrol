@@ -91,8 +91,6 @@ Item {
 
     readonly property real modeSpacing: ScreenTools.defaultFontPixelHeight / 3
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
-
     PX4AdvancedFlightModesController {
         id:         controller
         factPanel:  qgcViewPanel

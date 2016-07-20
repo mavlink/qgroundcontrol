@@ -27,7 +27,7 @@ FactPanel {
     readonly property int _pwmMax:      2200
     readonly property int _pwmRange:    _pwmMax - _pwmMin
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: _root.enabled }
 
     RCChannelMonitorController {
         id:             controller
