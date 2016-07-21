@@ -19,6 +19,10 @@ static const char* kQmlGlobalKeyName = "QGCQml";
 
 SettingsFact* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeFact =        NULL;
 FactMetaData* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeMetaData =    NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingVehicleTypeFact =         NULL;
+FactMetaData* QGroundControlQmlGlobal::_offlineEditingVehicleTypeMetaData =     NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingCruiseSpeedFact =         NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingHoverSpeedFact =          NULL;
 SettingsFact* QGroundControlQmlGlobal::_distanceUnitsFact =                     NULL;
 FactMetaData* QGroundControlQmlGlobal::_distanceUnitsMetaData =                 NULL;
 SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                        NULL;
@@ -224,6 +228,41 @@ Fact* QGroundControlQmlGlobal::offlineEditingFirmwareType(void)
     }
 
     return _offlineEditingFirmwareTypeFact;
+}
+
+Fact* QGroundControlQmlGlobal::offlineEditingVehicleType(void)
+{
+    if (!_offlineEditingVehicleTypeFact) {
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+
+        _offlineEditingVehicleTypeFact = new SettingsFact(QString(), "OfflineEditingVehicleType", FactMetaData::valueTypeUint32, (uint32_t)MAV_TYPE_FIXED_WING);
+        _offlineEditingVehicleTypeMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
+
+        enumStrings << "Fixedwing" << "Multicopter" << "VTOL";
+        enumValues << QVariant::fromValue((uint32_t)MAV_TYPE_FIXED_WING) << QVariant::fromValue((uint32_t)MAV_TYPE_QUADROTOR) << QVariant::fromValue((uint32_t)MAV_TYPE_VTOL_DUOROTOR);
+
+        _offlineEditingVehicleTypeMetaData->setEnumInfo(enumStrings, enumValues);
+        _offlineEditingVehicleTypeFact->setMetaData(_offlineEditingVehicleTypeMetaData);
+    }
+
+    return _offlineEditingVehicleTypeFact;
+}
+
+Fact* QGroundControlQmlGlobal::offlineEditingCruiseSpeed(void)
+{
+    if (!_offlineEditingCruiseSpeedFact) {
+        _offlineEditingCruiseSpeedFact = new SettingsFact(QString(), "OfflineEditingCruiseSpeed", FactMetaData::valueTypeDouble, 16.0);
+    }
+    return _offlineEditingCruiseSpeedFact;
+}
+
+Fact* QGroundControlQmlGlobal::offlineEditingHoverSpeed(void)
+{
+    if (!_offlineEditingHoverSpeedFact) {
+        _offlineEditingHoverSpeedFact = new SettingsFact(QString(), "OfflineEditingHoverSpeed", FactMetaData::valueTypeDouble, 4.0);
+    }
+    return _offlineEditingHoverSpeedFact;
 }
 
 Fact* QGroundControlQmlGlobal::distanceUnits(void)
