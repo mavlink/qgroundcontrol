@@ -82,6 +82,9 @@ public:
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
 
     Q_PROPERTY(Fact*    offlineEditingFirmwareType  READ offlineEditingFirmwareType CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingVehicleType   READ offlineEditingVehicleType  CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingCruiseSpeed   READ offlineEditingCruiseSpeed  CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingHoverSpeed    READ offlineEditingHoverSpeed   CONSTANT)
     Q_PROPERTY(Fact*    distanceUnits               READ distanceUnits              CONSTANT)
     Q_PROPERTY(Fact*    speedUnits                  READ speedUnits                 CONSTANT)
 
@@ -158,6 +161,9 @@ public:
     QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
 
     static Fact* offlineEditingFirmwareType (void);
+    static Fact* offlineEditingVehicleType  (void);
+    static Fact* offlineEditingCruiseSpeed  (void);
+    static Fact* offlineEditingHoverSpeed   (void);
     static Fact* distanceUnits              (void);
     static Fact* speedUnits                 (void);
 
@@ -212,6 +218,10 @@ private:
     // These are static so they are available to C++ code as well as Qml
     static SettingsFact*    _offlineEditingFirmwareTypeFact;
     static FactMetaData*    _offlineEditingFirmwareTypeMetaData;
+    static SettingsFact*    _offlineEditingVehicleTypeFact;
+    static FactMetaData*    _offlineEditingVehicleTypeMetaData;
+    static SettingsFact*    _offlineEditingCruiseSpeedFact;
+    static SettingsFact*    _offlineEditingHoverSpeedFact;
     static SettingsFact*    _distanceUnitsFact;
     static FactMetaData*    _distanceUnitsMetaData;
     static SettingsFact*    _speedUnitsFact;
