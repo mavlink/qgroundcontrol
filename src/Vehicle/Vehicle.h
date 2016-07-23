@@ -276,6 +276,7 @@ public:
     Q_PROPERTY(bool                 vtol                    READ vtol                                                   CONSTANT)
     Q_PROPERTY(bool                 rover                   READ rover                                                  CONSTANT)
     Q_PROPERTY(bool                 supportsManualControl   READ supportsManualControl                                  CONSTANT)
+    Q_PROPERTY(bool                 sub                     READ sub                                                    CONSTANT)
     Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                                      NOTIFY autoDisconnectChanged)
     Q_PROPERTY(QString              prearmError             READ prearmError            WRITE setPrearmError            NOTIFY prearmErrorChanged)
     Q_PROPERTY(int                  motorCount              READ motorCount                                             CONSTANT)
@@ -466,6 +467,7 @@ public:
     bool multiRotor(void) const;
     bool vtol(void) const;
     bool rover(void) const;
+    bool sub(void) const;
 
     bool supportsManualControl(void) const;
 

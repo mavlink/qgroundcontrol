@@ -63,9 +63,11 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
 
-            _radioComponent = new APMRadioComponent(_vehicle, this);
-            _radioComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
+            if ( !_vehicle->sub() ) {
+                _radioComponent = new APMRadioComponent(_vehicle, this);
+                _radioComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
+            }
 
             _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
             _flightModesComponent->setupTriggerSignals();
