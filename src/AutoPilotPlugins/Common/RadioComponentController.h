@@ -45,10 +45,10 @@ public:
     Q_PROPERTY(int minChannelCount MEMBER _chanMinimum CONSTANT)
     Q_PROPERTY(int channelCount READ channelCount NOTIFY channelCountChanged)
     
-    Q_PROPERTY(QQuickItem* statusText MEMBER _statusText)
-    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
-    Q_PROPERTY(QQuickItem* nextButton MEMBER _nextButton)
-    Q_PROPERTY(QQuickItem* skipButton MEMBER _skipButton)
+    Q_PROPERTY(QQuickItem* statusText   MEMBER _statusText      NOTIFY statusTextChanged)
+    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton    NOTIFY cancelButtonChanged)
+    Q_PROPERTY(QQuickItem* nextButton   MEMBER _nextButton      NOTIFY nextButtonChanged)
+    Q_PROPERTY(QQuickItem* skipButton   MEMBER _skipButton      NOTIFY skipButtonChanged)
     
     Q_PROPERTY(bool rollChannelMapped READ rollChannelMapped NOTIFY rollChannelMappedChanged)
     Q_PROPERTY(bool pitchChannelMapped READ pitchChannelMapped NOTIFY pitchChannelMappedChanged)
@@ -103,6 +103,11 @@ public:
     void setTransmitterMode(int mode);
     
 signals:
+    void statusTextChanged(void);
+    void cancelButtonChanged(void);
+    void nextButtonChanged(void);
+    void skipButtonChanged(void);
+
     void channelCountChanged(int channelCount);
     void channelRCValueChanged(int channel, int rcValue);
     
