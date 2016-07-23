@@ -29,7 +29,7 @@ QString CameraComponent::name(void) const
 
 QString CameraComponent::description(void) const
 {
-    return tr("The Camera is used to setup the camera modes and hardware configuration to use it.");
+    return tr("Camera setup is used to adjust camera and gimbal settings.");
 }
 
 QString CameraComponent::iconResource(void) const

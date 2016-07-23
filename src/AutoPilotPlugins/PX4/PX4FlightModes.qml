@@ -23,33 +23,31 @@ import QGroundControl.ScreenTools   1.0
 
 /// PX4 Flight Mode configuration. This control will load either the Simple or Advanced Flight Mode config
 /// based on current parameter settings.
-QGCView {
-    id:         rootQGCView
-    viewPanel:  panel
+SetupPage {
+    id:             flightModesPage
+    pageComponent:  pageComponent
 
-    property Fact _nullFact
-    property bool _rcMapFltmodeExists:  controller.parameterExists(-1, "RC_MAP_FLTMODE")
-    property Fact _rcMapFltmode:        _rcMapFltmodeExists ? controller.getParameterFact(-1, "RC_MAP_FLTMODE") : _nullFact
-    property Fact _rcMapModeSw:         controller.getParameterFact(-1, "RC_MAP_MODE_SW")
-    property bool _simpleMode:          _rcMapFltmodeExists ? _rcMapFltmode.value > 0 || _rcMapModeSw.value == 0 : false
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
-
-    FactPanelController {
-        id:         controller
-        factPanel:  panel
-    }
-
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
+    Component {
+        id: pageComponent
 
         Loader {
-            anchors.fill:   parent
-            source:         _simpleMode ? "qrc:/qml/PX4SimpleFlightModes.qml" : "qrc:/qml/PX4AdvancedFlightModes.qml"
+            width:  availableWidth
+            height: availableHeight
+            source: _simpleMode ? "qrc:/qml/PX4SimpleFlightModes.qml" : "qrc:/qml/PX4AdvancedFlightModes.qml"
 
-            property var qgcView:       rootQGCView
-            property var qgcViewPanel:  panel
+            property Fact _nullFact
+            property bool _rcMapFltmodeExists:  controller.parameterExists(-1, "RC_MAP_FLTMODE")
+            property Fact _rcMapFltmode:        _rcMapFltmodeExists ? controller.getParameterFact(-1, "RC_MAP_FLTMODE") : _nullFact
+            property Fact _rcMapModeSw:         controller.getParameterFact(-1, "RC_MAP_MODE_SW")
+            property bool _simpleMode:          _rcMapFltmodeExists ? _rcMapFltmode.value > 0 || _rcMapModeSw.value == 0 : false
+
+            FactPanelController {
+                id:         controller
+                factPanel:  flightModesPage.viewPanel
+            }
+
+            property var qgcView:       flightModesPage
+            property var qgcViewPanel:  flightModesPage.viewPanel
         }
-    } // QGCViewPanel
-} // QGCView
+    }
+}

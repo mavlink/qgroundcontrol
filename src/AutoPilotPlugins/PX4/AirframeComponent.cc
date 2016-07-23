@@ -113,7 +113,7 @@ QString AirframeComponent::name(void) const
 
 QString AirframeComponent::description(void) const
 {
-    return tr("The Airframe Component is used to select the airframe which matches your vehicle. "
+    return tr("Airframe Setup is used to select the airframe which matches your vehicle. "
               "This will in turn set up the various tuning values for flight parameters.");
 }
 

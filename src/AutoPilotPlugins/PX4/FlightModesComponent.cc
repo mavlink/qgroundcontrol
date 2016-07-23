@@ -33,9 +33,7 @@ QString FlightModesComponent::name(void) const
 
 QString FlightModesComponent::description(void) const
 {
-    // FIXME: Better text
-    return tr("The Flight Modes Component is used to set the switches associated with Flight Modes. "
-              "At a minimum the Main Mode Switch must be assigned prior to flight.");
+    return tr("Flight Modes Setup is used to configure the transmitter switches associated with Flight Modes.");
 }
 
 QString FlightModesComponent::iconResource(void) const
