@@ -37,6 +37,7 @@ public:
 
     Q_INVOKABLE void clearPolygon(void);
     Q_INVOKABLE void addPolygonCoordinate(const QGeoCoordinate coordinate);
+    Q_INVOKABLE void adjustPolygonCoordinate(int vertexIndex, const QGeoCoordinate coordinate);
 
     QVariantList polygonPath(void) { return _polygonPath; }
     QVariantList gridPoints (void) { return _gridPoints; }
