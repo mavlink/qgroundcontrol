@@ -87,6 +87,14 @@ void ComplexMissionItem::addPolygonCoordinate(const QGeoCoordinate coordinate)
     setDirty(true);
 }
 
+void ComplexMissionItem::adjustPolygonCoordinate(int vertexIndex, const QGeoCoordinate coordinate)
+{
+    _polygonPath[vertexIndex] = QVariant::fromValue(coordinate);
+    emit polygonPathChanged();
+    _generateGrid();
+    setDirty(true);
+}
+
 int ComplexMissionItem::lastSequenceNumber(void) const
 {
     int lastSeq = _sequenceNumber;

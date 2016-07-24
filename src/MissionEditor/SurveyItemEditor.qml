@@ -101,26 +101,42 @@ Rectangle {
         Connections {
             target: editorMap.polygonDraw
 
-            onPolygonStarted: {
+            onPolygonCaptureStarted: {
                 missionItem.clearPolygon()
             }
 
-            onPolygonFinished: {
+            onPolygonCaptureFinished: {
                 for (var i=0; i<coordinates.length; i++) {
                     missionItem.addPolygonCoordinate(coordinates[i])
+                }
+            }
+
+            onPolygonAdjustVertex: missionItem.adjustPolygonCoordinate(vertexIndex, vertexCoordinate)
+        }
+
+        QGCButton {
+            text:       editorMap.polygonDraw.drawingPolygon ? qsTr("Finish Draw") : qsTr("Draw Polygon")
+            enabled:    ((editorMap.polygonDraw.drawingPolygon && editorMap.polygonDraw.polygonReady) || !editorMap.polygonDraw.drawingPolygon) &&
+                        !editorMap.polygonDraw.adjustingPolygon
+
+            onClicked: {
+                if (editorMap.polygonDraw.drawingPolygon) {
+                    editorMap.polygonDraw.finishCapturePolygon()
+                } else {
+                    editorMap.polygonDraw.startCapturePolygon()
                 }
             }
         }
 
         QGCButton {
-            text:       editorMap.polygonDraw.drawingPolygon ? qsTr("Finish Polygon") : qsTr("Draw Polygon")
-            enabled:    (editorMap.polygonDraw.drawingPolygon && editorMap.polygonDraw.polygonReady) || !editorMap.polygonDraw.drawingPolygon
+            text:       editorMap.polygonDraw.adjustingPolygon ? qsTr("Finish Adjust") : qsTr("Adjust Polygon")
+            enabled:    !editorMap.polygonDraw.drawingPolygon
 
             onClicked: {
-                if (editorMap.polygonDraw.drawingPolygon) {
-                    editorMap.polygonDraw.finishPolygon()
+                if (editorMap.polygonDraw.adjustingPolygon) {
+                    editorMap.polygonDraw.finishAdjustPolygon()
                 } else {
-                    editorMap.polygonDraw.startPolygon()
+                    editorMap.polygonDraw.startAdjustPolygon(missionItem.polygonPath)
                 }
             }
         }
