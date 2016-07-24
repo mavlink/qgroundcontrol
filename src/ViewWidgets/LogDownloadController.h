@@ -152,10 +152,11 @@ private:
     void _receivedAllData   ();
     void _resetSelection    (bool canceled = false);
     void _findMissingData   ();
-    void _requestLogList    (uint32_t start = 0, uint32_t end = 0xFFFF);
+    void _requestLogList    (uint32_t start, uint32_t end);
     void _requestLogData    (uint8_t id, uint32_t offset = 0, uint32_t count = 0xFFFFFFFF);
     bool _prepareLogDownload();
     void _setDownloading    (bool active);
+    void _setListing        (bool active);
 
     QGCLogEntry* _getNextSelected();
 
