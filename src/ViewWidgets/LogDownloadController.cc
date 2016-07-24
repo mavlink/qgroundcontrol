@@ -26,7 +26,7 @@
 
 #define kTimeOutMilliseconds 500
 #define kGUIRateMilliseconds 17
-#define kTableBins           128
+#define kTableBins           512
 #define kChunkSize           (kTableBins * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN)
 
 QGC_LOGGING_CATEGORY(LogDownloadLog, "LogDownloadLog")
@@ -234,8 +234,7 @@ void
 LogDownloadController::_receivedAllEntries()
 {
     _timer.stop();
-    _requestingLogEntries = false;
-    emit requestingListChanged();
+    _setListing(false);
 }
 
 //----------------------------------------------------------------------------------------
@@ -458,7 +457,8 @@ void
 LogDownloadController::refresh(void)
 {
     _logEntriesModel.clear();
-    _requestLogList();
+    //-- Get first 50 entries
+    _requestLogList(0, 49);
 }
 
 //----------------------------------------------------------------------------------------
@@ -467,8 +467,7 @@ LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
 {
     if(_vehicle && _uas) {
         qCDebug(LogDownloadLog) << "Request log entry list (" << start << "through" << end << ")";
-        _requestingLogEntries = true;
-        emit requestingListChanged();
+        _setListing(true);
         mavlink_message_t msg;
         mavlink_msg_log_request_list_pack(
             qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
@@ -479,8 +478,8 @@ LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
             start,
             end);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-        //-- Wait 2 seconds before bitching about not getting anything
-        _timer.start(2000);
+        //-- Wait 5 seconds before bitching about not getting anything
+        _timer.start(5000);
     }
 }
 
@@ -608,6 +607,15 @@ LogDownloadController::_setDownloading(bool active)
     _downloadingLogs = active;
     _vehicle->setConnectionLostEnabled(!active);
     emit downloadingLogsChanged();
+}
+
+//----------------------------------------------------------------------------------------
+void
+LogDownloadController::_setListing(bool active)
+{
+    _requestingLogEntries = active;
+    _vehicle->setConnectionLostEnabled(!active);
+    emit requestingListChanged();
 }
 
 //----------------------------------------------------------------------------------------
