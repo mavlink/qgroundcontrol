@@ -17,12 +17,14 @@ import QGroundControl.Palette       1.0
 import QGroundControl               1.0
 
 Rectangle {
+    readonly property var       _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+
     property var    currentMissionItem          ///< Mission item to display status for
     property var    missionItems                ///< List of all available mission items
     property real   expandedWidth               ///< Width of control when expanded
 
     width:      _expanded ? expandedWidth : _collapsedWidth
-    height:     valueGrid.height + (_margins * 2)
+    height:     Math.max(valueGrid.height, valueMissionGrid.height) + (_margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth * 0.5
     color:      qgcPal.window
     opacity:    0.80
@@ -38,10 +40,23 @@ Rectangle {
     property real   _gradientPercent:   isNaN(_gradient) ? 0 : _gradient * 100
     property real   _azimuth:           _statusValid ? _currentMissionItem.azimuth : -1
     property bool   _statusValid:       currentMissionItem != undefined
+    property bool   _vehicleValid:      _activeVehicle != undefined
+    property bool   _missionValid:      missionItems != undefined
+    property bool   _currentSurvey:     _statusValid ? currentMissionItem.commandName == "Survey" : false
     property string _distanceText:      _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _altText:           _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _gradientText:      _statusValid ? _gradientPercent.toFixed(0) + "%" : " "
     property string _azimuthText:       _statusValid ? Math.round(_azimuth) : " "
+    property string _numberShotsText:   _currentSurvey ? "783" : " "
+    property string _coveredAreaText:   _currentSurvey ? "87ha / 217acr" : " "
+    property string _totalDistanceText: _missionValid ? "30.91" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _totalTimeText:     _missionValid ? "34min 23s" : " "
+    property string _maxTelemDistText:  _missionValid ? "5.23" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property bool   _isVTOL:            _vehicleValid ? _activeVehicle.vtol : false
+    property string _hoverDistanceText: _missionValid ? "0.47" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _cruiseDistanceText: _missionValid ? "30.44" + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _hoverTimeText:     _missionValid ? "4min 02s" : " "
+    property string _cruiseTimeText:    _missionValid ? "34min 21s" : " "
 
     readonly property real _margins:    ScreenTools.defaultFontPixelWidth
 
@@ -61,6 +76,9 @@ Rectangle {
             columnSpacing:      _margins
             anchors.verticalCenter: parent.verticalCenter
 
+            QGCLabel { text: qsTr("Selected waypoint") }
+            QGCLabel { text: qsTr(" ") }
+
             QGCLabel { text: qsTr("Distance:") }
             QGCLabel { text: _distanceText }
 
@@ -72,6 +90,24 @@ Rectangle {
 
             QGCLabel { text: qsTr("Azimuth:") }
             QGCLabel { text: _azimuthText }
+
+            QGCLabel {
+                text: qsTr("# shots:")
+                visible: _currentSurvey
+            }
+            QGCLabel {
+                text: _numberShotsText
+                visible: _currentSurvey
+            }
+
+            QGCLabel {
+                text: qsTr("Covered area:")
+                visible: _currentSurvey
+            }
+            QGCLabel {
+                text: _coveredAreaText
+                visible: _currentSurvey
+            }
         }
 
         ListView {
@@ -85,7 +121,7 @@ Rectangle {
             orientation:            ListView.Horizontal
             spacing:                0
             visible:                _expanded
-            width:                  parent.width - valueGrid.width - (_margins * 2)
+            width:                  parent.width - valueGrid.width - valueMissionGrid.width - (_margins * 2)
             clip:                   true
             currentIndex:           _currentMissionIndex
 
@@ -108,6 +144,61 @@ Rectangle {
                     label:                      object.abbreviation
                     visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
                 }
+            }
+        }
+
+        Grid {
+            id:                 valueMissionGrid
+            columns:            2
+            columnSpacing:      _margins
+            anchors.verticalCenter: parent.verticalCenter
+
+            QGCLabel { text: qsTr("Total mission [WIP]") }
+            QGCLabel { text: qsTr(" ") }
+
+            QGCLabel { text: qsTr("Distance:") }
+            QGCLabel { text: _totalDistanceText }
+
+            QGCLabel { text: qsTr("Time:") }
+            QGCLabel { text: _totalTimeText }
+
+            QGCLabel { text: qsTr("Max telem dist:") }
+            QGCLabel { text: _maxTelemDistText }
+
+            QGCLabel {
+                text: qsTr("Hover distance:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _hoverDistanceText
+                visible: _isVTOL
+            }
+
+            QGCLabel {
+                text: qsTr("Cruise distance:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _cruiseDistanceText
+                visible: _isVTOL
+            }
+
+            QGCLabel {
+                text: qsTr("Hover time:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _hoverTimeText
+                visible: _isVTOL
+            }
+
+            QGCLabel {
+                text: qsTr("Cruise time:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _cruiseTimeText
+                visible: _isVTOL
             }
         }
     }
