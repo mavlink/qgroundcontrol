@@ -1474,6 +1474,11 @@ bool Vehicle::rover(void) const
     return vehicleType() == MAV_TYPE_GROUND_ROVER;
 }
 
+bool Vehicle::sub(void) const
+{
+    return vehicleType() == MAV_TYPE_SUBMARINE;
+}
+
 bool Vehicle::multiRotor(void) const
 {
     switch (vehicleType()) {
