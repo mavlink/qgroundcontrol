@@ -377,11 +377,14 @@ public:
     /// Clear Messages
     Q_INVOKABLE void clearMessages();
 
+#if 0
+    // Temporarily removed, waiting for new command implementation
     /// Test motor
     ///     @param motor Motor number, 1-based
     ///     @param percent 0-no power, 100-full power
     ///     @param timeoutSecs Number of seconds for motor to run
     Q_INVOKABLE void motorTest(int motor, int percent, int timeoutSecs);
+#endif
 
     bool guidedModeSupported(void) const;
     bool pauseVehicleSupported(void) const;
