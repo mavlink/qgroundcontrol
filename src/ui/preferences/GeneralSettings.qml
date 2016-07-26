@@ -401,11 +401,15 @@ QGCView {
 
                 //-----------------------------------------------------------------
                 //-- Offline mission editing settings
+
+                QGCLabel { text: "Offline mission editing" }
+
                 Row {
                     spacing: ScreenTools.defaultFontPixelWidth
 
                     QGCLabel {
-                        text:               qsTr("Offline mission editing:")
+                        text:               qsTr("Firmware:")
+                        width:              hoverSpeedLabel.width
                         anchors.baseline:   offlineTypeCombo.baseline
                     }
 
@@ -414,6 +418,62 @@ QGCView {
                         width:      ScreenTools.defaultFontPixelWidth * 18
                         fact:       QGroundControl.offlineEditingFirmwareType
                         indexModel: false
+                    }
+                }
+
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth
+
+                    QGCLabel {
+                        text:               qsTr("Vehicle:")
+                        width:              hoverSpeedLabel.width
+                        anchors.baseline:   offlineVehicleCombo.baseline
+                    }
+
+                    FactComboBox {
+                        id:         offlineVehicleCombo
+                        width:      offlineTypeCombo.width
+                        fact:       QGroundControl.offlineEditingVehicleType
+                        indexModel: false
+                    }
+                }
+
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth
+                    visible:  offlineVehicleCombo.currentText != "Multicopter"
+
+                    QGCLabel {
+                        text:               qsTr("Cruise speed:")
+                        width:              hoverSpeedLabel.width
+                        anchors.baseline:   cruiseSpeedField.baseline
+                    }
+
+
+                    FactTextField {
+                        id:                 cruiseSpeedField
+                        width:              offlineTypeCombo.width
+                        fact:               QGroundControl.offlineEditingCruiseSpeed
+                        enabled:            true
+                    }
+                }
+
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth
+                    visible:  offlineVehicleCombo.currentText != "Fixedwing"
+
+                    QGCLabel {
+                        id:                 hoverSpeedLabel
+                        text:               qsTr("Hover speed:")
+                        width:              baseFontLabel.width
+                        anchors.baseline:   hoverSpeedField.baseline
+                    }
+
+
+                    FactTextField {
+                        id:                 hoverSpeedField
+                        width:              offlineTypeCombo.width
+                        fact:               QGroundControl.offlineEditingHoverSpeed
+                        enabled:            true
                     }
                 }
 
