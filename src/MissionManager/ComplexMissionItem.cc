@@ -396,6 +396,24 @@ void ComplexMissionItem::_intersectLinesWithPolygon(const QList<QLineF>& lineLis
     }
 }
 
+/// Adjust the line segments such that they are all going the same direction with respect to going from P1->P2
+void ComplexMissionItem::_adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines)
+{
+    for (int i=0; i<lineList.count(); i++) {
+        const QLineF& line = lineList[i];
+        QLineF adjustedLine;
+
+        if (line.angle() > 180.0) {
+            adjustedLine.setP1(line.p2());
+            adjustedLine.setP2(line.p1());
+        } else {
+            adjustedLine = line;
+        }
+
+        resultLines += adjustedLine;
+    }
+}
+
 void ComplexMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QList<QPointF>& gridPoints)
 {
     double gridAngle = _gridAngleFact.rawValue().toDouble();
@@ -435,15 +453,24 @@ void ComplexMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QL
         float yBottom = largeBoundRect.bottomRight().y() + 100.0;
 
         lineList += QLineF(_rotatePoint(QPointF(x, yTop), center, gridAngle), _rotatePoint(QPointF(x, yBottom), center, gridAngle));
-        qCDebug(ComplexMissionItemLog) << "line" << lineList.last().x1() << lineList.last().y1() << lineList.last().x2() << lineList.last().y2();
+        qCDebug(ComplexMissionItemLog) << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
 
         x += gridSpacing;
     }
 
-    // Now intesect the lines with the smaller bounding rect
+    // Now intersect the lines with the polygon
+    QList<QLineF> intersectLines;
+#if 1
+    _intersectLinesWithPolygon(lineList, polygon, intersectLines);
+#else
+    // This is handy for debugging grid problems, not for release
+    intersectLines = lineList;
+#endif
+
+    // Make sure all lines are going to same direction. Polygon intersection leads to line which
+    // can be in varied directions depending on the order of the intesecting sides.
     QList<QLineF> resultLines;
-    //_intersectLinesWithRect(lineList, smallBoundRect, resultLines);
-    _intersectLinesWithPolygon(lineList, polygon, resultLines);
+    _adjustLineDirection(intersectLines, resultLines);
 
     // Turn into a path
     for (int i=0; i<resultLines.count(); i++) {
