@@ -1119,7 +1119,12 @@ void Vehicle::_saveSettings(void)
     settings.beginGroup(QString(_settingsGroup).arg(_id));
 
     settings.setValue(_joystickModeSettingsKey, _joystickMode);
-    settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
+
+    // The joystick enabled setting should only be changed if a joystick is present
+    // since the checkbox can only be clicked if one is present
+    if (qgcApp()->toolbox()->joystickManager()->joysticks().count()) {
+        settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
+    }
 }
 
 int Vehicle::joystickMode(void)
