@@ -137,30 +137,6 @@ void ComplexMissionItemTest::_testAddPolygonCoordinate(void)
     for (int i=0; i<polyList.count(); i++) {
         QCOMPARE(polyList[i].value<QGeoCoordinate>(), _polyPoints[i]);
     }
-
-    _complexItem->setDirty(false);
-    _multiSpy->clearAllSignals();
-
-    // Forth call to addPolygonCoordinate should trigger:
-    //      polygonPathChanged
-    //      dirtyChanged
-    // Grid is generated again on polygon change which triggers:
-    //      lastSequenceNumberChanged -  number of internal mission items changes
-    //      gridPointsChanged - grid points show up for the first time
-    //      exitCoordinateChanged - grid generates new exit coordinate
-    // Note: Given the data set the entry coordinate stays the same
-
-    _complexItem->addPolygonCoordinate(_polyPoints[3]);
-    QVERIFY(_multiSpy->checkOnlySignalByMask(polygonPathChangedMask | lastSequenceNumberChangedMask | gridPointsChangedMask | exitCoordinateChangedMask |
-                                             dirtyChangedMask));
-    seqNum = _multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex);
-    QVERIFY(seqNum > 0);
-
-    polyList = _complexItem->polygonPath();
-    QCOMPARE(polyList.count(), 4);
-    for (int i=0; i<polyList.count(); i++) {
-        QCOMPARE(polyList[i].value<QGeoCoordinate>(), _polyPoints[i]);
-    }
 }
 
 void ComplexMissionItemTest::_testClearPolygon(void)
