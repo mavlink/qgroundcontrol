@@ -360,6 +360,7 @@ QGCView {
 
                     delegate: MapPolyline {
                         line.color: "white"
+                        line.width: 2
                         path:       object.gridPoints
                     }
                 }
