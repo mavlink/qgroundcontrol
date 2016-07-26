@@ -15,6 +15,7 @@
 #include "APM/ArduCopterFirmwarePlugin.h"
 #include "APM/ArduPlaneFirmwarePlugin.h"
 #include "APM/ArduRoverFirmwarePlugin.h"
+#include "APM/ArduSubFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
 
 FirmwarePluginManager::FirmwarePluginManager(QGCApplication* app)
@@ -22,6 +23,7 @@ FirmwarePluginManager::FirmwarePluginManager(QGCApplication* app)
     , _arduCopterFirmwarePlugin(NULL)
     , _arduPlaneFirmwarePlugin(NULL)
     , _arduRoverFirmwarePlugin(NULL)
+    , _arduSubFirmwarePlugin(NULL)
     , _genericFirmwarePlugin(NULL)
     , _px4FirmwarePlugin(NULL)
 {
@@ -33,6 +35,7 @@ FirmwarePluginManager::~FirmwarePluginManager()
     delete _arduCopterFirmwarePlugin;
     delete _arduPlaneFirmwarePlugin;
     delete _arduRoverFirmwarePlugin;
+    delete _arduSubFirmwarePlugin;
     delete _genericFirmwarePlugin;
     delete _px4FirmwarePlugin;
 }
@@ -59,11 +62,15 @@ FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT 
             return _arduPlaneFirmwarePlugin;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_SURFACE_BOAT:
-        case MAV_TYPE_SUBMARINE:
             if (!_arduRoverFirmwarePlugin) {
                 _arduRoverFirmwarePlugin = new ArduRoverFirmwarePlugin;
             }
             return _arduRoverFirmwarePlugin;
+        case MAV_TYPE_SUBMARINE:
+            if (!_arduSubFirmwarePlugin) {
+                _arduSubFirmwarePlugin = new ArduSubFirmwarePlugin;
+            }
+            return _arduSubFirmwarePlugin;
         default:
             break;
         }

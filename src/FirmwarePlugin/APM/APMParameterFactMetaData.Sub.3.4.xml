@@ -47,10 +47,13 @@
 <field name="Range">0.0 500.0</field>
 <field name="Increment">10</field>
 </param>
-<param humanName="Throttle stick behavior" name="ArduSub:PILOT_THR_BHV" documentation="Bits for: Feedback starts from mid stick" user="Standard">
+<param humanName="Throttle stick behavior" name="ArduSub:PILOT_THR_BHV" documentation="Bitmask containing various throttle stick options. Add up the values for options that you want." user="Standard">
+<field name="Bitmask">0:Feedback from mid stick,1:High throttle cancels landing,2:Disarm on land detection</field>
 <values>
 <value code="0">None</value>
-<value code="1">FeedbackFromMid</value>
+<value code="1">Feedback from mid stick</value>
+<value code="2">High throttle cancels landing</value>
+<value code="4">Disarm on land detection</value>
 </values>
 </param>
 <param humanName="Telemetry startup delay" name="ArduSub:TELEM_DELAY" documentation="The amount of time (in seconds) to delay radio telemetry to prevent an Xbee bricking on power up" user="Advanced">
@@ -232,11 +235,6 @@
 <field name="Increment">10</field>
 <field name="Units">cm/s/s</field>
 </param>
-<param humanName="Throttle Minimum" name="ArduSub:THR_MIN" documentation="The minimum throttle that will be sent to the motors to keep them spinning" user="Standard">
-<field name="Range">0 300</field>
-<field name="Increment">1</field>
-<field name="Units">Percent*10</field>
-</param>
 <param humanName="Throttle Failsafe Enable" name="ArduSub:FS_THR_ENABLE" documentation="The throttle failsafe allows you to configure a software failsafe activated by a setting on the throttle input channel" user="Standard">
 <values>
 <value code="0">Disabled</value>
@@ -250,11 +248,6 @@
 <field name="Increment">1</field>
 <field name="Units">pwm</field>
 </param>
-<param humanName="Throttle Mid Position" name="ArduSub:THR_MID" documentation="The throttle output (0 ~ 1000) when throttle stick is in mid position.  Used to scale the manual throttle so that the mid throttle stick position is close to the throttle required to hover" user="Standard">
-<field name="Range">300 700</field>
-<field name="Increment">10</field>
-<field name="Units">Percent*10</field>
-</param>
 <param humanName="Throttle deadzone" name="ArduSub:THR_DZ" documentation="The deadzone above and below mid throttle.  Used in AltHold, Loiter, PosHold flight modes" user="Standard">
 <field name="Range">0 300</field>
 <field name="Increment">1</field>
@@ -263,121 +256,43 @@
 <param humanName="Flight Mode 1" name="ArduSub:FLTMODE1" documentation="Flight mode when Channel 5 pwm is &lt;= 1230" user="Standard">
 <values>
 <value code="0">Stabilize</value>
-<value code="1">Acro</value>
-<value code="2">AltHold</value>
-<value code="3">Auto</value>
-<value code="4">Guided</value>
-<value code="5">Loiter</value>
-<value code="6">RTL</value>
-<value code="7">Circle</value>
-<value code="9">Land</value>
-<value code="11">Drift</value>
-<value code="13">Sport</value>
-<value code="14">Flip</value>
-<value code="15">AutoTune</value>
-<value code="16">PosHold</value>
-<value code="17">Brake</value>
-<value code="18">Throw</value>
+<value code="2">DepthHold</value>
+<value code="19">Manual</value>
 </values>
 </param>
 <param humanName="Flight Mode 2" name="ArduSub:FLTMODE2" documentation="Flight mode when Channel 5 pwm is &gt;1230, &lt;= 1360" user="Standard">
 <values>
 <value code="0">Stabilize</value>
-<value code="1">Acro</value>
-<value code="2">AltHold</value>
-<value code="3">Auto</value>
-<value code="4">Guided</value>
-<value code="5">Loiter</value>
-<value code="6">RTL</value>
-<value code="7">Circle</value>
-<value code="9">Land</value>
-<value code="11">Drift</value>
-<value code="13">Sport</value>
-<value code="14">Flip</value>
-<value code="15">AutoTune</value>
-<value code="16">PosHold</value>
-<value code="17">Brake</value>
-<value code="18">Throw</value>
+<value code="2">DepthHold</value>
+<value code="19">Manual</value>
 </values>
 </param>
 <param humanName="Flight Mode 3" name="ArduSub:FLTMODE3" documentation="Flight mode when Channel 5 pwm is &gt;1360, &lt;= 1490" user="Standard">
 <values>
 <value code="0">Stabilize</value>
-<value code="1">Acro</value>
-<value code="2">AltHold</value>
-<value code="3">Auto</value>
-<value code="4">Guided</value>
-<value code="5">Loiter</value>
-<value code="6">RTL</value>
-<value code="7">Circle</value>
-<value code="9">Land</value>
-<value code="11">Drift</value>
-<value code="13">Sport</value>
-<value code="14">Flip</value>
-<value code="15">AutoTune</value>
-<value code="16">PosHold</value>
-<value code="17">Brake</value>
-<value code="18">Throw</value>
+<value code="2">DepthHold</value>
+<value code="19">Manual</value>
 </values>
 </param>
 <param humanName="Flight Mode 4" name="ArduSub:FLTMODE4" documentation="Flight mode when Channel 5 pwm is &gt;1490, &lt;= 1620" user="Standard">
 <values>
 <value code="0">Stabilize</value>
-<value code="1">Acro</value>
-<value code="2">AltHold</value>
-<value code="3">Auto</value>
-<value code="4">Guided</value>
-<value code="5">Loiter</value>
-<value code="6">RTL</value>
-<value code="7">Circle</value>
-<value code="9">Land</value>
-<value code="11">Drift</value>
-<value code="13">Sport</value>
-<value code="14">Flip</value>
-<value code="15">AutoTune</value>
-<value code="16">PosHold</value>
-<value code="17">Brake</value>
-<value code="18">Throw</value>
+<value code="2">DepthHold</value>
+<value code="19">Manual</value>
 </values>
 </param>
 <param humanName="Flight Mode 5" name="ArduSub:FLTMODE5" documentation="Flight mode when Channel 5 pwm is &gt;1620, &lt;= 1749" user="Standard">
 <values>
 <value code="0">Stabilize</value>
-<value code="1">Acro</value>
-<value code="2">AltHold</value>
-<value code="3">Auto</value>
-<value code="4">Guided</value>
-<value code="5">Loiter</value>
-<value code="6">RTL</value>
-<value code="7">Circle</value>
-<value code="9">Land</value>
-<value code="11">Drift</value>
-<value code="13">Sport</value>
-<value code="14">Flip</value>
-<value code="15">AutoTune</value>
-<value code="16">PosHold</value>
-<value code="17">Brake</value>
-<value code="18">Throw</value>
+<value code="2">DepthHold</value>
+<value code="19">Manual</value>
 </values>
 </param>
 <param humanName="Flight Mode 6" name="ArduSub:FLTMODE6" documentation="Flight mode when Channel 5 pwm is &gt;=1750" user="Standard">
 <values>
 <value code="0">Stabilize</value>
-<value code="1">Acro</value>
-<value code="2">AltHold</value>
-<value code="3">Auto</value>
-<value code="4">Guided</value>
-<value code="5">Loiter</value>
-<value code="6">RTL</value>
-<value code="7">Circle</value>
-<value code="9">Land</value>
-<value code="11">Drift</value>
-<value code="13">Sport</value>
-<value code="14">Flip</value>
-<value code="15">AutoTune</value>
-<value code="16">PosHold</value>
-<value code="17">Brake</value>
-<value code="18">Throw</value>
+<value code="2">DepthHold</value>
+<value code="19">Manual</value>
 </values>
 </param>
 <param humanName="Simple mode bitmask" name="ArduSub:SIMPLE" documentation="Bitmask which holds which flight modes use simple heading mode (eg bit 0 = 1 means Flight Mode 0 uses simple mode)" user="Advanced">
@@ -687,7 +602,7 @@
 </values>
 </param>
 <param humanName="Arming check" name="ArduSub:ARMING_CHECK" documentation="Allows enabling or disabling of pre-arming checks of receiver, accelerometer, barometer, compass and GPS" user="Standard">
-<field name="Bitmask">0:All,1:Baro,2:Compass,3:GPS,4:INS,5:Parameters+Sonar,6:RC,7:Voltage</field>
+<field name="Bitmask">0:All,1:Baro,2:Compass,3:GPS,4:INS,5:Parameters+Rangefinder,6:RC,7:Voltage</field>
 <values>
 <value code="0">Disabled</value>
 <value code=" 1">Enabled</value>
@@ -695,7 +610,7 @@
 <value code=" -5">Skip Compass</value>
 <value code=" -9">Skip GPS</value>
 <value code=" -17">Skip INS</value>
-<value code=" -33">Skip Params/Sonar</value>
+<value code=" -33">Skip Params/Rangefinder</value>
 <value code=" -65">Skip RC</value>
 <value code=" 127">Skip Voltage</value>
 </values>
@@ -798,9 +713,6 @@
 <field name="Increment">10</field>
 <field name="Units">cm/s/s</field>
 </param>
-<param humanName="Velocity (horizontal) filter frequency in Hz" name="ArduSub:VEL_XY_FILT_HZ" documentation="Velocity (horizontal) filter frequency in Hz" user="Advanced">
-<field name="Units">Hz</field>
-</param>
 <param humanName="Velocity (vertical) P gain" name="ArduSub:VEL_Z_P" documentation="Velocity (vertical) P gain.  Converts the difference between desired vertical speed and actual speed into a desired acceleration that is passed to the throttle acceleration controller" user="Standard">
 <field name="Range">1.000 8.000</field>
 </param>
@@ -818,7 +730,7 @@
 <param humanName="Throttle acceleration controller D gain" name="ArduSub:ACCEL_Z_D" documentation="Throttle acceleration controller D gain.  Compensates for short-term change in desired vertical acceleration vs actual acceleration" user="Standard">
 <field name="Range">0.000 0.400</field>
 </param>
-<param humanName="Throttle acceleration filter" name="ArduSub:ACCEL_Z_FILT" documentation="Filter applied to acceleration to reduce noise.  Lower values reduce noise but add delay." user="Standard">
+<param humanName="Throttle acceleration filter" name="ArduSub:ACCEL_Z_FILT_HZ" documentation="Filter applied to acceleration to reduce noise.  Lower values reduce noise but add delay." user="Standard">
 <field name="Range">1.000 100.000</field>
 <field name="Units">Hz</field>
 </param>
@@ -827,16 +739,6 @@
 </param>
 <param humanName="Position (horizonal) controller P gain" name="ArduSub:POS_XY_P" documentation="Loiter position controller P gain.  Converts the distance (in the latitude direction) to the target location into a desired speed which is then passed to the loiter latitude rate controller" user="Standard">
 <field name="Range">0.500 2.000</field>
-</param>
-<param humanName="Precision landing velocity controller P gain" name="ArduSub:PRECLNDVEL_P" documentation="Precision landing velocity controller P gain" user="Advanced">
-<field name="Range">0.100 5.000</field>
-</param>
-<param humanName="Precision landing velocity controller I gain" name="ArduSub:PRECLNDVEL_I" documentation="Precision landing velocity controller I gain" user="Advanced">
-<field name="Range">0.100 5.000</field>
-</param>
-<param humanName="Precision landing velocity controller I gain maximum" name="ArduSub:PRECLNDVEL_IMAX" documentation="Precision landing velocity controller I gain maximum" user="Standard">
-<field name="Range">0 1000</field>
-<field name="Units">cm/s</field>
 </param>
 <param humanName="Autotune axis bitmask" name="ArduSub:AUTOTUNE_AXES" documentation="1-byte bitmap of axes to autotune" user="Standard">
 <field name="Bitmask">0:Roll,1:Pitch,2:Yaw</field>
@@ -864,7 +766,8 @@
 </param>
 <param humanName="Terrain Following use control" name="ArduSub:TERRAIN_FOLLOW" documentation="This enables terrain following for RTL and LAND flight modes. To use this option TERRAIN_ENABLE must be 1 and the GCS must  support sending terrain data to the aircraft.  In RTL the RTL_ALT will be considered a height above the terrain.  In LAND mode the vehicle will slow to LAND_SPEED 10m above terrain (instead of 10m above home).  This parameter does not affect AUTO and Guided which use a per-command flag to determine if the height is above-home, absolute or above-terrain." user="Standard">
 <values>
-<value code="0">Do Not Use in RTL and Land 1</value>
+<value code="0">Do Not Use in RTL and Land</value>
+<value code="1">Use in RTL and Land</value>
 </values>
 </param>
 </parameters>
@@ -885,10 +788,17 @@
 <value code="1500">1500000</value>
 </values>
 </param>
+<param humanName="Console protocol selection" name="SERIAL0_PROTOCOL" documentation="Control what protocol to use on the console. " user="Standard">
+<values>
+<value code="1">MAVlink1</value>
+<value code=" 2">MAVLink2</value>
+</values>
+</param>
 <param humanName="Telem1 protocol selection" name="SERIAL1_PROTOCOL" documentation="Control what protocol to use on the Telem1 port. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
 <values>
 <value code="-1">None</value>
-<value code=" 1">GCS Mavlink</value>
+<value code=" 1">MAVlink1</value>
+<value code=" 2">MAVLink2</value>
 <value code=" 3">Frsky D-PORT</value>
 <value code=" 4">Frsky S-PORT</value>
 <value code=" 5">GPS</value>
@@ -916,7 +826,8 @@
 <param humanName="Telemetry 2 protocol selection" name="SERIAL2_PROTOCOL" documentation="Control what protocol to use on the Telem2 port. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
 <values>
 <value code="-1">None</value>
-<value code=" 1">GCS Mavlink</value>
+<value code=" 1">MAVlink1</value>
+<value code=" 2">MAVLink2</value>
 <value code=" 3">Frsky D-PORT</value>
 <value code=" 4">Frsky S-PORT</value>
 <value code=" 5">GPS</value>
@@ -944,7 +855,8 @@
 <param humanName="Serial 3 (GPS) protocol selection" name="SERIAL3_PROTOCOL" documentation="Control what protocol Serial 3 (GPS) should be used for. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
 <values>
 <value code="-1">None</value>
-<value code=" 1">GCS Mavlink</value>
+<value code=" 1">MAVlink1</value>
+<value code=" 2">MAVLink2</value>
 <value code=" 3">Frsky D-PORT</value>
 <value code=" 4">Frsky S-PORT</value>
 <value code=" 5">GPS</value>
@@ -972,7 +884,8 @@
 <param humanName="Serial4 protocol selection" name="SERIAL4_PROTOCOL" documentation="Control what protocol Serial4 port should be used for. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
 <values>
 <value code="-1">None</value>
-<value code=" 1">GCS Mavlink</value>
+<value code=" 1">MAVlink1</value>
+<value code=" 2">MAVLink2</value>
 <value code=" 3">Frsky D-PORT</value>
 <value code=" 4">Frsky S-PORT</value>
 <value code=" 5">GPS</value>
@@ -1000,7 +913,8 @@
 <param humanName="Serial5 protocol selection" name="SERIAL5_PROTOCOL" documentation="Control what protocol Serial5 port should be used for. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
 <values>
 <value code="-1">None</value>
-<value code=" 1">GCS Mavlink</value>
+<value code=" 1">MAVlink1</value>
+<value code=" 2">MAVLink2</value>
 <value code=" 3">Frsky D-PORT</value>
 <value code=" 4">Frsky S-PORT</value>
 <value code=" 5">GPS</value>
@@ -3692,13 +3606,13 @@
 <param humanName="IMU Product ID" name="INS_PRODUCT_ID" documentation="Which type of IMU is installed (read-only)." user="Advanced">
 <values>
 <value code="0">Unknown</value>
-<value code="1">APM1-1280</value>
-<value code="2">APM1-2560</value>
-<value code="88">APM2</value>
+<value code="1">unused</value>
+<value code="2">unused</value>
+<value code="88">unused</value>
 <value code="3">SITL</value>
 <value code="4">PX4v1</value>
 <value code="5">PX4v2</value>
-<value code="256">Flymaple</value>
+<value code="256">unused</value>
 <value code="257">Linux</value>
 </values>
 </param>
@@ -3907,6 +3821,68 @@
 </param>
 </parameters>
 <parameters name="ATC_">
+<param humanName="Yaw target slew rate" name="ATC_SLEW_YAW" documentation="Maximum rate the yaw target can be updated in Loiter, RTL, Auto flight modes" user="Advanced">
+<field name="Range">500 18000</field>
+<field name="Increment">100</field>
+<field name="Units">Centi-Degrees/Sec</field>
+</param>
+<param humanName="Acceleration Max for Yaw" name="ATC_ACCEL_Y_MAX" documentation="Maximum acceleration in yaw axis" user="Advanced">
+<field name="Range">0 72000</field>
+<values>
+<value code="0">Disabled</value>
+<value code=" 18000">Slow</value>
+<value code=" 36000">Medium</value>
+<value code=" 54000">Fast</value>
+</values>
+<field name="Increment">1000</field>
+<field name="Units">Centi-Degrees/Sec/Sec</field>
+</param>
+<param humanName="Rate Feedforward Enable" name="ATC_RATE_FF_ENAB" documentation="Controls whether body-frame rate feedfoward is enabled or disabled" user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code=" 1">Enabled</value>
+</values>
+</param>
+<param humanName="Acceleration Max for Roll" name="ATC_ACCEL_R_MAX" documentation="Maximum acceleration in roll axis" user="Advanced">
+<field name="Range">0 180000</field>
+<values>
+<value code="0">Disabled</value>
+<value code=" 72000">Slow</value>
+<value code=" 108000">Medium</value>
+<value code=" 162000">Fast</value>
+</values>
+<field name="Increment">1000</field>
+<field name="Units">Centi-Degrees/Sec/Sec</field>
+</param>
+<param humanName="Acceleration Max for Pitch" name="ATC_ACCEL_P_MAX" documentation="Maximum acceleration in pitch axis" user="Advanced">
+<field name="Range">0 180000</field>
+<values>
+<value code="0">Disabled</value>
+<value code=" 72000">Slow</value>
+<value code=" 108000">Medium</value>
+<value code=" 162000">Fast</value>
+</values>
+<field name="Increment">1000</field>
+<field name="Units">Centi-Degrees/Sec/Sec</field>
+</param>
+<param humanName="Angle Boost" name="ATC_ANGLE_BOOST" documentation="Angle Boost increases output throttle as the vehicle leans to reduce loss of altitude" user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code=" 1">Enabled</value>
+</values>
+</param>
+<param humanName="Roll axis angle controller P gain" name="ATC_ANG_RLL_P" documentation="Roll axis angle controller P gain.  Converts the error between the desired roll angle and actual angle to a desired roll rate" user="Standard">
+<field name="Range">3.000 12.000</field>
+</param>
+<param humanName="Pitch axis angle controller P gain" name="ATC_ANG_PIT_P" documentation="Pitch axis angle controller P gain.  Converts the error between the desired pitch angle and actual angle to a desired pitch rate" user="Standard">
+<field name="Range">3.000 12.000</field>
+</param>
+<param humanName="Yaw axis angle controller P gain" name="ATC_ANG_YAW_P" documentation="Yaw axis angle controller P gain.  Converts the error between the desired yaw angle and actual angle to a desired yaw rate" user="Standard">
+<field name="Range">3.000 6.000</field>
+</param>
+<param humanName="Angle Limit (to maintain altitude) Time Constant" name="ATC_ANG_LIM_TC" documentation="Angle Limit (to maintain altitude) Time Constant" user="Advanced">
+<field name="Range">0.5 10.0</field>
+</param>
 <param humanName="Roll axis rate controller P gain" name="ATC_RAT_RLL_P" documentation="Roll axis rate controller P gain.  Converts the difference between desired roll rate and actual roll rate into a motor speed output" user="Standard">
 <field name="Range">0.08 0.30</field>
 <field name="Increment">0.005</field>
@@ -3973,68 +3949,15 @@
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
-<param humanName="Yaw target slew rate" name="ATC_SLEW_YAW" documentation="Maximum rate the yaw target can be updated in Loiter, RTL, Auto flight modes" user="Advanced">
-<field name="Range">500 18000</field>
-<field name="Increment">100</field>
-<field name="Units">Centi-Degrees/Sec</field>
+<param humanName="Throttle Mix Minimum" name="ATC_THR_MIX_MIN" documentation="Throttle vs attitude control prioritisation used when landing (higher values mean we prioritise attitude control over throttle)" user="Advanced">
+<field name="Range">0.1 0.25</field>
 </param>
-<param humanName="Acceleration Max for Yaw" name="ATC_ACCEL_Y_MAX" documentation="Maximum acceleration in yaw axis" user="Advanced">
-<field name="Range">0 72000</field>
-<values>
-<value code="0">Disabled</value>
-<value code=" 18000">Slow</value>
-<value code=" 36000">Medium</value>
-<value code=" 54000">Fast</value>
-</values>
-<field name="Increment">1000</field>
-<field name="Units">Centi-Degrees/Sec/Sec</field>
-</param>
-<param humanName="Rate Feedforward Enable" name="ATC_RATE_FF_ENAB" documentation="Controls whether body-frame rate feedfoward is enabled or disabled" user="Advanced">
-<values>
-<value code="0">Disabled</value>
-<value code=" 1">Enabled</value>
-</values>
-</param>
-<param humanName="Acceleration Max for Roll" name="ATC_ACCEL_R_MAX" documentation="Maximum acceleration in roll axis" user="Advanced">
-<field name="Range">0 180000</field>
-<values>
-<value code="0">Disabled</value>
-<value code=" 72000">Slow</value>
-<value code=" 108000">Medium</value>
-<value code=" 162000">Fast</value>
-</values>
-<field name="Increment">1000</field>
-<field name="Units">Centi-Degrees/Sec/Sec</field>
-</param>
-<param humanName="Acceleration Max for Pitch" name="ATC_ACCEL_P_MAX" documentation="Maximum acceleration in pitch axis" user="Advanced">
-<field name="Range">0 180000</field>
-<values>
-<value code="0">Disabled</value>
-<value code=" 72000">Slow</value>
-<value code=" 108000">Medium</value>
-<value code=" 162000">Fast</value>
-</values>
-<field name="Increment">1000</field>
-<field name="Units">Centi-Degrees/Sec/Sec</field>
-</param>
-<param humanName="Angle Boost" name="ATC_ANGLE_BOOST" documentation="Angle Boost increases output throttle as the vehicle leans to reduce loss of altitude" user="Advanced">
-<values>
-<value code="0">Disabled</value>
-<value code=" 1">Enabled</value>
-</values>
-</param>
-<param humanName="Roll axis angle controller P gain" name="ATC_ANG_RLL_P" documentation="Roll axis angle controller P gain.  Converts the error between the desired roll angle and actual angle to a desired roll rate" user="Standard">
-<field name="Range">3.000 12.000</field>
-</param>
-<param humanName="Pitch axis angle controller P gain" name="ATC_ANG_PIT_P" documentation="Pitch axis angle controller P gain.  Converts the error between the desired pitch angle and actual angle to a desired pitch rate" user="Standard">
-<field name="Range">3.000 12.000</field>
-</param>
-<param humanName="Yaw axis angle controller P gain" name="ATC_ANG_YAW_P" documentation="Yaw axis angle controller P gain.  Converts the error between the desired yaw angle and actual angle to a desired yaw rate" user="Standard">
-<field name="Range">3.000 6.000</field>
+<param humanName="Throttle Mix Maximum" name="ATC_THR_MIX_MAX" documentation="Throttle vs attitude control prioritisation used during active flight (higher values mean we prioritise attitude control over throttle)" user="Advanced">
+<field name="Range">0.5 0.9</field>
 </param>
 </parameters>
-<parameters name="PSC">
-<param humanName="XY Acceleration filter cutoff frequency" name="PSC_ACC_XY_FILT" documentation="Lower values will slow the response of the navigation controller and reduce twitchiness" user="Advanced">
+<parameters name="POSCON_">
+<param humanName="XY Acceleration filter cutoff frequency" name="POSCON__ACC_XY_FILT" documentation="Lower values will slow the response of the navigation controller and reduce twitchiness" user="Advanced">
 <field name="Range">0.5 5</field>
 <field name="Increment">0.1</field>
 <field name="Units">Hz</field>
@@ -4086,6 +4009,11 @@
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
+<param humanName="ADSB stream rate to ground station" name="SR0_ADSB" documentation="ADSB stream rate to ground station" user="Advanced">
+<field name="Range">0 50</field>
+<field name="Increment">1</field>
+<field name="Units">Hz</field>
+</param>
 </parameters>
 <parameters name="SR1_">
 <param humanName="Raw sensor stream rate" name="SR1_RAW_SENS" documentation="Stream rate of RAW_IMU, SCALED_IMU2, SCALED_PRESSURE, and SENSOR_OFFSETS to ground station" user="Advanced">
@@ -4130,6 +4058,11 @@
 </param>
 <param humanName="Parameter stream rate to ground station" name="SR1_PARAMS" documentation="Stream rate of PARAM_VALUE to ground station" user="Advanced">
 <field name="Range">0 10</field>
+<field name="Increment">1</field>
+<field name="Units">Hz</field>
+</param>
+<param humanName="ADSB stream rate to ground station" name="SR1_ADSB" documentation="ADSB stream rate to ground station" user="Advanced">
+<field name="Range">0 50</field>
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
@@ -4180,6 +4113,11 @@
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
+<param humanName="ADSB stream rate to ground station" name="SR2_ADSB" documentation="ADSB stream rate to ground station" user="Advanced">
+<field name="Range">0 50</field>
+<field name="Increment">1</field>
+<field name="Units">Hz</field>
+</param>
 </parameters>
 <parameters name="SR3_">
 <param humanName="Raw sensor stream rate" name="SR3_RAW_SENS" documentation="Stream rate of RAW_IMU, SCALED_IMU2, SCALED_PRESSURE, and SENSOR_OFFSETS to ground station" user="Advanced">
@@ -4224,6 +4162,11 @@
 </param>
 <param humanName="Parameter stream rate to ground station" name="SR3_PARAMS" documentation="Stream rate of PARAM_VALUE to ground station" user="Advanced">
 <field name="Range">0 10</field>
+<field name="Increment">1</field>
+<field name="Units">Hz</field>
+</param>
+<param humanName="ADSB stream rate to ground station" name="SR3_ADSB" documentation="ADSB stream rate to ground station" user="Advanced">
+<field name="Range">0 50</field>
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
@@ -4741,7 +4684,7 @@
 </param>
 </parameters>
 <parameters name="BRD_">
-<param humanName="Auxillary pin config" name="BRD_PWM_COUNT" documentation="Control assigning of FMU pins to PWM output, timer capture and GPIO. All unassigned pins can be used for GPIO">
+<param humanName="Auxiliary pin config" name="BRD_PWM_COUNT" documentation="Control assigning of FMU pins to PWM output, timer capture and GPIO. All unassigned pins can be used for GPIO">
 <values>
 <value code="0">No PWMs</value>
 <value code="2">Two PWMs</value>
@@ -4749,6 +4692,7 @@
 <value code="6">Six PWMs</value>
 <value code="7">Three PWMs and One Capture</value>
 </values>
+<field name="RebootRequired">True</field>
 </param>
 <param humanName="Serial 1 flow control" name="BRD_SER1_RTSCTS" documentation="Enable flow control on serial 1 (telemetry 1) on Pixhawk. You must have the RTS and CTS pins connected to your radio. The standard DF13 6 pin connector for a 3DR radio does have those pins connected. If this is set to 2 then flow control will be auto-detected by checking for the output buffer filling on startup. Note that the PX4v1 does not have hardware flow control pins on this port, so you should leave this disabled.">
 <values>
@@ -4756,6 +4700,7 @@
 <value code="1">Enabled</value>
 <value code="2">Auto</value>
 </values>
+<field name="RebootRequired">True</field>
 </param>
 <param humanName="Serial 2 flow control" name="BRD_SER2_RTSCTS" documentation="Enable flow control on serial 2 (telemetry 2) on Pixhawk and PX4. You must have the RTS and CTS pins connected to your radio. The standard DF13 6 pin connector for a 3DR radio does have those pins connected. If this is set to 2 then flow control will be auto-detected by checking for the output buffer filling on startup.">
 <values>
@@ -4763,12 +4708,14 @@
 <value code="1">Enabled</value>
 <value code="2">Auto</value>
 </values>
+<field name="RebootRequired">True</field>
 </param>
-<param humanName=" Enable use of safety arming switch" name="BRD_SAFETYENABLE" documentation="Disabling this option will disable the use of the safety switch on PX4 for arming. Use of the safety switch is highly recommended, so you should leave this option set to 1 except in unusual circumstances.">
+<param humanName="Enable use of safety arming switch" name="BRD_SAFETYENABLE" documentation="This controls the default state of the safety switch at startup. When set to 1 the safety switch will start in the safe state (flashing) at boot. When set to zero the safety switch will start in the unsafe state (solid) at startup. Note that if a safety switch is fitted the user can still control the safety state after startup using the switch. The safety state can also be controlled in software using a MAVLink message.">
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
 </values>
+<field name="RebootRequired">True</field>
 </param>
 <param humanName=" SBUS output rate" name="BRD_SBUS_OUT" documentation="This sets the SBUS output frame rate in Hz">
 <values>
@@ -4781,6 +4728,7 @@
 <value code="6">250Hz</value>
 <value code="7">300Hz</value>
 </values>
+<field name="RebootRequired">True</field>
 </param>
 <param humanName="User-defined serial number" name="BRD_SERIAL_NUM" documentation="User-defined serial number of this vehicle, it can be any arbitrary number you want and has no effect on the autopilot" user="Standard">
 <field name="Range">-32767 32768</field>
@@ -4790,6 +4738,18 @@
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
 </values>
+</param>
+<param humanName="Channels to which ignore the safety switch state" name="BRD_SAFETY_MASK" documentation="A bitmask which controls what channels can move while the safety switch has not been pressed">
+<field name="Bitmask">0:Ch1,1:Ch2,2:Ch3,3:Ch4,4:Ch5,5:Ch6,6:Ch7,7:Ch8</field>
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+<field name="RebootRequired">True</field>
+</param>
+<param humanName="Target IMU temperature" name="BRD_IMU_TARGTEMP" documentation="This sets the target IMU temperature for boards with controllable IMU heating units. A value of -1 disables heating.">
+<field name="Units">degreesC</field>
+<field name="Range">-1 80</field>
 </param>
 </parameters>
 <parameters name="SPRAY_">
@@ -5020,11 +4980,16 @@
 </values>
 </param>
 <param humanName="Fence Type" name="FENCE_TYPE" documentation="Enabled fence types held as bitmask" user="Standard">
+<field name="Bitmask">0:Altitude,1:Circle,2:Polygon</field>
 <values>
 <value code="0">None</value>
 <value code="1">Altitude</value>
 <value code="2">Circle</value>
 <value code="3">Altitude and Circle</value>
+<value code="4">Polygon</value>
+<value code="5">Altitude and Polygon</value>
+<value code="6">Circle and Polygon</value>
+<value code="7">All</value>
 </values>
 </param>
 <param humanName="Fence Action" name="FENCE_ACTION" documentation="What action should be taken when fence is breached" user="Standard">
@@ -5046,10 +5011,21 @@
 <field name="Range">1 10</field>
 <field name="Units">Meters</field>
 </param>
+<param humanName="Fence polygon point total" name="FENCE_TOTAL" documentation="Number of polygon points saved in eeprom (do not update manually)" user="Standard">
+<field name="Range">1 20</field>
+</param>
 <param humanName="Fence Maximum Depth" name="FENCE_DEPTH_MAX" documentation="Maximum depth allowed before geofence triggers" user="Standard">
 <field name="Range">10 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Meters</field>
+</param>
+</parameters>
+<parameters name="AVOID_">
+<param humanName="Avoidance control enable/disable" name="AVOID_ENABLE" documentation="Enabled/disable stopping at fence" user="Standard">
+<values>
+<value code="0">None</value>
+<value code="1">StopAtFence</value>
+</values>
 </param>
 </parameters>
 <parameters name="RALLY_">
@@ -5119,6 +5095,18 @@
 <field name="Range">0.0 1.5</field>
 <field name="Increment">0.1</field>
 </param>
+<param humanName="Maximum allowed motor gain" name="MOT_GAIN_MAX" documentation="Maximum allowed motor gain for scaling power output" user="Standard">
+<field name="Range">0.1 1.0</field>
+<field name="Increment">0.01</field>
+</param>
+<param humanName="Minimum allowed motor gain" name="MOT_GAIN_MIN" documentation="Minimum allowed motor gain for scaling power output" user="Standard">
+<field name="Range">0.1 1.0</field>
+<field name="Increment">0.01</field>
+</param>
+<param humanName="Number of gain levels between min and max" name="MOT_GAIN_STEPS" documentation="Number of gain levels between min and max" user="Standard">
+<field name="Range">1 10</field>
+<field name="Increment">1</field>
+</param>
 </parameters>
 <parameters name="RCMAP_">
 <param humanName="Roll channel" name="RCMAP_ROLL" documentation="Roll channel number. This is useful when you have a RC transmitter that can't change the channel order easily. Roll is normally on channel 1, but you can move it to any channel with this parameter.  Reboot is required for changes to take effect." user="Advanced">
@@ -5159,11 +5147,11 @@
 <value code=" 1">Enabled</value>
 </values>
 </param>
-<param humanName="GPS horizontal velocity measurement noise scaler" name="EKF_VELNE_NOISE" documentation="This is the scaler that is applied to the speed accuracy reported by the receiver to estimate the horizontal velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then a speed acuracy of 1 is assumed. Increasing it reduces the weighting on these measurements." user="Advanced">
+<param humanName="GPS horizontal velocity measurement noise scaler" name="EKF_VELNE_NOISE" documentation="This is the scaler that is applied to the speed accuracy reported by the receiver to estimate the horizontal velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then a speed accuracy of 1 is assumed. Increasing it reduces the weighting on these measurements." user="Advanced">
 <field name="Range">0.05 5.0</field>
 <field name="Increment">0.05</field>
 </param>
-<param humanName="GPS vertical velocity measurement noise scaler" name="EKF_VELD_NOISE" documentation="This is the scaler that is applied to the speed accuracy reported by the receiver to estimate the vertical velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then a speed acuracy of 1 is assumed. Increasing it reduces the weighting on this measurement." user="Advanced">
+<param humanName="GPS vertical velocity measurement noise scaler" name="EKF_VELD_NOISE" documentation="This is the scaler that is applied to the speed accuracy reported by the receiver to estimate the vertical velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then a speed accuracy of 1 is assumed. Increasing it reduces the weighting on this measurement." user="Advanced">
 <field name="Range">0.05 5.0</field>
 <field name="Increment">0.05</field>
 </param>
@@ -5275,7 +5263,7 @@
 <field name="Increment">5</field>
 <field name="Units">meters</field>
 </param>
-<param humanName="Terrain Gradient % RMS" name="EKF_GND_GRADIENT" documentation="This parameter sets the RMS terrain gradient percentage assumed by the terrain height estimation. Terrain height can be estimated using optical flow and/or range finder sensor data if fitted. Smaller values cause the terrain height estimate to be slower to respond to changes in measurement. Larger values casue the terrain height estimate to be faster to respond, but also more noisy. Generally this value can be reduced if operating over very flat terrain and increased if operating over uneven terrain." user="Advanced">
+<param humanName="Terrain Gradient % RMS" name="EKF_GND_GRADIENT" documentation="This parameter sets the RMS terrain gradient percentage assumed by the terrain height estimation. Terrain height can be estimated using optical flow and/or range finder sensor data if fitted. Smaller values cause the terrain height estimate to be slower to respond to changes in measurement. Larger values cause the terrain height estimate to be faster to respond, but also more noisy. Generally this value can be reduced if operating over very flat terrain and increased if operating over uneven terrain." user="Advanced">
 <field name="Range">1 50</field>
 <field name="Increment">1</field>
 </param>
@@ -5307,7 +5295,7 @@
 <value code=" 1">Trust DCM more</value>
 </values>
 </param>
-<param humanName="Primary height source" name="EKF_ALT_SOURCE" documentation="This parameter controls which height sensor is used by the EKF during optical flow navigation (when EKF_GPS_TYPE = 3). A value of will 0 cause it to always use baro altitude. A value of 1 will casue it to use range finder if available." user="Advanced">
+<param humanName="Primary height source" name="EKF_ALT_SOURCE" documentation="This parameter controls which height sensor is used by the EKF during optical flow navigation (when EKF_GPS_TYPE = 3). A value of will 0 cause it to always use baro altitude. A value of 1 will cause it to use range finder if available." user="Advanced">
 <values>
 <value code="0">Use Baro</value>
 <value code=" 1">Use Range Finder</value>
@@ -5332,26 +5320,26 @@
 <value code=" 3">No GPS use optical flow</value>
 </values>
 </param>
-<param humanName="GPS horizontal velocity measurement noise (m/s)" name="EK2_VELNE_NOISE" documentation="This sets a lower limit on the speed accuracy reported by the GPS receiver that is used to set horizontal velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then the parameter value will be used. Increasing it reduces the weighting of the GPS horizontal velocity measurements." user="Advanced">
+<param humanName="GPS horizontal velocity measurement noise (m/s)" name="EK2_VELNE_M_NSE" documentation="This sets a lower limit on the speed accuracy reported by the GPS receiver that is used to set horizontal velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then the parameter value will be used. Increasing it reduces the weighting of the GPS horizontal velocity measurements." user="Advanced">
 <field name="Range">0.05 5.0</field>
 <field name="Increment">0.05</field>
 <field name="Units">m/s</field>
 </param>
-<param humanName="GPS vertical velocity measurement noise (m/s)" name="EK2_VELD_NOISE" documentation="This sets a lower limit on the speed accuracy reported by the GPS receiver that is used to set vertical velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then the parameter value will be used. Increasing it reduces the weighting of the GPS vertical velocity measurements." user="Advanced">
+<param humanName="GPS vertical velocity measurement noise (m/s)" name="EK2_VELD_M_NSE" documentation="This sets a lower limit on the speed accuracy reported by the GPS receiver that is used to set vertical velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then the parameter value will be used. Increasing it reduces the weighting of the GPS vertical velocity measurements." user="Advanced">
 <field name="Range">0.05 5.0</field>
 <field name="Increment">0.05</field>
 <field name="Units">m/s</field>
 </param>
-<param humanName="GPS velocity innovation gate size" name="EK2_VEL_GATE" documentation="This sets the percentage number of standard deviations applied to the GPS velocity measurement innovation consistency check. Decreasing it makes it more likely that good measurements willbe rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<param humanName="GPS velocity innovation gate size" name="EK2_VEL_I_GATE" documentation="This sets the percentage number of standard deviations applied to the GPS velocity measurement innovation consistency check. Decreasing it makes it more likely that good measurements willbe rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
 <field name="Range">100 1000</field>
 <field name="Increment">25</field>
 </param>
-<param humanName="GPS horizontal position measurement noise (m)" name="EK2_POSNE_NOISE" documentation="This sets the GPS horizontal position observation noise. Increasing it reduces the weighting of GPS horizontal position measurements." user="Advanced">
+<param humanName="GPS horizontal position measurement noise (m)" name="EK2_POSNE_M_NSE" documentation="This sets the GPS horizontal position observation noise. Increasing it reduces the weighting of GPS horizontal position measurements." user="Advanced">
 <field name="Range">0.1 10.0</field>
 <field name="Increment">0.1</field>
 <field name="Units">m</field>
 </param>
-<param humanName="GPS position measurement gate size" name="EK2_POS_GATE" documentation="This sets the percentage number of standard deviations applied to the GPS position measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<param humanName="GPS position measurement gate size" name="EK2_POS_I_GATE" documentation="This sets the percentage number of standard deviations applied to the GPS position measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
 <field name="Range">100 1000</field>
 <field name="Increment">25</field>
 </param>
@@ -5372,12 +5360,12 @@
 <value code=" 2">Use GPS</value>
 </values>
 </param>
-<param humanName="Altitude measurement noise (m)" name="EK2_ALT_NOISE" documentation="This is the RMS value of noise in the altitude measurement. Increasing it reduces the weighting of the baro measurement and will make the filter respond more slowly to baro measurement errors, but will make it more sensitive to GPS and accelerometer errors." user="Advanced">
+<param humanName="Altitude measurement noise (m)" name="EK2_ALT_M_NSE" documentation="This is the RMS value of noise in the altitude measurement. Increasing it reduces the weighting of the baro measurement and will make the filter respond more slowly to baro measurement errors, but will make it more sensitive to GPS and accelerometer errors." user="Advanced">
 <field name="Range">0.1 10.0</field>
 <field name="Increment">0.1</field>
 <field name="Units">m</field>
 </param>
-<param humanName="Height measurement gate size" name="EK2_HGT_GATE" documentation="This sets the percentage number of standard deviations applied to the height measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<param humanName="Height measurement gate size" name="EK2_HGT_I_GATE" documentation="This sets the percentage number of standard deviations applied to the height measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
 <field name="Range">100 1000</field>
 <field name="Increment">25</field>
 </param>
@@ -5386,7 +5374,7 @@
 <field name="Increment">10</field>
 <field name="Units">msec</field>
 </param>
-<param humanName="Magnetometer measurement noise (Gauss)" name="EK2_MAG_NOISE" documentation="This is the RMS value of noise in magnetometer measurements. Increasing it reduces the weighting on these measurements." user="Advanced">
+<param humanName="Magnetometer measurement noise (Gauss)" name="EK2_MAG_M_NSE" documentation="This is the RMS value of noise in magnetometer measurements. Increasing it reduces the weighting on these measurements." user="Advanced">
 <field name="Range">0.01 0.5</field>
 <field name="Increment">0.01</field>
 <field name="Units">gauss</field>
@@ -5400,25 +5388,25 @@
 <value code="4">Always</value>
 </values>
 </param>
-<param humanName="Magnetometer measurement gate size" name="EK2_MAG_GATE" documentation="This sets the percentage number of standard deviations applied to the magnetometer measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<param humanName="Magnetometer measurement gate size" name="EK2_MAG_I_GATE" documentation="This sets the percentage number of standard deviations applied to the magnetometer measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
 <field name="Range">100 1000</field>
 <field name="Increment">25</field>
 </param>
-<param humanName="Equivalent airspeed measurement noise (m/s)" name="EK2_EAS_NOISE" documentation="This is the RMS value of noise in equivalent airspeed measurements used by planes. Increasing it reduces the weighting of airspeed measurements and will make wind speed estimates less noisy and slower to converge. Increasing also increases navigation errors when dead-reckoning without GPS measurements." user="Advanced">
+<param humanName="Equivalent airspeed measurement noise (m/s)" name="EK2_EAS_M_NSE" documentation="This is the RMS value of noise in equivalent airspeed measurements used by planes. Increasing it reduces the weighting of airspeed measurements and will make wind speed estimates less noisy and slower to converge. Increasing also increases navigation errors when dead-reckoning without GPS measurements." user="Advanced">
 <field name="Range">0.5 5.0</field>
 <field name="Increment">0.1</field>
 <field name="Units">m/s</field>
 </param>
-<param humanName="Airspeed measurement gate size" name="EK2_EAS_GATE" documentation="This sets the percentage number of standard deviations applied to the airspeed measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<param humanName="Airspeed measurement gate size" name="EK2_EAS_I_GATE" documentation="This sets the percentage number of standard deviations applied to the airspeed measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
 <field name="Range">100 1000</field>
 <field name="Increment">25</field>
 </param>
-<param humanName="Range finder measurement noise (m)" name="EK2_RNG_NOISE" documentation="This is the RMS value of noise in the range finder measurement. Increasing it reduces the weighting on this measurement." user="Advanced">
+<param humanName="Range finder measurement noise (m)" name="EK2_RNG_M_NSE" documentation="This is the RMS value of noise in the range finder measurement. Increasing it reduces the weighting on this measurement." user="Advanced">
 <field name="Range">0.1 10.0</field>
 <field name="Increment">0.1</field>
 <field name="Units">m</field>
 </param>
-<param humanName="Range finder measurement gate size" name="EK2_RNG_GATE" documentation="This sets the percentage number of standard deviations applied to the range finder innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<param humanName="Range finder measurement gate size" name="EK2_RNG_I_GATE" documentation="This sets the percentage number of standard deviations applied to the range finder innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
 <field name="Range">100 1000</field>
 <field name="Increment">25</field>
 </param>
@@ -5427,12 +5415,12 @@
 <field name="Increment">0.1</field>
 <field name="Units">rad/s</field>
 </param>
-<param humanName="Optical flow measurement noise (rad/s)" name="EK2_FLOW_NOISE" documentation="This is the RMS value of noise and errors in optical flow measurements. Increasing it reduces the weighting on these measurements." user="Advanced">
+<param humanName="Optical flow measurement noise (rad/s)" name="EK2_FLOW_M_NSE" documentation="This is the RMS value of noise and errors in optical flow measurements. Increasing it reduces the weighting on these measurements." user="Advanced">
 <field name="Range">0.05 1.0</field>
 <field name="Increment">0.05</field>
 <field name="Units">rad/s</field>
 </param>
-<param humanName="Optical Flow measurement gate size" name="EK2_FLOW_GATE" documentation="This sets the percentage number of standard deviations applied to the optical flow innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<param humanName="Optical Flow measurement gate size" name="EK2_FLOW_I_GATE" documentation="This sets the percentage number of standard deviations applied to the optical flow innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
 <field name="Range">100 1000</field>
 <field name="Increment">25</field>
 </param>
@@ -5441,33 +5429,29 @@
 <field name="Increment">10</field>
 <field name="Units">msec</field>
 </param>
-<param humanName="Rate gyro noise (rad/s)" name="EK2_GYRO_PNOISE" documentation="This control disturbance noise controls the growth of estimated error due to gyro measurement errors excluding bias. Increasing it makes the flter trust the gyro measurements less and other measurements more." user="Advanced">
-<field name="Range">0.0001 0.01</field>
+<param humanName="Rate gyro noise (rad/s)" name="EK2_GYRO_P_NSE" documentation="This control disturbance noise controls the growth of estimated error due to gyro measurement errors excluding bias. Increasing it makes the flter trust the gyro measurements less and other measurements more." user="Advanced">
+<field name="Range">0.0001 0.1</field>
 <field name="Increment">0.0001</field>
 <field name="Units">rad/s</field>
 </param>
-<param humanName="Accelerometer noise (m/s^2)" name="EK2_ACC_PNOISE" documentation="This control disturbance noise controls the growth of estimated error due to accelerometer measurement errors excluding bias. Increasing it makes the flter trust the accelerometer measurements less and other measurements more." user="Advanced">
+<param humanName="Accelerometer noise (m/s^2)" name="EK2_ACC_P_NSE" documentation="This control disturbance noise controls the growth of estimated error due to accelerometer measurement errors excluding bias. Increasing it makes the flter trust the accelerometer measurements less and other measurements more." user="Advanced">
 <field name="Range">0.01 1.0</field>
 <field name="Increment">0.01</field>
 <field name="Units">m/s/s</field>
 </param>
-<param humanName="Rate gyro bias process noise (rad/s)" name="EK2_GBIAS_PNOISE" documentation="This state  process noise controls growth of the gyro delta angle bias state error estimate. Increasing it makes rate gyro bias estimation faster and noisier." user="Advanced">
-<field name="Range">0.0000001 0.00001</field>
-<field name="Units">rad/s</field>
+<param humanName="Rate gyro bias stability (rad/s/s)" name="EK2_GBIAS_P_NSE" documentation="This state  process noise controls growth of the gyro delta angle bias state error estimate. Increasing it makes rate gyro bias estimation faster and noisier." user="Advanced">
+<field name="Range">0.00001 0.001</field>
+<field name="Units">rad/s/s</field>
 </param>
-<param humanName="Rate gyro scale factor process noise (1/s)" name="EK2_GSCL_PNOISE" documentation="This noise controls the rate of gyro scale factor learning. Increasing it makes rate gyro scale factor estimation faster and noisier." user="Advanced">
-<field name="Range">0.0000001 0.00001</field>
+<param humanName="Rate gyro scale factor stability (1/s)" name="EK2_GSCL_P_NSE" documentation="This noise controls the rate of gyro scale factor learning. Increasing it makes rate gyro scale factor estimation faster and noisier." user="Advanced">
+<field name="Range">0.000001 0.001</field>
 <field name="Units">1/s</field>
 </param>
-<param humanName="Accelerometer bias process noise (m/s^2)" name="EK2_ABIAS_PNOISE" documentation="This noise controls the growth of the vertical accelerometer delta velocity bias state error estimate. Increasing it makes accelerometer bias estimation faster and noisier." user="Advanced">
+<param humanName="Accelerometer bias stability (m/s^3)" name="EK2_ABIAS_P_NSE" documentation="This noise controls the growth of the vertical accelerometer delta velocity bias state error estimate. Increasing it makes accelerometer bias estimation faster and noisier." user="Advanced">
 <field name="Range">0.00001 0.001</field>
-<field name="Units">m/s/s</field>
+<field name="Units">m/s/s/s</field>
 </param>
-<param humanName="Magnetic field process noise (gauss/s)" name="EK2_MAG_PNOISE" documentation="This state process noise controls the growth of magnetic field state error estimates. Increasing it makes magnetic field bias estimation faster and noisier." user="Advanced">
-<field name="Range">0.0001 0.01</field>
-<field name="Units">gauss/s</field>
-</param>
-<param humanName="Wind velocity process noise (m/s^2)" name="EK2_WIND_PNOISE" documentation="This state process noise controls the growth of wind state error estimates. Increasing it makes wind estimation faster and noisier." user="Advanced">
+<param humanName="Wind velocity process noise (m/s^2)" name="EK2_WIND_P_NSE" documentation="This state process noise controls the growth of wind state error estimates. Increasing it makes wind estimation faster and noisier." user="Advanced">
 <field name="Range">0.01 1.0</field>
 <field name="Increment">0.1</field>
 <field name="Units">m/s/s</field>
@@ -5486,7 +5470,7 @@
 <field name="Range">50 200</field>
 <field name="Units">%</field>
 </param>
-<param humanName="Non-GPS operation position uncertainty (m)" name="EK2_NOAID_NOISE" documentation="This sets the amount of position variation that the EKF allows for when operating without external measurements (eg GPS or optical flow). Increasing this parameter makes the EKF attitude estimate less sensitive to vehicle manoeuvres but more sensitive to IMU errors." user="Advanced">
+<param humanName="Non-GPS operation position uncertainty (m)" name="EK2_NOAID_M_NSE" documentation="This sets the amount of position variation that the EKF allows for when operating without external measurements (eg GPS or optical flow). Increasing this parameter makes the EKF attitude estimate less sensitive to vehicle manoeuvres but more sensitive to IMU errors." user="Advanced">
 <field name="Range">0.5 50.0</field>
 <field name="Units">m/s</field>
 </param>
@@ -5497,6 +5481,27 @@
 <value code="3">FirstAndSecondIMU</value>
 <value code="7">AllIMUs</value>
 </values>
+</param>
+<param humanName="Yaw measurement noise (rad)" name="EK2_YAW_M_NSE" documentation="This is the RMS value of noise in yaw measurements from the magnetometer. Increasing it reduces the weighting on these measurements." user="Advanced">
+<field name="Range">0.05 1.0</field>
+<field name="Increment">0.05</field>
+<field name="Units">gauss</field>
+</param>
+<param humanName="Yaw measurement gate size" name="EK2_YAW_I_GATE" documentation="This sets the percentage number of standard deviations applied to the magnetometer yaw measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<field name="Range">100 1000</field>
+<field name="Increment">25</field>
+</param>
+<param humanName="Output complementary filter time constant (centi-sec)" name="EK2_TAU_OUTPUT" documentation="Sets the time constant of the output complementary filter/predictor in centi-seconds. Set to a negative number to use a computationally cheaper and less accurate method with an automatically calculated time constant." user="Advanced">
+<field name="Range">-1 100</field>
+<field name="Increment">10</field>
+</param>
+<param humanName="Earth magnetic field process noise (gauss/s)" name="EK2_MAGE_P_NSE" documentation="This state process noise controls the growth of earth magnetic field state error estimates. Increasing it makes earth magnetic field estimation faster and noisier." user="Advanced">
+<field name="Range">0.00001 0.01</field>
+<field name="Units">gauss/s</field>
+</param>
+<param humanName="Body magnetic field process noise (gauss/s)" name="EK2_MAGB_P_NSE" documentation="This state process noise controls the growth of body magnetic field state error estimates. Increasing it makes magnetometer bias error estimation faster and noisier." user="Advanced">
+<field name="Range">0.00001 0.01</field>
+<field name="Units">gauss/s</field>
 </param>
 </parameters>
 <parameters name="MIS_">
@@ -5959,15 +5964,15 @@
 <field name="Increment">1</field>
 </param>
 </parameters>
-<parameters name="PRECLAND_">
-<param humanName="Precision Land enabled/disabled and behaviour" name="PRECLAND_ENABLED" documentation="Precision Land enabled/disabled and behaviour" user="Advanced">
+<parameters name="PLND_">
+<param humanName="Precision Land enabled/disabled and behaviour" name="PLND_ENABLED" documentation="Precision Land enabled/disabled and behaviour" user="Advanced">
 <values>
 <value code="0">Disabled</value>
 <value code=" 1">Enabled Always Land</value>
 <value code=" 2">Enabled Strict</value>
 </values>
 </param>
-<param humanName="Precision Land Type" name="PRECLAND_TYPE" documentation="Precision Land Type" user="Advanced">
+<param humanName="Precision Land Type" name="PLND_TYPE" documentation="Precision Land Type" user="Advanced">
 <values>
 <value code="0">None</value>
 <value code=" 1">CompanionComputer</value>
@@ -6005,7 +6010,7 @@
 </param>
 </parameters>
 <parameters name="ADSB_">
-<param humanName="Enable ADSB" name="ADSB_ENABLE" documentation="Enable ADS-B" user="Advanced">
+<param humanName="Enable ADSB" name="ADSB_ENABLE" documentation="Enable ADS-B" user="Standard">
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
@@ -6017,6 +6022,9 @@
 <value code="1">Loiter</value>
 <value code="2">LoiterAndDescend</value>
 </values>
+</param>
+<param humanName="ADSB vehicle list size" name="ADSB_LIST_MAX" documentation="ADSB list size of nearest vehicles. Longer lists take longer to refresh with lower SRx_ADSB values." user="Advanced">
+<field name="Range">1 100</field>
 </param>
 </parameters>
 <parameters name="NTF_">
