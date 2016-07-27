@@ -185,8 +185,11 @@ after_success:
 
   # android google play deploy
   - export GOOGLE_PLAY_TRACK=none;
+
+  # master development builds to beta track
+  # tagged releases first to beta track then manually move to production
   - if [ "${TRAVIS_TAG}" ]; then
-        GOOGLE_PLAY_TRACK=production;
+        GOOGLE_PLAY_TRACK=beta;
     elif [ "${TRAVIS_BRANCH}" = "master" ]; then
         GOOGLE_PLAY_TRACK=beta;
     fi
