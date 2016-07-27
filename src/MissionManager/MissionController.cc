@@ -940,16 +940,10 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
 {
     qCDebug(MissionControllerLog) << "_activeVehicleChanged activeVehicle" << activeVehicle;
 
-    if (_activeVehicle) {
-        MissionManager* missionManager = _activeVehicle->missionManager();
-
-        disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailableFromVehicle);
-        disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
-        disconnect(missionManager, &MissionManager::currentItemChanged,         this, &MissionController::_currentMissionItemChanged);
-        disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,      this, &MissionController::_activeVehicleHomePositionAvailableChanged);
-        disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionController::_activeVehicleHomePositionChanged);
-        _activeVehicle = NULL;
+    for(auto con : _vehicleConnections) {
+        disconnect(con);
     }
+    _activeVehicle = nullptr;
 
     // We always remove all items on vehicle change. This leaves a user model hole:
     //      If the user has unsaved changes in the Plan view they will lose them
@@ -960,11 +954,11 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
     if (_activeVehicle) {
         MissionManager* missionManager = activeVehicle->missionManager();
 
-        connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailableFromVehicle);
-        connect(missionManager, &MissionManager::inProgressChanged,         this, &MissionController::_inProgressChanged);
-        connect(missionManager, &MissionManager::currentItemChanged,        this, &MissionController::_currentMissionItemChanged);
-        connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
-        connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
+        _vehicleConnections << connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailableFromVehicle);
+        _vehicleConnections << connect(missionManager, &MissionManager::inProgressChanged,         this, &MissionController::_inProgressChanged);
+        _vehicleConnections << connect(missionManager, &MissionManager::currentItemChanged,        this, &MissionController::_currentMissionItemChanged);
+        _vehicleConnections << connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
+        _vehicleConnections << connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
 
         if (_activeVehicle->getParameterLoader()->parametersAreReady() && !syncInProgress()) {
             // We are switching between two previously existing vehicles. We have to manually ask for the items from the Vehicle.

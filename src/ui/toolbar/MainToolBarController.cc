@@ -45,19 +45,17 @@ MainToolBarController::~MainToolBarController()
 
 void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
 {
-    // Disconnect the previous one (if any)
-    if (_vehicle) {
-        disconnect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
-        _mav = NULL;
-        _vehicle = NULL;
+    for(auto con : _vehicleConnections) {
+        disconnect(con);
     }
+    _mav = nullptr;
+    _vehicle = nullptr;
 
     // Connect new system
-    if (vehicle)
-    {
+    if (vehicle) {
         _vehicle = vehicle;
         _mav = vehicle->uas();
-        connect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
+        _vehicleConnections << connect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
     }
 }
 
