@@ -7,6 +7,11 @@ MANIFEST_FILE=android/AndroidManifest.xml
 VERSIONCODE=`git rev-list origin/master --first-parent --count`
 VERSIONNAME=`git describe --always --tags | sed -e 's/^v//'`
 
+# increment the versionCode past master for tagged releases
+if [ "${TRAVIS_TAG}" ]; then
+	let VERSIONCODE=${VERSIONCODE}+1
+fi
+
 if [ -n "$VERSIONCODE" ]; then
 	sed -i -e "s/android:versionCode=\"[0-9][0-9]*\"/android:versionCode=\"$VERSIONCODE\"/" $MANIFEST_FILE
 	echo "Android version: ${VERSIONCODE}"
