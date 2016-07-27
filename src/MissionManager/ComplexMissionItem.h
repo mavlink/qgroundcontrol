@@ -37,6 +37,7 @@ public:
     Q_PROPERTY(int                  lastSequenceNumber      READ lastSequenceNumber         NOTIFY lastSequenceNumberChanged)
     Q_PROPERTY(QVariantList         gridPoints              READ gridPoints                 NOTIFY gridPointsChanged)
 
+    Q_PROPERTY(double               surveyDistance          READ surveyDistance             NOTIFY surveyDistanceChanged)
     Q_PROPERTY(int                  cameraShots             READ cameraShots                NOTIFY cameraShotsChanged)
     Q_PROPERTY(double               coveredArea             READ coveredArea                NOTIFY coveredAreaChanged)
 
@@ -52,9 +53,11 @@ public:
     Fact* gridSpacing(void)     { return &_gridSpacingFact; }
     Fact* cameraTriggerDistance(void) { return &_cameraTriggerDistanceFact; }
 
+    double  surveyDistance      (void) const { return _surveyDistance; }
     int     cameraShots         (void) const { return _cameraShots; }
     double  coveredArea         (void) const { return _coveredArea; }
 
+    void setSurveyDistance      (double surveyDistance);
     void setCameraShots         (int cameraShots);
     void setCoveredArea         (double coveredArea);
 
@@ -70,6 +73,11 @@ public:
     ///     @param[out] errorString Error if load fails
     /// @return true: load success, false: load failed, errorString set
     bool load(const QJsonObject& complexObject, QString& errorString);
+
+    /// Get the point of complex mission item furthest away from a coordinate
+    ///     @param other QGeoCoordinate to which distance is calculated
+    /// @return the greatest distance from any point of the complex item to some coordinate
+    double greatestDistanceTo(const QGeoCoordinate &other) const;
 
     // Overrides from VisualMissionItem
 
@@ -102,6 +110,7 @@ signals:
     void cameraTriggerChanged           (bool cameraTrigger);
     void gridAltitudeRelativeChanged    (bool gridAltitudeRelative);
 
+    void surveyDistanceChanged          (double surveyDistance);
     void cameraShotsChanged             (int cameraShots);
     void coveredAreaChanged             (double coveredArea);
 
@@ -130,6 +139,7 @@ private:
     bool                _cameraTrigger;
     bool                _gridAltitudeRelative;
 
+    double              _surveyDistance;
     int                 _cameraShots;
     double              _coveredArea;
 
