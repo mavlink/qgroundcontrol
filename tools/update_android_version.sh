@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
-# this requires `master` in the git tree
-#  travis-ci branch builds are unable to set the version properly
+# this requires `origin/master` in the git tree
 
 MANIFEST_FILE=android/AndroidManifest.xml
 
-VERSIONCODE=`git rev-list master --first-parent --count`
+VERSIONCODE=`git rev-list origin/master --first-parent --count`
 VERSIONNAME=`git describe --always --tags | sed -e 's/^v//'`
 
 if [ -n "$VERSIONCODE" ]; then
