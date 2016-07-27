@@ -380,6 +380,7 @@ QGCView {
 
                         Column {
                             spacing: ScreenTools.defaultFontPixelHeight / 3
+                            visible: !_activeVehicle.sub
 
                             ExclusiveGroup { id: throttleModeExclusiveGroup }
 
