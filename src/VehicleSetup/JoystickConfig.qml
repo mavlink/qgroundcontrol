@@ -400,6 +400,18 @@ QGCView {
                             }
                         }
 
+                        Column {
+                            spacing: ScreenTools.defaultFontPixelHeight / 3
+
+                            QGCCheckBox {
+                                id:         exponential
+                                checked:    _activeJoystick.exponential
+                                text:       qsTr("Use exponential curve on roll, pitch, yaw")
+
+                                onClicked:  _activeJoystick.exponential = checked
+                            }
+                        }
+
                         QGCCheckBox {
                             id:         advancedSettings
                             checked:    _activeVehicle.joystickMode != 0

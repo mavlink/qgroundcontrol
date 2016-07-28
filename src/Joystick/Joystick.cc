@@ -22,6 +22,7 @@ const char* Joystick::_settingsGroup =              "Joysticks";
 const char* Joystick::_calibratedSettingsKey =      "Calibrated";
 const char* Joystick::_buttonActionSettingsKey =    "ButtonActionName%1";
 const char* Joystick::_throttleModeSettingsKey =    "ThrottleMode";
+const char* Joystick::_exponentialSettingsKey =     "Exponential";
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -44,6 +45,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _rgButtonValues(NULL)
     , _lastButtonBits(0)
     , _throttleMode(ThrottleModeCenterZero)
+    , _exponential(false)
     , _activeVehicle(NULL)
     , _pollingStartedForCalibration(false)
     , _multiVehicleManager(multiVehicleManager)
@@ -83,11 +85,12 @@ void Joystick::_loadSettings(void)
     qCDebug(JoystickLog) << "_loadSettings " << _name;
 
     _calibrated = settings.value(_calibratedSettingsKey, false).toBool();
+    _exponential = settings.value(_exponentialSettingsKey, false).toBool();
 
     _throttleMode = (ThrottleMode_t)settings.value(_throttleModeSettingsKey, ThrottleModeCenterZero).toInt(&convertOk);
     badSettings |= !convertOk;
 
-    qCDebug(JoystickLog) << "_loadSettings calibrated:throttlemode:badsettings" << _calibrated << _throttleMode << badSettings;
+    qCDebug(JoystickLog) << "_loadSettings calibrated:throttlemode:exponential:badsettings" << _calibrated << _throttleMode << _exponential << badSettings;
 
     QString minTpl  ("Axis%1Min");
     QString maxTpl  ("Axis%1Max");
@@ -141,6 +144,7 @@ void Joystick::_saveSettings(void)
     settings.beginGroup(_name);
 
     settings.setValue(_calibratedSettingsKey, _calibrated);
+    settings.setValue(_exponentialSettingsKey, _exponential);
     settings.setValue(_throttleModeSettingsKey, _throttleMode);
 
     qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode" << _calibrated << _throttleMode;
@@ -283,15 +287,17 @@ void Joystick::run(void)
             yaw =       std::max(-1.0f, std::min(tanf(asinf(yaw_limited)), 1.0f));
             throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle_limited)), 1.0f));
             
-            // Exponential (0% to -50% range like most RC radios)
-            // 0 for no exponential
-            // -0.5 for strong exponential
-            float expo = -0.35f;
+            if ( _exponential ) {
+                // Exponential (0% to -50% range like most RC radios)
+                // 0 for no exponential
+                // -0.5 for strong exponential
+                float expo = -0.35f;
 
-            // Calculate new RPY with exponential applied
-            roll =      -expo*powf(roll,3) + (1+expo)*roll;
-            pitch =     -expo*powf(pitch,3) + (1+expo)*pitch;
-            yaw =       -expo*powf(yaw,3) + (1+expo)*yaw;
+                // Calculate new RPY with exponential applied
+                roll =      -expo*powf(roll,3) + (1+expo)*roll;
+                pitch =     -expo*powf(pitch,3) + (1+expo)*pitch;
+                yaw =       -expo*powf(yaw,3) + (1+expo)*yaw;
+            }
 
             // Adjust throttle to 0:1 range
             if (_throttleMode == ThrottleModeCenterZero) {
@@ -503,6 +509,19 @@ void Joystick::setThrottleMode(int mode)
     _throttleMode = (ThrottleMode_t)mode;
     _saveSettings();
     emit throttleModeChanged(_throttleMode);
+}
+
+bool Joystick::exponential(void)
+{
+    return _exponential;
+}
+
+void Joystick::setExponential(bool expo)
+{
+    _exponential = expo;
+
+    _saveSettings();
+    emit exponentialChanged(_exponential);
 }
 
 void Joystick::startCalibrationMode(CalibrationMode_t mode)
