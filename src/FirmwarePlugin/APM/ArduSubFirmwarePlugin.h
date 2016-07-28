@@ -67,6 +67,7 @@ public:
     ArduSubFirmwarePlugin(void);
 
     // Overrides from FirmwarePlugin
+    int manualControlReservedButtonCount(void);
 
 };
 
