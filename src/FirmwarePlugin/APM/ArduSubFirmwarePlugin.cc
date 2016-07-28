@@ -47,3 +47,8 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void)
     supportedFlightModes << APMSubMode(APMSubMode::ALT_HOLD  ,true);
     setSupportedModes(supportedFlightModes);
 }
+
+int ArduSubFirmwarePlugin::manualControlReservedButtonCount(void)
+{
+    return 0;
+}
