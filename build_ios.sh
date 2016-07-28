@@ -12,5 +12,5 @@ TRAVIS_BUILD_DIR=/Users/gus/github/work/qgroundcontrol
 #-- Build it
 mkdir -p ${SHADOW_BUILD_DIR} &&
 cd ${SHADOW_BUILD_DIR} &&
-${QMAKE} -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release CONFIG+=ForAppStore &&
-xcodebuild -configuration Release -xcconfig ${TRAVIS_BUILD_DIR}/ios/qgroundcontrol_appstore.xcconfig
+${QMAKE} -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release CONFIG+=ForAppStore # &&
+# xcodebuild -configuration Release -xcconfig ${TRAVIS_BUILD_DIR}/ios/qgroundcontrol_appstore.xcconfig
