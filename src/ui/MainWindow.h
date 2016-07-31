@@ -89,10 +89,6 @@ public:
     QObject* rootQmlObject(void);
 
 public slots:
-#ifndef __mobile__
-    void showSettings();
-#endif
-
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { _lowPowerMode = enabled; }
 

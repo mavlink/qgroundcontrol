@@ -30,13 +30,13 @@ Item {
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:               _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
-    property bool   _lightWidgetBorders:        _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+    property bool   _lightWidgetBorders:        _isSatellite
     property bool   _useAlternateInstruments:   QGroundControl.virtualTabletJoystick || ScreenTools.isTinyScreen
 
+    readonly property real _margins:                ScreenTools.defaultFontPixelHeight / 2
+    readonly property real _toolButtonTopMargin:    parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
 
-    readonly property real _margins: ScreenTools.defaultFontPixelHeight / 2
-
-    QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
+    QGCMapPalette { id: mapPal; lightColors: isBackgroundDark }
     QGCPalette { id: qgcPal }
 
     function getGadgetWidth() {
@@ -139,14 +139,25 @@ Item {
         maxHeight:                  virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.y - y : parent.height - anchors.margins - y
     }
 
+    QGCLabel {
+        id:         flyLabel
+        text:       qsTr("Fly")
+        color:      mapPal.text
+        visible:    !ScreenTools.isShortScreen
+        anchors.topMargin:          _toolButtonTopMargin
+        anchors.horizontalCenter:   toolColumn.horizontalCenter
+        anchors.top:                parent.top
+    }
+
     //-- Vertical Tool Buttons
     Column {
-        id:                         toolColumn
-        visible:                    _mainIsMap
-        anchors.margins:            ScreenTools.defaultFontPixelHeight
-        anchors.left:               parent.left
-        anchors.top:                parent.top
-        spacing:                    ScreenTools.defaultFontPixelHeight
+        id:                 toolColumn
+        anchors.topMargin:  ScreenTools.isShortScreen ? _toolButtonTopMargin : ScreenTools.defaultFontPixelHeight / 2
+        anchors.leftMargin: ScreenTools.defaultFontPixelHeight
+        anchors.left:       parent.left
+        anchors.top:        ScreenTools.isShortScreen ? parent.top : flyLabel.bottom
+        spacing:            ScreenTools.defaultFontPixelHeight
+        visible:            _mainIsMap
 
         //-- Map Center Control
         DropButton {

@@ -29,7 +29,7 @@ Item {
 
     readonly property string _planViewSource:       "MissionEditor.qml"
     readonly property string _setupViewSource:      "SetupView.qml"
-    readonly property string _preferencesSource:    "MainWindowLeftPanel.qml"
+    readonly property string _settingsViewSource:   "AppSettings.qml"
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -56,7 +56,7 @@ Item {
             currentPopUp.close()
         }
         ScreenTools.availableHeight = parent.height - toolBar.height
-        preferencesPanel.visible    = false
+        settingsViewLoader.visible  = false
         flightView.visible          = true
         setupViewLoader.visible     = false
         planViewLoader.visible      = false
@@ -71,7 +71,7 @@ Item {
             planViewLoader.source   = _planViewSource
         }
         ScreenTools.availableHeight = parent.height - toolBar.height
-        preferencesPanel.visible    = false
+        settingsViewLoader.visible  = false
         flightView.visible          = false
         setupViewLoader.visible     = false
         planViewLoader.visible      = true
@@ -87,27 +87,27 @@ Item {
         if (setupViewLoader.source  != _setupViewSource) {
             setupViewLoader.source  = _setupViewSource
         }
-        preferencesPanel.visible    = false
+        settingsViewLoader.visible  = false
         flightView.visible          = false
         setupViewLoader.visible     = true
         planViewLoader.visible      = false
         toolBar.checkSetupButton()
     }
 
-    function showPreferences() {
+    function showSettingsView() {
         if(currentPopUp) {
             currentPopUp.close()
         }
         //-- In preferences view, the full height is available. Set to 0 so it is ignored.
         ScreenTools.availableHeight = 0
-        if (preferencesPanel.source != _preferencesSource) {
-            preferencesPanel.source  = _preferencesSource
+        if (settingsViewLoader.source != _settingsViewSource) {
+            settingsViewLoader.source  = _settingsViewSource
         }
         flightView.visible          = false
         setupViewLoader.visible     = false
         planViewLoader.visible      = false
-        preferencesPanel.visible    = true
-        toolBar.checkPreferencesButton()
+        settingsViewLoader.visible  = true
+        toolBar.checkSettingsButton()
     }
 
     // The following are use for unit testing only
@@ -260,20 +260,6 @@ Item {
         currentPopUp = indicatorDropdown
     }
 
-    //-- Left Settings Menu
-    Loader {
-        id:                 preferencesPanel
-        anchors.fill:       parent
-        visible:            false
-        z:                  QGroundControl.zOrderTopMost + 100
-        active:             visible
-        onVisibleChanged: {
-            if(!visible) {
-                source = ""
-            }
-        }
-    }
-
     //-- Main UI
 
     MainToolBar {
@@ -283,13 +269,12 @@ Item {
         anchors.right:      parent.right
         anchors.top:        parent.top
         mainWindow:         mainWindow
-        opaqueBackground:   preferencesPanel.visible
         isBackgroundDark:   flightView.isBackgroundDark
         z:                  QGroundControl.zOrderTopMost
         onShowSetupView:    mainWindow.showSetupView()
         onShowPlanView:     mainWindow.showPlanView()
         onShowFlyView:      mainWindow.showFlyView()
-        onShowPreferences:  mainWindow.showPreferences()
+        onShowSettingsView: mainWindow.showSettingsView()
         Component.onCompleted: {
             ScreenTools.availableHeight = parent.height - toolBar.height
         }
@@ -315,6 +300,22 @@ Item {
         anchors.bottom:     parent.bottom
         visible:            false
     }
+
+    Loader {
+        id:                 settingsViewLoader
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        toolBar.bottom
+        anchors.bottom:     parent.bottom
+        visible:            false
+
+        onVisibleChanged: {
+            if (!visible) {
+                // Free up the memory for this when not shown. No need to persist.
+                source = ""
+            }
+        }
+     }
 
     //-------------------------------------------------------------------------
     //-- Dismiss Pop Up Messages

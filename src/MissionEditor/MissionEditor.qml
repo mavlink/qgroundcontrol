@@ -33,16 +33,18 @@ QGCView {
     // zOrder comes from the Loader in MainWindow.qml
     z: QGroundControl.zOrderTopMost
 
-    readonly property int       _decimalPlaces:     8
-    readonly property real      _horizontalMargin:  ScreenTools.defaultFontPixelWidth  / 2
-    readonly property real      _margin:            ScreenTools.defaultFontPixelHeight * 0.5
-    readonly property var       _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    readonly property real      _rightPanelWidth:   Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
-    readonly property real      _rightPanelOpacity: 0.8
-    readonly property int       _toolButtonCount:   6
-    readonly property string    _autoSyncKey:       "AutoSync"
+    readonly property int       _decimalPlaces:         8
+    readonly property real      _horizontalMargin:      ScreenTools.defaultFontPixelWidth  / 2
+    readonly property real      _margin:                ScreenTools.defaultFontPixelHeight * 0.5
+    readonly property var       _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    readonly property real      _rightPanelWidth:       Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
+    readonly property real      _rightPanelOpacity:     0.8
+    readonly property int       _toolButtonCount:       6
+    readonly property string    _autoSyncKey:           "AutoSync"
+    readonly property real      _toolButtonTopMargin:   parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
     readonly property int       _addMissionItemsButtonAutoOffTimeout:   10000
     readonly property var       _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
+
 
     property bool   _syncNeeded:            controller.visualItems.dirty // Unsaved changes, visible to parent container
     property var    _visualItems:           controller.visualItems
@@ -271,6 +273,8 @@ QGCView {
                         easing.type:    Easing.InOutQuad
                     }
                 }
+
+                QGCMapPalette { id: mapPal; lightColors: editorMap.isSatelliteMap }
 
                 MouseArea {
                     //-- It's a whole lot faster to just fill parent and deal with top offset below
@@ -524,13 +528,23 @@ QGCView {
                     }
                 }
 
+                QGCLabel {
+                    id:         planLabel
+                    text:       qsTr("Plan")
+                    color:      mapPal.text
+                    visible:    !ScreenTools.isShortScreen
+                    anchors.topMargin:          _toolButtonTopMargin
+                    anchors.horizontalCenter:   toolColumn.horizontalCenter
+                    anchors.top:                parent.top
+                }
+
                 //-- Vertical Tool Buttons
                 Column {
                     id:                 toolColumn
-                    anchors.topMargin:  parent.height - ScreenTools.availableHeight + ScreenTools.defaultFontPixelHeight
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.topMargin:  ScreenTools.isShortScreen ? _toolButtonTopMargin : ScreenTools.defaultFontPixelHeight / 2
+                    anchors.leftMargin: ScreenTools.defaultFontPixelHeight
                     anchors.left:       parent.left
-                    anchors.top:        parent.top
+                    anchors.top:        ScreenTools.isShortScreen ? parent.top : planLabel.bottom
                     spacing:            ScreenTools.defaultFontPixelHeight
                     z:                  QGroundControl.zOrderWidgets
 
@@ -749,7 +763,7 @@ QGCView {
                 width:      sendSaveGrid.width
                 wrapMode:   Text.WordWrap
                 text:       _syncNeeded && !controller.autoSync ?
-                                qsTr("You have unsaved changed to you mission. You should send to your vehicle, or save to a file:") :
+                                qsTr("You have unsaved changes to your mission. You should send to your vehicle, or save to a file:") :
                                 qsTr("Sync:")
             }
             GridLayout {
