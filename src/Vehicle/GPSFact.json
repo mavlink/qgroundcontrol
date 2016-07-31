@@ -19,7 +19,7 @@
             "shortDescription": "Course Over Ground",
             "type":             "double",
             "decimalPlaces":    1,
-            "units":            "degrees"
+            "units":            "deg"
         },
         {
             "name":             "lock",
