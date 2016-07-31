@@ -23,7 +23,7 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 
 Rectangle {
-    id: setupView
+    id:     setupView
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
 
@@ -33,8 +33,9 @@ Rectangle {
 
     readonly property real      _defaultTextHeight: ScreenTools.defaultFontPixelHeight
     readonly property real      _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
-    readonly property real      _margin:            Math.round(_defaultTextHeight / 2)
-    readonly property real      _buttonWidth:       Math.round(_defaultTextWidth * 18)
+    readonly property real      _horizontalMargin:  _defaultTextWidth / 2
+    readonly property real      _verticalMargin:    _defaultTextHeight / 2
+    readonly property real      _buttonWidth:       _defaultTextWidth * 18
     readonly property string    _armedVehicleText:  qsTr("This operation cannot be performed while vehicle is armed.")
 
     property string _messagePanelText:              "missing message panel text"
@@ -211,6 +212,8 @@ Rectangle {
         anchors.topMargin:  _defaultTextHeight / 2
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
+        anchors.leftMargin: _horizontalMargin
+        anchors.left:       parent.left
         contentHeight:      buttonColumn.height
         flickableDirection: Flickable.VerticalFlick
         clip:               true
@@ -243,6 +246,15 @@ Rectangle {
                 for (var j = 0; j < children.length; j++) {
                     children[j].width = buttonColumn._maxButtonWidth
                 }
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                text:                   qsTr("Vehicle Setup")
+                wrapMode:               Text.WordWrap
+                horizontalAlignment:    Text.AlignHCenter
+                visible:                !ScreenTools.isShortScreen
             }
 
             SubMenuButton {
@@ -315,13 +327,25 @@ Rectangle {
         }
     }
 
+    Rectangle {
+        id:                     divider
+        anchors.topMargin:      _verticalMargin
+        anchors.bottomMargin:   _verticalMargin
+        anchors.leftMargin:     _horizontalMargin
+        anchors.left:           buttonScroll.right
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        width:                  1
+        color:                  qgcPal.windowShade
+    }
+
     Loader {
         id:                     panelLoader
-        anchors.topMargin:      _margin
-        anchors.bottomMargin:   _margin
-        anchors.leftMargin:     _defaultTextWidth
-        anchors.rightMargin:    _defaultTextWidth
-        anchors.left:           buttonScroll.right
+        anchors.topMargin:      _verticalMargin
+        anchors.bottomMargin:   _verticalMargin
+        anchors.leftMargin:     _horizontalMargin
+        anchors.rightMargin:    _horizontalMargin
+        anchors.left:           divider.right
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
