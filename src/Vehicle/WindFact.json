@@ -7,7 +7,7 @@
             "shortDescription": "Wind Direction",
             "type":             "double",
             "decimalPlaces":    1,
-            "units":            "degrees"
+            "units":            "deg"
         },
         {
             "name":             "speed",
