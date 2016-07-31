@@ -135,7 +135,7 @@
             "category": "Basic",
             "param1": {
                 "label": "Pitch:",
-                "units": "degrees",
+                "units": "deg",
                 "default": 10,
                 "decimalPlaces": 0
             },

@@ -45,14 +45,14 @@ Rectangle {
     readonly property var   colorBlue:      "#636efe"
     readonly property var   colorWhite:     "#ffffff"
 
-    signal showPreferences()
+    signal showSettingsView()
     signal showSetupView()
     signal showPlanView()
     signal showFlyView()
 
     MainToolBarController { id: _controller }
 
-    function checkPreferencesButton() {
+    function checkSettingsButton() {
         preferencesButton.checked = true
     }
 
@@ -332,7 +332,7 @@ Rectangle {
             exclusiveGroup:     mainActionGroup
             source:             "/res/QGCLogoWhite"
             logo:               true
-            onClicked:          toolBar.showPreferences()
+            onClicked:          toolBar.showSettingsView()
         }
 
         QGCToolBarButton {

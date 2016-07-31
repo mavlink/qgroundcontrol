@@ -138,7 +138,7 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Pitch:",
-                "units":            "degrees",
+                "units":            "deg",
                 "default":          15,
                 "decimalPlaces":    2
             },
@@ -250,7 +250,7 @@
             "param4": {
                 "label":            "Heading goal:",
                 "default":          0,
-                "units":            "degrees",
+                "units":            "deg",
                 "decimalPlaces":    2
             }
         },
@@ -280,7 +280,7 @@
             "category":             "VTOL",
             "param4": {
                 "label":            "Heading:",
-                "units":            "degrees",
+                "units":            "deg",
                 "default":          0.0,
                 "decimalPlaces":    2
             }
@@ -295,7 +295,7 @@
             "category":             "VTOL",
             "param4": {
                 "label":            "Heading:",
-                "units":            "degrees",
+                "units":            "deg",
                 "default":          0.0,
                 "decimalPlaces":    2
             },
@@ -371,7 +371,7 @@
             "category":     "Conditionals",
             "param1": {
                 "label":            "Heading:",
-                "units":            "degrees",
+                "units":            "deg",
                 "default":          0,
                 "decimalPlaces":    1
             },

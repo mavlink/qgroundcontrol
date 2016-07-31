@@ -7,21 +7,21 @@
             "shortDescription": "Roll",
             "type":             "double",
             "decimalPlaces":    1,
-            "units":            "degrees"
+            "units":            "deg"
         },
         {
             "name":             "pitch",
             "shortDescription": "Pitch",
             "type":             "double",
             "decimalPlaces":    1,
-            "units":            "degrees"
+            "units":            "deg"
         },
         {
             "name":             "heading",
             "shortDescription": "Heading",
             "type":             "double",
             "decimalPlaces":    0,
-            "units":            "degrees"
+            "units":            "deg"
         },
         {
             "name":             "groundSpeed",
