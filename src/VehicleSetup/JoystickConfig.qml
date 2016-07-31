@@ -18,6 +18,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 
 /// Joystick Config
 QGCView {
@@ -380,6 +381,7 @@ QGCView {
 
                         Column {
                             spacing: ScreenTools.defaultFontPixelHeight / 3
+                            visible: !_activeVehicle.sub
 
                             ExclusiveGroup { id: throttleModeExclusiveGroup }
 
@@ -447,6 +449,9 @@ QGCView {
                             if (buttonActionRepeater.itemAt(index)) {
                                 buttonActionRepeater.itemAt(index).pressed = pressed
                             }
+                            if (subButtonActionRepeater.itemAt(index)) {
+                                subButtonActionRepeater.itemAt(index).pressed = pressed
+                            }
                         }
                     }
 
@@ -469,7 +474,7 @@ QGCView {
 
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
-                                visible: _activeVehicle.manualControlReservedButtonCount == -1 ? false : modelData >= _activeVehicle.manualControlReservedButtonCount
+                                visible: (_activeVehicle.manualControlReservedButtonCount == -1 ? false : modelData >= _activeVehicle.manualControlReservedButtonCount) && !_activeVehicle.sub
 
                                 property bool pressed
 
@@ -507,6 +512,71 @@ QGCView {
                                     Component.onCompleted:  currentIndex = find(_activeJoystick.buttonActions[modelData])
                                 }
                             }
+                        } // Repeater
+
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+                            visible: _activeVehicle.sub
+
+                            QGCLabel {
+                                horizontalAlignment:    Text.AlignHCenter
+                                width:                  ScreenTools.defaultFontPixelHeight * 1.5
+                                text:                   qsTr("#")
+                            }
+
+                            QGCLabel {
+                                width:                  ScreenTools.defaultFontPixelWidth * 15
+                                text:                   qsTr("Function: ")
+                            }
+
+                            QGCLabel {
+                                width:                  ScreenTools.defaultFontPixelWidth * 15
+                                text:                   qsTr("Shift Function: ")
+                            }
+                        } // Row
+
+                        Repeater {
+                            id:     subButtonActionRepeater
+                            model:  _activeJoystick.totalButtonCount
+
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                visible: _activeVehicle.sub
+
+                                property bool pressed
+
+                                Rectangle {
+                                    anchors.verticalCenter:     parent.verticalCenter
+                                    width:                      ScreenTools.defaultFontPixelHeight * 1.5
+                                    height:                     width
+                                    border.width:               1
+                                    border.color:               qgcPal.text
+                                    color:                      pressed ? qgcPal.buttonHighlight : qgcPal.button
+
+
+                                    QGCLabel {
+                                        anchors.fill:           parent
+                                        color:                  pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                                        horizontalAlignment:    Text.AlignHCenter
+                                        verticalAlignment:      Text.AlignVCenter
+                                        text:                   modelData
+                                    }
+                                }
+
+                                FactComboBox {
+                                    id:         mainSubButtonActionCombo
+                                    width:      ScreenTools.defaultFontPixelWidth * 15
+                                    fact:       controller.parameterExists(-1, "BTN"+index+"_FUNCTION") ? controller.getParameterFact(-1, "BTN" + index + "_FUNCTION") : null;
+                                    indexModel: false
+                                }
+
+                                FactComboBox {
+                                    id:         shiftSubButtonActionCombo
+                                    width:      ScreenTools.defaultFontPixelWidth * 15
+                                    fact:       controller.parameterExists(-1, "BTN"+index+"_SFUNCTION") ? controller.getParameterFact(-1, "BTN" + index + "_SFUNCTION") : null;
+                                    indexModel: false
+                                }
+                            } // Row
                         } // Repeater
                     } // Column
                 } // Column - right setting column

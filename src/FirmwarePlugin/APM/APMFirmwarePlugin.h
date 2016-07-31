@@ -79,7 +79,7 @@ public:
     bool        setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
     bool        isGuidedMode(const Vehicle* vehicle) const final;
     void        pauseVehicle(Vehicle* vehicle);
-    int         manualControlReservedButtonCount(void) final;
+    int         manualControlReservedButtonCount(void);
     bool        adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
     void        adjustOutgoingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
     void        initializeVehicle(Vehicle* vehicle) final;
