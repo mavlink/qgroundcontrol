@@ -284,7 +284,7 @@ void Joystick::run(void)
             throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle_limited)), 1.0f));
 
             // Adjust throttle to 0:1 range
-            if (_throttleMode == ThrottleModeCenterZero) {
+            if (_throttleMode == ThrottleModeCenterZero && !_activeVehicle->sub()) {
                 throttle = std::max(0.0f, throttle);
             } else {
                 throttle = (throttle + 1.0f) / 2.0f;
