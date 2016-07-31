@@ -37,7 +37,7 @@
         <file alias="MainWindowHybrid.qml">src/ui/MainWindowHybrid.qml</file>
         <file alias="MainWindowInner.qml">src/ui/MainWindowInner.qml</file>
         <file alias="MainWindowNative.qml">src/ui/MainWindowNative.qml</file>
-        <file alias="MainWindowLeftPanel.qml">src/ui/MainWindowLeftPanel.qml</file>
+        <file alias="AppSettings.qml">src/ui/AppSettings.qml</file>
         <file alias="MissionEditor.qml">src/MissionEditor/MissionEditor.qml</file>
         <file alias="MotorComponent.qml">src/AutoPilotPlugins/Common/MotorComponent.qml</file>
         <file alias="PowerComponent.qml">src/AutoPilotPlugins/PX4/PowerComponent.qml</file>
