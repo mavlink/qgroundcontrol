@@ -238,7 +238,6 @@ FORMS += \
     src/ui/QGCTabbedInfoView.ui \
     src/ui/QGCUASFileView.ui \
     src/ui/QGCUASFileViewMulti.ui \
-    src/ui/SettingsDialog.ui \
     src/ui/uas/UASQuickView.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
     src/ui/UASInfo.ui \
@@ -363,7 +362,6 @@ HEADERS += \
     src/ui/MultiVehicleDockWidget.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/ui/QGCMapRCToParamDialog.h \
-    src/ui/SettingsDialog.h \
     src/ui/uas/UASMessageView.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/QGCDataPlot2D.h \
@@ -490,7 +488,6 @@ SOURCES += \
     src/ui/uas/UASMessageView.cc \
     src/uas/FileManager.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
-    src/ui/SettingsDialog.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/MAVLinkSettingsWidget.cc \
     src/ui/QGCMapRCToParamDialog.cpp \

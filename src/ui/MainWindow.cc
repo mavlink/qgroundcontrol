@@ -25,6 +25,7 @@
 #include <QDesktopServices>
 #include <QDockWidget>
 #include <QMenuBar>
+#include <QDialog>
 
 #include "QGC.h"
 #include "MAVLinkProtocol.h"
@@ -42,7 +43,6 @@
 #include "QGCImageProvider.h"
 
 #ifndef __mobile__
-#include "SettingsDialog.h"
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
@@ -489,9 +489,6 @@ void MainWindow::connectCommonActions()
     connect(qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mutedChanged, _ui.actionMuteAudioOutput, &QAction::setChecked);
     connect(_ui.actionMuteAudioOutput, &QAction::triggered, qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mute);
 
-    // Application Settings
-    connect(_ui.actionSettings, &QAction::triggered, this, &MainWindow::showSettings);
-
     // Connect internal actions
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
 }
@@ -502,14 +499,6 @@ void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
         qgcApp()->showMessage(QString("Could not open information in browser: %1").arg(errorMessage));
     }
 }
-
-#ifndef __mobile__
-void MainWindow::showSettings()
-{
-    SettingsDialog settings(this);
-    settings.exec();
-}
-#endif
 
 void MainWindow::_vehicleAdded(Vehicle* vehicle)
 {
