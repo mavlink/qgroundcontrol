@@ -436,5 +436,7 @@ bool FirmwareImage::_binLoad(const QString& imageFilename)
     
     binFile.close();
     
+    _binFilename = imageFilename;
+    
     return true;
 }
