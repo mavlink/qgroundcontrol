@@ -128,6 +128,11 @@ public:
     /// @return -1: reserver all buttons, >0 number of buttons to reserve
     virtual int manualControlReservedButtonCount(void);
 
+    /// Returns true if the vehicle and firmware supports the use of a throttle joystick that
+    /// is zero when centered. Typically not supported on vehicles that have bidirectional
+    /// throttle.
+    virtual bool supportsThrottleModeCenterZero(void);
+
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.
