@@ -89,6 +89,11 @@ bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
     return true;
 }
 
+bool FirmwarePlugin::supportsManualControl(void)
+{
+    return false;
+}
+
 bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
