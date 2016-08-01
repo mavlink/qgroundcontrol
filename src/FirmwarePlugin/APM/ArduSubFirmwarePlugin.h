@@ -69,6 +69,8 @@ public:
     // Overrides from FirmwarePlugin
     int manualControlReservedButtonCount(void);
 
+    bool supportsThrottleModeCenterZero(void);
+
 };
 
 #endif

@@ -83,6 +83,12 @@ int FirmwarePlugin::manualControlReservedButtonCount(void)
     return -1;
 }
 
+bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
+{
+    // By default, this is supported
+    return true;
+}
+
 bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);

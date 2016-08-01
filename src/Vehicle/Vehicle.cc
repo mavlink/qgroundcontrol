@@ -1528,6 +1528,11 @@ bool Vehicle::supportsManualControl(void) const
     return false;
 }
 
+bool Vehicle::supportsThrottleModeCenterZero(void) const
+{
+    return _firmwarePlugin->supportsThrottleModeCenterZero();
+}
+
 void Vehicle::_setCoordinateValid(bool coordinateValid)
 {
     if (coordinateValid != _coordinateValid) {

@@ -52,3 +52,8 @@ int ArduSubFirmwarePlugin::manualControlReservedButtonCount(void)
 {
     return 0;
 }
+
+bool ArduSubFirmwarePlugin::supportsThrottleModeCenterZero(void)
+{
+    return false;
+}
