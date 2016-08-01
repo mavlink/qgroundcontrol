@@ -137,6 +137,10 @@ public:
     /// By default, this returns false unless overridden in the firmware plugin.
     virtual bool supportsManualControl(void);
 
+    /// Returns true if the firmware supports the use of the RC radio and requires the RC radio
+    /// setup page. Returns true by default.
+    virtual bool supportsRadio(void);
+
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.

@@ -66,7 +66,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
 
-            if ( !_vehicle->sub() ) {
+            if ( _vehicle->supportsRadio() ) {
                 _radioComponent = new APMRadioComponent(_vehicle, this);
                 _radioComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));

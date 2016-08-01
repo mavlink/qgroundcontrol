@@ -1525,6 +1525,11 @@ bool Vehicle::supportsThrottleModeCenterZero(void) const
     return _firmwarePlugin->supportsThrottleModeCenterZero();
 }
 
+bool Vehicle::supportsRadio(void) const
+{
+    return _firmwarePlugin->supportsRadio();
+}
+
 void Vehicle::_setCoordinateValid(bool coordinateValid)
 {
     if (coordinateValid != _coordinateValid) {

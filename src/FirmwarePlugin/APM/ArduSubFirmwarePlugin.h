@@ -72,6 +72,8 @@ public:
     bool supportsThrottleModeCenterZero(void);
 
     bool supportsManualControl(void);
+
+    bool supportsRadio(void);
 };
 
 #endif

@@ -94,6 +94,11 @@ bool FirmwarePlugin::supportsManualControl(void)
     return false;
 }
 
+bool FirmwarePlugin::supportsRadio(void)
+{
+    return true;
+}
+
 bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
