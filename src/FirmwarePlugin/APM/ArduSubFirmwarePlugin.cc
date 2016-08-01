@@ -62,3 +62,8 @@ bool ArduSubFirmwarePlugin::supportsManualControl(void)
 {
     return true;
 }
+
+bool ArduSubFirmwarePlugin::supportsRadio(void)
+{
+    return false;
+}

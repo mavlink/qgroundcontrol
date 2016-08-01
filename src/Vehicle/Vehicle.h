@@ -475,6 +475,7 @@ public:
 
     bool supportsManualControl(void) const;
     bool supportsThrottleModeCenterZero(void) const;
+    bool supportsRadio(void) const;
 
     void setFlying(bool flying);
     void setGuidedMode(bool guidedMode);
