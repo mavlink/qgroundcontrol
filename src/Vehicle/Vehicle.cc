@@ -1530,6 +1530,11 @@ bool Vehicle::supportsRadio(void) const
     return _firmwarePlugin->supportsRadio();
 }
 
+bool Vehicle::supportsJSButton(void) const
+{
+    return _firmwarePlugin->supportsJSButton();
+}
+
 void Vehicle::_setCoordinateValid(bool coordinateValid)
 {
     if (coordinateValid != _coordinateValid) {

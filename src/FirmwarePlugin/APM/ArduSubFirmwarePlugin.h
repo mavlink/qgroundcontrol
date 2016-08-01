@@ -74,6 +74,8 @@ public:
     bool supportsManualControl(void);
 
     bool supportsRadio(void);
+
+    bool supportsJSButton(void);
 };
 
 #endif

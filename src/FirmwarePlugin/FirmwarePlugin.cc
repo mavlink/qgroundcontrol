@@ -99,6 +99,11 @@ bool FirmwarePlugin::supportsRadio(void)
     return true;
 }
 
+bool FirmwarePlugin::supportsJSButton(void)
+{
+    return false;
+}
+
 bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
