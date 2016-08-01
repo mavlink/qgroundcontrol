@@ -270,7 +270,7 @@ void LinkManager::_deleteLink(LinkInterface* link)
     _mavlinkChannelsUsedBitMask &= ~(1 << link->getMavlinkChannel());
 
     _links.removeOne(link);
-    delete link;
+    link->deleteLater();
 
     // Emit removal of link
     emit linkDeleted(link);

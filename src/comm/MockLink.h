@@ -22,6 +22,11 @@
 Q_DECLARE_LOGGING_CATEGORY(MockLinkLog)
 Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)
 
+class QMutex;
+
+typedef QMap<int, QMap<QString, QVariant> > ParamName2ValueMap;
+typedef QHash<QString, MAV_PARAM_TYPE>       ParamName2MavParamTypeMap;
+
 class MockConfiguration : public LinkConfiguration
 {
     Q_OBJECT
@@ -202,8 +207,11 @@ private:
     bool    _inNSH;
     bool    _mavlinkStarted;
 
-    QMap<int, QMap<QString, QVariant> > _mapParamName2Value;
-    QMap<QString, MAV_PARAM_TYPE>       _mapParamName2MavParamType;
+    ParamName2ValueMap         _mapParamName2Value;
+    ParamName2MavParamTypeMap  _mapParamName2MavParamType;
+    QList<int>  _componentList;
+    QStringList _currentComponentNames;
+
 
     uint8_t     _mavBaseMode;
     uint32_t    _mavCustomMode;

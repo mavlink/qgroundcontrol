@@ -60,7 +60,7 @@ ParameterLoader::ParameterLoader(Vehicle* vehicle)
     connect(this, &ParameterLoader::restartWaitingParamTimer, this, &ParameterLoader::_restartWaitingParamTimer);
 
     _initialRequestTimeoutTimer.setSingleShot(true);
-    _initialRequestTimeoutTimer.setInterval(6000);
+    _initialRequestTimeoutTimer.setInterval(_initialRequestTimeoutInterval);
     connect(&_initialRequestTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::_initialRequestTimeout);
 
     _waitingParamTimeoutTimer.setSingleShot(true);
@@ -80,7 +80,8 @@ ParameterLoader::ParameterLoader(Vehicle* vehicle)
 
 ParameterLoader::~ParameterLoader()
 {
-    delete _parameterMetaData;
+    if (!qgcApp()->runningUnitTests())
+        delete _parameterMetaData;
 }
 
 /// Called whenever a parameter is updated or first seen.
@@ -220,7 +221,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     int totalWaitingParamCount = readWaitingParamCount + waitingWriteParamNameCount;
     if (totalWaitingParamCount) {
         qCDebug(ParameterLoaderLog) << "totalWaitingParamCount:" << totalWaitingParamCount;
-    } else if (_defaultComponentId != MAV_COMP_ID_ALL) {
+    } else if (_defaultComponentId != MAV_COMP_ID_ALL || _defaultComponentIdParam.isEmpty()) {
         // No more parameters to wait for, stop the timeout. Be careful to not stop timer if we don't have the default
         // component yet.
         _waitingParamTimeoutTimer.stop();
@@ -937,8 +938,17 @@ void ParameterLoader::_addMetaDataToDefaultComponent(void)
          metaDataFile = parameterMetaDataFile(_vehicle->firmwareType(), _parameterSetMajorVersion, majorVersion, minorVersion);
          qCDebug(ParameterLoaderLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile << majorVersion << minorVersion;
      }
-
+#ifdef QT_DEBUG
+     static QHash<QString, QObject*> metaDataHash;
+     if (qgcApp()->runningUnitTests()) {
+         if (!metaDataHash.contains(metaDataFile)) {
+            metaDataHash[metaDataFile] = _vehicle->firmwarePlugin()->loadParameterMetaData(metaDataFile);
+         }
+         _parameterMetaData = metaDataHash[metaDataFile];
+     } else
+#endif
      _parameterMetaData = _vehicle->firmwarePlugin()->loadParameterMetaData(metaDataFile);
+
 
     // Loop over all parameters in default component adding meta data
     QVariantMap& factMap = _mapParameterName2Variant[_defaultComponentId];
@@ -962,7 +972,7 @@ void ParameterLoader::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
         }
     }
 
-    if (!failIfNoDefaultComponent && _defaultComponentId == MAV_COMP_ID_ALL) {
+    if (!failIfNoDefaultComponent && _defaultComponentId == MAV_COMP_ID_ALL && !_defaultComponentIdParam.isEmpty()) {
         // We are still waiting for default component to show up
         return;
     }
