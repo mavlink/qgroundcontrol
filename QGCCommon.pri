@@ -71,6 +71,7 @@ equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
     message("iOS build")
     CONFIG += iOSBuild MobileBuild app_bundle
     DEFINES += __ios__
+    DEFINES += QGC_NO_GOOGLE_MAPS
     QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
     QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie
