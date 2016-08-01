@@ -133,6 +133,10 @@ public:
     /// throttle.
     virtual bool supportsThrottleModeCenterZero(void);
 
+    /// Returns true if the firmware supports the use of the MAVlink "MANUAL_CONTROL" message.
+    /// By default, this returns false unless overridden in the firmware plugin.
+    virtual bool supportsManualControl(void);
+
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.
