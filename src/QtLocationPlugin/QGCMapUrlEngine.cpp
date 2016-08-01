@@ -33,20 +33,24 @@
 //-----------------------------------------------------------------------------
 UrlFactory::UrlFactory()
     : _timeout(5 * 1000)
+#ifndef QGC_NO_GOOGLE_MAPS
     , _googleVersionRetrieved(false)
     , _googleReply(NULL)
+#endif
 {
     QStringList langs = QLocale::system().uiLanguages();
     if (langs.length() > 0) {
         _language = langs[0];
     }
 
+#ifndef QGC_NO_GOOGLE_MAPS
     // Google version strings
     _versionGoogleMap            = "m@338000000";
     _versionGoogleSatellite      = "198";
     _versionGoogleLabels         = "h@336";
     _versionGoogleTerrain        = "t@132,r@338000000";
     _secGoogleWord               = "Galileo";
+#endif
     // BingMaps
     _versionBingMaps             = "563";
 }
@@ -54,8 +58,10 @@ UrlFactory::UrlFactory()
 //-----------------------------------------------------------------------------
 UrlFactory::~UrlFactory()
 {
+#ifndef QGC_NO_GOOGLE_MAPS
     if(_googleReply)
         _googleReply->deleteLater();
+#endif
 }
 
 
@@ -123,6 +129,7 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
     request.setRawHeader("Accept", "*/*");
     request.setRawHeader("User-Agent", _userAgent);
     switch (type) {
+#ifndef QGC_NO_GOOGLE_MAPS
         case GoogleMap:
         case GoogleSatellite:
         case GoogleLabels:
@@ -130,6 +137,7 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
         case GoogleHybrid:
             request.setRawHeader("Referrer", "https://www.google.com/maps/preview");
             break;
+#endif
         case BingHybrid:
         case BingMap:
         case BingSatellite:
@@ -152,6 +160,7 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
 }
 
 //-----------------------------------------------------------------------------
+#ifndef QGC_NO_GOOGLE_MAPS
 void
 UrlFactory::_getSecGoogleWords(int x, int y, QString &sec1, QString &sec2)
 {
@@ -163,12 +172,16 @@ UrlFactory::_getSecGoogleWords(int x, int y, QString &sec1, QString &sec2)
         sec1 = "&s=";
     }
 }
+#endif
 
 //-----------------------------------------------------------------------------
 QString
 UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager* networkManager)
 {
     switch (type) {
+#ifdef QGC_NO_GOOGLE_MAPS
+    Q_UNUSED(networkManager);
+#else
     case GoogleMap:
     {
         // http://mt1.google.com/vt/lyrs=m
@@ -215,6 +228,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
         return QString("http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleTerrain).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
     }
     break;
+#endif
     /*
     case OpenStreetMap:
     {
@@ -376,6 +390,7 @@ UrlFactory::_getServerNum(int x, int y, int max)
 }
 
 //-----------------------------------------------------------------------------
+#ifndef QGC_NO_GOOGLE_MAPS
 void
 UrlFactory::_networkReplyError(QNetworkReply::NetworkError error)
 {
@@ -386,15 +401,18 @@ UrlFactory::_networkReplyError(QNetworkReply::NetworkError error)
         _googleReply = NULL;
     }
 }
-
+#endif
 //-----------------------------------------------------------------------------
+#ifndef QGC_NO_GOOGLE_MAPS
 void
 UrlFactory::_replyDestroyed()
 {
     _googleReply = NULL;
 }
+#endif
 
 //-----------------------------------------------------------------------------
+#ifndef QGC_NO_GOOGLE_MAPS
 void
 UrlFactory::_googleVersionCompleted()
 {
@@ -433,8 +451,10 @@ UrlFactory::_googleVersionCompleted()
     _googleReply->deleteLater();
     _googleReply = NULL;
 }
+#endif
 
 //-----------------------------------------------------------------------------
+#ifndef QGC_NO_GOOGLE_MAPS
 void
 UrlFactory::_tryCorrectGoogleVersions(QNetworkAccessManager* networkManager)
 {
@@ -466,6 +486,7 @@ UrlFactory::_tryCorrectGoogleVersions(QNetworkAccessManager* networkManager)
         networkManager->setProxy(proxy);
     }
 }
+#endif
 
 #define AVERAGE_GOOGLE_STREET_MAP   4913
 #define AVERAGE_GOOGLE_TERRAIN_MAP  19391

@@ -16,6 +16,12 @@
 #include <QObject>
 #include <QStringList>
 
+/*
+  TODO: Map settings should come from QGCMapEngineManager. What is currently in
+  FlightMapSettings should be moved there so all map related funtions are in
+  one place.
+ */
+
 class FlightMapSettings : public QGCTool
 {
     Q_OBJECT
@@ -35,6 +41,9 @@ public:
     /// Map type to be used for all maps
     Q_PROPERTY(QString      mapType         READ mapType        WRITE setMapType        NOTIFY mapTypeChanged)
 
+    /// Is Google Maps Enabled
+    Q_PROPERTY(bool         googleMapEnabled    READ googleMapEnabled                   CONSTANT)
+
     Q_INVOKABLE void        saveMapSetting      (const QString &mapName, const QString& key, const QString& value);
     Q_INVOKABLE QString     loadMapSetting      (const QString &mapName, const QString& key, const QString& defaultValue);
     Q_INVOKABLE void        saveBoolMapSetting  (const QString &mapName, const QString& key, bool value);
@@ -52,6 +61,13 @@ public:
     virtual void setToolbox(QGCToolbox *toolbox);
 
     QStringList mapProviders() { return _supportedMapProviders; }
+
+#ifdef QGC_NO_GOOGLE_MAPS
+    bool    googleMapEnabled    () { return false; }
+#else
+    bool    googleMapEnabled    () { return true; }
+#endif
+
 
 signals:
     void mapProviderChanged (const QString& mapProvider);
