@@ -67,3 +67,8 @@ bool ArduSubFirmwarePlugin::supportsRadio(void)
 {
     return false;
 }
+
+bool ArduSubFirmwarePlugin::supportsJSButton(void)
+{
+    return true;
+}
