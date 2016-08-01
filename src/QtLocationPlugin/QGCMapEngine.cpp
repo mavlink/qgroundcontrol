@@ -43,9 +43,11 @@ struct stQGeoTileCacheQGCMapTypes {
 //   Changes here must reflect those in QGeoTiledMappingManagerEngineQGC.cpp
 
 stQGeoTileCacheQGCMapTypes kMapTypes[] = {
+#ifndef QGC_LIMITED_MAPS
     {"Google Street Map",       UrlFactory::GoogleMap},
     {"Google Satellite Map",    UrlFactory::GoogleSatellite},
     {"Google Terrain Map",      UrlFactory::GoogleTerrain},
+#endif
     {"Bing Street Map",         UrlFactory::BingMap},
     {"Bing Satellite Map",      UrlFactory::BingSatellite},
     {"Bing Hybrid Map",         UrlFactory::BingHybrid},

@@ -280,7 +280,15 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Map Providers
                 Row {
-                    spacing: ScreenTools.defaultFontPixelWidth
+
+                    /*
+                      TODO: Map settings should come from QGroundControl.mapEngineManager. What is currently in
+                      QGroundControl.flightMapSettings should be moved there so all map related funtions are in
+                      one place.
+                     */
+
+                    spacing:    ScreenTools.defaultFontPixelWidth
+                    visible:    QGroundControl.flightMapSettings.googleMapEnabled
 
                     QGCLabel {
                         id:                 mapProvidersLabel
