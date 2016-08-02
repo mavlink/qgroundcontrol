@@ -65,6 +65,7 @@ public:
     Q_INVOKABLE QString getButtonAction(int button);
 
     Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
+    Q_PROPERTY(int exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
 
     // Property accessors
 
@@ -89,6 +90,9 @@ public:
     int throttleMode(void);
     void setThrottleMode(int mode);
 
+    bool exponential(void);
+    void setExponential(bool expo);
+
     typedef enum {
         CalibrationModeOff,         // Not calibrating
         CalibrationModeMonitor,     // Monitors are active, continue to send to vehicle if already polling
@@ -111,6 +115,8 @@ signals:
     void buttonActionsChanged(QVariantList actions);
 
     void throttleModeChanged(int mode);
+
+    void exponentialChanged(bool exponential);
 
     void enabledChanged(bool enabled);
 
@@ -168,6 +174,8 @@ protected:
 
     ThrottleMode_t      _throttleMode;
 
+    bool                _exponential;
+
     Vehicle*            _activeVehicle;
     bool                _pollingStartedForCalibration;
 
@@ -180,6 +188,7 @@ private:
     static const char* _calibratedSettingsKey;
     static const char* _buttonActionSettingsKey;
     static const char* _throttleModeSettingsKey;
+    static const char* _exponentialSettingsKey;
 };
 
 #endif
