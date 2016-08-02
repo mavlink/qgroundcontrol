@@ -276,6 +276,8 @@ public:
     Q_PROPERTY(bool                 vtol                    READ vtol                                                   CONSTANT)
     Q_PROPERTY(bool                 rover                   READ rover                                                  CONSTANT)
     Q_PROPERTY(bool                 supportsManualControl   READ supportsManualControl                                  CONSTANT)
+    Q_PROPERTY(bool        supportsThrottleModeCenterZero   READ supportsThrottleModeCenterZero                         CONSTANT)
+    Q_PROPERTY(bool                 supportsJSButton        READ supportsJSButton                                       CONSTANT)
     Q_PROPERTY(bool                 sub                     READ sub                                                    CONSTANT)
     Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                                      NOTIFY autoDisconnectChanged)
     Q_PROPERTY(QString              prearmError             READ prearmError            WRITE setPrearmError            NOTIFY prearmErrorChanged)
@@ -473,6 +475,9 @@ public:
     bool sub(void) const;
 
     bool supportsManualControl(void) const;
+    bool supportsThrottleModeCenterZero(void) const;
+    bool supportsRadio(void) const;
+    bool supportsJSButton(void) const;
 
     void setFlying(bool flying);
     void setGuidedMode(bool guidedMode);

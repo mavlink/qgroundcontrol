@@ -83,6 +83,27 @@ int FirmwarePlugin::manualControlReservedButtonCount(void)
     return -1;
 }
 
+bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
+{
+    // By default, this is supported
+    return true;
+}
+
+bool FirmwarePlugin::supportsManualControl(void)
+{
+    return false;
+}
+
+bool FirmwarePlugin::supportsRadio(void)
+{
+    return true;
+}
+
+bool FirmwarePlugin::supportsJSButton(void)
+{
+    return false;
+}
+
 bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);

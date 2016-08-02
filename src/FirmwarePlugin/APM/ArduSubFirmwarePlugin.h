@@ -69,6 +69,13 @@ public:
     // Overrides from FirmwarePlugin
     int manualControlReservedButtonCount(void);
 
+    bool supportsThrottleModeCenterZero(void);
+
+    bool supportsManualControl(void);
+
+    bool supportsRadio(void);
+
+    bool supportsJSButton(void);
 };
 
 #endif

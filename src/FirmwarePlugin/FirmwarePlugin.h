@@ -128,6 +128,23 @@ public:
     /// @return -1: reserver all buttons, >0 number of buttons to reserve
     virtual int manualControlReservedButtonCount(void);
 
+    /// Returns true if the vehicle and firmware supports the use of a throttle joystick that
+    /// is zero when centered. Typically not supported on vehicles that have bidirectional
+    /// throttle.
+    virtual bool supportsThrottleModeCenterZero(void);
+
+    /// Returns true if the firmware supports the use of the MAVlink "MANUAL_CONTROL" message.
+    /// By default, this returns false unless overridden in the firmware plugin.
+    virtual bool supportsManualControl(void);
+
+    /// Returns true if the firmware supports the use of the RC radio and requires the RC radio
+    /// setup page. Returns true by default.
+    virtual bool supportsRadio(void);
+
+    /// Returns true if the firmware supports the AP_JSButton library, which allows joystick buttons
+    /// to be assigned via parameters in firmware. Default is false.
+    virtual bool supportsJSButton(void);
+
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.

@@ -170,6 +170,11 @@ int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
     return 0;   // 0 buttons reserved for rc switch simulation
 }
 
+bool PX4FirmwarePlugin::supportsManualControl(void)
+{
+    return true;
+}
+
 bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
     if(vehicle->multiRotor()) {
