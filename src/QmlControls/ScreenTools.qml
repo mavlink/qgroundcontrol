@@ -7,20 +7,46 @@ import QtQuick.Window 2.2
 import QGroundControl                       1.0
 import QGroundControl.ScreenToolsController 1.0
 
+/*!
+ The ScreenTools Singleton provides information on QGC's standard font metrics. It also provides information on screen
+ size which can be used to adjust user interface for varying available screen real estate.
+
+ QGC has four standard font sizes: default, small, medium and large. The QGC controls use the default font for display and you should use this font
+ for most text within the system that is drawn using something other than a standard QGC control. The small font is smaller than the default font.
+ The medium and large fonts are larger than the default font.
+
+ Usage:
+
+        import QGroundControl.ScreenTools 1.0
+
+        Rectangle {
+            anchors.fill:       parent
+            anchors.margins:    ScreenTools.defaultFontPixelWidth
+            ...
+        }
+*/
 Item {
     id: _screenTools
 
-    signal repaintRequested
+    //-- The point and pixel font size values are computed at runtime
 
-    property real availableHeight:          0
-
-    //-- These are computed at runtime
     property real defaultFontPointSize:     10
+
+    /// You can use this property to position ui elements in a screen resolution independant manner. Using fixed positioning values should not
+    /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way
+    /// your ui elements will reposition themselves appropriately on varying screen sizes and resolutions.
     property real defaultFontPixelHeight:   10
+
+    /// You can use this property to position ui elements in a screen resolution independant manner. Using fixed positioning values should not
+    /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way
+    /// your ui elements will reposition themselves appropriately on varying screen sizes and resolutions.
     property real defaultFontPixelWidth:    10
+
     property real smallFontPointSize:       10
     property real mediumFontPointSize:      10
     property real largeFontPointSize:       10
+
+    property real availableHeight:          0
 
     readonly property real smallFontPointRatio:      0.75
     readonly property real mediumFontPointRatio:     1.25
@@ -43,19 +69,22 @@ Item {
         target: QGroundControl
         onBaseFontPointSizeChanged: {
             if(ScreenToolsController.isDebug)
-                setBasePointSize(QGroundControl.baseFontPointSize)
+                _setBasePointSize(QGroundControl.baseFontPointSize)
         }
     }
 
+    /// Returns the current x position of the mouse in global screen coordinates.
     function mouseX() {
         return ScreenToolsController.mouseX()
     }
 
+    /// Returns the current y position of the mouse in global screen coordinates.
     function mouseY() {
         return ScreenToolsController.mouseY()
     }
 
-    function setBasePointSize(pointSize) {
+    /// \private
+    function _setBasePointSize(pointSize) {
         _textMeasure.font.pointSize = pointSize
         defaultFontPointSize    = pointSize
         defaultFontPixelHeight  = _textMeasure.fontHeight
@@ -111,10 +140,10 @@ Item {
                 QGroundControl.baseFontPointSize = baseSize
                 //-- Release build doesn't get signal
                 if(!ScreenToolsController.isDebug)
-                    _screenTools.setBasePointSize(baseSize);
+                    _screenTools._setBasePointSize(baseSize);
             } else {
                 //-- Set size saved in settings
-                _screenTools.setBasePointSize(baseSize);
+                _screenTools._setBasePointSize(baseSize);
             }
         }
     }
