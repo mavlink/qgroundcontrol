@@ -168,6 +168,7 @@ Row {
         id:     rcRssi
         width:  rssiRow.width * 1.1
         height: mainWindow.tbCellHeight
+        visible: activeVehicle ? activeVehicle.supportsRadio : true
         Row {
             id:         rssiRow
             height:     parent.height
