@@ -1517,15 +1517,22 @@ bool Vehicle::vtol(void) const
 
 bool Vehicle::supportsManualControl(void) const
 {
-    // PX4 Firmware supports manual control message
-    if ( px4Firmware() ) {
-        return true;
-    }
-    // ArduSub supports manual control message (identified by APM + Submarine type)
-    if ( apmFirmware() && vehicleType() == MAV_TYPE_SUBMARINE ) {
-        return true;
-    }
-    return false;
+    return _firmwarePlugin->supportsManualControl();
+}
+
+bool Vehicle::supportsThrottleModeCenterZero(void) const
+{
+    return _firmwarePlugin->supportsThrottleModeCenterZero();
+}
+
+bool Vehicle::supportsRadio(void) const
+{
+    return _firmwarePlugin->supportsRadio();
+}
+
+bool Vehicle::supportsJSButton(void) const
+{
+    return _firmwarePlugin->supportsJSButton();
 }
 
 void Vehicle::_setCoordinateValid(bool coordinateValid)
