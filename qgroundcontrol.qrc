@@ -3,6 +3,7 @@
         <file alias="PX4MockLink.params">src/comm/PX4MockLink.params</file>
         <file alias="APMArduCopterMockLink.params">src/comm/APMArduCopterMockLink.params</file>
         <file alias="APMArduPlaneMockLink.params">src/comm/APMArduPlaneMockLink.params</file>
+        <file alias="APMArduSubMockLink.params">src/comm/APMArduSubMockLink.params</file>
         <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
     </qresource>
     <qresource prefix="/qml">
