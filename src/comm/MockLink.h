@@ -148,6 +148,7 @@ public:
     static MockLink* startGenericMockLink        (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink* startAPMArduCopterMockLink  (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink* startAPMArduPlaneMockLink   (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink* startAPMArduSubMockLink     (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
 
 private slots:
     virtual void _writeBytes(const QByteArray bytes);
