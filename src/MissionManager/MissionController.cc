@@ -844,6 +844,14 @@ void MissionController::_recalcAltitudeRangeBearing()
                         missionMaxTelemetry = telemetryDistance;
                     }
                 }
+                else if (lastCoordinateItem == homeItem && !item->isSimpleItem()){
+                    missionDistance += qobject_cast<ComplexMissionItem*>(item)->surveyDistance();
+                    missionMaxTelemetry = qobject_cast<ComplexMissionItem*>(item)->greatestDistanceTo(homeItem->exitCoordinate());
+
+                    if (vtolCalc){
+                        cruiseDistance += qobject_cast<ComplexMissionItem*>(item)->surveyDistance(); //assume all survey missions undertaken in cruise
+                    }
+                }
                 lastCoordinateItem = item;
             }
         }
