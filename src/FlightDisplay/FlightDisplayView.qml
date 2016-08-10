@@ -66,6 +66,7 @@ QGCView {
     FlightDisplayViewController { id: _controller }
 
     function setStates() {
+        QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, _mainIsMap)
         if(_mainIsMap) {
             //-- Adjust Margins
             _flightMapContainer.state   = "fullMode"
