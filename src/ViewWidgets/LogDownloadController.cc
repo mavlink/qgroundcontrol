@@ -15,6 +15,7 @@
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "QGCToolbox.h"
+#include "QGCMapEngine.h"
 #include "Vehicle.h"
 #include "MainWindow.h"
 
@@ -31,7 +32,6 @@
 
 QGC_LOGGING_CATEGORY(LogDownloadLog, "LogDownloadLog")
 
-static QLocale kLocale;
 //-----------------------------------------------------------------------------
 struct LogDownloadData {
     LogDownloadData(QGCLogEntry* entry);
@@ -42,6 +42,8 @@ struct LogDownloadData {
     uint          ID;
     QGCLogEntry*  entry;
     uint          written;
+    size_t        rate_bytes;
+    qreal         rate_avg;
     QElapsedTimer elapsed;
 
     void advanceChunk()
@@ -76,6 +78,8 @@ LogDownloadData::LogDownloadData(QGCLogEntry* entry_)
     : ID(entry_->id())
     , entry(entry_)
     , written(0)
+    , rate_bytes(0)
+    , rate_avg(0)
 {
 
 }
@@ -95,7 +99,7 @@ QGCLogEntry::QGCLogEntry(uint logId, const QDateTime& dateTime, uint logSize, bo
 QString
 QGCLogEntry::sizeStr() const
 {
-    return kLocale.toString(_logSize);
+    return QGCMapEngine::bigSizeToString(_logSize);
 }
 
 //----------------------------------------------------------------------------------------
@@ -332,10 +336,18 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
         //-- Write chunk to file
         if(_downloadData->file.write((const char*)data, count)) {
             _downloadData->written += count;
+            _downloadData->rate_bytes += count;
             if (_downloadData->elapsed.elapsed() >= kGUIRateMilliseconds) {
+                //-- Update download rate
+                qreal rrate = _downloadData->rate_bytes/(_downloadData->elapsed.elapsed()/1000.0);
+                _downloadData->rate_avg = _downloadData->rate_avg*0.95 + rrate*0.05;
+                _downloadData->rate_bytes = 0;
+
                 //-- Update status
-                QString comma_value = kLocale.toString(_downloadData->written);
-                _downloadData->entry->setStatus(comma_value);
+                const QString status = QString("%1 (%2/s)").arg(QGCMapEngine::bigSizeToString(_downloadData->written),
+                                                                QGCMapEngine::bigSizeToString(_downloadData->rate_avg));
+
+                _downloadData->entry->setStatus(status);
                 _downloadData->elapsed.start();
             }
             result = true;
