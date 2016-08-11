@@ -42,11 +42,13 @@
 #endif
 
 #if defined(QGC_GST_STREAMING)
+#if (defined(__macos) && defined(QGC_INSTALL_RELEASE)) || defined(Q_OS_WIN)
 static void qgcputenv(const QString& key, const QString& root, const QString& path)
 {
     QString value = root + path;
     qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
 }
+#endif
 #endif
 
 void initializeVideoStreaming(int &argc, char* argv[])
