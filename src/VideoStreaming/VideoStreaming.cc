@@ -42,15 +42,11 @@
 #endif
 
 #if defined(QGC_GST_STREAMING)
-#if defined(__macos__)
-#ifdef QGC_INSTALL_RELEASE
 static void qgcputenv(const QString& key, const QString& root, const QString& path)
 {
     QString value = root + path;
     qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
 }
-#endif
-#endif
 #endif
 
 void initializeVideoStreaming(int &argc, char* argv[])
@@ -67,6 +63,9 @@ void initializeVideoStreaming(int &argc, char* argv[])
             qgcputenv("GST_PLUGIN_PATH_1_0",          currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
             qgcputenv("GST_PLUGIN_PATH",              currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
         #endif
+    #elif defined(Q_OS_WIN)
+        QString currentDir = QCoreApplication::applicationDirPath();
+        qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
     #endif
         // Initialize GStreamer
         GError* error = NULL;
