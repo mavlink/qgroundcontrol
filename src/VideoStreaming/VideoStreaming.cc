@@ -42,7 +42,7 @@
 #endif
 
 #if defined(QGC_GST_STREAMING)
-#if (defined(__macos) && defined(QGC_INSTALL_RELEASE)) || defined(Q_OS_WIN)
+#if (defined(__macos__) && defined(QGC_INSTALL_RELEASE)) || defined(Q_OS_WIN)
 static void qgcputenv(const QString& key, const QString& root, const QString& path)
 {
     QString value = root + path;
