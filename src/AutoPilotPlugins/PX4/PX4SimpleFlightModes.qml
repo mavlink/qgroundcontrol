@@ -198,7 +198,7 @@ Item {
                                 spacing: ScreenTools.defaultFontPixelWidth
 
                                 property Fact fact: controller.getParameterFact(-1, "RC_MAP_TRANS_SW")
-                                visible: (controller.vehicle.vtol)
+                                visible: (controller.vehicle.vtol && controller.parameterExists(-1, "RC_MAP_TRANS_SW"))
 
                                 QGCLabel {
                                     anchors.baseline:   vtolCombo.baseline
