@@ -69,6 +69,7 @@ public:
     static const int boardID3DRRadio = 78;  ///< 3DR Radio. This is an arbitrary value unrelated to the PID
     static const int boardIDMINDPXFMUV2 = 88;  ///< MindPX V2 board, as from USB PID
     static const int boardIDTAPV1 = 64;     ///< TAP V1 board, as from USB PID
+    static const int boardIDASCV1 = 65;     ///< ASC V1 board, as from USB PID
     
 signals:
     /// @brief Signals progress indicator for long running bootloader utility routines

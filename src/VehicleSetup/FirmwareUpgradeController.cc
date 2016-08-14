@@ -143,6 +143,10 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
         _foundBoardTypeName = "TAP V1";
         _startFlashWhenBootloaderFound = false;
         break;
+    case QGCSerialPortInfo::BoardTypeASCV1:
+        _foundBoardTypeName = "ASC V1";
+        _startFlashWhenBootloaderFound = false;
+        break;
     case QGCSerialPortInfo::BoardTypePX4Flow:
         _foundBoardTypeName = "PX4 Flow";
         _startFlashWhenBootloaderFound = false;
@@ -354,6 +358,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/tap-v1_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/tap-v1_default.px4"},
     };
+    //////////////////////////////////// ASCV1 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgASCV1FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/asc-v1_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/asc-v1_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/asc-v1_default.px4"},
+    };
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
         { PX4Flow, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
@@ -401,6 +411,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgTAPV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
+    size = sizeof(rgASCV1FirmwareArray)/sizeof(rgASCV1FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgASCV1FirmwareArray[i];
+        _rgASCV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
     size = sizeof(rgPX4FLowFirmwareArray)/sizeof(rgPX4FLowFirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgPX4FLowFirmwareArray[i];
@@ -438,6 +454,8 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         return &_rgMindPXFMUV2Firmware;
     case Bootloader::boardIDTAPV1:
         return &_rgTAPV1Firmware;
+    case Bootloader::boardIDASCV1:
+        return &_rgASCV1Firmware;
     case Bootloader::boardID3DRRadio:
         return &_rg3DRRadioFirmware;
     default:
@@ -467,6 +485,9 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         break;
     case QGCSerialPortInfo::BoardTypeTAPV1:
         boardId = Bootloader::boardIDTAPV1;
+        break;
+    case QGCSerialPortInfo::BoardTypeASCV1:
+        boardId = Bootloader::boardIDASCV1;
         break;
     case QGCSerialPortInfo::BoardTypePX4Flow:
         boardId = Bootloader::boardIDPX4Flow;
