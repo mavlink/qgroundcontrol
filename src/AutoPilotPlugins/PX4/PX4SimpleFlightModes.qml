@@ -197,7 +197,7 @@ Item {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
 
-                                property Fact fact: controller.getParameterFact(-1, "RC_MAP_TRANS_SW")
+                                property Fact fact: controller.getParameterFact(-1, "RC_MAP_TRANS_SW", false)
                                 visible: (controller.vehicle.vtol && controller.parameterExists(-1, "RC_MAP_TRANS_SW"))
 
                                 QGCLabel {
