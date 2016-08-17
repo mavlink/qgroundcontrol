@@ -38,7 +38,7 @@ The build system is setup to use pkgconfig and it will find the necessary header
 
 ### Mac OS
 
-Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/osx. The current version, as this is written is 1.5.2.
+Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/osx. Supported version is 1.5.2. QGC may work with newer version, but it is untested.
 
 You need two packages:
 - [gstreamer-1.0-devel-1.5.2-x86_64.pkg](http://gstreamer.freedesktop.org/data/pkg/osx/1.5.2/gstreamer-1.0-devel-1.5.2-x86_64.pkg)
@@ -72,6 +72,10 @@ qgroundcontrol
 
 ### Windows
 
-TODO: Binaries found in http://gstreamer.freedesktop.org/data/pkg/windows
-(work in progress)
+Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/windows. Supported version is 1.5.2. QGC may work with newer version, but it is untested.
 
+You need two packages:
+- [gstreamer-1.0-devel-x86-1.5.2.msi](https://gstreamer.freedesktop.org/data/pkg/windows/1.5.2/gstreamer-1.0-devel-x86-1.5.2.msi)
+- [gstreamer-1.0-x86-1.5.2.msi](https://gstreamer.freedesktop.org/data/pkg/windows/1.5.2/gstreamer-1.0-x86-1.5.2.msi)
+
+The installer places them under c:\gstreamer, which is where the QGC build system will look for it.
