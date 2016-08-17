@@ -51,7 +51,7 @@ Rectangle {
         anchors.leftMargin: _topBottomMargin
         anchors.left:       parent.left
         size:               _innerRadius * 2
-        active:             active
+        active:             root.active
         anchors.verticalCenter: parent.verticalCenter
     }
 
@@ -60,7 +60,7 @@ Rectangle {
         anchors.leftMargin: _spacing
         anchors.left:       attitude.right
         size:               _innerRadius * 2
-        active:             active
+        active:             root.active
         anchors.verticalCenter: parent.verticalCenter
     }
 }

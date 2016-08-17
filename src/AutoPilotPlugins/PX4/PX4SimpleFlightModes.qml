@@ -193,6 +193,26 @@ Item {
                                     indexModel: false
                                 }
                             }
+
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+
+                                property Fact fact: controller.getParameterFact(-1, "RC_MAP_TRANS_SW", false)
+                                visible: (controller.vehicle.vtol && controller.parameterExists(-1, "RC_MAP_TRANS_SW"))
+
+                                QGCLabel {
+                                    anchors.baseline:   vtolCombo.baseline
+                                    text:               "VTOL mode switch:"
+                                    color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
+                                }
+
+                                FactComboBox {
+                                    id:         vtolCombo
+                                    width:      _channelComboWidth
+                                    fact:       parent.fact
+                                    indexModel: false
+                                }
+                            }
                         } // Column
                     } // Rectangle
 

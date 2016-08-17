@@ -51,29 +51,26 @@ LinuxBuild {
     GST_ROOT = c:/gstreamer/1.0/x86
     exists($$GST_ROOT) {
         CONFIG      += VideoEnabled
-        LIBS        += -L$$GST_ROOT/lib/gstreamer-1.0/static -lgstreamer-1.0 -lgstvideo-1.0 -lgstbase-1.0
-        LIBS        += -L$$GST_ROOT/lib -lglib-2.0 -lintl -lgobject-2.0
+
+        LIBS        += -L$$GST_ROOT/lib -lgstreamer-1.0 -lgstvideo-1.0 -lgstbase-1.0
+        LIBS        += -lglib-2.0 -lintl -lgobject-2.0
+
         INCLUDEPATH += \
             $$GST_ROOT/include/gstreamer-1.0 \
             $$GST_ROOT/include/glib-2.0 \
             $$GST_ROOT/lib/gstreamer-1.0/include \
-            $$GST_ROOT/lib/glib-2.0/include        
-        COPY_FILE_LIST = \
-            $$GST_ROOT\\bin\\libffi-6.dll \
-            $$GST_ROOT\\bin\\libglib-2.0-0.dll \
-            $$GST_ROOT\\bin\\libgmodule-2.0-0.dll \
-            $$GST_ROOT\\bin\\libgobject-2.0-0.dll \
-            $$GST_ROOT\\bin\\libgstbase-1.0-0.dll \
-            $$GST_ROOT\\bin\\libgstreamer-1.0-0.dll \
-            $$GST_ROOT\\bin\\libgstvideo-1.0-0.dll \
-            $$GST_ROOT\\bin\\libintl-8.dll \
-            $$GST_ROOT\\bin\\liborc-0.4-0.dll \
-            $$GST_ROOT\\bin\\libwinpthread-1.dll
+            $$GST_ROOT/lib/glib-2.0/include
+
         DESTDIR_WIN = $$replace(DESTDIR, "/", "\\")
-        for(COPY_FILE, COPY_FILE_LIST) {
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
-        }
-        QMAKE_POST_LINK += $$escape_expand(\\n)
+        GST_ROOT_WIN = $$replace(GST_ROOT, "/", "\\")
+
+        # Copy main GStreamer runtime files
+        QMAKE_POST_LINK += $$escape_expand(\\n) xcopy \"$$GST_ROOT_WIN\\bin\*.dll\" \"$$DESTDIR_WIN\" /S/Y $$escape_expand(\\n)
+        QMAKE_POST_LINK += xcopy \"$$GST_ROOT_WIN\\bin\*.\" \"$$DESTDIR_WIN\" /S/Y $$escape_expand(\\n)
+
+        # Copy GStreamer plugins
+        QMAKE_POST_LINK += $$escape_expand(\\n) xcopy \"$$GST_ROOT_WIN\\lib\\gstreamer-1.0\\*.dll\" \"$$DESTDIR_WIN\\gstreamer-plugins\\\" /Y $$escape_expand(\\n)
+        QMAKE_POST_LINK += $$escape_expand(\\n) xcopy \"$$GST_ROOT_WIN\\lib\\gstreamer-1.0\\validate\\*.dll\" \"$$DESTDIR_WIN\\gstreamer-plugins\\validate\\\" /Y $$escape_expand(\\n)
     }
 } else:AndroidBuild {
     #- gstreamer assumed to be installed in $$PWD/../../android/gstreamer-1.0-android-armv7-1.5.2
