@@ -5,6 +5,11 @@
 
     "mavCmdInfo": [
         {
+            "id":           16,
+            "comment":      "MAV_CMD_NAV_WAYPOINT",
+            "paramRemove":  "2"
+        },
+        {
             "id":                   84,
             "comment":              "MAV_CMD_NAV_VTOL_TAKEOFF",
             "specifiesCoordinate":  true,
