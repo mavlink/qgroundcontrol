@@ -46,8 +46,6 @@ const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLoi
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLand[] = {
     { "Altitude:",  70.1234567 },
-    { "Abort Alt:", 10.1234567 },
-    { "Heading:",   40.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesTakeoff[] = {
@@ -70,7 +68,7 @@ const SimpleMissionItemTest::ItemExpected_t SimpleMissionItemTest::_rgItemExpect
     { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns[0]),       SimpleMissionItemTest::_rgFactValuesLoiterTurns,    true },
     { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime[0]),         SimpleMissionItemTest::_rgFactValuesLoiterTime,     true },
     { sizeof(SimpleMissionItemTest::_rgFactValuesLand)/sizeof(SimpleMissionItemTest::_rgFactValuesLand[0]),                     SimpleMissionItemTest::_rgFactValuesLand,           true },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        false },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        true },
     { sizeof(SimpleMissionItemTest::_rgFactValuesConditionDelay)/sizeof(SimpleMissionItemTest::_rgFactValuesConditionDelay[0]), SimpleMissionItemTest::_rgFactValuesConditionDelay, false },
     { sizeof(SimpleMissionItemTest::_rgFactValuesDoJump)/sizeof(SimpleMissionItemTest::_rgFactValuesDoJump[0]),                 SimpleMissionItemTest::_rgFactValuesDoJump,         false },
 };
@@ -82,6 +80,8 @@ SimpleMissionItemTest::SimpleMissionItemTest(void)
 
 void SimpleMissionItemTest::_testEditorFacts(void)
 {
+    Vehicle* vehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_FIXED_WING);
+
     for (size_t i=0; i<sizeof(_rgItemInfo)/sizeof(_rgItemInfo[0]); i++) {
         const ItemInfo_t* info = &_rgItemInfo[i];
         const ItemExpected_t* expected = &_rgItemExpected[i];
@@ -100,7 +100,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
                                 70.1234567,
                                 true,           // autoContinue
                                 false);         // isCurrentItem
-        SimpleMissionItem simpleMissionItem(NULL /* Vehicle */, missionItem);
+        SimpleMissionItem simpleMissionItem(vehicle, missionItem);
 
         // Validate that the fact values are correctly returned
 
@@ -120,9 +120,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
                 }
             }
             
-            if (!found) {
-                qDebug() << fact->name();
-            }
+            qDebug() << fact->name();
             QVERIFY(found);
         }
         QCOMPARE(factCount, expected->cFactValues);
@@ -130,6 +128,8 @@ void SimpleMissionItemTest::_testEditorFacts(void)
         int expectedCount = expected->relativeAltCheckbox ? 1 : 0;
         QCOMPARE(simpleMissionItem.checkboxFacts()->count(), expectedCount);
     }
+
+    delete vehicle;
 }
 
 void SimpleMissionItemTest::_testDefaultValues(void)
