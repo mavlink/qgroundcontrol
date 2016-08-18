@@ -192,11 +192,9 @@ public:
     /// List of supported mission commands. Empty list for all commands supported.
     virtual QList<MAV_CMD> supportedMissionCommands(void);
 
-    /// Returns the names for the mission command json override files. Empty string to specify no overrides.
-    ///     @param[out] commonJsonFilename Filename for common overrides
-    ///     @param[out] fixedWingJsonFilename Filename for fixed wing overrides
-    ///     @param[out] multiRotorJsonFilename Filename for multi rotor overrides
-    virtual void missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const;
+    /// Returns the name of the mission command json override file for the specified vehicle type.
+    ///     @param vehicleType Vehicle type to return file for, MAV_TYPE_GENERIC is a request for overrides for all vehicle types
+    virtual QString missionCommandOverrides(MAV_TYPE vehicleType) const;
 
     /// Returns the mapping structure which is used to map from one parameter name to another based on firmware version.
     virtual const remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const;

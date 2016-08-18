@@ -225,9 +225,9 @@ public:
             AutoPilotPluginManager* autopilotPluginManager,
             JoystickManager*        joystickManager);
 
-    // The following is used to create a disconnected Vehicle. A disconnected vehicle is primarily used to access FactGroup information
-    // without needing a real connection.
-    Vehicle(QObject* parent = NULL);
+    // The following is used to create a disconnected Vehicle. Disconnected vehicles are used used to access FactGroup information
+    // without needing a real connection as well as offline mission planning.
+    Vehicle(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, QObject* parent = NULL);
 
     ~Vehicle();
 
