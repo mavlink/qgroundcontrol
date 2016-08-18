@@ -365,6 +365,9 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
                 _requestLogData(_downloadData->ID,
                                 _downloadData->current_chunk*kChunkSize,
                                 _downloadData->chunk_table.size()*MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
+            } else if (bin < _downloadData->chunk_table.size() - 1 && _downloadData->chunk_table.at(bin+1)) {
+                // Likely to be grabbing fragments and got to the end of a gap
+                _findMissingData();
             }
         } else {
             qWarning() << "Error while writing log file chunk";
