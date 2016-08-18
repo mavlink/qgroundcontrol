@@ -5,11 +5,6 @@
 
     "mavCmdInfo": [
         {
-            "id":           16,
-            "comment":      "MAV_CMD_NAV_WAYPOINT",
-            "paramRemove":  "3,4"
-        },
-        {
             "id":           21,
             "comment":      "MAV_CMD_NAV_LAND",
             "paramRemove":  "1,4"
