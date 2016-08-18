@@ -40,9 +40,10 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _flightMapSettings(NULL)
     , _homePositionManager(NULL)
     , _linkManager(NULL)
-    , _missionCommands(NULL)
     , _multiVehicleManager(NULL)
     , _mapEngineManager(NULL)
+    , _qgcPositionManager(NULL)
+    , _missionCommandTree(NULL)
     , _virtualTabletJoystick(false)
     , _baseFontPointSize(0.0)
 {
@@ -66,10 +67,10 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _flightMapSettings      = toolbox->flightMapSettings();
     _homePositionManager    = toolbox->homePositionManager();
     _linkManager            = toolbox->linkManager();
-    _missionCommands        = toolbox->missionCommands();
     _multiVehicleManager    = toolbox->multiVehicleManager();
     _mapEngineManager       = toolbox->mapEngineManager();
-    _qgcPositionManager      = toolbox->qgcPositionManager();
+    _qgcPositionManager     = toolbox->qgcPositionManager();
+    _missionCommandTree     = toolbox->missionCommandTree();
 }
 
 
@@ -233,7 +234,7 @@ Fact* QGroundControlQmlGlobal::offlineEditingFirmwareType(void)
         _offlineEditingFirmwareTypeFact = new SettingsFact(QString(), "OfflineEditingFirmwareType", FactMetaData::valueTypeUint32, (uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA);
         _offlineEditingFirmwareTypeMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
 
-        enumStrings << "ArduPilot Firmware" << "PX4 Firmware" << "Mavlink Generic Firmware";
+        enumStrings << tr("ArduPilot Firmware") << tr("PX4 Pro Firmware") << tr("Mavlink Generic Firmware");
         enumValues << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_PX4) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_GENERIC);
 
         _offlineEditingFirmwareTypeMetaData->setEnumInfo(enumStrings, enumValues);
@@ -252,8 +253,10 @@ Fact* QGroundControlQmlGlobal::offlineEditingVehicleType(void)
         _offlineEditingVehicleTypeFact = new SettingsFact(QString(), "OfflineEditingVehicleType", FactMetaData::valueTypeUint32, (uint32_t)MAV_TYPE_FIXED_WING);
         _offlineEditingVehicleTypeMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
 
-        enumStrings << "Fixedwing" << "Multicopter" << "VTOL";
-        enumValues << QVariant::fromValue((uint32_t)MAV_TYPE_FIXED_WING) << QVariant::fromValue((uint32_t)MAV_TYPE_QUADROTOR) << QVariant::fromValue((uint32_t)MAV_TYPE_VTOL_DUOROTOR);
+        enumStrings << tr("Fixedwing") << tr("Multicopter") << tr("VTOL") << tr("Rover") << tr("Sub");
+        enumValues << QVariant::fromValue((uint32_t)MAV_TYPE_FIXED_WING) << QVariant::fromValue((uint32_t)MAV_TYPE_QUADROTOR)
+                   << QVariant::fromValue((uint32_t)MAV_TYPE_VTOL_DUOROTOR) << QVariant::fromValue((uint32_t)MAV_TYPE_GROUND_ROVER)
+                   << QVariant::fromValue((uint32_t)MAV_TYPE_SUBMARINE);
 
         _offlineEditingVehicleTypeMetaData->setEnumInfo(enumStrings, enumValues);
         _offlineEditingVehicleTypeFact->setMetaData(_offlineEditingVehicleTypeMetaData);

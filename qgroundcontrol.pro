@@ -178,6 +178,11 @@ RESOURCES += \
     qgroundcontrol.qrc \
     qgcresources.qrc
 
+DebugBuild {
+    # Unit Test resources
+    RESOURCES += UnitTest.qrc
+}
+
 DEPENDPATH += \
     . \
     plugins
@@ -268,7 +273,8 @@ HEADERS += \
     src/LogCompressor.h \
     src/MG.h \
     src/MissionManager/MissionCommandList.h \
-    src/MissionManager/MissionCommands.h \
+    src/MissionManager/MissionCommandTree.h \
+    src/MissionManager/MissionCommandUIInfo.h \
     src/MissionManager/MissionController.h \
     src/MissionManager/MissionItem.h \
     src/MissionManager/MissionManager.h \
@@ -412,6 +418,7 @@ SOURCES += \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkManager.cc \
     src/comm/MAVLinkProtocol.cc \
+    src/comm/QGCMAVLink.cc \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
     src/FlightDisplay/FlightDisplayViewController.cc \
@@ -427,7 +434,8 @@ SOURCES += \
     src/LogCompressor.cc \
     src/main.cc \
     src/MissionManager/MissionCommandList.cc \
-    src/MissionManager/MissionCommands.cc \
+    src/MissionManager/MissionCommandTree.cc \
+    src/MissionManager/MissionCommandUIInfo.cc \
     src/MissionManager/MissionController.cc \
     src/MissionManager/MissionItem.cc \
     src/MissionManager/MissionManager.cc \
@@ -554,6 +562,7 @@ HEADERS += \
     src/FactSystem/FactSystemTestGeneric.h \
     src/FactSystem/FactSystemTestPX4.h \
     src/MissionManager/ComplexMissionItemTest.h \
+    src/MissionManager/MissionCommandTreeTest.h \
     src/MissionManager/MissionControllerTest.h \
     src/MissionManager/MissionControllerManagerTest.h \
     src/MissionManager/MissionItemTest.h \
@@ -580,6 +589,7 @@ SOURCES += \
     src/FactSystem/FactSystemTestGeneric.cc \
     src/FactSystem/FactSystemTestPX4.cc \
     src/MissionManager/ComplexMissionItemTest.cc \
+    src/MissionManager/MissionCommandTreeTest.cc \
     src/MissionManager/MissionControllerTest.cc \
     src/MissionManager/MissionControllerManagerTest.cc \
     src/MissionManager/MissionItemTest.cc \

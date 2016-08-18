@@ -1,0 +1,13 @@
+{
+    "comment":  "Any Firmware, Fixed Wing",
+
+    "version": 1,
+
+    "mavCmdInfo": [
+        {
+            "id":           16,
+            "comment":      "MAV_CMD_NAV_WAYPOINT",
+            "paramRemove":  "4"
+        }
+    ]
+}

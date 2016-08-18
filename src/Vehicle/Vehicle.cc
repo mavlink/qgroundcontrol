@@ -23,6 +23,7 @@
 #include "QGCImageProvider.h"
 #include "GAudioOutput.h"
 #include "FollowMe.h"
+#include "MissionCommandTree.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -245,13 +246,13 @@ Vehicle::Vehicle(LinkInterface*             link,
 }
 
 // Disconnected Vehicle
-Vehicle::Vehicle(QObject* parent)
+Vehicle::Vehicle(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, QObject* parent)
     : FactGroup(_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json", parent)
     , _id(0)
     , _active(false)
-    , _disconnectedVehicle(false)
-    , _firmwareType(MAV_AUTOPILOT_PX4)
-    , _vehicleType(MAV_TYPE_QUADROTOR)
+    , _disconnectedVehicle(true)
+    , _firmwareType(firmwareType)
+    , _vehicleType(vehicleType)
     , _firmwarePlugin(NULL)
     , _autopilotPlugin(NULL)
     , _joystickMode(JoystickModeRC)
@@ -312,6 +313,11 @@ Vehicle::Vehicle(QObject* parent)
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
 {
+    // This is a hack for disconnected vehicle used while unit testing
+    if (qgcApp()->toolbox() && qgcApp()->toolbox()->firmwarePluginManager()) {
+        _firmwarePlugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
+    }
+
     // Build FactGroup object model
 
     _addFact(&_rollFact,                _rollFactName);
@@ -488,13 +494,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         return;
     }
 
-    QString commandName;
-    MavCmdInfo* cmdInfo = qgcApp()->toolbox()->missionCommands()->getMavCmdInfo((MAV_CMD)ack.command, this);
-    if (cmdInfo) {
-        commandName = cmdInfo->friendlyName();
-    } else {
-        commandName = tr("cmdid %1").arg(ack.command);
-    }
+    QString commandName = qgcApp()->toolbox()->missionCommandTree()->friendlyName((MAV_CMD)ack.command);
 
     switch (ack.result) {
     case MAV_RESULT_TEMPORARILY_REJECTED:
@@ -1471,32 +1471,22 @@ void Vehicle::_say(const QString& text)
 
 bool Vehicle::fixedWing(void) const
 {
-    return vehicleType() == MAV_TYPE_FIXED_WING;
+    return QGCMAVLink::isFixedWing(vehicleType());
 }
 
 bool Vehicle::rover(void) const
 {
-    return vehicleType() == MAV_TYPE_GROUND_ROVER;
+    return QGCMAVLink::isRover(vehicleType());
 }
 
 bool Vehicle::sub(void) const
 {
-    return vehicleType() == MAV_TYPE_SUBMARINE;
+    return QGCMAVLink::isSub(vehicleType());
 }
 
 bool Vehicle::multiRotor(void) const
 {
-    switch (vehicleType()) {
-    case MAV_TYPE_QUADROTOR:
-    case MAV_TYPE_COAXIAL:
-    case MAV_TYPE_HELICOPTER:
-    case MAV_TYPE_HEXAROTOR:
-    case MAV_TYPE_OCTOROTOR:
-    case MAV_TYPE_TRICOPTER:
-        return true;
-    default:
-        return false;
-    }
+    return QGCMAVLink::isMultiRotor(vehicleType());
 }
 
 bool Vehicle::vtol(void) const
