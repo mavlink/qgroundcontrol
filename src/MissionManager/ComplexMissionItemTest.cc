@@ -45,7 +45,7 @@ void ComplexMissionItemTest::init(void)
     _rgComplexMissionItemSignals[exitCoordinateHasRelativeAltitudeChangedIndex] =   SIGNAL(exitCoordinateHasRelativeAltitudeChanged(bool));
     _rgComplexMissionItemSignals[exitCoordinateSameAsEntryChangedIndex] =           SIGNAL(exitCoordinateSameAsEntryChanged(bool));
 
-    _complexItem = new ComplexMissionItem(NULL /* Vehicle */, this);
+    _complexItem = new SurveyMissionItem(NULL /* Vehicle */, this);
 
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can lead

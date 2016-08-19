@@ -271,14 +271,15 @@ HEADERS += \
     src/JsonHelper.h \
     src/LogCompressor.h \
     src/MG.h \
+    src/MissionManager/ComplexMissionItem.h \
     src/MissionManager/MissionCommandList.h \
     src/MissionManager/MissionCommandTree.h \
     src/MissionManager/MissionCommandUIInfo.h \
     src/MissionManager/MissionController.h \
     src/MissionManager/MissionItem.h \
     src/MissionManager/MissionManager.h \
-    src/MissionManager/ComplexMissionItem.h \
     src/MissionManager/SimpleMissionItem.h \
+    src/MissionManager/SurveyMissionItem.h \
     src/MissionManager/VisualMissionItem.h \
     src/QGC.h \
     src/QGCApplication.h \
@@ -431,14 +432,15 @@ SOURCES += \
     src/FollowMe/FollowMe.cc \
     src/LogCompressor.cc \
     src/main.cc \
+    src/MissionManager/ComplexMissionItem.cc \
     src/MissionManager/MissionCommandList.cc \
     src/MissionManager/MissionCommandTree.cc \
     src/MissionManager/MissionCommandUIInfo.cc \
     src/MissionManager/MissionController.cc \
     src/MissionManager/MissionItem.cc \
     src/MissionManager/MissionManager.cc \
-    src/MissionManager/ComplexMissionItem.cc \
     src/MissionManager/SimpleMissionItem.cc \
+    src/MissionManager/SurveyMissionItem.cc \
     src/MissionManager/VisualMissionItem.cc \
     src/QGC.cc \
     src/QGCApplication.cc \
