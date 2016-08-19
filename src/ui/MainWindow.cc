@@ -50,7 +50,6 @@
 #include "QGCTabbedInfoView.h"
 #include "CustomCommandWidget.h"
 #include "QGCDockWidget.h"
-#include "UASInfoWidget.h"
 #include "HILDockWidget.h"
 #include "LogDownload.h"
 #include "AppMessages.h"
@@ -72,7 +71,6 @@ enum DockWidgetTypes {
     MAVLINK_INSPECTOR,
     CUSTOM_COMMAND,
     ONBOARD_FILES,
-    STATUS_DETAILS,
     INFO_VIEW,
     HIL_CONFIG,
     ANALYZE,
@@ -83,7 +81,6 @@ static const char *rgDockWidgetNames[] = {
     "MAVLink Inspector",
     "Custom Command",
     "Onboard Files",
-    "Status Details",
     "Info View",
     "HIL Config",
     "Analyze",
@@ -357,9 +354,6 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
                 break;
             case LOG_DOWNLOAD:
                 widget = new LogDownload(widgetName, action, this);
-                break;
-            case STATUS_DETAILS:
-                widget = new UASInfoWidget(widgetName, action, this);
                 break;
             case HIL_CONFIG:
                 widget = new HILDockWidget(widgetName, action, this);

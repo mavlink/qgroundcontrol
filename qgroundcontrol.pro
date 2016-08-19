@@ -245,7 +245,6 @@ FORMS += \
     src/ui/QGCUASFileViewMulti.ui \
     src/ui/uas/UASQuickView.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
-    src/ui/UASInfo.ui \
 }
 
 HEADERS += \
@@ -379,7 +378,6 @@ HEADERS += \
     src/ui/QGCTabbedInfoView.h \
     src/ui/QGCUASFileView.h \
     src/ui/QGCUASFileViewMulti.h \
-    src/ui/uas/UASInfoWidget.h \
     src/ui/uas/UASQuickView.h \
     src/ui/uas/UASQuickViewGaugeItem.h \
     src/ui/uas/UASQuickViewItem.h \
@@ -525,7 +523,6 @@ SOURCES += \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/QGCUASFileView.cc \
     src/ui/QGCUASFileViewMulti.cc \
-    src/ui/uas/UASInfoWidget.cc \
     src/ui/uas/UASQuickView.cc \
     src/ui/uas/UASQuickViewGaugeItem.cc \
     src/ui/uas/UASQuickViewItem.cc \
