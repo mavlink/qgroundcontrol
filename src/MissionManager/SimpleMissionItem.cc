@@ -126,7 +126,7 @@ SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* pa
 
 const SimpleMissionItem& SimpleMissionItem::operator=(const SimpleMissionItem& other)
 {
-    static_cast<VisualMissionItem&>(*this) = other;
+    VisualMissionItem::operator=(other);
 
     setRawEdit(other._rawEdit);
     setDirty(other._dirty);
