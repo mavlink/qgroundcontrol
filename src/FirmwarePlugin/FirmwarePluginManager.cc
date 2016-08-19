@@ -40,6 +40,13 @@ FirmwarePluginManager::~FirmwarePluginManager()
     delete _px4FirmwarePlugin;
 }
 
+QList<MAV_AUTOPILOT> FirmwarePluginManager::knownFirmwareTypes(void) const
+{
+    QList<MAV_AUTOPILOT> list;
+    list << MAV_AUTOPILOT_GENERIC << MAV_AUTOPILOT_PX4 << MAV_AUTOPILOT_ARDUPILOTMEGA;
+    return list;
+}
+
 FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType)
 {
     switch (autopilotType) {

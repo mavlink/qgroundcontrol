@@ -82,7 +82,6 @@
 #include "CoordinateVector.h"
 #include "MainToolBarController.h"
 #include "MissionController.h"
-#include "MissionCommands.h"
 #include "FlightDisplayViewController.h"
 #include "VideoSurface.h"
 #include "VideoReceiver.h"
@@ -93,6 +92,7 @@
 #include "SimulatedPosition.h"
 #include "PositionManager.h"
 #include "FollowMe.h"
+#include "MissionCommandTree.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -365,10 +365,10 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<QGCMapPalette>  ("QGroundControl.Palette", 1, 0, "QGCMapPalette");
 
     qmlRegisterUncreatableType<CoordinateVector>    ("QGroundControl",                  1, 0, "CoordinateVector",       "Reference only");
-    qmlRegisterUncreatableType<MissionCommands>     ("QGroundControl",                  1, 0, "MissionCommands",        "Reference only");
     qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     "Reference only");
     qmlRegisterUncreatableType<VideoReceiver>       ("QGroundControl",                  1, 0, "VideoReceiver",          "Reference only");
     qmlRegisterUncreatableType<VideoSurface>        ("QGroundControl",                  1, 0, "VideoSurface",           "Reference only");
+    qmlRegisterUncreatableType<MissionCommandTree>  ("QGroundControl",                  1, 0, "MissionCommandTree",     "Reference only");
 
     qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",        "Reference only");
     qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",       "Reference only");

@@ -228,12 +228,31 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
     return list;
 }
 
-void PX4FirmwarePlugin::missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const
+QString PX4FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
 {
-    // No overrides
-    commonJsonFilename = QStringLiteral(":/json/PX4/MavCmdInfoCommon.json");
-    fixedWingJsonFilename = QStringLiteral(":/json/PX4/MavCmdInfoFixedWing.json");
-    multiRotorJsonFilename = QStringLiteral(":/json/PX4/MavCmdInfoMultiRotor.json");
+    switch (vehicleType) {
+    case MAV_TYPE_GENERIC:
+        return QStringLiteral(":/json/PX4/MavCmdInfoCommon.json");
+        break;
+    case MAV_TYPE_FIXED_WING:
+        return QStringLiteral(":/json/PX4/MavCmdInfoFixedWing.json");
+        break;
+    case MAV_TYPE_QUADROTOR:
+        return QStringLiteral(":/json/PX4/MavCmdInfoMultiRotor.json");
+        break;
+    case MAV_TYPE_VTOL_QUADROTOR:
+        return QStringLiteral(":/json/APM/MavCmdInfoVTOL.json");
+        break;
+    case MAV_TYPE_SUBMARINE:
+        return QStringLiteral(":/json/PX4/MavCmdInfoSub.json");
+        break;
+    case MAV_TYPE_GROUND_ROVER:
+        return QStringLiteral(":/json/PX4/MavCmdInfoRover.json");
+        break;
+    default:
+        qWarning() << "PX4FirmwarePlugin::missionCommandOverrides called with bad MAV_TYPE:" << vehicleType;
+        return QString();
+    }
 }
 
 QObject* PX4FirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)

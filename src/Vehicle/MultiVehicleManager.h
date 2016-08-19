@@ -45,7 +45,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  vehicles                        READ vehicles                                                       CONSTANT)
     Q_PROPERTY(bool                 gcsHeartBeatEnabled             READ gcsHeartbeatEnabled            WRITE setGcsHeartbeatEnabled    NOTIFY gcsHeartBeatEnabledChanged)
 
-    /// A disconnected vehicle is used to access FactGroup information for the Vehicle object when no active vehicle is available
+    /// A disconnected vehicle is used to simulate vehicle information while no vehicle is connected.
     Q_PROPERTY(Vehicle*             disconnectedVehicle             MEMBER _disconnectedVehicle                                         CONSTANT)
 
     // Methods

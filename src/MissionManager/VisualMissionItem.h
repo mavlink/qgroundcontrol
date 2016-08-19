@@ -25,7 +25,7 @@
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
-#include "MissionCommands.h"
+#include "Vehicle.h"
 
 // Abstract base class for all Simple and Complex visual mission objects.
 class VisualMissionItem : public QObject

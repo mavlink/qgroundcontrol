@@ -163,12 +163,23 @@
     </qresource>
     <qresource prefix="/json">
         <file alias="MavCmdInfoCommon.json">src/MissionManager/MavCmdInfoCommon.json</file>
+        <file alias="MavCmdInfoFixedWing.json">src/MissionManager/MavCmdInfoFixedWing.json</file>
+        <file alias="MavCmdInfoMultiRotor.json">src/MissionManager/MavCmdInfoMultiRotor.json</file>
+        <file alias="MavCmdInfoRover.json">src/MissionManager/MavCmdInfoRover.json</file>
+        <file alias="MavCmdInfoSub.json">src/MissionManager/MavCmdInfoSub.json</file>
+        <file alias="MavCmdInfoVTOL.json">src/MissionManager/MavCmdInfoVTOL.json</file>
         <file alias="APM/MavCmdInfoCommon.json">src/FirmwarePlugin/APM/MavCmdInfoCommon.json</file>
         <file alias="APM/MavCmdInfoFixedWing.json">src/FirmwarePlugin/APM/MavCmdInfoFixedWing.json</file>
         <file alias="APM/MavCmdInfoMultiRotor.json">src/FirmwarePlugin/APM/MavCmdInfoMultiRotor.json</file>
+        <file alias="APM/MavCmdInfoRover.json">src/FirmwarePlugin/APM/MavCmdInfoRover.json</file>
+        <file alias="APM/MavCmdInfoSub.json">src/FirmwarePlugin/APM/MavCmdInfoSub.json</file>
+        <file alias="APM/MavCmdInfoVTOL.json">src/FirmwarePlugin/APM/MavCmdInfoVTOL.json</file>
         <file alias="PX4/MavCmdInfoCommon.json">src/FirmwarePlugin/PX4/MavCmdInfoCommon.json</file>
         <file alias="PX4/MavCmdInfoFixedWing.json">src/FirmwarePlugin/PX4/MavCmdInfoFixedWing.json</file>
         <file alias="PX4/MavCmdInfoMultiRotor.json">src/FirmwarePlugin/PX4/MavCmdInfoMultiRotor.json</file>
+        <file alias="PX4/MavCmdInfoRover.json">src/FirmwarePlugin/PX4/MavCmdInfoRover.json</file>
+        <file alias="PX4/MavCmdInfoSub.json">src/FirmwarePlugin/PX4/MavCmdInfoSub.json</file>
+        <file alias="PX4/MavCmdInfoVTOL.json">src/FirmwarePlugin/PX4/MavCmdInfoVTOL.json</file>
         <file alias="Vehicle/VehicleFact.json">src/Vehicle/VehicleFact.json</file>
         <file alias="Vehicle/BatteryFact.json">src/Vehicle/BatteryFact.json</file>
         <file alias="Vehicle/GPSFact.json">src/Vehicle/GPSFact.json</file>
