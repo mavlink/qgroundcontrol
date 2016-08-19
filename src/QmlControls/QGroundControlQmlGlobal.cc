@@ -19,18 +19,20 @@
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeFact =        NULL;
-FactMetaData* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeMetaData =    NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingVehicleTypeFact =         NULL;
-FactMetaData* QGroundControlQmlGlobal::_offlineEditingVehicleTypeMetaData =     NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingCruiseSpeedFact =         NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingHoverSpeedFact =          NULL;
-SettingsFact* QGroundControlQmlGlobal::_distanceUnitsFact =                     NULL;
-FactMetaData* QGroundControlQmlGlobal::_distanceUnitsMetaData =                 NULL;
-SettingsFact* QGroundControlQmlGlobal::_areaUnitsFact =                         NULL;
-FactMetaData* QGroundControlQmlGlobal::_areaUnitsMetaData =                     NULL;
-SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                        NULL;
-FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                    NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeFact =            NULL;
+FactMetaData* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeMetaData =        NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingVehicleTypeFact =             NULL;
+FactMetaData* QGroundControlQmlGlobal::_offlineEditingVehicleTypeMetaData =         NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingCruiseSpeedFact =             NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingHoverSpeedFact =              NULL;
+SettingsFact* QGroundControlQmlGlobal::_distanceUnitsFact =                         NULL;
+FactMetaData* QGroundControlQmlGlobal::_distanceUnitsMetaData =                     NULL;
+SettingsFact* QGroundControlQmlGlobal::_areaUnitsFact =                             NULL;
+FactMetaData* QGroundControlQmlGlobal::_areaUnitsMetaData =                         NULL;
+SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                            NULL;
+FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                        NULL;
+SettingsFact* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceFact =       NULL;
+FactMetaData* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceMetaData =   NULL;
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
 const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
@@ -338,6 +340,27 @@ Fact* QGroundControlQmlGlobal::speedUnits(void)
     }
 
     return _speedUnitsFact;
+}
+
+Fact* QGroundControlQmlGlobal::batteryPercentRemainingAnnounce(void)
+{
+    if (!_batteryPercentRemainingAnnounceFact) {
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+
+        _batteryPercentRemainingAnnounceFact = new SettingsFact(QString(), "batteryPercentRemainingAnnounce", FactMetaData::valueTypeUint32, 30);
+        _batteryPercentRemainingAnnounceMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
+
+        _batteryPercentRemainingAnnounceMetaData->setDecimalPlaces(0);
+        _batteryPercentRemainingAnnounceMetaData->setShortDescription(tr("Percent announce"));
+        _batteryPercentRemainingAnnounceMetaData->setRawUnits("%");
+        _batteryPercentRemainingAnnounceMetaData->setRawMin(0);
+        _batteryPercentRemainingAnnounceMetaData->setRawMax(100);
+
+        _batteryPercentRemainingAnnounceFact->setMetaData(_batteryPercentRemainingAnnounceMetaData);
+    }
+
+    return _batteryPercentRemainingAnnounceFact;
 }
 
 bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPointF line2A, QPointF line2B)
