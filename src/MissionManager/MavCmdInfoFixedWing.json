@@ -1,5 +1,5 @@
 {
-    "comment":  "PX4 Pro, Any Vehicle",
+    "comment":  "Any Firmware, Fixed Wing",
 
     "version": 1,
 
@@ -7,7 +7,7 @@
         {
             "id":           16,
             "comment":      "MAV_CMD_NAV_WAYPOINT",
-            "paramRemove":  "2,3,4"
+            "paramRemove":  "4"
         }
     ]
 }

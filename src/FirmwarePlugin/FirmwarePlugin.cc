@@ -38,12 +38,12 @@ QString FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) cons
         const char* name;
     };
     static const struct Bit2Name rgBit2Name[] = {
-        { MAV_MODE_FLAG_MANUAL_INPUT_ENABLED,   "Manual" },
-        { MAV_MODE_FLAG_STABILIZE_ENABLED,      "Stabilize" },
-        { MAV_MODE_FLAG_GUIDED_ENABLED,         "Guided" },
-        { MAV_MODE_FLAG_AUTO_ENABLED,           "Auto" },
-        { MAV_MODE_FLAG_TEST_ENABLED,           "Test" },
-    };
+    { MAV_MODE_FLAG_MANUAL_INPUT_ENABLED,   "Manual" },
+    { MAV_MODE_FLAG_STABILIZE_ENABLED,      "Stabilize" },
+    { MAV_MODE_FLAG_GUIDED_ENABLED,         "Guided" },
+    { MAV_MODE_FLAG_AUTO_ENABLED,           "Auto" },
+    { MAV_MODE_FLAG_TEST_ENABLED,           "Test" },
+};
 
     Q_UNUSED(custom_mode);
 
@@ -140,12 +140,31 @@ QList<MAV_CMD> FirmwarePlugin::supportedMissionCommands(void)
     return QList<MAV_CMD>();
 }
 
-void FirmwarePlugin::missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const
+QString FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
 {
-    // No overrides
-    commonJsonFilename.clear();
-    fixedWingJsonFilename.clear();
-    multiRotorJsonFilename.clear();
+    switch (vehicleType) {
+    case MAV_TYPE_GENERIC:
+        return QStringLiteral(":/json/MavCmdInfoCommon.json");
+        break;
+    case MAV_TYPE_FIXED_WING:
+        return QStringLiteral(":/json/MavCmdInfoFixedWing.json");
+        break;
+    case MAV_TYPE_QUADROTOR:
+        return QStringLiteral(":/json/MavCmdInfoMultiRotor.json");
+        break;
+    case MAV_TYPE_VTOL_QUADROTOR:
+        return QStringLiteral(":/json/MavCmdInfoVTOL.json");
+        break;
+    case MAV_TYPE_SUBMARINE:
+        return QStringLiteral(":/json/MavCmdInfoSub.json");
+        break;
+    case MAV_TYPE_GROUND_ROVER:
+        return QStringLiteral(":/json/MavCmdInfoRover.json");
+        break;
+    default:
+        qWarning() << "FirmwarePlugin::missionCommandOverrides called with bad MAV_TYPE:" << vehicleType;
+        return QString();
+    }
 }
 
 void FirmwarePlugin::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)

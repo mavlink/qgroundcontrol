@@ -37,6 +37,8 @@ public:
     FirmwarePluginManager(QGCApplication* app);
     ~FirmwarePluginManager();
 
+    QList<MAV_AUTOPILOT> knownFirmwareTypes(void) const;
+
     /// Returns appropriate plugin for autopilot type.
     ///     @param autopilotType Type of autopilot to return plugin for.
     ///     @param vehicleType Vehicle type of autopilot to return plugin for.

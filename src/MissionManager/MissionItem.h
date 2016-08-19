@@ -25,7 +25,6 @@
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
-#include "MissionCommands.h"
 
 class ComplexMissionItem;
 class SimpleMissionItem;
