@@ -195,7 +195,6 @@ void SimpleMissionItem::_setupMetaData(void)
         _altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
         _altitudeMetaData->setRawUnits("m");
         _altitudeMetaData->setDecimalPlaces(2);
-        _altitudeMetaData->setAppSettingsTranslators();
 
         enumStrings.clear();
         enumValues.clear();
@@ -378,7 +377,6 @@ QmlObjectListModel* SimpleMissionItem::textFieldFacts(void)
                 paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                 paramMetaData->setEnumInfo(paramInfo->enumStrings(), paramInfo->enumValues());
                 paramMetaData->setRawUnits(paramInfo->units());
-                paramMetaData->setAppSettingsTranslators();
                 paramFact->setMetaData(paramMetaData);
                 model->append(paramFact);
 
