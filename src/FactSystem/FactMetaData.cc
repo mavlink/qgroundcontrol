@@ -37,7 +37,7 @@ const qreal FactMetaData::UnitConsts_s::feetToMeters = 0.3048;
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
     { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,   FactMetaData::_degreesToCentiDegrees },
     { "radians",        "deg",  FactMetaData::_radiansToDegrees,        FactMetaData::_degreesToRadians },
-    { "norm",           "%",  FactMetaData::_normToPercent,           FactMetaData::_percentToNorm },
+    { "norm",           "%",    FactMetaData::_normToPercent,           FactMetaData::_percentToNorm },
 };
 
 // Translations driven by app settings
@@ -48,11 +48,11 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "m^2",    "m^2",      false,  QGroundControlQmlGlobal::AreaUnitsSquareMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m",      "ft",       false,  QGroundControlQmlGlobal::DistanceUnitsFeet,             FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "meters", "ft",       false,  QGroundControlQmlGlobal::DistanceUnitsFeet,             FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
-    { "m^2",    "km^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareKilometers,         FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
-    { "m^2",    "ha",       false,  QGroundControlQmlGlobal::AreaUnitsHectares,         FactMetaData::_squareMetersToHectares,               FactMetaData::_hectaresToSquareMeters },
-    { "m^2",    "ft^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareFeet,         FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
-    { "m^2",    "ac",       false,  QGroundControlQmlGlobal::AreaUnitsAcres,         FactMetaData::_squareMetersToAcres,                 FactMetaData::_acresToSquareMeters },
-    { "m^2",    "mi^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareMiles,         FactMetaData::_squareMetersToSquareMiles,           FactMetaData::_squareMilesToSquareMeters },
+    { "m^2",    "km^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareKilometers,     FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
+    { "m^2",    "ha",       false,  QGroundControlQmlGlobal::AreaUnitsHectares,             FactMetaData::_squareMetersToHectares,              FactMetaData::_hectaresToSquareMeters },
+    { "m^2",    "ft^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareFeet,           FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
+    { "m^2",    "ac",       false,  QGroundControlQmlGlobal::AreaUnitsAcres,                FactMetaData::_squareMetersToAcres,                 FactMetaData::_acresToSquareMeters },
+    { "m^2",    "mi^2",     false,  QGroundControlQmlGlobal::AreaUnitsSquareMiles,          FactMetaData::_squareMetersToSquareMiles,           FactMetaData::_squareMilesToSquareMeters },
     { "m/s",    "ft/s",     true,   QGroundControlQmlGlobal::SpeedUnitsFeetPerSecond,       FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "m/s",    "mph",      true,   QGroundControlQmlGlobal::SpeedUnitsMilesPerHour,        FactMetaData::_metersPerSecondToMilesPerHour,       FactMetaData::_milesPerHourToMetersPerSecond },
     { "m/s",    "km/h",     true,   QGroundControlQmlGlobal::SpeedUnitsKilometersPerHour,   FactMetaData::_metersPerSecondToKilometersPerHour,  FactMetaData::_kilometersPerHourToMetersPerSecond },
@@ -383,6 +383,7 @@ void FactMetaData::setBuiltInTranslator(void)
         // No translation if enum
         setTranslators(_defaultTranslator, _defaultTranslator);
         _cookedUnits = _rawUnits;
+        return;
     } else {
         for (size_t i=0; i<sizeof(_rgBuiltInTranslations)/sizeof(_rgBuiltInTranslations[0]); i++) {
             const BuiltInTranslation_s* pBuiltInTranslation = &_rgBuiltInTranslations[i];
@@ -390,9 +391,13 @@ void FactMetaData::setBuiltInTranslator(void)
             if (pBuiltInTranslation->rawUnits == _rawUnits.toLower()) {
                 _cookedUnits = pBuiltInTranslation->cookedUnits;
                 setTranslators(pBuiltInTranslation->rawTranslator, pBuiltInTranslation->cookedTranslator);
+                return;
             }
         }
     }
+
+    // Translator not yet set, try app settings translators
+    _setAppSettingsTranslators();
 }
 
 QVariant FactMetaData::_degreesToRadians(const QVariant& degrees)
@@ -584,7 +589,9 @@ size_t FactMetaData::typeToSize(ValueType_t type)
     }
 }
 
-void FactMetaData::setAppSettingsTranslators(void)
+
+/// Set translators according to app settings
+void FactMetaData::_setAppSettingsTranslators(void)
 {
     if (!_enumStrings.count()) {
         for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {

@@ -234,9 +234,6 @@ void FactGroup::_loadMetaData(const QString& jsonFilename)
             }
         }
 
-        // All FactGroup Facts use translator based on app settings
-        metaData->setAppSettingsTranslators();
-
         _nameToFactMetaDataMap[name] = metaData;
     }
 }
