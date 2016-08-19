@@ -15,7 +15,7 @@
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
 #include "SimpleMissionItem.h"
-#include "ComplexMissionItem.h"
+#include "SurveyMissionItem.h"
 #include "JsonHelper.h"
 #include "ParameterLoader.h"
 #include "QGroundControlQmlGlobal.h"
@@ -200,7 +200,7 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
 int MissionController::insertComplexMissionItem(QGeoCoordinate coordinate, int i)
 {
     int sequenceNumber = _nextSequenceNumber();
-    ComplexMissionItem* newItem = new ComplexMissionItem(_activeVehicle, this);
+    SurveyMissionItem* newItem = new SurveyMissionItem(_activeVehicle, this);
     newItem->setSequenceNumber(sequenceNumber);
     newItem->setCoordinate(coordinate);
     _initVisualItem(newItem);
@@ -220,9 +220,7 @@ void MissionController::removeMissionItem(int index)
     _deinitVisualItem(item);
     if (!item->isSimpleItem()) {
         ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(_complexItems->removeOne(item));
-        if (complexItem) {
-            complexItem->deleteLater();
-        } else {
+        if (!complexItem) {
             qWarning() << "Complex item missing";
         }
     }
@@ -299,7 +297,7 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
             return false;
         }
 
-        ComplexMissionItem* item = new ComplexMissionItem(_activeVehicle, this);
+        SurveyMissionItem* item = new SurveyMissionItem(_activeVehicle, this);
         if (item->load(itemValue.toObject(), errorString)) {
             qCDebug(MissionControllerLog) << "Json load: complex item start:stop" << item->sequenceNumber() << item->lastSequenceNumber();
             complexItems->append(item);
@@ -321,7 +319,7 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
 
         // If there is a complex item that should be next in sequence add it in
         if (nextComplexItemIndex < complexItems->count()) {
-            ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(complexItems->get(nextComplexItemIndex));
+            SurveyMissionItem* complexItem = qobject_cast<SurveyMissionItem*>(complexItems->get(nextComplexItemIndex));
 
             if (complexItem->sequenceNumber() == nextSequenceNumber) {
                 qCDebug(MissionControllerLog) << "Json load: injecting complex item expectedSequence:actualSequence:" << nextSequenceNumber << complexItem->sequenceNumber();
@@ -832,11 +830,11 @@ void MissionController::_recalcAltitudeRangeBearing()
                             }
                         }
                     } else {
-                        missionDistance += qobject_cast<ComplexMissionItem*>(item)->surveyDistance();
+                        missionDistance += qobject_cast<ComplexMissionItem*>(item)->complexDistance();
                         telemetryDistance = qobject_cast<ComplexMissionItem*>(item)->greatestDistanceTo(homeItem->exitCoordinate());
 
                         if (vtolCalc){
-                            cruiseDistance += qobject_cast<ComplexMissionItem*>(item)->surveyDistance(); //assume all survey missions undertaken in cruise
+                            cruiseDistance += qobject_cast<ComplexMissionItem*>(item)->complexDistance(); //assume all survey missions undertaken in cruise
                         }
                     }
 
@@ -845,11 +843,11 @@ void MissionController::_recalcAltitudeRangeBearing()
                     }
                 }
                 else if (lastCoordinateItem == homeItem && !item->isSimpleItem()){
-                    missionDistance += qobject_cast<ComplexMissionItem*>(item)->surveyDistance();
+                    missionDistance += qobject_cast<ComplexMissionItem*>(item)->complexDistance();
                     missionMaxTelemetry = qobject_cast<ComplexMissionItem*>(item)->greatestDistanceTo(homeItem->exitCoordinate());
 
                     if (vtolCalc){
-                        cruiseDistance += qobject_cast<ComplexMissionItem*>(item)->surveyDistance(); //assume all survey missions undertaken in cruise
+                        cruiseDistance += qobject_cast<ComplexMissionItem*>(item)->complexDistance(); //assume all survey missions undertaken in cruise
                     }
                 }
                 lastCoordinateItem = item;
@@ -1015,7 +1013,7 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
         // We need to track changes of lastSequenceNumber so we can recalc sequence numbers for subsequence items
         ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
         connect(complexItem, &ComplexMissionItem::lastSequenceNumberChanged, this, &MissionController::_recalcSequence);
-        connect(complexItem, &ComplexMissionItem::surveyDistanceChanged, this, &MissionController::_recalcAltitudeRangeBearing);
+        connect(complexItem, &ComplexMissionItem::complexDistanceChanged, this, &MissionController::_recalcAltitudeRangeBearing);
     }
 }
 
