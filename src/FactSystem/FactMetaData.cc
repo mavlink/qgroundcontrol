@@ -507,7 +507,7 @@ QVariant FactMetaData::_metersPerSecondToKnots(const QVariant& metersPerSecond)
 
 QVariant FactMetaData::_knotsToMetersPerSecond(const QVariant& knots)
 {
-    return QVariant(knots.toDouble() * (constants.knotsToKPH / (1000.0 * constants.secondsPerHour)));
+    return QVariant(knots.toDouble() * (1000.0 * constants.knotsToKPH / constants.secondsPerHour));
 }
 
 QVariant FactMetaData::_percentToNorm(const QVariant& percent)
