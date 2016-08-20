@@ -173,7 +173,7 @@ MacBuild {
 
     LIBS += \
         -F$$BASEDIR/libs/lib/Frameworks \
-        -framework SDL
+        -framework SDL2
 } else:LinuxBuild {
     PKGCONFIG = sdl2
 } else:WindowsBuild {
