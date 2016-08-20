@@ -77,6 +77,7 @@ void Fact::forceSetRawValue(const QVariant& value)
             _rawValue.setValue(typedValue);
             _sendValueChangedSignal(cookedValue());
             emit _containerRawValueChanged(rawValue());
+            emit rawValueChanged(_rawValue);
         }
     } else {
         qWarning() << "Meta data pointer missing";
@@ -94,6 +95,7 @@ void Fact::setRawValue(const QVariant& value)
                 _rawValue.setValue(typedValue);
                 _sendValueChangedSignal(cookedValue());
                 emit _containerRawValueChanged(rawValue());
+                emit rawValueChanged(_rawValue);
             }
         }
     } else {
@@ -136,6 +138,7 @@ void Fact::_containerSetRawValue(const QVariant& value)
     _rawValue = value;
     _sendValueChangedSignal(cookedValue());
     emit vehicleUpdated(_rawValue);
+    emit rawValueChanged(_rawValue);
 }
 
 QString Fact::name(void) const
