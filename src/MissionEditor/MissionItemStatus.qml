@@ -50,8 +50,6 @@ Rectangle {
     property real   _gradient:          _statusValid && _currentMissionItem.distance > 0 ? Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) : 0
     property real   _gradientPercent:   isNaN(_gradient) ? 0 : _gradient * 100
     property real   _azimuth:           _statusValid ? _currentMissionItem.azimuth : -1
-    property int    _numberShots:       _currentSurvey ? _currentMissionItem.cameraShots : 0
-    property real   _coveredArea:       _currentSurvey ? _currentMissionItem.coveredArea : 0
     property real   _missionDistance:   _missionValid ? missionDistance : 0
     property real   _missionMaxTelemetry: _missionValid ? missionMaxTelemetry : 0
     property real   _missionTime:       _missionValid && _missionSpeed > 0 ?  (_isVTOL ? _hoverTime + _cruiseTime : _missionDistance / _missionSpeed) : 0
@@ -71,8 +69,6 @@ Rectangle {
     property string _altText:           _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _gradientText:      _statusValid ? _gradientPercent.toFixed(0) + "%" : " "
     property string _azimuthText:       _statusValid ? Math.round(_azimuth) : " "
-    property string _numberShotsText:   _currentSurvey ? _numberShots.toFixed(0) : " "
-    property string _coveredAreaText:   _currentSurvey ? QGroundControl.squareMetersToAppSettingsAreaUnits(_coveredArea).toFixed(2) + " " + QGroundControl.appSettingsAreaUnitsString : " "
     property string _missionDistanceText: _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_missionDistance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
     property string _missionTimeText:     _missionValid ? _missionTime.toFixed(0) + "s" : " "
     property string _missionMaxTelemetryText:  _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
@@ -113,24 +109,6 @@ Rectangle {
 
             QGCLabel { text: qsTr("Azimuth:") }
             QGCLabel { text: _azimuthText }
-
-            QGCLabel {
-                text: qsTr("# shots:")
-                visible: _currentSurvey
-            }
-            QGCLabel {
-                text: _numberShotsText
-                visible: _currentSurvey
-            }
-
-            QGCLabel {
-                text: qsTr("Covered area:")
-                visible: _currentSurvey
-            }
-            QGCLabel {
-                text: _coveredAreaText
-                visible: _currentSurvey
-            }
         }
 
         ListView {
