@@ -22,7 +22,44 @@ Rectangle {
 
     property real _margin: ScreenTools.defaultFontPixelWidth / 2
 
+    property var _cameraInfoCanonSX260: { "focalLength": 4.5, "sensorHeight": 4.55, "sensorWidth": 6.17 }
+
+    function recalcFromCameraValues() {
+        var focalLength = Number(focalLengthField.text)
+        var sensorWidth = Number(sensorWidthField.text)
+        var sensorHeight = Number(sensorHeightField.text)
+        var overlap = Number(imageOverlapField.text)
+
+        if (focalLength <= 0.0 || sensorWidth <= 0.0 || sensorHeight <= 0.0) {
+            return
+        }
+
+        var scaledFocalLengthMM = (1000.0 * missionItem.gridAltitude.rawValue) / focalLength
+        var imageWidthM = (sensorWidth * scaledFocalLengthMM) / 1000.0;
+        var imageHeightM = (sensorHeight * scaledFocalLengthMM) / 1000.0;
+
+        var gridSpacing
+        var cameraTriggerDistance
+        if (cameraOrientationLandscape.checked) {
+            gridSpacing = imageWidthM
+            cameraTriggerDistance = imageHeightM
+        } else {
+            gridSpacing = imageHeightM
+            cameraTriggerDistance = imageWidthM
+        }
+        gridSpacing = (1.0 - (overlap / 100.0)) * gridSpacing
+        cameraTriggerDistance = (1.0 - (overlap / 100.0)) * cameraTriggerDistance
+
+        missionItem.gridSpacing.rawValue = gridSpacing
+        missionItem.cameraTriggerDistance.rawValue = cameraTriggerDistance
+    }
+
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
+    ExclusiveGroup {
+        id:                 cameraOrientationGroup
+        onCurrentChanged:   recalcFromCameraValues()
+    }
 
     Column {
         id:                 editorColumn
@@ -113,6 +150,79 @@ Rectangle {
             }
 
             onPolygonAdjustVertex: missionItem.adjustPolygonCoordinate(vertexIndex, vertexCoordinate)
+        }
+
+        QGCLabel { text: qsTr("Camera:") }
+
+        Rectangle {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            height:         1
+            color:          qgcPal.text
+        }
+
+        Row {
+            spacing: ScreenTools.defaultFontPixelWidth
+
+
+            QGCRadioButton {
+                id:             cameraOrientationLandscape
+                text:           "Landscape"
+                checked:        true
+                exclusiveGroup: cameraOrientationGroup
+            }
+
+            QGCRadioButton {
+                id:             cameraOrientationPortrait
+                text:           "Portrait"
+                exclusiveGroup: cameraOrientationGroup
+            }
+        }
+
+        Grid {
+            columns: 2
+            spacing: ScreenTools.defaultFontPixelWidth
+            verticalItemAlignment: Grid.AlignVCenter
+
+            QGCLabel { text: qsTr("Focal length:") }
+            QGCTextField {
+                id:         focalLengthField
+                unitsLabel: "mm"
+                showUnits:  true
+                text:       _cameraInfoCanonSX260.focalLength.toString()
+
+                onEditingFinished: recalcFromCameraValues()
+            }
+
+            QGCLabel { text: qsTr("Sensor Width:") }
+            QGCTextField {
+                id:         sensorWidthField
+                unitsLabel: "mm"
+                showUnits:  true
+                text:       _cameraInfoCanonSX260.sensorWidth.toString()
+
+                onEditingFinished: recalcFromCameraValues()
+            }
+
+            QGCLabel { text: qsTr("Sensor height:") }
+            QGCTextField {
+                id:         sensorHeightField
+                unitsLabel: "mm"
+                showUnits:  true
+                text:       _cameraInfoCanonSX260.sensorHeight.toString()
+
+                onEditingFinished: recalcFromCameraValues()
+            }
+
+            QGCLabel { text: qsTr("Image overlap:") }
+            QGCTextField {
+                id:         imageOverlapField
+                unitsLabel: "%"
+                showUnits:  true
+                text:       "0"
+
+                onEditingFinished: recalcFromCameraValues()
+            }
         }
 
         QGCLabel { text: qsTr("Polygon:") }
