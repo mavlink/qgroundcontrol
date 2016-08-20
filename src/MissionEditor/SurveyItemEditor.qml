@@ -1,6 +1,7 @@
 import QtQuick                  2.2
 import QtQuick.Controls         1.2
 
+import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 import QGroundControl.Controls      1.0
@@ -38,7 +39,7 @@ Rectangle {
         }
 
         Repeater {
-            model: [ missionItem.gridAltitude, missionItem.gridAngle, missionItem.gridSpacing ]
+            model: [ missionItem.gridAngle, missionItem.gridSpacing, missionItem.gridAltitude ]
 
             Item {
                 anchors.left:   parent.left
@@ -114,31 +115,64 @@ Rectangle {
             onPolygonAdjustVertex: missionItem.adjustPolygonCoordinate(vertexIndex, vertexCoordinate)
         }
 
-        QGCButton {
-            text:       editorMap.polygonDraw.drawingPolygon ? qsTr("Finish Draw") : qsTr("Draw Polygon")
-            enabled:    ((editorMap.polygonDraw.drawingPolygon && editorMap.polygonDraw.polygonReady) || !editorMap.polygonDraw.drawingPolygon) &&
-                        !editorMap.polygonDraw.adjustingPolygon
+        QGCLabel { text: qsTr("Polygon:") }
 
-            onClicked: {
-                if (editorMap.polygonDraw.drawingPolygon) {
-                    editorMap.polygonDraw.finishCapturePolygon()
-                } else {
-                    editorMap.polygonDraw.startCapturePolygon()
+        Rectangle {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            height:         1
+            color:          qgcPal.text
+        }
+
+        Row {
+            spacing: ScreenTools.defaultFontPixelWidth
+
+            QGCButton {
+                text:       editorMap.polygonDraw.drawingPolygon ? qsTr("Finish Draw") : qsTr("Draw")
+                visible:    !editorMap.polygonDraw.adjustingPolygon
+                enabled:    ((editorMap.polygonDraw.drawingPolygon && editorMap.polygonDraw.polygonReady) || !editorMap.polygonDraw.drawingPolygon)
+
+                onClicked: {
+                    if (editorMap.polygonDraw.drawingPolygon) {
+                        editorMap.polygonDraw.finishCapturePolygon()
+                    } else {
+                        editorMap.polygonDraw.startCapturePolygon()
+                    }
+                }
+            }
+
+            QGCButton {
+                text:       editorMap.polygonDraw.adjustingPolygon ? qsTr("Finish Adjust") : qsTr("Adjust")
+                visible:    missionItem.polygonPath.length > 0 && !editorMap.polygonDraw.drawingPolygon
+
+                onClicked: {
+                    if (editorMap.polygonDraw.adjustingPolygon) {
+                        editorMap.polygonDraw.finishAdjustPolygon()
+                    } else {
+                        editorMap.polygonDraw.startAdjustPolygon(missionItem.polygonPath)
+                    }
                 }
             }
         }
 
-        QGCButton {
-            text:       editorMap.polygonDraw.adjustingPolygon ? qsTr("Finish Adjust") : qsTr("Adjust Polygon")
-            enabled:    !editorMap.polygonDraw.drawingPolygon
+        QGCLabel { text: qsTr("Statistics:") }
 
-            onClicked: {
-                if (editorMap.polygonDraw.adjustingPolygon) {
-                    editorMap.polygonDraw.finishAdjustPolygon()
-                } else {
-                    editorMap.polygonDraw.startAdjustPolygon(missionItem.polygonPath)
-                }
-            }
+        Rectangle {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            height:         1
+            color:          qgcPal.text
+        }
+
+        Grid {
+            columns: 2
+            spacing: ScreenTools.defaultFontPixelWidth
+
+            QGCLabel { text: qsTr("Survey area:") }
+            QGCLabel { text: QGroundControl.squareMetersToAppSettingsAreaUnits(missionItem.coveredArea).toFixed(2) + " " + QGroundControl.appSettingsAreaUnitsString }
+
+            QGCLabel { text: qsTr("# shots:") }
+            QGCLabel { text: missionItem.cameraShots }
         }
     }
 }
