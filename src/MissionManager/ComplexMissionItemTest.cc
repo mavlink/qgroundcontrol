@@ -170,7 +170,7 @@ void ComplexMissionItemTest::_testClearPolygon(void)
 
 void ComplexMissionItemTest::_testCameraTrigger(void)
 {
-    QVERIFY(!_complexItem->property("cameraTrigger").toBool());
+    QCOMPARE(_complexItem->property("cameraTrigger").toBool(), true);
 
     // Turning on/off camera triggering while there is no grid should trigger:
     //      cameraTriggerChanged
@@ -178,17 +178,18 @@ void ComplexMissionItemTest::_testCameraTrigger(void)
     // lastSequenceNumber should not change
 
     int lastSeq = _complexItem->lastSequenceNumber();
-    _complexItem->setProperty("cameraTrigger", true);
+
+    _complexItem->setProperty("cameraTrigger", false);
     QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask | cameraTriggerChangedMask));
-    QVERIFY(_multiSpy->pullBoolFromSignalIndex(cameraTriggerChangedIndex));
+    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(cameraTriggerChangedIndex));
     QCOMPARE(_complexItem->lastSequenceNumber(), lastSeq);
 
     _complexItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
-    _complexItem->setProperty("cameraTrigger", false);
+    _complexItem->setProperty("cameraTrigger", true);
     QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask | cameraTriggerChangedMask));
-    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(cameraTriggerChangedIndex));
+    QVERIFY(_multiSpy->pullBoolFromSignalIndex(cameraTriggerChangedIndex));
     QCOMPARE(_complexItem->lastSequenceNumber(), lastSeq);
 
     // Set up a grid
@@ -203,20 +204,20 @@ void ComplexMissionItemTest::_testCameraTrigger(void)
     lastSeq = _complexItem->lastSequenceNumber();
     QVERIFY(lastSeq > 0);
 
-    // Turning on camera triggering should add two more mission items, this should trigger:
+    // Turning off camera triggering should remove two camera trigger mission items, this should trigger:
     //      lastSequenceNumberChanged
     //      dirtyChanged
 
-    _complexItem->setProperty("cameraTrigger", true);
+    _complexItem->setProperty("cameraTrigger", false);
     QVERIFY(_multiSpy->checkOnlySignalByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
-    QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq + 2);
+    QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq - 2);
 
     _complexItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
-    // Turn off camera triggering and make sure things go back to previous count
+    // Turn on camera triggering and make sure things go back to previous count
 
-    _complexItem->setProperty("cameraTrigger", false);
+    _complexItem->setProperty("cameraTrigger", true);
     QVERIFY(_multiSpy->checkOnlySignalByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
     QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq);
 }
