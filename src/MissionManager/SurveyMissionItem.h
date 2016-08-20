@@ -50,8 +50,8 @@ public:
     Fact* gridSpacing(void)     { return &_gridSpacingFact; }
     Fact* cameraTriggerDistance(void) { return &_cameraTriggerDistanceFact; }
 
-    int     cameraShots         (void) const { return _cameraShots; }
-    double  coveredArea         (void) const { return _coveredArea; }
+    int     cameraShots(void) const;
+    double  coveredArea(void) const { return _coveredArea; }
 
     // Overrides from ComplexMissionItem
 
@@ -125,10 +125,14 @@ private:
     int                 _cameraShots;
     double              _coveredArea;
 
-    Fact    _gridAltitudeFact;
-    Fact    _gridAngleFact;
-    Fact    _gridSpacingFact;
-    Fact    _cameraTriggerDistanceFact;
+    Fact            _gridAltitudeFact;
+    Fact            _gridAngleFact;
+    Fact            _gridSpacingFact;
+    Fact            _cameraTriggerDistanceFact;
+    FactMetaData    _gridAltitudeMetaData;
+    FactMetaData    _gridAngleMetaData;
+    FactMetaData    _gridSpacingMetaData;
+    FactMetaData    _cameraTriggerDistanceMetaData;
 
     static const char* _jsonVersionKey;
     static const char* _jsonTypeKey;
