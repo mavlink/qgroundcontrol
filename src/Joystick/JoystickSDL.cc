@@ -23,7 +23,16 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
     qCDebug(JoystickLog) << "Available joysticks";
 
     for (int i=0; i<SDL_NumJoysticks(); i++) {
-        QString name = SDL_JoystickName(i);
+        QString name = SDL_JoystickNameForIndex(i);
+
+        if (SDL_IsGameController(i)) {
+            qDebug() << name << "supports SDL GameController!";
+        } else {
+            qDebug() << name << "DOES NOT support SDL GameController!";
+        }
+
+        SDL_GameController* sdlController = SDL_GameControllerOpen(i);
+        qDebug() << SDL_GetError();
 
         if (!ret.contains(name)) {
             int axisCount, buttonCount, hatCount;
