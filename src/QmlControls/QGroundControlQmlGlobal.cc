@@ -23,6 +23,8 @@ SettingsFact* QGroundControlQmlGlobal::_distanceUnitsFact =                     
 FactMetaData* QGroundControlQmlGlobal::_distanceUnitsMetaData =                 NULL;
 SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                        NULL;
 FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                    NULL;
+SettingsFact* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceFact =       NULL;
+FactMetaData* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceMetaData =   NULL;
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
 const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
@@ -278,4 +280,25 @@ Fact* QGroundControlQmlGlobal::speedUnits(void)
     }
 
     return _speedUnitsFact;
+}
+
+Fact* QGroundControlQmlGlobal::batteryPercentRemainingAnnounce(void)
+{
+    if (!_batteryPercentRemainingAnnounceFact) {
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+
+        _batteryPercentRemainingAnnounceFact = new SettingsFact(QString(), "batteryPercentRemainingAnnounce", FactMetaData::valueTypeUint32, 30);
+        _batteryPercentRemainingAnnounceMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
+
+        _batteryPercentRemainingAnnounceMetaData->setDecimalPlaces(0);
+        _batteryPercentRemainingAnnounceMetaData->setShortDescription(tr("Percent announce"));
+        _batteryPercentRemainingAnnounceMetaData->setRawUnits("%");
+        _batteryPercentRemainingAnnounceMetaData->setRawMin(0);
+        _batteryPercentRemainingAnnounceMetaData->setRawMax(100);
+
+        _batteryPercentRemainingAnnounceFact->setMetaData(_batteryPercentRemainingAnnounceMetaData);
+    }
+
+    return _batteryPercentRemainingAnnounceFact;
 }

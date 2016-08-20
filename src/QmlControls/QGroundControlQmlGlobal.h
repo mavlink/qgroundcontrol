@@ -84,6 +84,7 @@ public:
     Q_PROPERTY(Fact*    offlineEditingFirmwareType  READ offlineEditingFirmwareType CONSTANT)
     Q_PROPERTY(Fact*    distanceUnits               READ distanceUnits              CONSTANT)
     Q_PROPERTY(Fact*    speedUnits                  READ speedUnits                 CONSTANT)
+    Q_PROPERTY(Fact*    batteryPercentRemainingAnnounce READ batteryPercentRemainingAnnounce    CONSTANT)
 
     Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
     Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
@@ -163,6 +164,7 @@ public:
     static Fact* offlineEditingFirmwareType (void);
     static Fact* distanceUnits              (void);
     static Fact* speedUnits                 (void);
+    static Fact* batteryPercentRemainingAnnounce(void);
 
     //-- TODO: Make this into an actual preference.
     bool    isAdvancedMode          () { return false; }
@@ -223,6 +225,8 @@ private:
     static FactMetaData*    _distanceUnitsMetaData;
     static SettingsFact*    _speedUnitsFact;
     static FactMetaData*    _speedUnitsMetaData;
+    static SettingsFact*    _batteryPercentRemainingAnnounceFact;
+    static FactMetaData*    _batteryPercentRemainingAnnounceMetaData;
 
     static const char*  _virtualTabletJoystickKey;
     static const char*  _baseFontPointSizeKey;
