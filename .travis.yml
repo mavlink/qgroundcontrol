@@ -55,7 +55,7 @@ addons:
     - libgstreamer-plugins-base1.0-dev
     - libgstreamer1.0-0:amd64
     - libgstreamer1.0-dev
-    - libsdl1.2-dev
+    - libsdl2-dev
     - libudev-dev
     - wget
 
