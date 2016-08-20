@@ -45,8 +45,8 @@ You need to install Qt as described below instead of using pre-built packages fr
     * Windows: Default installer not quite correct, use [this](http://download.qt.io/official_releases/qt/5.5/5.5.1/qt-opensource-windows-x86-msvc2013-5.5.1.exe) instead
 
 ###### Install additional packages:
-* Ubuntu: sudo apt-get install espeak libespeak-dev libudev-dev libsdl1.2-dev
-* Fedora: sudo dnf install espeak espeak-devel SDL-devel SDL-static systemd-devel
+* Ubuntu: sudo apt-get install espeak libespeak-dev libudev-dev libsdl2-dev
+* Fedora: sudo dnf install espeak espeak-devel SDL2-devel SDL2 systemd-devel
 * Arch Linux: pacman -Sy espeak
 * Windows: [USB Driver](http://www.pixhawk.org/firmware/downloads) to connect to Pixhawk/PX4Flow/3DR Radio
 * Android: [Qt Android Setup](http://doc.qt.io/qt-5/androidgs.html)
