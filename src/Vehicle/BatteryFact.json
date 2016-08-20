@@ -17,16 +17,6 @@
             "units":            "%"
         },
         {
-            "name":             "percentRemainingAnnounce",
-            "shortDescription": "Percent announce",
-            "type":             "int32",
-            "decimalPlaces":    0,
-            "units":            "%",
-            "defaultValue":     30,
-            "min":              0,
-            "max":              100
-        },
-        {
             "name":             "mahConsumed",
             "shortDescription": "Consumed",
             "type":             "int32",

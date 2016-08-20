@@ -28,7 +28,7 @@ QGCView {
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
-    property Fact _percentRemainingAnnounce:    QGroundControl.multiVehicleManager.disconnectedVehicle.battery.percentRemainingAnnounce
+    property Fact _percentRemainingAnnounce:    QGroundControl.batteryPercentRemainingAnnounce
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 15
 
     QGCPalette { id: qgcPal }

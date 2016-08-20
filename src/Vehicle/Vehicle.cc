@@ -24,6 +24,7 @@
 #include "GAudioOutput.h"
 #include "FollowMe.h"
 #include "MissionCommandTree.h"
+#include "QGroundControlQmlGlobal.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -585,7 +586,7 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     }
     _batteryFactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
 
-    if (sysStatus.battery_remaining > 0 && sysStatus.battery_remaining < _batteryFactGroup.percentRemainingAnnounce()->rawValue().toInt()) {
+    if (sysStatus.battery_remaining > 0 && sysStatus.battery_remaining < QGroundControlQmlGlobal::batteryPercentRemainingAnnounce()->rawValue().toInt()) {
         if (!_lowBatteryAnnounceTimer.isValid() || _lowBatteryAnnounceTimer.elapsed() > _lowBatteryAnnounceRepeatMSecs) {
             _lowBatteryAnnounceTimer.restart();
             _say(QString("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
@@ -1891,14 +1892,12 @@ void VehicleGPSFactGroup::_setSatLoc(UASInterface*, int fix)
 
 const char* VehicleBatteryFactGroup::_voltageFactName =                     "voltage";
 const char* VehicleBatteryFactGroup::_percentRemainingFactName =            "percentRemaining";
-const char* VehicleBatteryFactGroup::_percentRemainingAnnounceFactName =    "percentRemainingAnnounce";
 const char* VehicleBatteryFactGroup::_mahConsumedFactName =                 "mahConsumed";
 const char* VehicleBatteryFactGroup::_currentFactName =                     "current";
 const char* VehicleBatteryFactGroup::_temperatureFactName =                 "temperature";
 const char* VehicleBatteryFactGroup::_cellCountFactName =                   "cellCount";
 
 const char* VehicleBatteryFactGroup::_settingsGroup =                       "Vehicle.battery";
-const int   VehicleBatteryFactGroup::_percentRemainingAnnounceDefault =     30;
 
 const double VehicleBatteryFactGroup::_voltageUnavailable =           -1.0;
 const int    VehicleBatteryFactGroup::_percentRemainingUnavailable =  -1;
@@ -1906,8 +1905,6 @@ const int    VehicleBatteryFactGroup::_mahConsumedUnavailable =       -1;
 const int    VehicleBatteryFactGroup::_currentUnavailable =           -1;
 const double VehicleBatteryFactGroup::_temperatureUnavailable =       -1.0;
 const int    VehicleBatteryFactGroup::_cellCountUnavailable =         -1.0;
-
-SettingsFact* VehicleBatteryFactGroup::_percentRemainingAnnounceFact = NULL;
 
 VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/BatteryFact.json", parent)
@@ -1921,7 +1918,6 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
 {
     _addFact(&_voltageFact,                 _voltageFactName);
     _addFact(&_percentRemainingFact,        _percentRemainingFactName);
-    _addFact(percentRemainingAnnounce(),    _percentRemainingAnnounceFactName);
     _addFact(&_mahConsumedFact,             _mahConsumedFactName);
     _addFact(&_currentFact,                 _currentFactName);
     _addFact(&_temperatureFact,             _temperatureFactName);
@@ -1939,14 +1935,6 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
 void VehicleBatteryFactGroup::setVehicle(Vehicle* vehicle)
 {
     _vehicle = vehicle;
-}
-
-Fact* VehicleBatteryFactGroup::percentRemainingAnnounce(void)
-{
-    if (!_percentRemainingAnnounceFact) {
-        _percentRemainingAnnounceFact = new SettingsFact(_settingsGroup, _percentRemainingAnnounceFactName, FactMetaData::valueTypeInt32, _percentRemainingAnnounceDefault);
-    }
-    return _percentRemainingAnnounceFact;
 }
 
 const char* VehicleWindFactGroup::_directionFactName =      "direction";

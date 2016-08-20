@@ -90,13 +90,14 @@ public:
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
 
-    Q_PROPERTY(Fact*    offlineEditingFirmwareType  READ offlineEditingFirmwareType CONSTANT)
-    Q_PROPERTY(Fact*    offlineEditingVehicleType   READ offlineEditingVehicleType  CONSTANT)
-    Q_PROPERTY(Fact*    offlineEditingCruiseSpeed   READ offlineEditingCruiseSpeed  CONSTANT)
-    Q_PROPERTY(Fact*    offlineEditingHoverSpeed    READ offlineEditingHoverSpeed   CONSTANT)
-    Q_PROPERTY(Fact*    distanceUnits               READ distanceUnits              CONSTANT)
-    Q_PROPERTY(Fact*    areaUnits                   READ areaUnits                  CONSTANT)
-    Q_PROPERTY(Fact*    speedUnits                  READ speedUnits                 CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingFirmwareType      READ offlineEditingFirmwareType         CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingVehicleType       READ offlineEditingVehicleType          CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingCruiseSpeed       READ offlineEditingCruiseSpeed          CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingHoverSpeed        READ offlineEditingHoverSpeed           CONSTANT)
+    Q_PROPERTY(Fact*    distanceUnits                   READ distanceUnits                      CONSTANT)
+    Q_PROPERTY(Fact*    areaUnits                       READ areaUnits                          CONSTANT)
+    Q_PROPERTY(Fact*    speedUnits                      READ speedUnits                         CONSTANT)
+    Q_PROPERTY(Fact*    batteryPercentRemainingAnnounce READ batteryPercentRemainingAnnounce    CONSTANT)
 
     Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
     Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
@@ -182,13 +183,14 @@ public:
 
     QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
 
-    static Fact* offlineEditingFirmwareType (void);
-    static Fact* offlineEditingVehicleType  (void);
-    static Fact* offlineEditingCruiseSpeed  (void);
-    static Fact* offlineEditingHoverSpeed   (void);
-    static Fact* distanceUnits              (void);
-    static Fact* areaUnits                  (void);
-    static Fact* speedUnits                 (void);
+    static Fact* offlineEditingFirmwareType     (void);
+    static Fact* offlineEditingVehicleType      (void);
+    static Fact* offlineEditingCruiseSpeed      (void);
+    static Fact* offlineEditingHoverSpeed       (void);
+    static Fact* distanceUnits                  (void);
+    static Fact* areaUnits                      (void);
+    static Fact* speedUnits                     (void);
+    static Fact* batteryPercentRemainingAnnounce(void);
 
     //-- TODO: Make this into an actual preference.
     bool    isAdvancedMode          () { return false; }
@@ -251,6 +253,8 @@ private:
     static FactMetaData*    _areaUnitsMetaData;
     static SettingsFact*    _speedUnitsFact;
     static FactMetaData*    _speedUnitsMetaData;
+    static SettingsFact*    _batteryPercentRemainingAnnounceFact;
+    static FactMetaData*    _batteryPercentRemainingAnnounceMetaData;
 
     static const char*  _virtualTabletJoystickKey;
     static const char*  _baseFontPointSizeKey;
