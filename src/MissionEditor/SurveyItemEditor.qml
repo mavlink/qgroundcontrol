@@ -54,6 +54,22 @@ Rectangle {
         missionItem.cameraTriggerDistance.rawValue = cameraTriggerDistance
     }
 
+    Connections {
+        target: editorMap.polygonDraw
+
+        onPolygonCaptureStarted: {
+            missionItem.clearPolygon()
+        }
+
+        onPolygonCaptureFinished: {
+            for (var i=0; i<coordinates.length; i++) {
+                missionItem.addPolygonCoordinate(coordinates[i])
+            }
+        }
+
+        onPolygonAdjustVertex: missionItem.adjustPolygonCoordinate(vertexIndex, vertexCoordinate)
+    }
+
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     ExclusiveGroup {
@@ -106,52 +122,6 @@ Rectangle {
             onClicked:      missionItem.gridAltitudeRelative = checked
         }
 
-        QGCCheckBox {
-            id:                 cameraTrigger
-            anchors.left:       parent.left
-            text:               qsTr("Camera trigger:")
-            checked:            missionItem.cameraTrigger
-            onClicked:          missionItem.cameraTrigger = checked
-        }
-
-        Item {
-            id:             distanceItem
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            height:         textField.height
-            enabled:        cameraTrigger.checked
-
-            QGCLabel {
-                anchors.baseline:   textField.baseline
-                anchors.left:       parent.left
-                text:               qsTr("Distance:")
-            }
-
-            FactTextField {
-                id:             textField
-                anchors.right:  parent.right
-                width:          _editFieldWidth
-                showUnits:      true
-                fact:           missionItem.cameraTriggerDistance
-            }
-        }
-
-        Connections {
-            target: editorMap.polygonDraw
-
-            onPolygonCaptureStarted: {
-                missionItem.clearPolygon()
-            }
-
-            onPolygonCaptureFinished: {
-                for (var i=0; i<coordinates.length; i++) {
-                    missionItem.addPolygonCoordinate(coordinates[i])
-                }
-            }
-
-            onPolygonAdjustVertex: missionItem.adjustPolygonCoordinate(vertexIndex, vertexCoordinate)
-        }
-
         QGCLabel { text: qsTr("Camera:") }
 
         Rectangle {
@@ -163,7 +133,6 @@ Rectangle {
 
         Row {
             spacing: ScreenTools.defaultFontPixelWidth
-
 
             QGCRadioButton {
                 id:             cameraOrientationLandscape
@@ -183,6 +152,20 @@ Rectangle {
             columns: 2
             spacing: ScreenTools.defaultFontPixelWidth
             verticalItemAlignment: Grid.AlignVCenter
+
+            QGCCheckBox {
+                id:         cameraTrigger
+                text:       qsTr("Trigger:")
+                checked:    missionItem.cameraTrigger
+                onClicked:  missionItem.cameraTrigger = checked
+            }
+
+            FactTextField {
+                width:      _editFieldWidth
+                showUnits:  true
+                fact:       missionItem.cameraTriggerDistance
+                enabled:    missionItem.cameraTrigger
+            }
 
             QGCLabel { text: qsTr("Focal length:") }
             QGCTextField {
