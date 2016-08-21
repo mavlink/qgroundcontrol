@@ -247,6 +247,9 @@
         <file alias="joystickThrottleUp.png">resources/calibration/joystick/joystickThrottleUp.png</file>
         <file alias="joystickThrottleDown.png">resources/calibration/joystick/joystickThrottleDown.png</file>
     </qresource>
+    <qresource prefix="/db/mapping/joystick">
+        <file alias="gamecontrollerdb.txt">resources/SDL_GameControllerDB/gamecontrollerdb.txt</file>
+    </qresource>
     <qresource prefix="/res/styles">
         <file alias="style-dark.css">resources/styles/style-dark.css</file>
         <file alias="style-light.css">resources/styles/style-light.css</file>
