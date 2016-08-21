@@ -538,8 +538,8 @@ void SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLi
     // Create set of rotated parallel lines within the expanded bounding rect. Make the lines larger than the
     // bounding box to guarantee intersection.
     QList<QLineF> lineList;
-    float x = largeBoundRect.topLeft().x();
     float gridSpacing = _gridSpacingFact.rawValue().toDouble();
+    float x = largeBoundRect.topLeft().x() - (gridSpacing / 2);
     while (x < largeBoundRect.bottomRight().x()) {
         float yTop =    largeBoundRect.topLeft().y() - 100.0;
         float yBottom = largeBoundRect.bottomRight().y() + 100.0;
