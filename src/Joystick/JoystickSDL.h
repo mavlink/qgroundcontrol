@@ -5,12 +5,7 @@
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
 
-#ifdef Q_OS_MAC
-    #include <SDL.h>
-#else
-    #include <SDL/SDL.h>
-#endif
-
+#include <SDL.h>
 
 class JoystickSDL : public Joystick
 {

@@ -62,7 +62,7 @@ WindowsBuild {
     DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
-        $$BASEDIR\\libs\\lib\\sdl2\\win32\\SDL2.dll \
+        $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll \
         $$BASEDIR\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll \
         $$BASEDIR\\deploy\\libeay32.dll
 

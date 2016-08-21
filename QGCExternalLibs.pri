@@ -181,7 +181,7 @@ MacBuild {
         $$BASEDIR/libs/lib/sdl2/msvc/include \
 
     LIBS += \
-        -L$$BASEDIR/libs/lib/sdl2/msvc/lib \
+        -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86 \
         -lSDL2main \
         -lSDL2
 }
