@@ -174,7 +174,11 @@ QString MissionCommandTree::friendlyName(MAV_CMD command)
     MissionCommandList *    commandList =   _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_GENERIC];
     MissionCommandUIInfo*   uiInfo =        commandList->getUIInfo(command);
 
-    return uiInfo->friendlyName();
+    if (uiInfo) {
+        return uiInfo->friendlyName();
+    } else {
+        return QString("MAV_CMD(%1)").arg((int)command);
+    }
 }
 
 QString MissionCommandTree::rawName(MAV_CMD command)
@@ -182,7 +186,11 @@ QString MissionCommandTree::rawName(MAV_CMD command)
     MissionCommandList *    commandList =   _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_GENERIC];
     MissionCommandUIInfo*   uiInfo =        commandList->getUIInfo(command);
 
-    return uiInfo->rawName();
+    if (uiInfo) {
+        return uiInfo->rawName();
+    } else {
+        return QString("MAV_CMD(%1)").arg((int)command);
+    }
 }
 
 const QList<MAV_CMD>& MissionCommandTree::allCommandIds(void) const
