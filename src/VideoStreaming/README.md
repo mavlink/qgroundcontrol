@@ -78,4 +78,4 @@ You need two packages:
 - [gstreamer-1.0-devel-x86-1.5.2.msi](https://gstreamer.freedesktop.org/data/pkg/windows/1.5.2/gstreamer-1.0-devel-x86-1.5.2.msi)
 - [gstreamer-1.0-x86-1.5.2.msi](https://gstreamer.freedesktop.org/data/pkg/windows/1.5.2/gstreamer-1.0-x86-1.5.2.msi)
 
-The installer places them under c:\gstreamer, which is where the QGC build system will look for it.
+Make sure you select "Complete" installation instead of "Typical" installation during the install process. The installer places them under c:\gstreamer, which is where the QGC build system will look for it.
