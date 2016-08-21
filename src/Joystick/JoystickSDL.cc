@@ -48,7 +48,7 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
 
             SDL_JoystickClose(sdlJoystick);
 
-            qCDebug(JoystickLog) << "\t" << name << "axes:" << axisCount << "buttons:" << buttonCount << "hats:" << hatCount;
+            qCDebug(JoystickLog) << "\t" << name << "axes:" << axisCount << "buttons:" << buttonCount << "hats:" << hatCount << "isGC:" << isGameController;
             ret[name] = new JoystickSDL(name, axisCount, buttonCount, hatCount, i, isGameController, _multiVehicleManager);
         } else {
             qCDebug(JoystickLog) << "\tSkipping duplicate" << name;
