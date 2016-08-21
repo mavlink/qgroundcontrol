@@ -15,11 +15,13 @@
 class JoystickSDL : public Joystick
 {
 public:
-    JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, MultiVehicleManager* multiVehicleManager);
+    JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, MultiVehicleManager* multiVehicleManager);
 
     static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager); 
 
 private:
+    static void _loadGameControllerMappings();
+
     bool _open() final;
     void _close() final;
     bool _update() final;
@@ -29,6 +31,8 @@ private:
     uint8_t _getHat(int hat,int i) final;
 
     SDL_Joystick *sdlJoystick;
+    SDL_GameController *sdlController;
+    bool    _isGameController;
     int     _index;      ///< Index for SDL_JoystickOpen
 };
 
