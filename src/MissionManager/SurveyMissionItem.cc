@@ -25,7 +25,7 @@ const char* SurveyMissionItem::_jsonGridAltitudeKey =          "gridAltitude";
 const char* SurveyMissionItem::_jsonGridAltitudeRelativeKey =  "gridAltitudeRelative";
 const char* SurveyMissionItem::_jsonGridAngleKey =             "gridAngle";
 const char* SurveyMissionItem::_jsonGridSpacingKey =           "gridSpacing";
-const char* SurveyMissionItem::_jsonTurnaroundDistKey =       "turnaroundDist";
+const char* SurveyMissionItem::_jsonTurnaroundDistKey =        "turnaroundDist";
 const char* SurveyMissionItem::_jsonCameraTriggerKey =         "cameraTrigger";
 const char* SurveyMissionItem::_jsonCameraTriggerDistanceKey = "cameraTriggerDistance";
 
