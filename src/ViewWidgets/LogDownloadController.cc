@@ -25,7 +25,7 @@
 #include <QBitArray>
 #include <QtCore/qmath.h>
 
-#define kTimeOutMilliseconds 500
+#define kTimeOutMilliseconds 2000
 #define kGUIRateMilliseconds 17
 #define kTableBins           512
 #define kChunkSize           (kTableBins * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN)
@@ -122,6 +122,7 @@ LogDownloadController::LogDownloadController(void)
 void
 LogDownloadController::_processDownload()
 {
+    qCDebug(LogDownloadLog) << "Timeout";
     if(_requestingLogEntries) {
         _findMissingEntries();
     } else if(_downloadingLogs) {
@@ -297,6 +298,9 @@ LogDownloadController::_findMissingEntries()
 void
 LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data)
 {
+    // Useful for debugging but noisy
+    //qCDebug(LogDownloadLog) << "_logData id:ofs:count" << id << ofs << count;
+
     if(!_uas || uas != _uas || !_downloadData) {
         return;
     }
@@ -361,11 +365,13 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
                 //-- Check for more
                 _receivedAllData();
             } else if (_chunkComplete()) {
+                qCDebug(LogDownloadLog) << "Chunk complete";
                 _downloadData->advanceChunk();
                 _requestLogData(_downloadData->ID,
                                 _downloadData->current_chunk*kChunkSize,
                                 _downloadData->chunk_table.size()*MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
             } else if (bin < _downloadData->chunk_table.size() - 1 && _downloadData->chunk_table.at(bin+1)) {
+                qCDebug(LogDownloadLog) << "Missing data";
                 // Likely to be grabbing fragments and got to the end of a gap
                 _findMissingData();
             }
@@ -443,6 +449,7 @@ LogDownloadController::_findMissingData()
         }
     }
 
+    qCDebug(LogDownloadLog) << "_findMissingData";
     const uint32_t pos = _downloadData->current_chunk*kChunkSize + start*MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN,
                    len = (end - start)*MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
     _requestLogData(_downloadData->ID, pos, len);
