@@ -137,6 +137,14 @@ void ComplexMissionItemTest::_testAddPolygonCoordinate(void)
     for (int i=0; i<polyList.count(); i++) {
         QCOMPARE(polyList[i].value<QGeoCoordinate>(), _polyPoints[i]);
     }
+
+    // Test that number of waypoints is doubled when using turnaround waypoints
+    _complexItem->setTurnaroundDist(60.0);
+    QVariantList gridPoints = _complexItem->gridPoints();
+    _complexItem->setTurnaroundDist(0.0);
+    QVariantList gridPointsNoT = _complexItem->gridPoints();
+    QCOMPARE(gridPoints.count(), 2 * gridPointsNoT.count());
+
 }
 
 void ComplexMissionItemTest::_testClearPolygon(void)
