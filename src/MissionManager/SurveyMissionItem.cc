@@ -53,7 +53,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _turnaroundDistMetaData       (FactMetaData::valueTypeDouble)
     , _cameraTriggerDistanceMetaData(FactMetaData::valueTypeDouble)
 {
-    _gridAltitudeFact.setRawValue(25);
+    _gridAltitudeFact.setRawValue(50);
     _gridSpacingFact.setRawValue(10);
     _turnaroundDistFact.setRawValue(60);
     _cameraTriggerDistanceFact.setRawValue(25);
@@ -344,7 +344,7 @@ void SurveyMissionItem::_clearGrid(void)
 
 void SurveyMissionItem::_generateGrid(void)
 {
-    if (_polygonPath.count() < 3) {
+    if (_polygonPath.count() < 3 || _gridSpacingFact.rawValue().toDouble() <= 0) {
         _clearGrid();
         return;
     }
@@ -391,7 +391,11 @@ void SurveyMissionItem::_generateGrid(void)
         _gridPoints += QVariant::fromValue(geoCoord);
     }
     _setSurveyDistance(surveyDistance);
-    _setCameraShots((int)floor(surveyDistance / _cameraTriggerDistanceFact.rawValue().toDouble()));
+    if (_cameraTriggerDistanceFact.rawValue().toDouble() > 0) {
+        _setCameraShots((int)floor(surveyDistance / _cameraTriggerDistanceFact.rawValue().toDouble()));
+    } else {
+        _setCameraShots(0);
+    }
 
     emit gridPointsChanged();
     emit lastSequenceNumberChanged(lastSequenceNumber());
