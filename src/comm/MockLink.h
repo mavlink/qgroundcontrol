@@ -144,6 +144,9 @@ public:
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
     void resetMissionItemHandler(void) { _missionItemHandler.reset(); }
 
+    /// Returns the filename for the simulated log file. Onyl available after a download is requested.
+    QString logDownloadFile(void) { return _logDownloadFilename; }
+
     static MockLink* startPX4MockLink            (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink* startGenericMockLink        (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink* startAPMArduCopterMockLink  (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
@@ -180,6 +183,8 @@ private:
     void _handleCommandLong(const mavlink_message_t& msg);
     void _handleManualControl(const mavlink_message_t& msg);
     void _handlePreFlightCalibration(const mavlink_command_long_t& request);
+    void _handleLogRequestList(const mavlink_message_t& msg);
+    void _handleLogRequestData(const mavlink_message_t& msg);
     float _floatUnionForParam(int componentId, const QString& paramName);
     void _setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat);
     void _sendHomePosition(void);
@@ -189,6 +194,7 @@ private:
     void _respondWithAutopilotVersion(void);
     void _sendRCChannels(void);
     void _paramRequestListWorker(void);
+    void _logDownloadWorker(void);
 
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 
@@ -224,7 +230,14 @@ private:
     int _sendGPSPositionDelayCount;
 
     int _currentParamRequestListComponentIndex; // Current component index for param request list workflow, -1 for no request in progress
-    int _currentParamRequestListParamIndex;     // Current parameter index for param request list workflor
+    int _currentParamRequestListParamIndex;     // Current parameter index for param request list workflow
+
+    static const uint16_t _logDownloadLogId = 0;        ///< Id of siumulated log file
+    static const uint32_t _logDownloadFileSize = 1000;  ///< Size of simulated log file
+
+    QString _logDownloadFilename;           ///< Filename for log download which is in progress
+    uint32_t    _logDownloadCurrentOffset;  ///< Current offset we are sending from
+    uint32_t    _logDownloadBytesRemaining; ///< Number of bytes still to send, 0 = send inactive
 
     static float        _vehicleLatitude;
     static float        _vehicleLongitude;
