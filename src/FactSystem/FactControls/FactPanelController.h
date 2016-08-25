@@ -30,7 +30,8 @@ class FactPanelController : public QObject
     Q_OBJECT
 
 public:
-    FactPanelController(void);
+    /// @param standaloneUnitTesting true: being run without factPanel, false: normal operation, factPanel is required
+    FactPanelController(bool standaloneUnitTesting = false);
 
     Q_PROPERTY(QQuickItem* factPanel READ factPanel WRITE setFactPanel)
     Q_PROPERTY(Vehicle* vehicle MEMBER _vehicle CONSTANT)

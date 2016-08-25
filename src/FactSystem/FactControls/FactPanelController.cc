@@ -20,7 +20,7 @@
 
 QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactPanelControllerLog")
 
-FactPanelController::FactPanelController(void)
+FactPanelController::FactPanelController(bool standaloneUnitTesting)
     : _vehicle(NULL)
     , _uas(NULL)
     , _autopilot(NULL)
@@ -33,8 +33,10 @@ FactPanelController::FactPanelController(void)
         _autopilot = _vehicle->autopilotPlugin();
     }
 
-    // Do a delayed check for the _factPanel finally being set correctly from Qml
-    QTimer::singleShot(1000, this, &FactPanelController::_checkForMissingFactPanel);
+    if (!standaloneUnitTesting) {
+        // Do a delayed check for the _factPanel finally being set correctly from Qml
+        QTimer::singleShot(1000, this, &FactPanelController::_checkForMissingFactPanel);
+    }
 }
 
 QQuickItem* FactPanelController::factPanel(void)

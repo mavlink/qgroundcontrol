@@ -115,7 +115,8 @@ class LogDownloadController : public FactPanelController
     Q_OBJECT
 public:
 
-    LogDownloadController();
+    /// @param standaloneUnitTesting true: being run without factPanel, false: normal operation, factPanel is required
+    LogDownloadController(bool standaloneUnitTesting = false);
 
     Q_PROPERTY(QGCLogModel* model           READ model              NOTIFY modelChanged)
     Q_PROPERTY(bool         requestingList  READ requestingList     NOTIFY requestingListChanged)
@@ -129,6 +130,8 @@ public:
     Q_INVOKABLE void download               ();
     Q_INVOKABLE void eraseAll               ();
     Q_INVOKABLE void cancel                 ();
+
+    void downloadToDirectory(const QString& dir);
 
 signals:
     void requestingListChanged  ();
