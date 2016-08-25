@@ -20,7 +20,6 @@
 #include "Vehicle.h"
 
 #include <QTemporaryFile>
-#include <QGlobal.h>
 #include <QTime>
 
 bool UnitTest::_messageBoxRespondedTo = false;
