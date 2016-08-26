@@ -103,8 +103,9 @@ QGCLogEntry::sizeStr() const
 }
 
 //----------------------------------------------------------------------------------------
-LogDownloadController::LogDownloadController(void)
-    : _uas(NULL)
+LogDownloadController::LogDownloadController(bool standaloneUnitTesting)
+    : FactPanelController(standaloneUnitTesting)
+    , _uas(NULL)
     , _downloadData(NULL)
     , _vehicle(NULL)
     , _requestingLogEntries(false)
@@ -502,6 +503,16 @@ LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
 void
 LogDownloadController::download(void)
 {
+    QString dir = QGCFileDialog::getExistingDirectory(
+                MainWindow::instance(),
+                "Log Download Directory",
+                QDir::homePath(),
+                QGCFileDialog::ShowDirsOnly | QGCFileDialog::DontResolveSymlinks);
+    downloadToDirectory(dir);
+}
+
+void LogDownloadController::downloadToDirectory(const QString& dir)
+{
     //-- Stop listing just in case
     _receivedAllEntries();
     //-- Reset downloads, again just in case
@@ -509,12 +520,7 @@ LogDownloadController::download(void)
         delete _downloadData;
         _downloadData = 0;
     }
-    _downloadPath.clear();
-    _downloadPath = QGCFileDialog::getExistingDirectory(
-        MainWindow::instance(),
-        "Log Download Directory",
-        QDir::homePath(),
-        QGCFileDialog::ShowDirsOnly | QGCFileDialog::DontResolveSymlinks);
+    _downloadPath = dir;
     if(!_downloadPath.isEmpty()) {
         if(!_downloadPath.endsWith(QDir::separator()))
             _downloadPath += QDir::separator();
@@ -533,6 +539,7 @@ LogDownloadController::download(void)
         _receivedAllData();
     }
 }
+
 
 //----------------------------------------------------------------------------------------
 QGCLogEntry*
@@ -619,18 +626,22 @@ LogDownloadController::_prepareLogDownload()
 void
 LogDownloadController::_setDownloading(bool active)
 {
-    _downloadingLogs = active;
-    _vehicle->setConnectionLostEnabled(!active);
-    emit downloadingLogsChanged();
+    if (_downloadingLogs != active) {
+        _downloadingLogs = active;
+        _vehicle->setConnectionLostEnabled(!active);
+        emit downloadingLogsChanged();
+    }
 }
 
 //----------------------------------------------------------------------------------------
 void
 LogDownloadController::_setListing(bool active)
 {
-    _requestingLogEntries = active;
-    _vehicle->setConnectionLostEnabled(!active);
-    emit requestingListChanged();
+    if (_requestingLogEntries != active) {
+        _requestingLogEntries = active;
+        _vehicle->setConnectionLostEnabled(!active);
+        emit requestingListChanged();
+    }
 }
 
 //----------------------------------------------------------------------------------------

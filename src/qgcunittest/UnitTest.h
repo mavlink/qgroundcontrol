@@ -84,6 +84,14 @@ public:
     /// @brief Adds a unit test to the list. Should only be called by UnitTestWrapper.
     static void _addTest(QObject* test);
 
+    /// Creates a file with random contents of the specified size.
+    /// @return Fully qualified path to created file
+    static QString createRandomFile(uint32_t byteCount);
+
+    /// Will throw qWarning at location where files differ
+    /// @return true: files are alike, false: files differ
+    static bool fileCompare(const QString& file1, const QString& file2);
+
 protected slots:
     
     // These are all pure virtuals to force the derived class to implement each one and in turn

@@ -11,6 +11,7 @@
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
+#include "UnitTest.h"
 
 #include <QTimer>
 #include <QDebug>
@@ -59,6 +60,8 @@ MockLink::MockLink(MockConfiguration* config)
     , _sendGPSPositionDelayCount(100)   // No gps lock for 5 seconds
     , _currentParamRequestListComponentIndex(-1)
     , _currentParamRequestListParamIndex(-1)
+    , _logDownloadCurrentOffset(0)
+    , _logDownloadBytesRemaining(0)
 {
     _config = config;
     if (_config) {
@@ -86,6 +89,9 @@ MockLink::MockLink(MockConfiguration* config)
 MockLink::~MockLink(void)
 {
     _disconnect();
+    if (!_logDownloadFilename.isEmpty()) {
+        QFile::remove(_logDownloadFilename);
+    }
 }
 
 bool MockLink::_connect(void)
@@ -170,6 +176,7 @@ void MockLink::_run500HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
         _paramRequestListWorker();
+        _logDownloadWorker();
     }
 }
 
@@ -376,6 +383,14 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
 
         case MAVLINK_MSG_ID_MANUAL_CONTROL:
             _handleManualControl(msg);
+            break;
+
+        case MAVLINK_MSG_ID_LOG_REQUEST_LIST:
+            _handleLogRequestList(msg);
+            break;
+
+        case MAVLINK_MSG_ID_LOG_REQUEST_DATA:
+            _handleLogRequestData(msg);
             break;
 
         default:
@@ -1097,3 +1112,86 @@ void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request
     respondWithMavlinkMessage(msg);
 }
 
+void MockLink::_handleLogRequestList(const mavlink_message_t& msg)
+{
+    mavlink_log_request_list_t request;
+
+    mavlink_msg_log_request_list_decode(&msg, &request);
+
+    if (request.start != 0 && request.end != 0xffff) {
+        qWarning() << "MockLink::_handleLogRequestList cannot handle partial requests";
+        return;
+    }
+
+    mavlink_message_t responseMsg;
+    mavlink_msg_log_entry_pack(_vehicleSystemId,
+                               _vehicleComponentId,
+                               &responseMsg,
+                               _logDownloadLogId,       // log id
+                               1,                       // num_logs
+                               1,                       // last_log_num
+                               0,                       // time_utc
+                               _logDownloadFileSize);   // size
+    respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::_handleLogRequestData(const mavlink_message_t& msg)
+{
+    mavlink_log_request_data_t request;
+
+    mavlink_msg_log_request_data_decode(&msg, &request);
+
+    if (_logDownloadFilename.isEmpty()) {
+        _logDownloadFilename = UnitTest::createRandomFile(_logDownloadFileSize);
+    }
+
+    if (request.id != 0) {
+        qWarning() << "MockLink::_handleLogRequestData id must be 0";
+        return;
+    }
+
+    if (request.ofs > _logDownloadFileSize - 1) {
+        qWarning() << "MockLink::_handleLogRequestData offset past end of file request.ofs:size" << request.ofs << _logDownloadFileSize;
+        return;
+    }
+
+    // This will trigger _logDownloadWorker to send data
+    _logDownloadCurrentOffset = request.ofs;
+    if (request.ofs + request.count > _logDownloadFileSize) {
+        request.count = _logDownloadFileSize - request.ofs;
+    }
+    _logDownloadBytesRemaining = request.count;
+}
+
+void MockLink::_logDownloadWorker(void)
+{
+    if (_logDownloadBytesRemaining != 0) {
+        QFile file(_logDownloadFilename);
+        if (file.open(QIODevice::ReadOnly)) {
+            uint8_t buffer[MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN];
+
+            qint64 bytesToRead = qMin(_logDownloadBytesRemaining, (uint32_t)MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
+            Q_ASSERT(file.seek(_logDownloadCurrentOffset));
+            Q_ASSERT(file.read((char *)buffer, bytesToRead) == bytesToRead);
+
+            qDebug() << "MockLink::_logDownloadWorker" << _logDownloadCurrentOffset << _logDownloadBytesRemaining;
+
+            mavlink_message_t responseMsg;
+            mavlink_msg_log_data_pack(_vehicleSystemId,
+                                       _vehicleComponentId,
+                                       &responseMsg,
+                                       _logDownloadLogId,
+                                       _logDownloadCurrentOffset,
+                                       bytesToRead,
+                                       &buffer[0]);
+            respondWithMavlinkMessage(responseMsg);
+
+            _logDownloadCurrentOffset += bytesToRead;
+            _logDownloadBytesRemaining -= bytesToRead;
+
+            file.close();
+        } else {
+            qWarning() << "MockLink::_logDownloadWorker open failed" << file.errorString();
+        }
+    }
+}
