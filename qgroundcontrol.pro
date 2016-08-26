@@ -581,6 +581,7 @@ HEADERS += \
     src/qgcunittest/TCPLinkTest.h \
     src/qgcunittest/TCPLoopBackServer.h \
     src/qgcunittest/UnitTest.h \
+    src/ViewWidgets/LogDownloadTest.h \
     src/VehicleSetup/SetupViewTest.h \
 
 SOURCES += \
@@ -609,6 +610,7 @@ SOURCES += \
     src/qgcunittest/TCPLoopBackServer.cc \
     src/qgcunittest/UnitTest.cc \
     src/qgcunittest/UnitTestList.cc \
+    src/ViewWidgets/LogDownloadTest.cc \
     src/VehicleSetup/SetupViewTest.cc \
 } # !MobileBuild
 } # DebugBuild
