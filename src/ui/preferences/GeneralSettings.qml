@@ -12,6 +12,7 @@ import QtQuick                  2.5
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
 import QtQuick.Dialogs          1.1
+import QtMultimedia             5.5
 
 import QGroundControl                       1.0
 import QGroundControl.FactSystem            1.0
@@ -20,6 +21,7 @@ import QGroundControl.Controls              1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
+import QGroundControl.Controllers           1.0
 
 QGCView {
     id:                 qgcView
@@ -29,7 +31,7 @@ QGCView {
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
     property Fact _percentRemainingAnnounce:    QGroundControl.batteryPercentRemainingAnnounce
-    property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 15
+    property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 20
 
     QGCPalette { id: qgcPal }
 
@@ -277,6 +279,32 @@ QGCView {
                     width:  parent.width
                 }
 
+                //-----------------------------------------------------------------
+                //-- Video Source
+                Row {
+                    spacing:    ScreenTools.defaultFontPixelWidth
+                    QGCLabel {
+                        anchors.baseline:   videoSource.baseline
+                        text:               qsTr("Video Source:")
+                    }
+                    QGCComboBox {
+                        id:                 videoSource
+                        width:              _editFieldWidth
+                        model:              QGroundControl.videoManager.videoSourceList
+                        Component.onCompleted: {
+                            var index = videoSource.find(QGroundControl.videoManager.videoSource)
+                            if (index >= 0) {
+                                videoSource.currentIndex = index
+                            }
+                        }
+                        onActivated: {
+                            if (index != -1) {
+                                currentIndex = index
+                                QGroundControl.videoManager.videoSource = model[index]
+                            }
+                        }
+                    }
+                }
                 //-----------------------------------------------------------------
                 //-- Map Providers
                 Row {
