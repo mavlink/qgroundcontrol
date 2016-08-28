@@ -46,6 +46,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _mapEngineManager(NULL)
     , _qgcPositionManager(NULL)
     , _missionCommandTree(NULL)
+    , _videoManager(NULL)
     , _virtualTabletJoystick(false)
     , _baseFontPointSize(0.0)
 {
@@ -73,6 +74,7 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _mapEngineManager       = toolbox->mapEngineManager();
     _qgcPositionManager     = toolbox->qgcPositionManager();
     _missionCommandTree     = toolbox->missionCommandTree();
+    _videoManager           = toolbox->videoManager();
 }
 
 
