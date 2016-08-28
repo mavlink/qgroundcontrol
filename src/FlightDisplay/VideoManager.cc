@@ -115,6 +115,7 @@ VideoManager::setVideoSource(QString vSource)
         if(cameraInfo.description() == vSource) {
             _videoSourceID = cameraInfo.deviceName();
             emit videoSourceIDChanged();
+            qCDebug(VideoManagerLog) << "Found USB source:" << _videoSourceID << " Name:" << _videoSource;
             break;
         }
     }
