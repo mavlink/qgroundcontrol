@@ -79,6 +79,7 @@ QT += \
     svg \
     widgets \
     xml \
+    multimedia
 
 !MobileBuild {
 QT += \
@@ -258,7 +259,7 @@ HEADERS += \
     src/comm/QGCMAVLink.h \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
-    src/FlightDisplay/FlightDisplayViewController.h \
+    src/FlightDisplay/VideoManager.h \
     src/FlightMap/FlightMapSettings.h \
     src/FlightMap/Widgets/ValuesWidgetController.h \
     src/GAudioOutput.h \
@@ -420,7 +421,7 @@ SOURCES += \
     src/comm/QGCMAVLink.cc \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
-    src/FlightDisplay/FlightDisplayViewController.cc \
+    src/FlightDisplay/VideoManager.cc \
     src/FlightMap/FlightMapSettings.cc \
     src/FlightMap/Widgets/ValuesWidgetController.cc \
     src/GAudioOutput.cc \
