@@ -27,6 +27,7 @@
 #include "QGCMapEngineManager.h"
 #include "FollowMe.h"
 #include "PositionManager.h"
+#include "VideoManager.h"
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
     : _audioOutput(NULL)
@@ -48,6 +49,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     , _uasMessageHandler(NULL)
     , _followMe(NULL)
     , _qgcPositionManager(NULL)
+    , _videoManager(NULL)
 {
     _audioOutput =              new GAudioOutput(app);
     _autopilotPluginManager =   new AutoPilotPluginManager(app);
@@ -68,6 +70,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _uasMessageHandler =        new UASMessageHandler(app);
     _qgcPositionManager =       new QGCPositionManager(app);
     _followMe =                 new FollowMe(app);
+    _videoManager =             new VideoManager(app);
 
     _audioOutput->setToolbox(this);
     _autopilotPluginManager->setToolbox(this);
@@ -88,10 +91,12 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _uasMessageHandler->setToolbox(this);
     _followMe->setToolbox(this);
     _qgcPositionManager->setToolbox(this);
+    _videoManager->setToolbox(this);
 }
 
 QGCToolbox::~QGCToolbox()
 {
+    delete _videoManager;
     delete _audioOutput;
     delete _autopilotPluginManager;
     delete _factSystem;
