@@ -50,6 +50,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _gridAltitudeMetaData         (FactMetaData::valueTypeDouble)
     , _gridAngleMetaData            (FactMetaData::valueTypeDouble)
     , _gridSpacingMetaData          (FactMetaData::valueTypeDouble)
+    , _turnaroundDistMetaData       (FactMetaData::valueTypeDouble)
     , _cameraTriggerDistanceMetaData(FactMetaData::valueTypeDouble)
 {
     _gridAltitudeFact.setRawValue(25);
@@ -60,16 +61,19 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     _gridAltitudeMetaData.setRawUnits("m");
     _gridAngleMetaData.setRawUnits("deg");
     _gridSpacingMetaData.setRawUnits("m");
+    _turnaroundDistMetaData.setRawUnits("m");
     _cameraTriggerDistanceMetaData.setRawUnits("m");
 
     _gridAltitudeMetaData.setDecimalPlaces(1);
     _gridAngleMetaData.setDecimalPlaces(1);
     _gridSpacingMetaData.setDecimalPlaces(2);
+    _turnaroundDistMetaData.setDecimalPlaces(2);
     _cameraTriggerDistanceMetaData.setDecimalPlaces(2);
 
     _gridAltitudeFact.setMetaData(&_gridAltitudeMetaData);
     _gridAngleFact.setMetaData(&_gridAngleMetaData);
     _gridSpacingFact.setMetaData(&_gridSpacingMetaData);
+    _turnaroundDistFact.setMetaData(&_turnaroundDistMetaData);
     _cameraTriggerDistanceFact.setMetaData(&_cameraTriggerDistanceMetaData);
 
     connect(&_gridSpacingFact,              &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
