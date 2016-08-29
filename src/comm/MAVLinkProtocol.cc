@@ -35,6 +35,7 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "MultiVehicleManager.h"
+#include "QGroundControlQmlGlobal.h"
 
 Q_DECLARE_METATYPE(mavlink_message_t)
 
@@ -252,7 +253,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 {
                     mavlink_message_t msg;
                     mavlink_msg_ping_pack(getSystemId(), getComponentId(), &msg, ping.time_usec, ping.seq, message.sysid, message.compid);
-                    _sendMessage(msg);
+                    sendMessage(link, msg);
                 }
             }
 
@@ -393,7 +394,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
                     // Only forward this message to the other links,
                     // not the link the message was received on
-                    if (currLink && currLink != link) _sendMessage(currLink, message, message.sysid, message.compid);
+                    if (currLink && currLink != link) sendMessage(currLink, message);
                 }
             }
         }
@@ -425,51 +426,27 @@ int MAVLinkProtocol::getComponentId()
     return 0;
 }
 
-/**
- * @param message message to send
- */
-void MAVLinkProtocol::_sendMessage(mavlink_message_t message)
+void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message)
 {
-    for (int i=0; i<_linkMgr->links()->count(); i++) {
-        LinkInterface* link = _linkMgr->links()->value<LinkInterface*>(i);
-        _sendMessage(link, message);
+    mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(link->getMavlinkChannel());
+    switch (QGroundControlQmlGlobal::mavlinkVersion()->rawValue().toInt()) {
+    case QGroundControlQmlGlobal::MavlinkVersion2IfVehicle2:
+        if (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) {
+            mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+            break;
+        }
+        // Fallthrough to set version 2
+    case QGroundControlQmlGlobal::MavlinkVersionAlways2:
+        mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+        break;
+    default:
+    case QGroundControlQmlGlobal::MavlinkVersionAlways1:
+        mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+        break;
     }
-}
 
-/**
- * @param link the link to send the message over
- * @param message message to send
- */
-void MAVLinkProtocol::_sendMessage(LinkInterface* link, mavlink_message_t message)
-{
     // Create buffer
     static uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-    // Rewriting header to ensure correct link ID is set
-    static uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
-    mavlink_finalize_message_chan(&message, this->getSystemId(), this->getComponentId(), link->getMavlinkChannel(), message.len, message.len, messageKeys[message.msgid]);
-    // Write message into buffer, prepending start sign
-    int len = mavlink_msg_to_send_buffer(buffer, &message);
-    // If link is connected
-    if (link->isConnected())
-    {
-        // Send the portion of the buffer now occupied by the message
-        link->writeBytesSafe((const char*)buffer, len);
-    }
-}
-
-/**
- * @param link the link to send the message over
- * @param message message to send
- * @param systemid id of the system the message is originating from
- * @param componentid id of the component the message is originating from
- */
-void MAVLinkProtocol::_sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid)
-{
-    // Create buffer
-    static uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-    // Rewriting header to ensure correct link ID is set
-    static uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
-    mavlink_finalize_message_chan(&message, systemid, componentid, link->getMavlinkChannel(), message.len, message.len, messageKeys[message.msgid]);
     // Write message into buffer, prepending start sign
     int len = mavlink_msg_to_send_buffer(buffer, &message);
     // If link is connected
