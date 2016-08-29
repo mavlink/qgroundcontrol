@@ -218,7 +218,7 @@ private:
     QNetworkAccessManager*  _downloadManager;       ///< Used for firmware file downloading across the internet
     QNetworkReply*          _downloadNetworkReply;  ///< Used for firmware file downloading across the internet
     
-    /// @brief Thread controller which is used to run bootloader commands on seperate thread
+    /// @brief Thread controller which is used to run bootloader commands on separate thread
     PX4FirmwareUpgradeThreadController* _threadController;
     
     static const int    _eraseTickMsec = 500;       ///< Progress bar update tick time for erase

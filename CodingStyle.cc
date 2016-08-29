@@ -20,7 +20,7 @@
 
 #include <math.h>
 
-// Note how the Qt headers and the QGroundControl headers above are kept seperate
+// Note how the Qt headers and the QGroundControl headers above are kept separate
 
 Q_LOGGING_CATEGORY(CodingStyleLog, "CodingStyleLog")
 

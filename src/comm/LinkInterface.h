@@ -187,7 +187,7 @@ signals:
      */
     void nameChanged(QString name);
 
-    /** @brief Communication error occured */
+    /** @brief Communication error occurred */
     void communicationError(const QString& title, const QString& error);
 
     void communicationUpdate(const QString& linkname, const QString& text);
@@ -217,7 +217,7 @@ protected:
     /// This function logs the send times and amounts of datas for input. Data is used for calculating
     /// the transmission rate.
     ///     @param byteCount Number of bytes received
-    ///     @param time Time in ms send occured
+    ///     @param time Time in ms send occurred
     void _logInputDataRate(quint64 byteCount, qint64 time) {
         if(_enableRateCollection)
             _logDataRateToBuffer(_inDataWriteAmounts, _inDataWriteTimes, &_inDataIndex, byteCount, time);
@@ -226,7 +226,7 @@ protected:
     /// This function logs the send times and amounts of datas for output. Data is used for calculating
     /// the transmission rate.
     ///     @param byteCount Number of bytes sent
-    ///     @param time Time in ms receive occured
+    ///     @param time Time in ms receive occurred
     void _logOutputDataRate(quint64 byteCount, qint64 time) {
         if(_enableRateCollection)
             _logDataRateToBuffer(_outDataWriteAmounts, _outDataWriteTimes, &_outDataIndex, byteCount, time);

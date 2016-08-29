@@ -240,7 +240,7 @@ void Mouse6dofInput::button3DMouseDown(int button)
 #ifdef QGC_MOUSE_ENABLED_LINUX
 void Mouse6dofInput::handleX11Event(XEvent *event)
 {
-    //qDebug("XEvent occured...");
+    //qDebug("XEvent occurred...");
     if (!mouseActive)
     {
         qDebug() << "3dMouse not initialized. Cancelled handling X11event for 3dMouse";
