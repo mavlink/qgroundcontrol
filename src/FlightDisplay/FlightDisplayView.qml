@@ -206,6 +206,12 @@ QGCView {
                     anchors.fill:   parent
                     visible:        !QGroundControl.videoManager.isGStreamer
                 }
+                onVisibleChanged: {
+                    if(visible)
+                        camera.start()
+                    else
+                        camera.stop()
+                }
             }
         }
 
