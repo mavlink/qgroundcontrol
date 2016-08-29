@@ -768,7 +768,7 @@
                 "label":            "Mode:",
                 "default":          0,
                 "decimalPlaces":    0,
-                "enumStrings":      "Retract,Neutral,Mavlink Targetting,RC Targetting,GPS Point",
+                "enumStrings":      "Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point",
                 "enumValues":       "0,1,2,3,4"
             },
             "param2": {

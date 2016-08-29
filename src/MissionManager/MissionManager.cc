@@ -165,7 +165,7 @@ void MissionManager::_ackTimeout(void)
     
     if (timedOutAck == AckNone) {
         qCWarning(MissionManagerLog) << "_ackTimeout timeout with AckNone";
-        _sendError(InternalError, "Internal error occured during Mission Item communication: _ackTimeOut:_retryAck == AckNone");
+        _sendError(InternalError, "Internal error occurred during Mission Item communication: _ackTimeOut:_retryAck == AckNone");
         return;
     }
     

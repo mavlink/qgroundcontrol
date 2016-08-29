@@ -92,13 +92,13 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
             _motionReport.pos_std_dev[2] = geoPositionInfo.attribute(QGeoPositionInfo::VerticalAccuracy);
         }                
 
-        // calculate z velocity if it's availible
+        // calculate z velocity if it's available
 
         if(geoPositionInfo.hasAttribute(QGeoPositionInfo::VerticalSpeed)) {
             _motionReport.vz = geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
         }
 
-        // calculate x,y velocity if it's availible
+        // calculate x,y velocity if it's available
 
         if((geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction)   == true) &&
            (geoPositionInfo.hasAttribute(QGeoPositionInfo::GroundSpeed) == true)) {
