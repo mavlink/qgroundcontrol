@@ -31,7 +31,7 @@ public:
 
     Q_PROPERTY(bool             hasVideo        READ    hasVideo                                NOTIFY hasVideoChanged)
     Q_PROPERTY(bool             isGStreamer     READ    isGStreamer                             NOTIFY isGStreamerChanged)
-    Q_PROPERTY(QString          videoSourceID   READ    videoSource                             NOTIFY videoSourceIDChanged)
+    Q_PROPERTY(QString          videoSourceID   READ    videoSourceID                           NOTIFY videoSourceIDChanged)
     Q_PROPERTY(QString          videoSource     READ    videoSource     WRITE setVideoSource    NOTIFY videoSourceChanged)
     Q_PROPERTY(QStringList      videoSourceList READ    videoSourceList                         NOTIFY videoSourceListChanged)
     Q_PROPERTY(bool             videoRunning    READ    videoRunning                            NOTIFY videoRunningChanged)
