@@ -312,7 +312,7 @@ QGCView {
                                     qsTr("This firmware has NOT BEEN FLIGHT TESTED. ") +
                                     qsTr("It is only intended for DEVELOPERS. ") +
                                     qsTr("Run bench tests without props first. ") +
-                                    qsTr("Do NOT fly this without additonal safety precautions. ") +
+                                    qsTr("Do NOT fly this without additional safety precautions. ") +
                                     qsTr("Follow the mailing list actively when using it.")
                         } else {
                             firmwareVersionWarningLabel.visible = false

@@ -66,7 +66,7 @@ void GstQtVideoSink::class_init(gpointer g_class, gpointer class_data)
      * This is an action signal that you can call from your Qt surface class inside
      * its paint function to render the video. It takes a QPainter* and the target
      * area rectangle as arguments. You should schedule to call this function to
-     * repaint the surface whenever the ::update signal is emited.
+     * repaint the surface whenever the ::update signal is emitted.
      *
      * Note that the x,y,width and height arguments are actually qreal. This means
      * that on architectures like arm they will be float instead of double. You should
@@ -87,7 +87,7 @@ void GstQtVideoSink::class_init(gpointer g_class, gpointer class_data)
     /**
      * GstQtVideoSink::update
      *
-     * This signal is emited when the surface should be repainted. It should
+     * This signal is emitted when the surface should be repainted. It should
      * be connected to QWidget::update() or QGraphicsItem::update() or any
      * other similar function in your surface.
      */
