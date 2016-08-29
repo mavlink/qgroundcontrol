@@ -92,7 +92,7 @@ Rectangle {
         }
 
         Repeater {
-            model: [ missionItem.gridAngle, missionItem.gridSpacing, missionItem.gridAltitude ]
+            model: [ missionItem.gridAngle, missionItem.gridSpacing, missionItem.gridAltitude, missionItem.turnaroundDist ]
 
             Item {
                 anchors.left:   parent.left
