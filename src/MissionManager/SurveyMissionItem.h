@@ -136,6 +136,7 @@ private:
     FactMetaData    _gridAltitudeMetaData;
     FactMetaData    _gridAngleMetaData;
     FactMetaData    _gridSpacingMetaData;
+    FactMetaData    _turnaroundDistMetaData;
     FactMetaData    _cameraTriggerDistanceMetaData;
 
     static const char* _jsonVersionKey;
