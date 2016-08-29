@@ -253,7 +253,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 {
                     mavlink_message_t msg;
                     mavlink_msg_ping_pack(getSystemId(), getComponentId(), &msg, ping.time_usec, ping.seq, message.sysid, message.compid);
-                    sendMessage(link, msg, getSystemId(), getComponentId());
+                    sendMessage(link, msg);
                 }
             }
 
@@ -394,7 +394,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
                     // Only forward this message to the other links,
                     // not the link the message was received on
-                    if (currLink && currLink != link) sendMessage(currLink, message, message.sysid, message.compid);
+                    if (currLink && currLink != link) sendMessage(currLink, message);
                 }
             }
         }
@@ -426,13 +426,7 @@ int MAVLinkProtocol::getComponentId()
     return 0;
 }
 
-/**
- * @param link the link to send the message over
- * @param message message to send
- * @param systemid id of the system the message is originating from
- * @param componentid id of the component the message is originating from
- */
-void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid)
+void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message)
 {
     mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(link->getMavlinkChannel());
     switch (QGroundControlQmlGlobal::mavlinkVersion()->rawValue().toInt()) {

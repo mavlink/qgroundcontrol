@@ -129,7 +129,7 @@ public:
     /// Suspend/Restart logging during replay.
     void suspendLogForReplay(bool suspend);
 
-    void sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid);
+    void sendMessage(LinkInterface* link, mavlink_message_t message);
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);

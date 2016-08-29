@@ -821,7 +821,7 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
     // Give the plugin a chance to adjust
     _firmwarePlugin->adjustOutgoingMavlinkMessage(this, &message);
 
-    _mavlink->sendMessage(link, message, _mavlink->getSystemId(), _mavlink->getComponentId());
+    _mavlink->sendMessage(link, message);
     _messagesSent++;
     emit messagesSentChanged();
 }
