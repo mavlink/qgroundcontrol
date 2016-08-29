@@ -48,7 +48,7 @@ QGCJSBSimLink::QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString
 
 QGCJSBSimLink::~QGCJSBSimLink()
 {   //do not disconnect unless it is connected.
-    //disconnectSimulation will delete the memory that was allocated for proces, terraSync and socket
+    //disconnectSimulation will delete the memory that was allocated for process, terraSync and socket
     if(connectState){
        disconnectSimulation();
     }

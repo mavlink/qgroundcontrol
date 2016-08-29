@@ -137,7 +137,7 @@ class Main(object):
         # module
         import optparse
         usage = "usage: %prog [options] directory old_prefix new_prefix"
-        description = 'Rellocates object files changing the dependant '\
+        description = 'Rellocates object files changing the dependent '\
                       ' dynamic libraries location path with a new one'
         parser = optparse.OptionParser(usage=usage, description=description)
         parser.add_option('-r', '--recursive', action='store_true',

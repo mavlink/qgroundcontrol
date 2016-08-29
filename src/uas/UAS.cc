@@ -1745,7 +1745,7 @@ float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
     //as well
     float noise = z0 * sqrt(noise_var); //calculate normally distributed variable with mu = 0, std = var^2
 
-    //Finally gaurd against any case where the noise is not real
+    //Finally guard against any case where the noise is not real
     if(std::isfinite(noise)) {
             return truth_meas + noise;
     } else {

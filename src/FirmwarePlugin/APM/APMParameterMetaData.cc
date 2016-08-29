@@ -312,7 +312,7 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
     // as long as param doens't end
     while (!(elementName == "param" && xml.isEndElement())) {
         if (elementName.isEmpty()) {
-            // skip empty elements. Somehow I am getting lot of these. Dont know what to do with them.
+            // skip empty elements. Somehow I am getting lot of these. Don't know what to do with them.
         } else if (elementName == "field") {
             QString attributeName = xml.attributes().value("name").toString();
 

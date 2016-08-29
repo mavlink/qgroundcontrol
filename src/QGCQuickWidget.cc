@@ -18,7 +18,7 @@
 #include <QQmlEngine>
 
 /// @file
-///     @brief Subclass of QQuickWidget which injects Facts and the Pallete object into
+///     @brief Subclass of QQuickWidget which injects Facts and the Palette object into
 ///             the QML context.
 ///
 ///     @author Don Gagne <don@thegagnes.com>

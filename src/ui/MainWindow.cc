@@ -405,7 +405,7 @@ void MainWindow::reallyClose(void)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (!_forceClose) {
-        // Attemp close from within the root Qml item
+        // Attempt close from within the root Qml item
         qgcApp()->qmlAttemptWindowClose();
         event->ignore();
         return;

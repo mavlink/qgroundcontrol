@@ -159,7 +159,7 @@ quint64 LogReplayLink::_parseTimestamp(const QByteArray& bytes)
     return timestamp;
 }
 
-/// Seeks to the beginning of the next successully parsed mavlink message in the log file.
+/// Seeks to the beginning of the next successfully parsed mavlink message in the log file.
 ///     @param nextMsg[output] Parsed next message that was found
 /// @return A Unix timestamp in microseconds UTC for found message or 0 if parsing failed
 quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
