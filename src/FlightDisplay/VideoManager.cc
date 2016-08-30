@@ -22,7 +22,10 @@ static const char* kVideoSourceKey  = "VideoSource";
 static const char* kVideoUDPPortKey = "VideoUDPPort";
 static const char* kVideoRTSPUrlKey = "VideoRTSPUrl";
 static const char* kUDPStream       = "UDP Video Stream";
+#if defined(QGC_GST_STREAMING)
 static const char* kRTSPStream      = "RTSP Video Stream";
+#endif
+static const char* kNoVideo         = "No Video Available";
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
@@ -97,6 +100,8 @@ VideoManager::uvcEnabled()
 void
 VideoManager::setVideoSource(QString vSource)
 {
+    if(vSource == kNoVideo)
+        return;
     _videoSource = vSource;
     QSettings settings;
     settings.setValue(kVideoSourceKey, vSource);
@@ -115,7 +120,7 @@ VideoManager::setVideoSource(QString vSource)
     emit isGStreamerChanged();
     qCDebug(VideoManagerLog) << "New Video Source:" << vSource;
     /*
-     * Not working. Requires restart for now
+     * Not working. Requires restart for now. (Undef KRTSP/kUDP above when enabling this)
     if(isGStreamer())
         _updateVideo();
     */
@@ -137,7 +142,7 @@ VideoManager::setUdpPort(quint16 port)
     settings.setValue(kVideoUDPPortKey, port);
     emit udpPortChanged();
     /*
-     * Not working. Requires restart for now
+     * Not working. Requires restart for now. (Undef KRTSP/kUDP above when enabling this)
     if(_videoSource == kUDPStream)
         _updateVideo();
     */
@@ -152,7 +157,7 @@ VideoManager::setRtspURL(QString url)
     settings.setValue(kVideoRTSPUrlKey, url);
     emit rtspURLChanged();
     /*
-     * Not working. Requires restart for now
+     * Not working. Requires restart for now. (Undef KRTSP/kUDP above when enabling this)
     if(_videoSource == kRTSPStream)
         _updateVideo();
     */
@@ -174,6 +179,8 @@ VideoManager::videoSourceList()
         _videoSourceList.append(cameraInfo.description());
     }
 #endif
+    if(_videoSourceList.count() == 0)
+        _videoSourceList.append(kNoVideo);
     return _videoSourceList;
 }
 
@@ -218,8 +225,8 @@ void VideoManager::_updateVideo()
             delete _videoSurface;
         _videoSurface  = new VideoSurface;
         _videoReceiver = new VideoReceiver(this);
-        _videoReceiver->setVideoSink(_videoSurface->videoSink());
         #if defined(QGC_GST_STREAMING)
+        _videoReceiver->setVideoSink(_videoSurface->videoSink());
         if(_videoSource == kUDPStream)
             _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_udpPort));
         else

@@ -49,6 +49,7 @@ void VideoReceiver::setVideoSink(GstElement* sink)
 }
 #endif
 
+#if defined(QGC_GST_STREAMING)
 static void newPadCB(GstElement * element, GstPad* pad, gpointer data)
 {
     gchar *name;
@@ -63,6 +64,7 @@ static void newPadCB(GstElement * element, GstPad* pad, gpointer data)
         qCritical() << "newPadCB : failed to link elements\n";
     g_free(name);
 }
+#endif
 
 void VideoReceiver::start()
 {
