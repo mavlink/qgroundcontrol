@@ -11,14 +11,14 @@
 #ifndef MissionController_H
 #define MissionController_H
 
-#include <QObject>
-#include <QHash>
-
+#include "PlanElementController.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 #include "MavlinkQmlSingleton.h"
 #include "VisualMissionItem.h"
+
+#include <QHash>
 
 class CoordinateVector;
 
@@ -26,7 +26,7 @@ Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
 typedef QPair<VisualMissionItem*,VisualMissionItem*> VisualItemPair;
 typedef QHash<VisualItemPair, CoordinateVector*> CoordVectHashTable;
-class MissionController : public QObject
+class MissionController : public PlanElementController
 {
     Q_OBJECT
 
@@ -37,24 +37,13 @@ public:
     Q_PROPERTY(QmlObjectListModel*  visualItems         READ visualItems                                NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  complexVisualItems  READ complexVisualItems                         NOTIFY complexVisualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines       READ waypointLines                              NOTIFY waypointLinesChanged)
-    Q_PROPERTY(bool                 autoSync            READ autoSync               WRITE setAutoSync   NOTIFY autoSyncChanged)
-    Q_PROPERTY(bool                 syncInProgress      READ syncInProgress                             NOTIFY syncInProgressChanged)
 
     Q_PROPERTY(double               missionDistance     READ missionDistance                            NOTIFY missionDistanceChanged)
     Q_PROPERTY(double               missionMaxTelemetry READ missionMaxTelemetry                        NOTIFY missionMaxTelemetryChanged)
     Q_PROPERTY(double               cruiseDistance      READ cruiseDistance                             NOTIFY cruiseDistanceChanged)
     Q_PROPERTY(double               hoverDistance       READ hoverDistance                              NOTIFY hoverDistanceChanged)
 
-
-    Q_INVOKABLE void start(bool editMode);
-    Q_INVOKABLE void getMissionItems(void);
-    Q_INVOKABLE void sendMissionItems(void);
-    Q_INVOKABLE void loadMissionFromFilePicker(void);
-    Q_INVOKABLE void loadMissionFromFile(const QString& filename);
-    Q_INVOKABLE void saveMissionToFilePicker(void);
-    Q_INVOKABLE void saveMissionToFile(const QString& filename);
     Q_INVOKABLE void removeMissionItem(int index);
-    Q_INVOKABLE void removeAllMissionItems(void);
 
     /// Add a new simple mission item to the list
     ///     @param i: index to insert at
@@ -66,15 +55,24 @@ public:
     /// @return Sequence number for new item
     Q_INVOKABLE int insertComplexMissionItem(QGeoCoordinate coordinate, int i);
 
+    // Overrides from PlanElementController
+    void start              (bool editMode) final;
+    void loadFromVehicle    (void) final;
+    void sendToVehicle      (void) final;
+    void loadFromFilePicker (void) final;
+    void loadFromFile       (const QString& filename) final;
+    void saveToFilePicker   (void) final;
+    void saveToFile         (const QString& filename) final;
+    void removeAll          (void) final;
+    bool syncInProgress     (void) const final;
+    bool dirty              (void) const final;
+    void setDirty           (bool dirty) final;
+
     // Property accessors
 
     QmlObjectListModel* visualItems         (void) { return _visualItems; }
     QmlObjectListModel* complexVisualItems  (void) { return _complexItems; }
     QmlObjectListModel* waypointLines       (void) { return &_waypointLines; }
-
-    bool autoSync(void) { return _autoSync; }
-    void setAutoSync(bool autoSync);
-    bool syncInProgress(void);
 
     double  missionDistance         (void) const { return _missionDistance; }
     double  missionMaxTelemetry     (void) const { return _missionMaxTelemetry; }
@@ -93,9 +91,7 @@ signals:
     void visualItemsChanged(void);
     void complexVisualItemsChanged(void);
     void waypointLinesChanged(void);
-    void autoSyncChanged(bool autoSync);
     void newItemsFromVehicle(void);
-    void syncInProgressChanged(bool syncInProgress);
     void missionDistanceChanged(double missionDistance);
     void missionMaxTelemetryChanged(double missionMaxTelemetry);
     void cruiseDistanceChanged(double cruiseDistance);
@@ -104,10 +100,8 @@ signals:
 private slots:
     void _newMissionItemsAvailableFromVehicle();
     void _itemCommandChanged(void);
-    void _activeVehicleChanged(Vehicle* activeVehicle);
     void _activeVehicleHomePositionAvailableChanged(bool homePositionAvailable);
     void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
-    void _dirtyChanged(bool dirty);
     void _inProgressChanged(bool inProgress);
     void _currentMissionItemChanged(int sequenceNumber);
     void _recalcWaypointLines(void);
@@ -121,7 +115,6 @@ private:
     void _deinitAllVisualItems(void);
     void _initVisualItem(VisualMissionItem* item);
     void _deinitVisualItem(VisualMissionItem* item);
-    void _autoSyncSend(void);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
     static void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     static void _calcHomeDist(VisualMissionItem* currentItem, VisualMissionItem* homeItem, double* distance);
@@ -134,14 +127,15 @@ private:
     bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
     int _nextSequenceNumber(void);
 
+    // Overrides from PlanElementController
+    void _activeVehicleBeingRemoved(void) final;
+    void _activeVehicleSet(void) final;
+
 private:
-    bool                _editMode;
     QmlObjectListModel* _visualItems;
     QmlObjectListModel* _complexItems;
     QmlObjectListModel  _waypointLines;
     CoordVectHashTable  _linesTable;
-    Vehicle*            _activeVehicle;
-    bool                _autoSync;
     bool                _firstItemsFromVehicle;
     bool                _missionItemsRequested;
     bool                _queuedSend;

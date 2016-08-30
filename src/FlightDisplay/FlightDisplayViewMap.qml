@@ -58,6 +58,11 @@ FlightMap {
         Component.onCompleted: start(false /* editMode */)
     }
 
+    GeoFenceController {
+        id: _geoFenceController
+        Component.onCompleted: start(false /* editMode */)
+    }
+
     // Add trajectory points to the map
     MapItemView {
         model: _mainIsMap ? _activeVehicle ? _activeVehicle.trajectoryPoints : 0 : 0
@@ -94,6 +99,20 @@ FlightMap {
     // Add lines between waypoints
     MissionLineView {
         model: _mainIsMap ? _missionController.waypointLines : 0
+    }
+
+    // GeoFence polygon
+    MapPolygon {
+        border.color:   "#80FF0000"
+        border.width:   3
+        path:           _geoFenceController.polygon.path
+    }
+
+    // GeoFence breach return point
+    MapQuickItem {
+        anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+        coordinate:     _geoFenceController.breachReturnPoint
+        sourceItem:     MissionItemIndexLabel { label: "F" }
     }
 
     // GoTo here waypoint
