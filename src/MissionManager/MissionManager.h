@@ -31,7 +31,6 @@ class MissionManager : public QObject
     Q_OBJECT
     
 public:
-    /// @param uas Uas which this set of facts is associated with
     MissionManager(Vehicle* vehicle);
     ~MissionManager();
     
