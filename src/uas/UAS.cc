@@ -426,7 +426,7 @@ void UAS::receiveMessage(mavlink_message_t message)
         {
             mavlink_hil_controls_t hil;
             mavlink_msg_hil_controls_decode(&message, &hil);
-            emit hilControlsChanged(hil.time_usec, hil.roll_ailerons, hil.pitch_elevator, hil.yaw_rudder, hil.throttle, hil.mode, hil.nav_mode);
+	    emit hilControlsChanged(hil.time_usec, hil.roll_ailerons, hil.pitch_elevator, hil.yaw_rudder, hil.throttle, hil.aux1, hil.aux2, hil.aux3, hil.aux4, hil.mode, hil.nav_mode);
         }
             break;
         case MAVLINK_MSG_ID_VFR_HUD:
