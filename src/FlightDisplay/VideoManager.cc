@@ -11,7 +11,10 @@
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QSettings>
+
+#ifndef QGC_DISABLE_UVC
 #include <QCameraInfo>
+#endif
 
 #include <VideoItem.h>
 
