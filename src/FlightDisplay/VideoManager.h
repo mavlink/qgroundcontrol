@@ -35,6 +35,9 @@ public:
     Q_PROPERTY(QString          videoSource     READ    videoSource     WRITE setVideoSource    NOTIFY videoSourceChanged)
     Q_PROPERTY(QStringList      videoSourceList READ    videoSourceList                         NOTIFY videoSourceListChanged)
     Q_PROPERTY(bool             videoRunning    READ    videoRunning                            NOTIFY videoRunningChanged)
+    Q_PROPERTY(quint16          udpPort         READ    udpPort         WRITE setUdpPort        NOTIFY udpPortChanged)
+    Q_PROPERTY(QString          rtspURL         READ    rtspURL         WRITE setRtspURL        NOTIFY rtspURLChanged)
+    Q_PROPERTY(bool             uvcEnabled      READ    uvcEnabled                              CONSTANT)
     Q_PROPERTY(VideoSurface*    videoSurface    MEMBER  _videoSurface                           CONSTANT)
     Q_PROPERTY(VideoReceiver*   videoReceiver   MEMBER  _videoReceiver                          CONSTANT)
 
@@ -44,7 +47,18 @@ public:
     QString     videoSourceID       () { return _videoSourceID; }
     QString     videoSource         () { return _videoSource; }
     QStringList videoSourceList     ();
+    quint16     udpPort             () { return _udpPort; }
+    QString     rtspURL             () { return _rtspURL; }
+
+#if defined(QGC_DISABLE_UVC)
+    bool        uvcEnabled          () { return false; }
+#else
+    bool        uvcEnabled          ();
+#endif
+
     void        setVideoSource      (QString vSource);
+    void        setUdpPort          (quint16 port);
+    void        setRtspURL          (QString url);
 
     // Override from QGCTool
     void        setToolbox          (QGCToolbox *toolbox);
@@ -56,9 +70,12 @@ signals:
     void videoSourceListChanged ();
     void isGStreamerChanged     ();
     void videoSourceIDChanged   ();
+    void udpPortChanged         ();
+    void rtspURLChanged         ();
 
 private:
-    void _updateTimer(void);
+    void _updateTimer           ();
+    void _updateVideo           ();
 
 private:
     VideoSurface*       _videoSurface;
@@ -70,6 +87,9 @@ private:
     QString             _videoSource;
     QString             _videoSourceID;
     QStringList         _videoSourceList;
+    quint16             _udpPort;
+    QString             _rtspURL;
+    bool                _init;
 };
 
 #endif

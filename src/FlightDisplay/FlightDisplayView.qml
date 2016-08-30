@@ -184,34 +184,17 @@ QGCView {
                     }
                 }
             ]
-            //-- UDP Video Streaming
+            //-- Video Streaming
             FlightDisplayViewVideo {
                 anchors.fill:   parent
                 visible:        QGroundControl.videoManager.isGStreamer
             }
             //-- UVC Video (USB Camera or Video Device)
-            Rectangle {
-                id:             noVideo
+            Loader {
+                id:             cameraLoader
                 anchors.fill:   parent
-                color:          Qt.rgba(0,0,0,0.75)
                 visible:        !QGroundControl.videoManager.isGStreamer
-                Camera {
-                    id:             camera
-                    deviceId:       QGroundControl.videoManager.videoSourceID
-                    captureMode:    Camera.CaptureViewfinder
-                }
-                VideoOutput {
-                    id:             viewFinder
-                    source:         camera
-                    anchors.fill:   parent
-                    visible:        !QGroundControl.videoManager.isGStreamer
-                }
-                onVisibleChanged: {
-                    if(visible)
-                        camera.start()
-                    else
-                        camera.stop()
-                }
+                source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml"
             }
         }
 
