@@ -142,7 +142,7 @@ private:
     QMap<int, QMap<QString, QStringList> > _mapGroup2ParameterName;
     
     bool        _parametersReady;               ///< true: full set of parameters correctly loaded
-    bool        _initialLoadComplete;           ///< true: Initial load of all parameters complete, whether succesful or not
+    bool        _initialLoadComplete;           ///< true: Initial load of all parameters complete, whether successful or not
     bool        _waitingForDefaultComponent;    ///< true: last chance wait for default component params
     bool        _saveRequired;                  ///< true: _saveToEEPROM should be called
     int         _defaultComponentId;

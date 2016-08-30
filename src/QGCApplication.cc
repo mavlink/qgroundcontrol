@@ -206,7 +206,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     if (!_runningUnitTests) {
         if (getuid() == 0) {
             QMessageBox msgBox;
-            msgBox.setInformativeText("You are runnning QGroundControl as root. "
+            msgBox.setInformativeText("You are running QGroundControl as root. "
                                       "You should not do this since it will cause other issues with QGroundControl. "
                                       "QGroundControl will now exit. "
                                       "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"

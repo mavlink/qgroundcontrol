@@ -41,7 +41,7 @@ private:
 
     QGeoPositionInfo lastPosition;
 
-    // items for simulating QGC movment in jMAVSIM
+    // items for simulating QGC movement in jMAVSIM
 
     int32_t lat_int;
     int32_t lon_int;
