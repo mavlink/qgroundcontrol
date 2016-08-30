@@ -181,7 +181,7 @@ public:
     virtual QString internalParameterMetaDataFile(void) { return QString(); }
 
     /// Loads the specified parameter meta data file.
-    /// @return Opaque parameter meta data information which must be stored with Vehicle. Vehicle is reponsible to
+    /// @return Opaque parameter meta data information which must be stored with Vehicle. Vehicle is responsible to
     ///         call deleteParameterMetaData when no longer needed.
     virtual QObject* loadParameterMetaData(const QString& metaDataFile) { Q_UNUSED(metaDataFile); return NULL; }
 

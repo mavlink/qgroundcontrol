@@ -88,7 +88,7 @@ void SerialLink::_writeBytes(const QByteArray data)
         _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
         _port->write(data);
     } else {
-        // Error occured
+        // Error occurred
         _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(getName()));
     }
 }

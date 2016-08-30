@@ -16,7 +16,7 @@
 #include "AutoPilotPlugin.h"
 
 /// @file
-///     @brief Subclass of QQuickWidget which injects Facts and the Pallete object into
+///     @brief Subclass of QQuickWidget which injects Facts and the Palette object into
 ///             the QML context.
 ///
 ///     @author Don Gagne <don@thegagnes.com>
@@ -31,7 +31,7 @@ public:
     void setAutoPilot(AutoPilotPlugin* autoPilot);
     
     /// Sets the QML into the control. Will display errors message box if error occurs loading source.
-    ///     @return true: source loaded, false: source not loaded, errors occured
+    ///     @return true: source loaded, false: source not loaded, errors occurred
     bool setSource(const QUrl& qmlUrl);
 };
 

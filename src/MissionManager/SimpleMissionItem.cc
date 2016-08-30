@@ -152,7 +152,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._commandFact, &Fact::valueChanged,                    this, &SimpleMissionItem::_setDirtyFromSignal);
     connect(&_missionItem,              &MissionItem::sequenceNumberChanged,    this, &SimpleMissionItem::_setDirtyFromSignal);
 
-    // Values from these facts must propogate back and forth between the real object storage
+    // Values from these facts must propagate back and forth between the real object storage
     connect(&_altitudeRelativeToHomeFact,   &Fact::valueChanged,    this, &SimpleMissionItem::_syncAltitudeRelativeToHomeToFrame);
     connect(&_missionItem._frameFact,       &Fact::valueChanged,    this, &SimpleMissionItem::_syncFrameToAltitudeRelativeToHome);
 
@@ -182,7 +182,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._commandFact,     &Fact::valueChanged, this, &SimpleMissionItem::_sendCommandChanged);
     connect(&_missionItem._frameFact,       &Fact::valueChanged, this, &SimpleMissionItem::_sendFrameChanged);
 
-    // Sequence number is kept in mission iteem, so we need to propogate signal up as well
+    // Sequence number is kept in mission iteem, so we need to propagate signal up as well
     connect(&_missionItem, &MissionItem::sequenceNumberChanged, this, &SimpleMissionItem::sequenceNumberChanged);
 }
 

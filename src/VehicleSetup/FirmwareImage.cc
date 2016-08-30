@@ -198,7 +198,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
 {
     _imageSize = 0;
     
-    // We need to collect information from the .px4 file as well as pull the binary image out to a seperate file.
+    // We need to collect information from the .px4 file as well as pull the binary image out to a separate file.
     
     QFile px4File(imageFilename);
     if (!px4File.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -400,7 +400,7 @@ bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< J
         return false;
     }
     
-    emit statusMessage(QString("Succesfully decompressed %1").arg(bytesKey));
+    emit statusMessage(QString("Successfully decompressed %1").arg(bytesKey));
     
     return true;
 }

@@ -31,6 +31,7 @@ public:
     Q_PROPERTY(bool                 gridAltitudeRelative    MEMBER _gridAltitudeRelative    NOTIFY gridAltitudeRelativeChanged)
     Q_PROPERTY(Fact*                gridAngle               READ gridAngle                  CONSTANT)
     Q_PROPERTY(Fact*                gridSpacing             READ gridSpacing                CONSTANT)
+    Q_PROPERTY(Fact*                turnaroundDist          READ turnaroundDist             CONSTANT)
     Q_PROPERTY(bool                 cameraTrigger           MEMBER _cameraTrigger           NOTIFY cameraTriggerChanged)
     Q_PROPERTY(Fact*                cameraTriggerDistance   READ cameraTriggerDistance      CONSTANT)
     Q_PROPERTY(QVariantList         polygonPath             READ polygonPath                NOTIFY polygonPathChanged)
@@ -48,6 +49,7 @@ public:
     Fact* gridAltitude(void)    { return &_gridAltitudeFact; }
     Fact* gridAngle(void)       { return &_gridAngleFact; }
     Fact* gridSpacing(void)     { return &_gridSpacingFact; }
+    Fact* turnaroundDist(void)  { return &_turnaroundDistFact; }
     Fact* cameraTriggerDistance(void) { return &_cameraTriggerDistanceFact; }
 
     int     cameraShots(void) const;
@@ -81,6 +83,7 @@ public:
     void setDirty           (bool dirty) final;
     void setCoordinate      (const QGeoCoordinate& coordinate) final;
     void setSequenceNumber  (int sequenceNumber) final;
+    void setTurnaroundDist  (double dist) { _turnaroundDistFact.setRawValue(dist); }
     void save               (QJsonObject& saveObject) const final;
 
 signals:
@@ -128,10 +131,12 @@ private:
     Fact            _gridAltitudeFact;
     Fact            _gridAngleFact;
     Fact            _gridSpacingFact;
+    Fact            _turnaroundDistFact;
     Fact            _cameraTriggerDistanceFact;
     FactMetaData    _gridAltitudeMetaData;
     FactMetaData    _gridAngleMetaData;
     FactMetaData    _gridSpacingMetaData;
+    FactMetaData    _turnaroundDistMetaData;
     FactMetaData    _cameraTriggerDistanceMetaData;
 
     static const char* _jsonVersionKey;
@@ -142,6 +147,7 @@ private:
     static const char* _jsonGridAltitudeRelativeKey;
     static const char* _jsonGridAngleKey;
     static const char* _jsonGridSpacingKey;
+    static const char* _jsonTurnaroundDistKey;
     static const char* _jsonCameraTriggerKey;
     static const char* _jsonCameraTriggerDistanceKey;
 

@@ -9,7 +9,7 @@
 
 
 /// @file
-///     @brief PX4 Firmware Upgrade operations which occur on a seperate thread.
+///     @brief PX4 Firmware Upgrade operations which occur on a separate thread.
 ///     @author Don Gagne <don@thegagnes.com>
 
 #ifndef PX4FirmwareUpgradeThread_H
@@ -30,7 +30,7 @@
 
 class PX4FirmwareUpgradeThreadController;
 
-/// @brief Used to run bootloader commands on a seperate thread. These routines are mainly meant to to be called
+/// @brief Used to run bootloader commands on a separate thread. These routines are mainly meant to to be called
 ///         internally by the PX4FirmwareUpgradeThreadController. Clients should call the various public methods
 ///         exposed by PX4FirmwareUpgradeThreadController.
 class PX4FirmwareUpgradeThreadWorker : public QObject
@@ -83,7 +83,7 @@ private:
 };
 
 /// @brief Provides methods to interact with the bootloader. The commands themselves are signalled
-///         across to PX4FirmwareUpgradeThreadWorker so that they run on the seperate thread.
+///         across to PX4FirmwareUpgradeThreadWorker so that they run on the separate thread.
 class PX4FirmwareUpgradeThreadController : public QObject
 {
     Q_OBJECT

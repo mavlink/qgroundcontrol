@@ -25,6 +25,7 @@ const char* SurveyMissionItem::_jsonGridAltitudeKey =          "gridAltitude";
 const char* SurveyMissionItem::_jsonGridAltitudeRelativeKey =  "gridAltitudeRelative";
 const char* SurveyMissionItem::_jsonGridAngleKey =             "gridAngle";
 const char* SurveyMissionItem::_jsonGridSpacingKey =           "gridSpacing";
+const char* SurveyMissionItem::_jsonTurnaroundDistKey =        "turnaroundDist";
 const char* SurveyMissionItem::_jsonCameraTriggerKey =         "cameraTrigger";
 const char* SurveyMissionItem::_jsonCameraTriggerDistanceKey = "cameraTriggerDistance";
 
@@ -43,34 +44,41 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _gridAltitudeFact         (0, "Altitude:",                FactMetaData::valueTypeDouble)
     , _gridAngleFact            (0, "Grid angle:",              FactMetaData::valueTypeDouble)
     , _gridSpacingFact          (0, "Grid spacing:",            FactMetaData::valueTypeDouble)
+    , _turnaroundDistFact       (0, "Turnaround dist.:",        FactMetaData::valueTypeDouble)
     , _cameraTriggerDistanceFact(0, "Camera trigger distance",  FactMetaData::valueTypeDouble)
 
     , _gridAltitudeMetaData         (FactMetaData::valueTypeDouble)
     , _gridAngleMetaData            (FactMetaData::valueTypeDouble)
     , _gridSpacingMetaData          (FactMetaData::valueTypeDouble)
+    , _turnaroundDistMetaData       (FactMetaData::valueTypeDouble)
     , _cameraTriggerDistanceMetaData(FactMetaData::valueTypeDouble)
 {
     _gridAltitudeFact.setRawValue(25);
     _gridSpacingFact.setRawValue(10);
+    _turnaroundDistFact.setRawValue(60);
     _cameraTriggerDistanceFact.setRawValue(25);
 
     _gridAltitudeMetaData.setRawUnits("m");
     _gridAngleMetaData.setRawUnits("deg");
     _gridSpacingMetaData.setRawUnits("m");
+    _turnaroundDistMetaData.setRawUnits("m");
     _cameraTriggerDistanceMetaData.setRawUnits("m");
 
     _gridAltitudeMetaData.setDecimalPlaces(1);
     _gridAngleMetaData.setDecimalPlaces(1);
     _gridSpacingMetaData.setDecimalPlaces(2);
+    _turnaroundDistMetaData.setDecimalPlaces(2);
     _cameraTriggerDistanceMetaData.setDecimalPlaces(2);
 
     _gridAltitudeFact.setMetaData(&_gridAltitudeMetaData);
     _gridAngleFact.setMetaData(&_gridAngleMetaData);
     _gridSpacingFact.setMetaData(&_gridSpacingMetaData);
+    _turnaroundDistFact.setMetaData(&_turnaroundDistMetaData);
     _cameraTriggerDistanceFact.setMetaData(&_cameraTriggerDistanceMetaData);
 
     connect(&_gridSpacingFact,              &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
     connect(&_gridAngleFact,                &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
+    connect(&_turnaroundDistFact,           &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
     connect(&_cameraTriggerDistanceFact,    &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
 
     connect(this, &SurveyMissionItem::cameraTriggerChanged, this, &SurveyMissionItem::_cameraTriggerChanged);
@@ -196,6 +204,7 @@ void SurveyMissionItem::save(QJsonObject& saveObject) const
     saveObject[_jsonGridAltitudeRelativeKey] =  _gridAltitudeRelative;
     saveObject[_jsonGridAngleKey] =             _gridAngleFact.rawValue().toDouble();
     saveObject[_jsonGridSpacingKey] =           _gridSpacingFact.rawValue().toDouble();
+    saveObject[_jsonTurnaroundDistKey] =        _turnaroundDistFact.rawValue().toDouble();
     saveObject[_jsonCameraTriggerKey] =         _cameraTrigger;
     saveObject[_jsonCameraTriggerDistanceKey] = _cameraTriggerDistanceFact.rawValue().toDouble();
 
@@ -246,9 +255,9 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, QString& errorStr
     // Validate types
     QStringList keyList;
     QList<QJsonValue::Type> typeList;
-    keyList << _jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey <<
+    keyList << _jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey << _jsonTurnaroundDistKey <<
                _jsonCameraTriggerKey << _jsonCameraTriggerDistanceKey << _jsonGridAltitudeRelativeKey;
-    typeList << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::Array << QJsonValue::Double << QJsonValue::Double<< QJsonValue::Double <<
+    typeList << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::Array << QJsonValue::Double << QJsonValue::Double<< QJsonValue::Double << QJsonValue::Double <<
                 QJsonValue::Bool << QJsonValue::Double << QJsonValue::Bool;
     if (!JsonHelper::validateKeyTypes(complexObject, keyList, typeList, errorString)) {
         _clear();
@@ -276,6 +285,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, QString& errorStr
     _gridAltitudeFact.setRawValue           (complexObject[_jsonGridAltitudeKey].toDouble());
     _gridAngleFact.setRawValue              (complexObject[_jsonGridAngleKey].toDouble());
     _gridSpacingFact.setRawValue            (complexObject[_jsonGridSpacingKey].toDouble());
+    _turnaroundDistFact.setRawValue         (complexObject[_jsonTurnaroundDistKey].toDouble());
     _cameraTriggerDistanceFact.setRawValue  (complexObject[_jsonCameraTriggerDistanceKey].toDouble());
 
     // Polygon shape
@@ -565,13 +575,26 @@ void SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLi
     _adjustLineDirection(intersectLines, resultLines);
 
     // Turn into a path
+    float turnaroundDist = _turnaroundDistFact.rawValue().toDouble();
+
     for (int i=0; i<resultLines.count(); i++) {
         const QLineF& line = resultLines[i];
 
+        QPointF turnaroundOffset = line.p2() - line.p1();
+        turnaroundOffset = turnaroundOffset * turnaroundDist / sqrt(pow(turnaroundOffset.x(),2.0) + pow(turnaroundOffset.y(),2.0));
+
         if (i & 1) {
-            gridPoints << line.p2() << line.p1();
+            if (turnaroundDist > 0.0) {
+                gridPoints << line.p2() + turnaroundOffset << line.p2() << line.p1() << line.p1() - turnaroundOffset;
+            } else {
+                gridPoints << line.p2() << line.p1();
+            }
         } else {
-            gridPoints << line.p1() << line.p2();
+            if (turnaroundDist > 0.0) {
+                gridPoints << line.p1() - turnaroundOffset << line.p1() << line.p2() << line.p2() + turnaroundOffset;
+            } else {
+                gridPoints << line.p1() << line.p2();
+            }
         }
     }
 }

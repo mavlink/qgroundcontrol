@@ -51,11 +51,11 @@ Item {
                                                         qsTr("The Main mode switch must always be assigned to a channel in order to fly")
 
     readonly property string assistModeName:            qsTr("Assist")
-    readonly property string assistModeDescription:     qsTr("If Position Control is placed on a seperate channel from the Main mode channel, an additional 'Assist' mode is added to the Main switch. ") +
+    readonly property string assistModeDescription:     qsTr("If Position Control is placed on a separate channel from the Main mode channel, an additional 'Assist' mode is added to the Main switch. ") +
                                                         qsTr("In order for the Attitude Control/Position Control switch to be active, the Main switch must be in Assist mode.")
 
     readonly property string autoModeName:              qsTr("Auto")
-    readonly property string autoModeDescription:       qsTr("If Loiter is placed on a seperate channel from the Main mode channel, an additional 'Auto' mode is added to the Main switch. ") +
+    readonly property string autoModeDescription:       qsTr("If Loiter is placed on a separate channel from the Main mode channel, an additional 'Auto' mode is added to the Main switch. ") +
                                                         qsTr("In order for the Mission/Loiter switch to be active, the Main switch must be in Auto mode.")
 
     readonly property string fwAcroModeName:            qsTr("Stabilized")

@@ -15,6 +15,7 @@ import QtQuick.Dialogs          1.1
 
 import QGroundControl                       1.0
 import QGroundControl.FactSystem            1.0
+import QGroundControl.FactControls          1.0
 import QGroundControl.Controls              1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
@@ -77,13 +78,21 @@ Rectangle {
                     QGroundControl.isMultiplexingEnabled = checked
                 }
             }
-            //-----------------------------------------------------------------
-            //-- Mavlink Version Check
-            QGCCheckBox {
-                text:       qsTr("Only accept MAVs with same protocol version")
-                checked:    QGroundControl.isVersionCheckEnabled
-                onClicked: {
-                    QGroundControl.isVersionCheckEnabled = checked
+
+            // Mavlink version
+            Row {
+                spacing: ScreenTools.defaultFontPixelWidth
+
+                QGCLabel {
+                    text: qsTr("Mavlink Version:")
+                    anchors.baseline: mavlinkVersionCombo.baseline
+                }
+
+                FactComboBox {
+                    id:         mavlinkVersionCombo
+                    width:      ScreenTools.defaultFontPixelWidth * 45
+                    indexModel: false
+                    fact:       QGroundControl.mavlinkVersion
                 }
             }
         }

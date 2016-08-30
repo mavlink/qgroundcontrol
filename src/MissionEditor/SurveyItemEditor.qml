@@ -16,7 +16,7 @@ Rectangle {
     color:      qgcPal.windowShadeDark
     radius:     _radius
 
-    // The following properties must be available up the hierachy chain
+    // The following properties must be available up the hierarchy chain
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
@@ -92,7 +92,7 @@ Rectangle {
         }
 
         Repeater {
-            model: [ missionItem.gridAngle, missionItem.gridSpacing, missionItem.gridAltitude ]
+            model: [ missionItem.gridAngle, missionItem.gridSpacing, missionItem.gridAltitude, missionItem.turnaroundDist ]
 
             Item {
                 anchors.left:   parent.left

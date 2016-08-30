@@ -9,7 +9,7 @@ WindowsBuild {
 # [REQUIRED] Add support for the MAVLink communications protocol.
 # Mavlink dialect is hardwired to arudpilotmega for now. The reason being
 # the current codebase supports both PX4 and APM flight stack. PX4 flight stack
-# only usese common mavlink specifications, wherease APM flight stack uses custom
+# only usese common mavlink specifications, whereas APM flight stack uses custom
 # mavlink specifications which add to common. So by using the adupilotmega dialect
 # QGC can support both in the same codebase.
 #
@@ -17,7 +17,7 @@ WindowsBuild {
 # a single compiled codebase this hardwiring of dialect can go away. But until then
 # this "workaround" is needed.
 
-MAVLINKPATH_REL = libs/mavlink/include/mavlink/v1.0
+MAVLINKPATH_REL = libs/mavlink/include/mavlink/v2.0
 MAVLINKPATH = $$BASEDIR/$$MAVLINKPATH_REL
 MAVLINK_CONF = ardupilotmega
 DEFINES += MAVLINK_NO_DATA
