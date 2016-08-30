@@ -40,7 +40,7 @@ public:
      * is called. The surface will always keep a reference to this element.
      */
 #if defined(QGC_GST_STREAMING)
-    GstElement* videoSink() const;
+    GstElement* videoSink();
     time_t      lastFrame() { return _lastFrame; }
     void        setLastFrame(time_t t) { _lastFrame = t; }
 #endif
@@ -55,7 +55,8 @@ private:
     friend class VideoItem;
 #if defined(QGC_GST_STREAMING)
     VideoSurfacePrivate * const _data;
-    time_t _lastFrame;
+    time_t  _lastFrame;
+    bool    _refed;
 #endif
 };
 

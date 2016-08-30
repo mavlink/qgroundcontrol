@@ -41,7 +41,6 @@ Item {
         display:        QGroundControl.videoManager.videoSurface
         receiver:       QGroundControl.videoManager.videoReceiver
         visible:        QGroundControl.videoManager.videoRunning
-        runVideo:       true
         /* TODO: Come up with a way to make this an option
         QGCAttitudeHUD {
             id:                 attitudeHUD
