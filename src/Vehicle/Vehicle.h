@@ -570,7 +570,7 @@ public:
     bool xConfigMotors(void);
 
     /// Returns true if the specifed parameter exists from the default component
-    bool parameterExists(int componentId, const QString& name);
+    bool parameterExists(int componentId, const QString& name) const;
 
     /// Returns the specified parameter Fact from the default component
     /// WARNING: Returns a default Fact if parameter does not exists. If that possibility exists, check for existence first with

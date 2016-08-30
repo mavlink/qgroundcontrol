@@ -67,7 +67,7 @@
         Q_INVOKABLE void refreshParametersPrefix(int componentId, const QString& namePrefix);
 
         /// Returns true if the specifed parameter exists from the default component
-        Q_INVOKABLE bool parameterExists(int componentId, const QString& name);
+        Q_INVOKABLE bool parameterExists(int componentId, const QString& name) const;
 
         /// Returns all parameter names
         QStringList parameterNames(int componentId);

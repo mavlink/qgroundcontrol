@@ -7,6 +7,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.FlightMap     1.0
+import QGroundControl.FactSystem    1.0
 
 QGCFlickable {
     id:             root
@@ -70,6 +71,7 @@ QGCFlickable {
                     anchors.right:  parent.right
                     wrapMode:       Text.WordWrap
                     text:           qsTr("Click in map to set breach return point.")
+                    visible:        geoFenceController.breachReturnSupported
                 }
 
                 QGCLabel { text: qsTr("Fence Settings:") }
@@ -105,6 +107,18 @@ QGCFlickable {
                             width:          _editFieldWidth
                             showUnits:      true
                             fact:           modelData
+                            visible:        !comboField.visible
+                        }
+
+                        FactComboBox {
+                            id:             comboField
+                            anchors.right:  parent.right
+                            width:          _editFieldWidth
+                            indexModel:     false
+                            fact:           visible ? modelData : _nullFact
+                            visible:        modelData.enumStrings.length
+
+                            property var _nullFact: Fact { }
                         }
                     }
                 }

@@ -128,7 +128,7 @@ private:
     int _nextSequenceNumber(void);
 
     // Overrides from PlanElementController
-    void _activeVehicleBeingRemoved(void) final;
+    void _activeVehicleBeingRemoved(Vehicle* vehicle) final;
     void _activeVehicleSet(void) final;
 
 private:

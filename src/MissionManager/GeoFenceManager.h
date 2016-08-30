@@ -11,19 +11,17 @@
 #define GeoFenceManager_H
 
 #include <QObject>
-#include <QTimer>
 #include <QGeoCoordinate>
 
-#include "MissionItem.h"
-#include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
-#include "LinkInterface.h"
 #include "QGCMapPolygon.h"
 
 class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(GeoFenceManagerLog)
 
+/// This is the base class for firmware specific geofence managers. A geofence manager is responsible
+/// for communicating with the vehicle to set/get geofence settings.
 class GeoFenceManager : public QObject
 {
     Q_OBJECT
@@ -45,16 +43,17 @@ public:
         QGeoCoordinate          breachReturnPoint;
     } GeoFence_t;
 
-    bool inProgress(void) const;
+    /// Returns true if the manager is currently communicating with the vehicle
+    virtual bool inProgress(void) const { return false; }
 
     /// Request the geo fence from the vehicle
-    void requestGeoFence(void);
+    virtual void requestGeoFence(void);
+
+    /// Set and send the specified geo fence to the vehicle
+    virtual void setGeoFence(const GeoFence_t& geoFence);
 
     /// Returns the current geofence settings
     const GeoFence_t& geoFence(void) const { return _geoFence; }
-
-    /// Set and send the specified geo fence to the vehicle
-    void setGeoFence(const GeoFence_t& geoFence);
 
     /// Error codes returned in error signal
     typedef enum {
@@ -69,31 +68,12 @@ signals:
     void inProgressChanged(bool inProgress);
     void error(int errorCode, const QString& errorMsg);
     
-private slots:
-    void _mavlinkMessageReceived(const mavlink_message_t& message);
-    //void _ackTimeout(void);
-    
-private:
+protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
     void _clearGeoFence(void);
-    void _requestFencePoint(uint8_t pointIndex);
-    void _sendFencePoint(uint8_t pointIndex);
-    bool _geoFenceSupported(void);
 
-private:
-    Vehicle*            _vehicle;
-    
-    bool        _readTransactionInProgress;
-    bool        _writeTransactionInProgress;
-
-    uint8_t     _cReadFencePoints;
-    uint8_t     _currentFencePoint;
-    QVariant    _savedWriteFenceAction;
-
+    Vehicle*    _vehicle;
     GeoFence_t  _geoFence;
-
-    static const char* _fenceTotalParam;
-    static const char* _fenceActionParam;
 };
 
 #endif

@@ -112,6 +112,7 @@ FlightMap {
     MapQuickItem {
         anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
         coordinate:     _geoFenceController.breachReturnPoint
+        visible:        _geoFenceController.breachReturnSupported
         sourceItem:     MissionItemIndexLabel { label: "F" }
     }
 
