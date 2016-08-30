@@ -40,19 +40,22 @@ QGCView {
     readonly property real      _rightPanelWidth:       Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
     readonly property real      _rightPanelOpacity:     0.8
     readonly property int       _toolButtonCount:       6
-    readonly property string    _autoSyncKey:           "AutoSync"
     readonly property real      _toolButtonTopMargin:   parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
-    readonly property int       _addMissionItemsButtonAutoOffTimeout:   10000
     readonly property var       _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
 
-
-    property bool   _syncNeeded:            controller.visualItems.dirty // Unsaved changes, visible to parent container
-    property var    _visualItems:           controller.visualItems
+    property var    _visualItems:           missionController.visualItems
     property var    _currentMissionItem
     property int    _currentMissionIndex:   0
     property bool   _firstVehiclePosition:  true
     property var    activeVehiclePosition:  _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property bool   _lightWidgetBorders:    editorMap.isSatelliteMap
+
+    /// The controller which should be called for load/save, send to/from vehicle calls
+    property var _syncDropDownController: missionController
+
+    readonly property int _layerMission:        1
+    readonly property int _layerGeoFence:       2
+    property int _editingLayer: _layerMission
 
     onActiveVehiclePositionChanged: updateMapToVehiclePosition()
 
@@ -70,28 +73,6 @@ QGCView {
         if (_activeVehicle && _activeVehicle.coordinateValid && _activeVehicle.coordinate.isValid && _firstVehiclePosition) {
             _firstVehiclePosition = false
             editorMap.center = _activeVehicle.coordinate
-        }
-    }
-
-    function loadFromVehicle() {
-        controller.getMissionItems()
-    }
-
-    function loadFromFile() {
-        if (ScreenTools.isMobile) {
-            _root.showDialog(mobileFilePicker, qsTr("Select Mission File"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
-        } else {
-            controller.loadMissionFromFilePicker()
-            fitViewportToMissionItems()
-            _currentMissionItem = _visualItems.get(0)
-        }
-    }
-
-    function saveToFile() {
-        if (ScreenTools.isMobile) {
-            _root.showDialog(mobileFileSaver, qsTr("Save Mission File"), _root.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
-        } else {
-            controller.saveMissionToFilePicker()
         }
     }
 
@@ -134,23 +115,45 @@ QGCView {
     }
 
     MissionController {
-        id:         controller
+        id: missionController
 
         Component.onCompleted: {
             start(true /* editMode */)
             setCurrentItem(0)
         }
 
-        /*
-        FIXME: autoSync is temporarily disconnected since it's still buggy
+        function loadFromSelectedFile() {
+            if (ScreenTools.isMobile) {
+                _root.showDialog(mobileFilePicker, qsTr("Select Mission File"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+            } else {
+                missionController.loadFromFilePicker()
+                fitViewportToMissionItems()
+                _currentMissionItem = _visualItems.get(0)
+            }
+        }
 
-        autoSync:   QGroundControl.flightMapSettings.loadMapSetting(editorMap.mapName, _autoSyncKey, true)
+        function saveToSelectedFile() {
+            if (ScreenTools.isMobile) {
+                _root.showDialog(mobileFileSaver, qsTr("Save Mission File"), _root.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+            } else {
+                missionController.saveToFilePicker()
+            }
+        }
 
-        onAutoSyncChanged:      QGroundControl.flightMapSettings.saveMapSetting(editorMap.mapName, _autoSyncKey, autoSync)
-*/
+        onVisualItemsChanged: {
+            itemDragger.clearItem()
+        }
 
-        onVisualItemsChanged: itemDragger.clearItem()
-        onNewItemsFromVehicle: fitViewportToMissionItems()
+        onNewItemsFromVehicle: {
+            fitViewportToMissionItems()
+            _currentMissionItem = _visualItems.get(0)
+        }
+    }
+
+    GeoFenceController {
+        id: geoFenceController
+
+        Component.onCompleted: start(true /* editMode */)
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -183,14 +186,9 @@ QGCView {
         id: mobileFilePicker
 
         QGCMobileFileDialog {
-            openDialog:     true
-            fileExtension:  QGroundControl.missionFileExtension
-
-            onFilenameReturned: {
-                controller.loadMissionFromFile(filename)
-                fitViewportToMissionItems()
-                _currentMissionItem = _visualItems.get(0)
-            }
+            openDialog:         true
+            fileExtension:      QGroundControl.missionFileExtension
+            onFilenameReturned: _syncDropDownController.loadFromfile(filename)
         }
     }
 
@@ -198,12 +196,9 @@ QGCView {
         id: mobileFileSaver
 
         QGCMobileFileDialog {
-            openDialog:     false
-            fileExtension:  QGroundControl.missionFileExtension
-
-            onFilenameReturned: {
-                controller.saveMissionToFile(filename)
-            }
+            openDialog:         false
+            fileExtension:      QGroundControl.missionFileExtension
+            onFilenameReturned: _syncDropDownController.saveToFile()
         }
     }
 
@@ -217,7 +212,7 @@ QGCView {
                 if (toIndex == 0) {
                     toIndex = 1
                 }
-                controller.moveMissionItem(_moveDialogMissionItemIndex, toIndex)
+                missionController.moveMissionItem(_moveDialogMissionItemIndex, toIndex)
                 hideDialog()
             }
 
@@ -260,8 +255,6 @@ QGCView {
                 anchors.right:  parent.right
                 mapName:        "MissionEditor"
 
-                signal mapClicked(var coordinate)
-
                 readonly property real animationDuration: 500
 
                 // Initial map position duplicates Fly view position
@@ -283,17 +276,25 @@ QGCView {
                     onClicked: {
                         //-- Don't pay attention to items beneath the toolbar.
                         var topLimit = parent.height - ScreenTools.availableHeight
-                        if(mouse.y >= topLimit) {
-                            var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y))
-                            coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
-                            coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
-                            coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+                        if(mouse.y < topLimit) {
+                            return
+                        }
+
+                        var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y))
+                        coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+                        coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
+                        coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+
+                        switch (_editingLayer) {
+                        case _layerMission:
                             if (addMissionItemsButton.checked) {
-                                var sequenceNumber = controller.insertSimpleMissionItem(coordinate, controller.visualItems.count)
+                                var sequenceNumber = missionController.insertSimpleMissionItem(coordinate, missionController.visualItems.count)
                                 setCurrentItem(sequenceNumber)
-                            } else {
-                                editorMap.mapClicked(coordinate)
                             }
+                            break
+                        case _layerGeoFence:
+                            geoFenceController.breachReturnPoint = coordinate
+                            break
                         }
                     }
                 }
@@ -350,7 +351,8 @@ QGCView {
 
                 // Add the complex mission item polygon to the map
                 MapItemView {
-                    model: controller.complexVisualItems
+                    model: _editingLayer == _layerMission ? missionController.complexVisualItems : undefined
+
                     delegate: MapPolygon {
                         color:      'green'
                         path:       object.polygonPath
@@ -360,7 +362,7 @@ QGCView {
 
                 // Add the complex mission item grid to the map
                 MapItemView {
-                    model: controller.complexVisualItems
+                    model: _editingLayer == _layerMission ? missionController.complexVisualItems : undefined
 
                     delegate: MapPolyline {
                         line.color: "white"
@@ -371,7 +373,7 @@ QGCView {
 
                 // Add the complex mission item exit coordinates
                 MapItemView {
-                    model:      controller.complexVisualItems
+                    model: _editingLayer == _layerMission ? missionController.complexVisualItems : undefined
                     delegate:   exitCoordinateComponent
                 }
 
@@ -389,7 +391,7 @@ QGCView {
 
                 // Add the simple mission items to the map
                 MapItemView {
-                    model:      controller.visualItems
+                    model:      _editingLayer == _layerMission ? missionController.visualItems : undefined
                     delegate:   missionItemComponent
                 }
 
@@ -447,7 +449,7 @@ QGCView {
 
                 // Add lines between waypoints
                 MissionLineView {
-                    model:          controller.waypointLines
+                    model:      _editingLayer == _layerMission ? missionController.waypointLines : undefined
                 }
 
                 // Add the vehicles to the map
@@ -472,6 +474,7 @@ QGCView {
                     width:          _rightPanelWidth
                     opacity:        _rightPanelOpacity
                     z:              QGroundControl.zOrderTopMost
+                    visible:        _editingLayer == _layerMission
 
                     MouseArea {
                          // This MouseArea prevents the Map below it from getting Mouse events. Without this
@@ -488,7 +491,7 @@ QGCView {
                         height:         parent.height
                         spacing:        _margin / 2
                         orientation:    ListView.Vertical
-                        model:          controller.visualItems
+                        model:          missionController.visualItems
                         cacheBuffer:    height * 2
                         clip:           true
                         currentIndex:   _currentMissionIndex
@@ -504,18 +507,47 @@ QGCView {
 
                             onRemove: {
                                 itemDragger.clearItem()
-                                controller.removeMissionItem(index)
+                                missionController.removeMissionItem(index)
                             }
 
                             onInsert: {
-                                var sequenceNumber = controller.insertSimpleMissionItem(editorMap.center, insertAfterIndex)
+                                var sequenceNumber = missionController.insertSimpleMissionItem(editorMap.center, insertAfterIndex)
                                 setCurrentItem(sequenceNumber)
                             }
 
-                            onMoveHomeToMapCenter: controller.visualItems.get(0).coordinate = editorMap.center
+                            onMoveHomeToMapCenter: missionController.visualItems.get(0).coordinate = editorMap.center
                         }
                     } // ListView
                 } // Item - Mission Item editor
+
+                // GeoFence Editor
+                Loader {
+                    anchors.topMargin:  parent.height - ScreenTools.availableHeight
+                    anchors.top:        parent.top
+                    anchors.right:      parent.right
+                    opacity:            _rightPanelOpacity
+                    z:                  QGroundControl.zOrderTopMost
+                    source:             _editingLayer == _layerGeoFence ? "qrc:/qml/GeoFenceEditor.qml" : ""
+
+                    property real availableWidth:   _rightPanelWidth
+                    property real availableHeight:  ScreenTools.availableHeight
+                }
+
+                // GeoFence polygon
+                MapPolygon {
+                    border.color:   "#80FF0000"
+                    border.width:   3
+                    path:           geoFenceController.polygon.path
+                }
+
+                // GeoFence breach return point
+                MapQuickItem {
+                    anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+                    coordinate:     geoFenceController.breachReturnPoint
+                    sourceItem: MissionItemIndexLabel {
+                        label: "F"
+                    }
+                }
 
                 //-- Dismiss Drop Down (if any)
                 MouseArea {
@@ -548,23 +580,66 @@ QGCView {
                     spacing:            ScreenTools.defaultFontPixelHeight
                     z:                  QGroundControl.zOrderWidgets
 
+                    DropButton {
+                        id:                 layerButton
+                        dropDirection:      dropRight
+                        //buttonImage:        "/qmlimages/MapCenter.svg"
+                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+                        exclusiveGroup:     _dropButtonsExclusiveGroup
+                        lightBorders:       _lightWidgetBorders
+
+                        dropDownComponent: Component {
+                            Column {
+                                spacing: ScreenTools.defaultFontPixelWidth * 0.5
+
+                                QGCLabel { text: qsTr("Editing Layer:") }
+
+                                Row {
+                                    spacing: ScreenTools.defaultFontPixelWidth
+
+                                    QGCButton {
+                                        text: qsTr("Mission")
+
+                                        onClicked: {
+                                            layerButton.hideDropDown()
+                                            _editingLayer = _layerMission
+                                            _syncDropDownController = missionController
+                                        }
+                                    }
+
+                                    QGCButton {
+                                        text: qsTr("GeoFence")
+
+                                        onClicked: {
+                                            layerButton.hideDropDown()
+                                            _editingLayer = _layerGeoFence
+                                            _syncDropDownController = geoFenceController
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     RoundButton {
                         id:             addMissionItemsButton
                         buttonImage:    "/qmlimages/MapAddMission.svg"
                         lightBorders:   _lightWidgetBorders
+                        visible:        _editingLayer == _layerMission
                     }
 
                     RoundButton {
                         id:             addShapeButton
                         buttonImage:    "/qmlimages/MapDrawShape.svg"
                         lightBorders:   _lightWidgetBorders
+                        visible:        _editingLayer == _layerMission
 
                         onClicked: {
                             var coordinate = editorMap.center
                             coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                             coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                             coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-                            var sequenceNumber = controller.insertComplexMissionItem(coordinate, controller.visualItems.count)
+                            var sequenceNumber = missionController.insertComplexMissionItem(coordinate, missionController.visualItems.count)
                             setCurrentItem(sequenceNumber)
                             checked = false
                             addMissionItemsButton.checked = false
@@ -574,12 +649,12 @@ QGCView {
                     DropButton {
                         id:                 syncButton
                         dropDirection:      dropRight
-                        buttonImage:        _syncNeeded ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
+                        buttonImage:        _syncDropDownController.dirty ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
                         viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
                         exclusiveGroup:     _dropButtonsExclusiveGroup
                         dropDownComponent:  syncDropDownComponent
-                        enabled:            !controller.syncInProgress
-                        rotateImage:        controller.syncInProgress
+                        enabled:            !_syncDropDownController.syncInProgress
+                        rotateImage:        _syncDropDownController.syncInProgress
                         lightBorders:       _lightWidgetBorders
                     }
 
@@ -602,7 +677,7 @@ QGCView {
                                         width:  ScreenTools.defaultFontPixelWidth * 10
                                         onClicked: {
                                             centerMapButton.hideDropDown()
-                                            editorMap.center = controller.visualItems.get(0).coordinate
+                                            editorMap.center = missionController.visualItems.get(0).coordinate
                                         }
                                     }
                                     QGCButton {
@@ -706,13 +781,13 @@ QGCView {
                     anchors.bottom:     parent.bottom
                     z:                  QGroundControl.zOrderTopMost
                     currentMissionItem: _currentMissionItem
-                    missionItems:       controller.visualItems
+                    missionItems:       missionController.visualItems
                     expandedWidth:      missionItemEditor.x - (ScreenTools.defaultFontPixelWidth * 2)
-                    missionDistance:    controller.missionDistance
-                    missionMaxTelemetry: controller.missionMaxTelemetry
-                    cruiseDistance:    controller.cruiseDistance
-                    hoverDistance:    controller.hoverDistance
-                    visible:            !ScreenTools.isShortScreen
+                    missionDistance:    missionController.missionDistance
+                    missionMaxTelemetry: missionController.missionMaxTelemetry
+                    cruiseDistance:     missionController.cruiseDistance
+                    hoverDistance:      missionController.hoverDistance
+                    visible:            _editingLayer == _layerMission && !ScreenTools.isShortScreen
                 }
             } // FlightMap
         } // Item - split view container
@@ -748,7 +823,7 @@ QGCView {
             message: qsTr("Are you sure you want to delete all mission items?")
             function accept() {
                 itemDragger.clearItem()
-                controller.removeAllMissionItems()
+                missionController.removeAll()
                 hideDialog()
             }
         }
@@ -756,96 +831,84 @@ QGCView {
 
     Component {
         id: syncDropDownComponent
+
         Column {
             id:         columnHolder
             spacing:    _margin
+
             QGCLabel {
                 width:      sendSaveGrid.width
                 wrapMode:   Text.WordWrap
-                text:       _syncNeeded && !controller.autoSync ?
+                text:       _syncDropDownController.dirty ?
                                 qsTr("You have unsaved changes to your mission. You should send to your vehicle, or save to a file:") :
                                 qsTr("Sync:")
             }
+
             GridLayout {
                 id:                 sendSaveGrid
                 columns:            2
                 anchors.margins:    _margin
                 rowSpacing:         _margin
                 columnSpacing:      ScreenTools.defaultFontPixelWidth
-                visible:            true //autoSyncCheckBox.enabled && autoSyncCheckBox.checked
+
                 QGCButton {
                     text:               qsTr("Send To Vehicle")
                     Layout.fillWidth:   true
-                    enabled:            _activeVehicle && !controller.syncInProgress
+                    enabled:            _activeVehicle && !_syncDropDownController.syncInProgress
                     onClicked: {
                         syncButton.hideDropDown()
-                        controller.sendMissionItems()
+                        _syncDropDownController.sendToVehicle()
                     }
                 }
+
                 QGCButton {
                     text:               qsTr("Load From Vehicle")
                     Layout.fillWidth:   true
-                    enabled:            _activeVehicle && !controller.syncInProgress
+                    enabled:            _activeVehicle && !_syncDropDownController.syncInProgress
                     onClicked: {
                         syncButton.hideDropDown()
-                        if (_syncNeeded) {
+                        if (_syncDropDownController.dirty) {
                             _root.showDialog(syncLoadFromVehicleOverwrite, qsTr("Mission overwrite"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                         } else {
-                            loadFromVehicle()
+                            _syncDropDownController.loadFromVehicle()
                         }
                     }
                 }
+
                 QGCButton {
                     text:               qsTr("Save To File...")
                     Layout.fillWidth:   true
-                    enabled:            !controller.syncInProgress
+                    enabled:            !_syncDropDownController.syncInProgress
                     onClicked: {
                         syncButton.hideDropDown()
-                        saveToFile()
+                        _syncDropDownController.saveToSelectedFile()
                     }
                 }
+
                 QGCButton {
                     text:               qsTr("Load From File...")
                     Layout.fillWidth:   true
-                    enabled:            !controller.syncInProgress
+                    enabled:            !_syncDropDownController.syncInProgress
                     onClicked: {
                         syncButton.hideDropDown()
-                        if (_syncNeeded) {
+                        if (_syncDropDownController.dirty) {
                             _root.showDialog(syncLoadFromFileOverwrite, qsTr("Mission overwrite"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                         } else {
-                            loadFromFile()
+                            _syncDropDownController.loadFromSelectedFile()
                         }
                     }
                 }
+
                 QGCButton {
                     text:               qsTr("Remove All")
                     Layout.fillWidth:   true
                     onClicked:  {
                         syncButton.hideDropDown()
+                        _syncDropDownController.removeAll()
                         _root.showDialog(removeAllPromptDialog, qsTr("Delete all"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                     }
                 }
             }
-
-
-/*
-        FIXME: autoSync is temporarily disconnected since it's still buggy
-
-            QGCLabel {
-                id:         autoSyncDisallowedLabel
-                visible:    _activeVehicle && _activeVehicle.armed
-                text:       "AutoSync is not allowed whie vehicle is armed"
-            }
-
-            QGCCheckBox {
-                id:         autoSyncCheckBox
-                checked:    controller.autoSync
-                text:       "Automatically sync changes with vehicle"
-                enabled:    _activeVehicle ? !_activeVehicle.armed : false
-
-                onClicked: controller.autoSync = checked
-            }
-*/
         }
     }
 } // QGCVIew

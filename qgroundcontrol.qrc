@@ -94,6 +94,7 @@
         <file alias="QGroundControl/Controls/ViewWidget.qml">src/ViewWidgets/ViewWidget.qml</file>
         <file alias="SimpleItemEditor.qml">src/MissionEditor/SimpleItemEditor.qml</file>
         <file alias="SurveyItemEditor.qml">src/MissionEditor/SurveyItemEditor.qml</file>
+        <file alias="GeoFenceEditor.qml">src/MissionEditor/GeoFenceEditor.qml</file>
         <file alias="QGroundControl/FactControls/FactBitmask.qml">src/FactSystem/FactControls/FactBitmask.qml</file>
         <file alias="QGroundControl/FactControls/FactCheckBox.qml">src/FactSystem/FactControls/FactCheckBox.qml</file>
         <file alias="QGroundControl/FactControls/FactComboBox.qml">src/FactSystem/FactControls/FactComboBox.qml</file>
@@ -109,6 +110,7 @@
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
         <file alias="QGroundControl/FlightMap/qmldir">src/FlightMap/qmldir</file>
         <file alias="QGroundControl/FlightMap/FlightMap.qml">src/FlightMap/FlightMap.qml</file>
+        <file alias="QGroundControl/FlightMap/QGCMapPolygonControls.qml">src/MissionEditor/QGCMapPolygonControls.qml</file>
         <file alias="QGroundControl/FlightMap/MapScale.qml">src/FlightMap/MapScale.qml</file>
         <file alias="QGroundControl/FlightMap/MissionItemIndicator.qml">src/FlightMap/MapItems/MissionItemIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/MissionItemView.qml">src/FlightMap/MapItems/MissionItemView.qml</file>
