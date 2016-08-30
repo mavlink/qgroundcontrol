@@ -46,6 +46,15 @@ contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
     DEFINES += QGC_ENABLE_BLUETOOTH
 }
 
+# USB Camera and UVC Video Sources
+contains (DEFINES, QGC_DISABLE_UVC) {
+    message("Skipping support for UVC devices (manual override from command line)")
+    DEFINES -= QGC_DISABLE_UVC
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_UVC) {
+    message("Skipping support for UVC devices (manual override from user_config.pri)")
+    DEFINES -= QGC_DISABLE_UVC
+}
+
 LinuxBuild {
     CONFIG += link_pkgconfig
 }

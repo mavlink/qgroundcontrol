@@ -27,6 +27,7 @@ VideoSurface::VideoSurface(QObject *parent)
 #if defined(QGC_GST_STREAMING)
     , _data(new VideoSurfacePrivate)
     , _lastFrame(0)
+    , _refed(false)
 #endif
 {
 }
@@ -34,7 +35,7 @@ VideoSurface::VideoSurface(QObject *parent)
 VideoSurface::~VideoSurface()
 {
 #if defined(QGC_GST_STREAMING)
-    if (_data->videoSink != NULL) {
+    if (!_refed && _data->videoSink != NULL) {
         gst_element_set_state(_data->videoSink, GST_STATE_NULL);
     }
     delete _data;
@@ -42,7 +43,7 @@ VideoSurface::~VideoSurface()
 }
 
 #if defined(QGC_GST_STREAMING)
-GstElement* VideoSurface::videoSink() const
+GstElement* VideoSurface::videoSink()
 {
     if (_data->videoSink == NULL) {
         if ((_data->videoSink = gst_element_factory_make("qtquick2videosink", NULL)) == NULL) {
@@ -50,6 +51,7 @@ GstElement* VideoSurface::videoSink() const
             return NULL;
         }
         g_signal_connect(_data->videoSink, "update", G_CALLBACK(onUpdateThunk), (void* )this);
+        _refed = true;
     }
     return _data->videoSink;
 }
