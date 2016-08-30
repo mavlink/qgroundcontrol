@@ -68,6 +68,7 @@ void GeoFenceController::setBreachReturnPoint(const QGeoCoordinate& breachReturn
 
 void GeoFenceController::_setParams(void)
 {
+    // FIXME: This is a firmware specific hack
     if (_params.count() == 0 && _activeVehicle && _multiVehicleMgr->parameterReadyVehicleAvailable()) {
         QStringList skipList;
         skipList << QStringLiteral("FENCE_TOTAL") << QStringLiteral("FENCE_ENABLE");
@@ -82,12 +83,21 @@ void GeoFenceController::_setParams(void)
     }
 }
 
-void GeoFenceController::_activeVehicleBeingRemoved(void)
+void GeoFenceController::_signalFenceAvailabilityChanges(void)
+{
+    emit fenceSupportedChanged(fenceSupported());
+    emit circleSupportedChanged(circleSupported());
+    emit polygonSupportedChanged(polygonSupported());
+    emit breachReturnSupportedChanged(breachReturnSupported());
+}
+
+void GeoFenceController::_activeVehicleBeingRemoved(Vehicle* vehicle)
 {
     _clearGeoFence();
     _params.clear();
     emit paramsChanged();
-    _activeVehicle->geoFenceManager()->disconnect(this);
+    _signalFenceAvailabilityChanges();
+    vehicle->geoFenceManager()->disconnect(this);
 }
 
 void GeoFenceController::_activeVehicleSet(void)
@@ -96,17 +106,22 @@ void GeoFenceController::_activeVehicleSet(void)
 
     _setParams();
 
-    if (_activeVehicle->getParameterLoader()->parametersAreReady() && !syncInProgress()) {
-        // We are switching between two previously existing vehicles. We have to manually ask for the items from the Vehicle.
-        // We don't request mission items for new vehicles since that will happen autamatically.
-        loadFromVehicle();
+    if (_activeVehicle->getParameterLoader()->parametersAreReady()) {
+        _signalFenceAvailabilityChanges();
+        if (!syncInProgress()) {
+            // We are switching between two previously existing vehicles. We have to manually ask for the items from the Vehicle.
+            // We don't request mission items for new vehicles since that will happen autamatically.
+            loadFromVehicle();
+        }
     }
 }
 
 void GeoFenceController::_parameterReadyVehicleAvailableChanged(bool parameterReadyVehicleAvailable)
 {
-    Q_UNUSED(parameterReadyVehicleAvailable);
-    _setParams();
+    if (parameterReadyVehicleAvailable) {
+        _setParams();
+        _signalFenceAvailabilityChanges();
+    }
 }
 
 void GeoFenceController::_newGeoFenceAvailable(void)
@@ -209,5 +224,37 @@ void GeoFenceController::_polygonDirtyChanged(bool dirty)
 {
     if (dirty) {
         setDirty(true);
+    }
+}
+
+bool GeoFenceController::fenceSupported(void) const
+{
+    return circleSupported() || polygonSupported();
+}
+
+bool GeoFenceController::circleSupported(void) const
+{
+    if (_activeVehicle) {
+        return _activeVehicle->firmwarePlugin()->isCapable(_activeVehicle, FirmwarePlugin::GeoFenceCircleCapability);
+    } else {
+        return true;
+    }
+}
+
+bool GeoFenceController::polygonSupported(void) const
+{
+    if (_activeVehicle) {
+        return _activeVehicle->firmwarePlugin()->isCapable(_activeVehicle, FirmwarePlugin::GeoFencePolygonCapability);
+    } else {
+        return true;
+    }
+}
+
+bool GeoFenceController::breachReturnSupported(void) const
+{
+    if (_activeVehicle) {
+        return _activeVehicle->firmwarePlugin()->isCapable(_activeVehicle, FirmwarePlugin::GeoFenceBreachReturnCapability);
+    } else {
+        return true;
     }
 }

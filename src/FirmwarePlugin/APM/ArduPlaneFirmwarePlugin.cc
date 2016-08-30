@@ -64,3 +64,13 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
     supportedFlightModes << APMPlaneMode(APMPlaneMode::QRTL            ,true);
     setSupportedModes(supportedFlightModes);
 }
+
+bool ArduPlaneFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
+{
+    Q_UNUSED(vehicle);
+
+    uint32_t vehicleCapabilities = SetFlightModeCapability | PauseVehicleCapability | GeoFenceBreachReturnCapability | GeoFencePolygonCapability;
+
+    return (capabilities & vehicleCapabilities) == capabilities;
+}
+

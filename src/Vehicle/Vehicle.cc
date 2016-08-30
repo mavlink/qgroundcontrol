@@ -199,7 +199,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_newMissionItemsAvailable);
 
-    _geoFenceManager = new GeoFenceManager(this);
+    _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
+
     connect(_geoFenceManager, &GeoFenceManager::error, this, &Vehicle::_geoFenceManagerError);
 
     _parameterLoader = new ParameterLoader(this);
@@ -1819,7 +1820,7 @@ void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
 #endif
 
 /// Returns true if the specifed parameter exists from the default component
-bool Vehicle::parameterExists(int componentId, const QString& name)
+bool Vehicle::parameterExists(int componentId, const QString& name) const
 {
     return _autopilotPlugin->parameterExists(componentId, name);
 }

@@ -54,6 +54,8 @@ class ArduPlaneFirmwarePlugin : public APMFirmwarePlugin
     
 public:
     ArduPlaneFirmwarePlugin(void);
+
+    bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
 };
 
 #endif

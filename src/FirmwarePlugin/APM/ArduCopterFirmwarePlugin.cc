@@ -98,9 +98,16 @@ int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVe
     return majorVersionNumber == 3 ? 4: Vehicle::versionNotSetValue;
 }
 
-bool ArduCopterFirmwarePlugin::isCapable(const Vehicle* /*vehicle*/, FirmwareCapabilities capabilities)
+bool ArduCopterFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
 {
-    return (capabilities & (SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability)) == capabilities;
+    uint32_t vehicleCapabilities = SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability;
+
+    if (vehicle->parameterExists(FactSystem::defaultComponentId, QStringLiteral("FENCE_TOTAL")) &&
+            vehicle->parameterExists(FactSystem::defaultComponentId, QStringLiteral("FENCE_ACTION"))) {
+        vehicleCapabilities |= GeoFencePolygonCapability | GeoFenceCircleCapability;
+    }
+
+    return (capabilities & vehicleCapabilities) == capabilities;
 }
 
 void ArduCopterFirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
