@@ -234,6 +234,11 @@ bool GeoFenceManager::inProgress(void) const
 
 bool GeoFenceManager::_geoFenceSupported(void)
 {
+    // FIXME: MockLink doesn't support geo fence yet
+    if (qgcApp()->runningUnitTests()) {
+        return false;
+    }
+
     // FIXME: Hack to get around lack of plugin-ized version of code
     if (_vehicle->apmFirmware()) {
         if (!_vehicle->parameterExists(FactSystem::defaultComponentId, _fenceTotalParam) ||
