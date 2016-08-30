@@ -89,9 +89,6 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     QmlObjectListModel* waypointLines = _missionController->waypointLines();
     QVERIFY(waypointLines);
     QCOMPARE(waypointLines->count(), 0);
-
-    // AutoSync should be off by default
-    QCOMPARE(_missionController->autoSync(), false);
 }
 
 void MissionControllerTest::_testEmptyVehicleWorker(MAV_AUTOPILOT firmwareType)
