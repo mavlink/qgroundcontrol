@@ -7,20 +7,9 @@
  *
  ****************************************************************************/
 
+import QtQuick                  2.5
 
-/**
- * @file
- *   @brief QGC Video Background
- *   @author Gus Grubba <mavlink@grubba.com>
- */
-
-import QtQuick 2.4
-import QtQuick.Controls 1.3
-import QGroundControl.QgcQtGStreamer 1.0
-
-VideoItem {
-    id: videoBackground
-    property var display
-    property var receiver
-    surface: display
+Rectangle {
+    anchors.fill:               parent
+    color:                      Qt.rgba(0,0,0,0.75)
 }

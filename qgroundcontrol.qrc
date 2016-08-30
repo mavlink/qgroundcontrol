@@ -15,6 +15,8 @@
         <file alias="LogDownload.qml">src/ViewWidgets/LogDownload.qml</file>
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
         <file alias="FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
+        <file alias="FlightDisplayViewUVC.qml">src/FlightDisplay/FlightDisplayViewUVC.qml</file>
+        <file alias="FlightDisplayViewDummy.qml">src/FlightDisplay/FlightDisplayViewDummy.qml</file>
         <file alias="PX4FlightModes.qml">src/AutoPilotPlugins/PX4/PX4FlightModes.qml</file>
         <file alias="PX4AdvancedFlightModes.qml">src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml</file>
         <file alias="PX4SimpleFlightModes.qml">src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml</file>
