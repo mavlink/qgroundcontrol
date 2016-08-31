@@ -38,6 +38,7 @@ linux {
         equals(ANDROID_TARGET_ARCH, x86)  {
             CONFIG += Androidx86Build
             DEFINES += __androidx86__
+            DEFINES += QGC_DISABLE_UVC
             message("Android x86 build")
         } else {
             message("Android Arm build")
