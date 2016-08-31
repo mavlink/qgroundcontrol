@@ -104,6 +104,7 @@ private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
     void _clearGrid(void);
     void _generateGrid(void);
+    void _updateCoordinateAltitude(void);
     void _gridGenerator(const QList<QPointF>& polygonPoints, QList<QPointF>& gridPoints);
     QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
     void _intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines);
