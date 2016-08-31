@@ -69,6 +69,8 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,       PX4FirmwarePlugin::takeoffFlightMode,       false,  true,   true },
 };
 
+static uint32_t version_tag_to_number(const char *tag);
+
 PX4FirmwarePlugin::PX4FirmwarePlugin(void)
     : _versionNotified(false)
 {
@@ -443,28 +445,119 @@ void PX4FirmwarePlugin::_handleAutopilotVersion(Vehicle* vehicle, mavlink_messag
 
     if (!_versionNotified) {
         bool notifyUser = false;
-        int supportedMajorVersion = 1;
-        int supportedMinorVersion = 4;
-        int supportedPatchVersion = 1;
+        static const char *minVersionStr = "v1.4.1";
+        static const uint32_t minSupportedVersion = version_tag_to_number(minVersionStr);
 
         mavlink_autopilot_version_t version;
         mavlink_msg_autopilot_version_decode(message, &version);
 
         if (version.flight_sw_version != 0) {
-            int majorVersion, minorVersion, patchVersion;
-
-            majorVersion = (version.flight_sw_version >> (8*3)) & 0xFF;
-            minorVersion = (version.flight_sw_version >> (8*2)) & 0xFF;
-            patchVersion = (version.flight_sw_version >> (8*1)) & 0xFF;
-
-            notifyUser = majorVersion < supportedMajorVersion || minorVersion < supportedMinorVersion || patchVersion < supportedPatchVersion;
+            notifyUser = version.flight_sw_version < minSupportedVersion;
         } else {
             notifyUser = true;
         }
 
         if (notifyUser) {
             _versionNotified = true;
-            qgcApp()->showMessage(QString("QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.").arg(supportedMajorVersion).arg(supportedMinorVersion).arg(supportedPatchVersion));
+            qgcApp()->showMessage(QString("QGroundControl supports PX4 Pro firmware Version %1 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.").arg(minVersionStr));
         }
     }
+}
+
+// Copied directly from PX4 firmware
+enum PX4_FIRMWARE_TYPE {
+	FIRMWARE_TYPE_DEV = 0,
+	FIRMWARE_TYPE_ALPHA = 64,
+	FIRMWARE_TYPE_BETA = 128,
+	FIRMWARE_TYPE_RC = 192,
+	FIRMWARE_TYPE_RELEASE = 255
+};
+
+ /**
+ * Convert a version tag string to a number
+ */
+static uint32_t version_tag_to_number(const char *tag)
+{
+    uint32_t ver = 0;
+    unsigned len = strlen(tag);
+    unsigned mag = 0;
+    int32_t type = -1;
+    bool dotparsed = false;
+    unsigned dashcount = 0;
+
+    for (int i = len - 1; i >= 0; i--) {
+
+        if (tag[i] == '-') {
+            dashcount++;
+        }
+
+        if (tag[i] >= '0' && tag[i] <= '9') {
+            unsigned number = tag[i] - '0';
+
+            ver += (number << mag);
+            mag += 8;
+
+        } else if (tag[i] == '.') {
+            continue;
+
+        } else if (mag > 2 * 8 && dotparsed) {
+            /* this is a full version and we have enough digits */
+            return ver;
+
+        } else if (i > 3 && type == -1) {
+            /* scan and look for signature characters for each type */
+            const char *curr = &tag[i - 1];
+
+            // dev: v1.4.0rc3-7-g7e282f57
+            // rc: v1.4.0rc4
+            // release: v1.4.0
+
+            while (curr > &tag[0]) {
+                if (*curr == 'v') {
+                    type = FIRMWARE_TYPE_DEV;
+                    break;
+
+                } else if (*curr == 'p') {
+                    type = FIRMWARE_TYPE_ALPHA;
+                    break;
+
+                } else if (*curr == 't') {
+                    type = FIRMWARE_TYPE_BETA;
+                    break;
+
+                } else if (*curr == 'r') {
+                    type = FIRMWARE_TYPE_RC;
+                    break;
+                }
+
+                curr--;
+            }
+
+            /* looks like a release */
+            if (type == -1) {
+                type = FIRMWARE_TYPE_RELEASE;
+            }
+
+        } else if (tag[i] != 'v') {
+            /* reset, because we don't have a full tag but
+             * are seeing non-numeric characters
+             */
+            ver = 0;
+            mag = 0;
+        }
+    }
+
+    /* if git describe contains dashes this is not a real tag */
+    if (dashcount > 0) {
+        type = FIRMWARE_TYPE_DEV;
+    }
+
+    /* looks like a release */
+    if (type == -1) {
+        type = FIRMWARE_TYPE_RELEASE;
+    }
+
+    ver = (ver << 8);
+
+    return ver | type;
 }
