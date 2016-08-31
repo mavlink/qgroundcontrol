@@ -121,7 +121,8 @@ LinuxBuild {
 
         !contains (DEFINES, QGC_DISABLE_UVC) {
             QT_LIB_LIST += \
-                libQt5Multimedia.so.5
+                libQt5Multimedia.so.5 \
+                libQt5MultimediaQuick_p.so.5
         }
 
         !contains(DEFINES, __rasp_pi2__) {
