@@ -80,6 +80,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     connect(&_gridAngleFact,                &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
     connect(&_turnaroundDistFact,           &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
     connect(&_cameraTriggerDistanceFact,    &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
+    connect(&_gridAltitudeFact,             &Fact::valueChanged, this, &SurveyMissionItem::_updateCoordinateAltitude);
 
     connect(this, &SurveyMissionItem::cameraTriggerChanged, this, &SurveyMissionItem::_cameraTriggerChanged);
 }
@@ -397,9 +398,21 @@ void SurveyMissionItem::_generateGrid(void)
     emit lastSequenceNumberChanged(lastSequenceNumber());
 
     if (_gridPoints.count()) {
-        setCoordinate(_gridPoints.first().value<QGeoCoordinate>());
-        _setExitCoordinate(_gridPoints.last().value<QGeoCoordinate>());
+        QGeoCoordinate coordinate = _gridPoints.first().value<QGeoCoordinate>();
+        coordinate.setAltitude(_gridAltitudeFact.rawValue().toDouble());
+        setCoordinate(coordinate);
+        QGeoCoordinate exitCoordinate = _gridPoints.last().value<QGeoCoordinate>();
+        exitCoordinate.setAltitude(_gridAltitudeFact.rawValue().toDouble());
+        _setExitCoordinate(exitCoordinate);
     }
+}
+
+void SurveyMissionItem::_updateCoordinateAltitude(void)
+{
+    _coordinate.setAltitude(_gridAltitudeFact.rawValue().toDouble());
+    _exitCoordinate.setAltitude(_gridAltitudeFact.rawValue().toDouble());
+    emit coordinateChanged(_coordinate);
+    emit exitCoordinateChanged(_exitCoordinate);
 }
 
 QPointF SurveyMissionItem::_rotatePoint(const QPointF& point, const QPointF& origin, double angle)
