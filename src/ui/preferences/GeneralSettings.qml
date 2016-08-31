@@ -117,92 +117,6 @@ QGCView {
                     }
                 }
                 //-----------------------------------------------------------------
-                //-- Video Source
-                Item {
-                    width:              qgcView.width * 0.8
-                    height:             videoLabel.height
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    QGCLabel {
-                        id:             videoLabel
-                        text:           qsTr("Video (Requires Restart)")
-                        font.family:    ScreenTools.demiboldFontFamily
-                    }
-                }
-                Rectangle {
-                    height:         videoCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:          qgcView.width * 0.8
-                    color:          qgcPal.windowShade
-                    anchors.margins: ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    Column {
-                        id:         videoCol
-                        spacing:    ScreenTools.defaultFontPixelWidth
-                        anchors.centerIn: parent
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            QGCLabel {
-                                anchors.baseline:   videoSource.baseline
-                                text:               qsTr("Video Source:")
-                                width:              _labelWidth
-                            }
-                            QGCComboBox {
-                                id:                 videoSource
-                                width:              _editFieldWidth
-                                model:              QGroundControl.videoManager.videoSourceList
-                                Component.onCompleted: {
-                                    var index = videoSource.find(QGroundControl.videoManager.videoSource)
-                                    if (index >= 0) {
-                                        videoSource.currentIndex = index
-                                    }
-                                }
-                                onActivated: {
-                                    if (index != -1) {
-                                        currentIndex = index
-                                        QGroundControl.videoManager.videoSource = model[index]
-                                    }
-                                }
-                            }
-                        }
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 0
-                            QGCLabel {
-                                anchors.baseline:   udpField.baseline
-                                text:               qsTr("UDP Port:")
-                                width:              _labelWidth
-                            }
-                            QGCTextField {
-                                id:                 udpField
-                                width:              _editFieldWidth
-                                text:               QGroundControl.videoManager.udpPort
-                                validator:          IntValidator {bottom: 1024; top: 65535;}
-                                inputMethodHints:   Qt.ImhDigitsOnly
-                                onEditingFinished: {
-                                    QGroundControl.videoManager.udpPort = parseInt(text)
-                                }
-                            }
-                        }
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 1
-                            QGCLabel {
-                                anchors.baseline:   rtspField.baseline
-                                text:               qsTr("RTSP URL:")
-                                width:              _labelWidth
-                            }
-                            QGCTextField {
-                                id:                 rtspField
-                                width:              _editFieldWidth
-                                text:               QGroundControl.videoManager.rtspURL
-                                onEditingFinished: {
-                                    QGroundControl.videoManager.rtspURL = text
-                                }
-                            }
-                        }
-                    }
-                }
-                //-----------------------------------------------------------------
                 //-- Offline mission editing
                 Item {
                     width:              qgcView.width * 0.8
@@ -566,6 +480,92 @@ QGCView {
                                 text:       qsTr("RTK GPS")
                                 checked:    QGroundControl.linkManager.autoconnectRTKGPS
                                 onClicked:  QGroundControl.linkManager.autoconnectRTKGPS = checked
+                            }
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                //-- Video Source
+                Item {
+                    width:              qgcView.width * 0.8
+                    height:             videoLabel.height
+                    anchors.margins:    ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QGCLabel {
+                        id:             videoLabel
+                        text:           qsTr("Video (Requires Restart)")
+                        font.family:    ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:         videoCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:          qgcView.width * 0.8
+                    color:          qgcPal.windowShade
+                    anchors.margins: ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Column {
+                        id:         videoCol
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.centerIn: parent
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            QGCLabel {
+                                anchors.baseline:   videoSource.baseline
+                                text:               qsTr("Video Source:")
+                                width:              _labelWidth
+                            }
+                            QGCComboBox {
+                                id:                 videoSource
+                                width:              _editFieldWidth
+                                model:              QGroundControl.videoManager.videoSourceList
+                                Component.onCompleted: {
+                                    var index = videoSource.find(QGroundControl.videoManager.videoSource)
+                                    if (index >= 0) {
+                                        videoSource.currentIndex = index
+                                    }
+                                }
+                                onActivated: {
+                                    if (index != -1) {
+                                        currentIndex = index
+                                        QGroundControl.videoManager.videoSource = model[index]
+                                    }
+                                }
+                            }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 0
+                            QGCLabel {
+                                anchors.baseline:   udpField.baseline
+                                text:               qsTr("UDP Port:")
+                                width:              _labelWidth
+                            }
+                            QGCTextField {
+                                id:                 udpField
+                                width:              _editFieldWidth
+                                text:               QGroundControl.videoManager.udpPort
+                                validator:          IntValidator {bottom: 1024; top: 65535;}
+                                inputMethodHints:   Qt.ImhDigitsOnly
+                                onEditingFinished: {
+                                    QGroundControl.videoManager.udpPort = parseInt(text)
+                                }
+                            }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 1
+                            QGCLabel {
+                                anchors.baseline:   rtspField.baseline
+                                text:               qsTr("RTSP URL:")
+                                width:              _labelWidth
+                            }
+                            QGCTextField {
+                                id:                 rtspField
+                                width:              _editFieldWidth
+                                text:               QGroundControl.videoManager.rtspURL
+                                onEditingFinished: {
+                                    QGroundControl.videoManager.rtspURL = text
+                                }
                             }
                         }
                     }
