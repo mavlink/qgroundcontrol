@@ -27,7 +27,7 @@ FlightMap {
     anchors.fill:   parent
     mapName:        _mapName
 
-    property alias  missionController: _missionController
+    property alias  missionController: missionController
     property var    flightWidgets
 
     property bool   _followVehicle:                 true
@@ -54,12 +54,12 @@ FlightMap {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     MissionController {
-        id: _missionController
+        id: missionController
         Component.onCompleted: start(false /* editMode */)
     }
 
     GeoFenceController {
-        id: _geoFenceController
+        id: geoFenceController
         Component.onCompleted: start(false /* editMode */)
     }
 
@@ -93,25 +93,34 @@ FlightMap {
 
     // Add the mission items to the map
     MissionItemView {
-        model: _mainIsMap ? _missionController.visualItems : 0
+        model: _mainIsMap ? missionController.visualItems : 0
     }
 
     // Add lines between waypoints
     MissionLineView {
-        model: _mainIsMap ? _missionController.waypointLines : 0
+        model: _mainIsMap ? missionController.waypointLines : 0
     }
 
     // GeoFence polygon
     MapPolygon {
         border.color:   "#80FF0000"
         border.width:   3
-        path:           _geoFenceController.polygon.path
+        path:           geoFenceController.polygonSupported ? geoFenceController.polygon.path : undefined
+    }
+
+    // GeoFence circle
+    MapCircle {
+        border.color:   "#80FF0000"
+        border.width:   3
+        center:         missionController.plannedHomePosition
+        radius:         geoFenceController.circleSupported ? geoFenceController.circleRadius : 0
     }
 
     // GeoFence breach return point
     MapQuickItem {
         anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
-        coordinate:     _geoFenceController.breachReturnPoint
+        coordinate:     geoFenceController.breachReturnPoint
+        visible:        geoFenceController.breachReturnSupported
         sourceItem:     MissionItemIndexLabel { label: "F" }
     }
 

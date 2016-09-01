@@ -34,7 +34,9 @@ void PlanElementController::start(bool editMode)
 void PlanElementController::_activeVehicleChanged(Vehicle* activeVehicle)
 {
     if (_activeVehicle) {
-        _activeVehicleBeingRemoved();
+        Vehicle* vehicleSave = _activeVehicle;
+        _activeVehicle = NULL;
+        _activeVehicleBeingRemoved(vehicleSave);
     }
 
     _activeVehicle = activeVehicle;

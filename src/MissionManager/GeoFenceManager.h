@@ -11,19 +11,17 @@
 #define GeoFenceManager_H
 
 #include <QObject>
-#include <QTimer>
 #include <QGeoCoordinate>
 
-#include "MissionItem.h"
-#include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
-#include "LinkInterface.h"
 #include "QGCMapPolygon.h"
 
 class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(GeoFenceManagerLog)
 
+/// This is the base class for firmware specific geofence managers. A geofence manager is responsible
+/// for communicating with the vehicle to set/get geofence settings.
 class GeoFenceManager : public QObject
 {
     Q_OBJECT
@@ -32,29 +30,30 @@ public:
     GeoFenceManager(Vehicle* vehicle);
     ~GeoFenceManager();
     
-    typedef enum {
-        GeoFenceNone,
-        GeoFenceCircle,
-        GeoFencePolygon,
-    } GeoFenceType_t;
+    /// Returns true if the manager is currently communicating with the vehicle
+    virtual bool inProgress(void) const { return false; }
 
-    typedef struct {
-        GeoFenceType_t          fenceType;
-        float                   circleRadius;
-        QGCMapPolygon           polygon;
-        QGeoCoordinate          breachReturnPoint;
-    } GeoFence_t;
+    /// Load the current settings from teh vehicle
+    virtual void loadFromVehicle(void);
 
-    bool inProgress(void) const;
+    /// Send the current settings to the vehicle
+    virtual void sendToVehicle(void);
 
-    /// Request the geo fence from the vehicle
-    void requestGeoFence(void);
+    // Support flags
+    virtual bool fenceSupported         (void) const { return false; }
+    virtual bool circleSupported        (void) const { return false; }
+    virtual bool polygonSupported       (void) const { return false; }
+    virtual bool breachReturnSupported  (void) const { return false; }
 
-    /// Returns the current geofence settings
-    const GeoFence_t& geoFence(void) const { return _geoFence; }
+    virtual float           circleRadius        (void) const { return 0.0; }
+    QList<QGeoCoordinate>   polygon             (void) const { return _polygon; }
+    QGeoCoordinate          breachReturnPoint   (void) const { return _breachReturnPoint; }
 
-    /// Set and send the specified geo fence to the vehicle
-    void setGeoFence(const GeoFence_t& geoFence);
+    virtual QVariantList    params      (void) const { return QVariantList(); }
+    virtual QStringList     paramLabels (void) const { return QStringList(); }
+
+    void setPolygon(QGCMapPolygon* polygon);
+    void setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint);
 
     /// Error codes returned in error signal
     typedef enum {
@@ -65,35 +64,24 @@ public:
     } ErrorCode_t;
     
 signals:
-    void newGeoFenceAvailable(void);
-    void inProgressChanged(bool inProgress);
-    void error(int errorCode, const QString& errorMsg);
+    void fenceSupportedChanged          (bool fenceSupported);
+    void circleSupportedChanged         (bool circleSupported);
+    void polygonSupportedChanged        (bool polygonSupported);
+    void breachReturnSupportedChanged   (bool fenceSupported);
+    void circleRadiusChanged            (float circleRadius);
+    void polygonChanged                 (QList<QGeoCoordinate> polygon);
+    void breachReturnPointChanged       (QGeoCoordinate breachReturnPoint);
+    void inProgressChanged              (bool inProgress);
+    void error                          (int errorCode, const QString& errorMsg);
+    void paramsChanged                  (QVariantList params);
+    void paramLabelsChanged             (QStringList paramLabels);
     
-private slots:
-    void _mavlinkMessageReceived(const mavlink_message_t& message);
-    //void _ackTimeout(void);
-    
-private:
+protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
-    void _clearGeoFence(void);
-    void _requestFencePoint(uint8_t pointIndex);
-    void _sendFencePoint(uint8_t pointIndex);
-    bool _geoFenceSupported(void);
 
-private:
-    Vehicle*            _vehicle;
-    
-    bool        _readTransactionInProgress;
-    bool        _writeTransactionInProgress;
-
-    uint8_t     _cReadFencePoints;
-    uint8_t     _currentFencePoint;
-    QVariant    _savedWriteFenceAction;
-
-    GeoFence_t  _geoFence;
-
-    static const char* _fenceTotalParam;
-    static const char* _fenceActionParam;
+    Vehicle*                _vehicle;
+    QList<QGeoCoordinate>   _polygon;
+    QGeoCoordinate          _breachReturnPoint;
 };
 
 #endif
