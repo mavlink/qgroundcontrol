@@ -17,6 +17,7 @@
 #include "QGCMAVLink.h"
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
+#include "GeoFenceManager.h"
 
 #include <QList>
 #include <QString>
@@ -40,8 +41,8 @@ public:
         SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
         MavCmdPreflightStorageCapability =  1 << 1, ///< MAV_CMD_PREFLIGHT_STORAGE is supported
         PauseVehicleCapability =            1 << 2, ///< Vehicle supports pausing at current location
-        GuidedModeCapability =              1 << 3, ///< Vehicle Supports guided mode commands
-        OrbitModeCapability =               1 << 4, ///< Vehicle Supports orbit mode
+        GuidedModeCapability =              1 << 3, ///< Vehicle supports guided mode commands
+        OrbitModeCapability =               1 << 4, ///< Vehicle supports orbit mode
     } FirmwareCapabilities;
 
     /// Maps from on parameter name to another
@@ -207,6 +208,14 @@ public:
 
     /// @return true: X confiuration, false: Plus configuration
     virtual bool multiRotorXConfig(Vehicle* vehicle) { Q_UNUSED(vehicle); return false; }
+
+    /// Returns a newly create geofence manager for this vehicle. Returns NULL if this vehicle
+    /// does not support geofence. You should make sense to check vehicle capabilites for geofence
+    /// support.
+    virtual GeoFenceManager* newGeoFenceManager(Vehicle* vehicle) { return new GeoFenceManager(vehicle); }
+
+    /// Returns the parameter which holds the fence circle radius if supported.
+    virtual QString geoFenceRadiusParam(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
 };
 
 #endif

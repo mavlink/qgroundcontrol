@@ -98,9 +98,13 @@ int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVe
     return majorVersionNumber == 3 ? 4: Vehicle::versionNotSetValue;
 }
 
-bool ArduCopterFirmwarePlugin::isCapable(const Vehicle* /*vehicle*/, FirmwareCapabilities capabilities)
+bool ArduCopterFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
 {
-    return (capabilities & (SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability)) == capabilities;
+    Q_UNUSED(vehicle);
+
+    uint32_t vehicleCapabilities = SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability;
+
+    return (capabilities & vehicleCapabilities) == capabilities;
 }
 
 void ArduCopterFirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
@@ -207,4 +211,10 @@ bool ArduCopterFirmwarePlugin::multiRotorCoaxialMotors(Vehicle* vehicle)
 bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
 {
     return vehicle->autopilotPlugin()->getParameterFact(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
+}
+
+QString ArduCopterFirmwarePlugin::geoFenceRadiusParam(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    return QStringLiteral("FENCE_RADIUS");
 }

@@ -574,8 +574,8 @@ void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
 
     mavlink_msg_mission_current_decode(&message, &missionCurrent);
 
-    qCDebug(MissionManagerLog) << "_handleMissionCurrent seq:" << missionCurrent.seq;
     if (missionCurrent.seq != _currentMissionItem) {
+        qCDebug(MissionManagerLog) << "_handleMissionCurrent seq:" << missionCurrent.seq;
         _currentMissionItem = missionCurrent.seq;
         emit currentItemChanged(_currentMissionItem);
     }

@@ -623,8 +623,6 @@ void MissionController::_recalcWaypointLines(void)
 
     if (!homeItem) {
         qWarning() << "Home item is not SimpleMissionItem";
-    } else {
-        connect(homeItem, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcAltitudeRangeBearing);
     }
 
     bool    showHomePosition =  homeItem->showHomePosition();
@@ -944,6 +942,10 @@ void MissionController::_initAllVisualItems(void)
         homeItem->setShowHomePosition(true);
     }
 
+    emit plannedHomePositionChanged(plannedHomePosition());
+
+    connect(homeItem, &VisualMissionItem::coordinateChanged, this, &MissionController::_homeCoordinateChanged);
+
     QmlObjectListModel* newComplexItems = new QmlObjectListModel(this);
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -1021,17 +1023,17 @@ void MissionController::_itemCommandChanged(void)
     _recalcWaypointLines();
 }
 
-void MissionController::_activeVehicleBeingRemoved(void)
+void MissionController::_activeVehicleBeingRemoved(Vehicle* vehicle)
 {
     qCDebug(MissionControllerLog) << "_activeVehicleSet _activeVehicleBeingRemoved";
 
-    MissionManager* missionManager = _activeVehicle->missionManager();
+    MissionManager* missionManager = vehicle->missionManager();
 
     disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailableFromVehicle);
     disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
     disconnect(missionManager, &MissionManager::currentItemChanged,         this, &MissionController::_currentMissionItemChanged);
-    disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,      this, &MissionController::_activeVehicleHomePositionAvailableChanged);
-    disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionController::_activeVehicleHomePositionChanged);
+    disconnect(vehicle, &Vehicle::homePositionAvailableChanged,             this, &MissionController::_activeVehicleHomePositionAvailableChanged);
+    disconnect(vehicle, &Vehicle::homePositionChanged,                      this, &MissionController::_activeVehicleHomePositionChanged);
 
     // We always remove all items on vehicle change. This leaves a user model hole:
     //      If the user has unsaved changes in the Plan view they will lose them
@@ -1069,6 +1071,7 @@ void MissionController::_activeVehicleHomePositionAvailableChanged(bool homePosi
 
         if (homeItem) {
             homeItem->setShowHomePosition(homePositionAvailable);
+            emit plannedHomePositionChanged(plannedHomePosition());
             _recalcWaypointLines();
         } else {
             qWarning() << "Unabled to cast home item to SimpleMissionItem";
@@ -1079,8 +1082,17 @@ void MissionController::_activeVehicleHomePositionAvailableChanged(bool homePosi
 void MissionController::_activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
 {
     if (!_editMode && _visualItems) {
-        qobject_cast<VisualMissionItem*>(_visualItems->get(0))->setCoordinate(homePosition);
-        _recalcWaypointLines();
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(0));
+        if (item) {
+            if (item->coordinate() != homePosition) {
+                item->setCoordinate(homePosition);
+                qCDebug(MissionControllerLog) << "Home position update" << homePosition;
+                emit plannedHomePositionChanged(plannedHomePosition());
+                _recalcWaypointLines();
+            }
+        } else {
+            qWarning() << "Unabled to cast home item to VisualMissionItem";
+        }
     }
 }
 
@@ -1255,4 +1267,22 @@ void MissionController::setDirty(bool dirty)
     if (_visualItems) {
         _visualItems->setDirty(dirty);
     }
+}
+
+QGeoCoordinate MissionController::plannedHomePosition(void)
+{
+    if (_visualItems && _visualItems->count() > 0) {
+        SimpleMissionItem* item = qobject_cast<SimpleMissionItem*>(_visualItems->get(0));
+        if (item && item->showHomePosition()) {
+            return item->coordinate();
+        }
+    }
+
+    return QGeoCoordinate();
+}
+
+void MissionController::_homeCoordinateChanged(void)
+{
+    emit plannedHomePositionChanged(plannedHomePosition());
+    _recalcAltitudeRangeBearing();
 }
