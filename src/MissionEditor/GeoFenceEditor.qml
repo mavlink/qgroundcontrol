@@ -7,6 +7,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.FlightMap     1.0
+import QGroundControl.FactSystem    1.0
 
 QGCFlickable {
     id:             root
@@ -15,7 +16,7 @@ QGCFlickable {
     contentHeight:  geoFenceEditorRect.height
     clip:           true
 
-    readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 12)
+    readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 15)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
 
@@ -70,6 +71,7 @@ QGCFlickable {
                     anchors.right:  parent.right
                     wrapMode:       Text.WordWrap
                     text:           qsTr("Click in map to set breach return point.")
+                    visible:        geoFenceController.breachReturnSupported
                 }
 
                 QGCLabel { text: qsTr("Fence Settings:") }
@@ -96,7 +98,7 @@ QGCFlickable {
                         QGCLabel {
                             id:                 textFieldLabel
                             anchors.baseline:   textField.baseline
-                            text:               modelData.name
+                            text:               geoFenceController.paramLabels[index]
                         }
 
                         FactTextField {
@@ -105,6 +107,18 @@ QGCFlickable {
                             width:          _editFieldWidth
                             showUnits:      true
                             fact:           modelData
+                            visible:        !comboField.visible
+                        }
+
+                        FactComboBox {
+                            id:             comboField
+                            anchors.right:  parent.right
+                            width:          _editFieldWidth
+                            indexModel:     false
+                            fact:           visible ? modelData : _nullFact
+                            visible:        modelData.enumStrings.length
+
+                            property var _nullFact: Fact { }
                         }
                     }
                 }
@@ -115,6 +129,7 @@ QGCFlickable {
                     flightMap:      editorMap
                     polygon:        root.polygon
                     sectionLabel:   qsTr("Fence Polygon:")
+                    visible:        geoFenceController.polygonSupported
                 }
             }
         }

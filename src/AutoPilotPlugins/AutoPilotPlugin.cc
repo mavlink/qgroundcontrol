@@ -117,7 +117,7 @@ void AutoPilotPlugin::refreshParametersPrefix(int componentId, const QString& na
     _vehicle->getParameterLoader()->refreshParametersPrefix(componentId, namePrefix);
 }
 
-bool AutoPilotPlugin::parameterExists(int componentId, const QString& name)
+bool AutoPilotPlugin::parameterExists(int componentId, const QString& name) const
 {
     return _vehicle->getParameterLoader()->parameterExists(componentId, name);
 }

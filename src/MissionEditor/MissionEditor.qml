@@ -154,6 +154,12 @@ QGCView {
         id: geoFenceController
 
         Component.onCompleted: start(true /* editMode */)
+
+        onFenceSupportedChanged: {
+            if (!fenceSupported && _editingLayer == _layerGeoFence) {
+                _editingLayer = _layerMission
+            }
+        }
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -515,7 +521,7 @@ QGCView {
                                 setCurrentItem(sequenceNumber)
                             }
 
-                            onMoveHomeToMapCenter: missionController.visualItems.get(0).coordinate = editorMap.center
+                            onMoveHomeToMapCenter: _visualItems.get(0).coordinate = editorMap.center
                         }
                     } // ListView
                 } // Item - Mission Item editor
@@ -537,16 +543,31 @@ QGCView {
                 MapPolygon {
                     border.color:   "#80FF0000"
                     border.width:   3
-                    path:           geoFenceController.polygon.path
+                    path:           geoFenceController.polygonSupported ? geoFenceController.polygon.path : undefined
+                }
+
+                // GeoFence circle
+                MapCircle {
+                    border.color:   "#80FF0000"
+                    border.width:   3
+                    center:         missionController.plannedHomePosition
+                    radius:         geoFenceController.circleSupported ? geoFenceController.circleRadius : 0
+                }
+
+                // GeoFence circle
+                MapCircle {
+                    border.color:   "#80FF0000"
+                    border.width:   3
+                    center:         missionController.plannedHomePosition
+                    radius:         geoFenceController.circleSupported ? geoFenceController.circleRadius : 0
                 }
 
                 // GeoFence breach return point
                 MapQuickItem {
                     anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
                     coordinate:     geoFenceController.breachReturnPoint
-                    sourceItem: MissionItemIndexLabel {
-                        label: "F"
-                    }
+                    visible:        geoFenceController.breachReturnSupported
+                    sourceItem:     MissionItemIndexLabel { label: "F" }
                 }
 
                 //-- Dismiss Drop Down (if any)
@@ -583,10 +604,10 @@ QGCView {
                     DropButton {
                         id:                 layerButton
                         dropDirection:      dropRight
-                        //buttonImage:        "/qmlimages/MapCenter.svg"
                         viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
                         exclusiveGroup:     _dropButtonsExclusiveGroup
                         lightBorders:       _lightWidgetBorders
+                        visible:            geoFenceController.fenceSupported
 
                         dropDownComponent: Component {
                             Column {
@@ -775,19 +796,19 @@ QGCView {
                 }
 
                 MissionItemStatus {
-                    id:                 waypointValuesDisplay
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.left:       parent.left
-                    anchors.bottom:     parent.bottom
-                    z:                  QGroundControl.zOrderTopMost
-                    currentMissionItem: _currentMissionItem
-                    missionItems:       missionController.visualItems
-                    expandedWidth:      missionItemEditor.x - (ScreenTools.defaultFontPixelWidth * 2)
-                    missionDistance:    missionController.missionDistance
-                    missionMaxTelemetry: missionController.missionMaxTelemetry
-                    cruiseDistance:     missionController.cruiseDistance
-                    hoverDistance:      missionController.hoverDistance
-                    visible:            _editingLayer == _layerMission && !ScreenTools.isShortScreen
+                    id:                     waypointValuesDisplay
+                    anchors.margins:        ScreenTools.defaultFontPixelWidth
+                    anchors.left:           parent.left
+                    anchors.bottom:         parent.bottom
+                    z:                      QGroundControl.zOrderTopMost
+                    currentMissionItem:     _currentMissionItem
+                    missionItems:           missionController.visualItems
+                    expandedWidth:          missionItemEditor.x - (ScreenTools.defaultFontPixelWidth * 2)
+                    missionDistance:        missionController.missionDistance
+                    missionMaxTelemetry:    missionController.missionMaxTelemetry
+                    cruiseDistance:         missionController.cruiseDistance
+                    hoverDistance:          missionController.hoverDistance
+                    visible:                _editingLayer == _layerMission && !ScreenTools.isShortScreen
                 }
             } // FlightMap
         } // Item - split view container

@@ -6512,6 +6512,10 @@
 <value code="1">Altitude</value>
 <value code="2">Circle</value>
 <value code="3">Altitude and Circle</value>
+<value code="4">Polygon</value>
+<value code="5">Altitude and Polygon</value>
+<value code="6">Circle and Polygon</value>
+<value code="7">All</value>
 </values>
 </param>
 <param humanName="Fence Action" name="FENCE_ACTION" documentation="What action should be taken when fence is breached" user="Standard">
