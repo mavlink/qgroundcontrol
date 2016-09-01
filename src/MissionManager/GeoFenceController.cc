@@ -83,8 +83,9 @@ void GeoFenceController::_activeVehicleSet(void)
     connect(geoFenceManager, &GeoFenceManager::paramsChanged,                   this, &GeoFenceController::paramsChanged);
     connect(geoFenceManager, &GeoFenceManager::paramLabelsChanged,              this, &GeoFenceController::paramLabelsChanged);
 
+    _signalAll();
+
     if (_activeVehicle->getParameterLoader()->parametersAreReady()) {
-        _signalAll();
         if (!syncInProgress()) {
             // We are switching between two previously existing vehicles. We have to manually ask for the items from the Vehicle.
             // We don't request mission items for new vehicles since that will happen autamatically.
@@ -223,7 +224,8 @@ void GeoFenceController::_setDirty(void)
 void GeoFenceController::_setPolygon(const QList<QGeoCoordinate>& polygon)
 {
     _polygon.setPath(polygon);
-    setDirty(true);
+    // This is coming from a GeoFenceManager::loadFromVehicle call
+    setDirty(false);
 }
 
 float GeoFenceController::circleRadius(void) const

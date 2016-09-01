@@ -471,16 +471,58 @@ QGCView {
                         }
                 }
 
+                // Mission/GeoFence selector
+                Item {
+                    id:                 planElementSelector
+                    anchors.topMargin:  parent.height - ScreenTools.availableHeight + _margin
+                    anchors.top:        parent.top
+                    anchors.leftMargin: parent.width - _rightPanelWidth
+                    anchors.left:       parent.left
+                    width:              planElementSelectorRow.width
+                    height:             geoFenceController.fenceSupported ? planElementSelectorRow.height : 0
+                    visible:            geoFenceController.fenceSupported
+
+                    ExclusiveGroup {
+                        id: planElementSelectorGroup
+                        onCurrentChanged: {
+                            var layerIsMission = current == planElementMission
+                            _editingLayer = layerIsMission ? _layerMission : _layerGeoFence
+                            _syncDropDownController = layerIsMission ? missionController : geoFenceController
+                        }
+                    }
+
+                    Row {
+                        id:     planElementSelectorRow
+                        spacing: _horizontalMargin
+
+                        QGCRadioButton {
+                            id:             planElementMission
+                            text:           qsTr("Mission")
+                            checked:        true
+                            exclusiveGroup: planElementSelectorGroup
+                            color:          mapPal.text
+                        }
+
+                        QGCRadioButton {
+                            id:             planElementGeoFence
+                            text:           qsTr("GeoFence")
+                            exclusiveGroup: planElementSelectorGroup
+                            color:          mapPal.text
+                        }
+                    }
+                }
+
                 // Mission Item Editor
                 Item {
-                    id:             missionItemEditor
-                    height:         ScreenTools.availableHeight
-                    anchors.bottom: parent.bottom
-                    anchors.right:  parent.right
-                    width:          _rightPanelWidth
-                    opacity:        _rightPanelOpacity
-                    z:              QGroundControl.zOrderTopMost
-                    visible:        _editingLayer == _layerMission
+                    id:                 missionItemEditor
+                    anchors.topMargin:  _margin
+                    anchors.top:        planElementSelector.bottom
+                    anchors.bottom:     parent.bottom
+                    anchors.right:      parent.right
+                    width:              _rightPanelWidth
+                    opacity:            _rightPanelOpacity
+                    z:                  QGroundControl.zOrderTopMost
+                    visible:            _editingLayer == _layerMission
 
                     MouseArea {
                          // This MouseArea prevents the Map below it from getting Mouse events. Without this
@@ -528,8 +570,8 @@ QGCView {
 
                 // GeoFence Editor
                 Loader {
-                    anchors.topMargin:  parent.height - ScreenTools.availableHeight
-                    anchors.top:        parent.top
+                    anchors.topMargin:  _margin
+                    anchors.top:        planElementSelector.bottom
                     anchors.right:      parent.right
                     opacity:            _rightPanelOpacity
                     z:                  QGroundControl.zOrderTopMost
@@ -600,47 +642,6 @@ QGCView {
                     anchors.top:        ScreenTools.isShortScreen ? parent.top : planLabel.bottom
                     spacing:            ScreenTools.defaultFontPixelHeight
                     z:                  QGroundControl.zOrderWidgets
-
-                    DropButton {
-                        id:                 layerButton
-                        dropDirection:      dropRight
-                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-                        exclusiveGroup:     _dropButtonsExclusiveGroup
-                        lightBorders:       _lightWidgetBorders
-                        visible:            geoFenceController.fenceSupported
-
-                        dropDownComponent: Component {
-                            Column {
-                                spacing: ScreenTools.defaultFontPixelWidth * 0.5
-
-                                QGCLabel { text: qsTr("Editing Layer:") }
-
-                                Row {
-                                    spacing: ScreenTools.defaultFontPixelWidth
-
-                                    QGCButton {
-                                        text: qsTr("Mission")
-
-                                        onClicked: {
-                                            layerButton.hideDropDown()
-                                            _editingLayer = _layerMission
-                                            _syncDropDownController = missionController
-                                        }
-                                    }
-
-                                    QGCButton {
-                                        text: qsTr("GeoFence")
-
-                                        onClicked: {
-                                            layerButton.hideDropDown()
-                                            _editingLayer = _layerGeoFence
-                                            _syncDropDownController = geoFenceController
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
 
                     RoundButton {
                         id:             addMissionItemsButton
@@ -818,10 +819,10 @@ QGCView {
         id: syncLoadFromVehicleOverwrite
         QGCViewMessage {
             id:         syncLoadFromVehicleCheck
-            message:   qsTr("You have unsaved/unsent mission changes. Loading the mission from the Vehicle will lose these changes. Are you sure you want to load the mission from the Vehicle?")
+            message:   qsTr("You have unsaved/unsent changes. Loading from the Vehicle will lose these changes. Are you sure you want to load from the Vehicle?")
             function accept() {
                 hideDialog()
-                loadFromVehicle()
+                _syncDropDownController.loadFromVehicle()
             }
         }
     }
@@ -830,10 +831,10 @@ QGCView {
         id: syncLoadFromFileOverwrite
         QGCViewMessage {
             id:         syncLoadFromVehicleCheck
-            message:   qsTr("You have unsaved/unsent mission changes. Loading a mission from a file will lose these changes. Are you sure you want to load a mission from a file?")
+            message:   qsTr("You have unsaved/unsent changes. Loading a from a file will lose these changes. Are you sure you want to load from a file?")
             function accept() {
                 hideDialog()
-                loadFromFile()
+                _syncDropDownController.loadFromSelectedFile()
             }
         }
     }
@@ -841,10 +842,10 @@ QGCView {
     Component {
         id: removeAllPromptDialog
         QGCViewMessage {
-            message: qsTr("Are you sure you want to delete all mission items?")
+            message: qsTr("Are you sure you want to remove all items?")
             function accept() {
                 itemDragger.clearItem()
-                missionController.removeAll()
+                _syncDropDownController.removeAll()
                 hideDialog()
             }
         }
@@ -857,11 +858,13 @@ QGCView {
             id:         columnHolder
             spacing:    _margin
 
+            property string _overwriteText: (_editingLayer == _layerMission) ? qsTr("Mission overwrite") : qsTr("GeoFence overwrite")
+
             QGCLabel {
                 width:      sendSaveGrid.width
                 wrapMode:   Text.WordWrap
                 text:       _syncDropDownController.dirty ?
-                                qsTr("You have unsaved changes to your mission. You should send to your vehicle, or save to a file:") :
+                                qsTr("You have unsaved changes. You should send to your vehicle, or save to a file:") :
                                 qsTr("Sync:")
             }
 
@@ -889,7 +892,7 @@ QGCView {
                     onClicked: {
                         syncButton.hideDropDown()
                         if (_syncDropDownController.dirty) {
-                            _root.showDialog(syncLoadFromVehicleOverwrite, qsTr("Mission overwrite"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                            _root.showDialog(syncLoadFromVehicleOverwrite, columnHolder._overwriteText, _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                         } else {
                             _syncDropDownController.loadFromVehicle()
                         }
@@ -913,7 +916,7 @@ QGCView {
                     onClicked: {
                         syncButton.hideDropDown()
                         if (_syncDropDownController.dirty) {
-                            _root.showDialog(syncLoadFromFileOverwrite, qsTr("Mission overwrite"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                            _root.showDialog(syncLoadFromFileOverwrite, columnHolder._overwriteText, _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                         } else {
                             _syncDropDownController.loadFromSelectedFile()
                         }
@@ -926,7 +929,7 @@ QGCView {
                     onClicked:  {
                         syncButton.hideDropDown()
                         _syncDropDownController.removeAll()
-                        _root.showDialog(removeAllPromptDialog, qsTr("Delete all"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                        _root.showDialog(removeAllPromptDialog, qsTr("Remove all"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                     }
                 }
             }

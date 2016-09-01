@@ -188,7 +188,7 @@ void LinkManager::_addLink(LinkInterface* link)
             if (!(_mavlinkChannelsUsedBitMask & 1 << i)) {
                 mavlink_reset_channel_status(i);
                 link->_setMavlinkChannel(i);
-                _mavlinkChannelsUsedBitMask |= i << i;
+                _mavlinkChannelsUsedBitMask |= 1 << i;
                 channelSet = true;
                 break;
             }
