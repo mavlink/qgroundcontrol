@@ -129,8 +129,6 @@ public:
     /// Suspend/Restart logging during replay.
     void suspendLogForReplay(bool suspend);
 
-    void sendMessage(LinkInterface* link, mavlink_message_t message);
-
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
@@ -256,6 +254,10 @@ private slots:
     void _vehicleCountChanged(int count);
     
 private:
+    void _sendMessage(mavlink_message_t message);
+    void _sendMessage(LinkInterface* link, mavlink_message_t message);
+    void _sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid);
+
 #ifndef __mobile__
     bool _closeLogFile(void);
     void _startLogging(void);
