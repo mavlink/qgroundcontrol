@@ -34,6 +34,7 @@ public:
     MissionController(QObject* parent = NULL);
     ~MissionController();
 
+    Q_PROPERTY(QGeoCoordinate       plannedHomePosition READ plannedHomePosition                        NOTIFY plannedHomePositionChanged)
     Q_PROPERTY(QmlObjectListModel*  visualItems         READ visualItems                                NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  complexVisualItems  READ complexVisualItems                         NOTIFY complexVisualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines       READ waypointLines                              NOTIFY waypointLinesChanged)
@@ -70,6 +71,7 @@ public:
 
     // Property accessors
 
+    QGeoCoordinate      plannedHomePosition (void);
     QmlObjectListModel* visualItems         (void) { return _visualItems; }
     QmlObjectListModel* complexVisualItems  (void) { return _complexItems; }
     QmlObjectListModel* waypointLines       (void) { return &_waypointLines; }
@@ -79,7 +81,6 @@ public:
     double  cruiseDistance          (void) const { return _cruiseDistance; }
     double  hoverDistance           (void) const { return _hoverDistance; }
 
-
     void setMissionDistance         (double missionDistance );
     void setMissionMaxTelemetry     (double missionMaxTelemetry);
     void setCruiseDistance          (double cruiseDistance );
@@ -88,6 +89,7 @@ public:
     static const char* jsonSimpleItemsKey;  ///< Key for simple items in a json file
 
 signals:
+    void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
     void visualItemsChanged(void);
     void complexVisualItemsChanged(void);
     void waypointLinesChanged(void);
@@ -105,7 +107,8 @@ private slots:
     void _inProgressChanged(bool inProgress);
     void _currentMissionItemChanged(int sequenceNumber);
     void _recalcWaypointLines(void);
-    void _recalcAltitudeRangeBearing();
+    void _recalcAltitudeRangeBearing(void);
+    void _homeCoordinateChanged(void);
 
 private:
     void _recalcSequence(void);
@@ -128,7 +131,7 @@ private:
     int _nextSequenceNumber(void);
 
     // Overrides from PlanElementController
-    void _activeVehicleBeingRemoved(void) final;
+    void _activeVehicleBeingRemoved(Vehicle* vehicle) final;
     void _activeVehicleSet(void) final;
 
 private:

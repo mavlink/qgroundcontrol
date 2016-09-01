@@ -199,12 +199,13 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_newMissionItemsAvailable);
 
-    _geoFenceManager = new GeoFenceManager(this);
-    connect(_geoFenceManager, &GeoFenceManager::error, this, &Vehicle::_geoFenceManagerError);
-
     _parameterLoader = new ParameterLoader(this);
     connect(_parameterLoader, &ParameterLoader::parametersReady, _autopilotPlugin, &AutoPilotPlugin::_parametersReadyPreChecks);
     connect(_parameterLoader, &ParameterLoader::parameterListProgress, _autopilotPlugin, &AutoPilotPlugin::parameterListProgress);
+
+    // GeoFenceManager needs to access ParameterLoader so make sure to create afters
+    _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
+    connect(_geoFenceManager, &GeoFenceManager::error, this, &Vehicle::_geoFenceManagerError);
 
     // Ask the vehicle for firmware version info. This must be MAV_COMP_ID_ALL since we don't know default component id yet.
 
@@ -1826,7 +1827,7 @@ void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
 #endif
 
 /// Returns true if the specifed parameter exists from the default component
-bool Vehicle::parameterExists(int componentId, const QString& name)
+bool Vehicle::parameterExists(int componentId, const QString& name) const
 {
     return _autopilotPlugin->parameterExists(componentId, name);
 }
@@ -1844,7 +1845,7 @@ void Vehicle::_newMissionItemsAvailable(void)
     // After the initial mission request complets we ask for the geofence
     if (!_geoFenceManagerInitialRequestComplete) {
         _geoFenceManagerInitialRequestComplete = true;
-        _geoFenceManager->requestGeoFence();
+        _geoFenceManager->loadFromVehicle();
     }
 }
 

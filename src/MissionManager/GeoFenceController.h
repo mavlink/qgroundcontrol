@@ -27,17 +27,15 @@ public:
     GeoFenceController(QObject* parent = NULL);
     ~GeoFenceController();
     
-    enum GeoFenceTypeEnum {
-        GeoFenceNone =      GeoFenceManager::GeoFenceNone,
-        GeoFenceCircle =    GeoFenceManager::GeoFenceCircle,
-        GeoFencePolygon  =  GeoFenceManager::GeoFencePolygon,
-    };
-
-    Q_PROPERTY(GeoFenceTypeEnum     fenceType           READ fenceType          WRITE setFenceType          NOTIFY fenceTypeChanged)
-    Q_PROPERTY(float                circleRadius        READ circleRadius       WRITE setCircleRadius       NOTIFY circleRadiusChanged)
-    Q_PROPERTY(QGCMapPolygon*       polygon             READ polygon                                        CONSTANT)
-    Q_PROPERTY(QGeoCoordinate       breachReturnPoint   READ breachReturnPoint  WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
-    Q_PROPERTY(QVariantList         params              READ params                                         NOTIFY paramsChanged)
+    Q_PROPERTY(bool                 fenceSupported          READ fenceSupported                                     NOTIFY fenceSupportedChanged)
+    Q_PROPERTY(bool                 circleSupported         READ circleSupported                                    NOTIFY circleSupportedChanged)
+    Q_PROPERTY(bool                 polygonSupported        READ polygonSupported                                   NOTIFY polygonSupportedChanged)
+    Q_PROPERTY(bool                 breachReturnSupported   READ breachReturnSupported                              NOTIFY breachReturnSupportedChanged)
+    Q_PROPERTY(float                circleRadius            READ circleRadius                                       NOTIFY circleRadiusChanged)
+    Q_PROPERTY(QGCMapPolygon*       polygon                 READ polygon                                            CONSTANT)
+    Q_PROPERTY(QGeoCoordinate       breachReturnPoint       READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
+    Q_PROPERTY(QVariantList         params                  READ params                                             NOTIFY paramsChanged)
+    Q_PROPERTY(QStringList          paramLabels             READ paramLabels                                        NOTIFY paramLabelsChanged)
 
     void start              (bool editMode) final;
     void loadFromVehicle    (void) final;
@@ -51,39 +49,46 @@ public:
     bool dirty              (void) const final;
     void setDirty           (bool dirty) final;
 
-    GeoFenceTypeEnum    fenceType           (void) const { return (GeoFenceTypeEnum)_geoFence.fenceType; }
-    float               circleRadius        (void) const { return _geoFence.circleRadius; }
-    QGCMapPolygon*      polygon             (void) { return &_geoFence.polygon; }
-    QGeoCoordinate      breachReturnPoint   (void) const { return _geoFence.breachReturnPoint; }
-    QVariantList        params              (void) { return _params; }
+    bool                fenceSupported          (void) const;
+    bool                circleSupported         (void) const;
+    bool                polygonSupported        (void) const;
+    bool                breachReturnSupported   (void) const;
+    float               circleRadius            (void) const;
+    QGCMapPolygon*      polygon                 (void) { return &_polygon; }
+    QGeoCoordinate      breachReturnPoint       (void) const { return _breachReturnPoint; }
+    QVariantList        params                  (void) const;
+    QStringList         paramLabels             (void) const;
 
-    void setFenceType(GeoFenceTypeEnum fenceType);
-    void setCircleRadius(float circleRadius);
+public slots:
     void setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint);
 
 signals:
-    void fenceTypeChanged           (GeoFenceTypeEnum fenceType);
-    void circleRadiusChanged        (float circleRadius);
-    void polygonPathChanged         (const QVariantList& polygonPath);
-    void breachReturnPointChanged   (QGeoCoordinate breachReturnPoint);
-    void paramsChanged              (void);
+    void fenceSupportedChanged          (bool fenceSupported);
+    void circleSupportedChanged         (bool circleSupported);
+    void polygonSupportedChanged        (bool polygonSupported);
+    void breachReturnSupportedChanged   (bool breachReturnSupported);
+    void circleRadiusChanged            (float circleRadius);
+    void polygonPathChanged             (const QVariantList& polygonPath);
+    void breachReturnPointChanged       (QGeoCoordinate breachReturnPoint);
+    void paramsChanged                  (QVariantList params);
+    void paramLabelsChanged             (QStringList paramLabels);
 
 private slots:
-    void _parameterReadyVehicleAvailableChanged(bool parameterReadyVehicleAvailable);
-    void _newGeoFenceAvailable(void);
     void _polygonDirtyChanged(bool dirty);
+    void _setDirty(void);
+    void _setPolygon(const QList<QGeoCoordinate>& polygon);
 
 private:
-    void _setParams(void);
     void _clearGeoFence(void);
-    void _setGeoFence(const GeoFenceManager::GeoFence_t& geoFence);
+    void _signalAll(void);
 
-    void _activeVehicleBeingRemoved(void) final;
+    void _activeVehicleBeingRemoved(Vehicle* vehicle) final;
     void _activeVehicleSet(void) final;
 
-    bool                        _dirty;
-    GeoFenceManager::GeoFence_t _geoFence;
-    QVariantList                _params;
+    bool            _dirty;
+    QGCMapPolygon   _polygon;
+    QGeoCoordinate  _breachReturnPoint;
+    QVariantList    _params;
 };
 
 #endif

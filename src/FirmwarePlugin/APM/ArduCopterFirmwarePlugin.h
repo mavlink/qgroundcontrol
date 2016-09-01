@@ -63,9 +63,10 @@ public:
     void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
     void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel) final;
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
-    virtual int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
-    virtual bool multiRotorCoaxialMotors(Vehicle* vehicle) final;
-    virtual bool multiRotorXConfig(Vehicle* vehicle) final;
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+    bool multiRotorCoaxialMotors(Vehicle* vehicle) final;
+    bool multiRotorXConfig(Vehicle* vehicle) final;
+    QString geoFenceRadiusParam(Vehicle* vehicle) final;
 
 private:
     static bool _remapParamNameIntialized;
