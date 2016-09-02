@@ -313,8 +313,8 @@ SetupPage {
                                     id:                 fenceRadiusCheckBox
                                     anchors.baseline:   fenceRadiusField.baseline
                                     text:               qsTr("Max radius:")
-                                    checked:            _fenceRadius.value >= 0
-                                    onClicked:          _fenceRadius.value = checked ? 100 : -1
+                                    checked:            _fenceRadius.value > 0
+                                    onClicked:          _fenceRadius.value = checked ? 100 : 0
                                     width:              _middleRowWidth
                                 }
                                 FactTextField {
@@ -330,8 +330,8 @@ SetupPage {
                                     id:                 fenceAltMaxCheckBox
                                     anchors.baseline:   fenceAltMaxField.baseline
                                     text:               qsTr("Max altitude:")
-                                    checked:            _fenceAlt.value >= 0
-                                    onClicked:          _fenceAlt.value = checked ? 100 : -1
+                                    checked:            _fenceAlt.value > 0
+                                    onClicked:          _fenceAlt.value = checked ? 100 : 0
                                     width:              _middleRowWidth
                                 }
                                 FactTextField {
