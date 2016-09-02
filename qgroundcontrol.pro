@@ -700,6 +700,7 @@ HEADERS+= \
     src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h \
     src/FirmwarePlugin/PX4/px4_custom_mode.h \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
+    src/FirmwarePlugin/PX4/PX4GeoFenceManager.h \
     src/FirmwarePlugin/PX4/PX4ParameterMetaData.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/Vehicle.h \
@@ -761,6 +762,7 @@ SOURCES += \
     src/FirmwarePlugin/FirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
+    src/FirmwarePlugin/PX4/PX4GeoFenceManager.cc \
     src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/Vehicle.cc \
