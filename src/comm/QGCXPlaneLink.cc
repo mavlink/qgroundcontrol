@@ -336,7 +336,7 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
     emit remoteChanged(QString("%1:%2").arg(remoteHost.toString()).arg(remotePort));
 }
 
-void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
+void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, float aux1, float aux2, float aux3, float aux4, quint8 systemMode, quint8 navMode)
 {
     #pragma pack(push, 1)
     struct payload {
@@ -354,6 +354,10 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
 
     Q_UNUSED(time);
     Q_UNUSED(systemMode);
+    Q_UNUSED(aux1);
+    Q_UNUSED(aux2);
+    Q_UNUSED(aux3);
+    Q_UNUSED(aux4);
     Q_UNUSED(navMode);
 
     if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR

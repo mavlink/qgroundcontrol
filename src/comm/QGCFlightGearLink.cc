@@ -208,13 +208,17 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
 
 }
 
-void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
+void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, float aux1, float aux2, float aux3, float aux4, quint8 systemMode, quint8 navMode)
 {
     // magnetos,aileron,elevator,rudder,throttle\n
 
     //float magnetos = 3.0f;
     Q_UNUSED(time);
     Q_UNUSED(systemMode);
+    Q_UNUSED(aux1);
+    Q_UNUSED(aux2);
+    Q_UNUSED(aux3);
+    Q_UNUSED(aux4);
     Q_UNUSED(navMode);
 
     if(!qIsNaN(rollAilerons) && !qIsNaN(pitchElevator) && !qIsNaN(yawRudder) && !qIsNaN(throttle))
