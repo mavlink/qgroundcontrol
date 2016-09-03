@@ -52,7 +52,6 @@ const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Ext
 MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
     : QGCTool(app)
     , m_multiplexingEnabled(false)
-    , m_authEnabled(false)
     , m_enable_version_check(true)
     , m_paramRetransmissionTimeout(350)
     , m_paramRewriteTimeout(500)
@@ -95,7 +94,6 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
 
    qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
 
-   m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
    loadSettings();
 
    // All the *Counter variables are not initialized here, as they should be initialized
@@ -135,10 +133,6 @@ void MAVLinkProtocol::loadSettings()
         systemId = temp;
     }
 
-    // Set auth key
-    m_authKey = settings.value("GCS_AUTH_KEY", m_authKey).toString();
-    enableAuth(settings.value("GCS_AUTH_ENABLED", m_authEnabled).toBool());
-
     // Parameter interface settings
     bool ok;
     temp = settings.value("PARAMETER_RETRANSMISSION_TIMEOUT", m_paramRetransmissionTimeout).toInt(&ok);
@@ -157,8 +151,6 @@ void MAVLinkProtocol::storeSettings()
     settings.setValue("VERSION_CHECK_ENABLED", m_enable_version_check);
     settings.setValue("MULTIPLEXING_ENABLED", m_multiplexingEnabled);
     settings.setValue("GCS_SYSTEM_ID", systemId);
-    settings.setValue("GCS_AUTH_KEY", m_authKey);
-    settings.setValue("GCS_AUTH_ENABLED", m_authEnabled);
     // Parameter interface settings
     settings.setValue("PARAMETER_RETRANSMISSION_TIMEOUT", m_paramRetransmissionTimeout);
     settings.setValue("PARAMETER_REWRITE_TIMEOUT", m_paramRewriteTimeout);
@@ -487,16 +479,6 @@ void MAVLinkProtocol::enableMultiplexing(bool enabled)
 
     m_multiplexingEnabled = enabled;
     if (changed) emit multiplexingChanged(m_multiplexingEnabled);
-}
-
-void MAVLinkProtocol::enableAuth(bool enable)
-{
-    bool changed = false;
-    m_authEnabled = enable;
-    if (m_authEnabled != enable) {
-        changed = true;
-    }
-    if (changed) emit authChanged(m_authEnabled);
 }
 
 void MAVLinkProtocol::enableParamGuard(bool enabled)

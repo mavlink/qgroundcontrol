@@ -246,7 +246,6 @@ FORMS += \
     src/ui/uas/UASMessageView.ui \
     src/ui/Linechart.ui \
     src/ui/MultiVehicleDockWidget.ui \
-    src/ui/MAVLinkSettingsWidget.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
@@ -383,7 +382,6 @@ HEADERS += \
     src/ui/linechart/ScrollZoomer.h \
     src/ui/MainWindow.h \
     src/ui/MAVLinkDecoder.h \
-    src/ui/MAVLinkSettingsWidget.h \
     src/ui/MultiVehicleDockWidget.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/ui/QGCMapRCToParamDialog.h \
@@ -520,7 +518,6 @@ SOURCES += \
     src/uas/FileManager.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
     src/ui/MAVLinkDecoder.cc \
-    src/ui/MAVLinkSettingsWidget.cc \
     src/ui/QGCMapRCToParamDialog.cpp \
     src/comm/LogReplayLink.cc \
     src/QGCFileDialog.cc \
