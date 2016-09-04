@@ -145,7 +145,7 @@ QGCView {
 
         onNewItemsFromVehicle: {
             fitViewportToMissionItems()
-            _currentMissionItem = _visualItems.get(0)
+            setCurrentItem(0)
         }
     }
 
@@ -172,6 +172,7 @@ QGCView {
     }
 
     function setCurrentItem(sequenceNumber) {
+        editorMap.polygonDraw.cancelPolygonEdit()
         _currentMissionItem = undefined
         for (var i=0; i<_visualItems.count; i++) {
             var visualItem = _visualItems.get(i)
@@ -554,6 +555,7 @@ QGCView {
                             onRemove: {
                                 itemDragger.clearItem()
                                 missionController.removeMissionItem(index)
+                                editorMap.polygonDraw.cancelPolygonEdit()
                             }
 
                             onInsert: {
