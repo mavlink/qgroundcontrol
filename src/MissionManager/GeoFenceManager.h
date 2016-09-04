@@ -52,6 +52,8 @@ public:
     virtual QVariantList    params      (void) const { return QVariantList(); }
     virtual QStringList     paramLabels (void) const { return QStringList(); }
 
+    virtual QString editorQml(void) const { return QStringLiteral("qrc:/FirmwarePlugin/GeoFenceEditor.qml"); }
+
     void setPolygon(QGCMapPolygon* polygon);
     void setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint);
 

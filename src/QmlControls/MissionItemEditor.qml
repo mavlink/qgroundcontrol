@@ -20,7 +20,6 @@ Rectangle {
 
     property var    missionItem ///< MissionItem associated with this editor
     property bool   readOnly    ///< true: read only view, false: full editing view
-    property var    qgcView     ///< QGCView control used for showing dialogs
 
     signal clicked
     signal remove
