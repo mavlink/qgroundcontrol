@@ -36,6 +36,7 @@ public:
     Q_PROPERTY(QGeoCoordinate       breachReturnPoint       READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
     Q_PROPERTY(QVariantList         params                  READ params                                             NOTIFY paramsChanged)
     Q_PROPERTY(QStringList          paramLabels             READ paramLabels                                        NOTIFY paramLabelsChanged)
+    Q_PROPERTY(QString              editorQml               READ editorQml                                          NOTIFY editorQmlChanged)
 
     void start              (bool editMode) final;
     void loadFromVehicle    (void) final;
@@ -58,6 +59,7 @@ public:
     QGeoCoordinate      breachReturnPoint       (void) const { return _breachReturnPoint; }
     QVariantList        params                  (void) const;
     QStringList         paramLabels             (void) const;
+    QString             editorQml               (void) const;
 
 public slots:
     void setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint);
@@ -72,6 +74,7 @@ signals:
     void breachReturnPointChanged       (QGeoCoordinate breachReturnPoint);
     void paramsChanged                  (QVariantList params);
     void paramLabelsChanged             (QStringList paramLabels);
+    void editorQmlChanged               (QString editorQml);
 
 private slots:
     void _polygonDirtyChanged(bool dirty);

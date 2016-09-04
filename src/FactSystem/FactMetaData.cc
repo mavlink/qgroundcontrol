@@ -593,7 +593,8 @@ size_t FactMetaData::typeToSize(ValueType_t type)
 /// Set translators according to app settings
 void FactMetaData::_setAppSettingsTranslators(void)
 {
-    if (!_enumStrings.count()) {
+    // We can only translate between real numbers
+    if (!_enumStrings.count() && (type() == valueTypeDouble || type() == valueTypeFloat)) {
         for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {
             const AppSettingsTranslation_s* pAppSettingsTranslation = &_rgAppSettingsTranslations[i];
 
