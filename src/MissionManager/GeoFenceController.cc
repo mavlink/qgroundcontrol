@@ -59,6 +59,7 @@ void GeoFenceController::_signalAll(void)
     emit circleRadiusChanged(circleRadius());
     emit paramsChanged(params());
     emit paramLabelsChanged(paramLabels());
+    emit editorQmlChanged(editorQml());
 }
 
 void GeoFenceController::_activeVehicleBeingRemoved(Vehicle* vehicle)
@@ -252,5 +253,15 @@ QStringList GeoFenceController::paramLabels(void) const
         return _activeVehicle->geoFenceManager()->paramLabels();
     } else {
         return QStringList();
+    }
+}
+
+QString GeoFenceController::editorQml(void) const
+{
+    if (_activeVehicle) {
+        return _activeVehicle->geoFenceManager()->editorQml();
+    } else {
+        // FIXME: Offline editing support
+        return QString();
     }
 }
