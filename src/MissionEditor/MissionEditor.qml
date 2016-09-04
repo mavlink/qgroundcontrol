@@ -26,9 +26,8 @@ import QGroundControl.Controllers   1.0
 /// Mission Editor
 
 QGCView {
-    id:         _root
-
-    viewPanel:          panel
+    id:         qgcView
+    viewPanel:  panel
 
     // zOrder comes from the Loader in MainWindow.qml
     z: QGroundControl.zOrderTopMost
@@ -124,7 +123,7 @@ QGCView {
 
         function loadFromSelectedFile() {
             if (ScreenTools.isMobile) {
-                _root.showDialog(mobileFilePicker, qsTr("Select Mission File"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                qgcView.showDialog(mobileFilePicker, qsTr("Select Mission File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
             } else {
                 missionController.loadFromFilePicker()
                 fitViewportToMissionItems()
@@ -134,7 +133,7 @@ QGCView {
 
         function saveToSelectedFile() {
             if (ScreenTools.isMobile) {
-                _root.showDialog(mobileFileSaver, qsTr("Save Mission File"), _root.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+                qgcView.showDialog(mobileFileSaver, qsTr("Save Mission File"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
             } else {
                 missionController.saveToFilePicker()
             }
@@ -255,7 +254,7 @@ QGCView {
 
             FlightMap {
                 id:             editorMap
-                height:         _root.height
+                height:         qgcView.height
                 anchors.bottom: parent.bottom
                 anchors.left:   parent.left
                 anchors.right:  parent.right
@@ -548,7 +547,6 @@ QGCView {
                         delegate: MissionItemEditor {
                             missionItem:    object
                             width:          parent.width
-                            qgcView:        _root
                             readOnly:       false
 
                             onClicked:  setCurrentItem(object.sequenceNumber)
@@ -892,7 +890,7 @@ QGCView {
                     onClicked: {
                         syncButton.hideDropDown()
                         if (_syncDropDownController.dirty) {
-                            _root.showDialog(syncLoadFromVehicleOverwrite, columnHolder._overwriteText, _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                            qgcView.showDialog(syncLoadFromVehicleOverwrite, columnHolder._overwriteText, qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                         } else {
                             _syncDropDownController.loadFromVehicle()
                         }
@@ -916,7 +914,7 @@ QGCView {
                     onClicked: {
                         syncButton.hideDropDown()
                         if (_syncDropDownController.dirty) {
-                            _root.showDialog(syncLoadFromFileOverwrite, columnHolder._overwriteText, _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                            qgcView.showDialog(syncLoadFromFileOverwrite, columnHolder._overwriteText, qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                         } else {
                             _syncDropDownController.loadFromSelectedFile()
                         }
@@ -929,7 +927,7 @@ QGCView {
                     onClicked:  {
                         syncButton.hideDropDown()
                         _syncDropDownController.removeAll()
-                        _root.showDialog(removeAllPromptDialog, qsTr("Remove all"), _root.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                        qgcView.showDialog(removeAllPromptDialog, qsTr("Remove all"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                     }
                 }
             }

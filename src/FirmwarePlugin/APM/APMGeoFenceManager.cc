@@ -314,3 +314,10 @@ bool APMGeoFenceManager::polygonSupported(void) const
 
     return false;
 }
+
+QString APMGeoFenceManager::editorQml(void) const
+{
+    return _vehicle->multiRotor() ?
+                QStringLiteral("qrc:/FirmwarePlugin/APM/CopterGeoFenceEditor.qml") :
+                QStringLiteral("qrc:/FirmwarePlugin/APM/PlaneGeoFenceEditor.qml");
+}

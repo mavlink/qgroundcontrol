@@ -33,6 +33,7 @@ public:
     float           circleRadius            (void) const final;
     QVariantList    params                  (void) const final { return _params; }
     QStringList     paramLabels             (void) const final { return _paramLabels; }
+    QString         editorQml               (void) const final;
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
