@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>226</width>
+    <width>269</width>
     <height>150</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0" columnstretch="20,0,0">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0,0" columnstretch="20,0,0">
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -26,16 +26,11 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
-   <item row="0" column="1" colspan="2">
-    <widget class="QComboBox" name="hostComboBox">
-     <property name="editable">
-      <bool>true</bool>
+   <item row="1" column="1" colspan="2">
+    <widget class="QPushButton" name="startButton">
+     <property name="text">
+      <string>Start</string>
      </property>
-     <item>
-      <property name="text">
-       <string>127.0.0.1:49000</string>
-      </property>
-     </item>
     </widget>
    </item>
    <item row="0" column="0">
@@ -45,14 +40,7 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0" colspan="3">
-    <widget class="QCheckBox" name="sensorHilCheckBox">
-     <property name="text">
-      <string>Enable sensor level HIL</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0" colspan="3">
+   <item row="7" column="0" colspan="3">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -65,10 +53,35 @@
      </property>
     </spacer>
    </item>
-   <item row="1" column="1" colspan="2">
-    <widget class="QPushButton" name="startButton">
+   <item row="3" column="0" colspan="3">
+    <widget class="QCheckBox" name="sensorHilCheckBox">
      <property name="text">
-      <string>Start</string>
+      <string>Enable sensor level HIL</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" colspan="2">
+    <widget class="QComboBox" name="hostComboBox">
+     <property name="editable">
+      <bool>true</bool>
+     </property>
+     <item>
+      <property name="text">
+       <string>127.0.0.1:49000</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="3">
+    <widget class="QCheckBox" name="useHilActuatorControlsCheckBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Use newer actuator format</string>
      </property>
     </widget>
    </item>
