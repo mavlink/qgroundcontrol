@@ -35,8 +35,11 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QGCHilCon
         // XXX not implemented yet
         //ui->airframeComboBox->hide();
         ui->sensorHilCheckBox->setChecked(xplane->sensorHilEnabled());
+        ui->useHilActuatorControlsCheckBox->setChecked(true);
         connect(xplane, &QGCXPlaneLink::sensorHilChanged, ui->sensorHilCheckBox, &QCheckBox::setChecked);
         connect(ui->sensorHilCheckBox, &QCheckBox::clicked, xplane, &QGCXPlaneLink::enableSensorHIL);
+        connect(xplane, &QGCXPlaneLink::useHilActuatorControlsChanged, ui->useHilActuatorControlsCheckBox, &QCheckBox::setChecked);
+        connect(ui->useHilActuatorControlsCheckBox, &QCheckBox::clicked, xplane, &QGCXPlaneLink::enableHilActuatorControls);
 
         connect(link, static_cast<void (QGCHilLink::*)(int)>(&QGCHilLink::versionChanged),
                 this, &QGCHilXPlaneConfiguration::setVersion);
