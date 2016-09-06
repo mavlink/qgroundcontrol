@@ -53,6 +53,7 @@
 #include "HILDockWidget.h"
 #include "LogDownload.h"
 #include "AppMessages.h"
+#include "VideoStreamingWidget.h"
 #endif
 
 #ifndef __ios__
@@ -74,7 +75,8 @@ enum DockWidgetTypes {
     INFO_VIEW,
     HIL_CONFIG,
     ANALYZE,
-    LOG_DOWNLOAD
+    LOG_DOWNLOAD,
+    VIDEO_STREAMING,
 };
 
 static const char *rgDockWidgetNames[] = {
@@ -84,7 +86,8 @@ static const char *rgDockWidgetNames[] = {
     "Info View",
     "HIL Config",
     "Analyze",
-    "Log Download"
+    "Log Download",
+    "Video Streaming",
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -363,6 +366,9 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
                 break;
             case INFO_VIEW:
                 widget= new QGCTabbedInfoView(widgetName, action, this);
+                break;
+            case VIDEO_STREAMING:
+                widget = new VideoStreamingWidget(widgetName, action, this);
                 break;
         }
         if(action->data().toInt() == INFO_VIEW) {

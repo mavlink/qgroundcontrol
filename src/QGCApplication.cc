@@ -49,6 +49,7 @@
 #include "ViewWidgetController.h"
 #include "ParameterEditorController.h"
 #include "CustomCommandWidgetController.h"
+#include "VideoStreamingWidgetController.h"
 #include "PX4AdvancedFlightModesController.h"
 #include "PX4SimpleFlightModesController.h"
 #include "APMFlightModesComponentController.h"
@@ -406,6 +407,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
     qmlRegisterType<FirmwareUpgradeController>      ("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
     qmlRegisterType<LogDownloadController>          ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
+    qmlRegisterType<VideoStreamingWidgetController> ("QGroundControl.Controllers", 1, 0, "VideoStreamingWidgetController");
 #endif
 
     // Register Qml Singletons

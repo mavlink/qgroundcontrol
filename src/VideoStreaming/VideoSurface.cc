@@ -50,6 +50,7 @@ GstElement* VideoSurface::videoSink()
             qCritical("Failed to create qtquick2videosink. Make sure it is installed correctly");
             return NULL;
         }
+        g_object_set(G_OBJECT(_data->videoSink), "sync", FALSE, NULL);
         g_signal_connect(_data->videoSink, "update", G_CALLBACK(onUpdateThunk), (void* )this);
         _refed = true;
     }
