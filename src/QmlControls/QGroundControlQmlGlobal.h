@@ -60,9 +60,15 @@ public:
         SpeedUnitsKnots,
     };
 
+    enum StreamingSources {
+        StreamingSourcesUDP = 0,
+        StreamingSourcesRTSP
+    };
+
     Q_ENUMS(DistanceUnits)
     Q_ENUMS(AreaUnits)
     Q_ENUMS(SpeedUnits)
+    Q_ENUMS(StreamingSources)
 
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
     Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager    CONSTANT)
@@ -99,6 +105,7 @@ public:
     Q_PROPERTY(Fact*    areaUnits                       READ areaUnits                          CONSTANT)
     Q_PROPERTY(Fact*    speedUnits                      READ speedUnits                         CONSTANT)
     Q_PROPERTY(Fact*    batteryPercentRemainingAnnounce READ batteryPercentRemainingAnnounce    CONSTANT)
+    Q_PROPERTY(Fact*    streamingSources                READ streamingSources                   CONSTANT)
 
     Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
     Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
@@ -193,6 +200,7 @@ public:
     static Fact* areaUnits                      (void);
     static Fact* speedUnits                     (void);
     static Fact* batteryPercentRemainingAnnounce(void);
+    static Fact* streamingSources               (void);
 
     //-- TODO: Make this into an actual preference.
     bool    isAdvancedMode          () { return false; }
@@ -258,6 +266,8 @@ private:
     static FactMetaData*    _speedUnitsMetaData;
     static SettingsFact*    _batteryPercentRemainingAnnounceFact;
     static FactMetaData*    _batteryPercentRemainingAnnounceMetaData;
+    static SettingsFact*    _streamingSourcesFact;
+    static FactMetaData*    _streamingSourcesMetaData;
 
     static const char*  _virtualTabletJoystickKey;
     static const char*  _baseFontPointSizeKey;
