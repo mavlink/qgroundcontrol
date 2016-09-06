@@ -36,7 +36,7 @@ class QGCXPlaneLink : public QGCHilLink
     //Q_INTERFACES(QGCXPlaneLinkInterface:LinkInterface)
 
 public:
-    QGCXPlaneLink(Vehicle* vehicle, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress localHost = QHostAddress::Any, quint16 localPort = 49005);
+    QGCXPlaneLink(Vehicle *vehicle, QString remoteHost = QString("127.0.0.1:49000"), QHostAddress localHost = QHostAddress::Any, quint16 localPort = 49005);
     ~QGCXPlaneLink();
 
     /**
@@ -51,7 +51,8 @@ public:
 
     bool isConnected();
     qint64 bytesAvailable();
-    int getPort() const {
+    int getPort() const
+    {
         return localPort;
     }
 
@@ -88,11 +89,13 @@ public:
         return (int)airframeID;
     }
 
-    bool sensorHilEnabled() {
+    bool sensorHilEnabled()
+    {
         return _sensorHilEnabled;
     }
 
-    bool useHilActuatorControls() {
+    bool useHilActuatorControls()
+    {
         return _useHilActuatorControls;
     }
 
@@ -104,7 +107,7 @@ public slots:
 //    void setAddress(QString address);
     void setPort(int port);
     /** @brief Add a new host to broadcast messages to */
-    void setRemoteHost(const QString& host);
+    void setRemoteHost(const QString &host);
     /** @brief Send new control states to the simulation */
     void updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
     /** @brief Send new control commands to the simulation */
@@ -127,14 +130,16 @@ public slots:
                                 float ctl_15,
                                 quint8 mode);
     /** @brief Set the simulator version as text string */
-    void setVersion(const QString& version);
+    void setVersion(const QString &version);
     /** @brief Set the simulator version as integer */
     void setVersion(unsigned int version);
 
-    void enableSensorHIL(bool enable) {
+    void enableSensorHIL(bool enable)
+    {
         if (enable != _sensorHilEnabled)
             _sensorHilEnabled = enable;
-            emit sensorHilChanged(enable);
+
+        emit sensorHilChanged(enable);
     }
 
     void enableHilActuatorControls(bool enable);
@@ -159,7 +164,7 @@ public slots:
      * @brief Select airplane model
      * @param plane the name of the airplane
      */
-    void selectAirframe(const QString& airframe);
+    void selectAirframe(const QString &airframe);
     /**
      * @brief Set the airplane position and attitude
      * @param lat
@@ -182,14 +187,14 @@ public slots:
     void setRandomAttitude();
 
 protected:
-    Vehicle* _vehicle;
+    Vehicle *_vehicle;
     QString name;
     QHostAddress localHost;
     quint16 localPort;
     QHostAddress remoteHost;
     quint16 remotePort;
     int id;
-    QUdpSocket* socket;
+    QUdpSocket *socket;
     bool connectState;
 
     quint64 bitsSentTotal;
@@ -202,8 +207,8 @@ protected:
     QMutex statisticsMutex;
     QMutex dataMutex;
     QTimer refreshTimer;
-    QProcess* process;
-    QProcess* terraSync;
+    QProcess *process;
+    QProcess *terraSync;
 
     bool gpsReceived;
     bool attitudeReceived;

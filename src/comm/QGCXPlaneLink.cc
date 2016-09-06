@@ -32,7 +32,7 @@
 #include "QGCMessageBox.h"
 #include "HomePositionManager.h"
 
-QGCXPlaneLink::QGCXPlaneLink(Vehicle* vehicle, QString remoteHost, QHostAddress localHost, quint16 localPort) :
+QGCXPlaneLink::QGCXPlaneLink(Vehicle *vehicle, QString remoteHost, QHostAddress localHost, quint16 localPort) :
     _vehicle(vehicle),
     remoteHost(QHostAddress("127.0.0.1")),
     remotePort(49000),
@@ -73,7 +73,8 @@ QGCXPlaneLink::~QGCXPlaneLink()
     // Tell the thread to exit
     _should_exit = true;
 
-    if (socket) {
+    if (socket)
+    {
         socket->close();
         socket->deleteLater();
         socket = NULL;
@@ -106,21 +107,25 @@ void QGCXPlaneLink::storeSettings()
     settings.endGroup();
 }
 
-void QGCXPlaneLink::setVersion(const QString& version)
+void QGCXPlaneLink::setVersion(const QString &version)
 {
     unsigned int oldVersion = xPlaneVersion;
+
     if (version.contains("9"))
     {
         xPlaneVersion = 9;
     }
+
     else if (version.contains("10"))
     {
         xPlaneVersion = 10;
     }
+
     else if (version.contains("11"))
     {
         xPlaneVersion = 11;
     }
+
     else if (version.contains("12"))
     {
         xPlaneVersion = 12;
@@ -136,19 +141,23 @@ void QGCXPlaneLink::setVersion(unsigned int version)
 {
     bool changed = (xPlaneVersion != version);
     xPlaneVersion = version;
+
     if (changed) emit versionChanged(QString("X-Plane %1").arg(xPlaneVersion));
 }
 
 void QGCXPlaneLink::enableHilActuatorControls(bool enable)
 {
-    if (enable != _useHilActuatorControls) {
+    if (enable != _useHilActuatorControls)
+    {
         _useHilActuatorControls = enable;
     }
 
     /* Only use override for new message and specific airframes */
     MAV_TYPE type = _vehicle->vehicleType();
     float value = 0.0f;
-    if (type == MAV_TYPE_VTOL_RESERVED2) {
+
+    if (type == MAV_TYPE_VTOL_RESERVED2)
+    {
         value = (enable ? 1.0f : 0.0f);
     }
 
@@ -163,12 +172,14 @@ void QGCXPlaneLink::enableHilActuatorControls(bool enable)
  **/
 void QGCXPlaneLink::run()
 {
-    if (!_vehicle) {
+    if (!_vehicle)
+    {
         emit statusMessage("No MAV present");
         return;
     }
 
-    if (connectState) {
+    if (connectState)
+    {
         emit statusMessage("Already connected");
         return;
     }
@@ -176,7 +187,9 @@ void QGCXPlaneLink::run()
     socket = new QUdpSocket(this);
     socket->moveToThread(this);
     connectState = socket->bind(localHost, localPort, QAbstractSocket::ReuseAddressHint);
-    if (!connectState) {
+
+    if (!connectState)
+    {
 
         emit statusMessage("Binding socket failed!");
 
@@ -237,14 +250,15 @@ void QGCXPlaneLink::run()
     strncpy(ip.str_port_them, localPortStr.toLatin1(), qMin((int)sizeof(ip.str_port_them), 6));
     ip.use_ip = 1;
 
-    writeBytesSafe((const char*)&ip, sizeof(ip));
+    writeBytesSafe((const char *)&ip, sizeof(ip));
 
     /* Call function which makes sure individual control override is enabled/disabled */
     enableHilActuatorControls(_useHilActuatorControls);
 
     _should_exit = false;
 
-    while(!_should_exit) {
+    while (!_should_exit)
+    {
         QCoreApplication::processEvents();
         QGC::SLEEP::msleep(5);
     }
@@ -277,32 +291,33 @@ void QGCXPlaneLink::setPort(int localPort)
 void QGCXPlaneLink::processError(QProcess::ProcessError err)
 {
     QString msg;
-    
-    switch(err) {
-        case QProcess::FailedToStart:
-            msg = tr("X-Plane Failed to start. Please check if the path and command is correct");
-            break;
-            
-        case QProcess::Crashed:
-            msg = tr("X-Plane crashed. This is an X-Plane-related problem, check for X-Plane upgrade.");
-            break;
-            
-        case QProcess::Timedout:
-            msg = tr("X-Plane start timed out. Please check if the path and command is correct");
-            break;
-            
-        case QProcess::ReadError:
-        case QProcess::WriteError:
-            msg = tr("Could not communicate with X-Plane. Please check if the path and command are correct");
-            break;
-            
-        case QProcess::UnknownError:
-        default:
-            msg = tr("X-Plane error occurred. Please check if the path and command is correct.");
-            break;
+
+    switch (err)
+    {
+    case QProcess::FailedToStart:
+        msg = tr("X-Plane Failed to start. Please check if the path and command is correct");
+        break;
+
+    case QProcess::Crashed:
+        msg = tr("X-Plane crashed. This is an X-Plane-related problem, check for X-Plane upgrade.");
+        break;
+
+    case QProcess::Timedout:
+        msg = tr("X-Plane start timed out. Please check if the path and command is correct");
+        break;
+
+    case QProcess::ReadError:
+    case QProcess::WriteError:
+        msg = tr("Could not communicate with X-Plane. Please check if the path and command are correct");
+        break;
+
+    case QProcess::UnknownError:
+    default:
+        msg = tr("X-Plane error occurred. Please check if the path and command is correct.");
+        break;
     }
-    
-    
+
+
     QGCMessageBox::critical(tr("X-Plane HIL"), msg);
 }
 
@@ -314,7 +329,7 @@ QString QGCXPlaneLink::getRemoteHost()
 /**
  * @param newHost Hostname in standard formatting, e.g. localhost:14551 or 192.168.1.1:14551
  */
-void QGCXPlaneLink::setRemoteHost(const QString& newHost)
+void QGCXPlaneLink::setRemoteHost(const QString &newHost)
 {
     if (newHost.length() == 0)
         return;
@@ -322,11 +337,13 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
     if (newHost.contains(":"))
     {
         QHostInfo info = QHostInfo::fromName(newHost.split(":").first());
+
         if (info.error() == QHostInfo::NoError)
         {
             // Add newHost
             QList<QHostAddress> newHostAddresses = info.addresses();
             QHostAddress address;
+
             for (int i = 0; i < newHostAddresses.size(); i++)
             {
                 // Exclude loopback IPv4 and all IPv6 addresses
@@ -335,18 +352,22 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
                     address = newHostAddresses.at(i);
                 }
             }
+
             remoteHost = address;
             // Set localPort according to user input
             remotePort = newHost.split(":").last().toInt();
         }
     }
+
     else
     {
         QHostInfo info = QHostInfo::fromName(newHost);
+
         if (info.error() == QHostInfo::NoError)
         {
             // Add newHost
             remoteHost = info.addresses().first();
+
             if (remotePort == 0) remotePort = 49000;
         }
     }
@@ -363,17 +384,20 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
 void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
 {
     /* Only use HIL_CONTROL when the checkbox is unchecked */
-    if (_useHilActuatorControls) {
+    if (_useHilActuatorControls)
+    {
         //qDebug() << "received HIL_CONTROL but not using it";
         return;
     }
-    #pragma pack(push, 1)
-    struct payload {
+
+#pragma pack(push, 1)
+    struct payload
+    {
         char b[5];
         int index;
         float f[8];
     } p;
-    #pragma pack(pop)
+#pragma pack(pop)
 
     p.b[0] = 'D';
     p.b[1] = 'A';
@@ -386,8 +410,8 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
     Q_UNUSED(navMode);
 
     if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR
-        || _vehicle->vehicleType() == MAV_TYPE_HEXAROTOR
-        || _vehicle->vehicleType() == MAV_TYPE_OCTOROTOR)
+            || _vehicle->vehicleType() == MAV_TYPE_HEXAROTOR
+            || _vehicle->vehicleType() == MAV_TYPE_OCTOROTOR)
     {
         qDebug() << "MAV_TYPE_QUADROTOR";
 
@@ -399,8 +423,9 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
 
         // Direct throttle control
         p.index = 25;
-        writeBytesSafe((const char*)&p, sizeof(p));
+        writeBytesSafe((const char *)&p, sizeof(p));
     }
+
     else
     {
         // direct pass-through, normal fixed-wing.
@@ -412,11 +437,11 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
 
         // Send to group 12
         p.index = 12;
-        writeBytesSafe((const char*)&p, sizeof(p));
+        writeBytesSafe((const char *)&p, sizeof(p));
 
         // Send to group 8, which equals manual controls
         p.index = 8;
-        writeBytesSafe((const char*)&p, sizeof(p));
+        writeBytesSafe((const char *)&p, sizeof(p));
 
         // Send throttle to all four motors
         p.index = 25;
@@ -425,13 +450,14 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
         p.f[1] = throttle;
         p.f[2] = throttle;
         p.f[3] = throttle;
-        writeBytesSafe((const char*)&p, sizeof(p));
+        writeBytesSafe((const char *)&p, sizeof(p));
     }
 }
 
 void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ctl_0, float ctl_1, float ctl_2, float ctl_3, float ctl_4, float ctl_5, float ctl_6, float ctl_7, float ctl_8, float ctl_9, float ctl_10, float ctl_11, float ctl_12, float ctl_13, float ctl_14, float ctl_15, quint8 mode)
 {
-    if (!_useHilActuatorControls) {
+    if (!_useHilActuatorControls)
+    {
         //qDebug() << "received HIL_ACTUATOR_CONTROLS but not using it";
         return;
     }
@@ -444,13 +470,14 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
     Q_UNUSED(ctl_14);
     Q_UNUSED(ctl_15);
 
-    #pragma pack(push, 1)
-    struct payload {
+#pragma pack(push, 1)
+    struct payload
+    {
         char b[5];
         int index;
         float f[8];
     } p;
-    #pragma pack(pop)
+#pragma pack(pop)
 
     p.b[0] = 'D';
     p.b[1] = 'A';
@@ -461,10 +488,11 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
     /* Initialize with zeroes */
     memset(p.f, 0, sizeof(p.f));
 
-    switch (_vehicle->vehicleType()) {
-        case MAV_TYPE_QUADROTOR:
-        case MAV_TYPE_HEXAROTOR:
-        case MAV_TYPE_OCTOROTOR:
+    switch (_vehicle->vehicleType())
+    {
+    case MAV_TYPE_QUADROTOR:
+    case MAV_TYPE_HEXAROTOR:
+    case MAV_TYPE_OCTOROTOR:
         {
             p.f[0] = ctl_0;         ///< X-Plane Engine 1
             p.f[1] = ctl_1;         ///< X-Plane Engine 2
@@ -477,10 +505,11 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
 
             /* Direct throttle control */
             p.index = 25;
-            writeBytesSafe((const char*)&p, sizeof(p));
+            writeBytesSafe((const char *)&p, sizeof(p));
             break;
         }
-        case MAV_TYPE_VTOL_RESERVED2:
+
+    case MAV_TYPE_VTOL_RESERVED2:
         {
             /**
              * Tailsitter with four control flaps and eight motors.
@@ -496,7 +525,7 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
             p.f[6] = ctl_6;
             p.f[7] = ctl_7;
             p.index = 25;
-            writeBytesSafe((const char*)&p, sizeof(p));
+            writeBytesSafe((const char *)&p, sizeof(p));
 
             /* Control individual actuators */
             float max_surface_deflection = 30.0f; // Degrees
@@ -507,7 +536,8 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
 
             break;
         }
-        default:
+
+    default:
         {
             /* direct pass-through, normal fixed-wing. */
             p.f[0] = -ctl_1;        ///< X-Plane Elevator
@@ -516,7 +546,7 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
 
             /* Send to group 8, which equals manual controls */
             p.index = 8;
-            writeBytesSafe((const char*)&p, sizeof(p));
+            writeBytesSafe((const char *)&p, sizeof(p));
 
             /* Send throttle to all eight motors */
             p.index = 25;
@@ -528,7 +558,7 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
             p.f[5] = ctl_3;
             p.f[6] = ctl_3;
             p.f[7] = ctl_3;
-            writeBytesSafe((const char*)&p, sizeof(p));
+            writeBytesSafe((const char *)&p, sizeof(p));
             break;
         }
 
@@ -536,33 +566,34 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
 
 }
 
-Eigen::Matrix3f euler_to_wRo(double yaw, double pitch, double roll) {
-  double c__ = cos(yaw);
-  double _c_ = cos(pitch);
-  double __c = cos(roll);
-  double s__ = sin(yaw);
-  double _s_ = sin(pitch);
-  double __s = sin(roll);
-  double cc_ = c__ * _c_;
-  double cs_ = c__ * _s_;
-  double sc_ = s__ * _c_;
-  double ss_ = s__ * _s_;
-  double c_c = c__ * __c;
-  double c_s = c__ * __s;
-  double s_c = s__ * __c;
-  double s_s = s__ * __s;
-  double _cc = _c_ * __c;
-  double _cs = _c_ * __s;
-  double csc = cs_ * __c;
-  double css = cs_ * __s;
-  double ssc = ss_ * __c;
-  double sss = ss_ * __s;
-  Eigen::Matrix3f wRo;
-  wRo <<
-    cc_  , css-s_c,  csc+s_s,
-    sc_  , sss+c_c,  ssc-c_s,
-    -_s_  ,     _cs,      _cc;
-  return wRo;
+Eigen::Matrix3f euler_to_wRo(double yaw, double pitch, double roll)
+{
+    double c__ = cos(yaw);
+    double _c_ = cos(pitch);
+    double __c = cos(roll);
+    double s__ = sin(yaw);
+    double _s_ = sin(pitch);
+    double __s = sin(roll);
+    double cc_ = c__ * _c_;
+    double cs_ = c__ * _s_;
+    double sc_ = s__ * _c_;
+    double ss_ = s__ * _s_;
+    double c_c = c__ * __c;
+    double c_s = c__ * __s;
+    double s_c = s__ * __c;
+    double s_s = s__ * __s;
+    double _cc = _c_ * __c;
+    double _cs = _c_ * __s;
+    double csc = cs_ * __c;
+    double css = cs_ * __s;
+    double ssc = ss_ * __c;
+    double sss = ss_ * __s;
+    Eigen::Matrix3f wRo;
+    wRo <<
+        cc_  , css - s_c,  csc + s_s,
+             sc_  , sss + c_c,  ssc - c_s,
+             -_s_  ,     _cs,      _cc;
+    return wRo;
 }
 
 void QGCXPlaneLink::_writeBytes(const QByteArray data)
@@ -591,25 +622,30 @@ void QGCXPlaneLink::readBytes()
     quint16 senderPort;
 
     unsigned int s = socket->pendingDatagramSize();
+
     if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size: " << s << std::endl;
+
     socket->readDatagram(data, maxLength, &sender, &senderPort);
-    if (s > maxLength) {
-    	std::string headStr = std::string(data, data+5);
-    	std::cerr << __FILE__ << __LINE__ << " UDP datagram header: " << headStr << std::endl;
+
+    if (s > maxLength)
+    {
+        std::string headStr = std::string(data, data + 5);
+        std::cerr << __FILE__ << __LINE__ << " UDP datagram header: " << headStr << std::endl;
     }
 
     // Calculate the number of data segments a 36 bytes
     // XPlane always has 5 bytes header: 'DATA@'
-    unsigned nsegs = (s-5)/36;
+    unsigned nsegs = (s - 5) / 36;
 
     //qDebug() << "XPLANE:" << "LEN:" << s << "segs:" << nsegs;
 
-    #pragma pack(push, 1)
-    struct payload {
+#pragma pack(push, 1)
+    struct payload
+    {
         int index;
         float f[8];
     } p;
-    #pragma pack(pop)
+#pragma pack(pop)
 
     bool oldConnectionState = xPlaneConnected;
 
@@ -620,15 +656,16 @@ void QGCXPlaneLink::readBytes()
     {
         xPlaneConnected = true;
 
-        if (oldConnectionState != xPlaneConnected) {
+        if (oldConnectionState != xPlaneConnected)
+        {
             simUpdateFirst = QGC::groundTimeMilliseconds();
         }
 
         for (unsigned i = 0; i < nsegs; i++)
         {
             // Get index
-            unsigned ioff = (5+i*36);;
-            memcpy(&(p), data+ioff, sizeof(p));
+            unsigned ioff = (5 + i * 36);;
+            memcpy(&(p), data + ioff, sizeof(p));
 
             if (p.index == 3)
             {
@@ -638,39 +675,42 @@ void QGCXPlaneLink::readBytes()
 
                 //qDebug() << "SPEEDS:" << "airspeed" << airspeed << "m/s, groundspeed" << groundspeed << "m/s";
             }
+
             if (p.index == 4)
             {
-				// WORKAROUND: IF ground speed <<1m/s and altitude-above-ground <1m, do NOT use the X-Plane data, because X-Plane (tested 
-				// with v10.3 and earlier) delivers yacc=0 and zacc=0 when the ground speed is very low, which gives e.g. wrong readings 
-				// before launch when waiting on the runway. This might pose a problem for initial state estimation/calibration. 
-				// Instead, we calculate our own accelerations.
-				if (fabsf(groundspeed)<0.1f && alt_agl<1.0) 
-				{
-					// TODO: Add centrip. acceleration to the current static acceleration implementation.
+                // WORKAROUND: IF ground speed <<1m/s and altitude-above-ground <1m, do NOT use the X-Plane data, because X-Plane (tested
+                // with v10.3 and earlier) delivers yacc=0 and zacc=0 when the ground speed is very low, which gives e.g. wrong readings
+                // before launch when waiting on the runway. This might pose a problem for initial state estimation/calibration.
+                // Instead, we calculate our own accelerations.
+                if (fabsf(groundspeed) < 0.1f && alt_agl < 1.0)
+                {
+                    // TODO: Add centrip. acceleration to the current static acceleration implementation.
                     Eigen::Vector3f g(0, 0, -9.80665f);
-					Eigen::Matrix3f R = euler_to_wRo(yaw, pitch, roll);
-					Eigen::Vector3f gr = R.transpose().eval() * g;
+                    Eigen::Matrix3f R = euler_to_wRo(yaw, pitch, roll);
+                    Eigen::Vector3f gr = R.transpose().eval() * g;
 
-					xacc = gr[0];
-					yacc = gr[1];
-					zacc = gr[2];
+                    xacc = gr[0];
+                    yacc = gr[1];
+                    zacc = gr[2];
 
-					//qDebug() << "Calculated values" << gr[0] << gr[1] << gr[2];
-				}
-				else
-				{
-					// Accelerometer readings, directly from X-Plane and including centripetal forces. 
-					const float one_g = 9.80665f;
-					xacc = p.f[5] * one_g;
-					yacc = p.f[6] * one_g;
-					zacc = -p.f[4] * one_g;
+                    //qDebug() << "Calculated values" << gr[0] << gr[1] << gr[2];
+                }
 
-					//qDebug() << "X-Plane values" << xacc << yacc << zacc;
-				}
+                else
+                {
+                    // Accelerometer readings, directly from X-Plane and including centripetal forces.
+                    const float one_g = 9.80665f;
+                    xacc = p.f[5] * one_g;
+                    yacc = p.f[6] * one_g;
+                    zacc = -p.f[4] * one_g;
 
-				fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
+                    //qDebug() << "X-Plane values" << xacc << yacc << zacc;
+                }
+
+                fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
                 emitUpdate = true;
             }
+
             // atmospheric pressure aircraft for XPlane 9 and 10
             else if (p.index == 6)
             {
@@ -679,6 +719,7 @@ void QGCXPlaneLink::readBytes()
                 temperature = p.f[1];
                 fields_changed |= (1 << 9) | (1 << 12);
             }
+
             // Forward controls from X-Plane to MAV, not very useful
             // better: Connect Joystick to QGroundControl
 //            else if (p.index == 8)
@@ -700,6 +741,7 @@ void QGCXPlaneLink::readBytes()
 
                 emitUpdate = true;
             }
+
             else if ((xPlaneVersion == 10 && p.index == 17) || (xPlaneVersion == 9 && p.index == 18))
             {
                 //qDebug() << "HDNG" << "pitch" << p.f[0] << "roll" << p.f[1] << "hding true" << p.f[2] << "hding mag" << p.f[3];
@@ -708,19 +750,25 @@ void QGCXPlaneLink::readBytes()
                 yaw = p.f[2] / 180.0f * M_PI;
 
                 // X-Plane expresses yaw as 0..2 PI
-                if (yaw > M_PI) {
+                if (yaw > M_PI)
+                {
                     yaw -= 2.0f * static_cast<float>(M_PI);
                 }
-                if (yaw < -M_PI) {
+
+                if (yaw < -M_PI)
+                {
                     yaw += 2.0f * static_cast<float>(M_PI);
                 }
 
                 float yawmag = p.f[3] / 180.0f * M_PI;
 
-                if (yawmag > M_PI) {
+                if (yawmag > M_PI)
+                {
                     yawmag -= 2.0f * static_cast<float>(M_PI);
                 }
-                if (yawmag < -M_PI) {
+
+                if (yawmag < -M_PI)
+                {
                     yawmag += 2.0f * static_cast<float>(M_PI);
                 }
 
@@ -754,7 +802,7 @@ void QGCXPlaneLink::readBytes()
                 dcm[2][1] = sinPhi * cosThe;
                 dcm[2][2] = cosPhi * cosThe;
 
-                Eigen::Matrix3f m = Eigen::Map<Eigen::Matrix3f>((float*)dcm).eval();
+                Eigen::Matrix3f m = Eigen::Map<Eigen::Matrix3f>((float *)dcm).eval();
 
                 Eigen::Vector3f mag(xmag, ymag, zmag);
 
@@ -777,14 +825,15 @@ void QGCXPlaneLink::readBytes()
 //            {
 //                qDebug() << "ATT:" << p.f[0] << p.f[1] << p.f[2];
 //            }
-			else if (p.index == 20)
-			{
-				//qDebug() << "LAT/LON/ALT:" << p.f[0] << p.f[1] << p.f[2];
-				lat = p.f[0];
-				lon = p.f[1];
-				alt = p.f[2] * 0.3048f; // convert feet (MSL) to meters
-				alt_agl = p.f[3] * 0.3048f; //convert feet (AGL) to meters
+            else if (p.index == 20)
+            {
+                //qDebug() << "LAT/LON/ALT:" << p.f[0] << p.f[1] << p.f[2];
+                lat = p.f[0];
+                lon = p.f[1];
+                alt = p.f[2] * 0.3048f; // convert feet (MSL) to meters
+                alt_agl = p.f[3] * 0.3048f; //convert feet (AGL) to meters
             }
+
             else if (p.index == 21)
             {
                 vy = p.f[3];
@@ -793,6 +842,7 @@ void QGCXPlaneLink::readBytes()
                 // for us.
                 vz = -p.f[4];
             }
+
             else if (p.index == 12)
             {
                 //qDebug() << "AIL/ELEV/RUD" << p.f[0] << p.f[1] << p.f[2];
@@ -823,9 +873,9 @@ void QGCXPlaneLink::readBytes()
 
     }
     else if (data[0] == 'S' &&
-               data[1] == 'T' &&
-               data[2] == 'A' &&
-               data[3] == 'T')
+             data[1] == 'T' &&
+             data[2] == 'A' &&
+             data[3] == 'T')
     {
 
     }
@@ -835,7 +885,8 @@ void QGCXPlaneLink::readBytes()
     }
 
     // Wait for 0.5s before actually using the data, so that all fields are filled
-    if (QGC::groundTimeMilliseconds() - simUpdateFirst < 500) {
+    if (QGC::groundTimeMilliseconds() - simUpdateFirst < 500)
+    {
         return;
     }
 
@@ -843,7 +894,9 @@ void QGCXPlaneLink::readBytes()
     if (emitUpdate && (QGC::groundTimeMilliseconds() - simUpdateLast) > 2)
     {
         simUpdateHz = simUpdateHz * 0.9f + 0.1f * (1000.0f / (QGC::groundTimeMilliseconds() - simUpdateLast));
-        if (QGC::groundTimeMilliseconds() - simUpdateLastText > 2000) {
+
+        if (QGC::groundTimeMilliseconds() - simUpdateLastText > 2000)
+        {
             emit statusMessage(tr("Receiving from XPlane at %1 Hz").arg(static_cast<int>(simUpdateHz)));
             // Reset lowpass with current value
             simUpdateHz = (1000.0f / (QGC::groundTimeMilliseconds() - simUpdateLast));
@@ -890,19 +943,23 @@ void QGCXPlaneLink::readBytes()
             int gps_fix_type = 3;
             float eph = 0.3f;
             float epv = 0.6f;
-            float vel = sqrt(vx*vx + vy*vy + vz*vz);
+            float vel = sqrt(vx * vx + vy * vy + vz * vz);
             float cog = atan2(vy, vx);
             int satellites = 8;
 
             emit sensorHilGpsChanged(QGC::groundTimeUsecs(), lat, lon, alt, gps_fix_type, eph, epv, vel, vx, vy, vz, cog, satellites);
-        } else {
+        }
+
+        else
+        {
             emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
                                  pitchspeed, yawspeed, lat, lon, alt,
                                  vx, vy, vz, ind_airspeed, true_airspeed, xacc, yacc, zacc);
         }
 
         // Limit ground truth to 25 Hz
-        if (QGC::groundTimeMilliseconds() - simUpdateLastGroundTruth > 40) {
+        if (QGC::groundTimeMilliseconds() - simUpdateLastGroundTruth > 40)
+        {
             emit hilGroundTruthChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
                                        pitchspeed, yawspeed, lat, lon, alt,
                                        vx, vy, vz, ind_airspeed, true_airspeed, xacc, yacc, zacc);
@@ -948,7 +1005,10 @@ bool QGCXPlaneLink::disconnectSimulation()
     if (connectState)
     {
         _should_exit = true;
-    } else {
+    }
+
+    else
+    {
         emit simulationDisconnected();
         emit simulationConnected(false);
     }
@@ -956,7 +1016,7 @@ bool QGCXPlaneLink::disconnectSimulation()
     return !connectState;
 }
 
-void QGCXPlaneLink::selectAirframe(const QString& plane)
+void QGCXPlaneLink::selectAirframe(const QString &plane)
 {
     airframeName = plane;
 
@@ -967,29 +1027,34 @@ void QGCXPlaneLink::selectAirframe(const QString& plane)
             airframeID = AIRFRAME_QUAD_X_MK_10INCH_I2C;
             emit airframeChanged("QRO_X / MK");
         }
+
         else if (plane.contains("ARDRONE") && airframeID != AIRFRAME_QUAD_X_ARDRONE)
         {
             airframeID = AIRFRAME_QUAD_X_ARDRONE;
             emit airframeChanged("QRO_X / ARDRONE");
         }
+
         else
         {
             bool changed = (airframeID != AIRFRAME_QUAD_DJI_F450_PWM);
             airframeID = AIRFRAME_QUAD_DJI_F450_PWM;
+
             if (changed) emit airframeChanged("QRO_X / DJI-F450 / PWM");
         }
     }
+
     else
     {
         bool changed = (airframeID != AIRFRAME_UNKNOWN);
         airframeID = AIRFRAME_UNKNOWN;
+
         if (changed) emit airframeChanged("X Plane default");
     }
 }
 
 void QGCXPlaneLink::setPositionAttitude(double lat, double lon, double alt, double roll, double pitch, double yaw)
 {
-    #pragma pack(push, 1)
+#pragma pack(push, 1)
     struct VEH1_struct
     {
         char header[5];
@@ -998,7 +1063,7 @@ void QGCXPlaneLink::setPositionAttitude(double lat, double lon, double alt, doub
         float psi_the_phi[3];
         float gear_flap_vect[3];
     } pos;
-    #pragma pack(pop)
+#pragma pack(pop)
 
     pos.header[0] = 'V';
     pos.header[1] = 'E';
@@ -1016,7 +1081,7 @@ void QGCXPlaneLink::setPositionAttitude(double lat, double lon, double alt, doub
     pos.gear_flap_vect[1] = 0.0f;
     pos.gear_flap_vect[2] = 0.0f;
 
-    writeBytesSafe((const char*)&pos, sizeof(pos));
+    writeBytesSafe((const char *)&pos, sizeof(pos));
 
 //    pos.header[0] = 'V';
 //    pos.header[1] = 'E';
@@ -1046,8 +1111,8 @@ void QGCXPlaneLink::setRandomPosition()
     // Initialize generator
     srand(0);
 
-    double offLat = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
-    double offLon = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
+    double offLat = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0 / 500.0;
+    double offLon = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0 / 500.0;
     double offAlt = rand() / static_cast<double>(RAND_MAX) * 200.0 + 100.0;
 
     if (_vehicle->altitudeAMSL()->rawValue().toDouble() + offAlt < 0)
@@ -1087,9 +1152,13 @@ void QGCXPlaneLink::setRandomAttitude()
  **/
 bool QGCXPlaneLink::connectSimulation()
 {
-    if (connectState) {
+    if (connectState)
+    {
         qDebug() << "Simulation already active";
-    } else {
+    }
+
+    else
+    {
         qDebug() << "STARTING X-PLANE LINK, CONNECTING TO" << remoteHost << ":" << remotePort;
         // XXX Hack
         storeSettings();
@@ -1123,13 +1192,14 @@ void QGCXPlaneLink::setName(QString name)
 
 void QGCXPlaneLink::sendDataRef(QString ref, float value)
 {
-    #pragma pack(push, 1)
-    struct payload {
+#pragma pack(push, 1)
+    struct payload
+    {
         char b[5];
         float value;
         char name[500];
     } dref;
-    #pragma pack(pop)
+#pragma pack(pop)
 
     dref.b[0] = 'D';
     dref.b[1] = 'R';
@@ -1147,12 +1217,16 @@ void QGCXPlaneLink::sendDataRef(QString ref, float value)
 
     /* Send command */
     QByteArray ba = ref.toUtf8();
-    if (ba.length() > 500) {
+
+    if (ba.length() > 500)
+    {
         return;
     }
 
-    for (int i = 0; i < ba.length(); i++) {
+    for (int i = 0; i < ba.length(); i++)
+    {
         dref.name[i] = ba.at(i);
     }
-    writeBytesSafe((const char*)&dref, sizeof(dref));
+
+    writeBytesSafe((const char *)&dref, sizeof(dref));
 }
