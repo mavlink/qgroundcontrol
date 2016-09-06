@@ -33,6 +33,8 @@ SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                        
 FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                        NULL;
 SettingsFact* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceFact =       NULL;
 FactMetaData* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceMetaData =   NULL;
+SettingsFact* QGroundControlQmlGlobal::_streamingSourcesFact =                      NULL;
+FactMetaData* QGroundControlQmlGlobal::_streamingSourcesMetaData =                  NULL;
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
 const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
@@ -363,6 +365,25 @@ Fact* QGroundControlQmlGlobal::batteryPercentRemainingAnnounce(void)
     }
 
     return _batteryPercentRemainingAnnounceFact;
+}
+
+Fact* QGroundControlQmlGlobal::streamingSources(void)
+{
+    if (!_streamingSourcesFact) {
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+
+        _streamingSourcesFact = new SettingsFact(QString(), "StreamingSources", FactMetaData::valueTypeUint32, StreamingSourcesUDP);
+        _streamingSourcesMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
+
+        enumStrings << "UDP" << "RTSP";
+        enumValues << QVariant::fromValue((uint32_t)StreamingSourcesUDP) << QVariant::fromValue((uint32_t)StreamingSourcesRTSP);
+
+        _streamingSourcesMetaData->setEnumInfo(enumStrings, enumValues);
+        _streamingSourcesFact->setMetaData(_streamingSourcesMetaData);
+    }
+
+    return _streamingSourcesFact;
 }
 
 bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPointF line2A, QPointF line2B)

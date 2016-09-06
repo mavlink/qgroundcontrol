@@ -15,6 +15,9 @@
  */
 
 #include "VideoReceiver.h"
+
+#include "QGroundControlQmlGlobal.h"
+
 #include <QDebug>
 
 VideoReceiver::VideoReceiver(QObject* parent)
@@ -81,14 +84,13 @@ void VideoReceiver::start()
     stop();
 
     bool running = false;
+    bool isUdp = (QGroundControlQmlGlobal::StreamingSources) QGroundControlQmlGlobal::streamingSources()->rawValue().toUInt() == QGroundControlQmlGlobal::StreamingSources::StreamingSourcesUDP;
 
     GstElement*     dataSource  = NULL;
     GstCaps*        caps        = NULL;
     GstElement*     demux       = NULL;
     GstElement*     parser      = NULL;
     GstElement*     decoder     = NULL;
-
-    bool isUdp = _uri.contains("udp://");
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == NULL) {
