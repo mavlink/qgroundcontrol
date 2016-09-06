@@ -3,7 +3,7 @@
 #include "QGCXPlaneLink.h"
 #include "QGCHilConfiguration.h"
 
-QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QGCHilConfiguration *parent) :
+QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink *link, QGCHilConfiguration *parent) :
     QWidget(parent),
     ui(new Ui::QGCHilXPlaneConfiguration)
 {
@@ -12,7 +12,7 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QGCHilCon
 
     connect(ui->startButton, &QPushButton::clicked, this, &QGCHilXPlaneConfiguration::toggleSimulation);
 
-    connect(ui->hostComboBox, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated),
+    connect(ui->hostComboBox, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::activated),
             link, &QGCHilLink::setRemoteHost);
 
     connect(link, &QGCHilLink::remoteChanged, ui->hostComboBox, &QComboBox::setEditText);
@@ -23,7 +23,7 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QGCHilCon
 
     ui->startButton->setText(tr("Connect"));
 
-    QGCXPlaneLink* xplane = dynamic_cast<QGCXPlaneLink*>(link);
+    QGCXPlaneLink *xplane = dynamic_cast<QGCXPlaneLink *>(link);
 
     if (xplane)
     {
@@ -58,17 +58,20 @@ void QGCHilXPlaneConfiguration::setVersion(int version)
 
 void QGCHilXPlaneConfiguration::toggleSimulation(bool connect)
 {
-    if (!link) {
+    if (!link)
+    {
         return;
     }
 
     Q_UNUSED(connect);
+
     if (!link->isConnected())
     {
         link->setRemoteHost(ui->hostComboBox->currentText());
         link->connectSimulation();
         ui->startButton->setText(tr("Disconnect"));
     }
+
     else
     {
         link->disconnectSimulation();
