@@ -216,6 +216,8 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
         return false; // couldn't open serial port
     }
 
+    _port->setDataTerminalReady(true);
+
     qCDebug(SerialLinkLog) << "Configuring port";
     _port->setBaudRate     (_config->baud());
     _port->setDataBits     (static_cast<QSerialPort::DataBits>     (_config->dataBits()));
