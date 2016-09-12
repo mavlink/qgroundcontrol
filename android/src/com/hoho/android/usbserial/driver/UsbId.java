@@ -68,6 +68,12 @@ public final class UsbId {
     public static final int DEVICE_UBLOX_7 = 0x01a7;
     public static final int DEVICE_UBLOX_8 = 0x01a8;
 
+    public static final int VENDOR_OPENPILOT = 0x20A0;
+    public static final int DEVICE_REVOLUTION = 0x415E;
+    public static final int DEVICE_OPLINK = 0x415C;
+    public static final int DEVICE_SPARKY2 = 0x41D0;
+    public static final int DEVICE_CC3D = 0x415D;
+
     private UsbId() {
         throw new IllegalAccessError("Non-instantiable class.");
     }

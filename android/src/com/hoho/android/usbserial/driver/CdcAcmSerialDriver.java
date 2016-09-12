@@ -297,6 +297,13 @@ public class CdcAcmSerialDriver extends CommonUsbSerialDriver {
                     UsbId.DEVICE_UBLOX_7,
                     UsbId.DEVICE_UBLOX_8,
                 });
+        supportedDevices.put(Integer.valueOf(UsbId.VENDOR_OPENPILOT),
+                new int[] {
+                    UsbId.DEVICE_CC3D,
+                    UsbId.DEVICE_REVOLUTION,
+                    UsbId.DEVICE_SPARKY2,
+                    UsbId.DEVICE_OPLINK,
+                });
         return supportedDevices;
     }
 
