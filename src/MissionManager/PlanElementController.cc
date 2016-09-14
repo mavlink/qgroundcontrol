@@ -9,11 +9,12 @@
 
 #include "PlanElementController.h"
 #include "QGCApplication.h"
+#include "MultiVehicleManager.h"
 
 PlanElementController::PlanElementController(QObject* parent)
     : QObject(parent)
-    , _activeVehicle(NULL)
     , _multiVehicleMgr(qgcApp()->toolbox()->multiVehicleManager())
+    , _activeVehicle(_multiVehicleMgr->offlineEditingVehicle())
     , _editMode(false)
 {
 
@@ -34,16 +35,16 @@ void PlanElementController::start(bool editMode)
 void PlanElementController::_activeVehicleChanged(Vehicle* activeVehicle)
 {
     if (_activeVehicle) {
-        Vehicle* vehicleSave = _activeVehicle;
+        _activeVehicleBeingRemoved();
         _activeVehicle = NULL;
-        _activeVehicleBeingRemoved(vehicleSave);
     }
 
-    _activeVehicle = activeVehicle;
-
-    if (_activeVehicle) {
-        _activeVehicleSet();
+    if (activeVehicle) {
+        _activeVehicle = activeVehicle;
+    } else {
+        _activeVehicle = _multiVehicleMgr->offlineEditingVehicle();
     }
+    _activeVehicleSet();
 
     // Whenever vehicle changes we need to update syncInProgress
     emit syncInProgressChanged(syncInProgress());

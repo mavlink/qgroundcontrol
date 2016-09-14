@@ -31,6 +31,10 @@ APMGeoFenceManager::APMGeoFenceManager(Vehicle* vehicle)
 {
     connect(_vehicle,                       &Vehicle::mavlinkMessageReceived,   this, &APMGeoFenceManager::_mavlinkMessageReceived);
     connect(_vehicle->getParameterLoader(), &ParameterLoader::parametersReady,  this, &APMGeoFenceManager::_parametersReady);
+
+    if (_vehicle->getParameterLoader()->parametersAreReady()) {
+        _parametersReady();
+    }
 }
 
 APMGeoFenceManager::~APMGeoFenceManager()
@@ -40,6 +44,10 @@ APMGeoFenceManager::~APMGeoFenceManager()
 
 void APMGeoFenceManager::sendToVehicle(void)
 {
+    if (_vehicle->isOfflineEditingVehicle()) {
+        return;
+    }
+
     if (_readTransactionInProgress) {
         _sendError(InternalError, QStringLiteral("Geo-Fence write attempted while read in progress."));
         return;
@@ -82,6 +90,10 @@ void APMGeoFenceManager::sendToVehicle(void)
 
 void APMGeoFenceManager::loadFromVehicle(void)
 {
+    if (_vehicle->isOfflineEditingVehicle()) {
+        return;
+    }
+
     _polygon.clear();
 
     if (!_geoFenceSupported()) {

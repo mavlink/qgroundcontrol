@@ -85,7 +85,7 @@ private:
     void _clearGeoFence(void);
     void _signalAll(void);
 
-    void _activeVehicleBeingRemoved(Vehicle* vehicle) final;
+    void _activeVehicleBeingRemoved(void) final;
     void _activeVehicleSet(void) final;
 
     bool            _dirty;
