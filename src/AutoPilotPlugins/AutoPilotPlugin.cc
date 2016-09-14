@@ -117,16 +117,6 @@ void AutoPilotPlugin::refreshParametersPrefix(int componentId, const QString& na
     _vehicle->getParameterLoader()->refreshParametersPrefix(componentId, namePrefix);
 }
 
-bool AutoPilotPlugin::parameterExists(int componentId, const QString& name) const
-{
-    return _vehicle->getParameterLoader()->parameterExists(componentId, name);
-}
-
-Fact* AutoPilotPlugin::getParameterFact(int componentId, const QString& name)
-{
-    return _vehicle->getParameterLoader()->getFact(componentId, name);
-}
-
 bool AutoPilotPlugin::factExists(FactSystem::Provider_t provider, int componentId, const QString& name)
 {
     switch (provider) {

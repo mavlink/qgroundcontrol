@@ -52,7 +52,7 @@ bool APMAirframeComponent::requiresSetup(void) const
 bool APMAirframeComponent::setupComplete(void) const
 {
     if (_requiresFrameSetup) {
-        return _autopilot->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME"))->rawValue().toInt() >= 0;
+        return _vehicle->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME"))->rawValue().toInt() >= 0;
     } else {
         return true;
     }

@@ -71,7 +71,10 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _qgcPositionManager =       new QGCPositionManager(app);
     _followMe =                 new FollowMe(app);
     _videoManager =             new VideoManager(app);
+}
 
+void QGCToolbox::setChildToolboxes(void)
+{
     _audioOutput->setToolbox(this);
     _autopilotPluginManager->setToolbox(this);
     _factSystem->setToolbox(this);

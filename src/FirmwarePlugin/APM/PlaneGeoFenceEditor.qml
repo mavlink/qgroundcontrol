@@ -218,7 +218,7 @@ Column {
         anchors.left:   parent.left
         anchors.right:  parent.right
         flightMap:      editorMap
-        polygon:        root.polygon
+        polygon:        geoFenceController.polygon
         sectionLabel:   qsTr("Fence Polygon:")
     }
 }

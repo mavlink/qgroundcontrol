@@ -40,7 +40,7 @@ bool APMPowerComponent::requiresSetup(void) const
 
 bool APMPowerComponent::setupComplete(void) const
 {
-    return _autopilot->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("BATT_CAPACITY"))->rawValue().toInt() != 0;
+    return _vehicle->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("BATT_CAPACITY"))->rawValue().toInt() != 0;
 }
 
 QStringList APMPowerComponent::setupCompleteChangedTriggerList(void) const

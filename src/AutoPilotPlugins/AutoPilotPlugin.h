@@ -7,131 +7,119 @@
  *
  ****************************************************************************/
 
+#ifndef AUTOPILOTPLUGIN_H
+#define AUTOPILOTPLUGIN_H
 
-    /// @file
-    ///     @author Don Gagne <don@thegagnes.com>
+#include <QObject>
+#include <QList>
+#include <QString>
+#include <QQmlContext>
 
-    #ifndef AUTOPILOTPLUGIN_H
-    #define AUTOPILOTPLUGIN_H
+#include "VehicleComponent.h"
+#include "FactSystem.h"
+#include "Vehicle.h"
 
-    #include <QObject>
-    #include <QList>
-    #include <QString>
-    #include <QQmlContext>
+class ParameterLoader;
+class Vehicle;
+class FirmwarePlugin;
 
-    #include "VehicleComponent.h"
-    #include "FactSystem.h"
-    #include "Vehicle.h"
+/// This is the base class for AutoPilot plugins
+///
+/// The AutoPilotPlugin class is an abstract base class which represent the methods and objects
+/// which are specific to a certain AutoPilot. This is the only place where AutoPilot specific
+/// code should reside in QGroundControl. The remainder of the QGroundControl source is
+/// generic to a common mavlink implementation.
 
-    class ParameterLoader;
-    class Vehicle;
-    class FirmwarePlugin;
+class AutoPilotPlugin : public QObject
+{
+    Q_OBJECT
 
-    /// This is the base class for AutoPilot plugins
-    ///
-    /// The AutoPilotPlugin class is an abstract base class which represent the methods and objects
-    /// which are specific to a certain AutoPilot. This is the only place where AutoPilot specific
-    /// code should reside in QGroundControl. The remainder of the QGroundControl source is
-    /// generic to a common mavlink implementation.
+public:
+    AutoPilotPlugin(Vehicle* vehicle, QObject* parent);
+    ~AutoPilotPlugin();
 
-    class AutoPilotPlugin : public QObject
-    {
-        Q_OBJECT
+    /// true: parameters are ready for use
+    Q_PROPERTY(bool parametersReady READ parametersReady NOTIFY parametersReadyChanged)
 
-    public:
-        AutoPilotPlugin(Vehicle* vehicle, QObject* parent);
-        ~AutoPilotPlugin();
+    /// true: parameters are missing from firmware response, false: all parameters received from firmware
+    Q_PROPERTY(bool missingParameters READ missingParameters NOTIFY missingParametersChanged)
 
-        /// true: parameters are ready for use
-        Q_PROPERTY(bool parametersReady READ parametersReady NOTIFY parametersReadyChanged)
+    /// List of VehicleComponent objects
+    Q_PROPERTY(QVariantList vehicleComponents READ vehicleComponents CONSTANT)
 
-        /// true: parameters are missing from firmware response, false: all parameters received from firmware
-        Q_PROPERTY(bool missingParameters READ missingParameters NOTIFY missingParametersChanged)
+    /// false: One or more vehicle components require setup
+    Q_PROPERTY(bool setupComplete READ setupComplete NOTIFY setupCompleteChanged)
 
-        /// List of VehicleComponent objects
-        Q_PROPERTY(QVariantList vehicleComponents READ vehicleComponents CONSTANT)
+    /// Reset all parameters to their default values
+    Q_INVOKABLE void resetAllParametersToDefaults(void);
 
-        /// false: One or more vehicle components require setup
-        Q_PROPERTY(bool setupComplete READ setupComplete NOTIFY setupCompleteChanged)
+    /// Re-request the full set of parameters from the autopilot
+    Q_INVOKABLE void refreshAllParameters(unsigned char componentID = MAV_COMP_ID_ALL);
 
-        /// Reset all parameters to their default values
-        Q_INVOKABLE void resetAllParametersToDefaults(void);
+    /// Request a refresh on the specific parameter
+    Q_INVOKABLE void refreshParameter(int componentId, const QString& name);
 
-        /// Re-request the full set of parameters from the autopilot
-        Q_INVOKABLE void refreshAllParameters(unsigned char componentID = MAV_COMP_ID_ALL);
+    /// Request a refresh on all parameters that begin with the specified prefix
+    Q_INVOKABLE void refreshParametersPrefix(int componentId, const QString& namePrefix);
 
-        /// Request a refresh on the specific parameter
-        Q_INVOKABLE void refreshParameter(int componentId, const QString& name);
+    /// Returns all parameter names
+    QStringList parameterNames(int componentId);
 
-        /// Request a refresh on all parameters that begin with the specified prefix
-        Q_INVOKABLE void refreshParametersPrefix(int componentId, const QString& namePrefix);
+    /// Writes the parameter facts to the specified stream
+    void writeParametersToStream(QTextStream &stream);
 
-        /// Returns true if the specifed parameter exists from the default component
-        Q_INVOKABLE bool parameterExists(int componentId, const QString& name) const;
+    /// Reads the parameters from the stream and updates values
+    /// @return Errors during load. Empty string for no errors
+    QString readParametersFromStream(QTextStream &stream);
 
-        /// Returns all parameter names
-        QStringList parameterNames(int componentId);
+    /// Returns true if the specifed fact exists
+    Q_INVOKABLE bool factExists(FactSystem::Provider_t  provider,       ///< fact provider
+                                int                     componentId,    ///< fact component, -1=default component
+                                const QString&          name);          ///< fact name
 
-        /// Returns the specified parameter Fact from the default component
-        /// WARNING: Returns a default Fact if parameter does not exists. If that possibility exists, check for existence first with
-        /// parameterExists.
-        Fact* getParameterFact(int componentId, const QString& name);
+    /// Returns the specified Fact.
+    /// WARNING: Will assert if fact does not exists. If that possibility exists, check for existence first with
+    /// factExists.
+    Fact* getFact(FactSystem::Provider_t    provider,       ///< fact provider
+                  int                       componentId,    ///< fact component, -1=default component
+                  const QString&            name);          ///< fact name
 
-        /// Writes the parameter facts to the specified stream
-        void writeParametersToStream(QTextStream &stream);
+    const QMap<int, QMap<QString, QStringList> >& getGroupMap(void);
 
-        /// Reads the parameters from the stream and updates values
-        /// @return Errors during load. Empty string for no errors
-        QString readParametersFromStream(QTextStream &stream);
+    // Must be implemented by derived class
+    virtual const QVariantList& vehicleComponents(void) = 0;
 
-        /// Returns true if the specifed fact exists
-        Q_INVOKABLE bool factExists(FactSystem::Provider_t  provider,       ///< fact provider
-                                    int                     componentId,    ///< fact component, -1=default component
-                                    const QString&          name);          ///< fact name
+    // Property accessors
+    bool parametersReady(void) { return _parametersReady; }
+    bool missingParameters(void) { return _missingParameters; }
+    bool setupComplete(void);
 
-        /// Returns the specified Fact.
-        /// WARNING: Will assert if fact does not exists. If that possibility exists, check for existence first with
-        /// factExists.
-        Fact* getFact(FactSystem::Provider_t    provider,       ///< fact provider
-                      int                       componentId,    ///< fact component, -1=default component
-                      const QString&            name);          ///< fact name
+    Vehicle* vehicle(void) { return _vehicle; }
+    virtual void _parametersReadyPreChecks(bool parametersReady) = 0;
 
-        const QMap<int, QMap<QString, QStringList> >& getGroupMap(void);
+signals:
+    void parametersReadyChanged(bool parametersReady);
+    void missingParametersChanged(bool missingParameters);
+    void setupCompleteChanged(bool setupComplete);
+    void parameterListProgress(float value);
 
-        // Must be implemented by derived class
-        virtual const QVariantList& vehicleComponents(void) = 0;
+protected:
+    /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
+    AutoPilotPlugin(QObject* parent = NULL) : QObject(parent) { }
 
-        // Property accessors
-        bool parametersReady(void) { return _parametersReady; }
-        bool missingParameters(void) { return _missingParameters; }
-        bool setupComplete(void);
-
-        Vehicle* vehicle(void) { return _vehicle; }
-        virtual void _parametersReadyPreChecks(bool parametersReady) = 0;
-
-    signals:
-        void parametersReadyChanged(bool parametersReady);
-        void missingParametersChanged(bool missingParameters);
-        void setupCompleteChanged(bool setupComplete);
-        void parameterListProgress(float value);
-
-    protected:
-        /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
-        AutoPilotPlugin(QObject* parent = NULL) : QObject(parent) { }
-
-        Vehicle*        _vehicle;
-        FirmwarePlugin* _firmwarePlugin;
-        bool            _parametersReady;
-        bool            _missingParameters;
-        bool            _setupComplete;
+    Vehicle*        _vehicle;
+    FirmwarePlugin* _firmwarePlugin;
+    bool            _parametersReady;
+    bool            _missingParameters;
+    bool            _setupComplete;
 
 
-    private slots:
-        void _uasDisconnected(void);
-        void _parametersReadyChanged(bool parametersReady);
+private slots:
+    void _uasDisconnected(void);
+    void _parametersReadyChanged(bool parametersReady);
 
-    private:
-        void _recalcSetupComplete(void);
-    };
+private:
+    void _recalcSetupComplete(void);
+};
 
-    #endif
+#endif

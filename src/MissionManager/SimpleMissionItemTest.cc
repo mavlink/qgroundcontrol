@@ -10,6 +10,7 @@
 
 #include "SimpleMissionItemTest.h"
 #include "SimpleMissionItem.h"
+#include "QGCApplication.h"
 
 const SimpleMissionItemTest::ItemInfo_t SimpleMissionItemTest::_rgItemInfo[] = {
     { MAV_CMD_NAV_WAYPOINT,     MAV_FRAME_GLOBAL_RELATIVE_ALT },
@@ -80,7 +81,7 @@ SimpleMissionItemTest::SimpleMissionItemTest(void)
 
 void SimpleMissionItemTest::_testEditorFacts(void)
 {
-    Vehicle* vehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_FIXED_WING);
+    Vehicle* vehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_FIXED_WING, qgcApp()->toolbox()->firmwarePluginManager());
 
     for (size_t i=0; i<sizeof(_rgItemInfo)/sizeof(_rgItemInfo[0]); i++) {
         const ItemInfo_t* info = &_rgItemInfo[i];
