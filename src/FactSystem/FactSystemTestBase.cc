@@ -96,7 +96,7 @@ void FactSystemTestBase::_qmlUpdate_test(void)
     // Change the value
 
     QVariant paramValue = 12;
-    _plugin->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_THROTTLE")->setRawValue(paramValue);
+    qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_THROTTLE")->setRawValue(paramValue);
 
     QTest::qWait(500); // Let the signals flow through
 

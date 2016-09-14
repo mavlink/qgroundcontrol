@@ -306,9 +306,9 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
                 // Work out what the autopilot is configured to
                 int sides = 0;
 
-                if (_autopilot->parameterExists(FactSystem::defaultComponentId, "CAL_MAG_SIDES")) {
+                if (_vehicle->parameterExists(FactSystem::defaultComponentId, "CAL_MAG_SIDES")) {
                     // Read the requested calibration directions off the system
-                    sides = _autopilot->getParameterFact(FactSystem::defaultComponentId, "CAL_MAG_SIDES")->rawValue().toFloat();
+                    sides = _vehicle->getParameterFact(FactSystem::defaultComponentId, "CAL_MAG_SIDES")->rawValue().toFloat();
                 } else {
                     // There is no valid setting, default to all six sides
                     sides = (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0);
