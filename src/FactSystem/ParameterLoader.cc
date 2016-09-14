@@ -39,7 +39,7 @@ const char* ParameterLoader::_cachedMetaDataFilePrefix = "ParameterFactMetaData"
 ParameterLoader::ParameterLoader(Vehicle* vehicle)
     : QObject(vehicle)
     , _vehicle(vehicle)
-    , _mavlink(qgcApp()->toolbox()->mavlinkProtocol())
+    , _mavlink(NULL)
     , _parametersReady(false)
     , _initialLoadComplete(false)
     , _waitingForDefaultComponent(false)
@@ -53,8 +53,12 @@ ParameterLoader::ParameterLoader(Vehicle* vehicle)
     , _initialRequestRetryCount(0)
     , _totalParamCount(0)
 {
-    Q_ASSERT(_vehicle);
-    Q_ASSERT(_mavlink);
+    if (_vehicle->isOfflineEditingVehicle()) {
+        _loadOfflineEditingParams();
+        return;
+    }
+
+    _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     // We signal this to ouselves in order to start timer on our thread
     connect(this, &ParameterLoader::restartWaitingParamTimer, this, &ParameterLoader::_restartWaitingParamTimer);
@@ -1211,4 +1215,72 @@ QString ParameterLoader::_remapParamNameToVersion(const QString& paramName)
     }
 
     return mappedParamName;
+}
+
+/// The offline editing vehicle can have custom loaded params bolted into it.
+void ParameterLoader::_loadOfflineEditingParams(void)
+{    
+    QString paramFilename = _vehicle->firmwarePlugin()->offlineEditingParamFile(_vehicle);
+    if (paramFilename.isEmpty()) {
+        return;
+    }
+
+    QFile paramFile(paramFilename);
+    if (!paramFile.open(QFile::ReadOnly)) {
+        qCWarning(ParameterLoaderLog) << "Unable to open offline editing params file" << paramFilename;
+    }
+
+    QTextStream paramStream(&paramFile);
+
+    while (!paramStream.atEnd()) {
+        QString line = paramStream.readLine();
+
+        if (line.startsWith("#")) {
+            continue;
+        }
+
+        QStringList paramData = line.split("\t");
+        Q_ASSERT(paramData.count() == 5);
+
+        _defaultComponentId = paramData.at(1).toInt();
+        QString paramName = paramData.at(2);
+        QString valStr = paramData.at(3);
+        MAV_PARAM_TYPE paramType = static_cast<MAV_PARAM_TYPE>(paramData.at(4).toUInt());
+
+        QVariant paramValue;
+        switch (paramType) {
+        case MAV_PARAM_TYPE_REAL32:
+            paramValue = QVariant(valStr.toFloat());
+            break;
+        case MAV_PARAM_TYPE_UINT32:
+            paramValue = QVariant(valStr.toUInt());
+            break;
+        case MAV_PARAM_TYPE_INT32:
+            paramValue = QVariant(valStr.toInt());
+            break;
+        case MAV_PARAM_TYPE_UINT16:
+            paramValue = QVariant((quint16)valStr.toUInt());
+            break;
+        case MAV_PARAM_TYPE_INT16:
+            paramValue = QVariant((qint16)valStr.toInt());
+            break;
+        case MAV_PARAM_TYPE_UINT8:
+            paramValue = QVariant((quint8)valStr.toUInt());
+            break;
+        case MAV_PARAM_TYPE_INT8:
+            paramValue = QVariant((qint8)valStr.toUInt());
+            break;
+        default:
+            qCritical() << "Unknown type" << paramType;
+            paramValue = QVariant(valStr.toInt());
+            break;
+        }
+
+        Fact* fact = new Fact(_defaultComponentId, paramName, _mavTypeToFactType(paramType), this);
+        _mapParameterName2Variant[_defaultComponentId][paramName] = QVariant::fromValue(fact);
+    }
+
+    _addMetaDataToDefaultComponent();
+    _parametersReady = true;
+    _initialLoadComplete = true;
 }

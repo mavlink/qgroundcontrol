@@ -61,6 +61,8 @@ public:
 #endif
 
 private:
+    void setChildToolboxes(void);
+
     GAudioOutput*               _audioOutput;
     AutoPilotPluginManager*     _autopilotPluginManager;
     FactSystem*                 _factSystem;
@@ -81,6 +83,8 @@ private:
     FollowMe*                   _followMe;
     QGCPositionManager*         _qgcPositionManager;
     VideoManager*               _videoManager;
+
+    friend class QGCApplication;
 };
 
 /// This is the base class for all tools

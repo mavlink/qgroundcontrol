@@ -125,7 +125,7 @@ QGCView {
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
                         id:             offlineLabel
-                        text:           qsTr("Offline Mission Editing")
+                        text:           qsTr("Offline Mission Editing (Requires Restart)")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
                 }

@@ -44,6 +44,10 @@ MissionManager::~MissionManager()
 
 void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 {
+    if (_vehicle->isOfflineEditingVehicle()) {
+        return;
+    }
+
     if (inProgress()) {
         qCDebug(MissionManagerLog) << "writeMissionItems called while transaction in progress";
         return;
@@ -131,6 +135,10 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
 
 void MissionManager::requestMissionItems(void)
 {
+    if (_vehicle->isOfflineEditingVehicle()) {
+        return;
+    }
+
     qCDebug(MissionManagerLog) << "requestMissionItems read sequence";
 
     if (inProgress()) {

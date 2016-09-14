@@ -273,6 +273,8 @@
         <file alias="APMParameterFactMetaData.Sub.3.4.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.4.xml</file>
         <file alias="CopterGeoFenceEditor.qml">src/FirmwarePlugin/APM/CopterGeoFenceEditor.qml</file>
         <file alias="PlaneGeoFenceEditor.qml">src/FirmwarePlugin/APM/PlaneGeoFenceEditor.qml</file>
+        <file alias="Copter.OfflineEditing.params">src/FirmwarePlugin/APM/Copter3.4.OfflineEditing.params</file>
+        <file alias="Plane.OfflineEditing.params">src/FirmwarePlugin/APM/Plane3.7.OfflineEditing.params</file>
     </qresource>
     <qresource prefix="/FirmwarePlugin">
         <file alias="GeoFenceEditor.qml">src/FirmwarePlugin/GeoFenceEditor.qml</file>

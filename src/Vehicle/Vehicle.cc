@@ -65,7 +65,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     : FactGroup(_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json")
     , _id(vehicleId)
     , _active(false)
-    , _disconnectedVehicle(false)
+    , _offlineEditingVehicle(false)
     , _firmwareType(firmwareType)
     , _vehicleType(vehicleType)
     , _firmwarePlugin(NULL)
@@ -203,7 +203,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_parameterLoader, &ParameterLoader::parametersReady, _autopilotPlugin, &AutoPilotPlugin::_parametersReadyPreChecks);
     connect(_parameterLoader, &ParameterLoader::parameterListProgress, _autopilotPlugin, &AutoPilotPlugin::parameterListProgress);
 
-    // GeoFenceManager needs to access ParameterLoader so make sure to create afters
+    // GeoFenceManager needs to access ParameterLoader so make sure to create after
     _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
     connect(_geoFenceManager, &GeoFenceManager::error, this, &Vehicle::_geoFenceManagerError);
 
@@ -254,12 +254,15 @@ Vehicle::Vehicle(LinkInterface*             link,
     _vibrationFactGroup.setVehicle(this);
 }
 
-// Disconnected Vehicle
-Vehicle::Vehicle(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, QObject* parent)
+// Disconnected Vehicle for offline editing
+Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
+                 MAV_TYPE                   vehicleType,
+                 FirmwarePluginManager*     firmwarePluginManager,
+                 QObject*                   parent)
     : FactGroup(_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json", parent)
     , _id(0)
     , _active(false)
-    , _disconnectedVehicle(true)
+    , _offlineEditingVehicle(true)
     , _firmwareType(firmwareType)
     , _vehicleType(vehicleType)
     , _firmwarePlugin(NULL)
@@ -290,12 +293,14 @@ Vehicle::Vehicle(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, QObject* pare
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
     , _missionManagerInitialRequestComplete(false)
+    , _geoFenceManager(NULL)
+    , _geoFenceManagerInitialRequestComplete(false)
     , _parameterLoader(NULL)
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
     , _nextSendMessageMultipleIndex(0)
-    , _firmwarePluginManager(NULL)
+    , _firmwarePluginManager(firmwarePluginManager)
     , _autopilotPluginManager(NULL)
     , _joystickManager(NULL)
     , _flowImageIndex(0)
@@ -322,10 +327,16 @@ Vehicle::Vehicle(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, QObject* pare
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
 {
-    // This is a hack for disconnected vehicle used while unit testing
-    if (qgcApp()->toolbox() && qgcApp()->toolbox()->firmwarePluginManager()) {
-        _firmwarePlugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
-    }
+    _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
+
+    _missionManager = new MissionManager(this);
+    connect(_missionManager, &MissionManager::error, this, &Vehicle::_missionManagerError);
+
+    _parameterLoader = new ParameterLoader(this);
+
+    // GeoFenceManager needs to access ParameterLoader so make sure to create after
+    _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
+    connect(_geoFenceManager, &GeoFenceManager::error, this, &Vehicle::_geoFenceManagerError);
 
     // Build FactGroup object model
 
@@ -1406,11 +1417,6 @@ void Vehicle::disconnectInactiveVehicle(void)
     }
 }
 
-ParameterLoader* Vehicle::getParameterLoader(void)
-{
-    return _parameterLoader;
-}
-
 void Vehicle::_imageReady(UASInterface*)
 {
     if(_uas)
@@ -1829,7 +1835,7 @@ void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
 /// Returns true if the specifed parameter exists from the default component
 bool Vehicle::parameterExists(int componentId, const QString& name) const
 {
-    return _autopilotPlugin->parameterExists(componentId, name);
+    return getParameterLoader()->parameterExists(componentId, name);
 }
 
 /// Returns the specified parameter Fact from the default component
@@ -1837,7 +1843,7 @@ bool Vehicle::parameterExists(int componentId, const QString& name) const
 /// parameterExists.
 Fact* Vehicle::getParameterFact(int componentId, const QString& name)
 {
-    return _autopilotPlugin->getParameterFact(componentId, name);
+    return getParameterLoader()->getFact(componentId, name);
 }
 
 void Vehicle::_newMissionItemsAvailable(void)

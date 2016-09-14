@@ -7,16 +7,13 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "MultiVehicleManager.h"
 #include "AutoPilotPlugin.h"
 #include "MAVLinkProtocol.h"
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "FollowMe.h"
+#include "QGroundControlQmlGlobal.h"
 
 #ifdef __mobile__
 #include "MobileScreenMgr.h"
@@ -33,7 +30,7 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     , _activeVehicleAvailable(false)
     , _parameterReadyVehicleAvailable(false)
     , _activeVehicle(NULL)
-    , _disconnectedVehicle(NULL)
+    , _offlineEditingVehicle(NULL)
     , _firmwarePluginManager(NULL)
     , _autopilotPluginManager(NULL)
     , _joystickManager(NULL)
@@ -50,8 +47,6 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     if (_gcsHeartbeatEnabled) {
         _gcsHeartbeatTimer.start();
     }
-
-    _disconnectedVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, this);
 }
 
 void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
@@ -67,6 +62,11 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
    qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
 
    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
+
+   _offlineEditingVehicle = new Vehicle(static_cast<MAV_AUTOPILOT>(QGroundControlQmlGlobal::offlineEditingFirmwareType()->rawValue().toInt()),
+                                        static_cast<MAV_TYPE>(QGroundControlQmlGlobal::offlineEditingVehicleType()->rawValue().toInt()),
+                                        _firmwarePluginManager,
+                                        this);
 }
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)

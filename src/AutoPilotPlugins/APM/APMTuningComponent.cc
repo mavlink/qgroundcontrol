@@ -60,7 +60,7 @@ QUrl APMTuningComponent::setupSource(void) const
         case MAV_TYPE_OCTOROTOR:
         case MAV_TYPE_TRICOPTER:
             // Older firmwares do not have CH9_OPT, we don't support Tuning on older firmwares
-            if (_autopilot->parameterExists(-1, QStringLiteral("CH9_OPT"))) {
+            if (_vehicle->parameterExists(-1, QStringLiteral("CH9_OPT"))) {
                 qmlFile = QStringLiteral("qrc:/qml/APMTuningComponentCopter.qml");
             }
             break;

@@ -210,7 +210,7 @@ bool ArduCopterFirmwarePlugin::multiRotorCoaxialMotors(Vehicle* vehicle)
 
 bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
 {
-    return vehicle->autopilotPlugin()->getParameterFact(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
+    return vehicle->getParameterFact(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
 }
 
 QString ArduCopterFirmwarePlugin::geoFenceRadiusParam(Vehicle* vehicle)

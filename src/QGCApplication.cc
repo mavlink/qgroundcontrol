@@ -343,6 +343,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     initializeVideoStreaming(argc, argv);
 
     _toolbox = new QGCToolbox(this);
+    _toolbox->setChildToolboxes();
 }
 
 QGCApplication::~QGCApplication()

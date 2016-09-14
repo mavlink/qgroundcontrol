@@ -117,8 +117,8 @@ void PX4AutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
     // Check for older parameter version set
     // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
     // should be used instead.
-    if (parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF") ||
-            parameterExists(FactSystem::defaultComponentId, "COM_DL_LOSS_EN")) {
+    if (_vehicle->parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF") ||
+            _vehicle->parameterExists(FactSystem::defaultComponentId, "COM_DL_LOSS_EN")) {
         _incorrectParameterVersion = true;
         qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
                               "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");

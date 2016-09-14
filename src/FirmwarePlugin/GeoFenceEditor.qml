@@ -12,7 +12,7 @@ import QGroundControl.FactSystem    1.0
 QGCLabel {
     width:      availableWidth
     wrapMode:   Text.WordWrap
-    text:       qsTr("This vehicle does tno support GeoFence.")
+    text:       qsTr("This vehicle does not support GeoFence.")
 
     //property var contoller - controller - Must be passed in from Loader
     //property real availableWidth - Available width for control - Must be passed in from Loader

@@ -31,6 +31,8 @@ FactPanelController::FactPanelController(bool standaloneUnitTesting)
     if (_vehicle) {
         _uas = _vehicle->uas();
         _autopilot = _vehicle->autopilotPlugin();
+    } else {
+        _vehicle = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
     }
 
     if (!standaloneUnitTesting) {
@@ -102,7 +104,7 @@ bool FactPanelController::_allParametersExists(int componentId, QStringList name
     bool noMissingFacts = true;
 
     foreach (const QString &name, names) {
-        if (_autopilot && !_autopilot->parameterExists(componentId, name)) {
+        if (_vehicle && !_vehicle->parameterExists(componentId, name)) {
             _reportMissingParameter(componentId, name);
             noMissingFacts = false;
         }
@@ -120,8 +122,8 @@ void FactPanelController::_checkForMissingFactPanel(void)
 
 Fact* FactPanelController::getParameterFact(int componentId, const QString& name, bool reportMissing)
 {
-    if (_autopilot && _autopilot->parameterExists(componentId, name)) {
-        Fact* fact = _autopilot->getParameterFact(componentId, name);
+    if (_vehicle && _vehicle->parameterExists(componentId, name)) {
+        Fact* fact = _vehicle->getParameterFact(componentId, name);
         QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
         return fact;
     } else {
@@ -133,7 +135,7 @@ Fact* FactPanelController::getParameterFact(int componentId, const QString& name
 
 bool FactPanelController::parameterExists(int componentId, const QString& name)
 {
-    return _autopilot ? _autopilot->parameterExists(componentId, name) : false;
+    return _vehicle ? _vehicle->parameterExists(componentId, name) : false;
 }
 
 void FactPanelController::_showInternalError(const QString& errorMsg)
