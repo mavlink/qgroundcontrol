@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 
-# this requires `origin/master` in the git tree
-
-MANIFEST_FILE=android/AndroidManifest.xml
-
-VERSIONCODE=`git rev-list origin/master --first-parent --count`
 VERSIONNAME=`git describe --always --tags | sed -e 's/^v//'`
 
-# increment the versionCode past master for tagged releases
-if [ "${TRAVIS_TAG}" ]; then
-	let VERSIONCODE=${VERSIONCODE}+1
-fi
+# Android versionCode from git tag vX.Y.Z-123-gSHA
+IFS=. read major minor patch dev sha <<<"${VERSIONNAME//-/.}"
+VERSIONCODE=$(($major*100000))
+VERSIONCODE=$(($(($minor*10000)) + $VERSIONCODE))
+VERSIONCODE=$(($(($patch*1000)) + $VERSIONCODE))
+VERSIONCODE=$(($(($dev)) + $VERSIONCODE))
 
+MANIFEST_FILE=android/AndroidManifest.xml
 if [ -n "$VERSIONCODE" ]; then
 	sed -i -e "s/android:versionCode=\"[0-9][0-9]*\"/android:versionCode=\"$VERSIONCODE\"/" $MANIFEST_FILE
 	echo "Android version: ${VERSIONCODE}"
@@ -27,3 +25,4 @@ else
 	echo "Error versionName empty"
 	exit 0 # don't cause the build to fail
 fi
+
