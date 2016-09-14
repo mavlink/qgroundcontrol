@@ -1023,17 +1023,17 @@ void MissionController::_itemCommandChanged(void)
     _recalcWaypointLines();
 }
 
-void MissionController::_activeVehicleBeingRemoved(Vehicle* vehicle)
+void MissionController::_activeVehicleBeingRemoved(void)
 {
-    qCDebug(MissionControllerLog) << "_activeVehicleSet _activeVehicleBeingRemoved";
+    qCDebug(MissionControllerLog) << "MissionController::_activeVehicleBeingRemoved";
 
-    MissionManager* missionManager = vehicle->missionManager();
+    MissionManager* missionManager = _activeVehicle->missionManager();
 
     disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailableFromVehicle);
     disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
     disconnect(missionManager, &MissionManager::currentItemChanged,         this, &MissionController::_currentMissionItemChanged);
-    disconnect(vehicle, &Vehicle::homePositionAvailableChanged,             this, &MissionController::_activeVehicleHomePositionAvailableChanged);
-    disconnect(vehicle, &Vehicle::homePositionChanged,                      this, &MissionController::_activeVehicleHomePositionChanged);
+    disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,      this, &MissionController::_activeVehicleHomePositionAvailableChanged);
+    disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionController::_activeVehicleHomePositionChanged);
 
     // We always remove all items on vehicle change. This leaves a user model hole:
     //      If the user has unsaved changes in the Plan view they will lose them

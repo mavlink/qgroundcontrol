@@ -62,11 +62,11 @@ void GeoFenceController::_signalAll(void)
     emit editorQmlChanged(editorQml());
 }
 
-void GeoFenceController::_activeVehicleBeingRemoved(Vehicle* vehicle)
+void GeoFenceController::_activeVehicleBeingRemoved(void)
 {
     _clearGeoFence();
     _signalAll();
-    vehicle->geoFenceManager()->disconnect(this);
+    _activeVehicle->geoFenceManager()->disconnect(this);
 }
 
 void GeoFenceController::_activeVehicleSet(void)
@@ -122,23 +122,23 @@ void GeoFenceController::removeAll(void)
 
 void GeoFenceController::loadFromVehicle(void)
 {
-    if (_activeVehicle && _activeVehicle->getParameterLoader()->parametersAreReady() && !syncInProgress()) {
+    if (_activeVehicle->getParameterLoader()->parametersAreReady() && !syncInProgress()) {
         _activeVehicle->geoFenceManager()->loadFromVehicle();
     } else {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle << _activeVehicle->getParameterLoader()->parametersAreReady() << syncInProgress();
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle->getParameterLoader()->parametersAreReady() << syncInProgress();
     }
 }
 
 void GeoFenceController::sendToVehicle(void)
 {
-    if (_activeVehicle && _activeVehicle->getParameterLoader()->parametersAreReady() && !syncInProgress()) {
+    if (_activeVehicle->getParameterLoader()->parametersAreReady() && !syncInProgress()) {
         _activeVehicle->geoFenceManager()->setPolygon(polygon());
         _activeVehicle->geoFenceManager()->setBreachReturnPoint(breachReturnPoint());
         setDirty(false);
         _polygon.setDirty(false);
         _activeVehicle->geoFenceManager()->sendToVehicle();
     } else {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle << _activeVehicle->getParameterLoader()->parametersAreReady() << syncInProgress();
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle->getParameterLoader()->parametersAreReady() << syncInProgress();
     }
 }
 
@@ -150,11 +150,7 @@ void GeoFenceController::_clearGeoFence(void)
 
 bool GeoFenceController::syncInProgress(void) const
 {
-    if (_activeVehicle) {
-        return _activeVehicle->geoFenceManager()->inProgress();
-    } else {
-        return false;
-    }
+    return _activeVehicle->geoFenceManager()->inProgress();
 }
 
 bool GeoFenceController::dirty(void) const
@@ -183,38 +179,22 @@ void GeoFenceController::_polygonDirtyChanged(bool dirty)
 
 bool GeoFenceController::fenceSupported(void) const
 {
-    if (_activeVehicle) {
-        return _activeVehicle->geoFenceManager()->fenceSupported();
-    } else {
-        return true;
-    }
+    return _activeVehicle->geoFenceManager()->fenceSupported();
 }
 
 bool GeoFenceController::circleSupported(void) const
 {
-    if (_activeVehicle) {
-        return _activeVehicle->geoFenceManager()->circleSupported();
-    } else {
-        return true;
-    }
+    return _activeVehicle->geoFenceManager()->circleSupported();
 }
 
 bool GeoFenceController::polygonSupported(void) const
 {
-    if (_activeVehicle) {
-        return _activeVehicle->geoFenceManager()->polygonSupported();
-    } else {
-        return true;
-    }
+    return _activeVehicle->geoFenceManager()->polygonSupported();
 }
 
 bool GeoFenceController::breachReturnSupported(void) const
 {
-    if (_activeVehicle) {
-        return _activeVehicle->geoFenceManager()->breachReturnSupported();
-    } else {
-        return true;
-    }
+    return _activeVehicle->geoFenceManager()->breachReturnSupported();
 }
 
 void GeoFenceController::_setDirty(void)
@@ -231,37 +211,20 @@ void GeoFenceController::_setPolygon(const QList<QGeoCoordinate>& polygon)
 
 float GeoFenceController::circleRadius(void) const
 {
-    if (_activeVehicle) {
-        return _activeVehicle->geoFenceManager()->circleRadius();
-    } else {
-        return 0.0;
-    }
+    return _activeVehicle->geoFenceManager()->circleRadius();
 }
 
 QVariantList GeoFenceController::params(void) const
 {
-    if (_activeVehicle) {
-        return _activeVehicle->geoFenceManager()->params();
-    } else {
-        return QVariantList();
-    }
+    return _activeVehicle->geoFenceManager()->params();
 }
 
 QStringList GeoFenceController::paramLabels(void) const
 {
-    if (_activeVehicle) {
-        return _activeVehicle->geoFenceManager()->paramLabels();
-    } else {
-        return QStringList();
-    }
+    return _activeVehicle->geoFenceManager()->paramLabels();
 }
 
 QString GeoFenceController::editorQml(void) const
 {
-    if (_activeVehicle) {
-        return _activeVehicle->geoFenceManager()->editorQml();
-    } else {
-        // FIXME: Offline editing support
-        return QString();
-    }
+    return _activeVehicle->geoFenceManager()->editorQml();
 }

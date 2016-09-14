@@ -52,13 +52,13 @@ signals:
     void dirtyChanged           (bool dirty);
 
 protected:
-    Vehicle*                _activeVehicle;
     MultiVehicleManager*    _multiVehicleMgr;
+    Vehicle*                _activeVehicle;     ///< Currently active vehicle, can be disconnected offline editing vehicle
     bool                    _editMode;
 
-    /// Called when the current active vehicle has been removed. Derived classes should override
-    /// to implement custom behavior. When this is called _activeVehicle has already been cleared.
-    virtual void _activeVehicleBeingRemoved(Vehicle* removedVehicle) = 0;
+    /// Called when the current active vehicle is about to be removed. Derived classes should override
+    /// to implement custom behavior.
+    virtual void _activeVehicleBeingRemoved(void) = 0;
 
     /// Called when a new active vehicle has been set. Derived classes should override
     /// to implement custom behavior.

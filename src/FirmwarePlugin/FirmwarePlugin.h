@@ -216,6 +216,9 @@ public:
 
     /// Returns the parameter which holds the fence circle radius if supported.
     virtual QString geoFenceRadiusParam(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
+
+    /// Return the resource file which contains the set of params loaded for offline editing.
+    virtual QString offlineEditingParamFile(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
 };
 
 #endif

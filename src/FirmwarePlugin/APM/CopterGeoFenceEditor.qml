@@ -36,11 +36,6 @@ Column {
         color:          qgcPal.text
     }
 
-    QGCLabel {
-        text:       qsTr("Must be connected to Vehicle to change fence settings.")
-        visible:    !QGroundControl.multiVehicleManager.activeVehicle
-    }
-
     Repeater {
         model: geoFenceController.params
 
@@ -80,7 +75,7 @@ Column {
         anchors.left:   parent.left
         anchors.right:  parent.right
         flightMap:      editorMap
-        polygon:        root.polygon
+        polygon:        geoFenceController.polygon
         sectionLabel:   qsTr("Fence Polygon:")
         visible:        geoFenceController.polygonSupported
     }

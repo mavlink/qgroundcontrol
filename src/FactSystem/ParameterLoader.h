@@ -125,6 +125,7 @@ private:
     void _tryCacheHashLoad(int uasId, int componentId, QVariant hash_value);
     void _addMetaDataToDefaultComponent(void);
     QString _remapParamNameToVersion(const QString& paramName);
+    void _loadOfflineEditingParams(void);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
