@@ -185,16 +185,26 @@ after_success:
 
   # android google play deploy
   - export GOOGLE_PLAY_TRACK=none;
+
+  # master development builds to beta track
+  # tagged releases first to beta track then move to production
   - if [ "${TRAVIS_TAG}" ]; then
         GOOGLE_PLAY_TRACK=production;
     elif [ "${TRAVIS_BRANCH}" = "master" ]; then
         GOOGLE_PLAY_TRACK=beta;
     fi
+  # deploy beta
   - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_TRACK}" != "none" ]]; then
         pip install --user google-api-python-client PyOpenSSL &&
-        echo "Google Play Track:" ${GOOGLE_PLAY_TRACK} &&
+        echo "Google Play Track beta" &&
         openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
-        ./tools/google_play_upload.py ${GOOGLE_PLAY_TRACK} org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/QGroundControl.apk;
+        ./tools/google_play_upload.py beta org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/QGroundControl.apk;
+    fi
+  # deploy production
+  - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_TRACK}" = "production" ]]; then
+        echo "Google Play Track production" &&
+        openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
+        ./tools/google_play_upload.py production org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/QGroundControl.apk;
     fi
 
 before_deploy:
