@@ -195,8 +195,8 @@ void MissionCommandTreeTest::testAllTrees(void)
     // This will cause all of the variants of collapsed trees to be built
     foreach(MAV_AUTOPILOT firmwareType, firmwareList) {
         foreach (MAV_TYPE vehicleType, vehicleList) {
-            Vehicle* vehicle = new Vehicle(firmwareType, vehicleType, qgcApp()->toolbox()->firmwarePluginManager());
             qDebug() << firmwareType << vehicleType;
+            Vehicle* vehicle = new Vehicle(firmwareType, vehicleType, qgcApp()->toolbox()->firmwarePluginManager());
             QVERIFY(qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, MAV_CMD_NAV_WAYPOINT) != NULL);
             delete vehicle;
         }

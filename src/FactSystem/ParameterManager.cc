@@ -59,6 +59,8 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     , _initialRequestRetryCount(0)
     , _totalParamCount(0)
 {
+    _versionParam = vehicle->firmwarePlugin()->getVersionParam();
+
     if (_vehicle->isOfflineEditingVehicle()) {
         _loadOfflineEditingParams();
         return;
@@ -79,7 +81,6 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
 
     connect(_vehicle->uas(), &UASInterface::parameterUpdate, this, &ParameterManager::_parameterUpdate);
 
-    _versionParam = vehicle->firmwarePlugin()->getVersionParam();
     _defaultComponentIdParam = vehicle->firmwarePlugin()->getDefaultComponentIdParam();
     qCDebug(ParameterManagerLog) << "Default component param" << _defaultComponentIdParam;
 
@@ -1280,6 +1281,11 @@ void ParameterManager::_loadOfflineEditingParams(void)
             qCritical() << "Unknown type" << paramType;
             paramValue = QVariant(valStr.toInt());
             break;
+        }
+
+        // Get parameter set version
+        if (!_versionParam.isEmpty() && _versionParam == paramName) {
+            _parameterSetMajorVersion = paramValue.toInt();
         }
 
         Fact* fact = new Fact(_defaultComponentId, paramName, _mavTypeToFactType(paramType), this);
