@@ -580,6 +580,7 @@ HEADERS += \
     src/FactSystem/FactSystemTestBase.h \
     src/FactSystem/FactSystemTestGeneric.h \
     src/FactSystem/FactSystemTestPX4.h \
+    src/FactSystem/ParameterManagerTest.h \
     src/MissionManager/ComplexMissionItemTest.h \
     src/MissionManager/MissionCommandTreeTest.h \
     src/MissionManager/MissionControllerTest.h \
@@ -596,7 +597,6 @@ HEADERS += \
     src/qgcunittest/MavlinkLogTest.h \
     src/qgcunittest/MessageBoxTest.h \
     src/qgcunittest/MultiSignalSpy.h \
-    src/qgcunittest/ParameterLoaderTest.h \
     src/qgcunittest/RadioConfigTest.h \
     src/qgcunittest/TCPLinkTest.h \
     src/qgcunittest/TCPLoopBackServer.h \
@@ -608,6 +608,7 @@ SOURCES += \
     src/FactSystem/FactSystemTestBase.cc \
     src/FactSystem/FactSystemTestGeneric.cc \
     src/FactSystem/FactSystemTestPX4.cc \
+    src/FactSystem/ParameterManagerTest.cc \
     src/MissionManager/ComplexMissionItemTest.cc \
     src/MissionManager/MissionCommandTreeTest.cc \
     src/MissionManager/MissionControllerTest.cc \
@@ -624,7 +625,6 @@ SOURCES += \
     src/qgcunittest/MavlinkLogTest.cc \
     src/qgcunittest/MessageBoxTest.cc \
     src/qgcunittest/MultiSignalSpy.cc \
-    src/qgcunittest/ParameterLoaderTest.cc \
     src/qgcunittest/RadioConfigTest.cc \
     src/qgcunittest/TCPLinkTest.cc \
     src/qgcunittest/TCPLoopBackServer.cc \
@@ -787,7 +787,7 @@ HEADERS += \
     src/FactSystem/FactMetaData.h \
     src/FactSystem/FactSystem.h \
     src/FactSystem/FactValidator.h \
-    src/FactSystem/ParameterLoader.h \
+    src/FactSystem/ParameterManager.h \
     src/FactSystem/SettingsFact.h \
 
 SOURCES += \
@@ -797,7 +797,7 @@ SOURCES += \
     src/FactSystem/FactMetaData.cc \
     src/FactSystem/FactSystem.cc \
     src/FactSystem/FactValidator.cc \
-    src/FactSystem/ParameterLoader.cc \
+    src/FactSystem/ParameterManager.cc \
     src/FactSystem/SettingsFact.cc \
 
 #-------------------------------------------------------------------------------------

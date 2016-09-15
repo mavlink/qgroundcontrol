@@ -64,7 +64,7 @@ QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, Fact
 
 void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaDataFile)
 {
-    qCDebug(ParameterLoaderLog) << "PX4ParameterMetaData::loadParameterFactMetaDataFile" << metaDataFile;
+    qCDebug(ParameterManagerLog) << "PX4ParameterMetaData::loadParameterFactMetaDataFile" << metaDataFile;
 
     if (_parameterMetaDataLoaded) {
         qWarning() << "Internal error: parameter meta data loaded more than once";
