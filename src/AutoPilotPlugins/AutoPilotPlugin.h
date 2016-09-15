@@ -19,7 +19,7 @@
 #include "FactSystem.h"
 #include "Vehicle.h"
 
-class ParameterLoader;
+class ParameterManager;
 class Vehicle;
 class FirmwarePlugin;
 
@@ -83,8 +83,6 @@ public:
     Fact* getFact(FactSystem::Provider_t    provider,       ///< fact provider
                   int                       componentId,    ///< fact component, -1=default component
                   const QString&            name);          ///< fact name
-
-    const QMap<int, QMap<QString, QStringList> >& getGroupMap(void);
 
     // Must be implemented by derived class
     virtual const QVariantList& vehicleComponents(void) = 0;

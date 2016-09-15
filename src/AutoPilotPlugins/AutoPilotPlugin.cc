@@ -13,7 +13,7 @@
 
 #include "AutoPilotPlugin.h"
 #include "QGCApplication.h"
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 #include "UAS.h"
 #include "FirmwarePlugin.h"
 
@@ -104,24 +104,24 @@ void AutoPilotPlugin::resetAllParametersToDefaults(void)
 
 void AutoPilotPlugin::refreshAllParameters(unsigned char componentID)
 {
-    _vehicle->getParameterLoader()->refreshAllParameters((uint8_t)componentID);
+    _vehicle->getParameterManager()->refreshAllParameters((uint8_t)componentID);
 }
 
 void AutoPilotPlugin::refreshParameter(int componentId, const QString& name)
 {
-    _vehicle->getParameterLoader()->refreshParameter(componentId, name);
+    _vehicle->getParameterManager()->refreshParameter(componentId, name);
 }
 
 void AutoPilotPlugin::refreshParametersPrefix(int componentId, const QString& namePrefix)
 {
-    _vehicle->getParameterLoader()->refreshParametersPrefix(componentId, namePrefix);
+    _vehicle->getParameterManager()->refreshParametersPrefix(componentId, namePrefix);
 }
 
 bool AutoPilotPlugin::factExists(FactSystem::Provider_t provider, int componentId, const QString& name)
 {
     switch (provider) {
         case FactSystem::ParameterProvider:
-            return _vehicle->getParameterLoader()->parameterExists(componentId, name);
+            return _vehicle->getParameterManager()->parameterExists(componentId, name);
             
         // Other providers will go here once they come online
     }
@@ -134,7 +134,7 @@ Fact* AutoPilotPlugin::getFact(FactSystem::Provider_t provider, int componentId,
 {
     switch (provider) {
         case FactSystem::ParameterProvider:
-            return _vehicle->getParameterLoader()->getFact(componentId, name);
+            return _vehicle->getParameterManager()->getFact(componentId, name);
             
         // Other providers will go here once they come online
     }
@@ -145,20 +145,15 @@ Fact* AutoPilotPlugin::getFact(FactSystem::Provider_t provider, int componentId,
 
 QStringList AutoPilotPlugin::parameterNames(int componentId)
 {
-    return _vehicle->getParameterLoader()->parameterNames(componentId);
-}
-
-const QMap<int, QMap<QString, QStringList> >& AutoPilotPlugin::getGroupMap(void)
-{
-    return _vehicle->getParameterLoader()->getGroupMap();
+    return _vehicle->getParameterManager()->parameterNames(componentId);
 }
 
 void AutoPilotPlugin::writeParametersToStream(QTextStream &stream)
 {
-    _vehicle->getParameterLoader()->writeParametersToStream(stream);
+    _vehicle->getParameterManager()->writeParametersToStream(stream);
 }
 
 QString AutoPilotPlugin::readParametersFromStream(QTextStream &stream)
 {
-    return _vehicle->getParameterLoader()->readParametersFromStream(stream);
+    return _vehicle->getParameterManager()->readParametersFromStream(stream);
 }

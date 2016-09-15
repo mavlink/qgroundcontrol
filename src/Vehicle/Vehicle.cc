@@ -18,7 +18,7 @@
 #include "JoystickManager.h"
 #include "MissionManager.h"
 #include "CoordinateVector.h"
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "QGCImageProvider.h"
 #include "GAudioOutput.h"
@@ -199,11 +199,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_newMissionItemsAvailable);
 
-    _parameterLoader = new ParameterLoader(this);
-    connect(_parameterLoader, &ParameterLoader::parametersReady, _autopilotPlugin, &AutoPilotPlugin::_parametersReadyPreChecks);
-    connect(_parameterLoader, &ParameterLoader::parameterListProgress, _autopilotPlugin, &AutoPilotPlugin::parameterListProgress);
+    _parameterLoader = new ParameterManager(this);
+    connect(_parameterLoader, &ParameterManager::parametersReady, _autopilotPlugin, &AutoPilotPlugin::_parametersReadyPreChecks);
+    connect(_parameterLoader, &ParameterManager::parameterListProgress, _autopilotPlugin, &AutoPilotPlugin::parameterListProgress);
 
-    // GeoFenceManager needs to access ParameterLoader so make sure to create after
+    // GeoFenceManager needs to access ParameterManager so make sure to create after
     _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
     connect(_geoFenceManager, &GeoFenceManager::error, this, &Vehicle::_geoFenceManagerError);
 
@@ -332,9 +332,9 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error, this, &Vehicle::_missionManagerError);
 
-    _parameterLoader = new ParameterLoader(this);
+    _parameterLoader = new ParameterManager(this);
 
-    // GeoFenceManager needs to access ParameterLoader so make sure to create after
+    // GeoFenceManager needs to access ParameterManager so make sure to create after
     _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
     connect(_geoFenceManager, &GeoFenceManager::error, this, &Vehicle::_geoFenceManagerError);
 
@@ -1813,7 +1813,7 @@ void Vehicle::rebootVehicle()
 
 int Vehicle::defaultComponentId(void)
 {
-    return _parameterLoader->defaultComponenentId();
+    return _parameterLoader->defaultComponentId();
 }
 
 void Vehicle::setSoloFirmware(bool soloFirmware)
@@ -1835,7 +1835,7 @@ void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
 /// Returns true if the specifed parameter exists from the default component
 bool Vehicle::parameterExists(int componentId, const QString& name) const
 {
-    return getParameterLoader()->parameterExists(componentId, name);
+    return getParameterManager()->parameterExists(componentId, name);
 }
 
 /// Returns the specified parameter Fact from the default component
@@ -1843,7 +1843,7 @@ bool Vehicle::parameterExists(int componentId, const QString& name) const
 /// parameterExists.
 Fact* Vehicle::getParameterFact(int componentId, const QString& name)
 {
-    return getParameterLoader()->getFact(componentId, name);
+    return getParameterManager()->getFact(componentId, name);
 }
 
 void Vehicle::_newMissionItemsAvailable(void)

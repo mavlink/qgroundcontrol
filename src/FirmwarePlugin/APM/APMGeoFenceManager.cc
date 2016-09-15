@@ -12,7 +12,7 @@
 #include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 
 const char* APMGeoFenceManager::_fenceTotalParam =     "FENCE_TOTAL";
 const char* APMGeoFenceManager::_fenceActionParam =    "FENCE_ACTION";
@@ -30,9 +30,9 @@ APMGeoFenceManager::APMGeoFenceManager(Vehicle* vehicle)
     , _fenceTypeFact(NULL)
 {
     connect(_vehicle,                       &Vehicle::mavlinkMessageReceived,   this, &APMGeoFenceManager::_mavlinkMessageReceived);
-    connect(_vehicle->getParameterLoader(), &ParameterLoader::parametersReady,  this, &APMGeoFenceManager::_parametersReady);
+    connect(_vehicle->getParameterManager(), &ParameterManager::parametersReady,  this, &APMGeoFenceManager::_parametersReady);
 
-    if (_vehicle->getParameterLoader()->parametersAreReady()) {
+    if (_vehicle->getParameterManager()->parametersAreReady()) {
         _parametersReady();
     }
 }

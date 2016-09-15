@@ -29,7 +29,7 @@
 #include "MainWindowTest.h"
 #include "FileManagerTest.h"
 #include "TCPLinkTest.h"
-#include "ParameterLoaderTest.h"
+#include "ParameterManagerTest.h"
 #include "MissionCommandTreeTest.h"
 #include "LogDownloadTest.h"
 
@@ -49,7 +49,7 @@ UT_REGISTER_TEST(MissionManagerTest)
 UT_REGISTER_TEST(RadioConfigTest)
 UT_REGISTER_TEST(TCPLinkTest)
 UT_REGISTER_TEST(FileManagerTest)
-UT_REGISTER_TEST(ParameterLoaderTest)
+UT_REGISTER_TEST(ParameterManagerTest)
 UT_REGISTER_TEST(MissionCommandTreeTest)
 UT_REGISTER_TEST(LogDownloadTest)
 
