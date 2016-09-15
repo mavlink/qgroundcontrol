@@ -18,16 +18,6 @@ QGCFlickable {
 
     property var polygon: geoFenceController.polygon
 
-    Connections {
-        target: geoFenceController.polygon
-
-        onPathChanged: {
-            if (geoFenceController.polygon.path.length > 2) {
-                geoFenceController.breachReturnPoint = geoFenceController.polygon.center()
-            }
-        }
-    }
-
     Rectangle {
         id:     geoFenceEditorRect
         width:  parent.width

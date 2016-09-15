@@ -11,9 +11,14 @@
 #include "JsonHelper.h"
 
 #include <QJsonArray>
+#include <QJsonParseError>
 
-const char* JsonHelper::_enumStringsJsonKey =   "enumStrings";
-const char* JsonHelper::_enumValuesJsonKey =    "enumValues";
+const char* JsonHelper::_enumStringsJsonKey =       "enumStrings";
+const char* JsonHelper::_enumValuesJsonKey =        "enumValues";
+const char* JsonHelper::jsonVersionKey =            "version";
+const char* JsonHelper::jsonGroundStationKey =      "groundStation";
+const char* JsonHelper::jsonGroundStationValue =    "QGroundControl";
+const char* JsonHelper::jsonFileTypeKey =           "fileType";
 
 bool JsonHelper::validateRequiredKeys(const QJsonObject& jsonObject, const QStringList& keys, QString& errorString)
 {
@@ -103,6 +108,23 @@ bool JsonHelper::parseEnum(QJsonObject& jsonObject, QStringList& enumStrings, QS
 
     if (enumStrings.count() != enumValues.count()) {
         errorString = QString("enum strings/values count mismatch: %1");
+        return false;
+    }
+
+    return true;
+}
+
+bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc)
+{
+    QJsonParseError error;
+
+    jsonDoc = QJsonDocument::fromJson(bytes, &error);
+
+    if (error.error == QJsonParseError::NoError) {
+        return true;
+    }
+
+    if (error.error == QJsonParseError::MissingObject && error.offset == 0) {
         return false;
     }
 

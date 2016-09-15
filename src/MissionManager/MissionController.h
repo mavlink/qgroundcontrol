@@ -148,8 +148,6 @@ private:
     double              _hoverDistance;
 
     static const char*  _settingsGroup;
-    static const char*  _jsonVersionKey;
-    static const char*  _jsonGroundStationKey;
     static const char*  _jsonMavAutopilotKey;
     static const char*  _jsonComplexItemsKey;
     static const char*  _jsonPlannedHomePositionKey;

@@ -87,7 +87,7 @@ FlightMap {
             coordinate:     object.coordinate
             isSatellite:    flightMap.isSatelliteMap
             size:           _mainIsMap ? ScreenTools.defaultFontPixelHeight * 5 : ScreenTools.defaultFontPixelHeight * 2
-            z:              QGroundControl.zOrderMapItems
+            z:              QGroundControl.zOrderMapItems - 1
         }
     }
 
@@ -114,6 +114,7 @@ FlightMap {
         border.width:   3
         center:         missionController.plannedHomePosition
         radius:         geoFenceController.circleSupported ? geoFenceController.circleRadius : 0
+        z:              QGroundControl.zOrderMapItems
     }
 
     // GeoFence breach return point
@@ -122,6 +123,7 @@ FlightMap {
         coordinate:     geoFenceController.breachReturnPoint
         visible:        geoFenceController.breachReturnSupported
         sourceItem:     MissionItemIndexLabel { label: "F" }
+        z:              QGroundControl.zOrderMapItems
     }
 
     // GoTo here waypoint

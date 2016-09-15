@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #ifndef JsonHelper_H
 #define JsonHelper_H
 
@@ -17,6 +16,11 @@
 class JsonHelper
 {
 public:
+    /// Determines is the specified data is a json file
+    ///     @param jsonDoc Returned json document if json file
+    /// @return true: file is json, false: file is not json
+    static bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc);
+
     static bool validateRequiredKeys(const QJsonObject& jsonObject, const QStringList& keys, QString& errorString);
     static bool validateKeyTypes(const QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types, QString& errorString);
     static bool toQGeoCoordinate(const QJsonValue& jsonValue, QGeoCoordinate& coordinate, bool altitudeRequired, QString& errorString);
@@ -24,6 +28,12 @@ public:
 
     static void writeQGeoCoordinate(QJsonValue& jsonValue, const QGeoCoordinate& coordinate, bool writeAltitude);
 
+    static const char* jsonVersionKey;
+    static const char* jsonGroundStationKey;
+    static const char* jsonGroundStationValue;
+    static const char* jsonFileTypeKey;
+
+private:
     static const char*  _enumStringsJsonKey;
     static const char*  _enumValuesJsonKey;
 };
