@@ -282,6 +282,7 @@
     <qresource prefix="/FirmwarePlugin/PX4">
         <file alias="PX4ParameterFactMetaData.xml">src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml</file>
         <file alias="PX4GeoFenceEditor.qml">src/FirmwarePlugin/PX4/PX4GeoFenceEditor.qml</file>
+        <file alias="PX4.OfflineEditing.params">src/FirmwarePlugin/PX4/V1.4.OfflineEditing.params</file>
     </qresource>
     <qresource prefix="/opengl">
         <file>resources/opengl/buglist.json</file>

@@ -19,6 +19,8 @@
 
 Q_DECLARE_LOGGING_CATEGORY(GeoFenceControllerLog)
 
+class GeoFenceManager;
+
 class GeoFenceController : public PlanElementController
 {
     Q_OBJECT
@@ -84,14 +86,17 @@ private slots:
 private:
     void _clearGeoFence(void);
     void _signalAll(void);
+    bool _loadJsonFile(QJsonDocument& jsonDoc, QString& errorString);
 
     void _activeVehicleBeingRemoved(void) final;
     void _activeVehicleSet(void) final;
 
-    bool            _dirty;
-    QGCMapPolygon   _polygon;
-    QGeoCoordinate  _breachReturnPoint;
-    QVariantList    _params;
+    bool                _dirty;
+    QGCMapPolygon       _polygon;
+    QGeoCoordinate      _breachReturnPoint;
+    QVariantList        _params;
+
+    static const char* _jsonFileTypeValue;
 };
 
 #endif

@@ -41,6 +41,17 @@ public:
     bool dirty(void) const { return _dirty; }
     void setDirty(bool dirty);
 
+    /// Saves the polygon to the json object.
+    ///     @param json Json object to save to
+    void saveToJson(QJsonObject& json);
+
+    /// Load a polygon from json
+    ///     @param json Json object to load from
+    ///     @param required true: no polygon in object will generate error
+    ///     @param errorString Error string if return is false
+    /// @return true: success, false: failure (errorString set)
+    bool loadFromJson(const QJsonObject& json, bool required, QString& errorString);
+
 signals:
     void pathChanged(void);
     void dirtyChanged(bool dirty);
@@ -48,6 +59,8 @@ signals:
 private:
     QVariantList    _polygonPath;
     bool            _dirty;
+
+    static const char* _jsonPolygonKey;
 };
 
 #endif

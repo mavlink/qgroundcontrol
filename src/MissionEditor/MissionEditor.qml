@@ -154,9 +154,31 @@ QGCView {
 
         Component.onCompleted: start(true /* editMode */)
 
+        function saveToSelectedFile() {
+            if (ScreenTools.isMobile) {
+                qgcView.showDialog(mobileFileSaver, qsTr("Save Fence File"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+            } else {
+                geoFenceController.saveToFilePicker()
+            }
+        }
+
+        function loadFromSelectedFile() {
+            if (ScreenTools.isMobile) {
+                qgcView.showDialog(mobileFilePicker, qsTr("Select Fence File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+            } else {
+                geoFenceController.loadFromFilePicker()
+            }
+        }
+
         onFenceSupportedChanged: {
             if (!fenceSupported && _editingLayer == _layerGeoFence) {
                 _editingLayer = _layerMission
+            }
+        }
+
+        onBreachReturnPointChanged: {
+            if (polygon.count() > 3) {
+                sendToVehicle()
             }
         }
     }
@@ -193,7 +215,7 @@ QGCView {
 
         QGCMobileFileDialog {
             openDialog:         true
-            fileExtension:      QGroundControl.missionFileExtension
+            fileExtension:      _syncDropDownController == geoFenceController ? QGroundControl.fenceFileExtension : QGroundControl.missionFileExtension
             onFilenameReturned: _syncDropDownController.loadFromfile(filename)
         }
     }
@@ -203,7 +225,7 @@ QGCView {
 
         QGCMobileFileDialog {
             openDialog:         false
-            fileExtension:      QGroundControl.missionFileExtension
+            fileExtension:      _syncDropDownController == geoFenceController ? QGroundControl.fenceFileExtension : QGroundControl.missionFileExtension
             onFilenameReturned: _syncDropDownController.saveToFile()
         }
     }
@@ -299,6 +321,7 @@ QGCView {
                             }
                             break
                         case _layerGeoFence:
+                            console.log("Updating breach return point", coordinate)
                             geoFenceController.breachReturnPoint = coordinate
                             break
                         }
@@ -586,6 +609,7 @@ QGCView {
                     border.color:   "#80FF0000"
                     border.width:   3
                     path:           geoFenceController.polygonSupported ? geoFenceController.polygon.path : undefined
+                    z:              QGroundControl.zOrderMapItems
                 }
 
                 // GeoFence circle
@@ -594,14 +618,7 @@ QGCView {
                     border.width:   3
                     center:         missionController.plannedHomePosition
                     radius:         geoFenceController.circleSupported ? geoFenceController.circleRadius : 0
-                }
-
-                // GeoFence circle
-                MapCircle {
-                    border.color:   "#80FF0000"
-                    border.width:   3
-                    center:         missionController.plannedHomePosition
-                    radius:         geoFenceController.circleSupported ? geoFenceController.circleRadius : 0
+                    z:              QGroundControl.zOrderMapItems
                 }
 
                 // GeoFence breach return point
@@ -610,6 +627,14 @@ QGCView {
                     coordinate:     geoFenceController.breachReturnPoint
                     visible:        geoFenceController.breachReturnSupported
                     sourceItem:     MissionItemIndexLabel { label: "F" }
+                    z:              QGroundControl.zOrderMapItems
+
+                    Connections {
+                        target: geoFenceController
+                        onBreachReturnPointChanged: console.log("breachreturn changed inside", geoFenceController.breachReturnPoint)
+                    }
+
+                    onCoordinateChanged: console.log("MqpQuickItem coodinateChanged", coordinate)
                 }
 
                 //-- Dismiss Drop Down (if any)
