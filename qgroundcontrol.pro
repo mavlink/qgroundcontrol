@@ -53,6 +53,11 @@ contains (DEFINES, QGC_DISABLE_UVC) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_UVC) {
     message("Skipping support for UVC devices (manual override from user_config.pri)")
     DEFINES += QGC_DISABLE_UVC
+} else:LinuxBuild {
+    contains(QT_VERSION, 5.5.1) {
+        message("Skipping support for UVC devices (conflict with Qt 5.5.1 on Ubuntu)")
+        DEFINES += QGC_DISABLE_UVC
+    }
 }
 
 LinuxBuild {
