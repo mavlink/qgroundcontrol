@@ -52,12 +52,20 @@ Rectangle {
                focalLength:    5.2
            }
            ListElement {
-               text:           qsTr("Canon SX260 HS PowerShot ")
+               text:           qsTr("Canon SX260 HS PowerShot")
                sensorWidth:    6.17
                sensorHeight:   4.55
                imageWidth:     4000
                imageHeight:    3000
                focalLength:    4.5
+           }
+           ListElement {
+               text:           qsTr("Canon EOS-M 22mm")
+               sensorWidth:    23.5
+               sensorHeight:   15.6
+               imageWidth:     5184
+               imageHeight:    3456
+               focalLength:    14.36
            }
    }
 
