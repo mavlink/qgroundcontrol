@@ -34,7 +34,7 @@ class AutoPilotPlugin;
 class AutoPilotPluginManager;
 class MissionManager;
 class GeoFenceManager;
-class ParameterLoader;
+class ParameterManager;
 class JoystickManager;
 class UASMessage;
 
@@ -544,8 +544,8 @@ public:
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
-    ParameterLoader* getParameterLoader(void) { return _parameterLoader; }
-    ParameterLoader* getParameterLoader(void) const { return _parameterLoader; }
+    ParameterManager* getParameterManager(void) { return _parameterLoader; }
+    ParameterManager* getParameterManager(void) const { return _parameterLoader; }
 
     static const int cMaxRcChannels = 18;
 
@@ -763,7 +763,7 @@ private:
     GeoFenceManager*    _geoFenceManager;
     bool                _geoFenceManagerInitialRequestComplete;
 
-    ParameterLoader*    _parameterLoader;
+    ParameterManager*    _parameterLoader;
 
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT

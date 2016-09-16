@@ -14,6 +14,8 @@ Column {
     property var flightMap                      ///< Must be set to FlightMap control
     property var polygon                        ///< Must be set to MapPolygon
 
+    signal polygonEditCompleted ///< Signalled when either a capture or adjust has completed
+
     property real _margin: ScreenTools.defaultFontPixelWidth / 2
 
     function polygonCaptureStarted() {
@@ -22,6 +24,7 @@ Column {
 
     function polygonCaptureFinished(coordinates) {
         polygon.path = coordinates
+        polygonEditCompleted()
     }
 
     function polygonAdjustVertex(vertexIndex, vertexCoordinate) {
@@ -29,7 +32,10 @@ Column {
     }
 
     function polygonAdjustStarted() { }
-    function polygonAdjustFinished() { }
+
+    function polygonAdjustFinished() {
+        polygonEditCompleted()
+    }
 
     QGCLabel { text: sectionLabel }
 

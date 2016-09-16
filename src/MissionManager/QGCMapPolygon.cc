@@ -9,10 +9,14 @@
 
 #include "QGCMapPolygon.h"
 #include "QGCGeo.h"
+#include "JsonHelper.h"
 
 #include <QGeoRectangle>
 #include <QDebug>
 #include <QPolygon>
+#include <QJsonArray>
+
+const char* QGCMapPolygon::_jsonPolygonKey = "polygon";
 
 QGCMapPolygon::QGCMapPolygon(QObject* parent)
     : QObject(parent)
@@ -106,3 +110,56 @@ void QGCMapPolygon::setPath(const QVariantList& path)
     setDirty(true);
     emit pathChanged();
 }
+
+void QGCMapPolygon::saveToJson(QJsonObject& json)
+{
+    QJsonArray rgPoints;
+
+    // Add all points to the array
+    for (int i=0; i<_polygonPath.count(); i++) {
+        QJsonValue jsonPoint;
+
+        JsonHelper::writeQGeoCoordinate(jsonPoint, (*this)[i], false /* writeAltitude */);
+        rgPoints.append(jsonPoint);
+    }
+
+    json.insert(_jsonPolygonKey, QJsonValue(rgPoints));
+
+    setDirty(false);
+}
+
+bool QGCMapPolygon::loadFromJson(const QJsonObject& json, bool required, QString& errorString)
+{
+    errorString.clear();
+    clear();
+
+    if (required) {
+        if (!JsonHelper::validateRequiredKeys(json, QStringList(_jsonPolygonKey), errorString)) {
+            return false;
+        }
+    } else if (!json.contains(_jsonPolygonKey)) {
+        return true;
+    }
+
+    QList<QJsonValue::Type> types;
+
+    types << QJsonValue::Array;
+    if (!JsonHelper::validateKeyTypes(json, QStringList(_jsonPolygonKey), types, errorString)) {
+        return false;
+    }
+
+    QJsonArray rgPoints =  json[_jsonPolygonKey].toArray();
+    for (int i=0; i<rgPoints.count(); i++) {
+        QGeoCoordinate coordinate;
+
+        if (!JsonHelper::toQGeoCoordinate(rgPoints[i], coordinate, false /* altitudeRequired */, errorString)) {
+            return false;
+        }
+        addCoordinate(coordinate);
+    }
+
+    setDirty(false);
+
+    return true;
+}
+
