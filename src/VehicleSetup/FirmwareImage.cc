@@ -18,7 +18,7 @@
 #include "QGCMAVLink.h"
 #include "QGCApplication.h"
 #include "FirmwarePlugin.h"
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 
 #include <QDebug>
 #include <QFile>
@@ -275,7 +275,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
         }
 
         // Cache this file with the system
-        ParameterLoader::cacheMetaDataFile(parameterFilename, firmwareType);
+        ParameterManager::cacheMetaDataFile(parameterFilename, firmwareType);
     }
 
     // Decompress the airframe xml and save to file

@@ -220,5 +220,7 @@ Column {
         flightMap:      editorMap
         polygon:        geoFenceController.polygon
         sectionLabel:   qsTr("Fence Polygon:")
+
+        onPolygonEditCompleted: geoFenceController.sendToVehicle()
     }
 }

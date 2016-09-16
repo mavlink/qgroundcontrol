@@ -119,6 +119,7 @@ Map {
         onMapTypeChanged:   updateActiveMapType()
     }
 
+    /// Ground Station location
     MapQuickItem {
         anchorPoint.x:  sourceItem.width  / 2
         anchorPoint.y:  sourceItem.height / 2

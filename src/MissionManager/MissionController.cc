@@ -17,7 +17,7 @@
 #include "SimpleMissionItem.h"
 #include "SurveyMissionItem.h"
 #include "JsonHelper.h"
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 #include "QGroundControlQmlGlobal.h"
 
 #ifndef __mobile__
@@ -29,8 +29,6 @@ QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
 const char* MissionController::jsonSimpleItemsKey = "items";
 
 const char* MissionController::_settingsGroup =                 "MissionController";
-const char* MissionController::_jsonVersionKey =                "version";
-const char* MissionController::_jsonGroundStationKey =          "groundStation";
 const char* MissionController::_jsonMavAutopilotKey =           "MAV_AUTOPILOT";
 const char* MissionController::_jsonComplexItemsKey =           "complexItems";
 const char* MissionController::_jsonPlannedHomePositionKey =    "plannedHomePosition";
@@ -258,7 +256,7 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
 
     // Check for required keys
     QStringList requiredKeys;
-    requiredKeys << _jsonVersionKey << _jsonPlannedHomePositionKey;
+    requiredKeys << JsonHelper::jsonVersionKey << _jsonPlannedHomePositionKey;
     if (!JsonHelper::validateRequiredKeys(json, requiredKeys, errorString)) {
         return false;
     }
@@ -266,14 +264,14 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
     // Validate base key types
     QStringList             keyList;
     QList<QJsonValue::Type> typeList;
-    keyList << jsonSimpleItemsKey << _jsonVersionKey << _jsonGroundStationKey << _jsonMavAutopilotKey << _jsonComplexItemsKey << _jsonPlannedHomePositionKey;
+    keyList << jsonSimpleItemsKey << JsonHelper::jsonVersionKey << JsonHelper::jsonGroundStationKey << _jsonMavAutopilotKey << _jsonComplexItemsKey << _jsonPlannedHomePositionKey;
     typeList << QJsonValue::Array << QJsonValue::String << QJsonValue::String << QJsonValue::Double << QJsonValue::Array << QJsonValue::Object;
     if (!JsonHelper::validateKeyTypes(json, keyList, typeList, errorString)) {
         return false;
     }
 
     // Version check
-    if (json[_jsonVersionKey].toString() != "1.0") {
+    if (json[JsonHelper::jsonVersionKey].toString() != "1.0") {
         errorString = QStringLiteral("QGroundControl does not support this file version");
         return false;
     }
@@ -502,8 +500,8 @@ void MissionController::saveToFile(const QString& filename)
         QJsonArray  simpleItemsObject;
         QJsonArray  complexItemsObject;
 
-        missionFileObject[_jsonVersionKey] =        "1.0";
-        missionFileObject[_jsonGroundStationKey] =  "QGroundControl";
+        missionFileObject[JsonHelper::jsonVersionKey] =         "1.0";
+        missionFileObject[JsonHelper::jsonGroundStationKey] =   JsonHelper::jsonGroundStationValue;
 
         MAV_AUTOPILOT firmwareType = MAV_AUTOPILOT_GENERIC;
         if (_activeVehicle) {
@@ -1054,7 +1052,7 @@ void MissionController::_activeVehicleSet(void)
     connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
     connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
 
-    if (_activeVehicle->getParameterLoader()->parametersAreReady() && !syncInProgress()) {
+    if (_activeVehicle->getParameterManager()->parametersAreReady() && !syncInProgress()) {
         // We are switching between two previously existing vehicles. We have to manually ask for the items from the Vehicle.
         // We don't request mission items for new vehicles since that will happen autamatically.
         loadFromVehicle();

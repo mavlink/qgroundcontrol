@@ -8,13 +8,13 @@
  ****************************************************************************/
 
 
-#include "ParameterLoaderTest.h"
+#include "ParameterManagerTest.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 
 /// Test failure modes which should still lead to param load success
-void ParameterLoaderTest::_noFailureWorker(MockConfiguration::FailureMode_t failureMode)
+void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t failureMode)
 {
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, failureMode);
@@ -34,7 +34,7 @@ void ParameterLoaderTest::_noFailureWorker(MockConfiguration::FailureMode_t fail
     QVERIFY(vehicle);
 
     // We should get progress bar updates during load
-    QSignalSpy spyProgress(vehicle->getParameterLoader(), SIGNAL(parameterListProgress(float)));
+    QSignalSpy spyProgress(vehicle->getParameterManager(), SIGNAL(parameterListProgress(float)));
     QCOMPARE(spyProgress.wait(2000), true);
     arguments = spyProgress.takeFirst();
     QCOMPARE(arguments.count(), 1);
@@ -54,18 +54,18 @@ void ParameterLoaderTest::_noFailureWorker(MockConfiguration::FailureMode_t fail
 }
 
 
-void ParameterLoaderTest::_noFailure(void)
+void ParameterManagerTest::_noFailure(void)
 {
     _noFailureWorker(MockConfiguration::FailNone);
 }
 
-void ParameterLoaderTest::_requestListMissingParamSuccess(void)
+void ParameterManagerTest::_requestListMissingParamSuccess(void)
 {
     _noFailureWorker(MockConfiguration::FailMissingParamOnInitialReqest);
 }
 
 // Test no response to param_request_list
-void ParameterLoaderTest::_requestListNoResponse(void)
+void ParameterManagerTest::_requestListNoResponse(void)
 {
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
@@ -85,7 +85,7 @@ void ParameterLoaderTest::_requestListNoResponse(void)
     QVERIFY(vehicle);
 
     QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QSignalSpy spyProgress(vehicle->getParameterLoader(), SIGNAL(parameterListProgress(float)));
+    QSignalSpy spyProgress(vehicle->getParameterManager(), SIGNAL(parameterListProgress(float)));
 
     // We should not get any progress bar updates, nor a parameter ready signal
     QCOMPARE(spyProgress.wait(500), false);
@@ -97,7 +97,7 @@ void ParameterLoaderTest::_requestListNoResponse(void)
 
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
 // param_read requests.
-void ParameterLoaderTest::_requestListMissingParamFail(void)
+void ParameterManagerTest::_requestListMissingParamFail(void)
 {
     // Will pop error about missing params
     setExpectedMessageBox(QMessageBox::Ok);
@@ -120,7 +120,7 @@ void ParameterLoaderTest::_requestListMissingParamFail(void)
     QVERIFY(vehicle);
 
     QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QSignalSpy spyProgress(vehicle->getParameterLoader(), SIGNAL(parameterListProgress(float)));
+    QSignalSpy spyProgress(vehicle->getParameterManager(), SIGNAL(parameterListProgress(float)));
 
     // We will get progress bar updates, since it will fail after getting partially through the request
     QCOMPARE(spyProgress.wait(2000), true);

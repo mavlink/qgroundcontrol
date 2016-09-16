@@ -10,14 +10,14 @@
 #include "PX4GeoFenceManager.h"
 #include "Vehicle.h"
 #include "FirmwarePlugin.h"
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 
 PX4GeoFenceManager::PX4GeoFenceManager(Vehicle* vehicle)
     : GeoFenceManager(vehicle)
     , _firstParamLoadComplete(false)
     , _circleRadiusFact(NULL)
 {
-    connect(_vehicle->getParameterLoader(), &ParameterLoader::parametersReady,  this, &PX4GeoFenceManager::_parametersReady);
+    connect(_vehicle->getParameterManager(), &ParameterManager::parametersReady,  this, &PX4GeoFenceManager::_parametersReady);
 }
 
 PX4GeoFenceManager::~PX4GeoFenceManager()

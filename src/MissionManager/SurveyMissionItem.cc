@@ -17,7 +17,6 @@
 
 QGC_LOGGING_CATEGORY(SurveyMissionItemLog, "SurveyMissionItemLog")
 
-const char* SurveyMissionItem::_jsonVersionKey =               "version";
 const char* SurveyMissionItem::_jsonTypeKey =                  "type";
 const char* SurveyMissionItem::_jsonPolygonKey =               "polygon";
 const char* SurveyMissionItem::_jsonIdKey =                    "id";
@@ -198,7 +197,7 @@ void SurveyMissionItem::setDirty(bool dirty)
 
 void SurveyMissionItem::save(QJsonObject& saveObject) const
 {
-    saveObject[_jsonVersionKey] =               1;
+    saveObject[JsonHelper::jsonVersionKey] =    1;
     saveObject[_jsonTypeKey] =                  _complexType;
     saveObject[_jsonIdKey] =                    sequenceNumber();
     saveObject[_jsonGridAltitudeKey] =          _gridAltitudeFact.rawValue().toDouble();
@@ -246,7 +245,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, QString& errorStr
 
     // Validate requires keys
     QStringList requiredKeys;
-    requiredKeys << _jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey <<
+    requiredKeys << JsonHelper::jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey <<
                     _jsonCameraTriggerKey << _jsonCameraTriggerDistanceKey << _jsonGridAltitudeRelativeKey;
     if (!JsonHelper::validateRequiredKeys(complexObject, requiredKeys, errorString)) {
         _clear();
@@ -256,7 +255,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, QString& errorStr
     // Validate types
     QStringList keyList;
     QList<QJsonValue::Type> typeList;
-    keyList << _jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey << _jsonTurnaroundDistKey <<
+    keyList << JsonHelper::jsonVersionKey << _jsonTypeKey << _jsonIdKey << _jsonPolygonKey << _jsonGridAltitudeKey << _jsonGridAngleKey << _jsonGridSpacingKey << _jsonTurnaroundDistKey <<
                _jsonCameraTriggerKey << _jsonCameraTriggerDistanceKey << _jsonGridAltitudeRelativeKey;
     typeList << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::Array << QJsonValue::Double << QJsonValue::Double<< QJsonValue::Double << QJsonValue::Double <<
                 QJsonValue::Bool << QJsonValue::Double << QJsonValue::Bool;
@@ -266,7 +265,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, QString& errorStr
     }
 
     // Version check
-    if (complexObject[_jsonVersionKey].toInt() != 1) {
+    if (complexObject[JsonHelper::jsonVersionKey].toInt() != 1) {
         errorString = tr("QGroundControl does not support this version of survey items");
         _clear();
         return false;

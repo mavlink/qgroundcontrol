@@ -22,7 +22,7 @@ Column {
 
     property Fact _fenceAction:     factController.getParameterFact(-1, "GF_ACTION")
     property Fact _fenceRadius:     factController.getParameterFact(-1, "GF_MAX_HOR_DIST")
-    property Fact _fenceAlt:        factController.getParameterFact(-1, "GF_MAX_VER_DIST")
+    property Fact _fenceMaxAlt:     factController.getParameterFact(-1, "GF_MAX_VER_DIST")
 
     FactPanelController {
         id:         factController
@@ -80,8 +80,8 @@ Column {
     QGCCheckBox {
         id:                 maxAltFenceCheckBox
         text:               qsTr("Maximum altitude fence")
-        checked:            _fenceAlt.value > 0
-        onClicked:          _fenceAlt.value = checked ? 100 : 0
+        checked:            _fenceMaxAlt.value > 0
+        onClicked:          _fenceMaxAlt.value = checked ? 100 : 0
     }
 
     Row {
@@ -97,7 +97,7 @@ Column {
         FactTextField {
             id:                 fenceAltMaxField
             showUnits:          true
-            fact:               _fenceAlt
+            fact:               _fenceMaxAlt
             enabled:            maxAltFenceCheckBox.checked
             width:              _editFieldWidth
         }

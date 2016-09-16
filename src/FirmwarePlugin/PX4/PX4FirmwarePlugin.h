@@ -15,7 +15,7 @@
 #define PX4FirmwarePlugin_H
 
 #include "FirmwarePlugin.h"
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 #include "PX4ParameterMetaData.h"
 #include "PX4GeoFenceManager.h"
 
@@ -57,6 +57,7 @@ public:
     QObject*            loadParameterMetaData           (const QString& metaDataFile);
     bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message);
     GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) { return new PX4GeoFenceManager(vehicle); }
+    QString             offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/PX4/PX4.OfflineEditing.params"); }
 
     // Use these constants to set flight modes using setFlightMode method. Don't use hardcoded string names since the
     // names may change.

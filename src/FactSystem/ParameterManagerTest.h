@@ -8,15 +8,15 @@
  ****************************************************************************/
 
 
-#ifndef ParameterLoaderTest_H
-#define ParameterLoaderTest_H
+#ifndef ParameterManagerTest_H
+#define ParameterManagerTest_H
 
 #include "UnitTest.h"
 #include "MockLink.h"
 #include "MultiSignalSpy.h"
 #include "MockLink.h"
 
-class ParameterLoaderTest : public UnitTest
+class ParameterManagerTest : public UnitTest
 {
     Q_OBJECT
     

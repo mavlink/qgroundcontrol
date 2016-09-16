@@ -140,7 +140,6 @@ private:
     FactMetaData    _turnaroundDistMetaData;
     FactMetaData    _cameraTriggerDistanceMetaData;
 
-    static const char* _jsonVersionKey;
     static const char* _jsonTypeKey;
     static const char* _jsonPolygonKey;
     static const char* _jsonIdKey;
