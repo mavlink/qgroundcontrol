@@ -30,6 +30,10 @@ static const struct VIDPIDMapInfo_s {
     { QGCSerialPortInfo::threeDRRadioVendorId,  QGCSerialPortInfo::threeDRRadioProductId,               QGCSerialPortInfo::BoardTypeSikRadio,   "Found SiK Radio" },
     { QGCSerialPortInfo::siLabsRadioVendorId,   QGCSerialPortInfo::siLabsRadioProductId,                QGCSerialPortInfo::BoardTypeSikRadio,   "Found SiK Radio" },
     { QGCSerialPortInfo::ubloxRTKVendorId,      QGCSerialPortInfo::ubloxRTKProductId,                   QGCSerialPortInfo::BoardTypeRTKGPS,     "Found RTK GPS" },
+    { QGCSerialPortInfo::openpilotVendorId,     QGCSerialPortInfo::revolutionProductId,                 QGCSerialPortInfo::BoardTypeLibrePilot, "Found OP Revolution" },
+    { QGCSerialPortInfo::openpilotVendorId,     QGCSerialPortInfo::oplinkProductId,                     QGCSerialPortInfo::BoardTypeLibrePilot, "Found OP OPLink" },
+    { QGCSerialPortInfo::openpilotVendorId,     QGCSerialPortInfo::sparky2ProductId,                    QGCSerialPortInfo::BoardTypeLibrePilot, "Found TL Sparky2" },
+    { QGCSerialPortInfo::openpilotVendorId,     QGCSerialPortInfo::CC3DProductId,                       QGCSerialPortInfo::BoardTypeLibrePilot, "Found OP CC3D" },
 };
 
 QGCSerialPortInfo::QGCSerialPortInfo(void) :
@@ -135,6 +139,15 @@ bool QGCSerialPortInfo::isBootloader(void) const
 bool QGCSerialPortInfo::canFlash(void)
 {
     BoardType_t boardType = this->boardType();
+    switch(boardType){
+    case QGCSerialPortInfo::BoardTypeUnknown:
+    case QGCSerialPortInfo::BoardTypeRTKGPS:
+    case QGCSerialPortInfo::BoardTypeLibrePilot:
+        return false;
+    default:
+        return true;
 
-    return boardType != QGCSerialPortInfo::BoardTypeUnknown && boardType != QGCSerialPortInfo::BoardTypeRTKGPS;
+    }
+
+
 }

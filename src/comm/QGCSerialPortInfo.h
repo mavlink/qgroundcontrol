@@ -37,6 +37,7 @@ public:
         BoardTypeMINDPXFMUV2,
         BoardTypeTAPV1,
         BoardTypeASCV1,
+        BoardTypeLibrePilot,
         BoardTypeUnknown
     } BoardType_t;
 
@@ -65,6 +66,12 @@ public:
 
     static const int ubloxRTKVendorId =                     5446;   ///< Vendor ID for ublox RTK
     static const int ubloxRTKProductId =                    424;    ///< Product ID for ublox RTK
+
+    static const int openpilotVendorId =                    0x20A0; ///< Vendor ID for OpenPilot
+    static const int revolutionProductId =                  0x415E; ///< Product ID for OpenPilot Revolution
+    static const int oplinkProductId =                      0x415C; ///< Product ID for OpenPilot OPLink
+    static const int sparky2ProductId =                     0x41D0; ///< Product ID for Taulabs Sparky2
+    static const int CC3DProductId =                        0x415D; ///< Product ID for OpenPilot CC3D
 
     QGCSerialPortInfo(void);
     QGCSerialPortInfo(const QSerialPort & port);

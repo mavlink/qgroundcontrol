@@ -66,6 +66,7 @@ public:
     Q_PROPERTY(bool autoconnect3DRRadio                 READ autoconnect3DRRadio                WRITE setAutoconnect3DRRadio    NOTIFY autoconnect3DRRadioChanged)
     Q_PROPERTY(bool autoconnectPX4Flow                  READ autoconnectPX4Flow                 WRITE setAutoconnectPX4Flow     NOTIFY autoconnectPX4FlowChanged)
     Q_PROPERTY(bool autoconnectRTKGPS                   READ autoconnectRTKGPS                  WRITE setAutoconnectRTKGPS      NOTIFY autoconnectRTKGPSChanged)
+    Q_PROPERTY(bool autoconnectLibrePilot               READ autoconnectLibrePilot              WRITE setAutoconnectLibrePilot  NOTIFY autoconnectLibrePilotChanged)
     Q_PROPERTY(bool isBluetoothAvailable                READ isBluetoothAvailable               CONSTANT)
 
     /// LinkInterface Accessor
@@ -96,6 +97,7 @@ public:
     bool autoconnect3DRRadio        (void)  { return _autoconnect3DRRadio; }
     bool autoconnectPX4Flow         (void)  { return _autoconnectPX4Flow; }
     bool autoconnectRTKGPS          (void)  { return _autoconnectRTKGPS; }
+    bool autoconnectLibrePilot      (void)  { return _autoconnectLibrePilot; }
     bool isBluetoothAvailable       (void);
 
     QmlObjectListModel* links               (void) { return &_links; }
@@ -105,11 +107,12 @@ public:
     QStringList         serialPortStrings   (void);
     QStringList         serialPorts         (void);
 
-    void setAutoconnectUDP      (bool autoconnect);
-    void setAutoconnectPixhawk  (bool autoconnect);
-    void setAutoconnect3DRRadio (bool autoconnect);
-    void setAutoconnectPX4Flow  (bool autoconnect);
-    void setAutoconnectRTKGPS   (bool autoconnect);
+    void setAutoconnectUDP        (bool autoconnect);
+    void setAutoconnectPixhawk    (bool autoconnect);
+    void setAutoconnect3DRRadio   (bool autoconnect);
+    void setAutoconnectPX4Flow    (bool autoconnect);
+    void setAutoconnectRTKGPS     (bool autoconnect);
+    void setAutoconnectLibrePilot (bool autoconnect);
 
     /// Load list of link configurations from disk
     void loadLinkConfigurationList();
@@ -163,11 +166,13 @@ public:
     virtual void setToolbox(QGCToolbox *toolbox);
 
 signals:
-    void autoconnectUDPChanged      (bool autoconnect);
-    void autoconnectPixhawkChanged  (bool autoconnect);
-    void autoconnect3DRRadioChanged (bool autoconnect);
-    void autoconnectPX4FlowChanged  (bool autoconnect);
-    void autoconnectRTKGPSChanged   (bool autoconnect);
+    void autoconnectUDPChanged        (bool autoconnect);
+    void autoconnectPixhawkChanged    (bool autoconnect);
+    void autoconnect3DRRadioChanged   (bool autoconnect);
+    void autoconnectPX4FlowChanged    (bool autoconnect);
+    void autoconnectRTKGPSChanged     (bool autoconnect);
+    void autoconnectLibrePilotChanged (bool autoconnect);
+
 
     void newLink(LinkInterface* link);
 
@@ -231,7 +236,7 @@ private:
     bool _autoconnect3DRRadio;
     bool _autoconnectPX4Flow;
     bool _autoconnectRTKGPS;
-
+    bool _autoconnectLibrePilot;
 #ifndef __ios__
     QTimer              _activeLinkCheckTimer;                  ///< Timer which checks for a vehicle showing up on a usb direct link
     QList<SerialLink*>  _activeLinkCheckList;                   ///< List of links we are waiting for a vehicle to show up on
@@ -244,6 +249,7 @@ private:
     static const char*  _autoconnect3DRRadioKey;
     static const char*  _autoconnectPX4FlowKey;
     static const char*  _autoconnectRTKGPSKey;
+    static const char*  _autoconnectLibrePilotKey;
     static const char*  _defaultUPDLinkName;
     static const int    _autoconnectUpdateTimerMSecs;
     static const int    _autoconnectConnectDelayMSecs;
