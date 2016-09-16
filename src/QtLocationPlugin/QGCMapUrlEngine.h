@@ -44,6 +44,8 @@ public:
         OpenStreetMapSurfer     = 34,
         OpenStreetMapSurferTerrain=35,
 
+        StatkartTopo            = 100,
+
         BingMap                 = 444,
         BingSatellite           = 555,
         BingHybrid              = 666,

@@ -114,6 +114,9 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "Bing Satellite Map",       "Bing satellite map",           false,  false,  UrlFactory::BingSatellite);
     mapTypes << QGeoMapType(QGeoMapType::HybridMap,         "Bing Hybrid Map",          "Bing hybrid map",              false,  false,  UrlFactory::BingHybrid);
 
+    // Statkart
+    mapTypes << QGeoMapType(QGeoMapType::TerrainMap,             "Statkart Topo2",           "Statkart Topo2",               false,  false,  UrlFactory::StatkartTopo);
+
     /* See: https://wiki.openstreetmap.org/wiki/Tile_usage_policy
     mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Open Street Map",          "Open Street map",              false, false, UrlFactory::OpenStreetMap);
     */

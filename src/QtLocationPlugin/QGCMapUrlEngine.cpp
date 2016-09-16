@@ -84,6 +84,7 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
                 case GoogleHybrid:
                 case BingMap:
                 case OpenStreetMap:
+                case StatkartTopo:
                     format = "png";
                     break;
                 case MapQuestMap:
@@ -142,6 +143,9 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
         case BingMap:
         case BingSatellite:
             request.setRawHeader("Referrer", "https://www.bing.com/maps/");
+            break;
+        case StatkartTopo:
+            request.setRawHeader("Referrer", "https://www.norgeskart.no/");
             break;
         /*
         case OpenStreetMapSurfer:
@@ -229,6 +233,11 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     }
     break;
 #endif
+    case StatkartTopo:
+    {
+        return QString("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo2&zoom=%1&x=%2&y=%3").arg(zoom).arg(x).arg(y);
+    }
+    break;
     /*
     case OpenStreetMap:
     {
