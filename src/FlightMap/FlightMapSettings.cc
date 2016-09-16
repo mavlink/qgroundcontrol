@@ -32,6 +32,7 @@ void FlightMapSettings::setToolbox(QGCToolbox *toolbox)
 #ifndef QGC_NO_GOOGLE_MAPS
     _supportedMapProviders << "Google";
 #endif
+    _supportedMapProviders << "Statkart";
     _loadSettings();
 }
 
@@ -82,6 +83,8 @@ void FlightMapSettings::_setMapTypesForCurrentProvider(void)
         _mapTypes << "Street Map" << "Satellite Map" << "Hybrid Map";
     } else if (_mapProvider == "Google") {
         _mapTypes << "Street Map" << "Satellite Map" << "Terrain Map";
+    } else if (_mapProvider == "Statkart") {
+        _mapTypes << "Topo2";
     }
 #endif
     emit mapTypesChanged(_mapTypes);
