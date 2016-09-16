@@ -18,7 +18,10 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "JsonHelper.h"
+
+#ifndef __mobile__
 #include "QGCFileDialog.h"
+#endif
 
 #include <QJsonDocument>
 
