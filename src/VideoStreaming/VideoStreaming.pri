@@ -186,7 +186,7 @@ VideoEnabled {
         }
         LinuxBuild {
             message("  You can install it using apt-get")
-            message("  sudo apt-get install libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev")
+            message("  sudo apt-get install gstreamer1.0*")
         }
         WindowsBuild {
             message("  You can download it from http://gstreamer.freedesktop.org/data/pkg/windows/")
