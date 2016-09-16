@@ -59,6 +59,14 @@ Rectangle {
                imageHeight:    3000
                focalLength:    4.5
            }
+           ListElement {
+               text:           qsTr("Canon EOS-M 22mm")
+               sensorWidth:    23.5
+               sensorHeight:   15.6
+               imageWidth:     5184
+               imageHeight:    3456
+               focalLength:    14.36
+           }
    }
 
     function recalcFromCameraValues() {
