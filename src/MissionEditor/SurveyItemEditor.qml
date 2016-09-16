@@ -52,7 +52,7 @@ Rectangle {
                focalLength:    5.2
            }
            ListElement {
-               text:           qsTr("Canon SX260 HS PowerShot ")
+               text:           qsTr("Canon SX260 HS PowerShot")
                sensorWidth:    6.17
                sensorHeight:   4.55
                imageWidth:     4000
