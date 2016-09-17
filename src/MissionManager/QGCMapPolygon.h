@@ -27,16 +27,17 @@ public:
     Q_PROPERTY(bool         dirty   READ dirty  WRITE setDirty  NOTIFY dirtyChanged)
 
     Q_INVOKABLE void clear(void);
-    Q_INVOKABLE void addCoordinate(const QGeoCoordinate coordinate);
     Q_INVOKABLE void adjustCoordinate(int vertexIndex, const QGeoCoordinate coordinate);
     Q_INVOKABLE QGeoCoordinate center(void) const;
     Q_INVOKABLE int count(void) const { return _polygonPath.count(); }
 
-    const QVariantList path(void) const { return _polygonPath; }
+    QVariantList path(void) const { return _polygonPath; }
     void setPath(const QList<QGeoCoordinate>& path);
     void setPath(const QVariantList& path);
 
-    const QGeoCoordinate operator[](int index) { return _polygonPath[index].value<QGeoCoordinate>(); }
+    QList<QGeoCoordinate> coordinateList(void) const;
+
+    QGeoCoordinate operator[](int index) const { return _polygonPath[index].value<QGeoCoordinate>(); }
 
     bool dirty(void) const { return _dirty; }
     void setDirty(bool dirty);

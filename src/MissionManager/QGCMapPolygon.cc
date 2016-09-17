@@ -52,13 +52,6 @@ void QGCMapPolygon::clear(void)
     setDirty(true);
 }
 
-void QGCMapPolygon::addCoordinate(const QGeoCoordinate coordinate)
-{
-    _polygonPath << QVariant::fromValue(coordinate);
-    emit pathChanged();
-    setDirty(true);
-}
-
 void QGCMapPolygon::adjustCoordinate(int vertexIndex, const QGeoCoordinate coordinate)
 {
     _polygonPath[vertexIndex] = QVariant::fromValue(coordinate);
@@ -148,18 +141,30 @@ bool QGCMapPolygon::loadFromJson(const QJsonObject& json, bool required, QString
         return false;
     }
 
-    QJsonArray rgPoints =  json[_jsonPolygonKey].toArray();
-    for (int i=0; i<rgPoints.count(); i++) {
+    QList<QGeoCoordinate> rgPoints;
+    QJsonArray jsonPoints =  json[_jsonPolygonKey].toArray();
+    for (int i=0; i<jsonPoints.count(); i++) {
         QGeoCoordinate coordinate;
 
-        if (!JsonHelper::toQGeoCoordinate(rgPoints[i], coordinate, false /* altitudeRequired */, errorString)) {
+        if (!JsonHelper::toQGeoCoordinate(jsonPoints[i], coordinate, false /* altitudeRequired */, errorString)) {
             return false;
         }
-        addCoordinate(coordinate);
+        rgPoints.append(coordinate);
     }
+    setPath(rgPoints);
 
     setDirty(false);
 
     return true;
 }
 
+QList<QGeoCoordinate> QGCMapPolygon::coordinateList(void) const
+{
+    QList<QGeoCoordinate> coords;
+
+    for (int i=0; i<count(); i++) {
+        coords.append((*this)[i]);
+    }
+
+    return coords;
+}

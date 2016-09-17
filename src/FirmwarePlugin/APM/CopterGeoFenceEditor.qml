@@ -78,7 +78,5 @@ Column {
         polygon:        geoFenceController.polygon
         sectionLabel:   qsTr("Fence Polygon:")
         visible:        geoFenceController.polygonSupported
-
-        onPolygonEditCompleted: geoFenceController.sendToVehicle()
     }
 }
