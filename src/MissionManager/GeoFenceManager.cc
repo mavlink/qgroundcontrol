@@ -34,26 +34,13 @@ void GeoFenceManager::_sendError(ErrorCode_t errorCode, const QString& errorMsg)
 void GeoFenceManager::loadFromVehicle(void)
 {
     // No geofence support in unknown vehicle
+    loadComplete(QGeoCoordinate(), QList<QGeoCoordinate>());
 }
 
-void GeoFenceManager::sendToVehicle(void)
+void GeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon)
 {
+    Q_UNUSED(breachReturn);
+    Q_UNUSED(polygon);
+
     // No geofence support in unknown vehicle
-}
-
-void GeoFenceManager::setPolygon(QGCMapPolygon* polygon)
-{
-    _polygon.clear();
-    for (int index=0; index<polygon->count(); index++) {
-        _polygon.append((*polygon)[index]);
-    }
-    emit polygonChanged(_polygon);
-}
-
-void GeoFenceManager::setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint)
-{
-    if (breachReturnPoint != _breachReturnPoint) {
-        _breachReturnPoint = breachReturnPoint;
-        emit breachReturnPointChanged(breachReturnPoint);
-    }
 }

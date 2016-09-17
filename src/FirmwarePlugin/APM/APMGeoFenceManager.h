@@ -25,7 +25,7 @@ public:
     // Overrides from GeoFenceManager
     bool            inProgress              (void) const final;
     void            loadFromVehicle         (void) final;
-    void            sendToVehicle           (void) final;
+    void            sendToVehicle           (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon) final;
     bool            fenceSupported          (void) const final { return _fenceSupported; }
     bool            circleSupported         (void) const final;
     bool            polygonSupported        (void) const final;
