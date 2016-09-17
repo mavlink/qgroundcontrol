@@ -63,7 +63,6 @@ public:
     QStringList         paramLabels             (void) const;
     QString             editorQml               (void) const;
 
-public slots:
     void setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint);
 
 signals:
@@ -81,10 +80,11 @@ signals:
 private slots:
     void _polygonDirtyChanged(bool dirty);
     void _setDirty(void);
-    void _setPolygon(const QList<QGeoCoordinate>& polygon);
+    void _setPolygonFromManager(const QList<QGeoCoordinate>& polygon);
+    void _setReturnPointFromManager(QGeoCoordinate breachReturnPoint);
+    void _loadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
 
 private:
-    void _clearGeoFence(void);
     void _signalAll(void);
     bool _loadJsonFile(QJsonDocument& jsonDoc, QString& errorString);
 
@@ -97,6 +97,7 @@ private:
     QVariantList        _params;
 
     static const char* _jsonFileTypeValue;
+    static const char* _jsonBreachReturnKey;
 };
 
 #endif

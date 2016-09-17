@@ -29,8 +29,8 @@ APMGeoFenceManager::APMGeoFenceManager(Vehicle* vehicle)
     , _fenceEnableFact(NULL)
     , _fenceTypeFact(NULL)
 {
-    connect(_vehicle,                       &Vehicle::mavlinkMessageReceived,   this, &APMGeoFenceManager::_mavlinkMessageReceived);
-    connect(_vehicle->getParameterManager(), &ParameterManager::parametersReady,  this, &APMGeoFenceManager::_parametersReady);
+    connect(_vehicle,                           &Vehicle::mavlinkMessageReceived,   this, &APMGeoFenceManager::_mavlinkMessageReceived);
+    connect(_vehicle->getParameterManager(),    &ParameterManager::parametersReady, this, &APMGeoFenceManager::_parametersReady);
 
     if (_vehicle->getParameterManager()->parametersAreReady()) {
         _parametersReady();
@@ -42,7 +42,7 @@ APMGeoFenceManager::~APMGeoFenceManager()
 
 }
 
-void APMGeoFenceManager::sendToVehicle(void)
+void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon)
 {
     if (_vehicle->isOfflineEditingVehicle()) {
         return;
@@ -58,16 +58,19 @@ void APMGeoFenceManager::sendToVehicle(void)
     }
 
     // Validate
+    int validatedPolygonCount = polygon.count();
     if (polygonSupported()) {
-        if (_polygon.count() < 3) {
-            _sendError(TooFewPoints, QStringLiteral("Geo-Fence polygon must contain at least 3 points."));
-            return;
+        if (polygon.count() < 3) {
+            validatedPolygonCount = 0;
         }
-        if (_polygon.count() > std::numeric_limits<uint8_t>::max()) {
+        if (polygon.count() > std::numeric_limits<uint8_t>::max()) {
             _sendError(TooManyPoints, QStringLiteral("Geo-Fence polygon has too many points: %1.").arg(_polygon.count()));
-            return;
+            validatedPolygonCount = 0;
         }
     }
+
+    _breachReturnPoint = breachReturn;
+    _polygon = polygon;
 
     // First thing is to turn off geo fence while we are updating. This prevents the vehicle from going haywire it is in the air.
     // Unfortunately the param to do this with differs between plane and copter.
@@ -77,7 +80,7 @@ void APMGeoFenceManager::sendToVehicle(void)
     fenceEnableFact->setRawValue(0);
 
     // Total point count, +1 polygon close in last index, +1 for breach in index 0
-    _cWriteFencePoints = _polygon.count() + 1 + 1 ;
+    _cWriteFencePoints = (validatedPolygonCount ? (validatedPolygonCount + 1) : 0) + 1 ;
     _vehicle->getParameterFact(FactSystem::defaultComponentId, _fenceTotalParam)->setRawValue(_cWriteFencePoints);
 
     // FIXME: No validation of correct fence received
@@ -86,11 +89,13 @@ void APMGeoFenceManager::sendToVehicle(void)
     }
 
     fenceEnableFact->setRawValue(savedEnableState);
+
+    emit loadComplete(_breachReturnPoint, _polygon);
 }
 
 void APMGeoFenceManager::loadFromVehicle(void)
 {
-    if (_vehicle->isOfflineEditingVehicle()) {
+    if (_vehicle->isOfflineEditingVehicle() || _readTransactionInProgress) {
         return;
     }
 
@@ -142,7 +147,7 @@ void APMGeoFenceManager::_mavlinkMessageReceived(const mavlink_message_t& messag
         }
 
         if (fencePoint.idx == 0) {
-            setBreachReturnPoint(QGeoCoordinate(fencePoint.lat, fencePoint.lng));
+            _breachReturnPoint = QGeoCoordinate(fencePoint.lat, fencePoint.lng);
             qCDebug(GeoFenceManagerLog) << "From vehicle: breach return point" << _breachReturnPoint;
             _requestFencePoint(++_currentFencePoint);
         } else if (fencePoint.idx < _cReadFencePoints - 1) {
@@ -155,7 +160,7 @@ void APMGeoFenceManager::_mavlinkMessageReceived(const mavlink_message_t& messag
             } else {
                 // We've finished collecting fence points
                 _readTransactionInProgress = false;
-                emit polygonChanged(_polygon);
+                emit loadComplete(_breachReturnPoint, _polygon);
             }
         }
     }

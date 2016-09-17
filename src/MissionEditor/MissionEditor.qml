@@ -175,12 +175,6 @@ QGCView {
                 _editingLayer = _layerMission
             }
         }
-
-        onBreachReturnPointChanged: {
-            if (polygon.count() > 3) {
-                sendToVehicle()
-            }
-        }
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -321,7 +315,6 @@ QGCView {
                             }
                             break
                         case _layerGeoFence:
-                            console.log("Updating breach return point", coordinate)
                             geoFenceController.breachReturnPoint = coordinate
                             break
                         }
@@ -628,13 +621,6 @@ QGCView {
                     visible:        geoFenceController.breachReturnSupported
                     sourceItem:     MissionItemIndexLabel { label: "F" }
                     z:              QGroundControl.zOrderMapItems
-
-                    Connections {
-                        target: geoFenceController
-                        onBreachReturnPointChanged: console.log("breachreturn changed inside", geoFenceController.breachReturnPoint)
-                    }
-
-                    onCoordinateChanged: console.log("MqpQuickItem coodinateChanged", coordinate)
                 }
 
                 //-- Dismiss Drop Down (if any)

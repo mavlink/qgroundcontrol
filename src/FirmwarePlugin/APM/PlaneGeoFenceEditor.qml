@@ -1,5 +1,6 @@
 import QtQuick          2.2
 import QtQuick.Controls 1.2
+import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -31,17 +32,6 @@ Column {
         factPanel:  qgcView.viewPanel
     }
 
-    Connections {
-        target:         fenceAction
-        onValueChanged: actionCombo.recalcSelection()
-    }
-
-    Connections {
-        target:         fenceRetRally
-        onValueChanged: actionCombo.recalcSelection()
-    }
-
-
     QGCLabel { text: qsTr("Fence Settings:") }
 
     Rectangle {
@@ -60,100 +50,91 @@ Column {
         anchors.right:      parent.right
         model: ListModel {
             id: actionModel
-            ListElement { text: qsTr("None"); actionValue: 0; retRallyValue: 0 }
-            ListElement { text: qsTr("Report only"); actionValue: 2; retRallyValue: 0 }
-            ListElement { text: qsTr("Fly to breach return point"); actionValue: 1; retRallyValue: 0 }
-            ListElement { text: qsTr("Fly to breach return point (throttle control)"); actionValue: 3; retRallyValue: 0 }
-            ListElement { text: qsTr("Fly to nearest rally point");  actionValue: 4; retRallyValue: 1 }
+            ListElement { text: qsTr("None"); actionValue: 0 }
+            ListElement { text: qsTr("Report only"); actionValue: 2 }
+            ListElement { text: qsTr("Fly to return point"); actionValue: 1 }
+            ListElement { text: qsTr("Fly to return point (throttle control)"); actionValue: 3 }
         }
 
-        onActivated: {
-            fenceAction.value = actionModel.get(index).actionValue
-            fenceRetRally.value = actionModel.get(index).retRallyValue
+        onActivated: fenceAction.rawValue = actionModel.get(index).actionValue
+        Component.onCompleted: recalcSelection()
+
+        Connections {
+            target:         fenceAction
+            onValueChanged: actionCombo.recalcSelection()
         }
 
         function recalcSelection() {
-            if (fenceAction.value != 0 && fenceRetRally.value == 1) {
-                actionCombo.currentIndex = 4
-            } else {
-                switch (fenceAction.value) {
-                case 0:
-                    actionCombo.currentIndex = 0
-                    break
-                case 1:
-                    actionCombo.currentIndex = 2
-                    break
-                case 2:
-                    actionCombo.currentIndex = 1
-                    break
-                case 3:
-                    actionCombo.currentIndex = 3
-                    break
-                case 4:
-                    actionCombo.currentIndex = 4
-                    break
-                case 0:
-                default:
-                    actionCombo.currentIndex = 0
-                    break
+            for (var i=0; i<actionModel.count; i++) {
+                if (actionModel.get(i).actionValue == fenceAction.rawValue) {
+                    actionCombo.currentIndex = i
+                    return
                 }
             }
+            actionCombo.currentIndex = 0
         }
+    }
+
+    ExclusiveGroup { id: returnLocationRadioGroup }
+
+    property bool _returnPointUsed: fenceAction.rawValue == 1 || fenceAction.rawValue == 3
+
+    QGCRadioButton {
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+        anchors.left:       parent.left
+        text:               qsTr("Fly to breach return point")
+        checked:            fenceRetRally.rawValue != 1
+        enabled:            _returnPointUsed
+        exclusiveGroup:     returnLocationRadioGroup
+        onClicked:          fenceRetRally.rawValue = 0
+    }
+
+    QGCRadioButton {
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+        anchors.left:       parent.left
+        text:               qsTr("Fly to nearest rally point")
+        checked:            fenceRetRally.rawValue == 1
+        enabled:            _returnPointUsed
+        exclusiveGroup:     returnLocationRadioGroup
+        onClicked:          fenceRetRally.rawValue = 1
     }
 
     Item { width:  1; height: 1 }
 
-    QGCCheckBox {
-        id:                 minAltFenceCheckBox
-        text:               qsTr("Minimum altitude fence")
-        checked:            fenceMinAlt.value > 0
-        onClicked:          fenceMinAlt.value = checked ? 10 : 0
-    }
+    GridLayout {
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        columnSpacing:  ScreenTools.defaultFontPixelWidth
+        columns:        2
 
-    Row {
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
-        anchors.left:       parent.left
-        spacing:            _margin
-
-        QGCLabel {
-            anchors.baseline: fenceAltMinField.baseline
-            text: qsTr("Min Altitude:")
+        QGCCheckBox {
+            id:                 minAltFenceCheckBox
+            text:               qsTr("Min altitude:")
+            checked:            fenceMinAlt.value > 0
+            onClicked:          fenceMinAlt.value = checked ? 10 : 0
         }
 
         FactTextField {
             id:                 fenceAltMinField
+            Layout.fillWidth:   true
             showUnits:          true
             fact:               fenceMinAlt
             enabled:            minAltFenceCheckBox.checked
-            width:              _editFieldWidth
         }
-    }
 
-    Item { width:  1; height: 1 }
-
-    QGCCheckBox {
-        id:                 maxAltFenceCheckBox
-        text:               qsTr("Maximum altitude fence")
-        checked:            fenceMaxAlt.value > 0
-        onClicked:          fenceMaxAlt.value = checked ? 100 : 0
-    }
-
-    Row {
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
-        anchors.left:       parent.left
-        spacing:            _margin
-
-        QGCLabel {
-            anchors.baseline: fenceAltMaxField.baseline
-            text: qsTr("Max Altitude:")
+        QGCCheckBox {
+            id:                 maxAltFenceCheckBox
+            text:               qsTr("Max altitude:")
+            checked:            fenceMaxAlt.value > 0
+            onClicked:          fenceMaxAlt.value = checked ? 100 : 0
         }
 
         FactTextField {
             id:                 fenceAltMaxField
+            Layout.fillWidth:   true
             showUnits:          true
             fact:               fenceMaxAlt
             enabled:            maxAltFenceCheckBox.checked
-            width:              _editFieldWidth
         }
     }
 
@@ -167,6 +148,7 @@ Column {
         anchors.right:      parent.right
         wrapMode:           Text.WordWrap
         text:               qsTr("Click in map to set breach return location.")
+        font.pointSize:     ScreenTools.smallFontPointSize
     }
 
     Row {
@@ -220,7 +202,5 @@ Column {
         flightMap:      editorMap
         polygon:        geoFenceController.polygon
         sectionLabel:   qsTr("Fence Polygon:")
-
-        onPolygonEditCompleted: geoFenceController.sendToVehicle()
     }
 }
