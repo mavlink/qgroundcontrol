@@ -50,7 +50,7 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol *protocol, Vehicle *vehicle, FirmwarePluginManager *firmwarePluginManager);
+    UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager);
 
     float lipoFull;  ///< 100% charged voltage
     float lipoEmpty; ///< Discharged voltage
@@ -89,8 +89,8 @@ public:
     void setGroundSpeed(double val)
     {
         groundSpeed = val;
-        emit groundSpeedChanged(val, "groundSpeed");
-        emit valueChanged(this->uasId, "groundSpeed", "m/s", QVariant(val), getUnixTime());
+        emit groundSpeedChanged(val,"groundSpeed");
+        emit valueChanged(this->uasId,"groundSpeed","m/s",QVariant(val),getUnixTime());
     }
     double getGroundSpeed() const
     {
@@ -100,8 +100,8 @@ public:
     void setAirSpeed(double val)
     {
         airSpeed = val;
-        emit airSpeedChanged(val, "airSpeed");
-        emit valueChanged(this->uasId, "airSpeed", "m/s", QVariant(val), getUnixTime());
+        emit airSpeedChanged(val,"airSpeed");
+        emit valueChanged(this->uasId,"airSpeed","m/s",QVariant(val),getUnixTime());
     }
 
     double getAirSpeed() const
@@ -112,8 +112,8 @@ public:
     void setLocalX(double val)
     {
         localX = val;
-        emit localXChanged(val, "localX");
-        emit valueChanged(this->uasId, "localX", "m", QVariant(val), getUnixTime());
+        emit localXChanged(val,"localX");
+        emit valueChanged(this->uasId,"localX","m",QVariant(val),getUnixTime());
     }
 
     double getLocalX() const
@@ -124,8 +124,8 @@ public:
     void setLocalY(double val)
     {
         localY = val;
-        emit localYChanged(val, "localY");
-        emit valueChanged(this->uasId, "localY", "m", QVariant(val), getUnixTime());
+        emit localYChanged(val,"localY");
+        emit valueChanged(this->uasId,"localY","m",QVariant(val),getUnixTime());
     }
     double getLocalY() const
     {
@@ -135,8 +135,8 @@ public:
     void setLocalZ(double val)
     {
         localZ = val;
-        emit localZChanged(val, "localZ");
-        emit valueChanged(this->uasId, "localZ", "m", QVariant(val), getUnixTime());
+        emit localZChanged(val,"localZ");
+        emit valueChanged(this->uasId,"localZ","m",QVariant(val),getUnixTime());
     }
     double getLocalZ() const
     {
@@ -146,8 +146,8 @@ public:
     void setLatitude(double val)
     {
         latitude = val;
-        emit latitudeChanged(val, "latitude");
-        emit valueChanged(this->uasId, "latitude", "deg", QVariant(val), getUnixTime());
+        emit latitudeChanged(val,"latitude");
+        emit valueChanged(this->uasId,"latitude","deg",QVariant(val),getUnixTime());
     }
 
     double getLatitude() const
@@ -158,8 +158,8 @@ public:
     void setLongitude(double val)
     {
         longitude = val;
-        emit longitudeChanged(val, "longitude");
-        emit valueChanged(this->uasId, "longitude", "deg", QVariant(val), getUnixTime());
+        emit longitudeChanged(val,"longitude");
+        emit valueChanged(this->uasId,"longitude","deg",QVariant(val),getUnixTime());
     }
 
     double getLongitude() const
@@ -171,10 +171,10 @@ public:
     {
         altitudeAMSL = val;
         emit altitudeAMSLChanged(val, "altitudeAMSL");
-        emit valueChanged(this->uasId, "altitudeAMSL", "m", QVariant(altitudeAMSL), getUnixTime());
+        emit valueChanged(this->uasId,"altitudeAMSL","m",QVariant(altitudeAMSL),getUnixTime());
         altitudeAMSLFT = 3.28084 * altitudeAMSL;
         emit altitudeAMSLFTChanged(val, "altitudeAMSLFT");
-        emit valueChanged(this->uasId, "altitudeAMSLFT", "m", QVariant(altitudeAMSLFT), getUnixTime());
+        emit valueChanged(this->uasId,"altitudeAMSLFT","m",QVariant(altitudeAMSLFT),getUnixTime());
     }
 
     double getAltitudeAMSL() const
@@ -191,7 +191,7 @@ public:
     {
         altitudeRelative = val;
         emit altitudeRelativeChanged(val, "altitudeRelative");
-        emit valueChanged(this->uasId, "altitudeRelative", "m", QVariant(val), getUnixTime());
+        emit valueChanged(this->uasId,"altitudeRelative","m",QVariant(val),getUnixTime());
     }
 
     double getAltitudeRelative() const
@@ -217,8 +217,8 @@ public:
     void setSatelliteCount(double val)
     {
         satelliteCount = val;
-        emit satelliteCountChanged(val, "satelliteCount");
-        emit valueChanged(this->uasId, "satelliteCount", "", QVariant(val), getUnixTime());
+        emit satelliteCountChanged(val,"satelliteCount");
+        emit valueChanged(this->uasId,"satelliteCount","",QVariant(val),getUnixTime());
     }
 
     double getSatelliteCount() const
@@ -234,8 +234,8 @@ public:
     void setDistToWaypoint(double val)
     {
         distToWaypoint = val;
-        emit distToWaypointChanged(val, "distToWaypoint");
-        emit valueChanged(this->uasId, "distToWaypoint", "m", QVariant(val), getUnixTime());
+        emit distToWaypointChanged(val,"distToWaypoint");
+        emit valueChanged(this->uasId,"distToWaypoint","m",QVariant(val),getUnixTime());
     }
 
     double getDistToWaypoint() const
@@ -246,8 +246,8 @@ public:
     void setBearingToWaypoint(double val)
     {
         bearingToWaypoint = val;
-        emit bearingToWaypointChanged(val, "bearingToWaypoint");
-        emit valueChanged(this->uasId, "bearingToWaypoint", "deg", QVariant(val), getUnixTime());
+        emit bearingToWaypointChanged(val,"bearingToWaypoint");
+        emit valueChanged(this->uasId,"bearingToWaypoint","deg",QVariant(val),getUnixTime());
     }
 
     double getBearingToWaypoint() const
@@ -259,7 +259,7 @@ public:
     void setRoll(double val)
     {
         roll = val;
-        emit rollChanged(val, "roll");
+        emit rollChanged(val,"roll");
     }
 
     double getRoll() const
@@ -270,7 +270,7 @@ public:
     void setPitch(double val)
     {
         pitch = val;
-        emit pitchChanged(val, "pitch");
+        emit pitchChanged(val,"pitch");
     }
 
     double getPitch() const
@@ -281,7 +281,7 @@ public:
     void setYaw(double val)
     {
         yaw = val;
-        emit yawChanged(val, "yaw");
+        emit yawChanged(val,"yaw");
     }
 
     double getYaw() const
@@ -290,68 +290,55 @@ public:
     }
 
     // Setters for HIL noise variance
-    void setXaccVar(float var)
-    {
+    void setXaccVar(float var){
         xacc_var = var;
     }
 
-    void setYaccVar(float var)
-    {
+    void setYaccVar(float var){
         yacc_var = var;
     }
 
-    void setZaccVar(float var)
-    {
+    void setZaccVar(float var){
         zacc_var = var;
     }
 
-    void setRollSpeedVar(float var)
-    {
+    void setRollSpeedVar(float var){
         rollspeed_var = var;
     }
 
-    void setPitchSpeedVar(float var)
-    {
+    void setPitchSpeedVar(float var){
         pitchspeed_var = var;
     }
 
-    void setYawSpeedVar(float var)
-    {
+    void setYawSpeedVar(float var){
         pitchspeed_var = var;
     }
 
-    void setXmagVar(float var)
-    {
+    void setXmagVar(float var){
         xmag_var = var;
     }
 
-    void setYmagVar(float var)
-    {
+    void setYmagVar(float var){
         ymag_var = var;
     }
 
-    void setZmagVar(float var)
-    {
+    void setZmagVar(float var){
         zmag_var = var;
     }
 
-    void setAbsPressureVar(float var)
-    {
+    void setAbsPressureVar(float var){
         abs_pressure_var = var;
     }
 
-    void setDiffPressureVar(float var)
-    {
+    void setDiffPressureVar(float var){
         diff_pressure_var = var;
     }
 
-    void setPressureAltVar(float var)
-    {
+    void setPressureAltVar(float var){
         pressure_alt_var = var;
     }
 
-    void setTemperatureVar(float var)
-    {
+    void setTemperatureVar(float var){
         temperature_var = var;
     }
 
@@ -365,7 +352,7 @@ protected: //COMMENTS FOR TEST UNIT
     QMap<int, QString> components;///< IDs and names of all detected onboard components
 
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
-    MAVLinkProtocol *mavlink;     ///< Reference to the MAVLink instance
+    MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
 
@@ -463,21 +450,20 @@ protected: //COMMENTS FOR TEST UNIT
 
     /// SIMULATION
 #ifndef __mobile__
-    QGCHilLink *simulation;         ///< Hardware in the loop simulation link
+    QGCHilLink* simulation;         ///< Hardware in the loop simulation link
 #endif
 
 public:
     /** @brief Get the human-readable status message for this code */
-    void getStatusForCode(int statusCode, QString &uasState, QString &stateDescription);
+    void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
 
 #ifndef __mobile__
-    virtual FileManager *getFileManager() { return &fileManager; }
+    virtual FileManager* getFileManager() { return &fileManager; }
 #endif
 
     /** @brief Get the HIL simulation */
 #ifndef __mobile__
-    QGCHilLink *getHILSimulation() const
-    {
+    QGCHilLink* getHILSimulation() const {
         return simulation;
     }
 #endif
@@ -494,18 +480,18 @@ public slots:
 
     /** @brief Enable / disable HIL */
 #ifndef __mobile__
-    void enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject *configuration);
+    void enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration);
     void enableHilJSBSim(bool enable, QString options);
     void enableHilXPlane(bool enable);
 
     /** @brief Send the full HIL state to the MAV */
     void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollRotationRate,
-                      float pitchRotationRate, float yawRotationRate, double lat, double lon, double alt,
-                      float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc);
+                        float pitchRotationRate, float yawRotationRate, double lat, double lon, double alt,
+                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc);
 
     void sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw, float rollRotationRate,
-                            float pitchRotationRate, float yawRotationRate, double lat, double lon, double alt,
-                            float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc);
+                        float pitchRotationRate, float yawRotationRate, double lat, double lon, double alt,
+                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc);
 
     /** @brief RAW sensors for sensor HIL */
     void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
@@ -562,45 +548,45 @@ public slots:
     /** @brief Send command to disable all bindings/maps between RC and parameters */
     void unsetRCToParameterMap();
 signals:
-    void loadChanged(UASInterface *uas, double load);
+    void loadChanged(UASInterface* uas, double load);
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
-    void imageReady(UASInterface *uas);
+    void imageReady(UASInterface* uas);
     /** @brief HIL controls have changed */
     void hilControlsChanged(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
     /** @brief HIL actuator controls (replaces HIL controls) */
     void hilActuatorControlsChanged(quint64 time, quint64 flags, float ctl_0, float ctl_1, float ctl_2, float ctl_3, float ctl_4, float ctl_5, float ctl_6, float ctl_7, float ctl_8, float ctl_9, float ctl_10, float ctl_11, float ctl_12, float ctl_13, float ctl_14, float ctl_15, quint8 mode);
 
-    void localXChanged(double val, QString name);
-    void localYChanged(double val, QString name);
-    void localZChanged(double val, QString name);
-    void longitudeChanged(double val, QString name);
-    void latitudeChanged(double val, QString name);
-    void altitudeAMSLChanged(double val, QString name);
-    void altitudeAMSLFTChanged(double val, QString name);
-    void altitudeRelativeChanged(double val, QString name);
+    void localXChanged(double val,QString name);
+    void localYChanged(double val,QString name);
+    void localZChanged(double val,QString name);
+    void longitudeChanged(double val,QString name);
+    void latitudeChanged(double val,QString name);
+    void altitudeAMSLChanged(double val,QString name);
+    void altitudeAMSLFTChanged(double val,QString name);
+    void altitudeRelativeChanged(double val,QString name);
 
-    void satRawHDOPChanged(double value);
-    void satRawVDOPChanged(double value);
-    void satRawCOGChanged(double value);
+    void satRawHDOPChanged  (double value);
+    void satRawVDOPChanged  (double value);
+    void satRawCOGChanged   (double value);
 
-    void rollChanged(double val, QString name);
-    void pitchChanged(double val, QString name);
-    void yawChanged(double val, QString name);
-    void satelliteCountChanged(double val, QString name);
-    void distToWaypointChanged(double val, QString name);
+    void rollChanged(double val,QString name);
+    void pitchChanged(double val,QString name);
+    void yawChanged(double val,QString name);
+    void satelliteCountChanged(double val,QString name);
+    void distToWaypointChanged(double val,QString name);
     void groundSpeedChanged(double val, QString name);
     void airSpeedChanged(double val, QString name);
-    void bearingToWaypointChanged(double val, QString name);
+    void bearingToWaypointChanged(double val,QString name);
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
-    quint64 getUnixTime(quint64 time = 0);
+    quint64 getUnixTime(quint64 time=0);
     /** @brief Get the UNIX timestamp in milliseconds, enter milliseconds */
     quint64 getUnixTimeFromMs(quint64 time);
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
 
-    virtual void processParamValueMsg(mavlink_message_t &msg, const QString &paramName, const mavlink_param_value_t &rawValue, mavlink_param_union_t &paramValue);
+    virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
 
     int componentID[256];
     bool componentMulti[256];
@@ -616,11 +602,11 @@ protected:
     quint64 lastSendTimeOpticalFlow; ///< Last HIL Optical Flow message sent
 
 private:
-    void _say(const QString &text, int severity = 6);
+    void _say(const QString& text, int severity = 6);
 
 private:
-    Vehicle                *_vehicle;
-    FirmwarePluginManager  *_firmwarePluginManager;
+    Vehicle*                _vehicle;
+    FirmwarePluginManager*  _firmwarePluginManager;
 };
 
 
