@@ -58,9 +58,7 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
     Q_UNUSED(compId);
     Q_UNUSED(severity);
     
-    UASInterface* uas = _autopilot->vehicle()->uas();
-    Q_ASSERT(uas);
-    if (uasId != uas->getUASID()) {
+    if (uasId != _vehicle->id()) {
         return;
     }
     

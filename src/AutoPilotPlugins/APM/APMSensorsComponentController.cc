@@ -13,6 +13,7 @@
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "APMAutoPilotPlugin.h"
+#include "ParameterManager.h"
 
 #include <QVariant>
 #include <QQmlProperty>
@@ -214,9 +215,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
     Q_UNUSED(compId);
     Q_UNUSED(severity);
     
-    UASInterface* uas = _autopilot->vehicle()->uas();
-    Q_ASSERT(uas);
-    if (uasId != uas->getUASID()) {
+    if (uasId != _vehicle->id()) {
         return;
     }
 
@@ -428,12 +427,12 @@ void APMSensorsComponentController::_refreshParams(void)
     fastRefreshList << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X")
                     << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
     foreach (const QString &paramName, fastRefreshList) {
-        _autopilot->refreshParameter(FactSystem::defaultComponentId, paramName);
+        _vehicle->parameterManager()->refreshParameter(FactSystem::defaultComponentId, paramName);
     }
     
     // Now ask for all to refresh
-    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, QStringLiteral("COMPASS_"));
-    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, QStringLiteral("INS_"));
+    _vehicle->parameterManager()->refreshParametersPrefix(FactSystem::defaultComponentId, QStringLiteral("COMPASS_"));
+    _vehicle->parameterManager()->refreshParametersPrefix(FactSystem::defaultComponentId, QStringLiteral("INS_"));
 }
 
 void APMSensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)

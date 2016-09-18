@@ -12,6 +12,7 @@
 #include "APMAutoPilotPlugin.h"
 #include "APMSensorsComponentController.h"
 #include "APMAirframeComponent.h"
+#include "ParameterManager.h"
 
 // These two list must be kept in sync
 
@@ -62,7 +63,7 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
     // Accelerometer triggers
     triggers << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
 
-    if (_vehicle->parameterExists(FactSystem::defaultComponentId, QStringLiteral("INS_USE"))) {
+    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("INS_USE"))) {
         triggers << QStringLiteral("INS_USE") << QStringLiteral("INS_USE2") << QStringLiteral("INS_USE3");
         triggers << QStringLiteral("INS_ACC2OFFS_X") << QStringLiteral("INS_ACC2OFFS_Y") << QStringLiteral("INS_ACC2OFFS_Z");
         triggers << QStringLiteral("INS_ACC3OFFS_X") << QStringLiteral("INS_ACC3OFFS_Y") << QStringLiteral("INS_ACC3OFFS_Z");
@@ -108,10 +109,10 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
     rgOffsets[2] << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_Y") << QStringLiteral("COMPASS_OFS3_Z");
 
     for (size_t i=0; i<cCompass; i++) {
-        if (_vehicle->getParameterFact(FactSystem::defaultComponentId, rgDevicesIds[i])->rawValue().toInt() != 0 &&
-            _vehicle->getParameterFact(FactSystem::defaultComponentId, rgCompassUse[i])->rawValue().toInt() != 0) {
+        if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgDevicesIds[i])->rawValue().toInt() != 0 &&
+            _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgCompassUse[i])->rawValue().toInt() != 0) {
             for (size_t j=0; j<cOffset; j++) {
-                if (_vehicle->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
+                if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
                     return true;
                 }
             }
@@ -133,7 +134,7 @@ bool APMSensorsComponent::accelSetupNeeded(void) const
     rgOffsets.clear();
 
     // This parameter is not available in all firmware version. Specifically missing from older Solo firmware.
-    if (_vehicle->parameterExists(FactSystem::defaultComponentId, QStringLiteral("INS_USE"))) {
+    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("INS_USE"))) {
         rgUse << QStringLiteral("INS_USE") << QStringLiteral("INS_USE2") << QStringLiteral("INS_USE3");
 
         // We have usage information for the remaining accels, so we can test them sa well
@@ -147,9 +148,9 @@ bool APMSensorsComponent::accelSetupNeeded(void) const
     }
 
     for (int i=0; i<rgAccels.count(); i++) {
-        if (rgUse.count() == 0 || _vehicle->getParameterFact(FactSystem::defaultComponentId, rgUse[i])->rawValue().toInt() != 0) {
+        if (rgUse.count() == 0 || _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgUse[i])->rawValue().toInt() != 0) {
             for (int j=0; j<rgAccels[0].count(); j++) {
-                if (_vehicle->getParameterFact(FactSystem::defaultComponentId, rgAccels[i][j])->rawValue().toFloat() == 0.0f) {
+                if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgAccels[i][j])->rawValue().toFloat() == 0.0f) {
                     return true;
                 }
             }

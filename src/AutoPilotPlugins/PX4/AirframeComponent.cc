@@ -13,6 +13,7 @@
 
 #include "AirframeComponent.h"
 #include "QGCQmlWidgetHolder.h"
+#include "ParameterManager.h"
 
 #if 0
 // Broken by latest mavlink module changes. Not used yet. Comment out for now.
@@ -129,7 +130,7 @@ bool AirframeComponent::requiresSetup(void) const
 
 bool AirframeComponent::setupComplete(void) const
 {
-    return _vehicle->getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt() != 0;
+    return _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt() != 0;
 }
 
 QStringList AirframeComponent::setupCompleteChangedTriggerList(void) const

@@ -59,9 +59,7 @@ APMAutoPilotPlugin::~APMAutoPilotPlugin()
 const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
-        Q_ASSERT(_vehicle);
-
-        if (parametersReady()) {
+        if (_vehicle->parameterManager()->parametersReady()) {
             _airframeComponent = new APMAirframeComponent(_vehicle, this);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
@@ -107,7 +105,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _components.append(QVariant::fromValue((VehicleComponent*)_cameraComponent));
 
             //-- Is there an ESP8266 Connected?
-            if(factExists(FactSystem::ParameterProvider, MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
+            if(_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
                 _esp8266Component = new ESP8266Component(_vehicle, this);
                 _esp8266Component->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_esp8266Component));
@@ -118,26 +116,4 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
     }
 
     return _components;
-}
-
-/// This will perform various checks prior to signalling that the plug in ready
-void APMAutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
-{
-#if 0
-    I believe APM has parameter version stamp, we should check that
-
-            // Check for older parameter version set
-            // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
-            // should be used instead.
-            if (parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF")) {
-        _incorrectParameterVersion = true;
-        qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
-                              "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
-    }
-#endif
-    Q_UNUSED(missingParameters);
-    _parametersReady = true;
-    _missingParameters = false; // we apply only the parameters that do exists on the FactSystem.
-    emit missingParametersChanged(_missingParameters);
-    emit parametersReadyChanged(_parametersReady);
 }
