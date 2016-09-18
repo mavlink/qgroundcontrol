@@ -60,7 +60,7 @@ public:
     ///     value:  remapParamNameMinorVersionRemapMap_t entry
     typedef QMap<int, remapParamNameMinorVersionRemapMap_t> remapParamNameMajorVersionMap_t;
 
-    /// Called when Vehicle is first created to send any necessary mavlink messages to the firmware.
+    /// Called when Vehicle is first created to perform any firmware specific setup.
     virtual void initializeVehicle(Vehicle* vehicle);
 
     /// @return true: Firmware supports all specified capabilites

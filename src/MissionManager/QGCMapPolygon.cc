@@ -13,7 +13,6 @@
 
 #include <QGeoRectangle>
 #include <QDebug>
-#include <QPolygon>
 #include <QJsonArray>
 
 const char* QGCMapPolygon::_jsonPolygonKey = "polygon";
@@ -67,24 +66,61 @@ void QGCMapPolygon::setDirty(bool dirty)
     }
 }
 
-QGeoCoordinate QGCMapPolygon::center(void) const
+QGeoCoordinate QGCMapPolygon::_coordFromPointF(const QPointF& point) const
+{
+    QGeoCoordinate coord;
+
+    if (_polygonPath.count() > 0) {
+        QGeoCoordinate tangentOrigin = _polygonPath[0].value<QGeoCoordinate>();
+        convertNedToGeo(-point.y(), point.x(), 0, tangentOrigin, &coord);
+    }
+
+    return coord;
+}
+
+QPointF QGCMapPolygon::_pointFFromCoord(const QGeoCoordinate& coordinate) const
+{
+    if (_polygonPath.count() > 0) {
+        double y, x, down;
+        QGeoCoordinate tangentOrigin = _polygonPath[0].value<QGeoCoordinate>();
+
+        convertGeoToNed(coordinate, tangentOrigin, &y, &x, &down);
+        return QPointF(x, -y);
+    }
+
+    return QPointF();
+}
+
+QPolygonF QGCMapPolygon::_toPolygonF(void) const
 {
     QPolygonF polygon;
 
-    QGeoCoordinate tangentOrigin = _polygonPath[0].value<QGeoCoordinate>();
-
-    foreach(const QVariant& coordVar, _polygonPath) {
-        double y, x, down;
-
-        convertGeoToNed(coordVar.value<QGeoCoordinate>(), tangentOrigin, &y, &x, &down);
-        polygon << QPointF(x, -y);
+    if (_polygonPath.count() > 2) {
+        for (int i=0; i<_polygonPath.count(); i++) {
+            polygon.append(_pointFFromCoord(_polygonPath[i].value<QGeoCoordinate>()));
+        }
     }
 
-    QGeoCoordinate centerCoord;
-    QPointF centerPoint = polygon.boundingRect().center();
-    convertNedToGeo(-centerPoint.y(), centerPoint.x(), 0, tangentOrigin, &centerCoord);
+    return polygon;
+}
 
-    return centerCoord;
+bool QGCMapPolygon::containsCoordinate(const QGeoCoordinate& coordinate) const
+{
+    if (_polygonPath.count() > 2) {
+        return _toPolygonF().containsPoint(_pointFFromCoord(coordinate), Qt::OddEvenFill);
+    } else {
+        return false;
+    }
+}
+
+QGeoCoordinate QGCMapPolygon::center(void) const
+{
+    if (_polygonPath.count() > 2) {
+        QPointF centerPoint = _toPolygonF().boundingRect().center();
+        return _coordFromPointF(centerPoint);
+    } else {
+        return QGeoCoordinate();
+    }
 }
 
 void QGCMapPolygon::setPath(const QList<QGeoCoordinate>& path)
