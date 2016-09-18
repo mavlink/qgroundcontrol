@@ -14,6 +14,7 @@
 #include "QGCApplication.h"
 #include "FollowMe.h"
 #include "QGroundControlQmlGlobal.h"
+#include "ParameterManager.h"
 
 #ifdef __mobile__
 #include "MobileScreenMgr.h"
@@ -99,7 +100,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 
     Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _autopilotPluginManager, _joystickManager);
     connect(vehicle, &Vehicle::allLinksInactive, this, &MultiVehicleManager::_deleteVehiclePhase1);
-    connect(vehicle->autopilotPlugin(), &AutoPilotPlugin::parametersReadyChanged, this, &MultiVehicleManager::_autopilotParametersReadyChanged);
+    connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MultiVehicleManager::_vehicleParametersReadyChanged);
 
     _vehicles.append(vehicle);
 
@@ -189,7 +190,7 @@ void MultiVehicleManager::_deleteVehiclePhase2(void)
     if (_activeVehicle) {
         _activeVehicle->setActive(true);
         emit activeVehicleAvailableChanged(true);
-        if (_activeVehicle->autopilotPlugin()->parametersReady()) {
+        if (_activeVehicle->parameterManager()->parametersReady()) {
             emit parameterReadyVehicleAvailableChanged(true);
         }
     }
@@ -237,23 +238,23 @@ void MultiVehicleManager::_setActiveVehiclePhase2(void)
         _activeVehicleAvailable = true;
         emit activeVehicleAvailableChanged(true);
 
-        if (_activeVehicle->autopilotPlugin()->parametersReady()) {
+        if (_activeVehicle->parameterManager()->parametersReady()) {
             _parameterReadyVehicleAvailable = true;
             emit parameterReadyVehicleAvailableChanged(true);
         }
     }
 }
 
-void MultiVehicleManager::_autopilotParametersReadyChanged(bool parametersReady)
+void MultiVehicleManager::_vehicleParametersReadyChanged(bool parametersReady)
 {
-    AutoPilotPlugin* autopilot = dynamic_cast<AutoPilotPlugin*>(sender());
+    ParameterManager* paramMgr = dynamic_cast<ParameterManager*>(sender());
 
-    if (!autopilot) {
+    if (!paramMgr) {
         qWarning() << "Dynamic cast failed!";
         return;
     }
 
-    if (autopilot->vehicle() == _activeVehicle) {
+    if (paramMgr->vehicle() == _activeVehicle) {
         _parameterReadyVehicleAvailable = parametersReady;
         emit parameterReadyVehicleAvailableChanged(parametersReady);
     }

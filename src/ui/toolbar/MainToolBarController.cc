@@ -24,6 +24,7 @@
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "UAS.h"
+#include "ParameterManager.h"
 
 MainToolBarController::MainToolBarController(QObject* parent)
     : QObject(parent)
@@ -47,7 +48,7 @@ void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
 {
     // Disconnect the previous one (if any)
     if (_vehicle) {
-        disconnect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
+        disconnect(_vehicle->parameterManager(), &ParameterManager::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
         _mav = NULL;
         _vehicle = NULL;
     }
@@ -57,7 +58,7 @@ void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
     {
         _vehicle = vehicle;
         _mav = vehicle->uas();
-        connect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
+        connect(_vehicle->parameterManager(), &ParameterManager::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
     }
 }
 

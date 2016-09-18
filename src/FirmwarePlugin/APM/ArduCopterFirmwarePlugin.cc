@@ -14,6 +14,7 @@
 #include "ArduCopterFirmwarePlugin.h"
 #include "QGCApplication.h"
 #include "MissionManager.h"
+#include "ParameterManager.h"
 
 bool ArduCopterFirmwarePlugin::_remapParamNameIntialized = false;
 FirmwarePlugin::remapParamNameMajorVersionMap_t ArduCopterFirmwarePlugin::_remapParamName;
@@ -210,7 +211,7 @@ bool ArduCopterFirmwarePlugin::multiRotorCoaxialMotors(Vehicle* vehicle)
 
 bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
 {
-    return vehicle->getParameterFact(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
+    return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
 }
 
 QString ArduCopterFirmwarePlugin::geoFenceRadiusParam(Vehicle* vehicle)

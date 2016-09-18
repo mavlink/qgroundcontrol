@@ -35,18 +35,18 @@ QString PX4RadioComponent::iconResource(void) const
 
 bool PX4RadioComponent::requiresSetup(void) const
 {
-    return _vehicle->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
+    return _vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
 }
 
 bool PX4RadioComponent::setupComplete(void) const
 {
-    if (_vehicle->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
+    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
         // The best we can do to detect the need for a radio calibration is look for attitude
         // controls to be mapped.
         QStringList attitudeMappings;
         attitudeMappings << "RC_MAP_ROLL" << "RC_MAP_PITCH" << "RC_MAP_YAW" << "RC_MAP_THROTTLE";
         foreach(const QString &mapParam, attitudeMappings) {
-            if (_vehicle->getParameterFact(FactSystem::defaultComponentId, mapParam)->rawValue().toInt() == 0) {
+            if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, mapParam)->rawValue().toInt() == 0) {
                 return false;
             }
         }
@@ -76,7 +76,7 @@ QUrl PX4RadioComponent::summaryQmlSource(void) const
 
 QString PX4RadioComponent::prerequisiteSetup(void) const
 {
-    if (_vehicle->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
+    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
         PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
         
         if (!plugin->airframeComponent()->setupComplete()) {
