@@ -49,14 +49,14 @@ bool SensorsComponent::requiresSetup(void) const
 bool SensorsComponent::setupComplete(void) const
 {
     foreach (const QString &triggerParam, _deviceIds) {
-        if (_vehicle->getParameterFact(FactSystem::defaultComponentId, triggerParam)->rawValue().toFloat() == 0.0f) {
+        if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, triggerParam)->rawValue().toFloat() == 0.0f) {
             return false;
         }
     }
 
     if (_vehicle->fixedWing() || _vehicle->vtol()) {
-        if (_vehicle->getParameterFact(FactSystem::defaultComponentId, _airspeedBreaker)->rawValue().toInt() != 162128) {
-            if (_vehicle->getParameterFact(FactSystem::defaultComponentId, _airspeedCal)->rawValue().toFloat() == 0.0f) {
+        if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedBreaker)->rawValue().toInt() != 162128) {
+            if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedCal)->rawValue().toFloat() == 0.0f) {
                 return false;
             }
         }

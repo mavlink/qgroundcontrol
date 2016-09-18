@@ -17,9 +17,9 @@ PX4GeoFenceManager::PX4GeoFenceManager(Vehicle* vehicle)
     , _firstParamLoadComplete(false)
     , _circleRadiusFact(NULL)
 {
-    connect(_vehicle->getParameterManager(), &ParameterManager::parametersReady,  this, &PX4GeoFenceManager::_parametersReady);
+    connect(_vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &PX4GeoFenceManager::_parametersReady);
 
-    if (_vehicle->getParameterManager()->parametersAreReady()) {
+    if (_vehicle->parameterManager()->parametersReady()) {
         _parametersReady();
     }
 }
@@ -34,7 +34,7 @@ void PX4GeoFenceManager::_parametersReady(void)
     if (!_firstParamLoadComplete) {
         _firstParamLoadComplete = true;
 
-        _circleRadiusFact = _vehicle->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("GF_MAX_HOR_DIST"));
+        _circleRadiusFact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("GF_MAX_HOR_DIST"));
         connect(_circleRadiusFact, &Fact::rawValueChanged, this, &PX4GeoFenceManager::_circleRadiusRawValueChanged);
         emit circleRadiusChanged(circleRadius());
 
@@ -48,8 +48,8 @@ void PX4GeoFenceManager::_parametersReady(void)
         _paramLabels.clear();
         for (int i=0; i<paramNames.count(); i++) {
             QString paramName = paramNames[i];
-            if (_vehicle->parameterExists(FactSystem::defaultComponentId, paramName)) {
-                Fact* paramFact = _vehicle->getParameterFact(FactSystem::defaultComponentId, paramName);
+            if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, paramName)) {
+                Fact* paramFact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName);
                 _params << QVariant::fromValue(paramFact);
                 _paramLabels << paramLabels[i];
             }

@@ -93,7 +93,7 @@ private slots:
     void _deleteVehiclePhase1(Vehicle* vehicle);
     void _deleteVehiclePhase2(void);
     void _setActiveVehiclePhase2(void);
-    void _autopilotParametersReadyChanged(bool parametersReady);
+    void _vehicleParametersReadyChanged(bool parametersReady);
     void _sendGCSHeartbeat(void);
     void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
 

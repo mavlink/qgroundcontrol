@@ -13,6 +13,7 @@
 
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
+#include "ParameterManager.h"
 
 VehicleComponent::VehicleComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     QObject(parent),
@@ -49,8 +50,8 @@ void VehicleComponent::setupTriggerSignals(void)
 {
     // Watch for changed on trigger list params
     foreach (const QString &paramName, setupCompleteChangedTriggerList()) {
-        if (_vehicle->parameterExists(FactSystem::defaultComponentId, paramName)) {
-            Fact* fact = _vehicle->getParameterFact(FactSystem::defaultComponentId, paramName);
+        if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, paramName)) {
+            Fact* fact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName);
             connect(fact, &Fact::valueChanged, this, &VehicleComponent::_triggerUpdated);
         }
     }
