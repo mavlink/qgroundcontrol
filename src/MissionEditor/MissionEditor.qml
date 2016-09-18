@@ -154,6 +154,12 @@ QGCView {
 
         Component.onCompleted: start(true /* editMode */)
 
+        onFenceSupportedChanged: {
+            if (!fenceSupported && _editingLayer == _layerGeoFence) {
+                _editingLayer = _layerMission
+            }
+        }
+
         function saveToSelectedFile() {
             if (ScreenTools.isMobile) {
                 qgcView.showDialog(mobileFileSaver, qsTr("Save Fence File"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
@@ -170,9 +176,14 @@ QGCView {
             }
         }
 
-        onFenceSupportedChanged: {
-            if (!fenceSupported && _editingLayer == _layerGeoFence) {
-                _editingLayer = _layerMission
+        function validateBreachReturn() {
+            if (geoFenceController.polygon.path.length > 0) {
+                if (!geoFenceController.polygon.containsCoordinate(geoFenceController.breachReturnPoint)) {
+                    geoFenceController.breachReturnPoint = geoFenceController.polygon.center()
+                }
+                if (!geoFenceController.polygon.containsCoordinate(geoFenceController.breachReturnPoint)) {
+                    geoFenceController.breachReturnPoint = geoFenceController.polygon.path[0]
+                }
             }
         }
     }
@@ -316,6 +327,7 @@ QGCView {
                             break
                         case _layerGeoFence:
                             geoFenceController.breachReturnPoint = coordinate
+                            geoFenceController.validateBreachReturn()
                             break
                         }
                     }
