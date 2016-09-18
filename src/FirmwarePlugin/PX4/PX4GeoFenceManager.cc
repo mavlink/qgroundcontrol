@@ -18,6 +18,10 @@ PX4GeoFenceManager::PX4GeoFenceManager(Vehicle* vehicle)
     , _circleRadiusFact(NULL)
 {
     connect(_vehicle->getParameterManager(), &ParameterManager::parametersReady,  this, &PX4GeoFenceManager::_parametersReady);
+
+    if (_vehicle->getParameterManager()->parametersAreReady()) {
+        _parametersReady();
+    }
 }
 
 PX4GeoFenceManager::~PX4GeoFenceManager()
