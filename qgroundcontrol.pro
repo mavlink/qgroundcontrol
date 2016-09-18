@@ -419,6 +419,8 @@ HEADERS += \
     src/ViewWidgets/CustomCommandWidgetController.h \
     src/ViewWidgets/LogDownload.h \
     src/ViewWidgets/LogDownloadController.h \
+    src/ViewWidgets/VideoStreamingWidget.h \
+    src/ViewWidgets/VideoStreamingWidgetController.h \
     src/ViewWidgets/ViewWidgetController.h \
 }
 
@@ -564,6 +566,8 @@ SOURCES += \
     src/ViewWidgets/CustomCommandWidgetController.cc \
     src/ViewWidgets/LogDownload.cc \
     src/ViewWidgets/LogDownloadController.cc \
+    src/ViewWidgets/VideoStreamingWidget.cc \
+    src/ViewWidgets/VideoStreamingWidgetController.cc \
     src/ViewWidgets/ViewWidgetController.cc
 }
 
@@ -814,6 +818,7 @@ INCLUDEPATH += \
 HEADERS += \
     src/VideoStreaming/VideoItem.h \
     src/VideoStreaming/VideoReceiver.h \
+    src/VideoStreaming/VideoUtils.h \
     src/VideoStreaming/VideoStreaming.h \
     src/VideoStreaming/VideoSurface.h \
     src/VideoStreaming/VideoSurface_p.h \
@@ -821,6 +826,7 @@ HEADERS += \
 SOURCES += \
     src/VideoStreaming/VideoItem.cc \
     src/VideoStreaming/VideoReceiver.cc \
+    src/VideoStreaming/VideoUtils.cc \
     src/VideoStreaming/VideoStreaming.cc \
     src/VideoStreaming/VideoSurface.cc \
 

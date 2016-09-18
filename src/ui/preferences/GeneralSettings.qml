@@ -514,22 +514,11 @@ QGCView {
                                 text:               qsTr("Video Source:")
                                 width:              _labelWidth
                             }
-                            QGCComboBox {
+                            FactComboBox {
                                 id:                 videoSource
                                 width:              _editFieldWidth
-                                model:              QGroundControl.videoManager.videoSourceList
-                                Component.onCompleted: {
-                                    var index = videoSource.find(QGroundControl.videoManager.videoSource)
-                                    if (index >= 0) {
-                                        videoSource.currentIndex = index
-                                    }
-                                }
-                                onActivated: {
-                                    if (index != -1) {
-                                        currentIndex = index
-                                        QGroundControl.videoManager.videoSource = model[index]
-                                    }
-                                }
+                                fact:               QGroundControl.streamingSources
+                                indexModel:         false
                             }
                         }
                         Row {
