@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 // This is an example class header file which is used to describe the QGroundControl
 // coding style. In general almost everything in here has some coding style meaning.
 // Not all style choices are explained.
