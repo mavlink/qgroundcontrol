@@ -204,16 +204,12 @@ QString QGCFileDialog::_getFirstExtensionInFilter(const QString& filter) {
 /// @brief Validates and updates the parameters for the file dialog calls
 void QGCFileDialog::_validate(Options& options)
 {
+    Q_UNUSED(options)
+
     // You can't use QGCFileDialog if QGCApplication is not created yet.
     Q_ASSERT(qgcApp());
     
     Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCFileDialog can only be called from main thread");
-#ifdef __mobile__
-    Q_UNUSED(options)
-#else
-    // On OSX native dialog can hang so we always use Qt dialogs
-    options |= DontUseNativeDialog;
-#endif
     if (MainWindow::instance()) {
     }
 }
