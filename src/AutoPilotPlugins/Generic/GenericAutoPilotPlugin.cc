@@ -25,12 +25,3 @@ const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
     
     return emptyList;
 }
-
-/// This will perform various checks prior to signalling that the plug in ready
-void GenericAutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
-{
-    _parametersReady = true;
-    _missingParameters = missingParameters;
-    emit missingParametersChanged(_missingParameters);
-    emit parametersReadyChanged(_parametersReady);
-}

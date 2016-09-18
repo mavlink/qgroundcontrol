@@ -10,6 +10,7 @@
 
 #include "APMCompassCal.h"
 #include "AutoPilotPlugin.h"
+#include "ParameterManager.h"
 
 QGC_LOGGING_CATEGORY(APMCompassCalLog, "APMCompassCalLog")
 
@@ -613,11 +614,11 @@ void APMCompassCal::startCalibration(void)
         _calWorkerThread->rgCompassAvailable[i] = true;
 
         const char* deviceIdParam = CalWorkerThread::rgCompassParams[i][3];
-        if (_vehicle->parameterExists(-1, deviceIdParam)) {
-            _calWorkerThread->rgCompassAvailable[i] = _vehicle->getParameterFact(-1, deviceIdParam)->rawValue().toInt() > 0;
+        if (_vehicle->parameterManager()->parameterExists(-1, deviceIdParam)) {
+            _calWorkerThread->rgCompassAvailable[i] = _vehicle->parameterManager()->getParameter(-1, deviceIdParam)->rawValue().toInt() > 0;
             for (int j=0; j<3; j++) {
                 const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
-                Fact* paramFact = _vehicle->getParameterFact(-1, offsetParam);
+                Fact* paramFact = _vehicle->parameterManager()->getParameter(-1, offsetParam);
 
                 _rgSavedCompassOffsets[i][j] = paramFact->rawValue().toFloat();
                 paramFact->setRawValue(0.0);
@@ -639,8 +640,8 @@ void APMCompassCal::cancelCalibration(void)
     for (int i=0; i<3; i++) {
         for (int j=0; j<3; j++) {
             const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
-            if (_vehicle->parameterExists(-1, offsetParam)) {
-                _vehicle->getParameterFact(-1, offsetParam)-> setRawValue(_rgSavedCompassOffsets[i][j]);
+            if (_vehicle->parameterManager()->parameterExists(-1, offsetParam)) {
+                _vehicle->parameterManager()->getParameter(-1, offsetParam)-> setRawValue(_rgSavedCompassOffsets[i][j]);
             }
         }
     }

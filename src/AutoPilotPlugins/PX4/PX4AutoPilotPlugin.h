@@ -40,7 +40,8 @@ public:
     ~PX4AutoPilotPlugin();
 
     // Overrides from AutoPilotPlugin
-    virtual const QVariantList& vehicleComponents(void);
+    const QVariantList& vehicleComponents(void) final;
+    void parametersReadyPreChecks(void) final;
 
     // These methods should only be used by objects within the plugin
     AirframeComponent*      airframeComponent(void)     { return _airframeComponent; }
@@ -53,10 +54,6 @@ public:
     PowerComponent*         powerComponent(void)        { return _powerComponent; }
     MotorComponent*         motorComponent(void)        { return _motorComponent; }
     PX4TuningComponent*     tuningComponent(void)       { return _tuningComponent; }
-
-public slots:
-    // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
-    void _parametersReadyPreChecks(bool missingParameters);
 
 private:
     PX4AirframeLoader*      _airframeFacts;

@@ -128,7 +128,7 @@ bool GeoFenceController::_loadJsonFile(QJsonDocument& jsonDoc, QString& errorStr
         return false;
     }
 
-    if (!_activeVehicle->getParameterManager()->loadFromJson(json, false /* required */, errorString)) {
+    if (!_activeVehicle->parameterManager()->loadFromJson(json, false /* required */, errorString)) {
         return false;
     }
 
@@ -274,7 +274,7 @@ void GeoFenceController::saveToFile(const QString& filename)
         fenceFileObject[JsonHelper::jsonGroundStationKey] = JsonHelper::jsonGroundStationValue;
 
         QStringList         paramNames;
-        ParameterManager*   paramMgr = _activeVehicle->getParameterManager();
+        ParameterManager*   paramMgr = _activeVehicle->parameterManager();
         GeoFenceManager*    fenceMgr = _activeVehicle->geoFenceManager();
         QVariantList        params = fenceMgr->params();
 
@@ -322,21 +322,21 @@ void GeoFenceController::removeAll(void)
 
 void GeoFenceController::loadFromVehicle(void)
 {
-    if (_activeVehicle->getParameterManager()->parametersAreReady() && !syncInProgress()) {
+    if (_activeVehicle->parameterManager()->parametersReady() && !syncInProgress()) {
         _activeVehicle->geoFenceManager()->loadFromVehicle();
     } else {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle->getParameterManager()->parametersAreReady() << syncInProgress();
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle->parameterManager()->parametersReady() << syncInProgress();
     }
 }
 
 void GeoFenceController::sendToVehicle(void)
 {
-    if (_activeVehicle->getParameterManager()->parametersAreReady() && !syncInProgress()) {
+    if (_activeVehicle->parameterManager()->parametersReady() && !syncInProgress()) {
         setDirty(false);
         _polygon.setDirty(false);
         _activeVehicle->geoFenceManager()->sendToVehicle(_breachReturnPoint, _polygon.coordinateList());
     } else {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle->getParameterManager()->parametersAreReady() << syncInProgress();
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle->parameterManager()->parametersReady() << syncInProgress();
     }
 }
 

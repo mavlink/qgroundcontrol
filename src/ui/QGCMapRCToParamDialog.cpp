@@ -13,6 +13,7 @@
 
 #include "QGCMapRCToParamDialog.h"
 #include "ui_QGCMapRCToParamDialog.h"
+#include "ParameterManager.h"
 
 #include <QDebug>
 #include <QTimer>
@@ -31,7 +32,7 @@ QGCMapRCToParamDialog::QGCMapRCToParamDialog(QString param_id, UASInterface *mav
 
     // refresh the parameter from onboard to make sure the current value is used
     Vehicle* vehicle = _multiVehicleManager->getVehicleById(mav->getUASID());
-    Fact* paramFact = vehicle->getParameterFact(FactSystem::defaultComponentId, param_id);
+    Fact* paramFact = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, param_id);
     
     ui->minValueDoubleSpinBox->setValue(paramFact->rawMin().toDouble());
     ui->maxValueDoubleSpinBox->setValue(paramFact->rawMax().toDouble());
@@ -43,7 +44,7 @@ QGCMapRCToParamDialog::QGCMapRCToParamDialog(QString param_id, UASInterface *mav
     ui->paramIdLabel->setText(param_id);
 
     connect(paramFact, &Fact::valueChanged, this, &QGCMapRCToParamDialog::_parameterUpdated);
-    vehicle->autopilotPlugin()->refreshParameter(FactSystem::defaultComponentId, param_id);
+    vehicle->parameterManager()->refreshParameter(FactSystem::defaultComponentId, param_id);
 }
 
 QGCMapRCToParamDialog::~QGCMapRCToParamDialog()

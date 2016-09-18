@@ -34,7 +34,7 @@ void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t fai
     QVERIFY(vehicle);
 
     // We should get progress bar updates during load
-    QSignalSpy spyProgress(vehicle->getParameterManager(), SIGNAL(parameterListProgress(float)));
+    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(parameterListProgress(float)));
     QCOMPARE(spyProgress.wait(2000), true);
     arguments = spyProgress.takeFirst();
     QCOMPARE(arguments.count(), 1);
@@ -85,7 +85,7 @@ void ParameterManagerTest::_requestListNoResponse(void)
     QVERIFY(vehicle);
 
     QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QSignalSpy spyProgress(vehicle->getParameterManager(), SIGNAL(parameterListProgress(float)));
+    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(parameterListProgress(float)));
 
     // We should not get any progress bar updates, nor a parameter ready signal
     QCOMPARE(spyProgress.wait(500), false);
@@ -120,7 +120,7 @@ void ParameterManagerTest::_requestListMissingParamFail(void)
     QVERIFY(vehicle);
 
     QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QSignalSpy spyProgress(vehicle->getParameterManager(), SIGNAL(parameterListProgress(float)));
+    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(parameterListProgress(float)));
 
     // We will get progress bar updates, since it will fail after getting partially through the request
     QCOMPARE(spyProgress.wait(2000), true);
@@ -130,7 +130,7 @@ void ParameterManagerTest::_requestListMissingParamFail(void)
 
     // We should get a parameters ready signal, but Vehicle should indicate missing params
     QCOMPARE(spyParamsReady.wait(40000), true);
-    QCOMPARE(vehicle->missingParameters(), true);
+    QCOMPARE(vehicle->parameterManager()->missingParameters(), true);
 
     // User should have been notified
     checkExpectedMessageBox();

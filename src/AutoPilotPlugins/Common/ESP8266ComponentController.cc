@@ -16,6 +16,7 @@
 #include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
 #include "UAS.h"
+#include "ParameterManager.h"
 
 #include <QHostAddress>
 #include <QtEndian>
@@ -393,7 +394,7 @@ ESP8266ComponentController::_commandAck(uint8_t compID, uint16_t command, uint8_
             emit busyChanged();
             qCDebug(ESP8266ComponentControllerLog) << "_commandAck for" << command;
             if(command == MAV_CMD_PREFLIGHT_STORAGE) {
-                _autopilot->refreshAllParameters(MAV_COMP_ID_UDP_BRIDGE);
+                _vehicle->parameterManager()->refreshAllParameters(MAV_COMP_ID_UDP_BRIDGE);
             }
         }
     }

@@ -52,10 +52,6 @@ public:
     APMTuningComponent*         tuningComponent     (void) const { return _tuningComponent; }
     ESP8266Component*           esp8266Component    (void) const { return _esp8266Component; }
 
-public slots:
-    // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
-    void _parametersReadyPreChecks(bool missingParameters);
-
 private:
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
     QVariantList            _components;
