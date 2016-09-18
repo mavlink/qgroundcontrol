@@ -385,7 +385,7 @@ QGCView {
 
                 // Add the complex mission item polygon to the map
                 MapItemView {
-                    model: _editingLayer == _layerMission ? missionController.complexVisualItems : undefined
+                    model: missionController.complexVisualItems
 
                     delegate: MapPolygon {
                         color:      'green'
@@ -396,7 +396,7 @@ QGCView {
 
                 // Add the complex mission item grid to the map
                 MapItemView {
-                    model: _editingLayer == _layerMission ? missionController.complexVisualItems : undefined
+                    model: missionController.complexVisualItems
 
                     delegate: MapPolyline {
                         line.color: "white"
@@ -407,7 +407,7 @@ QGCView {
 
                 // Add the complex mission item exit coordinates
                 MapItemView {
-                    model: _editingLayer == _layerMission ? missionController.complexVisualItems : undefined
+                    model: missionController.complexVisualItems
                     delegate:   exitCoordinateComponent
                 }
 
@@ -425,7 +425,7 @@ QGCView {
 
                 // Add the simple mission items to the map
                 MapItemView {
-                    model:      _editingLayer == _layerMission ? missionController.visualItems : undefined
+                    model:      missionController.visualItems
                     delegate:   missionItemComponent
                 }
 
