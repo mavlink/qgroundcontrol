@@ -30,7 +30,7 @@ QGCFlickable {
             anchors.margins:    _margin
             anchors.left:       parent.left
             anchors.top:        parent.top
-            text:               qsTr("GeoFence (WIP careful!)")
+            text:               qsTr("GeoFence")
             color:              "black"
         }
 
