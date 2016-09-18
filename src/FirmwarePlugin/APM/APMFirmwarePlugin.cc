@@ -540,14 +540,40 @@ void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t* mes
 
 void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
 {
-    // Streams are not started automatically on APM stack
-    vehicle->requestDataStream(MAV_DATA_STREAM_RAW_SENSORS,        2);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTENDED_STATUS,    2);
-    vehicle->requestDataStream(MAV_DATA_STREAM_RC_CHANNELS,        2);
-    vehicle->requestDataStream(MAV_DATA_STREAM_POSITION,           3);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1,             10);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2,             10);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,             3);
+    if (vehicle->isOfflineEditingVehicle()) {
+        switch (vehicle->vehicleType()) {
+        case MAV_TYPE_QUADROTOR:
+        case MAV_TYPE_HEXAROTOR:
+        case MAV_TYPE_OCTOROTOR:
+        case MAV_TYPE_TRICOPTER:
+        case MAV_TYPE_COAXIAL:
+        case MAV_TYPE_HELICOPTER:
+            vehicle->setFirmwareVersion(3, 4, 0);
+            break;
+        case MAV_TYPE_FIXED_WING:
+            vehicle->setFirmwareVersion(3, 5, 0);
+            break;
+        case MAV_TYPE_GROUND_ROVER:
+        case MAV_TYPE_SURFACE_BOAT:
+            vehicle->setFirmwareVersion(3, 0, 0);
+            break;
+        case MAV_TYPE_SUBMARINE:
+            vehicle->setFirmwareVersion(3, 4, 0);
+            break;
+        default:
+            // No version set
+            break;
+        }
+    } else {
+        // Streams are not started automatically on APM stack
+        vehicle->requestDataStream(MAV_DATA_STREAM_RAW_SENSORS,     2);
+        vehicle->requestDataStream(MAV_DATA_STREAM_EXTENDED_STATUS, 2);
+        vehicle->requestDataStream(MAV_DATA_STREAM_RC_CHANNELS,     2);
+        vehicle->requestDataStream(MAV_DATA_STREAM_POSITION,        3);
+        vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1,          10);
+        vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2,          10);
+        vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,          3);
+    }
 }
 
 void APMFirmwarePlugin::setSupportedModes(QList<APMCustomMode> supportedModes)
