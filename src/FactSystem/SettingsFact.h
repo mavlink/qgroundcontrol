@@ -29,7 +29,7 @@ public:
     const SettingsFact& operator=(const SettingsFact& other);
 
 private slots:
-    void _valueChanged(QVariant value);
+    void _rawValueChanged(QVariant value);
 
 private:
     QString _settingGroup;
