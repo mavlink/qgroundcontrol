@@ -408,7 +408,7 @@ QGCView {
                             spacing: ScreenTools.defaultFontPixelWidth
                             QGCLabel {
                                 anchors.baseline:   paletteCombo.baseline
-                                text:               qsTr("Style:")
+                                text:               qsTr("UI Style:")
                                 width:              _labelWidth
                             }
                             QGCComboBox {

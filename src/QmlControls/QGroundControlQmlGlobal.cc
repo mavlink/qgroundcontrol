@@ -19,20 +19,17 @@
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeFact =            NULL;
-FactMetaData* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeMetaData =        NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingVehicleTypeFact =             NULL;
-FactMetaData* QGroundControlQmlGlobal::_offlineEditingVehicleTypeMetaData =         NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingCruiseSpeedFact =             NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingHoverSpeedFact =              NULL;
 SettingsFact* QGroundControlQmlGlobal::_distanceUnitsFact =                         NULL;
 FactMetaData* QGroundControlQmlGlobal::_distanceUnitsMetaData =                     NULL;
 SettingsFact* QGroundControlQmlGlobal::_areaUnitsFact =                             NULL;
 FactMetaData* QGroundControlQmlGlobal::_areaUnitsMetaData =                         NULL;
 SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                            NULL;
 FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                        NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeFact =            NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingVehicleTypeFact =             NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingCruiseSpeedFact =             NULL;
+SettingsFact* QGroundControlQmlGlobal::_offlineEditingHoverSpeedFact =              NULL;
 SettingsFact* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceFact =       NULL;
-FactMetaData* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceMetaData =   NULL;
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
 const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
@@ -229,20 +226,21 @@ void QGroundControlQmlGlobal::setBaseFontPointSize(qreal size)
     }
 }
 
+SettingsFact* QGroundControlQmlGlobal::_createSettingsFact(const QString& name)
+{
+    SettingsFact*   fact;
+    FactMetaData*   metaData = nameToMetaDataMap()[name];
+
+    fact = new SettingsFact(QString(), name, metaData->type(), metaData->rawDefaultValue());
+    fact->setMetaData(metaData);
+
+    return fact;
+}
+
 Fact* QGroundControlQmlGlobal::offlineEditingFirmwareType(void)
 {
     if (!_offlineEditingFirmwareTypeFact) {
-        QStringList     enumStrings;
-        QVariantList    enumValues;
-
-        _offlineEditingFirmwareTypeFact = new SettingsFact(QString(), "OfflineEditingFirmwareType", FactMetaData::valueTypeUint32, (uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA);
-        _offlineEditingFirmwareTypeMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
-
-        enumStrings << tr("ArduPilot Firmware") << tr("PX4 Pro Firmware") << tr("Mavlink Generic Firmware");
-        enumValues << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_PX4) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_GENERIC);
-
-        _offlineEditingFirmwareTypeMetaData->setEnumInfo(enumStrings, enumValues);
-        _offlineEditingFirmwareTypeFact->setMetaData(_offlineEditingFirmwareTypeMetaData);
+        _offlineEditingFirmwareTypeFact = _createSettingsFact(QStringLiteral("OfflineEditingFirmwareType"));
     }
 
     return _offlineEditingFirmwareTypeFact;
@@ -251,19 +249,7 @@ Fact* QGroundControlQmlGlobal::offlineEditingFirmwareType(void)
 Fact* QGroundControlQmlGlobal::offlineEditingVehicleType(void)
 {
     if (!_offlineEditingVehicleTypeFact) {
-        QStringList     enumStrings;
-        QVariantList    enumValues;
-
-        _offlineEditingVehicleTypeFact = new SettingsFact(QString(), "OfflineEditingVehicleType", FactMetaData::valueTypeUint32, (uint32_t)MAV_TYPE_FIXED_WING);
-        _offlineEditingVehicleTypeMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
-
-        enumStrings << tr("Fixedwing") << tr("Multicopter") << tr("VTOL") << tr("Rover") << tr("Sub");
-        enumValues << QVariant::fromValue((uint32_t)MAV_TYPE_FIXED_WING) << QVariant::fromValue((uint32_t)MAV_TYPE_QUADROTOR)
-                   << QVariant::fromValue((uint32_t)MAV_TYPE_VTOL_DUOROTOR) << QVariant::fromValue((uint32_t)MAV_TYPE_GROUND_ROVER)
-                   << QVariant::fromValue((uint32_t)MAV_TYPE_SUBMARINE);
-
-        _offlineEditingVehicleTypeMetaData->setEnumInfo(enumStrings, enumValues);
-        _offlineEditingVehicleTypeFact->setMetaData(_offlineEditingVehicleTypeMetaData);
+        _offlineEditingVehicleTypeFact = _createSettingsFact(QStringLiteral("OfflineEditingVehicleType"));
     }
 
     return _offlineEditingVehicleTypeFact;
@@ -272,7 +258,7 @@ Fact* QGroundControlQmlGlobal::offlineEditingVehicleType(void)
 Fact* QGroundControlQmlGlobal::offlineEditingCruiseSpeed(void)
 {
     if (!_offlineEditingCruiseSpeedFact) {
-        _offlineEditingCruiseSpeedFact = new SettingsFact(QString(), "OfflineEditingCruiseSpeed", FactMetaData::valueTypeDouble, 16.0);
+        _offlineEditingCruiseSpeedFact = _createSettingsFact(QStringLiteral("OfflineEditingCruiseSpeed"));
     }
     return _offlineEditingCruiseSpeedFact;
 }
@@ -280,7 +266,7 @@ Fact* QGroundControlQmlGlobal::offlineEditingCruiseSpeed(void)
 Fact* QGroundControlQmlGlobal::offlineEditingHoverSpeed(void)
 {
     if (!_offlineEditingHoverSpeedFact) {
-        _offlineEditingHoverSpeedFact = new SettingsFact(QString(), "OfflineEditingHoverSpeed", FactMetaData::valueTypeDouble, 4.0);
+        _offlineEditingHoverSpeedFact = _createSettingsFact(QStringLiteral("OfflineEditingHoverSpeed"));
     }
     return _offlineEditingHoverSpeedFact;
 }
@@ -288,6 +274,7 @@ Fact* QGroundControlQmlGlobal::offlineEditingHoverSpeed(void)
 Fact* QGroundControlQmlGlobal::distanceUnits(void)
 {
     if (!_distanceUnitsFact) {
+        // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
         QStringList     enumStrings;
         QVariantList    enumValues;
 
@@ -308,6 +295,7 @@ Fact* QGroundControlQmlGlobal::distanceUnits(void)
 Fact* QGroundControlQmlGlobal::areaUnits(void)
 {
     if (!_areaUnitsFact) {
+        // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
         QStringList     enumStrings;
         QVariantList    enumValues;
 
@@ -328,6 +316,7 @@ Fact* QGroundControlQmlGlobal::areaUnits(void)
 Fact* QGroundControlQmlGlobal::speedUnits(void)
 {
     if (!_speedUnitsFact) {
+        // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
         QStringList     enumStrings;
         QVariantList    enumValues;
 
@@ -347,19 +336,7 @@ Fact* QGroundControlQmlGlobal::speedUnits(void)
 Fact* QGroundControlQmlGlobal::batteryPercentRemainingAnnounce(void)
 {
     if (!_batteryPercentRemainingAnnounceFact) {
-        QStringList     enumStrings;
-        QVariantList    enumValues;
-
-        _batteryPercentRemainingAnnounceFact = new SettingsFact(QString(), "batteryPercentRemainingAnnounce", FactMetaData::valueTypeUint32, 30);
-        _batteryPercentRemainingAnnounceMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
-
-        _batteryPercentRemainingAnnounceMetaData->setDecimalPlaces(0);
-        _batteryPercentRemainingAnnounceMetaData->setShortDescription(tr("Percent announce"));
-        _batteryPercentRemainingAnnounceMetaData->setRawUnits("%");
-        _batteryPercentRemainingAnnounceMetaData->setRawMin(0);
-        _batteryPercentRemainingAnnounceMetaData->setRawMax(100);
-
-        _batteryPercentRemainingAnnounceFact->setMetaData(_batteryPercentRemainingAnnounceMetaData);
+        _batteryPercentRemainingAnnounceFact = _createSettingsFact(QStringLiteral("batteryPercentRemainingAnnounce"));
     }
 
     return _batteryPercentRemainingAnnounceFact;
@@ -371,4 +348,14 @@ bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPo
 
     return QLineF(line1A, line1B).intersect(QLineF(line2A, line2B), &intersectPoint) == QLineF::BoundedIntersection &&
             intersectPoint != line1A && intersectPoint != line1B;
+}
+
+QMap<QString, FactMetaData*>& QGroundControlQmlGlobal::nameToMetaDataMap(void) {
+    static QMap<QString, FactMetaData*> map;
+
+    if (map.isEmpty()) {
+        map = FactMetaData::createMapFromJsonFile(":/json/QGroundControlQmlGlobal.json", NULL);
+    }
+
+    return map;
 }
