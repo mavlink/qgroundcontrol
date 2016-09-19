@@ -28,15 +28,15 @@ matrix:
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
         - os: osx
-          osx_image: xcode7.3
+          osx_image: xcode8
           env: SPEC=macx-clang CONFIG=debug
           sudo: required
         - os: osx
-          osx_image: xcode7.3
+          osx_image: xcode8
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
         - os: osx
-          osx_image: xcode7.3
+          osx_image: xcode8
           env: SPEC=macx-ios-clang CONFIG=release
           sudo: false
 
@@ -125,7 +125,8 @@ install:
         export QT_DIR=Qt5.5-mac-clang/5.5/clang_64 &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
         export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml &&
-        export PATH=/tmp/$QT_DIR/bin:$PATH
+        export PATH=/tmp/$QT_DIR/bin:$PATH &&
+        tools/patch_qt_for_xcode8.sh
         ;
     fi
 
@@ -135,7 +136,8 @@ install:
         tar jxf Qt5.5.1-ios-min.tar.bz2 -C /tmp &&
         export IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang` &&
         export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++` &&
-        export PATH=/tmp/ios/bin:$PATH
+        export PATH=/tmp/ios/bin:$PATH &&
+        tools/patch_qt_for_xcode8.sh
         ;
     fi
 
