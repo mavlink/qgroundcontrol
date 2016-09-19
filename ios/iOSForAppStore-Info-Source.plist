@@ -12,6 +12,10 @@
     <string>Open Source Flight Systems GmbH</string>
     <key>CFBundleIconFile</key>
     <string></string>
+    <key>NSCameraUsageDescription</key>
+    <string>QGC uses UVC devices for video streaming.</string>    
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>We do not access it. Apple thinks we do.</string>    
     <key>UIRequiredDeviceCapabilities</key>
     <array>
         <string>armv7</string>
