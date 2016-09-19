@@ -190,7 +190,7 @@ void QGCXPlaneLink::run()
     QObject::connect(socket, &QUdpSocket::readyRead, this, &QGCXPlaneLink::readBytes);
 
     connect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCXPlaneLink::updateControls, Qt::QueuedConnection);
-    connect(_vehicle->uas(), &UAS::hilActuatorControlsChanged, this, &QGCXPlaneLink::updateActuatorControls, Qt::QueuedConnection);
+    connect(_vehicle, &Vehicle::hilActuatorControlsChanged, this, &QGCXPlaneLink::updateActuatorControls, Qt::QueuedConnection);
 
     connect(this, &QGCXPlaneLink::hilGroundTruthChanged, _vehicle->uas(), &UAS::sendHilGroundTruth, Qt::QueuedConnection);
     connect(this, &QGCXPlaneLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState, Qt::QueuedConnection);
@@ -504,6 +504,10 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
             sendDataRef("sim/flightmodel/controls/wing1r_ail1def", ctl_9 * max_surface_deflection);
             sendDataRef("sim/flightmodel/controls/wing2l_ail1def", ctl_10 * max_surface_deflection);
             sendDataRef("sim/flightmodel/controls/wing2r_ail1def", ctl_11 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing1l_ail2def", ctl_12 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing1r_ail2def", ctl_13 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing2l_ail2def", ctl_14 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing2r_ail2def", ctl_15 * max_surface_deflection);
 
             break;
         }
