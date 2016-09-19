@@ -472,6 +472,11 @@ QGCView {
                                 onClicked:  QGroundControl.linkManager.autoconnectPX4Flow = checked
                             }
                             QGCCheckBox {
+                                text:       qsTr("LibrePilot")
+                                checked:    QGroundControl.linkManager.autoconnectLibrePilot
+                                onClicked:  QGroundControl.linkManager.autoconnectLibrePilot = checked
+                            }
+                            QGCCheckBox {
                                 text:       qsTr("UDP")
                                 checked:    QGroundControl.linkManager.autoconnectUDP
                                 onClicked:  QGroundControl.linkManager.autoconnectUDP = checked
