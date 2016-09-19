@@ -17,7 +17,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariant>
-
+#include <QJsonObject>
 
 /// Holds the meta data associated with a Fact.
 ///
@@ -45,6 +45,8 @@ public:
     FactMetaData(QObject* parent = NULL);
     FactMetaData(ValueType_t type, QObject* parent = NULL);
     FactMetaData(const FactMetaData& other, QObject* parent = NULL);
+
+    static QMap<QString, FactMetaData*> createMapFromJsonFile(const QString& jsonFilename, QObject* metaDataParent);
 
     const FactMetaData& operator=(const FactMetaData& other);
 
@@ -142,6 +144,7 @@ private:
     QVariant _minForType(void) const;
     QVariant _maxForType(void) const;
     void _setAppSettingsTranslators(void);
+    static FactMetaData* _createFromJsonObject(const QJsonObject& json, QObject* metaDataParent);
 
     // Built in translators
     static QVariant _defaultTranslator(const QVariant& from) { return from; }
@@ -225,6 +228,16 @@ private:
     static const BuiltInTranslation_s _rgBuiltInTranslations[];
 
     static const AppSettingsTranslation_s _rgAppSettingsTranslations[];
+
+    static const char*  _nameJsonKey;
+    static const char*  _decimalPlacesJsonKey;
+    static const char*  _typeJsonKey;
+    static const char*  _shortDescriptionJsonKey;
+    static const char*  _longDescriptionJsonKey;
+    static const char*  _unitsJsonKey;
+    static const char*  _defaultValueJsonKey;
+    static const char*  _minJsonKey;
+    static const char*  _maxJsonKey;
 };
 
 #endif
