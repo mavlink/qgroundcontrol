@@ -52,6 +52,7 @@ You need to install Qt as described below instead of using pre-built packages fr
 * Android: [Qt Android Setup](http://doc.qt.io/qt-5/androidgs.html)
 
 ###### Building using Qt Creator
+
 * Launch Qt Creator and open the `qgroundcontrol.pro` project.
 * Select the appropriate kit for your needs:
     * OSX: Desktop Qt 5.5.1 clang 64 bit
@@ -59,6 +60,18 @@ You need to install Qt as described below instead of using pre-built packages fr
     * Windows: Desktop Qt 5.5.1 MSVC2013 32bit
     * Android: Android for armeabi-v7a (GCC 4.9, Qt 5.5.1)
 * Note: iOS builds must be built using xCode: http://doc.qt.io/qt-5/ios-support.html. Use Qt Creator to generate the XCode project (*Run Qmake* from the context menu).
+
+###### Special case for Xcode 8 and Qt 5.5.1
+
+Xcode 8 broke the Qt 5.5.1 build system (qmake). As this is the version of Qt we're using for the moment, you will need to patch your Qt installation to make the build work. This is for both Mac OS X and iOS.
+
+Under the tools directory, you will find a script used by the CI build to patch Qt (`patch_qt_for_xcode8.sh`). You can use this script as a starting point. You will need to edit a few variables it expects to run:
+
+```
+IOSDIR=/<your_qt_path>/Qt/5.5/ios
+OSXDIR=/<your_qt_path>/Qt/5.5/clang_64
+TRAVIS_BUILD_DIR=/<your_github_repo>/qgroundcontrol
+```
 
 #### Vagrant
 
