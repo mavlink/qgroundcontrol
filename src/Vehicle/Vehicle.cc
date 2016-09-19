@@ -469,6 +469,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_WIND_COV:
         _handleWindCov(message);
         break;
+    case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
+        _handleHilActuatorControls(message);
+        break;
 
     // Following are ArduPilot dialect messages
 
@@ -497,6 +500,30 @@ void Vehicle::_handleAutopilotVersion(mavlink_message_t& message)
         versionType = (FIRMWARE_VERSION_TYPE)((autopilotVersion.flight_sw_version >> (8*0)) & 0xFF);
         setFirmwareVersion(majorVersion, minorVersion, patchVersion, versionType);
     }
+}
+
+void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
+{
+    mavlink_hil_actuator_controls_t hil;
+    mavlink_msg_hil_actuator_controls_decode(&message, &hil);
+    emit hilActuatorControlsChanged(hil.time_usec, hil.flags,
+                                    hil.controls[0],
+                                    hil.controls[1],
+                                    hil.controls[2],
+                                    hil.controls[3],
+                                    hil.controls[4],
+                                    hil.controls[5],
+                                    hil.controls[6],
+                                    hil.controls[7],
+                                    hil.controls[8],
+                                    hil.controls[9],
+                                    hil.controls[10],
+                                    hil.controls[11],
+                                    hil.controls[12],
+                                    hil.controls[13],
+                                    hil.controls[14],
+                                    hil.controls[15],
+                                    hil.mode);
 }
 
 void Vehicle::_handleCommandAck(mavlink_message_t& message)
