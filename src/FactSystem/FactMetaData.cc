@@ -750,7 +750,7 @@ int FactMetaData::decimalPlaces(void) const
     return actualDecimalPlaces;
 }
 
-FactMetaData* FactMetaData::_createFromJsonObject(const QJsonObject& json, QObject* metaDataParent)
+FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObject* metaDataParent)
 {
     QString         errorString;
 
@@ -855,7 +855,7 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonFile(const QString& 
             continue;
         }
         QJsonObject jsonObject = jsonValue.toObject();
-        FactMetaData* metaData = _createFromJsonObject(jsonObject, metaDataParent);
+        FactMetaData* metaData = createFromJsonObject(jsonObject, metaDataParent);
 
         if (metaDataMap.contains(metaData->name())) {
             qWarning() << QStringLiteral("Duplicate fact name:") << metaData->name();
