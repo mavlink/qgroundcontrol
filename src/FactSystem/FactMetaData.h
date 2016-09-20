@@ -48,6 +48,8 @@ public:
 
     static QMap<QString, FactMetaData*> createMapFromJsonFile(const QString& jsonFilename, QObject* metaDataParent);
 
+    static FactMetaData* createFromJsonObject(const QJsonObject& json, QObject* metaDataParent);
+
     const FactMetaData& operator=(const FactMetaData& other);
 
     /// Converts from meters to the user specified distance unit
@@ -144,7 +146,6 @@ private:
     QVariant _minForType(void) const;
     QVariant _maxForType(void) const;
     void _setAppSettingsTranslators(void);
-    static FactMetaData* _createFromJsonObject(const QJsonObject& json, QObject* metaDataParent);
 
     // Built in translators
     static QVariant _defaultTranslator(const QVariant& from) { return from; }
