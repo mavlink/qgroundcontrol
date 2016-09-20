@@ -1,15 +1,21 @@
-import QtQuick 2.2
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.2
+import QtQuick                  2.2
+import QtQuick.Controls         1.2
+import QtQuick.Controls.Styles  1.2
+import QtQuick.Layouts          1.2
 
-import QGroundControl.Palette 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 
 TextField {
     id: root
 
-    property bool showUnits: false
+    property bool   showUnits:  false
+    property bool   showHelp:   false
     property string unitsLabel: ""
+
+    signal helpClicked
+
+    property real _helpLayoutWidth: 0
 
     Component.onCompleted: {
         if (typeof qgcTextFieldforwardKeysTo !== 'undefined') {
@@ -17,9 +23,9 @@ TextField {
         }
     }
 
-    property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    textColor:          __qgcPal.textFieldText
+    textColor:          qgcPal.textFieldText
     height:             Math.round(Math.max(25, ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 2.5 : 1.2)))
 
     QGCLabel {
@@ -35,6 +41,8 @@ TextField {
         background: Item {
             id: backgroundItem
 
+            property bool showHelp: control.showHelp && control.activeFocus
+
             Rectangle {
                 anchors.fill:           parent
                 anchors.bottomMargin:   -1
@@ -44,32 +52,58 @@ TextField {
             Rectangle {
                 anchors.fill:           parent
                 border.color:           control.activeFocus ? "#47b" : "#999"
-                color:                  __qgcPal.textField
+                color:                  qgcPal.textField
             }
 
-            Text {
-                id: unitsLabel
+            RowLayout {
+                id:                     unitsHelpLayout
+                anchors.top:            parent.top
+                anchors.bottom:         parent.bottom
+                anchors.rightMargin:    backgroundItem.showHelp ? 0 : control.__contentHeight * 0.333
+                anchors.right:          parent.right
+                spacing:                4
 
-                anchors.top:    parent.top
-                anchors.bottom: parent.bottom
+                Component.onCompleted:  control._helpLayoutWidth = unitsHelpLayout.width
+                onWidthChanged:         control._helpLayoutWidth = unitsHelpLayout.width
 
-                verticalAlignment:  Text.AlignVCenter
-                horizontalAlignment:Text.AlignHCenter
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text:                   control.unitsLabel
+                    font.pointSize:         backgroundItem.showHelp ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+                    font.family:            ScreenTools.normalFontFamily
+                    antialiasing:           true
+                    color:                  control.textColor
+                    visible:                control.showUnits
+                }
 
-                x:              parent.width - width
-                width:          unitsLabelWidthGenerator.width
+                Rectangle {
+                    anchors.margins:    2
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
+                    anchors.right:      parent.right
+                    width:              height * 0.75
+                    color:              control.textColor
+                    radius:             2
+                    visible:            backgroundItem.showHelp
 
-                text:           control.unitsLabel
-                font.pointSize: ScreenTools.defaultFontPointSize
-                font.family:    ScreenTools.normalFontFamily
-                antialiasing:   true
+                    QGCLabel {
+                        anchors.fill:           parent
+                        verticalAlignment:      Text.AlignVCenter
+                        horizontalAlignment:    Text.AlignHCenter
+                        color:                  qgcPal.textField
+                        text:                   "?"
+                    }
+                }
+            }
 
-                color:          control.textColor
-                visible:        control.showUnits
+            MouseArea {
+                anchors.fill:   unitsHelpLayout
+                enabled:        control.activeFocus
+                onClicked:      root.helpClicked()
             }
         }
 
-        padding.right: control.showUnits ? unitsLabelWidthGenerator.width : control.__contentHeight * 0.333
+        padding.right: control._helpLayoutWidth //control.showUnits ? unitsLabelWidthGenerator.width : control.__contentHeight * 0.333
     }
 
     onActiveFocusChanged: {
