@@ -60,7 +60,7 @@ Item {
 
     readonly property string fwAcroModeName:            qsTr("Stabilized")
     readonly property string mrAcroModeName:            qsTr("Acro")
-    readonly property string fwAcroModeDescription:     qsTr("The angular rates are controlled, but not the attitude. ")
+    readonly property string fwAcroModeDescription:     qsTr("Roll/pitch angles and rudder deflection are controlled. ")
     readonly property string mrAcroModeDescription:     qsTr("The angular rates are controlled, but not the attitude. ")
 
     readonly property string altCtlModeName:            qsTr("Altitude")
