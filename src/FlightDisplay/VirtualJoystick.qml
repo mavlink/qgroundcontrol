@@ -17,7 +17,7 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
 
 Item {
-    QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
+    //property bool useLightColors - Must be passed in from loaded
 
     Timer {
         interval:   40  // 25Hz, same as real joystick rate
@@ -39,7 +39,7 @@ Item {
         width:                  parent.height
         height:                 parent.height
         yAxisThrottle:          true
-        lightColors:            !isBackgroundDark
+        lightColors:            useLightColors
     }
 
     JoystickThumbPad {
@@ -50,6 +50,6 @@ Item {
         anchors.bottom:         parent.bottom
         width:                  parent.height
         height:                 parent.height
-        lightColors:            !isBackgroundDark
+        lightColors:            useLightColors
     }
 }
