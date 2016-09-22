@@ -92,6 +92,14 @@ public:
         return _sensorHilEnabled;
     }
 
+    bool useHilActuatorControls() {
+        return _useHilActuatorControls;
+    }
+
+signals:
+    /** @brief Sensor leve HIL state changed */
+    void useHilActuatorControlsChanged(bool enabled);
+
 public slots:
 //    void setAddress(QString address);
     void setPort(int port);
@@ -99,6 +107,25 @@ public slots:
     void setRemoteHost(const QString& host);
     /** @brief Send new control states to the simulation */
     void updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
+    /** @brief Send new control commands to the simulation */
+    void updateActuatorControls(quint64 time, quint64 flags,
+                                float ctl_0,
+                                float ctl_1,
+                                float ctl_2,
+                                float ctl_3,
+                                float ctl_4,
+                                float ctl_5,
+                                float ctl_6,
+                                float ctl_7,
+                                float ctl_8,
+                                float ctl_9,
+                                float ctl_10,
+                                float ctl_11,
+                                float ctl_12,
+                                float ctl_13,
+                                float ctl_14,
+                                float ctl_15,
+                                quint8 mode);
     /** @brief Set the simulator version as text string */
     void setVersion(const QString& version);
     /** @brief Set the simulator version as integer */
@@ -109,6 +136,8 @@ public slots:
             _sensorHilEnabled = enable;
             emit sensorHilChanged(enable);
     }
+
+    void enableHilActuatorControls(bool enable);
 
     void processError(QProcess::ProcessError err);
 
@@ -199,9 +228,11 @@ protected:
     quint64 simUpdateLastGroundTruth;
     float simUpdateHz;
     bool _sensorHilEnabled;
+    bool _useHilActuatorControls;
     bool _should_exit;
 
     void setName(QString name);
+    void sendDataRef(QString ref, float value);
 };
 
 #endif // QGCXPLANESIMULATIONLINK_H

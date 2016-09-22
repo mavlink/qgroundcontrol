@@ -49,6 +49,7 @@ QGCXPlaneLink::QGCXPlaneLink(Vehicle* vehicle, QString remoteHost, QHostAddress 
     simUpdateLastGroundTruth(QGC::groundTimeMilliseconds()),
     simUpdateHz(0),
     _sensorHilEnabled(true),
+    _useHilActuatorControls(true),
     _should_exit(false)
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
@@ -88,6 +89,7 @@ void QGCXPlaneLink::loadSettings()
     setVersion(settings.value("XPLANE_VERSION", 10).toInt());
     selectAirframe(settings.value("AIRFRAME", "default").toString());
     _sensorHilEnabled = settings.value("SENSOR_HIL", _sensorHilEnabled).toBool();
+    _useHilActuatorControls = settings.value("ACTUATOR_HIL", _useHilActuatorControls).toBool();
     settings.endGroup();
 }
 
@@ -100,6 +102,7 @@ void QGCXPlaneLink::storeSettings()
     settings.setValue("XPLANE_VERSION", xPlaneVersion);
     settings.setValue("AIRFRAME", airframeName);
     settings.setValue("SENSOR_HIL", _sensorHilEnabled);
+    settings.setValue("ACTUATOR_HIL", _useHilActuatorControls);
     settings.endGroup();
 }
 
@@ -136,6 +139,23 @@ void QGCXPlaneLink::setVersion(unsigned int version)
     if (changed) emit versionChanged(QString("X-Plane %1").arg(xPlaneVersion));
 }
 
+void QGCXPlaneLink::enableHilActuatorControls(bool enable)
+{
+    if (enable != _useHilActuatorControls) {
+        _useHilActuatorControls = enable;
+    }
+
+    /* Only use override for new message and specific airframes */
+    MAV_TYPE type = _vehicle->vehicleType();
+    float value = 0.0f;
+    if (type == MAV_TYPE_VTOL_RESERVED2) {
+        value = (enable ? 1.0f : 0.0f);
+    }
+
+    sendDataRef("sim/operation/override/override_control_surfaces", value);
+    emit useHilActuatorControlsChanged(enable);
+}
+
 
 /**
  * @brief Runs the thread
@@ -170,6 +190,7 @@ void QGCXPlaneLink::run()
     QObject::connect(socket, &QUdpSocket::readyRead, this, &QGCXPlaneLink::readBytes);
 
     connect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCXPlaneLink::updateControls, Qt::QueuedConnection);
+    connect(_vehicle, &Vehicle::hilActuatorControlsChanged, this, &QGCXPlaneLink::updateActuatorControls, Qt::QueuedConnection);
 
     connect(this, &QGCXPlaneLink::hilGroundTruthChanged, _vehicle->uas(), &UAS::sendHilGroundTruth, Qt::QueuedConnection);
     connect(this, &QGCXPlaneLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState, Qt::QueuedConnection);
@@ -217,6 +238,9 @@ void QGCXPlaneLink::run()
     ip.use_ip = 1;
 
     writeBytesSafe((const char*)&ip, sizeof(ip));
+
+    /* Call function which makes sure individual control override is enabled/disabled */
+    enableHilActuatorControls(_useHilActuatorControls);
 
     _should_exit = false;
 
@@ -338,6 +362,11 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
 
 void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
 {
+    /* Only use HIL_CONTROL when the checkbox is unchecked */
+    if (_useHilActuatorControls) {
+        //qDebug() << "received HIL_CONTROL but not using it";
+        return;
+    }
     #pragma pack(push, 1)
     struct payload {
         char b[5];
@@ -398,6 +427,117 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
         p.f[3] = throttle;
         writeBytesSafe((const char*)&p, sizeof(p));
     }
+}
+
+void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ctl_0, float ctl_1, float ctl_2, float ctl_3, float ctl_4, float ctl_5, float ctl_6, float ctl_7, float ctl_8, float ctl_9, float ctl_10, float ctl_11, float ctl_12, float ctl_13, float ctl_14, float ctl_15, quint8 mode)
+{
+    if (!_useHilActuatorControls) {
+        //qDebug() << "received HIL_ACTUATOR_CONTROLS but not using it";
+        return;
+    }
+
+    Q_UNUSED(time);
+    Q_UNUSED(flags);
+    Q_UNUSED(mode);
+    Q_UNUSED(ctl_12);
+    Q_UNUSED(ctl_13);
+    Q_UNUSED(ctl_14);
+    Q_UNUSED(ctl_15);
+
+    #pragma pack(push, 1)
+    struct payload {
+        char b[5];
+        int index;
+        float f[8];
+    } p;
+    #pragma pack(pop)
+
+    p.b[0] = 'D';
+    p.b[1] = 'A';
+    p.b[2] = 'T';
+    p.b[3] = 'A';
+    p.b[4] = '\0';
+
+    /* Initialize with zeroes */
+    memset(p.f, 0, sizeof(p.f));
+
+    switch (_vehicle->vehicleType()) {
+        case MAV_TYPE_QUADROTOR:
+        case MAV_TYPE_HEXAROTOR:
+        case MAV_TYPE_OCTOROTOR:
+        {
+            p.f[0] = ctl_0;         ///< X-Plane Engine 1
+            p.f[1] = ctl_1;         ///< X-Plane Engine 2
+            p.f[2] = ctl_2;         ///< X-Plane Engine 3
+            p.f[3] = ctl_3;         ///< X-Plane Engine 4
+            p.f[4] = ctl_4;         ///< X-Plane Engine 5
+            p.f[5] = ctl_5;         ///< X-Plane Engine 6
+            p.f[6] = ctl_6;         ///< X-Plane Engine 7
+            p.f[7] = ctl_7;         ///< X-Plane Engine 8
+
+            /* Direct throttle control */
+            p.index = 25;
+            writeBytesSafe((const char*)&p, sizeof(p));
+            break;
+        }
+        case MAV_TYPE_VTOL_RESERVED2:
+        {
+            /**
+             * Tailsitter with four control flaps and eight motors.
+             */
+
+            /* Throttle channels */
+            p.f[0] = ctl_0;
+            p.f[1] = ctl_1;
+            p.f[2] = ctl_2;
+            p.f[3] = ctl_3;
+            p.f[4] = ctl_4;
+            p.f[5] = ctl_5;
+            p.f[6] = ctl_6;
+            p.f[7] = ctl_7;
+            p.index = 25;
+            writeBytesSafe((const char*)&p, sizeof(p));
+
+            /* Control individual actuators */
+            float max_surface_deflection = 30.0f; // Degrees
+            sendDataRef("sim/flightmodel/controls/wing1l_ail1def", ctl_8 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing1r_ail1def", ctl_9 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing2l_ail1def", ctl_10 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing2r_ail1def", ctl_11 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing1l_ail2def", ctl_12 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing1r_ail2def", ctl_13 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing2l_ail2def", ctl_14 * max_surface_deflection);
+            sendDataRef("sim/flightmodel/controls/wing2r_ail2def", ctl_15 * max_surface_deflection);
+
+            break;
+        }
+        default:
+        {
+            /* direct pass-through, normal fixed-wing. */
+            p.f[0] = -ctl_1;        ///< X-Plane Elevator
+            p.f[1] = ctl_0;         ///< X-Plane Aileron
+            p.f[2] = ctl_2;         ///< X-Plane Rudder
+
+            /* Send to group 8, which equals manual controls */
+            p.index = 8;
+            writeBytesSafe((const char*)&p, sizeof(p));
+
+            /* Send throttle to all eight motors */
+            p.index = 25;
+            p.f[0] = ctl_3;
+            p.f[1] = ctl_3;
+            p.f[2] = ctl_3;
+            p.f[3] = ctl_3;
+            p.f[4] = ctl_3;
+            p.f[5] = ctl_3;
+            p.f[6] = ctl_3;
+            p.f[7] = ctl_3;
+            writeBytesSafe((const char*)&p, sizeof(p));
+            break;
+        }
+
+    }
+
 }
 
 Eigen::Matrix3f euler_to_wRo(double yaw, double pitch, double roll) {
@@ -983,4 +1123,40 @@ void QGCXPlaneLink::setName(QString name)
 {
     this->name = name;
     //    emit nameChanged(this->name);
+}
+
+void QGCXPlaneLink::sendDataRef(QString ref, float value)
+{
+    #pragma pack(push, 1)
+    struct payload {
+        char b[5];
+        float value;
+        char name[500];
+    } dref;
+    #pragma pack(pop)
+
+    dref.b[0] = 'D';
+    dref.b[1] = 'R';
+    dref.b[2] = 'E';
+    dref.b[3] = 'F';
+    dref.b[4] = '0';
+
+    /* Set value */
+    dref.value = value;
+
+    /* Fill name with zeroes */
+    memset(dref.name, 0, sizeof(dref.name));
+
+    /* Set dref name */
+
+    /* Send command */
+    QByteArray ba = ref.toUtf8();
+    if (ba.length() > 500) {
+        return;
+    }
+
+    for (int i = 0; i < ba.length(); i++) {
+        dref.name[i] = ba.at(i);
+    }
+    writeBytesSafe((const char*)&dref, sizeof(dref));
 }
