@@ -7,10 +7,10 @@ environment:
   matrix:
 #  - BUILD: 'Debug'
 #    CONFIG: debug
-#    SHADOW_BUILD_DIR: $(APPVEYOR_BUILD_FOLDER)\build_windows_debug
+#    SHADOW_BUILD_DIR: C:\projects\qgroundcontrol\build_windows_debug
   - BUILD: 'Release'
     CONFIG: installer
-    SHADOW_BUILD_DIR: $(APPVEYOR_BUILD_FOLDER)\build_windows_install
+    SHADOW_BUILD_DIR: C:\projects\qgroundcontrol\build_windows_install
 
 install:
   - git submodule update --init --recursive
