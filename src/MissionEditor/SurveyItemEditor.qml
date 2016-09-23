@@ -65,7 +65,7 @@ Rectangle {
                sensorHeight:   15.6
                imageWidth:     5184
                imageHeight:    3456
-               focalLength:    14.36
+               focalLength:    22
            }
    }
 
