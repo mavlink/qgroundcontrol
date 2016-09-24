@@ -61,11 +61,11 @@ Rectangle {
            }
            ListElement {
                text:           qsTr("Canon EOS-M 22mm")
-               sensorWidth:    23.5
-               sensorHeight:   15.6
+               sensorWidth:    22.3
+               sensorHeight:   14.9
                imageWidth:     5184
                imageHeight:    3456
-               focalLength:    14.36
+               focalLength:    22
            }
    }
 
