@@ -47,7 +47,7 @@ exists($$MAVLINKPATH/common) {
         INCLUDEPATH += $$MAVLINKPATH/common
     }
 } else {
-    error($$sprintf("MAVLink folder does not exist at '%1'! Run 'git submodule init && git submodule update' on the command line.",$$MAVLINKPATH_REL))
+    error($$sprintf("MAVLink folder does not exist at '%1'!",$$MAVLINKPATH_REL))
 }
 
 #
