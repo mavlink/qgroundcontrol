@@ -17,6 +17,7 @@
 
 #include <QtGlobal>
 #include <QApplication>
+#include <QIcon>
 #include <QSslSocket>
 #include <QProcessEnvironment>
 #include <QHostAddress>
@@ -210,6 +211,10 @@ int main(int argc, char *argv[])
 
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
+
+#ifdef Q_OS_LINUX
+    QApplication::setWindowIcon(QIcon(":/res/resources/icons/qgroundcontrol.ico"));
+#endif /* Q_OS_LINUX */
 
     // There appears to be a threading issue in qRegisterMetaType which can cause it to throw a qWarning
     // about duplicate type converters. This is caused by a race condition in the Qt code. Still working
