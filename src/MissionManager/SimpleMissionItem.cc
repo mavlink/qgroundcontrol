@@ -307,6 +307,10 @@ QString SimpleMissionItem::abbreviation() const
         return QStringLiteral("T");
     case MavlinkQmlSingleton::MAV_CMD_NAV_LAND:
         return QStringLiteral("L");
+    case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF:
+        return QStringLiteral("VT");
+    case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_LAND:
+        return QStringLiteral("VL");
     }
 }
 
