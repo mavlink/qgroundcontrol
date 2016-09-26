@@ -93,6 +93,14 @@ Item {
     }
 
     Rectangle {
+        anchors.fill:       parent
+        radius:             width / 2
+        border.color:       mapPal.thumbJoystick
+        border.width:       2
+        color:              "transparent"
+    }
+
+    Rectangle {
         width:  hatWidth
         height: hatWidth
         radius: hatWidthHalf
