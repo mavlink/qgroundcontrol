@@ -283,8 +283,6 @@ bool RallyPointController::rallyPointsSupported(void) const
 
 void RallyPointController::removePoint(QObject* rallyPoint)
 {
-    QObject* prevPoint = _points[0];
-
     int foundIndex = 0;
     for (foundIndex=0; foundIndex<_points.count(); foundIndex++) {
         if (_points[foundIndex] == rallyPoint) {
