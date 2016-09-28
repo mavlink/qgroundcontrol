@@ -63,6 +63,11 @@ FlightMap {
         Component.onCompleted: start(false /* editMode */)
     }
 
+    RallyPointController {
+        id: rallyPointController
+        Component.onCompleted: start(false /* editMode */)
+    }
+
     // Add trajectory points to the map
     MapItemView {
         model: _mainIsMap ? _activeVehicle ? _activeVehicle.trajectoryPoints : 0 : 0
@@ -126,6 +131,23 @@ FlightMap {
         z:              QGroundControl.zOrderMapItems
     }
 
+    // Rally points on map
+    MapItemView {
+        model: rallyPointController.points
+
+        delegate: MapQuickItem {
+            id:             itemIndicator
+            anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+            coordinate:     object.coordinate
+            z:              QGroundControl.zOrderMapItems
+
+            sourceItem: MissionItemIndexLabel {
+                id:         itemIndexLabel
+                label:      qsTr("R", "rally point map item label")
+            }
+        }
+    }
+
     // GoTo here waypoint
     MapQuickItem {
         coordinate:     _gotoHereCoordinate
@@ -135,8 +157,8 @@ FlightMap {
         anchorPoint.y:  sourceItem.height / 2
 
         sourceItem: MissionItemIndexLabel {
-            isCurrentItem:  true
-            label:          qsTr("G", "Goto here waypoint") // second string is translator's hint.
+            checked: true
+            label:   qsTr("G", "Goto here waypoint") // second string is translator's hint.
         }
     }    
 

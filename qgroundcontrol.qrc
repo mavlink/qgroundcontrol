@@ -55,7 +55,7 @@
         <file alias="QGroundControl/Controls/JoystickThumbPad.qml">src/QmlControls/JoystickThumbPad.qml</file>
         <file alias="QGroundControl/Controls/MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="QGroundControl/Controls/MainToolBarIndicators.qml">src/ui/toolbar/MainToolBarIndicators.qml</file>
-        <file alias="QGroundControl/Controls/MissionItemEditor.qml">src/QmlControls/MissionItemEditor.qml</file>
+        <file alias="QGroundControl/Controls/MissionItemEditor.qml">src/MissionEditor/MissionItemEditor.qml</file>
         <file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">src/QmlControls/MissionItemIndexLabel.qml</file>
         <file alias="QGroundControl/Controls/MissionItemStatus.qml">src/MissionEditor/MissionItemStatus.qml</file>
         <file alias="QGroundControl/Controls/MissionCommandDialog.qml">src/QmlControls/MissionCommandDialog.qml</file>
@@ -63,6 +63,7 @@
         <file alias="QGroundControl/Controls/ModeSwitchDisplay.qml">src/QmlControls/ModeSwitchDisplay.qml</file>
         <file alias="QGroundControl/Controls/ParameterEditor.qml">src/QmlControls/ParameterEditor.qml</file>
         <file alias="QGroundControl/Controls/ParameterEditorDialog.qml">src/QmlControls/ParameterEditorDialog.qml</file>
+        <file alias="QGroundControl/Controls/RallyPointItemEditor.qml">src/MissionEditor/RallyPointItemEditor.qml</file>
         <file alias="QGroundControl/Controls/RCChannelMonitor.qml">src/QmlControls/RCChannelMonitor.qml</file>
         <file alias="QGroundControl/Controls/QGCButton.qml">src/QmlControls/QGCButton.qml</file>
         <file alias="QGroundControl/Controls/QGCCheckBox.qml">src/QmlControls/QGCCheckBox.qml</file>
@@ -83,6 +84,7 @@
         <file alias="QGroundControl/Controls/QGCViewDialog.qml">src/QmlControls/QGCViewDialog.qml</file>
         <file alias="QGroundControl/Controls/QGCViewMessage.qml">src/QmlControls/QGCViewMessage.qml</file>
         <file alias="QGroundControl/Controls/QGCViewPanel.qml">src/QmlControls/QGCViewPanel.qml</file>
+        <file alias="QGroundControl/Controls/RallyPointEditorHeader.qml">src/MissionEditor/RallyPointEditorHeader.qml</file>
         <file alias="QGroundControl/Controls/RoundButton.qml">src/QmlControls/RoundButton.qml</file>
         <file alias="QGroundControl/Controls/SetupPage.qml">src/AutoPilotPlugins/Common/SetupPage.qml</file>
         <file alias="QGroundControl/Controls/SignalStrength.qml">src/ui/toolbar/SignalStrength.qml</file>
@@ -190,5 +192,6 @@
         <file alias="Vehicle/WindFact.json">src/Vehicle/WindFact.json</file>
         <file alias="Vehicle/VibrationFact.json">src/Vehicle/VibrationFact.json</file>
         <file alias="QGroundControlQmlGlobal.json">src/QmlControls/QGroundControlQmlGlobal.json</file>
+        <file alias="RallyPoint.json">src/MissionManager/RallyPoint.json</file>
     </qresource>
 </RCC>

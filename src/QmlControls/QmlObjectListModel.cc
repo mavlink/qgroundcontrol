@@ -185,6 +185,7 @@ QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
     beginResetModel();
     _objectList = newlist;
     endResetModel();
+    emit countChanged(count());
     return oldlist;
 }
 

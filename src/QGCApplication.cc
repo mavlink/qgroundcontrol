@@ -82,6 +82,8 @@
 #include "CoordinateVector.h"
 #include "MainToolBarController.h"
 #include "MissionController.h"
+#include "GeoFenceController.h"
+#include "RallyPointController.h"
 #include "VideoManager.h"
 #include "VideoSurface.h"
 #include "VideoReceiver.h"
@@ -93,7 +95,6 @@
 #include "PositionManager.h"
 #include "FollowMe.h"
 #include "MissionCommandTree.h"
-#include "GeoFenceController.h"
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
 
@@ -126,6 +127,7 @@ QGCApplication* QGCApplication::_app = NULL;
 const char* QGCApplication::parameterFileExtension =    "params";
 const char* QGCApplication::missionFileExtension =      "mission";
 const char* QGCApplication::fenceFileExtension =        "fence";
+const char* QGCApplication::rallyPointFileExtension =   "rally";
 const char* QGCApplication::telemetryFileExtension =     "tlog";
 
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
@@ -400,11 +402,12 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     qmlRegisterType<MainToolBarController>              ("QGroundControl.Controllers", 1, 0, "MainToolBarController");
     qmlRegisterType<MissionController>                  ("QGroundControl.Controllers", 1, 0, "MissionController");
+    qmlRegisterType<GeoFenceController>                 ("QGroundControl.Controllers", 1, 0, "GeoFenceController");
+    qmlRegisterType<RallyPointController>               ("QGroundControl.Controllers", 1, 0, "RallyPointController");
     qmlRegisterType<ValuesWidgetController>             ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
     qmlRegisterType<QGCMobileFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QGCMobileFileDialogController");
     qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
     qmlRegisterType<JoystickConfigController>           ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
-    qmlRegisterType<GeoFenceController>                 ("QGroundControl.Controllers", 1, 0, "GeoFenceController");
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");

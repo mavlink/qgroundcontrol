@@ -196,7 +196,7 @@ bool MissionItem::load(const QJsonObject& json, QString& errorString)
     setCommand((MAV_CMD)json[_jsonCommandKey].toInt());
 
     QGeoCoordinate coordinate;
-    if (!JsonHelper::toQGeoCoordinate(json[_jsonCoordinateKey], coordinate, true /* altitudeRequired */, errorString)) {
+    if (!JsonHelper::loadGeoCoordinate(json[_jsonCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
         return false;
     }
     setParam5(coordinate.latitude());

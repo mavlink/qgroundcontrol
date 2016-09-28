@@ -141,7 +141,7 @@ Rectangle {
                     anchors.horizontalCenter:   parent.horizontalCenter
                     y:                          availableHeight - (availableHeight * object.altPercent)
                     small:                      true
-                    isCurrentItem:              object.isCurrentItem
+                    checked:                    object.isCurrentItem
                     label:                      object.abbreviation
                     visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
                 }
