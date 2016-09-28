@@ -142,18 +142,10 @@ void QGCMapPolygon::setPath(const QVariantList& path)
 
 void QGCMapPolygon::saveToJson(QJsonObject& json)
 {
-    QJsonArray rgPoints;
+    QJsonValue jsonValue;
 
-    // Add all points to the array
-    for (int i=0; i<_polygonPath.count(); i++) {
-        QJsonValue jsonPoint;
-
-        JsonHelper::writeQGeoCoordinate(jsonPoint, (*this)[i], false /* writeAltitude */);
-        rgPoints.append(jsonPoint);
-    }
-
-    json.insert(_jsonPolygonKey, QJsonValue(rgPoints));
-
+    JsonHelper::saveGeoCoordinateArray(_polygonPath, false /* writeAltitude*/, jsonValue);
+    json.insert(_jsonPolygonKey, jsonValue);
     setDirty(false);
 }
 
@@ -170,26 +162,11 @@ bool QGCMapPolygon::loadFromJson(const QJsonObject& json, bool required, QString
         return true;
     }
 
-    QList<QJsonValue::Type> types;
-
-    types << QJsonValue::Array;
-    if (!JsonHelper::validateKeyTypes(json, QStringList(_jsonPolygonKey), types, errorString)) {
+    if (!JsonHelper::loadGeoCoordinateArray(json[_jsonPolygonKey], false /* altitudeRequired */, _polygonPath, errorString)) {
         return false;
     }
-
-    QList<QGeoCoordinate> rgPoints;
-    QJsonArray jsonPoints =  json[_jsonPolygonKey].toArray();
-    for (int i=0; i<jsonPoints.count(); i++) {
-        QGeoCoordinate coordinate;
-
-        if (!JsonHelper::toQGeoCoordinate(jsonPoints[i], coordinate, false /* altitudeRequired */, errorString)) {
-            return false;
-        }
-        rgPoints.append(coordinate);
-    }
-    setPath(rgPoints);
-
     setDirty(false);
+    emit pathChanged();
 
     return true;
 }

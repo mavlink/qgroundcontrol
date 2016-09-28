@@ -216,7 +216,7 @@ void SurveyMissionItem::save(QJsonObject& saveObject) const
         const QVariant& polyVar = _polygonPath[i];
 
         QJsonValue jsonValue;
-        JsonHelper::writeQGeoCoordinate(jsonValue, polyVar.value<QGeoCoordinate>(), false /* writeAltitude */);
+        JsonHelper::saveGeoCoordinate(polyVar.value<QGeoCoordinate>(), false /* writeAltitude */, jsonValue);
         polygonArray += jsonValue;
     }
 
@@ -294,7 +294,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, QString& errorStr
         const QJsonValue& pointValue = polygonArray[i];
 
         QGeoCoordinate pointCoord;
-        if (!JsonHelper::toQGeoCoordinate(pointValue, pointCoord, false /* altitudeRequired */, errorString)) {
+        if (!JsonHelper::loadGeoCoordinate(pointValue, false /* altitudeRequired */, pointCoord, errorString)) {
             _clear();
             return false;
         }

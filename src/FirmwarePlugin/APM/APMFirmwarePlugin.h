@@ -18,6 +18,7 @@
 #include "QGCLoggingCategory.h"
 #include "APMParameterMetaData.h"
 #include "APMGeoFenceManager.h"
+#include "APMRallyPointManager.h"
 
 #include <QAbstractSocket>
 
@@ -93,6 +94,7 @@ public:
     void                getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) final { APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
     QObject*            loadParameterMetaData           (const QString& metaDataFile);
     GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) { return new APMGeoFenceManager(vehicle); }
+    RallyPointManager*  newRallyPointManager            (Vehicle* vehicle) { return new APMRallyPointManager(vehicle); }
 
     QString     getParameterMetaDataFile(Vehicle* vehicle);
 

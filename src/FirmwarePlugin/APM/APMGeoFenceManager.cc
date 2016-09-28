@@ -99,6 +99,7 @@ void APMGeoFenceManager::loadFromVehicle(void)
         return;
     }
 
+    _breachReturnPoint = QGeoCoordinate();
     _polygon.clear();
 
     if (!_geoFenceSupported()) {
@@ -112,7 +113,8 @@ void APMGeoFenceManager::loadFromVehicle(void)
     int minFencePoints = 6;
     qCDebug(GeoFenceManagerLog) << "APMGeoFenceManager::loadFromVehicle" << cFencePoints;
     if (cFencePoints == 0) {
-        // No fence, no more work to do, fence data has already been cleared
+        // No fence
+        emit loadComplete(_breachReturnPoint, _polygon);
         return;
     }
     if (cFencePoints < 0 || (cFencePoints > 0 && cFencePoints < minFencePoints)) {
@@ -142,6 +144,8 @@ void APMGeoFenceManager::_mavlinkMessageReceived(const mavlink_message_t& messag
 
         if (fencePoint.idx != _currentFencePoint) {
             // FIXME: Protocol out of whack
+            _readTransactionInProgress = false;
+            emit inProgressChanged(inProgress());
             qCWarning(GeoFenceManagerLog) << "Indices out of sync" << fencePoint.idx << _currentFencePoint;
             return;
         }
@@ -159,8 +163,10 @@ void APMGeoFenceManager::_mavlinkMessageReceived(const mavlink_message_t& messag
                 _requestFencePoint(++_currentFencePoint);
             } else {
                 // We've finished collecting fence points
+                qCDebug(GeoFenceManagerLog) << "Fence point load complete";
                 _readTransactionInProgress = false;
                 emit loadComplete(_breachReturnPoint, _polygon);
+                emit inProgressChanged(inProgress());
             }
         }
     }

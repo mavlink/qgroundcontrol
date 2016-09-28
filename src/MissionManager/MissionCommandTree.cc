@@ -102,7 +102,10 @@ void MissionCommandTree::_collapseHierarchy(Vehicle*                            
 
     foreach (MAV_CMD command, cmdList->commandIds()) {
         // Only add supported command to tree (MAV_CMD_NAV_LAST is used for planned home position)
-        if (!qgcApp()->runningUnitTests() && !vehicle->firmwarePlugin()->supportedMissionCommands().contains(command) && command != MAV_CMD_NAV_LAST) {
+        if (!qgcApp()->runningUnitTests()
+                && !vehicle->firmwarePlugin()->supportedMissionCommands().isEmpty()
+                && !vehicle->firmwarePlugin()->supportedMissionCommands().contains(command)
+                && command != MAV_CMD_NAV_LAST) {
             continue;
         }
 

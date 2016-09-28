@@ -18,6 +18,7 @@
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
 #include "GeoFenceManager.h"
+#include "RallyPointManager.h"
 
 #include <QList>
 #include <QString>
@@ -209,13 +210,14 @@ public:
     /// @return true: X confiuration, false: Plus configuration
     virtual bool multiRotorXConfig(Vehicle* vehicle) { Q_UNUSED(vehicle); return false; }
 
-    /// Returns a newly create geofence manager for this vehicle. Returns NULL if this vehicle
-    /// does not support geofence. You should make sense to check vehicle capabilites for geofence
-    /// support.
+    /// Returns a newly created geofence manager for this vehicle.
     virtual GeoFenceManager* newGeoFenceManager(Vehicle* vehicle) { return new GeoFenceManager(vehicle); }
 
     /// Returns the parameter which holds the fence circle radius if supported.
     virtual QString geoFenceRadiusParam(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
+
+    /// Returns a newly created rally point manager for this vehicle.
+    virtual RallyPointManager* newRallyPointManager(Vehicle* vehicle) { return new RallyPointManager(vehicle); }
 
     /// Return the resource file which contains the set of params loaded for offline editing.
     virtual QString offlineEditingParamFile(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }

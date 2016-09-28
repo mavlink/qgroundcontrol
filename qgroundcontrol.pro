@@ -293,7 +293,6 @@ HEADERS += \
     src/MissionManager/ComplexMissionItem.h \
     src/MissionManager/GeoFenceController.h \
     src/MissionManager/GeoFenceManager.h \
-    src/MissionManager/QGCMapPolygon.h \
     src/MissionManager/MissionCommandList.h \
     src/MissionManager/MissionCommandTree.h \
     src/MissionManager/MissionCommandUIInfo.h \
@@ -301,6 +300,10 @@ HEADERS += \
     src/MissionManager/MissionItem.h \
     src/MissionManager/MissionManager.h \
     src/MissionManager/PlanElementController.h \
+    src/MissionManager/QGCMapPolygon.h \
+    src/MissionManager/RallyPoint.h \
+    src/MissionManager/RallyPointController.h \
+    src/MissionManager/RallyPointManager.h \
     src/MissionManager/SimpleMissionItem.h \
     src/MissionManager/SurveyMissionItem.h \
     src/MissionManager/VisualMissionItem.h \
@@ -457,7 +460,6 @@ SOURCES += \
     src/MissionManager/ComplexMissionItem.cc \
     src/MissionManager/GeoFenceController.cc \
     src/MissionManager/GeoFenceManager.cc \
-    src/MissionManager/QGCMapPolygon.cc \
     src/MissionManager/MissionCommandList.cc \
     src/MissionManager/MissionCommandTree.cc \
     src/MissionManager/MissionCommandUIInfo.cc \
@@ -465,6 +467,10 @@ SOURCES += \
     src/MissionManager/MissionItem.cc \
     src/MissionManager/MissionManager.cc \
     src/MissionManager/PlanElementController.cc \
+    src/MissionManager/QGCMapPolygon.cc \
+    src/MissionManager/RallyPoint.cc \
+    src/MissionManager/RallyPointController.cc \
+    src/MissionManager/RallyPointManager.cc \
     src/MissionManager/SimpleMissionItem.cc \
     src/MissionManager/SurveyMissionItem.cc \
     src/MissionManager/VisualMissionItem.cc \
@@ -696,6 +702,7 @@ HEADERS+= \
     src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
     src/FirmwarePlugin/APM/APMGeoFenceManager.h \
     src/FirmwarePlugin/APM/APMParameterMetaData.h \
+    src/FirmwarePlugin/APM/APMRallyPointManager.h \
     src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h \
     src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h \
     src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h \
@@ -757,6 +764,7 @@ SOURCES += \
     src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
     src/FirmwarePlugin/APM/APMGeoFenceManager.cc \
     src/FirmwarePlugin/APM/APMParameterMetaData.cc \
+    src/FirmwarePlugin/APM/APMRallyPointManager.cc \
     src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.cc \
     src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.cc \
     src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.cc \

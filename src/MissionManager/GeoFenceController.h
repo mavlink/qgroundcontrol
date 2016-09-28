@@ -52,6 +52,8 @@ public:
     bool dirty              (void) const final;
     void setDirty           (bool dirty) final;
 
+    QString fileExtension(void) const final;
+
     bool                fenceSupported          (void) const;
     bool                circleSupported         (void) const;
     bool                polygonSupported        (void) const;
