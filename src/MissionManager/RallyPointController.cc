@@ -287,7 +287,6 @@ void RallyPointController::removePoint(QObject* rallyPoint)
 
     int foundIndex = 0;
     for (foundIndex=0; foundIndex<_points.count(); foundIndex++) {
-        prevPoint = _points[foundIndex];
         if (_points[foundIndex] == rallyPoint) {
             _points.removeOne(rallyPoint);
             rallyPoint->deleteLater();
