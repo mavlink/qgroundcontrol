@@ -966,6 +966,8 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
     default:
         break;
     }
+
+    setVtolState((MAV_VTOL_STATE)extendedState.vtol_state);
 }
 
 void Vehicle::_handleVibration(mavlink_message_t& message)
@@ -1702,6 +1704,30 @@ void Vehicle::setArmed(bool armed)
                    MAV_CMD_COMPONENT_ARM_DISARM,
                    true,    // show error if fails
                    armed ? 1.0f : 0.0f);
+}
+
+void Vehicle::vtolTransition(void)
+{
+    if ((_vtolState == MAV_VTOL_STATE_FW) || (_vtolState == MAV_VTOL_STATE_MC)) {
+        mavlink_message_t msg;
+        mavlink_command_long_t cmd;
+
+        cmd.command = (uint16_t)MAV_CMD_DO_VTOL_TRANSITION;
+        cmd.confirmation = 0;
+        cmd.param1 = (float)(_vtolState == MAV_VTOL_STATE_MC ? MAV_VTOL_STATE_FW : MAV_VTOL_STATE_MC);
+        cmd.param2 = 0.0f;
+        cmd.param3 = 0.0f;
+        cmd.param4 = 0.0f;
+        cmd.param5 = 0.0f;
+        cmd.param6 = 0.0f;
+        cmd.param7 = 0.0f;
+        cmd.target_system = id();
+        cmd.target_component = defaultComponentId();
+
+        mavlink_msg_command_long_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &cmd);
+
+        sendMessageOnPriorityLink(msg);
+    }
 }
 
 bool Vehicle::flightModeSetAvailable(void)
