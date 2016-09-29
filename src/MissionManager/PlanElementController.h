@@ -31,6 +31,10 @@ public:
     /// true: unsaved/sent changes are present, false: no changes since last save/send
     Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
 
+    /// Returns the file extention for plan element file type.
+    Q_PROPERTY(QString fileExtension READ fileExtension CONSTANT)
+    virtual QString fileExtension(void) const = 0;
+
     /// Should be called immediately upon Component.onCompleted.
     ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
     Q_INVOKABLE virtual void start(bool editMode);

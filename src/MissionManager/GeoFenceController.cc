@@ -92,6 +92,7 @@ void GeoFenceController::_activeVehicleSet(void)
     connect(geoFenceManager, &GeoFenceManager::paramsChanged,                   this, &GeoFenceController::paramsChanged);
     connect(geoFenceManager, &GeoFenceManager::paramLabelsChanged,              this, &GeoFenceController::paramLabelsChanged);
     connect(geoFenceManager, &GeoFenceManager::loadComplete,                    this, &GeoFenceController::_loadComplete);
+    connect(geoFenceManager, &GeoFenceManager::inProgressChanged,               this, &GeoFenceController::syncInProgressChanged);
 
     if (!geoFenceManager->inProgress()) {
         _loadComplete(geoFenceManager->breachReturnPoint(), geoFenceManager->polygon());
@@ -134,7 +135,7 @@ bool GeoFenceController::_loadJsonFile(QJsonDocument& jsonDoc, QString& errorStr
 
     if (breachReturnSupported()) {
         if (json.contains(_jsonBreachReturnKey)
-                && !JsonHelper::toQGeoCoordinate(json[_jsonBreachReturnKey], _breachReturnPoint, false /* altitudeRequired */, errorString)) {
+                && !JsonHelper::loadGeoCoordinate(json[_jsonBreachReturnKey], false /* altitudeRequired */, _breachReturnPoint, errorString)) {
             return false;
         }
     } else {
@@ -242,7 +243,7 @@ void GeoFenceController::loadFromFile(const QString& filename)
 void GeoFenceController::loadFromFilePicker(void)
 {
 #ifndef __mobile__
-    QString filename = QGCFileDialog::getOpenFileName(NULL, "Select GeoFence File to load", QString(), "Mission file (*.fence);;All Files (*.*)");
+    QString filename = QGCFileDialog::getOpenFileName(NULL, "Select GeoFence File to load", QString(), "Fence file (*.fence);;All Files (*.*)");
 
     if (filename.isEmpty()) {
         return;
@@ -287,7 +288,7 @@ void GeoFenceController::saveToFile(const QString& filename)
 
         if (breachReturnSupported()) {
             QJsonValue jsonBreachReturn;
-            JsonHelper::writeQGeoCoordinate(jsonBreachReturn, _breachReturnPoint, false /* writeAltitude */);
+            JsonHelper::saveGeoCoordinate(_breachReturnPoint, false /* writeAltitude */, jsonBreachReturn);
             fenceFileObject[_jsonBreachReturnKey] = jsonBreachReturn;
         }
 
@@ -432,4 +433,9 @@ void GeoFenceController::_loadComplete(const QGeoCoordinate& breachReturn, const
     _setReturnPointFromManager(breachReturn);
     _setPolygonFromManager(polygon);
     setDirty(false);
+}
+
+QString GeoFenceController::fileExtension(void) const
+{
+    return QGCApplication::fenceFileExtension;
 }

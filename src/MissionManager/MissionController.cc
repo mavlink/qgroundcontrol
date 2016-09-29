@@ -1284,3 +1284,8 @@ void MissionController::_homeCoordinateChanged(void)
     emit plannedHomePositionChanged(plannedHomePosition());
     _recalcAltitudeRangeBearing();
 }
+
+QString MissionController::fileExtension(void) const
+{
+    return QGCApplication::missionFileExtension;
+}

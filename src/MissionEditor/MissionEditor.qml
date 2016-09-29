@@ -54,6 +54,7 @@ QGCView {
 
     readonly property int _layerMission:        1
     readonly property int _layerGeoFence:       2
+    readonly property int _layerRallyPoints:    3
     property int _editingLayer: _layerMission
 
     onActiveVehiclePositionChanged: updateMapToVehiclePosition()
@@ -154,12 +155,6 @@ QGCView {
 
         Component.onCompleted: start(true /* editMode */)
 
-        onFenceSupportedChanged: {
-            if (!fenceSupported && _editingLayer == _layerGeoFence) {
-                _editingLayer = _layerMission
-            }
-        }
-
         function saveToSelectedFile() {
             if (ScreenTools.isMobile) {
                 qgcView.showDialog(mobileFileSaver, qsTr("Save Fence File"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
@@ -184,6 +179,36 @@ QGCView {
                 if (!geoFenceController.polygon.containsCoordinate(geoFenceController.breachReturnPoint)) {
                     geoFenceController.breachReturnPoint = geoFenceController.polygon.path[0]
                 }
+            }
+        }
+    }
+
+    RallyPointController {
+        id: rallyPointController
+
+        onCurrentRallyPointChanged: {
+            if (_editingLayer == _layerRallyPoints && !currentRallyPoint) {
+                itemDragger.visible = false
+                itemDragger.coordinateItem = undefined
+                itemDragger.mapCoordinateIndicator = undefined
+            }
+        }
+
+        Component.onCompleted: start(true /* editMode */)
+
+        function saveToSelectedFile() {
+            if (ScreenTools.isMobile) {
+                qgcView.showDialog(mobileFileSaver, qsTr("Save Rally Point File"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+            } else {
+                rallyPointController.saveToFilePicker()
+            }
+        }
+
+        function loadFromSelectedFile() {
+            if (ScreenTools.isMobile) {
+                qgcView.showDialog(mobileFilePicker, qsTr("Select Rally Point File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+            } else {
+                rallyPointController.loadFromFilePicker()
             }
         }
     }
@@ -220,7 +245,7 @@ QGCView {
 
         QGCMobileFileDialog {
             openDialog:         true
-            fileExtension:      _syncDropDownController == geoFenceController ? QGroundControl.fenceFileExtension : QGroundControl.missionFileExtension
+            fileExtension:      _syncDropDownController.fileExtension
             onFilenameReturned: _syncDropDownController.loadFromfile(filename)
         }
     }
@@ -230,7 +255,7 @@ QGCView {
 
         QGCMobileFileDialog {
             openDialog:         false
-            fileExtension:      _syncDropDownController == geoFenceController ? QGroundControl.fenceFileExtension : QGroundControl.missionFileExtension
+            fileExtension:      _syncDropDownController.fileExtension
             onFilenameReturned: _syncDropDownController.saveToFile()
         }
     }
@@ -326,8 +351,15 @@ QGCView {
                             }
                             break
                         case _layerGeoFence:
-                            geoFenceController.breachReturnPoint = coordinate
-                            geoFenceController.validateBreachReturn()
+                            if (geoFenceController.breachReturnSupported) {
+                                geoFenceController.breachReturnPoint = coordinate
+                                geoFenceController.validateBreachReturn()
+                            }
+                            break
+                        case _layerRallyPoints:
+                            if (rallyPointController.rallyPointsSupported) {
+                                rallyPointController.addPoint(coordinate)
+                            }
                             break
                         }
                     }
@@ -336,16 +368,16 @@ QGCView {
                 // We use this item to support dragging since dragging a MapQuickItem just doesn't seem to work
                 Rectangle {
                     id:             itemDragger
-                    x:              missionItemIndicator ? (missionItemIndicator.x + missionItemIndicator.anchorPoint.x - (itemDragger.width / 2)) : 100
-                    y:              missionItemIndicator ? (missionItemIndicator.y + missionItemIndicator.anchorPoint.y - (itemDragger.height / 2)) : 100
+                    x:              mapCoordinateIndicator ? (mapCoordinateIndicator.x + mapCoordinateIndicator.anchorPoint.x - (itemDragger.width / 2)) : 100
+                    y:              mapCoordinateIndicator ? (mapCoordinateIndicator.y + mapCoordinateIndicator.anchorPoint.y - (itemDragger.height / 2)) : 100
                     width:          ScreenTools.defaultFontPixelHeight * 2
                     height:         ScreenTools.defaultFontPixelHeight * 2
                     color:          "transparent"
                     visible:        false
                     z:              QGroundControl.zOrderMapItems + 1    // Above item icons
 
-                    property var    missionItem
-                    property var    missionItemIndicator
+                    property var    coordinateItem
+                    property var    mapCoordinateIndicator
                     property bool   preventCoordinateBindingLoop: false
 
                     onXChanged: liveDrag()
@@ -355,17 +387,17 @@ QGCView {
                         if (!itemDragger.preventCoordinateBindingLoop && Drag.active) {
                             var point = Qt.point(itemDragger.x + (itemDragger.width  / 2), itemDragger.y + (itemDragger.height / 2))
                             var coordinate = editorMap.toCoordinate(point)
-                            coordinate.altitude = itemDragger.missionItem.coordinate.altitude
+                            coordinate.altitude = itemDragger.coordinateItem.coordinate.altitude
                             itemDragger.preventCoordinateBindingLoop = true
-                            itemDragger.missionItem.coordinate = coordinate
+                            itemDragger.coordinateItem.coordinate = coordinate
                             itemDragger.preventCoordinateBindingLoop = false
                         }
                     }
 
                     function clearItem() {
                         itemDragger.visible = false
-                        itemDragger.missionItem = undefined
-                        itemDragger.missionItemIndicator = undefined
+                        itemDragger.coordinateItem = undefined
+                        itemDragger.mapCoordinateIndicator = undefined
                     }
 
                     Drag.active:    itemDrag.drag.active
@@ -449,8 +481,8 @@ QGCView {
                             if (object.isCurrentItem && itemIndicator.visible && object.specifiesCoordinate && object.isSimpleItem) {
                                 // Setup our drag item
                                 itemDragger.visible = true
-                                itemDragger.missionItem = Qt.binding(function() { return object })
-                                itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
+                                itemDragger.coordinateItem = Qt.binding(function() { return object })
+                                itemDragger.mapCoordinateIndicator = Qt.binding(function() { return itemIndicator })
                             }
                         }
 
@@ -470,9 +502,9 @@ QGCView {
                                 model: object.childItems
 
                                 delegate: MissionItemIndexLabel {
-                                    label:          object.abbreviation
-                                    isCurrentItem:  object.isCurrentItem
-                                    z:              2
+                                    label:      object.abbreviation
+                                    checked:    object.isCurrentItem
+                                    z:          2
 
                                     onClicked: setCurrentItem(object.sequenceNumber)
                                 }
@@ -491,60 +523,113 @@ QGCView {
                     model: QGroundControl.multiVehicleManager.vehicles
                     delegate:
                         VehicleMapItem {
-                                vehicle:        object
-                                coordinate:     object.coordinate
-                                isSatellite:    editorMap.isSatelliteMap
-                                size:           ScreenTools.defaultFontPixelHeight * 5
-                                z:              QGroundControl.zOrderMapItems - 1
-                        }
+                        vehicle:        object
+                        coordinate:     object.coordinate
+                        isSatellite:    editorMap.isSatelliteMap
+                        size:           ScreenTools.defaultFontPixelHeight * 5
+                        z:              QGroundControl.zOrderMapItems - 1
+                    }
                 }
 
-                // Mission/GeoFence selector
-                Item {
-                    id:                 planElementSelector
+                // Plan Element selector (Mission/Fence/Rally)
+                Row {
+                    id:                 planElementSelectorRow
                     anchors.topMargin:  parent.height - ScreenTools.availableHeight + _margin
                     anchors.top:        parent.top
                     anchors.leftMargin: parent.width - _rightPanelWidth
                     anchors.left:       parent.left
-                    width:              planElementSelectorRow.width
-                    height:             geoFenceController.fenceSupported ? planElementSelectorRow.height : 0
-                    visible:            geoFenceController.fenceSupported
+                    spacing:            _horizontalMargin
+
+                    readonly property real _buttonRadius: ScreenTools.defaultFontPixelHeight * 0.75
 
                     ExclusiveGroup {
                         id: planElementSelectorGroup
                         onCurrentChanged: {
-                            var layerIsMission = current == planElementMission
-                            _editingLayer = layerIsMission ? _layerMission : _layerGeoFence
-                            _syncDropDownController = layerIsMission ? missionController : geoFenceController
+                            switch (current) {
+                            case planElementMission:
+                                _editingLayer = _layerMission
+                                _syncDropDownController = missionController
+                                break
+                            case planElementGeoFence:
+                                _editingLayer = _layerGeoFence
+                                _syncDropDownController = geoFenceController
+                                break
+                            case planElementRallyPoints:
+                                _editingLayer = _layerRallyPoints
+                                _syncDropDownController = rallyPointController
+                                break
+                            }
                         }
                     }
 
-                    Row {
-                        id:     planElementSelectorRow
-                        spacing: _horizontalMargin
+                    RoundButton {
+                        id:             planElementMission
+                        radius:         parent._buttonRadius
+                        buttonImage:    "/qmlimages/Plan.svg"
+                        lightBorders:   _lightWidgetBorders
+                        exclusiveGroup: planElementSelectorGroup
+                        checked:        true
+                    }
 
-                        QGCRadioButton {
-                            id:             planElementMission
-                            text:           qsTr("Mission")
-                            checked:        true
-                            exclusiveGroup: planElementSelectorGroup
-                            color:          mapPal.text
-                        }
+                    QGCLabel {
+                        text:                   qsTr("Mission")
+                        color:                  mapPal.text
+                        anchors.verticalCenter: parent.verticalCenter
 
-                        QGCRadioButton {
-                            id:             planElementGeoFence
-                            text:           qsTr("GeoFence")
-                            exclusiveGroup: planElementSelectorGroup
-                            color:          mapPal.text
+                        MouseArea {
+                            anchors.fill:   parent
+                            onClicked:      planElementMission.checked = true
                         }
                     }
-                }
+
+                    Item { height: 1; width: 1 }
+
+                    RoundButton {
+                        id:             planElementGeoFence
+                        radius:         parent._buttonRadius
+                        buttonImage:    "/qmlimages/Plan.svg"
+                        lightBorders:   _lightWidgetBorders
+                        exclusiveGroup: planElementSelectorGroup
+                    }
+
+                    QGCLabel {
+                        text:                   qsTr("Fence")
+                        color:                  mapPal.text
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        MouseArea {
+                            anchors.fill:   parent
+                            onClicked:      planElementGeoFence.checked = true
+                        }
+                    }
+
+                    Item { height: 1; width: 1 }
+
+                    RoundButton {
+                        id:             planElementRallyPoints
+                        radius:         parent._buttonRadius
+                        buttonImage:    "/qmlimages/Plan.svg"
+                        lightBorders:   _lightWidgetBorders
+                        exclusiveGroup: planElementSelectorGroup
+                    }
+
+                    QGCLabel {
+                        text:                   qsTr("Rally")
+                        color:                  mapPal.text
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        MouseArea {
+                            anchors.fill:   parent
+                            onClicked:      planElementRallyPoints.checked = true
+                        }
+                    }
+                } // Row - Plan Element Selector
 
                 // Mission Item Editor
                 Item {
                     id:                 missionItemEditor
                     anchors.topMargin:  _margin
-                    anchors.top:        planElementSelector.bottom
+                    anchors.top:        planElementSelectorRow.bottom
                     anchors.bottom:     parent.bottom
                     anchors.right:      parent.right
                     width:              _rightPanelWidth
@@ -553,14 +638,14 @@ QGCView {
                     visible:            _editingLayer == _layerMission
 
                     MouseArea {
-                         // This MouseArea prevents the Map below it from getting Mouse events. Without this
-                         // things like mousewheel will scroll the Flickable and then scroll the map as well.
-                         anchors.fill:       editorListView
-                         onWheel:            wheel.accepted = true
-                     }
+                        // This MouseArea prevents the Map below it from getting Mouse events. Without this
+                        // things like mousewheel will scroll the Flickable and then scroll the map as well.
+                        anchors.fill:       missionItemEditorListView
+                        onWheel:            wheel.accepted = true
+                    }
 
                     ListView {
-                        id:             editorListView
+                        id:             missionItemEditorListView
                         anchors.left:   parent.left
                         anchors.right:  parent.right
                         anchors.top:    parent.top
@@ -599,7 +684,7 @@ QGCView {
                 // GeoFence Editor
                 Loader {
                     anchors.topMargin:  _margin
-                    anchors.top:        planElementSelector.bottom
+                    anchors.top:        planElementSelectorRow.bottom
                     anchors.right:      parent.right
                     opacity:            _rightPanelOpacity
                     z:                  QGroundControl.zOrderTopMost
@@ -633,6 +718,63 @@ QGCView {
                     visible:        geoFenceController.breachReturnSupported
                     sourceItem:     MissionItemIndexLabel { label: "F" }
                     z:              QGroundControl.zOrderMapItems
+                }
+
+                // Rally Point Editor
+
+                RallyPointEditorHeader {
+                    id:                 rallyPointHeader
+                    anchors.topMargin:  _margin
+                    anchors.top:        planElementSelectorRow.bottom
+                    anchors.right:      parent.right
+                    width:              _rightPanelWidth
+                    opacity:            _rightPanelOpacity
+                    z:                  QGroundControl.zOrderTopMost
+                    visible:            _editingLayer == _layerRallyPoints
+                    controller:         rallyPointController
+                }
+
+                RallyPointItemEditor {
+                    id:                 rallyPointEditor
+                    anchors.topMargin:  _margin
+                    anchors.top:        rallyPointHeader.bottom
+                    anchors.right:      parent.right
+                    width:              _rightPanelWidth
+                    opacity:            _rightPanelOpacity
+                    z:                  QGroundControl.zOrderTopMost
+                    visible:            _editingLayer == _layerRallyPoints && rallyPointController.points.count
+                    rallyPoint:         rallyPointController.currentRallyPoint
+                    controller:         rallyPointController
+                }
+
+                // Rally points on map
+
+                MapItemView {
+                    model: rallyPointController.points
+
+                    delegate: MapQuickItem {
+                        id:             itemIndicator
+                        anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+                        coordinate:     object.coordinate
+                        z:              QGroundControl.zOrderMapItems
+
+                        sourceItem: MissionItemIndexLabel {
+                            id:         itemIndexLabel
+                            label:      qsTr("R", "rally point map item label")
+                            checked:    _editingLayer == _layerRallyPoints ? object == rallyPointController.currentRallyPoint : false
+
+                            onClicked: rallyPointController.currentRallyPoint = object
+
+                            onCheckedChanged: {
+                                if (checked) {
+                                    // Setup our drag item
+                                    itemDragger.visible = true
+                                    itemDragger.coordinateItem = Qt.binding(function() { return object })
+                                    itemDragger.mapCoordinateIndicator = Qt.binding(function() { return itemIndicator })
+                                }
+                            }
+                        }
+                    }
                 }
 
                 //-- Dismiss Drop Down (if any)
@@ -881,7 +1023,7 @@ QGCView {
             id:         columnHolder
             spacing:    _margin
 
-            property string _overwriteText: (_editingLayer == _layerMission) ? qsTr("Mission overwrite") : qsTr("GeoFence overwrite")
+            property string _overwriteText: (_editingLayer == _layerMission) ? qsTr("Mission overwrite") : ((_editingLayer == _layerGeoFence) ? qsTr("GeoFence overwrite") : qsTr("Rally Points overwrite"))
 
             QGCLabel {
                 width:      sendSaveGrid.width

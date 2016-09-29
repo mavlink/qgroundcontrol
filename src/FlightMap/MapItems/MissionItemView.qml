@@ -43,9 +43,9 @@ MapItemView {
                 model: object.childItems
 
                 delegate: MissionItemIndexLabel {
-                    label:          object.abbreviation
-                    isCurrentItem:  object.isCurrentItem
-                    z:              2
+                    label:      object.abbreviation
+                    checked:    object.isCurrentItem
+                    z:          2
                 }
             }
         }
