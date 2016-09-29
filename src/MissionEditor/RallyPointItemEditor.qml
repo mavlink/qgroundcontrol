@@ -1,7 +1,6 @@
-import QtQuick                  2.2
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.2
-import QtQuick.Dialogs          1.2
+import QtQuick          2.2
+import QtQuick.Controls 1.2
+import QtQuick.Layouts  1.2
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
@@ -21,7 +20,6 @@ Rectangle {
     property bool   _currentItem:       rallyPoint ? rallyPoint == controller.currentRallyPoint : false
     property color  _outerTextColor:    _currentItem ? "black" : qgcPal.text
 
-    readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 12)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _titleHeight:       ScreenTools.defaultFontPixelHeight * 2
@@ -84,41 +82,39 @@ Rectangle {
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        titleBar.bottom
-        height:             valuesColumn.height + (_margin * 2)
+        height:             valuesGrid.height + (_margin * 2)
         color:              qgcPal.windowShadeDark
         visible:            _currentItem
         radius:             _radius
 
-        Column {
-            id:                 valuesColumn
+        GridLayout {
+            id:                 valuesGrid
             anchors.margins:    _margin
             anchors.left:       parent.left
             anchors.right:      parent.right
             anchors.top:        parent.top
-            spacing:            _margin
+            rowSpacing:         _margin
+            columnSpacing:      _margin
+            rows:               rallyPoint ? rallyPoint.textFieldFacts.length : 0
+            flow:               GridLayout.TopToBottom
 
             Repeater {
                 model: rallyPoint ? rallyPoint.textFieldFacts : 0
 
-                Item {
-                    width:  valuesColumn.width
-                    height: textField.height
-
-                    QGCLabel {
-                        id:                 textFieldLabel
-                        anchors.baseline:   textField.baseline
-                        text:               modelData.name + ":"
-                    }
-
-                    FactTextField {
-                        id:             textField
-                        anchors.right:  parent.right
-                        width:          _editFieldWidth
-                        showUnits:      true
-                        fact:           modelData
-                    }
+                QGCLabel {
+                    text: modelData.name + ":"
                 }
-            } // Repeater - text fields
-        } // Column
+            }
+
+            Repeater {
+                model: rallyPoint ? rallyPoint.textFieldFacts : 0
+
+                FactTextField {
+                    Layout.fillWidth:   true
+                    showUnits:          true
+                    fact:               modelData
+                }
+            }
+        } // GridLayout
     } // Rectangle
 } // Rectangle

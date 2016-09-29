@@ -28,7 +28,15 @@ const char* SurveyMissionItem::_jsonTurnaroundDistKey =        "turnaroundDist";
 const char* SurveyMissionItem::_jsonCameraTriggerKey =         "cameraTrigger";
 const char* SurveyMissionItem::_jsonCameraTriggerDistanceKey = "cameraTriggerDistance";
 
+const char* SurveyMissionItem::_gridAltitudeFactName =          "Altitude";
+const char* SurveyMissionItem::_gridAngleFactName =             "Grid angle";
+const char* SurveyMissionItem::_gridSpacingFactName =           "Grid spacing";
+const char* SurveyMissionItem::_turnaroundDistFactName =        "Turnaround dist.";
+const char* SurveyMissionItem::_cameraTriggerDistanceFactName = "Camera trigger distance";
+
 const char* SurveyMissionItem::_complexType = "survey";
+
+QMap<QString, FactMetaData*> SurveyMissionItem::_metaDataMap;
 
 SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     : ComplexMissionItem(vehicle, parent)
@@ -39,41 +47,26 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _surveyDistance(0.0)
     , _cameraShots(0)
     , _coveredArea(0.0)
-
-    , _gridAltitudeFact         (0, "Altitude:",                FactMetaData::valueTypeDouble)
-    , _gridAngleFact            (0, "Grid angle:",              FactMetaData::valueTypeDouble)
-    , _gridSpacingFact          (0, "Grid spacing:",            FactMetaData::valueTypeDouble)
-    , _turnaroundDistFact       (0, "Turnaround dist.:",        FactMetaData::valueTypeDouble)
-    , _cameraTriggerDistanceFact(0, "Camera trigger distance",  FactMetaData::valueTypeDouble)
-
-    , _gridAltitudeMetaData         (FactMetaData::valueTypeDouble)
-    , _gridAngleMetaData            (FactMetaData::valueTypeDouble)
-    , _gridSpacingMetaData          (FactMetaData::valueTypeDouble)
-    , _turnaroundDistMetaData       (FactMetaData::valueTypeDouble)
-    , _cameraTriggerDistanceMetaData(FactMetaData::valueTypeDouble)
+    , _gridAltitudeFact         (0, _gridAltitudeFactName,          FactMetaData::valueTypeDouble)
+    , _gridAngleFact            (0, _gridAngleFactName,             FactMetaData::valueTypeDouble)
+    , _gridSpacingFact          (0, _gridSpacingFactName,           FactMetaData::valueTypeDouble)
+    , _turnaroundDistFact       (0, _turnaroundDistFactName,        FactMetaData::valueTypeDouble)
+    , _cameraTriggerDistanceFact(0, _cameraTriggerDistanceFactName, FactMetaData::valueTypeDouble)
 {
+    if (_metaDataMap.isEmpty()) {
+        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.FactMetaData.json"), NULL /* metaDataParent */);
+    }
+
     _gridAltitudeFact.setRawValue(50);
     _gridSpacingFact.setRawValue(10);
     _turnaroundDistFact.setRawValue(60);
     _cameraTriggerDistanceFact.setRawValue(25);
 
-    _gridAltitudeMetaData.setRawUnits("m");
-    _gridAngleMetaData.setRawUnits("deg");
-    _gridSpacingMetaData.setRawUnits("m");
-    _turnaroundDistMetaData.setRawUnits("m");
-    _cameraTriggerDistanceMetaData.setRawUnits("m");
-
-    _gridAltitudeMetaData.setDecimalPlaces(1);
-    _gridAngleMetaData.setDecimalPlaces(1);
-    _gridSpacingMetaData.setDecimalPlaces(2);
-    _turnaroundDistMetaData.setDecimalPlaces(2);
-    _cameraTriggerDistanceMetaData.setDecimalPlaces(2);
-
-    _gridAltitudeFact.setMetaData(&_gridAltitudeMetaData);
-    _gridAngleFact.setMetaData(&_gridAngleMetaData);
-    _gridSpacingFact.setMetaData(&_gridSpacingMetaData);
-    _turnaroundDistFact.setMetaData(&_turnaroundDistMetaData);
-    _cameraTriggerDistanceFact.setMetaData(&_cameraTriggerDistanceMetaData);
+    _gridAltitudeFact.setMetaData(_metaDataMap[_gridAltitudeFactName]);
+    _gridAngleFact.setMetaData(_metaDataMap[_gridAngleFactName]);
+    _gridSpacingFact.setMetaData(_metaDataMap[_gridSpacingFactName]);
+    _turnaroundDistFact.setMetaData(_metaDataMap[_turnaroundDistFactName]);
+    _cameraTriggerDistanceFact.setMetaData(_metaDataMap[_cameraTriggerDistanceFactName]);
 
     connect(&_gridSpacingFact,              &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
     connect(&_gridAngleFact,                &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);

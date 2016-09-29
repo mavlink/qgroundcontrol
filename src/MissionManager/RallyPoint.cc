@@ -64,7 +64,7 @@ RallyPoint::~RallyPoint()
 void RallyPoint::_factSetup(void)
 {
     if (_metaDataMap.isEmpty()) {
-        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/RallyPoint.json"), NULL /* metaDataParent */);
+        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/RallyPoint.FactMetaData.json"), NULL /* metaDataParent */);
     }
 
     _longitudeFact.setMetaData(_metaDataMap[_longitudeFactName]);
