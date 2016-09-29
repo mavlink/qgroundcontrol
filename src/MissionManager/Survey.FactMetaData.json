@@ -1,0 +1,37 @@
+[
+{
+    "name":             "Altitude",
+    "shortDescription": "Altitude for all waypoints within the grid.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1
+},
+{
+    "name":             "Grid angle",
+    "shortDescription": "Angle for parallel lines of grid.",
+    "type":             "double",
+    "units":            "deg",
+    "decimalPlaces":    1
+},
+{
+    "name":             "Grid spacing",
+    "shortDescription": "Amount of spacing in between parallel grid lines.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "Turnaround dist.",
+    "shortDescription": "Amount of additional distance to add outside the grid area for vehicle turnaround.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "Camera trigger distance",
+    "shortDescription": "Distance between each triggering of the camera.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+}
+]

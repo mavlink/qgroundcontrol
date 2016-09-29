@@ -192,6 +192,7 @@
         <file alias="Vehicle/WindFact.json">src/Vehicle/WindFact.json</file>
         <file alias="Vehicle/VibrationFact.json">src/Vehicle/VibrationFact.json</file>
         <file alias="QGroundControlQmlGlobal.json">src/QmlControls/QGroundControlQmlGlobal.json</file>
-        <file alias="RallyPoint.json">src/MissionManager/RallyPoint.json</file>
+        <file alias="RallyPoint.FactMetaData.json">src/MissionManager/RallyPoint.FactMetaData.json</file>
+        <file alias="Survey.FactMetaData.json">src/MissionManager/Survey.FactMetaData.json</file>
     </qresource>
 </RCC>

@@ -134,11 +134,8 @@ private:
     Fact            _gridSpacingFact;
     Fact            _turnaroundDistFact;
     Fact            _cameraTriggerDistanceFact;
-    FactMetaData    _gridAltitudeMetaData;
-    FactMetaData    _gridAngleMetaData;
-    FactMetaData    _gridSpacingMetaData;
-    FactMetaData    _turnaroundDistMetaData;
-    FactMetaData    _cameraTriggerDistanceMetaData;
+
+    static QMap<QString, FactMetaData*> _metaDataMap;
 
     static const char* _jsonTypeKey;
     static const char* _jsonPolygonKey;
@@ -150,6 +147,12 @@ private:
     static const char* _jsonTurnaroundDistKey;
     static const char* _jsonCameraTriggerKey;
     static const char* _jsonCameraTriggerDistanceKey;
+
+    static const char* _gridAltitudeFactName;
+    static const char* _gridAngleFactName;
+    static const char* _gridSpacingFactName;
+    static const char* _turnaroundDistFactName;
+    static const char* _cameraTriggerDistanceFactName;
 
     static const char* _complexType;
 };
