@@ -29,10 +29,10 @@ MapQuickItem {
 
     sourceItem:
         MissionItemIndexLabel {
-            id:             _label
-            isCurrentItem:  _isCurrentItem
-            label:          missionItem ? missionItem.abbreviation : ""
-            onClicked:      _item.clicked()
+            id:         _label
+            checked:    _isCurrentItem
+            label:      missionItem ? missionItem.abbreviation : ""
+            onClicked:  _item.clicked()
 
             property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem : false
         }

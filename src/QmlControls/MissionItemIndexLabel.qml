@@ -6,9 +6,11 @@ import QGroundControl.ScreenTools 1.0
 import QGroundControl.Palette     1.0
 
 Rectangle {
-    property alias  label:          _label.text
-    property bool   isCurrentItem:  false
-    property bool   small:          false
+    id: root
+
+    property alias  label:      _label.text
+    property bool   checked:    false
+    property bool   small:      false
 
     signal clicked
 
@@ -17,7 +19,7 @@ Rectangle {
     radius:         _width / 2
     border.width:   small ? 1 : 2
     border.color:   "white"
-    color:          isCurrentItem ? "green" : qgcPal.mapButtonHighlight
+    color:          checked ? "green" : qgcPal.mapButtonHighlight
 
     property real _width: small ? ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio * 1.75 : ScreenTools.defaultFontPixelHeight * 1.75
 

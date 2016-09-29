@@ -69,6 +69,8 @@ public:
     bool dirty              (void) const final;
     void setDirty           (bool dirty) final;
 
+    QString fileExtension(void) const final;
+
     // Property accessors
 
     QGeoCoordinate      plannedHomePosition (void);

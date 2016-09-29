@@ -17,6 +17,8 @@
 #include "UAS.h"
 #include "JoystickManager.h"
 #include "MissionManager.h"
+#include "GeoFenceManager.h"
+#include "RallyPointManager.h"
 #include "CoordinateVector.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
@@ -25,7 +27,6 @@
 #include "FollowMe.h"
 #include "MissionCommandTree.h"
 #include "QGroundControlQmlGlobal.h"
-#include "GeoFenceManager.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -98,9 +99,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
-    , _missionManagerInitialRequestComplete(false)
+    , _missionManagerInitialRequestSent(false)
     , _geoFenceManager(NULL)
-    , _geoFenceManagerInitialRequestComplete(false)
+    , _geoFenceManagerInitialRequestSent(false)
+    , _rallyPointManager(NULL)
+    , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(NULL)
     , _armed(false)
     , _base_mode(0)
@@ -202,6 +205,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     // GeoFenceManager needs to access ParameterManager so make sure to create after
     _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
     connect(_geoFenceManager, &GeoFenceManager::error, this, &Vehicle::_geoFenceManagerError);
+    connect(_geoFenceManager, &GeoFenceManager::loadComplete, this, &Vehicle::_newGeoFenceAvailable);
+
+    _rallyPointManager = _firmwarePlugin->newRallyPointManager(this);
+    connect(_rallyPointManager, &RallyPointManager::error, this, &Vehicle::_rallyPointManagerError);
 
     // Ask the vehicle for firmware version info. This must be MAV_COMP_ID_ALL since we don't know default component id yet.
 
@@ -288,9 +295,11 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
-    , _missionManagerInitialRequestComplete(false)
+    , _missionManagerInitialRequestSent(false)
     , _geoFenceManager(NULL)
-    , _geoFenceManagerInitialRequestComplete(false)
+    , _geoFenceManagerInitialRequestSent(false)
+    , _rallyPointManager(NULL)
+    , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(NULL)
     , _armed(false)
     , _base_mode(0)
@@ -334,6 +343,9 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     // GeoFenceManager needs to access ParameterManager so make sure to create after
     _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
     connect(_geoFenceManager, &GeoFenceManager::error, this, &Vehicle::_geoFenceManagerError);
+
+    _rallyPointManager = _firmwarePlugin->newRallyPointManager(this);
+    connect(_rallyPointManager, &RallyPointManager::error, this, &Vehicle::_rallyPointManagerError);
 
     // Build FactGroup object model
 
@@ -1381,7 +1393,13 @@ void Vehicle::_missionManagerError(int errorCode, const QString& errorMsg)
 void Vehicle::_geoFenceManagerError(int errorCode, const QString& errorMsg)
 {
     Q_UNUSED(errorCode);
-    qgcApp()->showMessage(QString("Error during Geo-Fence communication with Vehicle: %1").arg(errorMsg));
+    qgcApp()->showMessage(QString("Error during GeoFence communication with Vehicle: %1").arg(errorMsg));
+}
+
+void Vehicle::_rallyPointManagerError(int errorCode, const QString& errorMsg)
+{
+    Q_UNUSED(errorCode);
+    qgcApp()->showMessage(QString("Error during Rally Point communication with Vehicle: %1").arg(errorMsg));
 }
 
 void Vehicle::_addNewMapTrajectoryPoint(void)
@@ -1411,8 +1429,8 @@ void Vehicle::_mapTrajectoryStop()
 
 void Vehicle::_parametersReady(bool parametersReady)
 {
-    if (parametersReady && !_missionManagerInitialRequestComplete) {
-        _missionManagerInitialRequestComplete = true;
+    if (parametersReady && !_missionManagerInitialRequestSent) {
+        _missionManagerInitialRequestSent = true;
         _missionManager->requestMissionItems();
     }
 
@@ -1854,9 +1872,18 @@ void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
 void Vehicle::_newMissionItemsAvailable(void)
 {
     // After the initial mission request complets we ask for the geofence
-    if (!_geoFenceManagerInitialRequestComplete) {
-        _geoFenceManagerInitialRequestComplete = true;
+    if (!_geoFenceManagerInitialRequestSent) {
+        _geoFenceManagerInitialRequestSent = true;
         _geoFenceManager->loadFromVehicle();
+    }
+}
+
+void Vehicle::_newGeoFenceAvailable(void)
+{
+    // After the initial mission request complets we ask for the geofence
+    if (!_rallyPointManagerInitialRequestSent) {
+        _rallyPointManagerInitialRequestSent = true;
+        _rallyPointManager->loadFromVehicle();
     }
 }
 

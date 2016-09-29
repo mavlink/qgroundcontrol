@@ -34,6 +34,7 @@ class AutoPilotPlugin;
 class AutoPilotPluginManager;
 class MissionManager;
 class GeoFenceManager;
+class RallyPointManager;
 class ParameterManager;
 class JoystickManager;
 class UASMessage;
@@ -448,8 +449,9 @@ public:
 
     int manualControlReservedButtonCount(void);
 
-    MissionManager* missionManager(void) { return _missionManager; }
-    GeoFenceManager* geoFenceManager(void) { return _geoFenceManager; }
+    MissionManager*     missionManager(void)    { return _missionManager; }
+    GeoFenceManager*    geoFenceManager(void)   { return _geoFenceManager; }
+    RallyPointManager*  rallyPointManager(void) { return _rallyPointManager; }
 
     bool homePositionAvailable(void);
     QGeoCoordinate homePosition(void);
@@ -666,6 +668,7 @@ private slots:
     void _connectionLostTimeout(void);
     void _prearmErrorTimeout(void);
     void _newMissionItemsAvailable(void);
+    void _newGeoFenceAvailable(void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -688,6 +691,7 @@ private:
     void _handleHilActuatorControls(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
+    void _rallyPointManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
     void _connectionActive(void);
@@ -751,10 +755,13 @@ private:
     QTimer              _connectionLostTimer;
 
     MissionManager*     _missionManager;
-    bool                _missionManagerInitialRequestComplete;
+    bool                _missionManagerInitialRequestSent;
 
     GeoFenceManager*    _geoFenceManager;
-    bool                _geoFenceManagerInitialRequestComplete;
+    bool                _geoFenceManagerInitialRequestSent;
+
+    RallyPointManager*  _rallyPointManager;
+    bool                _rallyPointManagerInitialRequestSent;
 
     ParameterManager*    _parameterManager;
 
