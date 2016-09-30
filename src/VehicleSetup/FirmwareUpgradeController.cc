@@ -503,52 +503,15 @@ void FirmwareUpgradeController::_downloadFirmware(void)
     _appendStatusLog("Downloading firmware...");
     _appendStatusLog(QString(" From: %1").arg(_firmwareFilename));
     
-    // Split out filename from path
-    QString firmwareFilename = QFileInfo(_firmwareFilename).fileName();
-    Q_ASSERT(!firmwareFilename.isEmpty());
-    
-    // Determine location to download file to
-    QString downloadFile = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    if (downloadFile.isEmpty()) {
-        downloadFile = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-        if (downloadFile.isEmpty()) {
-            _errorCancel("Unabled to find writable download location. Tried downloads and temp directory.");
-            return;
-        }
-    }
-    Q_ASSERT(!downloadFile.isEmpty());
-    downloadFile += "/"  + firmwareFilename;
-
-    QUrl firmwareUrl;
-    if (_firmwareFilename.startsWith("http:")) {
-        firmwareUrl.setUrl(_firmwareFilename);
-    } else {
-        firmwareUrl = QUrl::fromLocalFile(_firmwareFilename);
-    }
-    Q_ASSERT(firmwareUrl.isValid());
-    
-    QNetworkRequest networkRequest(firmwareUrl);
-    
-    // Store download file location in user attribute so we can retrieve when the download finishes
-    networkRequest.setAttribute(QNetworkRequest::User, downloadFile);
-    
-    _downloadManager = new QNetworkAccessManager(this);
-    Q_CHECK_PTR(_downloadManager);
-    QNetworkProxy tProxy;
-    tProxy.setType(QNetworkProxy::DefaultProxy);
-    _downloadManager->setProxy(tProxy);
-
-    _downloadNetworkReply = _downloadManager->get(networkRequest);
-    Q_ASSERT(_downloadNetworkReply);
-    connect(_downloadNetworkReply, &QNetworkReply::downloadProgress, this, &FirmwareUpgradeController::_downloadProgress);
-    connect(_downloadNetworkReply, &QNetworkReply::finished, this, &FirmwareUpgradeController::_downloadFinished);
-
-    connect(_downloadNetworkReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-            this, &FirmwareUpgradeController::_downloadError);
+    QGCFileDownload* downloader = new QGCFileDownload(this);
+    connect(downloader, &QGCFileDownload::downloadFinished, this, &FirmwareUpgradeController::_firmwareDownloadFinished);
+    connect(downloader, &QGCFileDownload::downloadProgress, this, &FirmwareUpgradeController::_firmwareDownloadProgress);
+    connect(downloader, &QGCFileDownload::error,            this, &FirmwareUpgradeController::_firmwareDownloadError);
+    downloader->download(_firmwareFilename);
 }
 
 /// @brief Updates the progress indicator while downloading
-void FirmwareUpgradeController::_downloadProgress(qint64 curr, qint64 total)
+void FirmwareUpgradeController::_firmwareDownloadProgress(qint64 curr, qint64 total)
 {
     // Take care of cases where 0 / 0 is emitted as error return value
     if (total > 0) {
@@ -557,43 +520,18 @@ void FirmwareUpgradeController::_downloadProgress(qint64 curr, qint64 total)
 }
 
 /// @brief Called when the firmware download completes.
-void FirmwareUpgradeController::_downloadFinished(void)
+void FirmwareUpgradeController::_firmwareDownloadFinished(QString remoteFile, QString localFile)
 {
+    Q_UNUSED(remoteFile);
+
     _appendStatusLog("Download complete");
     
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
-    Q_ASSERT(reply);
-    
-    Q_ASSERT(_downloadNetworkReply == reply);
-    
-    _downloadManager->deleteLater();
-    _downloadManager = NULL;
-    
-    // When an error occurs or the user cancels the download, we still end up here. So bail out in
-    // those cases.
-    if (reply->error() != QNetworkReply::NoError) {
-        return;
-    }
-    
-    // Download file location is in user attribute
-    QString downloadFilename = reply->request().attribute(QNetworkRequest::User).toString();
-    Q_ASSERT(!downloadFilename.isEmpty());
-    
-    // Store downloaded file in download location
-    QFile file(downloadFilename);
-    if (!file.open(QIODevice::WriteOnly)) {
-        _errorCancel(QString("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
-        return;
-    }
-    
-    file.write(reply->readAll());
-    file.close();
     FirmwareImage* image = new FirmwareImage(this);
     
     connect(image, &FirmwareImage::statusMessage, this, &FirmwareUpgradeController::_status);
     connect(image, &FirmwareImage::errorMessage, this, &FirmwareUpgradeController::_error);
     
-    if (!image->load(downloadFilename, _bootloaderBoardID)) {
+    if (!image->load(localFile, _bootloaderBoardID)) {
         _errorCancel("Image load failed");
         return;
     }
@@ -613,20 +551,8 @@ void FirmwareUpgradeController::_downloadFinished(void)
 }
 
 /// @brief Called when an error occurs during download
-void FirmwareUpgradeController::_downloadError(QNetworkReply::NetworkError code)
+void FirmwareUpgradeController::_firmwareDownloadError(QString errorMsg)
 {
-    QString errorMsg;
-    
-    if (code == QNetworkReply::OperationCanceledError) {
-        errorMsg = "Download cancelled";
-
-    } else if (code == QNetworkReply::ContentNotFoundError) {
-        errorMsg = QString("Error: File Not Found. Please check %1 firmware version is available.")
-                      .arg(firmwareTypeAsString(_selectedFirmwareType));
-
-    } else {
-        errorMsg = QString("Error during download. Error: %1").arg(code);
-    }
     _errorCancel(errorMsg);
 }
 
