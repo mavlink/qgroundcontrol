@@ -37,6 +37,14 @@ public:
     static bool validateRequiredKeys(const QJsonObject& jsonObject, const QStringList& keys, QString& errorString);
     static bool validateKeyTypes(const QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types, QString& errorString);
 
+    typedef struct {
+        const char*         key;        ///< json key name
+        QJsonValue::Type    type;       ///< type of key
+        bool                required;   ///< true: key must be present
+    } KeyValidateInfo;
+
+    static bool validateKeys(const QJsonObject& jsonObject, const QList<KeyValidateInfo>& keyInfo, QString& errorString);
+
     /// Loads a QGeoCoordinate
     /// @return false: validation failed
     static bool loadGeoCoordinate(const QJsonValue& jsonValue,          ///< json value to load from
