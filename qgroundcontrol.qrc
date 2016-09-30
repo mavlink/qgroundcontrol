@@ -103,6 +103,8 @@
         <file alias="QGroundControl/FactControls/FactLabel.qml">src/FactSystem/FactControls/FactLabel.qml</file>
         <file alias="QGroundControl/FactControls/FactPanel.qml">src/FactSystem/FactControls/FactPanel.qml</file>
         <file alias="QGroundControl/FactControls/FactTextField.qml">src/FactSystem/FactControls/FactTextField.qml</file>
+        <file alias="QGroundControl/FactControls/FactTextFieldGrid.qml">src/FactSystem/FactControls/FactTextFieldGrid.qml</file>
+        <file alias="QGroundControl/FactControls/FactTextFieldRow.qml">src/FactSystem/FactControls/FactTextFieldRow.qml</file>
         <file alias="QGroundControl/FactControls/qmldir">src/FactSystem/FactControls/qmldir</file>
         <file alias="QGroundControl/FlightDisplay/qmldir">src/FlightDisplay/qmldir</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
