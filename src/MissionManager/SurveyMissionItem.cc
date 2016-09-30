@@ -92,7 +92,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
 
     _gridAltitudeFact.setRawValue(50);
     _gridSpacingFact.setRawValue(30);
-    _turnaroundDistFact.setRawValue(_vehicle->multiRotor() ? 0 : 60);
+    _turnaroundDistFact.setRawValue((_vehicle && _vehicle->multiRotor()) ? 0 : 60);
     _cameraTriggerDistanceFact.setRawValue(25);
     _groundResolutionFact.setRawValue(3);
     _frontalOverlapFact.setRawValue(10);
