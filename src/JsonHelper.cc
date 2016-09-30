@@ -262,3 +262,25 @@ void JsonHelper::saveGeoCoordinateArray(const QList<QGeoCoordinate>&    rgPoints
     }
     return saveGeoCoordinateArray(rgVarPoints, writeAltitude, jsonValue);
 }
+
+bool JsonHelper::validateKeys(const QJsonObject& jsonObject, const QList<JsonHelper::KeyValidateInfo>& keyInfo, QString& errorString)
+{
+    QStringList             keyList;
+    QList<QJsonValue::Type> typeList;
+
+    for (int i=0; i<keyInfo.count(); i++) {
+        if (keyInfo[i].required) {
+            keyList.append(keyInfo[i].key);
+        }
+    }
+    if (!validateRequiredKeys(jsonObject, keyList, errorString)) {
+        return false;
+    }
+
+    keyList.clear();
+    for (int i=0; i<keyInfo.count(); i++) {
+        keyList.append(keyInfo[i].key);
+        typeList.append(keyInfo[i].type);
+    }
+    return validateKeyTypes(jsonObject, keyList, typeList, errorString);
+}
