@@ -155,9 +155,9 @@ signals:
     void px4BetaVersionChanged(const QString& px4BetaVersion);
 
 private slots:
-    void _downloadProgress(qint64 curr, qint64 total);
-    void _downloadFinished(void);
-    void _downloadError(QNetworkReply::NetworkError code);
+    void _firmwareDownloadProgress(qint64 curr, qint64 total);
+    void _firmwareDownloadFinished(QString remoteFile, QString localFile);
+    void _firmwareDownloadError(QString errorMsg);
     void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int boardType);
     void _noBoardFound(void);
     void _boardGone();
