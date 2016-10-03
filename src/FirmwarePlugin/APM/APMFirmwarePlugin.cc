@@ -211,7 +211,7 @@ int APMFirmwarePlugin::manualControlReservedButtonCount(void)
     return -1;
 }
 
-void APMFirmwarePlugin::_handleParamValue(Vehicle* vehicle, mavlink_message_t* message)
+void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
 
@@ -301,7 +301,7 @@ void APMFirmwarePlugin::_handleOutgoingParamSet(Vehicle* vehicle, LinkInterface*
     mavlink_msg_param_set_encode_chan(message->sysid, message->compid, outgoingLink->mavlinkChannel(), message, &paramSet);
 }
 
-bool APMFirmwarePlugin::_handleStatusText(Vehicle* vehicle, mavlink_message_t* message)
+bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message)
 {
     QString messageText;
 
@@ -410,7 +410,7 @@ bool APMFirmwarePlugin::_handleStatusText(Vehicle* vehicle, mavlink_message_t* m
     return true;
 }
 
-void APMFirmwarePlugin::_handleHeartbeat(Vehicle* vehicle, mavlink_message_t* message)
+void APMFirmwarePlugin::_handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message)
 {
     bool flying = false;
 
@@ -439,12 +439,12 @@ bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_m
 
     switch (message->msgid) {
     case MAVLINK_MSG_ID_PARAM_VALUE:
-        _handleParamValue(vehicle, message);
+        _handleIncomingParamValue(vehicle, message);
         break;
     case MAVLINK_MSG_ID_STATUSTEXT:
-        return _handleStatusText(vehicle, message);
+        return _handleIncomingStatusText(vehicle, message);
     case MAVLINK_MSG_ID_HEARTBEAT:
-        _handleHeartbeat(vehicle, message);
+        _handleIncomingHeartbeat(vehicle, message);
         break;
     }
 

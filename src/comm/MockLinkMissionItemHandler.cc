@@ -96,12 +96,13 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
         
         mavlink_message_t   responseMsg;
         
-        mavlink_msg_mission_count_pack(_mockLink->vehicleId(),
-                                       MAV_COMP_ID_MISSIONPLANNER,
-                                       &responseMsg,            // Outgoing message
-                                       msg.sysid,               // Target is original sender
-                                       msg.compid,              // Target is original sender
-                                       itemCount);              // Number of mission items
+        mavlink_msg_mission_count_pack_chan(_mockLink->vehicleId(),
+                                            MAV_COMP_ID_MISSIONPLANNER,
+                                            _mockLink->mavlinkChannel(),
+                                            &responseMsg,            // Outgoing message
+                                            msg.sysid,               // Target is original sender
+                                            msg.compid,              // Target is original sender
+                                            itemCount);              // Number of mission items
         _mockLink->respondWithMavlinkMessage(responseMsg);
     } else {
         qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequestList not responding due to failure mode";
@@ -149,18 +150,19 @@ void MockLinkMissionItemHandler::_handleMissionRequest(const mavlink_message_t& 
                 item = _missionItems[request.seq];
             }
             
-            mavlink_msg_mission_item_pack(_mockLink->vehicleId(),
-                                          MAV_COMP_ID_MISSIONPLANNER,
-                                          &responseMsg,            // Outgoing message
-                                          msg.sysid,               // Target is original sender
-                                          msg.compid,              // Target is original sender
-                                          request.seq,             // Index of mission item being sent
-                                          item.frame,
-                                          item.command,
-                                          item.current,
-                                          item.autocontinue,
-                                          item.param1, item.param2, item.param3, item.param4,
-                                          item.x, item.y, item.z);
+            mavlink_msg_mission_item_pack_chan(_mockLink->vehicleId(),
+                                               MAV_COMP_ID_MISSIONPLANNER,
+                                               _mockLink->mavlinkChannel(),
+                                               &responseMsg,            // Outgoing message
+                                               msg.sysid,               // Target is original sender
+                                               msg.compid,              // Target is original sender
+                                               request.seq,             // Index of mission item being sent
+                                               item.frame,
+                                               item.command,
+                                               item.current,
+                                               item.autocontinue,
+                                               item.param1, item.param2, item.param3, item.param4,
+                                               item.x, item.y, item.z);
             _mockLink->respondWithMavlinkMessage(responseMsg);
         }
     }
@@ -218,7 +220,11 @@ void MockLinkMissionItemHandler::_requestNextMissionItem(int sequenceNumber)
             missionRequest.target_component =   _mavlinkProtocol->getComponentId();
             missionRequest.seq =                sequenceNumber;
             
-            mavlink_msg_mission_request_encode(_mockLink->vehicleId(), MAV_COMP_ID_MISSIONPLANNER, &message, &missionRequest);
+            mavlink_msg_mission_request_encode_chan(_mockLink->vehicleId(),
+                                                    MAV_COMP_ID_MISSIONPLANNER,
+                                                    _mockLink->mavlinkChannel(),
+                                                    &message,
+                                                    &missionRequest);
             _mockLink->respondWithMavlinkMessage(message);
 
             // If response with Mission Item doesn't come before timer fires it's an error
@@ -238,7 +244,11 @@ void MockLinkMissionItemHandler::_sendAck(MAV_MISSION_RESULT ackType)
     missionAck.target_component =   _mavlinkProtocol->getComponentId();
     missionAck.type =               ackType;
     
-    mavlink_msg_mission_ack_encode(_mockLink->vehicleId(), MAV_COMP_ID_MISSIONPLANNER, &message, &missionAck);
+    mavlink_msg_mission_ack_encode_chan(_mockLink->vehicleId(),
+                                        MAV_COMP_ID_MISSIONPLANNER,
+                                        _mockLink->mavlinkChannel(),
+                                        &message,
+                                        &missionAck);
     _mockLink->respondWithMavlinkMessage(message);
 }
 
