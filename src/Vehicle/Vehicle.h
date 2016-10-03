@@ -508,6 +508,8 @@ public:
     void setVtolState(MAV_VTOL_STATE state) { _vtolState = state;}
     MAV_VTOL_STATE vtolState(void) { return _vtolState; }
 
+    void parachute(void);
+
     bool flightModeSetAvailable(void);
     QStringList flightModes(void);
     QString flightMode(void) const;
