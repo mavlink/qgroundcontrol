@@ -37,16 +37,6 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(const QString& title, QAction* action, 
     header << tr("Type");
     ui->treeWidget->setHeaderLabels(header);
 
-    // Set up the column headers for the rate listing
-    QStringList rateHeader;
-    rateHeader << tr("Name");
-    rateHeader << tr("#ID");
-    rateHeader << tr("Rate");
-    ui->rateTreeWidget->setHeaderLabels(rateHeader);
-    connect(ui->rateTreeWidget, &QTreeWidget::itemChanged,
-            this, &QGCMAVLinkInspector::rateTreeItemChanged);
-    ui->rateTreeWidget->hide();
-
     // Connect the UI
     connect(ui->systemComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
             this, &QGCMAVLinkInspector::selectDropDownMenuSystem);
@@ -78,23 +68,11 @@ void QGCMAVLinkInspector::selectDropDownMenuSystem(int dropdownid)
 {
     selectedSystemID = ui->systemComboBox->itemData(dropdownid).toInt();
     rebuildComponentList();
-
-    if (selectedSystemID != 0 && selectedComponentID != 0) {
-        ui->rateTreeWidget->show();
-    } else {
-        ui->rateTreeWidget->hide();
-    }
 }
 
 void QGCMAVLinkInspector::selectDropDownMenuComponent(int dropdownid)
 {
     selectedComponentID = ui->componentComboBox->itemData(dropdownid).toInt();
-
-    if (selectedSystemID != 0 && selectedComponentID != 0) {
-        ui->rateTreeWidget->show();
-    } else {
-        ui->rateTreeWidget->hide();
-    }
 }
 
 void QGCMAVLinkInspector::rebuildComponentList()
@@ -195,8 +173,6 @@ void QGCMAVLinkInspector::clearView()
     onboardMessageInterval.clear();
 
     ui->treeWidget->clear();
-    ui->rateTreeWidget->clear();
-
 }
 
 void QGCMAVLinkInspector::refreshView()
@@ -311,25 +287,6 @@ void QGCMAVLinkInspector::refreshView()
         if (!strcmp(msgname, "EMPTY")) {
             continue;
         }
-
-        // Update the tree view
-        QString messageName("%1");
-        messageName = messageName.arg(msgname);
-        if (!rateTreeWidgetItems.contains(i))
-        {
-            QStringList fields;
-            fields << messageName;
-            fields << QString("%1").arg(i);
-            fields << "OFF / --- Hz";
-            QTreeWidgetItem* widget = new QTreeWidgetItem(fields);
-            widget->setFlags(widget->flags() | Qt::ItemIsEditable);
-            rateTreeWidgetItems.insert(i, widget);
-            ui->rateTreeWidget->addTopLevelItem(widget);
-        }
-
-        // Set Hz
-        //QTreeWidgetItem* message = rateTreeWidgetItems.value(i);
-        //message->setData(0, Qt::DisplayRole, QVariant(messageName));
     }
 }
 
@@ -473,43 +430,6 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
             }
             break;
 
-    }
-}
-
-void QGCMAVLinkInspector::changeStreamInterval(int msgid, int interval)
-{
-    //REQUEST_DATA_STREAM
-    if (selectedSystemID == 0 || selectedComponentID == 0) {
-        return;
-    }
-
-    mavlink_request_data_stream_t stream;
-    stream.target_system = selectedSystemID;
-    stream.target_component = selectedComponentID;
-    stream.req_stream_id = msgid;
-    stream.req_message_rate = interval;
-    stream.start_stop = (interval > 0);
-
-    mavlink_message_t msg;
-    mavlink_msg_request_data_stream_encode(_protocol->getSystemId(), _protocol->getComponentId(), &msg, &stream);
-
-#if 0
-    // FIXME: Is this really used?
-    _protocol->sendMessage(msg);
-#endif
-}
-
-void QGCMAVLinkInspector::rateTreeItemChanged(QTreeWidgetItem* paramItem, int column)
-{
-    if (paramItem && column > 0) {
-
-        int key = paramItem->data(1, Qt::DisplayRole).toInt();
-        QVariant value = paramItem->data(2, Qt::DisplayRole);
-        float interval = 1000 / value.toFloat();
-
-        qDebug() << "Stream " << key << "interval" << interval;
-
-        changeStreamInterval(key, interval);
     }
 }
 

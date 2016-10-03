@@ -188,12 +188,6 @@ void QGroundControlQmlGlobal::setIsSaveLogPromptNotArmed(bool prompt)
     emit isSaveLogPromptNotArmedChanged(prompt);
 }
 
-void QGroundControlQmlGlobal::setIsMultiplexingEnabled(bool enable)
-{
-    qgcApp()->toolbox()->mavlinkProtocol()->enableMultiplexing(enable);
-    emit isMultiplexingEnabledChanged(enable);
-}
-
 void QGroundControlQmlGlobal::setIsVersionCheckEnabled(bool enable)
 {
     qgcApp()->toolbox()->mavlinkProtocol()->enableVersionCheck(enable);

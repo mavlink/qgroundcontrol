@@ -69,15 +69,6 @@ Rectangle {
                 }
             }
             //-----------------------------------------------------------------
-            //-- Mavlink Multiplexing
-            QGCCheckBox {
-                text:       qsTr("Enable multiplexing (forward packets to all other links)")
-                checked:    QGroundControl.isMultiplexingEnabled
-                onClicked: {
-                    QGroundControl.isMultiplexingEnabled = checked
-                }
-            }
-            //-----------------------------------------------------------------
             //-- Mavlink Version Check
             QGCCheckBox {
                 text:       qsTr("Only accept MAVs with same protocol version")

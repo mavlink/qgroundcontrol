@@ -90,9 +90,13 @@ void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
     missionCount.target_component = MAV_COMP_ID_MISSIONPLANNER;
     missionCount.count = _missionItems.count();
 
-    mavlink_msg_mission_count_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &message, &missionCount);
-
     _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_mission_count_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                          qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                          _dedicatedLink->mavlinkChannel(),
+                                          &message,
+                                          &missionCount);
+
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
     _startAckTimeout(AckMissionRequest);
     emit inProgressChanged(true);
@@ -125,9 +129,13 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     missionItem.current =           altChangeOnly ? 3 : 2;
     missionItem.autocontinue =      true;
 
-    mavlink_msg_mission_item_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &messageOut, &missionItem);
-
     _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_mission_item_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &missionItem);
+
     _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
     _startAckTimeout(AckGuidedItem);
     emit inProgressChanged(true);
@@ -157,9 +165,13 @@ void MissionManager::requestMissionItems(void)
     request.target_system = _vehicle->id();
     request.target_component = MAV_COMP_ID_MISSIONPLANNER;
     
-    mavlink_msg_mission_request_list_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &message, &request);
-    
     _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_mission_request_list_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                                 qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                                 _dedicatedLink->mavlinkChannel(),
+                                                 &message,
+                                                 &request);
+    
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
     _startAckTimeout(AckMissionCount);
     emit inProgressChanged(true);
@@ -223,7 +235,11 @@ void MissionManager::_readTransactionComplete(void)
     missionAck.target_component =   MAV_COMP_ID_MISSIONPLANNER;
     missionAck.type =               MAV_MISSION_ACCEPTED;
     
-    mavlink_msg_mission_ack_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &message, &missionAck);
+    mavlink_msg_mission_ack_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                        _dedicatedLink->mavlinkChannel(),
+                                        &message,
+                                        &missionAck);
     
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
 
@@ -269,7 +285,11 @@ void MissionManager::_requestNextMissionItem(void)
     missionRequest.target_component =   MAV_COMP_ID_MISSIONPLANNER;
     missionRequest.seq =                _itemIndicesToRead[0];
     
-    mavlink_msg_mission_request_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &message, &missionRequest);
+    mavlink_msg_mission_request_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                            _dedicatedLink->mavlinkChannel(),
+                                            &message,
+                                            &missionRequest);
     
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
     _startAckTimeout(AckMissionItem);
@@ -377,7 +397,11 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message)
     missionItem.current =           missionRequest.seq == 0;
     missionItem.autocontinue =      item->autoContinue();
     
-    mavlink_msg_mission_item_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &messageOut, &missionItem);
+    mavlink_msg_mission_item_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &missionItem);
     
     _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
     _startAckTimeout(AckMissionRequest);

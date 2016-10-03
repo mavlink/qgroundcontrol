@@ -7,15 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
-* @file
-*   @brief Brief Description
-*
-*   @author Lorenz Meier <mavteam@student.ethz.ch>
-*
-*/
-
 #ifndef _LINKINTERFACE_H_
 #define _LINKINTERFACE_H_
 
@@ -25,6 +16,7 @@
 #include <QMutexLocker>
 #include <QMetaType>
 #include <QSharedPointer>
+#include <QDebug>
 
 #include "QGCMAVLink.h"
 
@@ -124,7 +116,13 @@ public:
     
     /// mavlink channel to use for this link, as used by mavlink_parse_char. The mavlink channel is only
     /// set into the link when it is added to LinkManager
-    uint8_t getMavlinkChannel(void) const { Q_ASSERT(_mavlinkChannelSet); return _mavlinkChannel; }
+    uint8_t mavlinkChannel(void) const
+    {
+        if (!_mavlinkChannelSet) {
+            qWarning() << "Call to LinkInterface::mavlinkChannel with _mavlinkChannelSet == false";
+        }
+        return _mavlinkChannel;
+    }
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
