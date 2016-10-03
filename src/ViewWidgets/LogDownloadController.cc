@@ -458,12 +458,13 @@ LogDownloadController::_requestLogData(uint8_t id, uint32_t offset, uint32_t cou
         id += _apmOneBased;
         qCDebug(LogDownloadLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count << ")";
         mavlink_message_t msg;
-        mavlink_msg_log_request_data_pack(
-            qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-            &msg,
-            qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId(),
-            id, offset, count);
+        mavlink_msg_log_request_data_pack_chan(
+                    qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                    qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                    _vehicle->priorityLink()->mavlinkChannel(),
+                    &msg,
+                    qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId(),
+                    id, offset, count);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
     }
 }
@@ -485,14 +486,15 @@ LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
         qCDebug(LogDownloadLog) << "Request log entry list (" << start << "through" << end << ")";
         _setListing(true);
         mavlink_message_t msg;
-        mavlink_msg_log_request_list_pack(
-            qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-            &msg,
-            _vehicle->id(),
-            _vehicle->defaultComponentId(),
-            start,
-            end);
+        mavlink_msg_log_request_list_pack_chan(
+                    qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                    qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                    _vehicle->priorityLink()->mavlinkChannel(),
+                    &msg,
+                    _vehicle->id(),
+                    _vehicle->defaultComponentId(),
+                    start,
+                    end);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
         //-- Wait 5 seconds before bitching about not getting anything
         _timer.start(5000);
@@ -650,11 +652,12 @@ LogDownloadController::eraseAll(void)
 {
     if(_vehicle && _uas) {
         mavlink_message_t msg;
-        mavlink_msg_log_erase_pack(
-            qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-            &msg,
-            qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId());
+        mavlink_msg_log_erase_pack_chan(
+                    qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                    qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                    _vehicle->priorityLink()->mavlinkChannel(),
+                    &msg,
+                    qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId());
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
         refresh();
     }

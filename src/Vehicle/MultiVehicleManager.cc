@@ -307,15 +307,16 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
         Vehicle* vehicle = qobject_cast<Vehicle*>(_vehicles[i]);
 
         mavlink_message_t message;
-        mavlink_msg_heartbeat_pack(_mavlinkProtocol->getSystemId(),
-                                   _mavlinkProtocol->getComponentId(),
-                                   &message,
-                                   MAV_TYPE_GCS,            // MAV_TYPE
-                                   MAV_AUTOPILOT_INVALID,   // MAV_AUTOPILOT
-                                   MAV_MODE_MANUAL_ARMED,   // MAV_MODE
-                                   0,                       // custom mode
-                                   MAV_STATE_ACTIVE);       // MAV_STATE
-        vehicle->sendMessageOnPriorityLink(message);
+        mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
+                                        _mavlinkProtocol->getComponentId(),
+                                        vehicle->priorityLink()->mavlinkChannel(),
+                                        &message,
+                                        MAV_TYPE_GCS,            // MAV_TYPE
+                                        MAV_AUTOPILOT_INVALID,   // MAV_AUTOPILOT
+                                        MAV_MODE_MANUAL_ARMED,   // MAV_MODE
+                                        0,                       // custom mode
+                                        MAV_STATE_ACTIVE);       // MAV_STATE
+        vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
     }
 }
 

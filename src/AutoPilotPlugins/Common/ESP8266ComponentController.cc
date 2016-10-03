@@ -318,9 +318,11 @@ void
 ESP8266ComponentController::_reboot()
 {
     mavlink_message_t msg;
-    mavlink_msg_command_long_pack(
+
+    mavlink_msg_command_long_pack_chan(
         qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        _vehicle->priorityLink()->mavlinkChannel(),
         &msg,
         _vehicle->id(),
         MAV_COMP_ID_UDP_BRIDGE,
@@ -339,9 +341,10 @@ void
 ESP8266ComponentController::_restoreDefaults()
 {
     mavlink_message_t msg;
-    mavlink_msg_command_long_pack(
+    mavlink_msg_command_long_pack_chan(
         qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        _vehicle->priorityLink()->mavlinkChannel(),
         &msg,
         _vehicle->id(),
         MAV_COMP_ID_UDP_BRIDGE,

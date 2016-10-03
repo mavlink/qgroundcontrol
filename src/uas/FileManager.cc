@@ -733,13 +733,14 @@ void FileManager::_sendRequest(Request* request)
     }
     
     Q_ASSERT(_vehicle);
-    mavlink_msg_file_transfer_protocol_pack(_systemIdQGC,       // QGC System ID
-                                            0,                  // QGC Component ID
-                                            &message,           // Mavlink Message to pack into
-                                            0,                  // Target network
-                                            _systemIdServer,    // Target system
-                                            0,                  // Target component
-                                            (uint8_t*)request); // Payload
+    mavlink_msg_file_transfer_protocol_pack_chan(_systemIdQGC,       // QGC System ID
+                                                 0,                  // QGC Component ID
+                                                 _dedicatedLink->mavlinkChannel(),
+                                                 &message,           // Mavlink Message to pack into
+                                                 0,                  // Target network
+                                                 _systemIdServer,    // Target system
+                                                 0,                  // Target component
+                                                 (uint8_t*)request); // Payload
     
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
 }

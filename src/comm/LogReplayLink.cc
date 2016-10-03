@@ -167,7 +167,7 @@ quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
     char nextByte;
     mavlink_status_t comm;
     while (_logFile.getChar(&nextByte)) { // Loop over every byte
-        bool messageFound = mavlink_parse_char(getMavlinkChannel(), nextByte, nextMsg, &comm);
+        bool messageFound = mavlink_parse_char(mavlinkChannel(), nextByte, nextMsg, &comm);
         
         // If we've found a message, jump back to the start of the message, grab the timestamp,
         // and go back to the end of this file.

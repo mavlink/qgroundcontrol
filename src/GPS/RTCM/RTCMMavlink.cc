@@ -61,8 +61,11 @@ void RTCMMavlink::sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg)
     for (int i = 0; i < vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
         mavlink_message_t message;
-        mavlink_msg_gps_rtcm_data_encode(mavlinkProtocol->getSystemId(),
-                mavlinkProtocol->getComponentId(), &message, &msg);
-        vehicle->sendMessageOnPriorityLink(message);
+        mavlink_msg_gps_rtcm_data_encode_chan(mavlinkProtocol->getSystemId(),
+                                              mavlinkProtocol->getComponentId(),
+                                              vehicle->priorityLink()->mavlinkChannel(),
+                                              &message,
+                                              &msg);
+        vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
     }
 }

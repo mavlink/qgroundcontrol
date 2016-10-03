@@ -346,7 +346,7 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
 
     for (qint64 i=0; i<cBytes; i++)
     {
-        if (!mavlink_parse_char(getMavlinkChannel(), bytes[i], &msg, &comm)) {
+        if (!mavlink_parse_char(mavlinkChannel(), bytes[i], &msg, &comm)) {
             continue;
         }
 
