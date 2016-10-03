@@ -731,16 +731,23 @@ void FileManager::_sendRequest(Request* request)
     if (_systemIdQGC == 0) {
         _systemIdQGC = qgcApp()->toolbox()->mavlinkProtocol()->getSystemId();
     }
+
+    // Unit testing code can end up here without _dedicateLink set since it tests inidividual commands.
+    LinkInterface* link;
+    if (_dedicatedLink) {
+        link = _dedicatedLink;
+    } else {
+        link = _vehicle->priorityLink();
+    }
     
-    Q_ASSERT(_vehicle);
     mavlink_msg_file_transfer_protocol_pack_chan(_systemIdQGC,       // QGC System ID
                                                  0,                  // QGC Component ID
-                                                 _dedicatedLink->mavlinkChannel(),
+                                                 link->mavlinkChannel(),
                                                  &message,           // Mavlink Message to pack into
                                                  0,                  // Target network
                                                  _systemIdServer,    // Target system
                                                  0,                  // Target component
                                                  (uint8_t*)request); // Payload
     
-    _vehicle->sendMessageOnLink(_dedicatedLink, message);
+    _vehicle->sendMessageOnLink(link, message);
 }
