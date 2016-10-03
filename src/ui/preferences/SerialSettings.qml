@@ -50,11 +50,17 @@ Item {
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }
+            QGCLabel {
+                text:       qsTr("No serial ports available");
+                visible:    QGroundControl.linkManager.serialPortStrings.length == 0
+            }
+
             QGCComboBox {
-                id:             commPortCombo
-                width:          _secondColumn
-                model:          QGroundControl.linkManager.serialPortStrings
+                id:                     commPortCombo
                 anchors.verticalCenter: parent.verticalCenter
+                width:                  _secondColumn
+                model:                  QGroundControl.linkManager.serialPortStrings
+                visible:                QGroundControl.linkManager.serialPortStrings.length > 0
                 onActivated: {
                     if (index != -1) {
                         subEditConfig.portName = QGroundControl.linkManager.serialPorts[index]
