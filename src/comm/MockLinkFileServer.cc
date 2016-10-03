@@ -365,13 +365,14 @@ void MockLinkFileServer::_sendResponse(uint8_t targetSystemId, uint8_t targetCom
     
     request->hdr.seqNumber = seqNumber;
     
-    mavlink_msg_file_transfer_protocol_pack(_systemIdServer,    // System ID
-                                            0,                  // Component ID
-                                            &mavlinkMessage,    // Mavlink Message to pack into
-                                            0,                  // Target network
-                                            targetSystemId,
-                                            targetComponentId,
-                                            (uint8_t*)request); // Payload
+    mavlink_msg_file_transfer_protocol_pack_chan(_systemIdServer,    // System ID
+                                                 0,                  // Component ID
+                                                 _mockLink->mavlinkChannel(),
+                                                 &mavlinkMessage,    // Mavlink Message to pack into
+                                                 0,                  // Target network
+                                                 targetSystemId,
+                                                 targetComponentId,
+                                                 (uint8_t*)request); // Payload
     
     _mockLink->respondWithMavlinkMessage(mavlinkMessage);
 }
