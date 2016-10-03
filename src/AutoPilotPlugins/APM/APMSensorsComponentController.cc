@@ -468,9 +468,13 @@ void APMSensorsComponentController::nextClicked(void)
 
     ack.command = 0;
     ack.result = 1;
-    mavlink_msg_command_ack_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &msg, &ack);
+    mavlink_msg_command_ack_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                        _vehicle->priorityLink()->mavlinkChannel(),
+                                        &msg,
+                                        &ack);
 
-    _vehicle->sendMessageOnPriorityLink(msg);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
     if (_compassMotCalInProgress) {
         _stopCalibration(StopCalibrationSuccess);

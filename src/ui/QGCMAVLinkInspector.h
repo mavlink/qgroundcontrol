@@ -36,8 +36,6 @@ public slots:
     /** @Brief Select a component through the drop down menu */
     void selectDropDownMenuComponent(int dropdownid);
 
-    void rateTreeItemChanged(QTreeWidgetItem* paramItem, int column);
-
 protected:
     MAVLinkProtocol *_protocol;     ///< MAVLink instance
     int selectedSystemID;          ///< Currently selected system
@@ -45,7 +43,6 @@ protected:
     QMap<int, int> systems;     ///< Already observed systems
     QMap<int, int> components; ///< Already observed components
     QMap<int, float> onboardMessageInterval; ///< Stores the onboard selected data rate
-    QMap<int, QTreeWidgetItem*> rateTreeWidgetItems; ///< Available rate tree widget items
     QTimer updateTimer; ///< Only update at 1 Hz to not overload the GUI
     mavlink_message_info_t messageInfo[256]; // Store the metadata for all available MAVLink messages.
 
@@ -63,8 +60,6 @@ protected:
     void updateField(int sysid, int msgid, int fieldid, QTreeWidgetItem* item);
     /** @brief Rebuild the list of components */
     void rebuildComponentList();
-    /** @brief Change the stream interval */
-    void changeStreamInterval(int msgid, int interval);
     /* @brief Create a new tree for a new UAS */
     void addUAStoTree(int sysId);
 

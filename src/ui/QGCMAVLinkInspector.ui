@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>MAVLink Inspector</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="2,8,2,8,3">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="2,0,0,0,0">
    <property name="leftMargin">
     <number>6</number>
    </property>
@@ -26,12 +26,24 @@
    <property name="bottomMargin">
     <number>6</number>
    </property>
-   <item row="0" column="4">
-    <widget class="QPushButton" name="clearButton">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="maximumSize">
+      <size>
+       <width>100</width>
+       <height>16777215</height>
+      </size>
+     </property>
      <property name="text">
-      <string>Clear</string>
+      <string>System</string>
      </property>
     </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="systemComboBox"/>
+   </item>
+   <item row="0" column="3">
+    <widget class="QComboBox" name="componentComboBox"/>
    </item>
    <item row="0" column="2">
     <widget class="QLabel" name="label_2">
@@ -40,10 +52,10 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="label">
+   <item row="0" column="4">
+    <widget class="QPushButton" name="clearButton">
      <property name="text">
-      <string>System</string>
+      <string>Clear</string>
      </property>
     </widget>
    </item>
@@ -55,21 +67,6 @@
       </property>
      </column>
     </widget>
-   </item>
-   <item row="3" column="0" colspan="5">
-    <widget class="QTreeWidget" name="rateTreeWidget">
-     <column>
-      <property name="text">
-       <string notr="true">1</string>
-      </property>
-     </column>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QComboBox" name="systemComboBox"/>
-   </item>
-   <item row="0" column="3">
-    <widget class="QComboBox" name="componentComboBox"/>
    </item>
   </layout>
  </widget>

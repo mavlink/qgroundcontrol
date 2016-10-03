@@ -141,9 +141,13 @@ void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitu
     cmd.target_component = vehicle->defaultComponentId();
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+    mavlink_msg_command_long_encode_chan(mavlink->getSystemId(),
+                                         mavlink->getComponentId(),
+                                         vehicle->priorityLink()->mavlinkChannel(),
+                                         &msg,
+                                         &cmd);
 
-    vehicle->sendMessageOnPriorityLink(msg);
+    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
 }
 
 void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
@@ -179,9 +183,13 @@ void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double
     cmd.z = -(altitudeRel - vehicle->altitudeRelative()->rawValue().toDouble());
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_set_position_target_local_ned_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+    mavlink_msg_set_position_target_local_ned_encode_chan(mavlink->getSystemId(),
+                                                          mavlink->getComponentId(),
+                                                          vehicle->priorityLink()->mavlinkChannel(),
+                                                          &msg,
+                                                          &cmd);
 
-    vehicle->sendMessageOnPriorityLink(msg);
+    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
 }
 
 bool ArduCopterFirmwarePlugin::isPaused(const Vehicle* vehicle) const
