@@ -109,13 +109,14 @@ void APMRallyPointManager::_requestRallyPoint(uint8_t pointIndex)
     MAVLinkProtocol*    mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     qCDebug(RallyPointManagerLog) << "APMRallyPointManager::_requestRallyPoint" << pointIndex;
-    mavlink_msg_rally_fetch_point_pack(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       &msg,
-                                       _vehicle->id(),
-                                       _vehicle->defaultComponentId(),
-                                       pointIndex);
-    _vehicle->sendMessageOnPriorityLink(msg);
+    mavlink_msg_rally_fetch_point_pack_chan(mavlink->getSystemId(),
+                                            mavlink->getComponentId(),
+                                            _vehicle->priorityLink()->mavlinkChannel(),
+                                            &msg,
+                                            _vehicle->id(),
+                                            _vehicle->defaultComponentId(),
+                                            pointIndex);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
 
 void APMRallyPointManager::_sendRallyPoint(uint8_t pointIndex)
@@ -124,18 +125,19 @@ void APMRallyPointManager::_sendRallyPoint(uint8_t pointIndex)
     MAVLinkProtocol*    mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     QGeoCoordinate point = _rgPoints[pointIndex];
-    mavlink_msg_rally_point_pack(mavlink->getSystemId(),
-                                 mavlink->getComponentId(),
-                                 &msg,
-                                 _vehicle->id(),
-                                 _vehicle->defaultComponentId(),
-                                 pointIndex,
-                                 _rgPoints.count(),
-                                 point.latitude() * 1e7,
-                                 point.longitude() * 1e7,
-                                 point.altitude(),
-                                 0, 0, 0);          //  break_alt, land_dir, flags
-    _vehicle->sendMessageOnPriorityLink(msg);
+    mavlink_msg_rally_point_pack_chan(mavlink->getSystemId(),
+                                      mavlink->getComponentId(),
+                                      _vehicle->priorityLink()->mavlinkChannel(),
+                                      &msg,
+                                      _vehicle->id(),
+                                      _vehicle->defaultComponentId(),
+                                      pointIndex,
+                                      _rgPoints.count(),
+                                      point.latitude() * 1e7,
+                                      point.longitude() * 1e7,
+                                      point.altitude(),
+                                      0, 0, 0);          //  break_alt, land_dir, flags
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
 
 bool APMRallyPointManager::inProgress(void) const

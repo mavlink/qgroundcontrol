@@ -140,11 +140,12 @@ void FollowMe::_sendGCSMotionReport(void)
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
         if(vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
             mavlink_message_t message;
-            mavlink_msg_follow_target_encode(mavlinkProtocol->getSystemId(),
-                                             mavlinkProtocol->getComponentId(),
-                                             &message,
-                                             &follow_target);
-            vehicle->sendMessageOnPriorityLink(message);
+            mavlink_msg_follow_target_encode_chan(mavlinkProtocol->getSystemId(),
+                                                  mavlinkProtocol->getComponentId(),
+                                                  vehicle->priorityLink()->mavlinkChannel(),
+                                                  &message,
+                                                  &follow_target);
+            vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
         }
     }
 }

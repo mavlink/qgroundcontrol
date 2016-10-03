@@ -395,7 +395,12 @@ void ParameterManager::refreshAllParameters(uint8_t componentID)
     Q_ASSERT(mavlink);
 
     mavlink_message_t msg;
-    mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->id(), componentID);
+    mavlink_msg_param_request_list_pack_chan(mavlink->getSystemId(),
+                                             mavlink->getComponentId(),
+                                             _vehicle->priorityLink()->mavlinkChannel(),
+                                             &msg,
+                                             _vehicle->id(),
+                                             componentID);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
     QString what = (componentID == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(componentID);
@@ -618,13 +623,14 @@ void ParameterManager::_readParameterRaw(int componentId, const QString& paramNa
     char fixedParamName[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN];
 
     strncpy(fixedParamName, paramName.toStdString().c_str(), sizeof(fixedParamName));
-    mavlink_msg_param_request_read_pack(_mavlink->getSystemId(),    // Our system id
-                                        _mavlink->getComponentId(), // Our component id
-                                        &msg,                       // Pack into this mavlink_message_t
-                                        _vehicle->id(),             // Target system id
-                                        componentId,                // Target component id
-                                        fixedParamName,             // Named parameter being requested
-                                        paramIndex);                // Parameter index being requested, -1 for named
+    mavlink_msg_param_request_read_pack_chan(_mavlink->getSystemId(),   // QGC system id
+                                             _mavlink->getComponentId(),     // QGC component id
+                                             _vehicle->priorityLink()->mavlinkChannel(),
+                                             &msg,                           // Pack into this mavlink_message_t
+                                             _vehicle->id(),                 // Target system id
+                                             componentId,                    // Target component id
+                                             fixedParamName,                 // Named parameter being requested
+                                             paramIndex);                    // Parameter index being requested, -1 for named
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
 
@@ -677,7 +683,11 @@ void ParameterManager::_writeParameterRaw(int componentId, const QString& paramN
     strncpy(p.param_id, paramName.toStdString().c_str(), sizeof(p.param_id));
 
     mavlink_message_t msg;
-    mavlink_msg_param_set_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &p);
+    mavlink_msg_param_set_encode_chan(_mavlink->getSystemId(),
+                                      _mavlink->getComponentId(),
+                                      _vehicle->priorityLink()->mavlinkChannel(),
+                                      &msg,
+                                      &p);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
 
@@ -756,7 +766,11 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         p.target_system = (uint8_t)_vehicle->id();
         p.target_component = (uint8_t)componentId;
         mavlink_message_t msg;
-        mavlink_msg_param_set_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &p);
+        mavlink_msg_param_set_encode_chan(_mavlink->getSystemId(),
+                                          _mavlink->getComponentId(),
+                                          _vehicle->priorityLink()->mavlinkChannel(),
+                                          &msg,
+                                          &p);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
         // Give the user some feedback things loaded properly
@@ -787,7 +801,13 @@ void ParameterManager::_saveToEEPROM(void)
         _saveRequired = false;
         if (_vehicle->firmwarePlugin()->isCapable(_vehicle, FirmwarePlugin::MavCmdPreflightStorageCapability)) {
             mavlink_message_t msg;
-            mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _vehicle->id(), 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
+            mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
+                                               _mavlink->getComponentId(),
+                                               _vehicle->priorityLink()->mavlinkChannel(),
+                                               &msg,
+                                               _vehicle->id(),
+                                               0,
+                                               MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
             _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
             qCDebug(ParameterManagerLog) << "_saveToEEPROM";
         } else {
@@ -1409,17 +1429,18 @@ void ParameterManager::resetAllParametersToDefaults(void)
     mavlink_message_t msg;
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
-    mavlink_msg_command_long_pack(mavlink->getSystemId(),
-                                  mavlink->getComponentId(),
-                                  &msg,
-                                  _vehicle->id(),                   // Target systeem
-                                  _vehicle->defaultComponentId(),   // Target component
-                                  MAV_CMD_PREFLIGHT_STORAGE,
-                                  0,                                // Confirmation
-                                  2,                                // 2 = Reset params to default
-                                  -1,                               // -1 = No change to mission storage
-                                  0,                                // 0 = Ignore
-                                  0, 0, 0, 0);                      // Unused
-    _vehicle->sendMessageOnPriorityLink(msg);
+    mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
+                                       mavlink->getComponentId(),
+                                       _vehicle->priorityLink()->mavlinkChannel(),
+                                       &msg,
+                                       _vehicle->id(),                   // Target systeem
+                                       _vehicle->defaultComponentId(),   // Target component
+                                       MAV_CMD_PREFLIGHT_STORAGE,
+                                       0,                                // Confirmation
+                                       2,                                // 2 = Reset params to default
+                                       -1,                               // -1 = No change to mission storage
+                                       0,                                // 0 = Ignore
+                                       0, 0, 0, 0);                      // Unused
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
 

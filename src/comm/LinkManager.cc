@@ -270,7 +270,7 @@ void LinkManager::_deleteLink(LinkInterface* link)
     }
 
     // Free up the mavlink channel associated with this link
-    _mavlinkChannelsUsedBitMask &= ~(1 << link->getMavlinkChannel());
+    _mavlinkChannelsUsedBitMask &= ~(1 << link->mavlinkChannel());
 
     _links.removeOne(link);
     delete link;

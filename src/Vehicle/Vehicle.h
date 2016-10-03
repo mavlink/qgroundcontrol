@@ -430,10 +430,6 @@ public:
     /// @return true: message sent, false: Link no longer connected
     bool sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
 
-    /// Sends a message to the priority link
-    /// @return true: message sent, false: Link no longer connected
-    bool sendMessageOnPriorityLink(mavlink_message_t message) { return sendMessageOnLink(priorityLink(), message); }
-
     /// Sends the specified messages multiple times to the vehicle in order to attempt to
     /// guarantee that it makes it to the vehicle.
     void sendMessageMultiple(mavlink_message_t message);
