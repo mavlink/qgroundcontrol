@@ -54,6 +54,7 @@
         <file alias="DatalinkLossLight.svg">src/AutoPilotPlugins/PX4/Images/DatalinkLossLight.svg</file>
         <file alias="GeoFence.svg">src/AutoPilotPlugins/PX4/Images/GeoFence.svg</file>
         <file alias="GeoFenceLight.svg">src/AutoPilotPlugins/PX4/Images/GeoFenceLight.svg</file>
+        <file alias="GeoTagIcon.png">src/AnalyzeView/GeoTagIcon.png</file>
         <file alias="LandMode.svg">src/AutoPilotPlugins/PX4/Images/LandMode.svg</file>
         <file alias="LandModeCopter.svg">src/AutoPilotPlugins/PX4/Images/LandModeCopter.svg</file>
         <file alias="LowBattery.svg">src/AutoPilotPlugins/PX4/Images/LowBattery.svg</file>
@@ -128,6 +129,7 @@
         <file alias="Disarmed.svg">src/ui/toolbar/Images/Disarmed.svg</file>
         <file alias="Disconnect.svg">src/ui/toolbar/Images/Disconnect.svg</file>
         <file alias="Gears.svg">src/ui/toolbar/Images/Gears.svg</file>
+        <file alias="Analyze.svg">src/ui/toolbar/Images/Analyze.svg</file>
         <file alias="Gps.svg">src/ui/toolbar/Images/Gps.svg</file>
         <file alias="Hamburger.svg">src/ui/toolbar/Images/Hamburger.svg</file>
         <file alias="Megaphone.svg">src/ui/toolbar/Images/Megaphone.svg</file>

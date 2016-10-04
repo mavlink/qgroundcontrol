@@ -128,8 +128,6 @@ public slots:
     /// You can connect to this slot to show a critical message box from a different thread.
     void criticalMessageBoxOnMainThread(const QString& title, const QString& msg);
 
-    void showFlyView(void);
-    void showPlanView(void);
     void showSetupView(void);
 
     void qmlAttemptWindowClose(void);
@@ -162,11 +160,6 @@ public:
     /// @brief Intialize the application for normal application boot. Or in other words we are not going to run
     ///         unit tests. Although public should only be called by main.
     bool _initForUnitTests(void);
-
-    void _showSetupFirmware(void);
-    void _showSetupParameters(void);
-    void _showSetupSummary(void);
-    void _showSetupVehicleComponent(VehicleComponent* vehicleComponent);
 
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
 
