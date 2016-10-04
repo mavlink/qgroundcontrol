@@ -45,15 +45,16 @@ Rectangle {
     readonly property var   colorBlue:      "#636efe"
     readonly property var   colorWhite:     "#ffffff"
 
-    signal showSettingsView()
-    signal showSetupView()
-    signal showPlanView()
-    signal showFlyView()
+    signal showSettingsView
+    signal showSetupView
+    signal showPlanView
+    signal showFlyView
+    signal showAnalyzeView
 
     MainToolBarController { id: _controller }
 
     function checkSettingsButton() {
-        preferencesButton.checked = true
+            settingsButton.checked = true
     }
 
     function checkSetupButton() {
@@ -66,6 +67,10 @@ Rectangle {
 
     function checkFlyButton() {
         flyButton.checked = true
+    }
+
+    function checkAnalyzeButton() {
+        analyzeButton.checked = true
     }
 
     function getBatteryColor() {
@@ -325,7 +330,7 @@ Rectangle {
         ExclusiveGroup { id: mainActionGroup }
 
         QGCToolBarButton {
-            id:                 preferencesButton
+            id:                 settingsButton
             width:              mainWindow.tbButtonWidth
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
@@ -363,6 +368,17 @@ Rectangle {
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/PaperPlane.svg"
             onClicked:          toolBar.showFlyView()
+        }
+
+        QGCToolBarButton {
+            id:                 analyzeButton
+            width:              mainWindow.tbButtonWidth
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            exclusiveGroup:     mainActionGroup
+            source:             "/qmlimages/Analyze.svg"
+            visible:            !ScreenTools.isMobile
+            onClicked:          toolBar.showAnalyzeView()
         }
     }
 

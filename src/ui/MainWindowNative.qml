@@ -28,34 +28,8 @@ Window {
         }
     }
 
-    function showFlyView() {
-        mainWindowInner.item.showFlyView()
-    }
-
-    function showPlanView() {
-        mainWindowInner.item.showPlanView()
-    }
-
     function showSetupView() {
         mainWindowInner.item.showSetupView()
-    }
-
-    // The following are use for unit testing only
-
-    function showSetupFirmware() {
-        mainWindowInner.item.showSetupFirmware()
-    }
-
-    function showSetupParameters() {
-        mainWindowInner.item.showSetupParameters()
-    }
-
-    function showSetupSummary() {
-        mainWindowInner.item.showSetupSummary()
-    }
-
-    function showSetupVehicleComponent(vehicleComponent) {
-        mainWindowInner.showSetupVehicleComponent(vehicleComponent)
     }
 
     function showMessage(message) {

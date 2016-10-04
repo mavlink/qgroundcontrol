@@ -1,5 +1,6 @@
 Module QGroundControl.Controls
 
+AnalyzePage             1.0 AnalyzePage.qml
 AppMessages             1.0 AppMessages.qml
 ClickableColor          1.0 ClickableColor.qml
 DropButton              1.0 DropButton.qml
