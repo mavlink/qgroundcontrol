@@ -21,7 +21,6 @@
 
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
-#include "FactPanelController.h"
 
 class  MultiVehicleManager;
 class  UASInterface;
@@ -110,13 +109,12 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-class LogDownloadController : public FactPanelController
+class LogDownloadController : public QObject
 {
     Q_OBJECT
-public:
 
-    /// @param standaloneUnitTesting true: being run without factPanel, false: normal operation, factPanel is required
-    LogDownloadController(bool standaloneUnitTesting = false);
+public:
+    LogDownloadController(void);
 
     Q_PROPERTY(QGCLogModel* model           READ model              NOTIFY modelChanged)
     Q_PROPERTY(bool         requestingList  READ requestingList     NOTIFY requestingListChanged)
