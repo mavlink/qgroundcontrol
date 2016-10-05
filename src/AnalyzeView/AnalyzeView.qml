@@ -29,17 +29,11 @@ Rectangle {
 
     ExclusiveGroup { id: setupButtonGroup }
 
-    readonly property real      _defaultTextHeight: ScreenTools.defaultFontPixelHeight
-    readonly property real      _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
-    readonly property real      _horizontalMargin:  _defaultTextWidth / 2
-    readonly property real      _verticalMargin:    _defaultTextHeight / 2
-    readonly property real      _buttonWidth:       _defaultTextWidth * 18
-
-    function showGeoTagPanel() {
-        panelLoader.source = "GeoTagPage.qml"
-    }
-
-    Component.onCompleted: showGeoTagPanel()
+    readonly property real  _defaultTextHeight:     ScreenTools.defaultFontPixelHeight
+    readonly property real  _defaultTextWidth:      ScreenTools.defaultFontPixelWidth
+    readonly property real  _horizontalMargin:      _defaultTextWidth / 2
+    readonly property real  _verticalMargin:        _defaultTextHeight / 2
+    readonly property real  _buttonWidth:           _defaultTextWidth * 18
 
     QGCFlickable {
         id:                 buttonScroll
@@ -87,15 +81,31 @@ Rectangle {
                 visible:                !ScreenTools.isShortScreen
             }
 
-            SubMenuButton {
-                id:             summaryButton
-                imageResource: "/qmlimages/GeoTagIcon.png"
-                setupIndicator: false
-                checked:        true
-                exclusiveGroup: setupButtonGroup
-                text:           "GeoTag Images"
+            Repeater {
+                id: buttonRepeater
 
-                onClicked: showGeoTagPanel()
+                model: ListModel {
+                    ListElement {
+                        buttonImage:    "/qmlimages/LogDownloadIcon"
+                        buttonText:     qsTr("Log Download")
+                        pageSource:     "LogDownloadPage.qml"
+                    }
+                    ListElement {
+                        buttonImage:    "/qmlimages/GeoTagIcon"
+                        buttonText:     qsTr("GeoTag Images")
+                        pageSource:     "GeoTagPage.qml"
+                    }
+                }
+
+                Component.onCompleted: itemAt(0).checked = true
+
+                SubMenuButton {
+                    imageResource:  buttonImage
+                    setupIndicator: false
+                    exclusiveGroup: setupButtonGroup
+                    text:           buttonText
+                    onClicked:      panelLoader.source = pageSource
+                }
             }
         }
     }
@@ -122,5 +132,6 @@ Rectangle {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
+        source:                 "LogDownloadPage.qml"
     }
 }

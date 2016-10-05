@@ -103,9 +103,8 @@ QGCLogEntry::sizeStr() const
 }
 
 //----------------------------------------------------------------------------------------
-LogDownloadController::LogDownloadController(bool standaloneUnitTesting)
-    : FactPanelController(standaloneUnitTesting)
-    , _uas(NULL)
+LogDownloadController::LogDownloadController(void)
+    : _uas(NULL)
     , _downloadData(NULL)
     , _vehicle(NULL)
     , _requestingLogEntries(false)
