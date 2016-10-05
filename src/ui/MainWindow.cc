@@ -51,7 +51,6 @@
 #include "CustomCommandWidget.h"
 #include "QGCDockWidget.h"
 #include "HILDockWidget.h"
-#include "LogDownload.h"
 #include "AppMessages.h"
 #endif
 
@@ -73,8 +72,7 @@ enum DockWidgetTypes {
     ONBOARD_FILES,
     INFO_VIEW,
     HIL_CONFIG,
-    ANALYZE,
-    LOG_DOWNLOAD
+    ANALYZE
 };
 
 static const char *rgDockWidgetNames[] = {
@@ -83,8 +81,7 @@ static const char *rgDockWidgetNames[] = {
     "Onboard Files",
     "Info View",
     "HIL Config",
-    "Analyze",
-    "Log Download"
+    "Analyze"
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -351,9 +348,6 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
                 break;
             case ONBOARD_FILES:
                 widget = new QGCUASFileViewMulti(widgetName, action, this);
-                break;
-            case LOG_DOWNLOAD:
-                widget = new LogDownload(widgetName, action, this);
                 break;
             case HIL_CONFIG:
                 widget = new HILDockWidget(widgetName, action, this);
