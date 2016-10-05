@@ -12,7 +12,6 @@
         <file alias="APMAirframeComponent.qml">src/AutoPilotPlugins/APM/APMAirframeComponent.qml</file>
         <file alias="APMAirframeComponentSummary.qml">src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml</file>
         <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
-        <file alias="LogDownload.qml">src/ViewWidgets/LogDownload.qml</file>
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
         <file alias="FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
         <file alias="FlightDisplayViewUVC.qml">src/FlightDisplay/FlightDisplayViewUVC.qml</file>
@@ -169,8 +168,9 @@
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
         <file alias="QGroundControl/Controls/OfflineMapButton.qml">src/QmlControls/OfflineMapButton.qml</file>
         <file alias="PX4TuningComponentVTOL.qml">src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml</file>
-        <file alias="GeoTagPage.qml">src/AnalyzeView/GeoTagPage.qml</file>
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
+        <file alias="GeoTagPage.qml">src/AnalyzeView/GeoTagPage.qml</file>
+        <file alias="LogDownloadPage.qml">src/AnalyzeView/LogDownloadPage.qml</file>
     </qresource>
     <qresource prefix="/json">
         <file alias="MavCmdInfoCommon.json">src/MissionManager/MavCmdInfoCommon.json</file>
