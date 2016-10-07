@@ -69,6 +69,9 @@ QUrl APMSafetyComponent::setupSource(void) const
         case MAV_TYPE_TRICOPTER:
             qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentCopter.qml");
             break;
+        case MAV_TYPE_SUBMARINE:
+            qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSub.qml");
+            break;
         case MAV_TYPE_GROUND_ROVER:
             qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentRover.qml");
             break;
@@ -95,6 +98,9 @@ QUrl APMSafetyComponent::summaryQmlSource(void) const
         case MAV_TYPE_OCTOROTOR:
         case MAV_TYPE_TRICOPTER:
             qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSummaryCopter.qml");
+            break;
+        case MAV_TYPE_SUBMARINE:
+            qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSummarySub.qml");
             break;
         case MAV_TYPE_GROUND_ROVER:
             qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSummaryRover.qml");
