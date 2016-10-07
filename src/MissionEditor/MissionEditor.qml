@@ -672,7 +672,7 @@ QGCView {
                             }
 
                             onInsert: {
-                                var sequenceNumber = missionController.insertSimpleMissionItem(editorMap.center, insertAfterIndex)
+                                var sequenceNumber = missionController.insertSimpleMissionItem(editorMap.center, index)
                                 setCurrentItem(sequenceNumber)
                             }
 

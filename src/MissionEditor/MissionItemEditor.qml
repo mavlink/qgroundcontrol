@@ -23,7 +23,7 @@ Rectangle {
 
     signal clicked
     signal remove
-    signal insert(int insertAfterIndex)
+    signal insert
     signal moveHomeToMapCenter
 
     property bool   _currentItem:       missionItem.isCurrentItem
@@ -74,7 +74,7 @@ Rectangle {
 
                 MenuItem {
                     text:           qsTr("Insert")
-                    onTriggered:    insert(missionItem.sequenceNumber)
+                    onTriggered:    insert()
                 }
 
                 MenuItem {
