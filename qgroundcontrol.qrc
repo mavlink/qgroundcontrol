@@ -149,9 +149,11 @@
         <file alias="APMSafetyComponentCopter.qml">src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml</file>
         <file alias="APMSafetyComponentPlane.qml">src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml</file>
         <file alias="APMSafetyComponentRover.qml">src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml</file>
+        <file alias="APMSafetyComponentSub.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml</file>
         <file alias="APMSafetyComponentSummaryCopter.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml</file>
         <file alias="APMSafetyComponentSummaryPlane.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml</file>
         <file alias="APMSafetyComponentSummaryRover.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml</file>
+        <file alias="APMSafetyComponentSummarySub.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml</file>
         <file alias="APMTuningComponentCopter.qml">src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml</file>
         <file alias="CameraComponent.qml">src/AutoPilotPlugins/PX4/CameraComponent.qml</file>
         <file alias="CameraComponentSummary.qml">src/AutoPilotPlugins/PX4/CameraComponentSummary.qml</file>
