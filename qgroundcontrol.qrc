@@ -143,6 +143,8 @@
         <file alias="APMNotSupported.qml">src/AutoPilotPlugins/APM/APMNotSupported.qml</file>
         <file alias="APMCameraComponent.qml">src/AutoPilotPlugins/APM/APMCameraComponent.qml</file>
         <file alias="APMCameraComponentSummary.qml">src/AutoPilotPlugins/APM/APMCameraComponentSummary.qml</file>
+        <file alias="APMLightsComponent.qml">src/AutoPilotPlugins/APM/APMLightsComponent.qml</file>
+        <file alias="APMLightsComponentSummary.qml">src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml</file>
         <file alias="APMPowerComponent.qml">src/AutoPilotPlugins/APM/APMPowerComponent.qml</file>
         <file alias="APMPowerComponentSummary.qml">src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml</file>
         <file alias="APMRadioComponentSummary.qml">src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml</file>
