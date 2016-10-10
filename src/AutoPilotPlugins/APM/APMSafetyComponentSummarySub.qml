@@ -21,7 +21,7 @@ FactPanel {
     property Fact _fenceEnable: controller.getParameterFact(-1, "FENCE_ENABLE")
     property Fact _fenceType:   controller.getParameterFact(-1, "FENCE_TYPE")
 
-    property Fact _leakPin:     controller.getParameterFact(-1, "WD_1_PIN")
+    property Fact _leakPin:     controller.getParameterFact(-1, "LEAK1_PIN")
 
     property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 
@@ -72,7 +72,7 @@ FactPanel {
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Leak Detector:")
+            labelText: qsTr("Leak detector:")
             valueText: _leakPin.value > 0 ? qsTr("Enabled") : qsTr("Disabled")
         }
 

@@ -40,8 +40,8 @@ QGCView {
     property Fact _fenceMargin: controller.getParameterFact(-1, "FENCE_MARGIN")
     property Fact _fenceType:   controller.getParameterFact(-1, "FENCE_TYPE")
 
-    property Fact _leakPin:            controller.getParameterFact(-1, "WD_1_PIN")
-    property Fact _leakLogic:          controller.getParameterFact(-1, "WD_1_DEFAULT")
+    property Fact _leakPin:            controller.getParameterFact(-1, "LEAK1_PIN")
+    property Fact _leakLogic:          controller.getParameterFact(-1, "LEAK1_LOGIC")
 
     property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 
@@ -180,7 +180,7 @@ QGCView {
 
                     QGCLabel {
                         id:             leakDetectorLabel
-                        text:           qsTr("Leak Detector")
+                        text:           qsTr("Leak detector")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
 
