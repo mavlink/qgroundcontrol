@@ -28,11 +28,11 @@ QGCView {
     QGCPalette { id: ggcPal; colorGroupEnabled: enabled }
 
     property Fact _failsafeGCSEnable:   controller.getParameterFact(-1, "FS_GCS_ENABLE")
-    property Fact _failsafeBattEnable:  controller.getParameterFact(-1, "FS_BATT_ENABLE")
-    property Fact _failsafeBattMah:     controller.getParameterFact(-1, "FS_BATT_MAH")
-    property Fact _failsafeBattVoltage: controller.getParameterFact(-1, "FS_BATT_VOLTAGE")
-    property Fact _failsafeThrEnable:   controller.getParameterFact(-1, "FS_THR_ENABLE")
-    property Fact _failsafeThrValue:    controller.getParameterFact(-1, "FS_THR_VALUE")
+    property Fact _failsafeLeakEnable:  controller.getParameterFact(-1, "FS_LEAK_ENABLE")
+    property Fact _failsafePressureEnable: controller.getParameterFact(-1, "FS_PRESS_ENABLE")
+    property Fact _failsafePressureValue:  controller.getParameterFact(-1, "FS_PRESS_MAX")
+    property Fact _failsafeTempEnable:  controller.getParameterFact(-1, "FS_TEMP_ENABLE")
+    property Fact _failsafeTempValue:   controller.getParameterFact(-1, "FS_TEMP_MAX")
 
     property Fact _fenceAction: controller.getParameterFact(-1, "FENCE_ACTION")
     property Fact _fenceAltMax: controller.getParameterFact(-1, "FENCE_ALT_MAX")
@@ -70,14 +70,14 @@ QGCView {
 
                     QGCLabel {
                         id:         failsafeLabel
-                        text:       qsTr("Failsafe Triggers")
+                        text:       qsTr("Failsafe Actions")
                         font.family: ScreenTools.demiboldFontFamily
                     }
 
                     Rectangle {
                         id:     failsafeSettings
-                        width:  throttleEnableCombo.x + throttleEnableCombo.width + _margins
-                        height: mahField.y + mahField.height + _margins
+                        width:  leakEnableCombo.x + leakEnableCombo.width + _margins
+                        height: leakEnableCombo.y + leakEnableCombo.height + _margins
                         color:  ggcPal.windowShade
 
                         QGCLabel {
@@ -90,111 +90,30 @@ QGCView {
 
                         FactComboBox {
                             id:                 gcsEnableCombo
-                            anchors.topMargin:  _margins
-                            anchors.leftMargin: _margins
+                            anchors.margins:    _margins
                             anchors.left:       gcsEnableLabel.right
                             anchors.top:        parent.top
-                            width:              voltageField.width
+                            width:              ScreenTools.defaultFontPixelWidth*15
                             fact:               _failsafeGCSEnable
                             indexModel:         false
                         }
 
                         QGCLabel {
-                            id:                 throttleEnableLabel
+                            id:                 leakEnableLabel
                             anchors.margins:    _margins
                             anchors.left:       parent.left
-                            anchors.baseline:   throttleEnableCombo.baseline
-                            text:               qsTr("Throttle failsafe:")
+                            anchors.baseline:   leakEnableCombo.baseline
+                            text:               qsTr("Leak failsafe:")
                         }
 
-                        QGCComboBox {
-                            id:                 throttleEnableCombo
+                        FactComboBox {
+                            id:                 leakEnableCombo
                             anchors.topMargin:  _margins
                             anchors.left:       gcsEnableCombo.left
                             anchors.top:        gcsEnableCombo.bottom
-                            width:              voltageField.width
-                            model:              [qsTr("Disabled"), qsTr("Always RTL"),
-                                qsTr("Continue with Mission in Auto Mode"), qsTr("Always Land")]
-                            currentIndex:       _failsafeThrEnable.value
-
-                            onActivated: _failsafeThrEnable.value = index
-                        }
-
-                        QGCLabel {
-                            id:                 throttlePWMLabel
-                            anchors.margins:    _margins
-                            anchors.left:       parent.left
-                            anchors.baseline:   throttlePWMField.baseline
-                            text:               qsTr("PWM threshold:")
-                        }
-
-                        FactTextField {
-                            id:                 throttlePWMField
-                            anchors.topMargin:  _margins / 2
-                            anchors.left:       gcsEnableCombo.left
-                            anchors.top:        throttleEnableCombo.bottom
-                            fact:               _failsafeThrValue
-                            showUnits:          true
-                        }
-
-                        QGCLabel {
-                            id:                 batteryEnableLabel
-                            anchors.margins:    _margins
-                            anchors.left:       parent.left
-                            anchors.baseline:   batteryEnableCombo.baseline
-                            text:               qsTr("Battery failsafe:")
-                        }
-
-                        QGCComboBox {
-                            id:                 batteryEnableCombo
-                            anchors.topMargin:  _margins
-                            anchors.left:       gcsEnableCombo.left
-                            anchors.top:        throttlePWMField.bottom
-                            width:              voltageField.width
-                            model:              [qsTr("Disabled"), qsTr("Land"), qsTr("Return to Launch")]
-                            currentIndex:       _failsafeBattEnable.value
-
-                            onActivated: _failsafeBattEnable.value = index
-                        }
-
-                        QGCCheckBox {
-                            id:                 voltageLabel
-                            anchors.margins:    _margins
-                            anchors.left:       parent.left
-                            anchors.baseline:   voltageField.baseline
-                            text:               qsTr("Voltage threshold:")
-                            checked:            _failsafeBattVoltage.value != 0
-
-                            onClicked: _failsafeBattVoltage.value = checked ? 10.5 : 0
-                        }
-
-                        FactTextField {
-                            id:                 voltageField
-                            anchors.topMargin:  _margins / 2
-                            anchors.left:       gcsEnableCombo.left
-                            anchors.top:        batteryEnableCombo.bottom
-                            fact:               _failsafeBattVoltage
-                            showUnits:          true
-                        }
-
-                        QGCCheckBox {
-                            id:                 mahLabel
-                            anchors.margins:    _margins
-                            anchors.left:       parent.left
-                            anchors.baseline:   mahField.baseline
-                            text:               qsTr("MAH threshold:")
-                            checked:            _failsafeBattMah.value != 0
-
-                            onClicked: _failsafeBattMah.value = checked ? 600 : 0
-                        }
-
-                        FactTextField {
-                            id:                 mahField
-                            anchors.topMargin:  _margins / 2
-                            anchors.left:       gcsEnableCombo.left
-                            anchors.top:        voltageField.bottom
-                            fact:               _failsafeBattMah
-                            showUnits:          true
+                            width:              ScreenTools.defaultFontPixelWidth*15
+                            fact:               _failsafeLeakEnable
+                            indexModel:         false
                         }
                     } // Rectangle - Failsafe Settings
                 } // Column - Failsafe Settings
@@ -216,11 +135,10 @@ QGCView {
 
                         QGCCheckBox {
                             id:                 altitudeGeo
-                            enabled:            false
                             anchors.margins:    _margins
                             anchors.left:       parent.left
                             anchors.top:        parent.top
-                            text:               qsTr("Depth GeoFence enabled")
+                            text:               qsTr("Depth GeoFence enabled\n(report only)")
                             checked:            _fenceEnable.value != 0 && _fenceType.value & 1
 
                             onClicked: {
@@ -238,35 +156,8 @@ QGCView {
                             }
                         }
 
-                        QGCRadioButton {
-                            id:                 geoReportRadio
-                            enabled:            false
-                            anchors.margins:    _margins
-                            anchors.left:       parent.left
-                            anchors.top:        altitudeGeo.bottom
-                            text:               qsTr("Report only")
-                            exclusiveGroup:     fenceActionRadioGroup
-                            checked:            _fenceAction.value == 0
-
-                            onClicked: _fenceAction.value = 0
-                        }
-
-                        QGCRadioButton {
-                            id:                 geoRTLRadio
-                            enabled:            false
-                            anchors.topMargin:  _margins / 2
-                            anchors.left:       altitudeGeo.left
-                            anchors.top:        geoReportRadio.bottom
-                            text:               qsTr("RTL or Land")
-                            exclusiveGroup:     fenceActionRadioGroup
-                            checked:            _fenceAction.value == 1
-
-                            onClicked: _fenceAction.value = 1
-                        }
-
                         QGCLabel {
                             id:                 fenceAltMaxLabel
-                            enabled:            false
                             anchors.left:       altitudeGeo.left
                             anchors.baseline:   fenceAltMaxField.baseline
                             text:               qsTr("Max depth:")
@@ -274,11 +165,10 @@ QGCView {
 
                         FactTextField {
                             id:                 fenceAltMaxField
-                            enabled:            false
                             anchors.topMargin:  _margins / 2
                             anchors.leftMargin: _margins
                             anchors.left:       fenceAltMaxLabel.right
-                            anchors.top:        geoRTLRadio.bottom
+                            anchors.top:        altitudeGeo.bottom
                             fact:               _fenceAltMax
                             showUnits:          true
                         }
@@ -313,7 +203,7 @@ QGCView {
                             anchors.margins:    _margins
                             anchors.left:       leakLogicLabel.right
                             anchors.baseline:   leakPinLabel.baseline
-                            width:              voltageField.width
+                            width:              ScreenTools.defaultFontPixelWidth*15
                             fact:               _leakPin
                             indexModel:         false
                         }
@@ -331,7 +221,7 @@ QGCView {
                             anchors.margins:    _margins
                             anchors.left:       leakLogicLabel.right
                             anchors.baseline:   leakLogicLabel.baseline
-                            width:              voltageField.width
+                            width:              ScreenTools.defaultFontPixelWidth*15
                             fact:               _leakLogic
                             indexModel:         false
                         }

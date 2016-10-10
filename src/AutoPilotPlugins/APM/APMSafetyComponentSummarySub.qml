@@ -14,69 +14,42 @@ FactPanel {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
 
-    property Fact _failsafeBattEnable:  controller.getParameterFact(-1, "FS_BATT_ENABLE")
-    property Fact _failsafeThrEnable:   controller.getParameterFact(-1, "FS_THR_ENABLE")
+    property Fact _failsafeGCSEnable:   controller.getParameterFact(-1, "FS_GCS_ENABLE")
+    property Fact _failsafeLeakEnable:  controller.getParameterFact(-1, "FS_LEAK_ENABLE")
 
     property Fact _fenceAction: controller.getParameterFact(-1, "FENCE_ACTION")
     property Fact _fenceEnable: controller.getParameterFact(-1, "FENCE_ENABLE")
     property Fact _fenceType:   controller.getParameterFact(-1, "FENCE_TYPE")
 
-    property Fact _leakPin:            controller.getParameterFact(-1, "WD_1_PIN")
+    property Fact _leakPin:     controller.getParameterFact(-1, "WD_1_PIN")
 
     property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 
-    property string _failsafeBattEnableText
-    property string _failsafeThrEnableText
+    property string _failsafeGCSEnableText
 
     Component.onCompleted: {
-        setFailsafeBattEnableText()
-        setFailsafeThrEnableText()
+        setFailsafeGCSEnableText()
     }
 
     Connections {
-        target: _failsafeBattEnable
+        target: _failsafeGCSEnable
 
-        onValueChanged: setFailsafeBattEnableText()
+        onValueChanged: setFailsafeGCSEnableText()
     }
 
-    Connections {
-        target: _failsafeThrEnable
-
-        onValueChanged: setFailsafeThrEnableText()
-    }
-
-    function setFailsafeThrEnableText() {
-        switch (_failsafeThrEnable.value) {
+    function setFailsafeGCSEnableText() {
+        switch (_failsafeGCSEnable.value) {
         case 0:
-            _failsafeThrEnableText = qsTr("Disabled")
+            _failsafeGCSEnableText = qsTr("Disabled")
             break
         case 1:
-            _failsafeThrEnableText = qsTr("Always RTL")
+            _failsafeGCSEnableText = qsTr("Always RTL")
             break
         case 2:
-            _failsafeThrEnableText = qsTr("Continue with Mission in Auto Mode")
-            break
-        case 3:
-            _failsafeThrEnableText = qsTr("Always Land")
+            _failsafeGCSEnableText = qsTr("Continue with Mission in Auto Mode")
             break
         default:
-            _failsafeThrEnableText = qsTr("Unknown")
-        }
-    }
-
-    function setFailsafeBattEnableText() {
-        switch (_failsafeBattEnable.value) {
-        case 0:
-            _failsafeBattEnableText = qsTr("Disabled")
-            break
-        case 1:
-            _failsafeBattEnableText = qsTr("Land")
-            break
-        case 2:
-            _failsafeBattEnableText = qsTr("Return to Launch")
-            break
-        default:
-            _failsafeThrEnableText = qsTr("Unknown")
+            _failsafeGCSEnableText = qsTr("Unknown")
         }
     }
 
@@ -89,13 +62,13 @@ FactPanel {
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Throttle failsafe:")
-            valueText:  _failsafeThrEnableText
+            labelText: qsTr("GCS failsafe:")
+            valueText: _failsafeGCSEnableText
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Battery failsafe:")
-            valueText:  _failsafeBattEnableText
+            labelText: qsTr("Leak failsafe:")
+            valueText:  _failsafeLeakEnable.value ? qsTr("Enabled") : qsTr("Disabled")
         }
 
         VehicleSummaryRow {
@@ -108,15 +81,13 @@ FactPanel {
             valueText: _fenceEnable.value == 0 || _fenceType == 0 ?
                            qsTr("Disabled") :
                            (_fenceType.value == 1 ?
-                                qsTr("Altitude") :
-                                (_fenceType.value == 2 ? qsTr("Circle") : qsTr("Altitude,Circle")))
+                                qsTr("Depth") :
+                                (_fenceType.value == 2 ? qsTr("Circle") : qsTr("Depth,Circle")))
         }
 
         VehicleSummaryRow {
             labelText: qsTr("GeoFence:")
-            valueText: _fenceAction.value == 0 ?
-                           qsTr("Report only") :
-                           (_fenceAction.value == 1 ? qsTr("RTL or Land") : qsTr("Unknown"))
+            valueText: qsTr("Report only")
             visible:    _fenceEnable.value != 0
         }
     }
