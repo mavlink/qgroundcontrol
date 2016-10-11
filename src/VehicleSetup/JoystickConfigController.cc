@@ -228,12 +228,13 @@ void JoystickConfigController::_saveAllTrims(void)
 void JoystickConfigController::_inputCenterWaitBegin(Joystick::AxisFunction_t function, int axis, int value)
 {
     Q_UNUSED(function);
-    Q_UNUSED(axis);
-    Q_UNUSED(value);
-    
-    // FIXME: Doesn't wait for center
-    
+    _rgAxisInfo[axis].deadband = std::max(abs(value),_rgAxisInfo[axis].deadband);
     _nextButton->setEnabled(true);
+
+    // FIXME: Doesn't wait for center
+    // FIXME: Ideally the deadband should be probed only around the center
+
+    qCDebug(JoystickConfigControllerLog) << "Axis:" << axis << "Deadband:" << _rgAxisInfo[axis].deadband;
 }
 
 bool JoystickConfigController::_stickSettleComplete(int axis, int value)
@@ -420,6 +421,7 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
         struct AxisInfo* info = &_rgAxisInfo[i];
         info->function = Joystick::maxFunction;
         info->reversed = false;
+        info->deadband = 0;
         info->axisMin = JoystickConfigController::_calCenterPoint;
         info->axisMax = JoystickConfigController::_calCenterPoint;
         info->axisTrim = JoystickConfigController::_calCenterPoint;
@@ -457,6 +459,7 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
         info->axisMin = calibration.min;
         info->axisMax = calibration.max;
         info->reversed = calibration.reversed;
+        info->deadband = calibration.deadband;
         
         qCDebug(JoystickConfigControllerLog) << "Read settings name:axis:min:max:trim:reversed" << joystick->name() << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
     }
@@ -512,6 +515,7 @@ void JoystickConfigController::_validateCalibration(void)
             info->axisMin = _calDefaultMinValue;
             info->axisMax = _calDefaultMaxValue;
             info->axisTrim = info->axisMin + ((info->axisMax - info->axisMin) / 2);
+            info->deadband = 0;
             info->reversed = false;
         }
     }
@@ -534,6 +538,7 @@ void JoystickConfigController::_writeCalibration(void)
         calibration.min = info->axisMin;
         calibration.max = info->axisMax;
         calibration.reversed = info->reversed;
+        calibration.deadband = info->deadband;
         
         joystick->setCalibration(axis, calibration);
     }
