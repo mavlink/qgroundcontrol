@@ -144,6 +144,7 @@ private:
         int                         axisMin;    ///< Minimum axis value
         int                         axisMax;    ///< Maximum axis value
         int                         axisTrim;   ///< Trim position
+        int                         deadband;   ///< Deadband
     };
     
     Joystick* _activeJoystick;

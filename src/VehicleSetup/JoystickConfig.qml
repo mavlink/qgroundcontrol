@@ -382,6 +382,20 @@ SetupPage {
                                     onClicked: _activeJoystick.throttleMode = 0
                                 }
 
+                                Row {
+                                    width:      parent.width
+                                    spacing:    ScreenTools.defaultFontPixelWidth
+                                    visible:    _activeJoystick.throttleMode == 0
+
+                                    QGCCheckBox {
+                                        id:         accumulator
+                                        checked:    _activeJoystick.accumulator
+                                        text:       qsTr("Use accumulator on throttle")
+
+                                        onClicked:  _activeJoystick.accumulator = checked
+                                    }
+                                }
+
                                 QGCRadioButton {
                                     exclusiveGroup: throttleModeExclusiveGroup
                                     text:           qsTr("Full down stick is zero throttle")
