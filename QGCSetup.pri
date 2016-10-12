@@ -105,6 +105,8 @@ LinuxBuild {
             libQt5DBus.so.5 \
             libQt5Gui.so.5 \
             libQt5Location.so.5 \
+            libQt5Multimedia.so.5 \
+            libQt5MultimediaQuick_p.so.5 \
             libQt5Network.so.5 \
             libQt5OpenGL.so.5 \
             libQt5Positioning.so.5 \
@@ -118,12 +120,6 @@ LinuxBuild {
             libQt5Test.so.5 \
             libQt5Widgets.so.5 \
             libQt5XcbQpa.so.5
-
-        !contains (DEFINES, QGC_DISABLE_UVC) {
-            QT_LIB_LIST += \
-                libQt5Multimedia.so.5 \
-                libQt5MultimediaQuick_p.so.5
-        }
 
         !contains(DEFINES, __rasp_pi2__) {
             QT_LIB_LIST += \
