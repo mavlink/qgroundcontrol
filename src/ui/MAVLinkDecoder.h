@@ -25,15 +25,16 @@ protected:
     /** @brief Shift a timestamp in Unix time if necessary */
     quint64 getUnixTimeFromMs(int systemID, quint64 time);
 
-    mavlink_message_t receivedMessages[256]; ///< Available / known messages
-    QMap<uint16_t, bool> messageFilter;               ///< Message/field names not to emit
-    QMap<uint16_t, bool> textMessageFilter;           ///< Message/field names not to emit in text mode
-    int componentID[256];                             ///< Multi component detection
-    bool componentMulti[256];                         ///< Multi components detected
-    quint64 onboardTimeOffset[256];                   ///< Offset of onboard time from Unix epoch (of the receiving GCS)
-    qint64 onboardToGCSUnixTimeOffsetAndDelay[256];   ///< Offset of onboard time and GCS Unix time
-    quint64 firstOnboardTime[256];                    ///< First seen onboard time
+    static const size_t cMessageIds = 256;
 
+    mavlink_message_t receivedMessages[cMessageIds];        ///< Available / known messages
+    QMap<uint16_t, bool> messageFilter;                     ///< Message/field names not to emit
+    QMap<uint16_t, bool> textMessageFilter;                 ///< Message/field names not to emit in text mode
+    int componentID[cMessageIds];                           ///< Multi component detection
+    bool componentMulti[cMessageIds];                       ///< Multi components detected
+    quint64 onboardTimeOffset[cMessageIds];                 ///< Offset of onboard time from Unix epoch (of the receiving GCS)
+    qint64 onboardToGCSUnixTimeOffsetAndDelay[cMessageIds]; ///< Offset of onboard time and GCS Unix time
+    quint64 firstOnboardTime[cMessageIds];                  ///< First seen onboard time
 };
 
 #endif // MAVLINKDECODER_H
