@@ -51,12 +51,17 @@ public:
     Q_PROPERTY(bool pitchAxisMapped     READ pitchAxisMapped    NOTIFY pitchAxisMappedChanged)
     Q_PROPERTY(bool yawAxisMapped       READ yawAxisMapped      NOTIFY yawAxisMappedChanged)
     Q_PROPERTY(bool throttleAxisMapped  READ throttleAxisMapped NOTIFY throttleAxisMappedChanged)
-    
+
     Q_PROPERTY(int rollAxisValue        READ rollAxisValue      NOTIFY rollAxisValueChanged)
     Q_PROPERTY(int pitchAxisValue       READ pitchAxisValue     NOTIFY pitchAxisValueChanged)
     Q_PROPERTY(int yawAxisValue         READ yawAxisValue       NOTIFY yawAxisValueChanged)
     Q_PROPERTY(int throttleAxisValue    READ throttleAxisValue  NOTIFY throttleAxisValueChanged)
-    
+
+    Q_PROPERTY(int rollAxisDeadband     READ rollAxisDeadband   NOTIFY rollAxisDeadbandChanged)
+    Q_PROPERTY(int pitchAxisDeadband    READ pitchAxisDeadband  NOTIFY pitchAxisDeadbandChanged)
+    Q_PROPERTY(int yawAxisDeadband      READ yawAxisDeadband    NOTIFY yawAxisDeadbandChanged)
+    Q_PROPERTY(int throttleAxisDeadband READ throttleAxisDeadband NOTIFY throttleAxisDeadbandChanged)
+
     Q_PROPERTY(int rollAxisReversed     READ rollAxisReversed       NOTIFY rollAxisReversedChanged)
     Q_PROPERTY(int pitchAxisReversed    READ pitchAxisReversed      NOTIFY pitchAxisReversedChanged)
     Q_PROPERTY(int yawAxisReversed      READ yawAxisReversed        NOTIFY yawAxisReversedChanged)
@@ -68,12 +73,17 @@ public:
     Q_INVOKABLE void skipButtonClicked(void);
     Q_INVOKABLE void nextButtonClicked(void);
     Q_INVOKABLE void start(void);
-    
+
     int rollAxisValue(void);
     int pitchAxisValue(void);
     int yawAxisValue(void);
     int throttleAxisValue(void);
     
+    int rollAxisDeadband(void);
+    int pitchAxisDeadband(void);
+    int yawAxisDeadband(void);
+    int throttleAxisDeadband(void);
+
     bool rollAxisMapped(void);
     bool pitchAxisMapped(void);
     bool yawAxisMapped(void);
@@ -88,7 +98,7 @@ public:
     
 signals:
     void axisValueChanged(int axis, int value);
-    
+
     void rollAxisMappedChanged(bool mapped);
     void pitchAxisMappedChanged(bool mapped);
     void yawAxisMappedChanged(bool mapped);
@@ -98,7 +108,12 @@ signals:
     void pitchAxisValueChanged(int value);
     void yawAxisValueChanged(int value);
     void throttleAxisValueChanged(int value);
-    
+
+    void rollAxisDeadbandChanged(int value);
+    void pitchAxisDeadbandChanged(int value);
+    void yawAxisDeadbandChanged(int value);
+    void throttleAxisDeadbandChanged(int value);
+
     void rollAxisReversedChanged(bool reversed);
     void pitchAxisReversedChanged(bool reversed);
     void yawAxisReversedChanged(bool reversed);
@@ -112,6 +127,7 @@ signals:
 private slots:
     void _activeJoystickChanged(Joystick* joystick);
     void _axisValueChanged(int axis, int value);
+    void _axisDeadbandChanged(int axis, int value);
    
 private:
     /// @brief The states of the calibration state machine.

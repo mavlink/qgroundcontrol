@@ -24,6 +24,7 @@ const char* Joystick::_buttonActionSettingsKey =    "ButtonActionName%1";
 const char* Joystick::_throttleModeSettingsKey =    "ThrottleMode";
 const char* Joystick::_exponentialSettingsKey =     "Exponential";
 const char* Joystick::_accumulatorSettingsKey =     "Accumulator";
+const char* Joystick::_deadbandSettingsKey =        "Deadband";
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -48,6 +49,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _throttleMode(ThrottleModeCenterZero)
     , _exponential(false)
     , _accumulator(false)
+    , _deadband(false)
     , _activeVehicle(NULL)
     , _pollingStartedForCalibration(false)
     , _multiVehicleManager(multiVehicleManager)
@@ -89,6 +91,7 @@ void Joystick::_loadSettings(void)
     _calibrated = settings.value(_calibratedSettingsKey, false).toBool();
     _exponential = settings.value(_exponentialSettingsKey, false).toBool();
     _accumulator = settings.value(_accumulatorSettingsKey, false).toBool();
+    _deadband = settings.value(_deadbandSettingsKey, false).toBool();
 
     _throttleMode = (ThrottleMode_t)settings.value(_throttleModeSettingsKey, ThrottleModeCenterZero).toInt(&convertOk);
     badSettings |= !convertOk;
@@ -154,6 +157,7 @@ void Joystick::_saveSettings(void)
     settings.setValue(_calibratedSettingsKey, _calibrated);
     settings.setValue(_exponentialSettingsKey, _exponential);
     settings.setValue(_accumulatorSettingsKey, _accumulator);
+    settings.setValue(_deadbandSettingsKey, _deadband);
     settings.setValue(_throttleModeSettingsKey, _throttleMode);
 
     qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode" << _calibrated << _throttleMode;
@@ -213,10 +217,9 @@ float Joystick::_adjustRange(int value, Calibration_t calibration)
         axisLength =  calibration.center - calibration.min;
     }
 
-    if (_accumulator) {//deadband will be applied only in accumulator mode
-        int deadband = calibration.deadband*1.5;    //we are increasing deadband to accommodate slight variations
-        if (valueNormalized>deadband) valueNormalized-=deadband;
-        else if (valueNormalized<-deadband) valueNormalized+=deadband;
+    if (_deadband) {
+        if (valueNormalized>calibration.deadband) valueNormalized-=calibration.deadband;
+        else if (valueNormalized<-calibration.deadband) valueNormalized+=calibration.deadband;
         else valueNormalized = 0.f;
     }
 
@@ -570,6 +573,19 @@ void Joystick::setAccumulator(bool accu)
 
     _saveSettings();
     emit accumulatorChanged(_accumulator);
+}
+
+bool Joystick::deadband(void)
+{
+    return _deadband;
+}
+
+void Joystick::setDeadband(bool deadband)
+{
+    _deadband = deadband;
+
+    _saveSettings();
+    emit deadbandChanged(_deadband);
 }
 
 void Joystick::startCalibrationMode(CalibrationMode_t mode)
