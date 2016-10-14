@@ -19,9 +19,13 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
     : _activeFlightMode(0)
     , _channelCount(Vehicle::cMaxRcChannels)
 {
+    _modeParamPrefix = _vehicle->rover() ? "MODE" : "FLTMODE";
+    _modeChannelParam = _vehicle->rover() ? "MODE_CH" : "FLTMODE_CH";
+
     QStringList usedParams;
-    usedParams << QStringLiteral("FLTMODE1") << QStringLiteral("FLTMODE2") << QStringLiteral("FLTMODE3")
-               << QStringLiteral("FLTMODE4") << QStringLiteral("FLTMODE5") << QStringLiteral("FLTMODE6");
+    for (int i=1; i<7; i++) {
+        usedParams << QStringLiteral("%1%2").arg(_modeParamPrefix).arg(i);
+    }
     if (!_allParametersExists(FactSystem::defaultComponentId, usedParams)) {
         return;
     }
@@ -36,8 +40,8 @@ void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int
 {
     int flightModeChannel = 4;
 
-    if (parameterExists(FactSystem::defaultComponentId, QStringLiteral("FLTMODE_CH"))) {
-        flightModeChannel = getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FLTMODE_CH"))->rawValue().toInt() - 1;
+    if (parameterExists(FactSystem::defaultComponentId, _modeChannelParam)) {
+        flightModeChannel = getParameterFact(FactSystem::defaultComponentId, _modeChannelParam)->rawValue().toInt() - 1;
     }
 
     if (flightModeChannel >= channelCount) {

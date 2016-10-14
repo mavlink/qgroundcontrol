@@ -7,21 +7,29 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief QGCPalette is used by QML ui to bind colors to the QGC pallete. The implementation
-///             is similar to the QML SystemPalette and should be used in the same way. Refer to
-///             that documentation for details. The one difference is that QGCPalette also supports
-///             a light and dark theme which you can switch between.
-///
-///     @author Don Gagne <don@thegagnes.com>
-
 #ifndef QGCPalette_h
 #define QGCPalette_h
 
 #include <QObject>
 #include <QColor>
 
+/*!
+ QGCPalette is used in QML ui to expose color properties for the QGC palette. There are two
+ separate palettes in QGC, light and dark. The light palette is for outdoor use and the dark
+ palette is for indoor use. Each palette also has a set of different colors for enabled and
+ disabled states.
+
+ Usage:
+
+        import QGroundControl.Palette 1.0
+
+        Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.window
+
+            QGCPalette { id: qgcPal: colorGroupEnabled: enabled }
+        }
+*/
 class QGCPalette : public QObject
 {
     Q_OBJECT
@@ -31,30 +39,6 @@ class QGCPalette : public QObject
     Q_PROPERTY(Theme globalTheme READ globalTheme WRITE setGlobalTheme NOTIFY paletteChanged)
     
     Q_PROPERTY(bool colorGroupEnabled READ colorGroupEnabled WRITE setColorGroupEnabled NOTIFY paletteChanged)
-
-    // The colors are:
-    //      window -                Background color for windows
-    //      windowShade -           Color for shaded areas within a window. The windowShade color should be a color somewhere between window and button.
-    //      windowShadeDark -       Color for darker shared areas within a window. The windowShadeDark color should be a color somewhere between window and windowShade.
-    //      text -                  Standard text color for label text
-    //      warningText -           Color for warning text
-    //      button -                Background color for buttons
-    //      buttonText -            Text color for buttons
-    //      buttonHighlight -       Background color for button in selected or hover state
-    //      buttonHighlightText -   Text color for button in selected or hover state
-
-    //      primaryButton -         Background color for primary buttons. A primary button is the button which would be the
-    //                              normal default  button to press. For example in an Ok/Cancel situation where Ok would normally
-    //                              be pressed, Ok is the primary button.
-    //      primaryButtonText -     Text color for primary buttons
-    //      textField -             Background color for TextFields
-    //      textFieldText -         Text color for TextFields
-    //      mapButton -             Background color for map buttons
-    //      mapButtonHighlight -    Background color for map button in selected or hover state
-    //      mapWidgetBorderLight -  Widget border color which will stand out against light map tiles
-    //      mapWidgetBorderDark -   Widget border color which will stand out against dark map tiles
-    //      brandingPurple -        Purple color from branding guidelines
-    //      brandingBlue -          Blue color from branding guidelines
 
     Q_PROPERTY(QColor window                READ window                 WRITE setWindow                 NOTIFY paletteChanged)
     Q_PROPERTY(QColor windowShade           READ windowShade            WRITE setWindowShade            NOTIFY paletteChanged)
@@ -93,24 +77,62 @@ public:
     bool colorGroupEnabled(void) const { return _colorGroupEnabled; }
     void setColorGroupEnabled(bool enabled);
     
+    /// Background color for windows
     QColor window(void)                 const { return _window[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Color for shaded areas within a window. The windowShade color is a color between window and button.
     QColor windowShade(void)            const { return _windowShade[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Color for darker shared areas within a window. The windowShadeDark color is a color between window and windowShade.
     QColor windowShadeDark(void)        const { return _windowShadeDark[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Text color
     QColor text(void)                   const { return _text[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Color for warning text
     QColor warningText(void)            const { return _warningText[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Background color for buttons
     QColor button(void)                 const { return _button[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Text color for buttons
     QColor buttonText(void)             const { return _buttonText[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Background color for button in selected or hover state
     QColor buttonHighlight(void)        const { return _buttonHighlight[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Text color for button in selected or hover state
     QColor buttonHighlightText(void)    const { return _buttonHighlightText[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Background color for primary buttons. A primary button is the button which would be the normal default  button to press.
+    /// For example in an Ok/Cancel situation where Ok would normally be pressed, Ok is the primary button.
     QColor primaryButton(void)          const { return _primaryButton[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Text color for primary buttons
     QColor primaryButtonText(void)      const { return _primaryButtonText[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Background color for TextFields
     QColor textField(void)              const { return _textField[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Text color for TextFields
     QColor textFieldText(void)          const { return _textFieldText[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Background color for map buttons
     QColor mapButton(void)              const { return _mapButton[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Background color for map button in selected or hover state
     QColor mapButtonHighlight(void)     const { return _mapButtonHighlight[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Widget border color which will stand out against light map tiles
     QColor mapWidgetBorderLight(void)   const { return _mapWidgetBorderLight[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Widget border color which will stand out against dark map tiles
     QColor mapWidgetBorderDark(void)    const { return _mapWidgetBorderDark[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Purple color from branding guidelines
     QColor brandingPurple(void)         const { return _brandingPurple[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    /// Blue color from branding guidelines
     QColor brandingBlue(void)           const { return _brandingBlue[_theme][_colorGroupEnabled ? 1 : 0]; }
 
     void setWindow(QColor& color)               { _window[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }

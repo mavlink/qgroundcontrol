@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/json/unittest">
+        <file alias="MavCmdInfoCommon.json">src/MissionManager/UnitTest/MavCmdInfoCommon.json</file>
+        <file alias="MavCmdInfoFixedWing.json">src/MissionManager/UnitTest/MavCmdInfoFixedWing.json</file>
+        <file alias="MavCmdInfoMultiRotor.json">src/MissionManager/UnitTest/MavCmdInfoMultiRotor.json</file>
+        <file alias="MavCmdInfoRover.json">src/MissionManager/UnitTest/MavCmdInfoRover.json</file>
+        <file alias="MavCmdInfoSub.json">src/MissionManager/UnitTest/MavCmdInfoSub.json</file>
+        <file alias="MavCmdInfoVTOL.json">src/MissionManager/UnitTest/MavCmdInfoVTOL.json</file>
+    </qresource>
+</RCC>

@@ -54,6 +54,9 @@ class ArduPlaneFirmwarePlugin : public APMFirmwarePlugin
     
 public:
     ArduPlaneFirmwarePlugin(void);
+
+    // Overrides from FirmwarePlugin
+    QString offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Plane.OfflineEditing.params"); }
 };
 
 #endif

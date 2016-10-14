@@ -119,6 +119,7 @@ Map {
         onMapTypeChanged:   updateActiveMapType()
     }
 
+    /// Ground Station location
     MapQuickItem {
         anchorPoint.x:  sourceItem.width  / 2
         anchorPoint.y:  sourceItem.height / 2
@@ -128,4 +129,264 @@ Map {
             label: "Q"
         }
     }
+
+    //---- Polygon drawing code
+
+    //
+    // Usage:
+    //
+    // Connections {
+    //     target: map.polygonDraw
+    //
+    //    onPolygonCaptureStarted: {
+    //      // Polygon creation has started
+    //    }
+    //
+    //    onPolygonCaptureFinished: {
+    //      // Polygon capture complete, coordinates signal variable contains the polygon points
+    //    }
+    // }
+    //
+    // map.polygonDraqw.startPolgyon() - begin capturing a new polygon
+    // map.polygonDraqw.endPolygon() - end capture (right-click will also end capture)
+
+    // Not sure why this is needed, but trying to reference polygonDrawer directly from other code doesn't work
+    property alias polygonDraw: polygonDrawer
+
+    QGCLabel {
+        id:                     polygonHelp
+        anchors.topMargin:      parent.height - ScreenTools.availableHeight
+        anchors.top:            parent.top
+        anchors.left:           parent.left
+        anchors.right:          parent.right
+        horizontalAlignment:    Text.AlignHCenter
+        text:                   qsTr("Click to add point %1").arg(ScreenTools.isMobile || !polygonDrawer.polygonReady ? "" : qsTr("- Right Click to end polygon"))
+        visible:                polygonDrawer.drawingPolygon
+
+        Connections {
+            target: polygonDrawer
+
+            onDrawingPolygonChanged: {
+                if (polygonDrawer.drawingPolygon) {
+                    polygonHelp.text = qsTr("Click to add point")
+                }
+                polygonHelp.visible = polygonDrawer.drawingPolygon
+            }
+
+            onPolygonReadyChanged: {
+                if (polygonDrawer.polygonReady && !ScreenTools.isMobile) {
+                    polygonHelp.text = qsTr("Click to add point - Right Click to end polygon")
+                }
+            }
+
+            onAdjustingPolygonChanged: {
+                if (polygonDrawer.adjustingPolygon) {
+                    polygonHelp.text = qsTr("Adjust polygon by dragging corners")
+                }
+                polygonHelp.visible = polygonDrawer.adjustingPolygon
+            }
+        }
+    }
+
+    MouseArea {
+        id:                 polygonDrawer
+        anchors.fill:       parent
+        acceptedButtons:    Qt.LeftButton | Qt.RightButton
+        visible:            drawingPolygon
+        z:                  1000 // Hack to fix MouseArea layering for now
+
+        property alias  drawingPolygon:     polygonDrawer.hoverEnabled
+        property bool   adjustingPolygon:   false
+        property bool   polygonReady:       polygonDrawerPolygon.path.length > 3 ///< true: enough points have been captured to create a closed polygon
+
+        property var _callbackObject
+
+        property var _vertexDragList: []
+
+        /// Begin capturing a new polygon
+        ///     polygonCaptureStarted will be signalled
+        function startCapturePolygon(callback) {
+            polygonDrawer._callbackObject = callback
+            polygonDrawer.drawingPolygon = true
+            polygonDrawer._clearPolygon()
+            polygonDrawer._callbackObject.polygonCaptureStarted()
+        }
+
+        /// Finish capturing the polygon
+        ///     polygonCaptureFinished will be signalled
+        /// @return true: polygon completed, false: not enough points to complete polygon
+        function finishCapturePolygon() {
+            if (!polygonDrawer.polygonReady) {
+                return false
+            }
+
+            var polygonPath = polygonDrawerPolygon.path
+            polygonPath.pop() // get rid of drag coordinate
+            _cancelCapturePolygon()
+            polygonDrawer._callbackObject.polygonCaptureFinished(polygonPath)
+            return true
+        }
+
+        function startAdjustPolygon(callback, vertexCoordinates) {
+            polygonDraw._callbackObject = callback
+            polygonDrawer.adjustingPolygon = true
+            for (var i=0; i<vertexCoordinates.length; i++) {
+                var mapItem = Qt.createQmlObject(
+                            "import QtQuick                     2.5; " +
+                            "import QtLocation                  5.3; " +
+                            "import QGroundControl.ScreenTools  1.0; " +
+                            "Rectangle {" +
+                            "   id:     vertexDrag; " +
+                            "   width:  _sideLength; " +
+                            "   height: _sideLength; " +
+                            "   color:  'red'; " +
+                            "" +
+                            "   property var coordinate; " +
+                            "   property int index; " +
+                            "" +
+                            "   readonly property real _sideLength:     ScreenTools.defaultFontPixelWidth * 2; " +
+                            "   readonly property real _halfSideLength: _sideLength / 2; " +
+                            "" +
+                            "   Drag.active:    dragMouseArea.drag.active; " +
+                            "   Drag.hotSpot.x: _halfSideLength; " +
+                            "   Drag.hotSpot.y: _halfSideLength; " +
+                            "" +
+                            "   onXChanged: updateCoordinate(); " +
+                            "   onYChanged: updateCoordinate(); " +
+                            "" +
+                            "   function updateCoordinate() { " +
+                            "       vertexDrag.coordinate = _map.toCoordinate(Qt.point(vertexDrag.x + _halfSideLength, vertexDrag.y + _halfSideLength), false); " +
+                            "       polygonDrawer._callbackObject.polygonAdjustVertex(vertexDrag.index, vertexDrag.coordinate); " +
+                            "   } " +
+                            "" +
+                            "   function updatePosition() { " +
+                            "       var vertexPoint = _map.fromCoordinate(coordinate, false); " +
+                            "       vertexDrag.x = vertexPoint.x - _halfSideLength; " +
+                            "       vertexDrag.y = vertexPoint.y - _halfSideLength; " +
+                            "   } " +
+                            "" +
+                            "   Connections { " +
+                            "       target: _map; " +
+                            "       onCenterChanged: updatePosition(); " +
+                            "       onZoomLevelChanged: updatePosition(); " +
+                            "   } " +
+                            "" +
+                            "   MouseArea { " +
+                            "       id:             dragMouseArea; " +
+                            "       anchors.fill:   parent; " +
+                            "       drag.target:    parent; " +
+                            "       drag.minimumX:  0; " +
+                            "       drag.minimumY:  0; " +
+                            "       drag.maximumX:  _map.width - parent.width; " +
+                            "       drag.maximumY:  _map.height - parent.height; " +
+                            "   } " +
+                            "} ",
+                            _map)
+                mapItem.z = QGroundControl.zOrderMapItems + 1
+                mapItem.coordinate = vertexCoordinates[i]
+                mapItem.index = i
+                mapItem.updatePosition()
+                polygonDrawer._vertexDragList.push(mapItem)
+                polygonDrawer._callbackObject.polygonAdjustStarted()
+            }
+        }
+
+        function finishAdjustPolygon() {
+            _cancelAdjustPolygon()
+            polygonDrawer._callbackObject.polygonAdjustFinished()
+        }
+
+        /// Cancels an in progress draw or adjust
+        function cancelPolygonEdit() {
+            _cancelAdjustPolygon()
+            _cancelCapturePolygon()
+        }
+
+        function _cancelAdjustPolygon() {
+            polygonDrawer.adjustingPolygon = false
+            for (var i=0; i<polygonDrawer._vertexDragList.length; i++) {
+                polygonDrawer._vertexDragList[i].destroy()
+            }
+            polygonDrawer._vertexDragList = []
+        }
+
+        function _cancelCapturePolygon() {
+            polygonDrawer._clearPolygon()
+            polygonDrawer.drawingPolygon = false
+        }
+
+        function _clearPolygon() {
+            // Simpler methods to clear the path simply don't work due to bugs. This craziness does.
+            var bogusCoord = _map.toCoordinate(Qt.point(height/2, width/2))
+            polygonDrawerPolygon.path = [ bogusCoord, bogusCoord ]
+            polygonDrawerNextPoint.path = [ bogusCoord, bogusCoord ]
+            polygonDrawerPolygon.path = [ ]
+            polygonDrawerNextPoint.path = [ ]
+        }
+
+        onClicked: {
+            if (mouse.button == Qt.LeftButton) {
+                if (polygonDrawerPolygon.path.length > 2) {
+                    // Make sure the new line doesn't intersect the existing polygon
+                    var lastSegment = polygonDrawerPolygon.path.length - 2
+                    var newLineA = _map.fromCoordinate(polygonDrawerPolygon.path[lastSegment], false /* clipToViewPort */)
+                    var newLineB = _map.fromCoordinate(polygonDrawerPolygon.path[lastSegment+1], false /* clipToViewPort */)
+                    for (var i=0; i<lastSegment; i++) {
+                        var oldLineA = _map.fromCoordinate(polygonDrawerPolygon.path[i], false /* clipToViewPort */)
+                        var oldLineB = _map.fromCoordinate(polygonDrawerPolygon.path[i+1], false /* clipToViewPort */)
+                        if (QGroundControl.linesIntersect(newLineA, newLineB, oldLineA, oldLineB)) {
+                            return;
+                        }
+                    }
+                }
+
+                var clickCoordinate = _map.toCoordinate(Qt.point(mouse.x, mouse.y))
+                var polygonPath = polygonDrawerPolygon.path
+                if (polygonPath.length == 0) {
+                    // Add first coordinate
+                    polygonPath.push(clickCoordinate)
+                } else {
+                    // Update finalized coordinate
+                    polygonPath[polygonDrawerPolygon.path.length - 1] = clickCoordinate
+                }
+                // Add next drag coordinate
+                polygonPath.push(clickCoordinate)
+                polygonDrawerPolygon.path = polygonPath
+            } else if (polygonDrawer.polygonReady) {
+                finishCapturePolygon()
+            }
+        }
+
+        onPositionChanged: {
+            if (polygonDrawerPolygon.path.length) {
+                var dragCoordinate = _map.toCoordinate(Qt.point(mouse.x, mouse.y))
+
+                // Update drag line
+                polygonDrawerNextPoint.path = [ polygonDrawerPolygon.path[polygonDrawerPolygon.path.length - 2], dragCoordinate ]
+
+                // Update drag coordinate
+                var polygonPath = polygonDrawerPolygon.path
+                polygonPath[polygonDrawerPolygon.path.length - 1] = dragCoordinate
+                polygonDrawerPolygon.path = polygonPath
+            }
+        }
+    }
+
+    /// Polygon being drawn
+    MapPolygon {
+        id:         polygonDrawerPolygon
+        color:      "blue"
+        opacity:    0.5
+        visible:    polygonDrawer.drawingPolygon
+    }
+
+    /// Next line for polygon
+    MapPolyline {
+        id:         polygonDrawerNextPoint
+        line.color: "green"
+        line.width: 5
+        visible:    polygonDrawer.drawingPolygon
+    }
+
+    //---- End Polygon Drawing code
 } // Map

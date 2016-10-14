@@ -27,7 +27,7 @@ Item {
         id:             noVideo
         anchors.fill:   parent
         color:          Qt.rgba(0,0,0,0.75)
-        visible:        !_controller.videoRunning
+        visible:        !QGroundControl.videoManager.videoRunning
         QGCLabel {
             text:               qsTr("NO VIDEO")
             font.family:        ScreenTools.demiboldFontFamily
@@ -38,10 +38,9 @@ Item {
     }
     QGCVideoBackground {
         anchors.fill:   parent
-        display:        _controller.videoSurface
-        receiver:       _controller.videoReceiver
-        visible:        _controller.videoRunning
-        runVideo:       true
+        display:        QGroundControl.videoManager.videoSurface
+        receiver:       QGroundControl.videoManager.videoReceiver
+        visible:        QGroundControl.videoManager.videoRunning
         /* TODO: Come up with a way to make this an option
         QGCAttitudeHUD {
             id:                 attitudeHUD

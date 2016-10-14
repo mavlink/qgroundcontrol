@@ -21,6 +21,7 @@
 #include "SafetyComponent.h"
 #include "CameraComponent.h"
 #include "PowerComponent.h"
+#include "MotorComponent.h"
 #include "PX4TuningComponent.h"
 #include "Vehicle.h"
 
@@ -39,7 +40,8 @@ public:
     ~PX4AutoPilotPlugin();
 
     // Overrides from AutoPilotPlugin
-    virtual const QVariantList& vehicleComponents(void);
+    const QVariantList& vehicleComponents(void) final;
+    void parametersReadyPreChecks(void) final;
 
     // These methods should only be used by objects within the plugin
     AirframeComponent*      airframeComponent(void)     { return _airframeComponent; }
@@ -50,11 +52,8 @@ public:
     SafetyComponent*        safetyComponent(void)       { return _safetyComponent; }
     CameraComponent*        cameraComponent(void)       { return _cameraComponent; }
     PowerComponent*         powerComponent(void)        { return _powerComponent; }
+    MotorComponent*         motorComponent(void)        { return _motorComponent; }
     PX4TuningComponent*     tuningComponent(void)       { return _tuningComponent; }
-
-public slots:
-    // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
-    void _parametersReadyPreChecks(bool missingParameters);
 
 private:
     PX4AirframeLoader*      _airframeFacts;
@@ -67,6 +66,7 @@ private:
     SafetyComponent*        _safetyComponent;
     CameraComponent*        _cameraComponent;
     PowerComponent*         _powerComponent;
+    MotorComponent*         _motorComponent;
     PX4TuningComponent*     _tuningComponent;
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
 };

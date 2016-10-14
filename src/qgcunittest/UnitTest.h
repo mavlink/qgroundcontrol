@@ -74,12 +74,23 @@ public:
     //          @param Expected failure response flags
     void checkExpectedMessageBox(int expectFailFlags = expectFailNoFailure);
     
+    /// Checks that the specified number of message boxes where shown. Do not call setExpectedMessageBox when using this method.
+    void checkMultipleExpectedMessageBox(int messageCount);
+
     /// @brief Check whether a message box was displayed and correctly responded to
     //          @param Expected failure response flags
     void checkExpectedFileDialog(int expectFailFlags = expectFailNoFailure);
     
     /// @brief Adds a unit test to the list. Should only be called by UnitTestWrapper.
     static void _addTest(QObject* test);
+
+    /// Creates a file with random contents of the specified size.
+    /// @return Fully qualified path to created file
+    static QString createRandomFile(uint32_t byteCount);
+
+    /// Will throw qWarning at location where files differ
+    /// @return true: files are alike, false: files differ
+    static bool fileCompare(const QString& file1, const QString& file2);
 
 protected slots:
     

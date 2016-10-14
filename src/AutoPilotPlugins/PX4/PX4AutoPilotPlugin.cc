@@ -22,16 +22,17 @@
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
 ///     @author Don Gagne <don@thegagnes.com>
 
-PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
-    AutoPilotPlugin(vehicle, parent),
-    _airframeComponent(NULL),
-    _radioComponent(NULL),
-    _esp8266Component(NULL),
-    _flightModesComponent(NULL),
-    _sensorsComponent(NULL),
-    _safetyComponent(NULL),
-    _powerComponent(NULL),
-    _incorrectParameterVersion(false)
+PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
+    : AutoPilotPlugin(vehicle, parent)
+    , _airframeComponent(NULL)
+    , _radioComponent(NULL)
+    , _esp8266Component(NULL)
+    , _flightModesComponent(NULL)
+    , _sensorsComponent(NULL)
+    , _safetyComponent(NULL)
+    , _powerComponent(NULL)
+    , _motorComponent(NULL)
+    , _incorrectParameterVersion(false)
 {
     Q_ASSERT(vehicle);
 
@@ -51,7 +52,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         Q_ASSERT(_vehicle);
 
-        if (parametersReady()) {
+        if (_vehicle->parameterManager()->parametersReady()) {
             _airframeComponent = new AirframeComponent(_vehicle, this);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
@@ -74,6 +75,13 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
 
+#if 0
+            // Coming soon
+            _motorComponent = new MotorComponent(_vehicle, this);
+            _motorComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_motorComponent));
+#endif
+
             _safetyComponent = new SafetyComponent(_vehicle, this);
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
@@ -83,14 +91,14 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
 
             //-- Is there support for cameras?
-            if(factExists(FactSystem::ParameterProvider, _vehicle->id(), "TRIG_MODE")) {
+            if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "TRIG_MODE")) {
                 _cameraComponent = new CameraComponent(_vehicle, this);
                 _cameraComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_cameraComponent));
             }
 
             //-- Is there an ESP8266 Connected?
-            if(factExists(FactSystem::ParameterProvider, MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
+            if(_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
                 _esp8266Component = new ESP8266Component(_vehicle, this);
                 _esp8266Component->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_esp8266Component));
@@ -103,21 +111,18 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
     return _components;
 }
 
-/// This will perform various checks prior to signalling that the plug in ready
-void PX4AutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
+void PX4AutoPilotPlugin::parametersReadyPreChecks(void)
 {
+    // Base class must be called
+    AutoPilotPlugin::parametersReadyPreChecks();
+
     // Check for older parameter version set
     // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
     // should be used instead.
-    if (parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF") ||
-            parameterExists(FactSystem::defaultComponentId, "COM_DL_LOSS_EN")) {
+    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF") ||
+            _vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "COM_DL_LOSS_EN")) {
         _incorrectParameterVersion = true;
         qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
                               "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
     }
-
-    _parametersReady = true;
-    _missingParameters = missingParameters;
-    emit missingParametersChanged(_missingParameters);
-    emit parametersReadyChanged(_parametersReady);
 }

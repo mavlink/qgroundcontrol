@@ -93,9 +93,9 @@ QGCView {
     property bool compass3Use:      compass3UseParamAvailable ? compass3UseFact.value : true
 
     // Id > = signals compass available, rot < 0 signals internal compass
-    property bool showCompass1Rot: compass1Id.value > 0 && compass1External && compass1Use
-    property bool showCompass2Rot: compass2Id.value > 0 && compass2External && compass2Use
-    property bool showCompass3Rot: compass3Id.value > 0 && compass3External && compass3Use
+    property bool showCompass1: compass1Id.value > 0
+    property bool showCompass2: compass2Id.value > 0
+    property bool showCompass3: compass3Id.value > 0
 
     readonly property int _calTypeCompass:  1   ///< Calibrate compass
     readonly property int _calTypeAccel:    2   ///< Calibrate accel
@@ -133,7 +133,7 @@ QGCView {
         case _calTypeSet:
             _orientationsDialogShowCompass = true
             _orientationDialogHelp = orientationHelpSet
-            dialogTitle = qsTr("SetOrientations")
+            dialogTitle = qsTr("Sensor Settings")
             break
         }
 
@@ -147,6 +147,7 @@ QGCView {
         progressBar:                progressBar
         compassButton:              compassButton
         accelButton:                accelButton
+        compassMotButton:           motorInterferenceButton
         nextButton:                 nextButton
         cancelButton:               cancelButton
         setOrientationsButton:      setOrientationsButton
@@ -171,6 +172,7 @@ QGCView {
                                                 "INS_GYROFFS_X", "INS_GYROFFS_Y", "INS_GYROFFS_Z",
                                                 "INS_GYR2OFFS_X", "INS_GYR2OFFS_Y", "INS_GYR2OFFS_Z",
                                                 "INS_GYR3OFFS_X", "INS_GYR3OFFS_Y", "INS_GYR3OFFS_Z" ]
+                showDialog(postCalibrationDialogComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
             } else if (_orientationDialogCalType == _calTypeCompass) {
                 _postCalibrationDialogText = qsTr("Compass calibration complete. ")
                 _postCalibrationDialogParams = [];
@@ -198,8 +200,8 @@ QGCView {
                     _postCalibrationDialogParams.push("COMPASS_OFS3_Y")
                     _postCalibrationDialogParams.push("COMPASS_OFS3_Z")
                 }
+                showDialog(postCalibrationDialogComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
             }
-            showDialog(postCalibrationDialogComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
         }
     }
 
@@ -304,18 +306,19 @@ QGCView {
                     }
 
                     Column {
-                        visible: _orientationsDialogShowCompass
+                        visible: _orientationsDialogShowCompass && showCompass1
 
-                        Component {
-                            id: compass1ComponentLabel
+                        FactCheckBox {
+                            text: "Use Compass 1"
+                            fact: compass1UseFact
+                        }
+
+                        Column {
+                            visible: showCompass1Rot
 
                             QGCLabel {
                                 text: qsTr("Compass 1 Orientation:")
                             }
-                        }
-
-                        Component {
-                            id: compass1ComponentCombo
 
                             FactComboBox {
                                 width:      rotationColumnWidth
@@ -323,24 +326,22 @@ QGCView {
                                 fact:       compass1Rot
                             }
                         }
-
-                        Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel : null }
-                        Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo : null }
                     }
 
                     Column {
-                        visible: _orientationsDialogShowCompass
+                        visible: _orientationsDialogShowCompass && showCompass2
 
-                        Component {
-                            id: compass2ComponentLabel
+                        FactCheckBox {
+                            text: "Use Compass 2"
+                            fact: compass2UseFact
+                        }
+
+                        Column {
+                            visible: showCompass1Rot
 
                             QGCLabel {
                                 text: qsTr("Compass 2 Orientation:")
                             }
-                        }
-
-                        Component {
-                            id: compass2ComponentCombo
 
                             FactComboBox {
                                 width:      rotationColumnWidth
@@ -348,24 +349,22 @@ QGCView {
                                 fact:       compass2Rot
                             }
                         }
-
-                        Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel : null }
-                        Loader { sourceComponent: showCompass2Rot ? compass2ComponentCombo : null }
                     }
 
                     Column {
-                        visible: _orientationsDialogShowCompass
+                        visible: _orientationsDialogShowCompass && showCompass3
 
-                        Component {
-                            id: compass3ComponentLabel
-
-                            QGCLabel {
-                                text: qsTr("Compass 3 Orientation")
-                            }
+                        FactCheckBox {
+                            text: "Use Compass 3"
+                            fact: compass3UseFact
                         }
 
-                        Component {
-                            id: compass3ComponentCombo
+                        Column {
+                            visible: showCompass3Rot
+
+                            QGCLabel {
+                                text: qsTr("Compass 3 Orientation:")
+                            }
 
                             FactComboBox {
                                 width:      rotationColumnWidth
@@ -373,13 +372,77 @@ QGCView {
                                 fact:       compass3Rot
                             }
                         }
-                        Loader { sourceComponent: showCompass3Rot ? compass3ComponentLabel : null }
-                        Loader { sourceComponent: showCompass3Rot ? compass3ComponentCombo : null }
                     }
                 } // Column
             } // QGCFlickable
         } // QGCViewDialog
     } // Component - orientationsDialogComponent
+
+    Component {
+        id: compassMotDialogComponent
+
+        QGCViewDialog {
+            id: compassMotDialog
+
+            function accept() {
+                controller.calibrateMotorInterference()
+                compassMotDialog.hideDialog()
+            }
+
+            QGCFlickable {
+                anchors.fill:   parent
+                contentHeight:  columnLayout.height
+                clip:           true
+
+                Column {
+                    id:                 columnLayout
+                    anchors.margins:    ScreenTools.defaultFontPixelWidth
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    anchors.top:        parent.top
+                    spacing:            ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           "This is recommended for vehicles that have only an internal compass and on vehicles where there is significant interference on the compass from the motors, power wires, etc. " +
+                                        "CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. " +
+                                        "It is technically possible to set-up CompassMot using throttle but this is not recommended."
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           "Disconnect your props, flip them over and rotate them one position around the frame. " +
+                                        "In this configuration they should push the copter down into the ground when the throttle is raised."
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           "Secure the copter (perhaps with tape) so that it does not move."
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           "Turn on your transmitter and keep throttle at zero."
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           "Click Ok to start CompassMot calibration."
+                    }
+                } // Column
+            } // QGCFlickable
+        } // QGCViewDialog
+    }
 
     QGCViewPanel {
         id:             panel
@@ -416,6 +479,13 @@ QGCView {
             }
 
             QGCButton {
+                id:         motorInterferenceButton
+                width:      parent.buttonWidth
+                text:       qsTr("CompassMot")
+                onClicked:  showDialog(compassMotDialogComponent, qsTr("CompassMot - Compass Motor Interference Calibration"), qgcView.showDialogFullWidth, StandardButton.Cancel | StandardButton.Ok)
+            }
+
+            QGCButton {
                 id:         nextButton
                 width:      parent.buttonWidth
                 text:       qsTr("Next")
@@ -434,7 +504,7 @@ QGCView {
             QGCButton {
                 id:         setOrientationsButton
                 width:      parent.buttonWidth
-                text:       qsTr("Set Orientations")
+                text:       qsTr("Sensor Settings")
                 onClicked:  showOrientationsDialog(_calTypeSet)
             }
         } // Column - Buttons

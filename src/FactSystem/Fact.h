@@ -58,6 +58,7 @@ public:
     Q_PROPERTY(FactMetaData::ValueType_t type       READ type                                               CONSTANT)
     Q_PROPERTY(QString      units                   READ cookedUnits                                        CONSTANT)
     Q_PROPERTY(QVariant     value                   READ cookedValue            WRITE setCookedValue        NOTIFY valueChanged)
+    Q_PROPERTY(QVariant     rawValue                READ rawValue               WRITE setRawValue           NOTIFY rawValueChanged)
     Q_PROPERTY(bool         valueEqualsDefault      READ valueEqualsDefault                                 NOTIFY valueChanged)
     Q_PROPERTY(QString      valueString             READ cookedValueString                                  NOTIFY valueChanged)
     Q_PROPERTY(QString      enumOrValueString       READ enumOrValueString                                  NOTIFY valueChanged)
@@ -145,6 +146,7 @@ signals:
     ///
     /// This signal is only meant for use by the QT property system. It should not be connected to by client code.
     void valueChanged(QVariant value);
+    void rawValueChanged(QVariant value);
     
     /// Signalled when the param write ack comes back from the vehicle
     void vehicleUpdated(QVariant value);

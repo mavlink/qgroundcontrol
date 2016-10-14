@@ -30,7 +30,7 @@ SettingsFact::SettingsFact(QString settingGroup, QString settingName, FactMetaDa
 
     _rawValue = settings.value(_name, defaultValue);
 
-    connect(this, &Fact::valueChanged, this, &SettingsFact::_valueChanged);
+    connect(this, &Fact::rawValueChanged, this, &SettingsFact::_rawValueChanged);
 }
 
 SettingsFact::SettingsFact(const SettingsFact& other, QObject* parent)
@@ -48,7 +48,7 @@ const SettingsFact& SettingsFact::operator=(const SettingsFact& other)
     return *this;
 }
 
-void SettingsFact::_valueChanged(QVariant value)
+void SettingsFact::_rawValueChanged(QVariant value)
 {
     QSettings settings;
 

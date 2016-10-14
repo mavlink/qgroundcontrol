@@ -33,9 +33,7 @@ QString FlightModesComponent::name(void) const
 
 QString FlightModesComponent::description(void) const
 {
-    // FIXME: Better text
-    return tr("The Flight Modes Component is used to set the switches associated with Flight Modes. "
-              "At a minimum the Main Mode Switch must be assigned prior to flight.");
+    return tr("Flight Modes Setup is used to configure the transmitter switches associated with Flight Modes.");
 }
 
 QString FlightModesComponent::iconResource(void) const
@@ -45,17 +43,17 @@ QString FlightModesComponent::iconResource(void) const
 
 bool FlightModesComponent::requiresSetup(void) const
 {
-    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
+    return _vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
 }
 
 bool FlightModesComponent::setupComplete(void) const
 {
-    if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
+    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
         return true;
     }
 
-    if (_autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->rawValue().toInt() != 0 ||
-            (_autopilot->parameterExists(FactSystem::defaultComponentId, "RC_MAP_FLTMODE") && _autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_FLTMODE")->rawValue().toInt() != 0)) {
+    if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->rawValue().toInt() != 0 ||
+            (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "RC_MAP_FLTMODE") && _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_FLTMODE")->rawValue().toInt() != 0)) {
         return true;
     }
 
@@ -83,7 +81,7 @@ QUrl FlightModesComponent::summaryQmlSource(void) const
 
 QString FlightModesComponent::prerequisiteSetup(void) const
 {
-    if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
+    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
         // No RC input
         return QString();
     } else {
@@ -94,7 +92,7 @@ QString FlightModesComponent::prerequisiteSetup(void) const
             return plugin->airframeComponent()->name();
         } else if (!plugin->radioComponent()->setupComplete()) {
             return plugin->radioComponent()->name();
-        } else if (!plugin->vehicle()->hilMode() && !plugin->sensorsComponent()->setupComplete()) {
+        } else if (!_vehicle->hilMode() && !plugin->sensorsComponent()->setupComplete()) {
             return plugin->sensorsComponent()->name();
         }
     }

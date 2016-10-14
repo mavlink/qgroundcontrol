@@ -24,27 +24,27 @@ private:
     bool handleKeyEvent(jobject event);
     bool handleGenericMotionEvent(jobject event);
 
-    bool _open() final;
-    void _close() final;
-    bool _update() final;
+    virtual bool _open();
+    virtual void _close();
+    virtual bool _update();
 
-    bool _getButton(int i) final;
-    int _getAxis(int i) final;
-    uint8_t _getHat(int hat,int i);
+    virtual bool _getButton(int i);
+    virtual int _getAxis(int i);
+    virtual uint8_t _getHat(int hat,int i);
 
-    int *_btnCode;
-    int *_axisCode;
-    bool *_btnValue;
-    int *_axisValue;
+    int *btnCode;
+    int *axisCode;
+    bool *btnValue;
+    int *axisValue;
 
     static void _initStatic();
     static int * _androidBtnList; //list of all possible android buttons
     static int _androidBtnListCount;
 
     static int ACTION_DOWN, ACTION_UP;
-    static QMutex _m_mutex;
+    static QMutex m_mutex;
 
-    int _deviceId;
+    int deviceId;
 };
 
 #endif // JOYSTICKANDROID_H

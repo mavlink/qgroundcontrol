@@ -12,6 +12,7 @@
 
 #include <QFileInfo>
 #include <QStandardPaths>
+#include <QNetworkProxy>
 
 QGCFileDownload::QGCFileDownload(QObject* parent)
     : QNetworkAccessManager(parent)
@@ -19,8 +20,12 @@ QGCFileDownload::QGCFileDownload(QObject* parent)
 
 }
 
-bool QGCFileDownload::download(const QString& remoteFile)
+bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
 {
+    if (!redirect) {
+        _originalRemoteFile = remoteFile;
+    }
+
     if (remoteFile.isEmpty()) {
         qWarning() << "downloadFile empty";
         return false;
@@ -62,10 +67,14 @@ bool QGCFileDownload::download(const QString& remoteFile)
     }
     
     QNetworkRequest networkRequest(remoteUrl);
+
+    QNetworkProxy tProxy;
+    tProxy.setType(QNetworkProxy::DefaultProxy);
+    setProxy(tProxy);
     
     // Store local file location in user attribute so we can retrieve when the download finishes
     networkRequest.setAttribute(QNetworkRequest::User, localFile);
-    
+
     QNetworkReply* networkReply = get(networkRequest);
     if (!networkReply) {
         qWarning() << "QNetworkAccessManager::get failed";
@@ -89,7 +98,16 @@ void QGCFileDownload::_downloadFinished(void)
     if (reply->error() != QNetworkReply::NoError) {
         return;
     }
-    
+
+    // Check for redirection
+    QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    if (!redirectionTarget.isNull()) {
+        QUrl redirectUrl = reply->url().resolved(redirectionTarget.toUrl());
+        download(redirectUrl.toString(), true /* redirect */);
+        reply->deleteLater();
+        return;
+    }
+
     // Download file location is in user attribute
     QString downloadFilename = reply->request().attribute(QNetworkRequest::User).toString();
     Q_ASSERT(!downloadFilename.isEmpty());
@@ -104,7 +122,7 @@ void QGCFileDownload::_downloadFinished(void)
     file.write(reply->readAll());
     file.close();
 
-    emit downloadFinished(reply->url().toString(), downloadFilename);
+    emit downloadFinished(_originalRemoteFile, downloadFilename);
 }
 
 /// @brief Called when an error occurs during download

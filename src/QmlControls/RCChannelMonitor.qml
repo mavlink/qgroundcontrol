@@ -23,7 +23,11 @@ FactPanel {
     id:     _root
     height: monitorColumn.height
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
+    readonly property int _pwmMin:      800
+    readonly property int _pwmMax:      2200
+    readonly property int _pwmRange:    _pwmMax - _pwmMin
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: _root.enabled }
 
     RCChannelMonitorController {
         id:             controller
@@ -63,7 +67,7 @@ FactPanel {
                 anchors.verticalCenter: parent.verticalCenter
                 width:                  parent.height * 0.75
                 height:                 width
-                x:                      ((Math.abs((rcValue - 1000) - (reversed ? 1000 : 0)) / 1000) * parent.width) - (width / 2)
+                x:                      (((reversed ? _pwmMax - rcValue : rcValue - _pwmMin) / _pwmRange) * parent.width) - (width / 2)
                 radius:                 width / 2
                 color:                  qgcPal.text
                 visible:                mapped

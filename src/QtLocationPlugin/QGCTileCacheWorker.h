@@ -60,7 +60,7 @@ private:
     void        _resetCacheDatabase     (QGCMapTask* mtask);
     void        _pruneCache             (QGCMapTask* mtask);
 
-    bool        _findTile               (const QString hash);
+    quint64     _findTile               (const QString hash);
     bool        _findTileSetID          (const QString name, quint64& setID);
     void        _updateSetTotals        (QGCCachedTileSet* set);
     bool        _init                   ();

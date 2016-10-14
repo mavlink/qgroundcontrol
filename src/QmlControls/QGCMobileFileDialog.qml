@@ -29,6 +29,7 @@ QGCViewDialog {
 
     function accept() {
         if (!openDialog) {
+            console.log("filename", dialogLoader.item.filename)
             if (!dialogLoader.item.replaceMessageShown) {
                 if (controller.fileExists(dialogLoader.item.filename, fileExtension)) {
                     dialogLoader.item.replaceMessageShown = true

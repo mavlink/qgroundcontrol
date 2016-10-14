@@ -144,7 +144,7 @@ QGCView {
     Connections { target: _rc13Function; onValueChanged: calcGimbalOutValues() }
     Connections { target: _rc14Function; onValueChanged: calcGimbalOutValues() }
 
-    // Whenever an MNT_RC_IN_* setting is changed make sure to turn on RC targetting
+    // Whenever an MNT_RC_IN_* setting is changed make sure to turn on RC targeting
     Connections {
         target:         _mountRCInPan
         onValueChanged: _mountDefaultMode.value = _mountDefaultModeRCTargetting

@@ -1,65 +1,44 @@
 {
+    "comment":  "ArduPilot, Multi Rotor",
+
     "version": 1,
 
     "mavCmdInfo": [
         {
+            "id":           16,
+            "comment":      "MAV_CMD_NAV_WAYPOINT",
+            "paramRemove":  "2,3,4"
+        },
+        {
+            "id":           17,
+            "comment":      "MAV_CMD_NAV_LOITER_UNLIM",
+            "paramRemove":  "3"
+        },
+        {
+            "id":           18,
+            "comment":      "MAV_CMD_NAV_LOITER_TURNS",
+            "paramRemove":  "4"
+        },
+        {
+            "id":           19,
+            "comment":      "MAV_CMD_NAV_LOITER_TIME",
+            "paramRemove":  "4"
+        },
+        {
+            "id":           21,
+            "comment":      "MAV_CMD_NAV_LAND",
+            "paramRemove":  "1,4"
+        },
+        {
             "id":                   22,
-            "rawName":              "MAV_CMD_NAV_TAKEOFF",
-            "friendlyName":         "Takeoff",
-            "description":          "Take off from the ground.",
+            "comment":              "MAV_CMD_NAV_TAKEOFF",
             "specifiesCoordinate":  false,
-            "friendlyEdit":         true,
-            "category":             "Basic",
-            "param7": {
-                "label":            "Altitude:",
-                "units":            "m",
-                "default":          25.0,
-                "decimalPlaces":    2
-            }
+            "paramRemove":          "1,2,3,4,5,6"
         },
         {
-            "id":                   17,
-            "rawName":              "MAV_CMD_NAV_LOITER_UNLIM",
-            "friendlyName":         "Loiter",
-            "description":          "Travel to a position and Loiter indefinitely.",
-            "specifiesCoordinate":  true,
-            "friendlyEdit":         true,
-            "category":             "Basic"
-        },
-        {
-            "id":                   18,
-            "rawName":              "MAV_CMD_NAV_LOITER_TURNS",
-            "friendlyName":         "Loiter (turns)",
-            "description":          "Travel to a position and Circle with the specified radius for a number of turns.",
-            "specifiesCoordinate":  true,
-            "friendlyEdit":         true,
-            "category":             "Basic",
-            "param1": {
-                "label":            "Turns:",
-                "default":          1,
-                "decimalPlaces":    0
-            },
-            "param3": {
-                "label":            "Radius:",
-                "units":            "m",
-                "default":          10.0,
-                "decimalPlaces":    2
-            }
-        },
-        {
-            "id":                   19,
-            "rawName":              "MAV_CMD_NAV_LOITER_TIME",
-            "friendlyName":         "Loiter (time)",
-            "description":          "Travel to a position and Loiter for an amount of time.",
-            "specifiesCoordinate":  true,
-            "friendlyEdit":         true,
-            "category":             "Basic",
-            "param1": {
-                "label":            "Hold:",
-                "units":            "secs",
-                "default":          30,
-                "decimalPlaces":    0
-            }
+            "id":           31,
+            "comment":      "MAV_CMD_NAV_LOITER_TO_ALT",
+            "paramRemove":  "4"
         }
     ]
 }

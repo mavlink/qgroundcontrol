@@ -14,7 +14,7 @@ UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(p
     titleLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
     titleLabel->setObjectName(QString::fromUtf8("title"));
     QFont titlefont = titleLabel->font();
-    titlefont.setPixelSize(this->height() / 4.0);
+    //titlefont.setPixelSize(this->height() / 4.0);
     titleLabel->setFont(titlefont);
     layout->addWidget(titleLabel);
 
@@ -25,7 +25,7 @@ UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(p
     valueLabel->setObjectName(QString::fromUtf8("value"));
     valueLabel->setText("0.00");
     QFont valuefont = valueLabel->font();
-    valuefont.setPixelSize(this->height() / 2.0);
+    //valuefont.setPixelSize(this->height() / 2.0);
     valueLabel->setFont(valuefont);
     layout->addWidget(valueLabel);
 

@@ -26,14 +26,20 @@ QGCView {
 
     QGCPalette { id: palette; colorGroupEnabled: enabled }
 
-    property Fact _throttleMid: controller.getParameterFact(-1, "THR_MID")
-    property Fact _rcFeel:      controller.getParameterFact(-1, "RC_FEEL_RP")
-    property Fact _rateRollP:   controller.getParameterFact(-1, "r.ATC_RAT_RLL_P")
-    property Fact _rateRollI:   controller.getParameterFact(-1, "r.ATC_RAT_RLL_I")
-    property Fact _ratePitchP:  controller.getParameterFact(-1, "r.ATC_RAT_PIT_P")
-    property Fact _ratePitchI:  controller.getParameterFact(-1, "r.ATC_RAT_PIT_I")
-    property Fact _rateClimbP:  controller.getParameterFact(-1, "ACCEL_Z_P")
-    property Fact _rateClimbI:  controller.getParameterFact(-1, "ACCEL_Z_I")
+    // Older firmwares use THR_MODE, newer use MOT_THST_HOVER
+    property bool _throttleMidExists: controller.parameterExists(-1, "THR_MID")
+    property Fact _hoverTuneParam:  controller.getParameterFact(-1, _throttleMidExists ? "THR_MID" : "MOT_THST_HOVER")
+    property real _hoverTuneMin:    _throttleMidExists ? 200 : 0
+    property real _hoverTuneMax:    _throttleMidExists ? 800 : 1
+    property real _hoverTuneStep:   _throttleMidExists ? 10 : 0.01
+
+    property Fact _rcFeel:          controller.getParameterFact(-1, "RC_FEEL_RP")
+    property Fact _rateRollP:       controller.getParameterFact(-1, "r.ATC_RAT_RLL_P")
+    property Fact _rateRollI:       controller.getParameterFact(-1, "r.ATC_RAT_RLL_I")
+    property Fact _ratePitchP:      controller.getParameterFact(-1, "r.ATC_RAT_PIT_P")
+    property Fact _ratePitchI:      controller.getParameterFact(-1, "r.ATC_RAT_PIT_I")
+    property Fact _rateClimbP:      controller.getParameterFact(-1, "ACCEL_Z_P")
+    property Fact _rateClimbI:      controller.getParameterFact(-1, "ACCEL_Z_I")
 
     property Fact _ch7Opt:  controller.getParameterFact(-1, "CH7_OPT")
     property Fact _ch8Opt:  controller.getParameterFact(-1, "CH8_OPT")
@@ -63,7 +69,7 @@ QGCView {
         // handler which updates your property with the new value, this first value change will trash
         // your bound values. In order to work around this we don't set the values into the Sliders until
         // after Qml load is done. We also don't track value changes until Qml load completes.
-        throttleHover.value = _throttleMid.value
+        throttleHover.value = _hoverTuneParam.value
         rollPitch.value = _rateRollP.value
         climb.value = _rateClimbP.value
         rcFeel.value = _rcFeel.value
@@ -159,14 +165,14 @@ QGCView {
                             id:                 throttleHover
                             anchors.left:       parent.left
                             anchors.right:      parent.right
-                            minimumValue:       200
-                            maximumValue:       800
-                            stepSize:           10.0
+                            minimumValue:       _hoverTuneMin
+                            maximumValue:       _hoverTuneMax
+                            stepSize:           _hoverTuneStep
                             tickmarksEnabled:   true
 
                             onValueChanged: {
                                 if (_loadComplete) {
-                                    _throttleMid.value = value
+                                    _hoverTuneParam.value = value
                                 }
                             }
                         }
@@ -269,63 +275,148 @@ QGCView {
                 }
             } // Rectangle - Basic tuning
 
-            QGCLabel {
-                id:                 autoTuneLabel
-                anchors.topMargin:  _margins
-                anchors.top:        basicTuningRect.bottom
-                text:               qsTr("AutoTune")
-                font.family:        ScreenTools.demiboldFontFamily
-            }
-
-            Rectangle {
-                id:                 autoTuneRect
+            Flow {
+                id:                 flowLayout
                 anchors.topMargin:  _margins / 2
-                anchors.left:       parent.left
-                anchors.top:        autoTuneLabel.bottom
-                width:              autoTuneColumn.x + autoTuneColumn.width + _margins
-                height:             autoTuneColumn.y + autoTuneColumn.height + _margins
-                color:              palette.windowShade
+                width:              panel.width // parent.width doesn't work here for some reason!
+                anchors.top:        basicTuningRect.bottom
+                spacing:            _margins
 
-                Column {
-                    id:                 autoTuneColumn
-                    anchors.margins:    _margins
-                    anchors.left:       parent.left
-                    anchors.top:        parent.top
-                    spacing:            _margins
+                Rectangle {
+                    height:     autoTuneLabel.height + autoTuneRect.height
+                    width:      autoTuneRect.width
+                    color:      palette.window
 
-                    Row {
-                        spacing: _margins
-
-                        QGCLabel { text: qsTr("Axes to AutoTune:") }
-                        FactBitmask { fact: _autoTuneAxes }
+                    QGCLabel {
+                        id:                 autoTuneLabel
+                        text:               qsTr("AutoTune")
+                        font.family:        ScreenTools.demiboldFontFamily
                     }
 
-                    Row {
-                        spacing:    _margins
+                    Rectangle {
+                        id:                 autoTuneRect
+                        width:              autoTuneColumn.x + autoTuneColumn.width + _margins
+                        height:             autoTuneColumn.y + autoTuneColumn.height + _margins
+                        anchors.top:        autoTuneLabel.bottom
+                        color:              palette.windowShade
 
-                        QGCLabel {
-                            anchors.baseline:   autoTuneChannelCombo.baseline
-                            text:               qsTr("Channel for AutoTune switch:")
-                        }
+                        Column {
+                            id:                 autoTuneColumn
+                            anchors.margins:    _margins
+                            anchors.left:       parent.left
+                            anchors.top:        parent.top
+                            spacing:            _margins
 
-                        QGCComboBox {
-                            id:             autoTuneChannelCombo
-                            width:          ScreenTools.defaultFontPixelWidth * 14
-                            model:          [qsTr("None"), qsTr("Channel 7"), qsTr("Channel 8"), qsTr("Channel 9"), qsTr("Channel 10"), qsTr("Channel 11"), qsTr("Channel 12") ]
-                            currentIndex:   _autoTuneSwitchChannelIndex
+                            Row {
+                                spacing: _margins
 
-                            onActivated: {
-                                var channel = index
+                                QGCLabel { text: qsTr("Axes to AutoTune:") }
+                                FactBitmask { fact: _autoTuneAxes }
+                            }
 
-                                if (channel > 0) {
-                                    channel += 6
+                            Row {
+                                spacing:    _margins
+
+                                QGCLabel {
+                                    anchors.baseline:   autoTuneChannelCombo.baseline
+                                    text:               qsTr("Channel for AutoTune switch:")
                                 }
-                                setChannelAutoTuneOption(channel)
+
+                                QGCComboBox {
+                                    id:             autoTuneChannelCombo
+                                    width:          ScreenTools.defaultFontPixelWidth * 14
+                                    model:          [qsTr("None"), qsTr("Channel 7"), qsTr("Channel 8"), qsTr("Channel 9"), qsTr("Channel 10"), qsTr("Channel 11"), qsTr("Channel 12") ]
+                                    currentIndex:   _autoTuneSwitchChannelIndex
+
+                                    onActivated: {
+                                        var channel = index
+
+                                        if (channel > 0) {
+                                            channel += 6
+                                        }
+                                        setChannelAutoTuneOption(channel)
+                                    }
+                                }
                             }
                         }
+                    } // Rectangle - AutoTune
+                } // Rectangle - AutoTuneWrap
+
+                Rectangle {
+                    height:     inFlightTuneLabel.height + channel6TuningOption.height
+                    width:      channel6TuningOption.width
+                    color:      palette.window
+
+                    QGCLabel {
+                        id:                 inFlightTuneLabel
+                        text:               qsTr("In Flight Tuning")
+                        font.family:        ScreenTools.demiboldFontFamily
                     }
-                }
-            } // Rectangle - AutoTune
+
+                    Rectangle {
+                        id:             channel6TuningOption
+                        width:          channel6TuningOptColumn.width + (_margins * 2)
+                        height:         channel6TuningOptColumn.height + ScreenTools.defaultFontPixelHeight
+                        anchors.top:    inFlightTuneLabel.bottom
+                        color:          qgcPal.windowShade
+
+                        Column {
+                            id:                 channel6TuningOptColumn
+                            anchors.margins:    ScreenTools.defaultFontPixelWidth
+                            anchors.left:       parent.left
+                            anchors.top:        parent.top
+                            spacing:            ScreenTools.defaultFontPixelHeight
+
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                property Fact nullFact: Fact { }
+
+                                QGCLabel {
+                                    anchors.baseline:   optCombo.baseline
+                                    text:               qsTr("Channel Option 6 (Tuning):")
+                                    //color:            controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
+                                }
+
+                                FactComboBox {
+                                    id:         optCombo
+                                    width:      ScreenTools.defaultFontPixelWidth * 15
+                                    fact:       controller.getParameterFact(-1, "TUNE")
+                                    indexModel: false
+                                }
+                            }
+
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                property Fact nullFact: Fact { }
+
+                                QGCLabel {
+                                    anchors.baseline:   tuneMinField.baseline
+                                    text:               qsTr("Min:")
+                                    //color:            controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
+                                }
+
+                                FactTextField {
+                                    id:                 tuneMinField
+                                    validator:          DoubleValidator {bottom: 0; top: 32767;}
+                                    fact:               controller.getParameterFact(-1, "TUNE_LOW")
+                                }
+
+                                QGCLabel {
+                                    anchors.baseline:   tuneMaxField.baseline
+                                    text:               qsTr("Max:")
+                                    //color:            controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
+                                }
+
+                                FactTextField {
+                                    id:                 tuneMaxField
+                                    validator:          DoubleValidator {bottom: 0; top: 32767;}
+                                    fact:               controller.getParameterFact(-1, "TUNE_HIGH")
+                                }
+                            }
+                        } // Column - Channel 6 Tuning option
+                    } // Rectangle - Channel 6 Tuning options
+                } // Rectangle - Channel 6 Tuning options wrap
+            } // Flow - Tune
         } // QGCFlickable
     } // QGCViewPanel
 } // QGCView

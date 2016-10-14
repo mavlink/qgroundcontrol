@@ -88,7 +88,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
             break;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_SURFACE_BOAT:
-            vehicleName = "ArduRover";
+            vehicleName = "APMrover2";
             break;
         case MAV_TYPE_SUBMARINE:
             vehicleName = "ArduSub";
@@ -219,7 +219,7 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 group = group.remove(QRegExp("[0-9]*$")); // remove any numbers from the end
 
                 QString shortDescription = xml.attributes().value("humanName").toString();
-                QString longDescription = xml.attributes().value("docmentation").toString();
+                QString longDescription = xml.attributes().value("documentation").toString();
                 QString userLevel = xml.attributes().value("user").toString();
 
                 qCDebug(APMParameterMetaDataVerboseLog) << "Found parameter name:" << name
@@ -312,7 +312,7 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
     // as long as param doens't end
     while (!(elementName == "param" && xml.isEndElement())) {
         if (elementName.isEmpty()) {
-            // skip empty elements. Somehow I am getting lot of these. Dont know what to do with them.
+            // skip empty elements. Somehow I am getting lot of these. Don't know what to do with them.
         } else if (elementName == "field") {
             QString attributeName = xml.attributes().value("name").toString();
 

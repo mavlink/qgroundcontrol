@@ -20,7 +20,8 @@ Rectangle
     property bool   checked:    false
     property bool   complete:   false
     property alias  text:       nameLabel.text
-    property alias  size:       sizeLabel.text
+    property int    tiles:      0
+    property string size:       ""
 
     signal clicked()
 
@@ -40,6 +41,7 @@ Rectangle
             horizontalAlignment: Text.AlignRight
             anchors.verticalCenter: parent.verticalCenter
             color:  __showHighlight ? __qgcPal.buttonHighlightText : __qgcPal.buttonText
+            text:   __mapButton.size + (tiles > 0 ? " (" + tiles + " tiles)" : "")
         }
         Item {
             width:  ScreenTools.defaultFontPixelWidth * 2

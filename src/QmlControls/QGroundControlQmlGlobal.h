@@ -19,7 +19,6 @@
 #include "LinkManager.h"
 #include "HomePositionManager.h"
 #include "FlightMapSettings.h"
-#include "MissionCommands.h"
 #include "SettingsFact.h"
 #include "FactMetaData.h"
 #include "SimulatedPosition.h"
@@ -44,6 +43,15 @@ public:
         DistanceUnitsMeters
     };
 
+    enum AreaUnits {
+        AreaUnitsSquareFeet = 0,
+        AreaUnitsSquareMeters,
+        AreaUnitsSquareKilometers,
+        AreaUnitsHectares,
+        AreaUnitsAcres,
+        AreaUnitsSquareMiles,
+    };
+
     enum SpeedUnits {
         SpeedUnitsFeetPerSecond = 0,
         SpeedUnitsMetersPerSecond,
@@ -53,15 +61,17 @@ public:
     };
 
     Q_ENUMS(DistanceUnits)
+    Q_ENUMS(AreaUnits)
     Q_ENUMS(SpeedUnits)
 
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
     Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager    CONSTANT)
     Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
-    Q_PROPERTY(MissionCommands*     missionCommands     READ missionCommands        CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager    READ mapEngineManager       CONSTANT)
     Q_PROPERTY(QGCPositionManager*  qgcPositionManger   READ qgcPositionManger      CONSTANT)
+    Q_PROPERTY(MissionCommandTree*  missionCommandTree  READ missionCommandTree     CONSTANT)
+    Q_PROPERTY(VideoManager*        videoManager        READ videoManager           CONSTANT)
 
     Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -77,13 +87,17 @@ public:
     Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
 
     // MavLink Protocol
-    Q_PROPERTY(bool     isMultiplexingEnabled   READ isMultiplexingEnabled      WRITE setIsMultiplexingEnabled      NOTIFY isMultiplexingEnabledChanged)
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
 
-    Q_PROPERTY(Fact*    offlineEditingFirmwareType  READ offlineEditingFirmwareType CONSTANT)
-    Q_PROPERTY(Fact*    distanceUnits               READ distanceUnits              CONSTANT)
-    Q_PROPERTY(Fact*    speedUnits                  READ speedUnits                 CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingFirmwareType      READ offlineEditingFirmwareType         CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingVehicleType       READ offlineEditingVehicleType          CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingCruiseSpeed       READ offlineEditingCruiseSpeed          CONSTANT)
+    Q_PROPERTY(Fact*    offlineEditingHoverSpeed        READ offlineEditingHoverSpeed           CONSTANT)
+    Q_PROPERTY(Fact*    distanceUnits                   READ distanceUnits                      CONSTANT)
+    Q_PROPERTY(Fact*    areaUnits                       READ areaUnits                          CONSTANT)
+    Q_PROPERTY(Fact*    speedUnits                      READ speedUnits                         CONSTANT)
+    Q_PROPERTY(Fact*    batteryPercentRemainingAnnounce READ batteryPercentRemainingAnnounce    CONSTANT)
 
     Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
     Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
@@ -93,11 +107,9 @@ public:
     Q_PROPERTY(QString  missionFileExtension    READ missionFileExtension   CONSTANT)
     Q_PROPERTY(QString  telemetryFileExtension  READ telemetryFileExtension CONSTANT)
 
-    /// @ return: true: experimental survey ip code is turned on
-    Q_PROPERTY(bool experimentalSurvey READ experimentalSurvey WRITE setExperimentalSurvey NOTIFY experimentalSurveyChanged)
-
     /// Returns the string for distance units which has configued by user
     Q_PROPERTY(QString appSettingsDistanceUnitsString READ appSettingsDistanceUnitsString CONSTANT)
+    Q_PROPERTY(QString appSettingsAreaUnitsString READ appSettingsAreaUnitsString CONSTANT)
 
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
@@ -111,6 +123,7 @@ public:
     Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText);
     Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText);
     Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText);
+    Q_INVOKABLE void    startAPMArduSubMockLink     (bool sendStatusText);
     Q_INVOKABLE void    stopAllMockLinks            (void);
 
     /// Converts from meters to the user specified distance unit
@@ -120,6 +133,14 @@ public:
     Q_INVOKABLE QVariant appSettingsDistanceUnitsToMeters(const QVariant& distance) const { return FactMetaData::appSettingsDistanceUnitsToMeters(distance); }
 
     QString appSettingsDistanceUnitsString(void) const { return FactMetaData::appSettingsDistanceUnitsString(); }
+
+    /// Converts from square meters to the user specified area unit
+    Q_INVOKABLE QVariant squareMetersToAppSettingsAreaUnits(const QVariant& meters) const { return FactMetaData::squareMetersToAppSettingsAreaUnits(meters); }
+
+    /// Converts from user specified area unit to square meters
+    Q_INVOKABLE QVariant appSettingsAreaUnitsToSquareMeters(const QVariant& area) const { return FactMetaData::appSettingsAreaUnitsToSquareMeters(area); }
+
+    QString appSettingsAreaUnitsString(void) const { return FactMetaData::appSettingsAreaUnitsString(); }
 
     /// Returns the list of available logging category names.
     Q_INVOKABLE QStringList loggingCategories(void) const { return QGCLoggingCategoryRegister::instance()->registeredCategories(); }
@@ -133,15 +154,18 @@ public:
     /// Updates the logging filter rules after settings have changed
     Q_INVOKABLE void updateLoggingFilterRules(void) { QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(QString()); }
 
+    Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
+
     // Property accesors
 
     FlightMapSettings*      flightMapSettings   ()      { return _flightMapSettings; }
     HomePositionManager*    homePositionManager ()      { return _homePositionManager; }
     LinkManager*            linkManager         ()      { return _linkManager; }
-    MissionCommands*        missionCommands     ()      { return _missionCommands; }
     MultiVehicleManager*    multiVehicleManager ()      { return _multiVehicleManager; }
     QGCMapEngineManager*    mapEngineManager    ()      { return _mapEngineManager; }
     QGCPositionManager*     qgcPositionManger   ()      { return _qgcPositionManager; }
+    MissionCommandTree*     missionCommandTree  ()      { return _missionCommandTree; }
+    VideoManager*           videoManager        ()      { return _videoManager; }
 
     qreal                   zOrderTopMost       ()      { return 1000; }
     qreal                   zOrderWidgets       ()      { return 100; }
@@ -154,15 +178,19 @@ public:
     bool    virtualTabletJoystick   () { return _virtualTabletJoystick; }
     qreal   baseFontPointSize       () { return _baseFontPointSize; }
 
-    bool    isMultiplexingEnabled   () { return _toolbox->mavlinkProtocol()->multiplexingEnabled(); }
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
 
     QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
 
-    static Fact* offlineEditingFirmwareType (void);
-    static Fact* distanceUnits              (void);
-    static Fact* speedUnits                 (void);
+    static Fact* offlineEditingFirmwareType     (void);
+    static Fact* offlineEditingVehicleType      (void);
+    static Fact* offlineEditingCruiseSpeed      (void);
+    static Fact* offlineEditingHoverSpeed       (void);
+    static Fact* distanceUnits                  (void);
+    static Fact* areaUnits                      (void);
+    static Fact* speedUnits                     (void);
+    static Fact* batteryPercentRemainingAnnounce(void);
 
     //-- TODO: Make this into an actual preference.
     bool    isAdvancedMode          () { return false; }
@@ -174,12 +202,8 @@ public:
     void    setVirtualTabletJoystick    (bool enabled);
     void    setBaseFontPointSize        (qreal size);
 
-    void    setIsMultiplexingEnabled    (bool enable);
     void    setIsVersionCheckEnabled    (bool enable);
     void    setMavlinkSystemID          (int  id);
-
-    bool experimentalSurvey(void) const;
-    void setExperimentalSurvey(bool experimentalSurvey);
 
     QString parameterFileExtension(void) const  { return QGCApplication::parameterFileExtension; }
     QString missionFileExtension(void) const    { return QGCApplication::missionFileExtension; }
@@ -200,16 +224,19 @@ signals:
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
-    void experimentalSurveyChanged      (bool experimentalSurvey);
 
 private:
+    static SettingsFact* _createSettingsFact(const QString& name);
+    static QMap<QString, FactMetaData*>& nameToMetaDataMap(void);
+
     FlightMapSettings*      _flightMapSettings;
     HomePositionManager*    _homePositionManager;
     LinkManager*            _linkManager;
-    MissionCommands*        _missionCommands;
     MultiVehicleManager*    _multiVehicleManager;
     QGCMapEngineManager*    _mapEngineManager;
     QGCPositionManager*     _qgcPositionManager;
+    MissionCommandTree*     _missionCommandTree;
+    VideoManager*           _videoManager;
 
     bool                    _virtualTabletJoystick;
     qreal                   _baseFontPointSize;
@@ -218,11 +245,16 @@ private:
 
     // These are static so they are available to C++ code as well as Qml
     static SettingsFact*    _offlineEditingFirmwareTypeFact;
-    static FactMetaData*    _offlineEditingFirmwareTypeMetaData;
+    static SettingsFact*    _offlineEditingVehicleTypeFact;
+    static SettingsFact*    _offlineEditingCruiseSpeedFact;
+    static SettingsFact*    _offlineEditingHoverSpeedFact;
     static SettingsFact*    _distanceUnitsFact;
     static FactMetaData*    _distanceUnitsMetaData;
+    static SettingsFact*    _areaUnitsFact;
+    static FactMetaData*    _areaUnitsMetaData;
     static SettingsFact*    _speedUnitsFact;
     static FactMetaData*    _speedUnitsMetaData;
+    static SettingsFact*    _batteryPercentRemainingAnnounceFact;
 
     static const char*  _virtualTabletJoystickKey;
     static const char*  _baseFontPointSizeKey;

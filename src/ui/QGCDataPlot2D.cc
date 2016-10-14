@@ -680,7 +680,7 @@ bool QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, dou
     syy = sumy2 - sumy * sumy / n;
     sxy = sumxy - sumx * sumy / n;
 
-    /* Infinite slope (b), non existant intercept (a) */
+    /* Infinite slope (b), non existent intercept (a) */
     if (fabs(sxx) == 0)
         return false;
 

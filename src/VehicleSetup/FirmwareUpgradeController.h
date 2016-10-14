@@ -155,9 +155,9 @@ signals:
     void px4BetaVersionChanged(const QString& px4BetaVersion);
 
 private slots:
-    void _downloadProgress(qint64 curr, qint64 total);
-    void _downloadFinished(void);
-    void _downloadError(QNetworkReply::NetworkError code);
+    void _firmwareDownloadProgress(qint64 curr, qint64 total);
+    void _firmwareDownloadFinished(QString remoteFile, QString localFile);
+    void _firmwareDownloadError(QString errorMsg);
     void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int boardType);
     void _noBoardFound(void);
     void _boardGone();
@@ -194,6 +194,8 @@ private:
     QHash<FirmwareIdentifier, QString> _rgAeroCoreFirmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FMUV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgMindPXFMUV2Firmware;
+    QHash<FirmwareIdentifier, QString> _rgTAPV1Firmware;
+    QHash<FirmwareIdentifier, QString> _rgASCV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
     QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
 
@@ -216,7 +218,7 @@ private:
     QNetworkAccessManager*  _downloadManager;       ///< Used for firmware file downloading across the internet
     QNetworkReply*          _downloadNetworkReply;  ///< Used for firmware file downloading across the internet
     
-    /// @brief Thread controller which is used to run bootloader commands on seperate thread
+    /// @brief Thread controller which is used to run bootloader commands on separate thread
     PX4FirmwareUpgradeThreadController* _threadController;
     
     static const int    _eraseTickMsec = 500;       ///< Progress bar update tick time for erase

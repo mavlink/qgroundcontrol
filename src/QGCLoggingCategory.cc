@@ -20,7 +20,7 @@ QGC_LOGGING_CATEGORY(FirmwareUpgradeLog,        "FirmwareUpgradeLog")
 QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "FirmwareUpgradeVerboseLog")
 QGC_LOGGING_CATEGORY(MissionCommandsLog,        "MissionCommandsLog")
 QGC_LOGGING_CATEGORY(MissionItemLog,            "MissionItemLog")
-QGC_LOGGING_CATEGORY(ParameterLoaderLog,        "ParameterLoaderLog")
+QGC_LOGGING_CATEGORY(ParameterManagerLog,        "ParameterManagerLog")
 
 QGCLoggingCategoryRegister* _instance = NULL;
 const char* QGCLoggingCategoryRegister::_filterRulesSettingsGroup = "LoggingFilters";

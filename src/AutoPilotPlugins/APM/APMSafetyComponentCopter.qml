@@ -25,7 +25,7 @@ QGCView {
 
     FactPanelController { id: controller; factPanel: panel }
 
-    QGCPalette { id: palette; colorGroupEnabled: enabled }
+    QGCPalette { id: ggcPal; colorGroupEnabled: enabled }
 
     property Fact _failsafeGCSEnable:   controller.getParameterFact(-1, "FS_GCS_ENABLE")
     property Fact _failsafeBattEnable:  controller.getParameterFact(-1, "FS_BATT_ENABLE")
@@ -83,7 +83,7 @@ QGCView {
                         id:     failsafeSettings
                         width:  throttleEnableCombo.x + throttleEnableCombo.width + _margins
                         height: mahField.y + mahField.height + _margins
-                        color:  palette.windowShade
+                        color:  ggcPal.windowShade
 
                         QGCLabel {
                             id:                 gcsEnableLabel
@@ -217,7 +217,7 @@ QGCView {
                         id:     geoFenceSettings
                         width:  fenceAltMaxField.x + fenceAltMaxField.width + _margins
                         height: fenceAltMaxField.y + fenceAltMaxField.height + _margins
-                        color:  palette.windowShade
+                        color:  ggcPal.windowShade
 
                         QGCCheckBox {
                             id:                 circleGeo
@@ -341,7 +341,7 @@ QGCView {
                         id:     rtlSettings
                         width:  rltAltFinalField.x + rltAltFinalField.width + _margins
                         height: rltAltFinalField.y + rltAltFinalField.height + _margins
-                        color:  palette.windowShade
+                        color:  ggcPal.windowShade
 
                         Image {
                             id:                 icon
@@ -360,7 +360,7 @@ QGCView {
                         ColorOverlay {
                             anchors.fill:   icon
                             source:         icon
-                            color:          palette.text
+                            color:          ggcPal.text
                             visible:        _showIcon
                         }
 
@@ -472,7 +472,7 @@ QGCView {
                     Rectangle {
                         width:  flowLayout.width
                         height: armingCheckInnerColumn.height + (_margins * 2)
-                        color:  palette.windowShade
+                        color:  ggcPal.windowShade
 
                         Column {
                             id:                 armingCheckInnerColumn
@@ -482,19 +482,22 @@ QGCView {
                             anchors.right:      parent.right
                             spacing: _margins
 
+                            FactBitmask {
+                                id:                 armingCheckBitmask
+                                anchors.left:       parent.left
+                                anchors.right:      parent.right
+                                firstEntryIsAll:    true
+                                fact:               _armingCheck
+                            }
+
                             QGCLabel {
                                 id:             armingCheckWarning
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
                                 wrapMode:       Text.WordWrap
-                                text:            qsTr("Turning off arming checks can lead to loss of Vehicle control.")
-                            }
-
-                            FactBitmask {
-                                id:             armingCheckBitmask
-                                anchors.left:   parent.left
-                                anchors.right:  parent.right
-                                fact:           _armingCheck
+                                color:          qgcPal.warningText
+                                text:            qsTr("Warning: Turning off arming checks can lead to loss of Vehicle control.")
+                                visible:        _armingCheck.value != 1
                             }
                         }
                     } // Rectangle - Arming checks

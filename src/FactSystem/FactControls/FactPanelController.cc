@@ -7,11 +7,11 @@
  *
  ****************************************************************************/
 
-
 #include "FactPanelController.h"
 #include "MultiVehicleManager.h"
 #include "UAS.h"
 #include "QGCApplication.h"
+#include "ParameterManager.h"
 
 #include <QQmlEngine>
 
@@ -20,7 +20,7 @@
 
 QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactPanelControllerLog")
 
-FactPanelController::FactPanelController(void)
+FactPanelController::FactPanelController(bool standaloneUnitTesting)
     : _vehicle(NULL)
     , _uas(NULL)
     , _autopilot(NULL)
@@ -31,10 +31,14 @@ FactPanelController::FactPanelController(void)
     if (_vehicle) {
         _uas = _vehicle->uas();
         _autopilot = _vehicle->autopilotPlugin();
+    } else {
+        _vehicle = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
     }
 
-    // Do a delayed check for the _factPanel finally being set correctly from Qml
-    QTimer::singleShot(1000, this, &FactPanelController::_checkForMissingFactPanel);
+    if (!standaloneUnitTesting) {
+        // Do a delayed check for the _factPanel finally being set correctly from Qml
+        QTimer::singleShot(1000, this, &FactPanelController::_checkForMissingFactPanel);
+    }
 }
 
 QQuickItem* FactPanelController::factPanel(void)
@@ -100,7 +104,7 @@ bool FactPanelController::_allParametersExists(int componentId, QStringList name
     bool noMissingFacts = true;
 
     foreach (const QString &name, names) {
-        if (_autopilot && !_autopilot->parameterExists(componentId, name)) {
+        if (_vehicle && !_vehicle->parameterManager()->parameterExists(componentId, name)) {
             _reportMissingParameter(componentId, name);
             noMissingFacts = false;
         }
@@ -118,8 +122,8 @@ void FactPanelController::_checkForMissingFactPanel(void)
 
 Fact* FactPanelController::getParameterFact(int componentId, const QString& name, bool reportMissing)
 {
-    if (_autopilot && _autopilot->parameterExists(componentId, name)) {
-        Fact* fact = _autopilot->getParameterFact(componentId, name);
+    if (_vehicle && _vehicle->parameterManager()->parameterExists(componentId, name)) {
+        Fact* fact = _vehicle->parameterManager()->getParameter(componentId, name);
         QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
         return fact;
     } else {
@@ -131,7 +135,7 @@ Fact* FactPanelController::getParameterFact(int componentId, const QString& name
 
 bool FactPanelController::parameterExists(int componentId, const QString& name)
 {
-    return _autopilot ? _autopilot->parameterExists(componentId, name) : false;
+    return _vehicle ? _vehicle->parameterManager()->parameterExists(componentId, name) : false;
 }
 
 void FactPanelController::_showInternalError(const QString& errorMsg)

@@ -49,7 +49,7 @@ public:
 
     Q_INVOKABLE void                loadTileSets            ();
     Q_INVOKABLE void                updateForCurrentView    (double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom, const QString& mapName);
-    Q_INVOKABLE void                startDownload           (const QString& name, const QString& description, const QString& mapType, const QImage& image = QImage());
+    Q_INVOKABLE void                startDownload           (const QString& name, const QString& mapType);
     Q_INVOKABLE void                saveSetting             (const QString& key,  const QString& value);
     Q_INVOKABLE QString             loadSetting             (const QString& key,  const QString& defaultValue);
     Q_INVOKABLE void                deleteTileSet           (QGCCachedTileSet* tileSet);

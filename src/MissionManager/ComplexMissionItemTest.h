@@ -14,7 +14,7 @@
 #include "UnitTest.h"
 #include "TCPLink.h"
 #include "MultiSignalSpy.h"
-#include "ComplexMissionItem.h"
+#include "SurveyMissionItem.h"
 
 #include <QGeoCoordinate>
 
@@ -95,7 +95,7 @@ private:
     const char*         _rgComplexMissionItemSignals[_cComplexMissionItemSignals];
 
     MultiSignalSpy*         _multiSpy;
-    ComplexMissionItem*     _complexItem;
+    SurveyMissionItem*     _complexItem;
     QList<QGeoCoordinate>   _polyPoints;
 };
 

@@ -30,7 +30,7 @@ public:
     ///     @param fileExtension Expected file extension, added if needed
     Q_INVOKABLE QString fullPath(const QString& filename, const QString& fileExtension);
 
-    /// Check for file existance
+    /// Check for file existence
     ///     @param filename File name, not fully qualified, may not have extension
     ///     @param fileExtension Expected file extension, added if needed
     /// @return true: File exists at Documents location

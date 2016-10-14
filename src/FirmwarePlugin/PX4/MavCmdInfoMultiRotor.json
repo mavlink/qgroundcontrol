@@ -1,44 +1,26 @@
 {
+    "comment":  "PX4 Pro, Multi Rotor",
+
     "version": 1,
 
     "mavCmdInfo": [
         {
-            "id":                   17,
-            "rawName":              "MAV_CMD_NAV_LOITER_UNLIM",
-            "friendlyName":         "Loiter",
-            "description":          "Travel to a position and Loiter indefinitely.",
-            "specifiesCoordinate":  true,
-            "friendlyEdit":         true,
-            "category":             "Basic"
+            "id":           17,
+            "comment":      "MAV_CMD_NAV_LOITER_UNLIM",
+            "description":  "Travel to a position and Loiter indefinitely.",
+            "paramRemove":  "3"
         },
         {
-            "id":                   18,
-            "rawName":              "MAV_CMD_NAV_LOITER_TURNS",
-            "friendlyName":         "Loiter (turns)",
-            "description":          "Travel to a position and Loiter for a number of turns.",
-            "specifiesCoordinate":  true,
-            "friendlyEdit":         true,
-            "category":             "Basic",
-            "param1": {
-                "label":            "Turns:",
-                "default":          1,
-                "decimalPlaces":    0
-            }
+            "id":           18,
+            "comment":      "MAV_CMD_NAV_LOITER_TURNS",
+            "description":  "Travel to a position and Loiter for a number of turns.",
+            "paramRemove":  "3,4"
         },
         {
-            "id":                   19,
-            "rawName":              "MAV_CMD_NAV_LOITER_TIME",
-            "friendlyName":         "Loiter (time)",
-            "description":          "Travel to a position and Loiter for an amount of time.",
-            "specifiesCoordinate":  true,
-            "friendlyEdit":         true,
-            "category":             "Basic",
-            "param1": {
-                "label":            "Hold:",
-                "units":            "secs",
-                "default":          30,
-                "decimalPlaces":    0
-            }
+            "id":           19,
+            "comment":      "MAV_CMD_NAV_LOITER_TIME",
+            "description":  "Travel to a position and Loiter for an amount of time.",
+            "paramRemove":  "3,4"
         }
     ]
 }

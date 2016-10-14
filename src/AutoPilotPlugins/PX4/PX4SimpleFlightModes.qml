@@ -30,8 +30,6 @@ Item {
     readonly property real _flightModeComboWidth:   ScreenTools.defaultFontPixelWidth * 13
     readonly property real _channelComboWidth:      ScreenTools.defaultFontPixelWidth * 13
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
-
     PX4SimpleFlightModesController {
         id:         controller
         factPanel:  qgcViewPanel
@@ -190,6 +188,26 @@ Item {
 
                                 FactComboBox {
                                     id:         offboardCombo
+                                    width:      _channelComboWidth
+                                    fact:       parent.fact
+                                    indexModel: false
+                                }
+                            }
+
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+
+                                property Fact fact: controller.getParameterFact(-1, "RC_MAP_TRANS_SW", false)
+                                visible: (controller.vehicle.vtol && controller.parameterExists(-1, "RC_MAP_TRANS_SW"))
+
+                                QGCLabel {
+                                    anchors.baseline:   vtolCombo.baseline
+                                    text:               "VTOL mode switch:"
+                                    color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
+                                }
+
+                                FactComboBox {
+                                    id:         vtolCombo
                                     width:      _channelComboWidth
                                     fact:       parent.fact
                                     indexModel: false

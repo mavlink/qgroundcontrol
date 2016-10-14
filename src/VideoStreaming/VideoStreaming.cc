@@ -1,4 +1,4 @@
-    /****************************************************************************
+/****************************************************************************
  *
  *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
@@ -19,6 +19,9 @@
 
 #if defined(QGC_GST_STREAMING)
 #include <gst/gst.h>
+#ifdef __android__
+//#define ANDDROID_GST_DEBUG
+#endif
 #endif
 
 #include "VideoStreaming.h"
@@ -34,16 +37,17 @@
     GST_PLUGIN_STATIC_DECLARE(coreelements);
     GST_PLUGIN_STATIC_DECLARE(libav);
     GST_PLUGIN_STATIC_DECLARE(rtp);
+    GST_PLUGIN_STATIC_DECLARE(rtsp);
     GST_PLUGIN_STATIC_DECLARE(udp);
     GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
     GST_PLUGIN_STATIC_DECLARE(x264);
+    GST_PLUGIN_STATIC_DECLARE(rtpmanager);
 #endif
     G_END_DECLS
 #endif
 
 #if defined(QGC_GST_STREAMING)
-#if defined(__macos__)
-#ifdef QGC_INSTALL_RELEASE
+#if (defined(__macos__) && defined(QGC_INSTALL_RELEASE)) || defined(Q_OS_WIN)
 static void qgcputenv(const QString& key, const QString& root, const QString& path)
 {
     QString value = root + path;
@@ -51,6 +55,48 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 }
 #endif
 #endif
+
+#ifdef ANDDROID_GST_DEBUG
+// Redirects stdio and stderr to logcat
+#include <unistd.h>
+#include <pthread.h>
+#include <android/log.h>
+
+static int pfd[2];
+static pthread_t thr;
+static const char *tag = "myapp";
+
+static void *thread_func(void*)
+{
+    ssize_t rdsz;
+    char buf[128];
+    while((rdsz = read(pfd[0], buf, sizeof buf - 1)) > 0) {
+        if(buf[rdsz - 1] == '\n') --rdsz;
+        buf[rdsz] = 0;  /* add null-terminator */
+        __android_log_write(ANDROID_LOG_DEBUG, tag, buf);
+    }
+    return 0;
+}
+
+int start_logger(const char *app_name)
+{
+    tag = app_name;
+
+    /* make stdout line-buffered and stderr unbuffered */
+    setvbuf(stdout, 0, _IOLBF, 0);
+    setvbuf(stderr, 0, _IONBF, 0);
+
+    /* create the pipe and redirect stdout and stderr */
+    pipe(pfd);
+    dup2(pfd[1], 1);
+    dup2(pfd[1], 2);
+
+    /* spawn the logging thread */
+    if(pthread_create(&thr, 0, thread_func, 0) == -1)
+        return -1;
+    pthread_detach(thr);
+    return 0;
+}
 #endif
 
 void initializeVideoStreaming(int &argc, char* argv[])
@@ -67,8 +113,16 @@ void initializeVideoStreaming(int &argc, char* argv[])
             qgcputenv("GST_PLUGIN_PATH_1_0",          currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
             qgcputenv("GST_PLUGIN_PATH",              currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
         #endif
+    #elif defined(Q_OS_WIN)
+        QString currentDir = QCoreApplication::applicationDirPath();
+        qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
     #endif
         // Initialize GStreamer
+        #ifdef ANDDROID_GST_DEBUG
+        start_logger("gst_log");
+        qputenv("GST_DEBUG", "*:4");
+        qputenv("GST_DEBUG_NO_COLOR", "1");
+        #endif
         GError* error = NULL;
         if (!gst_init_check(&argc, &argv, &error)) {
             qCritical() << "gst_init_check() failed: " << error->message;
@@ -81,9 +135,11 @@ void initializeVideoStreaming(int &argc, char* argv[])
         GST_PLUGIN_STATIC_REGISTER(coreelements);
         GST_PLUGIN_STATIC_REGISTER(libav);
         GST_PLUGIN_STATIC_REGISTER(rtp);
+        GST_PLUGIN_STATIC_REGISTER(rtsp);
         GST_PLUGIN_STATIC_REGISTER(udp);
         GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
         GST_PLUGIN_STATIC_REGISTER(x264);
+        GST_PLUGIN_STATIC_REGISTER(rtpmanager);
     #endif
 #else
     Q_UNUSED(argc);

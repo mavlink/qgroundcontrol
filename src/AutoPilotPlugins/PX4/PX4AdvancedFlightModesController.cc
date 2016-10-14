@@ -88,7 +88,7 @@ void PX4AdvancedFlightModesController::_init(void)
         // PosCtl disabled so AltCtl must move back to main Mode switch
         _assistModeVisible = false;
     } else {
-        // Assist mode is visible if AltCtl/PosCtl are on seperate channel from main Mode switch
+        // Assist mode is visible if AltCtl/PosCtl are on separate channel from main Mode switch
         _assistModeVisible = posCtlChannel != modeChannel;
     }
     
@@ -96,7 +96,7 @@ void PX4AdvancedFlightModesController::_init(void)
         // Loiter disabled so Mission must move back to main Mode switch
         _autoModeVisible = false;
     } else {
-        // Auto mode is visible if Mission/Loiter are on seperate channel from main Mode switch
+        // Auto mode is visible if Mission/Loiter are on separate channel from main Mode switch
         _autoModeVisible = loiterChannel != modeChannel;
     }
     
@@ -662,7 +662,7 @@ void PX4AdvancedFlightModesController::setPosCtlModeChannelIndex(int index)
         // PosCtl disabled so AltCtl must move back to main Mode switch
         _assistModeVisible = false;
     } else {
-        // Assist mode is visible if AltCtl/PosCtl are on seperate channel from main Mode switch
+        // Assist mode is visible if AltCtl/PosCtl are on separate channel from main Mode switch
         _assistModeVisible = channel != getParameterFact(-1, "RC_MAP_MODE_SW")->rawValue().toInt();
     }
     
@@ -684,7 +684,7 @@ void PX4AdvancedFlightModesController::setLoiterModeChannelIndex(int index)
         // Loiter disabled so Mission must move back to main Mode switch
         _autoModeVisible = false;
     } else {
-        // Auto mode is visible if Mission/Loiter are on seperate channel from main Mode switch
+        // Auto mode is visible if Mission/Loiter are on separate channel from main Mode switch
         _autoModeVisible = channel != getParameterFact(-1, "RC_MAP_MODE_SW")->rawValue().toInt();
     }
     

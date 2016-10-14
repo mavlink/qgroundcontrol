@@ -48,12 +48,12 @@ public:
 class ArduCopterFirmwarePlugin : public APMFirmwarePlugin
 {
     Q_OBJECT
-    
+
 public:
     ArduCopterFirmwarePlugin(void);
 
     // Overrides from FirmwarePlugin
-    bool isCapable(FirmwareCapabilities capabilities) final;
+    bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
     bool isPaused(const Vehicle* vehicle) const final;
     void setGuidedMode(Vehicle* vehicle, bool guidedMode) final;
     void pauseVehicle(Vehicle* vehicle) final;
@@ -63,7 +63,11 @@ public:
     void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
     void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel) final;
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
-    virtual int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+    bool multiRotorCoaxialMotors(Vehicle* vehicle) final;
+    bool multiRotorXConfig(Vehicle* vehicle) final;
+    QString geoFenceRadiusParam(Vehicle* vehicle) final;
+    QString offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
 
 private:
     static bool _remapParamNameIntialized;

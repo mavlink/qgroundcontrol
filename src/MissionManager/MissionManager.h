@@ -31,7 +31,6 @@ class MissionManager : public QObject
     Q_OBJECT
     
 public:
-    /// @param uas Uas which this set of facts is associated with
     MissionManager(Vehicle* vehicle);
     ~MissionManager();
     
@@ -82,7 +81,7 @@ private:
         AckMissionCount,    ///< MISSION_COUNT message expected
         AckMissionItem,     ///< MISSION_ITEM expected
         AckMissionRequest,  ///< MISSION_REQUEST is expected, or MISSION_ACK to end sequence
-        AckGuidedItem,      ///< MISSION_ACK expected in reponse to ArduPilot guided mode single item send
+        AckGuidedItem,      ///< MISSION_ACK expected in response to ArduPilot guided mode single item send
     } AckType_t;
     
     void _startAckTimeout(AckType_t ack);

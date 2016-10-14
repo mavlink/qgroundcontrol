@@ -7,15 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
-* @file
-*   @brief Brief Description
-*
-*   @author Lorenz Meier <mavteam@student.ethz.ch>
-*
-*/
-
 #ifndef _LINKINTERFACE_H_
 #define _LINKINTERFACE_H_
 
@@ -25,6 +16,7 @@
 #include <QMutexLocker>
 #include <QMetaType>
 #include <QSharedPointer>
+#include <QDebug>
 
 #include "QGCMAVLink.h"
 
@@ -124,7 +116,13 @@ public:
     
     /// mavlink channel to use for this link, as used by mavlink_parse_char. The mavlink channel is only
     /// set into the link when it is added to LinkManager
-    uint8_t getMavlinkChannel(void) const { Q_ASSERT(_mavlinkChannelSet); return _mavlinkChannel; }
+    uint8_t mavlinkChannel(void) const
+    {
+        if (!_mavlinkChannelSet) {
+            qWarning() << "Call to LinkInterface::mavlinkChannel with _mavlinkChannelSet == false";
+        }
+        return _mavlinkChannel;
+    }
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
@@ -187,7 +185,7 @@ signals:
      */
     void nameChanged(QString name);
 
-    /** @brief Communication error occured */
+    /** @brief Communication error occurred */
     void communicationError(const QString& title, const QString& error);
 
     void communicationUpdate(const QString& linkname, const QString& text);
@@ -217,7 +215,7 @@ protected:
     /// This function logs the send times and amounts of datas for input. Data is used for calculating
     /// the transmission rate.
     ///     @param byteCount Number of bytes received
-    ///     @param time Time in ms send occured
+    ///     @param time Time in ms send occurred
     void _logInputDataRate(quint64 byteCount, qint64 time) {
         if(_enableRateCollection)
             _logDataRateToBuffer(_inDataWriteAmounts, _inDataWriteTimes, &_inDataIndex, byteCount, time);
@@ -226,7 +224,7 @@ protected:
     /// This function logs the send times and amounts of datas for output. Data is used for calculating
     /// the transmission rate.
     ///     @param byteCount Number of bytes sent
-    ///     @param time Time in ms receive occured
+    ///     @param time Time in ms receive occurred
     void _logOutputDataRate(quint64 byteCount, qint64 time) {
         if(_enableRateCollection)
             _logDataRateToBuffer(_outDataWriteAmounts, _outDataWriteTimes, &_outDataIndex, byteCount, time);

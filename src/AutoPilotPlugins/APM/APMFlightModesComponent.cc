@@ -66,8 +66,10 @@ QString APMFlightModesComponent::prerequisiteSetup(void) const
 
     if (!plugin->airframeComponent()->setupComplete()) {
         return plugin->airframeComponent()->name();
-    } else if (!plugin->radioComponent()->setupComplete()) {
-        return plugin->radioComponent()->name();
+    } else if (plugin->radioComponent() != NULL) {
+        if (!plugin->radioComponent()->setupComplete()) {
+            return plugin->radioComponent()->name();
+        }
     }
     
     return QString();

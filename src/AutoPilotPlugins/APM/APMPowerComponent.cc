@@ -11,6 +11,7 @@
 #include "APMPowerComponent.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
+#include "ParameterManager.h"
 
 APMPowerComponent::APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent),
@@ -40,7 +41,7 @@ bool APMPowerComponent::requiresSetup(void) const
 
 bool APMPowerComponent::setupComplete(void) const
 {
-    return _autopilot->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("BATT_CAPACITY"))->rawValue().toInt() != 0;
+    return _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("BATT_CAPACITY"))->rawValue().toInt() != 0;
 }
 
 QStringList APMPowerComponent::setupCompleteChangedTriggerList(void) const

@@ -8,11 +8,11 @@ int JoystickAndroid::_androidBtnListCount;
 int *JoystickAndroid::_androidBtnList;
 int JoystickAndroid::ACTION_DOWN;
 int JoystickAndroid::ACTION_UP;
-QMutex JoystickAndroid::_m_mutex;
+QMutex JoystickAndroid::m_mutex;
 
 JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager)
     : Joystick(name,axisCount,buttonCount,0,multiVehicleManager)
-    , _deviceId(id)
+    , deviceId(id)
 {
     int i;
     
@@ -27,26 +27,26 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
     jbooleanArray jSupportedButtons = btns.object<jbooleanArray>();
     jboolean* supportedButtons = env->GetBooleanArrayElements(jSupportedButtons, nullptr);
     //create a mapping table (btnCode) that maps button number with button code
-    _btnValue = new bool[_buttonCount];
-    _btnCode = new int[_buttonCount];
+    btnValue = new bool[_buttonCount];
+    btnCode = new int[_buttonCount];
     int c = 0;
     for (i=0;i<_androidBtnListCount;i++)
         if (supportedButtons[i]) {
-            _btnValue[c] = false;
-            _btnCode[c] = _androidBtnList[i];
+            btnValue[c] = false;
+            btnCode[c] = _androidBtnList[i];
             c++;
         }
 
     env->ReleaseBooleanArrayElements(jSupportedButtons, supportedButtons, 0);
 
     //set axis mapping (number->code)
-    _axisValue = new int[_axisCount];
-    _axisCode = new int[_axisCount];
+    axisValue = new int[_axisCount];
+    axisCode = new int[_axisCount];
     QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
     for (i=0;i<_axisCount;i++) {
         QAndroidJniObject range = rangeListNative.callObjectMethod("get", "(I)Ljava/lang/Object;",i);
-        _axisCode[i] = range.callMethod<jint>("getAxis");
-        _axisValue[i] = 0;
+        axisCode[i] = range.callMethod<jint>("getAxis");
+        axisValue[i] = 0;
     }
 
 
@@ -56,10 +56,10 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
 }
 
 JoystickAndroid::~JoystickAndroid() {
-    delete _btnCode;
-    delete _axisCode;
-    delete _btnValue;
-    delete _axisValue;
+    delete btnCode;
+    delete axisCode;
+    delete btnValue;
+    delete axisValue;
 
     QtAndroidPrivate::unregisterGenericMotionEventListener(this);
     QtAndroidPrivate::unregisterKeyEventListener(this);
@@ -71,7 +71,7 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
 
     _initStatic(); //it's enough to run it once, should be in a static constructor
 
-    QMutexLocker lock(&_m_mutex);
+    QMutexLocker lock(&m_mutex);
 
     QAndroidJniEnvironment env;
     QAndroidJniObject o = QAndroidJniObject::callStaticObjectMethod<jintArray>("android/view/InputDevice", "getDeviceIds");
@@ -117,7 +117,6 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
 
         ret[name] = new JoystickAndroid(name, axisCount, buttonCount, buff[i], _multiVehicleManager);
         joystickFound = true;
-        //joystickFound = false;
     }
 
     env->ReleaseIntArrayElements(jarr, buff, 0);
@@ -129,18 +128,17 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
 
 bool JoystickAndroid::handleKeyEvent(jobject event) {
     QJNIObjectPrivate ev(event);
-    QMutexLocker lock(&_m_mutex);
-    const int deviceId = ev.callMethod<jint>("getDeviceId", "()I");
-    if (deviceId!=_deviceId) return false;
+    QMutexLocker lock(&m_mutex);
+    const int _deviceId = ev.callMethod<jint>("getDeviceId", "()I");
+    if (_deviceId!=deviceId) return false;
  
     const int action = ev.callMethod<jint>("getAction", "()I");
     const int keyCode = ev.callMethod<jint>("getKeyCode", "()I");
 
     for (int i=0;i<_buttonCount;i++) {
-        if (_btnCode[i]==keyCode) {
-            if (action==ACTION_DOWN) _btnValue[i] = true;
-            if (action==ACTION_UP) _btnValue[i] = false;
-            qWarning() << "Btn:"<<i;
+        if (btnCode[i]==keyCode) {
+            if (action==ACTION_DOWN) btnValue[i] = true;
+            if (action==ACTION_UP) btnValue[i] = false;
             return true;
         }
     }
@@ -149,39 +147,36 @@ bool JoystickAndroid::handleKeyEvent(jobject event) {
 
 bool JoystickAndroid::handleGenericMotionEvent(jobject event) {
     QJNIObjectPrivate ev(event);
-    QMutexLocker lock(&_m_mutex);
-    const int deviceId = ev.callMethod<jint>("getDeviceId", "()I");
-    if (deviceId!=_deviceId) return false;
+    QMutexLocker lock(&m_mutex);
+    const int _deviceId = ev.callMethod<jint>("getDeviceId", "()I");
+    if (_deviceId!=deviceId) return false;
  
     for (int i=0;i<_axisCount;i++) {
-        const float v = ev.callMethod<jfloat>("getAxisValue", "(I)F",_axisCode[i]);
-        _axisValue[i] = (int)(v*32767.f);
+        const float v = ev.callMethod<jfloat>("getAxisValue", "(I)F",axisCode[i]);
+        axisValue[i] = (int)(v*32767.f);
     }
     return true;
 }
 
 
 bool JoystickAndroid::_open(void) {
-    //no need to open android joystick (done at instantiation)
     return true;
 }
 
 void JoystickAndroid::_close(void) {
-     //as for _open
 }
 
 bool JoystickAndroid::_update(void)
 {
-    //android joystick gets updated in thebackground through handlers
     return true;
 }
 
 bool JoystickAndroid::_getButton(int i) {
-    return _btnValue[ i ];
+    return btnValue[ i ];
 }
 
 int JoystickAndroid::_getAxis(int i) {
-    return _axisValue[ i ];
+    return axisValue[ i ];
 }
 
 uint8_t JoystickAndroid::_getHat(int hat,int i) {

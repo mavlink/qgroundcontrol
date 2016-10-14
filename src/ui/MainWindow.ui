@@ -61,7 +61,6 @@
     <addaction name="separator"/>
     <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionStatusBar"/>
-    <addaction name="actionSettings"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -93,17 +92,6 @@
    </property>
    <property name="text">
     <string>Mute Audio Output</string>
-   </property>
-  </action>
-  <action name="actionSettings">
-   <property name="text">
-    <string>Settings</string>
-   </property>
-   <property name="toolTip">
-    <string>Application settings</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::PreferencesRole</enum>
    </property>
   </action>
   <action name="actionAdvanced_Mode">

@@ -97,7 +97,7 @@ QGCView {
             } else {
                 // We end up here when we detect a board plugged in after we've started upgrade
                 statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
-                if (controller.boardType == "Pixhawk" || controller.boardType == "AeroCore" || controller.boardType == "PX4 Flow" || controller.boardType == "PX4 FMU V1" || controller.boardType == "MindPX") {
+                if (controller.boardType == "Pixhawk" || controller.boardType == "AeroCore" || controller.boardType == "PX4 Flow" || controller.boardType == "PX4 FMU V1" || controller.boardType == "MindPX" || controller.boardType == "TAP V1" || controller.boardType == "ASC V1") {
                     showDialog(pixhawkFirmwareSelectDialogComponent, title, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
             }
@@ -312,7 +312,7 @@ QGCView {
                                     qsTr("This firmware has NOT BEEN FLIGHT TESTED. ") +
                                     qsTr("It is only intended for DEVELOPERS. ") +
                                     qsTr("Run bench tests without props first. ") +
-                                    qsTr("Do NOT fly this without additonal safety precautions. ") +
+                                    qsTr("Do NOT fly this without additional safety precautions. ") +
                                     qsTr("Follow the mailing list actively when using it.")
                         } else {
                             firmwareVersionWarningLabel.visible = false

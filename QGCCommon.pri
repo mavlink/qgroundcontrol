@@ -21,21 +21,28 @@ linux {
         message("Linux build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
-		linux-clang {
-			message("Linux clang")
-			QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
-		}
+        linux-clang {
+            message("Linux clang")
+            QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
+        }
     } else : linux-rasp-pi2-g++ {
         message("Linux R-Pi2 build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
     } else : android-g++ {
-        message("Android build")
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_ENABLE_BLUETOOTH
         target.path = $$DESTDIR
+        equals(ANDROID_TARGET_ARCH, x86)  {
+            CONFIG += Androidx86Build
+            DEFINES += __androidx86__
+            DEFINES += QGC_DISABLE_UVC
+            message("Android x86 build")
+        } else {
+            message("Android Arm build")
+        }
     } else {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
@@ -54,12 +61,13 @@ linux {
         DEFINES += __macos__
         CONFIG += x86_64
         CONFIG -= x86
-equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
-        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
-} else {
-        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-}
-        QMAKE_MAC_SDK = macosx10.11
+        equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
+                QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+        } else {
+                QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+        }
+        #-- Not forcing anything. Let qmake find the latest, installed SDK.
+        #QMAKE_MAC_SDK = macosx10.12
         QMAKE_CXXFLAGS += -fvisibility=hidden
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
@@ -71,11 +79,26 @@ equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
     message("iOS build")
     CONFIG += iOSBuild MobileBuild app_bundle
     DEFINES += __ios__
+    DEFINES += QGC_NO_GOOGLE_MAPS
     QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
     QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie
 } else {
     error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")
+}
+
+# Enable ccache where we can
+linux|macx|ios {
+    system(which ccache) {
+        message("Found ccache, enabling")
+        !ios {
+            QMAKE_CXX = ccache $$QMAKE_CXX
+            QMAKE_CC  = ccache $$QMAKE_CC
+        } else {
+            QMAKE_CXX = $$PWD/tools/iosccachecc.sh
+            QMAKE_CC  = $$PWD/tools/iosccachecxx.sh
+        }
+    }
 }
 
 MobileBuild {
@@ -86,27 +109,37 @@ MobileBuild {
 
 exists ($$PWD/.git) {
     GIT_DESCRIBE = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
-    GIT_HASH     = $$system(git rev-parse HEAD)
+    GIT_BRANCH   = $$system(git --git-dir $$PWD/.git --work-tree $$PWD rev-parse --abbrev-ref HEAD)
+    GIT_HASH     = $$system(git --git-dir $$PWD/.git --work-tree $$PWD rev-parse --short HEAD)
+    GIT_TIME     = $$system(git --git-dir $$PWD/.git --work-tree $$PWD show --oneline --format=\"%ci\" -s HEAD)
+
+    # determine if we're on a tag matching vX.Y.Z (stable release)
+    contains(GIT_DESCRIBE, v[0-9].[0-9].[0-9]) {
+        # release version "vX.Y.Z"
+        GIT_VERSION = $${GIT_DESCRIBE}
+    } else {
+        # development version "Development branch:sha date"
+        GIT_VERSION = "Development $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME}"
+    }
+
     VERSION      = $$replace(GIT_DESCRIBE, "v", "")
     VERSION      = $$replace(VERSION, "-", ".")
     VERSION      = $$section(VERSION, ".", 0, 3)
     MacBuild {
         MAC_VERSION  = $$section(VERSION, ".", 0, 2)
         MAC_BUILD    = $$section(VERSION, ".", 3, 3)
-        message(QGroundControl version $${MAC_VERSION} build $${MAC_BUILD} describe $${GIT_DESCRIBE} hash $${GIT_HASH})
+        message(QGroundControl version $${MAC_VERSION} build $${MAC_BUILD} describe $${GIT_VERSION})
     } else {
-        message(QGroundControl version $${VERSION} describe $${GIT_DESCRIBE} hash $${GIT_HASH})
+        message(QGroundControl $${GIT_VERSION})
     }
 } else {
-    GIT_DESCRIBE    = None
-    GIT_HASH        = None
+    GIT_VERSION     = None
     VERSION         = 0.0.0   # Marker to indicate out-of-tree build
     MAC_VERSION     = 0.0.0
     MAC_BUILD       = 0
 }
 
-DEFINES += GIT_TAG=\"\\\"$$GIT_DESCRIBE\\\"\"
-DEFINES += GIT_HASH=\"\\\"$$GIT_HASH\\\"\"
+DEFINES += GIT_VERSION=\"\\\"$$GIT_VERSION\\\"\"
 DEFINES += EIGEN_MPL2_ONLY
 
 # Installer configuration

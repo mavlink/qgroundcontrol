@@ -23,7 +23,7 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 
 Rectangle {
-    id: setupView
+    id:     setupView
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
 
@@ -33,25 +33,26 @@ Rectangle {
 
     readonly property real      _defaultTextHeight: ScreenTools.defaultFontPixelHeight
     readonly property real      _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
-    readonly property real      _margin:            Math.round(_defaultTextHeight / 2)
-    readonly property real      _buttonWidth:       Math.round(_defaultTextWidth * 18)
+    readonly property real      _horizontalMargin:  _defaultTextWidth / 2
+    readonly property real      _verticalMargin:    _defaultTextHeight / 2
+    readonly property real      _buttonWidth:       _defaultTextWidth * 18
     readonly property string    _armedVehicleText:  qsTr("This operation cannot be performed while vehicle is armed.")
 
     property string _messagePanelText:              "missing message panel text"
-    property bool   _fullParameterVehicleAvailable: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !QGroundControl.multiVehicleManager.activeVehicle.missingParameters
+    property bool   _fullParameterVehicleAvailable: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !QGroundControl.multiVehicleManager.activeVehicle.parameterManager.missingParameters
 
     function showSummaryPanel()
     {
         if (_fullParameterVehicleAvailable) {
             if (QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents.length == 0) {
-                panelLoader.sourceComponent = noComponentsVehicleSummaryComponent
+                panelLoader.setSourceComponent(noComponentsVehicleSummaryComponent)
             } else {
-                panelLoader.source = "VehicleSummary.qml";
+                panelLoader.setSource("VehicleSummary.qml")
             }
         } else if (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable) {
-            panelLoader.sourceComponent = missingParametersVehicleSummaryComponent
+            panelLoader.setSourceComponent(missingParametersVehicleSummaryComponent)
         } else {
-            panelLoader.sourceComponent = disconnectedVehicleSummaryComponent
+            panelLoader.setSourceComponent(disconnectedVehicleSummaryComponent)
         }
     }
 
@@ -60,9 +61,9 @@ Rectangle {
         if (!ScreenTools.isMobile) {
             if (QGroundControl.multiVehicleManager.activeVehicleAvailable && QGroundControl.multiVehicleManager.activeVehicle.armed) {
                 _messagePanelText = _armedVehicleText
-                panelLoader.sourceComponent = messagePanelComponent
+                panelLoader.setSourceComponent(messagePanelComponent)
             } else {
-                panelLoader.source = "FirmwareUpgrade.qml";
+                panelLoader.setSource("FirmwareUpgrade.qml")
             }
         }
     }
@@ -71,33 +72,33 @@ Rectangle {
     {
         if (QGroundControl.multiVehicleManager.activeVehicleAvailable && QGroundControl.multiVehicleManager.activeVehicle.armed) {
             _messagePanelText = _armedVehicleText
-            panelLoader.sourceComponent = messagePanelComponent
+            panelLoader.setSourceComponent(messagePanelComponent)
         } else {
-            panelLoader.source = "JoystickConfig.qml";
+            panelLoader.setSource("JoystickConfig.qml")
         }
     }
 
     function showParametersPanel()
     {
-        panelLoader.source = "SetupParameterEditor.qml";
+        panelLoader.setSource("SetupParameterEditor.qml")
     }
 
     function showPX4FlowPanel()
     {
-        panelLoader.source = "PX4FlowSensor.qml";
+        panelLoader.setSource("PX4FlowSensor.qml")
     }
 
     function showVehicleComponentPanel(vehicleComponent)
     {
         if (QGroundControl.multiVehicleManager.activeVehicle.armed && !vehicleComponent.allowSetupWhileArmed) {
             _messagePanelText = _armedVehicleText
-            panelLoader.sourceComponent = messagePanelComponent
+            panelLoader.setSourceComponent(messagePanelComponent)
         } else {
             if (vehicleComponent.prerequisiteSetup != "") {
                 _messagePanelText = vehicleComponent.prerequisiteSetup + " setup must be completed prior to " + vehicleComponent.name + " setup."
-                panelLoader.sourceComponent = messagePanelComponent
+                panelLoader.setSourceComponent(messagePanelComponent)
             } else {
-                panelLoader.source = vehicleComponent.setupSource
+                panelLoader.setSource(vehicleComponent.setupSource, vehicleComponent)
                 for(var i = 0; i < componentRepeater.count; i++) {
                     var obj = componentRepeater.itemAt(i);
                     if (obj.text === vehicleComponent.name) {
@@ -210,6 +211,8 @@ Rectangle {
         anchors.topMargin:  _defaultTextHeight / 2
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
+        anchors.leftMargin: _horizontalMargin
+        anchors.left:       parent.left
         contentHeight:      buttonColumn.height
         flickableDirection: Flickable.VerticalFlick
         clip:               true
@@ -242,6 +245,15 @@ Rectangle {
                 for (var j = 0; j < children.length; j++) {
                     children[j].width = buttonColumn._maxButtonWidth
                 }
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                text:                   qsTr("Vehicle Setup")
+                wrapMode:               Text.WordWrap
+                horizontalAlignment:    Text.AlignHCenter
+                visible:                !ScreenTools.isShortScreen
             }
 
             SubMenuButton {
@@ -314,15 +326,39 @@ Rectangle {
         }
     }
 
+    Rectangle {
+        id:                     divider
+        anchors.topMargin:      _verticalMargin
+        anchors.bottomMargin:   _verticalMargin
+        anchors.leftMargin:     _horizontalMargin
+        anchors.left:           buttonScroll.right
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        width:                  1
+        color:                  qgcPal.windowShade
+    }
+
     Loader {
         id:                     panelLoader
-        anchors.topMargin:      _margin
-        anchors.bottomMargin:   _margin
-        anchors.leftMargin:     _defaultTextWidth
-        anchors.rightMargin:    _defaultTextWidth
-        anchors.left:           buttonScroll.right
+        anchors.topMargin:      _verticalMargin
+        anchors.bottomMargin:   _verticalMargin
+        anchors.leftMargin:     _horizontalMargin
+        anchors.rightMargin:    _horizontalMargin
+        anchors.left:           divider.right
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
+
+        function setSource(source, vehicleComponent) {
+            panelLoader.vehicleComponent = vehicleComponent
+            panelLoader.source = source
+        }
+
+        function setSourceComponent(sourceComponent, vehicleComponent) {
+            panelLoader.vehicleComponent = vehicleComponent
+            panelLoader.sourceComponent = sourceComponent
+        }
+
+        property var vehicleComponent
     }
 }

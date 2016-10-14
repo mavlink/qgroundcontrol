@@ -12,6 +12,9 @@
 #include "RadioComponentController.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
+#include "PX4/PX4AutoPilotPlugin.h"
+#include "APM/APMAutoPilotPlugin.h"
+#include "APM/APMRadioComponent.h"
 
 /// @file
 ///     @brief QRadioComponentController Widget unit test
@@ -190,12 +193,23 @@ void RadioConfigTest::_init(MAV_AUTOPILOT firmwareType)
     
     _autopilot = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_autopilot);
+
+    // This test is so quick that it tends to finish before the mission item protocol completes. This causes an error to pop up.
+    // So we wait a little to let mission items sync.
+    QTest::qWait(500);
     
     // This will instatiate the widget with an active uas with ready parameters
     _calWidget = new QGCQmlWidgetHolder(QString(), NULL);
     _calWidget->resize(600, 600);
     Q_CHECK_PTR(_calWidget);
     _calWidget->setAutoPilot(_autopilot);
+    QObject* vehicleComponent;
+    if (firmwareType == MAV_AUTOPILOT_PX4) {
+        vehicleComponent = dynamic_cast<QObject*>(dynamic_cast<PX4AutoPilotPlugin*>(_autopilot)->radioComponent());
+    } else {
+        vehicleComponent = dynamic_cast<QObject*>(dynamic_cast<APMAutoPilotPlugin*>(_autopilot)->radioComponent());
+    }
+    _calWidget->setContextPropertyObject("vehicleComponent", vehicleComponent);
     _calWidget->setSource(QUrl::fromUserInput("qrc:/qml/RadioComponent.qml"));
     
     // Nasty hack to get to controller
@@ -364,7 +378,7 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
                     switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_ACRO_SW";
 
                     foreach (const QString &switchParam, switchList) {
-                        Q_ASSERT(_autopilot->getParameterFact(FactSystem::defaultComponentId, switchParam)->rawValue().toInt() != channel + 1);
+                        Q_ASSERT(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, switchParam)->rawValue().toInt() != channel + 1);
                     }
                 }
                 
@@ -379,7 +393,7 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
         if (!found) {
             const char* paramName = _functionInfo()[function].parameterName;
             if (paramName) {
-                _rgFunctionChannelMap[function] = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
+                _rgFunctionChannelMap[function] = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
                 qCDebug(RadioConfigTestLog) << "Assigning switch" << function << _rgFunctionChannelMap[function];
                 if (_rgFunctionChannelMap[function] == 0) {
                     _rgFunctionChannelMap[function] = -1;   // -1 signals no mapping
@@ -455,8 +469,8 @@ void RadioConfigTest::_validateParameters(void)
         
         const char* paramName = _functionInfo()[chanFunction].parameterName;
         if (paramName) {
-            qCDebug(RadioConfigTestLog) << "Validate" << chanFunction << _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
-            QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedParameterValue);
+            qCDebug(RadioConfigTestLog) << "Validate" << chanFunction << _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
+            QCOMPARE(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedParameterValue);
         }
     }
 
@@ -471,13 +485,13 @@ void RadioConfigTest::_validateParameters(void)
         int rcTrimExpected = _channelSettingsValidate()[chan].rcTrim;
         bool rcReversedExpected = _channelSettingsValidate()[chan].reversed;
 
-        int rcMinActual = _autopilot->getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
+        int rcMinActual = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        int rcMaxActual = _autopilot->getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
+        int rcMaxActual = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        int rcTrimActual = _autopilot->getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
+        int rcTrimActual = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        float rcReversedFloat = _autopilot->getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel))->rawValue().toFloat(&convertOk);
+        float rcReversedFloat = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel))->rawValue().toFloat(&convertOk);
         QCOMPARE(convertOk, true);
         bool rcReversedActual = (rcReversedFloat == -1.0f);
         
@@ -501,7 +515,7 @@ void RadioConfigTest::_validateParameters(void)
         const char* paramName = _functionInfo()[chanFunction].parameterName;
         if (paramName) {
             // qCDebug(RadioConfigTestLog) << chanFunction << expectedValue << mapParamsSet[paramName].toInt();
-            QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedValue);
+            QCOMPARE(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedValue);
         }
     }
 }

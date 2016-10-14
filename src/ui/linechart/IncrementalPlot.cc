@@ -128,7 +128,7 @@ void IncrementalPlot::showLegend(bool show)
 }
 
 /**
- * Set datapoint and line style. This interface is intented
+ * Set datapoint and line style. This interface is intended
  * to be directly connected to the UI and allows to parse
  * human-readable, textual descriptions into plot specs.
  *

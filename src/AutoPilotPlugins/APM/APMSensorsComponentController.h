@@ -34,6 +34,7 @@ public:
     
     Q_PROPERTY(QQuickItem* compassButton MEMBER _compassButton)
     Q_PROPERTY(QQuickItem* accelButton MEMBER _accelButton)
+    Q_PROPERTY(QQuickItem* compassMotButton MEMBER _compassMotButton)
     Q_PROPERTY(QQuickItem* nextButton MEMBER _nextButton)
     Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
     Q_PROPERTY(QQuickItem* setOrientationsButton MEMBER _setOrientationsButton)
@@ -76,6 +77,7 @@ public:
     
     Q_INVOKABLE void calibrateCompass(void);
     Q_INVOKABLE void calibrateAccel(void);
+    Q_INVOKABLE void calibrateMotorInterference(void);
     Q_INVOKABLE void cancelCalibration(void);
     Q_INVOKABLE void nextClicked(void);
     Q_INVOKABLE bool usingUDPLink(void);
@@ -122,6 +124,7 @@ private:
     QQuickItem* _progressBar;
     QQuickItem* _compassButton;
     QQuickItem* _accelButton;
+    QQuickItem* _compassMotButton;
     QQuickItem* _nextButton;
     QQuickItem* _cancelButton;
     QQuickItem* _setOrientationsButton;
@@ -131,6 +134,7 @@ private:
     
     bool _magCalInProgress;
     bool _accelCalInProgress;
+    bool _compassMotCalInProgress;
     
     bool _orientationCalDownSideDone;
     bool _orientationCalUpsideDownSideDone;

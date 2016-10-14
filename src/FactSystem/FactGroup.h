@@ -57,17 +57,6 @@ private:
     QMap<QString, FactMetaData*>    _nameToFactMetaDataMap;
 
     QTimer _updateTimer;
-
-    static const char*  _propertiesJsonKey;
-    static const char*  _nameJsonKey;
-    static const char*  _decimalPlacesJsonKey;
-    static const char*  _typeJsonKey;
-    static const char*  _versionJsonKey;
-    static const char*  _shortDescriptionJsonKey;
-    static const char*  _unitsJsonKey;
-    static const char*  _defaultValueJsonKey;
-    static const char*  _minJsonKey;
-    static const char*  _maxJsonKey;
 };
 
 #endif

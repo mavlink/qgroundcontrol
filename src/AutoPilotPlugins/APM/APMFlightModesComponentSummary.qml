@@ -14,12 +14,14 @@ FactPanel {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
 
-    property Fact flightMode1: controller.getParameterFact(-1, "FLTMODE1")
-    property Fact flightMode2: controller.getParameterFact(-1, "FLTMODE2")
-    property Fact flightMode3: controller.getParameterFact(-1, "FLTMODE3")
-    property Fact flightMode4: controller.getParameterFact(-1, "FLTMODE4")
-    property Fact flightMode5: controller.getParameterFact(-1, "FLTMODE5")
-    property Fact flightMode6: controller.getParameterFact(-1, "FLTMODE6")
+    property var _vehicle: controller.vehicle
+
+    property Fact flightMode1: controller.getParameterFact(-1, _vehicle.rover ? "MODE1" : "FLTMODE1")
+    property Fact flightMode2: controller.getParameterFact(-1, _vehicle.rover ? "MODE2" : "FLTMODE2")
+    property Fact flightMode3: controller.getParameterFact(-1, _vehicle.rover ? "MODE3" : "FLTMODE3")
+    property Fact flightMode4: controller.getParameterFact(-1, _vehicle.rover ? "MODE4" : "FLTMODE4")
+    property Fact flightMode5: controller.getParameterFact(-1, _vehicle.rover ? "MODE5" : "FLTMODE5")
+    property Fact flightMode6: controller.getParameterFact(-1, _vehicle.rover ? "MODE6" : "FLTMODE6")
 
     Column {
         anchors.fill:       parent

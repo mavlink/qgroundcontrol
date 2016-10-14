@@ -85,7 +85,8 @@ QGCViewDialog {
             QGCLabel {
                 width:      parent.width
                 wrapMode:   Text.WordWrap
-                text:       fact.shortDescription ? fact.shortDescription : qsTr("Parameter Description (not defined)")
+                visible:    fact.shortDescription
+                text:       fact.shortDescription
             }
 
             QGCLabel {
@@ -156,42 +157,56 @@ QGCViewDialog {
                 }
             }
 
-            QGCLabel { text: fact.name }
-
-            Row {
-                spacing: defaultTextWidth
-
-                QGCLabel { text: qsTr("Units:") }
-                QGCLabel { text: fact.units ? fact.units : qsTr("none") }
+            QGCLabel {
+                text:       fact.name
+                visible:    fact.componentId > 0 // > 0 means it's a parameter fact
             }
 
-            Row {
-                spacing: defaultTextWidth
-                visible: !fact.minIsDefaultForType
+            Column {
+                spacing:        defaultTextHeight / 2
+                anchors.left:   parent.left
+                anchors.right:  parent.right
 
-                QGCLabel { text: qsTr("Minimum value:") }
-                QGCLabel { text: fact.minString }
-            }
+                Row {
+                    spacing: defaultTextWidth
 
-            Row {
-                spacing: defaultTextWidth
-                visible: !fact.maxIsDefaultForType
+                    QGCLabel { text: qsTr("Units:") }
+                    QGCLabel { text: fact.units ? fact.units : qsTr("none") }
+                }
 
-                QGCLabel { text: qsTr("Maximum value:") }
-                QGCLabel { text: fact.maxString }
-            }
+                Row {
+                    spacing: defaultTextWidth
+                    visible: !fact.minIsDefaultForType
 
-            Row {
-                spacing: defaultTextWidth
+                    QGCLabel { text: qsTr("Minimum value:") }
+                    QGCLabel { text: fact.minString }
+                }
 
-                QGCLabel { text: qsTr("Default value:") }
-                QGCLabel { text: fact.defaultValueAvailable ? fact.defaultValueString : qsTr("none") }
-            }
+                Row {
+                    spacing: defaultTextWidth
+                    visible: !fact.maxIsDefaultForType
+
+                    QGCLabel { text: qsTr("Maximum value:") }
+                    QGCLabel { text: fact.maxString }
+                }
+
+                Row {
+                    spacing: defaultTextWidth
+
+                    QGCLabel { text: qsTr("Default value:") }
+                    QGCLabel { text: fact.defaultValueAvailable ? fact.defaultValueString : qsTr("none") }
+                }
+
+                QGCLabel {
+                    visible:    fact.rebootRequired
+                    text:       "Reboot required after change"
+                }
+            } // Column
 
             QGCLabel {
                 width:      parent.width
                 wrapMode:   Text.WordWrap
-                text:       qsTr("Warning: Modifying parameters while vehicle is in flight can lead to vehicle instability and possible vehicle loss. ") +
+                text:       qsTr("Warning: Modifying values while vehicle is in flight can lead to vehicle instability and possible vehicle loss. ") +
                             qsTr("Make sure you know what you are doing and double-check your values before Save!")
             }
 

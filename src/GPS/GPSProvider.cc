@@ -10,7 +10,7 @@
 
 #include "GPSProvider.h"
 
-#define TIMEOUT_5HZ 500
+#define GPS_RECEIVE_TIMEOUT 1200
 
 #include <QDebug>
 
@@ -73,7 +73,7 @@ void GPSProvider::run()
             int numTries = 0;
 
             while (!_requestStop && numTries < 3) {
-                int helperRet = gpsHelper->receive(TIMEOUT_5HZ);
+                int helperRet = gpsHelper->receive(GPS_RECEIVE_TIMEOUT);
 
                 if (helperRet > 0) {
                     numTries = 0;

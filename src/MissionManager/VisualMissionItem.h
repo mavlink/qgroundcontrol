@@ -25,13 +25,13 @@
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
-#include "MissionCommands.h"
+#include "Vehicle.h"
 
 // Abstract base class for all Simple and Complex visual mission objects.
 class VisualMissionItem : public QObject
 {
     Q_OBJECT
-    
+
 public:
     VisualMissionItem(Vehicle* vehicle, QObject* parent = NULL);
     VisualMissionItem(const VisualMissionItem& other, QObject* parent = NULL);
@@ -40,7 +40,7 @@ public:
 
     const VisualMissionItem& operator=(const VisualMissionItem& other);
 
-    // The following properties are calulated/set by the MissionControll recalc methods
+    // The following properties are calculated/set by the MissionControll recalc methods
 
     Q_PROPERTY(double altDifference READ altDifference  WRITE setAltDifference  NOTIFY altDifferenceChanged)    ///< Change in altitude from previous waypoint
     Q_PROPERTY(double altPercent    READ altPercent     WRITE setAltPercent     NOTIFY altPercentChanged)       ///< Percent of total altitude change in mission altitude
@@ -73,7 +73,7 @@ public:
     Q_PROPERTY(bool     isCurrentItem           READ isCurrentItem          WRITE setIsCurrentItem      NOTIFY isCurrentItemChanged)
     Q_PROPERTY(int      sequenceNumber          READ sequenceNumber         WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
     Q_PROPERTY(bool     specifiesCoordinate     READ specifiesCoordinate                                NOTIFY specifiesCoordinateChanged)      ///< Item is associated with a coordinate position
-    Q_PROPERTY(bool     isStandaloneCoordinate  READ isStandaloneCoordinate                             NOTIFY isStandaloneCoordinateChanged)   ///< Wayoint line does not go through item
+    Q_PROPERTY(bool     isStandaloneCoordinate  READ isStandaloneCoordinate                             NOTIFY isStandaloneCoordinateChanged)   ///< Waypoint line does not go through item
     Q_PROPERTY(bool     isSimpleItem            READ isSimpleItem                                       NOTIFY isSimpleItemChanged)             ///< Simple or Complex MissionItem
 
     /// List of child mission items. Child mission item are subsequent mision items which do not specify a coordinate. They
@@ -81,7 +81,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  childItems      READ childItems     CONSTANT)
 
     // Property accesors
-    
+
     double altDifference    (void) const { return _altDifference; }
     double altPercent       (void) const { return _altPercent; }
     double azimuth          (void) const { return _azimuth; }

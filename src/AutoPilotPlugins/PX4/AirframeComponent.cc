@@ -13,6 +13,7 @@
 
 #include "AirframeComponent.h"
 #include "QGCQmlWidgetHolder.h"
+#include "ParameterManager.h"
 
 #if 0
 // Broken by latest mavlink module changes. Not used yet. Comment out for now.
@@ -113,7 +114,7 @@ QString AirframeComponent::name(void) const
 
 QString AirframeComponent::description(void) const
 {
-    return tr("The Airframe Component is used to select the airframe which matches your vehicle. "
+    return tr("Airframe Setup is used to select the airframe which matches your vehicle. "
               "This will in turn set up the various tuning values for flight parameters.");
 }
 
@@ -129,7 +130,7 @@ bool AirframeComponent::requiresSetup(void) const
 
 bool AirframeComponent::setupComplete(void) const
 {
-    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt() != 0;
+    return _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt() != 0;
 }
 
 QStringList AirframeComponent::setupCompleteChangedTriggerList(void) const

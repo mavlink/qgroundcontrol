@@ -45,12 +45,17 @@ Rectangle {
     readonly property var   colorBlue:      "#636efe"
     readonly property var   colorWhite:     "#ffffff"
 
-    signal showPreferences()
-    signal showSetupView()
-    signal showPlanView()
-    signal showFlyView()
+    signal showSettingsView
+    signal showSetupView
+    signal showPlanView
+    signal showFlyView
+    signal showAnalyzeView
 
     MainToolBarController { id: _controller }
+
+    function checkSettingsButton() {
+            settingsButton.checked = true
+    }
 
     function checkSetupButton() {
         setupButton.checked = true
@@ -64,10 +69,14 @@ Rectangle {
         flyButton.checked = true
     }
 
+    function checkAnalyzeButton() {
+        analyzeButton.checked = true
+    }
+
     function getBatteryColor() {
         if(activeVehicle) {
             if(activeVehicle.battery.percentRemaining.value > 75) {
-                return colorGreen
+                return qgcPal.text
             }
             if(activeVehicle.battery.percentRemaining.value > 50) {
                 return colorOrange
@@ -215,7 +224,7 @@ Rectangle {
 
                 QGCLabel {
                     id:             rssiLabel
-                    text:           activeVehicle ? (activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data avaliable")
+                    text:           activeVehicle ? (activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data available")
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
@@ -308,51 +317,28 @@ Rectangle {
     }
 
     //---------------------------------------------
-    // Logo (Preferences Button)
-    Rectangle {
-        id:                     preferencesButton
-        width:                  mainWindow.tbButtonWidth * 1.25
-        height:                 parent.height
-        anchors.top:            parent.top
-        anchors.left:           parent.left
-        color:                  "#4A2C6D"
-        Image {
-            height:                 mainWindow.tbCellHeight
-            anchors.centerIn:       parent
-            source:                 "/res/QGCLogoWhite"
-            fillMode:               Image.PreserveAspectFit
-            smooth:                 true
-            mipmap:                 true
-            antialiasing:           true
-        }
-        /* Experimenting with a white/black divider
-        Rectangle {
-            color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
-            height: parent.height
-            width:  1
-            anchors.right:  parent.right
-            anchors.top:    parent.top
-        }
-        */
-        MouseArea {
-            anchors.fill:   parent
-            onClicked:      toolBar.showPreferences()
-        }
-    }
-
-    //---------------------------------------------
     // Toolbar Row
     Row {
         id:                     viewRow
         height:                 mainWindow.tbCellHeight
         spacing:                mainWindow.tbSpacing
-        anchors.left:           preferencesButton.right
-        anchors.leftMargin:     mainWindow.tbSpacing
+        anchors.left:           parent.left
         anchors.bottomMargin:   1
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
 
         ExclusiveGroup { id: mainActionGroup }
+
+        QGCToolBarButton {
+            id:                 settingsButton
+            width:              mainWindow.tbButtonWidth
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            exclusiveGroup:     mainActionGroup
+            source:             "/res/QGCLogoWhite"
+            logo:               true
+            onClicked:          toolBar.showSettingsView()
+        }
 
         QGCToolBarButton {
             id:                 setupButton
@@ -382,6 +368,17 @@ Rectangle {
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/PaperPlane.svg"
             onClicked:          toolBar.showFlyView()
+        }
+
+        QGCToolBarButton {
+            id:                 analyzeButton
+            width:              mainWindow.tbButtonWidth
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            exclusiveGroup:     mainActionGroup
+            source:             "/qmlimages/Analyze.svg"
+            visible:            !ScreenTools.isMobile
+            onClicked:          toolBar.showAnalyzeView()
         }
     }
 

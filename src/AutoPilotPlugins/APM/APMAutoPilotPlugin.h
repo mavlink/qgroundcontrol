@@ -22,6 +22,7 @@ class APMTuningComponent;
 class APMSafetyComponent;
 class APMSensorsComponent;
 class APMPowerComponent;
+class MotorComponent;
 class APMCameraComponent;
 class ESP8266Component;
 
@@ -41,15 +42,15 @@ public:
     APMCameraComponent*         cameraComponent     (void) const { return _cameraComponent; }
     APMFlightModesComponent*    flightModesComponent(void) const { return _flightModesComponent; }
     APMPowerComponent*          powerComponent      (void) const { return _powerComponent; }
+#if 0
+    // Temporarily removed, waiting for new command implementation
+    MotorComponent*             motorComponent      (void) const { return _motorComponent; }
+#endif
     APMRadioComponent*          radioComponent      (void) const { return _radioComponent; }
     APMSafetyComponent*         safetyComponent     (void) const { return _safetyComponent; }
     APMSensorsComponent*        sensorsComponent    (void) const { return _sensorsComponent; }
     APMTuningComponent*         tuningComponent     (void) const { return _tuningComponent; }
     ESP8266Component*           esp8266Component    (void) const { return _esp8266Component; }
-
-public slots:
-    // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
-    void _parametersReadyPreChecks(bool missingParameters);
 
 private:
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
@@ -59,6 +60,10 @@ private:
     APMCameraComponent*         _cameraComponent;
     APMFlightModesComponent*    _flightModesComponent;
     APMPowerComponent*          _powerComponent;
+#if 0
+    // Temporarily removed, waiting for new command implementation
+    MotorComponent*             _motorComponent;
+#endif
     APMRadioComponent*          _radioComponent;
     APMSafetyComponent*         _safetyComponent;
     APMSensorsComponent*        _sensorsComponent;

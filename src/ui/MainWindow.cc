@@ -25,6 +25,7 @@
 #include <QDesktopServices>
 #include <QDockWidget>
 #include <QMenuBar>
+#include <QDialog>
 
 #include "QGC.h"
 #include "MAVLinkProtocol.h"
@@ -42,7 +43,6 @@
 #include "QGCImageProvider.h"
 
 #ifndef __mobile__
-#include "SettingsDialog.h"
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
@@ -50,9 +50,7 @@
 #include "QGCTabbedInfoView.h"
 #include "CustomCommandWidget.h"
 #include "QGCDockWidget.h"
-#include "UASInfoWidget.h"
 #include "HILDockWidget.h"
-#include "LogDownload.h"
 #include "AppMessages.h"
 #endif
 
@@ -72,22 +70,18 @@ enum DockWidgetTypes {
     MAVLINK_INSPECTOR,
     CUSTOM_COMMAND,
     ONBOARD_FILES,
-    STATUS_DETAILS,
     INFO_VIEW,
     HIL_CONFIG,
-    ANALYZE,
-    LOG_DOWNLOAD
+    ANALYZE
 };
 
 static const char *rgDockWidgetNames[] = {
     "MAVLink Inspector",
     "Custom Command",
     "Onboard Files",
-    "Status Details",
     "Info View",
     "HIL Config",
-    "Analyze",
-    "Log Download"
+    "Analyze"
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -355,12 +349,6 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
             case ONBOARD_FILES:
                 widget = new QGCUASFileViewMulti(widgetName, action, this);
                 break;
-            case LOG_DOWNLOAD:
-                widget = new LogDownload(widgetName, action, this);
-                break;
-            case STATUS_DETAILS:
-                widget = new UASInfoWidget(widgetName, action, this);
-                break;
             case HIL_CONFIG:
                 widget = new HILDockWidget(widgetName, action, this);
                 break;
@@ -411,7 +399,7 @@ void MainWindow::reallyClose(void)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (!_forceClose) {
-        // Attemp close from within the root Qml item
+        // Attempt close from within the root Qml item
         qgcApp()->qmlAttemptWindowClose();
         event->ignore();
         return;
@@ -489,9 +477,6 @@ void MainWindow::connectCommonActions()
     connect(qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mutedChanged, _ui.actionMuteAudioOutput, &QAction::setChecked);
     connect(_ui.actionMuteAudioOutput, &QAction::triggered, qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mute);
 
-    // Application Settings
-    connect(_ui.actionSettings, &QAction::triggered, this, &MainWindow::showSettings);
-
     // Connect internal actions
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
 }
@@ -502,14 +487,6 @@ void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
         qgcApp()->showMessage(QString("Could not open information in browser: %1").arg(errorMessage));
     }
 }
-
-#ifndef __mobile__
-void MainWindow::showSettings()
-{
-    SettingsDialog settings(this);
-    settings.exec();
-}
-#endif
 
 void MainWindow::_vehicleAdded(Vehicle* vehicle)
 {

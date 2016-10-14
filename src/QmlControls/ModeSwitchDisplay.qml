@@ -89,7 +89,7 @@ Rectangle {
                 spacing:    ScreenTools.defaultFontPixelWidth * 2
 
                 QGCLabel {
-                    width:              ScreenTools.defaultFontPixelWidth * monitorThresholdCharWidth
+                    id:                 monitorLabel
                     height:             ScreenTools.defaultFontPixelHeight
                     verticalAlignment:  Text.AlignVCenter
                     text:               qsTr("Monitor:")
@@ -129,12 +129,11 @@ Rectangle {
                 spacing:    ScreenTools.defaultFontPixelWidth * 2
 
                 QGCLabel {
-                    width:              ScreenTools.defaultFontPixelWidth * monitorThresholdCharWidth
+                    id:                 thresholdLabel
                     height:             ScreenTools.defaultFontPixelHeight
                     verticalAlignment:  Text.AlignVCenter
                     text:               qsTr("Threshold:")
                 }
-
 
                 Item {
                     id:     thresholdContainer

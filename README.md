@@ -1,6 +1,7 @@
 # QGroundControl Ground Control Station
 ## Open Source Micro Air Vehicle Ground Control Station
 
+[![Releases](https://img.shields.io/github/release/mavlink/QGroundControl.svg)](https://github.com/mavlink/QGroundControl/releases)
 [![Travis Build Status](https://travis-ci.org/mavlink/qgroundcontrol.svg?branch=master)](https://travis-ci.org/mavlink/qgroundcontrol)
 [![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/crxcm4qayejuvh6c/branch/master?svg=true)](https://ci.appveyor.com/project/mavlink/qgroundcontrol)
 
@@ -25,11 +26,14 @@ git clone --recursive https://github.com/mavlink/qgroundcontrol.git
 ```
 Each time you pull new source to your repository you should run `git submodule update` to get the latest submodules as well. Since QGroundControl uses submodules, using the zip file for source download will not work. You must use git.
 
+### User Manual
+https://donlakeflyer.gitbooks.io/qgroundcontrol-user-guide/content/
+
 ### Supported Builds
 
 #### Native Builds
 QGroundControl builds are supported for OSX, Linux, Windows, iOS and Android. QGroundControl uses [Qt](http://www.qt.io) as its cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as its default build environment.
-* OSX: OSX 10.7 or higher, 64 bit, clang compiler
+* OSX: OSX 10.7 or higher, 64 bit, clang compiler (IMPORTANT: XCode 8 not supported due to Qt bug. Currently only workaround is to use XCode 7.3.1)
 * Ubuntu: 64 bit, gcc compiler
 * Windows: Vista or higher, 32 bit, [Visual Studio 2013 compiler](http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop)
 * iOS: 8.0 and higher
@@ -44,13 +48,14 @@ You need to install Qt as described below instead of using pre-built packages fr
     * Windows: Default installer not quite correct, use [this](http://download.qt.io/official_releases/qt/5.5/5.5.1/qt-opensource-windows-x86-msvc2013-5.5.1.exe) instead
 
 ###### Install additional packages:
-* Ubuntu: sudo apt-get install espeak libespeak-dev libudev-dev libsdl1.2-dev
-* Fedora: sudo dnf install espeak espeak-devel SDL-devel SDL-static systemd-devel
+* Ubuntu: sudo apt-get install espeak libespeak-dev libudev-dev libsdl2-dev
+* Fedora: sudo dnf install espeak espeak-devel SDL2-devel SDL2 systemd-devel
 * Arch Linux: pacman -Sy espeak
 * Windows: [USB Driver](http://www.pixhawk.org/firmware/downloads) to connect to Pixhawk/PX4Flow/3DR Radio
 * Android: [Qt Android Setup](http://doc.qt.io/qt-5/androidgs.html)
 
 ###### Building using Qt Creator
+
 * Launch Qt Creator and open the `qgroundcontrol.pro` project.
 * Select the appropriate kit for your needs:
     * OSX: Desktop Qt 5.5.1 clang 64 bit
@@ -58,6 +63,18 @@ You need to install Qt as described below instead of using pre-built packages fr
     * Windows: Desktop Qt 5.5.1 MSVC2013 32bit
     * Android: Android for armeabi-v7a (GCC 4.9, Qt 5.5.1)
 * Note: iOS builds must be built using xCode: http://doc.qt.io/qt-5/ios-support.html. Use Qt Creator to generate the XCode project (*Run Qmake* from the context menu).
+
+###### Special case for Xcode 8 and Qt 5.5.1
+
+Xcode 8 broke the Qt 5.5.1 build system (qmake). As this is the version of Qt we're using for the moment, you will need to patch your Qt installation to make the build work. This is for both Mac OS X and iOS.
+
+Under the tools directory, you will find a script used by the CI build to patch Qt (`patch_qt_for_xcode8.sh`). You can use this script as a starting point. You will need to edit a few variables it expects to run:
+
+```
+IOSDIR=/<your_qt_path>/Qt/5.5/ios
+OSXDIR=/<your_qt_path>/Qt/5.5/clang_64
+TRAVIS_BUILD_DIR=/<your_github_repo>/qgroundcontrol
+```
 
 #### Vagrant
 

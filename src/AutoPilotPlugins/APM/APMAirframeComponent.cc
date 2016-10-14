@@ -7,12 +7,9 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "APMAirframeComponent.h"
 #include "ArduCopterFirmwarePlugin.h"
+#include "ParameterManager.h"
 
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)
@@ -52,7 +49,7 @@ bool APMAirframeComponent::requiresSetup(void) const
 bool APMAirframeComponent::setupComplete(void) const
 {
     if (_requiresFrameSetup) {
-        return _autopilot->getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME"))->rawValue().toInt() >= 0;
+        return _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("FRAME"))->rawValue().toInt() >= 0;
     } else {
         return true;
     }

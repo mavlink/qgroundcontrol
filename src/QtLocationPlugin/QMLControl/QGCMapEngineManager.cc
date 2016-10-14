@@ -127,10 +127,10 @@ QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet* tileSet)
 
 //-----------------------------------------------------------------------------
 void
-QGCMapEngineManager::startDownload(const QString& name, const QString& description, const QString& mapType, const QImage& image)
+QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
 {
     if(_totalSet.tileSize) {
-        QGCCachedTileSet* set = new QGCCachedTileSet(name, description);
+        QGCCachedTileSet* set = new QGCCachedTileSet(name);
         set->setMapTypeStr(mapType);
         set->setTopleftLat(_topleftLat);
         set->setTopleftLon(_topleftLon);
@@ -138,11 +138,9 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& descripti
         set->setBottomRightLon(_bottomRightLon);
         set->setMinZoom(_minZoom);
         set->setMaxZoom(_maxZoom);
-        set->setTilesSize(_totalSet.tileSize);
-        set->setNumTiles(_totalSet.tileCount);
+        set->setTotalTileSize(_totalSet.tileSize);
+        set->setTotalTileCount(_totalSet.tileCount);
         set->setType(QGCMapEngine::getTypeFromName(mapType));
-        if(!image.isNull())
-            set->setThumbNail(image);
         QGCCreateTileSetTask* task = new QGCCreateTileSetTask(set);
         //-- Create Tile Set (it will also create a list of tiles to download)
         connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
@@ -329,10 +327,10 @@ QGCMapEngineManager::_updateTotals(quint32 totaltiles, quint64 totalsize, quint3
         QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(_tileSets.get(i));
         Q_ASSERT(set);
         if (set->defaultSet()) {
-            set->setSavedSize(totalsize);
-            set->setSavedTiles(totaltiles);
-            set->setNumTiles(defaulttiles);
-            set->setTilesSize(defaultsize);
+            set->setSavedTileSize(totalsize);
+            set->setSavedTileCount(totaltiles);
+            set->setTotalTileCount(defaulttiles);
+            set->setTotalTileSize(defaultsize);
             return;
         }
     }

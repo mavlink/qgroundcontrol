@@ -38,7 +38,7 @@ void FollowMe::followMeHandleManager(const QString&)
 
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
-        if(vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
+        if (vehicle->px4Firmware() && vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
             _enable();
             return;
         }
@@ -92,13 +92,13 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
             _motionReport.pos_std_dev[2] = geoPositionInfo.attribute(QGeoPositionInfo::VerticalAccuracy);
         }                
 
-        // calculate z velocity if it's availible
+        // calculate z velocity if it's available
 
         if(geoPositionInfo.hasAttribute(QGeoPositionInfo::VerticalSpeed)) {
             _motionReport.vz = geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
         }
 
-        // calculate x,y velocity if it's availible
+        // calculate x,y velocity if it's available
 
         if((geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction)   == true) &&
            (geoPositionInfo.hasAttribute(QGeoPositionInfo::GroundSpeed) == true)) {
@@ -140,11 +140,12 @@ void FollowMe::_sendGCSMotionReport(void)
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
         if(vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
             mavlink_message_t message;
-            mavlink_msg_follow_target_encode(mavlinkProtocol->getSystemId(),
-                                             mavlinkProtocol->getComponentId(),
-                                             &message,
-                                             &follow_target);
-            vehicle->sendMessageOnPriorityLink(message);
+            mavlink_msg_follow_target_encode_chan(mavlinkProtocol->getSystemId(),
+                                                  mavlinkProtocol->getComponentId(),
+                                                  vehicle->priorityLink()->mavlinkChannel(),
+                                                  &message,
+                                                  &follow_target);
+            vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
         }
     }
 }

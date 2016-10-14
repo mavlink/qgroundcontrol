@@ -16,17 +16,18 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 Item {
-    id: _root
+    id:     _root
+    state:  "HelpShown"
+    clip:   true
 
-    property alias          source:  icon.source
-    property bool           checked: false
+    property alias          source:         icon.source
+    property bool           checked:        false
+    property bool           logo:           false
     property ExclusiveGroup exclusiveGroup:  null
 
     readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight / 2
 
-    signal   clicked()
-
-    QGCPalette { id: qgcPal }
+    signal clicked()
 
     onExclusiveGroupChanged: {
         if (exclusiveGroup) {
@@ -34,17 +35,25 @@ Item {
         }
     }
 
+    QGCPalette { id: qgcPal }
+
+    Rectangle {
+        anchors.fill:   parent
+        visible:        logo
+        color:          "#4A2C6D"
+    }
+
     QGCColoredImage {
         id:                     icon
         anchors.left:           parent.left
         anchors.right:          parent.right
         anchors.topMargin:      _topBottomMargins
-        anchors.bottomMargin:   _topBottomMargins
         anchors.top:            parent.top
+        anchors.bottomMargin:   _topBottomMargins
         anchors.bottom:         parent.bottom
         sourceSize.height:      parent.height
         fillMode:               Image.PreserveAspectFit
-        color:                  checked ? qgcPal.buttonHighlight : qgcPal.buttonText
+        color:                  logo ? "white" : (checked ? qgcPal.buttonHighlight : qgcPal.buttonText)
     }
 
     Rectangle {

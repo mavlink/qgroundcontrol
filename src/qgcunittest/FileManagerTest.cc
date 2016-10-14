@@ -235,7 +235,7 @@ void FileManagerTest::_readDownloadTest(void)
             _fileManager->downloadPath(testCase->filename, QDir::temp());
             QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
             
-            // This should be a succesful download
+            // This should be a successful download
             QCOMPARE(_multiSpy->checkOnlySignalByMask(commandCompleteSignalMask), true);
             _multiSpy->clearAllSignals();
             
@@ -321,7 +321,7 @@ void FileManagerTest::_streamDownloadTest(void)
             _fileManager->streamPath(testCase->filename, QDir::temp());
             QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
             
-            // This should be a succesful download
+            // This should be a successful download
             QCOMPARE(_multiSpy->checkOnlySignalByMask(commandCompleteSignalMask), true);
             _multiSpy->clearAllSignals();
             

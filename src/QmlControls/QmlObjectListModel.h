@@ -37,7 +37,7 @@ public:
     void setDirty(bool dirty);
     
     void append(QObject* object);
-    QObjectList swapObjectList(QObjectList newlist);
+    QObjectList swapObjectList(const QObjectList& newlist);
     void clear(void);
     QObject* removeAt(int i);
     QObject* removeOne(QObject* object) { return removeAt(indexOf(object)); }

@@ -68,13 +68,13 @@ QGCFlightGearLink::QGCFlightGearLink(Vehicle* vehicle, QString startupArguments,
 
 QGCFlightGearLink::~QGCFlightGearLink()
 {   //do not disconnect unless it is connected.
-    //disconnectSimulation will delete the memory that was allocated for proces, terraSync and _udpCommSocket
+    //disconnectSimulation will delete the memory that was allocated for process, terraSync and _udpCommSocket
     if(connectState){
        disconnectSimulation();
     }
 }
 
-/// @brief Runs the simulation thread. We do setup work here which needs to happen in the seperate thread.
+/// @brief Runs the simulation thread. We do setup work here which needs to happen in the separate thread.
 void QGCFlightGearLink::run()
 {
     Q_ASSERT(_vehicle);
@@ -497,7 +497,7 @@ bool QGCFlightGearLink::disconnectSimulation()
     return !connectState;
 }
 
-/// @brief Splits a space seperated set of command line arguments into a QStringList.
+/// @brief Splits a space separated set of command line arguments into a QStringList.
 ///         Quoted strings are allowed and handled correctly.
 ///     @param uiArgs Arguments to parse
 ///     @param argList Returned argument list
@@ -602,7 +602,7 @@ bool QGCFlightGearLink::connectSimulation()
     // We setup all the information we need to start FlightGear here such that if something goes
     // wrong we can return false out of here. All of this happens on the main UI thread. Once we
     // have that information setup we start the thread which will call run, which will in turn
-    // start the various FG processes on the seperate thread.
+    // start the various FG processes on the separate thread.
 
     if (!_vehicle->uas()) {
         return false;
@@ -617,7 +617,7 @@ bool QGCFlightGearLink::connectSimulation()
     QDir        fgAppDir;						// Location of main FlightGear application
 
     // Reset the list of arguments which will be provided to FG to the arguments set by the user via the UI
-    // First split the space seperated command line arguments coming in from the ui into a QStringList since
+    // First split the space separated command line arguments coming in from the ui into a QStringList since
     // that is what QProcess::start needs.
     QStringList uiArgList;
     bool mismatchedQuotes = parseUIArguments(startupArguments, uiArgList);
@@ -709,7 +709,7 @@ bool QGCFlightGearLink::connectSimulation()
 
                 regExp.setPattern("^fg_scenery:(.*)");
                 if (regExp.indexIn(line) == 0 && regExp.captureCount() == 1) {
-                    // Scenery can contain multiple paths seperated by ';' so don't do QDir::absolutePath on it
+                    // Scenery can contain multiple paths separated by ';' so don't do QDir::absolutePath on it
                     fgSceneryPath = regExp.cap(1);
                     qDebug() << "fg_scenery" << fgSceneryPath;
                     continue;
