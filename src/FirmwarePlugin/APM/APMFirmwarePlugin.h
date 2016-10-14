@@ -95,6 +95,7 @@ public:
     QObject*            loadParameterMetaData           (const QString& metaDataFile);
     GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) { return new APMGeoFenceManager(vehicle); }
     RallyPointManager*  newRallyPointManager            (Vehicle* vehicle) { return new APMRallyPointManager(vehicle); }
+    QString             brandImage                      (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
 
     QString     getParameterMetaDataFile(Vehicle* vehicle);
 

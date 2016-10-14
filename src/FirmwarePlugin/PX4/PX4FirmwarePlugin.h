@@ -58,6 +58,7 @@ public:
     bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message);
     GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) { return new PX4GeoFenceManager(vehicle); }
     QString             offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/PX4/PX4.OfflineEditing.params"); }
+    QString             brandImage                      (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
 
     // Use these constants to set flight modes using setFlightMode method. Don't use hardcoded string names since the
     // names may change.

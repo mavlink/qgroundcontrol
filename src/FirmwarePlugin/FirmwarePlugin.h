@@ -222,6 +222,9 @@ public:
 
     /// Return the resource file which contains the set of params loaded for offline editing.
     virtual QString offlineEditingParamFile(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
+
+    /// Return the resource file which contains the brand image for the vehicle.
+    virtual QString brandImage(const Vehicle* vehicle) const { Q_UNUSED(vehicle) return QString(); }
 };
 
 #endif
