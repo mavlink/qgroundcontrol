@@ -30,7 +30,7 @@ QString APMLightsComponent::name(void) const
 
 QString APMLightsComponent::description(void) const
 {
-    return tr("The Lights Component is used to setup lights settings.");
+    return tr("Lights setup is used to adjust light output channels.");
 }
 
 QString APMLightsComponent::iconResource(void) const
