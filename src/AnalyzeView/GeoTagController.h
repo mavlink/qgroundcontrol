@@ -13,6 +13,9 @@
 #include <QObject>
 #include <QString>
 #include <QThread>
+#include <QElapsedTimer>
+#include <QDebug>
+#include <QGeoCoordinate>
 
 class GeoTagWorker : public QThread
 {
@@ -27,7 +30,7 @@ public:
     void setLogFile(const QString& logFile) { _logFile = logFile; }
     void setImageDirectory(const QString& imageDirectory) { _imageDirectory = imageDirectory; }
 
-    void cancellTagging(void) { _cancel = true; }
+    void cancelTagging(void) { _cancel = true; }
 
 protected:
     void run(void) final;
@@ -38,9 +41,19 @@ signals:
     void progressChanged(double progress);
 
 private:
+    bool parsePX4Log();
+    bool triggerFiltering();
+
+
     bool    _cancel;
     QString _logFile;
     QString _imageDirectory;
+    QList<QByteArray> _imageBuffers;
+    QList<double> _tagTime;
+    QList<QGeoCoordinate> _geoRef;
+    QList<double> _triggerTime;
+    QList<int> _imageIndices;
+    QList<int> _triggerIndices;
 };
 
 /// Controller for GeoTagPage.qml. Supports geotagging images based on logfile camera tags.
@@ -67,7 +80,7 @@ public:
     Q_INVOKABLE void pickLogFile(void);
     Q_INVOKABLE void pickImageDirectory(void);
     Q_INVOKABLE void startTagging(void);
-    Q_INVOKABLE void cancelTagging(void) { _worker.cancellTagging(); }
+    Q_INVOKABLE void cancelTagging(void) { _worker.cancelTagging(); }
 
     QString logFile         (void) const { return _worker.logFile(); }
     QString imageDirectory  (void) const { return _worker.imageDirectory(); }
