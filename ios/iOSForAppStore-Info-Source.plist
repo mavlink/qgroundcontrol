@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>QGroundControl</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Open Source Flight Systems GmbH</string>
+    <key>CFBundleIconFile</key>
+    <string></string>
+    <key>NSCameraUsageDescription</key>
+    <string>QGC uses UVC devices for video streaming.</string>    
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>We do not access it. Apple thinks we do.</string>    
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>armv7</string>
+    </array>
+    <key>CFBundleIcons</key>
+    <dict>
+        <key>CFBundlePrimaryIcon</key>
+        <dict>
+            <key>CFBundleIconFiles</key>
+            <array>
+                <string>AppIcon29x29.png</string>
+                <string>AppIcon29x29@2x.png</string>
+                <string>AppIcon40x40@2x.png</string>
+                <string>AppIcon57x57.png</string>
+                <string>AppIcon57x57@2x.png</string>
+                <string>AppIcon60x60@2x.png</string>
+            </array>
+        </dict>
+    </dict>
+    <key>CFBundleIcons~ipad</key>
+    <dict>
+        <key>CFBundlePrimaryIcon</key>
+        <dict>
+            <key>CFBundleIconFiles</key>
+            <array>
+                <string>AppIcon29x29.png</string>
+                <string>AppIcon29x29@2x.png</string>
+                <string>AppIcon40x40@2x.png</string>
+                <string>AppIcon57x57.png</string>
+                <string>AppIcon57x57@2x.png</string>
+                <string>AppIcon60x60@2x.png</string>
+                <string>AppIcon29x29~ipad.png</string>
+                <string>AppIcon29x29@2x~ipad.png</string>
+                <string>AppIcon40x40~ipad.png</string>
+                <string>AppIcon40x40@2x~ipad.png</string>
+                <string>AppIcon50x50~ipad.png</string>
+                <string>AppIcon50x50@2x~ipad.png</string>
+                <string>AppIcon72x72~ipad.png</string>
+                <string>AppIcon72x72@2x~ipad.png</string>
+                <string>AppIcon76x76~ipad.png</string>
+                <string>AppIcon76x76@2x~ipad.png</string>
+                <string>AppIcon83.5x83.5@2x~ipad.png</string>
+            </array>
+        </dict>
+    </dict>
+    <key>CFBundleIdentifier</key>
+    <string>org.QGroundControl.qgc</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>###VERSION###</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleVersion</key>
+    <string>###BUILD###</string>
+    <key>ForAppStore</key>
+    <string>Yes</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>NSLocationUsageDescription</key>
+    <string>Ground Station Location</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Ground Station Location</string>
+    <key>UILaunchStoryboardName</key>
+    <string>QGCLaunchScreen</string>
+    <key>UIRequiresFullScreen</key>
+    <true/>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+</dict>
+</plist>

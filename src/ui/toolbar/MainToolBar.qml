@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -51,93 +38,6 @@ Rectangle {
     property bool isBackgroundDark:     true
     property bool opaqueBackground:     false
 
-    /*
-        Dev System (Mac OS)
-
-        qml: Main Window Width:   1008
-        qml: Toolbar height:      51.2
-        qml: Default font:        12.8
-        qml: Font (.75):          9.600000000000001
-        qml: Font (.85):          10.88
-        qml: Font 1.5):           19.200000000000003
-        qml: Default Font Width:  8.328125
-        qml: Default Font Height: 12.8
-        qml: --
-        qml: Real Font Height:    16
-        qml: fontHRatio:          1
-        qml: --
-        qml: cellHeight:          38
-        qml: tbFontSmall:         10
-        qml: tbFontNormal:        12
-        qml: tbFontLarge:         18
-        qml: tbSpacing:           9.54
-
-        Nexus 9
-
-        qml: Main Window Width:   2048
-        qml: Toolbar height:      90.9312
-        qml: Default font:        38
-        qml: Font (.75):          28.5
-        qml: Font (.85):          32.3
-        qml: Font 1.5):           57
-        qml: Default Font Width:  20.0625
-        qml: Default Font Height: 38
-        qml: --
-        qml: Real Font Height:    38
-        qml: fontHRatio:          2.375
-        qml: --
-        qml: cellHeight:          68
-        qml: tbFontSmall:         23.75
-        qml: tbFontNormal:        28.5
-        qml: tbFontLarge:         42.75
-        qml: tbSpacing:           16.87552
-
-        Nexus 7
-
-        qml: Main Window Width:   1920
-        qml: Toolbar height:      85.248
-        qml: Default font:        38
-        qml: Font (.75):          28.5
-        qml: Font (.85):          32.3
-        qml: Font 1.5):           57
-        qml: Default Font Width:  20.140625
-        qml: Default Font Height: 38
-        qml: --
-        qml: Real Font Height:    38
-        qml: fontHRatio:          2.375
-        qml: --
-        qml: cellHeight:          63
-        qml: tbFontSmall:         23.75
-        qml: tbFontNormal:        28.5
-        qml: tbFontLarge:         42.75
-        qml: tbSpacing:           15.820800000000002
-
-        Nexus 4
-
-        qml: Main Window Width:   1196
-        qml: Toolbar height:      79.65360000000001
-        qml: Default font:        38
-        qml: Font (.75):          28.5
-        qml: Font (.85):          32.3
-        qml: Font 1.5):           57
-        qml: Default Font Width:  20.140625
-        qml: Default Font Height: 38
-        qml: --
-        qml: Real Font Height:    38
-        qml: fontHRatio:          2.375
-        qml: --
-        qml: cellHeight:          59
-        qml: tbFontSmall:         23.75
-        qml: tbFontNormal:        28.5
-        qml: tbFontLarge:         42.75
-        qml: tbSpacing:           9.85504
-
-    */
-
-    readonly property real  tbFontSmall:    10 * ScreenTools.fontHRatio
-    readonly property real  tbFontNormal:   12 * ScreenTools.fontHRatio
-    readonly property real  tbFontLarge:    18 * ScreenTools.fontHRatio
-
     readonly property var   colorGreen:     "#05f068"
     readonly property var   colorOrange:    "#f0ab06"
     readonly property var   colorRed:       "#fc4638"
@@ -145,11 +45,17 @@ Rectangle {
     readonly property var   colorBlue:      "#636efe"
     readonly property var   colorWhite:     "#ffffff"
 
-    signal showSetupView()
-    signal showPlanView()
-    signal showFlyView()
+    signal showSettingsView
+    signal showSetupView
+    signal showPlanView
+    signal showFlyView
+    signal showAnalyzeView
 
     MainToolBarController { id: _controller }
+
+    function checkSettingsButton() {
+            settingsButton.checked = true
+    }
 
     function checkSetupButton() {
         setupButton.checked = true
@@ -163,10 +69,14 @@ Rectangle {
         flyButton.checked = true
     }
 
+    function checkAnalyzeButton() {
+        analyzeButton.checked = true
+    }
+
     function getBatteryColor() {
         if(activeVehicle) {
             if(activeVehicle.battery.percentRemaining.value > 75) {
-                return colorGreen
+                return qgcPal.text
             }
             if(activeVehicle.battery.percentRemaining.value > 50) {
                 return colorOrange
@@ -212,9 +122,9 @@ Rectangle {
                 anchors.centerIn:   parent
 
                 QGCLabel {
-                    id:         gpsLabel
-                    text:       (activeVehicle && activeVehicle.gps.count.value >= 0) ? qsTr("GPS Status") : qsTr("GPS Data Unavailable")
-                    font.weight:Font.DemiBold
+                    id:             gpsLabel
+                    text:           (activeVehicle && activeVehicle.gps.count.value >= 0) ? qsTr("GPS Status") : qsTr("GPS Data Unavailable")
+                    font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
@@ -266,9 +176,9 @@ Rectangle {
                 anchors.centerIn:   parent
 
                 QGCLabel {
-                    id:         battLabel
-                    text:       qsTr("Battery Status")
-                    font.weight:Font.DemiBold
+                    id:             battLabel
+                    text:           qsTr("Battery Status")
+                    font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
@@ -313,9 +223,9 @@ Rectangle {
                 anchors.centerIn:   parent
 
                 QGCLabel {
-                    id:         rssiLabel
-                    text:       activeVehicle ? (activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data avaliable")
-                    font.weight:Font.DemiBold
+                    id:             rssiLabel
+                    text:           activeVehicle ? (activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data available")
+                    font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
@@ -361,7 +271,7 @@ Rectangle {
                 QGCLabel {
                     id:             telemLabel
                     text:           qsTr("Telemetry RSSI Status")
-                    font.weight:    Font.DemiBold
+                    font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
@@ -407,51 +317,28 @@ Rectangle {
     }
 
     //---------------------------------------------
-    // Logo (Preferences Button)
-    Rectangle {
-        id:                     preferencesButton
-        width:                  mainWindow.tbButtonWidth * 1.25
-        height:                 parent.height
-        anchors.top:            parent.top
-        anchors.left:           parent.left
-        color:                  "#4A2C6D"
-        Image {
-            height:                 mainWindow.tbCellHeight
-            anchors.centerIn:       parent
-            source:                 "/res/QGCLogoWhite"
-            fillMode:               Image.PreserveAspectFit
-            smooth:                 true
-            mipmap:                 true
-            antialiasing:           true
-        }
-        /* Experimenting with a white/black divider
-        Rectangle {
-            color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
-            height: parent.height
-            width:  1
-            anchors.right:  parent.right
-            anchors.top:    parent.top
-        }
-        */
-        MouseArea {
-            anchors.fill: parent
-            onClicked: mainWindow.showLeftMenu()
-        }
-    }
-
-    //---------------------------------------------
     // Toolbar Row
     Row {
         id:                     viewRow
         height:                 mainWindow.tbCellHeight
         spacing:                mainWindow.tbSpacing
-        anchors.left:           preferencesButton.right
-        anchors.leftMargin:     mainWindow.tbSpacing
+        anchors.left:           parent.left
         anchors.bottomMargin:   1
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
 
         ExclusiveGroup { id: mainActionGroup }
+
+        QGCToolBarButton {
+            id:                 settingsButton
+            width:              mainWindow.tbButtonWidth
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            exclusiveGroup:     mainActionGroup
+            source:             "/res/QGCLogoWhite"
+            logo:               true
+            onClicked:          toolBar.showSettingsView()
+        }
 
         QGCToolBarButton {
             id:                 setupButton
@@ -482,6 +369,17 @@ Rectangle {
             source:             "/qmlimages/PaperPlane.svg"
             onClicked:          toolBar.showFlyView()
         }
+
+        QGCToolBarButton {
+            id:                 analyzeButton
+            width:              mainWindow.tbButtonWidth
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            exclusiveGroup:     mainActionGroup
+            source:             "/qmlimages/Analyze.svg"
+            visible:            !ScreenTools.isMobile
+            onClicked:          toolBar.showAnalyzeView()
+        }
     }
 
     Item {
@@ -503,8 +401,8 @@ Rectangle {
         QGCLabel {
             id:                     connectionLost
             text:                   qsTr("COMMUNICATION LOST")
-            font.pixelSize:         tbFontLarge
-            font.weight:            Font.DemiBold
+            font.pointSize:         ScreenTools.largeFontPointSize
+            font.family:            ScreenTools.demiboldFontFamily
             color:                  colorRed
             anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
             anchors.right:          disconnectButton.left

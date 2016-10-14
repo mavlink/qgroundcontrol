@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -58,31 +45,33 @@ Item {
         //----------------------------------------------------
         //-- Artificial Horizon
         QGCArtificialHorizon {
-            rollAngle:      _rollAngle
-            pitchAngle:     _pitchAngle
-            anchors.fill:   parent
+            rollAngle:          _rollAngle
+            pitchAngle:         _pitchAngle
+            anchors.fill:       parent
         }
         //----------------------------------------------------
         //-- Pointer
         Image {
-            id:         pointer
-            source:     "/qmlimages/attitudePointer.svg"
-            mipmap:     true
-            fillMode:   Image.PreserveAspectFit
-            anchors.fill: parent
+            id:                 pointer
+            source:             "/qmlimages/attitudePointer.svg"
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            anchors.fill:       parent
+            sourceSize.height:  parent.height
         }
         //----------------------------------------------------
         //-- Instrument Dial
         Image {
-            id:         instrumentDial
-            source:     "/qmlimages/attitudeDial.svg"
-            mipmap:     true
-            fillMode:   Image.PreserveAspectFit
-            anchors.fill: parent
+            id:                 instrumentDial
+            source:             "/qmlimages/attitudeDial.svg"
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            anchors.fill:       parent
+            sourceSize.height:  parent.height
             transform: Rotation {
-                origin.x: root.width  / 2
-                origin.y: root.height / 2
-                angle: -_rollAngle
+                origin.x:       root.width  / 2
+                origin.y:       root.height / 2
+                angle:          -_rollAngle
             }
         }
         //----------------------------------------------------
@@ -104,6 +93,7 @@ Item {
             source:             "/qmlimages/crossHair.svg"
             mipmap:             true
             width:              size * 0.75
+            sourceSize.width:   width
             fillMode:           Image.PreserveAspectFit
         }
     }

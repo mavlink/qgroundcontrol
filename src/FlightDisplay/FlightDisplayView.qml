@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 import QtQuick                  2.5
 import QtQuick.Controls         1.3
@@ -27,6 +14,7 @@ import QtQuick.Controls.Styles  1.2
 import QtQuick.Dialogs          1.2
 import QtLocation               5.3
 import QtPositioning            5.2
+import QtMultimedia             5.5
 
 import QGroundControl               1.0
 import QGroundControl.FlightDisplay 1.0
@@ -46,8 +34,8 @@ QGCView {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
-    property bool _mainIsMap:           _controller.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
-    property bool _isPipVisible:        _controller.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
+    property bool _mainIsMap:           QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
+    property bool _isPipVisible:        QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
 
     property real _roll:                _activeVehicle ? _activeVehicle.roll.value    : _defaultRoll
     property real _pitch:               _activeVehicle ? _activeVehicle.pitch.value   : _defaultPitch
@@ -76,9 +64,8 @@ QGCView {
     readonly property string    _mainIsMapKey:          "MainFlyWindowIsMap"
     readonly property string    _PIPVisibleKey:         "IsPIPVisible"
 
-    FlightDisplayViewController { id: _controller }
-
     function setStates() {
+        QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, _mainIsMap)
         if(_mainIsMap) {
             //-- Adjust Margins
             _flightMapContainer.state   = "fullMode"
@@ -104,7 +91,7 @@ QGCView {
     }
 
     function px4JoystickCheck() {
-        if (_activeVehicle && !_activeVehicle.px4Firmware && (QGroundControl.virtualTabletJoystick || _activeVehicle.joystickEnabled)) {
+        if ( _activeVehicle && !_activeVehicle.supportsManualControl && (QGroundControl.virtualTabletJoystick || _activeVehicle.joystickEnabled)) {
             px4JoystickSupport.open()
         }
     }
@@ -173,14 +160,14 @@ QGCView {
         }
 
         //-- Video View
-        FlightDisplayViewVideo {
+        Item {
             id:             _flightVideo
             z:              _mainIsMap ? _panel.z + 2 : _panel.z + 1
             width:          !_mainIsMap ? _panel.width  : pipSize
             height:         !_mainIsMap ? _panel.height : pipSize * (9/16)
             anchors.left:   _panel.left
             anchors.bottom: _panel.bottom
-            visible:        _controller.hasVideo && (!_mainIsMap || _isPipVisible)
+            visible:        QGroundControl.videoManager.hasVideo && (!_mainIsMap || _isPipVisible)
             states: [
                 State {
                     name:   "pipMode"
@@ -197,6 +184,18 @@ QGCView {
                     }
                 }
             ]
+            //-- Video Streaming
+            FlightDisplayViewVideo {
+                anchors.fill:   parent
+                visible:        QGroundControl.videoManager.isGStreamer
+            }
+            //-- UVC Video (USB Camera or Video Device)
+            Loader {
+                id:             cameraLoader
+                anchors.fill:   parent
+                visible:        !QGroundControl.videoManager.isGStreamer
+                source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml"
+            }
         }
 
         QGCPipable {
@@ -207,7 +206,7 @@ QGCView {
             anchors.left:       _panel.left
             anchors.bottom:     _panel.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight
-            visible:            _controller.hasVideo
+            visible:            QGroundControl.videoManager.hasVideo
             isHidden:           !_isPipVisible
             isDark:             isBackgroundDark
             onActivated: {
@@ -236,7 +235,7 @@ QGCView {
 
         //-- Virtual Joystick
         Loader {
-            id:                         multiTouchItem
+            id:                         virtualJoystickMultiTouch
             z:                          _panel.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
             height:                     Math.min(ScreenTools.availableHeight * 0.25, ScreenTools.defaultFontPixelWidth * 16)
@@ -246,6 +245,8 @@ QGCView {
             anchors.horizontalCenter:   widgetsLoader.horizontalCenter
             source:                     "qrc:/qml/VirtualJoystick.qml"
             active:                     QGroundControl.virtualTabletJoystick
+
+            property bool useLightColors: root.isBackgroundDark
         }
     }
 }

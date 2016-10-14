@@ -11,7 +11,7 @@ Item {
     signal          clicked()
     property alias  buttonImage:        roundButton.buttonImage
     property alias  rotateImage:        roundButton.rotateImage
-    property real   radius:             ScreenTools.defaultFontPixelHeight * 1.5
+    property real   radius:             ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.75 : ScreenTools.defaultFontPixelHeight * 1.25
     property int    dropDirection:      dropDown
     property alias  dropDownComponent:  dropDownLoader.sourceComponent
     property real   viewportMargins:    0
@@ -26,15 +26,15 @@ Item {
     readonly property int dropUp:       3
     readonly property int dropDown:     4
 
-    readonly property real _arrowBaseWidth:     (radius * 2) / 2    // Width of long side of arrow
-    readonly property real _arrowPointHeight:   (radius * 2) / 3    // Height is long side to point
-    readonly property real _dropCornerRadius:   ScreenTools.defaultFontPixelWidth / 2
+    readonly property real _arrowBaseWidth:     radius             // Width of long side of arrow
+    readonly property real _arrowPointHeight:   radius * 0.666     // Height is long side to point
+    readonly property real _dropCornerRadius:   ScreenTools.defaultFontPixelWidth * 0.5
     readonly property real _dropCornerRadiusX2: _dropCornerRadius * 2
     readonly property real _dropMargin:         _dropCornerRadius
     readonly property real _dropMarginX2:       _dropMargin * 2
 
     property real   _viewportMaxLeft:   -x + viewportMargins
-    property real   _viewportMaxRight:  parent.width - (viewportMargins * 2) - x
+    property real   _viewportMaxRight:  parent.width  - (viewportMargins * 2) - x
     property real   _viewportMaxTop:    -y + viewportMargins
     property real   _viewportMaxBottom: parent.height - (viewportMargins * 2) - y
 
@@ -160,7 +160,6 @@ Item {
     RoundButton {
         id:             roundButton
         radius:         parent.width / 2
-
         onClicked:  {
             _root.clicked()
         }

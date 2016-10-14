@@ -27,7 +27,7 @@
 #include "gstqwidgetvideosink.h"
 
 #define PACKAGE "mini-qt-gstreamer"
-#define PACKAGE_NAME "QgcQtGStreamer" 
+#define PACKAGE_NAME "QgcQtGStreamer"
 #define PACKAGE_ORIGIN "http://gstreamer.freedesktop.org/"
 #define PACKAGE_VERSION "1.2.0"
 
@@ -44,7 +44,7 @@ static gboolean plugin_init(GstPlugin *plugin)
                             G_STRINGIFY(QGC_VIDEOSINK_PLUGIN), 0,
                             "Debug category for GstQtVideoSink");
 
-	if(!gst_element_register(plugin, G_STRINGIFY(QGC_VIDEOSINK_PLUGIN),
+    if(!gst_element_register(plugin, G_STRINGIFY(QGC_VIDEOSINK_PLUGIN),
                 GST_RANK_NONE, GST_TYPE_QT_VIDEO_SINK)) {
         GST_ERROR("Failed to register " G_STRINGIFY(QGC_VIDEOSINK_PLUGIN));
         return FALSE;

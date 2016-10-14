@@ -1,30 +1,18 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
 
 #include "QGCFileDownload.h"
 
 #include <QFileInfo>
 #include <QStandardPaths>
+#include <QNetworkProxy>
 
 QGCFileDownload::QGCFileDownload(QObject* parent)
     : QNetworkAccessManager(parent)
@@ -32,8 +20,12 @@ QGCFileDownload::QGCFileDownload(QObject* parent)
 
 }
 
-bool QGCFileDownload::download(const QString& remoteFile)
+bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
 {
+    if (!redirect) {
+        _originalRemoteFile = remoteFile;
+    }
+
     if (remoteFile.isEmpty()) {
         qWarning() << "downloadFile empty";
         return false;
@@ -44,6 +36,12 @@ bool QGCFileDownload::download(const QString& remoteFile)
     if (remoteFileName.isEmpty()) {
         qWarning() << "Unabled to parse filename from downloadFile" << remoteFile;
         return false;
+    }
+
+    // Strip out parameters from remote filename
+    int parameterIndex = remoteFileName.indexOf("?");
+    if (parameterIndex != -1) {
+        remoteFileName  = remoteFileName.left(parameterIndex);
     }
 
     // Determine location to download file to
@@ -58,7 +56,7 @@ bool QGCFileDownload::download(const QString& remoteFile)
     localFile += "/"  + remoteFileName;
 
     QUrl remoteUrl;
-    if (remoteFile.startsWith("http:")) {
+    if (remoteFile.startsWith("http:") || remoteFile.startsWith("https:")) {
         remoteUrl.setUrl(remoteFile);
     } else {
         remoteUrl = QUrl::fromLocalFile(remoteFile);
@@ -69,10 +67,14 @@ bool QGCFileDownload::download(const QString& remoteFile)
     }
     
     QNetworkRequest networkRequest(remoteUrl);
+
+    QNetworkProxy tProxy;
+    tProxy.setType(QNetworkProxy::DefaultProxy);
+    setProxy(tProxy);
     
     // Store local file location in user attribute so we can retrieve when the download finishes
     networkRequest.setAttribute(QNetworkRequest::User, localFile);
-    
+
     QNetworkReply* networkReply = get(networkRequest);
     if (!networkReply) {
         qWarning() << "QNetworkAccessManager::get failed";
@@ -96,7 +98,16 @@ void QGCFileDownload::_downloadFinished(void)
     if (reply->error() != QNetworkReply::NoError) {
         return;
     }
-    
+
+    // Check for redirection
+    QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    if (!redirectionTarget.isNull()) {
+        QUrl redirectUrl = reply->url().resolved(redirectionTarget.toUrl());
+        download(redirectUrl.toString(), true /* redirect */);
+        reply->deleteLater();
+        return;
+    }
+
     // Download file location is in user attribute
     QString downloadFilename = reply->request().attribute(QNetworkRequest::User).toString();
     Q_ASSERT(!downloadFilename.isEmpty());
@@ -111,7 +122,7 @@ void QGCFileDownload::_downloadFinished(void)
     file.write(reply->readAll());
     file.close();
 
-    emit downloadFinished(reply->url().toString(), downloadFilename);
+    emit downloadFinished(_originalRemoteFile, downloadFilename);
 }
 
 /// @brief Called when an error occurs during download

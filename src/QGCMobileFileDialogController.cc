@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 #include "QGCMobileFileDialogController.h"
 
@@ -27,16 +14,13 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 #include <QDir>
 
+QGC_LOGGING_CATEGORY(QGCMobileFileDialogControllerLog, "QGCMobileFileDialogControllerLog")
+
 QStringList QGCMobileFileDialogController::getFiles(const QString& fileExtension)
 {
     QStringList files;
 
-    QStringList docDirs = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
-    if (docDirs.count() <= 0) {
-        qWarning() << "No Documents location";
-        return QStringList();
-    }
-    QDir fileDir = docDirs.at(0);
+    QDir fileDir(_getSaveLocation());
 
     QFileInfoList fileInfoList = fileDir.entryInfoList(QStringList(QString("*.%1").arg(fileExtension)),  QDir::Files, QDir::Name);
 
@@ -49,9 +33,8 @@ QStringList QGCMobileFileDialogController::getFiles(const QString& fileExtension
 
 QString QGCMobileFileDialogController::fullPath(const QString& filename, const QString& fileExtension)
 {
-    QStringList docDirs = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
-    if (docDirs.count() <= 0) {
-        qWarning() << "No Documents location";
+    QString saveLocation(_getSaveLocation());
+    if (saveLocation.isEmpty()) {
         return filename;
     }
 
@@ -61,8 +44,8 @@ QString QGCMobileFileDialogController::fullPath(const QString& filename, const Q
         fixedFilename += correctExtension;
     }
 
-    QString fullPath = docDirs.at(0) + QDir::separator() + fixedFilename;
-    qDebug() << fullPath;
+    QString fullPath = saveLocation + QDir::separator() + fixedFilename;
+    qCDebug(QGCMobileFileDialogControllerLog) << "Full path" << fullPath;
     return fullPath;
 }
 
@@ -70,4 +53,16 @@ bool QGCMobileFileDialogController::fileExists(const QString& filename, const QS
 {
     QFile file(fullPath(filename, fileExtension));
     return file.exists();
+}
+
+QString QGCMobileFileDialogController::_getSaveLocation(void)
+{
+    QStringList docDirs = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
+    if (docDirs.count() <= 0) {
+        qCWarning(QGCMobileFileDialogControllerLog) << "No Documents location";
+        return QString();
+    }
+    qCDebug(QGCMobileFileDialogControllerLog) << "Save directory" << docDirs.at(0);
+    
+    return docDirs.at(0);
 }

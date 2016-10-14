@@ -9,17 +9,17 @@ import QGroundControl.ScreenTools 1.0
 ComboBox {
     property var    _qgcPal:        QGCPalette { colorGroupEnabled: enabled }
     property bool   _showHighlight: pressed | hovered
-    property bool   _showBorder:    _qgcPal.globalTheme == QGCPalette.Light
+    property bool   _showBorder:    _qgcPal.globalTheme === QGCPalette.Light
 
     style: ComboBoxStyle {
-        font.pixelSize: ScreenTools.defaultFontPixelSize
+        font.pointSize: ScreenTools.defaultFontPointSize
         textColor: _showHighlight ?
                     control._qgcPal.buttonHighlightText :
                     control._qgcPal.buttonText
 
         background: Item {
-            implicitWidth: Math.round(TextSingleton.implicitHeight * 4.5)
-            implicitHeight: ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 3 * 0.75 : Math.max(25, Math.round(TextSingleton.implicitHeight * 1.2))
+            implicitWidth:      Math.round(ScreenTools.defaultFontPixelWidth * 4.5)
+            implicitHeight:     ScreenTools.isMobile ? Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 2)) : Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
 
             Rectangle {
                 anchors.fill:   parent

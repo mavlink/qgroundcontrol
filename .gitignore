@@ -60,6 +60,9 @@ gstreamer-1.0-android*
 *.autosave
 .settings/
 
+# iOS Generated files
+ios/iOSForAppStore-Info.plist
+
 # Generated files
 moc_*
 ui_*

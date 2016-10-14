@@ -1,29 +1,17 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 #include "APMRadioComponent.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
+#include "ParameterManager.h"
 
 APMRadioComponent::APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),
@@ -32,7 +20,7 @@ APMRadioComponent::APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilo
     _mapParams << QStringLiteral("RCMAP_ROLL") << QStringLiteral("RCMAP_PITCH") << QStringLiteral("RCMAP_YAW") << QStringLiteral("RCMAP_THROTTLE");
 
     foreach (const QString& mapParam, _mapParams) {
-        Fact* fact = _autopilot->getParameterFact(-1, mapParam);
+        Fact* fact = _vehicle->parameterManager()->getParameter(-1, mapParam);
         connect(fact, &Fact::valueChanged, this, &APMRadioComponent::_triggerChanged);
     }
 
@@ -69,7 +57,7 @@ bool APMRadioComponent::setupComplete(void) const
 
     // First check for all attitude controls mapped
     for (int i=0; i<_mapParams.count(); i++) {
-        mapValues << _autopilot->getParameterFact(FactSystem::defaultComponentId, _mapParams[i])->rawValue().toInt();
+        mapValues << _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _mapParams[i])->rawValue().toInt();
         if (mapValues[i] <= 0) {
             return false;
         }
@@ -77,14 +65,14 @@ bool APMRadioComponent::setupComplete(void) const
 
     // Next check RC#_MIN/MAX/TRIM all at defaults
     foreach (const QString& mapParam, _mapParams) {
-        int channel = _autopilot->getParameterFact(-1, mapParam)->rawValue().toInt();
-        if (_autopilot->getParameterFact(-1, QString("RC%1_MIN").arg(channel))->rawValue().toInt() != 1100) {
+        int channel = _vehicle->parameterManager()->getParameter(-1, mapParam)->rawValue().toInt();
+        if (_vehicle->parameterManager()->getParameter(-1, QString("RC%1_MIN").arg(channel))->rawValue().toInt() != 1100) {
             return true;
         }
-        if (_autopilot->getParameterFact(-1, QString("RC%1_MAX").arg(channel))->rawValue().toInt() != 1900) {
+        if (_vehicle->parameterManager()->getParameter(-1, QString("RC%1_MAX").arg(channel))->rawValue().toInt() != 1900) {
             return true;
         }
-        if (_autopilot->getParameterFact(-1, QString("RC%1_TRIM").arg(channel))->rawValue().toInt() != 1500) {
+        if (_vehicle->parameterManager()->getParameter(-1, QString("RC%1_TRIM").arg(channel))->rawValue().toInt() != 1500) {
             return true;
         }
     }
@@ -129,17 +117,17 @@ void APMRadioComponent::_connectSetupTriggers(void)
 
     // Get the channels for attitude controls and connect to those values for triggers
     foreach (const QString& mapParam, _mapParams) {
-        int channel = _autopilot->getParameterFact(FactSystem::defaultComponentId, mapParam)->rawValue().toInt();
+        int channel = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, mapParam)->rawValue().toInt();
 
-        Fact* fact = _autopilot->getParameterFact(-1, QString("RC%1_MIN").arg(channel));
+        Fact* fact = _vehicle->parameterManager()->getParameter(-1, QString("RC%1_MIN").arg(channel));
         _triggerFacts << fact;
         connect(fact, &Fact::valueChanged, this, &APMRadioComponent::_triggerChanged);
 
-        fact = _autopilot->getParameterFact(-1, QString("RC%1_MAX").arg(channel));
+        fact = _vehicle->parameterManager()->getParameter(-1, QString("RC%1_MAX").arg(channel));
         _triggerFacts << fact;
         connect(fact, &Fact::valueChanged, this, &APMRadioComponent::_triggerChanged);
 
-        fact = _autopilot->getParameterFact(-1, QString("RC%1_TRIM").arg(channel));
+        fact = _vehicle->parameterManager()->getParameter(-1, QString("RC%1_TRIM").arg(channel));
         _triggerFacts << fact;
         connect(fact, &Fact::valueChanged, this, &APMRadioComponent::_triggerChanged);
     }

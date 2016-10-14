@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
@@ -28,8 +15,9 @@
 
 const char* guided_mode_not_supported_by_vehicle = "Guided mode not supported by Vehicle.";
 
-bool FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+bool FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
+    Q_UNUSED(vehicle);
     Q_UNUSED(capabilities);
     return false;
 }
@@ -50,12 +38,12 @@ QString FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) cons
         const char* name;
     };
     static const struct Bit2Name rgBit2Name[] = {
-        { MAV_MODE_FLAG_MANUAL_INPUT_ENABLED,   "Manual" },
-        { MAV_MODE_FLAG_STABILIZE_ENABLED,      "Stabilize" },
-        { MAV_MODE_FLAG_GUIDED_ENABLED,         "Guided" },
-        { MAV_MODE_FLAG_AUTO_ENABLED,           "Auto" },
-        { MAV_MODE_FLAG_TEST_ENABLED,           "Test" },
-    };
+    { MAV_MODE_FLAG_MANUAL_INPUT_ENABLED,   "Manual" },
+    { MAV_MODE_FLAG_STABILIZE_ENABLED,      "Stabilize" },
+    { MAV_MODE_FLAG_GUIDED_ENABLED,         "Guided" },
+    { MAV_MODE_FLAG_AUTO_ENABLED,           "Auto" },
+    { MAV_MODE_FLAG_TEST_ENABLED,           "Test" },
+};
 
     Q_UNUSED(custom_mode);
 
@@ -95,6 +83,27 @@ int FirmwarePlugin::manualControlReservedButtonCount(void)
     return -1;
 }
 
+bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
+{
+    // By default, this is supported
+    return true;
+}
+
+bool FirmwarePlugin::supportsManualControl(void)
+{
+    return false;
+}
+
+bool FirmwarePlugin::supportsRadio(void)
+{
+    return true;
+}
+
+bool FirmwarePlugin::supportsJSButton(void)
+{
+    return false;
+}
+
 bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
@@ -103,9 +112,10 @@ bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_mess
     return true;
 }
 
-void FirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
+void FirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
+    Q_UNUSED(outgoingLink);
     Q_UNUSED(message);
     // Generic plugin does no message adjustment
 }
@@ -131,12 +141,31 @@ QList<MAV_CMD> FirmwarePlugin::supportedMissionCommands(void)
     return QList<MAV_CMD>();
 }
 
-void FirmwarePlugin::missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const
+QString FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
 {
-    // No overrides
-    commonJsonFilename.clear();
-    fixedWingJsonFilename.clear();
-    multiRotorJsonFilename.clear();
+    switch (vehicleType) {
+    case MAV_TYPE_GENERIC:
+        return QStringLiteral(":/json/MavCmdInfoCommon.json");
+        break;
+    case MAV_TYPE_FIXED_WING:
+        return QStringLiteral(":/json/MavCmdInfoFixedWing.json");
+        break;
+    case MAV_TYPE_QUADROTOR:
+        return QStringLiteral(":/json/MavCmdInfoMultiRotor.json");
+        break;
+    case MAV_TYPE_VTOL_QUADROTOR:
+        return QStringLiteral(":/json/MavCmdInfoVTOL.json");
+        break;
+    case MAV_TYPE_SUBMARINE:
+        return QStringLiteral(":/json/MavCmdInfoSub.json");
+        break;
+    case MAV_TYPE_GROUND_ROVER:
+        return QStringLiteral(":/json/MavCmdInfoRover.json");
+        break;
+    default:
+        qWarning() << "FirmwarePlugin::missionCommandOverrides called with bad MAV_TYPE:" << vehicleType;
+        return QString();
+    }
 }
 
 void FirmwarePlugin::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
@@ -193,6 +222,12 @@ void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
     Q_UNUSED(altitudeRel);
+    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+}
+
+void FirmwarePlugin::guidedModeOrbit(Vehicle* /*vehicle*/, const QGeoCoordinate& /*centerCoord*/, double /*radius*/, double /*velocity*/, double /*altitude*/)
+{
+    // Not supported by generic vehicle
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 

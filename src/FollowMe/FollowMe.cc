@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
 #include <QElapsedTimer>
 #include <cmath>
 
@@ -51,7 +38,7 @@ void FollowMe::followMeHandleManager(const QString&)
 
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
-        if(vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
+        if (vehicle->px4Firmware() && vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
             _enable();
             return;
         }
@@ -105,13 +92,13 @@ void FollowMe::_setGPSLocation(QGeoPositionInfo geoPositionInfo)
             _motionReport.pos_std_dev[2] = geoPositionInfo.attribute(QGeoPositionInfo::VerticalAccuracy);
         }                
 
-        // calculate z velocity if it's availible
+        // calculate z velocity if it's available
 
         if(geoPositionInfo.hasAttribute(QGeoPositionInfo::VerticalSpeed)) {
             _motionReport.vz = geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
         }
 
-        // calculate x,y velocity if it's availible
+        // calculate x,y velocity if it's available
 
         if((geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction)   == true) &&
            (geoPositionInfo.hasAttribute(QGeoPositionInfo::GroundSpeed) == true)) {
@@ -153,11 +140,12 @@ void FollowMe::_sendGCSMotionReport(void)
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
         if(vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
             mavlink_message_t message;
-            mavlink_msg_follow_target_encode(mavlinkProtocol->getSystemId(),
-                                             mavlinkProtocol->getComponentId(),
-                                             &message,
-                                             &follow_target);
-            vehicle->sendMessage(message);
+            mavlink_msg_follow_target_encode_chan(mavlinkProtocol->getSystemId(),
+                                                  mavlinkProtocol->getComponentId(),
+                                                  vehicle->priorityLink()->mavlinkChannel(),
+                                                  &message,
+                                                  &follow_target);
+            vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
         }
     }
 }

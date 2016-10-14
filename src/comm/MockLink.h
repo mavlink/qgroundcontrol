@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 #ifndef MOCKLINK_H
 #define MOCKLINK_H
@@ -64,6 +51,15 @@ public:
     bool sendStatusText(void) { return _sendStatusText; }
     void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
 
+    typedef enum {
+        FailNone,                           // No failures
+        FailParamNoReponseToRequestList,    // Do no respond to PARAM_REQUEST_LIST
+        FailMissingParamOnInitialReqest,    // Not all params are sent on initial request, should still succeed since QGC will re-query missing params
+        FailMissingParamOnAllRequests,      // Not all params are sent on initial request, QGC retries will fail as well
+    } FailureMode_t;
+    FailureMode_t failureMode(void) { return _failureMode; }
+    void setFailureMode(FailureMode_t failureMode) { _failureMode = failureMode; }
+
     // Overrides from LinkConfiguration
     LinkType    type            (void) { return LinkConfiguration::TypeMock; }
     void        copyFrom        (LinkConfiguration* source);
@@ -81,10 +77,12 @@ private:
     MAV_AUTOPILOT   _firmwareType;
     MAV_TYPE        _vehicleType;
     bool            _sendStatusText;
+    FailureMode_t   _failureMode;
 
     static const char* _firmwareTypeKey;
     static const char* _vehicleTypeKey;
     static const char* _sendStatusTextKey;
+    static const char* _failureModeKey;
 };
 
 class MockLink : public LinkInterface
@@ -101,6 +99,7 @@ public:
     MAV_AUTOPILOT getFirmwareType(void) { return _firmwareType; }
     void setFirmwareType(MAV_AUTOPILOT autopilot) { _firmwareType = autopilot; }
     void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; }
+    void setFailureMode(MockConfiguration::FailureMode_t failureMode) { _failureMode = failureMode; }
 
     /// APM stack has strange handling of the first item of the mission list. If it has no
     /// onboard mission items, sometimes it sends back a home position in position 0 and
@@ -145,10 +144,14 @@ public:
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
     void resetMissionItemHandler(void) { _missionItemHandler.reset(); }
 
-    static MockLink* startPX4MockLink            (bool sendStatusText);
-    static MockLink* startGenericMockLink        (bool sendStatusText);
-    static MockLink* startAPMArduCopterMockLink  (bool sendStatusText);
-    static MockLink* startAPMArduPlaneMockLink   (bool sendStatusText);
+    /// Returns the filename for the simulated log file. Onyl available after a download is requested.
+    QString logDownloadFile(void) { return _logDownloadFilename; }
+
+    static MockLink* startPX4MockLink            (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink* startGenericMockLink        (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink* startAPMArduCopterMockLink  (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink* startAPMArduPlaneMockLink   (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink* startAPMArduSubMockLink     (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
 
 private slots:
     virtual void _writeBytes(const QByteArray bytes);
@@ -156,7 +159,7 @@ private slots:
 private slots:
     void _run1HzTasks(void);
     void _run10HzTasks(void);
-    void _run50HzTasks(void);
+    void _run500HzTasks(void);
 
 private:
     // From LinkInterface
@@ -179,12 +182,19 @@ private:
     void _handleFTP(const mavlink_message_t& msg);
     void _handleCommandLong(const mavlink_message_t& msg);
     void _handleManualControl(const mavlink_message_t& msg);
+    void _handlePreFlightCalibration(const mavlink_command_long_t& request);
+    void _handleLogRequestList(const mavlink_message_t& msg);
+    void _handleLogRequestData(const mavlink_message_t& msg);
     float _floatUnionForParam(int componentId, const QString& paramName);
     void _setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat);
     void _sendHomePosition(void);
     void _sendGpsRawInt(void);
     void _sendVibration(void);
     void _sendStatusTextMessages(void);
+    void _respondWithAutopilotVersion(void);
+    void _sendRCChannels(void);
+    void _paramRequestListWorker(void);
+    void _logDownloadWorker(void);
 
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 
@@ -214,12 +224,26 @@ private:
 
     bool _sendStatusText;
     bool _apmSendHomePositionOnEmptyList;
+    MockConfiguration::FailureMode_t _failureMode;
 
     int _sendHomePositionDelayCount;
+    int _sendGPSPositionDelayCount;
 
-    static float _vehicleLatitude;
-    static float _vehicleLongitude;
-    static float _vehicleAltitude;
+    int _currentParamRequestListComponentIndex; // Current component index for param request list workflow, -1 for no request in progress
+    int _currentParamRequestListParamIndex;     // Current parameter index for param request list workflow
+
+    static const uint16_t _logDownloadLogId = 0;        ///< Id of siumulated log file
+    static const uint32_t _logDownloadFileSize = 1000;  ///< Size of simulated log file
+
+    QString _logDownloadFilename;           ///< Filename for log download which is in progress
+    uint32_t    _logDownloadCurrentOffset;  ///< Current offset we are sending from
+    uint32_t    _logDownloadBytesRemaining; ///< Number of bytes still to send, 0 = send inactive
+
+    static float        _vehicleLatitude;
+    static float        _vehicleLongitude;
+    static float        _vehicleAltitude;
+    static int          _nextVehicleSystemId;
+    static const char*  _failParam;
 };
 
 #endif

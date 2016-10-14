@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @brief Support for Intel Hex firmware file
@@ -31,7 +18,7 @@
 #include "QGCMAVLink.h"
 #include "QGCApplication.h"
 #include "FirmwarePlugin.h"
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 
 #include <QDebug>
 #include <QFile>
@@ -211,7 +198,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
 {
     _imageSize = 0;
     
-    // We need to collect information from the .px4 file as well as pull the binary image out to a seperate file.
+    // We need to collect information from the .px4 file as well as pull the binary image out to a separate file.
     
     QFile px4File(imageFilename);
     if (!px4File.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -288,7 +275,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
         }
 
         // Cache this file with the system
-        ParameterLoader::cacheMetaDataFile(parameterFilename, firmwareType);
+        ParameterManager::cacheMetaDataFile(parameterFilename, firmwareType);
     }
 
     // Decompress the airframe xml and save to file
@@ -413,7 +400,7 @@ bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< J
         return false;
     }
     
-    emit statusMessage(QString("Succesfully decompressed %1").arg(bytesKey));
+    emit statusMessage(QString("Successfully decompressed %1").arg(bytesKey));
     
     return true;
 }
@@ -448,6 +435,8 @@ bool FirmwareImage::_binLoad(const QString& imageFilename)
     _imageSize = (uint32_t)binFile.size();
     
     binFile.close();
+    
+    _binFilename = imageFilename;
     
     return true;
 }

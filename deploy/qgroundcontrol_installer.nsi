@@ -44,7 +44,6 @@ InstallDir $PROGRAMFILES\qgroundcontrol
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP "installheader.bmp";
 
-!insertmacro MUI_PAGE_LICENSE "license.txt"
 !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -67,7 +66,7 @@ Section
 
 doinstall:
   SetOutPath $INSTDIR
-  File /r build_windows_install\release\*.*
+  File /r /x qgroundcontrol.pdb /x qgroundcontrol.lib /x qgroundcontrol.exp build_windows_install\release\*.* 
   File deploy\px4driver.msi
   WriteUninstaller $INSTDIR\QGroundControl_uninstall.exe
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl" "DisplayName" "QGroundControl"

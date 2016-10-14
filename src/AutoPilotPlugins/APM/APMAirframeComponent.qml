@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 import QtQuick          2.5
 import QtQuick.Controls 1.2
@@ -61,9 +48,6 @@ QGCView {
                 onCurrentAirframeTypeChanged: {
                     airframePicker.model = controller.currentAirframeType.airframes;
                 }
-                onCurrentAirframeChanged : {
-                    hideDialog();
-                }
             }
 
             QGCLabel {
@@ -73,7 +57,7 @@ QGCView {
                 anchors.right:      parent.right
                 anchors.margins:    _margins
                 wrapMode:           Text.WordWrap
-                text:               qsTr("Select you drone to load the default parameters for it. ")
+                text:               qsTr("Select your drone to load the default parameters for it. ")
             }
 
             Flow {
@@ -95,7 +79,10 @@ QGCView {
                         height: (ScreenTools.defaultFontPixelHeight * 14) / 5
                         text:   controller.currentAirframeType.airframes[index].name;
 
-                        onClicked : controller.currentAirframe = controller.currentAirframeType.airframes[index]
+                        onClicked : {
+                            controller.loadParameters(controller.currentAirframeType.airframes[index].params)
+                            hideDialog()
+                        }
                     }
                 }
             }
@@ -119,7 +106,7 @@ QGCView {
                 anchors.left:           parent.left
                 anchors.right:          applyButton.right
                 text:                   qsTr("Please select your airframe type")
-                font.pixelSize:         ScreenTools.mediumFontPixelSize
+                font.pointSize:         ScreenTools.mediumFontPointSize
                 wrapMode:               Text.WordWrap
             }
 

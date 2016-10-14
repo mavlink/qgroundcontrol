@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -33,6 +20,7 @@
 #include "AutoPilotPlugin.h"
 #include "UASInterface.h"
 #include "FactPanelController.h"
+#include "QmlObjectListModel.h"
 
 class ParameterEditorController : public FactPanelController
 {
@@ -42,11 +30,15 @@ public:
     ParameterEditorController(void);
     ~ParameterEditorController();
 
-    Q_PROPERTY(QStringList componentIds MEMBER _componentIds CONSTANT)
+    Q_PROPERTY(QString              searchText          MEMBER _searchText          NOTIFY searchTextChanged)
+    Q_PROPERTY(int                  currentComponentId  MEMBER _currentComponentId  NOTIFY currentComponentIdChanged)
+    Q_PROPERTY(QString              currentGroup        MEMBER _currentGroup        NOTIFY currentGroupChanged)
+    Q_PROPERTY(QmlObjectListModel*  parameters          MEMBER _parameters          CONSTANT)
+    Q_PROPERTY(QVariantList         componentIds        MEMBER _componentIds        CONSTANT)
 	
 	Q_INVOKABLE QStringList getGroupsForComponent(int componentId);
 	Q_INVOKABLE QStringList getParametersForGroup(int componentId, QString group);
-    Q_INVOKABLE QStringList searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions);
+    Q_INVOKABLE QStringList searchParametersForComponent(int componentId, const QString& searchText, bool searchInName=true, bool searchInDescriptions=true);
 	
 	Q_INVOKABLE void clearRCToParam(void);
     Q_INVOKABLE void saveToFilePicker(void);
@@ -60,10 +52,20 @@ public:
 	QList<QObject*> model(void);
     
 signals:
+    void searchTextChanged(QString searchText);
+    void currentComponentIdChanged(int componentId);
+    void currentGroupChanged(QString group);
     void showErrorMessage(const QString& errorMsg);
-	
+
+private slots:
+    void _updateParameters(void);
+
 private:
-	QStringList			_componentIds;
+    QVariantList        _componentIds;
+    QString             _searchText;
+    int                 _currentComponentId;
+    QString             _currentGroup;
+    QmlObjectListModel* _parameters;
 };
 
 #endif

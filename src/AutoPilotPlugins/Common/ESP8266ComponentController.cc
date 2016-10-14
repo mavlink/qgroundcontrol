@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009, 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 /// @file
 ///     @brief  ESP8266 WiFi Config Qml Controller
@@ -29,6 +16,7 @@
 #include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
 #include "UAS.h"
+#include "ParameterManager.h"
 
 #include <QHostAddress>
 #include <QtEndian>
@@ -330,9 +318,11 @@ void
 ESP8266ComponentController::_reboot()
 {
     mavlink_message_t msg;
-    mavlink_msg_command_long_pack(
+
+    mavlink_msg_command_long_pack_chan(
         qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        _vehicle->priorityLink()->mavlinkChannel(),
         &msg,
         _vehicle->id(),
         MAV_COMP_ID_UDP_BRIDGE,
@@ -351,9 +341,10 @@ void
 ESP8266ComponentController::_restoreDefaults()
 {
     mavlink_message_t msg;
-    mavlink_msg_command_long_pack(
+    mavlink_msg_command_long_pack_chan(
         qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        _vehicle->priorityLink()->mavlinkChannel(),
         &msg,
         _vehicle->id(),
         MAV_COMP_ID_UDP_BRIDGE,
@@ -406,7 +397,7 @@ ESP8266ComponentController::_commandAck(uint8_t compID, uint16_t command, uint8_
             emit busyChanged();
             qCDebug(ESP8266ComponentControllerLog) << "_commandAck for" << command;
             if(command == MAV_CMD_PREFLIGHT_STORAGE) {
-                _autopilot->refreshAllParameters(MAV_COMP_ID_UDP_BRIDGE);
+                _vehicle->parameterManager()->refreshAllParameters(MAV_COMP_ID_UDP_BRIDGE);
             }
         }
     }

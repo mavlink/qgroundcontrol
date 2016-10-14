@@ -24,7 +24,6 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
-        anchors.margins:    8
 
         VehicleSummaryRow {
             visible:    _mountTypeExists

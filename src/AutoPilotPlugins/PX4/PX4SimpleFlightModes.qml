@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 import QtQuick                  2.5
 import QtQuick.Controls         1.2
@@ -40,10 +27,8 @@ Item {
 
     property real _margins: ScreenTools.defaultFontPixelHeight / 2
 
-    readonly property real _flightModeComboWidth:   ScreenTools.defaultFontPixelWidth * 23
-    readonly property real _channelComboWidth:      ScreenTools.defaultFontPixelWidth * 20
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
+    readonly property real _flightModeComboWidth:   ScreenTools.defaultFontPixelWidth * 13
+    readonly property real _channelComboWidth:      ScreenTools.defaultFontPixelWidth * 13
 
     PX4SimpleFlightModesController {
         id:         controller
@@ -71,7 +56,7 @@ Item {
                     QGCLabel {
                         id:             flightModeLabel
                         text:           qsTr("Flight Mode Settings")
-                        font.weight:    Font.DemiBold
+                        font.family:    ScreenTools.demiboldFontFamily
                     }
 
                     Rectangle {
@@ -93,7 +78,7 @@ Item {
                                 QGCLabel {
                                     id:                 modeChannelLabel
                                     anchors.baseline:   modeChannelCombo.baseline
-                                    text:               qsTr("Flight mode channel:")
+                                    text:               qsTr("Mode channel:")
                                 }
 
                                 FactComboBox {
@@ -136,7 +121,7 @@ Item {
 
                     QGCLabel {
                         text:           qsTr("Switch Settings")
-                        font.weight:    Font.DemiBold
+                        font.family:    ScreenTools.demiboldFontFamily
                     }
 
                     Rectangle {
@@ -152,28 +137,82 @@ Item {
                             anchors.top:        parent.top
                             spacing:            ScreenTools.defaultFontPixelHeight
 
-                            Repeater {
-                                model: [ "RC_MAP_RETURN_SW", "RC_MAP_KILL_SW", "RC_MAP_OFFB_SW" ]
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
 
-                                Row {
-                                    spacing: ScreenTools.defaultFontPixelWidth
+                                property Fact fact: controller.getParameterFact(-1, "RC_MAP_RETURN_SW")
 
-                                    property Fact fact: controller.getParameterFact(-1, modelData)
-
-                                    QGCLabel {
-                                        anchors.baseline:   optCombo.baseline
-                                        text:               fact.shortDescription + ":"
-                                        color:              fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
-                                    }
-
-                                    FactComboBox {
-                                        id:         optCombo
-                                        width:      _channelComboWidth
-                                        fact:       parent.fact
-                                        indexModel: false
-                                    }
+                                QGCLabel {
+                                    anchors.baseline:   returnCombo.baseline
+                                    text:               "Return switch:"
+                                    color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
                                 }
-                            } // Repeater
+
+                                FactComboBox {
+                                    id:         returnCombo
+                                    width:      _channelComboWidth
+                                    fact:       parent.fact
+                                    indexModel: false
+                                }
+                            }
+
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+
+                                property Fact fact: controller.getParameterFact(-1, "RC_MAP_KILL_SW")
+
+                                QGCLabel {
+                                    anchors.baseline:   killCombo.baseline
+                                    text:               "Kill switch:"
+                                    color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
+                                }
+
+                                FactComboBox {
+                                    id:         killCombo
+                                    width:      _channelComboWidth
+                                    fact:       parent.fact
+                                    indexModel: false
+                                }
+                            }
+
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+
+                                property Fact fact: controller.getParameterFact(-1, "RC_MAP_OFFB_SW")
+
+                                QGCLabel {
+                                    anchors.baseline:   offboardCombo.baseline
+                                    text:               "Offboard switch:"
+                                    color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
+                                }
+
+                                FactComboBox {
+                                    id:         offboardCombo
+                                    width:      _channelComboWidth
+                                    fact:       parent.fact
+                                    indexModel: false
+                                }
+                            }
+
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+
+                                property Fact fact: controller.getParameterFact(-1, "RC_MAP_TRANS_SW", false)
+                                visible: (controller.vehicle.vtol && controller.parameterExists(-1, "RC_MAP_TRANS_SW"))
+
+                                QGCLabel {
+                                    anchors.baseline:   vtolCombo.baseline
+                                    text:               "VTOL mode switch:"
+                                    color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
+                                }
+
+                                FactComboBox {
+                                    id:         vtolCombo
+                                    width:      _channelComboWidth
+                                    fact:       parent.fact
+                                    indexModel: false
+                                }
+                            }
                         } // Column
                     } // Rectangle
 

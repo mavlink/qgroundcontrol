@@ -61,17 +61,8 @@
     <addaction name="separator"/>
     <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionStatusBar"/>
-    <addaction name="actionSettings"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
-   </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>Help</string>
-    </property>
-    <addaction name="actionOnline_Documentation"/>
-    <addaction name="actionProject_Roadmap"/>
-    <addaction name="actionDeveloper_Credits"/>
    </widget>
    <widget class="QMenu" name="menuWidgets">
     <property name="title">
@@ -80,7 +71,6 @@
    </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuWidgets"/>
-   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionExit">
@@ -96,38 +86,12 @@
     <string>Manage Communication Links</string>
    </property>
   </action>
-  <action name="actionOnline_Documentation">
-   <property name="text">
-    <string>Online Documentation</string>
-   </property>
-  </action>
-  <action name="actionProject_Roadmap">
-   <property name="text">
-    <string>Project Roadmap</string>
-   </property>
-  </action>
-  <action name="actionDeveloper_Credits">
-   <property name="text">
-    <string>Developer Credits</string>
-   </property>
-  </action>
   <action name="actionMuteAudioOutput">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
     <string>Mute Audio Output</string>
-   </property>
-  </action>
-  <action name="actionSettings">
-   <property name="text">
-    <string>Settings</string>
-   </property>
-   <property name="toolTip">
-    <string>Application settings</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::PreferencesRole</enum>
    </property>
   </action>
   <action name="actionAdvanced_Mode">

@@ -1,31 +1,19 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
 
 #include "APMSensorsComponentController.h"
 #include "QGCMAVLink.h"
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "APMAutoPilotPlugin.h"
+#include "ParameterManager.h"
 
 #include <QVariant>
 #include <QQmlProperty>
@@ -37,11 +25,14 @@ APMSensorsComponentController::APMSensorsComponentController(void) :
     _progressBar(NULL),
     _compassButton(NULL),
     _accelButton(NULL),
+    _compassMotButton(NULL),
     _nextButton(NULL),
     _cancelButton(NULL),
+    _setOrientationsButton(NULL),
     _showOrientationCalArea(false),
     _magCalInProgress(false),
     _accelCalInProgress(false),
+    _compassMotCalInProgress(false),
     _orientationCalDownSideDone(false),
     _orientationCalUpsideDownSideDone(false),
     _orientationCalLeftSideDone(false),
@@ -98,7 +89,9 @@ void APMSensorsComponentController::_startLogCalibration(void)
     
     _compassButton->setEnabled(false);
     _accelButton->setEnabled(false);
-    if (_accelCalInProgress) {
+    _compassMotButton->setEnabled(false);
+    _setOrientationsButton->setEnabled(false);
+    if (_accelCalInProgress || _compassMotCalInProgress) {
         _nextButton->setEnabled(true);
     }
     _cancelButton->setEnabled(false);
@@ -108,6 +101,8 @@ void APMSensorsComponentController::_startVisualCalibration(void)
 {
     _compassButton->setEnabled(false);
     _accelButton->setEnabled(false);
+    _compassMotButton->setEnabled(false);
+    _setOrientationsButton->setEnabled(false);
     _cancelButton->setEnabled(true);
 
     _resetInternalState();
@@ -143,14 +138,14 @@ void APMSensorsComponentController::_resetInternalState(void)
 
 void APMSensorsComponentController::_stopCalibration(APMSensorsComponentController::StopCalibrationCode code)
 {
-    if (_accelCalInProgress) {
-        _vehicle->setConnectionLostEnabled(true);
-    }
+    _vehicle->setConnectionLostEnabled(true);
 
     disconnect(_uas, &UASInterface::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
     
     _compassButton->setEnabled(true);
     _accelButton->setEnabled(true);
+    _compassMotButton->setEnabled(true);
+    _setOrientationsButton->setEnabled(true);
     _nextButton->setEnabled(false);
     _cancelButton->setEnabled(false);
 
@@ -187,6 +182,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     
     _magCalInProgress = false;
     _accelCalInProgress = false;
+    _compassMotCalInProgress = false;
 }
 
 void APMSensorsComponentController::calibrateCompass(void)
@@ -197,10 +193,21 @@ void APMSensorsComponentController::calibrateCompass(void)
 
 void APMSensorsComponentController::calibrateAccel(void)
 {
+    _accelCalInProgress = true;
     _vehicle->setConnectionLostEnabled(false);
     _startLogCalibration();
-    _accelCalInProgress = true;
     _uas->startCalibration(UASInterface::StartCalibrationAccel);
+}
+
+void APMSensorsComponentController::calibrateMotorInterference(void)
+{
+    _compassMotCalInProgress = true;
+    _vehicle->setConnectionLostEnabled(false);
+    _startLogCalibration();
+    _appendStatusLog(tr("Raise the throttle slowly to between 50% ~ 75% (the props will spin!) for 5 ~ 10 seconds."));
+    _appendStatusLog(tr("Quickly bring the throttle back down to zero"));
+    _appendStatusLog(tr("Press the Next button to complete the calibration"));
+    _uas->startCalibration(UASInterface::StartCalibrationCompassMot);
 }
 
 void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
@@ -208,9 +215,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
     Q_UNUSED(compId);
     Q_UNUSED(severity);
     
-    UASInterface* uas = _autopilot->vehicle()->uas();
-    Q_ASSERT(uas);
-    if (uasId != uas->getUASID()) {
+    if (uasId != _vehicle->id()) {
         return;
     }
 
@@ -422,29 +427,12 @@ void APMSensorsComponentController::_refreshParams(void)
     fastRefreshList << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X")
                     << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
     foreach (const QString &paramName, fastRefreshList) {
-        _autopilot->refreshParameter(FactSystem::defaultComponentId, paramName);
+        _vehicle->parameterManager()->refreshParameter(FactSystem::defaultComponentId, paramName);
     }
     
     // Now ask for all to refresh
-    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, QStringLiteral("COMPASS_"));
-    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, QStringLiteral("INS_"));
-}
-
-bool APMSensorsComponentController::fixedWing(void)
-{
-    switch (_vehicle->vehicleType()) {
-    case MAV_TYPE_FIXED_WING:
-    case MAV_TYPE_VTOL_DUOROTOR:
-    case MAV_TYPE_VTOL_QUADROTOR:
-    case MAV_TYPE_VTOL_TILTROTOR:
-    case MAV_TYPE_VTOL_RESERVED2:
-    case MAV_TYPE_VTOL_RESERVED3:
-    case MAV_TYPE_VTOL_RESERVED4:
-    case MAV_TYPE_VTOL_RESERVED5:
-        return true;
-    default:
-        return false;
-    }
+    _vehicle->parameterManager()->refreshParametersPrefix(FactSystem::defaultComponentId, QStringLiteral("COMPASS_"));
+    _vehicle->parameterManager()->refreshParametersPrefix(FactSystem::defaultComponentId, QStringLiteral("INS_"));
 }
 
 void APMSensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)
@@ -480,9 +468,17 @@ void APMSensorsComponentController::nextClicked(void)
 
     ack.command = 0;
     ack.result = 1;
-    mavlink_msg_command_ack_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &msg, &ack);
+    mavlink_msg_command_ack_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                        _vehicle->priorityLink()->mavlinkChannel(),
+                                        &msg,
+                                        &ack);
 
-    _vehicle->sendMessage(msg);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+
+    if (_compassMotCalInProgress) {
+        _stopCalibration(StopCalibrationSuccess);
+    }
 }
 
 bool APMSensorsComponentController::compassSetupNeeded(void) const
@@ -493,4 +489,9 @@ bool APMSensorsComponentController::compassSetupNeeded(void) const
 bool APMSensorsComponentController::accelSetupNeeded(void) const
 {
     return _sensorsComponent->accelSetupNeeded();
+}
+
+bool APMSensorsComponentController::usingUDPLink(void)
+{
+    return _vehicle->priorityLink()->getLinkConfiguration()->type() == LinkConfiguration::TypeUdp;
 }

@@ -85,7 +85,6 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
-        anchors.margins:    8
 
         VehicleSummaryRow {
             labelText: qsTr("Arming Checks:")
@@ -121,22 +120,22 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: qsTr("RTL min alt:")
-            valueText: _rtlAltFact.value == 0 ? qsTr("current") : _rtlAltFact.valueString
+            valueText: _rtlAltFact.value == 0 ? qsTr("current") : _rtlAltFact.valueString + " " + _rtlAltFact.units
         }
 
         VehicleSummaryRow {
             labelText: qsTr("RTL loiter time:")
-            valueText: _rtlLoitTimeFact.valueString
+            valueText: _rtlLoitTimeFact.valueString + " " + _rtlLoitTimeFact.units
         }
 
         VehicleSummaryRow {
             labelText: qsTr("RTL final alt:")
-            valueText: _rtlAltFinalFact.value == 0 ? qsTr("Land") : _rtlAltFinalFact.valueString
+            valueText: _rtlAltFinalFact.value == 0 ? qsTr("Land") : _rtlAltFinalFact.valueString + " " + _rtlAltFinalFact.units
         }
 
         VehicleSummaryRow {
             labelText: qsTr("Descent speed:")
-            valueText: _landSpeedFact.valueString
+            valueText: _landSpeedFact.valueString + " " + _landSpeedFact.units
         }
     }
 }

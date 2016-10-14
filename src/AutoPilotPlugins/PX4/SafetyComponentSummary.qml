@@ -24,21 +24,20 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
-        anchors.margins:    8
 
         VehicleSummaryRow {
             labelText: qsTr("RTL min alt:")
-            valueText: returnAltFact ? returnAltFact.valueString : ""
+            valueText: returnAltFact ? returnAltFact.valueString + " " + returnAltFact.units : ""
         }
 
         VehicleSummaryRow {
             labelText: qsTr("RTL home alt:")
-            valueText: descendAltFact ? descendAltFact.valueString : ""
+            valueText: descendAltFact ? descendAltFact.valueString + " " + descendAltFact.units : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("RC loss RTL (seconds):")
-            valueText: commRCLossFact ? commRCLossFact.valueString : ""
+            labelText: qsTr("RC loss RTL:")
+            valueText: commRCLossFact ? commRCLossFact.valueString + " " + commRCLossFact.units : ""
         }
 
         VehicleSummaryRow {

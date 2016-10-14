@@ -1,29 +1,16 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
 
 #include "GPSProvider.h"
 
-#define TIMEOUT_5HZ 500
+#define GPS_RECEIVE_TIMEOUT 1200
 
 #include <QDebug>
 
@@ -31,9 +18,25 @@
 #include "Drivers/src/gps_helper.h"
 #include "definitions.h"
 
+//#define SIMULATE_RTCM_OUTPUT //if defined, generate simulated RTCM messages
+                               //additionally make sure to call connectGPS(""), eg. from QGCToolbox.cc
+
 
 void GPSProvider::run()
 {
+#ifdef SIMULATE_RTCM_OUTPUT
+        const int fakeMsgLengths[3] = { 30, 170, 240 };
+        uint8_t* fakeData = new uint8_t[fakeMsgLengths[2]];
+        while (!_requestStop) {
+            for (int i = 0; i < 3; ++i) {
+                gotRTCMData((uint8_t*) fakeData, fakeMsgLengths[i]);
+                msleep(4);
+            }
+            msleep(100);
+        }
+        delete[] fakeData;
+#endif /* SIMULATE_RTCM_OUTPUT */
+
     if (_serial) delete _serial;
 
     _serial = new QSerialPort();
@@ -70,7 +73,7 @@ void GPSProvider::run()
             int numTries = 0;
 
             while (!_requestStop && numTries < 3) {
-                int helperRet = gpsHelper->receive(TIMEOUT_5HZ);
+                int helperRet = gpsHelper->receive(GPS_RECEIVE_TIMEOUT);
 
                 if (helperRet > 0) {
                     numTries = 0;
@@ -138,10 +141,11 @@ int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
 {
     switch (type) {
         case GPSCallbackType::readDeviceData: {
-            int timeout = *((int *) data1);
-            if (!_serial->waitForReadyRead(timeout))
-                return 0; //timeout
-            msleep(10); //give some more time to buffer data
+            if (_serial->bytesAvailable() == 0) {
+                int timeout = *((int *) data1);
+                if (!_serial->waitForReadyRead(timeout))
+                    return 0; //timeout
+            }
             return (int)_serial->read((char*) data1, data2);
         }
         case GPSCallbackType::writeDeviceData:
