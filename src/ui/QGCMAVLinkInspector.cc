@@ -441,8 +441,7 @@ void QGCMAVLinkInspector::updateField(mavlink_message_t* msg, const mavlink_mess
         return;
     }
 
-    uint8_t* m = ((uint8_t*)uasMessage)+8;
-
+    uint8_t* m = (uint8_t*)&uasMessage->payload64[0];
 
     switch (msgInfo->fields[fieldid].type)
     {
