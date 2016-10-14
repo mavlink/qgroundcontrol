@@ -121,7 +121,7 @@ SetupPage {
 
                     QGCLabel {
                         id:             settingsLabel
-                        text:           qsTr("Light Settings")
+                        text:           qsTr("Light Output Channels")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
 
