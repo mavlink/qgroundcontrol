@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -35,93 +22,83 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 
 FactPanel {
-    id: __rootItem
+    id: _rootItem
 
-    property var qgcView:               __rootItem  ///< Used by Fact controls for validation dialogs
-    property bool completedSignalled:   false
-    property real topDialogMargin:      0           ///< Set a top margin for dialog
-
-    property var viewPanel
+    property var    qgcView:               _rootItem  ///< Used by Fact controls for validation dialogs
+    property bool   completedSignalled:   false
+    property real   topDialogMargin:      0           ///< Set a top margin for dialog
+    property var    viewPanel
 
     /// This is signalled when the top level Item reaches Component.onCompleted. This allows
     /// the view subcomponent to connect to this signal and do work once the full ui is ready
     /// to go.
-    signal completed
+    signal completed        
 
-    function __setupDialogButtons(buttons) {
-        __acceptButton.visible = false
-        __rejectButton.visible = false
+    function _setupDialogButtons(buttons) {
+        _acceptButton.visible = false
+        _rejectButton.visible = false
 
         // Accept role buttons
         if (buttons & StandardButton.Ok) {
-            __acceptButton.text = qsTr("Ok")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Ok")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.Open) {
-            __acceptButton.text = qsTr("Open")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Open")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.Save) {
-            __acceptButton.text = qsTr("Save")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Save")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.Apply) {
-            __acceptButton.text = qsTr("Apply")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Apply")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.Open) {
-            __acceptButton.text = qsTr("Open")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Open")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.SaveAll) {
-            __acceptButton.text = qsTr("Save All")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Save All")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.Yes) {
-            __acceptButton.text = qsTr("Yes")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Yes")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.YesToAll) {
-            __acceptButton.text = qsTr("Yes to All")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Yes to All")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.Retry) {
-            __acceptButton.text = qsTr("Retry")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Retry")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.Reset) {
-            __acceptButton.text = qsTr("Reset")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Reset")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.RestoreToDefaults) {
-            __acceptButton.text = qsTr("Restore to Defaults")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Restore to Defaults")
+            _acceptButton.visible = true
         } else if (buttons & StandardButton.Ignore) {
-            __acceptButton.text = qsTr("Ignore")
-            __acceptButton.visible = true
+            _acceptButton.text = qsTr("Ignore")
+            _acceptButton.visible = true
         }
 
         // Reject role buttons
         if (buttons & StandardButton.Cancel) {
-            __rejectButton.text = qsTr("Cancel")
-            __rejectButton.visible = true
+            _rejectButton.text = qsTr("Cancel")
+            _rejectButton.visible = true
         } else if (buttons & StandardButton.Close) {
-            __rejectButton.text = qsTr("Close")
-            __rejectButton.visible = true
+            _rejectButton.text = qsTr("Close")
+            _rejectButton.visible = true
         } else if (buttons & StandardButton.No) {
-            __rejectButton.text = qsTr("No")
-            __rejectButton.visible = true
+            _rejectButton.text = qsTr("No")
+            _rejectButton.visible = true
         } else if (buttons & StandardButton.NoToAll) {
-            __rejectButton.text = qsTr("No to All")
-            __rejectButton.visible = true
+            _rejectButton.text = qsTr("No to All")
+            _rejectButton.visible = true
         } else if (buttons & StandardButton.Abort) {
-            __rejectButton.text = qsTr("Abort")
-            __rejectButton.visible = true
-        } else if (buttons & StandardButton.Reset) {
-            __rejectButton.text = qsTr("Reset")
-            __rejectButton.visible = true
+            _rejectButton.text = qsTr("Abort")
+            _rejectButton.visible = true
         }
     }
 
-    function __stopAllAnimations() {
-        if (__animateHideDialog.running) {
-            __animateHideDialog.stop()
-        }
-    }
-
-    function __checkForEarlyDialog(title) {
+    function _checkForEarlyDialog(title) {
         if (!completedSignalled) {
-            console.warn(qsTr("showDialog|Message called before QGCView.completed signalled"), title)
+            console.warn(qsTr("showDialog called before QGCView.completed signalled"), title)
         }
     }
 
@@ -135,71 +112,65 @@ FactPanel {
     readonly property int showDialogDefaultWidth:   40  ///< Use for default dialog width
 
     function showDialog(component, title, charWidth, buttons) {
-        if (__checkForEarlyDialog(title)) {
+        if (_checkForEarlyDialog(title)) {
             return
         }
 
-        __stopAllAnimations()
+        _rejectButton.enabled = true
+        _acceptButton.enabled = true
 
-        __dialogCharWidth = charWidth
-        __dialogTitle = title
+        _dialogCharWidth = charWidth
+        _dialogTitle = title
 
-        __setupDialogButtons(buttons)
+        _setupDialogButtons(buttons)
 
-        __dialogComponent = component
+        _dialogComponent = component
         viewPanel.enabled = false
-        __dialogOverlay.visible = true
-
-        //__dialogComponentLoader.item.forceActiveFocus()
-
-        __animateShowDialog.start()
+        _dialogOverlay.visible = true
     }
 
     function showMessage(title, message, buttons) {
-        if (__checkForEarlyDialog(title)) {
+        if (_checkForEarlyDialog(title)) {
             return
         }
 
-        __stopAllAnimations()
+        _rejectButton.enabled = true
+        _acceptButton.enabled = true
 
-        __dialogCharWidth = showDialogDefaultWidth
-        __dialogTitle = title
-        __messageDialogText = message
+        _dialogCharWidth = showDialogDefaultWidth
+        _dialogTitle = title
+        _messageDialogText = message
 
-        __setupDialogButtons(buttons)
+        _setupDialogButtons(buttons)
 
-        __dialogComponent = __messageDialog
+        _dialogComponent = _messageDialog
         viewPanel.enabled = false
-        __dialogOverlay.visible = true
-
-        __dialogComponentLoader.item.forceActiveFocus()
-
-        __animateShowDialog.start()
+        _dialogOverlay.visible = true
     }
 
     function hideDialog() {
-        //__dialogComponentLoader.item.focus = false
         viewPanel.enabled = true
-        __animateHideDialog.start()
+        _dialogComponent = null
+        _dialogOverlay.visible = false
     }
 
-    QGCPalette { id: __qgcPal; colorGroupEnabled: true }
-    QGCLabel { id: __textMeasure; text: "X"; visible: false }
+    QGCPalette { id: _qgcPal; colorGroupEnabled: true }
+    QGCLabel { id: _textMeasure; text: "X"; visible: false }
 
-    property real defaultTextHeight: __textMeasure.contentHeight
-    property real defaultTextWidth:  __textMeasure.contentWidth
+    property real defaultTextHeight: _textMeasure.contentHeight
+    property real defaultTextWidth:  _textMeasure.contentWidth
 
     /// The width of the dialog panel in characters
-    property int __dialogCharWidth: 75
+    property int _dialogCharWidth: 75
 
     /// The title for the dialog panel
-    property string __dialogTitle
+    property string _dialogTitle
 
-    property string __messageDialogText
+    property string _messageDialogText
 
-    property Component __dialogComponent
+    property Component _dialogComponent
 
-    function __signalCompleted() {
+    function _signalCompleted() {
         // When we use this control inside a QGCQmlWidgetHolder Component.onCompleted is signalled
         // before the width and height are adjusted. So we need to wait for width and heigth to be
         // set before we signal our own completed signal.
@@ -209,156 +180,118 @@ FactPanel {
         }
     }
 
-    Component.onCompleted:  __signalCompleted()
-    onWidthChanged:         __signalCompleted()
-    onHeightChanged:        __signalCompleted()
+    Component.onCompleted:  _signalCompleted()
+    onWidthChanged:         _signalCompleted()
+    onHeightChanged:        _signalCompleted()
 
     Connections {
-        target: __dialogComponentLoader.item
+        target: _dialogComponentLoader.item
 
-        onHideDialog: __rootItem.hideDialog()
+        onHideDialog: _rootItem.hideDialog()
     }
 
     Item {
-        id:             __dialogOverlay
+        id:             _dialogOverlay
         visible:        false
         anchors.fill:   parent
         z:              5000
 
-        readonly property int __animationDuration: 200
-
-        ParallelAnimation {
-            id: __animateShowDialog
-
-
-            NumberAnimation {
-                target:     __transparentSection
-                properties: "opacity"
-                from:       0.0
-                to:         0.8
-                duration:   __dialogOverlay.__animationDuration
-            }
-
-            NumberAnimation {
-                target:     __transparentSection
-                properties: "width"
-                from:       __dialogOverlay.width
-                to:         __dialogOverlay.width - __dialogPanel.width
-                duration:   __dialogOverlay.__animationDuration
-            }
-        }
-
-        ParallelAnimation {
-            id: __animateHideDialog
-
-            NumberAnimation {
-                target:     __transparentSection
-                properties: "opacity"
-                from:       0.8
-                to:         0.0
-                duration:   __dialogOverlay.__animationDuration
-            }
-
-            NumberAnimation {
-                target:     __transparentSection
-                properties: "width"
-                from:       __dialogOverlay.width - __dialogPanel.width
-                to:         __dialogOverlay.width
-                duration:   __dialogOverlay.__animationDuration
-            }
-
-            onRunningChanged: {
-                if (!running) {
-                    __dialogComponent = null
-                    __dialogOverlay.visible = false
-                }
-            }
-        }
-
         // This covers the parent with an transparent section
         Rectangle {
-            id:             __transparentSection
+            id:             _transparentSection
             height:         ScreenTools.availableHeight ? ScreenTools.availableHeight : parent.height
             anchors.bottom: parent.bottom
             anchors.left:   parent.left
-            anchors.right:  __dialogPanel.left
+            anchors.right:  _dialogPanel.left
             opacity:        0.0
-            color:          __qgcPal.window
+            color:          _qgcPal.window
         }
 
         // This is the main dialog panel which is anchored to the right edge
         Rectangle {
-            id:                 __dialogPanel
-            width:              __dialogCharWidth == showDialogFullWidth ? parent.width : defaultTextWidth * __dialogCharWidth
+            id:                 _dialogPanel
+            width:              _dialogCharWidth == showDialogFullWidth ? parent.width : defaultTextWidth * _dialogCharWidth
             anchors.topMargin:  topDialogMargin
             height:             ScreenTools.availableHeight ? ScreenTools.availableHeight : parent.height
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
-            color:              __qgcPal.windowShadeDark
+            color:              _qgcPal.windowShadeDark
 
             Rectangle {
-                id:     __header
+                id:     _header
                 width:  parent.width
-                height: __acceptButton.height
-                color:  __qgcPal.windowShade
+                height: _acceptButton.visible ? _acceptButton.height : _rejectButton.height
+                color:  _qgcPal.windowShade
 
-                function __hidePanel() {
-                    __fullPanel.visible = false
+                function _hidePanel() {
+                    _fullPanel.visible = false
                 }
 
                 QGCLabel {
                     x:                  defaultTextWidth
                     height:             parent.height
                     verticalAlignment:	Text.AlignVCenter
-                    text:               __dialogTitle
+                    text:               _dialogTitle
                 }
 
                 QGCButton {
-                    id:             __rejectButton
-                    anchors.right:  __acceptButton.visible ?  __acceptButton.left : parent.right
+                    id:             _rejectButton
+                    anchors.right:  _acceptButton.visible ?  _acceptButton.left : parent.right
                     anchors.bottom: parent.bottom
 
-                    onClicked: __dialogComponentLoader.item.reject()
+                    onClicked: {
+                        enabled = false // prevent multiple clicks
+                        _dialogComponentLoader.item.reject()
+                        if (!viewPanel.enabled) {
+                            // Dialog was not closed, re-enable button
+                            enabled = true
+                        }
+                    }
                 }
 
                 QGCButton {
-                    id:             __acceptButton
+                    id:             _acceptButton
                     anchors.right:  parent.right
                     primary:        true
 
                     onClicked: {
-                       __dialogComponentLoader.item.accept()
+                        enabled = false // prevent multiple clicks
+                       _dialogComponentLoader.item.accept()
+                        if (!viewPanel.enabled) {
+                            // Dialog was not closed, re-enable button
+                            enabled = true
+                        }
                     }
                 }
             }
 
             Item {
-                id:             __spacer
+                id:             _spacer
                 width:          10
                 height:         10
-                anchors.top:    __header.bottom
+                anchors.top:    _header.bottom
             }
 
             Loader {
-                id:                 __dialogComponentLoader
+                id:                 _dialogComponentLoader
                 anchors.margins:    5
                 anchors.left:       parent.left
                 anchors.right:      parent.right
-                anchors.top:        __spacer.bottom
+                anchors.top:        _spacer.bottom
                 anchors.bottom:     parent.bottom
-                sourceComponent:    __dialogComponent
+                sourceComponent:    _dialogComponent
 
-                property bool acceptAllowed: __acceptButton.visible
-                property bool rejectAllowed: __rejectButton.visible
+                property bool acceptAllowed: _acceptButton.visible
+                property bool rejectAllowed: _rejectButton.visible
             }
         } // Rectangle - Dialog panel
     } // Item - Dialog overlay
 
     Component {
-        id: __messageDialog
+        id: _messageDialog
 
         QGCViewMessage {
-            message: __messageDialogText
+            message: _messageDialogText
         }
     }
 }

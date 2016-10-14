@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 #ifndef APMSensorsComponentController_H
 #define APMSensorsComponentController_H
@@ -42,15 +29,15 @@ class APMSensorsComponentController : public FactPanelController
 public:
     APMSensorsComponentController(void);
 
-    Q_PROPERTY(bool fixedWing READ fixedWing CONSTANT)
-    
     Q_PROPERTY(QQuickItem* statusLog MEMBER _statusLog)
     Q_PROPERTY(QQuickItem* progressBar MEMBER _progressBar)
     
     Q_PROPERTY(QQuickItem* compassButton MEMBER _compassButton)
     Q_PROPERTY(QQuickItem* accelButton MEMBER _accelButton)
+    Q_PROPERTY(QQuickItem* compassMotButton MEMBER _compassMotButton)
     Q_PROPERTY(QQuickItem* nextButton MEMBER _nextButton)
     Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
+    Q_PROPERTY(QQuickItem* setOrientationsButton MEMBER _setOrientationsButton)
     Q_PROPERTY(QQuickItem* orientationCalAreaHelpText MEMBER _orientationCalAreaHelpText)
 
     Q_PROPERTY(bool compassSetupNeeded  READ compassSetupNeeded NOTIFY setupNeededChanged)
@@ -90,10 +77,10 @@ public:
     
     Q_INVOKABLE void calibrateCompass(void);
     Q_INVOKABLE void calibrateAccel(void);
+    Q_INVOKABLE void calibrateMotorInterference(void);
     Q_INVOKABLE void cancelCalibration(void);
     Q_INVOKABLE void nextClicked(void);
-
-    bool fixedWing(void);
+    Q_INVOKABLE bool usingUDPLink(void);
 
     bool compassSetupNeeded(void) const;
     bool accelSetupNeeded(void) const;
@@ -137,14 +124,17 @@ private:
     QQuickItem* _progressBar;
     QQuickItem* _compassButton;
     QQuickItem* _accelButton;
+    QQuickItem* _compassMotButton;
     QQuickItem* _nextButton;
     QQuickItem* _cancelButton;
+    QQuickItem* _setOrientationsButton;
     QQuickItem* _orientationCalAreaHelpText;
     
     bool _showOrientationCalArea;
     
     bool _magCalInProgress;
     bool _accelCalInProgress;
+    bool _compassMotCalInProgress;
     
     bool _orientationCalDownSideDone;
     bool _orientationCalUpsideDownSideDone;

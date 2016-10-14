@@ -88,7 +88,7 @@ void SerialLink::_writeBytes(const QByteArray data)
         _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
         _port->write(data);
     } else {
-        // Error occured
+        // Error occurred
         _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(getName()));
     }
 }
@@ -215,6 +215,8 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
         _port = NULL;
         return false; // couldn't open serial port
     }
+
+    _port->setDataTerminalReady(true);
 
     qCDebug(SerialLinkLog) << "Configuring port";
     _port->setBaudRate     (_config->baud());

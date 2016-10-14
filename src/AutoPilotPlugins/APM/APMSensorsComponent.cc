@@ -1,30 +1,18 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 #include "APMSensorsComponent.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMSensorsComponentController.h"
 #include "APMAirframeComponent.h"
+#include "ParameterManager.h"
 
 // These two list must be kept in sync
 
@@ -75,6 +63,12 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
     // Accelerometer triggers
     triggers << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
 
+    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("INS_USE"))) {
+        triggers << QStringLiteral("INS_USE") << QStringLiteral("INS_USE2") << QStringLiteral("INS_USE3");
+        triggers << QStringLiteral("INS_ACC2OFFS_X") << QStringLiteral("INS_ACC2OFFS_Y") << QStringLiteral("INS_ACC2OFFS_Z");
+        triggers << QStringLiteral("INS_ACC3OFFS_X") << QStringLiteral("INS_ACC3OFFS_Y") << QStringLiteral("INS_ACC3OFFS_Z");
+    }
+
     return triggers;
 }
 
@@ -115,10 +109,10 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
     rgOffsets[2] << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_Y") << QStringLiteral("COMPASS_OFS3_Z");
 
     for (size_t i=0; i<cCompass; i++) {
-        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgDevicesIds[i])->rawValue().toInt() != 0 &&
-            _autopilot->getParameterFact(FactSystem::defaultComponentId, rgCompassUse[i])->rawValue().toInt() != 0) {
+        if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgDevicesIds[i])->rawValue().toInt() != 0 &&
+            _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgCompassUse[i])->rawValue().toInt() != 0) {
             for (size_t j=0; j<cOffset; j++) {
-                if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
+                if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
                     return true;
                 }
             }
@@ -130,13 +124,36 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
 
 bool APMSensorsComponent::accelSetupNeeded(void) const
 {
-    QStringList offsets;
+    QStringList         rgUse;
+    QStringList         rgOffsets;
+    QList<QStringList>  rgAccels;
 
-    offsets << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
+    // We always at a minimum test the first accel
+    rgOffsets << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
+    rgAccels << rgOffsets;
+    rgOffsets.clear();
 
-    foreach(const QString& offset, offsets) {
-        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, offset)->rawValue().toFloat() == 0.0f) {
-            return true;
+    // This parameter is not available in all firmware version. Specifically missing from older Solo firmware.
+    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("INS_USE"))) {
+        rgUse << QStringLiteral("INS_USE") << QStringLiteral("INS_USE2") << QStringLiteral("INS_USE3");
+
+        // We have usage information for the remaining accels, so we can test them sa well
+        rgOffsets << QStringLiteral("INS_ACC2OFFS_X") << QStringLiteral("INS_ACC2OFFS_Y") << QStringLiteral("INS_ACC2OFFS_Z");
+        rgAccels << rgOffsets;
+        rgOffsets.clear();
+
+        rgOffsets << QStringLiteral("INS_ACC3OFFS_X") << QStringLiteral("INS_ACC3OFFS_Y") << QStringLiteral("INS_ACC3OFFS_Z");
+        rgAccels << rgOffsets;
+        rgOffsets.clear();
+    }
+
+    for (int i=0; i<rgAccels.count(); i++) {
+        if (rgUse.count() == 0 || _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgUse[i])->rawValue().toInt() != 0) {
+            for (int j=0; j<rgAccels[0].count(); j++) {
+                if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgAccels[i][j])->rawValue().toFloat() == 0.0f) {
+                    return true;
+                }
+            }
         }
     }
 

@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  *  @file
@@ -57,6 +44,8 @@ public:
         OpenStreetMapSurfer     = 34,
         OpenStreetMapSurferTerrain=35,
 
+        StatkartTopo            = 100,
+
         BingMap                 = 444,
         BingSatellite           = 555,
         BingHybrid              = 666,
@@ -89,30 +78,38 @@ public:
     static quint32  averageSizeForType  (MapType type);
 
 private slots:
+#ifndef QGC_NO_GOOGLE_MAPS
     void    _networkReplyError          (QNetworkReply::NetworkError error);
     void    _googleVersionCompleted     ();
     void    _replyDestroyed             ();
+#endif
 
 private:
     QString _getURL                     (MapType type, int x, int y, int zoom, QNetworkAccessManager* networkManager);
-    void    _getSecGoogleWords          (int x, int y, QString& sec1, QString& sec2);
-    int     _getServerNum               (int x, int y, int max);
-    void    _tryCorrectGoogleVersions   (QNetworkAccessManager* networkManager);
     QString _tileXYToQuadKey            (int tileX, int tileY, int levelOfDetail);
+    int     _getServerNum               (int x, int y, int max);
+#ifndef QGC_NO_GOOGLE_MAPS
+    void    _getSecGoogleWords          (int x, int y, QString& sec1, QString& sec2);
+    void    _tryCorrectGoogleVersions   (QNetworkAccessManager* networkManager);
+#endif
 
+private:
     int             _timeout;
-    bool            _googleVersionRetrieved;
-    QNetworkReply*  _googleReply;
-    QMutex          _googleVersionMutex;
     QByteArray      _userAgent;
     QString         _language;
 
     // Google version strings
+#ifndef QGC_NO_GOOGLE_MAPS
+    bool            _googleVersionRetrieved;
+    QNetworkReply*  _googleReply;
+    QMutex          _googleVersionMutex;
     QString         _versionGoogleMap;
     QString         _versionGoogleSatellite;
     QString         _versionGoogleLabels;
     QString         _versionGoogleTerrain;
     QString         _secGoogleWord;
+#endif
+
     // BingMaps
     QString         _versionBingMaps;
 

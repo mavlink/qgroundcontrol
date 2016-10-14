@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -45,7 +32,7 @@ Q_DECLARE_METATYPE(QList<QGCTile*>)
 static const char* kDbFileName = "qgcMapCache.db";
 static QLocale kLocale;
 
-#define CACHE_PATH_VERSION  "100"
+#define CACHE_PATH_VERSION  "300"
 
 struct stQGeoTileCacheQGCMapTypes {
     const char* name;
@@ -56,12 +43,15 @@ struct stQGeoTileCacheQGCMapTypes {
 //   Changes here must reflect those in QGeoTiledMappingManagerEngineQGC.cpp
 
 stQGeoTileCacheQGCMapTypes kMapTypes[] = {
+#ifndef QGC_LIMITED_MAPS
     {"Google Street Map",       UrlFactory::GoogleMap},
     {"Google Satellite Map",    UrlFactory::GoogleSatellite},
     {"Google Terrain Map",      UrlFactory::GoogleTerrain},
+#endif
     {"Bing Street Map",         UrlFactory::BingMap},
     {"Bing Satellite Map",      UrlFactory::BingSatellite},
     {"Bing Hybrid Map",         UrlFactory::BingHybrid},
+    {"Statkart Topo2",          UrlFactory::StatkartTopo},
     {"MapQuest Street Map",     UrlFactory::MapQuestMap},
     {"MapQuest Satellite Map",  UrlFactory::MapQuestSat}
     /*
@@ -139,6 +129,7 @@ QGCMapEngine::QGCMapEngine()
     , _maxDiskCache(0)
     , _maxMemCache(0)
     , _prunning(false)
+    , _cacheWasReset(false)
 {
     qRegisterMetaType<QGCMapTask::TaskType>();
     qRegisterMetaType<QGCTile>();
@@ -157,15 +148,40 @@ QGCMapEngine::~QGCMapEngine()
 
 //-----------------------------------------------------------------------------
 void
+QGCMapEngine::_checkWipeDirectory(const QString& dirPath)
+{
+    QDir dir(dirPath);
+    if (dir.exists(dirPath)) {
+        _cacheWasReset = true;
+        _wipeDirectory(dirPath);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapEngine::_wipeOldCaches()
+{
+    QString oldCacheDir;
+#ifdef __mobile__
+    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache55");
+#else
+    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
+#endif
+    _checkWipeDirectory(oldCacheDir);
+#ifdef __mobile__
+    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache100");
+#else
+    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache100");
+#endif
+    _checkWipeDirectory(oldCacheDir);
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCMapEngine::init()
 {
-    //-- Delete old style cache (if present)
-#ifdef __mobile__
-    QString oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache55");
-#else
-    QString oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
-#endif
-    _wipeDirectory(oldCacheDir);
+    //-- Delete old style caches (if present)
+    _wipeOldCaches();
     //-- Figure out cache path
 #ifdef __mobile__
     QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache" CACHE_PATH_VERSION);
@@ -375,6 +391,9 @@ QGCMapEngine::getMaxMemCache()
         _maxMemCache = settings.value(kMaxMemCacheKey, 128).toUInt();
 #endif
     }
+    //-- Size in MB
+    if(_maxMemCache > 1024)
+        _maxMemCache = 1024;
     return _maxMemCache;
 }
 
@@ -382,6 +401,9 @@ QGCMapEngine::getMaxMemCache()
 void
 QGCMapEngine::setMaxMemCache(quint32 size)
 {
+    //-- Size in MB
+    if(size > 1024)
+        size = 1024;
     QSettings settings;
     settings.setValue(kMaxMemCacheKey, size);
     _maxMemCache = size;
@@ -405,7 +427,7 @@ QGCMapEngine::bigSizeToString(quint64 size)
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngine::numberToString(quint32 number)
+QGCMapEngine::numberToString(quint64 number)
 {
     return kLocale.toString(number);
 }
@@ -415,7 +437,7 @@ void
 QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize)
 {
     emit updateTotals(totaltiles, totalsize, defaulttiles, defaultsize);
-    quint64 maxSize = getMaxDiskCache() * 1024 * 1024;
+    quint64 maxSize = (quint64)getMaxDiskCache() * 1024L * 1024L;
     if(!_prunning && defaultsize > maxSize) {
         //-- Prune Disk Cache
         _prunning = true;
@@ -442,6 +464,7 @@ QGCMapEngine::concurrentDownloads(UrlFactory::MapType type)
     case UrlFactory::BingMap:
     case UrlFactory::BingSatellite:
     case UrlFactory::BingHybrid:
+    case UrlFactory::StatkartTopo:
         return 12;
     case UrlFactory::MapQuestMap:
     case UrlFactory::MapQuestSat:

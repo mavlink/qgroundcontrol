@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 #include "MockLinkFileServer.h"
 #include "MockLink.h"
@@ -378,13 +365,14 @@ void MockLinkFileServer::_sendResponse(uint8_t targetSystemId, uint8_t targetCom
     
     request->hdr.seqNumber = seqNumber;
     
-    mavlink_msg_file_transfer_protocol_pack(_systemIdServer,    // System ID
-                                            0,                  // Component ID
-                                            &mavlinkMessage,    // Mavlink Message to pack into
-                                            0,                  // Target network
-                                            targetSystemId,
-                                            targetComponentId,
-                                            (uint8_t*)request); // Payload
+    mavlink_msg_file_transfer_protocol_pack_chan(_systemIdServer,    // System ID
+                                                 0,                  // Component ID
+                                                 _mockLink->mavlinkChannel(),
+                                                 &mavlinkMessage,    // Mavlink Message to pack into
+                                                 0,                  // Target network
+                                                 targetSystemId,
+                                                 targetComponentId,
+                                                 (uint8_t*)request); // Payload
     
     _mockLink->respondWithMavlinkMessage(mavlinkMessage);
 }

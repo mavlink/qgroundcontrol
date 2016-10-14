@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-
-(c) 2009, 2015 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
-
-This file is part of the PIXHAWK project
-
-    PIXHAWK is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    PIXHAWK is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /// @file
 ///     @author Lorenz Meier <mavteam@student.ethz.ch>
@@ -78,6 +65,8 @@ public:
     Q_PROPERTY(bool autoconnectPixhawk                  READ autoconnectPixhawk                 WRITE setAutoconnectPixhawk     NOTIFY autoconnectPixhawkChanged)
     Q_PROPERTY(bool autoconnect3DRRadio                 READ autoconnect3DRRadio                WRITE setAutoconnect3DRRadio    NOTIFY autoconnect3DRRadioChanged)
     Q_PROPERTY(bool autoconnectPX4Flow                  READ autoconnectPX4Flow                 WRITE setAutoconnectPX4Flow     NOTIFY autoconnectPX4FlowChanged)
+    Q_PROPERTY(bool autoconnectRTKGPS                   READ autoconnectRTKGPS                  WRITE setAutoconnectRTKGPS      NOTIFY autoconnectRTKGPSChanged)
+    Q_PROPERTY(bool autoconnectLibrePilot               READ autoconnectLibrePilot              WRITE setAutoconnectLibrePilot  NOTIFY autoconnectLibrePilotChanged)
     Q_PROPERTY(bool isBluetoothAvailable                READ isBluetoothAvailable               CONSTANT)
 
     /// LinkInterface Accessor
@@ -107,6 +96,8 @@ public:
     bool autoconnectPixhawk         (void)  { return _autoconnectPixhawk; }
     bool autoconnect3DRRadio        (void)  { return _autoconnect3DRRadio; }
     bool autoconnectPX4Flow         (void)  { return _autoconnectPX4Flow; }
+    bool autoconnectRTKGPS          (void)  { return _autoconnectRTKGPS; }
+    bool autoconnectLibrePilot      (void)  { return _autoconnectLibrePilot; }
     bool isBluetoothAvailable       (void);
 
     QmlObjectListModel* links               (void) { return &_links; }
@@ -116,10 +107,12 @@ public:
     QStringList         serialPortStrings   (void);
     QStringList         serialPorts         (void);
 
-    void setAutoconnectUDP      (bool autoconnect);
-    void setAutoconnectPixhawk  (bool autoconnect);
-    void setAutoconnect3DRRadio (bool autoconnect);
-    void setAutoconnectPX4Flow  (bool autoconnect);
+    void setAutoconnectUDP        (bool autoconnect);
+    void setAutoconnectPixhawk    (bool autoconnect);
+    void setAutoconnect3DRRadio   (bool autoconnect);
+    void setAutoconnectPX4Flow    (bool autoconnect);
+    void setAutoconnectRTKGPS     (bool autoconnect);
+    void setAutoconnectLibrePilot (bool autoconnect);
 
     /// Load list of link configurations from disk
     void loadLinkConfigurationList();
@@ -173,10 +166,13 @@ public:
     virtual void setToolbox(QGCToolbox *toolbox);
 
 signals:
-    void autoconnectUDPChanged(bool autoconnect);
-    void autoconnectPixhawkChanged(bool autoconnect);
-    void autoconnect3DRRadioChanged(bool autoconnect);
-    void autoconnectPX4FlowChanged(bool autoconnect);
+    void autoconnectUDPChanged        (bool autoconnect);
+    void autoconnectPixhawkChanged    (bool autoconnect);
+    void autoconnect3DRRadioChanged   (bool autoconnect);
+    void autoconnectPX4FlowChanged    (bool autoconnect);
+    void autoconnectRTKGPSChanged     (bool autoconnect);
+    void autoconnectLibrePilotChanged (bool autoconnect);
+
 
     void newLink(LinkInterface* link);
 
@@ -212,6 +208,7 @@ private:
     void _updateAutoConnectLinks(void);
     void _updateSerialPorts();
     void _fixUnnamed(LinkConfiguration* config);
+    bool _setAutoconnectWorker(bool& currentAutoconnect, bool newAutoconnect, const char* autoconnectKey);
 
 #ifndef __ios__
     SerialConfiguration* _autoconnectConfigurationsContainsPort(const QString& portName);
@@ -238,7 +235,8 @@ private:
     bool _autoconnectPixhawk;
     bool _autoconnect3DRRadio;
     bool _autoconnectPX4Flow;
-
+    bool _autoconnectRTKGPS;
+    bool _autoconnectLibrePilot;
 #ifndef __ios__
     QTimer              _activeLinkCheckTimer;                  ///< Timer which checks for a vehicle showing up on a usb direct link
     QList<SerialLink*>  _activeLinkCheckList;                   ///< List of links we are waiting for a vehicle to show up on
@@ -250,6 +248,8 @@ private:
     static const char*  _autoconnectPixhawkKey;
     static const char*  _autoconnect3DRRadioKey;
     static const char*  _autoconnectPX4FlowKey;
+    static const char*  _autoconnectRTKGPSKey;
+    static const char*  _autoconnectLibrePilotKey;
     static const char*  _defaultUPDLinkName;
     static const int    _autoconnectUpdateTimerMSecs;
     static const int    _autoconnectConnectDelayMSecs;

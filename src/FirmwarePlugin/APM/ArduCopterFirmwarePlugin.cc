@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -27,6 +14,7 @@
 #include "ArduCopterFirmwarePlugin.h"
 #include "QGCApplication.h"
 #include "MissionManager.h"
+#include "ParameterManager.h"
 
 bool ArduCopterFirmwarePlugin::_remapParamNameIntialized = false;
 FirmwarePlugin::remapParamNameMajorVersionMap_t ArduCopterFirmwarePlugin::_remapParamName;
@@ -111,9 +99,13 @@ int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVe
     return majorVersionNumber == 3 ? 4: Vehicle::versionNotSetValue;
 }
 
-bool ArduCopterFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+bool ArduCopterFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
 {
-    return (capabilities & (SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability)) == capabilities;
+    Q_UNUSED(vehicle);
+
+    uint32_t vehicleCapabilities = SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability;
+
+    return (capabilities & vehicleCapabilities) == capabilities;
 }
 
 void ArduCopterFirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
@@ -146,12 +138,16 @@ void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitu
     cmd.param6 = 0.0f;
     cmd.param7 = vehicle->altitudeAMSL()->rawValue().toFloat() +  altitudeRel; // AMSL meters
     cmd.target_system = vehicle->id();
-    cmd.target_component = 0;
+    cmd.target_component = vehicle->defaultComponentId();
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+    mavlink_msg_command_long_encode_chan(mavlink->getSystemId(),
+                                         mavlink->getComponentId(),
+                                         vehicle->priorityLink()->mavlinkChannel(),
+                                         &msg,
+                                         &cmd);
 
-    vehicle->sendMessage(msg);
+    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
 }
 
 void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
@@ -161,7 +157,6 @@ void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QG
         return;
     }
 
-    vehicle->setFlightMode("Guided");
     QGeoCoordinate coordWithAltitude = gotoCoord;
     coordWithAltitude.setAltitude(vehicle->altitudeRelative()->rawValue().toDouble());
     vehicle->missionManager()->writeArduPilotGuidedMissionItem(coordWithAltitude, false /* altChangeOnly */);
@@ -180,7 +175,7 @@ void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double
     memset(&cmd, 0, sizeof(mavlink_set_position_target_local_ned_t));
 
     cmd.target_system = vehicle->id();
-    cmd.target_component = 0;
+    cmd.target_component = vehicle->defaultComponentId();
     cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
     cmd.type_mask = 0xFFF8; // Only x/y/z valid
     cmd.x = 0.0f;
@@ -188,9 +183,13 @@ void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double
     cmd.z = -(altitudeRel - vehicle->altitudeRelative()->rawValue().toDouble());
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_set_position_target_local_ned_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+    mavlink_msg_set_position_target_local_ned_encode_chan(mavlink->getSystemId(),
+                                                          mavlink->getComponentId(),
+                                                          vehicle->priorityLink()->mavlinkChannel(),
+                                                          &msg,
+                                                          &cmd);
 
-    vehicle->sendMessage(msg);
+    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
 }
 
 bool ArduCopterFirmwarePlugin::isPaused(const Vehicle* vehicle) const
@@ -210,4 +209,21 @@ void ArduCopterFirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
     } else {
         pauseVehicle(vehicle);
     }
+}
+
+bool ArduCopterFirmwarePlugin::multiRotorCoaxialMotors(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    return _coaxialMotors;
+}
+
+bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
+{
+    return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
+}
+
+QString ArduCopterFirmwarePlugin::geoFenceRadiusParam(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    return QStringLiteral("FENCE_RADIUS");
 }

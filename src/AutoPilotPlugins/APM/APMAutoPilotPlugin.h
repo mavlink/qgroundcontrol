@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 #ifndef APMAutoPilotPlugin_H
 #define APMAutoPilotPlugin_H
@@ -35,6 +22,7 @@ class APMTuningComponent;
 class APMSafetyComponent;
 class APMSensorsComponent;
 class APMPowerComponent;
+class MotorComponent;
 class APMCameraComponent;
 class ESP8266Component;
 
@@ -54,15 +42,15 @@ public:
     APMCameraComponent*         cameraComponent     (void) const { return _cameraComponent; }
     APMFlightModesComponent*    flightModesComponent(void) const { return _flightModesComponent; }
     APMPowerComponent*          powerComponent      (void) const { return _powerComponent; }
+#if 0
+    // Temporarily removed, waiting for new command implementation
+    MotorComponent*             motorComponent      (void) const { return _motorComponent; }
+#endif
     APMRadioComponent*          radioComponent      (void) const { return _radioComponent; }
     APMSafetyComponent*         safetyComponent     (void) const { return _safetyComponent; }
     APMSensorsComponent*        sensorsComponent    (void) const { return _sensorsComponent; }
     APMTuningComponent*         tuningComponent     (void) const { return _tuningComponent; }
     ESP8266Component*           esp8266Component    (void) const { return _esp8266Component; }
-
-public slots:
-    // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
-    void _parametersReadyPreChecks(bool missingParameters);
 
 private:
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
@@ -72,6 +60,10 @@ private:
     APMCameraComponent*         _cameraComponent;
     APMFlightModesComponent*    _flightModesComponent;
     APMPowerComponent*          _powerComponent;
+#if 0
+    // Temporarily removed, waiting for new command implementation
+    MotorComponent*             _motorComponent;
+#endif
     APMRadioComponent*          _radioComponent;
     APMSafetyComponent*         _safetyComponent;
     APMSensorsComponent*        _sensorsComponent;

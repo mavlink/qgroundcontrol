@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -40,9 +27,9 @@ Item {
     property real heading:  0
     property real size:     _defaultSize
 
-    property real _defaultSize: ScreenTools.defaultFontPixelSize * (10)
+    property real _defaultSize: ScreenTools.defaultFontPixelHeight * (10)
     property real _sizeRatio:   ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
-    property int  _fontSize:    ScreenTools.defaultFontPixelSize * _sizeRatio
+    property int  _fontSize:    ScreenTools.defaultFontPointSize * _sizeRatio
 
     width:                  size
     height:                 size
@@ -64,6 +51,7 @@ Item {
             source:             "/qmlimages/compassInstrumentAirplane.svg"
             mipmap:             true
             width:              size * 0.75
+            sourceSize.width:   width
             fillMode:           Image.PreserveAspectFit
             anchors.centerIn:   parent
             transform: Rotation {
@@ -79,6 +67,7 @@ Item {
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             anchors.fill:       parent
+            sourceSize.height:  parent.height
         }
 
         Rectangle {
@@ -90,8 +79,8 @@ Item {
 
             QGCLabel {
                 text:           active ? heading.toFixed(0) : qsTr("OFF")
-                font.weight:    active ? Font.DemiBold : Font.Light
-                font.pixelSize: _fontSize < 1 ? 1 : _fontSize;
+                font.family:    active ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
+                font.pointSize: _fontSize < 8 ? 8 : _fontSize;
                 color:          "white"
                 anchors.centerIn: parent
             }

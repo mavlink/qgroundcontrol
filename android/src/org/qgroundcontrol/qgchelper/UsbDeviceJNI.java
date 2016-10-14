@@ -347,7 +347,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
                         Log.e(TAG, "UsbIoManager instance is null");
                     m_ioManager.put(idL, managerL);
                     m_Executor.submit(managerL);
-                    Log.i(TAG, "Port open successfull");
+                    Log.i(TAG, "Port open successful");
                     return idL;
                 }
             }

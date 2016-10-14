@@ -4,7 +4,7 @@
   <airframe_version_major>1</airframe_version_major>
   <airframe_version_minor>1</airframe_version_minor>
   <airframe_group image="HelicopterCoaxial" name="Coaxial Helicopter">
-    <airframe id="15001" maintainer="Emmanuel Roussel" name="Coaxial Helicopter (such as Esky Lama v4 or Esky Big Lama)">
+    <airframe id="15001" maintainer="Emmanuel Roussel" name="Esky (Big) Lama v4">
       <maintainer>Emmanuel Roussel</maintainer>
       <type>Coaxial Helicopter</type>
       <output name="MAIN1">Left swashplate servomotor, pitch axis</output>
@@ -202,6 +202,13 @@
       <output name="AUX2">feed-through of RC AUX2 channel</output>
       <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
+    <airframe id="4002" maintainer="James Goppert &lt;james.goppert@gmail.com&gt;" name="Lumenier QAV-R (raceblade) 5&quot; arms">
+      <maintainer>James Goppert &lt;james.goppert@gmail.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
     <airframe id="4008" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="AR.Drone Frame">
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
@@ -372,6 +379,10 @@
       <maintainer>Sander Smeets &lt;sander@droneslab.com&gt;</maintainer>
       <type>Standard VTOL</type>
     </airframe>
+    <airframe id="13009" maintainer="Andreas Antener &lt;andreas@uaventure.com&gt;" name="Sparkle Tech Ranger VTOL">
+      <maintainer>Andreas Antener &lt;andreas@uaventure.com&gt;</maintainer>
+      <type>Standard VTOL</type>
+    </airframe>
   </airframe_group>
   <airframe_group image="YPlus" name="Tricopter Y+">
     <airframe id="14001" maintainer="Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;" name="Generic Tricopter Y+ Geometry">
@@ -408,6 +419,10 @@
   <airframe_group image="VTOLTiltRotor" name="VTOL Tiltrotor">
     <airframe id="13002" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="BirdsEyeView Aerobotics FireFly6">
       <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
+      <type>VTOL Tiltrotor</type>
+    </airframe>
+    <airframe id="13010" maintainer="Samay Siga &lt;samay_s@icloud.com&gt;" name="CruiseAder Claire">
+      <maintainer>Samay Siga &lt;samay_s@icloud.com&gt;</maintainer>
       <type>VTOL Tiltrotor</type>
     </airframe>
   </airframe_group>

@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @brief Radio Config Qml Controller
@@ -136,7 +123,7 @@ RadioComponentController::~RadioComponentController()
 /// @brief Returns the state machine entry for the specified state.
 const RadioComponentController::stateMachineEntry* RadioComponentController::_getStateMachineEntry(int step) const
 {
-    static const char* msgBeginPX4 =        "Lower the Throttle stick all the way down as shown in diagram.\nReset all transmitter trims to center.\n\n"
+    static const char* msgBeginPX4 =        "Lower the Throttle stick all the way down as shown in diagram.\n\n"
                                             "It is recommended to disconnect all motors for additional safety, however, the system is designed to not arm during the calibration.\n\n"
                                             "Click Next to continue";
     static const char* msgBeginAPM =        "Lower the Throttle stick all the way down as shown in diagram.\nReset all transmitter trims to center.\n\n"
@@ -219,11 +206,20 @@ void RadioComponentController::_advanceState(void)
 /// @brief Sets up the state machine according to the current step from _currentStep.
 void RadioComponentController::_setupCurrentState(void)
 {
-   const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
-    
-    _statusText->setProperty("text", state->instructions);
-    
-    _setHelpImage(state->image);
+    static const char* msgBeginAPMRover = "Center the Throttle stick as shown in diagram.\nReset all transmitter trims to center.\n\n"
+                                          "Please ensure all motor power is disconnected from the vehicle.\n\n"
+                                          "Click Next to continue";
+    const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
+
+    const char* instructions = state->instructions;
+    const char* helpImage = state->image;
+    if (_vehicle->rover() && _currentStep == 0) {
+        // Hack in center throttle start for Rover. This is to set the correct centered trim for throttle.
+        instructions = msgBeginAPMRover;
+        helpImage = _imageCenter;
+    }
+    _statusText->setProperty("text", instructions);
+    _setHelpImage(helpImage);
     
     _stickDetectChannel = _chanMax();
     _stickDetectSettleStarted = false;
@@ -329,7 +325,7 @@ void RadioComponentController::_saveAllTrims(void)
     // trims reset to correct values.
     
     for (int i=0; i<_chanCount; i++) {
-        qCDebug(RadioComponentControllerLog) << "_saveAllTrims trim" << _rcRawValue[i];
+        qCDebug(RadioComponentControllerLog) << "_saveAllTrims channel trim" << i<< _rcRawValue[i];
         _rgChannelInfo[i].rcTrim = _rcRawValue[i];
     }
     _advanceState();
@@ -407,8 +403,6 @@ void RadioComponentController::_inputStickDetect(enum rcCalFunctions function, i
         if (_stickSettleComplete(value)) {
             ChannelInfo* info = &_rgChannelInfo[channel];
             
-            qCDebug(RadioComponentControllerLog) << "_inputStickDetect settle complete, function:channel:value" << function << channel << value;
-            
             // Stick detection is complete. Stick should be at max position.
             // Map the channel to the function
             _rgFunctionChannelMapping[function] = channel;
@@ -417,6 +411,8 @@ void RadioComponentController::_inputStickDetect(enum rcCalFunctions function, i
             // Channel should be at max value, if it is below initial set point the the channel is reversed.
             info->reversed = value < _rcValueSave[channel];
             
+            qCDebug(RadioComponentControllerLog) << "_inputStickDetect settle complete, function:channel:value:reversed" << function << channel << value << info->reversed;
+
             if (info->reversed) {
                 _rgChannelInfo[channel].rcMin = value;
             } else {
@@ -755,77 +751,83 @@ void RadioComponentController::_writeCalibration(void)
     if (_px4Vehicle()) {
         _uas->stopCalibration();
     }
-    
-    _validateCalibration();
-    
-    QString minTpl("RC%1_MIN");
-    QString maxTpl("RC%1_MAX");
-    QString trimTpl("RC%1_TRIM");
-    QString revTpl("RC%1_REV");
-    
-    // Note that the rc parameters are all float, so you must cast to float in order to get the right QVariant
-    for (int chan = 0; chan<_chanMax(); chan++) {
-        struct ChannelInfo* info = &_rgChannelInfo[chan];
-        int                 oneBasedChannel = chan + 1;
-        
-        if (_px4Vehicle() && _apmPossibleMissingRCChannelParams.contains(chan+1) && !parameterExists(FactSystem::defaultComponentId, minTpl.arg(chan+1))) {
-            // RC parameters for this channel are missing from this version of APM
-            continue;
-        }
 
-        Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel));
-        if (paramFact) {
-            paramFact->setRawValue((float)info->rcTrim);
-        }
-        paramFact = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel));
-        if (paramFact) {
-            paramFact->setRawValue((float)info->rcMin);
-        }
-        paramFact = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel));
-        if (paramFact) {
-            paramFact->setRawValue((float)info->rcMax);
-        }
+    if (!_px4Vehicle() && (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER || _vehicle->multiRotor()) &&  _rgChannelInfo[_rgFunctionChannelMapping[rcCalFunctionThrottle]].reversed) {
+        // A reversed throttle could lead to dangerous power up issues if the firmware doesn't handle it absolutely correctly in all places.
+        // So in this case fail the calibration for anything other than PX4 which is known to be able to handle this correctly.
+        emit throttleReversedCalFailure();
+    } else {
+        _validateCalibration();
 
-        // For multi-rotor we can determine reverse setting during radio cal. For anything other than multi-rotor, servo installation
-        // may affect channel reversing so we can't automatically determine it.
-        if (_vehicle->multiRotor()) {
-            // APM multi-rotor has a backwards interpretation of "reversed" on the Pitch control. So be careful.
-            float reversedParamValue;
-            if (_px4Vehicle() || info->function != rcCalFunctionPitch) {
-                reversedParamValue = info->reversed ? -1.0f : 1.0f;
-            } else {
-                reversedParamValue = info->reversed ? 1.0f : -1.0f;
+        QString minTpl("RC%1_MIN");
+        QString maxTpl("RC%1_MAX");
+        QString trimTpl("RC%1_TRIM");
+        QString revTpl("RC%1_REV");
+
+        // Note that the rc parameters are all float, so you must cast to float in order to get the right QVariant
+        for (int chan = 0; chan<_chanMax(); chan++) {
+            struct ChannelInfo* info = &_rgChannelInfo[chan];
+            int                 oneBasedChannel = chan + 1;
+
+            if (_px4Vehicle() && _apmPossibleMissingRCChannelParams.contains(chan+1) && !parameterExists(FactSystem::defaultComponentId, minTpl.arg(chan+1))) {
+                // RC parameters for this channel are missing from this version of APM
+                continue;
             }
-            paramFact = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel));
+
+            Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel));
             if (paramFact) {
-                paramFact->setRawValue(reversedParamValue);
+                paramFact->setRawValue((float)info->rcTrim);
+            }
+            paramFact = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel));
+            if (paramFact) {
+                paramFact->setRawValue((float)info->rcMin);
+            }
+            paramFact = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel));
+            if (paramFact) {
+                paramFact->setRawValue((float)info->rcMax);
+            }
+
+            // For multi-rotor we can determine reverse setting during radio cal. For anything other than multi-rotor, servo installation
+            // may affect channel reversing so we can't automatically determine it.
+            if (_vehicle->multiRotor()) {
+                // APM multi-rotor has a backwards interpretation of "reversed" on the Pitch control. So be careful.
+                float reversedParamValue;
+                if (_px4Vehicle() || info->function != rcCalFunctionPitch) {
+                    reversedParamValue = info->reversed ? -1.0f : 1.0f;
+                } else {
+                    reversedParamValue = info->reversed ? 1.0f : -1.0f;
+                }
+                paramFact = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel));
+                if (paramFact) {
+                    paramFact->setRawValue(reversedParamValue);
+                }
             }
         }
-    }
-    
-    // Write function mapping parameters
-    for (size_t i=0; i<rcCalFunctionMax; i++) {
-        int32_t paramChannel;
-        if (_rgFunctionChannelMapping[i] == _chanMax()) {
-            // 0 signals no mapping
-            paramChannel = 0;
-        } else {
-            // Note that the channel value is 1-based
-            paramChannel = _rgFunctionChannelMapping[i] + 1;
-        }
-        const char* paramName = _functionInfo()[i].parameterName;
-        if (paramName) {
-            Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
 
-            if (paramFact && paramFact->rawValue().toInt() != paramChannel) {
-                paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
-                if (paramFact) {
-                    paramFact->setRawValue(paramChannel);
+        // Write function mapping parameters
+        for (size_t i=0; i<rcCalFunctionMax; i++) {
+            int32_t paramChannel;
+            if (_rgFunctionChannelMapping[i] == _chanMax()) {
+                // 0 signals no mapping
+                paramChannel = 0;
+            } else {
+                // Note that the channel value is 1-based
+                paramChannel = _rgFunctionChannelMapping[i] + 1;
+            }
+            const char* paramName = _functionInfo()[i].parameterName;
+            if (paramName) {
+                Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
+
+                if (paramFact && paramFact->rawValue().toInt() != paramChannel) {
+                    paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
+                    if (paramFact) {
+                        paramFact->setRawValue(paramChannel);
+                    }
                 }
             }
         }
     }
-    
+
     if (_px4Vehicle()) {
         // If the RC_CHAN_COUNT parameter is available write the channel count
         if (parameterExists(FactSystem::defaultComponentId, "RC_CHAN_CNT")) {
@@ -883,9 +885,9 @@ void RadioComponentController::_stopCalibration(void)
 /// @brief Saves the current channel values, so that we can detect when the use moves an input.
 void RadioComponentController::_rcCalSaveCurrentValues(void)
 {
-	qCDebug(RadioComponentControllerLog) << "_rcCalSaveCurrentValues";
     for (int i = 0; i < _chanMax(); i++) {
         _rcValueSave[i] = _rcRawValue[i];
+        qCDebug(RadioComponentControllerLog) << "_rcCalSaveCurrentValues channel:value" << i << _rcValueSave[i];
     }
 }
 

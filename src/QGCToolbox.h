@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 #ifndef QGCToolbox_h
 #define QGCToolbox_h
@@ -37,13 +24,14 @@ class JoystickManager;
 class FollowMe;
 class LinkManager;
 class MAVLinkProtocol;
-class MissionCommands;
+class MissionCommandTree;
 class MultiVehicleManager;
 class QGCMapEngineManager;
 class QGCApplication;
 class QGCImageProvider;
 class UASMessageHandler;
 class QGCPositionManager;
+class VideoManager;
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox {
@@ -60,32 +48,43 @@ public:
     JoystickManager*            joystickManager(void)           { return _joystickManager; }
     LinkManager*                linkManager(void)               { return _linkManager; }
     MAVLinkProtocol*            mavlinkProtocol(void)           { return _mavlinkProtocol; }
-    MissionCommands*            missionCommands(void)           { return _missionCommands; }
+    MissionCommandTree*         missionCommandTree(void)        { return _missionCommandTree; }
     MultiVehicleManager*        multiVehicleManager(void)       { return _multiVehicleManager; }
     QGCMapEngineManager*        mapEngineManager(void)          { return _mapEngineManager; }
     QGCImageProvider*           imageProvider()                 { return _imageProvider; }
     UASMessageHandler*          uasMessageHandler(void)         { return _uasMessageHandler; }
     FollowMe*                   followMe(void)                  { return _followMe; }
     QGCPositionManager*         qgcPositionManager(void)        { return _qgcPositionManager; }
+    VideoManager*               videoManager(void)              { return _videoManager; }
+#ifndef __mobile__
+    GPSManager*                 gpsManager(void)                { return _gpsManager; }
+#endif
 
 private:
+    void setChildToolboxes(void);
+
     GAudioOutput*               _audioOutput;
     AutoPilotPluginManager*     _autopilotPluginManager;
     FactSystem*                 _factSystem;
     FirmwarePluginManager*      _firmwarePluginManager;
     FlightMapSettings*          _flightMapSettings;
+#ifndef __mobile__
     GPSManager*                 _gpsManager;
+#endif
     HomePositionManager*        _homePositionManager;
     QGCImageProvider*           _imageProvider;
     JoystickManager*            _joystickManager;
     LinkManager*                _linkManager;
     MAVLinkProtocol*            _mavlinkProtocol;
-    MissionCommands*            _missionCommands;
+    MissionCommandTree*         _missionCommandTree;
     MultiVehicleManager*        _multiVehicleManager;
     QGCMapEngineManager*         _mapEngineManager;
     UASMessageHandler*          _uasMessageHandler;
     FollowMe*                   _followMe;
     QGCPositionManager*         _qgcPositionManager;
+    VideoManager*               _videoManager;
+
+    friend class QGCApplication;
 };
 
 /// This is the base class for all tools

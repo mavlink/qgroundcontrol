@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 import QtQuick                  2.2
 import QtQuick.Controls         1.2
@@ -35,11 +22,13 @@ import QGroundControl.Palette               1.0
 Rectangle {
     id:             _summaryRoot
     anchors.fill:   parent
+    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+    anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
     color:          qgcPal.window
 
-    property real _minSummaryW:     ScreenTools.defaultFontPixelWidth * 30
+    property real _minSummaryW:     ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 28 : ScreenTools.defaultFontPixelWidth * 36
     property real _summaryBoxWidth: _minSummaryW
-    property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth
+    property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth * 2
 
     function computeSummaryBoxSize() {
         var sw  = 0
@@ -51,7 +40,7 @@ Rectangle {
         } else {
             _summaryBoxSpace = 0
             if(idx > 1) {
-                _summaryBoxSpace = ScreenTools.defaultFontPixelWidth
+                _summaryBoxSpace = ScreenTools.defaultFontPixelWidth * 2
                 sw = _summaryBoxSpace * (idx - 1)
             }
             rw = _summaryRoot.width - sw
@@ -92,7 +81,8 @@ Rectangle {
                 width:			parent.width
                 wrapMode:		Text.WordWrap
                 color:			setupComplete ? qgcPal.text : qgcPal.warningText
-                font.weight:    Font.DemiBold
+                font.family:    ScreenTools.demiboldFontFamily
+                horizontalAlignment: Text.AlignHCenter
                 text:           setupComplete ?
                     qsTr("Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component.") :
                     qsTr("WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left.")
@@ -111,8 +101,13 @@ Rectangle {
                     Rectangle {
                         width:      _summaryBoxWidth
                         height:     ScreenTools.defaultFontPixelHeight * 13
-                        color:      qgcPal.window
-                        visible:    modelData.summaryQmlSource.toString() != ""
+                        color:      qgcPal.windowShade
+                        visible:    modelData.summaryQmlSource.toString() !== ""
+                        border.width: 1
+                        border.color: qgcPal.text
+                        Component.onCompleted: {
+                            border.color = Qt.rgba(border.color.r, border.color.g, border.color.b, 0.1)
+                        }
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 
@@ -121,32 +116,31 @@ Rectangle {
                             id:     titleBar
                             width:  parent.width
                             height: titleHeight
-                            text:                   capitalizeWords(modelData.name)
+                            text:   capitalizeWords(modelData.name)
 
                             // Setup indicator
                             Rectangle {
-                                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 3
+                                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
                                 anchors.right:          parent.right
                                 anchors.verticalCenter: parent.verticalCenter
-                                width:                  ScreenTools.defaultFontPixelWidth
+                                width:                  ScreenTools.defaultFontPixelWidth * 1.75
                                 height:                 width
                                 radius:                 width / 2
                                 color:                  modelData.setupComplete ? "#00d932" : "red"
                                 visible:                modelData.requiresSetup
                             }
-
                             onClicked : {
                                 setupView.showVehicleComponentPanel(modelData)
                             }
                         }
-
                         // Summary Qml
                         Rectangle {
                             anchors.top:    titleBar.bottom
                             width:          parent.width
                             Loader {
-                                anchors.fill:   parent
-                                source:         modelData.summaryQmlSource
+                                anchors.fill:       parent
+                                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                                source:             modelData.summaryQmlSource
                             }
                         }
                     }

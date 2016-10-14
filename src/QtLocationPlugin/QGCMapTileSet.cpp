@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -41,17 +28,18 @@ QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "QGCCachedTileSetLog")
 #define TILE_BATCH_SIZE      256
 
 //-----------------------------------------------------------------------------
-QGCCachedTileSet::QGCCachedTileSet(const QString& name, const QString& description)
+QGCCachedTileSet::QGCCachedTileSet(const QString& name)
     : _name(name)
-    , _description(description)
     , _topleftLat(0.0)
     , _topleftLon(0.0)
     , _bottomRightLat(0.0)
     , _bottomRightLon(0.0)
-    , _numTiles(0)
-    , _tilesSize(0)
-    , _savedTiles(0)
-    , _savedSize(0)
+    , _totalTileCount(0)
+    , _totalTileSize(0)
+    , _uniqueTileCount(0)
+    , _uniqueTileSize(0)
+    , _savedTileCount(0)
+    , _savedTileSize(0)
     , _minZoom(3)
     , _maxZoom(3)
     , _defaultSet(false)
@@ -85,30 +73,44 @@ QGCCachedTileSet::errorCountStr()
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::numTilesStr()
+QGCCachedTileSet::totalTileCountStr()
 {
-    return QGCMapEngine::numberToString(_numTiles);
+    return QGCMapEngine::numberToString(_totalTileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::tilesSizeStr()
+QGCCachedTileSet::totalTilesSizeStr()
 {
-    return QGCMapEngine::bigSizeToString(_tilesSize);
+    return QGCMapEngine::bigSizeToString(_totalTileSize);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::savedTilesStr()
+QGCCachedTileSet::uniqueTileSizeStr()
 {
-    return QGCMapEngine::numberToString(_savedTiles);
+    return QGCMapEngine::bigSizeToString(_uniqueTileSize);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::savedSizeStr()
+QGCCachedTileSet::uniqueTileCountStr()
 {
-    return QGCMapEngine::bigSizeToString(_savedSize);
+    return QGCMapEngine::numberToString(_uniqueTileCount);
+}
+
+//-----------------------------------------------------------------------------
+QString
+QGCCachedTileSet::savedTileCountStr()
+{
+    return QGCMapEngine::numberToString(_savedTileCount);
+}
+
+//-----------------------------------------------------------------------------
+QString
+QGCCachedTileSet::savedTileSizeStr()
+{
+    return QGCMapEngine::bigSizeToString(_savedTileSize);
 }
 
 //-----------------------------------------------------------------------------
@@ -116,12 +118,12 @@ QString
 QGCCachedTileSet::downloadStatus()
 {
     if(_defaultSet) {
-        return tilesSizeStr();
+        return totalTilesSizeStr();
     }
-    if(_numTiles == _savedTiles) {
-        return savedSizeStr();
+    if(_totalTileCount <= _savedTileCount) {
+        return savedTileSizeStr();
     } else {
-        return savedSizeStr() + " / " + tilesSizeStr();
+        return savedTileSizeStr() + " / " + totalTilesSizeStr();
     }
 }
 
@@ -141,8 +143,8 @@ QGCCachedTileSet::createDownloadTask()
     if(_manager)
         connect(task, &QGCMapTask::error, _manager, &QGCMapEngineManager::taskError);
     getQGCMapEngine()->addTask(task);
-    emit numTilesChanged();
-    emit tilesSizeChanged();
+    emit totalTileCountChanged();
+    emit totalTilesSizeChanged();
     _batchRequested = true;
 }
 
@@ -177,6 +179,7 @@ QGCCachedTileSet::_tileListFetched(QList<QGCTile *> tiles)
         _noMoreTiles = true;
     }
     if(!tiles.size()) {
+        _doneWithDownload();
         return;
     }
     //-- If this is the first time, create Network Manager
@@ -190,22 +193,32 @@ QGCCachedTileSet::_tileListFetched(QList<QGCTile *> tiles)
 }
 
 //-----------------------------------------------------------------------------
+void QGCCachedTileSet::_doneWithDownload()
+{
+    if(!_errorCount) {
+        _totalTileCount = _savedTileCount;
+        _totalTileSize  = _savedTileSize;
+        //-- Too expensive to compute the real size now. Estimate it for the time being.
+        quint32 avg = _savedTileSize / _savedTileCount;
+        _uniqueTileSize = _uniqueTileCount * avg;
+    }
+    emit totalTileCountChanged();
+    emit totalTilesSizeChanged();
+    emit savedTileSizeChanged();
+    emit savedTileCountChanged();
+    emit uniqueTileSizeChanged();
+    _downloading = false;
+    emit downloadingChanged();
+    emit completeChanged();
+}
+
+//-----------------------------------------------------------------------------
 void QGCCachedTileSet::_prepareDownload()
 {
     if(!_tilesToDownload.count()) {
         //-- Are we done?
         if(_noMoreTiles) {
-            if(!_errorCount) {
-                _numTiles  = _savedTiles;
-                _tilesSize = _savedSize;
-            }
-            emit numTilesChanged();
-            emit tilesSizeChanged();
-            emit savedSizeChanged();
-            emit savedTilesChanged();
-            _downloading = false;
-            emit downloadingChanged();
-            emit completeChanged();
+            _doneWithDownload();
         } else {
             if(!_batchRequested)
                 createDownloadTask();
@@ -266,15 +279,17 @@ QGCCachedTileSet::_networkReplyFinished()
             QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateComplete, hash);
             getQGCMapEngine()->addTask(task);
             //-- Updated cached (downloaded) data
-            _savedSize += image.size();
-            _savedTiles++;
-            emit savedSizeChanged();
-            emit savedTilesChanged();
+            _savedTileSize += image.size();
+            _savedTileCount++;
+            emit savedTileSizeChanged();
+            emit savedTileCountChanged();
             //-- Update estimate
-            if(_savedTiles % 10 == 0) {
-                quint32 avg = _savedSize / _savedTiles;
-                _tilesSize = avg * _numTiles;
-                emit tilesSizeChanged();
+            if(_savedTileCount % 10 == 0) {
+                quint32 avg = _savedTileSize / _savedTileCount;
+                _totalTileSize  = avg * _totalTileCount;
+                _uniqueTileSize = avg * _uniqueTileCount;
+                emit totalTilesSizeChanged();
+                emit uniqueTileSizeChanged();
             }
         }
         //-- Setup a new download

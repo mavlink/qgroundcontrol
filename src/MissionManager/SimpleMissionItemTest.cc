@@ -1,28 +1,16 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 #include "SimpleMissionItemTest.h"
 #include "SimpleMissionItem.h"
+#include "QGCApplication.h"
 
 const SimpleMissionItemTest::ItemInfo_t SimpleMissionItemTest::_rgItemInfo[] = {
     { MAV_CMD_NAV_WAYPOINT,     MAV_FRAME_GLOBAL_RELATIVE_ALT },
@@ -59,8 +47,6 @@ const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLoi
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLand[] = {
     { "Altitude:",  70.1234567 },
-    { "Abort Alt:", 10.1234567 },
-    { "Heading:",   40.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesTakeoff[] = {
@@ -83,7 +69,7 @@ const SimpleMissionItemTest::ItemExpected_t SimpleMissionItemTest::_rgItemExpect
     { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns[0]),       SimpleMissionItemTest::_rgFactValuesLoiterTurns,    true },
     { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime[0]),         SimpleMissionItemTest::_rgFactValuesLoiterTime,     true },
     { sizeof(SimpleMissionItemTest::_rgFactValuesLand)/sizeof(SimpleMissionItemTest::_rgFactValuesLand[0]),                     SimpleMissionItemTest::_rgFactValuesLand,           true },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        false },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        true },
     { sizeof(SimpleMissionItemTest::_rgFactValuesConditionDelay)/sizeof(SimpleMissionItemTest::_rgFactValuesConditionDelay[0]), SimpleMissionItemTest::_rgFactValuesConditionDelay, false },
     { sizeof(SimpleMissionItemTest::_rgFactValuesDoJump)/sizeof(SimpleMissionItemTest::_rgFactValuesDoJump[0]),                 SimpleMissionItemTest::_rgFactValuesDoJump,         false },
 };
@@ -95,6 +81,8 @@ SimpleMissionItemTest::SimpleMissionItemTest(void)
 
 void SimpleMissionItemTest::_testEditorFacts(void)
 {
+    Vehicle* vehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_FIXED_WING, qgcApp()->toolbox()->firmwarePluginManager());
+
     for (size_t i=0; i<sizeof(_rgItemInfo)/sizeof(_rgItemInfo[0]); i++) {
         const ItemInfo_t* info = &_rgItemInfo[i];
         const ItemExpected_t* expected = &_rgItemExpected[i];
@@ -113,7 +101,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
                                 70.1234567,
                                 true,           // autoContinue
                                 false);         // isCurrentItem
-        SimpleMissionItem simpleMissionItem(NULL /* Vehicle */, missionItem);
+        SimpleMissionItem simpleMissionItem(vehicle, missionItem);
 
         // Validate that the fact values are correctly returned
 
@@ -133,9 +121,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
                 }
             }
             
-            if (!found) {
-                qDebug() << fact->name();
-            }
+            qDebug() << fact->name();
             QVERIFY(found);
         }
         QCOMPARE(factCount, expected->cFactValues);
@@ -143,6 +129,8 @@ void SimpleMissionItemTest::_testEditorFacts(void)
         int expectedCount = expected->relativeAltCheckbox ? 1 : 0;
         QCOMPARE(simpleMissionItem.checkboxFacts()->count(), expectedCount);
     }
+
+    delete vehicle;
 }
 
 void SimpleMissionItemTest::_testDefaultValues(void)

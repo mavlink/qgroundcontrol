@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -40,15 +27,24 @@ CoordinateVector::CoordinateVector(const QGeoCoordinate& coordinate1, const QGeo
     
 }
 
-CoordinateVector::~CoordinateVector()
-{
-    
-}
-
 void CoordinateVector::setCoordinates(const QGeoCoordinate& coordinate1, const QGeoCoordinate& coordinate2)
 {
-    _coordinate1 = coordinate1;
-    _coordinate2 = coordinate2;
-    emit coordinate1Changed(_coordinate1);
-    emit coordinate2Changed(_coordinate2);
+    setCoordinate1(coordinate1);
+    setCoordinate2(coordinate2);
+}
+
+void CoordinateVector::setCoordinate1(const QGeoCoordinate &coordinate)
+{
+    if (_coordinate1 != coordinate) {
+        _coordinate1 = coordinate;
+        emit coordinate1Changed(_coordinate1);
+    }
+}
+
+void CoordinateVector::setCoordinate2(const QGeoCoordinate &coordinate)
+{
+    if (_coordinate2 != coordinate) {
+        _coordinate2 = coordinate;
+        emit coordinate2Changed(_coordinate2);
+    }
 }

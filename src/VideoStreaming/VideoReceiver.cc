@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -62,6 +49,23 @@ void VideoReceiver::setVideoSink(GstElement* sink)
 }
 #endif
 
+#if defined(QGC_GST_STREAMING)
+static void newPadCB(GstElement * element, GstPad* pad, gpointer data)
+{
+    gchar *name;
+    name = gst_pad_get_name(pad);
+    g_print("A new pad %s was created\n", name);
+    GstCaps * p_caps = gst_pad_get_pad_template_caps (pad);
+    gchar * description = gst_caps_to_string(p_caps);
+    qDebug() << p_caps << ", " << description;
+    g_free(description);
+    GstElement * p_rtph264depay = GST_ELEMENT(data);
+    if(gst_element_link_pads(element, name, p_rtph264depay, "sink") == false)
+        qCritical() << "newPadCB : failed to link elements\n";
+    g_free(name);
+}
+#endif
+
 void VideoReceiver::start()
 {
 #if defined(QGC_GST_STREAMING)
@@ -69,7 +73,6 @@ void VideoReceiver::start()
         qCritical() << "VideoReceiver::start() failed because URI is not specified";
         return;
     }
-
     if (_videoSink == NULL) {
         qCritical() << "VideoReceiver::start() failed because video sink is not set";
         return;
@@ -85,27 +88,42 @@ void VideoReceiver::start()
     GstElement*     parser      = NULL;
     GstElement*     decoder     = NULL;
 
+    bool isUdp = _uri.contains("udp://");
+
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == NULL) {
             qCritical() << "VideoReceiver::start() failed. Error with gst_pipeline_new()";
             break;
         }
 
-        if ((dataSource = gst_element_factory_make("udpsrc", "udp-source")) == NULL) {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('udpsrc')";
+        if(isUdp) {
+            dataSource = gst_element_factory_make("udpsrc", "udp-source");
+        } else {
+            dataSource = gst_element_factory_make("rtspsrc", "rtsp-source");
+        }
+
+        if (!dataSource) {
+            qCritical() << "VideoReceiver::start() failed. Error with data source for gst_element_factory_make()";
             break;
         }
 
-        if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264")) == NULL) {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_caps_from_string()";
-            break;
+        if(isUdp) {
+            if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264")) == NULL) {
+                qCritical() << "VideoReceiver::start() failed. Error with gst_caps_from_string()";
+                break;
+            }
+            g_object_set(G_OBJECT(dataSource), "uri", qPrintable(_uri), "caps", caps, NULL);
+        } else {
+            g_object_set(G_OBJECT(dataSource), "location", qPrintable(_uri), "latency", 0, NULL);
         }
-
-        g_object_set(G_OBJECT(dataSource), "uri", qPrintable(_uri), "caps", caps, NULL);
 
         if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == NULL) {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('rtph264depay')";
             break;
+        }
+
+        if(!isUdp) {
+            g_signal_connect(dataSource, "pad-added", G_CALLBACK(newPadCB), demux);
         }
 
         if ((parser = gst_element_factory_make("h264parse", "h264-parser")) == NULL) {
@@ -120,7 +138,15 @@ void VideoReceiver::start()
 
         gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, decoder, _videoSink, NULL);
 
-        if (gst_element_link_many(dataSource, demux, parser, decoder, _videoSink, NULL) != (gboolean)TRUE) {
+        gboolean res = FALSE;
+
+        if(isUdp) {
+            res = gst_element_link_many(dataSource, demux, parser, decoder, _videoSink, NULL);
+        } else {
+            res = gst_element_link_many(demux, parser, decoder, _videoSink, NULL);
+        }
+
+        if (!res) {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_link_many()";
             break;
         }

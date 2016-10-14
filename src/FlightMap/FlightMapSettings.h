@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 #ifndef FlightMapSettings_H
 #define FlightMapSettings_H
@@ -29,6 +16,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QObject>
 #include <QStringList>
 
+/*
+  TODO: Map settings should come from QGCMapEngineManager. What is currently in
+  FlightMapSettings should be moved there so all map related funtions are in
+  one place.
+ */
+
 class FlightMapSettings : public QGCTool
 {
     Q_OBJECT
@@ -37,18 +30,19 @@ public:
     FlightMapSettings(QGCApplication* app);
 
     /// mapProvider is either Bing, Google or Open to specify to set of maps available
-    Q_PROPERTY(QString      mapProvider         READ mapProvider    WRITE setMapProvider NOTIFY mapProviderChanged)
+    Q_PROPERTY(QString      mapProvider     READ mapProvider    WRITE setMapProvider    NOTIFY mapProviderChanged)
 
     /// Map providers
-    Q_PROPERTY(QStringList  mapProviders        READ mapProviders   CONSTANT)
+    Q_PROPERTY(QStringList  mapProviders    READ mapProviders                           CONSTANT)
 
     /// Map types associated with current map provider
-    Q_PROPERTY(QStringList  mapTypes            MEMBER _mapTypes    NOTIFY mapTypesChanged)
+    Q_PROPERTY(QStringList  mapTypes        MEMBER _mapTypes                            NOTIFY mapTypesChanged)
 
-    Q_PROPERTY(bool         showScaleOnFlyView  READ showScaleOnFlyView WRITE setShowScaleOnFlyView NOTIFY showScaleOnFlyViewChanged)
+    /// Map type to be used for all maps
+    Q_PROPERTY(QString      mapType         READ mapType        WRITE setMapType        NOTIFY mapTypeChanged)
 
-    Q_INVOKABLE QString     mapTypeForMapName   (const QString& mapName);
-    Q_INVOKABLE void        setMapTypeForMapName(const QString& mapName, const QString& mapType);
+    /// Is Google Maps Enabled
+    Q_PROPERTY(bool         googleMapEnabled    READ googleMapEnabled                   CONSTANT)
 
     Q_INVOKABLE void        saveMapSetting      (const QString &mapName, const QString& key, const QString& value);
     Q_INVOKABLE QString     loadMapSetting      (const QString &mapName, const QString& key, const QString& defaultValue);
@@ -60,18 +54,25 @@ public:
     QString mapProvider(void);
     void setMapProvider(const QString& mapProvider);
 
+    QString mapType(void);
+    void setMapType(const QString& mapType);
+
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
     QStringList mapProviders() { return _supportedMapProviders; }
 
-    bool    showScaleOnFlyView          ();
-    void    setShowScaleOnFlyView       (bool show);
+#ifdef QGC_NO_GOOGLE_MAPS
+    bool    googleMapEnabled    () { return false; }
+#else
+    bool    googleMapEnabled    () { return true; }
+#endif
+
 
 signals:
-    void    mapProviderChanged          (const QString& mapProvider);
-    void    mapTypesChanged             (const QStringList& mapTypes);
-    void    showScaleOnFlyViewChanged   ();
+    void mapProviderChanged (const QString& mapProvider);
+    void mapTypesChanged    (const QStringList& mapTypes);
+    void mapTypeChanged     (const QString& mapType);
 
 private:
     void    _storeSettings              (void);
@@ -87,7 +88,6 @@ private:
     static const char* _settingsGroup;
     static const char* _mapProviderKey;
     static const char* _mapTypeKey;
-    static const char* _showScaleOnFlyViewKey;
 };
 
 #endif

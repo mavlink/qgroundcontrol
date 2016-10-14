@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -90,6 +77,7 @@ void Fact::forceSetRawValue(const QVariant& value)
             _rawValue.setValue(typedValue);
             _sendValueChangedSignal(cookedValue());
             emit _containerRawValueChanged(rawValue());
+            emit rawValueChanged(_rawValue);
         }
     } else {
         qWarning() << "Meta data pointer missing";
@@ -107,6 +95,7 @@ void Fact::setRawValue(const QVariant& value)
                 _rawValue.setValue(typedValue);
                 _sendValueChangedSignal(cookedValue());
                 emit _containerRawValueChanged(rawValue());
+                emit rawValueChanged(_rawValue);
             }
         }
     } else {
@@ -149,6 +138,7 @@ void Fact::_containerSetRawValue(const QVariant& value)
     _rawValue = value;
     _sendValueChangedSignal(cookedValue());
     emit vehicleUpdated(_rawValue);
+    emit rawValueChanged(_rawValue);
 }
 
 QString Fact::name(void) const

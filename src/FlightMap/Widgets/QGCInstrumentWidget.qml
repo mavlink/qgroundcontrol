@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -54,15 +41,15 @@ Item {
     property Fact   groundSpeedFact:    _emptyFact
     property Fact   airSpeedFact:       _emptyFact
 
-    property real   _defaultSize:   ScreenTools.defaultFontPixelSize * (9)
+    property real   _defaultSize:   ScreenTools.defaultFontPixelHeight * (9)
 
     property color  _backgroundColor:   qgcPal.window
-    property real   _spacing:           ScreenTools.defaultFontPixelSize * 0.33
+    property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
     property real   _topBottomMargin:   (size * 0.05) / 2
     property real   _availableValueHeight: maxHeight - (attitudeWidget.height + _spacer1.height + _spacer2.height + (_spacing * 4)) - (_showCompass ? compass.height : 0)
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
-    readonly property bool _showCompass:    !ScreenTools.isShortScreen
+    readonly property bool _showCompass:    true // !ScreenTools.isShortScreen
 
     QGCPalette { id: qgcPal }
 
@@ -108,8 +95,8 @@ Item {
                 mipmap:             true
                 opacity:            0.5
                 width:              attitudeWidget.width * 0.15
+                sourceSize.width:   width
                 fillMode:           Image.PreserveAspectFit
-
                 MouseArea {
                     anchors.fill:   parent
                     hoverEnabled:   true

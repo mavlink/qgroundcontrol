@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @brief Base class for all unit tests
@@ -31,6 +18,9 @@
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
 #include "Vehicle.h"
+
+#include <QTemporaryFile>
+#include <QTime>
 
 bool UnitTest::_messageBoxRespondedTo = false;
 bool UnitTest::_badResponseButton = false;
@@ -209,6 +199,13 @@ void UnitTest::checkExpectedMessageBox(int expectFailFlags)
     _messageBoxRespondedTo = false;
     
     QCOMPARE(messageBoxRespondedTo, true);
+}
+
+void UnitTest::checkMultipleExpectedMessageBox(int messageCount)
+{
+    int missedMessageBoxCount = _missedMessageBoxCount;
+    _missedMessageBoxCount = 0;
+    QCOMPARE(missedMessageBoxCount, messageCount);
 }
 
 void UnitTest::checkExpectedFileDialog(int expectFailFlags)
@@ -390,7 +387,7 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
 
     // Wait for the Vehicle to get created
     QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QCOMPARE(spyVehicle.wait(5000), true);
+    QCOMPARE(spyVehicle.wait(10000), true);
     QVERIFY(qgcApp()->toolbox()->multiVehicleManager()->parameterReadyVehicleAvailable());
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     QVERIFY(_vehicle);
@@ -438,4 +435,72 @@ void UnitTest::_closeMainWindow(bool cancelExpected)
         // This prevents qWarning from bad references in Qml
         QTest::qWait(1000);
     }
+}
+
+QString UnitTest::createRandomFile(uint32_t byteCount)
+{
+    QTemporaryFile tempFile;
+
+    QTime time = QTime::currentTime();
+    qsrand((uint)time.msec());
+
+    tempFile.setAutoRemove(false);
+    if (tempFile.open()) {
+        for (uint32_t bytesWritten=0; bytesWritten<byteCount; bytesWritten++) {
+            unsigned char byte = (qrand() * 0xFF) / RAND_MAX;
+            tempFile.write((char *)&byte, 1);
+        }
+        tempFile.close();
+        return tempFile.fileName();
+    } else {
+        qWarning() << "UnitTest::createRandomFile open failed" << tempFile.errorString();
+        return QString();
+    }
+}
+
+bool UnitTest::fileCompare(const QString& file1, const QString& file2)
+{
+    QFile f1(file1);
+    QFile f2(file2);
+
+    if (QFileInfo(file1).size() != QFileInfo(file2).size()) {
+        qWarning() << "UnitTest::fileCompare file sizes differ size1:size2" << QFileInfo(file1).size() << QFileInfo(file2).size();
+        return false;
+    }
+
+    if (!f1.open(QIODevice::ReadOnly)) {
+        qWarning() << "UnitTest::fileCompare unable to open file1:" << f1.errorString();
+        return false;
+    }
+    if (!f2.open(QIODevice::ReadOnly)) {
+        qWarning() << "UnitTest::fileCompare unable to open file1:" << f1.errorString();
+        return false;
+    }
+
+    qint64 bytesRemaining = QFileInfo(file1).size();
+    qint64 offset = 0;
+    while (bytesRemaining) {
+        uint8_t b1, b2;
+
+        qint64 bytesRead = f1.read((char*)&b1, 1);
+        if (bytesRead != 1) {
+            qWarning() << "UnitTest::fileCompare file1 read failed:" << f1.errorString();
+            return false;
+        }
+        bytesRead = f2.read((char*)&b2, 1);
+        if (bytesRead != 1) {
+            qWarning() << "UnitTest::fileCompare file2 read failed:" << f2.errorString();
+            return false;
+        }
+
+        if (b1 != b2) {
+            qWarning() << "UnitTest::fileCompare mismatch offset:b1:b2" << offset << b1 << b2;
+            return false;
+        }
+
+        offset++;
+        bytesRemaining--;
+    }
+
+    return true;
 }

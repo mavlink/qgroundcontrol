@@ -6,6 +6,7 @@ QGCVideoBackground      1.0 QGCVideoBackground.qml
 
 # Widgets
 InstrumentSwipeView             1.0 InstrumentSwipeView.qml
+MapScale                        1.0 MapScale.qml
 QGCArtificialHorizon            1.0 QGCArtificialHorizon.qml
 QGCAttitudeHUD                  1.0 QGCAttitudeHUD.qml
 QGCAttitudeWidget               1.0 QGCAttitudeWidget.qml
@@ -22,3 +23,6 @@ MissionItemIndicator    1.0 MissionItemIndicator.qml
 MissionItemView         1.0 MissionItemView.qml
 MissionLineView         1.0 MissionLineView.qml
 VehicleMapItem          1.0 VehicleMapItem.qml
+
+# Editor controls
+QGCMapPolygonControls  1.0 QGCMapPolygonControls.qml

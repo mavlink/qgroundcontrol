@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -77,7 +64,7 @@ QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, Fact
 
 void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaDataFile)
 {
-    qCDebug(ParameterLoaderLog) << "PX4ParameterMetaData::loadParameterFactMetaDataFile" << metaDataFile;
+    qCDebug(ParameterManagerLog) << "PX4ParameterMetaData::loadParameterFactMetaDataFile" << metaDataFile;
 
     if (_parameterMetaDataLoaded) {
         qWarning() << "Internal error: parameter meta data loaded more than once";
@@ -316,6 +303,40 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                             metaData->setIncrement(increment);
                         } else {
                             qCWarning(PX4ParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << text;
+                        }
+
+                    } else if (elementName == "boolean") {
+                        QVariant    enumValue;
+                        metaData->convertAndValidateRaw(1, false /* validate */, enumValue, errorString);
+                        metaData->addEnumInfo(tr("Enabled"), enumValue);
+                        metaData->convertAndValidateRaw(0, false /* validate */, enumValue, errorString);
+                        metaData->addEnumInfo(tr("Disabled"), enumValue);
+
+                    } else if (elementName == "bitmask") {
+                        // doing nothing individual bits will follow anyway. May be used for sanity checking.
+
+                    } else if (elementName == "bit") {
+                        bool ok = false;
+                        unsigned char bit = xml.attributes().value("index").toString().toUInt(&ok);
+                        if (ok) {
+                            QString bitDescription = xml.readElementText();
+                            qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
+                                                             << "index:" << bit << "description:" << bitDescription;
+
+                            if (bit < 31) {
+                                QVariant bitmaskRawValue = 1 << bit;
+                                QVariant bitmaskValue;
+                                QString errorString;
+                                if (metaData->convertAndValidateRaw(bitmaskRawValue, true, bitmaskValue, errorString)) {
+                                    metaData->addBitmaskInfo(bitDescription, bitmaskValue);
+                                } else {
+                                    qCDebug(PX4ParameterMetaDataLog) << "Invalid bitmask value, name:" << metaData->name()
+                                                                     << " type:" << metaData->type() << " value:" << bitmaskValue
+                                                                     << " error:" << errorString;
+                                }
+                            } else {
+                                qCWarning(PX4ParameterMetaDataLog) << "Invalid value for bitmask, bit:" << bit;
+                            }
                         }
                     } else {
                         qCDebug(PX4ParameterMetaDataLog) << "Unknown element in XML: " << elementName;

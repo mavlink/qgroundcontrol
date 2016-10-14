@@ -1,84 +1,72 @@
-/*=====================================================================
-
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
-
-import QtQuick 2.5
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.2
-import QtQuick.Layouts 1.2
-import QtGraphicalEffects 1.0
-
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.ScreenTools 1.0
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
 
-QGCView {
-    id:             _safetyView
-    viewPanel:      panel
-    anchors.fill:   parent
+import QtQuick                  2.5
+import QtQuick.Controls         1.2
+import QtQuick.Controls.Styles  1.2
+import QtQuick.Layouts          1.2
+import QtGraphicalEffects       1.0
 
-    FactPanelController { id: controller; factPanel: panel }
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
 
-    QGCPalette { id: palette; colorGroupEnabled: enabled }
 
-    property real _margins:         ScreenTools.defaultFontPixelHeight
-    property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 22
-    property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 18
+SetupPage {
+    id:             safetyPage
+    pageComponent:  pageComponent
 
-    property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
-    property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
-    property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
-    property Fact _rtlLandDelay:    controller.getParameterFact(-1, "RTL_LAND_DELAY")
-    property Fact _lowBattAction:   controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
-    property Fact _rcLossAction:    controller.getParameterFact(-1, "NAV_RCL_ACT")
-    property Fact _dlLossAction:    controller.getParameterFact(-1, "NAV_DLL_ACT")
-    property Fact _disarmLandDelay: controller.getParameterFact(-1, "COM_DISARM_LAND")
-    property Fact _landSpeedMC: controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
+    Component {
+        id: pageComponent
 
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
-        QGCFlickable {
-            clip:                                       true
-            anchors.fill:   parent
-            contentHeight:                              mainCol.height
-            flickableDirection:                         Flickable.VerticalFlick
+        Item {
+            width:  Math.max(availableWidth, mainCol.width)
+            height: mainCol.height
+
+            FactPanelController {
+                id:         controller
+                factPanel:  safetyPage.viewPanel
+            }
+
+            property real _margins:         ScreenTools.defaultFontPixelHeight
+            property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 20
+            property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 14
+
+            property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
+            property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
+            property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
+            property Fact _rtlLandDelay:    controller.getParameterFact(-1, "RTL_LAND_DELAY")
+            property Fact _lowBattAction:   controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
+            property Fact _rcLossAction:    controller.getParameterFact(-1, "NAV_RCL_ACT")
+            property Fact _dlLossAction:    controller.getParameterFact(-1, "NAV_DLL_ACT")
+            property Fact _disarmLandDelay: controller.getParameterFact(-1, "COM_DISARM_LAND")
+            property Fact _landSpeedMC:     controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
+
+            property bool _showIcons: !ScreenTools.isTinyScreen
+
             Column {
                 id:                                     mainCol
                 spacing:                                _margins
                 anchors.horizontalCenter:               parent.horizontalCenter
+
                 /*
                    **** Low Battery ****
                 */
                 Item { width: 1; height: _margins * 0.5; }
                 QGCLabel {
                     text:                               qsTr("Low Battery Failsafe Trigger")
-                    font.weight:                        Font.DemiBold
+                    font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlSettings.width
                     height:                             lowBattRow.height + _margins * 2
                     Row {
@@ -89,17 +77,22 @@ QGCView {
                         Image {
                             height:                     ScreenTools.defaultFontPixelWidth * 6
                             width:                      ScreenTools.defaultFontPixelWidth * 20
+                            sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/LowBatteryLight.svg" : "/qmlimages/LowBattery.svg"
+                            source:                     qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/LowBatteryLight.svg" : "/qmlimages/LowBattery.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
-                        Item { width: _margins * 0.5; height: 1; }
+                        Item {
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
+                        }
                         Column {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             Row {
-                                visible:                !controller.fixedWing
                                 QGCLabel {
                                     anchors.baseline:   lowBattCombo.baseline
                                     width:              _middleRowWidth
@@ -146,10 +139,10 @@ QGCView {
                 */
                 QGCLabel {
                     text:                               qsTr("RC Loss Failsafe Trigger")
-                    font.weight:                        Font.DemiBold
+                    font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlSettings.width
                     height:                             rcLossRow.height + _margins * 2
                     Row {
@@ -160,12 +153,18 @@ QGCView {
                         Image {
                             height:                     ScreenTools.defaultFontPixelWidth * 6
                             width:                      ScreenTools.defaultFontPixelWidth * 20
+                            sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/RCLossLight.svg" : "/qmlimages/RCLoss.svg"
+                            source:                     qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/RCLossLight.svg" : "/qmlimages/RCLoss.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
-                        Item { width: _margins * 0.5; height: 1; }
+                        Item {
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
+                        }
                         Column {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
@@ -203,10 +202,10 @@ QGCView {
                 */
                 QGCLabel {
                     text:                               qsTr("Data Link Loss Failsafe Trigger")
-                    font.weight:                        Font.DemiBold
+                    font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlSettings.width
                     height:                             dlLossRow.height + _margins * 2
                     Row {
@@ -217,12 +216,18 @@ QGCView {
                         Image {
                             height:                     ScreenTools.defaultFontPixelWidth * 6
                             width:                      ScreenTools.defaultFontPixelWidth * 20
+                            sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/DatalinkLossLight.svg" : "/qmlimages/DatalinkLoss.svg"
+                            source:                     qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/DatalinkLossLight.svg" : "/qmlimages/DatalinkLoss.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
-                        Item { width: _margins * 0.5; height: 1; }
+                        Item {
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
+                        }
                         Column {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
@@ -260,10 +265,10 @@ QGCView {
                 */
                 QGCLabel {
                     text:                               qsTr("Geofence Failsafe Trigger")
-                    font.weight:                        Font.DemiBold
+                    font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlSettings.width
                     height:                             geofenceRow.height + _margins * 2
                     Row {
@@ -274,12 +279,18 @@ QGCView {
                         Image {
                             height:                     ScreenTools.defaultFontPixelWidth * 8
                             width:                      ScreenTools.defaultFontPixelWidth * 20
+                            sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     qgcPal.globalTheme === QGCPalette.Light ? "/qmlimages/GeoFenceLight.svg" : "/qmlimages/GeoFence.svg"
+                            source:                     qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/GeoFenceLight.svg" : "/qmlimages/GeoFence.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
-                        Item { width: _margins * 0.5; height: 1; }
+                        Item {
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
+                        }
                         Column {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
@@ -302,8 +313,8 @@ QGCView {
                                     id:                 fenceRadiusCheckBox
                                     anchors.baseline:   fenceRadiusField.baseline
                                     text:               qsTr("Max radius:")
-                                    checked:            _fenceRadius.value >= 0
-                                    onClicked:          _fenceRadius.value = checked ? 100 : -1
+                                    checked:            _fenceRadius.value > 0
+                                    onClicked:          _fenceRadius.value = checked ? 100 : 0
                                     width:              _middleRowWidth
                                 }
                                 FactTextField {
@@ -319,8 +330,8 @@ QGCView {
                                     id:                 fenceAltMaxCheckBox
                                     anchors.baseline:   fenceAltMaxField.baseline
                                     text:               qsTr("Max altitude:")
-                                    checked:            _fenceAlt.value >= 0
-                                    onClicked:          _fenceAlt.value = checked ? 100 : -1
+                                    checked:            _fenceAlt.value > 0
+                                    onClicked:          _fenceAlt.value = checked ? 100 : 0
                                     width:              _middleRowWidth
                                 }
                                 FactTextField {
@@ -340,11 +351,11 @@ QGCView {
                 QGCLabel {
                     id:                                 rtlLabel
                     text:                               qsTr("Return Home Settings")
-                    font.weight:                        Font.DemiBold
+                    font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
                     id:                                 rtlSettings
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlRow.width  + _margins * 2
                     height:                             rtlRow.height + _margins * 2
                     Row {
@@ -354,15 +365,21 @@ QGCView {
                         Item { width: _margins * 0.5; height: 1; }
                         QGCColoredImage {
                             id:                         icon
-                            color:                      palette.text
+                            color:                      qgcPal.text
                             height:                     ScreenTools.defaultFontPixelWidth * 10
                             width:                      ScreenTools.defaultFontPixelWidth * 20
+                            sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     controller.fixedWing ? "/qmlimages/ReturnToHomeAltitude.svg" : "/qmlimages/ReturnToHomeAltitudeCopter.svg"
+                            source:                     controller.vehicle.fixedWing ? "/qmlimages/ReturnToHomeAltitude.svg" : "/qmlimages/ReturnToHomeAltitudeCopter.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
-                        Item { width: _margins * 0.5; height: 1; }
+                        Item {
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
+                        }
                         Column {
                             spacing:                    _margins * 0.5
                             Row {
@@ -418,7 +435,7 @@ QGCView {
                                     text:               qsTr("Loiter Time")
                                     width:              _middleRowWidth
                                     anchors.baseline:   landDelayField.baseline
-                                    color:              palette.text
+                                    color:              qgcPal.text
                                     enabled:            homeLoiterLandRadio.checked === true
                                 }
                                 FactTextField {
@@ -434,7 +451,7 @@ QGCView {
                                     text:               qsTr("Loiter Altitude")
                                     width:              _middleRowWidth
                                     anchors.baseline:   descendField.baseline
-                                    color:              palette.text
+                                    color:              qgcPal.text
                                     enabled:            homeLoiterLandRadio.checked === true || homeLoiterNoLandRadio.checked === true
                                 }
                                 FactTextField {
@@ -453,10 +470,10 @@ QGCView {
                 */
                 QGCLabel {
                     text:                               qsTr("Land Mode Settings")
-                    font.weight:                        Font.DemiBold
+                    font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              rtlSettings.width
                     height:                             landModeRow.height + _margins * 2
                     Row {
@@ -468,23 +485,26 @@ QGCView {
                             height:                     1
                         }
                         QGCColoredImage {
-                            color:                      palette.text
-                            height:                     ScreenTools.defaultFontPixelWidth * 10
+                            color:                      qgcPal.text
+                            height:                     ScreenTools.defaultFontPixelWidth * 13
                             width:                      ScreenTools.defaultFontPixelWidth * 20
+                            sourceSize.width:           width
                             mipmap:                     true
                             fillMode:                   Image.PreserveAspectFit
-                            source:                     controller.fixedWing ? "/qmlimages/LandMode.svg" : "/qmlimages/LandModeCopter.svg"
+                            source:                     controller.vehicle.fixedWing ? "/qmlimages/LandMode.svg" : "/qmlimages/LandModeCopter.svg"
                             anchors.verticalCenter:     parent.verticalCenter
+                            visible:                    _showIcons
                         }
                         Item {
-                            width:                      _margins * 0.5
-                            height:                     1
+                            width:      _margins * 0.5
+                            height:     1
+                            visible:    _showIcons
                         }
                         Column {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             Row {
-                                visible:                _landSpeedMC !== -1
+                                visible:                !controller.vehicle.fixedWing && (_landSpeedMC !== -1)
                                 QGCLabel {
                                     anchors.baseline:   landVelField.baseline
                                     width:              _middleRowWidth
@@ -518,8 +538,8 @@ QGCView {
                     }
                 }
                 Item { width: 1; height: _margins * 0.5; }
-            }
-        }
-    }
-}
+            } // Column
+        } // Item
+    } // Component
+} // SetupPage
 

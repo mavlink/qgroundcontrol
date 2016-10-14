@@ -62,7 +62,7 @@ process_framework() {
     rm -rf $GST_TARGET/lib/libffi-3.0.13
     rm -rf $GST_TARGET/lib/pkgconfig
     rm $GST_TARGET/Commands
-    #-- Now relocate the embeded paths
+    #-- Now relocate the embedded paths
     echo "GST Installer: Relocating"
     python $RELOC -r "$GST_TARGET" "$OLDDLPATH" "$NEWDLPATH" > /dev/null || die "Error relocating binaries in $GST_TARGET/lib"
 }

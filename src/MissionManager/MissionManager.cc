@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -57,6 +44,15 @@ MissionManager::~MissionManager()
 
 void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 {
+    if (_vehicle->isOfflineEditingVehicle()) {
+        return;
+    }
+
+    if (inProgress()) {
+        qCDebug(MissionManagerLog) << "writeMissionItems called while transaction in progress";
+        return;
+    }
+
     bool skipFirstItem = !_vehicle->firmwarePlugin()->sendHomePositionToVehicle();
 
     _missionItems.clear();
@@ -81,11 +77,6 @@ void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 
     qCDebug(MissionManagerLog) << "writeMissionItems count:" << _missionItems.count();
     
-    if (inProgress()) {
-        qCDebug(MissionManagerLog) << "writeMissionItems called while transaction in progress";
-        return;
-    }
-
     // Prime write list
     for (int i=0; i<_missionItems.count(); i++) {
         _itemIndicesToWrite << i;
@@ -99,9 +90,13 @@ void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
     missionCount.target_component = MAV_COMP_ID_MISSIONPLANNER;
     missionCount.count = _missionItems.count();
 
-    mavlink_msg_mission_count_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &message, &missionCount);
-
     _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_mission_count_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                          qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                          _dedicatedLink->mavlinkChannel(),
+                                          &message,
+                                          &missionCount);
+
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
     _startAckTimeout(AckMissionRequest);
     emit inProgressChanged(true);
@@ -120,7 +115,7 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     mavlink_mission_item_t  missionItem;
 
     missionItem.target_system =     _vehicle->id();
-    missionItem.target_component =  0;
+    missionItem.target_component =  _vehicle->defaultComponentId();
     missionItem.seq =               0;
     missionItem.command =           MAV_CMD_NAV_WAYPOINT;
     missionItem.param1 =            0;
@@ -134,9 +129,13 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     missionItem.current =           altChangeOnly ? 3 : 2;
     missionItem.autocontinue =      true;
 
-    mavlink_msg_mission_item_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &messageOut, &missionItem);
-
     _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_mission_item_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &missionItem);
+
     _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
     _startAckTimeout(AckGuidedItem);
     emit inProgressChanged(true);
@@ -144,7 +143,16 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
 
 void MissionManager::requestMissionItems(void)
 {
+    if (_vehicle->isOfflineEditingVehicle()) {
+        return;
+    }
+
     qCDebug(MissionManagerLog) << "requestMissionItems read sequence";
+
+    if (inProgress()) {
+        qCDebug(MissionManagerLog) << "requestMissionItems called while transaction in progress";
+        return;
+    }
     
     mavlink_message_t               message;
     mavlink_mission_request_list_t  request;
@@ -157,9 +165,13 @@ void MissionManager::requestMissionItems(void)
     request.target_system = _vehicle->id();
     request.target_component = MAV_COMP_ID_MISSIONPLANNER;
     
-    mavlink_msg_mission_request_list_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &message, &request);
-    
     _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_mission_request_list_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                                 qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                                 _dedicatedLink->mavlinkChannel(),
+                                                 &message,
+                                                 &request);
+    
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
     _startAckTimeout(AckMissionCount);
     emit inProgressChanged(true);
@@ -173,7 +185,7 @@ void MissionManager::_ackTimeout(void)
     
     if (timedOutAck == AckNone) {
         qCWarning(MissionManagerLog) << "_ackTimeout timeout with AckNone";
-        _sendError(InternalError, "Internal error occured during Mission Item communication: _ackTimeOut:_retryAck == AckNone");
+        _sendError(InternalError, "Internal error occurred during Mission Item communication: _ackTimeOut:_retryAck == AckNone");
         return;
     }
     
@@ -197,8 +209,13 @@ bool MissionManager::_stopAckTimeout(AckType_t expectedAck)
     _ackTimeoutTimer->stop();
     
     if (savedRetryAck != expectedAck) {
-        _sendError(ProtocolOrderError, QString("Vehicle responded incorrectly to mission item protocol sequence: %1:%2").arg(_ackTypeToString(savedRetryAck)).arg(_ackTypeToString(expectedAck)));
-        _finishTransaction(false);
+        if (savedRetryAck == AckNone) {
+            // Don't annoy the user with warnings about unexpected mission commands, just ignore them; ArduPilot updates home position using
+            // spurious MISSION_ITEMs.
+        } else {
+            _sendError(ProtocolOrderError, QString("Vehicle responded incorrectly to mission item protocol sequence: %1:%2").arg(_ackTypeToString(savedRetryAck)).arg(_ackTypeToString(expectedAck)));
+            _finishTransaction(false);
+        }
         success = false;
     } else {
         success = true;
@@ -218,7 +235,11 @@ void MissionManager::_readTransactionComplete(void)
     missionAck.target_component =   MAV_COMP_ID_MISSIONPLANNER;
     missionAck.type =               MAV_MISSION_ACCEPTED;
     
-    mavlink_msg_mission_ack_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &message, &missionAck);
+    mavlink_msg_mission_ack_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                        _dedicatedLink->mavlinkChannel(),
+                                        &message,
+                                        &missionAck);
     
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
 
@@ -264,7 +285,11 @@ void MissionManager::_requestNextMissionItem(void)
     missionRequest.target_component =   MAV_COMP_ID_MISSIONPLANNER;
     missionRequest.seq =                _itemIndicesToRead[0];
     
-    mavlink_msg_mission_request_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &message, &missionRequest);
+    mavlink_msg_mission_request_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                            _dedicatedLink->mavlinkChannel(),
+                                            &message,
+                                            &missionRequest);
     
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
     _startAckTimeout(AckMissionItem);
@@ -372,7 +397,11 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message)
     missionItem.current =           missionRequest.seq == 0;
     missionItem.autocontinue =      item->autoContinue();
     
-    mavlink_msg_mission_item_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &messageOut, &missionItem);
+    mavlink_msg_mission_item_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &missionItem);
     
     _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
     _startAckTimeout(AckMissionRequest);
@@ -577,8 +606,8 @@ void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
 
     mavlink_msg_mission_current_decode(&message, &missionCurrent);
 
-    qCDebug(MissionManagerLog) << "_handleMissionCurrent seq:" << missionCurrent.seq;
     if (missionCurrent.seq != _currentMissionItem) {
+        qCDebug(MissionManagerLog) << "_handleMissionCurrent seq:" << missionCurrent.seq;
         _currentMissionItem = missionCurrent.seq;
         emit currentItemChanged(_currentMissionItem);
     }

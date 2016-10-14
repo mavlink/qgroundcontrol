@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -30,6 +17,8 @@
 #include "QGCMAVLink.h"
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
+#include "GeoFenceManager.h"
+#include "RallyPointManager.h"
 
 #include <QList>
 #include <QString>
@@ -53,7 +42,8 @@ public:
         SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
         MavCmdPreflightStorageCapability =  1 << 1, ///< MAV_CMD_PREFLIGHT_STORAGE is supported
         PauseVehicleCapability =            1 << 2, ///< Vehicle supports pausing at current location
-        GuidedModeCapability =              1 << 3, ///< Vehicle Support guided mode commands
+        GuidedModeCapability =              1 << 3, ///< Vehicle supports guided mode commands
+        OrbitModeCapability =               1 << 4, ///< Vehicle supports orbit mode
     } FirmwareCapabilities;
 
     /// Maps from on parameter name to another
@@ -70,27 +60,30 @@ public:
     ///     key:    firmware major version
     ///     value:  remapParamNameMinorVersionRemapMap_t entry
     typedef QMap<int, remapParamNameMinorVersionRemapMap_t> remapParamNameMajorVersionMap_t;
-    
-    /// Called when Vehicle is first created to send any necessary mavlink messages to the firmware.
+
+    /// Called when Vehicle is first created to perform any firmware specific setup.
     virtual void initializeVehicle(Vehicle* vehicle);
 
     /// @return true: Firmware supports all specified capabilites
-    virtual bool isCapable(FirmwareCapabilities capabilities);
+    virtual bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities);
 
     /// Returns VehicleComponents for specified Vehicle
     ///     @param vehicle Vehicle  to associate with components
     /// @return List of VehicleComponents for the specified vehicle. Caller owns returned objects and must
     ///         free when no longer needed.
     virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
-    
+
     /// Returns the list of available flight modes
-    virtual QStringList flightModes(void) { return QStringList(); }
-    
+    virtual QStringList flightModes(Vehicle* vehicle) {
+        Q_UNUSED(vehicle);
+        return QStringList();
+    }
+
     /// Returns the name for this flight mode. Flight mode names must be human readable as well as audio speakable.
     ///     @param base_mode Base mode from mavlink HEARTBEAT message
     ///     @param custom_mode Custom mode from mavlink HEARTBEAT message
     virtual QString flightMode(uint8_t base_mode, uint32_t custom_mode) const;
-    
+
     /// Sets base_mode and custom_mode to specified flight mode.
     ///     @param[out] base_mode Base mode for SET_MODE mavlink message
     ///     @param[out] custom_mode Custom mode for SET_MODE mavlink message
@@ -119,6 +112,10 @@ public:
     ///     @param altitudeRel Relative altitude to takeoff to
     virtual void guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
 
+    /// Command vehicle to orbit given center point
+    ///     @param centerCoord Center Coordinates
+    virtual void guidedModeOrbit(Vehicle* vehicle, const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude);
+
     /// Command vehicle to move to specified location (altitude is included and relative)
     virtual void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord);
 
@@ -132,7 +129,24 @@ public:
     /// The remainder can be assigned to Vehicle actions.
     /// @return -1: reserver all buttons, >0 number of buttons to reserve
     virtual int manualControlReservedButtonCount(void);
-    
+
+    /// Returns true if the vehicle and firmware supports the use of a throttle joystick that
+    /// is zero when centered. Typically not supported on vehicles that have bidirectional
+    /// throttle.
+    virtual bool supportsThrottleModeCenterZero(void);
+
+    /// Returns true if the firmware supports the use of the MAVlink "MANUAL_CONTROL" message.
+    /// By default, this returns false unless overridden in the firmware plugin.
+    virtual bool supportsManualControl(void);
+
+    /// Returns true if the firmware supports the use of the RC radio and requires the RC radio
+    /// setup page. Returns true by default.
+    virtual bool supportsRadio(void);
+
+    /// Returns true if the firmware supports the AP_JSButton library, which allows joystick buttons
+    /// to be assigned via parameters in firmware. Default is false.
+    virtual bool supportsJSButton(void);
+
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.
@@ -140,13 +154,14 @@ public:
     ///     @param message[in,out] Mavlink message to adjust if needed.
     /// @return false: skip message, true: process message
     virtual bool adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
-    
+
     /// Called before any mavlink message is sent to the Vehicle so plugin can adjust any message characteristics.
     /// This is handy to adjust or differences in mavlink spec implementations such that the base code can remain
     /// mavlink generic.
     ///     @param vehicle Vehicle message came from
+    ///     @param outgoingLink Link that messae is going out on
     ///     @param message[in,out] Mavlink message to adjust if needed.
-    virtual void adjustOutgoingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
+    virtual void adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
 
     /// Determines how to handle the first item of the mission item list. Internally to QGC the first item
     /// is always the home position.
@@ -155,7 +170,7 @@ public:
     ///             it, it may or may not return a home position back in position 0.
     ///     false: Do not send first item to vehicle, sequence numbers must be adjusted
     virtual bool sendHomePositionToVehicle(void);
-    
+
     /// Returns the parameter that is used to identify the default component
     virtual QString getDefaultComponentIdParam(void) const { return QString(); }
 
@@ -169,7 +184,7 @@ public:
     virtual QString internalParameterMetaDataFile(void) { return QString(); }
 
     /// Loads the specified parameter meta data file.
-    /// @return Opaque parameter meta data information which must be stored with Vehicle. Vehicle is reponsible to
+    /// @return Opaque parameter meta data information which must be stored with Vehicle. Vehicle is responsible to
     ///         call deleteParameterMetaData when no longer needed.
     virtual QObject* loadParameterMetaData(const QString& metaDataFile) { Q_UNUSED(metaDataFile); return NULL; }
 
@@ -180,17 +195,33 @@ public:
     /// List of supported mission commands. Empty list for all commands supported.
     virtual QList<MAV_CMD> supportedMissionCommands(void);
 
-    /// Returns the names for the mission command json override files. Empty string to specify no overrides.
-    ///     @param[out] commonJsonFilename Filename for common overrides
-    ///     @param[out] fixedWingJsonFilename Filename for fixed wing overrides
-    ///     @param[out] multiRotorJsonFilename Filename for multi rotor overrides
-    virtual void missionCommandOverrides(QString& commonJsonFilename, QString& fixedWingJsonFilename, QString& multiRotorJsonFilename) const;
+    /// Returns the name of the mission command json override file for the specified vehicle type.
+    ///     @param vehicleType Vehicle type to return file for, MAV_TYPE_GENERIC is a request for overrides for all vehicle types
+    virtual QString missionCommandOverrides(MAV_TYPE vehicleType) const;
 
     /// Returns the mapping structure which is used to map from one parameter name to another based on firmware version.
     virtual const remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const;
 
     /// Returns the highest major version number that is known to the remap for this specified major version.
     virtual int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const;
+
+    /// @return true: Motors are coaxial like an X8 config, false: Quadcopter for example
+    virtual bool multiRotorCoaxialMotors(Vehicle* vehicle) { Q_UNUSED(vehicle); return false; }
+
+    /// @return true: X confiuration, false: Plus configuration
+    virtual bool multiRotorXConfig(Vehicle* vehicle) { Q_UNUSED(vehicle); return false; }
+
+    /// Returns a newly created geofence manager for this vehicle.
+    virtual GeoFenceManager* newGeoFenceManager(Vehicle* vehicle) { return new GeoFenceManager(vehicle); }
+
+    /// Returns the parameter which holds the fence circle radius if supported.
+    virtual QString geoFenceRadiusParam(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
+
+    /// Returns a newly created rally point manager for this vehicle.
+    virtual RallyPointManager* newRallyPointManager(Vehicle* vehicle) { return new RallyPointManager(vehicle); }
+
+    /// Return the resource file which contains the set of params loaded for offline editing.
+    virtual QString offlineEditingParamFile(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
 };
 
 #endif

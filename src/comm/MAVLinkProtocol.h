@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -77,62 +64,30 @@ public:
     bool versionCheckEnabled() const {
         return m_enable_version_check;
     }
-    /** @brief Get the multiplexing state */
-    bool multiplexingEnabled() const {
-        return m_multiplexingEnabled;
-    }
-    /** @brief Get the authentication state */
-    bool getAuthEnabled() {
-        return m_authEnabled;
-    }
     /** @brief Get the protocol version */
     int getVersion() {
         return MAVLINK_VERSION;
-    }
-    /** @brief Get the auth key */
-    QString getAuthKey() {
-        return m_authKey;
-    }
-    /** @brief Get state of parameter retransmission */
-    bool paramGuardEnabled() {
-        return m_paramGuardEnabled;
-    }
-    /** @brief Get parameter read timeout */
-    int getParamRetransmissionTimeout() {
-        return m_paramRetransmissionTimeout;
-    }
-    /** @brief Get parameter write timeout */
-    int getParamRewriteTimeout() {
-        return m_paramRewriteTimeout;
-    }
-    /** @brief Get state of action retransmission */
-    bool actionGuardEnabled() {
-        return m_actionGuardEnabled;
-    }
-    /** @brief Get parameter read timeout */
-    int getActionRetransmissionTimeout() {
-        return m_actionRetransmissionTimeout;
     }
     /**
      * Retrieve a total of all successfully parsed packets for the specified link.
      * @returns -1 if this is not available for this protocol, # of packets otherwise.
      */
     qint32 getReceivedPacketCount(const LinkInterface *link) const {
-        return totalReceiveCounter[link->getMavlinkChannel()];
+        return totalReceiveCounter[link->mavlinkChannel()];
     }
     /**
      * Retrieve a total of all parsing errors for the specified link.
      * @returns -1 if this is not available for this protocol, # of errors otherwise.
      */
     qint32 getParsingErrorCount(const LinkInterface *link) const {
-        return totalErrorCounter[link->getMavlinkChannel()];
+        return totalErrorCounter[link->mavlinkChannel()];
     }
     /**
      * Retrieve a total of all dropped packets for the specified link.
      * @returns -1 if this is not available for this protocol, # of packets otherwise.
      */
     qint32 getDroppedPacketCount(const LinkInterface *link) const {
-        return totalLossCounter[link->getMavlinkChannel()];
+        return totalLossCounter[link->mavlinkChannel()];
     }
     /**
      * Reset the counters for all metadata for this link.
@@ -152,34 +107,8 @@ public slots:
     /** @brief Set the system id of this application */
     void setSystemId(int id);
 
-    /** @brief Enabled/disable packet multiplexing */
-    void enableMultiplexing(bool enabled);
-
-    /** @brief Enable / disable parameter retransmission */
-    void enableParamGuard(bool enabled);
-
-    /** @brief Enable / disable action retransmission */
-    void enableActionGuard(bool enabled);
-
-    /** @brief Set parameter read timeout */
-    void setParamRetransmissionTimeout(int ms);
-
-    /** @brief Set parameter write timeout */
-    void setParamRewriteTimeout(int ms);
-
-    /** @brief Set parameter read timeout */
-    void setActionRetransmissionTimeout(int ms);
-
     /** @brief Enable / disable version check */
     void enableVersionCheck(bool enabled);
-
-    /** @brief Enable / disable authentication */
-    void enableAuth(bool enable);
-
-    /** @brief Set authentication token */
-    void setAuthKey(QString key) {
-        m_authKey = key;
-    }
 
     /** @brief Load protocol settings */
     void loadSettings();
@@ -195,15 +124,7 @@ public slots:
 #endif
 
 protected:
-    bool m_multiplexingEnabled; ///< Enable/disable packet multiplexing
-    bool m_authEnabled;        ///< Enable authentication token broadcast
-    QString m_authKey;         ///< Authentication key
     bool m_enable_version_check; ///< Enable checking of version match of MAV and QGC
-    int m_paramRetransmissionTimeout; ///< Timeout for parameter retransmission
-    int m_paramRewriteTimeout;    ///< Timeout for sending re-write request
-    bool m_paramGuardEnabled;       ///< Parameter retransmission/rewrite enabled
-    bool m_actionGuardEnabled;       ///< Action request retransmission enabled
-    int m_actionRetransmissionTimeout; ///< Timeout for parameter retransmission
     QMutex receiveMutex;        ///< Mutex to protect receiveBytes function
     int lastIndex[256][256];    ///< Store the last received sequence ID for each system/componenet pair
     int totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS];    ///< The total number of successfully received messages
@@ -220,28 +141,12 @@ signals:
 
     /** @brief Message received and directly copied via signal */
     void messageReceived(LinkInterface* link, mavlink_message_t message);
-    /** @brief Emitted if multiplexing is started / stopped */
-    void multiplexingChanged(bool enabled);
-    /** @brief Emitted if authentication support is enabled / disabled */
-    void authKeyChanged(QString key);
-    /** @brief Authentication changed */
-    void authChanged(bool enabled);
     /** @brief Emitted if version check is enabled / disabled */
     void versionCheckChanged(bool enabled);
     /** @brief Emitted if a message from the protocol should reach the user */
     void protocolStatusMessage(const QString& title, const QString& message);
     /** @brief Emitted if a new system ID was set */
     void systemIdChanged(int systemId);
-    /** @brief Emitted if param guard status changed */
-    void paramGuardChanged(bool enabled);
-    /** @brief Emitted if param read timeout changed */
-    void paramRetransmissionTimeoutChanged(int ms);
-    /** @brief Emitted if param write timeout changed */
-    void paramRewriteTimeoutChanged(int ms);
-    /** @brief Emitted if action guard status changed */
-    void actionGuardChanged(bool enabled);
-    /** @brief Emitted if action request timeout changed */
-    void actionRetransmissionTimeoutChanged(int ms);
 
     void receiveLossPercentChanged(int uasId, float lossPercent);
     void receiveLossTotalChanged(int uasId, int totalLoss);
@@ -267,10 +172,6 @@ private slots:
     void _vehicleCountChanged(int count);
     
 private:
-    void _sendMessage(mavlink_message_t message);
-    void _sendMessage(LinkInterface* link, mavlink_message_t message);
-    void _sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid);
-
 #ifndef __mobile__
     bool _closeLogFile(void);
     void _startLogging(void);

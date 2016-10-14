@@ -41,6 +41,8 @@
 
 #include <QtGlobal>
 
+#define GPS_READ_BUFFER_SIZE 1024
+
 #define GPS_INFO(...) qInfo(__VA_ARGS__)
 #define GPS_WARN(...) qWarning(__VA_ARGS__)
 #define GPS_ERR(...) qCritical(__VA_ARGS__)
@@ -59,7 +61,9 @@ public:
     static void usleep(unsigned long usecs) { QThread::usleep(usecs); }
 };
 
-#define usleep Sleeper::usleep
+static inline void usleep(unsigned long usecs) {
+    Sleeper::usleep(usecs);
+}
 
 
 typedef uint64_t gps_abstime;

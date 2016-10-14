@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 import QtQuick                  2.2
 import QtQuick.Controls         1.2
@@ -42,19 +29,19 @@ Item {
     //property var qgcView      - QGCView control
     //property var qgcViewPanel - QGCViewPanel control
 
-    readonly property int monitorThresholdCharWidth: 8  // Character width of Monitor and Threshold labels
+    readonly property bool _shortText: ScreenTools.isTinyScreen
 
     // User visible strings
 
     readonly property string title:                     qsTr("FLIGHT MODES")
 
-
-    property string topHelpText:                        qsTr("Assign Flight Modes to radio control channels and adjust the thresholds for triggering them. ") +
-                                                        qsTr("You can assign multiple flight modes to a single channel. ") +
-                                                        qsTr("Turn your radio control on to test switch settings. ") +
-                                                        qsTr("The following channels: ") + controller.reservedChannels +
-                                                        qsTr(" are not available for Flight Modes since they are already in use for other functions.")
-
+    property string topHelpText: ScreenTools.isTinyScreen ?
+                                     qsTr("Assign Flight Modes to radio control channels and adjust the thresholds for triggering them.") :
+                                     (qsTr("Assign Flight Modes to radio control channels and adjust the thresholds for triggering them. ") +
+                                      qsTr("You can assign multiple flight modes to a single channel. ") +
+                                      qsTr("Turn your radio control on to test switch settings. ") +
+                                      qsTr("The following channels: ") + controller.reservedChannels +
+                                      qsTr(" are not available for Flight Modes since they are already in use for other functions."))
 
     readonly property string fwManualModeName:          qsTr("Manual/Main")
     readonly property string mrManualModeName:          qsTr("Stabilized/Main")
@@ -64,19 +51,19 @@ Item {
                                                         qsTr("The Main mode switch must always be assigned to a channel in order to fly")
 
     readonly property string assistModeName:            qsTr("Assist")
-    readonly property string assistModeDescription:     qsTr("If Position Control is placed on a seperate channel from the Main mode channel, an additional 'Assist' mode is added to the Main switch. ") +
+    readonly property string assistModeDescription:     qsTr("If Position Control is placed on a separate channel from the Main mode channel, an additional 'Assist' mode is added to the Main switch. ") +
                                                         qsTr("In order for the Attitude Control/Position Control switch to be active, the Main switch must be in Assist mode.")
 
     readonly property string autoModeName:              qsTr("Auto")
-    readonly property string autoModeDescription:       qsTr("If Loiter is placed on a seperate channel from the Main mode channel, an additional 'Auto' mode is added to the Main switch. ") +
+    readonly property string autoModeDescription:       qsTr("If Loiter is placed on a separate channel from the Main mode channel, an additional 'Auto' mode is added to the Main switch. ") +
                                                         qsTr("In order for the Mission/Loiter switch to be active, the Main switch must be in Auto mode.")
 
     readonly property string fwAcroModeName:            qsTr("Stabilized")
     readonly property string mrAcroModeName:            qsTr("Acro")
-    readonly property string fwAcroModeDescription:     qsTr("The angular rates are controlled, but not the attitude. ")
+    readonly property string fwAcroModeDescription:     qsTr("Roll/pitch angles and rudder deflection are controlled. ")
     readonly property string mrAcroModeDescription:     qsTr("The angular rates are controlled, but not the attitude. ")
 
-    readonly property string altCtlModeName:            qsTr("Altitude Control")
+    readonly property string altCtlModeName:            qsTr("Altitude")
     readonly property string fwAltCtlModeDescription:   qsTr("Roll stick controls banking, pitch stick altitude ") +
                                                         qsTr("Throttle stick controls speed. ") +
                                                         qsTr("With no stick inputs the plane holds heading, but drifts off in wind. ")
@@ -89,10 +76,10 @@ Item {
     readonly property string mrPosCtlModeDescription:   qsTr("Roll and Pitch sticks control sideways and forward speed ") +
                                                         qsTr("Throttle stick controls climb / sink rade. ")
 
-    readonly property string missionModeName:           qsTr("Auto Mission")
+    readonly property string missionModeName:           qsTr("Mission")
     readonly property string missionModeDescription:    qsTr("The aircraft obeys the programmed mission sent by QGroundControl. ")
 
-    readonly property string loiterModeName:            qsTr("Auto Pause")
+    readonly property string loiterModeName:            qsTr("Hold")
     readonly property string fwLoiterModeDescription:   qsTr("The aircraft flies in a circle around the current position at the current altitude. ")
     readonly property string mrLoiterModeDescription:   qsTr("The multirotor hovers at the current position and altitude. ")
 
@@ -103,8 +90,6 @@ Item {
     readonly property string offboardModeDescription:   qsTr("All flight control aspects are controlled by an offboard system.")
 
     readonly property real modeSpacing: ScreenTools.defaultFontPixelHeight / 3
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
     PX4AdvancedFlightModesController {
         id:         controller
@@ -201,7 +186,7 @@ Item {
                     anchors.left:           parent.left
                     anchors.right:          buttonColumn.left
                     text:                   topHelpText
-                    font.pixelSize:         ScreenTools.defaultFontPixelSize
+                    font.pointSize:         ScreenTools.defaultFontPointSize
                     wrapMode:               Text.WordWrap
                 }
 

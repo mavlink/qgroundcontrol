@@ -29,7 +29,6 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
-        anchors.margins:    8
         VehicleSummaryRow {
             labelText: qsTr("Firmware Version:")
             valueText: esp8266.version
@@ -39,8 +38,9 @@ FactPanel {
             valueText: wifiMode ? (wifiMode.value === 0 ? "AP Mode" : "Station Mode") : "AP Mode"
         }
         VehicleSummaryRow {
-            labelText: qsTr("WiFi Channel:")
-            valueText: wifiChannel ? wifiChannel.valueString : ""
+            labelText:  qsTr("WiFi Channel:")
+            valueText:  wifiChannel ? wifiChannel.valueString : ""
+            visible:    wifiMode ? wifiMode.value === 0 : true
         }
         VehicleSummaryRow {
             labelText: qsTr("WiFi AP SSID:")
@@ -50,6 +50,7 @@ FactPanel {
             labelText: qsTr("WiFi AP Password:")
             valueText: esp8266.wifiPassword
         }
+        /* Too much info makes it all crammed
         VehicleSummaryRow {
             labelText: qsTr("WiFi STA SSID:")
             valueText: esp8266.wifiSSIDSta
@@ -58,6 +59,7 @@ FactPanel {
             labelText: qsTr("WiFi STA Password:")
             valueText: esp8266.wifiPasswordSta
         }
+        */
         VehicleSummaryRow {
             labelText: qsTr("UART Baud Rate:")
             valueText: uartBaud ? uartBaud.valueString : ""
