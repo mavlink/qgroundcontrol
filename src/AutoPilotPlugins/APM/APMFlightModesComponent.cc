@@ -26,7 +26,7 @@ QString APMFlightModesComponent::name(void) const
 
 QString APMFlightModesComponent::description(void) const
 {
-    return QStringLiteral("The Flight Modes Component is used to assign FLight Modes to Channel 5.");
+    return tr("Flight Modes Setup is used to configure the transmitter switches associated with Flight Modes.");
 }
 
 QString APMFlightModesComponent::iconResource(void) const

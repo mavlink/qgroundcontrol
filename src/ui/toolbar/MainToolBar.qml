@@ -54,7 +54,7 @@ Rectangle {
     MainToolBarController { id: _controller }
 
     function checkSettingsButton() {
-            settingsButton.checked = true
+        settingsButton.checked = true
     }
 
     function checkSetupButton() {
@@ -421,6 +421,17 @@ Rectangle {
             primary:                true
             onClicked:              activeVehicle.disconnectInactiveVehicle()
         }
+
+        Image {
+            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 2
+            anchors.right:          parent.right
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            visible:                parent.x < x && !disconnectButton.visible && source != ""
+            fillMode:               Image.PreserveAspectFit
+            source:                 activeVehicle ? activeVehicle.brandImage : ""
+        }
+
     }
 
     // Progress bar

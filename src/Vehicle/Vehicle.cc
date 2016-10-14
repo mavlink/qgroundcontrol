@@ -1922,6 +1922,11 @@ void Vehicle::_newGeoFenceAvailable(void)
     }
 }
 
+QString Vehicle::brandImage(void) const
+{
+    return _firmwarePlugin->brandImage(this);
+}
+
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
 const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
