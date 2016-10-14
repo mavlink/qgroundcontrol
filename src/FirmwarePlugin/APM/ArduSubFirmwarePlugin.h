@@ -76,6 +76,8 @@ public:
     bool supportsRadio(void);
 
     bool supportsJSButton(void);
+
+    QString brandImage(const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
 };
 
 #endif
