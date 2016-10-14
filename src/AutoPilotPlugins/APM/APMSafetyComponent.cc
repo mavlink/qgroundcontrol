@@ -29,7 +29,22 @@ QString APMSafetyComponent::name(void) const
 
 QString APMSafetyComponent::description(void) const
 {
-    return tr("Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
+    switch (_vehicle->vehicleType()) {
+        case MAV_TYPE_SUBMARINE:
+            return tr("Safety Setup is used to setup failsafe actions, geofence limits, leak detection, and arming checks.");
+            break;
+        case MAV_TYPE_GROUND_ROVER:
+        case MAV_TYPE_FIXED_WING:
+        case MAV_TYPE_QUADROTOR:
+        case MAV_TYPE_COAXIAL:
+        case MAV_TYPE_HELICOPTER:
+        case MAV_TYPE_HEXAROTOR:
+        case MAV_TYPE_OCTOROTOR:
+        case MAV_TYPE_TRICOPTER:
+        default:
+            return tr("Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
+            break;
+    }
 }
 
 QString APMSafetyComponent::iconResource(void) const
