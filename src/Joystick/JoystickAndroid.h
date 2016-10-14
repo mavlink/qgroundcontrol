@@ -24,12 +24,13 @@ private:
     bool handleKeyEvent(jobject event);
     bool handleGenericMotionEvent(jobject event);
 
-    virtual bool open();
-    virtual void close();
-    virtual bool update();
+    virtual bool _open();
+    virtual void _close();
+    virtual bool _update();
 
-    virtual bool getButton(int i);
-    virtual int getAxis(int i);
+    virtual bool _getButton(int i);
+    virtual int _getAxis(int i);
+    virtual uint8_t _getHat(int hat,int i);
 
     int *btnCode;
     int *axisCode;

@@ -11,7 +11,7 @@ int JoystickAndroid::ACTION_UP;
 QMutex JoystickAndroid::m_mutex;
 
 JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager)
-    : Joystick(name,axisCount,buttonCount,multiVehicleManager)
+    : Joystick(name,axisCount,buttonCount,0,multiVehicleManager)
     , deviceId(id)
 {
     int i;
@@ -159,26 +159,32 @@ bool JoystickAndroid::handleGenericMotionEvent(jobject event) {
 }
 
 
-bool JoystickAndroid::open(void) {
+bool JoystickAndroid::_open(void) {
     return true;
 }
 
-void JoystickAndroid::close(void) {
+void JoystickAndroid::_close(void) {
 }
 
-bool JoystickAndroid::update(void)
+bool JoystickAndroid::_update(void)
 {
     return true;
 }
 
-bool JoystickAndroid::getButton(int i) {
+bool JoystickAndroid::_getButton(int i) {
     return btnValue[ i ];
 }
 
-int JoystickAndroid::getAxis(int i) {
+int JoystickAndroid::_getAxis(int i) {
     return axisValue[ i ];
 }
 
+uint8_t JoystickAndroid::_getHat(int hat,int i) {
+    Q_UNUSED(hat);
+    Q_UNUSED(i);
+
+    return 0;
+}
 
 //helper method
 void JoystickAndroid::_initStatic() {
