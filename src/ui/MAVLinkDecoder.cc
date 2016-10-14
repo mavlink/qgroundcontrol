@@ -69,6 +69,11 @@ void MAVLinkDecoder::run()
 
 void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t message)
 {
+    if (message.msgid >= cMessageIds) {
+        // No support for messag ids above 255
+        return;
+    }
+
     Q_UNUSED(link);
     memcpy(receivedMessages+message.msgid, &message, sizeof(mavlink_message_t));
 
@@ -91,7 +96,8 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
 
         // See if first value is a time value and if it is, use that as the arrival time for this data.
         uint8_t fieldid = 0;
-        uint8_t* m = ((uint8_t*)(receivedMessages+msgid))+8;
+        uint8_t* m = (uint8_t*)&((mavlink_message_t*)(receivedMessages+msgid))->payload64[0];
+
         if (QString(msgInfo->fields[fieldid].name) == QString("time_boot_ms") && msgInfo->fields[fieldid].type == MAVLINK_TYPE_UINT32_T)
         {
             time = *((quint32*)(m+msgInfo->fields[fieldid].wire_offset));
@@ -220,7 +226,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
     if (messageFilter.contains(msgid)) return;
     QString fieldName(msgInfo->fields[fieldid].name);
     QString fieldType;
-    uint8_t* m = ((uint8_t*)(receivedMessages+msgid))+8;
+    uint8_t* m = (uint8_t*)&((mavlink_message_t*)(receivedMessages+msgid))->payload64[0];
     QString name("%1.%2");
     QString unit("");
 
