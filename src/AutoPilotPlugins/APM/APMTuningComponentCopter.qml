@@ -17,113 +17,109 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
-QGCView {
-    id:                 _safetyView
-    viewPanel:          panel
-    anchors.fill:       parent
+SetupPage {
+    id:             tuningPage
+    pageComponent:  tuningPageComponent
 
-    FactPanelController { id: controller; factPanel: panel }
+    Component {
+        id: tuningPageComponent
 
-    QGCPalette { id: palette; colorGroupEnabled: enabled }
+        Column {
+            width:      availableWidth
+            spacing:    _margins
 
-    // Older firmwares use THR_MODE, newer use MOT_THST_HOVER
-    property bool _throttleMidExists: controller.parameterExists(-1, "THR_MID")
-    property Fact _hoverTuneParam:  controller.getParameterFact(-1, _throttleMidExists ? "THR_MID" : "MOT_THST_HOVER")
-    property real _hoverTuneMin:    _throttleMidExists ? 200 : 0
-    property real _hoverTuneMax:    _throttleMidExists ? 800 : 1
-    property real _hoverTuneStep:   _throttleMidExists ? 10 : 0.01
+            FactPanelController { id: controller; factPanel: tuningPage.viewPanel }
 
-    property Fact _rcFeel:          controller.getParameterFact(-1, "RC_FEEL_RP")
-    property Fact _rateRollP:       controller.getParameterFact(-1, "r.ATC_RAT_RLL_P")
-    property Fact _rateRollI:       controller.getParameterFact(-1, "r.ATC_RAT_RLL_I")
-    property Fact _ratePitchP:      controller.getParameterFact(-1, "r.ATC_RAT_PIT_P")
-    property Fact _ratePitchI:      controller.getParameterFact(-1, "r.ATC_RAT_PIT_I")
-    property Fact _rateClimbP:      controller.getParameterFact(-1, "ACCEL_Z_P")
-    property Fact _rateClimbI:      controller.getParameterFact(-1, "ACCEL_Z_I")
+            QGCPalette { id: palette; colorGroupEnabled: true }
 
-    property Fact _ch7Opt:  controller.getParameterFact(-1, "CH7_OPT")
-    property Fact _ch8Opt:  controller.getParameterFact(-1, "CH8_OPT")
-    property Fact _ch9Opt:  controller.getParameterFact(-1, "CH9_OPT")
-    property Fact _ch10Opt: controller.getParameterFact(-1, "CH10_OPT")
-    property Fact _ch11Opt: controller.getParameterFact(-1, "CH11_OPT")
-    property Fact _ch12Opt: controller.getParameterFact(-1, "CH12_OPT")
+            // Older firmwares use THR_MODE, newer use MOT_THST_HOVER
+            property bool _throttleMidExists: controller.parameterExists(-1, "THR_MID")
+            property Fact _hoverTuneParam:  controller.getParameterFact(-1, _throttleMidExists ? "THR_MID" : "MOT_THST_HOVER")
+            property real _hoverTuneMin:    _throttleMidExists ? 200 : 0
+            property real _hoverTuneMax:    _throttleMidExists ? 800 : 1
+            property real _hoverTuneStep:   _throttleMidExists ? 10 : 0.01
 
-    readonly property int   _firstOptionChannel:    7
-    readonly property int   _lastOptionChannel:     12
+            property Fact _rcFeel:          controller.getParameterFact(-1, "RC_FEEL_RP")
+            property Fact _rateRollP:       controller.getParameterFact(-1, "r.ATC_RAT_RLL_P")
+            property Fact _rateRollI:       controller.getParameterFact(-1, "r.ATC_RAT_RLL_I")
+            property Fact _ratePitchP:      controller.getParameterFact(-1, "r.ATC_RAT_PIT_P")
+            property Fact _ratePitchI:      controller.getParameterFact(-1, "r.ATC_RAT_PIT_I")
+            property Fact _rateClimbP:      controller.getParameterFact(-1, "ACCEL_Z_P")
+            property Fact _rateClimbI:      controller.getParameterFact(-1, "ACCEL_Z_I")
 
-    property Fact   _autoTuneAxes:                  controller.getParameterFact(-1, "AUTOTUNE_AXES")
-    property int    _autoTuneSwitchChannelIndex:    0
-    readonly property int _autoTuneOption:          17
+            property Fact _ch7Opt:  controller.getParameterFact(-1, "CH7_OPT")
+            property Fact _ch8Opt:  controller.getParameterFact(-1, "CH8_OPT")
+            property Fact _ch9Opt:  controller.getParameterFact(-1, "CH9_OPT")
+            property Fact _ch10Opt: controller.getParameterFact(-1, "CH10_OPT")
+            property Fact _ch11Opt: controller.getParameterFact(-1, "CH11_OPT")
+            property Fact _ch12Opt: controller.getParameterFact(-1, "CH12_OPT")
 
-    property real _margins: ScreenTools.defaultFontPixelHeight
+            readonly property int   _firstOptionChannel:    7
+            readonly property int   _lastOptionChannel:     12
 
-    property bool _loadComplete: false
+            property Fact   _autoTuneAxes:                  controller.getParameterFact(-1, "AUTOTUNE_AXES")
+            property int    _autoTuneSwitchChannelIndex:    0
+            readonly property int _autoTuneOption:          17
 
-    ExclusiveGroup { id: fenceActionRadioGroup }
-    ExclusiveGroup { id: landLoiterRadioGroup }
-    ExclusiveGroup { id: returnAltRadioGroup }
+            property real _margins: ScreenTools.defaultFontPixelHeight
 
-    Component.onCompleted: {
-        // Qml Sliders have a strange behavior in which they first set Slider::value to some internal
-        // setting and then set Slider::value to the bound properties value. If you have an onValueChanged
-        // handler which updates your property with the new value, this first value change will trash
-        // your bound values. In order to work around this we don't set the values into the Sliders until
-        // after Qml load is done. We also don't track value changes until Qml load completes.
-        throttleHover.value = _hoverTuneParam.value
-        rollPitch.value = _rateRollP.value
-        climb.value = _rateClimbP.value
-        rcFeel.value = _rcFeel.value
-        _loadComplete = true
+            property bool _loadComplete: false
 
-        calcAutoTuneChannel()
-    }
+            ExclusiveGroup { id: fenceActionRadioGroup }
+            ExclusiveGroup { id: landLoiterRadioGroup }
+            ExclusiveGroup { id: returnAltRadioGroup }
 
-    /// The AutoTune switch is stored in one of the RC#_FUNCTION parameters. We need to loop through those
-    /// to find them and setup the ui accordindly.
-    function calcAutoTuneChannel() {
-        _autoTuneSwitchChannelIndex = 0
-        for (var channel=_firstOptionChannel; channel<=_lastOptionChannel; channel++) {
-            var optionFact = controller.getParameterFact(-1, "CH" + channel + "_OPT")
-            if (optionFact.value == _autoTuneOption) {
-                _autoTuneSwitchChannelIndex = channel - _firstOptionChannel + 1
-                break
+            Component.onCompleted: {
+                // Qml Sliders have a strange behavior in which they first set Slider::value to some internal
+                // setting and then set Slider::value to the bound properties value. If you have an onValueChanged
+                // handler which updates your property with the new value, this first value change will trash
+                // your bound values. In order to work around this we don't set the values into the Sliders until
+                // after Qml load is done. We also don't track value changes until Qml load completes.
+                throttleHover.value = _hoverTuneParam.value
+                rollPitch.value = _rateRollP.value
+                climb.value = _rateClimbP.value
+                rcFeel.value = _rcFeel.value
+                _loadComplete = true
+
+                calcAutoTuneChannel()
             }
-        }
-    }
 
-    /// We need to clear AutoTune from any previous channel before setting it to a new one
-    function setChannelAutoTuneOption(channel) {
-        // First clear any previous settings for AutTune
-        for (var optionChannel=_firstOptionChannel; optionChannel<=_lastOptionChannel; optionChannel++) {
-            var optionFact = controller.getParameterFact(-1, "CH" + optionChannel + "_OPT")
-            if (optionFact.value == _autoTuneOption) {
-                optionFact.value = 0
+            /// The AutoTune switch is stored in one of the RC#_FUNCTION parameters. We need to loop through those
+            /// to find them and setup the ui accordindly.
+            function calcAutoTuneChannel() {
+                _autoTuneSwitchChannelIndex = 0
+                for (var channel=_firstOptionChannel; channel<=_lastOptionChannel; channel++) {
+                    var optionFact = controller.getParameterFact(-1, "CH" + channel + "_OPT")
+                    if (optionFact.value == _autoTuneOption) {
+                        _autoTuneSwitchChannelIndex = channel - _firstOptionChannel + 1
+                        break
+                    }
+                }
             }
-        }
 
-        // Now set the function into the new channel
-        if (channel != 0) {
-            var optionFact = controller.getParameterFact(-1, "CH" + channel + "_OPT")
-            optionFact.value = _autoTuneOption
-        }
-    }
+            /// We need to clear AutoTune from any previous channel before setting it to a new one
+            function setChannelAutoTuneOption(channel) {
+                // First clear any previous settings for AutTune
+                for (var optionChannel=_firstOptionChannel; optionChannel<=_lastOptionChannel; optionChannel++) {
+                    var optionFact = controller.getParameterFact(-1, "CH" + optionChannel + "_OPT")
+                    if (optionFact.value == _autoTuneOption) {
+                        optionFact.value = 0
+                    }
+                }
 
-    Connections { target: _ch7Opt; onValueChanged: calcAutoTuneChannel() }
-    Connections { target: _ch8Opt; onValueChanged: calcAutoTuneChannel() }
-    Connections { target: _ch9Opt; onValueChanged: calcAutoTuneChannel() }
-    Connections { target: _ch10Opt; onValueChanged: calcAutoTuneChannel() }
-    Connections { target: _ch11Opt; onValueChanged: calcAutoTuneChannel() }
-    Connections { target: _ch12Opt; onValueChanged: calcAutoTuneChannel() }
+                // Now set the function into the new channel
+                if (channel != 0) {
+                    var optionFact = controller.getParameterFact(-1, "CH" + channel + "_OPT")
+                    optionFact.value = _autoTuneOption
+                }
+            }
 
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
-
-        QGCFlickable {
-            clip:               true
-            anchors.fill:       parent
-            contentHeight:      autoTuneRect.y + autoTuneRect.height
-            flickableDirection: Flickable.VerticalFlick
+            Connections { target: _ch7Opt; onValueChanged: calcAutoTuneChannel() }
+            Connections { target: _ch8Opt; onValueChanged: calcAutoTuneChannel() }
+            Connections { target: _ch9Opt; onValueChanged: calcAutoTuneChannel() }
+            Connections { target: _ch10Opt; onValueChanged: calcAutoTuneChannel() }
+            Connections { target: _ch11Opt; onValueChanged: calcAutoTuneChannel() }
+            Connections { target: _ch12Opt; onValueChanged: calcAutoTuneChannel() }
 
             QGCLabel {
                 id:         basicLabel
@@ -133,10 +129,8 @@ QGCView {
 
             Rectangle {
                 id:                 basicTuningRect
-                anchors.topMargin:  _margins / 2
                 anchors.left:       parent.left
                 anchors.right:      parent.right
-                anchors.top:        basicLabel.bottom
                 height:             basicTuningColumn.y + basicTuningColumn.height + _margins
                 color:              palette.windowShade
 
@@ -276,16 +270,15 @@ QGCView {
             } // Rectangle - Basic tuning
 
             Flow {
-                id:                 flowLayout
-                anchors.topMargin:  _margins / 2
-                width:              panel.width // parent.width doesn't work here for some reason!
-                anchors.top:        basicTuningRect.bottom
-                spacing:            _margins
+                id:             flowLayout
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margins
 
                 Rectangle {
-                    height:     autoTuneLabel.height + autoTuneRect.height
-                    width:      autoTuneRect.width
-                    color:      palette.window
+                    height: autoTuneLabel.height + autoTuneRect.height
+                    width:  autoTuneRect.width
+                    color:  palette.window
 
                     QGCLabel {
                         id:                 autoTuneLabel
@@ -294,11 +287,11 @@ QGCView {
                     }
 
                     Rectangle {
-                        id:                 autoTuneRect
-                        width:              autoTuneColumn.x + autoTuneColumn.width + _margins
-                        height:             autoTuneColumn.y + autoTuneColumn.height + _margins
-                        anchors.top:        autoTuneLabel.bottom
-                        color:              palette.windowShade
+                        id:             autoTuneRect
+                        width:          autoTuneColumn.x + autoTuneColumn.width + _margins
+                        height:         autoTuneColumn.y + autoTuneColumn.height + _margins
+                        anchors.top:    autoTuneLabel.bottom
+                        color:          palette.windowShade
 
                         Column {
                             id:                 autoTuneColumn
@@ -417,6 +410,6 @@ QGCView {
                     } // Rectangle - Channel 6 Tuning options
                 } // Rectangle - Channel 6 Tuning options wrap
             } // Flow - Tune
-        } // QGCFlickable
-    } // QGCViewPanel
-} // QGCView
+        } // Column
+    } // Component
+} // SetupView

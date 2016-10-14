@@ -29,7 +29,7 @@ QString APMSafetyComponent::name(void) const
 
 QString APMSafetyComponent::description(void) const
 {
-    return tr("The Safety Component is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
+    return tr("Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
 }
 
 QString APMSafetyComponent::iconResource(void) const

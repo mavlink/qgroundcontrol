@@ -29,7 +29,7 @@ QString APMCameraComponent::name(void) const
 
 QString APMCameraComponent::description(void) const
 {
-    return tr("The Camera Component is used to setup camera and gimbal settings.");
+    return tr("Camera setup is used to adjust camera and gimbal settings.");
 }
 
 QString APMCameraComponent::iconResource(void) const

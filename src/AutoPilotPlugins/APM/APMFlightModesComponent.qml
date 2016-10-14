@@ -18,9 +18,9 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
-QGCView {
-    id:         rootQGCView
-    viewPanel:  panel
+SetupPage {
+    id:             flightModePage
+    pageComponent:  flightModePageComponent
 
     readonly property string _modeChannelParam: controller.modeChannelParam
     readonly property string _modeParamPrefix:  controller.modeParamPrefix
@@ -33,26 +33,19 @@ QGCView {
     property bool   _fltmodeChExists:           controller.parameterExists(-1, _modeChannelParam)
     property Fact   _fltmodeCh:                 _fltmodeChExists ? controller.getParameterFact(-1, _modeChannelParam) : _nullFact
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     APMFlightModesComponentController {
         id:         controller
-        factPanel:  panel
+        factPanel:  flightModePage.viewPanel
     }
 
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
-
-        QGCFlickable {
-            anchors.fill:       parent
-            clip:               true
-            contentHeight:      flowLayout.height
-            contentWidth:       flowLayout.width
+    Component {
+        id: flightModePageComponent
 
             Flow {
                 id:         flowLayout
-                width:      panel.width // parent.width doesn't work here for some reason!
+                width:      availableWidth
                 spacing:     _margins
 
                 Column {
@@ -181,6 +174,5 @@ QGCView {
                     } // Rectangle - Channel options
                 } // Column - Channel options
             } // Flow
-        } // QGCFlickable
-    } // QGCViewPanel
-} // QGCView
+    } // Component - flightModePageComponent
+} // SetupPage
