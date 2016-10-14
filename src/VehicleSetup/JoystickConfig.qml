@@ -72,7 +72,7 @@ SetupPage {
 
                 Item {
                     property int axisValue: 0
-
+                    property int deadbandValue: 0
 
                     property int            __lastAxisValue:        0
                     readonly property int   __axisValueMaxJitter:   100
@@ -85,6 +85,20 @@ SetupPage {
                         width:                  parent.width
                         height:                 parent.height / 2
                         color:                  __barColor
+                    }
+
+                    // Deadband
+                    Rectangle {
+                        id:                     deadbandBar
+                        anchors.verticalCenter: parent.verticalCenter
+                        x:                      _deadbandPosition
+                        width:                  _deadbandWidth
+                        height:                 parent.height / 2
+                        color:                  "#8c161a"
+
+                        property real _percentDeadband:    ((2 * deadbandValue) / (32768.0 * 2))
+                        property real _deadbandWidth:   parent.width * _percentDeadband
+                        property real _deadbandPosition:   (parent.width - _deadbandWidth) / 2
                     }
 
                     // Center point
@@ -126,13 +140,15 @@ SetupPage {
                         duration:   1500
                     }
 
-                    /*
+
                     // Axis value debugger
+                    /*
                     QGCLabel {
                         anchors.fill: parent
                         text: axisValue
                     }
                     */
+
                 }
             } // Component - axisMonitorDisplayComponent
 
@@ -180,6 +196,8 @@ SetupPage {
                             target: controller
 
                             onRollAxisValueChanged: rollLoader.item.axisValue = value
+
+                            onRollAxisDeadbandChanged: rollLoader.item.deadbandValue = value
                         }
                     }
 
@@ -210,6 +228,9 @@ SetupPage {
                             target: controller
 
                             onPitchAxisValueChanged: pitchLoader.item.axisValue = value
+
+                            onPitchAxisDeadbandChanged: pitchLoader.item.deadbandValue = value
+
                         }
                     }
 
@@ -240,6 +261,8 @@ SetupPage {
                             target: controller
 
                             onYawAxisValueChanged: yawLoader.item.axisValue = value
+
+                            onYawAxisDeadbandChanged: yawLoader.item.deadbandValue = value
                         }
                     }
 
@@ -270,6 +293,8 @@ SetupPage {
                             target: controller
 
                             onThrottleAxisValueChanged: throttleLoader.item.axisValue = value
+
+                            onThrottleAxisDeadbandChanged: throttleLoader.item.deadbandValue = value
                         }
                     }
                 } // Column - Attitude Control labels
@@ -383,6 +408,7 @@ SetupPage {
                                 }
 
                                 Row {
+                                    x:          20
                                     width:      parent.width
                                     spacing:    ScreenTools.defaultFontPixelWidth
                                     visible:    _activeJoystick.throttleMode == 0
@@ -390,9 +416,24 @@ SetupPage {
                                     QGCCheckBox {
                                         id:         accumulator
                                         checked:    _activeJoystick.accumulator
-                                        text:       qsTr("Use accumulator on throttle")
+                                        text:       qsTr("Spring on throttle support")
 
                                         onClicked:  _activeJoystick.accumulator = checked
+                                    }
+                                }
+
+                                Row {
+                                    x:          20
+                                    width:      parent.width
+                                    spacing:    ScreenTools.defaultFontPixelWidth
+                                    visible:    _activeJoystick.throttleMode == 0
+
+                                    QGCCheckBox {
+                                        id:         deadband
+                                        checked:    _activeJoystick.deadband
+                                        text:       qsTr("Deadband (requires re-calibration)")
+
+                                        onClicked:  _activeJoystick.deadband = checked
                                     }
                                 }
 
@@ -711,3 +752,5 @@ SetupPage {
         } // Item
     } // Component - pageComponent
 } // SetupPage
+
+

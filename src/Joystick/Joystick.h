@@ -68,6 +68,7 @@ public:
     Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
     Q_PROPERTY(int exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
     Q_PROPERTY(int accumulator READ accumulator WRITE setAccumulator NOTIFY accumulatorChanged)
+    Q_PROPERTY(int deadband READ deadband WRITE setDeadband NOTIFY deadbandChanged)
 
     // Property accessors
 
@@ -98,6 +99,9 @@ public:
     bool accumulator(void);
     void setAccumulator(bool accu);
 
+    bool deadband(void);
+    void setDeadband(bool accu);
+
     typedef enum {
         CalibrationModeOff,         // Not calibrating
         CalibrationModeMonitor,     // Monitors are active, continue to send to vehicle if already polling
@@ -124,6 +128,8 @@ signals:
     void exponentialChanged(bool exponential);
 
     void accumulatorChanged(bool accumulator);
+
+    void deadbandChanged(bool deadband);
 
     void enabledChanged(bool enabled);
 
@@ -183,6 +189,7 @@ protected:
 
     bool                _exponential;
     bool                _accumulator;
+    bool                _deadband;
 
     Vehicle*            _activeVehicle;
     bool                _pollingStartedForCalibration;
@@ -198,6 +205,7 @@ private:
     static const char* _throttleModeSettingsKey;
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;
+    static const char* _deadbandSettingsKey;
 };
 
 #endif

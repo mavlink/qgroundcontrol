@@ -224,17 +224,49 @@ void JoystickConfigController::_saveAllTrims(void)
     _advanceState();
 }
 
+void JoystickConfigController::_axisDeadbandChanged(int axis, int value)
+{
+    value = abs(value)<_calValidMaxValue?abs(value):_calValidMaxValue;
+
+    if (value>_rgAxisInfo[axis].deadband) {
+        _rgAxisInfo[axis].deadband = value;
+
+        switch (_rgAxisInfo[axis].function) {
+            case Joystick::rollFunction:
+                emit rollAxisDeadbandChanged(_rgAxisInfo[axis].deadband);
+                break;
+            case Joystick::pitchFunction:
+                emit pitchAxisDeadbandChanged(_rgAxisInfo[axis].deadband);
+                break;
+            case Joystick::yawFunction:
+                emit yawAxisDeadbandChanged(_rgAxisInfo[axis].deadband);
+                break;
+            case Joystick::throttleFunction:
+                emit throttleAxisDeadbandChanged(_rgAxisInfo[axis].deadband);
+                break;
+            default:
+                break;
+        }
+        qCDebug(JoystickConfigControllerLog) << "Axis:" << axis << "Deadband:" << _rgAxisInfo[axis].deadband;
+    }
+}
+
 /// @brief Waits for the sticks to be centered, enabling Next when done.
 void JoystickConfigController::_inputCenterWaitBegin(Joystick::AxisFunction_t function, int axis, int value)
 {
     Q_UNUSED(function);
-    _rgAxisInfo[axis].deadband = std::max(abs(value),_rgAxisInfo[axis].deadband);
+
+    //sensing deadband
+    if (_activeJoystick->deadband()) {
+        if (abs(value)*1.5>_rgAxisInfo[axis].deadband) {
+            _axisDeadbandChanged(axis,abs(value)*1.5);
+        }
+    }
+
     _nextButton->setEnabled(true);
 
     // FIXME: Doesn't wait for center
     // FIXME: Ideally the deadband should be probed only around the center
-
-    qCDebug(JoystickConfigControllerLog) << "Axis:" << axis << "Deadband:" << _rgAxisInfo[axis].deadband;
 }
 
 bool JoystickConfigController::_stickSettleComplete(int axis, int value)
@@ -460,7 +492,7 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
         info->axisMax = calibration.max;
         info->reversed = calibration.reversed;
         info->deadband = calibration.deadband;
-        
+
         qCDebug(JoystickConfigControllerLog) << "Read settings name:axis:min:max:trim:reversed" << joystick->name() << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
     }
     
@@ -669,6 +701,42 @@ int JoystickConfigController::throttleAxisValue(void)
     }
 }
 
+int JoystickConfigController::rollAxisDeadband(void)
+{
+    if (_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::rollFunction]].deadband;
+    } else {
+        return 0;
+    }
+}
+
+int JoystickConfigController::pitchAxisDeadband(void)
+{
+    if (_rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::pitchFunction]].deadband;
+    } else {
+        return 0;
+    }
+}
+
+int JoystickConfigController::yawAxisDeadband(void)
+{
+    if (_rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::yawFunction]].deadband;
+    } else {
+        return 0;
+    }
+}
+
+int JoystickConfigController::throttleAxisDeadband(void)
+{
+    if (_rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::throttleFunction]].deadband;
+    } else {
+        return 0;
+    }
+}
+
 bool JoystickConfigController::rollAxisMapped(void)
 {
     return _rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis;
@@ -736,6 +804,11 @@ void JoystickConfigController::_signalAllAttiudeValueChanges(void)
     emit pitchAxisReversedChanged(pitchAxisReversed());
     emit yawAxisReversedChanged(yawAxisReversed());
     emit throttleAxisReversedChanged(throttleAxisReversed());
+
+    emit rollAxisDeadbandChanged(rollAxisDeadband());
+    emit pitchAxisDeadbandChanged(pitchAxisDeadband());
+    emit yawAxisDeadbandChanged(yawAxisDeadband());
+    emit throttleAxisDeadbandChanged(throttleAxisDeadband());
 }
 
 void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
