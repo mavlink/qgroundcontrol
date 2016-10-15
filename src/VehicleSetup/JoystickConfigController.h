@@ -67,6 +67,8 @@ public:
     Q_PROPERTY(int yawAxisReversed      READ yawAxisReversed        NOTIFY yawAxisReversedChanged)
     Q_PROPERTY(int throttleAxisReversed READ throttleAxisReversed   NOTIFY throttleAxisReversedChanged)
     
+    Q_PROPERTY(bool deadbandToggle            READ getDeadbandToggle        WRITE setDeadbandToggle    NOTIFY deadbandToggled)
+
     Q_PROPERTY(QString imageHelp MEMBER _imageHelp NOTIFY imageHelpChanged)
     
     Q_INVOKABLE void cancelButtonClicked(void);
@@ -78,7 +80,7 @@ public:
     int pitchAxisValue(void);
     int yawAxisValue(void);
     int throttleAxisValue(void);
-    
+
     int rollAxisDeadband(void);
     int pitchAxisDeadband(void);
     int yawAxisDeadband(void);
@@ -94,6 +96,9 @@ public:
     bool yawAxisReversed(void);
     bool throttleAxisReversed(void);
     
+    bool getDeadbandToggle(void);
+    void setDeadbandToggle(bool);
+
     int axisCount(void);
     
 signals:
@@ -118,6 +123,8 @@ signals:
     void pitchAxisReversedChanged(bool reversed);
     void yawAxisReversedChanged(bool reversed);
     void throttleAxisReversedChanged(bool reversed);
+
+    void deadbandToggled(bool value);
     
     void imageHelpChanged(QString source);
     
