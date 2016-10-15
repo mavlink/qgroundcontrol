@@ -96,7 +96,7 @@ void Joystick::_loadSettings(void)
     _throttleMode = (ThrottleMode_t)settings.value(_throttleModeSettingsKey, ThrottleModeCenterZero).toInt(&convertOk);
     badSettings |= !convertOk;
 
-    qCDebug(JoystickLog) << "_loadSettings calibrated:throttlemode:exponential:badsettings" << _calibrated << _throttleMode << _exponential << badSettings;
+    qCDebug(JoystickLog) << "_loadSettings calibrated:throttlemode:exponential:deadband:badsettings" << _calibrated << _throttleMode << _exponential << _deadband << badSettings;
 
     QString minTpl  ("Axis%1Min");
     QString maxTpl  ("Axis%1Max");
@@ -122,7 +122,7 @@ void Joystick::_loadSettings(void)
         calibration->reversed = settings.value(revTpl.arg(axis), false).toBool();
 
 
-        qCDebug(JoystickLog) << "_loadSettings axis:min:max:trim:reversed:badsettings" << axis << calibration->min << calibration->max << calibration->center << calibration->reversed << calibration->deadband << badSettings;
+        qCDebug(JoystickLog) << "_loadSettings axis:min:max:trim:reversed:deadband:badsettings" << axis << calibration->min << calibration->max << calibration->center << calibration->reversed << calibration->deadband << badSettings;
     }
 
     for (int function=0; function<maxFunction; function++) {
@@ -160,7 +160,7 @@ void Joystick::_saveSettings(void)
     settings.setValue(_deadbandSettingsKey, _deadband);
     settings.setValue(_throttleModeSettingsKey, _throttleMode);
 
-    qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode" << _calibrated << _throttleMode;
+    qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode:deadband" << _calibrated << _throttleMode << _deadband;
 
     QString minTpl  ("Axis%1Min");
     QString maxTpl  ("Axis%1Max");
@@ -177,7 +177,7 @@ void Joystick::_saveSettings(void)
         settings.setValue(revTpl.arg(axis), calibration->reversed);
         settings.setValue(deadbndTpl.arg(axis), calibration->deadband);
 
-        qCDebug(JoystickLog) << "_saveSettings name:axis:min:max:trim:reversed"
+        qCDebug(JoystickLog) << "_saveSettings name:axis:min:max:trim:reversed:deadband"
                                 << _name
                                 << axis
                                 << calibration->min
@@ -232,12 +232,13 @@ float Joystick::_adjustRange(int value, Calibration_t calibration)
     }
 
 #if 0
-    qCDebug(JoystickLog) << "_adjustRange corrected:value:min:max:center:reversed:basis:normalized:length"
+    qCDebug(JoystickLog) << "_adjustRange corrected:value:min:max:center:reversed:deadband:basis:normalized:length"
                             << correctedValue
                             << value
                             << calibration.min
                             << calibration.max
                             << calibration.center
+                            << calibration.reversed
                             << calibration.deadband
                             << axisBasis
                             << valueNormalized
@@ -585,7 +586,6 @@ void Joystick::setDeadband(bool deadband)
     _deadband = deadband;
 
     _saveSettings();
-    emit deadbandChanged(_deadband);
 }
 
 void Joystick::startCalibrationMode(CalibrationMode_t mode)

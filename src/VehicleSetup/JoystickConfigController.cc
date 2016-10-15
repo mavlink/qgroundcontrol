@@ -210,6 +210,18 @@ void JoystickConfigController::cancelButtonClicked(void)
     _stopCalibration();
 }
 
+bool JoystickConfigController::getDeadbandToggle() {
+    return _activeJoystick->deadband();
+}
+
+void JoystickConfigController::setDeadbandToggle(bool deadband) {
+    _activeJoystick->setDeadband(deadband);
+
+    _signalAllAttiudeValueChanges();
+
+    emit deadbandToggled(deadband);
+}
+
 void JoystickConfigController::_saveAllTrims(void)
 {
     // We save all trims as the first step. At this point no axes are mapped but it should still
@@ -228,27 +240,9 @@ void JoystickConfigController::_axisDeadbandChanged(int axis, int value)
 {
     value = abs(value)<_calValidMaxValue?abs(value):_calValidMaxValue;
 
-    if (value>_rgAxisInfo[axis].deadband) {
-        _rgAxisInfo[axis].deadband = value;
+    _rgAxisInfo[axis].deadband = value;
 
-        switch (_rgAxisInfo[axis].function) {
-            case Joystick::rollFunction:
-                emit rollAxisDeadbandChanged(_rgAxisInfo[axis].deadband);
-                break;
-            case Joystick::pitchFunction:
-                emit pitchAxisDeadbandChanged(_rgAxisInfo[axis].deadband);
-                break;
-            case Joystick::yawFunction:
-                emit yawAxisDeadbandChanged(_rgAxisInfo[axis].deadband);
-                break;
-            case Joystick::throttleFunction:
-                emit throttleAxisDeadbandChanged(_rgAxisInfo[axis].deadband);
-                break;
-            default:
-                break;
-        }
-        qCDebug(JoystickConfigControllerLog) << "Axis:" << axis << "Deadband:" << _rgAxisInfo[axis].deadband;
-    }
+    qCDebug(JoystickConfigControllerLog) << "Axis:" << axis << "Deadband:" << _rgAxisInfo[axis].deadband;
 }
 
 /// @brief Waits for the sticks to be centered, enabling Next when done.
@@ -257,16 +251,13 @@ void JoystickConfigController::_inputCenterWaitBegin(Joystick::AxisFunction_t fu
     Q_UNUSED(function);
 
     //sensing deadband
-    if (_activeJoystick->deadband()) {
-        if (abs(value)*1.5>_rgAxisInfo[axis].deadband) {
-            _axisDeadbandChanged(axis,abs(value)*1.5);
-        }
+    if (abs(value)*1.1f>_rgAxisInfo[axis].deadband) {   //add 10% on top of existing deadband
+        _axisDeadbandChanged(axis,abs(value)*1.1f);
     }
 
     _nextButton->setEnabled(true);
 
     // FIXME: Doesn't wait for center
-    // FIXME: Ideally the deadband should be probed only around the center
 }
 
 bool JoystickConfigController::_stickSettleComplete(int axis, int value)
@@ -703,7 +694,7 @@ int JoystickConfigController::throttleAxisValue(void)
 
 int JoystickConfigController::rollAxisDeadband(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) {
+    if ((_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
         return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::rollFunction]].deadband;
     } else {
         return 0;
@@ -712,7 +703,7 @@ int JoystickConfigController::rollAxisDeadband(void)
 
 int JoystickConfigController::pitchAxisDeadband(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis) {
+    if ((_rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
         return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::pitchFunction]].deadband;
     } else {
         return 0;
@@ -721,7 +712,7 @@ int JoystickConfigController::pitchAxisDeadband(void)
 
 int JoystickConfigController::yawAxisDeadband(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis) {
+    if ((_rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
         return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::yawFunction]].deadband;
     } else {
         return 0;
@@ -730,7 +721,7 @@ int JoystickConfigController::yawAxisDeadband(void)
 
 int JoystickConfigController::throttleAxisDeadband(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis) {
+    if ((_rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
         return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::throttleFunction]].deadband;
     } else {
         return 0;

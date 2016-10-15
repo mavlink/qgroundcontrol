@@ -430,10 +430,10 @@ SetupPage {
 
                                     QGCCheckBox {
                                         id:         deadband
-                                        checked:    _activeJoystick.deadband
-                                        text:       qsTr("Deadband (requires re-calibration)")
+                                        checked:    controller.deadbandToggle
+                                        text:       qsTr("Deadbands")
 
-                                        onClicked:  _activeJoystick.deadband = checked
+                                        onClicked:  controller.deadbandToggle = checked
                                     }
                                 }
 

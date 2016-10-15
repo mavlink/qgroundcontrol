@@ -66,9 +66,8 @@ public:
     Q_INVOKABLE QString getButtonAction(int button);
 
     Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
-    Q_PROPERTY(int exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
-    Q_PROPERTY(int accumulator READ accumulator WRITE setAccumulator NOTIFY accumulatorChanged)
-    Q_PROPERTY(int deadband READ deadband WRITE setDeadband NOTIFY deadbandChanged)
+    Q_PROPERTY(bool exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
+    Q_PROPERTY(bool accumulator READ accumulator WRITE setAccumulator NOTIFY accumulatorChanged)
 
     // Property accessors
 
@@ -128,8 +127,6 @@ signals:
     void exponentialChanged(bool exponential);
 
     void accumulatorChanged(bool accumulator);
-
-    void deadbandChanged(bool deadband);
 
     void enabledChanged(bool enabled);
 
