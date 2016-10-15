@@ -877,6 +877,12 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
         return;
     }
 
+#if 0
+    // Leaving in for ease in Mav 2.0 testing
+    mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(link->mavlinkChannel());
+    qDebug() << "_sendMessageOnLink" << mavlinkStatus << link->mavlinkChannel() << mavlinkStatus->flags << message.magic;
+#endif
+
     // Give the plugin a chance to adjust
     _firmwarePlugin->adjustOutgoingMavlinkMessage(this, link, &message);
 
