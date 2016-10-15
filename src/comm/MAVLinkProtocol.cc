@@ -216,10 +216,10 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
             mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
             if (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
-                qDebug() << "switch to mavlink 2.0" << mavlinkStatus->flags;
+                qDebug() << "switch to mavlink 2.0" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                 mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
             } else if ((mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && !(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
-                qDebug() << "switch to mavlink 1.0" << mavlinkStatus->flags;
+                qDebug() << "switch to mavlink 1.0" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                 mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
             }
 
