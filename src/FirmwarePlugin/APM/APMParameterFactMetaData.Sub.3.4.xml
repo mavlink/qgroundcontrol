@@ -108,12 +108,49 @@
 <field name="Increment">50</field>
 <field name="Units">mAh</field>
 </param>
-<param humanName="Ground Station Failsafe Enable" name="ArduSub:FS_GCS_ENABLE" documentation="Controls whether failsafe will be invoked (and what action to take) when connection with Ground station is lost for at least 5 seconds. NB. The GCS Failsafe is only active when RC_OVERRIDE is being used to control the vehicle." user="Standard">
+<param humanName="Ground Station Failsafe Enable" name="ArduSub:FS_GCS_ENABLE" documentation="Controls what action to take when GCS heartbeat is lost." user="Standard">
 <values>
 <value code="0">Disabled</value>
-<value code="1">Enabled always RTL</value>
-<value code="2">Enabled Continue with Mission in Auto Mode</value>
+<value code="1">Warn only</value>
+<value code="2">Disarm</value>
+<value code="3">Enter depth hold mode</value>
+<value code="4">Enter surface mode</value>
 </values>
+</param>
+<param humanName="Leak Failsafe Enable" name="ArduSub:FS_LEAK_ENABLE" documentation="Controls what action to take if a leak is detected." user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Warn only</value>
+<value code="2">Enter surface mode</value>
+</values>
+</param>
+<param humanName="Internal Pressure Failsafe Enable" name="ArduSub:FS_PRESS_ENABLE" documentation="Controls what action to take if internal pressure exceeds FS_PRESS_MAX parameter." user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Warn only</value>
+</values>
+</param>
+<param humanName="Internal Temperature Failsafe Enable" name="ArduSub:FS_TEMP_ENABLE" documentation="Controls what action to take if internal temperature exceeds FS_TEMP_MAX parameter." user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Warn only</value>
+</values>
+</param>
+<param humanName="Internal Pressure Failsafe Threshold" name="ArduSub:FS_PRESS_MAX" documentation="The maximum internal pressure allowed before triggering failsafe. Failsafe action is determined by FS_PRESS_ENABLE parameter" user="Standard">
+<field name="Units">Pascal</field>
+</param>
+<param humanName="Internal Temperature Failsafe Threshold" name="ArduSub:FS_TEMP_MAX" documentation="The maximum internal temperature allowed before triggering failsafe. Failsafe action is determined by FS_TEMP_ENABLE parameter." user="Standard">
+<field name="Units">Degrees Centigrade</field>
+</param>
+<param humanName="Terrain Failsafe Enable" name="ArduSub:FS_TERRAIN_ENAB" documentation="Controls what action to take if terrain information is lost during AUTO mode" user="Standard">
+<values>
+<value code="0">Disarm</value>
+<value code=" 1">Hold Position</value>
+<value code=" 2">Surface</value>
+</values>
+</param>
+<param humanName="Crosstrack correction angle limit" name="ArduSub:XTRACK_ANG_LIM" documentation="Maximum allowed angle (in degrees) between current track and desired heading during waypoint navigation" user="Standard">
+<field name="Range">10 90</field>
 </param>
 <param humanName="GPS Hdop Good" name="ArduSub:GPS_HDOP_GOOD" documentation="GPS Hdop value at or below this value represent a good position.  Used for pre-arm checks" user="Advanced">
 <field name="Range">100 900</field>
@@ -769,6 +806,9 @@
 <value code="0">Do Not Use in RTL and Land</value>
 <value code="1">Use in RTL and Land</value>
 </values>
+</param>
+<param humanName="Takeoff navigation altitude" name="ArduSub:TKOFF_NAV_ALT" documentation="This is the altitude in meters above the takeoff point that attitude changes for navigation can begin" user="Standard">
+<field name="Range">0 5</field>
 </param>
 </parameters>
 </vehicles><libraries><parameters name="SERIAL">
@@ -1918,6 +1958,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1932,6 +1974,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN0_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -1953,6 +2007,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1967,6 +2023,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -1990,6 +2058,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2004,6 +2074,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN1_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2025,6 +2107,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2039,6 +2123,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2062,6 +2158,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2076,6 +2174,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN2_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2097,6 +2207,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2111,6 +2223,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2134,6 +2258,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2148,6 +2274,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN3_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2169,6 +2307,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2183,6 +2323,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2206,6 +2358,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2220,6 +2374,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN4_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2241,6 +2407,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2255,6 +2423,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2278,6 +2458,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2292,6 +2474,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN5_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2313,6 +2507,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2327,6 +2523,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2350,6 +2558,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2364,6 +2574,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN6_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2385,6 +2607,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2399,6 +2623,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2422,6 +2658,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2436,6 +2674,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN7_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2457,6 +2707,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2471,6 +2723,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2494,6 +2758,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2508,6 +2774,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN8_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2529,6 +2807,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2543,6 +2823,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2566,6 +2858,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2580,6 +2874,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN9_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2601,6 +2907,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2615,6 +2923,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2638,6 +2958,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2652,6 +2974,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN10_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2673,6 +3007,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2687,6 +3023,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2710,6 +3058,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2724,6 +3074,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN11_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2745,6 +3107,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2759,6 +3123,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2782,6 +3158,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2796,6 +3174,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN12_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2817,6 +3207,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2831,6 +3223,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2854,6 +3258,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2868,6 +3274,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN13_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2889,6 +3307,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2903,6 +3323,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2926,6 +3358,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2940,6 +3374,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN14_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2961,6 +3407,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2975,6 +3423,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2998,6 +3458,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -3012,6 +3474,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN15_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -3033,6 +3507,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -3047,6 +3523,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -4952,6 +5440,68 @@
 </values>
 </param>
 </parameters>
+<parameters name="LEAK">
+<param humanName="Pin that leak detector is connected to" name="LEAK1_PIN" documentation="Pin that the leak detector is connected to" user="Standard">
+<values>
+<value code="-1">Disabled</value>
+<value code="50">Pixhawk Aux1</value>
+<value code="51">Pixhawk Aux2</value>
+<value code="52">Pixhawk Aux3</value>
+<value code="53">Pixhawk Aux4</value>
+<value code="54">Pixhawk Aux5</value>
+<value code="55">Pixhawk Aux6</value>
+<value code="13">Pixhawk 3.3ADC1</value>
+<value code="14">Pixhawk 3.3ADC2</value>
+<value code="15">Pixhawk 6.6ADC</value>
+</values>
+</param>
+<param humanName="Default reading of leak detector when dry" name="LEAK1_LOGIC" documentation="Default reading of leak detector when dry" user="Standard">
+<values>
+<value code="0">Low</value>
+<value code="1">High</value>
+</values>
+</param>
+<param humanName="Pin that leak detector is connected to" name="LEAK2_PIN" documentation="Pin that the leak detector is connected to" user="Standard">
+<values>
+<value code="-1">Disabled</value>
+<value code="50">Pixhawk Aux1</value>
+<value code="51">Pixhawk Aux2</value>
+<value code="52">Pixhawk Aux3</value>
+<value code="53">Pixhawk Aux4</value>
+<value code="54">Pixhawk Aux5</value>
+<value code="55">Pixhawk Aux6</value>
+<value code="13">Pixhawk 3.3ADC1</value>
+<value code="14">Pixhawk 3.3ADC2</value>
+<value code="15">Pixhawk 6.6ADC</value>
+</values>
+</param>
+<param humanName="Default reading of leak detector when dry" name="LEAK2_LOGIC" documentation="Default reading of leak detector when dry" user="Standard">
+<values>
+<value code="0">Low</value>
+<value code="1">High</value>
+</values>
+</param>
+<param humanName="Pin that leak detector is connected to" name="LEAK3_PIN" documentation="Pin that the leak detector is connected to" user="Standard">
+<values>
+<value code="-1">Disabled</value>
+<value code="50">Pixhawk Aux1</value>
+<value code="51">Pixhawk Aux2</value>
+<value code="52">Pixhawk Aux3</value>
+<value code="53">Pixhawk Aux4</value>
+<value code="54">Pixhawk Aux5</value>
+<value code="55">Pixhawk Aux6</value>
+<value code="13">Pixhawk 3.3ADC1</value>
+<value code="14">Pixhawk 3.3ADC2</value>
+<value code="15">Pixhawk 6.6ADC</value>
+</values>
+</param>
+<param humanName="Default reading of leak detector when dry" name="LEAK3_LOGIC" documentation="Default reading of leak detector when dry" user="Standard">
+<values>
+<value code="0">Low</value>
+<value code="1">High</value>
+</values>
+</param>
+</parameters>
 <parameters name="SCHED_">
 <param humanName="Scheduler debug level" name="SCHED_DEBUG" documentation='Set to non-zero to enable scheduler debug messages. When set to show "Slips" the scheduler will display a message whenever a scheduled task is delayed due to too much CPU load. When set to ShowOverruns the scheduled will display a message whenever a task takes longer than the limit promised in the task table.' user="Advanced">
 <values>
@@ -5094,18 +5644,6 @@
 <param humanName="Forward/vertical to pitch decoupling factor" name="MOT_FV_CPLNG_K" documentation="Used to decouple pitch from forward/vertical motion. 0 to disable, 1.2 normal" user="Standard">
 <field name="Range">0.0 1.5</field>
 <field name="Increment">0.1</field>
-</param>
-<param humanName="Maximum allowed motor gain" name="MOT_GAIN_MAX" documentation="Maximum allowed motor gain for scaling power output" user="Standard">
-<field name="Range">0.1 1.0</field>
-<field name="Increment">0.01</field>
-</param>
-<param humanName="Minimum allowed motor gain" name="MOT_GAIN_MIN" documentation="Minimum allowed motor gain for scaling power output" user="Standard">
-<field name="Range">0.1 1.0</field>
-<field name="Increment">0.01</field>
-</param>
-<param humanName="Number of gain levels between min and max" name="MOT_GAIN_STEPS" documentation="Number of gain levels between min and max" user="Standard">
-<field name="Range">1 10</field>
-<field name="Increment">1</field>
 </param>
 </parameters>
 <parameters name="RCMAP_">
@@ -5491,9 +6029,9 @@
 <field name="Range">100 1000</field>
 <field name="Increment">25</field>
 </param>
-<param humanName="Output complementary filter time constant (centi-sec)" name="EK2_TAU_OUTPUT" documentation="Sets the time constant of the output complementary filter/predictor in centi-seconds. Set to a negative number to use a computationally cheaper and less accurate method with an automatically calculated time constant." user="Advanced">
-<field name="Range">-1 100</field>
-<field name="Increment">10</field>
+<param humanName="Output complementary filter time constant (centi-sec)" name="EK2_TAU_OUTPUT" documentation="Sets the time constant of the output complementary filter/predictor in centi-seconds." user="Advanced">
+<field name="Range">10 50</field>
+<field name="Increment">5</field>
 </param>
 <param humanName="Earth magnetic field process noise (gauss/s)" name="EK2_MAGE_P_NSE" documentation="This state process noise controls the growth of earth magnetic field state error estimates. Increasing it makes earth magnetic field estimation faster and noisier." user="Advanced">
 <field name="Range">0.00001 0.01</field>
@@ -6026,6 +6564,42 @@
 <param humanName="ADSB vehicle list size" name="ADSB_LIST_MAX" documentation="ADSB list size of nearest vehicles. Longer lists take longer to refresh with lower SRx_ADSB values." user="Advanced">
 <field name="Range">1 100</field>
 </param>
+<param humanName="ADSB vehicle list radius filter" name="ADSB_LIST_RADIUS" documentation="ADSB vehicle list radius filter. Vehicles detected outside this radius will be completely ignored. They will not show up in the SRx_ADSB stream to the GCS and will not be considered in any avoidance calculations." user="Advanced">
+<field name="Range">1 100000</field>
+</param>
+<param humanName="ICAO_ID vehicle identifaction number" name="ADSB_ICAO_ID" documentation="ICAO_ID unique vehicle identifaction number of this aircraft. This is a integer limited to 24bits. If set to 0 then one will be randomly generated. If set to -1 then static information is not sent, transceiver is assumed pre-programmed." user="Advanced">
+<field name="Range">-1 16777215</field>
+</param>
+<param humanName="Emitter type" name="ADSB_EMIT_TYPE" documentation="ADSB classification for the type of vehicle emitting the transponder signal. Default value is 14 (UAV)." user="Advanced">
+<values>
+<value code="0">NoInfo</value>
+<value code="1">Light</value>
+<value code="2">Small</value>
+<value code="3">Large</value>
+<value code="4">HighVortexlarge</value>
+<value code="5">Heavy</value>
+<value code="6">HighlyManuv</value>
+<value code="7">Rotocraft</value>
+<value code="8">RESERVED</value>
+<value code="9">Glider</value>
+<value code="10">LightAir</value>
+<value code="11">Parachute</value>
+<value code="12">UltraLight</value>
+<value code="13">RESERVED</value>
+<value code="14">UAV</value>
+<value code="15">Space</value>
+<value code="16">RESERVED</value>
+<value code="17">EmergencySurface</value>
+<value code="18">ServiceSurface</value>
+<value code="19">PointObstacle</value>
+</values>
+</param>
+<param humanName="Aircraft length and width" name="ADSB_LEN_WIDTH" documentation="Aircraft length and width encoding." user="Advanced">
+</param>
+<param humanName="GPS antenna lateral offset" name="ADSB_OFFSET_LAT" documentation="GPS antenna lateral offset." user="Advanced">
+</param>
+<param humanName="GPS antenna longitudinal offset" name="ADSB_OFFSET_LON" documentation="GPS antenna longitudinal offset." user="Advanced">
+</param>
 </parameters>
 <parameters name="NTF_">
 <param humanName="LED Brightness" name="NTF_LED_BRIGHT" documentation="Select the RGB LED brightness level. When USB is connected brightness will never be higher than low regardless of the setting." user="Advanced">
@@ -6037,6 +6611,12 @@
 </values>
 </param>
 <param humanName="Buzzer enable" name="NTF_BUZZ_ENABLE" documentation="Enable or disable the buzzer. Only for Linux and PX4 based boards." user="Advanced">
+<values>
+<value code="0">Disable</value>
+<value code="1">Enable</value>
+</values>
+</param>
+<param humanName="Setup for MAVLink LED override" name="NTF_LED_OVERRIDE" documentation="This sets up the board RGB LED for override by MAVLink. Normal notify LED control is disabled" user="Advanced">
 <values>
 <value code="0">Disable</value>
 <value code="1">Enable</value>
