@@ -416,7 +416,7 @@ SetupPage {
                                     QGCCheckBox {
                                         id:         accumulator
                                         checked:    _activeJoystick.accumulator
-                                        text:       qsTr("Spring on throttle support")
+                                        text:       qsTr("Spring loaded throttle smoothing")
 
                                         onClicked:  _activeJoystick.accumulator = checked
                                     }
