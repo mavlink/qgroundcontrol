@@ -143,7 +143,6 @@ void MockLink::run(void)
 void MockLink::_run1HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
-        _sendHeartBeat();
         _sendVibration();
         if (!qgcApp()->runningUnitTests()) {
             // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
@@ -165,6 +164,7 @@ void MockLink::_run1HzTasks(void)
 void MockLink::_run10HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
+        _sendHeartBeat();
         if (_sendGPSPositionDelayCount > 0) {
             // We delay gps position for better testing
             _sendGPSPositionDelayCount--;

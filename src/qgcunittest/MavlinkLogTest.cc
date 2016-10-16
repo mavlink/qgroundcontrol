@@ -128,7 +128,7 @@ void MavlinkLogTest::_connectLogWorker(bool arm)
     
     if (arm) {
         qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->setArmed(true);
-        QTest::qWait(1500); // Wait long enough for heartbeat to come through
+        QTest::qWait(500); // Wait long enough for heartbeat to come through
         
         // On Disconnect: We should get a getSaveFileName dialog.
         logSaveDir.setPath(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
