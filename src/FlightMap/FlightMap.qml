@@ -367,7 +367,9 @@ Map {
                 // Update drag coordinate
                 var polygonPath = polygonDrawerPolygon.path
                 polygonPath[polygonDrawerPolygon.path.length - 1] = dragCoordinate
-                polygonDrawerPolygon.path = polygonPath
+                if (polygonDrawerPolygon.path.length>2){
+                    polygonDrawerPolygon.path = polygonPath
+                }
             }
         }
     }
