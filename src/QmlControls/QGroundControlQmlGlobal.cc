@@ -44,6 +44,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _qgcPositionManager(NULL)
     , _missionCommandTree(NULL)
     , _videoManager(NULL)
+    , _mavlinkLogManager(NULL)
     , _virtualTabletJoystick(false)
     , _baseFontPointSize(0.0)
 {
@@ -60,7 +61,6 @@ QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 
 }
 
-
 void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
@@ -72,8 +72,8 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _qgcPositionManager     = toolbox->qgcPositionManager();
     _missionCommandTree     = toolbox->missionCommandTree();
     _videoManager           = toolbox->videoManager();
+    _mavlinkLogManager      = toolbox->mavlinkLogManager();
 }
-
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
 {

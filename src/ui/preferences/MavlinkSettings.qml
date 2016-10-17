@@ -25,7 +25,35 @@ Rectangle {
     color:          qgcPal.window
     anchors.fill:   parent
 
+    property real _labelWidth:      ScreenTools.defaultFontPixelWidth * 28
+    property real _valueWidth:      ScreenTools.defaultFontPixelWidth * 24
+    property int  _selectedCount:   0
+
     QGCPalette { id: qgcPal }
+
+    Connections {
+        target: QGroundControl.mavlinkLogManager
+        onSelectedCountChanged: {
+            var selected = 0
+            for(var i = 0; i < QGroundControl.mavlinkLogManager.logFiles.count; i++) {
+                var logFile = QGroundControl.mavlinkLogManager.logFiles.get(i)
+                console.log(logFile.selected)
+                if(logFile.selected)
+                    selected++
+            }
+            _selectedCount = selected
+            console.log(_selectedCount)
+        }
+    }
+
+    MessageDialog {
+        id:         emptyEmailDialog
+        visible:    false
+        icon:       StandardIcon.Warning
+        standardButtons: StandardButton.Close
+        title:      qsTr("Uploading Log Files")
+        text:       qsTr("Please enter an email address before uploading log files.")
+    }
 
     QGCFlickable {
         clip:               true
@@ -36,45 +64,319 @@ Rectangle {
 
         Column {
             id:                 settingsColumn
-            spacing:            ScreenTools.defaultFontPixelHeight
+            width:              __mavlinkRoot.width
+            spacing:            ScreenTools.defaultFontPixelHeight * 0.5
             anchors.margins:    ScreenTools.defaultFontPixelWidth
-            anchors.left:       parent.left
-            anchors.top:        parent.top
             //-----------------------------------------------------------------
-            //-- System ID
-            Row {
-                spacing:    ScreenTools.defaultFontPixelWidth
+            //-- Ground Station
+            Item {
+                width:              __mavlinkRoot.width * 0.8
+                height:             gcsLabel.height
+                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
-                    text:   qsTr("Ground Station MavLink System ID:")
-                    anchors.verticalCenter: parent.verticalCenter
+                    id:             gcsLabel
+                    text:           qsTr("Ground Station")
+                    font.family:    ScreenTools.demiboldFontFamily
                 }
-                QGCTextField {
-                    id:     sysidField
-                    text:   QGroundControl.mavlinkSystemID.toString()
-                    width:  ScreenTools.defaultFontPixelWidth * 6
-                    inputMethodHints:       Qt.ImhFormattedNumbersOnly
-                    anchors.verticalCenter: parent.verticalCenter
-                    onEditingFinished: {
-                        QGroundControl.mavlinkSystemID = parseInt(sysidField.text)
+            }
+            Rectangle {
+                height:         gcsColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:          __mavlinkRoot.width * 0.8
+                color:          qgcPal.windowShade
+                anchors.margins: ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                Column {
+                    id:         gcsColumn
+                    spacing:    ScreenTools.defaultFontPixelWidth
+                    anchors.centerIn: parent
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   sysidField.baseline
+                            text:               qsTr("MavLink System ID:")
+                        }
+                        QGCTextField {
+                            id:     sysidField
+                            text:   QGroundControl.mavlinkSystemID.toString()
+                            width:  _valueWidth
+                            inputMethodHints:       Qt.ImhFormattedNumbersOnly
+                            anchors.verticalCenter: parent.verticalCenter
+                            onEditingFinished: {
+                                QGroundControl.mavlinkSystemID = parseInt(sysidField.text)
+                            }
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Mavlink Heartbeats
+                    QGCCheckBox {
+                        text:       qsTr("Emit heartbeat")
+                        checked:    QGroundControl.multiVehicleManager.gcsHeartBeatEnabled
+                        onClicked: {
+                            QGroundControl.multiVehicleManager.gcsHeartBeatEnabled = checked
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Mavlink Version Check
+                    QGCCheckBox {
+                        text:       qsTr("Only accept MAVs with same protocol version")
+                        checked:    QGroundControl.isVersionCheckEnabled
+                        onClicked: {
+                            QGroundControl.isVersionCheckEnabled = checked
+                        }
                     }
                 }
             }
             //-----------------------------------------------------------------
-            //-- Mavlink Heartbeats
-            QGCCheckBox {
-                text:       qsTr("Emit heartbeat")
-                checked:    QGroundControl.multiVehicleManager.gcsHeartBeatEnabled
-                onClicked: {
-                    QGroundControl.multiVehicleManager.gcsHeartBeatEnabled = checked
+            //-- Mavlink Logging
+            Item {
+                width:              __mavlinkRoot.width * 0.8
+                height:             logLabel.height
+                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    id:             logLabel
+                    text:           qsTr("Vehicle Mavlink Logging")
+                    font.family:    ScreenTools.demiboldFontFamily
+                }
+            }
+            Rectangle {
+                height:         logColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:          __mavlinkRoot.width * 0.8
+                color:          qgcPal.windowShade
+                anchors.margins: ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                Column {
+                    id:         logColumn
+                    spacing:    ScreenTools.defaultFontPixelWidth
+                    anchors.centerIn: parent
+                    //-----------------------------------------------------------------
+                    //-- Email address Field
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   emailField.baseline
+                            text:               qsTr("Email address for Log Upload:")
+                        }
+                        QGCTextField {
+                            id:     emailField
+                            text:   QGroundControl.mavlinkLogManager.emailAddress
+                            width:  _valueWidth
+                            inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhEmailCharactersOnly
+                            anchors.verticalCenter: parent.verticalCenter
+                            onEditingFinished: {
+                                QGroundControl.mavlinkLogManager.emailAddress = emailField.text
+                            }
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Description Field
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   descField.baseline
+                            text:               qsTr("Default Description:")
+                        }
+                        QGCTextField {
+                            id:     descField
+                            text:   QGroundControl.mavlinkLogManager.description
+                            width:  _valueWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                            onEditingFinished: {
+                                QGroundControl.mavlinkLogManager.description = descField.text
+                            }
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Upload URL
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   urlField.baseline
+                            text:               qsTr("Default Upload URL")
+                        }
+                        QGCTextField {
+                            id:     urlField
+                            text:   QGroundControl.mavlinkLogManager.uploadURL
+                            width:  _valueWidth
+                            inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
+                            anchors.verticalCenter: parent.verticalCenter
+                            onEditingFinished: {
+                                QGroundControl.mavlinkLogManager.uploadURL = urlField.text
+                            }
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Automatic Upload
+                    QGCCheckBox {
+                        text:       qsTr("Enable automatic log uploads")
+                        checked:    QGroundControl.mavlinkLogManager.enableAutolog
+                        enabled:    emailField.text !== "" && urlField !== ""
+                        onClicked: {
+                            QGroundControl.mavlinkLogManager.enableAutolog = checked
+                        }
+                    }
                 }
             }
             //-----------------------------------------------------------------
-            //-- Mavlink Version Check
-            QGCCheckBox {
-                text:       qsTr("Only accept MAVs with same protocol version")
-                checked:    QGroundControl.isVersionCheckEnabled
-                onClicked: {
-                    QGroundControl.isVersionCheckEnabled = checked
+            //-- Log Files
+            Item {
+                width:              __mavlinkRoot.width * 0.8
+                height:             logFilesLabel.height
+                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    id:             logFilesLabel
+                    text:           qsTr("Saved Log Files")
+                    font.family:    ScreenTools.demiboldFontFamily
+                }
+            }
+            Rectangle {
+                height:         logFilesColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:          __mavlinkRoot.width * 0.8
+                color:          qgcPal.windowShade
+                anchors.margins: ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                Column {
+                    id:         logFilesColumn
+                    spacing:    ScreenTools.defaultFontPixelWidth
+                    anchors.centerIn: parent
+                    Rectangle {
+                        width:          ScreenTools.defaultFontPixelWidth  * 52
+                        height:         ScreenTools.defaultFontPixelHeight * 10
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        color:          qgcPal.windowShade
+                        border.color:   qgcPal.text
+                        border.width:   0.5
+                        ListView {
+                            width:          ScreenTools.defaultFontPixelWidth  * 50
+                            height:         ScreenTools.defaultFontPixelHeight * 9
+                            anchors.centerIn: parent
+                            orientation:    ListView.Vertical
+                            model:          QGroundControl.mavlinkLogManager.logFiles
+                            delegate: Rectangle {
+                                width:          ScreenTools.defaultFontPixelWidth  * 48
+                                height:         ScreenTools.defaultFontPixelHeight * 1.25
+                                color:          index % 2 == 0 ? qgcPal.window : qgcPal.windowShade
+                                anchors.horizontalCenter: parent.horizontalCenter;
+                                Row {
+                                    width:  ScreenTools.defaultFontPixelWidth  * 46
+                                    anchors.centerIn: parent
+                                    spacing: ScreenTools.defaultFontPixelWidth
+                                    QGCCheckBox {
+                                        width:      ScreenTools.defaultFontPixelWidth * 4
+                                        checked:    object.selected
+                                        onClicked:  {
+                                            object.selected = checked
+                                        }
+                                    }
+                                    QGCLabel {
+                                        text:       object.name
+                                        width:      ScreenTools.defaultFontPixelWidth * 20
+                                    }
+                                    QGCLabel {
+                                        text:       object.size
+                                        visible:    !object.uploading
+                                        width:      ScreenTools.defaultFontPixelWidth * 20;
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                    ProgressBar {
+                                        visible:    object.uploading
+                                        width:      ScreenTools.defaultFontPixelWidth * 20;
+                                        height:     ScreenTools.defaultFontPixelHeight
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        minimumValue:   0
+                                        maximumValue:   100
+                                        value:          object.progress * 100.0
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:       "Check All"
+                            enabled:    !QGroundControl.mavlinkLogManager.busy
+                            onClicked: {
+                                for(var i = 0; i < QGroundControl.mavlinkLogManager.logFiles.count; i++) {
+                                    var logFile = QGroundControl.mavlinkLogManager.logFiles.get(i)
+                                    logFile.selected = true
+                                }
+                            }
+                        }
+                        QGCButton {
+                            text:       "Check None"
+                            enabled:    !QGroundControl.mavlinkLogManager.busy
+                            onClicked: {
+                                for(var i = 0; i < QGroundControl.mavlinkLogManager.logFiles.count; i++) {
+                                    var logFile = QGroundControl.mavlinkLogManager.logFiles.get(i)
+                                    logFile.selected = false
+                                }
+                            }
+                        }
+                        QGCButton {
+                            text:       "Delete Selected"
+                            enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.busy
+                            onClicked:  deleteDialog.open()
+                            MessageDialog {
+                                id:         deleteDialog
+                                visible:    false
+                                icon:       StandardIcon.Warning
+                                standardButtons: StandardButton.Yes | StandardButton.No
+                                title:      qsTr("Delete Selected Log Files")
+                                text:       qsTr("Confirm deleting selected log files?")
+                                onYes: {
+                                    QGroundControl.mavlinkLogManager.deleteLog()
+                                }
+                            }
+                        }
+                        QGCButton {
+                            text:       "Upload Selected"
+                            enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.busy
+                            visible:    !QGroundControl.mavlinkLogManager.busy
+                            onClicked:  {
+                                QGroundControl.mavlinkLogManager.emailAddress = emailField.text
+                                if(QGroundControl.mavlinkLogManager.emailAddress === "")
+                                    emptyEmailDialog.open()
+                                else
+                                    uploadDialog.open()
+                            }
+                            MessageDialog {
+                                id:         uploadDialog
+                                visible:    false
+                                icon:       StandardIcon.Question
+                                standardButtons: StandardButton.Yes | StandardButton.No
+                                title:      qsTr("Upload Selected Log Files")
+                                text:       qsTr("Confirm uploading selected log files?")
+                                onYes: {
+                                    QGroundControl.mavlinkLogManager.uploadLog()
+                                }
+                            }
+                        }
+                        QGCButton {
+                            text:       "Cancel"
+                            enabled:    QGroundControl.mavlinkLogManager.busy
+                            visible:    QGroundControl.mavlinkLogManager.busy
+                            onClicked:  cancelDialog.open()
+                            MessageDialog {
+                                id:         cancelDialog
+                                visible:    false
+                                icon:       StandardIcon.Warning
+                                standardButtons: StandardButton.Yes | StandardButton.No
+                                title:      qsTr("Cancel Upload")
+                                text:       qsTr("Confirm canceling the upload process?")
+                                onYes: {
+                                    QGroundControl.mavlinkLogManager.cancelUpload()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
