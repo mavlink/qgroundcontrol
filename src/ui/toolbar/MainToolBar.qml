@@ -393,6 +393,7 @@ Rectangle {
         property bool vehicleConnectionLost: activeVehicle ? activeVehicle.connectionLost : false
 
         Loader {
+            id:                     indicatorLoader
             source:                 activeVehicle && !parent.vehicleConnectionLost ? "MainToolBarIndicators.qml" : ""
             anchors.left:           parent.left
             anchors.verticalCenter: parent.verticalCenter
@@ -408,7 +409,6 @@ Rectangle {
             anchors.right:          disconnectButton.left
             anchors.verticalCenter: parent.verticalCenter
             visible:                parent.vehicleConnectionLost
-
         }
 
         QGCButton {
@@ -427,7 +427,7 @@ Rectangle {
             anchors.right:          parent.right
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
-            visible:                parent.x < x && !disconnectButton.visible && source != ""
+            visible:                x > indicatorLoader.x + indicatorLoader.width && !disconnectButton.visible && source != ""
             fillMode:               Image.PreserveAspectFit
             source:                 activeVehicle ? activeVehicle.brandImage : ""
         }
