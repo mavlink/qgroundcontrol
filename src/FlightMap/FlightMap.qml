@@ -197,7 +197,8 @@ Map {
 
         property alias  drawingPolygon:     polygonDrawer.hoverEnabled
         property bool   adjustingPolygon:   false
-        property bool   polygonReady:       polygonDrawerPolygon.path.length > 3 ///< true: enough points have been captured to create a closed polygon
+        property bool   polygonReady:       polygonDrawerPolygonSet.path.length > 2 ///< true: enough points have been captured to create a closed polygon
+        property bool   justClicked: false
 
         property var _callbackObject
 
@@ -220,8 +221,7 @@ Map {
                 return false
             }
 
-            var polygonPath = polygonDrawerPolygon.path
-            polygonPath.pop() // get rid of drag coordinate
+            var polygonPath = polygonDrawerPolygonSet.path
             _cancelCapturePolygon()
             polygonDrawer._callbackObject.polygonCaptureFinished(polygonPath)
             return true
@@ -322,10 +322,13 @@ Map {
             polygonDrawerNextPoint.path = [ bogusCoord, bogusCoord ]
             polygonDrawerPolygon.path = [ ]
             polygonDrawerNextPoint.path = [ ]
+            polygonDrawerPolygonSet.path = [ bogusCoord, bogusCoord ]
+            polygonDrawerPolygonSet.path = [ ]
         }
 
         onClicked: {
             if (mouse.button == Qt.LeftButton) {
+                polygonDrawer.justClicked = true
                 if (polygonDrawerPolygon.path.length > 2) {
                     // Make sure the new line doesn't intersect the existing polygon
                     var lastSegment = polygonDrawerPolygon.path.length - 2
@@ -342,15 +345,14 @@ Map {
 
                 var clickCoordinate = _map.toCoordinate(Qt.point(mouse.x, mouse.y))
                 var polygonPath = polygonDrawerPolygon.path
-                if (polygonPath.length == 0) {
+                if(polygonPath.length == 0) {
                     // Add first coordinate
                     polygonPath.push(clickCoordinate)
                 } else {
                     // Update finalized coordinate
                     polygonPath[polygonDrawerPolygon.path.length - 1] = clickCoordinate
                 }
-                // Add next drag coordinate
-                polygonPath.push(clickCoordinate)
+                polygonDrawerPolygonSet.path = polygonPath
                 polygonDrawerPolygon.path = polygonPath
             } else if (polygonDrawer.polygonReady) {
                 finishCapturePolygon()
@@ -360,16 +362,20 @@ Map {
         onPositionChanged: {
             if (polygonDrawerPolygon.path.length) {
                 var dragCoordinate = _map.toCoordinate(Qt.point(mouse.x, mouse.y))
+                var polygonPath = polygonDrawerPolygon.path
+                if (polygonDrawer.justClicked){
+                    polygonPath.push(dragCoordinate)
+                    polygonDrawer.justClicked = false
+                }
 
                 // Update drag line
                 polygonDrawerNextPoint.path = [ polygonDrawerPolygon.path[polygonDrawerPolygon.path.length - 2], dragCoordinate ]
 
                 // Update drag coordinate
-                var polygonPath = polygonDrawerPolygon.path
+
                 polygonPath[polygonDrawerPolygon.path.length - 1] = dragCoordinate
-                if (polygonDrawerPolygon.path.length>2){
-                    polygonDrawerPolygon.path = polygonPath
-                }
+                polygonDrawerPolygon.path = polygonPath
+
             }
         }
     }
@@ -379,14 +385,20 @@ Map {
         id:         polygonDrawerPolygon
         color:      "blue"
         opacity:    0.5
-        visible:    polygonDrawer.drawingPolygon
+        visible:    polygonDrawerPolygon.path.length > 2
+    }
+    MapPolygon {
+        id:         polygonDrawerPolygonSet
+        color:      'green'
+        opacity:    0.5
+        visible:    polygonDrawer.polygonReady
     }
 
     /// Next line for polygon
     MapPolyline {
         id:         polygonDrawerNextPoint
         line.color: "green"
-        line.width: 5
+        line.width: 3
         visible:    polygonDrawer.drawingPolygon
     }
 
