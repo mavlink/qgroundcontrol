@@ -18,6 +18,10 @@
  * Project home page: http://code.google.com/p/usb-serial-for-android/
  */
 
+// IMPORTANT NOTE:
+//  This code has been modified from the original source. It now uses the FTDI driver provided by
+//  ftdichip.com to communicate with an FTDI device. The previous code did not work with all FTDI
+//  devices.
 package com.hoho.android.usbserial.driver;
 
 import android.hardware.usb.UsbConstants;
@@ -27,11 +31,15 @@ import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import com.ftdi.j2xx.D2xxManager;
+import com.ftdi.j2xx.FT_Device;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.qgroundcontrol.qgchelper.UsbDeviceJNI;
 
 /**
  * A {@link CommonUsbSerialDriver} implementation for a variety of FTDI devices
@@ -167,6 +175,8 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
      */
     private static final boolean ENABLE_ASYNC_READS = false;
 
+    FT_Device m_ftDev;
+
     /**
      * Filter FTDI status bytes from buffer
      * @param src The source buffer (which contains status bytes)
@@ -219,261 +229,140 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
 
     @Override
     public void open() throws IOException {
-        boolean opened = false;
+        D2xxManager ftD2xx = null;
         try {
-            for (int i = 0; i < mDevice.getInterfaceCount(); i++) {
-                if (mConnection.claimInterface(mDevice.getInterface(i), true)) {
-                    Log.d(TAG, "claimInterface " + i + " SUCCESS");
-                } else {
-                    throw new IOException("Error claiming interface " + i);
-                }
-            }
-            reset();
-            opened = true;
+            ftD2xx = D2xxManager.getInstance(UsbDeviceJNI.m_context);
+        } catch (D2xxManager.D2xxException ex) {
+            UsbDeviceJNI.qgcLogDebug("D2xxManager.getInstance threw exception: " + ex.getMessage());
+        }
+
+        if (ftD2xx == null) {
+            String errMsg = "Unable to retrieve D2xxManager instance.";
+            UsbDeviceJNI.qgcLogWarning(errMsg);
+            throw new IOException(errMsg);
+        }
+        UsbDeviceJNI.qgcLogDebug("Opened D2xxManager");
+
+        int DevCount = ftD2xx.createDeviceInfoList(UsbDeviceJNI.m_context);
+        UsbDeviceJNI.qgcLogDebug("Found " + DevCount + " ftdi devices.");
+        if (DevCount < 1) {
+            throw new IOException("No FTDI Devices found");
+        }
+
+        m_ftDev = null;
+        try {
+            m_ftDev = ftD2xx.openByIndex(UsbDeviceJNI.m_context, 0);
+        } catch (NullPointerException e) {
+            UsbDeviceJNI.qgcLogDebug("ftD2xx.openByIndex exception: " + e.getMessage());
         } finally {
-            if (!opened) {
-                close();
+            if (m_ftDev == null) {
+                throw new IOException("No FTDI Devices found");
             }
         }
+        UsbDeviceJNI.qgcLogDebug("Opened FTDI device.");
     }
 
     @Override
     public void close() {
-        mConnection.close();
+        if (m_ftDev != null) {
+            try {
+                m_ftDev.close();
+            } catch (Exception e) {
+                UsbDeviceJNI.qgcLogWarning("close exception: " + e.getMessage());
+            }
+            m_ftDev = null;
+        }
     }
 
     @Override
     public int read(byte[] dest, int timeoutMillis) throws IOException {
-        final UsbEndpoint endpoint = mDevice.getInterface(0).getEndpoint(0);
+        int totalBytesRead = 0;
+        int bytesAvailable = m_ftDev.getQueueStatus();
 
-        if (ENABLE_ASYNC_READS) {
-            final int readAmt;
-            synchronized (mReadBufferLock) {
-                // mReadBuffer is only used for maximum read size.
-                readAmt = Math.min(dest.length, mReadBuffer.length);
-            }
-
-            final UsbRequest request = new UsbRequest();
-            request.initialize(mConnection, endpoint);
-
-            final ByteBuffer buf = ByteBuffer.wrap(dest);
-            if (!request.queue(buf, readAmt)) {
-                throw new IOException("Error queueing request.");
-            }
-
-            final UsbRequest response = mConnection.requestWait();
-            if (response == null) {
-                throw new IOException("Null response");
-            }
-
-            final int payloadBytesRead = buf.position() - MODEM_STATUS_HEADER_LENGTH;
-            if (payloadBytesRead > 0) {
-                return payloadBytesRead;
-            } else {
-                return 0;
-            }
-        } else {
-            final int totalBytesRead;
-
-            synchronized (mReadBufferLock) {
-                final int readAmt = Math.min(dest.length, mReadBuffer.length);
-                totalBytesRead = mConnection.bulkTransfer(endpoint, mReadBuffer,
-                        readAmt, timeoutMillis);
-
-                if (totalBytesRead < MODEM_STATUS_HEADER_LENGTH) {
-                    throw new IOException("Expected at least " + MODEM_STATUS_HEADER_LENGTH + " bytes");
-                }
-  
-                return filterStatusBytes(mReadBuffer, dest, totalBytesRead, endpoint.getMaxPacketSize());
+        if (bytesAvailable > 0) {
+            bytesAvailable = Math.min(4096, bytesAvailable);
+            try {
+                totalBytesRead = m_ftDev.read(dest, bytesAvailable, timeoutMillis);
+            } catch (NullPointerException e) {
+                final String errorMsg = "Error reading: " + e.getMessage();
+                UsbDeviceJNI.qgcLogWarning(errorMsg);
+                throw new IOException(errorMsg, e);
             }
         }
+
+        return totalBytesRead;
     }
 
     @Override
     public int write(byte[] src, int timeoutMillis) throws IOException {
-        final UsbEndpoint endpoint = mDevice.getInterface(0).getEndpoint(1);
-        int offset = 0;
-
-        while (offset < src.length) {
-            final int writeLength;
-            final int amtWritten;
-
-            synchronized (mWriteBufferLock) {
-                final byte[] writeBuffer;
-
-                writeLength = Math.min(src.length - offset, mWriteBuffer.length);
-                if (offset == 0) {
-                    writeBuffer = src;
-                } else {
-                    // bulkTransfer does not support offsets, make a copy.
-                    System.arraycopy(src, offset, mWriteBuffer, 0, writeLength);
-                    writeBuffer = mWriteBuffer;
-                }
-
-                amtWritten = mConnection.bulkTransfer(endpoint, writeBuffer, writeLength,
-                        timeoutMillis);
-            }
-
-            if (amtWritten <= 0) {
-                throw new IOException("Error writing " + writeLength
-                        + " bytes at offset " + offset + " length=" + src.length);
-            }
-
-            //Log.d(TAG, "Wrote amtWritten=" + amtWritten + " attempted=" + writeLength);
-            offset += amtWritten;
+        try {
+            m_ftDev.write(src);
+            return src.length;
+        } catch (Exception e) {
+            UsbDeviceJNI.qgcLogWarning("Error writing: " + e.getMessage());
         }
-        return offset;
+        return 0;
     }
 
     private int setBaudRate(int baudRate) throws IOException {
-        long[] vals = convertBaudrate(baudRate);
-        long actualBaudrate = vals[0];
-        long index = vals[1];
-        long value = vals[2];
-        int result = mConnection.controlTransfer(FTDI_DEVICE_OUT_REQTYPE,
-                SIO_SET_BAUD_RATE_REQUEST, (int) value, (int) index,
-                null, 0, USB_WRITE_TIMEOUT_MILLIS);
-        if (result != 0) {
-            throw new IOException("Setting baudrate failed: result=" + result);
+        try {
+            m_ftDev.setBaudRate(baudRate);
+            return baudRate;
+        } catch (Exception e) {
+            UsbDeviceJNI.qgcLogWarning("Error setting baud rate: " + e.getMessage());
         }
-        return (int) actualBaudrate;
+        return 0;
     }
 
     @Override
-    public void setParameters(int baudRate, int dataBits, int stopBits, int parity)
-            throws IOException {
+    public void setParameters(int baudRate, int dataBits, int stopBits, int parity) throws IOException {
         setBaudRate(baudRate);
 
-        int config = dataBits;
-
-        switch (parity) {
-            case PARITY_NONE:
-                config |= (0x00 << 8);
-                break;
-            case PARITY_ODD:
-                config |= (0x01 << 8);
-                break;
-            case PARITY_EVEN:
-                config |= (0x02 << 8);
-                break;
-            case PARITY_MARK:
-                config |= (0x03 << 8);
-                break;
-            case PARITY_SPACE:
-                config |= (0x04 << 8);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown parity value: " + parity);
+        switch (dataBits) {
+        case 7:
+            dataBits = D2xxManager.FT_DATA_BITS_7;
+            break;
+        case 8:
+        default:
+            dataBits = D2xxManager.FT_DATA_BITS_8;
+            break;
         }
 
         switch (stopBits) {
-            case STOPBITS_1:
-                config |= (0x00 << 11);
-                break;
-            case STOPBITS_1_5:
-                config |= (0x01 << 11);
-                break;
-            case STOPBITS_2:
-                config |= (0x02 << 11);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown stopBits value: " + stopBits);
+        default:
+        case 0:
+            stopBits = D2xxManager.FT_STOP_BITS_1;
+            break;
+        case 1:
+            stopBits = D2xxManager.FT_STOP_BITS_2;
+            break;
         }
 
-        int result = mConnection.controlTransfer(FTDI_DEVICE_OUT_REQTYPE,
-                SIO_SET_DATA_REQUEST, config, 0 /* index */,
-                null, 0, USB_WRITE_TIMEOUT_MILLIS);
-        if (result != 0) {
-            throw new IOException("Setting parameters failed: result=" + result);
+        switch (parity) {
+        default:
+        case 0:
+            parity = D2xxManager.FT_PARITY_NONE;
+            break;
+        case 1:
+            parity = D2xxManager.FT_PARITY_ODD;
+            break;
+        case 2:
+            parity = D2xxManager.FT_PARITY_EVEN;
+            break;
+        case 3:
+            parity = D2xxManager.FT_PARITY_MARK;
+            break;
+        case 4:
+            parity = D2xxManager.FT_PARITY_SPACE;
+            break;
+        }
+
+        try {
+            m_ftDev.setDataCharacteristics((byte)dataBits, (byte)stopBits, (byte)parity);
+        } catch (Exception e) {
+            UsbDeviceJNI.qgcLogWarning("Error setDataCharacteristics: " + e.getMessage());
         }
     }
-
-    private long[] convertBaudrate(int baudrate) {
-        // TODO(mikey): Braindead transcription of libfti method.  Clean up,
-        // using more idiomatic Java where possible.
-        int divisor = 24000000 / baudrate;
-        int bestDivisor = 0;
-        int bestBaud = 0;
-        int bestBaudDiff = 0;
-        int fracCode[] = {
-                0, 3, 2, 4, 1, 5, 6, 7
-        };
-
-        for (int i = 0; i < 2; i++) {
-            int tryDivisor = divisor + i;
-            int baudEstimate;
-            int baudDiff;
-
-            if (tryDivisor <= 8) {
-                // Round up to minimum supported divisor
-                tryDivisor = 8;
-            } else if (mType != DeviceType.TYPE_AM && tryDivisor < 12) {
-                // BM doesn't support divisors 9 through 11 inclusive
-                tryDivisor = 12;
-            } else if (divisor < 16) {
-                // AM doesn't support divisors 9 through 15 inclusive
-                tryDivisor = 16;
-            } else {
-                if (mType == DeviceType.TYPE_AM) {
-                    // TODO
-                } else {
-                    if (tryDivisor > 0x1FFFF) {
-                        // Round down to maximum supported divisor value (for
-                        // BM)
-                        tryDivisor = 0x1FFFF;
-                    }
-                }
-            }
-
-            // Get estimated baud rate (to nearest integer)
-            baudEstimate = (24000000 + (tryDivisor / 2)) / tryDivisor;
-
-            // Get absolute difference from requested baud rate
-            if (baudEstimate < baudrate) {
-                baudDiff = baudrate - baudEstimate;
-            } else {
-                baudDiff = baudEstimate - baudrate;
-            }
-
-            if (i == 0 || baudDiff < bestBaudDiff) {
-                // Closest to requested baud rate so far
-                bestDivisor = tryDivisor;
-                bestBaud = baudEstimate;
-                bestBaudDiff = baudDiff;
-                if (baudDiff == 0) {
-                    // Spot on! No point trying
-                    break;
-                }
-            }
-        }
-
-        // Encode the best divisor value
-        long encodedDivisor = (bestDivisor >> 3) | (fracCode[bestDivisor & 7] << 14);
-        // Deal with special cases for encoded value
-        if (encodedDivisor == 1) {
-            encodedDivisor = 0; // 3000000 baud
-        } else if (encodedDivisor == 0x4001) {
-            encodedDivisor = 1; // 2000000 baud (BM only)
-        }
-
-        // Split into "value" and "index" values
-        long value = encodedDivisor & 0xFFFF;
-        long index;
-        if (mType == DeviceType.TYPE_2232C || mType == DeviceType.TYPE_2232H
-                || mType == DeviceType.TYPE_4232H) {
-            index = (encodedDivisor >> 8) & 0xffff;
-            index &= 0xFF00;
-            index |= 0 /* TODO mIndex */;
-        } else {
-            index = (encodedDivisor >> 16) & 0xffff;
-        }
-
-        // Return the nearest baud rate
-        return new long[] {
-                bestBaud, index, value
-        };
-    }
-
     @Override
     public boolean getCD() throws IOException {
         return false;
@@ -515,18 +404,22 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
     @Override
     public boolean purgeHwBuffers(boolean purgeReadBuffers, boolean purgeWriteBuffers) throws IOException {
         if (purgeReadBuffers) {
-            int result = mConnection.controlTransfer(FTDI_DEVICE_OUT_REQTYPE, SIO_RESET_REQUEST,
-                    SIO_RESET_PURGE_RX, 0 /* index */, null, 0, USB_WRITE_TIMEOUT_MILLIS);
-            if (result != 0) {
-                throw new IOException("Flushing RX failed: result=" + result);
+            try {
+                m_ftDev.purge(D2xxManager.FT_PURGE_RX);
+            } catch (Exception e) {
+                String errMsg = "Error purgeHwBuffers(RX): "+ e.getMessage();
+                UsbDeviceJNI.qgcLogWarning(errMsg);
+                throw new IOException(errMsg);
             }
         }
 
         if (purgeWriteBuffers) {
-            int result = mConnection.controlTransfer(FTDI_DEVICE_OUT_REQTYPE, SIO_RESET_REQUEST,
-                    SIO_RESET_PURGE_TX, 0 /* index */, null, 0, USB_WRITE_TIMEOUT_MILLIS);
-            if (result != 0) {
-                throw new IOException("Flushing RX failed: result=" + result);
+            try {
+                m_ftDev.purge(D2xxManager.FT_PURGE_TX);
+            } catch (Exception e) {
+                String errMsg = "Error purgeHwBuffers(TX): " + e.getMessage();
+                UsbDeviceJNI.qgcLogWarning(errMsg);
+                throw new IOException(errMsg);
             }
         }
 
