@@ -345,7 +345,7 @@ Map {
 
                 var clickCoordinate = _map.toCoordinate(Qt.point(mouse.x, mouse.y))
                 var polygonPath = polygonDrawerPolygon.path
-                if(polygonPath.length == 0) {
+                if (polygonPath.length == 0) {
                     // Add first coordinate
                     polygonPath.push(clickCoordinate)
                 } else {
@@ -370,8 +370,6 @@ Map {
 
                 // Update drag line
                 polygonDrawerNextPoint.path = [ polygonDrawerPolygon.path[polygonDrawerPolygon.path.length - 2], dragCoordinate ]
-
-                // Update drag coordinate
 
                 polygonPath[polygonDrawerPolygon.path.length - 1] = dragCoordinate
                 polygonDrawerPolygon.path = polygonPath
