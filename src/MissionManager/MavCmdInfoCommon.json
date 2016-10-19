@@ -308,8 +308,8 @@
         {
             "id":                   84,
             "rawName":              "MAV_CMD_NAV_VTOL_TAKEOFF",
-            "friendlyName":         "VTOL takeoff",
-            "description":          "Takeoff from ground using VTOL mode.",
+            "friendlyName":         "VTOL takeoff and transition",
+            "description":          "Takeoff in VTOL mode, transition to forward flight and fly to the specified location.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "VTOL",
@@ -323,8 +323,8 @@
         {
             "id":                   85,
             "rawName":              "MAV_CMD_NAV_VTOL_LAND",
-            "friendlyName":         "VTOL land",
-            "description":          "Land using VTOL mode.",
+            "friendlyName":         "VTOL transition and land",
+            "description":          "Transition to VTOL mode and land.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "VTOL",
@@ -975,7 +975,7 @@
             "id": 3000,
             "rawName":      "MAV_CMD_DO_VTOL_TRANSITION",
             "friendlyName": "VTOL Transition",
-            "description":  "Perform flight mode transition",
+            "description":  "Perform flight mode transition.",
             "category":     "VTOL",
             "param1": {
                 "label":            "Mode:",
