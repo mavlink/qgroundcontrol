@@ -68,6 +68,8 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     private static TextToSpeech  m_tts;
     private static PowerManager.WakeLock m_wl;
 
+    public static Context m_context;
+
     private final static UsbIoManager.Listener m_Listener =
             new UsbIoManager.Listener()
             {
@@ -89,6 +91,10 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     private static native void nativeDeviceHasDisconnected(int userDataA);
     private static native void nativeDeviceException(int userDataA, String messageA);
     private static native void nativeDeviceNewData(int userDataA, byte[] dataA);
+
+    // Native C++ functions called to log output
+    public static native void qgcLogDebug(String message);
+    public static native void qgcLogWarning(String message);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -252,7 +258,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
                 tempL = tempL + Integer.toString(deviceL.getVendorId()) + ":";
                 listL[countL] = tempL;
                 countL++;
-                //Log.i(TAG, "Found " + tempL);
+                qgcLogDebug("Found " + tempL);
             }
         }
 
@@ -273,11 +279,13 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     //              calls like close(), read(), and write().
     //
     /////////////////////////////////////////////////////////////////////////////////////////////////
-    public static int open(String nameA, int userDataA)
+    public static int open(Context parentContext, String nameA, int userDataA)
     {
         int idL = BAD_PORT;
 
-        Log.i(TAG, "Getting device list");
+        m_context = parentContext;
+
+        //qgcLogDebug("Getting device list");
         if (!getCurrentDevices())
             return BAD_PORT;
 
@@ -366,7 +374,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
 
                 m_ioManager.remove(idL);
             }
-            Log.e(TAG, "Port open exception");
+            qgcLogWarning("Port open exception: " + exA.getMessage());
             return BAD_PORT;
         }
     }
