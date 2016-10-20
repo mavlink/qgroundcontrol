@@ -575,6 +575,11 @@ QGCView {
                         }
                     }
                 }
+
+                QGCLabel {
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    text:                       qsTr("QGroundControl Version: " + QGroundControl.qgcVersion)
+                }
             } // settingsColumn
         } // QGCFlickable
     } // QGCViewPanel
