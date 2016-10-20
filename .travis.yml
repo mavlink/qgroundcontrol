@@ -174,12 +174,14 @@ script:
   #- ccache -s
 
   # unit tests linux/osx
-  - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
-        mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
-        ./debug/QGroundControl --unittest;
-    elif [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
-        mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/ &&
-        ./debug/qgroundcontrol.app/Contents/MacOS/QGroundControl --unittest;
+  - if [ "${TRAVIS_BRANCH}" != "master" ]; then
+        if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
+            mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
+            ./debug/QGroundControl --unittest;
+        elif [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
+            mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/ &&
+            ./debug/qgroundcontrol.app/Contents/MacOS/QGroundControl --unittest;
+        fi
     fi
 
 after_success:
