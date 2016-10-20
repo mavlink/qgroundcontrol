@@ -143,7 +143,7 @@ signals:
 protected:
     void _saveSettings(void);
     void _loadSettings(void);
-    float _adjustRange(int value, Calibration_t calibration);
+    float _adjustRange(int value, Calibration_t calibration, bool withDeadbands);
     void _buttonAction(const QString& action);
     bool _validAxis(int axis);
     bool _validButton(int button);

@@ -422,21 +422,6 @@ SetupPage {
                                     }
                                 }
 
-                                Row {
-                                    x:          20
-                                    width:      parent.width
-                                    spacing:    ScreenTools.defaultFontPixelWidth
-                                    visible:    _activeJoystick.throttleMode == 0
-
-                                    QGCCheckBox {
-                                        id:         deadband
-                                        checked:    controller.deadbandToggle
-                                        text:       qsTr("Deadbands")
-
-                                        onClicked:  controller.deadbandToggle = checked
-                                    }
-                                }
-
                                 QGCRadioButton {
                                     exclusiveGroup: throttleModeExclusiveGroup
                                     text:           qsTr("Full down stick is zero throttle")
@@ -488,6 +473,20 @@ SetupPage {
                                     model:          _activeVehicle.joystickModes
 
                                     onActivated: _activeVehicle.joystickMode = index
+                                }
+                            }
+
+                            Row {
+                                width:      parent.width
+                                spacing:    ScreenTools.defaultFontPixelWidth
+                                visible:    advancedSettings.checked
+
+                                QGCCheckBox {
+                                    id:         deadband
+                                    checked:    controller.deadbandToggle
+                                    text:       qsTr("Deadbands")
+
+                                    onClicked:  controller.deadbandToggle = checked
                                 }
                             }
                         }
