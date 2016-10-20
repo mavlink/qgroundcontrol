@@ -199,13 +199,11 @@ void Joystick::_saveSettings(void)
 }
 
 /// Adjust the raw axis value to the -1:1 range given calibration information
-float Joystick::_adjustRange(int value, Calibration_t calibration)
+float Joystick::_adjustRange(int value, Calibration_t calibration, bool withDeadbands)
 {
     float valueNormalized;
     float axisLength;
     float axisBasis;
-
-
 
     if (value > calibration.center) {
         axisBasis = 1.0f;
@@ -217,7 +215,7 @@ float Joystick::_adjustRange(int value, Calibration_t calibration)
         axisLength =  calibration.center - calibration.min;
     }
 
-    if (_deadband) {
+    if (withDeadbands) {
         if (valueNormalized>calibration.deadband) valueNormalized-=calibration.deadband;
         else if (valueNormalized<-calibration.deadband) valueNormalized+=calibration.deadband;
         else valueNormalized = 0.f;
@@ -290,16 +288,16 @@ void Joystick::run(void)
 
         if (_calibrationMode != CalibrationModeCalibrating) {
             int     axis = _rgFunctionAxis[rollFunction];
-            float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
+            float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
 
                     axis = _rgFunctionAxis[pitchFunction];
-            float   pitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
+            float   pitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
 
                     axis = _rgFunctionAxis[yawFunction];
-            float   yaw = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
+            float   yaw = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband);
 
                     axis = _rgFunctionAxis[throttleFunction];
-            float   throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
+            float   throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _throttleMode==ThrottleModeDownZero?false:_deadband);
 
             if ( _accumulator ) {
                 static float throttle_accu = 0.f;
@@ -546,6 +544,11 @@ void Joystick::setThrottleMode(int mode)
     }
 
     _throttleMode = (ThrottleMode_t)mode;
+
+    if (_throttleMode == ThrottleModeDownZero) {
+        setAccumulator(false);
+    }
+
     _saveSettings();
     emit throttleModeChanged(_throttleMode);
 }
