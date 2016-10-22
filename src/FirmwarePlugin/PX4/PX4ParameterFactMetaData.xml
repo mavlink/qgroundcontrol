@@ -6671,6 +6671,8 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <scope>modules/systemlib</scope>
       <values>
         <value code="10">FrSky Telemetry</value>
+        <value code="319200">Normal Telemetry (19200 baud, 8N1)</value>
+        <value code="338400">Normal Telemetry (38400 baud, 8N1)</value>
         <value code="357600">Normal Telemetry (57600 baud, 8N1)</value>
         <value code="257600">Command Receiver (57600 baud, 8N1)</value>
         <value code="157600">OSD (57600 baud, 8N1)</value>
