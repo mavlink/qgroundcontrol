@@ -81,13 +81,7 @@ public:
     {
         close();
     }
-    void close()
-    {
-        if(fd) {
-            fclose(fd);
-            fd = NULL;
-        }
-    }
+    void close();
     FILE*               fd;
     QString             fileName;
     MavlinkLogFiles*    record;

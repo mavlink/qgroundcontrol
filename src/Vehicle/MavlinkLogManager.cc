@@ -37,6 +37,7 @@ MavlinkLogFiles::MavlinkLogFiles(MavlinkLogManager* manager, const QString& file
     , _selected(false)
     , _uploading(false)
     , _progress(0)
+    , _writing(false)
 {
     QFileInfo fi(filePath);
     _name = fi.baseName();
@@ -84,6 +85,17 @@ MavlinkLogFiles::setWriting(bool writing)
     emit writingChanged();
 }
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CurrentRunningLog::close()
+{
+    if(fd) {
+        fclose(fd);
+        fd = NULL;
+    }
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 MavlinkLogManager::MavlinkLogManager(QGCApplication* app)
     : QGCTool(app)
@@ -533,7 +545,7 @@ MavlinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
 void
 MavlinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system*/, uint8_t /*target_component*/, uint16_t sequence, uint8_t length, uint8_t first_message, const uint8_t* data, bool /*acked*/)
 {
-    if(_currentSavingFile) {
+    if(_currentSavingFile && _currentSavingFile->fd) {
         if(sequence != _sequence) {
             qCWarning(MavlinkLogManagerLog) << "Dropped Mavlink log data";
             if(first_message < 255) {
@@ -557,7 +569,6 @@ MavlinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system
     }
     //-- Update file size
     if(_currentSavingFile) {
-        _currentSavingFile->close();
         if(_currentSavingFile->record) {
             quint32 size = _currentSavingFile->record->size() + length;
             _currentSavingFile->record->setSize(size);

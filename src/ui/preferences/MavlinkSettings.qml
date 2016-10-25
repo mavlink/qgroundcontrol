@@ -331,6 +331,7 @@ Rectangle {
                                     QGCCheckBox {
                                         width:      ScreenTools.defaultFontPixelWidth * 4
                                         checked:    object.selected
+                                        enabled:    !object.writing && !object.uploading
                                         onClicked:  {
                                             object.selected = checked
                                         }
