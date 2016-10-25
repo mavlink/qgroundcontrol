@@ -132,12 +132,63 @@ Rectangle {
             //-- Mavlink Logging
             Item {
                 width:              __mavlinkRoot.width * 0.8
+                height:             mavlogLabel.height
+                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    id:             mavlogLabel
+                    text:           qsTr("Vehicle Mavlink Logging")
+                    font.family:    ScreenTools.demiboldFontFamily
+                }
+            }
+            Rectangle {
+                height:         mavlogColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:          __mavlinkRoot.width * 0.8
+                color:          qgcPal.windowShade
+                anchors.margins: ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                Column {
+                    id:         mavlogColumn
+                    width:      gcsColumn.width
+                    spacing:    ScreenTools.defaultFontPixelWidth
+                    anchors.centerIn: parent
+                    //-----------------------------------------------------------------
+                    //-- Enable auto log on arming
+                    QGCCheckBox {
+                        text:       qsTr("Enable automatic logging start when vehicle is armed")
+                        checked:    QGroundControl.mavlinkLogManager.enableAutoStart
+                        onClicked: {
+                            QGroundControl.mavlinkLogManager.enableAutoStart = checked
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Manual Start/Stop
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:       "Start Logging"
+                            enabled:    !QGroundControl.mavlinkLogManager.logRunning && QGroundControl.mavlinkLogManager.canStartLog
+                            onClicked:  QGroundControl.mavlinkLogManager.startLogging()
+                        }
+                        QGCButton {
+                            text:       "Stop Logging"
+                            enabled:    QGroundControl.mavlinkLogManager.logRunning
+                            onClicked:  QGroundControl.mavlinkLogManager.stopLogging()
+                        }
+                    }
+                }
+            }
+            //-----------------------------------------------------------------
+            //-- Mavlink Logging
+            Item {
+                width:              __mavlinkRoot.width * 0.8
                 height:             logLabel.height
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
                     id:             logLabel
-                    text:           qsTr("Vehicle Mavlink Logging")
+                    text:           qsTr("Mavlink Log Uploads")
                     font.family:    ScreenTools.demiboldFontFamily
                 }
             }
@@ -214,10 +265,10 @@ Rectangle {
                     //-- Automatic Upload
                     QGCCheckBox {
                         text:       qsTr("Enable automatic log uploads")
-                        checked:    QGroundControl.mavlinkLogManager.enableAutolog
+                        checked:    QGroundControl.mavlinkLogManager.enableAutoUpload
                         enabled:    emailField.text !== "" && urlField !== ""
                         onClicked: {
-                            QGroundControl.mavlinkLogManager.enableAutolog = checked
+                            QGroundControl.mavlinkLogManager.enableAutoUpload = checked
                         }
                     }
                 }

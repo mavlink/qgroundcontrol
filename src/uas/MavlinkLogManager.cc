@@ -21,13 +21,13 @@
 
 QGC_LOGGING_CATEGORY(MavlinkLogManagerLog, "MavlinkLogManagerLog")
 
-static const char* kEmailAddressKey = "MavlinkLogEmail";
-static const char* kDescriptionsKey = "MavlinkLogDescription";
-static const char* kDefaultDescr    = "QGroundControl Session";
-static const char* kPx4URLKey       = "MavlinkLogURL";
-static const char* kDefaultPx4URL   = "http://logs.px4.io/upload";
-static const char* kEnableAutologKey= "EnableAutologKey";
-
+static const char* kEmailAddressKey         = "MavlinkLogEmail";
+static const char* kDescriptionsKey         = "MavlinkLogDescription";
+static const char* kDefaultDescr            = "QGroundControl Session";
+static const char* kPx4URLKey               = "MavlinkLogURL";
+static const char* kDefaultPx4URL           = "http://logs.px4.io/upload";
+static const char* kEnableAutoUploadKey     = "EnableAutoUploadKey";
+static const char* kEnableAutoStartKey      = "EnableAutoStartKey";
 
 //-----------------------------------------------------------------------------
 MavlinkLogFiles::MavlinkLogFiles(MavlinkLogManager *manager, const QString& filePath)
@@ -70,16 +70,20 @@ MavlinkLogFiles::setProgress(qreal progress)
 //-----------------------------------------------------------------------------
 MavlinkLogManager::MavlinkLogManager(QGCApplication* app)
     : QGCTool(app)
-    , _enableAutolog(true)
+    , _enableAutoUpload(true)
+    , _enableAutoStart(true)
     , _nam(NULL)
     , _currentLogfile(NULL)
+    , _vehicle(NULL)
+    , _logRunning(false)
 {
     //-- Get saved settings
     QSettings settings;
     setEmailAddress(settings.value(kEmailAddressKey, QString()).toString());
     setDescription(settings.value(kDescriptionsKey, QString(kDefaultDescr)).toString());
     setUploadURL(settings.value(kPx4URLKey, QString(kDefaultPx4URL)).toString());
-    setEnableAutolog(settings.value(kEnableAutologKey, true).toBool());
+    setEnableAutoUpload(settings.value(kEnableAutoUploadKey, true).toBool());
+    setEnableAutoStart(settings.value(kEnableAutoStartKey, true).toBool());
     //-- Logging location
     _logPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     _logPath += "/MavlinkLogs";
@@ -109,6 +113,7 @@ MavlinkLogManager::setToolbox(QGCToolbox *toolbox)
    QGCTool::setToolbox(toolbox);
    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
    qmlRegisterUncreatableType<MavlinkLogManager>("QGroundControl.MavlinkLogManager", 1, 0, "MavlinkLogManager", "Reference only");
+   connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MavlinkLogManager::_activeVehicleChanged);
 
    //    _uploadURL = "http://192.168.1.21/px4";
    //    _uploadURL = "http://192.168.1.9:8080";
@@ -153,12 +158,22 @@ MavlinkLogManager::setUploadURL(QString url)
 
 //-----------------------------------------------------------------------------
 void
-MavlinkLogManager::setEnableAutolog(bool enable)
+MavlinkLogManager::setEnableAutoUpload(bool enable)
 {
-    _enableAutolog = enable;
+    _enableAutoUpload = enable;
     QSettings settings;
-    settings.setValue(kEnableAutologKey, enable);
-    emit enableAutologChanged();
+    settings.setValue(kEnableAutoUploadKey, enable);
+    emit enableAutoUploadChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogManager::setEnableAutoStart(bool enable)
+{
+    _enableAutoStart = enable;
+    QSettings settings;
+    settings.setValue(kEnableAutoStartKey, enable);
+    emit enableAutoStartChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -215,6 +230,28 @@ MavlinkLogManager::cancelUpload()
     }
     if(_currentLogfile) {
         emit abortUpload();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogManager::startLogging()
+{
+    if(_vehicle) {
+        _vehicle->startMavlinkLog();
+        _logRunning = true;
+        emit logRunningChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogManager::stopLogging()
+{
+    if(_vehicle) {
+        _vehicle->stopMavlinkLog();
+        _logRunning = false;
+        emit logRunningChanged();
     }
 }
 
@@ -346,4 +383,61 @@ MavlinkLogManager::_uploadProgress(qint64 bytesSent, qint64 bytesTotal)
             _currentLogfile->setProgress(progress);
     }
     qCDebug(MavlinkLogManagerLog) << bytesSent << "of" << bytesTotal;
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
+{
+    //-- TODO: This is not quite right. This is being used to detect when a vehicle
+    //   connects/disconnects. In reality, if QGC is connected to multiple vehicles,
+    //   this is called each time the user switches from one vehicle to another. So
+    //   far, I'm working on the assumption that multiple vehicles is a rare exception.
+
+    // Disconnect the previous one (if any)
+    if (_vehicle) {
+        disconnect(_vehicle, &Vehicle::armedChanged,   this, &MavlinkLogManager::_armedChanged);
+        disconnect(_vehicle, &Vehicle::mavlinkLogData, this, &MavlinkLogManager::_mavlinkLogData);
+        _vehicle = NULL;
+        emit canStartLogChanged();
+    }
+    // Connect new system
+    if (vehicle)
+    {
+        _vehicle = vehicle;
+        connect(_vehicle, &Vehicle::armedChanged,   this, &MavlinkLogManager::_armedChanged);
+        connect(_vehicle, &Vehicle::mavlinkLogData, this, &MavlinkLogManager::_mavlinkLogData);
+        emit canStartLogChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogManager::_mavlinkLogData(Vehicle * /*vehicle*/, uint8_t /*target_system*/, uint8_t /*target_component*/, uint16_t sequence, uint8_t length, uint8_t first_message, const uint8_t* data, bool /*acked*/)
+{
+    Q_UNUSED(data);
+    qDebug() << "Mavlink Log:" << sequence << length << first_message;
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogManager::_armedChanged(bool armed)
+{
+    if(_vehicle) {
+        if(armed) {
+            if(_enableAutoStart) {
+                _vehicle->startMavlinkLog();
+                _logRunning = true;
+                emit logRunningChanged();
+            }
+        } else {
+            if(_logRunning && _enableAutoStart) {
+                _vehicle->stopMavlinkLog();
+                emit logRunningChanged();
+                if(_enableAutoUpload) {
+                    //-- TODO: Queue log for auto upload
+                }
+            }
+        }
+    }
 }

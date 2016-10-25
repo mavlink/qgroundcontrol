@@ -485,6 +485,10 @@ public:
 
     int  flowImageIndex() { return _flowImageIndex; }
 
+    //-- Mavlink Logging
+    void startMavlinkLog();
+    void stopMavlinkLog();
+
     /// Requests the specified data stream from the vehicle
     ///     @param stream Stream which is being requested
     ///     @param rate Rate at which to send stream in Hz
@@ -638,6 +642,9 @@ signals:
     void mavlinkScaledImu2(mavlink_message_t message);
     void mavlinkScaledImu3(mavlink_message_t message);
 
+    // Mavlink Log Download
+    void mavlinkLogData (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t length, uint8_t first_message, const uint8_t* data, bool acked);
+
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
     void _linkInactiveOrDeleted(LinkInterface* link);
@@ -695,6 +702,9 @@ private:
     void _connectionActive(void);
     void _say(const QString& text);
     QString _vehicleIdSpeech(void);
+    void _handleMavlinkLoggingData(mavlink_message_t& message);
+    void _handleMavlinkLoggingDataAcked(mavlink_message_t& message);
+    void _ackMavlinkLogData(uint16_t sequence);
 
 private:
     int     _id;                    ///< Mavlink system id

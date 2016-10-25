@@ -400,6 +400,7 @@ Vehicle::resetCounters()
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
+
     if (message.sysid != _id && message.sysid != 0) {
         return;
     }
@@ -487,6 +488,12 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
         _handleHilActuatorControls(message);
+        break;
+    case MAVLINK_MSG_ID_LOGGING_DATA:
+        _handleMavlinkLoggingData(message);
+        break;
+    case MAVLINK_MSG_ID_LOGGING_DATA_ACKED:
+        _handleMavlinkLoggingDataAcked(message);
         break;
 
     // Following are ArduPilot dialect messages
@@ -1958,6 +1965,62 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     _vdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _courseOverGroundFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }
+
+//-----------------------------------------------------------------------------
+void
+Vehicle::startMavlinkLog()
+{
+    doCommandLong(defaultComponentId(), MAV_CMD_LOGGING_START);
+}
+
+//-----------------------------------------------------------------------------
+void
+Vehicle::stopMavlinkLog()
+{
+    doCommandLong(defaultComponentId(), MAV_CMD_LOGGING_STOP);
+}
+
+//-----------------------------------------------------------------------------
+void
+Vehicle::_ackMavlinkLogData(uint16_t sequence)
+{
+    mavlink_message_t msg;
+    mavlink_logging_ack_t ack;
+    ack.sequence = sequence;
+    ack.target_component = defaultComponentId();
+    ack.target_system = id();
+    mavlink_msg_logging_ack_encode_chan(
+        _mavlink->getSystemId(),
+        _mavlink->getComponentId(),
+        priorityLink()->mavlinkChannel(),
+        &msg,
+        &ack);
+    sendMessageOnLink(priorityLink(), msg);
+}
+
+//-----------------------------------------------------------------------------
+void
+Vehicle::_handleMavlinkLoggingData(mavlink_message_t& message)
+{
+    qDebug() << "MAVLINK_MSG_ID_LOGGING_DATA";
+    mavlink_logging_data_t log;
+    mavlink_msg_logging_data_decode(&message, &log);
+    emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence, log.length, log.first_message_offset, log.data, false);
+}
+
+//-----------------------------------------------------------------------------
+void
+Vehicle::_handleMavlinkLoggingDataAcked(mavlink_message_t& message)
+{
+    qDebug() << "MAVLINK_MSG_ID_LOGGING_DATA_ACKED";
+    mavlink_logging_data_t log;
+    mavlink_msg_logging_data_decode(&message, &log);
+    _ackMavlinkLogData(log.sequence);
+    emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence, log.length, log.first_message_offset, log.data, true);
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 void VehicleGPSFactGroup::setVehicle(Vehicle* vehicle)
 {
