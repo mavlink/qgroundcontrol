@@ -262,11 +262,22 @@ Rectangle {
                     //-----------------------------------------------------------------
                     //-- Automatic Upload
                     QGCCheckBox {
+                        id:         autoUploadCheck
                         text:       qsTr("Enable automatic log uploads")
                         checked:    QGroundControl.mavlinkLogManager.enableAutoUpload
                         enabled:    emailField.text !== "" && urlField !== ""
                         onClicked: {
                             QGroundControl.mavlinkLogManager.enableAutoUpload = checked
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Delete log after upload
+                    QGCCheckBox {
+                        text:       qsTr("Delete log file after uploading")
+                        checked:    QGroundControl.mavlinkLogManager.deleteAfterUpload
+                        enabled:    emailField.text !== "" && urlField !== "" && autoUploadCheck.checked
+                        onClicked: {
+                            QGroundControl.mavlinkLogManager.deleteAfterUpload = checked
                         }
                     }
                 }
@@ -327,11 +338,13 @@ Rectangle {
                                     QGCLabel {
                                         text:       object.name
                                         width:      ScreenTools.defaultFontPixelWidth * 28
+                                        color:      object.writing ? qgcPal.warningText : qgcPal.text
                                     }
                                     QGCLabel {
                                         text:       Number(object.size).toLocaleString(Qt.locale(), 'f', 0)
                                         visible:    !object.uploading
                                         width:      ScreenTools.defaultFontPixelWidth * 20;
+                                        color:      object.writing ? qgcPal.warningText : qgcPal.text
                                         horizontalAlignment: Text.AlignRight
                                     }
                                     ProgressBar {
@@ -352,7 +365,7 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCButton {
                             text:       "Check All"
-                            enabled:    !QGroundControl.mavlinkLogManager.busy
+                            enabled:    !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning
                             onClicked: {
                                 for(var i = 0; i < QGroundControl.mavlinkLogManager.logFiles.count; i++) {
                                     var logFile = QGroundControl.mavlinkLogManager.logFiles.get(i)
@@ -362,7 +375,7 @@ Rectangle {
                         }
                         QGCButton {
                             text:       "Check None"
-                            enabled:    !QGroundControl.mavlinkLogManager.busy
+                            enabled:    !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning
                             onClicked: {
                                 for(var i = 0; i < QGroundControl.mavlinkLogManager.logFiles.count; i++) {
                                     var logFile = QGroundControl.mavlinkLogManager.logFiles.get(i)
@@ -372,7 +385,7 @@ Rectangle {
                         }
                         QGCButton {
                             text:       "Delete Selected"
-                            enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.busy
+                            enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning
                             onClicked:  deleteDialog.open()
                             MessageDialog {
                                 id:         deleteDialog
@@ -388,8 +401,8 @@ Rectangle {
                         }
                         QGCButton {
                             text:       "Upload Selected"
-                            enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.busy
-                            visible:    !QGroundControl.mavlinkLogManager.busy
+                            enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning
+                            visible:    !QGroundControl.mavlinkLogManager.uploading
                             onClicked:  {
                                 QGroundControl.mavlinkLogManager.emailAddress = emailField.text
                                 if(QGroundControl.mavlinkLogManager.emailAddress === "")
@@ -411,8 +424,8 @@ Rectangle {
                         }
                         QGCButton {
                             text:       "Cancel"
-                            enabled:    QGroundControl.mavlinkLogManager.busy
-                            visible:    QGroundControl.mavlinkLogManager.busy
+                            enabled:    QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning
+                            visible:    QGroundControl.mavlinkLogManager.uploading
                             onClicked:  cancelDialog.open()
                             MessageDialog {
                                 id:         cancelDialog
