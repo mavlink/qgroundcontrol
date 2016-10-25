@@ -73,7 +73,7 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
 MAVLinkProtocol::~MAVLinkProtocol()
 {
     storeSettings();
-    
+
 #ifndef __mobile__
     _closeLogFile();
 #endif
@@ -162,7 +162,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     if (!_linkMgr->links()->contains(link)) {
         return;
     }
-    
+
 //    receiveMutex.lock();
     mavlink_message_t message;
     mavlink_status_t status;
@@ -214,6 +214,8 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         {
             decodedFirstPacket = true;
 
+            /*
+             * Handled in Vehicle.cc now.
             mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
             if (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
                 qDebug() << "switch to mavlink 2.0" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
@@ -222,6 +224,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 qDebug() << "switch to mavlink 1.0" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                 mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
             }
+            */
 
             if(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS)
             {
@@ -255,7 +258,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
 #ifndef __mobile__
             // Log data
-            
+
             if (!_logSuspendError && !_logSuspendReplay && _tempLogFile.isOpen()) {
                 uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)];
 
@@ -280,7 +283,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     _stopLogging();
                     _logSuspendError = true;
                 }
-                
+
                 // Check for the vehicle arming going by. This is used to trigger log save.
                 if (!_logPromptForSave && message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
                     mavlink_heartbeat_t state;
@@ -412,7 +415,7 @@ bool MAVLinkProtocol::_closeLogFile(void)
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -458,11 +461,11 @@ void MAVLinkProtocol::_stopLogging(void)
 void MAVLinkProtocol::checkForLostLogFiles(void)
 {
     QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-    
+
     QString filter(QString("*.%1").arg(_logFileExtension));
     QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
     qDebug() << "Orphaned log file count" << fileInfoList.count();
-    
+
     foreach(const QFileInfo fileInfo, fileInfoList) {
         qDebug() << "Orphaned log file" << fileInfo.filePath();
         if (fileInfo.size() == 0) {
@@ -488,10 +491,10 @@ void MAVLinkProtocol::suspendLogForReplay(bool suspend)
 void MAVLinkProtocol::deleteTempLogFiles(void)
 {
     QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-    
+
     QString filter(QString("*.%1").arg(_logFileExtension));
     QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
-    
+
     foreach(const QFileInfo fileInfo, fileInfoList) {
         QFile::remove(fileInfo.filePath());
     }

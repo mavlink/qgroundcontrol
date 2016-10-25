@@ -37,12 +37,10 @@ Rectangle {
             var selected = 0
             for(var i = 0; i < QGroundControl.mavlinkLogManager.logFiles.count; i++) {
                 var logFile = QGroundControl.mavlinkLogManager.logFiles.get(i)
-                console.log(logFile.selected)
                 if(logFile.selected)
                     selected++
             }
             _selectedCount = selected
-            console.log(_selectedCount)
         }
     }
 
@@ -296,26 +294,27 @@ Rectangle {
                     id:         logFilesColumn
                     spacing:    ScreenTools.defaultFontPixelWidth
                     anchors.centerIn: parent
+                    width:          ScreenTools.defaultFontPixelWidth * 68
                     Rectangle {
-                        width:          ScreenTools.defaultFontPixelWidth  * 52
+                        width:          ScreenTools.defaultFontPixelWidth  * 64
                         height:         ScreenTools.defaultFontPixelHeight * 10
                         anchors.horizontalCenter: parent.horizontalCenter
-                        color:          qgcPal.windowShade
+                        color:          qgcPal.window
                         border.color:   qgcPal.text
                         border.width:   0.5
                         ListView {
-                            width:          ScreenTools.defaultFontPixelWidth  * 50
-                            height:         ScreenTools.defaultFontPixelHeight * 9
+                            width:          ScreenTools.defaultFontPixelWidth  * 56
+                            height:         ScreenTools.defaultFontPixelHeight * 8.75
                             anchors.centerIn: parent
                             orientation:    ListView.Vertical
                             model:          QGroundControl.mavlinkLogManager.logFiles
+                            clip:           true
                             delegate: Rectangle {
-                                width:          ScreenTools.defaultFontPixelWidth  * 48
+                                width:          ScreenTools.defaultFontPixelWidth  * 52
                                 height:         ScreenTools.defaultFontPixelHeight * 1.25
-                                color:          index % 2 == 0 ? qgcPal.window : qgcPal.windowShade
-                                anchors.horizontalCenter: parent.horizontalCenter;
+                                color:          qgcPal.window
                                 Row {
-                                    width:  ScreenTools.defaultFontPixelWidth  * 46
+                                    width:  ScreenTools.defaultFontPixelWidth  * 50
                                     anchors.centerIn: parent
                                     spacing: ScreenTools.defaultFontPixelWidth
                                     QGCCheckBox {
@@ -327,10 +326,10 @@ Rectangle {
                                     }
                                     QGCLabel {
                                         text:       object.name
-                                        width:      ScreenTools.defaultFontPixelWidth * 20
+                                        width:      ScreenTools.defaultFontPixelWidth * 28
                                     }
                                     QGCLabel {
-                                        text:       object.size
+                                        text:       Number(object.size).toLocaleString(Qt.locale(), 'f', 0)
                                         visible:    !object.uploading
                                         width:      ScreenTools.defaultFontPixelWidth * 20;
                                         horizontalAlignment: Text.AlignRight
