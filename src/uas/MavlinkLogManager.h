@@ -131,6 +131,8 @@ private slots:
 private:
     bool _sendLog                   (const QString& logFile);
     bool _processUploadResponse     (int http_code, QByteArray &data);
+    bool _createNewLog              ();
+    int  _getFirstSelected          ();
 
 private:
     QString                 _description;
@@ -144,6 +146,10 @@ private:
     MavlinkLogFiles*        _currentLogfile;
     Vehicle*                _vehicle;
     bool                    _logRunning;
+    bool                    _loggingDisabled;
+    FILE*                   _currentSavingFileFd;
+    QString                 _currentSavingFileStr;
+    uint16_t                _sequence;
 };
 
 #endif

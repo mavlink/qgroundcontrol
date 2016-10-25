@@ -481,7 +481,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleCommandAck(message);
         break;
     case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
-        _handleAutopilotVersion(message);
+        _handleAutopilotVersion(link, message);
         break;
     case MAVLINK_MSG_ID_WIND_COV:
         _handleWindCov(message);
@@ -508,10 +508,16 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     _uas->receiveMessage(message);
 }
 
-void Vehicle::_handleAutopilotVersion(mavlink_message_t& message)
+void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& message)
 {
     mavlink_autopilot_version_t autopilotVersion;
     mavlink_msg_autopilot_version_decode(&message, &autopilotVersion);
+
+    bool isMavlink2 = (autopilotVersion.capabilities & MAV_PROTOCOL_CAPABILITY_MAVLINK2) != 0;
+    if(isMavlink2) {
+        mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(link->mavlinkChannel());
+        mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+    }
 
     if (autopilotVersion.flight_sw_version != 0) {
         int majorVersion, minorVersion, patchVersion;
@@ -2002,7 +2008,6 @@ Vehicle::_ackMavlinkLogData(uint16_t sequence)
 void
 Vehicle::_handleMavlinkLoggingData(mavlink_message_t& message)
 {
-    qDebug() << "MAVLINK_MSG_ID_LOGGING_DATA";
     mavlink_logging_data_t log;
     mavlink_msg_logging_data_decode(&message, &log);
     emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence, log.length, log.first_message_offset, log.data, false);
@@ -2012,7 +2017,6 @@ Vehicle::_handleMavlinkLoggingData(mavlink_message_t& message)
 void
 Vehicle::_handleMavlinkLoggingDataAcked(mavlink_message_t& message)
 {
-    qDebug() << "MAVLINK_MSG_ID_LOGGING_DATA_ACKED";
     mavlink_logging_data_t log;
     mavlink_msg_logging_data_decode(&message, &log);
     _ackMavlinkLogData(log.sequence);
