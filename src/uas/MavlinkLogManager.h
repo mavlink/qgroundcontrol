@@ -16,6 +16,7 @@
 #include "QmlObjectListModel.h"
 #include "QGCLoggingCategory.h"
 #include "QGCToolbox.h"
+#include "Vehicle.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MavlinkLogManagerLog)
 
@@ -67,29 +68,38 @@ public:
     MavlinkLogManager    (QGCApplication* app);
     ~MavlinkLogManager   ();
 
-    Q_PROPERTY(QString              emailAddress    READ    emailAddress    WRITE setEmailAddress   NOTIFY emailAddressChanged)
-    Q_PROPERTY(QString              description     READ    description     WRITE setDescription    NOTIFY descriptionChanged)
-    Q_PROPERTY(QString              uploadURL       READ    uploadURL       WRITE setUploadURL      NOTIFY uploadURLChanged)
-    Q_PROPERTY(bool                 enableAutolog   READ    enableAutolog   WRITE setEnableAutolog  NOTIFY enableAutologChanged)
-    Q_PROPERTY(bool                 busy            READ    busy                                    NOTIFY busyChanged)
-    Q_PROPERTY(QmlObjectListModel*  logFiles        READ    logFiles                                NOTIFY logFilesChanged)
+    Q_PROPERTY(QString              emailAddress        READ    emailAddress        WRITE setEmailAddress       NOTIFY emailAddressChanged)
+    Q_PROPERTY(QString              description         READ    description         WRITE setDescription        NOTIFY descriptionChanged)
+    Q_PROPERTY(QString              uploadURL           READ    uploadURL           WRITE setUploadURL          NOTIFY uploadURLChanged)
+    Q_PROPERTY(bool                 enableAutoUpload    READ    enableAutoUpload    WRITE setEnableAutoUpload   NOTIFY enableAutoUploadChanged)
+    Q_PROPERTY(bool                 enableAutoStart     READ    enableAutoStart     WRITE setEnableAutoStart    NOTIFY enableAutoStartChanged)
+    Q_PROPERTY(bool                 busy                READ    busy                                            NOTIFY busyChanged)
+    Q_PROPERTY(bool                 logRunning          READ    logRunning                                      NOTIFY logRunningChanged)
+    Q_PROPERTY(bool                 canStartLog         READ    canStartLog                                     NOTIFY canStartLogChanged)
+    Q_PROPERTY(QmlObjectListModel*  logFiles            READ    logFiles                                        NOTIFY logFilesChanged)
 
     Q_INVOKABLE void uploadLog      ();
     Q_INVOKABLE void deleteLog      ();
     Q_INVOKABLE void cancelUpload   ();
+    Q_INVOKABLE void startLogging   ();
+    Q_INVOKABLE void stopLogging    ();
 
     QString     emailAddress        () { return _emailAddress; }
     QString     description         () { return _description; }
     QString     uploadURL           () { return _uploadURL; }
-    bool        enableAutolog       () { return _enableAutolog; }
+    bool        enableAutoUpload    () { return _enableAutoUpload; }
+    bool        enableAutoStart     () { return _enableAutoStart; }
     bool        busy                ();
+    bool        logRunning          () { return _logRunning; }
+    bool        canStartLog         () { return _vehicle != NULL; }
 
     QmlObjectListModel* logFiles    () { return &_logFiles; }
 
     void        setEmailAddress     (QString email);
     void        setDescription      (QString description);
     void        setUploadURL        (QString url);
-    void        setEnableAutolog    (bool enable);
+    void        setEnableAutoUpload (bool enable);
+    void        setEnableAutoStart  (bool enable);
 
     // Override from QGCTool
     void        setToolbox          (QGCToolbox *toolbox);
@@ -98,7 +108,8 @@ signals:
     void emailAddressChanged        ();
     void descriptionChanged         ();
     void uploadURLChanged           ();
-    void enableAutologChanged       ();
+    void enableAutoUploadChanged    ();
+    void enableAutoStartChanged     ();
     void logFilesChanged            ();
     void selectedCountChanged       ();
     void busyChanged                ();
@@ -106,11 +117,16 @@ signals:
     void failed                     ();
     void succeed                    ();
     void abortUpload                ();
+    void logRunningChanged          ();
+    void canStartLogChanged         ();
 
 private slots:
     void _uploadFinished            ();
     void _dataAvailable             ();
     void _uploadProgress            (qint64 bytesSent, qint64 bytesTotal);
+    void _activeVehicleChanged      (Vehicle* vehicle);
+    void _mavlinkLogData            (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t length, uint8_t first_message, const uint8_t* data, bool acked);
+    void _armedChanged              (bool armed);
 
 private:
     bool _sendLog                   (const QString& logFile);
@@ -121,10 +137,13 @@ private:
     QString                 _emailAddress;
     QString                 _uploadURL;
     QString                 _logPath;
-    bool                    _enableAutolog;
+    bool                    _enableAutoUpload;
+    bool                    _enableAutoStart;
     QNetworkAccessManager*  _nam;
     QmlObjectListModel      _logFiles;
     MavlinkLogFiles*        _currentLogfile;
+    Vehicle*                _vehicle;
+    bool                    _logRunning;
 };
 
 #endif
