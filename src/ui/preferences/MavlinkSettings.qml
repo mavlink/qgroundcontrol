@@ -57,8 +57,8 @@ Rectangle {
         visible:    false
         icon:       StandardIcon.Warning
         standardButtons: StandardButton.Close
-        title:      qsTr("Uploading Log Files")
-        text:       qsTr("Please enter an email address before uploading log files.")
+        title:      qsTr("MAVLink Logging")
+        text:       qsTr("Please enter an email address before uploading MAVLink log files.")
     }
 
     QGCFlickable {
@@ -235,6 +235,11 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
                                 QGroundControl.mavlinkLogManager.emailAddress = emailField.text
+                                if(emailField.text === "") {
+                                    autoUploadCheck.checked = false
+                                    QGroundControl.mavlinkLogManager.enableAutoUpload = false
+                                    console.log("forcing enableAutoUpload to false")
+                                }
                             }
                         }
                     }
@@ -283,9 +288,14 @@ Rectangle {
                         id:         autoUploadCheck
                         text:       qsTr("Enable automatic log uploads")
                         checked:    QGroundControl.mavlinkLogManager.enableAutoUpload
-                        enabled:    emailField.text !== "" && urlField !== ""
                         onClicked: {
-                            QGroundControl.mavlinkLogManager.enableAutoUpload = checked
+                            QGroundControl.mavlinkLogManager.emailAddress = emailField.text
+                            if(checked && QGroundControl.mavlinkLogManager.emailAddress === "") {
+                                checked = false
+                                emptyEmailDialog.open()
+                            } else {
+                                QGroundControl.mavlinkLogManager.enableAutoUpload = checked
+                            }
                         }
                     }
                     //-----------------------------------------------------------------
@@ -293,7 +303,7 @@ Rectangle {
                     QGCCheckBox {
                         text:       qsTr("Delete log file after uploading")
                         checked:    QGroundControl.mavlinkLogManager.deleteAfterUpload
-                        enabled:    emailField.text !== "" && urlField !== "" && autoUploadCheck.checked
+                        enabled:    autoUploadCheck.checked
                         onClicked: {
                             QGroundControl.mavlinkLogManager.deleteAfterUpload = checked
                         }
