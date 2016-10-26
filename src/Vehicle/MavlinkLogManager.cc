@@ -19,6 +19,8 @@
 #include <QFile>
 #include <QFileInfo>
 
+#define kTimeOutMilliseconds 1000
+
 QGC_LOGGING_CATEGORY(MavlinkLogManagerLog, "MavlinkLogManagerLog")
 
 static const char* kEmailAddressKey         = "MavlinkLogEmail";
@@ -126,6 +128,7 @@ MavlinkLogManager::MavlinkLogManager(QGCApplication* app)
     , _currentSavingFile(NULL)
     , _sequence(0)
     , _deleteAfterUpload(false)
+    , _loggingCmdTryCount(0)
 {
     //-- Get saved settings
     QSettings settings;
@@ -171,6 +174,7 @@ MavlinkLogManager::setToolbox(QGCToolbox* toolbox)
     qmlRegisterUncreatableType<MavlinkLogManager>("QGroundControl.MavlinkLogManager", 1, 0, "MavlinkLogManager", "Reference only");
     if(!_loggingDisabled) {
         connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MavlinkLogManager::_activeVehicleChanged);
+        connect(&_ackTimer, &QTimer::timeout, this, &MavlinkLogManager::_processCmdAck);
     }
 }
 
@@ -363,6 +367,8 @@ MavlinkLogManager::startLogging()
         if(_createNewLog()) {
             _vehicle->startMavlinkLog();
             _logRunning = true;
+            _loggingCmdTryCount = 0;
+            _ackTimer.start(kTimeOutMilliseconds);
             emit logRunningChanged();
         }
     }
@@ -375,23 +381,28 @@ MavlinkLogManager::stopLogging()
     if(_vehicle) {
         //-- Tell vehicle to stop sending logs
         _vehicle->stopMavlinkLog();
-        if(_currentSavingFile) {
-            _currentSavingFile->close();
-            if(_currentSavingFile->record) {
-                _currentSavingFile->record->setWriting(false);
-                if(_enableAutoUpload) {
-                    //-- Queue log for auto upload (set selected flag)
-                    _currentSavingFile->record->setSelected(true);
-                    if(!uploading()) {
-                        uploadLog();
-                    }
+    }
+    if(_currentSavingFile) {
+        _currentSavingFile->close();
+        if(_currentSavingFile->record) {
+            _currentSavingFile->record->setWriting(false);
+            if(_enableAutoUpload) {
+                //-- Queue log for auto upload (set selected flag)
+                _currentSavingFile->record->setSelected(true);
+                if(!uploading()) {
+                    uploadLog();
                 }
             }
-            delete _currentSavingFile;
-            _currentSavingFile = NULL;
-            _logRunning = false;
-            emit logRunningChanged();
         }
+        delete _currentSavingFile;
+        _currentSavingFile = NULL;
+        _logRunning = false;
+        if(_vehicle) {
+            //-- Setup a timer to make sure vehicle received the command
+            _loggingCmdTryCount = 0;
+            _ackTimer.start(kTimeOutMilliseconds);
+        }
+        emit logRunningChanged();
     }
 }
 
@@ -560,7 +571,10 @@ MavlinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
     if(_vehicle) {
         disconnect(_vehicle, &Vehicle::armedChanged,   this, &MavlinkLogManager::_armedChanged);
         disconnect(_vehicle, &Vehicle::mavlinkLogData, this, &MavlinkLogManager::_mavlinkLogData);
+        disconnect(_vehicle, &Vehicle::commandLongAck, this, &MavlinkLogManager::_commandLongAck);
         _vehicle = NULL;
+        //-- Stop logging (if that's the case)
+        stopLogging();
         emit canStartLogChanged();
     }
     // Connect new system
@@ -568,7 +582,38 @@ MavlinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
         _vehicle = vehicle;
         connect(_vehicle, &Vehicle::armedChanged,   this, &MavlinkLogManager::_armedChanged);
         connect(_vehicle, &Vehicle::mavlinkLogData, this, &MavlinkLogManager::_mavlinkLogData);
+        connect(_vehicle, &Vehicle::commandLongAck, this, &MavlinkLogManager::_commandLongAck);
         emit canStartLogChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogManager::_processCmdAck()
+{
+    if(_loggingCmdTryCount++ > 3) {
+        _ackTimer.stop();
+        //-- Give up
+        if(_logRunning) {
+            qCWarning(MavlinkLogManagerLog) << "Start MAVLink log command had no response.";
+            _discardLog();
+        } else {
+            qCWarning(MavlinkLogManagerLog) << "Stop MAVLink log command had no response.";
+        }
+    } else {
+        if(_vehicle) {
+            if(_logRunning) {
+                _vehicle->startMavlinkLog();
+                qCWarning(MavlinkLogManagerLog) << "Start MAVLink log command sent again.";
+            } else {
+                _vehicle->stopMavlinkLog();
+                qCWarning(MavlinkLogManagerLog) << "Stop MAVLink log command sent again.";
+            }
+            _ackTimer.start(kTimeOutMilliseconds);
+        } else {
+            //-- Vehicle went away on us
+            _ackTimer.stop();
+        }
     }
 }
 
@@ -576,6 +621,10 @@ MavlinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
 void
 MavlinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system*/, uint8_t /*target_component*/, uint16_t sequence, uint8_t length, uint8_t first_message, const uint8_t* data, bool /*acked*/)
 {
+    //-- Disable timer if we got a message before an ACK for the start command
+    if(_logRunning) {
+        _ackTimer.stop();
+    }
     if(_currentSavingFile && _currentSavingFile->fd) {
         if(sequence != _sequence) {
             qCWarning(MavlinkLogManagerLog) << "Dropped Mavlink log data";
@@ -606,6 +655,43 @@ MavlinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system
         }
     }
     _sequence = sequence + 1;
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogManager::_commandLongAck(uint8_t /*compID*/, uint16_t command, uint8_t result)
+{
+    if(command == MAV_CMD_LOGGING_START || command == MAV_CMD_LOGGING_STOP) {
+        _ackTimer.stop();
+        //-- Did it fail?
+        if(result) {
+            if(command == MAV_CMD_LOGGING_STOP) {
+                //-- Not that it could happen but...
+                qCWarning(MavlinkLogManagerLog) << "Stop MAVLink log command failed.";
+            } else {
+                //-- Could not start logging for some reason.
+                qCWarning(MavlinkLogManagerLog) << "Start MAVLink log command failed.";
+                _discardLog();
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogManager::_discardLog()
+{
+    //-- Delete (empty) log file (and record)
+    if(_currentSavingFile) {
+        _currentSavingFile->close();
+        if(_currentSavingFile->record) {
+            _deleteLog(_currentSavingFile->record);
+        }
+        delete _currentSavingFile;
+        _currentSavingFile = NULL;
+    }
+    _logRunning = false;
+    emit logRunningChanged();
 }
 
 //-----------------------------------------------------------------------------

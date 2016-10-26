@@ -165,6 +165,8 @@ private slots:
     void _activeVehicleChanged      (Vehicle* vehicle);
     void _mavlinkLogData            (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t length, uint8_t first_message, const uint8_t* data, bool acked);
     void _armedChanged              (bool armed);
+    void _commandLongAck            (uint8_t compID, uint16_t command, uint8_t result);
+    void _processCmdAck             ();
 
 private:
     bool _sendLog                   (const QString& logFile);
@@ -173,6 +175,7 @@ private:
     int  _getFirstSelected          ();
     void _insertNewLog              (MavlinkLogFiles* newLog);
     void _deleteLog                 (MavlinkLogFiles* log);
+    void _discardLog                ();
     QString _makeFilename           (const QString& baseName);
 
 private:
@@ -191,6 +194,8 @@ private:
     CurrentRunningLog*      _currentSavingFile;
     uint16_t                _sequence;
     bool                    _deleteAfterUpload;
+    int                     _loggingCmdTryCount;
+    QTimer                  _ackTimer;
 };
 
 #endif
