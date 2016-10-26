@@ -28,7 +28,7 @@ class MavlinkLogFiles : public QObject
 {
     Q_OBJECT
 public:
-    MavlinkLogFiles    (MavlinkLogManager* manager, const QString& filePath);
+    MavlinkLogFiles    (MavlinkLogManager* manager, const QString& filePath, bool newFile = false);
 
     Q_PROPERTY(QString      name        READ    name                                CONSTANT)
     Q_PROPERTY(quint32      size        READ    size                                NOTIFY sizeChanged)
@@ -36,6 +36,7 @@ public:
     Q_PROPERTY(bool         uploading   READ    uploading                           NOTIFY uploadingChanged)
     Q_PROPERTY(qreal        progress    READ    progress                            NOTIFY progressChanged)
     Q_PROPERTY(bool         writing     READ    writing                             NOTIFY writingChanged)
+    Q_PROPERTY(bool         uploaded    READ    uploaded                            NOTIFY uploadedChanged)
 
     QString     name                () { return _name; }
     quint32     size                () { return _size; }
@@ -43,12 +44,14 @@ public:
     bool        uploading           () { return _uploading; }
     qreal       progress            () { return _progress; }
     bool        writing             () { return _writing; }
+    bool        uploaded            () { return _uploaded; }
 
     void        setSelected         (bool selected);
     void        setUploading        (bool uploading);
     void        setProgress         (qreal progress);
     void        setWriting          (bool writing);
     void        setSize             (quint32 size);
+    void        setUploaded         (bool uploaded);
 
 signals:
     void        sizeChanged         ();
@@ -56,6 +59,7 @@ signals:
     void        uploadingChanged    ();
     void        progressChanged     ();
     void        writingChanged      ();
+    void        uploadedChanged     ();
 
 private:
     MavlinkLogManager*  _manager;
@@ -65,6 +69,7 @@ private:
     bool                _uploading;
     qreal               _progress;
     bool                _writing;
+    bool                _uploaded;
 };
 
 //-----------------------------------------------------------------------------
@@ -144,7 +149,7 @@ signals:
     void enableAutoStartChanged     ();
     void logFilesChanged            ();
     void selectedCountChanged       ();
-    void uploadingChanged                ();
+    void uploadingChanged           ();
     void readyRead                  (QByteArray data);
     void failed                     ();
     void succeed                    ();
@@ -168,6 +173,7 @@ private:
     int  _getFirstSelected          ();
     void _insertNewLog              (MavlinkLogFiles* newLog);
     void _deleteLog                 (MavlinkLogFiles* log);
+    QString _makeFilename           (const QString& baseName);
 
 private:
     QString                 _description;
