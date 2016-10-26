@@ -643,7 +643,7 @@ signals:
     void mavlinkScaledImu3(mavlink_message_t message);
 
     // Mavlink Log Download
-    void mavlinkLogData (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t length, uint8_t first_message, const uint8_t* data, bool acked);
+    void mavlinkLogData (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, QByteArray data, bool acked);
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);

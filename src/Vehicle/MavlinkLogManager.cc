@@ -106,12 +106,187 @@ MavlinkLogFiles::setUploaded(bool uploaded)
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CurrentRunningLog::close()
+MavlinkLogProcessor::MavlinkLogProcessor()
+    : _fd(NULL)
+    , _written(0)
+    , _sequence(-1)
+    , _numDrops(0)
+    , _gotHeader(false)
+    , _error(false)
+    , _record(NULL)
 {
-    if(fd) {
-        fclose(fd);
-        fd = NULL;
+}
+
+//-----------------------------------------------------------------------------
+MavlinkLogProcessor::~MavlinkLogProcessor()
+{
+    close();
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogProcessor::close()
+{
+    if(_fd) {
+        fclose(_fd);
+        _fd = NULL;
     }
+}
+
+//-----------------------------------------------------------------------------
+bool
+MavlinkLogProcessor::valid()
+{
+    return (_fd != NULL) && (_record != NULL);
+}
+
+//-----------------------------------------------------------------------------
+bool
+MavlinkLogProcessor::create(MavlinkLogManager* manager, const QString path, uint8_t id)
+{
+    _fileName.sprintf("%s/%03d-%s%s",
+        path.toLatin1().data(),
+        id,
+        QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz").toLatin1().data(),
+        kUlogExtension);
+    _fd = fopen(_fileName.toLatin1().data(), "wb");
+    if(_fd) {
+        _record = new MavlinkLogFiles(manager, _fileName, true);
+        _record->setWriting(true);
+        _sequence = -1;
+        return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+bool
+MavlinkLogProcessor::_checkSequence(uint16_t seq, int& num_drops)
+{
+    num_drops = 0;
+    //-- Check if a sequence is newer than the one previously received and if
+    //   there were dropped messages between the last one and this.
+    if(_sequence == -1) {
+        _sequence = seq;
+        return true;
+    }
+    if((uint16_t)_sequence == seq) {
+        return false;
+    }
+    if(seq > (uint16_t)_sequence) {
+        // Account for wrap-arounds, sequence is 2 bytes
+        if((seq - _sequence) > (1 << 15)) { // Assume reordered
+            return false;
+        }
+        num_drops = seq - _sequence - 1;
+        _numDrops += num_drops;
+        _sequence = seq;
+        return true;
+    } else {
+        if((_sequence - seq) > (1 << 15)) {
+            num_drops = (1 << 16) - _sequence - 1 + seq;
+            _numDrops += num_drops;
+            _sequence = seq;
+            return true;
+        }
+        return false;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MavlinkLogProcessor::_writeData(void* data, int len)
+{
+    if(!_error) {
+        _error = fwrite(data, 1, len, _fd) != (size_t)len;
+        if(!_error) {
+            _written += len;
+            if(_record) {
+                _record->setSize(_written);
+            }
+        } else {
+            qCDebug(MavlinkLogManagerLog) << "File IO error:" << len << "bytes into" << _fileName;
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+QByteArray
+MavlinkLogProcessor::_writeUlogMessage(QByteArray& data)
+{
+    //-- Write ulog data w/o integrity checking, assuming data starts with a
+    //   valid ulog message. returns the remaining data at the end.
+    while(data.length() > 2) {
+        uint8_t* ptr = (uint8_t*)data.data();
+        int message_length = ptr[0] + (ptr[1] * 256) + 3; // 3 = ULog msg header
+        if(message_length > data.length())
+            break;
+        _writeData(data.data(), message_length);
+        data.remove(0, message_length);
+        return data;
+    }
+    return data;
+}
+
+//-----------------------------------------------------------------------------
+bool
+MavlinkLogProcessor::processStreamData(uint16_t sequence, uint8_t first_message, QByteArray data)
+{
+    int num_drops = 0;
+    _error = false;
+    while(_checkSequence(sequence, num_drops)) {
+        //-- The first 16 bytes need special treatment (this sounds awfully brittle)
+        if(!_gotHeader) {
+            if(data.size() < 16) {
+                //-- Shouldn't happen but if it does, we might as well close shop.
+                qCCritical(MavlinkLogManagerLog) << "Corrupt log header. Canceling log download.";
+                return false;
+            }
+            //-- Write header
+            _writeData(data.data(), 16);
+            data.remove(0, 16);
+            _gotHeader = true;
+            // What about data start offset now that we removed 16 bytes off the start?
+        }
+        if(_gotHeader && num_drops > 0) {
+            if(num_drops > 25) num_drops = 25;
+            //-- Hocus Pocus
+            //   Write a dropout message. We don't really know the actual duration,
+            //   so just use the number of drops * 10 ms
+            uint8_t bogus[] = {2, 0, 79, 0, 0};
+            bogus[3] = num_drops * 10;
+            _writeData(bogus, sizeof(bogus));
+        }
+        if(num_drops > 0) {
+            _writeUlogMessage(_ulogMessage);
+            _ulogMessage.clear();
+            //-- If no usefull information in this message. Drop it.
+            if(first_message == 255) {
+                break;
+            }
+            if(first_message > 0) {
+                data.remove(0, first_message);
+                first_message = 0;
+            }
+        }
+        if(first_message == 255 && _ulogMessage.length() > 0) {
+            _ulogMessage.append(data);
+            break;
+        }
+        if(_ulogMessage.length()) {
+            _writeData(_ulogMessage.data(), _ulogMessage.length());
+            if(first_message) {
+                _writeData(data.left(first_message).data(), first_message);
+            }
+            _ulogMessage.clear();
+        }
+        if(first_message) {
+            data.remove(0, first_message);
+        }
+        _ulogMessage = _writeUlogMessage(data);
+        break;
+    }
+    return !_error;
 }
 
 //-----------------------------------------------------------------------------
@@ -125,8 +300,7 @@ MavlinkLogManager::MavlinkLogManager(QGCApplication* app)
     , _vehicle(NULL)
     , _logRunning(false)
     , _loggingDisabled(false)
-    , _currentSavingFile(NULL)
-    , _sequence(0)
+    , _logProcessor(NULL)
     , _deleteAfterUpload(false)
     , _loggingCmdTryCount(0)
 {
@@ -382,20 +556,20 @@ MavlinkLogManager::stopLogging()
         //-- Tell vehicle to stop sending logs
         _vehicle->stopMavlinkLog();
     }
-    if(_currentSavingFile) {
-        _currentSavingFile->close();
-        if(_currentSavingFile->record) {
-            _currentSavingFile->record->setWriting(false);
+    if(_logProcessor) {
+        _logProcessor->close();
+        if(_logProcessor->record()) {
+            _logProcessor->record()->setWriting(false);
             if(_enableAutoUpload) {
                 //-- Queue log for auto upload (set selected flag)
-                _currentSavingFile->record->setSelected(true);
+                _logProcessor->record()->setSelected(true);
                 if(!uploading()) {
                     uploadLog();
                 }
             }
         }
-        delete _currentSavingFile;
-        _currentSavingFile = NULL;
+        delete _logProcessor;
+        _logProcessor = NULL;
         _logRunning = false;
         if(_vehicle) {
             //-- Setup a timer to make sure vehicle received the command
@@ -619,42 +793,24 @@ MavlinkLogManager::_processCmdAck()
 
 //-----------------------------------------------------------------------------
 void
-MavlinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system*/, uint8_t /*target_component*/, uint16_t sequence, uint8_t length, uint8_t first_message, const uint8_t* data, bool /*acked*/)
+MavlinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system*/, uint8_t /*target_component*/, uint16_t sequence, uint8_t first_message, QByteArray data, bool /*acked*/)
 {
     //-- Disable timer if we got a message before an ACK for the start command
     if(_logRunning) {
         _ackTimer.stop();
     }
-    if(_currentSavingFile && _currentSavingFile->fd) {
-        if(sequence != _sequence) {
-            qCWarning(MavlinkLogManagerLog) << "Dropped Mavlink log data";
-            if(first_message < 255) {
-                data += first_message;
-                length -= first_message;
-            } else {
-                return;
-            }
-        }
-        if(fwrite(data, 1, length, _currentSavingFile->fd) != (size_t)length) {
-            qCCritical(MavlinkLogManagerLog) << "Error writing Mavlink log file:" << _currentSavingFile->fileName;
-            delete _currentSavingFile;
-            _currentSavingFile = NULL;
+    if(_logProcessor && _logProcessor->valid()) {
+        if(!_logProcessor->processStreamData(sequence, first_message, data)) {
+            qCCritical(MavlinkLogManagerLog) << "Error writing Mavlink log file:" << _logProcessor->fileName();
+            delete _logProcessor;
+            _logProcessor = NULL;
             _logRunning = false;
             _vehicle->stopMavlinkLog();
             emit logRunningChanged();
         }
     } else {
-        length = 0;
         qCWarning(MavlinkLogManagerLog) << "Mavlink log data received when not expected.";
     }
-    //-- Update file size
-    if(_currentSavingFile) {
-        if(_currentSavingFile->record) {
-            quint32 size = _currentSavingFile->record->size() + length;
-            _currentSavingFile->record->setSize(size);
-        }
-    }
-    _sequence = sequence + 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -682,13 +838,13 @@ void
 MavlinkLogManager::_discardLog()
 {
     //-- Delete (empty) log file (and record)
-    if(_currentSavingFile) {
-        _currentSavingFile->close();
-        if(_currentSavingFile->record) {
-            _deleteLog(_currentSavingFile->record);
+    if(_logProcessor) {
+        _logProcessor->close();
+        if(_logProcessor->record()) {
+            _deleteLog(_logProcessor->record());
         }
-        delete _currentSavingFile;
-        _currentSavingFile = NULL;
+        delete _logProcessor;
+        _logProcessor = NULL;
     }
     _logRunning = false;
     emit logRunningChanged();
@@ -698,30 +854,20 @@ MavlinkLogManager::_discardLog()
 bool
 MavlinkLogManager::_createNewLog()
 {
-    if(_currentSavingFile) {
-        delete _currentSavingFile;
-        _currentSavingFile = NULL;
+    if(_logProcessor) {
+        delete _logProcessor;
+        _logProcessor = NULL;
     }
-    _currentSavingFile = new CurrentRunningLog;
-    _currentSavingFile->fileName.sprintf("%s/%03d-%s%s",
-        _logPath.toLatin1().data(),
-        _vehicle->id(),
-        QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz").toLatin1().data(),
-        kUlogExtension);
-    _currentSavingFile->fd = fopen(_currentSavingFile->fileName.toLatin1().data(), "wb");
-    if(_currentSavingFile->fd) {
-        MavlinkLogFiles* newLog = new MavlinkLogFiles(this, _currentSavingFile->fileName, true);
-        newLog->setWriting(true);
-        _insertNewLog(newLog);
-        _currentSavingFile->record = newLog;
+    _logProcessor = new MavlinkLogProcessor;
+    if(_logProcessor->create(this, _logPath, _vehicle->id())) {
+        _insertNewLog(_logProcessor->record());
         emit logFilesChanged();
     } else {
-        qCCritical(MavlinkLogManagerLog) << "Could not create Mavlink log file:" << _currentSavingFile->fileName;
-        delete _currentSavingFile;
-        _currentSavingFile = NULL;
+        qCCritical(MavlinkLogManagerLog) << "Could not create Mavlink log file:" << _logProcessor->fileName();
+        delete _logProcessor;
+        _logProcessor = NULL;
     }
-    _sequence = 0;
-    return _currentSavingFile != NULL;
+    return _logProcessor != NULL;
 }
 
 //-----------------------------------------------------------------------------

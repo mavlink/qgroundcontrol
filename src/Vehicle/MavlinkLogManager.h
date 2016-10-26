@@ -73,24 +73,31 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-class CurrentRunningLog
+class MavlinkLogProcessor
 {
 public:
-    CurrentRunningLog()
-        : fd(NULL)
-        , record(NULL)
-        , written(0)
-    {
-    }
-    ~CurrentRunningLog()
-    {
-        close();
-    }
-    void close();
-    FILE*               fd;
-    QString             fileName;
-    MavlinkLogFiles*    record;
-    quint32             written;
+    MavlinkLogProcessor();
+    ~MavlinkLogProcessor();
+    void                close       ();
+    bool                valid       ();
+    bool                create      (MavlinkLogManager *manager, const QString path, uint8_t id);
+    MavlinkLogFiles*    record      () { return _record; }
+    QString             fileName    () { return _fileName; }
+    bool                processStreamData(uint16_t _sequence, uint8_t first_message, QByteArray data);
+private:
+    bool                _checkSequence(uint16_t seq, int &num_drops);
+    QByteArray          _writeUlogMessage(QByteArray &data);
+    void                _writeData(void* data, int len);
+private:
+    FILE*               _fd;
+    quint32             _written;
+    int                 _sequence;
+    int                 _numDrops;
+    bool                _gotHeader;
+    bool                _error;
+    QByteArray          _ulogMessage;
+    QString             _fileName;
+    MavlinkLogFiles*    _record;
 };
 
 //-----------------------------------------------------------------------------
@@ -163,7 +170,7 @@ private slots:
     void _dataAvailable             ();
     void _uploadProgress            (qint64 bytesSent, qint64 bytesTotal);
     void _activeVehicleChanged      (Vehicle* vehicle);
-    void _mavlinkLogData            (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t length, uint8_t first_message, const uint8_t* data, bool acked);
+    void _mavlinkLogData            (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, QByteArray data, bool acked);
     void _armedChanged              (bool armed);
     void _commandLongAck            (uint8_t compID, uint16_t command, uint8_t result);
     void _processCmdAck             ();
@@ -191,8 +198,7 @@ private:
     Vehicle*                _vehicle;
     bool                    _logRunning;
     bool                    _loggingDisabled;
-    CurrentRunningLog*      _currentSavingFile;
-    uint16_t                _sequence;
+    MavlinkLogProcessor*    _logProcessor;
     bool                    _deleteAfterUpload;
     int                     _loggingCmdTryCount;
     QTimer                  _ackTimer;

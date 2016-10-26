@@ -2015,7 +2015,8 @@ Vehicle::_handleMavlinkLoggingData(mavlink_message_t& message)
 {
     mavlink_logging_data_t log;
     mavlink_msg_logging_data_decode(&message, &log);
-    emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence, log.length, log.first_message_offset, log.data, false);
+    emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
+        log.first_message_offset, QByteArray((const char*)log.data, log.length), false);
 }
 
 //-----------------------------------------------------------------------------
@@ -2025,7 +2026,8 @@ Vehicle::_handleMavlinkLoggingDataAcked(mavlink_message_t& message)
     mavlink_logging_data_t log;
     mavlink_msg_logging_data_decode(&message, &log);
     _ackMavlinkLogData(log.sequence);
-    emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence, log.length, log.first_message_offset, log.data, true);
+    emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
+        log.first_message_offset, QByteArray((const char*)log.data, log.length), true);
 }
 
 //-----------------------------------------------------------------------------
