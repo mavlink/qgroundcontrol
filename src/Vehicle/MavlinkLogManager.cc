@@ -29,19 +29,28 @@ static const char* kDefaultPx4URL           = "http://logs.px4.io/upload";
 static const char* kEnableAutoUploadKey     = "EnableAutoUploadKey";
 static const char* kEnableAutoStartKey      = "EnableAutoStartKey";
 static const char* kEnableDeletetKey        = "EnableDeleteKey";
+static const char* kUlogExtension           = ".ulg";
+static const char* kSidecarExtension        = ".uploaded";
 
 //-----------------------------------------------------------------------------
-MavlinkLogFiles::MavlinkLogFiles(MavlinkLogManager* manager, const QString& filePath)
+MavlinkLogFiles::MavlinkLogFiles(MavlinkLogManager* manager, const QString& filePath, bool newFile)
     : _manager(manager)
     , _size(0)
     , _selected(false)
     , _uploading(false)
     , _progress(0)
     , _writing(false)
+    , _uploaded(false)
 {
     QFileInfo fi(filePath);
     _name = fi.baseName();
-    _size = (quint32)fi.size();
+    if(!newFile) {
+        _size = (quint32)fi.size();
+        QString sideCar = filePath;
+        sideCar.replace(kUlogExtension, kSidecarExtension);
+        QFileInfo sc(sideCar);
+        _uploaded = sc.exists();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -86,6 +95,14 @@ MavlinkLogFiles::setWriting(bool writing)
 }
 
 //-----------------------------------------------------------------------------
+void
+MavlinkLogFiles::setUploaded(bool uploaded)
+{
+    _uploaded = uploaded;
+    emit uploadedChanged();
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CurrentRunningLog::close()
 {
@@ -122,14 +139,16 @@ MavlinkLogManager::MavlinkLogManager(QGCApplication* app)
     _logPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     _logPath += "/MavlinkLogs";
     if(!QDir(_logPath).exists()) {
-        if(QDir().mkpath(_logPath)) {
+        if(!QDir().mkpath(_logPath)) {
             qCCritical(MavlinkLogManagerLog) << "Could not create Mavlink log download path:" << _logPath;
             _loggingDisabled = true;
         }
     }
     if(!_loggingDisabled) {
         //-- Load current list of logs
-        QDirIterator it(_logPath, QStringList() << "*.ulg", QDir::Files);
+        QString filter = "*";
+        filter += kUlogExtension;
+        QDirIterator it(_logPath, QStringList() << filter, QDir::Files);
         while(it.hasNext()) {
             _insertNewLog(new MavlinkLogFiles(this, it.next()));
         }
@@ -153,11 +172,6 @@ MavlinkLogManager::setToolbox(QGCToolbox* toolbox)
     if(!_loggingDisabled) {
         connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MavlinkLogManager::_activeVehicleChanged);
     }
-    //    _uploadURL = "http://192.168.1.21/px4";
-    //    _uploadURL = "http://192.168.1.9:8080";
-    //    _emailAddress = "gus.grubba.com";
-    //    _description = "Test from QGroundControl - Discard";
-    //    _sendLog("/Users/gus/github/work/logs/simulator.ulg");
 }
 
 //-----------------------------------------------------------------------------
@@ -242,15 +256,14 @@ MavlinkLogManager::uploadLog()
         Q_ASSERT(_currentLogfile);
         if(_currentLogfile->selected()) {
             _currentLogfile->setSelected(false);
-            _currentLogfile->setUploading(true);
-            _currentLogfile->setProgress(0.0);
-            QString filePath = _logPath;
-            filePath += "/";
-            filePath += _currentLogfile->name();
-            filePath += ".ulg";
-            _sendLog(filePath);
-            emit uploadingChanged();
-            return;
+            if(!_currentLogfile->uploaded() && !_emailAddress.isEmpty() && !_uploadURL.isEmpty()) {
+                _currentLogfile->setUploading(true);
+                _currentLogfile->setProgress(0.0);
+                QString filePath = _makeFilename(_currentLogfile->name());
+                _sendLog(filePath);
+                emit uploadingChanged();
+                return;
+            }
         }
     }
     _currentLogfile = NULL;
@@ -309,14 +322,18 @@ MavlinkLogManager::deleteLog()
 void
 MavlinkLogManager::_deleteLog(MavlinkLogFiles* log)
 {
-    QString filePath = _logPath;
-    filePath += "/";
-    filePath += log->name();
-    filePath += ".ulg";
+    QString filePath = _makeFilename(log->name());
     QFile gone(filePath);
     if(!gone.remove()) {
         qCWarning(MavlinkLogManagerLog) << "Could not delete Mavlink log file:" << _logPath;
     }
+    //-- Remove sidecar file (if any)
+    filePath.replace(kUlogExtension, kSidecarExtension);
+    QFile sgone(filePath);
+    if(sgone.exists()) {
+        sgone.remove();
+    }
+    //-- Remove file from list and delete record
     _logFiles.removeOne(log);
     delete log;
     emit logFilesChanged();
@@ -494,6 +511,17 @@ MavlinkLogManager::_uploadFinished()
                 _deleteLog(_currentLogfile);
                 _currentLogfile = NULL;
             }
+        } else {
+            if(_currentLogfile) {
+                _currentLogfile->setUploaded(true);
+                //-- Write side-car file to flag it as uploaded
+                QString sideCar = _makeFilename(_currentLogfile->name());
+                sideCar.replace(kUlogExtension, kSidecarExtension);
+                FILE* f = fopen(sideCar.toLatin1().data(), "wb");
+                if(f) {
+                    fclose(f);
+                }
+            }
         }
     } else {
         qCWarning(MavlinkLogManagerLog) << QString("Log Upload Error: %1 status: %2").arg(reply->errorString(), reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
@@ -525,6 +553,7 @@ MavlinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
     //   connects/disconnects. In reality, if QGC is connected to multiple vehicles,
     //   this is called each time the user switches from one vehicle to another. So
     //   far, I'm working on the assumption that multiple vehicles is a rare exception.
+    //   For now, we only handle one log download at a time.
     // Disconnect the previous one (if any)
     if(_vehicle) {
         disconnect(_vehicle, &Vehicle::armedChanged,   this, &MavlinkLogManager::_armedChanged);
@@ -586,13 +615,14 @@ MavlinkLogManager::_createNewLog()
         _currentSavingFile = NULL;
     }
     _currentSavingFile = new CurrentRunningLog;
-    _currentSavingFile->fileName.sprintf("%s/%03d-%s.ulg",
+    _currentSavingFile->fileName.sprintf("%s/%03d-%s%s",
         _logPath.toLatin1().data(),
         _vehicle->id(),
-        QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz").toLatin1().data());
+        QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz").toLatin1().data(),
+        kUlogExtension);
     _currentSavingFile->fd = fopen(_currentSavingFile->fileName.toLatin1().data(), "wb");
     if(_currentSavingFile->fd) {
-        MavlinkLogFiles* newLog = new MavlinkLogFiles(this, _currentSavingFile->fileName);
+        MavlinkLogFiles* newLog = new MavlinkLogFiles(this, _currentSavingFile->fileName, true);
         newLog->setWriting(true);
         _insertNewLog(newLog);
         _currentSavingFile->record = newLog;
@@ -621,4 +651,15 @@ MavlinkLogManager::_armedChanged(bool armed)
             }
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+QString
+MavlinkLogManager::_makeFilename(const QString& baseName)
+{
+    QString filePath = _logPath;
+    filePath += "/";
+    filePath += baseName;
+    filePath += kUlogExtension;
+    return filePath;
 }

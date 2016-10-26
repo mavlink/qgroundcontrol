@@ -28,6 +28,8 @@ Rectangle {
     property real _labelWidth:      ScreenTools.defaultFontPixelWidth * 28
     property real _valueWidth:      ScreenTools.defaultFontPixelWidth * 24
     property int  _selectedCount:   0
+    property real _columnSpacing:   ScreenTools.defaultFontPixelHeight * 0.25
+
 
     QGCPalette { id: qgcPal }
 
@@ -59,6 +61,7 @@ Rectangle {
         anchors.margins:    ScreenTools.defaultFontPixelWidth
         contentHeight:      settingsColumn.height
         contentWidth:       settingsColumn.width
+        flickableDirection: Flickable.VerticalFlick
 
         Column {
             id:                 settingsColumn
@@ -86,7 +89,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 Column {
                     id:         gcsColumn
-                    spacing:    ScreenTools.defaultFontPixelWidth
+                    spacing:    _columnSpacing
                     anchors.centerIn: parent
                     Row {
                         spacing:    ScreenTools.defaultFontPixelWidth
@@ -148,31 +151,40 @@ Rectangle {
                 Column {
                     id:         mavlogColumn
                     width:      gcsColumn.width
-                    spacing:    ScreenTools.defaultFontPixelWidth
+                    spacing:    _columnSpacing
                     anchors.centerIn: parent
-                    //-----------------------------------------------------------------
-                    //-- Enable auto log on arming
-                    QGCCheckBox {
-                        text:       qsTr("Enable automatic logging start when vehicle is armed")
-                        checked:    QGroundControl.mavlinkLogManager.enableAutoStart
-                        onClicked: {
-                            QGroundControl.mavlinkLogManager.enableAutoStart = checked
-                        }
-                    }
                     //-----------------------------------------------------------------
                     //-- Manual Start/Stop
                     Row {
                         spacing:    ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
-                        QGCButton {
-                            text:       "Start Logging"
-                            enabled:    !QGroundControl.mavlinkLogManager.logRunning && QGroundControl.mavlinkLogManager.canStartLog
-                            onClicked:  QGroundControl.mavlinkLogManager.startLogging()
+                        QGCLabel {
+                            width:              _labelWidth
+                            text:               qsTr("Manual Start/Stop:")
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                         QGCButton {
-                            text:       "Stop Logging"
-                            enabled:    QGroundControl.mavlinkLogManager.logRunning
-                            onClicked:  QGroundControl.mavlinkLogManager.stopLogging()
+                            text:               qsTr("Start Logging")
+                            width:              (_valueWidth * 0.5) - (ScreenTools.defaultFontPixelWidth * 0.5)
+                            enabled:            !QGroundControl.mavlinkLogManager.logRunning && QGroundControl.mavlinkLogManager.canStartLog
+                            onClicked:          QGroundControl.mavlinkLogManager.startLogging()
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCButton {
+                            text:               qsTr("Stop Logging")
+                            width:              (_valueWidth * 0.5) - (ScreenTools.defaultFontPixelWidth * 0.5)
+                            enabled:            QGroundControl.mavlinkLogManager.logRunning
+                            onClicked:          QGroundControl.mavlinkLogManager.stopLogging()
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Enable auto log on arming
+                    QGCCheckBox {
+                        text:       qsTr("Enable automatic logging")
+                        checked:    QGroundControl.mavlinkLogManager.enableAutoStart
+                        onClicked: {
+                            QGroundControl.mavlinkLogManager.enableAutoStart = checked
                         }
                     }
                 }
@@ -198,7 +210,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 Column {
                     id:         logColumn
-                    spacing:    ScreenTools.defaultFontPixelWidth
+                    spacing:    _columnSpacing
                     anchors.centerIn: parent
                     //-----------------------------------------------------------------
                     //-- Email address Field
@@ -303,35 +315,37 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 Column {
                     id:         logFilesColumn
-                    spacing:    ScreenTools.defaultFontPixelWidth
+                    spacing:    _columnSpacing * 4
                     anchors.centerIn: parent
                     width:          ScreenTools.defaultFontPixelWidth * 68
                     Rectangle {
                         width:          ScreenTools.defaultFontPixelWidth  * 64
-                        height:         ScreenTools.defaultFontPixelHeight * 10
+                        height:         ScreenTools.defaultFontPixelHeight * 14
                         anchors.horizontalCenter: parent.horizontalCenter
                         color:          qgcPal.window
                         border.color:   qgcPal.text
                         border.width:   0.5
                         ListView {
                             width:          ScreenTools.defaultFontPixelWidth  * 56
-                            height:         ScreenTools.defaultFontPixelHeight * 8.75
+                            height:         ScreenTools.defaultFontPixelHeight * 12
                             anchors.centerIn: parent
                             orientation:    ListView.Vertical
                             model:          QGroundControl.mavlinkLogManager.logFiles
                             clip:           true
                             delegate: Rectangle {
                                 width:          ScreenTools.defaultFontPixelWidth  * 52
-                                height:         ScreenTools.defaultFontPixelHeight * 1.25
+                                height:         selectCheck.height
                                 color:          qgcPal.window
                                 Row {
                                     width:  ScreenTools.defaultFontPixelWidth  * 50
                                     anchors.centerIn: parent
                                     spacing: ScreenTools.defaultFontPixelWidth
                                     QGCCheckBox {
+                                        id:         selectCheck
                                         width:      ScreenTools.defaultFontPixelWidth * 4
                                         checked:    object.selected
                                         enabled:    !object.writing && !object.uploading
+                                        anchors.verticalCenter: parent.verticalCenter
                                         onClicked:  {
                                             object.selected = checked
                                         }
@@ -340,16 +354,25 @@ Rectangle {
                                         text:       object.name
                                         width:      ScreenTools.defaultFontPixelWidth * 28
                                         color:      object.writing ? qgcPal.warningText : qgcPal.text
+                                        anchors.verticalCenter: parent.verticalCenter
                                     }
                                     QGCLabel {
                                         text:       Number(object.size).toLocaleString(Qt.locale(), 'f', 0)
-                                        visible:    !object.uploading
+                                        visible:    !object.uploading && !object.uploaded
                                         width:      ScreenTools.defaultFontPixelWidth * 20;
                                         color:      object.writing ? qgcPal.warningText : qgcPal.text
                                         horizontalAlignment: Text.AlignRight
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    QGCLabel {
+                                        text:       "Uploaded"
+                                        visible:    object.uploaded
+                                        width:      ScreenTools.defaultFontPixelWidth * 20;
+                                        horizontalAlignment: Text.AlignRight
+                                        anchors.verticalCenter: parent.verticalCenter
                                     }
                                     ProgressBar {
-                                        visible:    object.uploading
+                                        visible:    object.uploading && !object.uploaded
                                         width:      ScreenTools.defaultFontPixelWidth * 20;
                                         height:     ScreenTools.defaultFontPixelHeight
                                         anchors.verticalCenter: parent.verticalCenter
