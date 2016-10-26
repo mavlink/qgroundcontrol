@@ -25,22 +25,28 @@ Rectangle {
     color:          qgcPal.window
     anchors.fill:   parent
 
-    property real _labelWidth:      ScreenTools.defaultFontPixelWidth * 28
-    property real _valueWidth:      ScreenTools.defaultFontPixelWidth * 24
-    property int  _selectedCount:   0
-    property real _columnSpacing:   ScreenTools.defaultFontPixelHeight * 0.25
-
+    property real _labelWidth:          ScreenTools.defaultFontPixelWidth * 28
+    property real _valueWidth:          ScreenTools.defaultFontPixelWidth * 24
+    property int  _selectedCount:       0
+    property real _columnSpacing:       ScreenTools.defaultFontPixelHeight * 0.25
+    property bool _uploadedSelected:    false
 
     QGCPalette { id: qgcPal }
 
     Connections {
         target: QGroundControl.mavlinkLogManager
         onSelectedCountChanged: {
+            _uploadedSelected = false
             var selected = 0
             for(var i = 0; i < QGroundControl.mavlinkLogManager.logFiles.count; i++) {
                 var logFile = QGroundControl.mavlinkLogManager.logFiles.get(i)
-                if(logFile.selected)
+                if(logFile.selected) {
                     selected++
+                    //-- If an uploaded file is selected, disable "Upload" button
+                    if(logFile.uploaded) {
+                        _uploadedSelected = true
+                    }
+                }
             }
             _selectedCount = selected
         }
@@ -425,7 +431,7 @@ Rectangle {
                         }
                         QGCButton {
                             text:       "Upload Selected"
-                            enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning
+                            enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning && !_uploadedSelected
                             visible:    !QGroundControl.mavlinkLogManager.uploading
                             onClicked:  {
                                 QGroundControl.mavlinkLogManager.emailAddress = emailField.text
