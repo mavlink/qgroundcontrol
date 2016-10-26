@@ -562,9 +562,14 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 
     emit commandLongAck(message.compid, ack.command, ack.result);
 
-    if (ack.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES) {
-        // Disregard failures
-        return;
+    // Disregard failures for these (handled above)
+    switch (ack.command) {
+        case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
+        case MAV_CMD_LOGGING_START:
+        case MAV_CMD_LOGGING_STOP:
+            return;
+        default:
+            break;
     }
 
     QString commandName = qgcApp()->toolbox()->missionCommandTree()->friendlyName((MAV_CMD)ack.command);
