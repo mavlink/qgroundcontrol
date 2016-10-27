@@ -334,7 +334,7 @@ HEADERS += \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
-    src/Vehicle/MavlinkLogManager.h \
+    src/Vehicle/MAVLinkLogManager.h \
     src/ui/toolbar/MainToolBarController.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
     src/AutoPilotPlugins/APM/APMAirframeLoader.h \
@@ -499,7 +499,7 @@ SOURCES += \
     src/QmlControls/QmlObjectListModel.cc \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
-    src/Vehicle/MavlinkLogManager.cc \
+    src/Vehicle/MAVLinkLogManager.cc \
     src/ui/toolbar/MainToolBarController.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
     src/AutoPilotPlugins/APM/APMAirframeLoader.cc \

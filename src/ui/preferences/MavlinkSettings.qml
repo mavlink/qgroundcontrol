@@ -144,7 +144,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
                     id:             mavlogLabel
-                    text:           qsTr("Vehicle Mavlink Logging")
+                    text:           qsTr("Vehicle MAVLink Logging")
                     font.family:    ScreenTools.demiboldFontFamily
                 }
             }
