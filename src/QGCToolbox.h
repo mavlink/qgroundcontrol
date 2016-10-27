@@ -32,7 +32,7 @@ class QGCImageProvider;
 class UASMessageHandler;
 class QGCPositionManager;
 class VideoManager;
-class MavlinkLogManager;
+class MAVLinkLogManager;
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox {
@@ -57,7 +57,7 @@ public:
     FollowMe*                   followMe(void)                  { return _followMe; }
     QGCPositionManager*         qgcPositionManager(void)        { return _qgcPositionManager; }
     VideoManager*               videoManager(void)              { return _videoManager; }
-    MavlinkLogManager*          mavlinkLogManager(void)         { return _mavlinkLogManager; }
+    MAVLinkLogManager*          mavlinkLogManager(void)         { return _mavlinkLogManager; }
 
 #ifndef __mobile__
     GPSManager*                 gpsManager(void)                { return _gpsManager; }
@@ -86,7 +86,7 @@ private:
     FollowMe*                   _followMe;
     QGCPositionManager*         _qgcPositionManager;
     VideoManager*               _videoManager;
-    MavlinkLogManager*          _mavlinkLogManager;
+    MAVLinkLogManager*          _mavlinkLogManager;
 
     friend class QGCApplication;
 };
