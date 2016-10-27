@@ -400,6 +400,7 @@ Vehicle::resetCounters()
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
+
     if (message.sysid != _id && message.sysid != 0) {
         return;
     }
@@ -480,13 +481,19 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleCommandAck(message);
         break;
     case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
-        _handleAutopilotVersion(message);
+        _handleAutopilotVersion(link, message);
         break;
     case MAVLINK_MSG_ID_WIND_COV:
         _handleWindCov(message);
         break;
     case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
         _handleHilActuatorControls(message);
+        break;
+    case MAVLINK_MSG_ID_LOGGING_DATA:
+        _handleMavlinkLoggingData(message);
+        break;
+    case MAVLINK_MSG_ID_LOGGING_DATA_ACKED:
+        _handleMavlinkLoggingDataAcked(message);
         break;
 
     // Following are ArduPilot dialect messages
@@ -501,10 +508,16 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     _uas->receiveMessage(message);
 }
 
-void Vehicle::_handleAutopilotVersion(mavlink_message_t& message)
+void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& message)
 {
     mavlink_autopilot_version_t autopilotVersion;
     mavlink_msg_autopilot_version_decode(&message, &autopilotVersion);
+
+    bool isMavlink2 = (autopilotVersion.capabilities & MAV_PROTOCOL_CAPABILITY_MAVLINK2) != 0;
+    if(isMavlink2) {
+        mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(link->mavlinkChannel());
+        mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+    }
 
     if (autopilotVersion.flight_sw_version != 0) {
         int majorVersion, minorVersion, patchVersion;
@@ -549,9 +562,14 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 
     emit commandLongAck(message.compid, ack.command, ack.result);
 
-    if (ack.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES) {
-        // Disregard failures
-        return;
+    // Disregard failures for these (handled above)
+    switch (ack.command) {
+        case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
+        case MAV_CMD_LOGGING_START:
+        case MAV_CMD_LOGGING_STOP:
+            return;
+        default:
+            break;
     }
 
     QString commandName = qgcApp()->toolbox()->missionCommandTree()->friendlyName((MAV_CMD)ack.command);
@@ -1958,6 +1976,62 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     _vdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _courseOverGroundFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }
+
+//-----------------------------------------------------------------------------
+void
+Vehicle::startMavlinkLog()
+{
+    doCommandLong(defaultComponentId(), MAV_CMD_LOGGING_START);
+}
+
+//-----------------------------------------------------------------------------
+void
+Vehicle::stopMavlinkLog()
+{
+    doCommandLong(defaultComponentId(), MAV_CMD_LOGGING_STOP);
+}
+
+//-----------------------------------------------------------------------------
+void
+Vehicle::_ackMavlinkLogData(uint16_t sequence)
+{
+    mavlink_message_t msg;
+    mavlink_logging_ack_t ack;
+    ack.sequence = sequence;
+    ack.target_component = defaultComponentId();
+    ack.target_system = id();
+    mavlink_msg_logging_ack_encode_chan(
+        _mavlink->getSystemId(),
+        _mavlink->getComponentId(),
+        priorityLink()->mavlinkChannel(),
+        &msg,
+        &ack);
+    sendMessageOnLink(priorityLink(), msg);
+}
+
+//-----------------------------------------------------------------------------
+void
+Vehicle::_handleMavlinkLoggingData(mavlink_message_t& message)
+{
+    mavlink_logging_data_t log;
+    mavlink_msg_logging_data_decode(&message, &log);
+    emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
+        log.first_message_offset, QByteArray((const char*)log.data, log.length), false);
+}
+
+//-----------------------------------------------------------------------------
+void
+Vehicle::_handleMavlinkLoggingDataAcked(mavlink_message_t& message)
+{
+    mavlink_logging_data_t log;
+    mavlink_msg_logging_data_decode(&message, &log);
+    _ackMavlinkLogData(log.sequence);
+    emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
+        log.first_message_offset, QByteArray((const char*)log.data, log.length), true);
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 void VehicleGPSFactGroup::setVehicle(Vehicle* vehicle)
 {
