@@ -120,7 +120,7 @@ Rectangle {
 
             QGCButton {
                 height:         _buttonHeight
-                text:           qsTr("MavLink")
+                text:           qsTr("MAVLink")
                 exclusiveGroup: panelActionGroup
                 onClicked: {
                     if(__rightPanel.source != "MavlinkSettings.qml") {
