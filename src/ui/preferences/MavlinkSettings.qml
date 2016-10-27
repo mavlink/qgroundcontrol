@@ -238,7 +238,6 @@ Rectangle {
                                 if(emailField.text === "") {
                                     autoUploadCheck.checked = false
                                     QGroundControl.mavlinkLogManager.enableAutoUpload = false
-                                    console.log("forcing enableAutoUpload to false")
                                 }
                             }
                         }
@@ -381,7 +380,7 @@ Rectangle {
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     QGCLabel {
-                                        text:       "Uploaded"
+                                        text:      qsTr("Uploaded")
                                         visible:    object.uploaded
                                         width:      ScreenTools.defaultFontPixelWidth * 20;
                                         horizontalAlignment: Text.AlignRight
@@ -404,7 +403,7 @@ Rectangle {
                         spacing:    ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCButton {
-                            text:       "Check All"
+                            text:      qsTr("Check All")
                             enabled:    !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning
                             onClicked: {
                                 for(var i = 0; i < QGroundControl.mavlinkLogManager.logFiles.count; i++) {
@@ -414,7 +413,7 @@ Rectangle {
                             }
                         }
                         QGCButton {
-                            text:       "Check None"
+                            text:      qsTr("Check None")
                             enabled:    !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning
                             onClicked: {
                                 for(var i = 0; i < QGroundControl.mavlinkLogManager.logFiles.count; i++) {
@@ -424,7 +423,7 @@ Rectangle {
                             }
                         }
                         QGCButton {
-                            text:       "Delete Selected"
+                            text:      qsTr("Delete Selected")
                             enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning
                             onClicked:  deleteDialog.open()
                             MessageDialog {
@@ -440,7 +439,7 @@ Rectangle {
                             }
                         }
                         QGCButton {
-                            text:       "Upload Selected"
+                            text:      qsTr("Upload Selected")
                             enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning && !_uploadedSelected
                             visible:    !QGroundControl.mavlinkLogManager.uploading
                             onClicked:  {
@@ -463,7 +462,7 @@ Rectangle {
                             }
                         }
                         QGCButton {
-                            text:       "Cancel"
+                            text:      qsTr("Cancel")
                             enabled:    QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning
                             visible:    QGroundControl.mavlinkLogManager.uploading
                             onClicked:  cancelDialog.open()
