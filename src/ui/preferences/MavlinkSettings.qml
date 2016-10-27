@@ -102,7 +102,7 @@ Rectangle {
                         QGCLabel {
                             width:              _labelWidth
                             anchors.baseline:   sysidField.baseline
-                            text:               qsTr("MavLink System ID:")
+                            text:               qsTr("MAVLink System ID:")
                         }
                         QGCTextField {
                             id:     sysidField
@@ -204,7 +204,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
                     id:             logLabel
-                    text:           qsTr("Mavlink Log Uploads")
+                    text:           qsTr("MAVLink Log Uploads")
                     font.family:    ScreenTools.demiboldFontFamily
                 }
             }

@@ -23,10 +23,10 @@
 
 QGC_LOGGING_CATEGORY(MavlinkLogManagerLog, "MavlinkLogManagerLog")
 
-static const char* kEmailAddressKey         = "MavlinkLogEmail";
-static const char* kDescriptionsKey         = "MavlinkLogDescription";
+static const char* kEmailAddressKey         = "MAVLinkLogEmail";
+static const char* kDescriptionsKey         = "MAVLinkLogDescription";
 static const char* kDefaultDescr            = "QGroundControl Session";
-static const char* kPx4URLKey               = "MavlinkLogURL";
+static const char* kPx4URLKey               = "MAVLinkLogURL";
 static const char* kDefaultPx4URL           = "http://logs.px4.io/upload";
 static const char* kEnableAutoUploadKey     = "EnableAutoUploadKey";
 static const char* kEnableAutoStartKey      = "EnableAutoStartKey";
@@ -329,7 +329,7 @@ MavlinkLogManager::MavlinkLogManager(QGCApplication* app)
         while(it.hasNext()) {
             _insertNewLog(new MavlinkLogFiles(this, it.next()));
         }
-        qCDebug(MavlinkLogManagerLog) << "Mavlink logs directory:" << _logPath;
+        qCDebug(MavlinkLogManagerLog) << "MAVLink logs directory:" << _logPath;
     }
 }
 
@@ -809,7 +809,7 @@ MavlinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system
             emit logRunningChanged();
         }
     } else {
-        qCWarning(MavlinkLogManagerLog) << "Mavlink log data received when not expected.";
+        qCWarning(MavlinkLogManagerLog) << "MAVLink log data received when not expected.";
     }
 }
 
