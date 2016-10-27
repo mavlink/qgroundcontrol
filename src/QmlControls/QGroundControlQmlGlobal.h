@@ -72,7 +72,7 @@ public:
     Q_PROPERTY(QGCPositionManager*  qgcPositionManger   READ qgcPositionManger      CONSTANT)
     Q_PROPERTY(MissionCommandTree*  missionCommandTree  READ missionCommandTree     CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager        READ videoManager           CONSTANT)
-    Q_PROPERTY(MavlinkLogManager*   mavlinkLogManager   READ mavlinkLogManager      CONSTANT)
+    Q_PROPERTY(MAVLinkLogManager*   mavlinkLogManager   READ mavlinkLogManager      CONSTANT)
 
     Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -167,7 +167,7 @@ public:
     QGCPositionManager*     qgcPositionManger   ()      { return _qgcPositionManager; }
     MissionCommandTree*     missionCommandTree  ()      { return _missionCommandTree; }
     VideoManager*           videoManager        ()      { return _videoManager; }
-    MavlinkLogManager*      mavlinkLogManager   ()      { return _mavlinkLogManager; }
+    MAVLinkLogManager*      mavlinkLogManager   ()      { return _mavlinkLogManager; }
 
     qreal                   zOrderTopMost       ()      { return 1000; }
     qreal                   zOrderWidgets       ()      { return 100; }
@@ -239,7 +239,7 @@ private:
     QGCPositionManager*     _qgcPositionManager;
     MissionCommandTree*     _missionCommandTree;
     VideoManager*           _videoManager;
-    MavlinkLogManager*      _mavlinkLogManager;
+    MAVLinkLogManager*      _mavlinkLogManager;
 
     bool                    _virtualTabletJoystick;
     qreal                   _baseFontPointSize;

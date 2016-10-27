@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 
-#ifndef MavlinkLogManager_H
-#define MavlinkLogManager_H
+#ifndef MAVLinkLogManager_H
+#define MAVLinkLogManager_H
 
 #include <QObject>
 
@@ -18,17 +18,17 @@
 #include "QGCToolbox.h"
 #include "Vehicle.h"
 
-Q_DECLARE_LOGGING_CATEGORY(MavlinkLogManagerLog)
+Q_DECLARE_LOGGING_CATEGORY(MAVLinkLogManagerLog)
 
 class QNetworkAccessManager;
-class MavlinkLogManager;
+class MAVLinkLogManager;
 
 //-----------------------------------------------------------------------------
-class MavlinkLogFiles : public QObject
+class MAVLinkLogFiles : public QObject
 {
     Q_OBJECT
 public:
-    MavlinkLogFiles    (MavlinkLogManager* manager, const QString& filePath, bool newFile = false);
+    MAVLinkLogFiles    (MAVLinkLogManager* manager, const QString& filePath, bool newFile = false);
 
     Q_PROPERTY(QString      name        READ    name                                CONSTANT)
     Q_PROPERTY(quint32      size        READ    size                                NOTIFY sizeChanged)
@@ -62,7 +62,7 @@ signals:
     void        uploadedChanged     ();
 
 private:
-    MavlinkLogManager*  _manager;
+    MAVLinkLogManager*  _manager;
     QString             _name;
     quint32             _size;
     bool                _selected;
@@ -73,15 +73,15 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-class MavlinkLogProcessor
+class MAVLinkLogProcessor
 {
 public:
-    MavlinkLogProcessor();
-    ~MavlinkLogProcessor();
+    MAVLinkLogProcessor();
+    ~MAVLinkLogProcessor();
     void                close       ();
     bool                valid       ();
-    bool                create      (MavlinkLogManager *manager, const QString path, uint8_t id);
-    MavlinkLogFiles*    record      () { return _record; }
+    bool                create      (MAVLinkLogManager *manager, const QString path, uint8_t id);
+    MAVLinkLogFiles*    record      () { return _record; }
     QString             fileName    () { return _fileName; }
     bool                processStreamData(uint16_t _sequence, uint8_t first_message, QByteArray data);
 private:
@@ -97,17 +97,17 @@ private:
     bool                _error;
     QByteArray          _ulogMessage;
     QString             _fileName;
-    MavlinkLogFiles*    _record;
+    MAVLinkLogFiles*    _record;
 };
 
 //-----------------------------------------------------------------------------
-class MavlinkLogManager : public QGCTool
+class MAVLinkLogManager : public QGCTool
 {
     Q_OBJECT
 
 public:
-    MavlinkLogManager    (QGCApplication* app);
-    ~MavlinkLogManager   ();
+    MAVLinkLogManager    (QGCApplication* app);
+    ~MAVLinkLogManager   ();
 
     Q_PROPERTY(QString              emailAddress        READ    emailAddress        WRITE setEmailAddress       NOTIFY emailAddressChanged)
     Q_PROPERTY(QString              description         READ    description         WRITE setDescription        NOTIFY descriptionChanged)
@@ -180,8 +180,8 @@ private:
     bool _processUploadResponse     (int http_code, QByteArray &data);
     bool _createNewLog              ();
     int  _getFirstSelected          ();
-    void _insertNewLog              (MavlinkLogFiles* newLog);
-    void _deleteLog                 (MavlinkLogFiles* log);
+    void _insertNewLog              (MAVLinkLogFiles* newLog);
+    void _deleteLog                 (MAVLinkLogFiles* log);
     void _discardLog                ();
     QString _makeFilename           (const QString& baseName);
 
@@ -194,11 +194,11 @@ private:
     bool                    _enableAutoStart;
     QNetworkAccessManager*  _nam;
     QmlObjectListModel      _logFiles;
-    MavlinkLogFiles*        _currentLogfile;
+    MAVLinkLogFiles*        _currentLogfile;
     Vehicle*                _vehicle;
     bool                    _logRunning;
     bool                    _loggingDisabled;
-    MavlinkLogProcessor*    _logProcessor;
+    MAVLinkLogProcessor*    _logProcessor;
     bool                    _deleteAfterUpload;
     int                     _loggingCmdTryCount;
     QTimer                  _ackTimer;

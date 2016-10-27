@@ -28,7 +28,7 @@
 #include "FollowMe.h"
 #include "PositionManager.h"
 #include "VideoManager.h"
-#include "MavlinkLogManager.h"
+#include "MAVLinkLogManager.h"
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
     : _audioOutput(NULL)
@@ -73,7 +73,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _qgcPositionManager =       new QGCPositionManager(app);
     _followMe =                 new FollowMe(app);
     _videoManager =             new VideoManager(app);
-    _mavlinkLogManager =        new MavlinkLogManager(app);
+    _mavlinkLogManager =        new MAVLinkLogManager(app);
 }
 
 void QGCToolbox::setChildToolboxes(void)
