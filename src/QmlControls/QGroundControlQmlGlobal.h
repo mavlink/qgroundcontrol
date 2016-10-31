@@ -85,6 +85,7 @@ public:
     Q_PROPERTY(bool     isSaveLogPrompt         READ isSaveLogPrompt            WRITE setIsSaveLogPrompt            NOTIFY isSaveLogPromptChanged)
     Q_PROPERTY(bool     isSaveLogPromptNotArmed READ isSaveLogPromptNotArmed    WRITE setIsSaveLogPromptNotArmed    NOTIFY isSaveLogPromptNotArmedChanged)
     Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
+    Q_PROPERTY(bool     forceShowMissionManager READ forceShowMissionManager    WRITE setForceShowMissionManager    NOTIFY forceShowMissionManagerChanged)
     Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
 
     // MavLink Protocol
@@ -178,6 +179,7 @@ public:
     bool    isSaveLogPrompt         () { return _app->promptFlightDataSave(); }
     bool    isSaveLogPromptNotArmed () { return _app->promptFlightDataSaveNotArmed(); }
     bool    virtualTabletJoystick   () { return _virtualTabletJoystick; }
+    bool    forceShowMissionManager () { return _forceShowMissionManager; }
     qreal   baseFontPointSize       () { return _baseFontPointSize; }
 
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
@@ -202,6 +204,7 @@ public:
     void    setIsSaveLogPrompt          (bool prompt);
     void    setIsSaveLogPromptNotArmed  (bool prompt);
     void    setVirtualTabletJoystick    (bool enabled);
+    void    setForceShowMissionManager  (bool enabled);
     void    setBaseFontPointSize        (qreal size);
 
     void    setIsVersionCheckEnabled    (bool enable);
@@ -220,6 +223,7 @@ signals:
     void isSaveLogPromptChanged         (bool prompt);
     void isSaveLogPromptNotArmedChanged (bool prompt);
     void virtualTabletJoystickChanged   (bool enabled);
+    void forceShowMissionManagerChanged (bool enabled);
     void baseFontPointSizeChanged       (qreal size);
     void isMultiplexingEnabledChanged   (bool enabled);
     void isVersionCheckEnabledChanged   (bool enabled);
@@ -242,6 +246,7 @@ private:
     MAVLinkLogManager*      _mavlinkLogManager;
 
     bool                    _virtualTabletJoystick;
+    bool                    _forceShowMissionManager;
     qreal                   _baseFontPointSize;
     QGeoCoordinate          _flightMapPosition;
     double                  _flightMapZoom;
@@ -260,6 +265,7 @@ private:
     static SettingsFact*    _batteryPercentRemainingAnnounceFact;
 
     static const char*  _virtualTabletJoystickKey;
+    static const char*  _forceShowMissionManagerKey;
     static const char*  _baseFontPointSizeKey;
 };
 

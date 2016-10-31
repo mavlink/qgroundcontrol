@@ -135,6 +135,10 @@ public:
     /// throttle.
     virtual bool supportsThrottleModeCenterZero(void);
 
+    /// Returns true if the vehicle and firmware supports mission planning/manager. Even if turned off,
+    /// it can be enabled in "Advanced Options" for development purposes.
+    virtual bool supportsMissionManager(void);
+
     /// Returns true if the firmware supports the use of the MAVlink "MANUAL_CONTROL" message.
     /// By default, this returns false unless overridden in the firmware plugin.
     virtual bool supportsManualControl(void);

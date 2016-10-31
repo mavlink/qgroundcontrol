@@ -58,6 +58,11 @@ bool ArduSubFirmwarePlugin::supportsThrottleModeCenterZero(void)
     return false;
 }
 
+bool ArduSubFirmwarePlugin::supportsMissionManager(void)
+{
+    return false;
+}
+
 bool ArduSubFirmwarePlugin::supportsManualControl(void)
 {
     return true;

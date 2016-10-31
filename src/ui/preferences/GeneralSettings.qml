@@ -198,10 +198,19 @@ QGCView {
                                 enabled:            true
                             }
                         }
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+                            visible: offlineVehicleCombo.currentText == "Sub"
+                            QGCCheckBox {
+                                text:       qsTr("Show mission manager even if not supported by firmware")
+                                checked:    QGroundControl.forceShowMissionManager
+                                onClicked:  QGroundControl.forceShowMissionManager = checked
+                            }
+                        }
                     }
                 }
                 //-----------------------------------------------------------------
-                //-- Miscelanous
+                //-- Miscellanous
                 Item {
                     width:              qgcView.width * 0.8
                     height:             miscLabel.height
@@ -209,7 +218,7 @@ QGCView {
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
                         id:             miscLabel
-                        text:           qsTr("Miscelaneous")
+                        text:           qsTr("Miscellaneous")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
                 }

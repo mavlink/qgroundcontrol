@@ -356,6 +356,7 @@ Rectangle {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
+            visible:            activeVehicle ? activeVehicle.supportsMissionManager || QGroundControl.forceShowMissionManager : true
             source:             "/qmlimages/Plan.svg"
             onClicked:          toolBar.showPlanView()
         }
