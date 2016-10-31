@@ -8,9 +8,13 @@
  ****************************************************************************/
 
 #include "GeoTagController.h"
-#include "QGCFileDialog.h"
 #include "ExifParser.h"
+#include "QGCFileDialog.h"
+#include "QGCLoggingCategory.h"
+#include <math.h>
 #include <QtEndian>
+#include <QMessageBox>
+#include <QDebug>
 #include <cfloat>
 
 GeoTagController::GeoTagController(void)
@@ -46,10 +50,81 @@ void GeoTagController::pickImageDirectory(void)
     }
 }
 
+void GeoTagController::pickSaveDirectory(void)
+{
+    QString dir = QGCFileDialog::getExistingDirectory(NULL, "Select save directory");
+    if (!dir.isEmpty()) {
+        _worker.setSaveDirectory(dir);
+        emit saveDirectoryChanged(dir);
+    }
+}
+
 void GeoTagController::startTagging(void)
 {
     _errorMessage.clear();
     emit errorMessageChanged(_errorMessage);
+
+    QDir imageDirectory = QDir(_worker.imageDirectory());
+    if(!imageDirectory.exists()) {
+        _errorMessage = tr("Cannot find the image directory");
+        emit errorMessageChanged(_errorMessage);
+        return;
+    }
+    if(_worker.saveDirectory() == "") {
+        if(!imageDirectory.mkdir(_worker.imageDirectory() + "/TAGGED")) {
+            QMessageBox msgBox(QMessageBox::Question,
+                               tr("Images have alreay been tagged."),
+                               tr("The images have already been tagged. Do you want to replace the previously tagged images?"),
+                               QMessageBox::Cancel);
+            msgBox.setWindowModality(Qt::ApplicationModal);
+            msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
+            if (msgBox.exec() == QMessageBox::Cancel) {
+                _errorMessage = tr("Images have already been tagged");
+                emit errorMessageChanged(_errorMessage);
+                return;
+            }
+            QDir oldTaggedFolder = QDir(_worker.imageDirectory() + "/TAGGED");
+            oldTaggedFolder.removeRecursively();
+            if(!imageDirectory.mkdir(_worker.imageDirectory() + "/TAGGED")) {
+                _errorMessage = tr("Couldn't replace the previously tagged images");
+                emit errorMessageChanged(_errorMessage);
+                return;
+            }
+        }
+    } else {
+        QDir saveDirectory = QDir(_worker.saveDirectory());
+        if(!saveDirectory.exists()) {
+            _errorMessage = tr("Cannot find the save directory");
+            emit errorMessageChanged(_errorMessage);
+            return;
+        }
+        saveDirectory.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
+        QStringList nameFilters;
+        nameFilters << "*.jpg" << "*.JPG";
+        saveDirectory.setNameFilters(nameFilters);
+        QStringList imageList = saveDirectory.entryList();
+        if(!imageList.isEmpty()) {
+            QMessageBox msgBox(QMessageBox::Question,
+                               tr("Save folder not empty."),
+                               tr("The save folder already contains images. Do you want to replace them?"),
+                               QMessageBox::Cancel);
+            msgBox.setWindowModality(Qt::ApplicationModal);
+            msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
+            if (msgBox.exec() == QMessageBox::Cancel) {
+                _errorMessage = tr("Save folder not empty");
+                emit errorMessageChanged(_errorMessage);
+                return;
+            }
+            foreach(QString dirFile, imageList)
+            {
+                if(!saveDirectory.remove(dirFile)) {
+                    _errorMessage = tr("Couldn't replace the existing images");
+                    emit errorMessageChanged(_errorMessage);
+                    return;
+                }
+            }
+        }
+    }
     _worker.start();
 }
 
@@ -67,6 +142,9 @@ void GeoTagController::_workerError(QString errorMessage)
 
 GeoTagWorker::GeoTagWorker(void)
     : _cancel(false)
+    , _logFile("")
+    , _imageDirectory("")
+    , _saveDirectory("")
 {
 
 }
@@ -74,139 +152,148 @@ GeoTagWorker::GeoTagWorker(void)
 void GeoTagWorker::run(void)
 {
     _cancel = false;
-    emit progressChanged(0);
+    emit progressChanged(1);
+    double nSteps = 5;
 
-    //used to time operations to get a feel for how much to progress the progressBar
-    QElapsedTimer timerTotal;
-    QElapsedTimer timerLoadImages;
-    QElapsedTimer timerParseExif;
-    QElapsedTimer timerFilter;
-    QElapsedTimer timerLoadLogFile;
-    QElapsedTimer timerGeotag;
-
-    timerTotal.start();
-
-
-    //////////// Load Images
-    timerLoadImages.start();
-
+    // Load Images
+    _imageList.clear();
     QDir imageDirectory = QDir(_imageDirectory);
-    if(!imageDirectory.exists()) {
-        emit error(tr("Cannot find the image directory"));
-        return;
-    }
-    if(!imageDirectory.mkdir(_imageDirectory + "/TAGGED")) {
-        emit error(tr("Images have already been tagged"));
-        return;
-    }
-
     imageDirectory.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
     imageDirectory.setSorting(QDir::Name);
     QStringList nameFilters;
     nameFilters << "*.jpg" << "*.JPG";
     imageDirectory.setNameFilters(nameFilters);
-
-    QFileInfoList imageList = imageDirectory.entryInfoList();
-    if(imageList.isEmpty()) {
+    _imageList = imageDirectory.entryInfoList();
+    if(_imageList.isEmpty()) {
         emit error(tr("The image directory doesn't contain images, make sure your images are of the JPG format"));
         return;
     }
-
-    _imageBuffers.clear();
-    for (int i = 0; i < imageList.size(); ++i) {
-        QFile file(imageList.at(i).absoluteFilePath());
-        if (!file.open(QIODevice::ReadOnly)) {
-            continue;
-        }
-        _imageBuffers.append(QByteArray(file.readAll()));
-        file.close();
-    }
-
-    qWarning() << "Image loading time elapsed: " << timerLoadImages.elapsed() << " milliseconds";
-
-    ////////// Parse exif data
-    timerParseExif.start();
+    emit progressChanged((100/nSteps));
 
     // Parse EXIF
     ExifParser exifParser;
     _tagTime.clear();
-    for (int i = 0; i < _imageBuffers.count(); i++) {
-         _tagTime.append(exifParser.readTime(_imageBuffers[i]));
-    }
-
-    qWarning() << "Parse exif data time elapsed: " << timerParseExif.elapsed() << " milliseconds";
-
-    ////////// Load PX4 log
-    timerLoadLogFile.start();
-
-    _geoRef.clear();
-    _triggerTime.clear();
-    if (!parsePX4Log()) {
-        qWarning() << "Geotagging failed";
-        return;
-    }
-    qWarning() << "Found " << _geoRef.count() << " trigger logs.";
-
-    qWarning() << "Log loading time elapsed: " << timerLoadLogFile.elapsed() << " milliseconds";
-
-    ////////// Filter Trigger
-    timerFilter.start();
-
-    if (!triggerFiltering()) {
-        qWarning() << "Geotagging failed";
-        return;
-    }
-
-    qWarning() << "Filter time elapsed: " << timerFilter.elapsed() << " milliseconds";
-
-    //////////// Tag images
-    timerGeotag.start();
-
-    for(int i = 0; i < _imageIndices.count() && i < _triggerIndices.count() && i < imageList.count(); i++) {
-        if (!exifParser.write(_imageBuffers[_imageIndices[i]], _geoRef[_triggerIndices[i]])) {
-            _cancel = true;
-            break;
-        } else {
-            QFile file(_imageDirectory + "/TAGGED/" + imageList[_imageIndices[i]].fileName());
-            if (file.open( QFile::WriteOnly)) {
-                file.write(_imageBuffers[_imageIndices[i]]);
-                file.close();
-            }
+    for (int i = 0; i < _imageList.size(); ++i) {
+        QFile file(_imageList.at(i).absoluteFilePath());
+        if (!file.open(QIODevice::ReadOnly)) {
+            emit error(tr("Geotagging failed. Couldn't open an image."));
+            return;
         }
-    }
+        QByteArray imageBuffer = file.readAll();
+        file.close();
 
-    qWarning() << "Tagging images time elapsed: " << timerGeotag.elapsed() << " milliseconds";
+        _tagTime.append(exifParser.readTime(imageBuffer));
 
-    for (int i=0; i<10;i++) {
+        emit progressChanged((100/nSteps) + ((100/nSteps) / _imageList.size())*i);
+
         if (_cancel) {
+            qCDebug(GeotaggingLog) << "Tagging cancelled";
             emit error(tr("Tagging cancelled"));
             return;
         }
-        emit progressChanged(i*10);
-        //sleep(1);
     }
 
-    qWarning() << "Total time elapsed: " << timerTotal.elapsed() << " milliseconds";
+    // Load PX4 log
+    _geoRef.clear();
+    _triggerTime.clear();
+    if (!parsePX4Log()) {
+        if (_cancel) {
+            qCDebug(GeotaggingLog) << "Tagging cancelled";
+            emit error(tr("Tagging cancelled"));
+            return;
+        } else {
+            qCDebug(GeotaggingLog) << "Log parsing failed";
+            emit error(tr("Log parsing failed - tagging cancelled"));
+            return;
+        }
+    }
+    emit progressChanged(3*(100/nSteps));
+
+    qCDebug(GeotaggingLog) << "Found " << _geoRef.count() << " trigger logs.";
+
+    if (_cancel) {
+        qCDebug(GeotaggingLog) << "Tagging cancelled";
+        emit error(tr("Tagging cancelled"));
+        return;
+    }
+
+    // Filter Trigger
+    if (!triggerFiltering()) {
+        qCDebug(GeotaggingLog) << "Geotagging failed in trigger filtering";
+        emit error(tr("Geotagging failed in trigger filtering"));
+        return;
+    }
+    emit progressChanged(4*(100/nSteps));
+
+    if (_cancel) {
+        qCDebug(GeotaggingLog) << "Tagging cancelled";
+        emit error(tr("Tagging cancelled"));
+        return;
+    }
+
+    // Tag images
+    int maxIndex = std::min(_imageIndices.count(), _triggerIndices.count());
+    maxIndex = std::min(maxIndex, _imageList.count());
+    for(int i = 0; i < maxIndex; i++) {
+        QFile fileRead(_imageList.at(_imageIndices[i]).absoluteFilePath());
+        if (!fileRead.open(QIODevice::ReadOnly)) {
+            emit error(tr("Geotagging failed. Couldn't open an image."));
+            return;
+        }
+        QByteArray imageBuffer = fileRead.readAll();
+        fileRead.close();
+
+        if (!exifParser.write(imageBuffer, _geoRef[_triggerIndices[i]])) {
+            emit error(tr("Geotagging failed. Couldn't write to image."));
+            return;
+        } else {
+            QFile fileWrite;
+            if(_saveDirectory == "") {
+                fileWrite.setFileName(_imageDirectory + "/TAGGED/" + _imageList.at(_imageIndices[i]).fileName());
+            } else {
+                fileWrite.setFileName(_saveDirectory + "/" + _imageList.at(_imageIndices[i]).fileName());
+            }
+            if (!fileWrite.open(QFile::WriteOnly)) {
+                emit error(tr("Geotagging failed. Couldn't write to an image."));
+                return;
+            }
+            fileWrite.write(imageBuffer);
+            fileWrite.close();
+        }
+        emit progressChanged(4*(100/nSteps) + ((100/nSteps) / maxIndex)*i);
+
+        if (_cancel) {
+            qCDebug(GeotaggingLog) << "Tagging cancelled";
+            emit error(tr("Tagging cancelled"));
+            return;
+        }
+    }
+
+    if (_cancel) {
+        qCDebug(GeotaggingLog) << "Tagging cancelled";
+        emit error(tr("Tagging cancelled"));
+        return;
+    }
+
     emit progressChanged(100);
-    emit taggingComplete();
 }
 
 bool GeoTagWorker::parsePX4Log()
 {
     // general message header
-    // char header[] = {0xA3, 0x95, 0x00};
+    char header[] = {(char)0xA3, (char)0x95, (char)0x00};
     // header for GPOS message
-    char gposHeader[] = {0xA3, 0x95, 0x10, 0x00};
+    char gposHeader[] = {(char)0xA3, (char)0x95, (char)0x10, (char)0x00};
     int gposOffsets[3] = {3, 7, 11};
     int gposLengths[3] = {4, 4, 4};
     // header for trigger message
-    char triggerHeader[] = {0xA3, 0x95, 0x37, 0x00};
+    char triggerHeader[] = {(char)0xA3, (char)0x95, (char)0x37, (char)0x00};
     int triggerOffsets[2] = {3, 11};
     int triggerLengths[2] = {8, 4};
     // load log
     QFile file(_logFile);
     if (!file.open(QIODevice::ReadOnly)) {
-        qWarning() << "Could not open log file";
+        qCDebug(GeotaggingLog) << "Could not open log file " << _logFile;
         return false;
     }
     QByteArray log = file.readAll();
@@ -217,40 +304,55 @@ bool GeoTagWorker::parsePX4Log()
     int sequence = -1;
     QGeoCoordinate lastCoordinate;
     while(index < log.count() - 1) {
-        int gposIndex = log.indexOf(gposHeader, index + 1);
+
+        if (_cancel) {
+            return false;
+        }
+
+        // first extract trigger
         int triggerIndex = log.indexOf(triggerHeader, index + 1);
         // check for whether last entry has been passed
-        if ((gposIndex < 0 && triggerIndex < 0) || (gposIndex >= log.count() - 1 && triggerIndex >= log.count() - 1)) {
+        if (triggerIndex < 0) {
             break;
-        } else if (gposIndex < 0) {
-            gposIndex = triggerIndex + 1;
-        } else if (triggerIndex < 0) {
-            triggerIndex = gposIndex + 1;
         }
-        // extract next entry, gpos or trigger
-        if (gposIndex < triggerIndex) {
-            // TODO: somehow verify that the gposIndex is really the header of a gpos message
-            int32_t* lat = reinterpret_cast<int32_t*>(log.mid(gposIndex + gposOffsets[0], gposLengths[0]).data());
-            double latitude = static_cast<double>(qFromLittleEndian(*lat))/1.0e7;
-            lastCoordinate.setLatitude(latitude);
-            int32_t* lon = reinterpret_cast<int32_t*>(log.mid(gposIndex + gposOffsets[1], gposLengths[1]).data());
-            double longitude = static_cast<double>(qFromLittleEndian(*lon))/1.0e7;
-            longitude = fmod(180.0 + longitude, 360.0) - 180.0;
-            lastCoordinate.setLongitude(longitude);
-            float* alt = reinterpret_cast<float*>(log.mid(gposIndex + gposOffsets[2], gposLengths[2]).data());
-            lastCoordinate.setAltitude(qFromLittleEndian(*alt));
-            index = gposIndex;
-        } else {
-            uint64_t* time = reinterpret_cast<uint64_t*>(log.mid(triggerIndex + triggerOffsets[0], triggerLengths[0]).data());
-            double timeDouble = static_cast<double>(qFromLittleEndian(*time));
-            uint32_t* seq = reinterpret_cast<uint32_t*>(log.mid(triggerIndex + triggerOffsets[1], triggerLengths[1]).data());
-            int seqInt = static_cast<int>(qFromLittleEndian(*seq));
-            if (sequence < seqInt && sequence + 20 > seqInt) { // assume that logging has not skipped more than 20 triggers. this prevents wrong header detection
-               _geoRef.append(lastCoordinate);
-               _triggerTime.append(timeDouble/1000000.0);
-               sequence = seqInt;
+        uint64_t* time = reinterpret_cast<uint64_t*>(log.mid(triggerIndex + triggerOffsets[0], triggerLengths[0]).data());
+        double timeDouble = static_cast<double>(qFromLittleEndian(*time));
+        uint32_t* seq = reinterpret_cast<uint32_t*>(log.mid(triggerIndex + triggerOffsets[1], triggerLengths[1]).data());
+        int seqInt = static_cast<int>(qFromLittleEndian(*seq));
+        if (sequence < seqInt && sequence + 20 > seqInt) { // assume that logging has not skipped more than 20 triggers. this prevents wrong header detection
+           _triggerTime.append(timeDouble/1000000.0);
+           sequence = seqInt;
+        }
+        index = triggerIndex;        // extract next entry gpos
+
+        // second extract position
+        bool lookForGpos = true;
+        while (lookForGpos) {
+
+            if (_cancel) {
+                return false;
             }
-            index = triggerIndex;
+
+            int gposIndex = log.indexOf(gposHeader, index + 1);
+            if (gposIndex < 0) {
+                _geoRef.append(lastCoordinate);
+                break;
+            }
+            index = gposIndex;
+            // verify that at an offset of 27 the next log message starts
+            if (gposIndex + 27 == log.indexOf(header, gposIndex + 1)) {
+                int32_t* lat = reinterpret_cast<int32_t*>(log.mid(gposIndex + gposOffsets[0], gposLengths[0]).data());
+                double latitude = static_cast<double>(qFromLittleEndian(*lat))/1.0e7;
+                lastCoordinate.setLatitude(latitude);
+                int32_t* lon = reinterpret_cast<int32_t*>(log.mid(gposIndex + gposOffsets[1], gposLengths[1]).data());
+                double longitude = static_cast<double>(qFromLittleEndian(*lon))/1.0e7;
+                longitude = fmod(180.0 + longitude, 360.0) - 180.0;
+                lastCoordinate.setLongitude(longitude);
+                float* alt = reinterpret_cast<float*>(log.mid(gposIndex + gposOffsets[2], gposLengths[2]).data());
+                lastCoordinate.setAltitude(qFromLittleEndian(*alt));
+                _geoRef.append(lastCoordinate);
+                break;
+            }
         }
     }
     return true;
@@ -258,9 +360,12 @@ bool GeoTagWorker::parsePX4Log()
 
 bool GeoTagWorker::triggerFiltering()
 {
-    for (int i = 0; i < _triggerTime.count() && i < _tagTime.count(); i++) {
+    _imageIndices.clear();
+    _triggerIndices.clear();
+    for(int i = 0; i < _tagTime.count() && i < _triggerTime.count(); i++) {
+        _imageIndices.append(i);
         _triggerIndices.append(i);
-        _imagesIndices.append(i);
     }
+
     return true;
 }
