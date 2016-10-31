@@ -1,4 +1,5 @@
 #include "ExifParser.h"
+#include <math.h>
 #include <QtEndian>
 #include <QDateTime>
 
@@ -14,8 +15,8 @@ ExifParser::~ExifParser()
 
 double ExifParser::readTime(QByteArray& buf)
 {
-    char tiffHeader[] = {0x49,0x49,0x2A,0x00};
-    char createDateHeader[] = {0x04,0x90,0x02,0x00};
+    char tiffHeader[] = {static_cast<char>(0x49),static_cast<char>(0x49),static_cast<char>(0x2A),static_cast<char>(0x00)};
+    char createDateHeader[] = {static_cast<char>(0x04),static_cast<char>(0x90),static_cast<char>(0x02),static_cast<char>(0x00)};
 
     // find header position
     uint32_t tiffHeaderIndex = buf.indexOf(tiffHeader);
@@ -57,7 +58,9 @@ double ExifParser::readTime(QByteArray& buf)
 
 bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
 {
-    char app1Header[2] = {0xff, 0xe1};
+    QByteArray app1Header;
+    app1Header.append(0xff);
+    app1Header.append(0xe1);
     uint32_t app1HeaderInd = buf.indexOf(app1Header);
     uint16_t *conversionPointer = reinterpret_cast<uint16_t *>(buf.mid(app1HeaderInd + 2, 2).data());
     uint16_t app1Size = *conversionPointer;
@@ -122,7 +125,7 @@ bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
     gpsIFDInd.i = nextIfdOffset;
 
     // this will stay constant
-    char gpsInfo[12] = {0x25, 0x88, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, gpsIFDInd.c[0], gpsIFDInd.c[1], gpsIFDInd.c[2], gpsIFDInd.c[3]};
+    char gpsInfo[12] = {static_cast<char>(0x25), static_cast<char>(0x88), static_cast<char>(0x04), static_cast<char>(0x00), static_cast<char>(0x01), static_cast<char>(0x00), static_cast<char>(0x00), static_cast<char>(0x00), static_cast<char>(gpsIFDInd.c[0]), static_cast<char>(gpsIFDInd.c[1]), static_cast<char>(gpsIFDInd.c[2]), static_cast<char>(gpsIFDInd.c[3])};
 
     // filling values to gpsData
     uint32_t gpsDataExtInd = gpsIFDInd.i + 2 + sizeof(fields_s);
@@ -173,14 +176,14 @@ bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
     // Filling up the additional information that does not fit into the fields
     gpsData.readable.extendedData.gpsLat[0] = abs(static_cast<int>(coordinate.latitude()));
     gpsData.readable.extendedData.gpsLat[1] = 1;
-    gpsData.readable.extendedData.gpsLat[2] = static_cast<int>((fabs(coordinate.latitude()) - std::floor(fabs(coordinate.latitude()))) * 60000.0);
+    gpsData.readable.extendedData.gpsLat[2] = static_cast<int>((fabs(coordinate.latitude()) - floor(fabs(coordinate.latitude()))) * 60000.0);
     gpsData.readable.extendedData.gpsLat[3] = 1000;
     gpsData.readable.extendedData.gpsLat[4] = 0;
     gpsData.readable.extendedData.gpsLat[5] = 1;
 
     gpsData.readable.extendedData.gpsLon[0] = abs(static_cast<int>(coordinate.longitude()));
     gpsData.readable.extendedData.gpsLon[1] = 1;
-    gpsData.readable.extendedData.gpsLon[2] = static_cast<int>((fabs(coordinate.longitude()) - std::floor(fabs(coordinate.longitude()))) * 60000.0);
+    gpsData.readable.extendedData.gpsLon[2] = static_cast<int>((fabs(coordinate.longitude()) - floor(fabs(coordinate.longitude()))) * 60000.0);
     gpsData.readable.extendedData.gpsLon[3] = 1000;
     gpsData.readable.extendedData.gpsLon[4] = 0;
     gpsData.readable.extendedData.gpsLon[5] = 1;

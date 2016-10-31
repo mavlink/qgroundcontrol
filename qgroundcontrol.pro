@@ -508,7 +508,7 @@ SOURCES += \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
     src/PositionManager/SimulatedPosition.cc \
     src/PositionManager/PositionManager.cpp \
-    src/AnalyzeView/ExifParser.cpp
+    src/AnalyzeView/ExifParser.cc
 
 DebugBuild {
 SOURCES += \
