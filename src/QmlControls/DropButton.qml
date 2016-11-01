@@ -115,7 +115,7 @@ Item {
 
                 dropItemHolderRect.x = 0
             } else {
-                dropDownItem.x = roundButton.width + _dropMargin
+                dropDownItem.x = -(roundButton.width + _dropMargin)
 
                 dropItemHolderRect.x = _arrowPointHeight
             }
