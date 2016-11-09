@@ -124,6 +124,9 @@ public:
         return _mavlinkChannel;
     }
 
+    bool decodedFirstMavlinkPacket(void) const { return _decodedFirstMavlinkPacket; }
+    bool setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { return _decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
+
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
     bool connect(void);
@@ -197,6 +200,7 @@ protected:
         , _mavlinkChannelSet(false)
         , _active(false)
         , _enableRateCollection(false)
+        , _decodedFirstMavlinkPacket(false)
     {
         // Initialize everything for the data rate calculation buffers.
         _inDataIndex  = 0;
@@ -351,8 +355,9 @@ private:
     
     mutable QMutex _dataRateMutex; // Mutex for accessing the data rate member variables
 
-    bool _active;       ///< true: link is actively receiving mavlink messages
+    bool _active;                       ///< true: link is actively receiving mavlink messages
     bool _enableRateCollection;
+    bool _decodedFirstMavlinkPacket;    ///< true: link has correctly decoded it's first mavlink packet
 };
 
 typedef QSharedPointer<LinkInterface> SharedLinkInterface;
