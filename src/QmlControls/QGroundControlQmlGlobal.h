@@ -112,6 +112,8 @@ public:
     Q_PROPERTY(QString appSettingsDistanceUnitsString READ appSettingsDistanceUnitsString CONSTANT)
     Q_PROPERTY(QString appSettingsAreaUnitsString READ appSettingsAreaUnitsString CONSTANT)
 
+    Q_PROPERTY(QString qgcVersion READ qgcVersion CONSTANT)
+
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
@@ -210,6 +212,8 @@ public:
     QString parameterFileExtension(void) const  { return QGCApplication::parameterFileExtension; }
     QString missionFileExtension(void) const    { return QGCApplication::missionFileExtension; }
     QString telemetryFileExtension(void) const  { return QGCApplication::telemetryFileExtension; }
+
+    QString qgcVersion(void) const { return qgcApp()->applicationVersion(); }
 
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
