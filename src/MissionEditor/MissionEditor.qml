@@ -562,66 +562,27 @@ QGCView {
                         }
                     }
 
-                    RoundButton {
+                    QGCRadioButton {
                         id:             planElementMission
-                        radius:         parent._buttonRadius
-                        buttonImage:    "/qmlimages/Plan.svg"
-                        lightBorders:   _lightWidgetBorders
                         exclusiveGroup: planElementSelectorGroup
+                        text:           qsTr("Mission")
                         checked:        true
                     }
 
-                    QGCLabel {
-                        text:                   qsTr("Mission")
-                        color:                  mapPal.text
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        MouseArea {
-                            anchors.fill:   parent
-                            onClicked:      planElementMission.checked = true
-                        }
-                    }
-
                     Item { height: 1; width: 1 }
 
-                    RoundButton {
+                    QGCRadioButton {
                         id:             planElementGeoFence
-                        radius:         parent._buttonRadius
-                        buttonImage:    "/qmlimages/Plan.svg"
-                        lightBorders:   _lightWidgetBorders
                         exclusiveGroup: planElementSelectorGroup
-                    }
-
-                    QGCLabel {
-                        text:                   qsTr("Fence")
-                        color:                  mapPal.text
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        MouseArea {
-                            anchors.fill:   parent
-                            onClicked:      planElementGeoFence.checked = true
-                        }
+                        text:           qsTr("Fence")
                     }
 
                     Item { height: 1; width: 1 }
 
-                    RoundButton {
+                    QGCRadioButton {
                         id:             planElementRallyPoints
-                        radius:         parent._buttonRadius
-                        buttonImage:    "/qmlimages/Plan.svg"
-                        lightBorders:   _lightWidgetBorders
                         exclusiveGroup: planElementSelectorGroup
-                    }
-
-                    QGCLabel {
-                        text:                   qsTr("Rally")
-                        color:                  mapPal.text
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        MouseArea {
-                            anchors.fill:   parent
-                            onClicked:      planElementRallyPoints.checked = true
-                        }
+                        text:           qsTr("Rally")
                     }
                 } // Row - Plan Element Selector
 
