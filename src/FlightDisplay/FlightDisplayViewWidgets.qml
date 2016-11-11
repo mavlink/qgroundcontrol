@@ -426,7 +426,7 @@ Item {
                 break;
             case confirmTakeoff:
                 altitudeSlider.visible = true
-                altitudeSlider.setInitialValueMeters(2)
+                altitudeSlider.setInitialValueMeters(3)
                 guidedModeConfirm.confirmText = qsTr("takeoff")
                 break;
             case confirmLand:
