@@ -282,14 +282,21 @@ bool GeoTagWorker::parsePX4Log()
 {
     // general message header
     char header[] = {(char)0xA3, (char)0x95, (char)0x00};
+    // header for GPOS message header
+    char gposHeaderHeader[] = {(char)0xA3, (char)0x95, (char)0x80, (char)0x10, (char)0x00};
+    int gposHeaderOffset;
     // header for GPOS message
     char gposHeader[] = {(char)0xA3, (char)0x95, (char)0x10, (char)0x00};
     int gposOffsets[3] = {3, 7, 11};
     int gposLengths[3] = {4, 4, 4};
+    // header for trigger message header
+    char triggerHeaderHeader[] = {(char)0xA3, (char)0x95, (char)0x80, (char)0x37, (char)0x00};
+    int triggerHeaderOffset;
     // header for trigger message
     char triggerHeader[] = {(char)0xA3, (char)0x95, (char)0x37, (char)0x00};
     int triggerOffsets[2] = {3, 11};
     int triggerLengths[2] = {8, 4};
+
     // load log
     QFile file(_logFile);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -298,6 +305,12 @@ bool GeoTagWorker::parsePX4Log()
     }
     QByteArray log = file.readAll();
     file.close();
+
+    // extract header information: message lengths
+    uint8_t* iptr = reinterpret_cast<uint8_t*>(log.mid(log.indexOf(gposHeaderHeader) + 4, 1).data());
+    gposHeaderOffset = static_cast<int>(qFromLittleEndian(*iptr));
+    iptr = reinterpret_cast<uint8_t*>(log.mid(log.indexOf(triggerHeaderHeader) + 4, 1).data());
+    triggerHeaderOffset = static_cast<int>(qFromLittleEndian(*iptr));
 
     // extract trigger data
     int index = 1;
@@ -310,20 +323,24 @@ bool GeoTagWorker::parsePX4Log()
         }
 
         // first extract trigger
-        int triggerIndex = log.indexOf(triggerHeader, index + 1);
+        index = log.indexOf(triggerHeader, index + 1);
         // check for whether last entry has been passed
-        if (triggerIndex < 0) {
+        if (index < 0) {
             break;
         }
-        uint64_t* time = reinterpret_cast<uint64_t*>(log.mid(triggerIndex + triggerOffsets[0], triggerLengths[0]).data());
-        double timeDouble = static_cast<double>(qFromLittleEndian(*time));
-        uint32_t* seq = reinterpret_cast<uint32_t*>(log.mid(triggerIndex + triggerOffsets[1], triggerLengths[1]).data());
-        int seqInt = static_cast<int>(qFromLittleEndian(*seq));
-        if (sequence < seqInt && sequence + 20 > seqInt) { // assume that logging has not skipped more than 20 triggers. this prevents wrong header detection
-           _triggerTime.append(timeDouble/1000000.0);
-           sequence = seqInt;
+
+        if (log.indexOf(header, index + 1) != index + triggerHeaderOffset) {
+            continue;
         }
-        index = triggerIndex;        // extract next entry gpos
+        uint64_t* time = reinterpret_cast<uint64_t*>(log.mid(index + triggerOffsets[0], triggerLengths[0]).data());
+        double timeDouble = static_cast<double>(qFromLittleEndian(*time)) / 1.0e6;
+        uint32_t* seq = reinterpret_cast<uint32_t*>(log.mid(index + triggerOffsets[1], triggerLengths[1]).data());
+        int seqInt = static_cast<int>(qFromLittleEndian(*seq));
+        if (sequence >= seqInt || sequence + 20 < seqInt) { // assume that logging has not skipped more than 20 triggers. this prevents wrong header detection
+            continue;
+        }
+        _triggerTime.append(timeDouble);
+        sequence = seqInt;
 
         // second extract position
         bool lookForGpos = true;
@@ -339,8 +356,8 @@ bool GeoTagWorker::parsePX4Log()
                 break;
             }
             index = gposIndex;
-            // verify that at an offset of 27 the next log message starts
-            if (gposIndex + 27 == log.indexOf(header, gposIndex + 1)) {
+            // verify that at an offset of gposHeaderOffset the next log message starts
+            if (gposIndex + gposHeaderOffset == log.indexOf(header, gposIndex + 1)) {
                 int32_t* lat = reinterpret_cast<int32_t*>(log.mid(gposIndex + gposOffsets[0], gposLengths[0]).data());
                 double latitude = static_cast<double>(qFromLittleEndian(*lat))/1.0e7;
                 lastCoordinate.setLatitude(latitude);
