@@ -254,6 +254,7 @@ void RallyPointController::_loadComplete(const QList<QGeoCoordinate> rgPoints)
     _points.swapObjectList(pointList);
     setDirty(false);
     _setFirstPointCurrent();
+    emit loadComplete();
 }
 
 QString RallyPointController::fileExtension(void) const

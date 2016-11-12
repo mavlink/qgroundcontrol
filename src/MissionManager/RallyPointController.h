@@ -61,6 +61,7 @@ public:
 signals:
     void rallyPointsSupportedChanged(bool rallyPointsSupported);
     void currentRallyPointChanged(QObject* rallyPoint);
+    void loadComplete(void);
 
 private slots:
     void _loadComplete(const QList<QGeoCoordinate> rgPoints);
