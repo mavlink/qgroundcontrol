@@ -128,7 +128,9 @@ Item {
 
             InstrumentSwipeView {
                 id:                 _valuesWidget
-                width:              parent.width
+                anchors.margins:    1
+                anchors.left:       parent.left
+                anchors.right:      parent.right
                 qgcView:            instrumentPanel.qgcView
                 textColor:          qgcPal.text
                 backgroundColor:    _backgroundColor

@@ -96,6 +96,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rcRSSIstore(255)
     , _autoDisconnect(false)
     , _flying(false)
+    , _onboardControlSensorsPresent(0)
+    , _onboardControlSensorsEnabled(0)
+    , _onboardControlSensorsHealth(0)
+    , _onboardControlSensorsUnhealthy(0)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -296,6 +300,11 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _rcRSSI(255)
     , _rcRSSIstore(255)
     , _autoDisconnect(false)
+    , _flying(false)
+    , _onboardControlSensorsPresent(0)
+    , _onboardControlSensorsEnabled(0)
+    , _onboardControlSensorsHealth(0)
+    , _onboardControlSensorsUnhealthy(0)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -668,6 +677,16 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
             _lowBatteryAnnounceTimer.restart();
             _say(QString("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
         }
+    }
+
+    _onboardControlSensorsPresent = sysStatus.onboard_control_sensors_present;
+    _onboardControlSensorsEnabled = sysStatus.onboard_control_sensors_enabled;
+    _onboardControlSensorsHealth = sysStatus.onboard_control_sensors_health;
+
+    uint32_t newSensorsUnhealthy = _onboardControlSensorsEnabled & ~_onboardControlSensorsHealth;
+    if (newSensorsUnhealthy != _onboardControlSensorsUnhealthy) {
+        _onboardControlSensorsUnhealthy = newSensorsUnhealthy;
+        emit unhealthySensorsChanged();
     }
 }
 
@@ -1950,6 +1969,54 @@ QString Vehicle::brandImage(void) const
 {
     return _firmwarePlugin->brandImage(this);
 }
+
+QStringList Vehicle::unhealthySensors(void) const
+{
+    QStringList sensorList;
+
+    struct sensorInfo_s {
+        uint32_t    bit;
+        const char* sensorName;
+    };
+
+    static const sensorInfo_s rgSensorInfo[] = {
+        { MAV_SYS_STATUS_SENSOR_3D_GYRO,                "Gyro" },
+        { MAV_SYS_STATUS_SENSOR_3D_ACCEL,               "Accelerometer" },
+        { MAV_SYS_STATUS_SENSOR_3D_MAG,                 "Magnetometer" },
+        { MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE,      "Absolute pressure" },
+        { MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE,  "Differential pressure" },
+        { MAV_SYS_STATUS_SENSOR_GPS,                    "GPS" },
+        { MAV_SYS_STATUS_SENSOR_OPTICAL_FLOW,           "Optical flow" },
+        { MAV_SYS_STATUS_SENSOR_VISION_POSITION,        "Computer vision position" },
+        { MAV_SYS_STATUS_SENSOR_LASER_POSITION,         "Laser based position" },
+        { MAV_SYS_STATUS_SENSOR_EXTERNAL_GROUND_TRUTH,  "External ground truth" },
+        { MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL,   "Angular rate control" },
+        { MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION, "Attitude stabilization" },
+        { MAV_SYS_STATUS_SENSOR_YAW_POSITION,           "Yaw position" },
+        { MAV_SYS_STATUS_SENSOR_Z_ALTITUDE_CONTROL,     "Z/altitude control" },
+        { MAV_SYS_STATUS_SENSOR_XY_POSITION_CONTROL,    "X/Y position control" },
+        { MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS,          "Motor outputs / control" },
+        { MAV_SYS_STATUS_SENSOR_RC_RECEIVER,            "RC receiver" },
+        { MAV_SYS_STATUS_SENSOR_3D_GYRO2,               "Gyro 2" },
+        { MAV_SYS_STATUS_SENSOR_3D_ACCEL2,              "Accelerometer 2" },
+        { MAV_SYS_STATUS_SENSOR_3D_MAG2,                "Magnetometer 2" },
+        { MAV_SYS_STATUS_GEOFENCE,                      "GeoFence" },
+        { MAV_SYS_STATUS_AHRS,                          "AHRS" },
+        { MAV_SYS_STATUS_TERRAIN,                       "Terrain" },
+        { MAV_SYS_STATUS_REVERSE_MOTOR,                 "Motors reversed" },
+        { MAV_SYS_STATUS_LOGGING,                       "Logging" },
+    };
+
+    for (size_t i=0; i<sizeof(rgSensorInfo)/sizeof(sensorInfo_s); i++) {
+        const sensorInfo_s* pSensorInfo = &rgSensorInfo[i];
+        if ((_onboardControlSensorsEnabled & pSensorInfo->bit) && !(_onboardControlSensorsHealth & pSensorInfo->bit)) {
+            sensorList << pSensorInfo->sensorName;
+        }
+    }
+
+    return sensorList;
+}
+
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
