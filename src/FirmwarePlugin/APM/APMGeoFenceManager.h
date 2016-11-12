@@ -49,6 +49,8 @@ private:
 private:
     bool _fenceSupported;
     bool _breachReturnSupported;
+    bool _circleSupported;
+    bool _polygonSupported;
     bool _firstParamLoadComplete;
 
     QVariantList    _params;
@@ -63,7 +65,6 @@ private:
     uint8_t _cWriteFencePoints;
     uint8_t _currentFencePoint;
 
-    Fact* _fenceEnableFact;
     Fact* _fenceTypeFact;
 
     static const char* _fenceTotalParam;
