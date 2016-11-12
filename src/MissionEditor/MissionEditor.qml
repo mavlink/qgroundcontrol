@@ -86,31 +86,114 @@ QGCView {
         return lon  + 180.0
     }
 
-    /// Fix the map viewport to the current mission items.
-    function fitViewportToMissionItems() {
-        if (_visualItems.count == 1) {
+    /// Fits the visible region of the map to inclues all of the specified coordinates. If no coordinates
+    /// are specified the map will fit to the home position
+    function fitMapViewportToAllCoordinates(coordList) {
+        if (coordList.length == 0) {
             editorMap.center = _visualItems.get(0).coordinate
-        } else {
-            var missionItem = _visualItems.get(0)
-            var north = normalizeLat(missionItem.coordinate.latitude)
-            var south = north
-            var east = normalizeLon(missionItem.coordinate.longitude)
-            var west = east
+            return
+        }
 
-            for (var i=1; i<_visualItems.count; i++) {
-                missionItem = _visualItems.get(i)
+        // Determine the size of the inner portion of the map available for display
+        var toolbarHeight = qgcView.height - ScreenTools.availableHeight
+        var rightPanelWidth = _rightPanelWidth
+        var leftToolWidth = centerMapButton.x + centerMapButton.width
+        var availableWidth = qgcView.width - rightPanelWidth - leftToolWidth
+        var availableHeight = qgcView.height - toolbarHeight
 
-                if (missionItem.specifiesCoordinate && !missionItem.isStandaloneCoordinate) {
-                    var lat = normalizeLat(missionItem.coordinate.latitude)
-                    var lon = normalizeLon(missionItem.coordinate.longitude)
+        // Create the normalized lat/lon corners for the coordinate bounding rect from the list of coordinates
+        var north = normalizeLat(coordList[0].latitude)
+        var south = north
+        var east = normalizeLon(coordList[0].longitude)
+        var west = east
+        for (var i=1; i<coordList.length; i++) {
+            var lat = normalizeLat(coordList[i].latitude)
+            var lon = normalizeLon(coordList[i].longitude)
 
-                    north = Math.max(north, lat)
-                    south = Math.min(south, lat)
-                    east = Math.max(east, lon)
-                    west = Math.min(west, lon)
-                }
+            north = Math.max(north, lat)
+            south = Math.min(south, lat)
+            east = Math.max(east, lon)
+            west = Math.min(west, lon)
+        }        
+
+        // Expand the coordinate bounding rect to make room for the tools around the edge of the map
+        var latDegreesPerPixel = (north - south) / availableWidth
+        var lonDegreesPerPixel = (east - west) / availableHeight
+        north = Math.min(north + (toolbarHeight * latDegreesPerPixel), 180)
+        west = Math.max(west - (leftToolWidth * lonDegreesPerPixel), 0)
+        east = Math.min(east + (rightPanelWidth * lonDegreesPerPixel), 360)
+
+        // Fix the map region to the new bounding rect
+        var topLeftCoord = QtPositioning.coordinate(north - 90.0, west - 180.0)
+        var bottomRightCoord  = QtPositioning.coordinate(south - 90.0, east - 180.0)
+        editorMap.visibleRegion = QtPositioning.rectangle(topLeftCoord, bottomRightCoord)
+    }
+
+    function addMissionItemCoordsForFit(coordList) {
+        for (var i=1; i<qgcView._visualItems.count; i++) {
+            missionItem = qgcView._visualItems.get(i)
+            if (missionItem.specifiesCoordinate && !missionItem.isStandaloneCoordinate) {
+                coordList.push(missionItem.coordinate)
             }
-            editorMap.visibleRegion = QtPositioning.rectangle(QtPositioning.coordinate(north - 90.0, west - 180.0), QtPositioning.coordinate(south - 90.0, east - 180.0))
+        }
+    }
+
+    function fitMapViewportToMissionItems() {
+        var coordList = [ ]
+        addMissionItemCoordsForFit(coordList)
+        fitMapViewportToAllCoordinates(coordList)
+    }
+
+    function addFenceItemCoordsForFit(coordList) {
+        if (geoFenceController.circleSupported) {
+            var azimuthList = [ 0, 180, 90, 270 ]
+            for (var i=0; i<azimuthList.length; i++) {
+                var edgeCoordinate = homePos.coordinate.atDistanceAndAzimuth(geoFenceController.circleRadius, azimuthList[i])
+                coordList.push(edgeCoordinate)
+            }
+        }
+        if (geoFenceController.polygonSupported && geoFenceController.polygon.count() > 2) {
+            for (var i=0; i<geoFenceController.polygon.count(); i++) {
+                coordList.push(geoFenceController.polygon.path[i])
+            }
+        }
+    }
+
+    function fitMapViewportToFenceItems() {
+        var coordList = [ ]
+        addFenceItemCoordsForFit(coordList)
+        fitMapViewportToAllCoordinates(coordList)
+    }
+
+    function addRallyItemCoordsForFit(coordList) {
+        for (var i=0; i<rallyPointController.points.count; i++) {
+            coordList.push(rallyPointController.points.get(i).coordinate)
+        }
+    }
+
+    function fitMapViewportToRallyItems() {
+        var coordList = [ ]
+        addRallyItemCoordsForFit(coordList)
+        fitMapViewportToAllCoordinates(coordList)
+    }
+
+    function fitMapViewportToAllItems() {
+        var coordList = [ ]
+        addMissionItemCoordsForFit(coordList)
+        addFenceItemCoordsForFit(coordList)
+        addRallyItemCoordsForFit(coordList)
+        fitMapViewportToAllCoordinates(coordList)
+    }
+
+    property bool _firstMissionLoadComplete:    false
+    property bool _firstFenceLoadComplete:      false
+    property bool _firstRallyLoadComplete:      false
+    property bool _firstLoadComplete:           false
+
+    function checkFirstLoadComplete() {
+        if (!_firstLoadComplete && _firstMissionLoadComplete && _firstRallyLoadComplete && _firstFenceLoadComplete) {
+            _firstLoadComplete = true
+            fitMapViewportToAllItems()
         }
     }
 
@@ -127,7 +210,7 @@ QGCView {
                 qgcView.showDialog(mobileFilePicker, qsTr("Select Mission File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
             } else {
                 missionController.loadFromFilePicker()
-                fitViewportToMissionItems()
+                fitMapViewportToMissionItems()
                 _currentMissionItem = _visualItems.get(0)
             }
         }
@@ -140,13 +223,19 @@ QGCView {
             }
         }
 
+        function fitViewportToItems() {
+            fitMapViewportToMissionItems()
+        }
+
         onVisualItemsChanged: {
             itemDragger.clearItem()
         }
 
         onNewItemsFromVehicle: {
-            fitViewportToMissionItems()
+            fitMapViewportToMissionItems()
             setCurrentItem(0)
+            _firstMissionLoadComplete = true
+            checkFirstLoadComplete()
         }
     }
 
@@ -168,6 +257,7 @@ QGCView {
                 qgcView.showDialog(mobileFilePicker, qsTr("Select Fence File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
             } else {
                 geoFenceController.loadFromFilePicker()
+                fitMapViewportToFenceItems()
             }
         }
 
@@ -179,6 +269,22 @@ QGCView {
                 if (!geoFenceController.polygon.containsCoordinate(geoFenceController.breachReturnPoint)) {
                     geoFenceController.breachReturnPoint = geoFenceController.polygon.path[0]
                 }
+            }
+        }
+
+        function fitViewportToItems() {
+            fitMapViewportToFenceItems()
+        }
+
+        onLoadComplete: {
+            _firstFenceLoadComplete = true
+            switch (_syncDropDownController) {
+            case geoFenceController:
+                fitMapViewportToFenceItems()
+                break
+            case missionController:
+                checkFirstLoadComplete()
+                break
             }
         }
     }
@@ -209,6 +315,23 @@ QGCView {
                 qgcView.showDialog(mobileFilePicker, qsTr("Select Rally Point File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
             } else {
                 rallyPointController.loadFromFilePicker()
+                fitMapViewportToRallyItems()
+            }
+        }
+
+        function fitViewportToItems() {
+            fitMapViewportToRallyItems()
+        }
+
+        onLoadComplete: {
+            _firstRallyLoadComplete = true
+            switch (_syncDropDownController) {
+            case rallyPointController:
+                fitMapViewportToRallyItems()
+                break
+            case missionController:
+                checkFirstLoadComplete()
+                break
             }
         }
     }
@@ -246,7 +369,10 @@ QGCView {
         QGCMobileFileDialog {
             openDialog:         true
             fileExtension:      _syncDropDownController.fileExtension
-            onFilenameReturned: _syncDropDownController.loadFromFile(filename)
+            onFilenameReturned: {
+                _syncDropDownController.loadFromFile(filename)
+                _syncDropDownController.fitViewportToItems()
+            }
         }
     }
 
@@ -559,6 +685,7 @@ QGCView {
                                 _syncDropDownController = rallyPointController
                                 break
                             }
+                            _syncDropDownController.fitViewportToItems()
                         }
                     }
 
@@ -833,7 +960,15 @@ QGCView {
                                         width:  ScreenTools.defaultFontPixelWidth * 10
                                         onClicked: {
                                             centerMapButton.hideDropDown()
-                                            fitViewportToMissionItems()
+                                            fitMapViewportToMissionItems()
+                                        }
+                                    }
+                                    QGCButton {
+                                        text: qsTr("All items")
+                                        width:  ScreenTools.defaultFontPixelWidth * 10
+                                        onClicked: {
+                                            centerMapButton.hideDropDown()
+                                            fitMapViewportToAllItems()
                                         }
                                     }
                                     QGCButton {
