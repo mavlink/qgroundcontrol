@@ -90,7 +90,7 @@ void APMRallyPointManager::_mavlinkMessageReceived(const mavlink_message_t& mess
 
         QGeoCoordinate point((float)rallyPoint.lat / 1e7, (float)rallyPoint.lng / 1e7, rallyPoint.alt);
         _rgPoints.append(point);
-        if (rallyPoint.idx < _cReadRallyPoints - 2) {
+        if (rallyPoint.idx < _cReadRallyPoints - 1) {
             // Still more points to request
             _requestRallyPoint(++_currentRallyPoint);
         } else {
