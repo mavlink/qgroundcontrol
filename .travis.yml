@@ -108,7 +108,7 @@ install:
         ./android-ndk-r10e-linux-x86_64.bin > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r10e &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
-        export PATH=/tmp/Qt/5.5/android_armv7/bin:`pwd`/android-ndk-r10e:$PATH
+        export PATH=/tmp/Qt/5.5/android_armv7/bin:`pwd`/android-ndk-r10e:$PATH && echo $PATH
         ;
     fi
 
