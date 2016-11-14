@@ -128,6 +128,7 @@
         <file alias="QGroundControl/FlightMap/QGCPitchIndicator.qml">src/FlightMap/Widgets/QGCPitchIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/QGCVideoBackground.qml">src/FlightMap/QGCVideoBackground.qml</file>
         <file alias="QGroundControl/FlightMap/ValuesWidget.qml">src/FlightMap/Widgets/ValuesWidget.qml</file>
+        <file alias="QGroundControl/FlightMap/VehicleHealthWidget.qml">src/FlightMap/Widgets/VehicleHealthWidget.qml</file>
         <file alias="QGroundControl/FlightMap/VibrationWidget.qml">src/FlightMap/Widgets/VibrationWidget.qml</file>
         <file alias="QGroundControl/FlightMap/VehicleMapItem.qml">src/FlightMap/MapItems/VehicleMapItem.qml</file>
         <file alias="QGroundControl/FlightMap/InstrumentSwipeView.qml">src/FlightMap/Widgets/InstrumentSwipeView.qml</file>

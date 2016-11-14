@@ -280,6 +280,7 @@ public:
     Q_PROPERTY(bool                 xConfigMotors           READ xConfigMotors                                          CONSTANT)
     Q_PROPERTY(bool                 isOfflineEditingVehicle READ isOfflineEditingVehicle                                CONSTANT)
     Q_PROPERTY(QString              brandImage              READ brandImage                                             CONSTANT)
+    Q_PROPERTY(QStringList          unhealthySensors        READ unhealthySensors                                       NOTIFY unhealthySensorsChanged)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying      READ flying     WRITE setFlying     NOTIFY flyingChanged)
@@ -530,6 +531,7 @@ public:
     uint32_t        customMode              () const { return _custom_mode; }
     bool            isOfflineEditingVehicle () const { return _offlineEditingVehicle; }
     QString         brandImage              () const;
+    QStringList     unhealthySensors        () const;
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -604,6 +606,7 @@ signals:
     void prearmErrorChanged(const QString& prearmError);
     void commandLongAck(uint8_t compID, uint16_t command, uint8_t result);
     void soloFirmwareChanged(bool soloFirmware);
+    void unhealthySensorsChanged(void);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -751,6 +754,10 @@ private:
     double          _rcRSSIstore;
     bool            _autoDisconnect;    ///< true: Automatically disconnect vehicle when last connection goes away or lost heartbeat
     bool            _flying;
+    uint32_t        _onboardControlSensorsPresent;
+    uint32_t        _onboardControlSensorsEnabled;
+    uint32_t        _onboardControlSensorsHealth;
+    uint32_t        _onboardControlSensorsUnhealthy;
 
     QString             _prearmError;
     QTimer              _prearmErrorTimer;
