@@ -144,7 +144,7 @@ private slots:
     void _activeVehicleChanged(Vehicle* vehicle);
 
 private:
-    UASInterface*           _activeUAS;
+    Vehicle*                _activeVehicle;
     int                     _activeComponent;
     bool                    _multiComp;
     QVector<UASMessage*>    _messages;
