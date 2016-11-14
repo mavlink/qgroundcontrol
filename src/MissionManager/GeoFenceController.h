@@ -78,6 +78,7 @@ signals:
     void paramsChanged                  (QVariantList params);
     void paramLabelsChanged             (QStringList paramLabels);
     void editorQmlChanged               (QString editorQml);
+    void loadComplete                   (void);
 
 private slots:
     void _polygonDirtyChanged(bool dirty);
