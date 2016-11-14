@@ -16,6 +16,7 @@ QGCInstrumentWidgetAlternate    1.0 QGCInstrumentWidgetAlternate.qml
 QGCPitchIndicator               1.0 QGCPitchIndicator.qml
 QGCSlider                       1.0 QGCSlider.qml
 ValuesWidget                    1.0 ValuesWidget.qml
+VehicleHealthWidget             1.0 VehicleHealthWidget.qml
 VibrationWidget                 1.0 VibrationWidget.qml
 
 # Map items
