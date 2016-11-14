@@ -34,7 +34,7 @@ void RallyPointManager::_sendError(ErrorCode_t errorCode, const QString& errorMs
 void RallyPointManager::loadFromVehicle(void)
 {
     // No support in generic vehicle
-    loadComplete(QList<QGeoCoordinate>());
+    emit loadComplete(QList<QGeoCoordinate>());
 }
 
 void RallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)

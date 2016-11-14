@@ -333,9 +333,9 @@ void GeoFenceController::loadFromVehicle(void)
 void GeoFenceController::sendToVehicle(void)
 {
     if (_activeVehicle->parameterManager()->parametersReady() && !syncInProgress()) {
-        setDirty(false);
-        _polygon.setDirty(false);
         _activeVehicle->geoFenceManager()->sendToVehicle(_breachReturnPoint, _polygon.coordinateList());
+        _polygon.setDirty(false);
+        setDirty(false);
     } else {
         qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle->parameterManager()->parametersReady() << syncInProgress();
     }
@@ -433,6 +433,7 @@ void GeoFenceController::_loadComplete(const QGeoCoordinate& breachReturn, const
     _setReturnPointFromManager(breachReturn);
     _setPolygonFromManager(polygon);
     setDirty(false);
+    emit loadComplete();
 }
 
 QString GeoFenceController::fileExtension(void) const
