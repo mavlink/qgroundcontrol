@@ -365,7 +365,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
 {
-    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+    if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
         qgcApp()->showMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
         return;
     }
@@ -397,8 +397,12 @@ void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
 
 void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
 {
-    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
-        qgcApp()->showMessage(QStringLiteral("Unable to change altitude, vehicle altitude not known."));
+    if (!vehicle->homePositionAvailable()) {
+        qgcApp()->showMessage(QStringLiteral("Unable to change altitude, home position unknown."));
+        return;
+    }
+    if (qIsNaN(vehicle->homePosition().altitude())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to change altitude, home position altitude unknown."));
         return;
     }
 
@@ -413,7 +417,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     cmd.param4 = NAN;
     cmd.param5 = NAN;
     cmd.param6 = NAN;
-    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toDouble() + altitudeRel;
+    cmd.param7 = vehicle->homePosition().altitude() + altitudeRel;
     cmd.target_system = vehicle->id();
     cmd.target_component = vehicle->defaultComponentId();
 
