@@ -98,6 +98,10 @@
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
 
+#if defined(__yuneec__)
+#include "m4.h"
+#endif
+
 #ifndef __ios__
     #include "SerialLink.h"
 #endif
@@ -352,6 +356,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
+#if defined(__yuneec__)
+    Yuneec::initM4();
+#endif
 }
 
 QGCApplication::~QGCApplication()
@@ -468,7 +475,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
     }
 
     settings.sync();
-
     return true;
 }
 

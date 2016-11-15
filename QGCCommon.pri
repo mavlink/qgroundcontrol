@@ -38,8 +38,14 @@ linux {
         equals(ANDROID_TARGET_ARCH, x86)  {
             CONFIG += Androidx86Build
             DEFINES += __androidx86__
-            DEFINES += QGC_DISABLE_UVC
             message("Android x86 build")
+            contains (CONFIG, YUNEEC_QGC) {
+                message("Yuneec build (manual override from command line)")
+                CONFIG += YuneecBuild
+            } else:exists(user_config.pri):infile(user_config.pri, DEFINES, YUNEEC_QGC) {
+                message("Yuneec build (manual override from user_config.pri)")
+                CONFIG += YuneecBuild
+            }
         } else {
             message("Android Arm build")
         }
@@ -85,6 +91,12 @@ linux {
     QMAKE_LFLAGS += -Wl,-no_pie
 } else {
     error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")
+}
+
+YuneecBuild {
+    DEFINES -= QGC_ENABLE_BLUETOOTH
+    DEFINES += QGC_DISABLE_UVC
+    DEFINES += __yuneec__
 }
 
 # Enable ccache where we can
