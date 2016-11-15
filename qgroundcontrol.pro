@@ -877,6 +877,20 @@ AndroidBuild {
 }
 
 #-------------------------------------------------------------------------------------
+# Yuneec
+
+YuneecBuild {
+    SOURCES += \
+        src/Yuneec/m4.cc
+
+    HEADERS += \
+        src/Yuneec/m4.h
+
+    INCLUDEPATH += \
+        src/Yuneec
+}
+
+#-------------------------------------------------------------------------------------
 #
 # Post link configuration
 #

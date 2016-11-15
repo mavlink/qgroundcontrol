@@ -43,7 +43,11 @@ VideoManager::VideoManager(QGCApplication* app)
 {
     //-- Get saved settings
     QSettings settings;
+#if defined(__yuneec__)
+    setVideoSource(settings.value(kVideoSourceKey, kRTSPStream).toString());
+#else
     setVideoSource(settings.value(kVideoSourceKey, kUDPStream).toString());
+#endif
     setUdpPort(settings.value(kVideoUDPPortKey, 5600).toUInt());
     setRtspURL(settings.value(kVideoRTSPUrlKey, "rtsp://192.168.42.1:554/live").toString()); //-- Example RTSP URL
     _init = true;
