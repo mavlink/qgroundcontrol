@@ -63,6 +63,7 @@ void GeoFenceController::setBreachReturnPoint(const QGeoCoordinate& breachReturn
 void GeoFenceController::_signalAll(void)
 {
     emit fenceSupportedChanged(fenceSupported());
+    emit fenceEnabledChanged(fenceEnabled());
     emit circleSupportedChanged(circleSupported());
     emit polygonSupportedChanged(polygonSupported());
     emit breachReturnSupportedChanged(breachReturnSupported());
@@ -82,9 +83,10 @@ void GeoFenceController::_activeVehicleBeingRemoved(void)
 void GeoFenceController::_activeVehicleSet(void)
 {
     GeoFenceManager* geoFenceManager = _activeVehicle->geoFenceManager();
+    connect(geoFenceManager, &GeoFenceManager::fenceSupportedChanged,           this, &GeoFenceController::fenceSupportedChanged);
+    connect(geoFenceManager, &GeoFenceManager::fenceEnabledChanged,             this, &GeoFenceController::fenceEnabledChanged);
     connect(geoFenceManager, &GeoFenceManager::circleSupportedChanged,          this, &GeoFenceController::_setDirty);
     connect(geoFenceManager, &GeoFenceManager::polygonSupportedChanged,         this, &GeoFenceController::_setDirty);
-    connect(geoFenceManager, &GeoFenceManager::fenceSupportedChanged,           this, &GeoFenceController::fenceSupportedChanged);
     connect(geoFenceManager, &GeoFenceManager::circleSupportedChanged,          this, &GeoFenceController::circleSupportedChanged);
     connect(geoFenceManager, &GeoFenceManager::polygonSupportedChanged,         this, &GeoFenceController::polygonSupportedChanged);
     connect(geoFenceManager, &GeoFenceManager::breachReturnSupportedChanged,    this, &GeoFenceController::breachReturnSupportedChanged);
@@ -373,6 +375,11 @@ void GeoFenceController::_polygonDirtyChanged(bool dirty)
 bool GeoFenceController::fenceSupported(void) const
 {
     return _activeVehicle->geoFenceManager()->fenceSupported();
+}
+
+bool GeoFenceController::fenceEnabled(void) const
+{
+    return _activeVehicle->geoFenceManager()->fenceEnabled();
 }
 
 bool GeoFenceController::circleSupported(void) const
