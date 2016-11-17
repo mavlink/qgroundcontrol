@@ -11,8 +11,8 @@
 #ifndef QGCMESSAGEBOX_H
 #define QGCMESSAGEBOX_H
 
-#ifdef __mobile__
-#error Should not be included in mobile builds
+#if defined(__mobile__) || defined(MINIMALIST_BUILD)
+#error Should not be included in mobile or minimalist builds
 #endif
 
 #include <QMessageBox>
@@ -21,10 +21,7 @@
 #include "QGCApplication.h"
 
 #ifdef QT_DEBUG
-#ifndef __mobile__
 #include "UnitTest.h"
-#endif
-
 #endif
 
 /// @file
@@ -100,11 +97,9 @@ private:
         qDebug() << "QGCMessageBox (unit testing)" << title << text;
 
 #ifdef QT_DEBUG
-#ifndef __mobile__
         if (qgcApp()->runningUnitTests()) {
             return UnitTest::_messageBox(icon, title, text, buttons, defaultButton);
         } else
-#endif
 #endif
         {
 #ifdef __macos__

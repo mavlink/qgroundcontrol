@@ -29,12 +29,12 @@
 
 #define  SINGLE_INSTANCE_PORT   14499
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     #include "QGCSerialPortInfo.h"
 #endif
 
 #ifdef QT_DEBUG
-    #ifndef __mobile__
+    #if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
         #include "UnitTest.h"
     #endif
     #include "CmdLineOptParser.h"
@@ -55,7 +55,7 @@
 #undef main
 #endif
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     Q_DECLARE_METATYPE(QGCSerialPortInfo)
 #endif
 
@@ -73,21 +73,17 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 
 #endif
 
-#ifdef __android__
+#if defined(__android__) && !defined(NO_SERIAL_LINK)
 #include <jni.h>
 #include "qserialport.h"
-
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     Q_UNUSED(reserved);
-
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return -1;
     }
-
     QSerialPort::setNativeMethods();
-
     return JNI_VERSION_1_6;
 }
 #endif
@@ -150,7 +146,7 @@ int main(int argc, char *argv[])
     // that we use these types in signals, and without calling qRegisterMetaType we can't queue
     // these signals. In general we don't queue these signals, but we do what the warning says
     // anyway to silence the debug output.
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     qRegisterMetaType<QSerialPort::SerialPortError>();
 #endif
 #ifdef QGC_ENABLE_BLUETOOTH
@@ -158,7 +154,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QBluetoothServiceInfo>();
 #endif
     qRegisterMetaType<QAbstractSocket::SocketError>();
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     qRegisterMetaType<QGCSerialPortInfo>();
 #endif
 
@@ -229,7 +225,7 @@ int main(int argc, char *argv[])
 
     int exitCode = 0;
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 #ifdef QT_DEBUG
     if (runUnitTests) {
         for (int i=0; i < (stressUnitTests ? 20 : 1); i++) {

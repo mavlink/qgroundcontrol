@@ -5,7 +5,7 @@
  *
  */
 
-#if defined(__yuneec__)
+#if defined(MINIMALIST_BUILD)
 
 #include "m4.h"
 

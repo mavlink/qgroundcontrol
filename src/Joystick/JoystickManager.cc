@@ -13,12 +13,12 @@
 
 #include <QQmlEngine>
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     #include "JoystickSDL.h"
     #define __sdljoystick__
 #endif
 
-#ifdef __android__
+#if defined(__android__) || defined(MINIMALIST_BUILD)
     /*
      * Android Joystick not yet supported
      * #include "JoystickAndroid.h"
@@ -74,14 +74,14 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
 void JoystickManager::_setActiveJoystickFromSettings(void)
 {
     QSettings settings;
-    
+
     settings.beginGroup(_settingsGroup);
     QString name = settings.value(_settingsKeyActiveJoystick).toString();
-    
+
     if (name.isEmpty()) {
         name = _name2JoystickMap.first()->name();
     }
-    
+
     setActiveJoystick(_name2JoystickMap.value(name, _name2JoystickMap.first()));
     settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
 }
@@ -94,21 +94,21 @@ Joystick* JoystickManager::activeJoystick(void)
 void JoystickManager::setActiveJoystick(Joystick* joystick)
 {
     QSettings settings;
-    
+
     if (!_name2JoystickMap.contains(joystick->name())) {
         qCWarning(JoystickManagerLog) << "Set active not in map" << joystick->name();
         return;
     }
-    
+
     if (_activeJoystick) {
         _activeJoystick->stopPolling();
     }
-    
+
     _activeJoystick = joystick;
-    
+
     settings.beginGroup(_settingsGroup);
     settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
-    
+
     emit activeJoystickChanged(_activeJoystick);
     emit activeJoystickNameChanged(_activeJoystick->name());
 }
@@ -116,11 +116,11 @@ void JoystickManager::setActiveJoystick(Joystick* joystick)
 QVariantList JoystickManager::joysticks(void)
 {
     QVariantList list;
-    
+
     foreach (const QString &name, _name2JoystickMap.keys()) {
         list += QVariant::fromValue(_name2JoystickMap[name]);
     }
-    
+
     return list;
 }
 
@@ -140,6 +140,6 @@ void JoystickManager::setActiveJoystickName(const QString& name)
         qCWarning(JoystickManagerLog) << "Set active not in map" << name;
         return;
     }
-    
+
     setActiveJoystick(_name2JoystickMap[name]);
 }

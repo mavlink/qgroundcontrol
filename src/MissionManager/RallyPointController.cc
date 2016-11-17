@@ -21,7 +21,7 @@
 #include "JsonHelper.h"
 #include "SimpleMissionItem.h"
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 #include "QGCFileDialog.h"
 #endif
 
@@ -91,7 +91,7 @@ bool RallyPointController::_loadJsonFile(QJsonDocument& jsonDoc, QString& errorS
     QList<QGeoCoordinate> rgPoints;
     if (!JsonHelper::loadGeoCoordinateArray(json[_jsonPointsKey], true /* altitudeRequired */, rgPoints, errorString)) {
         return false;
-    }    
+    }
     _points.clearAndDeleteContents();
     QObjectList pointList;
     for (int i=0; i<rgPoints.count(); i++) {
@@ -137,7 +137,7 @@ void RallyPointController::loadFromFile(const QString& filename)
 
 void RallyPointController::loadFromFilePicker(void)
 {
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Rally Point File to load", QString(), "Rally point file (*.rally);;All Files (*.*)");
 
     if (filename.isEmpty()) {
@@ -186,7 +186,7 @@ void RallyPointController::saveToFile(const QString& filename)
 
 void RallyPointController::saveToFilePicker(void)
 {
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save Rally Points to", QString(), "Rally point file (*.rally);;All Files (*.*)");
 
     if (filename.isEmpty()) {

@@ -98,15 +98,15 @@
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
 
-#if defined(__yuneec__)
+#if defined(MINIMALIST_BUILD)
 #include "m4.h"
 #endif
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     #include "SerialLink.h"
 #endif
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     #include "QGCFileDialog.h"
     #include "QGCMessageBox.h"
     #include "FirmwareUpgradeController.h"
@@ -183,14 +183,14 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
  **/
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
-#ifdef __mobile__
+#if defined(__mobile__) || defined(MINIMALIST_BUILD)
     : QGuiApplication(argc, argv)
     , _qmlAppEngine(NULL)
 #else
     : QApplication(argc, argv)
 #endif
     , _runningUnitTests(unitTesting)
-#if defined (__mobile__)
+#if defined (__mobile__) && !defined(MINIMALIST_BUILD)
     , _styleIsDark(false)
 #else
     , _styleIsDark(true)
@@ -216,7 +216,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
 #ifdef Q_OS_LINUX
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     if (!_runningUnitTests) {
         if (getuid() == 0) {
             QMessageBox msgBox;
@@ -356,14 +356,14 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
-#if defined(__yuneec__)
+#if defined(MINIMALIST_BUILD)
     Yuneec::initM4();
 #endif
 }
 
 QGCApplication::~QGCApplication()
 {
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     MainWindow* mainWindow = MainWindow::instance();
     if (mainWindow) {
         delete mainWindow;
@@ -419,7 +419,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<QGCMobileFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QGCMobileFileDialogController");
     qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
     qmlRegisterType<JoystickConfigController>           ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
     qmlRegisterType<FirmwareUpgradeController>      ("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
@@ -443,7 +443,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     // Exit main application when last window is closed
     connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
 
-#ifdef __mobile__
+#if defined(__mobile__) || defined(MINIMALIST_BUILD)
     _qmlAppEngine = new QQmlApplicationEngine(this);
     _qmlAppEngine->addImportPath("qrc:/qml");
     _qmlAppEngine->rootContext()->setContextProperty("joystickManager", toolbox()->joystickManager());
@@ -536,7 +536,7 @@ void QGCApplication::informationMessageBoxOnMainThread(const QString& title, con
 
 void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const QString& msg)
 {
-#ifdef __mobile__
+#if defined(__mobile__) || defined(MINIMALIST_BUILD)
     Q_UNUSED(title)
     showMessage(msg);
 #else
@@ -546,7 +546,7 @@ void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const Q
 
 void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const QString& msg)
 {
-#ifdef __mobile__
+#if defined(__mobile__) || defined(MINIMALIST_BUILD)
     Q_UNUSED(title)
     showMessage(msg);
 #else
@@ -554,7 +554,7 @@ void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const 
 #endif
 }
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
 {
     bool saveError;
@@ -596,7 +596,7 @@ void QGCApplication::setStyle(bool styleIsDark)
 
 void QGCApplication::_loadCurrentStyle(void)
 {
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     bool success = true;
     QString styles;
 
@@ -658,7 +658,7 @@ void QGCApplication::_missingParamsDisplay(void)
 
 QObject* QGCApplication::_rootQmlObject(void)
 {
-#ifdef __mobile__
+#if defined(__mobile__) || defined(MINIMALIST_BUILD)
     return _qmlAppEngine->rootObjects()[0];
 #else
     MainWindow * mainWindow = MainWindow::instance();
@@ -689,7 +689,7 @@ void QGCApplication::showMessage(const QString& message)
         QVariant varMessage = QVariant::fromValue(message);
 
         QMetaObject::invokeMethod(_rootQmlObject(), "showMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     } else if (runningUnitTests()){
         // Unit test can run without a main window which will lead to no root qml object. Use QGCMessageBox instead
         QGCMessageBox::information("Unit Test", message);

@@ -11,8 +11,8 @@
 #ifndef QGCFILEDIALOG_H
 #define QGCFILEDIALOG_H
 
-#ifdef __mobile__
-#error Should not be included in mobile builds
+#if defined(__mobile__) || defined(MINIMALIST_BUILD)
+#error Should not be included in mobile or minimalist builds
 #endif
 
 #include <QFileDialog>
@@ -40,7 +40,7 @@
 */
 
 class QGCFileDialog : public QFileDialog {
-    
+
 public:
 
     //! Static helper that will return an existing directory selected by the user.
@@ -57,7 +57,7 @@ public:
         const QString& caption = QString(),
         const QString& dir = QString(),
         Options options = ShowDirsOnly);
-    
+
     //! Static helper that invokes a File Open dialog where the user can select a file to be opened.
     /*!
         @param[in] parent The parent QWidget.
@@ -74,7 +74,7 @@ public:
         const QString& dir = QString(),
         const QString& filter = QString(),
         Options options = 0);
-    
+
     //! Static helper that invokes a File Open dialog where the user can select one or more files to be opened.
     /*!
         @param[in] parent The parent QWidget.
@@ -91,7 +91,7 @@ public:
         const QString& dir = QString(),
         const QString& filter = QString(),
         Options options = 0);
-    
+
     //! Static helper that invokes a File Save dialog where the user can select a directory and enter a filename to be saved.
     /*!
         @param[in] parent The parent QWidget.
@@ -122,7 +122,7 @@ private slots:
     /// @brief The exec slot is private because we only want QGCFileDialog users to use the static methods. Otherwise it will break
     ///        unit testing.
     int exec(void) { return QFileDialog::exec(); }
-    
+
 private:
     static void    _validate(Options& options);
     static bool    _validateExtension(const QString& filter, const QString& extension);

@@ -28,7 +28,7 @@
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 class FileManager;
 #endif
 
@@ -60,7 +60,7 @@ public:
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     virtual FileManager* getFileManager() = 0;
 #endif
 
@@ -149,7 +149,7 @@ public slots:
     virtual void pairRX(int rxType, int rxSubType) = 0;
 
     /** @brief Send the full HIL state to the MAV */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     virtual void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
                         float pitchspeed, float yawspeed, double lat, double lon, double alt,
                         float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc) = 0;

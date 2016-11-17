@@ -257,6 +257,24 @@ Rectangle {
             }
 
             SubMenuButton {
+                imageResource:  "/res/gear-white.svg"
+                setupIndicator: false
+                exclusiveGroup: setupButtonGroup
+                text:           "General"
+                visible:        QGroundControl.isMinimalist
+                onClicked:      panelLoader.setSource("GeneralSettings.qml")
+            }
+
+            SubMenuButton {
+                imageResource:  "/res/waves.svg"
+                setupIndicator: false
+                exclusiveGroup: setupButtonGroup
+                text:           "MAVLink"
+                visible:        QGroundControl.isMinimalist
+                onClicked:      panelLoader.setSource("MavlinkSettings.qml")
+            }
+
+            SubMenuButton {
                 id:             summaryButton
                 imageResource: "/qmlimages/VehicleSummaryIcon.png"
                 setupIndicator: false

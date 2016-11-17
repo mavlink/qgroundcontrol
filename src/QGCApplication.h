@@ -53,7 +53,7 @@ class QGCToolbox;
  *
  **/
 class QGCApplication : public
-#ifdef __mobile__
+#if defined(__mobile__) || defined(MINIMALIST_BUILD)
     QGuiApplication // Native Qml based application
 #else
     QApplication    // QtWidget based application
@@ -132,7 +132,7 @@ public slots:
 
     void qmlAttemptWindowClose(void);
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     /// Save the specified Flight Data Log
     void saveTempFlightDataLogOnMainThread(QString tempLogfile);
 #endif
@@ -170,7 +170,7 @@ private:
     void _loadCurrentStyle(void);
     QObject* _rootQmlObject(void);
 
-#ifdef __mobile__
+#if defined(__mobile__) || defined(MINIMALIST_BUILD)
     QQmlApplicationEngine* _qmlAppEngine;
 #endif
 

@@ -7,7 +7,7 @@
 
 #ifndef YUNEEC_M4_H
 #define YUNEEC_M4_H
-#if defined(__yuneec__)
+#if defined(MINIMALIST_BUILD)
 namespace Yuneec {
 
 extern bool initM4();
