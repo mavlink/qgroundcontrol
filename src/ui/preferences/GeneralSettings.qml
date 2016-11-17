@@ -123,6 +123,7 @@ QGCView {
                     height:             offlineLabel.height
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
+                    visible:            !QGroundControl.isMinimalist
                     QGCLabel {
                         id:             offlineLabel
                         text:           qsTr("Offline Mission Editing (Requires Restart)")
@@ -133,6 +134,7 @@ QGCView {
                     height:         offlineCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:          qgcView.width * 0.8
                     color:          qgcPal.windowShade
+                    visible:        !QGroundControl.isMinimalist
                     anchors.margins: ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     Column {
@@ -364,6 +366,7 @@ QGCView {
                             text:       qsTr("Virtual Joystick")
                             checked:    QGroundControl.virtualTabletJoystick
                             onClicked:  QGroundControl.virtualTabletJoystick = checked
+                            visible:    !QGroundControl.isMinimalist
                         }
                         //-----------------------------------------------------------------
                         //-- Map Providers
@@ -433,6 +436,7 @@ QGCView {
                     height:             autoConnectLabel.height
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
+                    visible:            !QGroundControl.isMinimalist
                     QGCLabel {
                         id:             autoConnectLabel
                         text:           qsTr("Autoconnect to the following devices:")
@@ -443,6 +447,7 @@ QGCView {
                     height:         autoConnectCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:          qgcView.width * 0.8
                     color:          qgcPal.windowShade
+                    visible:        !QGroundControl.isMinimalist
                     anchors.margins: ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     Column {
@@ -494,6 +499,7 @@ QGCView {
                 Item {
                     width:              qgcView.width * 0.8
                     height:             videoLabel.height
+                    visible:            !QGroundControl.isMinimalist
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
@@ -506,6 +512,7 @@ QGCView {
                     height:         videoCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:          qgcView.width * 0.8
                     color:          qgcPal.windowShade
+                    visible:        !QGroundControl.isMinimalist
                     anchors.margins: ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     Column {
