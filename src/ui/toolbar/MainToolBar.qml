@@ -338,6 +338,7 @@ Rectangle {
             source:             "/res/QGCLogoWhite"
             logo:               true
             onClicked:          toolBar.showSettingsView()
+            visible:            !QGroundControl.isMinimalist
         }
 
         QGCToolBarButton {
@@ -377,7 +378,7 @@ Rectangle {
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/Analyze.svg"
-            visible:            !ScreenTools.isMobile
+            visible:            !ScreenTools.isMobile && !QGroundControl.isMinimalist
             onClicked:          toolBar.showAnalyzeView()
         }
     }

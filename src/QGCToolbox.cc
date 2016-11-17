@@ -13,7 +13,7 @@
 #include "FirmwarePluginManager.h"
 #include "FlightMapSettings.h"
 #include "GAudioOutput.h"
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 #include "GPSManager.h"
 #endif
 #include "HomePositionManager.h"
@@ -36,7 +36,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     , _factSystem(NULL)
     , _firmwarePluginManager(NULL)
     , _flightMapSettings(NULL)
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     , _gpsManager(NULL)
 #endif
     , _homePositionManager(NULL)
@@ -58,7 +58,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _factSystem =               new FactSystem(app);
     _firmwarePluginManager =    new FirmwarePluginManager(app);
     _flightMapSettings =        new FlightMapSettings(app);
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     _gpsManager =               new GPSManager(app);
 #endif
     _homePositionManager =      new HomePositionManager(app);
@@ -83,7 +83,7 @@ void QGCToolbox::setChildToolboxes(void)
     _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
     _flightMapSettings->setToolbox(this);
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     _gpsManager->setToolbox(this);
 #endif
     _homePositionManager->setToolbox(this);

@@ -26,7 +26,7 @@
 #include "Vehicle.h"
 #include "FirmwarePluginManager.h"
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 #include "FileManager.h"
 #include "QGCHilLink.h"
 #include "QGCFlightGearLink.h"
@@ -342,7 +342,7 @@ public:
         temperature_var = var;
     }
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     friend class FileManager;
 #endif
 
@@ -405,7 +405,7 @@ protected: //COMMENTS FOR TEST UNIT
     double airSpeed;             ///< Airspeed
     double groundSpeed;          ///< Groundspeed
     double bearingToWaypoint;    ///< Bearing to next waypoint
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     FileManager   fileManager;
 #endif
 
@@ -449,7 +449,7 @@ protected: //COMMENTS FOR TEST UNIT
     float temperature_var;      ///< variance of temperature noise for HIL sim (C)
 
     /// SIMULATION
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
 #endif
 
@@ -457,12 +457,12 @@ public:
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     virtual FileManager* getFileManager() { return &fileManager; }
 #endif
 
     /** @brief Get the HIL simulation */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     QGCHilLink* getHILSimulation() const {
         return simulation;
     }
@@ -479,7 +479,7 @@ public slots:
     void pairRX(int rxType, int rxSubType);
 
     /** @brief Enable / disable HIL */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     void enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration);
     void enableHilJSBSim(bool enable, QString options);
     void enableHilXPlane(bool enable);
@@ -529,7 +529,7 @@ public slots:
     void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode);
 
     /** @brief Set the values for the 6dof manual control of the vehicle */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
 #endif
 

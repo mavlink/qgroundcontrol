@@ -36,7 +36,7 @@
 #include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 #include "FirmwarePluginManager.h"
@@ -101,7 +101,7 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
 
     airSpeed(std::numeric_limits<double>::quiet_NaN()),
     groundSpeed(std::numeric_limits<double>::quiet_NaN()),
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     fileManager(this, vehicle),
 #endif
 
@@ -149,7 +149,7 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     temperature_var(0.0f),
     */
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     simulation(0),
 #endif
 
@@ -173,7 +173,7 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
         componentMulti[i] = false;
     }
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, &fileManager, &FileManager::receiveMessage);
 #endif
 
@@ -1451,7 +1451,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
     }
 }
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw)
 {
     if (!_vehicle) {
@@ -1520,7 +1520,7 @@ void UAS::pairRX(int rxType, int rxSubType)
 /**
 * If enabled, connect the flight gear link.
 */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration)
 {
     Q_UNUSED(configuration);
@@ -1570,7 +1570,7 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObj
 /**
 * If enabled, connect the JSBSim link.
 */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::enableHilJSBSim(bool enable, QString options)
 {
     QGCJSBSimLink* link = dynamic_cast<QGCJSBSimLink*>(simulation);
@@ -1599,7 +1599,7 @@ void UAS::enableHilJSBSim(bool enable, QString options)
 /**
 * If enabled, connect the X-plane gear link.
 */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::enableHilXPlane(bool enable)
 {
     QGCXPlaneLink* link = dynamic_cast<QGCXPlaneLink*>(simulation);
@@ -1655,7 +1655,7 @@ void UAS::enableHilXPlane(bool enable)
 * @param yacc Y acceleration (mg)
 * @param zacc Z acceleration (mg)
 */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
@@ -1705,7 +1705,7 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
 * @param yacc Y acceleration (mg)
 * @param zacc Z acceleration (mg)
 */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
@@ -1751,7 +1751,7 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
 }
 #endif
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
 {
     /* Calculate normally distributed variable noise with mean = 0 and variance = noise_var.  Calculated according to
@@ -1789,7 +1789,7 @@ float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
 * @param abs_pressure Absolute Pressure (hPa)
 * @param diff_pressure Differential Pressure  (hPa)
 */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
                                     float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed)
 {
@@ -1833,7 +1833,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
 }
 #endif
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, float flow_comp_m_x,
                     float flow_comp_m_y, quint8 quality, float ground_distance)
 {
@@ -1875,7 +1875,7 @@ void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, floa
 }
 #endif
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites)
 {
     if (!_vehicle) {
@@ -1916,7 +1916,7 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
 /**
 * Connect flight gear link.
 **/
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::startHil()
 {
     if (hilEnabled) return;
@@ -1932,7 +1932,7 @@ void UAS::startHil()
 /**
 * disable flight gear link.
 */
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 void UAS::stopHil()
 {
    if (simulation && simulation->isConnected()) {
@@ -2023,7 +2023,7 @@ void UAS::_say(const QString& text, int severity)
 
 void UAS::shutdownVehicle(void)
 {
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     stopHil();
     if (simulation) {
         // wait for the simulator to exit

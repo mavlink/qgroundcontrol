@@ -59,7 +59,7 @@ public:
     VideoManager*               videoManager(void)              { return _videoManager; }
     MAVLinkLogManager*          mavlinkLogManager(void)         { return _mavlinkLogManager; }
 
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     GPSManager*                 gpsManager(void)                { return _gpsManager; }
 #endif
 
@@ -71,7 +71,7 @@ private:
     FactSystem*                 _factSystem;
     FirmwarePluginManager*      _firmwarePluginManager;
     FlightMapSettings*          _flightMapSettings;
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     GPSManager*                 _gpsManager;
 #endif
     HomePositionManager*        _homePositionManager;

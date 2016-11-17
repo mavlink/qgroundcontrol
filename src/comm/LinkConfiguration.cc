@@ -15,12 +15,12 @@
 */
 
 #include "LinkConfiguration.h"
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 #include "UDPLink.h"
 #include "TCPLink.h"
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 #include "LogReplayLink.h"
 #endif
 #ifdef QGC_ENABLE_BLUETOOTH
@@ -79,7 +79,7 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
 {
     LinkConfiguration* config = NULL;
     switch(type) {
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
         case LinkConfiguration::TypeSerial:
             config = new SerialConfiguration(name);
             break;
@@ -95,7 +95,7 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
         config = new BluetoothConfiguration(name);
         break;
 #endif
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
         case LinkConfiguration::TypeLogReplay:
             config = new LogReplayLinkConfiguration(name);
             break;
@@ -117,7 +117,7 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
 {
     LinkConfiguration* dupe = NULL;
     switch(source->type()) {
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
         case TypeSerial:
             dupe = new SerialConfiguration(dynamic_cast<SerialConfiguration*>(source));
             break;
@@ -133,7 +133,7 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
             dupe = new BluetoothConfiguration(dynamic_cast<BluetoothConfiguration*>(source));
             break;
 #endif
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
         case TypeLogReplay:
             dupe = new LogReplayLinkConfiguration(dynamic_cast<LogReplayLinkConfiguration*>(source));
             break;

@@ -13,7 +13,7 @@
 #include "MainWindow.h"
 
 #ifdef QT_DEBUG
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
 #include "UnitTest.h"
 #endif
 #endif
@@ -29,9 +29,9 @@ QString QGCFileDialog::getExistingDirectory(
     Options options)
 {
     _validate(options);
-    
+
 #ifdef QT_DEBUG
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getExistingDirectory(parent, caption, dir, options);
     } else
@@ -50,9 +50,9 @@ QString QGCFileDialog::getOpenFileName(
     Options options)
 {
     _validate(options);
-    
+
 #ifdef QT_DEBUG
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileName(parent, caption, dir, filter, options);
     } else
@@ -71,9 +71,9 @@ QStringList QGCFileDialog::getOpenFileNames(
     Options options)
 {
     _validate(options);
-    
+
 #ifdef QT_DEBUG
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileNames(parent, caption, dir, filter, options);
     } else
@@ -96,7 +96,7 @@ QString QGCFileDialog::getSaveFileName(
     _validate(options);
 
 #ifdef QT_DEBUG
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getSaveFileName(parent, caption, dir, filter, defaultSuffix, options);
     } else
@@ -208,7 +208,7 @@ void QGCFileDialog::_validate(Options& options)
 
     // You can't use QGCFileDialog if QGCApplication is not created yet.
     Q_ASSERT(qgcApp());
-    
+
     Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCFileDialog can only be called from main thread");
     if (MainWindow::instance()) {
     }

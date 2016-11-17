@@ -39,13 +39,6 @@ linux {
             CONFIG += Androidx86Build
             DEFINES += __androidx86__
             message("Android x86 build")
-            contains (CONFIG, YUNEEC_QGC) {
-                message("Yuneec build (manual override from command line)")
-                CONFIG += YuneecBuild
-            } else:exists(user_config.pri):infile(user_config.pri, DEFINES, YUNEEC_QGC) {
-                message("Yuneec build (manual override from user_config.pri)")
-                CONFIG += YuneecBuild
-            }
         } else {
             message("Android Arm build")
         }
@@ -83,9 +76,10 @@ linux {
         error("Unsupported Qt version, 5.5.x or greater is required for iOS")
     }
     message("iOS build")
-    CONFIG += iOSBuild MobileBuild app_bundle
+    CONFIG  += iOSBuild MobileBuild app_bundle NoSerialBuild
     DEFINES += __ios__
     DEFINES += QGC_NO_GOOGLE_MAPS
+    DEFINES += NO_SERIAL_LINK
     QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
     QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie
@@ -93,10 +87,19 @@ linux {
     error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")
 }
 
-YuneecBuild {
-    DEFINES -= QGC_ENABLE_BLUETOOTH
-    DEFINES += QGC_DISABLE_UVC
-    DEFINES += __yuneec__
+# Minimalist Build
+contains (CONFIG, MINIMALIST_QGC) {
+    message("Minimalist build (manual override from command line)")
+    CONFIG += MinimalistBuild
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, MINIMALIST_QGC) {
+    message("Minimalist build (manual override from user_config.pri)")
+    CONFIG += MinimalistBuild
+}
+
+MinimalistBuild {
+    DEFINES += MINIMALIST_BUILD
+    DEFINES += NO_SERIAL_LINK
+    CONFIG  += NoSerialBuild
 }
 
 # Enable ccache where we can

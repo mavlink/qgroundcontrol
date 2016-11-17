@@ -46,7 +46,7 @@ public:
     ///  The link types supported by QGC
     ///  Any changes here MUST be reflected in LinkManager::linkTypeStrings()
     enum LinkType {
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
         TypeSerial,     ///< Serial Link
 #endif
         TypeUdp,        ///< UDP Link
@@ -63,7 +63,7 @@ public:
 #ifdef QT_DEBUG
         TypeMock,       ///< Mock Link for Unitesting
 #endif
-#ifndef __mobile__
+#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
         TypeLogReplay,
 #endif
         TypeLast        // Last type value (type >= TypeLast == invalid)

@@ -18,8 +18,8 @@
 #ifndef _MAINWINDOW_H_
 #define _MAINWINDOW_H_
 
-#ifdef __mobile__
-#error Should not be include in mobile build
+#if defined(__mobile__) || defined(MINIMALIST_BUILD)
+#error Should not be include in mobile or minimalist builds
 #endif
 
 #include <QMainWindow>
@@ -33,9 +33,7 @@
 #include "UASInterface.h"
 #include "LogCompressor.h"
 #include "QGCMAVLinkInspector.h"
-#ifndef __mobile__
 #include "QGCMAVLinkLogPlayer.h"
-#endif
 #include "MAVLinkDecoder.h"
 #include "Vehicle.h"
 #include "QGCDockWidget.h"
@@ -117,12 +115,10 @@ signals:
 #endif //QGC_MOUSE_ENABLED_LINUX
 
 public:
-#ifndef __mobile__
     QGCMAVLinkLogPlayer* getLogPlayer()
     {
         return logPlayer;
     }
-#endif
 
 protected:
     void connectCommonActions();
@@ -133,9 +129,7 @@ protected:
     QSettings settings;
 
     QPointer<MAVLinkDecoder> mavlinkDecoder;
-#ifndef __mobile__
     QGCMAVLinkLogPlayer* logPlayer;
-#endif
 #ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief 3d Mouse support (WIN only) */
     Mouse3DInput* mouseInput;               ///< 3dConnexion 3dMouse SDK
@@ -164,10 +158,7 @@ protected:
 private slots:
     void _closeWindow(void) { close(); }
     void _vehicleAdded(Vehicle* vehicle);
-
-#ifndef __mobile__
     void _showDockWidgetAction(bool show);
-#endif
 
 #ifdef UNITTEST_BUILD
     void _showQmlTestWidget(void);
@@ -179,15 +170,11 @@ private:
 
     void _openUrl(const QString& url, const QString& errorMessage);
 
-#ifndef __mobile__
     QMap<QString, QGCDockWidget*>   _mapName2DockWidget;
     QMap<QString, QAction*>         _mapName2Action;
-#endif
 
     void _storeCurrentViewState(void);
     void _loadCurrentViewState(void);
-
-#ifndef __mobile__
     bool _createInnerDockWidget(const QString& widgetName);
     void _buildCommonWidgets(void);
     void _hideAllDockWidgets(void);
