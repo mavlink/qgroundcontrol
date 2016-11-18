@@ -78,9 +78,130 @@ bool
 M4Controller::_start()
 {
     qDebug() << "Enable M4";
-    //-- Enable M4
-    m4Command enterRun(Yuneec::CMD_ENTER_RUN);
-    QByteArray cmd = enterRun.pack();
+    //-- Enable M4: This is temporary. We will eventualy need to go through the
+    //   whole initialization now done by the default Yuneec app.
+    return _enterRun();
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * This command is used for entering the progress of binding aircraft.
+ * This command is the first step of the progress of binging aircraft.
+ * The next command you will send may be {@link _startBind}.
+ */
+bool
+M4Controller::_enterRun()
+{
+    m4Command enterRunCmd(Yuneec::CMD_ENTER_RUN);
+    QByteArray cmd = enterRunCmd.pack();
+    return _commPort->write(cmd);
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * This command is used for stopping control aircraft.
+ */
+bool
+M4Controller::_exitRun()
+{
+    m4Command exitRunCmd(Yuneec::CMD_EXIT_RUN);
+    QByteArray cmd = exitRunCmd.pack();
+    return _commPort->write(cmd);
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * This command is used for entering the progress of binding aircraft.
+ * This command is the first step of the progress of binging aircraft.
+ * The next command you will send may be {@link _startBind}.
+ */
+bool
+M4Controller::_enterBind()
+{
+    m4Command enterBindCmd(Yuneec::CMD_ENTER_BIND);
+    QByteArray cmd = enterBindCmd.pack();
+    return _commPort->write(cmd);
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * This command is used for exiting the progress of binding.
+ */
+bool
+M4Controller::_exitBind()
+{
+    m4Command exitBindCmd(Yuneec::CMD_EXIT_BIND);
+    QByteArray cmd = exitBindCmd.pack();
+    return _commPort->write(cmd);
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * After {@link _enterBind} response rightly, send this command to get a list of aircraft which can be bind.
+ * The next command you will send may be {@link _bind}.
+ */
+bool
+M4Controller::_startBind()
+{
+    m4Command startBindCmd(Yuneec::CMD_START_BIND);
+    QByteArray bindPayload;
+    bindPayload.resize(8);
+    bindPayload[3] = Yuneec::CMD_START_BIND;
+    bindPayload[6] = 0x05;  // 跳频间隔时间1 (Frequency hopping interval 1)
+    bindPayload[7] = 0x0F;  // 跳频间隔时间2 (Frequency hopping interval 2)
+    startBindCmd.data.append(bindPayload);
+    QByteArray cmd = startBindCmd.pack();
+    return _commPort->write(cmd);
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * Use this command to bind specified aircraft.
+ * After {@link _startBind} response rightly, you get a list of aircraft which can be bound.
+ * Then you send this command and {@link _queryBindState} repeatedly several times until get a right
+ * response from {@link _queryBindState}. If not bind successful after sending commands several times,
+ * the progress of bind exits.
+ */
+bool
+M4Controller::_bind(int rxAddr)
+{
+    m4Command bindCmd(Yuneec::CMD_BIND);
+    QByteArray bindPayload;
+    bindPayload.resize(8);
+    bindPayload[3] = Yuneec::CMD_START_BIND;
+    bindPayload[4] = (uint8_t)(rxAddr & 0xff);
+    bindPayload[5] = (uint8_t)((rxAddr & 0xff00) >> 8);
+    bindPayload[6] = 5; //-- Gotta love magic numbers
+    bindPayload[7] = 15;
+    bindCmd.data.append(bindPayload);
+    QByteArray cmd = bindCmd.pack();
+    return _commPort->write(cmd);
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * This command is used for disconnecting the bound aircraft.
+ * Suggest to use this command before using {@link _bind} first time.
+ */
+bool
+M4Controller::_unbind()
+{
+    m4Command unbindCmd(Yuneec::CMD_UNBIND);
+    QByteArray cmd = unbindCmd.pack();
+    return _commPort->write(cmd);
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * This command is used for querying the state of whether bind was succeed.
+ * This command always be sent follow {@link _bind} with a transient time.
+ * The next command you will send may be {@link _setChannelSetting}.
+ */
+bool
+M4Controller::_queryBindState()
+{
+    m4Command queryBindStateCmd(Yuneec::CMD_QUERY_BIND_STATE);
+    QByteArray cmd = queryBindStateCmd.pack();
     return _commPort->write(cmd);
 }
 

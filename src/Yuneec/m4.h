@@ -99,7 +99,15 @@ public:
 private slots:
     void    _bytesReady (QByteArray data);
 private:
-    bool    _start();
+    bool    _start                  ();
+    bool    _enterRun               ();
+    bool    _exitRun                ();
+    bool    _startBind              ();
+    bool    _enterBind              ();
+    bool    _exitBind               ();
+    bool    _bind                   (int rxAddr);
+    bool    _unbind                 ();
+    bool    _queryBindState         ();
     bool    _handleNonTypePacket    (m4Packet& packet);
     void    _handleRxBindInfo       (m4Packet& packet);
     void    _handleChannel          (m4Packet& packet);
