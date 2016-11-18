@@ -45,6 +45,10 @@ class QGCSingleton;
 class MainWindow;
 class QGCToolbox;
 
+#if defined(MINIMALIST_BUILD)
+class M4Controller;
+#endif
+
 /**
  * @brief The main application and management class.
  *
@@ -206,6 +210,9 @@ private:
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
+#if defined(MINIMALIST_BUILD)
+    M4Controller*  _m4Controller;
+#endif
 };
 
 /// @brief Returns the QGCApplication object singleton.

@@ -5,132 +5,19 @@
  *
  */
 
+/*-----------------------------------------------------------------------------
+ *   Original source: DroneFly/droneservice/src/main/java/com/yuneec/droneservice/parse/St16Controller.java
+ */
+
 #if defined(MINIMALIST_BUILD)
 
 #include "m4.h"
-
+#include "SerialComm.h"
 #include <QDebug>
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <time.h>
+static const char* kUartName = "/dev/ttyMFD0";
 
-#define  UART_PATH  "/dev/ttyMFD0"
-
-static bool
-UART_Set(int fd, int speed, int flow_ctrl, int databits, int stopbits, int parity)
-{
-    int i;
-    int speed_arr[] = { B230400, B115200, B38400, B19200, B9600, B4800, B2400,
-                        B1200, B300
-                      };
-    int name_arr[] =
-    { 230400, 115200, 38400, 19200, 9600, 4800, 2400, 1200, 300 };
-    struct termios options;
-    /*tcgetattr(fd,&options)得到与fd指向对象的相关参数，并将其保存于options,该函数还可以测试配置是否正确，
-     该串口是否可用等。若调用成功，函数返回值为0，若调用失败，函数返回值为1*/
-    if(tcgetattr(fd, &options) != 0) {
-        return false;
-    }
-    //设置串口输入波特率和输出波特率
-    for(i = 0; i < (int)(sizeof(speed_arr) / sizeof(int)); i++) {
-        if(speed == name_arr[i]) {
-            cfsetispeed(&options, speed_arr[i]);
-            cfsetospeed(&options, speed_arr[i]);
-        }
-    }
-    //修改控制模式，保证程序不会占用串口
-    options.c_cflag |= CLOCAL;
-    //修改控制模式，使得能够从串口中读取输入数据
-    options.c_cflag |= CREAD;
-    //设置数据流控制
-    switch(flow_ctrl) {
-        case 0: //不使用流控制
-            options.c_cflag &= ~CRTSCTS;
-            break;
-        case 1: //使用硬件流控制
-            options.c_cflag |= CRTSCTS;
-            break;
-        case 2: //使用软件流控制
-            options.c_cflag |= IXON | IXOFF | IXANY;
-            break;
-    }
-    //设置数据位
-    //屏蔽其他标志位
-    options.c_cflag &= ~CSIZE;
-    switch(databits) {
-        case 5:
-            options.c_cflag |= CS5;
-            break;
-        case 6:
-            options.c_cflag |= CS6;
-            break;
-        case 7:
-            options.c_cflag |= CS7;
-            break;
-        case 8:
-            options.c_cflag |= CS8;
-            break;
-        default:
-            return false;
-    }
-    //设置校验位
-    switch(parity) {
-        case 'n':
-        case 'N': //无奇偶校验位。
-            options.c_cflag &= ~PARENB;
-            options.c_iflag &= ~INPCK;
-            break;
-        case 'o':
-        case 'O': //设置为奇校验
-            options.c_cflag |= (PARODD | PARENB);
-            options.c_iflag |= INPCK;
-            break;
-        case 'e':
-        case 'E': //设置为偶校验
-            options.c_cflag |= PARENB;
-            options.c_cflag &= ~PARODD;
-            options.c_iflag |= INPCK;
-            break;
-        case 's':
-        case 'S': //设置为空格
-            options.c_cflag &= ~PARENB;
-            options.c_cflag &= ~CSTOPB;
-            break;
-        default:
-            return false;
-    }
-    // 设置停止位
-    switch(stopbits) {
-        case 1:
-            options.c_cflag &= ~CSTOPB;
-            break;
-        case 2:
-            options.c_cflag |= CSTOPB;
-            break;
-        default:
-            return false;
-    }
-    //修改输出模式，原始数据输出
-    options.c_oflag &= ~OPOST;
-    options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); //我加的
-    //options.c_lflag &= ~(ISIG | ICANON);
-    options.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-    //设置等待时间和最小接收字符
-    options.c_cc[VTIME] = 1; /* 读取一个字符等待1*(1/10)s */
-    options.c_cc[VMIN] = 0; /* 读取字符的最少个数为1 */
-    //如果发生数据溢出，接收数据，但是不再读取 刷新收到的数据但是不读
-    tcflush(fd, TCIFLUSH);
-    //激活配置 (将修改后的termios数据设置到串口中）
-    if(tcsetattr(fd, TCSANOW, &options) != 0) {
-        return false;
-    }
-    return true;
-}
-
+//-----------------------------------------------------------------------------
 static const unsigned char CRC8T[] = {
     0, 7, 14, 9, 28, 27, 18, 21, 56, 63, 54, 49, 36, 35, 42, 45, 112, 119, 126, 121, 108, 107,
     98, 101, 72, 79, 70, 65, 84, 83, 90, 93, 224, 231, 238, 233, 252, 251, 242, 245, 216, 223, 214, 209, 196,
@@ -146,54 +33,233 @@ static const unsigned char CRC8T[] = {
     250, 253, 244, 243
 };
 
+//-----------------------------------------------------------------------------
 /** x^8 + x^2 + x + 1 */
-static unsigned char
-crc8(unsigned char* buffer, int len)
+uint8_t
+M4Controller::crc8(uint8_t* buffer, int len)
 {
-    unsigned char ret = 0;
+    uint8_t ret = 0;
     for(int i = 0; i < len; ++i) {
         ret = CRC8T[ret ^ buffer[i]];
     }
     return ret;
 }
 
-static void
-enter_run(int uart_fd)
+//-----------------------------------------------------------------------------
+M4Controller::M4Controller(QObject* parent)
+    : QObject(parent)
 {
-    qDebug() << "Start enter_run";
-    //send enter run command
-    unsigned char buf[128];
-    memset(buf, 0, sizeof(buf));
-    buf[0] = 0x55; //sync bytes
-    buf[1] = 0x55;
-    int payload_len = 10;
-    buf[2] = payload_len + 1;
-    buf[5] = 0x03 << 2;
-    buf[12] = 0x68; //enter run command
-    buf[payload_len + 3] = crc8(buf + 3, payload_len);
-    if(write(uart_fd, buf, payload_len + 4) != payload_len + 4) {
-        qWarning() << "write failed";
-    }
-    qDebug() << "end enter_run";
+    _commPort = new M4SerialComm(this);
 }
 
-namespace Yuneec {
-bool
-initM4()
+//-----------------------------------------------------------------------------
+M4Controller::~M4Controller()
 {
-    int uart_fd = open(UART_PATH, O_RDWR | O_NOCTTY);
-    if(uart_fd == -1) {
-        qWarning() << "open serial ttyMFD1 failed";
-        return false;
+    if(_commPort) {
+        delete _commPort;
     }
-    if(UART_Set(uart_fd, 230400, 0, 8, 1, 'N') == false) {
-        qWarning() << "uart config failed";
-        return false;
-    }
-    enter_run(uart_fd); //enable RC
-    close(uart_fd);
-    return true;
 }
+
+//-----------------------------------------------------------------------------
+bool
+M4Controller::init()
+{
+    qDebug() << "Init M4 Handler";
+    if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
+        qWarning() << "Could not start serial communication with M4";
+        return false;
+    }
+    connect(_commPort, &M4SerialComm::bytesReady, this, &M4Controller::_bytesReady);
+    return _start();
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4Controller::_start()
+{
+    qDebug() << "Enable M4";
+    //-- Enable M4
+    unsigned char buf[128];
+    memset(buf, 0, sizeof(buf));
+    buf[0]  = 0x55; //-- Sync bytes
+    buf[1]  = 0x55;
+    int payload_len = 10;
+    buf[2]  = payload_len + 1;
+    buf[5]  = 0x03 << 2;
+    buf[12] = 0x68; //-- Enter run command
+    buf[payload_len + 3] = crc8(buf + 3, payload_len);
+    return _commPort->write(buf, payload_len + 4);
+}
+
+//-----------------------------------------------------------------------------
+void
+M4Controller::_bytesReady(QByteArray data)
+{
+    m4Packet packet(data);
+    int type = packet.type();
+    qDebug() << "M4 Packet:" << type << ((type & 0x1c) >> 2);
+    //-- Some Chinese voodoo
+    type = (type & 0x1c) >> 2;
+    if (_handleNonTypePacket(packet)) {
+        return;
+    }
+    switch (type) {
+        case Yuneec::TYPE_BIND:
+            qDebug() << "M4 Packet: TYPE_BIND" << (uint8_t)data[3];
+            switch ((uint8_t)data[3]) {
+                case 2:
+                    _handleRxBindInfo(packet);
+                    break;
+                case 4:
+                    break;
+                case 12:
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case Yuneec::TYPE_CHN:
+            _handleChannel(packet);
+            break;
+        case Yuneec::TYPE_CMD:
+            _handleCommand(packet);
+            break;
+        case Yuneec::TYPE_RSP:
+            qDebug() << "M4 Packet: TYPE_RSP" << packet.commandID();
+            switch (packet.commandID()) {
+                case Yuneec::CMD_QUERY_BIND_STATE:
+                    BindState state;
+                    state.state = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
+                    qDebug() << "M4 Packet: CMD_QUERY_BIND_STATE" << state.state;
+                    /*
+                    ControllerStateManager manager = ControllerStateManager.getInstance();
+                    if (manager != null) {
+                        manager.onRecvBindState(state);
+                    }
+                    */
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case Yuneec::TYPE_MISSION:
+            qDebug() << "M4 Packet: TYPE_MISSION";
+            break;
+        default:
+            qDebug() << "M4 Packet: Unknown Packet" << type;
+            break;
+    }
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4Controller::_handleNonTypePacket(m4Packet& packet) {
+    int commandId = packet.commandID();
+    switch (commandId) {
+        case Yuneec::COMMAND_M4_SEND_GPS_DATA_TO_PA:
+            qDebug() << "M4 Packet: COMMAND_M4_SEND_GPS_DATA_TO_PA";
+            /*
+            if (droneFeedbackListener != null) {
+                handControllerFeedback(commandData);
+            }
+            */
+            return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+void
+M4Controller::_handleRxBindInfo(m4Packet& packet) {
+    RxBindInfo rxBindInfoFeedback;
+    rxBindInfoFeedback.mode     = ((uint8_t)packet.data[6]  & 0xff) | ((uint8_t)packet.data[7]  << 8 & 0xff00);
+    rxBindInfoFeedback.panId    = ((uint8_t)packet.data[8]  & 0xff) | ((uint8_t)packet.data[9]  << 8 & 0xff00);
+    rxBindInfoFeedback.nodeId   = ((uint8_t)packet.data[10] & 0xff) | ((uint8_t)packet.data[11] << 8 & 0xff00);
+    rxBindInfoFeedback.aNum     = (uint8_t)packet.data[20];
+    rxBindInfoFeedback.aBit     = (uint8_t)packet.data[21];
+    rxBindInfoFeedback.swNum    = (uint8_t)packet.data[24];
+    rxBindInfoFeedback.swBit    = (uint8_t)packet.data[25];
+    int p = packet.data.length() - 2;
+    rxBindInfoFeedback.txAddr = ((uint8_t)packet.data[p] & 0xff) | ((uint8_t)packet.data[p + 1] << 8 & 0xff00);
+    qDebug() << "M4 Packet: RxBindInfo:" << rxBindInfoFeedback.getName();
+    /*
+    ControllerStateManager manager = ControllerStateManager.getInstance();
+    if (manager != null) {
+        manager.onRecvBindInfo(rxBindInfoFeedback);
+    }
+    */
+}
+
+//-----------------------------------------------------------------------------
+void
+M4Controller::_handleChannel(m4Packet& packet) {
+    Q_UNUSED(packet);
+    switch (packet.commandID()) {
+        case Yuneec::CMD_RX_FEEDBACK_DATA:
+            qDebug() << "M4 Packet: CMD_RX_FEEDBACK_DATA";
+            /*
+            if (droneFeedbackListener == null) {
+                return;
+            }
+            handleDroneFeedback(packet);
+            */
+            break;
+        case Yuneec::CMD_TX_CHANNEL_DATA_MIXED:
+            qDebug() << "M4 Packet: CMD_TX_CHANNEL_DATA_MIXED";
+            /*
+            if (controllerFeedbackListener == null) {
+                return;
+            }
+            handleMixedChannelData(packet);
+            */
+            break;
+    }
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4Controller::_handleCommand(m4Packet& packet) {
+    Q_UNUSED(packet);
+    switch (packet.commandID()) {
+        case Yuneec::CMD_TX_STATE_MACHINE:
+            qDebug() << "M4 Packet: CMD_TX_STATE_MACHINE";
+            /*
+            if (controllerFeedbackListener != null) {
+                QByteArray commandValues = packet.commandValues();
+                int status = commandValues[0] & 0x1f;
+                ControllerStateManager manager = ControllerStateManager.getInstance();
+                if (manager != null) {
+                    manager.onRecvTxState(status);
+                }
+                controllerFeedbackListener.onHardwareStatesChange(status);
+                return true;
+            }
+            */
+            break;
+        case Yuneec::CMD_TX_SWITCH_CHANGED:
+            qDebug() << "M4 Packet: CMD_TX_SWITCH_CHANGED";
+            /*
+            if (controllerFeedbackListener != null) {
+                switchChanged(packet);
+                return true;
+            }
+            */
+            break;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+void
+M4Controller::_switchChanged(m4Packet& packet) {
+    Q_UNUSED(packet);
+    QByteArray commandValues = packet.commandValues();
+    SwitchChanged switchChanged;
+    switchChanged.hwId      = commandValues[0];
+    switchChanged.oldState  = commandValues[1];
+    switchChanged.newState  = commandValues[2];
+    //controllerFeedbackListener.onSwitchChanged(switchChanged);
+    qDebug() << "M4 Packet: SwitchChanged" << switchChanged.hwId << switchChanged.oldState << switchChanged.newState;
 }
 
 #endif
