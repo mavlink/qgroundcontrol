@@ -349,8 +349,17 @@ Map {
                     // Add first coordinate
                     polygonPath.push(clickCoordinate)
                 } else {
-                    // Update finalized coordinate
-                    polygonPath[polygonDrawerPolygon.path.length - 1] = clickCoordinate
+                    // Add subsequent coordinate
+                    if (ScreenTools.isMobile) {
+                        // Since mobile has no mouse, the onPositionChangedHandler will not fire. We have to add the coordinate
+                        // here instead.
+                        polygonDrawer.justClicked = false
+                        polygonPath.push(clickCoordinate)
+                    } else {
+                        // The onPositionChanged handler for mouse movement will have already added the coordinate to the array.
+                        // Just update it to the final position
+                        polygonPath[polygonDrawerPolygon.path.length - 1] = clickCoordinate
+                    }
                 }
                 polygonDrawerPolygonSet.path = polygonPath
                 polygonDrawerPolygon.path = polygonPath
@@ -360,10 +369,15 @@ Map {
         }
 
         onPositionChanged: {
+            if (ScreenTools.isMobile) {
+                // We don't track mouse drag on mobile
+                return
+            }
             if (polygonDrawerPolygon.path.length) {
                 var dragCoordinate = _map.toCoordinate(Qt.point(mouse.x, mouse.y))
                 var polygonPath = polygonDrawerPolygon.path
                 if (polygonDrawer.justClicked){
+                    // Add new drag coordinate
                     polygonPath.push(dragCoordinate)
                     polygonDrawer.justClicked = false
                 }
