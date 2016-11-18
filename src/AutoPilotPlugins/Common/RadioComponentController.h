@@ -149,20 +149,7 @@ private:
         rcCalFunctionPitch,
         rcCalFunctionYaw,
         rcCalFunctionThrottle,
-        rcCalFunctionModeSwitch,
-        rcCalFunctionPosCtlSwitch,
-        rcCalFunctionLoiterSwitch,
-        rcCalFunctionReturnSwitch,
-        rcCalFunctionAcroSwitch,
         rcCalFunctionMax,
-        
-        // Attitude functions are roll/pitch/yaw/throttle
-        rcCalFunctionFirstAttitudeFunction = rcCalFunctionRoll,
-        rcCalFunctionLastAttitudeFunction = rcCalFunctionThrottle,
-        
-        // Non-Attitude functions are everything else
-        rcCalFunctionFirstNonAttitudeFunction = rcCalFunctionModeSwitch,
-        rcCalFunctionLastNonAttitudeFunction = rcCalFunctionAcroSwitch,
     };
     
     /// @brief The states of the calibration state machine.
