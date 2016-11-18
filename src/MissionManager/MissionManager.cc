@@ -23,7 +23,7 @@ MissionManager::MissionManager(Vehicle* vehicle)
     : _vehicle(vehicle)
     , _dedicatedLink(NULL)
     , _ackTimeoutTimer(NULL)
-    , _retryAck(AckNone)
+    , _expectedAck(AckNone)
     , _readTransactionInProgress(false)
     , _writeTransactionInProgress(false)
     , _currentMissionItem(-1)
@@ -81,7 +81,17 @@ void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
     for (int i=0; i<_missionItems.count(); i++) {
         _itemIndicesToWrite << i;
     }
+
     _writeTransactionInProgress = true;
+    _retryCount = 0;
+    emit inProgressChanged(true);
+    _writeMissionCount();
+}
+
+/// This begins the write sequence with the vehicle. This may be called during a retry.
+void MissionManager::_writeMissionCount(void)
+{
+    qCDebug(MissionManagerLog) << "_writeMissionCount retry count" << _retryCount;
 
     mavlink_message_t       message;
     mavlink_mission_count_t missionCount;
@@ -99,7 +109,6 @@ void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
     _startAckTimeout(AckMissionRequest);
-    emit inProgressChanged(true);
 }
 
 void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly)
@@ -153,75 +162,128 @@ void MissionManager::requestMissionItems(void)
         qCDebug(MissionManagerLog) << "requestMissionItems called while transaction in progress";
         return;
     }
-    
+
+    _retryCount = 0;
+    emit inProgressChanged(true);
+    _requestList();
+}
+
+/// Internal call to request list of mission items. May be called during a retry sequence.
+void MissionManager::_requestList(void)
+{
+    qCDebug(MissionManagerLog) << "_requestList retry count" << _retryCount;
+
     mavlink_message_t               message;
     mavlink_mission_request_list_t  request;
-    
-    _requestItemRetryCount = 0;
+
     _itemIndicesToRead.clear();
     _readTransactionInProgress = true;
     _clearMissionItems();
-    
+
     request.target_system = _vehicle->id();
     request.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    
+
     _dedicatedLink = _vehicle->priorityLink();
     mavlink_msg_mission_request_list_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                  qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                                  _dedicatedLink->mavlinkChannel(),
                                                  &message,
                                                  &request);
-    
+
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
     _startAckTimeout(AckMissionCount);
-    emit inProgressChanged(true);
 }
 
 void MissionManager::_ackTimeout(void)
 {
-    AckType_t timedOutAck = _retryAck;
-    
-    _retryAck = AckNone;
-    
-    if (timedOutAck == AckNone) {
-        qCWarning(MissionManagerLog) << "_ackTimeout timeout with AckNone";
-        _sendError(InternalError, "Internal error occurred during Mission Item communication: _ackTimeOut:_retryAck == AckNone");
+    if (_expectedAck == AckNone) {
         return;
     }
-    
-    _sendError(AckTimeoutError, QString("Vehicle did not respond to mission item communication: %1").arg(_ackTypeToString(timedOutAck)));
-    _finishTransaction(false);
+
+    switch (_expectedAck) {
+    case AckNone:
+        qCWarning(MissionManagerLog) << "_ackTimeout timeout with AckNone";
+        _sendError(InternalError, "Internal error occurred during Mission Item communication: _ackTimeOut:_expectedAck == AckNone");
+        break;
+    case AckMissionCount:
+        // MISSION_COUNT message expected
+        if (_retryCount > _maxRetryCount) {
+            _sendError(VehicleError, QStringLiteral("Mission request list failed, maximum retries exceeded."));
+            _finishTransaction(false);
+        } else {
+            _retryCount++;
+            qCDebug(MissionManagerLog) << "Retrying REQUEST_LIST retry Count" << _retryCount;
+            _requestList();
+        }
+        break;
+    case AckMissionItem:
+        // MISSION_ITEM expected
+        if (_retryCount > _maxRetryCount) {
+            _sendError(VehicleError, QStringLiteral("Mission read failed, maximum retries exceeded."));
+            _finishTransaction(false);
+        } else {
+            _retryCount++;
+            qCDebug(MissionManagerLog) << "Retrying MISSION_REQUEST retry Count" << _retryCount;
+            _requestNextMissionItem();
+        }
+        break;
+    case AckMissionRequest:
+        // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
+        if (_itemIndicesToWrite.count() == 0) {
+            // Vehicle did not send final MISSION_ACK at end of sequence
+            _sendError(VehicleError, QStringLiteral("Mission write failed, vehicle failed to send final ack."));
+            _finishTransaction(false);
+        } else if (_itemIndicesToWrite[0] == 0) {
+            // Vehicle did not respond to MISSION_COUNT, try again
+            if (_retryCount > _maxRetryCount) {
+                _sendError(VehicleError, QStringLiteral("Mission write mission count failed, maximum retries exceeded."));
+                _finishTransaction(false);
+            } else {
+                _retryCount++;
+                qCDebug(MissionManagerLog) << "Retrying MISSION_COUNT retry Count" << _retryCount;
+                _writeMissionCount();
+            }
+        } else {
+            // Vehicle did not request all items from ground station
+            _sendError(AckTimeoutError, QString("Vehicle did not request all items from ground station: %1").arg(_ackTypeToString(_expectedAck)));
+            _expectedAck = AckNone;
+            _finishTransaction(false);
+        }
+        break;
+    case AckGuidedItem:
+        // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
+    default:
+        _sendError(AckTimeoutError, QString("Vehicle did not respond to mission item communication: %1").arg(_ackTypeToString(_expectedAck)));
+        _expectedAck = AckNone;
+        _finishTransaction(false);
+    }
 }
 
 void MissionManager::_startAckTimeout(AckType_t ack)
 {
-    _retryAck = ack;
+    _expectedAck = ack;
     _ackTimeoutTimer->start();
 }
 
-bool MissionManager::_stopAckTimeout(AckType_t expectedAck)
+/// Checks the received ack against the expected ack. If they match the ack timeout timer will be stopped.
+/// @return true: received ack matches expected ack
+bool MissionManager::_checkForExpectedAck(AckType_t receivedAck)
 {
-    bool        success = false;
-    AckType_t   savedRetryAck = _retryAck;
-    
-    _retryAck = AckNone;
-    
-    _ackTimeoutTimer->stop();
-    
-    if (savedRetryAck != expectedAck) {
-        if (savedRetryAck == AckNone) {
-            // Don't annoy the user with warnings about unexpected mission commands, just ignore them; ArduPilot updates home position using
+    if (receivedAck == _expectedAck) {
+        _expectedAck = AckNone;
+        _ackTimeoutTimer->stop();
+        return true;
+    } else {
+        if (_expectedAck == AckNone) {
+            // Don't worry about unexpected mission commands, just ignore them; ArduPilot updates home position using
             // spurious MISSION_ITEMs.
         } else {
-            _sendError(ProtocolOrderError, QString("Vehicle responded incorrectly to mission item protocol sequence: %1:%2").arg(_ackTypeToString(savedRetryAck)).arg(_ackTypeToString(expectedAck)));
-            _finishTransaction(false);
+            // We just warn in this case, this could be crap left over from a previous transaction or the vehicle going bonkers.
+            // Whatever it is we let the ack timeout handle any error output to the user.
+            qCDebug(MissionManagerLog) << QString("Out of sequence ack expected:received %1:%2").arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck));
         }
-        success = false;
-    } else {
-        success = true;
+        return false;
     }
-    
-    return success;
 }
 
 void MissionManager::_readTransactionComplete(void)
@@ -251,9 +313,11 @@ void MissionManager::_handleMissionCount(const mavlink_message_t& message)
 {
     mavlink_mission_count_t missionCount;
     
-    if (!_stopAckTimeout(AckMissionCount)) {
+    if (!_checkForExpectedAck(AckMissionCount)) {
         return;
     }
+
+    _retryCount = 0;
     
     mavlink_msg_mission_count_decode(&message, &missionCount);
     qCDebug(MissionManagerLog) << "_handleMissionCount count:" << missionCount.count;
@@ -271,13 +335,13 @@ void MissionManager::_handleMissionCount(const mavlink_message_t& message)
 
 void MissionManager::_requestNextMissionItem(void)
 {
-    qCDebug(MissionManagerLog) << "_requestNextMissionItem sequenceNumber:" << _itemIndicesToRead[0];
-
     if (_itemIndicesToRead.count() == 0) {
         _sendError(InternalError, "Internal Error: Call to Vehicle _requestNextMissionItem with no more indices to read");
         return;
     }
-    
+
+    qCDebug(MissionManagerLog) << "_requestNextMissionItem sequenceNumber:retry" << _itemIndicesToRead[0] << _retryCount;
+
     mavlink_message_t           message;
     mavlink_mission_request_t   missionRequest;
     
@@ -299,7 +363,7 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
 {
     mavlink_mission_item_t missionItem;
     
-    if (!_stopAckTimeout(AckMissionItem)) {
+    if (!_checkForExpectedAck(AckMissionItem)) {
         return;
     }
     
@@ -308,7 +372,6 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
     qCDebug(MissionManagerLog) << "_handleMissionItem sequenceNumber:" << missionItem.seq;
     
     if (_itemIndicesToRead.contains(missionItem.seq)) {
-        _requestItemRetryCount = 0;
         _itemIndicesToRead.removeOne(missionItem.seq);
 
         MissionItem* item = new MissionItem(missionItem.seq,
@@ -333,13 +396,12 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
         _missionItems.append(item);
     } else {
         qCDebug(MissionManagerLog) << "_handleMissionItem mission item received item index which was not requested, disregrarding:" << missionItem.seq;
-        if (++_requestItemRetryCount > _maxRetryCount) {
-            _sendError(RequestRangeError, QString("Vehicle would not send item %1 after max retries. Read from Vehicle failed.").arg(_itemIndicesToRead[0]));
-            _finishTransaction(false);
-            return;
-        }
+        // We have to put the ack timeout back since it was removed above
+        _startAckTimeout(AckMissionItem);
+        return;
     }
     
+    _retryCount = 0;
     if (_itemIndicesToRead.count() == 0) {
         _readTransactionComplete();
     } else {
@@ -357,7 +419,7 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message)
 {
     mavlink_mission_request_t missionRequest;
     
-    if (!_stopAckTimeout(AckMissionRequest)) {
+    if (!_checkForExpectedAck(AckMissionRequest)) {
         return;
     }
     
@@ -411,14 +473,14 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
 {
     mavlink_mission_ack_t missionAck;
     
-    // Save the retry ack before calling _stopAckTimeout since we'll need it to determine what
+    // Save the retry ack before calling _checkForExpectedAck since we'll need it to determine what
     // type of a protocol sequence we are in.
-    AckType_t savedRetryAck = _retryAck;
+    AckType_t savedExpectedAck = _expectedAck;
     
     // We can get a MISSION_ACK with an error at any time, so if the Acks don't match it is not
-    // a protocol sequence error. Call _stopAckTimeout with _retryAck so it will succeed no
+    // a protocol sequence error. Call _checkForExpectedAck with _retryAck so it will succeed no
     // matter what.
-    if (!_stopAckTimeout(_retryAck)) {
+    if (!_checkForExpectedAck(_expectedAck)) {
         return;
     }
     
@@ -426,7 +488,7 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
     
     qCDebug(MissionManagerLog) << "_handleMissionAck type:" << _missionResultToString((MAV_MISSION_RESULT)missionAck.type);
 
-    switch (savedRetryAck) {
+    switch (savedExpectedAck) {
         case AckNone:
             // State machine is idle. Vehicle is confused.
             _sendError(VehicleError, QString("Vehicle sent unexpected MISSION_ACK message, error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
@@ -438,7 +500,7 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
             break;
         case AckMissionItem:
             // MISSION_ITEM expected
-            _sendError(VehicleError, QString("Vehicle returned error: %1. Partial list of mission items may have been returned.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+            _sendError(VehicleError, QString("Vehicle returned error: %1.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
             _finishTransaction(false);
             break;
         case AckMissionRequest:
@@ -459,7 +521,7 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
         case AckGuidedItem:
             // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
             if (missionAck.type == MAV_MISSION_ACCEPTED) {
-                qCDebug(MissionManagerLog) << "_handleMissionAck guide mode item accepted";
+                qCDebug(MissionManagerLog) << "_handleMissionAck guided mode item accepted";
                 _finishTransaction(true);
             } else {
                 _sendError(VehicleError, QString("Vehicle returned error: %1. Vehicle did not accept guided item.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
@@ -587,12 +649,14 @@ void MissionManager::_finishTransaction(bool success)
         emit newMissionItemsAvailable();
     }
 
-    _readTransactionInProgress = false;
-    _writeTransactionInProgress = false;
     _itemIndicesToRead.clear();
     _itemIndicesToWrite.clear();
 
-    emit inProgressChanged(false);
+    if (_readTransactionInProgress || _writeTransactionInProgress) {
+        _readTransactionInProgress = false;
+        _writeTransactionInProgress = false;
+        emit inProgressChanged(false);
+    }
 }
 
 bool MissionManager::inProgress(void)
