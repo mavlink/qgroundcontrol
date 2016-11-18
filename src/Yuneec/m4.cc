@@ -79,16 +79,9 @@ M4Controller::_start()
 {
     qDebug() << "Enable M4";
     //-- Enable M4
-    unsigned char buf[128];
-    memset(buf, 0, sizeof(buf));
-    buf[0]  = 0x55; //-- Sync bytes
-    buf[1]  = 0x55;
-    int payload_len = 10;
-    buf[2]  = payload_len + 1;
-    buf[5]  = 0x03 << 2;
-    buf[12] = 0x68; //-- Enter run command
-    buf[payload_len + 3] = crc8(buf + 3, payload_len);
-    return _commPort->write(buf, payload_len + 4);
+    m4Command enterRun(Yuneec::CMD_ENTER_RUN);
+    QByteArray cmd = enterRun.pack();
+    return _commPort->write(cmd);
 }
 
 //-----------------------------------------------------------------------------

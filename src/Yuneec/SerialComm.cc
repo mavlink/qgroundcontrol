@@ -121,18 +121,21 @@ M4SerialComm::run()
 void
 M4SerialComm::_readPacket(uint8_t length)
 {
-    uint8_t buffer[260];
-    buffer[0] = 0x55;
-    buffer[1] = 0x55;
-    buffer[2] = length;
-    //-- CRC is appended to end of data block
-    if(::read(_fd, &buffer[3], length + 1) == length + 1) {
-        uint8_t crc = M4Controller::crc8(&buffer[3], length);
-        if(crc == buffer[length]) {
-            QByteArray data((const char*)buffer, 3 + length); //-- 3 bytes in header plus data
-            emit bytesReady(data);
-        } else {
-            qDebug() << "Bad CRC" << length << buffer[3] << buffer[4] << buffer[5] << buffer[6];
+    if(length > 1) {
+        length--; //-- Skip CRC from count
+        uint8_t buffer[260];
+        if(::read(_fd, buffer, length) == length) {
+            //-- CRC is appended to end of data block
+            uint8_t iCRC;
+            if(::read(_fd, &iCRC, 1) == 1) {
+                uint8_t oCRC = M4Controller::crc8(buffer, length);
+                if(iCRC == oCRC) {
+                    QByteArray data((const char*)buffer, length);
+                    emit bytesReady(data);
+                } else {
+                    qDebug() << "Bad CRC" << length << iCRC << oCRC;
+                }
+            }
         }
     }
 }
