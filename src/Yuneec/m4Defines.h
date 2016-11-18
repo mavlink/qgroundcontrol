@@ -1,6 +1,6 @@
 /*!
  * @file
- * @brief Stop gap code to handle M4 initialization
+ * @brief ST16 Enums ported from original Java code
  * @author Gus Grubba <mavlink@grubba.com>
  *
  */
