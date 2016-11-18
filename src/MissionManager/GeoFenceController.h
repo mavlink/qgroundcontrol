@@ -30,6 +30,7 @@ public:
     ~GeoFenceController();
     
     Q_PROPERTY(bool                 fenceSupported          READ fenceSupported                                     NOTIFY fenceSupportedChanged)
+    Q_PROPERTY(bool                 fenceEnabled            READ fenceEnabled                                       NOTIFY fenceEnabledChanged)
     Q_PROPERTY(bool                 circleSupported         READ circleSupported                                    NOTIFY circleSupportedChanged)
     Q_PROPERTY(bool                 polygonSupported        READ polygonSupported                                   NOTIFY polygonSupportedChanged)
     Q_PROPERTY(bool                 breachReturnSupported   READ breachReturnSupported                              NOTIFY breachReturnSupportedChanged)
@@ -55,6 +56,7 @@ public:
     QString fileExtension(void) const final;
 
     bool                fenceSupported          (void) const;
+    bool                fenceEnabled            (void) const;
     bool                circleSupported         (void) const;
     bool                polygonSupported        (void) const;
     bool                breachReturnSupported   (void) const;
@@ -69,6 +71,7 @@ public:
 
 signals:
     void fenceSupportedChanged          (bool fenceSupported);
+    void fenceEnabledChanged            (bool fenceEnabled);
     void circleSupportedChanged         (bool circleSupported);
     void polygonSupportedChanged        (bool polygonSupported);
     void breachReturnSupportedChanged   (bool breachReturnSupported);

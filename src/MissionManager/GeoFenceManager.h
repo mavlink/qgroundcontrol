@@ -40,6 +40,7 @@ public:
 
     // Support flags
     virtual bool fenceSupported         (void) const { return false; }
+    virtual bool fenceEnabled           (void) const { return false; }
     virtual bool circleSupported        (void) const { return false; }
     virtual bool polygonSupported       (void) const { return false; }
     virtual bool breachReturnSupported  (void) const { return false; }
@@ -64,6 +65,7 @@ public:
 signals:
     void loadComplete                   (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
     void fenceSupportedChanged          (bool fenceSupported);
+    void fenceEnabledChanged            (bool fenceEnabled);
     void circleSupportedChanged         (bool circleSupported);
     void polygonSupportedChanged        (bool polygonSupported);
     void breachReturnSupportedChanged   (bool fenceSupported);
