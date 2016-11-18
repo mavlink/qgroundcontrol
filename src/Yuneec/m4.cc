@@ -90,16 +90,15 @@ M4Controller::_bytesReady(QByteArray data)
 {
     m4Packet packet(data);
     int type = packet.type();
-    qDebug() << "M4 Packet:" << type << ((type & 0x1c) >> 2);
     //-- Some Chinese voodoo
     type = (type & 0x1c) >> 2;
-    if (_handleNonTypePacket(packet)) {
+    if(_handleNonTypePacket(packet)) {
         return;
     }
-    switch (type) {
+    switch(type) {
         case Yuneec::TYPE_BIND:
             qDebug() << "M4 Packet: TYPE_BIND" << (uint8_t)data[3];
-            switch ((uint8_t)data[3]) {
+            switch((uint8_t)data[3]) {
                 case 2:
                     _handleRxBindInfo(packet);
                     break;
@@ -119,7 +118,7 @@ M4Controller::_bytesReady(QByteArray data)
             break;
         case Yuneec::TYPE_RSP:
             qDebug() << "M4 Packet: TYPE_RSP" << packet.commandID();
-            switch (packet.commandID()) {
+            switch(packet.commandID()) {
                 case Yuneec::CMD_QUERY_BIND_STATE:
                     BindState state;
                     state.state = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
@@ -146,16 +145,12 @@ M4Controller::_bytesReady(QByteArray data)
 
 //-----------------------------------------------------------------------------
 bool
-M4Controller::_handleNonTypePacket(m4Packet& packet) {
+M4Controller::_handleNonTypePacket(m4Packet& packet)
+{
     int commandId = packet.commandID();
-    switch (commandId) {
+    switch(commandId) {
         case Yuneec::COMMAND_M4_SEND_GPS_DATA_TO_PA:
-            qDebug() << "M4 Packet: COMMAND_M4_SEND_GPS_DATA_TO_PA";
-            /*
-            if (droneFeedbackListener != null) {
-                handControllerFeedback(commandData);
-            }
-            */
+            _handControllerFeedback(packet);
             return true;
     }
     return false;
@@ -163,7 +158,8 @@ M4Controller::_handleNonTypePacket(m4Packet& packet) {
 
 //-----------------------------------------------------------------------------
 void
-M4Controller::_handleRxBindInfo(m4Packet& packet) {
+M4Controller::_handleRxBindInfo(m4Packet& packet)
+{
     RxBindInfo rxBindInfoFeedback;
     rxBindInfoFeedback.mode     = ((uint8_t)packet.data[6]  & 0xff) | ((uint8_t)packet.data[7]  << 8 & 0xff00);
     rxBindInfoFeedback.panId    = ((uint8_t)packet.data[8]  & 0xff) | ((uint8_t)packet.data[9]  << 8 & 0xff00);
@@ -185,9 +181,10 @@ M4Controller::_handleRxBindInfo(m4Packet& packet) {
 
 //-----------------------------------------------------------------------------
 void
-M4Controller::_handleChannel(m4Packet& packet) {
+M4Controller::_handleChannel(m4Packet& packet)
+{
     Q_UNUSED(packet);
-    switch (packet.commandID()) {
+    switch(packet.commandID()) {
         case Yuneec::CMD_RX_FEEDBACK_DATA:
             qDebug() << "M4 Packet: CMD_RX_FEEDBACK_DATA";
             /*
@@ -198,53 +195,42 @@ M4Controller::_handleChannel(m4Packet& packet) {
             */
             break;
         case Yuneec::CMD_TX_CHANNEL_DATA_MIXED:
-            qDebug() << "M4 Packet: CMD_TX_CHANNEL_DATA_MIXED";
-            /*
-            if (controllerFeedbackListener == null) {
-                return;
-            }
-            handleMixedChannelData(packet);
-            */
+            _handleMixedChannelData(packet);
             break;
     }
 }
 
 //-----------------------------------------------------------------------------
 bool
-M4Controller::_handleCommand(m4Packet& packet) {
+M4Controller::_handleCommand(m4Packet& packet)
+{
     Q_UNUSED(packet);
-    switch (packet.commandID()) {
+    switch(packet.commandID()) {
         case Yuneec::CMD_TX_STATE_MACHINE:
-            qDebug() << "M4 Packet: CMD_TX_STATE_MACHINE";
-            /*
-            if (controllerFeedbackListener != null) {
+            {
                 QByteArray commandValues = packet.commandValues();
                 int status = commandValues[0] & 0x1f;
+                /*
                 ControllerStateManager manager = ControllerStateManager.getInstance();
                 if (manager != null) {
                     manager.onRecvTxState(status);
                 }
                 controllerFeedbackListener.onHardwareStatesChange(status);
-                return true;
+                */
+                qDebug() << "M4 Packet: CMD_TX_STATE_MACHINE:" << status;
             }
-            */
             break;
         case Yuneec::CMD_TX_SWITCH_CHANGED:
-            qDebug() << "M4 Packet: CMD_TX_SWITCH_CHANGED";
-            /*
-            if (controllerFeedbackListener != null) {
-                switchChanged(packet);
-                return true;
-            }
-            */
-            break;
+            _switchChanged(packet);
+            return true;
     }
     return false;
 }
 
 //-----------------------------------------------------------------------------
 void
-M4Controller::_switchChanged(m4Packet& packet) {
+M4Controller::_switchChanged(m4Packet& packet)
+{
     Q_UNUSED(packet);
     QByteArray commandValues = packet.commandValues();
     SwitchChanged switchChanged;
@@ -252,7 +238,122 @@ M4Controller::_switchChanged(m4Packet& packet) {
     switchChanged.oldState  = commandValues[1];
     switchChanged.newState  = commandValues[2];
     //controllerFeedbackListener.onSwitchChanged(switchChanged);
-    qDebug() << "M4 Packet: SwitchChanged" << switchChanged.hwId << switchChanged.oldState << switchChanged.newState;
+    qDebug() << "M4 Packet: CMD_TX_SWITCH_CHANGED" << switchChanged.hwId << switchChanged.oldState << switchChanged.newState;
+}
+
+//-----------------------------------------------------------------------------
+void
+M4Controller::_handleMixedChannelData(m4Packet& packet)
+{
+    int analogChannelCount = 10;
+    int switchChannelCount = 2;
+    QByteArray values = packet.commandValues();
+    int value, val1, val2, startIndex;
+    QByteArray channels;
+    for(int i = 0; i < analogChannelCount + switchChannelCount; i++) {
+        if(i < analogChannelCount) {
+            startIndex = (int)floor(i * 1.5);
+            val1 = values[startIndex] & 0xff;
+            val2 = values[startIndex + 1] & 0xff;
+            if(i % 2 == 0) {
+                value = val1 << 4 | val2 >> 4;
+            } else {
+                value = (val1 & 0x0f) << 8 | val2;
+            }
+        } else {
+            val1 = values[(int)(ceil((analogChannelCount - 1) * 1.5) + ceil((i - analogChannelCount + 1) * 0.25f))] & 0xff;
+            switch((i - analogChannelCount + 1) % 4) {
+                case 1:
+                    value = val1 >> 6 & 0x03;
+                    break;
+                case 2:
+                    value = val1 >> 4 & 0x03;
+                    break;
+                case 3:
+                    value = val1 >> 2 & 0x03;
+                    break;
+                case 0:
+                    value = val1 >> 0 & 0x03;
+                    break;
+                default:
+                    value = 0;
+                    break;
+            }
+        }
+        channels.append(value);
+    }
+    qDebug() << "M4 Packet: CMD_TX_CHANNEL_DATA_MIXED:" << channels;
+    //controllerFeedbackListener.onReceiveChannelValues(channels);
+}
+
+//-----------------------------------------------------------------------------
+void
+M4Controller::_handControllerFeedback(m4Packet& packet) {
+    QByteArray commandValues = packet.commandValues();
+    ControllerLocation controllerLocation;
+    controllerLocation.latitude     = byteArrayToInt(commandValues, 0) / 1e7;
+    controllerLocation.longitude    = byteArrayToInt(commandValues, 4) / 1e7;
+    controllerLocation.altitude     = byteArrayToFloat(commandValues, 8);
+    controllerLocation.accuracy     = byteArrayToShort(commandValues, 12);
+    controllerLocation.speed        = byteArrayToShort(commandValues, 14);
+    controllerLocation.angle        = byteArrayToShort(commandValues, 16);
+    controllerLocation.satelliteCount = commandValues[18] & 0x1f;
+    //controllerFeedbackListener.onReceiveControllerLocation(controllerLocation);
+    qDebug() << "M4 Packet: COMMAND_M4_SEND_GPS_DATA_TO_PA" << controllerLocation.satelliteCount << controllerLocation.latitude << controllerLocation.longitude << controllerLocation.altitude;
+}
+
+//-----------------------------------------------------------------------------
+int
+M4Controller::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
+{
+    int iRetVal = -1;
+    if (data.size() < offset + 4)
+        return iRetVal;
+    int iLowest;
+    int iLow;
+    int iMid;
+    int iHigh;
+    if (isBigEndian) {
+        iLowest = data[offset + 3];
+        iLow    = data[offset + 2];
+        iMid    = data[offset + 1];
+        iHigh   = data[offset + 0];
+    } else {
+        iLowest = data[offset + 0];
+        iLow    = data[offset + 1];
+        iMid    = data[offset + 2];
+        iHigh   = data[offset + 3];
+    }
+    iRetVal = (iHigh << 24) | ((iMid & 0xFF) << 16) | ((iLow & 0xFF) << 8) | (0xFF & iLowest);
+    return iRetVal;
+}
+
+//-----------------------------------------------------------------------------
+float
+M4Controller::byteArrayToFloat(QByteArray data, int offset)
+{
+    uint32_t val = (uint32_t)byteArrayToInt(data, offset);
+    return *(float*)(void*)&val;
+}
+
+//-----------------------------------------------------------------------------
+short
+M4Controller::byteArrayToShort(QByteArray data, int offset, bool isBigEndian)
+{
+    short iRetVal = -1;
+    if (data.size() < offset + 2)
+        return iRetVal;
+    int iLow;
+    int iHigh;
+    if (isBigEndian) {
+        iLow    = data[offset + 1];
+        iHigh   = data[offset + 0];
+    } else {
+        iLow    = data[offset + 0];
+        iHigh   = data[offset + 1];
+    }
+    iRetVal = (iHigh << 8) | (0xFF & iLow);
+    return iRetVal;
 }
 
 #endif

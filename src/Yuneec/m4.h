@@ -12,6 +12,22 @@
 #include <QObject>
 #include "m4Defines.h"
 
+//-- Comments (Google) translated from Chinese.
+//-- Nowhere I could find access through a struct. It's always numbered index into a byte array.
+//-- Also note that throughout the code, the header is given as 10 bytes long and the payload
+//   starts at index 10. The command starts at index 3 (FCF below). CRC is of payload only and
+//   follows it (single uint8_t byte).
+struct m4CommandHeader {
+    uint16_t   start_str;           // 0x5555
+    uint8_t    size;                // Len bytes, the data length, with len M3 generated
+    uint16_t   FCF;                 // The frame control domain is shown in Table 2
+    uint8_t    Type;                // Frame type, binding is set to a binding frame in Table 4
+    uint16_t   PANID;               // Address? (Google says it's "Website address")
+    uint16_t   NodeIDdest;          // The node address
+    uint16_t   NodeIDsource;        // The node address
+    uint8_t    command;
+};
+
 class M4SerialComm;
 
 //-----------------------------------------------------------------------------
@@ -76,32 +92,23 @@ public:
     M4Controller(QObject* parent = NULL);
     ~M4Controller();
     bool    init();
-    static  uint8_t crc8(uint8_t* buffer, int len);
+    static  uint8_t crc8            (uint8_t* buffer, int len);
+    static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
+    static  float   byteArrayToFloat(QByteArray data, int offset);
+    static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
 private slots:
     void    _bytesReady (QByteArray data);
 private:
     bool    _start();
-    bool    _handleNonTypePacket(m4Packet& packet);
-    void    _handleRxBindInfo   (m4Packet& packet);
-    void    _handleChannel      (m4Packet& packet);
-    bool    _handleCommand      (m4Packet& packet);
-    void    _switchChanged      (m4Packet& packet);
+    bool    _handleNonTypePacket    (m4Packet& packet);
+    void    _handleRxBindInfo       (m4Packet& packet);
+    void    _handleChannel          (m4Packet& packet);
+    bool    _handleCommand          (m4Packet& packet);
+    void    _switchChanged          (m4Packet& packet);
+    void    _handleMixedChannelData (m4Packet& packet);
+    void    _handControllerFeedback (m4Packet& packet);
 private:
     M4SerialComm* _commPort;
-};
-
-//-- Comments (Google) translated from Chinese.
-//-- Nowhere I could find access through a struct. It's always numbered index into a byte array.
-//-- Also note that throughout the code, the header is given as 10 bytes long and the payload starts at index 10.
-struct m4CommandHeader {
-    uint16_t   start_str;           // 0x5555
-    uint8_t    size;                // Len bytes, the data length, with len M3 generated
-    uint16_t   FCF;                 // The frame control domain is shown in Table 2
-    uint8_t    Type;                // Frame type, binding is set to a binding frame in Table 4
-    uint16_t   PANID;               // Website address (Address?)
-    uint16_t   NodeIDdest;          // The node address
-    uint16_t   NodeIDsource;        // The node address
-    uint8_t    command;
 };
 
 //-----------------------------------------------------------------------------
@@ -172,6 +179,52 @@ public:
         BOUND = 1
     };
     int state;
+};
+
+//-----------------------------------------------------------------------------
+class ControllerLocation {
+public:
+    ControllerLocation()
+        : longitude(0.0)
+        , latitude(0.0)
+        , altitude(0.0)
+        , satelliteCount(0)
+        , accuracy(0.0f)
+        , speed(0.0f)
+        , angle(0.0f)
+    {
+    }
+    /**
+     * Longitude of remote-controller
+     */
+    double longitude;
+    /**
+     * Latitude of remote-controller
+     */
+    double latitude;
+    /**
+     * Altitude of remote-controller
+     */
+    double altitude;
+    /**
+     * The number of satellite has searched
+     */
+    int satelliteCount;
+
+    /**
+     * Accuracy of remote-controller
+     */
+    float accuracy;
+
+    /**
+     * Speed of remote-controller
+     */
+    float speed;
+
+    /**
+     * Angle of remote-controller
+     */
+    float angle;
 };
 
 #define m4CommandHeaderLen sizeof(m4CommandHeader)
