@@ -58,29 +58,17 @@ const char* RadioComponentController::_settingsGroup = "RadioCalibration";
 const char* RadioComponentController::_settingsKeyTransmitterMode = "TransmitterMode";
 
 const struct RadioComponentController::FunctionInfo RadioComponentController::_rgFunctionInfoPX4[RadioComponentController::rcCalFunctionMax] = {
-    //Parameter          required
     { "RC_MAP_ROLL" },
     { "RC_MAP_PITCH" },
     { "RC_MAP_YAW" },
-    { "RC_MAP_THROTTLE" },
-    { "RC_MAP_MODE_SW" },
-    { "RC_MAP_POSCTL_SW" },
-    { "RC_MAP_LOITER_SW" },
-    { "RC_MAP_RETURN_SW" },
-    { "RC_MAP_ACRO_SW" },
+    { "RC_MAP_THROTTLE" }
 };
 
 const struct RadioComponentController::FunctionInfo RadioComponentController::_rgFunctionInfoAPM[RadioComponentController::rcCalFunctionMax] = {
-    //Parameter          required
     { "RCMAP_ROLL" },
     { "RCMAP_PITCH" },
     { "RCMAP_YAW" },
-    { "RCMAP_THROTTLE" },
-    { NULL },
-    { NULL },
-    { NULL },
-    { NULL },
-    { NULL },
+    { "RCMAP_THROTTLE" }
 };
 
 RadioComponentController::RadioComponentController(void) :
@@ -570,38 +558,6 @@ void RadioComponentController::_resetInternalCalibrationValues(void)
     // Initialize attitude function mapping to function channel not set
     for (size_t i=0; i<rcCalFunctionMax; i++) {
         _rgFunctionChannelMapping[i] = _chanMax();
-    }
-    
-    if (_px4Vehicle()) {
-        // Reserve the existing Flight Mode switch settings channels so we don't re-use them
-
-        static const rcCalFunctions rgFlightModeFunctions[] = {
-            rcCalFunctionModeSwitch,
-            rcCalFunctionPosCtlSwitch,
-            rcCalFunctionLoiterSwitch,
-            rcCalFunctionReturnSwitch };
-        static const size_t crgFlightModeFunctions = sizeof(rgFlightModeFunctions) / sizeof(rgFlightModeFunctions[0]);
-
-        for (size_t i=0; i < crgFlightModeFunctions; i++) {
-            QVariant value;
-            enum rcCalFunctions curFunction = rgFlightModeFunctions[i];
-
-            Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[curFunction].parameterName);
-            if (paramFact) {
-                bool ok;
-                int switchChannel = paramFact->rawValue().toInt(&ok);
-                Q_ASSERT(ok);
-
-                // Parameter: 1-based channel, 0=not mapped
-                // _rgFunctionChannelMapping: 0-based channel, _chanMax=not mapped
-
-                if (switchChannel != 0) {
-                    qCDebug(RadioComponentControllerLog) << "Reserving 0-based switch channel" << switchChannel - 1;
-                    _rgFunctionChannelMapping[curFunction] = switchChannel - 1;
-                    _rgChannelInfo[switchChannel - 1].function = curFunction;
-                }
-            }
-        }
     }
     
     _signalAllAttiudeValueChanges();
