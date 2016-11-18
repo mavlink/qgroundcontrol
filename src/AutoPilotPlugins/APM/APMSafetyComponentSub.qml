@@ -172,7 +172,7 @@ SetupPage {
 
                 QGCLabel {
                     id:             leakDetectorLabel
-                    text:           qsTr("Leak detector")
+                    text:           qsTr("Leak Detector")
                     font.family:    ScreenTools.demiboldFontFamily
                 }
 
@@ -205,7 +205,7 @@ SetupPage {
                         anchors.margins:    _margins
                         anchors.left:       parent.left
                         anchors.top:        leakPinLabel.bottom
-                        text:               qsTr("Logic:")
+                        text:               qsTr("Logic (when dry):")
                     }
 
                     FactComboBox {
