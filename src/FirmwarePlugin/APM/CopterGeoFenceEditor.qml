@@ -43,6 +43,8 @@ Column {
             width:  editorColumn.width
             height: textField.height
 
+            property bool showCombo: modelData.enumStrings.length > 0
+
             QGCLabel {
                 id:                 textFieldLabel
                 anchors.baseline:   textField.baseline
@@ -55,7 +57,7 @@ Column {
                 width:          _editFieldWidth
                 showUnits:      true
                 fact:           modelData
-                visible:        !comboField.visible
+                visible:        !parent.showCombo
             }
 
             FactComboBox {
@@ -63,8 +65,8 @@ Column {
                 anchors.right:  parent.right
                 width:          _editFieldWidth
                 indexModel:     false
-                fact:           visible ? modelData : _nullFact
-                visible:        modelData.enumStrings.length
+                fact:           showCombo ? modelData : _nullFact
+                visible:        parent.showCombo
 
                 property var _nullFact: Fact { }
             }

@@ -786,8 +786,9 @@ QGCView {
                 MapPolygon {
                     border.color:   "#80FF0000"
                     border.width:   3
-                    path:           geoFenceController.polygonSupported ? geoFenceController.polygon.path : undefined
+                    path:           geoFenceController.polygon.path
                     z:              QGroundControl.zOrderMapItems
+                    visible:        geoFenceController.polygonSupported
                 }
 
                 // GeoFence circle
@@ -797,6 +798,7 @@ QGCView {
                     center:         missionController.plannedHomePosition
                     radius:         geoFenceController.circleSupported ? geoFenceController.circleRadius : 0
                     z:              QGroundControl.zOrderMapItems
+                    visible:        geoFenceController.circleSupported
                 }
 
                 // GeoFence breach return point
