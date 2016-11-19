@@ -128,7 +128,7 @@ M4SerialComm::_readPacket(uint8_t length)
             //-- CRC is appended to end of data block
             uint8_t iCRC;
             if(::read(_fd, &iCRC, 1) == 1) {
-                uint8_t oCRC = M4Controller::crc8(buffer, length);
+                uint8_t oCRC = QGCCustom::crc8(buffer, length);
                 if(iCRC == oCRC) {
                     QByteArray data((const char*)buffer, length);
                     emit bytesReady(data);

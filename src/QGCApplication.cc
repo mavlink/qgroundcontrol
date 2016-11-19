@@ -357,9 +357,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
 
-#if defined(MINIMALIST_BUILD)
-    _m4Controller = new M4Controller(this);
-    _m4Controller->init();
+#if defined(CUSTOM_BUILD)
+    _pCustomObject = new QGCCustom(this);
+    _pCustomObject->init(this);
 #endif
 
 }
@@ -373,8 +373,8 @@ QGCApplication::~QGCApplication()
     }
 #endif
 #if defined(MINIMALIST_BUILD)
-    if(_m4Controller)
-        delete _m4Controller;
+    if(_pCustomObject)
+        delete _pCustomObject;
 #endif
     shutdownVideoStreaming();
     delete _toolbox;

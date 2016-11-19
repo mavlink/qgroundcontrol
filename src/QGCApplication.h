@@ -45,8 +45,8 @@ class QGCSingleton;
 class MainWindow;
 class QGCToolbox;
 
-#if defined(MINIMALIST_BUILD)
-class M4Controller;
+#if defined(CUSTOM_BUILD)
+class QGCCustom;
 #endif
 
 /**
@@ -210,8 +210,10 @@ private:
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
-#if defined(MINIMALIST_BUILD)
-    M4Controller*  _m4Controller;
+
+    //-- Custom Object
+#if defined(CUSTOM_BUILD)
+    QGCCustom*  _pCustomObject;
 #endif
 };
 

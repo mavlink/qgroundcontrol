@@ -14,6 +14,7 @@
 #include "m4.h"
 #include "SerialComm.h"
 #include <QDebug>
+#include <math.h>
 
 static const char* kUartName = "/dev/ttyMFD0";
 
@@ -36,7 +37,7 @@ static const unsigned char CRC8T[] = {
 //-----------------------------------------------------------------------------
 /** x^8 + x^2 + x + 1 */
 uint8_t
-M4Controller::crc8(uint8_t* buffer, int len)
+QGCCustom::crc8(uint8_t* buffer, int len)
 {
     uint8_t ret = 0;
     for(int i = 0; i < len; ++i) {
@@ -46,14 +47,14 @@ M4Controller::crc8(uint8_t* buffer, int len)
 }
 
 //-----------------------------------------------------------------------------
-M4Controller::M4Controller(QObject* parent)
+QGCCustom::QGCCustom(QObject* parent)
     : QObject(parent)
 {
     _commPort = new M4SerialComm(this);
 }
 
 //-----------------------------------------------------------------------------
-M4Controller::~M4Controller()
+QGCCustom::~QGCCustom()
 {
     if(_commPort) {
         delete _commPort;
@@ -62,20 +63,20 @@ M4Controller::~M4Controller()
 
 //-----------------------------------------------------------------------------
 bool
-M4Controller::init()
+QGCCustom::init(QGCApplication* /*pApp*/)
 {
     qDebug() << "Init M4 Handler";
     if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
         qWarning() << "Could not start serial communication with M4";
         return false;
     }
-    connect(_commPort, &M4SerialComm::bytesReady, this, &M4Controller::_bytesReady);
+    connect(_commPort, &M4SerialComm::bytesReady, this, &QGCCustom::_bytesReady);
     return _start();
 }
 
 //-----------------------------------------------------------------------------
 bool
-M4Controller::_start()
+QGCCustom::_start()
 {
     qDebug() << "Enable M4";
     //-- Enable M4: This is temporary. We will eventualy need to go through the
@@ -90,7 +91,7 @@ M4Controller::_start()
  * The next command you will send may be {@link _startBind}.
  */
 bool
-M4Controller::_enterRun()
+QGCCustom::_enterRun()
 {
     m4Command enterRunCmd(Yuneec::CMD_ENTER_RUN);
     QByteArray cmd = enterRunCmd.pack();
@@ -102,7 +103,7 @@ M4Controller::_enterRun()
  * This command is used for stopping control aircraft.
  */
 bool
-M4Controller::_exitRun()
+QGCCustom::_exitRun()
 {
     m4Command exitRunCmd(Yuneec::CMD_EXIT_RUN);
     QByteArray cmd = exitRunCmd.pack();
@@ -116,7 +117,7 @@ M4Controller::_exitRun()
  * The next command you will send may be {@link _startBind}.
  */
 bool
-M4Controller::_enterBind()
+QGCCustom::_enterBind()
 {
     m4Command enterBindCmd(Yuneec::CMD_ENTER_BIND);
     QByteArray cmd = enterBindCmd.pack();
@@ -128,7 +129,7 @@ M4Controller::_enterBind()
  * This command is used for exiting the progress of binding.
  */
 bool
-M4Controller::_exitBind()
+QGCCustom::_exitBind()
 {
     m4Command exitBindCmd(Yuneec::CMD_EXIT_BIND);
     QByteArray cmd = exitBindCmd.pack();
@@ -141,7 +142,7 @@ M4Controller::_exitBind()
  * The next command you will send may be {@link _bind}.
  */
 bool
-M4Controller::_startBind()
+QGCCustom::_startBind()
 {
     m4Command startBindCmd(Yuneec::CMD_START_BIND);
     QByteArray bindPayload;
@@ -163,7 +164,7 @@ M4Controller::_startBind()
  * the progress of bind exits.
  */
 bool
-M4Controller::_bind(int rxAddr)
+QGCCustom::_bind(int rxAddr)
 {
     m4Command bindCmd(Yuneec::CMD_BIND);
     QByteArray bindPayload;
@@ -184,7 +185,7 @@ M4Controller::_bind(int rxAddr)
  * Suggest to use this command before using {@link _bind} first time.
  */
 bool
-M4Controller::_unbind()
+QGCCustom::_unbind()
 {
     m4Command unbindCmd(Yuneec::CMD_UNBIND);
     QByteArray cmd = unbindCmd.pack();
@@ -198,7 +199,7 @@ M4Controller::_unbind()
  * The next command you will send may be {@link _setChannelSetting}.
  */
 bool
-M4Controller::_queryBindState()
+QGCCustom::_queryBindState()
 {
     m4Command queryBindStateCmd(Yuneec::CMD_QUERY_BIND_STATE);
     QByteArray cmd = queryBindStateCmd.pack();
@@ -207,7 +208,7 @@ M4Controller::_queryBindState()
 
 //-----------------------------------------------------------------------------
 void
-M4Controller::_bytesReady(QByteArray data)
+QGCCustom::_bytesReady(QByteArray data)
 {
     m4Packet packet(data);
     int type = packet.type();
@@ -266,7 +267,7 @@ M4Controller::_bytesReady(QByteArray data)
 
 //-----------------------------------------------------------------------------
 bool
-M4Controller::_handleNonTypePacket(m4Packet& packet)
+QGCCustom::_handleNonTypePacket(m4Packet& packet)
 {
     int commandId = packet.commandID();
     switch(commandId) {
@@ -279,7 +280,7 @@ M4Controller::_handleNonTypePacket(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-M4Controller::_handleRxBindInfo(m4Packet& packet)
+QGCCustom::_handleRxBindInfo(m4Packet& packet)
 {
     RxBindInfo rxBindInfoFeedback;
     rxBindInfoFeedback.mode     = ((uint8_t)packet.data[6]  & 0xff) | ((uint8_t)packet.data[7]  << 8 & 0xff00);
@@ -302,7 +303,7 @@ M4Controller::_handleRxBindInfo(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-M4Controller::_handleChannel(m4Packet& packet)
+QGCCustom::_handleChannel(m4Packet& packet)
 {
     Q_UNUSED(packet);
     switch(packet.commandID()) {
@@ -323,7 +324,7 @@ M4Controller::_handleChannel(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 bool
-M4Controller::_handleCommand(m4Packet& packet)
+QGCCustom::_handleCommand(m4Packet& packet)
 {
     Q_UNUSED(packet);
     switch(packet.commandID()) {
@@ -350,7 +351,7 @@ M4Controller::_handleCommand(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-M4Controller::_switchChanged(m4Packet& packet)
+QGCCustom::_switchChanged(m4Packet& packet)
 {
     Q_UNUSED(packet);
     QByteArray commandValues = packet.commandValues();
@@ -364,7 +365,7 @@ M4Controller::_switchChanged(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-M4Controller::_handleMixedChannelData(m4Packet& packet)
+QGCCustom::_handleMixedChannelData(m4Packet& packet)
 {
     int analogChannelCount = 10;
     int switchChannelCount = 2;
@@ -409,7 +410,7 @@ M4Controller::_handleMixedChannelData(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-M4Controller::_handControllerFeedback(m4Packet& packet) {
+QGCCustom::_handControllerFeedback(m4Packet& packet) {
     QByteArray commandValues = packet.commandValues();
     ControllerLocation controllerLocation;
     controllerLocation.latitude     = byteArrayToInt(commandValues, 0) / 1e7;
@@ -425,7 +426,7 @@ M4Controller::_handControllerFeedback(m4Packet& packet) {
 
 //-----------------------------------------------------------------------------
 int
-M4Controller::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
+QGCCustom::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
 {
     int iRetVal = -1;
     if (data.size() < offset + 4)
@@ -451,7 +452,7 @@ M4Controller::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
 
 //-----------------------------------------------------------------------------
 float
-M4Controller::byteArrayToFloat(QByteArray data, int offset)
+QGCCustom::byteArrayToFloat(QByteArray data, int offset)
 {
     uint32_t val = (uint32_t)byteArrayToInt(data, offset);
     return *(float*)(void*)&val;
@@ -459,7 +460,7 @@ M4Controller::byteArrayToFloat(QByteArray data, int offset)
 
 //-----------------------------------------------------------------------------
 short
-M4Controller::byteArrayToShort(QByteArray data, int offset, bool isBigEndian)
+QGCCustom::byteArrayToShort(QByteArray data, int offset, bool isBigEndian)
 {
     short iRetVal = -1;
     if (data.size() < offset + 2)

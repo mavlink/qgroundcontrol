@@ -29,6 +29,7 @@ struct m4CommandHeader {
 };
 
 class M4SerialComm;
+class QGCApplication;
 
 //-----------------------------------------------------------------------------
 //-- Accessor class to handle data structure in an "Yuneec" way
@@ -85,13 +86,13 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-class M4Controller : public QObject
+class QGCCustom : public QObject
 {
     Q_OBJECT
 public:
-    M4Controller(QObject* parent = NULL);
-    ~M4Controller();
-    bool    init();
+    QGCCustom(QObject* parent = NULL);
+    ~QGCCustom();
+    bool    init(QGCApplication* pApp);
     static  uint8_t crc8            (uint8_t* buffer, int len);
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  float   byteArrayToFloat(QByteArray data, int offset);
@@ -257,7 +258,7 @@ public:
         command[1] = 0x55;
         command[2] = (uint8_t)data.size() + 1;
         command.append(data);
-        uint8_t crc = M4Controller::crc8((uint8_t*)data.data(), data.size());
+        uint8_t crc = QGCCustom::crc8((uint8_t*)data.data(), data.size());
         command.append(crc);
         return command;
     }
