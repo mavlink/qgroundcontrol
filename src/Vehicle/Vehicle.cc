@@ -509,6 +509,8 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_VFR_HUD:
         _handleVfrHud(message);
+    case MAVLINK_MSG_ID_HIGH_LATENCY:
+        _handleHighLatency(message);
         break;
 
     // Following are ArduPilot dialect messages
@@ -933,6 +935,45 @@ void Vehicle::_handleRCChannelsRaw(mavlink_message_t& message)
 
     emit remoteControlRSSIChanged(channels.rssi);
     emit rcChannelsChanged(channelCount, pwmValues);
+}
+
+void Vehicle::_handleHighLatency(mavlink_message_t& message)
+{
+    mavlink_high_latency_t highLatency;
+    mavlink_msg_high_latency_decode(&message, &highLatency);
+
+    if (highLatency.base_mode != _base_mode || highLatency.custom_mode != _custom_mode) {
+        _base_mode = highLatency.base_mode;
+        _custom_mode = highLatency.custom_mode;
+        emit flightModeChanged(flightMode());
+    }
+
+    switch (highLatency.landed_state) {
+    case MAV_LANDED_STATE_UNDEFINED:
+        break;
+    case MAV_LANDED_STATE_ON_GROUND:
+        setFlying(false);
+        break;
+    case MAV_LANDED_STATE_IN_AIR:
+        setFlying(true);
+        break;
+    }
+
+    const double CD_TO_RAD = (M_PI / 180.0 / 100);
+    _updateAttitude(this->uas(), highLatency.roll * CD_TO_RAD, highLatency.pitch * CD_TO_RAD, highLatency.heading * CD_TO_RAD, 0);
+
+    setLatitude((double)(highLatency.latitude)/1e7);
+    setLongitude((double)(highLatency.longitude)/1e7);
+
+    _updateAltitude(this->uas(), highLatency.altitude_amsl, highLatency.altitude_home, highLatency.climb_rate, 0);
+
+    _batteryFactGroup.percentRemaining()->setRawValue(highLatency.battery_remaining);
+    if (highLatency.battery_remaining > 0 && highLatency.battery_remaining < QGroundControlQmlGlobal::batteryPercentRemainingAnnounce()->rawValue().toInt()) {
+        if (!_lowBatteryAnnounceTimer.isValid() || _lowBatteryAnnounceTimer.elapsed() > _lowBatteryAnnounceRepeatMSecs) {
+            _lowBatteryAnnounceTimer.restart();
+            _say(QString("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(highLatency.battery_remaining));
+        }
+    }
 }
 
 bool Vehicle::_containsLink(LinkInterface* link)
