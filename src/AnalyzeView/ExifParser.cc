@@ -15,8 +15,8 @@ ExifParser::~ExifParser()
 
 double ExifParser::readTime(QByteArray& buf)
 {
-    char tiffHeader[] = {static_cast<char>(0x49),static_cast<char>(0x49),static_cast<char>(0x2A),static_cast<char>(0x00)};
-    char createDateHeader[] = {static_cast<char>(0x04),static_cast<char>(0x90),static_cast<char>(0x02),static_cast<char>(0x00)};
+    QByteArray tiffHeader("\x49\x49\x2A", 3);
+    QByteArray createDateHeader("\x04\x90\x02", 3);
 
     // find header position
     uint32_t tiffHeaderIndex = buf.indexOf(tiffHeader);
@@ -58,14 +58,12 @@ double ExifParser::readTime(QByteArray& buf)
 
 bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
 {
-    QByteArray app1Header;
-    app1Header.append(0xff);
-    app1Header.append(0xe1);
+    QByteArray app1Header("\xff\xe1", 2);
     uint32_t app1HeaderInd = buf.indexOf(app1Header);
     uint16_t *conversionPointer = reinterpret_cast<uint16_t *>(buf.mid(app1HeaderInd + 2, 2).data());
     uint16_t app1Size = *conversionPointer;
     uint16_t app1SizeEndian = qFromBigEndian(app1Size) + 0xa5;  // change wrong endian
-    char tiffHeader[4] = {0x49, 0x49, 0x2A, 0x00};
+    QByteArray tiffHeader("\x49\x49\x2A", 3);
     uint32_t tiffHeaderInd = buf.indexOf(tiffHeader);
     conversionPointer = reinterpret_cast<uint16_t *>(buf.mid(tiffHeaderInd + 8, 2).data());
     uint16_t numberOfTiffFields  = *conversionPointer;
@@ -125,7 +123,11 @@ bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
     gpsIFDInd.i = nextIfdOffset;
 
     // this will stay constant
-    char gpsInfo[12] = {static_cast<char>(0x25), static_cast<char>(0x88), static_cast<char>(0x04), static_cast<char>(0x00), static_cast<char>(0x01), static_cast<char>(0x00), static_cast<char>(0x00), static_cast<char>(0x00), static_cast<char>(gpsIFDInd.c[0]), static_cast<char>(gpsIFDInd.c[1]), static_cast<char>(gpsIFDInd.c[2]), static_cast<char>(gpsIFDInd.c[3])};
+    QByteArray gpsInfo("\x25\x88\x04\x00\x01\x00\x00\x00", 8);
+    gpsInfo.append(gpsIFDInd.c[0]);
+    gpsInfo.append(gpsIFDInd.c[1]);
+    gpsInfo.append(gpsIFDInd.c[2]);
+    gpsInfo.append(gpsIFDInd.c[3]);
 
     // filling values to gpsData
     uint32_t gpsDataExtInd = gpsIFDInd.i + 2 + sizeof(fields_s);
