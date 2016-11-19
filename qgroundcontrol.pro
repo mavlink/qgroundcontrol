@@ -901,18 +901,17 @@ MinimalistBuild {
             android/gradlew.bat
     }
 }
+
 #-------------------------------------------------------------------------------------
-# Extras
+# Custom Build: QGC will create a QGCCustom object (exposed by your custom build) and
+# call its QGCCustom::init(QGCApplication* pApp) method, which you should expose. This
+# the start of allowing custom Plugins, which will eventually use a more defined
+# runtime plugin architecture and not require a separate build.
 
-MinimalistBuild {
-    SOURCES += \
-        src/Yuneec/m4.cc
-
-    HEADERS += \
-        src/Yuneec/m4.h
-
-    INCLUDEPATH += \
-        src/Yuneec
+exists(custom.pri) {
+    message("Including custom build")
+    DEFINES += CUSTOM_BUILD
+    include(custom.pri)
 }
 
 #-------------------------------------------------------------------------------------

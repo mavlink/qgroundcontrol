@@ -45,6 +45,10 @@ class QGCSingleton;
 class MainWindow;
 class QGCToolbox;
 
+#if defined(CUSTOM_BUILD)
+class QGCCustom;
+#endif
+
 /**
  * @brief The main application and management class.
  *
@@ -206,6 +210,11 @@ private:
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
+
+    //-- Custom Object
+#if defined(CUSTOM_BUILD)
+    QGCCustom*  _pCustomObject;
+#endif
 };
 
 /// @brief Returns the QGCApplication object singleton.

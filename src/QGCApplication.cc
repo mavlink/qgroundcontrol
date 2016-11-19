@@ -356,9 +356,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
-#if defined(MINIMALIST_BUILD)
-    Yuneec::initM4();
+
+#if defined(CUSTOM_BUILD)
+    _pCustomObject = new QGCCustom(this);
+    _pCustomObject->init(this);
 #endif
+
 }
 
 QGCApplication::~QGCApplication()
@@ -368,6 +371,10 @@ QGCApplication::~QGCApplication()
     if (mainWindow) {
         delete mainWindow;
     }
+#endif
+#if defined(MINIMALIST_BUILD)
+    if(_pCustomObject)
+        delete _pCustomObject;
 #endif
     shutdownVideoStreaming();
     delete _toolbox;
