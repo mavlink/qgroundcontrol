@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <array name="qt_sources">
-        <item>https://download.qt-project.org/ministro/android/qt5/qt-5.4</item>
+        <item>https://download.qt-project.org/ministro/android/qt5/qt-5.5</item>
     </array>
 
     <!-- The following is handled automatically by the deployment tool. It should

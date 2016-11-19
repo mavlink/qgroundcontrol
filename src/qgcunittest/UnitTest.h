@@ -15,7 +15,7 @@
 
 #ifndef UNITTEST_H
 #define UNITTEST_H
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 
 #include <QObject>
 #include <QtTest>

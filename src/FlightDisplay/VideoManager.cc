@@ -43,7 +43,7 @@ VideoManager::VideoManager(QGCApplication* app)
 {
     //-- Get saved settings
     QSettings settings;
-#if defined(MINIMALIST_BUILD) && defined(QGC_GST_STREAMING)
+#if defined(NO_UDP_VIDEO) && defined(QGC_GST_STREAMING)
     setVideoSource(settings.value(kVideoSourceKey, kRTSPStream).toString());
 #else
     setVideoSource(settings.value(kVideoSourceKey, kUDPStream).toString());

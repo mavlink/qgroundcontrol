@@ -31,7 +31,7 @@
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
 #include "GAudioOutput.h"
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 #include "QGCMAVLinkLogPlayer.h"
 #endif
 #include "MAVLinkDecoder.h"
@@ -42,7 +42,7 @@
 #include "UAS.h"
 #include "QGCImageProvider.h"
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
@@ -65,7 +65,7 @@
 /// The key under which the Main Window settings are saved
 const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 enum DockWidgetTypes {
     MAVLINK_INSPECTOR,
     CUSTOM_COMMAND,
@@ -181,7 +181,7 @@ MainWindow::MainWindow()
     setStatusBar(new QStatusBar(this));
     statusBar()->setSizeGripEnabled(true);
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     emit initStatusChanged(tr("Building common widgets."), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     _buildCommonWidgets();
     emit initStatusChanged(tr("Building common actions"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
@@ -264,7 +264,7 @@ MainWindow::MainWindow()
 #endif
     }
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     _loadVisibleWidgetsSettings();
 #endif
     //-- Enable message handler display of messages in main window
@@ -288,7 +288,7 @@ QString MainWindow::_getWindowGeometryKey()
     return "_geometry";
 }
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 void MainWindow::_buildCommonWidgets(void)
 {
     // Add generic MAVLink decoder
@@ -445,7 +445,7 @@ void MainWindow::storeSettings()
     settings.endGroup();
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     _storeVisibleWidgetsSettings();
 #endif
 }
@@ -485,7 +485,7 @@ void MainWindow::_vehicleAdded(Vehicle* vehicle)
 /// Stores the state of the toolbar, status bar and widgets associated with the current view
 void MainWindow::_storeCurrentViewState(void)
 {
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     foreach(QGCDockWidget* dockWidget, _mapName2DockWidget) {
         dockWidget->saveSettings();
     }
@@ -518,7 +518,7 @@ void MainWindow::_showQmlTestWidget(void)
 }
 #endif
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 void MainWindow::_loadVisibleWidgetsSettings(void)
 {
     QSettings settings;

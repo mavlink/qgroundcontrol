@@ -18,7 +18,7 @@
 #ifndef _MAINWINDOW_H_
 #define _MAINWINDOW_H_
 
-#if defined(__mobile__) || defined(MINIMALIST_BUILD)
+#if defined(__mobile__)
 #error Should not be include in mobile or minimalist builds
 #endif
 

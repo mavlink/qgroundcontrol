@@ -29,12 +29,12 @@
 
 #define  SINGLE_INSTANCE_PORT   14499
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     #include "QGCSerialPortInfo.h"
 #endif
 
 #ifdef QT_DEBUG
-    #if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+    #if !defined(__mobile__)
         #include "UnitTest.h"
     #endif
     #include "CmdLineOptParser.h"
@@ -55,7 +55,7 @@
 #undef main
 #endif
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     Q_DECLARE_METATYPE(QGCSerialPortInfo)
 #endif
 
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QBluetoothServiceInfo>();
 #endif
     qRegisterMetaType<QAbstractSocket::SocketError>();
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     qRegisterMetaType<QGCSerialPortInfo>();
 #endif
 
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 
     int exitCode = 0;
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 #ifdef QT_DEBUG
     if (runUnitTests) {
         for (int i=0; i < (stressUnitTests ? 20 : 1); i++) {

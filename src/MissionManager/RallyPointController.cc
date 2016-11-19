@@ -21,7 +21,7 @@
 #include "JsonHelper.h"
 #include "SimpleMissionItem.h"
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 #include "QGCFileDialog.h"
 #endif
 
@@ -137,7 +137,7 @@ void RallyPointController::loadFromFile(const QString& filename)
 
 void RallyPointController::loadFromFilePicker(void)
 {
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Rally Point File to load", QString(), "Rally point file (*.rally);;All Files (*.*)");
 
     if (filename.isEmpty()) {
@@ -186,7 +186,7 @@ void RallyPointController::saveToFile(const QString& filename)
 
 void RallyPointController::saveToFilePicker(void)
 {
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save Rally Points to", QString(), "Rally point file (*.rally);;All Files (*.*)");
 
     if (filename.isEmpty()) {

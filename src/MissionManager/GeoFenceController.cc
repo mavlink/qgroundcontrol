@@ -19,7 +19,7 @@
 #include "ParameterManager.h"
 #include "JsonHelper.h"
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 #include "QGCFileDialog.h"
 #endif
 
@@ -242,7 +242,7 @@ void GeoFenceController::loadFromFile(const QString& filename)
 
 void GeoFenceController::loadFromFilePicker(void)
 {
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     QString filename = QGCFileDialog::getOpenFileName(NULL, "Select GeoFence File to load", QString(), "Fence file (*.fence);;All Files (*.*)");
 
     if (filename.isEmpty()) {
@@ -305,7 +305,7 @@ void GeoFenceController::saveToFile(const QString& filename)
 
 void GeoFenceController::saveToFilePicker(void)
 {
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save GeoFence to", QString(), "Fence file (*.fence);;All Files (*.*)");
 
     if (filename.isEmpty()) {

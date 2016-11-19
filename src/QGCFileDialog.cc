@@ -13,7 +13,7 @@
 #include "MainWindow.h"
 
 #ifdef QT_DEBUG
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 #include "UnitTest.h"
 #endif
 #endif
@@ -31,7 +31,7 @@ QString QGCFileDialog::getExistingDirectory(
     _validate(options);
 
 #ifdef QT_DEBUG
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getExistingDirectory(parent, caption, dir, options);
     } else
@@ -52,7 +52,7 @@ QString QGCFileDialog::getOpenFileName(
     _validate(options);
 
 #ifdef QT_DEBUG
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileName(parent, caption, dir, filter, options);
     } else
@@ -73,7 +73,7 @@ QStringList QGCFileDialog::getOpenFileNames(
     _validate(options);
 
 #ifdef QT_DEBUG
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileNames(parent, caption, dir, filter, options);
     } else
@@ -96,7 +96,7 @@ QString QGCFileDialog::getSaveFileName(
     _validate(options);
 
 #ifdef QT_DEBUG
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getSaveFileName(parent, caption, dir, filter, defaultSuffix, options);
     } else

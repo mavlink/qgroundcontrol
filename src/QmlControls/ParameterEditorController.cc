@@ -16,7 +16,7 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 #include "QGCFileDialog.h"
 #include "QGCMapRCToParamDialog.h"
 #include "MainWindow.h"
@@ -112,7 +112,7 @@ void ParameterEditorController::saveToFile(const QString& filename)
 
 void ParameterEditorController::saveToFilePicker(void)
 {
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     QString fileName = QGCFileDialog::getSaveFileName(NULL,
                                                       "Save Parameters",
                                                       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
@@ -152,7 +152,7 @@ void ParameterEditorController::loadFromFile(const QString& filename)
 
 void ParameterEditorController::loadFromFilePicker(void)
 {
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     QString fileName = QGCFileDialog::getOpenFileName(NULL,
                                                       "Load Parameters",
                                                       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
@@ -174,7 +174,7 @@ void ParameterEditorController::resetAllToDefaults(void)
 
 void ParameterEditorController::setRCToParam(const QString& paramName)
 {
-#if defined(__mobile__) || defined(MINIMALIST_BUILD)
+#if defined(__mobile__)
     Q_UNUSED(paramName)
 #else
     Q_ASSERT(_uas);

@@ -5,7 +5,7 @@
  */
 
 #include "SerialComm.h"
-#include "m4.h"
+#include "QGCCustom.h"
 
 #include <QDebug>
 #include <stdio.h>

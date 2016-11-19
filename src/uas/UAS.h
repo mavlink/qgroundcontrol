@@ -26,7 +26,7 @@
 #include "Vehicle.h"
 #include "FirmwarePluginManager.h"
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 #include "FileManager.h"
 #include "QGCHilLink.h"
 #include "QGCFlightGearLink.h"
@@ -342,7 +342,7 @@ public:
         temperature_var = var;
     }
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     friend class FileManager;
 #endif
 
@@ -405,7 +405,7 @@ protected: //COMMENTS FOR TEST UNIT
     double airSpeed;             ///< Airspeed
     double groundSpeed;          ///< Groundspeed
     double bearingToWaypoint;    ///< Bearing to next waypoint
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     FileManager   fileManager;
 #endif
 
@@ -449,7 +449,7 @@ protected: //COMMENTS FOR TEST UNIT
     float temperature_var;      ///< variance of temperature noise for HIL sim (C)
 
     /// SIMULATION
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
 #endif
 
@@ -457,12 +457,12 @@ public:
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     virtual FileManager* getFileManager() { return &fileManager; }
 #endif
 
     /** @brief Get the HIL simulation */
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     QGCHilLink* getHILSimulation() const {
         return simulation;
     }
@@ -479,7 +479,7 @@ public slots:
     void pairRX(int rxType, int rxSubType);
 
     /** @brief Enable / disable HIL */
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     void enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration);
     void enableHilJSBSim(bool enable, QString options);
     void enableHilXPlane(bool enable);
@@ -529,7 +529,7 @@ public slots:
     void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode);
 
     /** @brief Set the values for the 6dof manual control of the vehicle */
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
 #endif
 

@@ -63,7 +63,7 @@ public:
 #ifdef QT_DEBUG
         TypeMock,       ///< Mock Link for Unitesting
 #endif
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
         TypeLogReplay,
 #endif
         TypeLast        // Last type value (type >= TypeLast == invalid)

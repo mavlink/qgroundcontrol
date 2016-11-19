@@ -11,7 +11,7 @@
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 #include "UnitTest.h"
 #endif
 
@@ -1159,7 +1159,7 @@ void MockLink::_handleLogRequestData(const mavlink_message_t& msg)
     mavlink_msg_log_request_data_decode(&msg, &request);
 
     if (_logDownloadFilename.isEmpty()) {
-        #if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+        #if !defined(__mobile__)
         _logDownloadFilename = UnitTest::createRandomFile(_logDownloadFileSize);
         #endif
     }

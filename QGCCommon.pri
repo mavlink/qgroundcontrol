@@ -87,21 +87,6 @@ linux {
     error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")
 }
 
-# Minimalist Build
-contains (CONFIG, MINIMALIST_QGC) {
-    message("Minimalist build (manual override from command line)")
-    CONFIG += MinimalistBuild
-} else:exists(user_config.pri):infile(user_config.pri, DEFINES, MINIMALIST_QGC) {
-    message("Minimalist build (manual override from user_config.pri)")
-    CONFIG += MinimalistBuild
-}
-
-MinimalistBuild {
-    DEFINES += MINIMALIST_BUILD
-    DEFINES += NO_SERIAL_LINK
-    CONFIG  += NoSerialBuild
-}
-
 # Enable ccache where we can
 linux|macx|ios {
     system(which ccache) {

@@ -28,6 +28,24 @@ DebugBuild {
     DESTDIR  = $${OUT_PWD}/release
 }
 
+#-------------------------------------------------------------------------------------
+# Custom Build: QGC will create a QGCCustom object (exposed by your custom build) and
+# call its QGCCustom::init(QGCApplication* pApp) method, which you should expose. This
+# is the start of allowing custom Plugins, which will eventually use a more defined
+# runtime plugin architecture and not require a separate build.
+#
+
+exists($$PWD/custom/custom.pri) {
+    message("Including custom build")
+    DEFINES += CUSTOM_BUILD
+    include($$PWD/custom/custom.pri)
+} else {
+    AndroidBuild {
+        # Android
+        include(Android.pri)
+    }
+}
+
 # Load additional config flags from user_config.pri
 exists(user_config.pri):infile(user_config.pri, CONFIG) {
     CONFIG += $$fromfile(user_config.pri, CONFIG)
@@ -35,36 +53,28 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 }
 
 # Bluetooth
-MinimalistBuild {
+contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
+    message("Skipping support for Bluetooth (manual override from command line)")
     DEFINES -= QGC_ENABLE_BLUETOOTH
-} else {
-    contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
-        message("Skipping support for Bluetooth (manual override from command line)")
-        DEFINES -= QGC_ENABLE_BLUETOOTH
-    } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_BLUETOOTH) {
-        message("Skipping support for Bluetooth (manual override from user_config.pri)")
-        DEFINES -= QGC_ENABLE_BLUETOOTH
-    } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_ENABLE_BLUETOOTH) {
-        message("Including support for Bluetooth (manual override from user_config.pri)")
-        DEFINES += QGC_ENABLE_BLUETOOTH
-    }
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_BLUETOOTH) {
+    message("Skipping support for Bluetooth (manual override from user_config.pri)")
+    DEFINES -= QGC_ENABLE_BLUETOOTH
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_ENABLE_BLUETOOTH) {
+    message("Including support for Bluetooth (manual override from user_config.pri)")
+    DEFINES += QGC_ENABLE_BLUETOOTH
 }
 
 # USB Camera and UVC Video Sources
-MinimalistBuild {
+contains (DEFINES, QGC_DISABLE_UVC) {
+    message("Skipping support for UVC devices (manual override from command line)")
     DEFINES += QGC_DISABLE_UVC
-} else {
-    contains (DEFINES, QGC_DISABLE_UVC) {
-        message("Skipping support for UVC devices (manual override from command line)")
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_UVC) {
+    message("Skipping support for UVC devices (manual override from user_config.pri)")
+    DEFINES += QGC_DISABLE_UVC
+} else:LinuxBuild {
+    contains(QT_VERSION, 5.5.1) {
+        message("Skipping support for UVC devices (conflict with Qt 5.5.1 on Ubuntu)")
         DEFINES += QGC_DISABLE_UVC
-    } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_UVC) {
-        message("Skipping support for UVC devices (manual override from user_config.pri)")
-        DEFINES += QGC_DISABLE_UVC
-    } else:LinuxBuild {
-        contains(QT_VERSION, 5.5.1) {
-            message("Skipping support for UVC devices (conflict with Qt 5.5.1 on Ubuntu)")
-            DEFINES += QGC_DISABLE_UVC
-        }
     }
 }
 
@@ -376,61 +386,59 @@ HEADERS += \
 }
 
 !MobileBuild {
-    !MinimalistBuild {
-        HEADERS += \
-            src/AnalyzeView/GeoTagController.h \
-            src/AnalyzeView/LogDownloadController.h \
-            src/comm/LogReplayLink.h \
-            src/comm/QGCFlightGearLink.h \
-            src/comm/QGCHilLink.h \
-            src/comm/QGCJSBSimLink.h \
-            src/comm/QGCXPlaneLink.h \
-            src/Joystick/JoystickSDL.h \
-            src/QGCFileDialog.h \
-            src/QGCMessageBox.h \
-            src/uas/FileManager.h \
-            src/ui/HILDockWidget.h \
-            src/ui/linechart/ChartPlot.h \
-            src/ui/linechart/IncrementalPlot.h \
-            src/ui/linechart/LinechartPlot.h \
-            src/ui/linechart/Linecharts.h \
-            src/ui/linechart/LinechartWidget.h \
-            src/ui/linechart/Scrollbar.h \
-            src/ui/linechart/ScrollZoomer.h \
-            src/ui/MainWindow.h \
-            src/ui/MAVLinkDecoder.h \
-            src/ui/MultiVehicleDockWidget.h \
-            src/ui/QGCMAVLinkLogPlayer.h \
-            src/ui/QGCMapRCToParamDialog.h \
-            src/ui/uas/UASMessageView.h \
-            src/ui/uas/QGCUnconnectedInfoWidget.h \
-            src/ui/QGCDataPlot2D.h \
-            src/ui/QGCHilConfiguration.h \
-            src/ui/QGCHilFlightGearConfiguration.h \
-            src/ui/QGCHilJSBSimConfiguration.h \
-            src/ui/QGCHilXPlaneConfiguration.h \
-            src/ui/QGCMAVLinkInspector.h \
-            src/ui/QGCTabbedInfoView.h \
-            src/ui/QGCUASFileView.h \
-            src/ui/QGCUASFileViewMulti.h \
-            src/ui/uas/UASQuickView.h \
-            src/ui/uas/UASQuickViewGaugeItem.h \
-            src/ui/uas/UASQuickViewItem.h \
-            src/ui/uas/UASQuickViewItemSelect.h \
-            src/ui/uas/UASQuickViewTextItem.h \
-            src/GPS/Drivers/src/gps_helper.h \
-            src/GPS/Drivers/src/ubx.h \
-            src/GPS/definitions.h \
-            src/GPS/vehicle_gps_position.h \
-            src/GPS/satellite_info.h \
-            src/GPS/RTCM/RTCMMavlink.h \
-            src/GPS/GPSManager.h \
-            src/GPS/GPSPositionMessage.h \
-            src/GPS/GPSProvider.h \
-            src/ViewWidgets/CustomCommandWidget.h \
-            src/ViewWidgets/CustomCommandWidgetController.h \
-            src/ViewWidgets/ViewWidgetController.h \
-    }
+    HEADERS += \
+        src/AnalyzeView/GeoTagController.h \
+        src/AnalyzeView/LogDownloadController.h \
+        src/comm/LogReplayLink.h \
+        src/comm/QGCFlightGearLink.h \
+        src/comm/QGCHilLink.h \
+        src/comm/QGCJSBSimLink.h \
+        src/comm/QGCXPlaneLink.h \
+        src/Joystick/JoystickSDL.h \
+        src/QGCFileDialog.h \
+        src/QGCMessageBox.h \
+        src/uas/FileManager.h \
+        src/ui/HILDockWidget.h \
+        src/ui/linechart/ChartPlot.h \
+        src/ui/linechart/IncrementalPlot.h \
+        src/ui/linechart/LinechartPlot.h \
+        src/ui/linechart/Linecharts.h \
+        src/ui/linechart/LinechartWidget.h \
+        src/ui/linechart/Scrollbar.h \
+        src/ui/linechart/ScrollZoomer.h \
+        src/ui/MainWindow.h \
+        src/ui/MAVLinkDecoder.h \
+        src/ui/MultiVehicleDockWidget.h \
+        src/ui/QGCMAVLinkLogPlayer.h \
+        src/ui/QGCMapRCToParamDialog.h \
+        src/ui/uas/UASMessageView.h \
+        src/ui/uas/QGCUnconnectedInfoWidget.h \
+        src/ui/QGCDataPlot2D.h \
+        src/ui/QGCHilConfiguration.h \
+        src/ui/QGCHilFlightGearConfiguration.h \
+        src/ui/QGCHilJSBSimConfiguration.h \
+        src/ui/QGCHilXPlaneConfiguration.h \
+        src/ui/QGCMAVLinkInspector.h \
+        src/ui/QGCTabbedInfoView.h \
+        src/ui/QGCUASFileView.h \
+        src/ui/QGCUASFileViewMulti.h \
+        src/ui/uas/UASQuickView.h \
+        src/ui/uas/UASQuickViewGaugeItem.h \
+        src/ui/uas/UASQuickViewItem.h \
+        src/ui/uas/UASQuickViewItemSelect.h \
+        src/ui/uas/UASQuickViewTextItem.h \
+        src/GPS/Drivers/src/gps_helper.h \
+        src/GPS/Drivers/src/ubx.h \
+        src/GPS/definitions.h \
+        src/GPS/vehicle_gps_position.h \
+        src/GPS/satellite_info.h \
+        src/GPS/RTCM/RTCMMavlink.h \
+        src/GPS/GPSManager.h \
+        src/GPS/GPSPositionMessage.h \
+        src/GPS/GPSProvider.h \
+        src/ViewWidgets/CustomCommandWidget.h \
+        src/ViewWidgets/CustomCommandWidgetController.h \
+        src/ViewWidgets/ViewWidgetController.h \
 }
 
 iOSBuild {
@@ -442,7 +450,6 @@ iOSBuild {
 AndroidBuild {
     SOURCES += src/MobileScreenMgr.cc \
 }
-
 
 SOURCES += \
     src/audio/QGCAudioWorker.cpp \
@@ -533,55 +540,53 @@ contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
 }
 
 !MobileBuild {
-    !MinimalistBuild {
-        SOURCES += \
-            src/AnalyzeView/GeoTagController.cc \
-            src/AnalyzeView/LogDownloadController.cc \
-            src/ui/uas/UASMessageView.cc \
-            src/uas/FileManager.cc \
-            src/ui/uas/QGCUnconnectedInfoWidget.cc \
-            src/ui/MAVLinkDecoder.cc \
-            src/ui/QGCMapRCToParamDialog.cpp \
-            src/comm/LogReplayLink.cc \
-            src/QGCFileDialog.cc \
-            src/ui/QGCMAVLinkLogPlayer.cc \
-            src/comm/QGCFlightGearLink.cc \
-            src/comm/QGCJSBSimLink.cc \
-            src/comm/QGCXPlaneLink.cc \
-            src/Joystick/JoystickSDL.cc \
-            src/ui/HILDockWidget.cc \
-            src/ui/linechart/ChartPlot.cc \
-            src/ui/linechart/IncrementalPlot.cc \
-            src/ui/linechart/LinechartPlot.cc \
-            src/ui/linechart/Linecharts.cc \
-            src/ui/linechart/LinechartWidget.cc \
-            src/ui/linechart/Scrollbar.cc \
-            src/ui/linechart/ScrollZoomer.cc \
-            src/ui/MainWindow.cc \
-            src/ui/MultiVehicleDockWidget.cc \
-            src/ui/QGCDataPlot2D.cc \
-            src/ui/QGCHilConfiguration.cc \
-            src/ui/QGCHilFlightGearConfiguration.cc \
-            src/ui/QGCHilJSBSimConfiguration.cc \
-            src/ui/QGCHilXPlaneConfiguration.cc \
-            src/ui/QGCMAVLinkInspector.cc \
-            src/ui/QGCTabbedInfoView.cpp \
-            src/ui/QGCUASFileView.cc \
-            src/ui/QGCUASFileViewMulti.cc \
-            src/ui/uas/UASQuickView.cc \
-            src/ui/uas/UASQuickViewGaugeItem.cc \
-            src/ui/uas/UASQuickViewItem.cc \
-            src/ui/uas/UASQuickViewItemSelect.cc \
-            src/ui/uas/UASQuickViewTextItem.cc \
-            src/GPS/Drivers/src/gps_helper.cpp \
-            src/GPS/Drivers/src/ubx.cpp \
-            src/GPS/RTCM/RTCMMavlink.cc \
-            src/GPS/GPSManager.cc \
-            src/GPS/GPSProvider.cc \
-            src/ViewWidgets/CustomCommandWidget.cc \
-            src/ViewWidgets/CustomCommandWidgetController.cc \
-            src/ViewWidgets/ViewWidgetController.cc
-    }
+    SOURCES += \
+        src/AnalyzeView/GeoTagController.cc \
+        src/AnalyzeView/LogDownloadController.cc \
+        src/ui/uas/UASMessageView.cc \
+        src/uas/FileManager.cc \
+        src/ui/uas/QGCUnconnectedInfoWidget.cc \
+        src/ui/MAVLinkDecoder.cc \
+        src/ui/QGCMapRCToParamDialog.cpp \
+        src/comm/LogReplayLink.cc \
+        src/QGCFileDialog.cc \
+        src/ui/QGCMAVLinkLogPlayer.cc \
+        src/comm/QGCFlightGearLink.cc \
+        src/comm/QGCJSBSimLink.cc \
+        src/comm/QGCXPlaneLink.cc \
+        src/Joystick/JoystickSDL.cc \
+        src/ui/HILDockWidget.cc \
+        src/ui/linechart/ChartPlot.cc \
+        src/ui/linechart/IncrementalPlot.cc \
+        src/ui/linechart/LinechartPlot.cc \
+        src/ui/linechart/Linecharts.cc \
+        src/ui/linechart/LinechartWidget.cc \
+        src/ui/linechart/Scrollbar.cc \
+        src/ui/linechart/ScrollZoomer.cc \
+        src/ui/MainWindow.cc \
+        src/ui/MultiVehicleDockWidget.cc \
+        src/ui/QGCDataPlot2D.cc \
+        src/ui/QGCHilConfiguration.cc \
+        src/ui/QGCHilFlightGearConfiguration.cc \
+        src/ui/QGCHilJSBSimConfiguration.cc \
+        src/ui/QGCHilXPlaneConfiguration.cc \
+        src/ui/QGCMAVLinkInspector.cc \
+        src/ui/QGCTabbedInfoView.cpp \
+        src/ui/QGCUASFileView.cc \
+        src/ui/QGCUASFileViewMulti.cc \
+        src/ui/uas/UASQuickView.cc \
+        src/ui/uas/UASQuickViewGaugeItem.cc \
+        src/ui/uas/UASQuickViewItem.cc \
+        src/ui/uas/UASQuickViewItemSelect.cc \
+        src/ui/uas/UASQuickViewTextItem.cc \
+        src/GPS/Drivers/src/gps_helper.cpp \
+        src/GPS/Drivers/src/ubx.cpp \
+        src/GPS/RTCM/RTCMMavlink.cc \
+        src/GPS/GPSManager.cc \
+        src/GPS/GPSProvider.cc \
+        src/ViewWidgets/CustomCommandWidget.cc \
+        src/ViewWidgets/CustomCommandWidgetController.cc \
+        src/ViewWidgets/ViewWidgetController.cc
 }
 
 #
@@ -592,65 +597,63 @@ DebugBuild {
     HEADERS += src/QmlControls/QmlTestWidget.h
     SOURCES += src/QmlControls/QmlTestWidget.cc
     !MobileBuild {
-        !MinimalistBuild {
-            INCLUDEPATH += \
-                src/qgcunittest
+        INCLUDEPATH += \
+            src/qgcunittest
 
-            HEADERS += \
-                src/AnalyzeView/LogDownloadTest.h \
-                src/FactSystem/FactSystemTestBase.h \
-                src/FactSystem/FactSystemTestGeneric.h \
-                src/FactSystem/FactSystemTestPX4.h \
-                src/FactSystem/ParameterManagerTest.h \
-                src/MissionManager/ComplexMissionItemTest.h \
-                src/MissionManager/MissionCommandTreeTest.h \
-                src/MissionManager/MissionControllerTest.h \
-                src/MissionManager/MissionControllerManagerTest.h \
-                src/MissionManager/MissionItemTest.h \
-                src/MissionManager/MissionManagerTest.h \
-                src/MissionManager/SimpleMissionItemTest.h \
-                src/qgcunittest/GeoTest.h \
-                src/qgcunittest/FileDialogTest.h \
-                src/qgcunittest/FileManagerTest.h \
-                src/qgcunittest/FlightGearTest.h \
-                src/qgcunittest/LinkManagerTest.h \
-                src/qgcunittest/MainWindowTest.h \
-                src/qgcunittest/MavlinkLogTest.h \
-                src/qgcunittest/MessageBoxTest.h \
-                src/qgcunittest/MultiSignalSpy.h \
-                src/qgcunittest/RadioConfigTest.h \
-                src/qgcunittest/TCPLinkTest.h \
-                src/qgcunittest/TCPLoopBackServer.h \
-                src/qgcunittest/UnitTest.h \
+        HEADERS += \
+            src/AnalyzeView/LogDownloadTest.h \
+            src/FactSystem/FactSystemTestBase.h \
+            src/FactSystem/FactSystemTestGeneric.h \
+            src/FactSystem/FactSystemTestPX4.h \
+            src/FactSystem/ParameterManagerTest.h \
+            src/MissionManager/ComplexMissionItemTest.h \
+            src/MissionManager/MissionCommandTreeTest.h \
+            src/MissionManager/MissionControllerTest.h \
+            src/MissionManager/MissionControllerManagerTest.h \
+            src/MissionManager/MissionItemTest.h \
+            src/MissionManager/MissionManagerTest.h \
+            src/MissionManager/SimpleMissionItemTest.h \
+            src/qgcunittest/GeoTest.h \
+            src/qgcunittest/FileDialogTest.h \
+            src/qgcunittest/FileManagerTest.h \
+            src/qgcunittest/FlightGearTest.h \
+            src/qgcunittest/LinkManagerTest.h \
+            src/qgcunittest/MainWindowTest.h \
+            src/qgcunittest/MavlinkLogTest.h \
+            src/qgcunittest/MessageBoxTest.h \
+            src/qgcunittest/MultiSignalSpy.h \
+            src/qgcunittest/RadioConfigTest.h \
+            src/qgcunittest/TCPLinkTest.h \
+            src/qgcunittest/TCPLoopBackServer.h \
+            src/qgcunittest/UnitTest.h \
 
-            SOURCES += \
-                src/AnalyzeView/LogDownloadTest.cc \
-                src/FactSystem/FactSystemTestBase.cc \
-                src/FactSystem/FactSystemTestGeneric.cc \
-                src/FactSystem/FactSystemTestPX4.cc \
-                src/FactSystem/ParameterManagerTest.cc \
-                src/MissionManager/ComplexMissionItemTest.cc \
-                src/MissionManager/MissionCommandTreeTest.cc \
-                src/MissionManager/MissionControllerTest.cc \
-                src/MissionManager/MissionControllerManagerTest.cc \
-                src/MissionManager/MissionItemTest.cc \
-                src/MissionManager/MissionManagerTest.cc \
-                src/MissionManager/SimpleMissionItemTest.cc \
-                src/qgcunittest/GeoTest.cc \
-                src/qgcunittest/FileDialogTest.cc \
-                src/qgcunittest/FileManagerTest.cc \
-                src/qgcunittest/FlightGearTest.cc \
-                src/qgcunittest/LinkManagerTest.cc \
-                src/qgcunittest/MainWindowTest.cc \
-                src/qgcunittest/MavlinkLogTest.cc \
-                src/qgcunittest/MessageBoxTest.cc \
-                src/qgcunittest/MultiSignalSpy.cc \
-                src/qgcunittest/RadioConfigTest.cc \
-                src/qgcunittest/TCPLinkTest.cc \
-                src/qgcunittest/TCPLoopBackServer.cc \
-                src/qgcunittest/UnitTest.cc \
-                src/qgcunittest/UnitTestList.cc \
-        }
+        SOURCES += \
+            src/AnalyzeView/LogDownloadTest.cc \
+            src/FactSystem/FactSystemTestBase.cc \
+            src/FactSystem/FactSystemTestGeneric.cc \
+            src/FactSystem/FactSystemTestPX4.cc \
+            src/FactSystem/ParameterManagerTest.cc \
+            src/MissionManager/ComplexMissionItemTest.cc \
+            src/MissionManager/MissionCommandTreeTest.cc \
+            src/MissionManager/MissionControllerTest.cc \
+            src/MissionManager/MissionControllerManagerTest.cc \
+            src/MissionManager/MissionItemTest.cc \
+            src/MissionManager/MissionManagerTest.cc \
+            src/MissionManager/SimpleMissionItemTest.cc \
+            src/qgcunittest/GeoTest.cc \
+            src/qgcunittest/FileDialogTest.cc \
+            src/qgcunittest/FileManagerTest.cc \
+            src/qgcunittest/FlightGearTest.cc \
+            src/qgcunittest/LinkManagerTest.cc \
+            src/qgcunittest/MainWindowTest.cc \
+            src/qgcunittest/MavlinkLogTest.cc \
+            src/qgcunittest/MessageBoxTest.cc \
+            src/qgcunittest/MultiSignalSpy.cc \
+            src/qgcunittest/RadioConfigTest.cc \
+            src/qgcunittest/TCPLinkTest.cc \
+            src/qgcunittest/TCPLoopBackServer.cc \
+            src/qgcunittest/UnitTest.cc \
+            src/qgcunittest/UnitTestList.cc \
     } # !MobileBuild
 } # DebugBuild
 
@@ -725,13 +728,11 @@ HEADERS+= \
     src/VehicleSetup/VehicleComponent.h \
 
 !MobileBuild {
-    !MinimalistBuild {
-        HEADERS += \
-            src/VehicleSetup/FirmwareUpgradeController.h \
-            src/VehicleSetup/Bootloader.h \
-            src/VehicleSetup/PX4FirmwareUpgradeThread.h \
-            src/VehicleSetup/FirmwareImage.h \
-    }
+    HEADERS += \
+        src/VehicleSetup/FirmwareUpgradeController.h \
+        src/VehicleSetup/Bootloader.h \
+        src/VehicleSetup/PX4FirmwareUpgradeThread.h \
+        src/VehicleSetup/FirmwareImage.h \
 }
 
 SOURCES += \
@@ -790,13 +791,11 @@ SOURCES += \
     src/VehicleSetup/VehicleComponent.cc \
 
 !MobileBuild {
-    !MinimalistBuild {
     SOURCES += \
         src/VehicleSetup/FirmwareUpgradeController.cc \
         src/VehicleSetup/Bootloader.cc \
         src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
         src/VehicleSetup/FirmwareImage.cc \
-    }
 }
 
 # Fact System code
@@ -851,67 +850,6 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from user_config.pri)")
 } else {
     include(src/VideoStreaming/VideoStreaming.pri)
-}
-
-#-------------------------------------------------------------------------------------
-# Android
-
-MinimalistBuild {
-    AndroidBuild {
-        QT += androidextras
-        ANDROID_PACKAGE_SOURCE_DIR = $$PWD/minimal_android
-        OTHER_FILES += \
-            $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml \
-
-        DISTFILES += \
-            android/gradle/wrapper/gradle-wrapper.jar \
-            android/gradlew \
-            android/res/values/libs.xml \
-            android/build.gradle \
-            android/gradle/wrapper/gradle-wrapper.properties \
-            android/gradlew.bat
-    }
-} else {
-    AndroidBuild {
-        include($$PWD/libs/qtandroidserialport/src/qtandroidserialport.pri)
-        message("Adding Serial Java Classes")
-        QT += androidextras
-        ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
-        OTHER_FILES += \
-            $$PWD/android/AndroidManifest.xml \
-            $$PWD/android/res/xml/device_filter.xml \
-            $$PWD/android/src/com/hoho/android/usbserial/driver/CdcAcmSerialDriver.java \
-            $$PWD/android/src/com/hoho/android/usbserial/driver/CommonUsbSerialDriver.java \
-            $$PWD/android/src/com/hoho/android/usbserial/driver/Cp2102SerialDriver.java \
-            $$PWD/android/src/com/hoho/android/usbserial/driver/FtdiSerialDriver.java \
-            $$PWD/android/src/com/hoho/android/usbserial/driver/ProlificSerialDriver.java \
-            $$PWD/android/src/com/hoho/android/usbserial/driver/UsbId.java \
-            $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialDriver.java \
-            $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
-            $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
-            $$PWD/android/src/org/qgroundcontrol/qgchelper/UsbDeviceJNI.java \
-            $$PWD/android/src/org/qgroundcontrol/qgchelper/UsbIoManager.java
-
-        DISTFILES += \
-            android/gradle/wrapper/gradle-wrapper.jar \
-            android/gradlew \
-            android/res/values/libs.xml \
-            android/build.gradle \
-            android/gradle/wrapper/gradle-wrapper.properties \
-            android/gradlew.bat
-    }
-}
-
-#-------------------------------------------------------------------------------------
-# Custom Build: QGC will create a QGCCustom object (exposed by your custom build) and
-# call its QGCCustom::init(QGCApplication* pApp) method, which you should expose. This
-# the start of allowing custom Plugins, which will eventually use a more defined
-# runtime plugin architecture and not require a separate build.
-
-exists(custom.pri) {
-    message("Including custom build")
-    DEFINES += CUSTOM_BUILD
-    include(custom.pri)
 }
 
 #-------------------------------------------------------------------------------------
