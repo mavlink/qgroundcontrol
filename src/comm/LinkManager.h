@@ -24,7 +24,7 @@
 #include "QGCToolbox.h"
 #include "ProtocolInterface.h"
 #include "MAVLinkProtocol.h"
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
 #include "LogReplayLink.h"
 #endif
 #include "QmlObjectListModel.h"

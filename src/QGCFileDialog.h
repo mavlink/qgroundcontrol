@@ -11,7 +11,7 @@
 #ifndef QGCFILEDIALOG_H
 #define QGCFILEDIALOG_H
 
-#if defined(__mobile__) || defined(MINIMALIST_BUILD)
+#if defined(__mobile__)
 #error Should not be included in mobile or minimalist builds
 #endif
 

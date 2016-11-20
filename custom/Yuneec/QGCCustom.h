@@ -7,7 +7,6 @@
 
 #ifndef YUNEEC_M4_H
 #define YUNEEC_M4_H
-#if defined(MINIMALIST_BUILD)
 
 #include <QObject>
 #include "m4Defines.h"
@@ -245,13 +244,16 @@ class m4Command
 public:
     m4Command(int id, int type = Yuneec::COMMAND_TYPE_NORMAL)
     {
-        data.resize(Yuneec::COMMAND_BODY_EXCLUDE_VALUES_LENGTH);
+        data.fill(0, Yuneec::COMMAND_BODY_EXCLUDE_VALUES_LENGTH);
         data[2] = (uint8_t)type;
-        data[data.size() - 1] = (uint8_t)id;
+        data[9] = (uint8_t)id;
     }
     virtual ~m4Command() {}
-    QByteArray pack()
+    QByteArray pack(QByteArray payload = QByteArray())
     {
+        if(payload.size()) {
+            data.append(payload);
+        }
         QByteArray command;
         command.resize(3);
         command[0] = 0x55;
@@ -265,5 +267,4 @@ public:
     QByteArray data;
 };
 
-#endif
 #endif

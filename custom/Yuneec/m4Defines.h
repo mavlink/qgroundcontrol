@@ -7,7 +7,6 @@
 
 #ifndef YUNEEC_M4DEFINES_H
 #define YUNEEC_M4DEFINES_H
-#if defined(MINIMALIST_BUILD)
 namespace Yuneec {
 
 enum {
@@ -293,5 +292,4 @@ enum {
 };
 
 }
-#endif
 #endif

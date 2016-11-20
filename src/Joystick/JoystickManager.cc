@@ -13,12 +13,12 @@
 
 #include <QQmlEngine>
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     #include "JoystickSDL.h"
     #define __sdljoystick__
 #endif
 
-#if defined(__android__) || defined(MINIMALIST_BUILD)
+#if defined(__android__)
     /*
      * Android Joystick not yet supported
      * #include "JoystickAndroid.h"

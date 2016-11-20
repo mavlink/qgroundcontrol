@@ -9,9 +9,7 @@
  *   Original source: DroneFly/droneservice/src/main/java/com/yuneec/droneservice/parse/St16Controller.java
  */
 
-#if defined(MINIMALIST_BUILD)
-
-#include "m4.h"
+#include "QGCCustom.h"
 #include "SerialComm.h"
 #include <QDebug>
 #include <math.h>
@@ -78,7 +76,6 @@ QGCCustom::init(QGCApplication* /*pApp*/)
 bool
 QGCCustom::_start()
 {
-    qDebug() << "Enable M4";
     //-- Enable M4: This is temporary. We will eventualy need to go through the
     //   whole initialization now done by the default Yuneec app.
     return _enterRun();
@@ -93,8 +90,10 @@ QGCCustom::_start()
 bool
 QGCCustom::_enterRun()
 {
+    qDebug() << "CMD_ENTER_RUN";
     m4Command enterRunCmd(Yuneec::CMD_ENTER_RUN);
     QByteArray cmd = enterRunCmd.pack();
+    qDebug() << cmd.toHex();
     return _commPort->write(cmd);
 }
 
@@ -150,8 +149,7 @@ QGCCustom::_startBind()
     bindPayload[3] = Yuneec::CMD_START_BIND;
     bindPayload[6] = 0x05;  // 跳频间隔时间1 (Frequency hopping interval 1)
     bindPayload[7] = 0x0F;  // 跳频间隔时间2 (Frequency hopping interval 2)
-    startBindCmd.data.append(bindPayload);
-    QByteArray cmd = startBindCmd.pack();
+    QByteArray cmd = startBindCmd.pack(bindPayload);
     return _commPort->write(cmd);
 }
 
@@ -174,8 +172,7 @@ QGCCustom::_bind(int rxAddr)
     bindPayload[5] = (uint8_t)((rxAddr & 0xff00) >> 8);
     bindPayload[6] = 5; //-- Gotta love magic numbers
     bindPayload[7] = 15;
-    bindCmd.data.append(bindPayload);
-    QByteArray cmd = bindCmd.pack();
+    QByteArray cmd = bindCmd.pack(bindPayload);
     return _commPort->write(cmd);
 }
 
@@ -207,12 +204,15 @@ QGCCustom::_queryBindState()
 }
 
 //-----------------------------------------------------------------------------
+/*
+ * A full, validate message has been received.
+ */
 void
 QGCCustom::_bytesReady(QByteArray data)
 {
     m4Packet packet(data);
     int type = packet.type();
-    //-- Some Chinese voodoo
+    //-- Some Yuneec voodoo
     type = (type & 0x1c) >> 2;
     if(_handleNonTypePacket(packet)) {
         return;
@@ -245,7 +245,7 @@ QGCCustom::_bytesReady(QByteArray data)
                     BindState state;
                     state.state = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
                     qDebug() << "M4 Packet: CMD_QUERY_BIND_STATE" << state.state;
-                    /*
+                    /* From original Java code
                     ControllerStateManager manager = ControllerStateManager.getInstance();
                     if (manager != null) {
                         manager.onRecvBindState(state);
@@ -293,7 +293,7 @@ QGCCustom::_handleRxBindInfo(m4Packet& packet)
     int p = packet.data.length() - 2;
     rxBindInfoFeedback.txAddr = ((uint8_t)packet.data[p] & 0xff) | ((uint8_t)packet.data[p + 1] << 8 & 0xff00);
     qDebug() << "M4 Packet: RxBindInfo:" << rxBindInfoFeedback.getName();
-    /*
+    /* From original Java code
     ControllerStateManager manager = ControllerStateManager.getInstance();
     if (manager != null) {
         manager.onRecvBindInfo(rxBindInfoFeedback);
@@ -309,7 +309,7 @@ QGCCustom::_handleChannel(m4Packet& packet)
     switch(packet.commandID()) {
         case Yuneec::CMD_RX_FEEDBACK_DATA:
             qDebug() << "M4 Packet: CMD_RX_FEEDBACK_DATA";
-            /*
+            /* From original Java code
             if (droneFeedbackListener == null) {
                 return;
             }
@@ -332,7 +332,7 @@ QGCCustom::_handleCommand(m4Packet& packet)
             {
                 QByteArray commandValues = packet.commandValues();
                 int status = commandValues[0] & 0x1f;
-                /*
+                /* From original Java code
                 ControllerStateManager manager = ControllerStateManager.getInstance();
                 if (manager != null) {
                     manager.onRecvTxState(status);
@@ -359,6 +359,7 @@ QGCCustom::_switchChanged(m4Packet& packet)
     switchChanged.hwId      = commandValues[0];
     switchChanged.oldState  = commandValues[1];
     switchChanged.newState  = commandValues[2];
+    // From original Java code
     //controllerFeedbackListener.onSwitchChanged(switchChanged);
     qDebug() << "M4 Packet: CMD_TX_SWITCH_CHANGED" << switchChanged.hwId << switchChanged.oldState << switchChanged.newState;
 }
@@ -405,6 +406,7 @@ QGCCustom::_handleMixedChannelData(m4Packet& packet)
         channels.append(value);
     }
     qDebug() << "M4 Packet: CMD_TX_CHANNEL_DATA_MIXED:" << channels;
+    // From original Java code
     //controllerFeedbackListener.onReceiveChannelValues(channels);
 }
 
@@ -420,6 +422,7 @@ QGCCustom::_handControllerFeedback(m4Packet& packet) {
     controllerLocation.speed        = byteArrayToShort(commandValues, 14);
     controllerLocation.angle        = byteArrayToShort(commandValues, 16);
     controllerLocation.satelliteCount = commandValues[18] & 0x1f;
+    // From original Java code
     //controllerFeedbackListener.onReceiveControllerLocation(controllerLocation);
     qDebug() << "M4 Packet: COMMAND_M4_SEND_GPS_DATA_TO_PA" << controllerLocation.satelliteCount << controllerLocation.latitude << controllerLocation.longitude << controllerLocation.altitude;
 }
@@ -477,5 +480,3 @@ QGCCustom::byteArrayToShort(QByteArray data, int offset, bool isBigEndian)
     iRetVal = (iHigh << 8) | (0xFF & iLow);
     return iRetVal;
 }
-
-#endif

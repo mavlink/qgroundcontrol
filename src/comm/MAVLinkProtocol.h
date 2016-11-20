@@ -115,7 +115,7 @@ public slots:
     /** @brief Store protocol settings */
     void storeSettings();
 
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     /// @brief Deletes any log files which are in the temp directory
     static void deleteTempLogFiles(void);
 
@@ -172,7 +172,7 @@ private slots:
     void _vehicleCountChanged(int count);
 
 private:
-#if !defined(__mobile__) && !defined(MINIMALIST_BUILD)
+#if !defined(__mobile__)
     bool _closeLogFile(void);
     void _startLogging(void);
     void _stopLogging(void);
