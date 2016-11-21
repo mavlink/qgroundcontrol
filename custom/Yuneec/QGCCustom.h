@@ -10,7 +10,10 @@
 
 #include <QObject>
 #include <QTimer>
+#include "QGCLoggingCategory.h"
 #include "m4Defines.h"
+
+Q_DECLARE_LOGGING_CATEGORY(YuneecLog)
 
 //-- Comments (Google) translated from Chinese.
 //-- Nowhere I could find access through a struct. It's always numbered index into a byte array.
