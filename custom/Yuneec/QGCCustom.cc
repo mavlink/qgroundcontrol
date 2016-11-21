@@ -49,6 +49,24 @@ static const unsigned char CRC8T[] = {
 // RC Channel data provided by Yuneec
 #include "ChannelData.inc"
 
+static QString
+dump_data_packet(QByteArray data)
+{
+    QString resp;
+    QString temp;
+    resp += "\n";
+    for(int i = 0; i < data.size(); i++) {
+        temp.sprintf("%02X ", i);
+        resp += temp;
+    }
+    resp += "\n";
+    for(int i = 0; i < data.size(); i++) {
+        temp.sprintf("%02X ", (uint8_t)data[i]);
+        resp += temp;
+    }
+    return resp;
+}
+
 //-----------------------------------------------------------------------------
 /** x^8 + x^2 + x + 1 */
 uint8_t
@@ -65,7 +83,7 @@ QGCCustom::crc8(uint8_t* buffer, int len)
 QGCCustom::QGCCustom(QObject* parent)
     : QObject(parent)
     , _state(STATE_NONE)
-    , _enterBindCount(0)
+    , _responseTryCount(0)
     , _currentChannelAdd(0)
 {
     _commPort = new M4SerialComm(this);
@@ -106,8 +124,15 @@ QGCCustom::init(QGCApplication* /*pApp*/)
     }
     settings.endGroup();
     bool res = false;
+    /*
+        If we have previously bound, I don't know the proper sequence in this case.
+        Sending ENTER_BIND, even if the vehicle is in binding mode gives no response.
+        As wen can't "ENTER_BIND", none of the binding commands/messages can be used.
+        All other post binding commands don't work either. In other words, once the
+        M4 is "bound", nothing else works on subsequence runs. You have to power
+        down the ST16, remove the battery and start over.
+    */
 //    if(_rxBindInfoFeedback.nodeId) {
-//        //-- We have previously bound but I don't know the proper sequence in this case
 //        qDebug() << "Previously bound with:" << _rxBindInfoFeedback.nodeId;
 //        _state = STATE_ENTER_RUN;
 //        _enterRun();
@@ -120,7 +145,7 @@ QGCCustom::init(QGCApplication* /*pApp*/)
 bool
 QGCCustom::_startBindingSequence()
 {
-    _enterBindCount = 0;
+    _responseTryCount = 0;
     _state = STATE_ENTER_BIND;
     _enterBind();
     _timer.start(COMMAND_WAIT_INTERVAL);
@@ -134,12 +159,16 @@ QGCCustom::_checkBindState()
     switch(_state) {
         case STATE_ENTER_BIND:
             qDebug() << "STATE_ENTER_BIND Timeout";
-            if(_enterBindCount > 10) {
-                qWarning() << "Too many STATE_ENTER_BIND Timeouts";
+            if(_responseTryCount > 10) {
+                qWarning() << "Too many STATE_ENTER_BIND Timeouts. Switching to post bind init.";
+                _responseTryCount = 0;
+                _state = STATE_SEND_RX_INFO;
+                _sendRxResInfo();
+                _timer.start(COMMAND_WAIT_INTERVAL);
             } else {
                 _enterBind();
                 _timer.start(COMMAND_WAIT_INTERVAL);
-                _enterBindCount++;
+                _responseTryCount++;
             }
             break;
 
@@ -169,9 +198,14 @@ QGCCustom::_checkBindState()
             break;
 
         case STATE_RECV_BOTH_CH:
-            qDebug() << "STATE_RECV_BOTH_CH Timeout";
-            _sendRecvBothCh();
-            _timer.start(COMMAND_WAIT_INTERVAL);
+            if(_responseTryCount > 10) {
+                qWarning() << "Too many STATE_RECV_BOTH_CH Timeouts. Giving up...";
+            } else {
+                qDebug() << "STATE_RECV_BOTH_CH Timeout";
+                _sendRecvBothCh();
+                _timer.start(COMMAND_WAIT_INTERVAL);
+                _responseTryCount++;
+            }
             break;
 
         case STATE_SET_CHANNEL_SETTINGS:
@@ -195,15 +229,25 @@ QGCCustom::_checkBindState()
             break;
 
         case STATE_SEND_RX_INFO:
-            qDebug() << "STATE_SEND_RX_INFO Timeout";
-            _sendRxResInfo();
-            _timer.start(COMMAND_WAIT_INTERVAL);
+            if(_responseTryCount > 10) {
+                qWarning() << "Too many STATE_SEND_RX_INFO Timeouts. Giving up...";
+            } else {
+                qDebug() << "STATE_SEND_RX_INFO Timeout";
+                _sendRxResInfo();
+                _timer.start(COMMAND_WAIT_INTERVAL);
+                _responseTryCount++;
+            }
             break;
 
         case STATE_ENTER_RUN:
-            qDebug() << "STATE_ENTER_RUN Timeout";
-            _enterRun();
-            _timer.start(COMMAND_WAIT_INTERVAL);
+            if(_responseTryCount > 10) {
+                qWarning() << "Too many STATE_ENTER_RUN Timeouts. Giving up...";
+            } else {
+                qDebug() << "STATE_ENTER_RUN Timeout";
+                _enterRun();
+                _timer.start(COMMAND_WAIT_INTERVAL);
+                _responseTryCount++;
+            }
             break;
 
         default:
@@ -471,6 +515,7 @@ QGCCustom::_bytesReady(QByteArray data)
             _handleCommand(packet);
             break;
         case Yuneec::TYPE_RSP:
+            qDebug() << "TYPE_RSP Response:" << dump_data_packet(data);
             switch(packet.commandID()) {
                 case Yuneec::CMD_QUERY_BIND_STATE:
                     //-- Response from _queryBindState()
@@ -490,6 +535,7 @@ QGCCustom::_bytesReady(QByteArray data)
                     //-- Response from _exitBind()
                     qDebug() << "M4 Packet: CMD_EXIT_BIND";
                     if(_state == STATE_EXIT_BIND) {
+                        _responseTryCount = 0;
                         _state = STATE_RECV_BOTH_CH;
                         _sendRecvBothCh();
                         _timer.start(COMMAND_WAIT_INTERVAL);
@@ -534,6 +580,7 @@ QGCCustom::_bytesReady(QByteArray data)
                             //-- Wait longer
                             _timer.start(500);
                         } else {
+                            _responseTryCount = 0;
                             _state = STATE_SEND_RX_INFO;
                             _sendRxResInfo();
                             _timer.start(COMMAND_WAIT_INTERVAL);
@@ -545,6 +592,7 @@ QGCCustom::_bytesReady(QByteArray data)
                     qDebug() << "M4 Packet: TYPE_RSP CMD_SEND_RX_RESINFO";
                     if(_state == STATE_SEND_RX_INFO) {
                         _state = STATE_ENTER_RUN;
+                        _responseTryCount = 0;
                         _enterRun();
                         _timer.start(COMMAND_WAIT_INTERVAL);
                     }

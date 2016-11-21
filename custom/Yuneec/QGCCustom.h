@@ -196,7 +196,7 @@ private:
         STATE_RUNNING
     };
     int             _state;
-    int             _enterBindCount;
+    int             _responseTryCount;
     int             _currentChannelAdd;
     RxBindInfo      _rxBindInfoFeedback;
     QTimer          _timer;
