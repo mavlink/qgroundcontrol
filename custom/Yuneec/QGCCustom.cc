@@ -66,6 +66,7 @@ QGCCustom::QGCCustom(QObject* parent)
     : QObject(parent)
     , _state(STATE_NONE)
     , _enterBindCount(0)
+    , _currentChannelAdd(0)
 {
     _commPort = new M4SerialComm(this);
 }
@@ -104,31 +105,20 @@ QGCCustom::init(QGCApplication* /*pApp*/)
         _rxBindInfoFeedback.txAddr   = settings.value(ktxAddr, 0).toInt();
     }
     settings.endGroup();
-    if(_rxBindInfoFeedback.nodeId) {
-        //-- What do we do about it?
-        qDebug() << "Previously bound with:" << _rxBindInfoFeedback.nodeId;
-    }
-    return _start();
+    bool res = false;
+//    if(_rxBindInfoFeedback.nodeId) {
+//        //-- We have previously bound but I don't know the proper sequence in this case
+//        qDebug() << "Previously bound with:" << _rxBindInfoFeedback.nodeId;
+//        _state = STATE_ENTER_RUN;
+//        _enterRun();
+//    } else {
+        res = _startBindingSequence();
+//    }
+    return res;
 }
 
-//-----------------------------------------------------------------------------
-/*
-    The binding sequence:
-
-    -->  _enterBind(): CMD_ENTER_BIND (cmd)
-    <--  Wait for CMD ACK response CMD_ENTER_BIND
-    -->  _startBind(): CMD_START_BIND (msg) (BIND_MSG_SCAN in the documentation sent)
-    <--  Wait for MSG ACK response TYPE_BIND
-
-
-
-    <--  Wait for rxBindInfoFeedback response ()
-
-
-
-*/
 bool
-QGCCustom::_start()
+QGCCustom::_startBindingSequence()
 {
     _enterBindCount = 0;
     _state = STATE_ENTER_BIND;
@@ -409,7 +399,7 @@ QGCCustom::_syncMixingDataAdd()
 {
     qDebug() << "CMD_SYNC_MIXING_DATA_ADD";
     m4Command syncMixingDataAddCmd(Yuneec::CMD_SYNC_MIXING_DATA_ADD);
-    QByteArray payload((const char*)channel_data, sizeof(channel_data));
+    QByteArray payload((const char*)&channel_data[_currentChannelAdd], CHANNEL_LENGTH);
     QByteArray cmd = syncMixingDataAddCmd.pack(payload);
     qDebug() << cmd.toHex();
     return _commPort->write(cmd);
@@ -528,18 +518,26 @@ QGCCustom::_bytesReady(QByteArray data)
                     qDebug() << "M4 Packet: CMD_SYNC_MIXING_DATA_DELETE_ALL";
                     if(_state == STATE_MIX_CHANNEL_DELETE) {
                         _state = STATE_MIX_CHANNEL_ADD;
+                        _currentChannelAdd = 0;
                         _syncMixingDataAdd();
-                        _timer.start(COMMAND_WAIT_INTERVAL);
+                        //-- Wait longer
+                        _timer.start(500);
                     }
                     break;
                 case Yuneec::CMD_SYNC_MIXING_DATA_ADD:
                     //-- Response from _syncMixingDataAdd()
-                    qDebug() << "M4 Packet: CMD_SYNC_MIXING_DATA_ADD";
+                    qDebug() << "M4 Packet: CMD_SYNC_MIXING_DATA_ADD" << _currentChannelAdd;
                     if(_state == STATE_MIX_CHANNEL_ADD) {
-                        _state = STATE_SEND_RX_INFO;
-                        _sendRxResInfo();
-                        //-- Wait longer
-                        _timer.start(2000);
+                        _currentChannelAdd++;
+                        if(_currentChannelAdd < NUM_CHANNELS) {
+                            _syncMixingDataAdd();
+                            //-- Wait longer
+                            _timer.start(500);
+                        } else {
+                            _state = STATE_SEND_RX_INFO;
+                            _sendRxResInfo();
+                            _timer.start(COMMAND_WAIT_INTERVAL);
+                        }
                     }
                     break;
                 case Yuneec::CMD_SEND_RX_RESINFO:

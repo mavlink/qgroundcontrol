@@ -155,7 +155,7 @@ private slots:
     void    _bytesReady             (QByteArray data);
     void    _checkBindState         ();
 private:
-    bool    _start                  ();
+    bool    _startBindingSequence                  ();
     bool    _enterRun               ();
     bool    _exitRun                ();
     bool    _startBind              ();
@@ -197,6 +197,7 @@ private:
     };
     int             _state;
     int             _enterBindCount;
+    int             _currentChannelAdd;
     RxBindInfo      _rxBindInfoFeedback;
     QTimer          _timer;
 };
