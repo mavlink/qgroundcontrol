@@ -258,10 +258,10 @@ private:
     void    _handleMixedChannelData (m4Packet& packet);
     void    _handControllerFeedback (m4Packet& packet);
 signals:
-    void    _m4StateChanged             (int state);
-    void    _switchStateChanged         (int swId, int oldState, int newState);
-    void    _channelDataStatus          (QByteArray channelData);
-    void    _controllerLocationChanged  ();
+    void    m4StateChanged             (int state);
+    void    switchStateChanged         (int swId, int oldState, int newState);
+    void    channelDataStatus          (QByteArray channelData);
+    void    controllerLocationChanged  ();
 private:
     M4SerialComm* _commPort;
     enum {
