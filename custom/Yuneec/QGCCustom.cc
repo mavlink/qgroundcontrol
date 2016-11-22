@@ -58,6 +58,7 @@ static const unsigned char CRC8T[] = {
 // RC Channel data provided by Yuneec
 #include "ChannelData.inc"
 
+//-----------------------------------------------------------------------------
 #if 0
 static QString
 dump_data_packet(QByteArray data)
@@ -66,18 +67,22 @@ dump_data_packet(QByteArray data)
     QString temp;
     resp += "\n";
     for(int i = 0; i < data.size(); i++) {
-        temp.sprintf("%02X ", i);
+        temp.sprintf("%03d, ", i);
         resp += temp;
     }
     resp += "\n";
     for(int i = 0; i < data.size(); i++) {
-        temp.sprintf("%02X ", (uint8_t)data[i]);
+        temp.sprintf("%03d, ", (uint8_t)data[i]);
+        resp += temp;
+    }
+    resp += "\n";
+    for(int i = 0; i < data.size(); i++) {
+        temp.sprintf(" %02X, ", (uint8_t)data[i]);
         resp += temp;
     }
     return resp;
 }
 #endif
-
 //-----------------------------------------------------------------------------
 /** x^8 + x^2 + x + 1 */
 uint8_t
@@ -141,15 +146,12 @@ QGCCustom::init(QGCApplication* /*pApp*/)
     }
     settings.endGroup();
     //-- For now, make Power Key (Start/Stop on top of the ST16) work as a power button.
-    for(int i = 0; i < 3; i++) {
-        _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
-        QThread::msleep(50);
-    }
-    //-- Start with Exit run mode first.
-    for(int i = 0; i < 3; i++) {
-        _exitRun();
-        QThread::msleep(50);
-    }
+    _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
+    QThread::msleep(50);
+    //-- Start with Exit run mode first. Eventually, when this is complete we
+    //   will check the current state (_m4State) to decide what to do.
+    _exitRun();
+    QThread::msleep(50);
     _state = STATE_EXIT_RUN;
     _timer.start(COMMAND_WAIT_INTERVAL);
     return true;
@@ -176,6 +178,12 @@ QGCCustom::_initSequence()
 }
 
 //-----------------------------------------------------------------------------
+/*
+ * This handles the sequence of events/commands sent to the MCU. A following
+ * command is only sent once we receive an response from the previous one. If
+ * no response is received, the command is sent again.
+ *
+ */
 void
 QGCCustom::_stateManager()
 {
@@ -241,18 +249,21 @@ QGCCustom::_stateManager()
             qCDebug(YuneecLog) << "STATE_BIND Timeout";
             _bind(_rxBindInfoFeedback.nodeId);
             _timer.start(COMMAND_WAIT_INTERVAL);
+            //-- TODO: This can't wait for ever...
             break;
 
         case STATE_QUERY_BIND:
             qCDebug(YuneecLog) << "STATE_QUERY_BIND Timeout";
             _queryBindState();
             _timer.start(COMMAND_WAIT_INTERVAL);
+            //-- TODO: This can't wait for ever...
             break;
 
         case STATE_EXIT_BIND:
             qCDebug(YuneecLog) << "STATE_EXIT_BIND Timeout";
             _exitBind();
             _timer.start(COMMAND_WAIT_INTERVAL);
+            //-- TODO: This can't wait for ever...
             break;
 
         case STATE_RECV_BOTH_CH:
@@ -270,12 +281,14 @@ QGCCustom::_stateManager()
             qCDebug(YuneecLog) << "STATE_SET_CHANNEL_SETTINGS Timeout";
             _setChannelSetting();
             _timer.start(COMMAND_WAIT_INTERVAL);
+            //-- TODO: This can't wait for ever...
             break;
 
         case STATE_MIX_CHANNEL_DELETE:
             qCDebug(YuneecLog) << "STATE_MIX_CHANNEL_DELETE Timeout";
             _syncMixingDataDeleteAll();
             _timer.start(COMMAND_WAIT_INTERVAL);
+            //-- TODO: This can't wait for ever...
             break;
 
         case STATE_MIX_CHANNEL_ADD:
@@ -284,6 +297,7 @@ QGCCustom::_stateManager()
             _state = STATE_MIX_CHANNEL_DELETE;
             _syncMixingDataDeleteAll();
             _timer.start(COMMAND_WAIT_INTERVAL);
+            //-- TODO: This can't wait for ever...
             break;
 
         case STATE_SEND_RX_INFO:
@@ -361,6 +375,7 @@ QGCCustom::_enterBind()
 /**
  * Use this command to set the type of channel receive original hardware signal values and encoding values.
  */
+//-- TODO: Do we really need raw data? Maybe CMD_RECV_MIXED_CH_ONLY would be enough.
 bool
 QGCCustom::_sendRecvBothCh()
 {
@@ -511,6 +526,15 @@ QGCCustom::_syncMixingDataDeleteAll()
 bool
 QGCCustom::_syncMixingDataAdd()
 {
+    /*
+     *  "Mixing Data" is an array of NUM_CHANNELS (25) sets of CHANNEL_LENGTH (96)
+     *  magic bytes each. Each set is sent using this command. The documentation states
+     *  that if there is an error you should send the CMD_SYNC_MIXING_DATA_DELETE_ALL
+     *  command again and start over.
+     *  I have not seen a way to identify an error other than getting no response once
+     *  the command is sent. There doesn't appear to be a "NAK" type response.
+     */
+
     qCDebug(YuneecLog) << "Sending: CMD_SYNC_MIXING_DATA_ADD";
     m4Command syncMixingDataAddCmd(Yuneec::CMD_SYNC_MIXING_DATA_ADD);
     QByteArray payload((const char*)&channel_data[_currentChannelAdd], CHANNEL_LENGTH);
@@ -527,10 +551,40 @@ QGCCustom::_syncMixingDataAdd()
 bool
 QGCCustom::_sendRxResInfo()
 {
+    /*
+     * This is not working. Even though, as far as I can tell it follows the
+     * directions to the letter, it seems it's wrong. We get no negative response
+     * from the MCU so I can't tell what's going on. What I do know is that when
+     * we receive this data structure from the MCU, it comes in a 45-byte array,
+     * yet I'm told to build a 44-byte array as laid out below.
+     *
+     * This is what the original Java code looks like:
+
+        public byte[] toByte() {
+            int len = 44;
+            byte data[] = new byte[len];
+            data[6] = (byte) (mode & 0xff);
+            data[7] = (byte) ((mode & 0xff00) >> 8);
+            data[8] = (byte) (panId & 0xff);
+            data[9] = (byte) ((panId & 0xff00) >> 8);
+            data[10] = (byte) (nodeId & 0xff);
+            data[11] = (byte) ((nodeId & 0xff00) >> 8);
+            data[20] = (byte) aNum;
+            data[21] = (byte) aBit;
+            data[24] = (byte) swNum;
+            data[25] = (byte) swBit;
+            data[len - 2] = (byte) (txAddr & 0xff);
+            data[len - 1] = (byte) ((txAddr & 0xff00) >> 8);
+            return data;
+        }
+
+     */
+
     qCDebug(YuneecLog) << "Sending: CMD_SEND_RX_RESINFO";
     m4Command sendRxResInfoCmd(Yuneec::CMD_SEND_RX_RESINFO);
     QByteArray payload;
-    payload.fill(0, 44);
+    int len = 44;
+    payload.fill(0, len); //-- Creates a 44-byte array and fill it with zeroes
     payload[6]  = (uint8_t)( _rxBindInfoFeedback.mode     & 0xff);
     payload[7]  = (uint8_t)((_rxBindInfoFeedback.mode     & 0xff00) >> 8);
     payload[8]  = (uint8_t)( _rxBindInfoFeedback.panId    & 0xff);
@@ -541,15 +595,22 @@ QGCCustom::_sendRxResInfo()
     payload[21] = (uint8_t)( _rxBindInfoFeedback.aBit);
     payload[24] = (uint8_t)( _rxBindInfoFeedback.swNum);
     payload[25] = (uint8_t)( _rxBindInfoFeedback.swBit);
-    payload[42] = (uint8_t)( _rxBindInfoFeedback.txAddr   & 0xff);
-    payload[43] = (uint8_t)((_rxBindInfoFeedback.txAddr   & 0xff00) >> 8);
+    payload[len - 2] = (uint8_t)( _rxBindInfoFeedback.txAddr & 0xff);
+    payload[len - 1] = (uint8_t)((_rxBindInfoFeedback.txAddr & 0xff00) >> 8);
     QByteArray cmd = sendRxResInfoCmd.pack(payload);
+    //qCDebug(YuneecLog) << dump_data_packet(cmd);
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
 /*
- * A full, validate data packet has been received.
+ *
+ * A full, validated data packet has been received. The data argument contains
+ * only the data portion. The 0x55, 0x55 header and length (3 bytes) have been
+ * removed as well as the trailing CRC (1 byte).
+ *
+ * Code largely based on original Java code found in the St16Controller class.
+ * The main difference is we also handle the machine state here.
  */
 void
 QGCCustom::_bytesReady(QByteArray data)
@@ -583,7 +644,6 @@ QGCCustom::_bytesReady(QByteArray data)
             _handleCommand(packet);
             break;
         case Yuneec::TYPE_RSP:
-            //qCDebug(YuneecLog) << "Received TYPE_RSP Response:" << dump_data_packet(data);
             switch(packet.commandID()) {
                 case Yuneec::CMD_QUERY_BIND_STATE:
                     //-- Response from _queryBindState()
@@ -700,7 +760,7 @@ QGCCustom::_bytesReady(QByteArray data)
             qCDebug(YuneecLog) << "Received TYPE_MISSION (?)";
             break;
         default:
-            qCDebug(YuneecLog) << "Received: Unknown Packet" << type;
+            qCDebug(YuneecLog) << "Received: Unknown Packet" << type << data.toHex();
             break;
     }
 }
@@ -769,8 +829,30 @@ QGCCustom::_handleRxBindInfo(m4Packet& packet)
     //-- TODO: If for some reason this is done where two or more Typhoons are in
     //   binding mode, we will be receiving multiple responses. No check for this
     //   situation is done below.
+    /*
+     * Based on original Java code as below:
+     *
+        private void handleRxBindInfo(byte[] data) {
+            RxBindInfo rxBindInfoFeedback = new RxBindInfo();
+            rxBindInfoFeedback.mode = (data[6] & 0xff) | (data[7] << 8 & 0xff00);
+            rxBindInfoFeedback.panId = (data[8] & 0xff) | (data[9] << 8 & 0xff00);
+            rxBindInfoFeedback.nodeId = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
+            rxBindInfoFeedback.aNum = data[20];
+            rxBindInfoFeedback.aBit = data[21];
+            rxBindInfoFeedback.swNum = data[24];
+            rxBindInfoFeedback.swBit = data[25];
+            int p = data.length - 2;
+            rxBindInfoFeedback.txAddr = (data[p] & 0xff) | (data[p + 1] << 8 & 0xff00);//data[12]~data[19]
+            ControllerStateManager manager = ControllerStateManager.getInstance();
+            if (manager != null) {
+                manager.onRecvBindInfo(rxBindInfoFeedback);
+            }
+        }
+     *
+     */
     qCDebug(YuneecLog) << "Received: TYPE_BIND with rxBindInfoFeedback";
     if(_state == STATE_START_BIND) {
+        //qCDebug(YuneecLog) << dump_data_packet(packet.data);
         _timer.stop();
         _rxBindInfoFeedback.mode     = ((uint8_t)packet.data[6]  & 0xff) | ((uint8_t)packet.data[7]  << 8 & 0xff00);
         _rxBindInfoFeedback.panId    = ((uint8_t)packet.data[8]  & 0xff) | ((uint8_t)packet.data[9]  << 8 & 0xff00);
@@ -780,7 +862,7 @@ QGCCustom::_handleRxBindInfo(m4Packet& packet)
         _rxBindInfoFeedback.swNum    = (uint8_t)packet.data[24];
         _rxBindInfoFeedback.swBit    = (uint8_t)packet.data[25];
         int p = packet.data.length() - 2;
-        _rxBindInfoFeedback.txAddr = ((uint8_t)packet.data[p] & 0xff) | ((uint8_t)packet.data[p + 1] << 8 & 0xff00);
+        _rxBindInfoFeedback.txAddr   = ((uint8_t)packet.data[p] & 0xff) | ((uint8_t)packet.data[p + 1] << 8 & 0xff00);
         qCDebug(YuneecLog) << "RxBindInfo:" << _rxBindInfoFeedback.getName() << _rxBindInfoFeedback.nodeId;
         _state = STATE_UNBIND;
         _unbind();
@@ -812,6 +894,12 @@ QGCCustom::_handleChannel(m4Packet& packet)
         case Yuneec::CMD_TX_CHANNEL_DATA_MIXED:
             _handleMixedChannelData(packet);
             break;
+        case Yuneec::CMD_TX_CHANNEL_DATA_RAW:
+            //-- We don't yet use this
+            break;
+        case 0x82:
+            //-- Not sure what this is
+            break;
         default:
             qCDebug(YuneecLog) << "Received Unknown TYPE_CHN:" << packet.data.toHex();
             break;
@@ -834,6 +922,9 @@ QGCCustom::_handleCommand(m4Packet& packet)
         case Yuneec::CMD_TX_SWITCH_CHANGED:
             _switchChanged(packet);
             return true;
+        default:
+            qCDebug(YuneecLog) << "Received Unknown TYPE_CMD:" << packet.commandID() << packet.data.toHex();
+            break;
     }
     return false;
 }
@@ -855,8 +946,8 @@ QGCCustom::_switchChanged(m4Packet& packet)
 void
 QGCCustom::_handleMixedChannelData(m4Packet& packet)
 {
-    int analogChannelCount = 10;
-    int switchChannelCount = 2;
+    int analogChannelCount = _rxBindInfoFeedback.aNum  ? _rxBindInfoFeedback.aNum  : 10;
+    int switchChannelCount = _rxBindInfoFeedback.swNum ? _rxBindInfoFeedback.swNum : 2;
     QByteArray values = packet.commandValues();
     int value, val1, val2, startIndex;
     QByteArray channels;

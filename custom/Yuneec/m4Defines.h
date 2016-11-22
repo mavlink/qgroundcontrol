@@ -280,6 +280,7 @@ enum {
         ACTION_REQUEST_CONFIG = 8,
 
 
+        CMD_TX_CHANNEL_DATA_RAW         = 0x77,
         CMD_TX_CHANNEL_DATA_MIXED       = 0x78,
         CMD_TX_STATE_MACHINE            = 0x83,
         CMD_RX_FEEDBACK_DATA            = 0x88,
