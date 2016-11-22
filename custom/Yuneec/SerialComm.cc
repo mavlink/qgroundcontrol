@@ -76,8 +76,11 @@ M4SerialComm::close()
 }
 
 //-----------------------------------------------------------------------------
-bool M4SerialComm::write(QByteArray data)
+bool M4SerialComm::write(QByteArray data, bool debug)
 {
+    if(debug) {
+        qDebug() << data.toHex();
+    }
     return _writePort(data.data(), data.size()) == data.length();
 }
 
