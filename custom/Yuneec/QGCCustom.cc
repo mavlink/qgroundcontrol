@@ -918,7 +918,7 @@ QGCCustom::_handleCommand(m4Packet& packet)
                 int state = (int)(commandValues[0] & 0x1f);
                 if(state != _m4State) {
                     _m4State = state;
-                    emit _m4StateChanged(_m4State);
+                    emit m4StateChanged(_m4State);
                 }
             }
             break;
@@ -942,7 +942,7 @@ QGCCustom::_switchChanged(m4Packet& packet)
     switchChanged.hwId      = (int)commandValues[0];
     switchChanged.oldState  = (int)commandValues[1];
     switchChanged.newState  = (int)commandValues[2];
-    emit _switchStateChanged(switchChanged.hwId, switchChanged.oldState, switchChanged.newState);
+    emit switchStateChanged(switchChanged.hwId, switchChanged.oldState, switchChanged.newState);
 }
 
 //-----------------------------------------------------------------------------
@@ -986,7 +986,7 @@ QGCCustom::_handleMixedChannelData(m4Packet& packet)
         }
         channels.append(value);
     }
-    emit _channelDataStatus(channels);
+    emit channelDataStatus(channels);
 }
 
 //-----------------------------------------------------------------------------
@@ -1007,7 +1007,7 @@ QGCCustom::_handControllerFeedback(m4Packet& packet) {
     _controllerLocation.speed        = byteArrayToShort(commandValues, 14);
     _controllerLocation.angle        = byteArrayToShort(commandValues, 16);
     _controllerLocation.satelliteCount = commandValues[18] & 0x1f;
-    emit _controllerLocationChanged();
+    emit controllerLocationChanged();
 }
 
 //-----------------------------------------------------------------------------
