@@ -345,6 +345,7 @@ HEADERS += \
 
 AndroidBuild {
 HEADERS += \
+	src/Joystick/JoystickAndroid.h \
 }
 
 DebugBuild {
@@ -436,6 +437,7 @@ iOSBuild {
 
 AndroidBuild {
     SOURCES += src/MobileScreenMgr.cc \
+	src/Joystick/JoystickAndroid.cc \
 }
 
 
