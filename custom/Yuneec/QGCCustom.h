@@ -9,7 +9,11 @@
 #define YUNEEC_M4_H
 
 #include <QObject>
+#include <QTimer>
+#include "QGCLoggingCategory.h"
 #include "m4Defines.h"
+
+Q_DECLARE_LOGGING_CATEGORY(YuneecLog)
 
 //-- Comments (Google) translated from Chinese.
 //-- Nowhere I could find access through a struct. It's always numbered index into a byte array.
@@ -85,43 +89,19 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-class QGCCustom : public QObject
-{
-    Q_OBJECT
-public:
-    QGCCustom(QObject* parent = NULL);
-    ~QGCCustom();
-    bool    init(QGCApplication* pApp);
-    static  uint8_t crc8            (uint8_t* buffer, int len);
-    static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
-    static  float   byteArrayToFloat(QByteArray data, int offset);
-    static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
-private slots:
-    void    _bytesReady (QByteArray data);
-private:
-    bool    _start                  ();
-    bool    _enterRun               ();
-    bool    _exitRun                ();
-    bool    _startBind              ();
-    bool    _enterBind              ();
-    bool    _exitBind               ();
-    bool    _bind                   (int rxAddr);
-    bool    _unbind                 ();
-    bool    _queryBindState         ();
-    bool    _handleNonTypePacket    (m4Packet& packet);
-    void    _handleRxBindInfo       (m4Packet& packet);
-    void    _handleChannel          (m4Packet& packet);
-    bool    _handleCommand          (m4Packet& packet);
-    void    _switchChanged          (m4Packet& packet);
-    void    _handleMixedChannelData (m4Packet& packet);
-    void    _handControllerFeedback (m4Packet& packet);
-private:
-    M4SerialComm* _commPort;
-};
-
-//-----------------------------------------------------------------------------
 class RxBindInfo {
 public:
+    RxBindInfo()
+        : mode(0)
+        , panId(0)
+        , nodeId(0)
+        , aNum(0)
+        , aBit(0)
+        , swNum(0)
+        , swBit(0)
+        , txAddr(0)
+    {
+    }
     int mode;
     int panId;
     int nodeId;
@@ -163,33 +143,6 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-class SwitchChanged {
-public:
-    /**
-     * Hardware ID
-     */
-    int hwId;
-    /**
-     * Old status of hardware
-     */
-    int oldState;
-    /**
-     * New status of hardware
-     */
-    int newState;
-};
-
-//-----------------------------------------------------------------------------
-class BindState {
-public:
-    enum {
-        NOT_BOUND = 0,
-        BOUND = 1
-    };
-    int state;
-};
-
-//-----------------------------------------------------------------------------
 class ControllerLocation {
 public:
     ControllerLocation()
@@ -201,6 +154,17 @@ public:
         , speed(0.0f)
         , angle(0.0f)
     {
+    }
+    ControllerLocation& operator=(ControllerLocation& other)
+    {
+        longitude       = other.longitude;
+        latitude        = other.latitude;
+        altitude        = other.altitude;
+        satelliteCount  = other.satelliteCount;
+        accuracy        = other.accuracy;
+        speed           = other.speed;
+        angle           = other.angle;
+        return *this;
     }
     /**
      * Longitude of remote-controller
@@ -235,6 +199,115 @@ public:
     float angle;
 };
 
+//-----------------------------------------------------------------------------
+class QGCCustom : public QObject
+{
+    Q_OBJECT
+public:
+    QGCCustom(QObject* parent = NULL);
+    ~QGCCustom();
+
+    bool    init                    (QGCApplication* pApp);
+
+    enum {
+        M4_STATE_NONE           = 0,
+        M4_STATE_AWAIT          = 1,
+        M4_STATE_BIND           = 2,
+        M4_STATE_CALIBRATION    = 3,
+        M4_STATE_SETUP          = 4,
+        M4_STATE_RUN            = 5,
+        M4_STATE_SIM            = 6,
+        M4_STATE_FACTORY_CALI   = 7
+    };
+
+    int     getm4State              () { return _m4State; }
+    void    getControllerLocation   (ControllerLocation& location);
+
+    static  uint8_t crc8            (uint8_t* buffer, int len);
+    static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
+    static  float   byteArrayToFloat(QByteArray data, int offset);
+    static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
+
+private slots:
+    void    _bytesReady             (QByteArray data);
+    void    _stateManager           ();
+private:
+    bool    _enterRun               ();
+    bool    _exitRun                ();
+    bool    _startBind              ();
+    bool    _enterBind              ();
+    bool    _exitBind               ();
+    bool    _bind                   (int rxAddr);
+    bool    _unbind                 ();
+    void    _checkExitRun           ();
+    void    _initSequence           ();
+    bool    _queryBindState         ();
+    bool    _sendRecvBothCh         ();
+    bool    _setChannelSetting      ();
+    bool    _syncMixingDataDeleteAll();
+    bool    _syncMixingDataAdd      ();
+    bool    _sendRxResInfo          ();
+    bool    _setPowerKey            (int function);
+    void    _handleBindResponse     ();
+    void    _handleQueryBindResponse(QByteArray data);
+    bool    _handleNonTypePacket    (m4Packet& packet);
+    void    _handleRxBindInfo       (m4Packet& packet);
+    void    _handleChannel          (m4Packet& packet);
+    bool    _handleCommand          (m4Packet& packet);
+    void    _switchChanged          (m4Packet& packet);
+    void    _handleMixedChannelData (m4Packet& packet);
+    void    _handControllerFeedback (m4Packet& packet);
+signals:
+    void    _m4StateChanged             (int state);
+    void    _switchStateChanged         (int swId, int oldState, int newState);
+    void    _channelDataStatus          (QByteArray channelData);
+    void    _controllerLocationChanged  ();
+private:
+    M4SerialComm* _commPort;
+    enum {
+        STATE_NONE,
+        STATE_ENTER_BIND_ERROR,
+        STATE_EXIT_RUN,
+        STATE_ENTER_BIND,
+        STATE_START_BIND,
+        STATE_UNBIND,
+        STATE_BIND,
+        STATE_QUERY_BIND,
+        STATE_EXIT_BIND,
+        STATE_RECV_BOTH_CH,
+        STATE_SET_CHANNEL_SETTINGS,
+        STATE_MIX_CHANNEL_DELETE,
+        STATE_MIX_CHANNEL_ADD,
+        STATE_SEND_RX_INFO,
+        STATE_ENTER_RUN,
+        STATE_RUNNING
+    };
+    int                 _state;
+    int                 _responseTryCount;
+    int                 _currentChannelAdd;
+    int                 _m4State;
+    RxBindInfo          _rxBindInfoFeedback;
+    QTimer              _timer;
+    ControllerLocation  _controllerLocation;
+};
+
+//-----------------------------------------------------------------------------
+class SwitchChanged {
+public:
+    /**
+     * Hardware ID
+     */
+    int hwId;
+    /**
+     * Old status of hardware
+     */
+    int oldState;
+    /**
+     * New status of hardware
+     */
+    int newState;
+};
+
 #define m4CommandHeaderLen sizeof(m4CommandHeader)
 
 //-----------------------------------------------------------------------------
@@ -254,6 +327,33 @@ public:
         if(payload.size()) {
             data.append(payload);
         }
+        QByteArray command;
+        command.resize(3);
+        command[0] = 0x55;
+        command[1] = 0x55;
+        command[2] = (uint8_t)data.size() + 1;
+        command.append(data);
+        uint8_t crc = QGCCustom::crc8((uint8_t*)data.data(), data.size());
+        command.append(crc);
+        return command;
+    }
+    QByteArray data;
+};
+
+//-----------------------------------------------------------------------------
+// Base Yuneec Protocol Message
+class m4Message
+{
+public:
+    m4Message(int id, int type = 0)
+    {
+        data.fill(0, 8);
+        data[2] = (uint8_t)type;
+        data[3] = (uint8_t)id;
+    }
+    virtual ~m4Message() {}
+    QByteArray pack()
+    {
         QByteArray command;
         command.resize(3);
         command[0] = 0x55;

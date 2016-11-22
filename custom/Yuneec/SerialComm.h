@@ -22,7 +22,7 @@ public:
     bool        init    (QString port, int baud);
     bool        open    ();
     void        close   ();
-    bool        write   (QByteArray data);
+    bool        write   (QByteArray data, bool debug = false);
     bool        write   (void* data, int length);
     //-- From QThread
     void        run     ();

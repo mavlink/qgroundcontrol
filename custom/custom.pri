@@ -19,6 +19,9 @@ HEADERS += \
     $$PWD/Yuneec/QGCCustom.h \
     $$PWD/Yuneec/SerialComm.h
 
+OTHER_FILES += \
+    $$PWD/Yuneec/ChannelData.inc
+
 INCLUDEPATH += \
     $$PWD/Yuneec
 
