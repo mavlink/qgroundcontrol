@@ -915,8 +915,11 @@ QGCCustom::_handleCommand(m4Packet& packet)
         case Yuneec::CMD_TX_STATE_MACHINE:
             {
                 QByteArray commandValues = packet.commandValues();
-                _m4State = (int)(commandValues[0] & 0x1f);
-                emit _m4StateChanged(_m4State);
+                int state = (int)(commandValues[0] & 0x1f);
+                if(state != _m4State) {
+                    _m4State = state;
+                    emit _m4StateChanged(_m4State);
+                }
             }
             break;
         case Yuneec::CMD_TX_SWITCH_CHANGED:
