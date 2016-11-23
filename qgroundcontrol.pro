@@ -32,7 +32,10 @@ DebugBuild {
 # Custom Build: QGC will create a QGCCustom object (exposed by your custom build) and
 # call its QGCCustom::init(QGCApplication* pApp) method, which you should expose. This
 # is the start of allowing custom Plugins, which will eventually use a more defined
-# runtime plugin architecture and not require a separate build.
+# runtime plugin architecture and not require a separate build. The idea is that we
+# should be able to have uneeded code only loaded (at runtime) if required. For
+# instance, all APM/PX4 support could be implemented as plugins and only load one
+# or the other (or both) if needed.
 #
 
 contains (DEFINES, QGC_DISABLE_CUSTOM) {
@@ -301,6 +304,7 @@ FORMS += \
 }
 
 HEADERS += \
+    src/AnalyzeView/ExifParser.h \
     src/AutoPilotPlugins/APM/APMAirframeLoader.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
     src/CmdLineOptParser.h \
@@ -374,12 +378,6 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
     src/ui/toolbar/MainToolBarController.h \
-    src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
-    src/AutoPilotPlugins/APM/APMAirframeLoader.h \
-    src/QmlControls/QGCImageProvider.h \
-    src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
-    src/PositionManager/PositionManager.h \
-    src/AnalyzeView/ExifParser.h
 
 DebugBuild {
 HEADERS += \
