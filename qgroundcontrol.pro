@@ -32,17 +32,35 @@ DebugBuild {
 # Custom Build: QGC will create a QGCCustom object (exposed by your custom build) and
 # call its QGCCustom::init(QGCApplication* pApp) method, which you should expose. This
 # is the start of allowing custom Plugins, which will eventually use a more defined
-# runtime plugin architecture and not require a separate build.
+# runtime plugin architecture and not require a separate build. The idea is that we
+# should be able to have uneeded code only loaded (at runtime) if required. For
+# instance, all APM/PX4 support could be implemented as plugins and only load one
+# or the other (or both) if needed.
 #
 
-exists($$PWD/custom/custom.pri) {
-    message("Including custom build")
-    DEFINES += CUSTOM_BUILD
-    include($$PWD/custom/custom.pri)
-} else {
+contains (DEFINES, QGC_DISABLE_CUSTOM) {
+    CONFIG += DisableCustomBuild
+    message("Disable custom build override from command line")
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_CUSTOM) {
+    CONFIG += DisableCustomBuild
+    message("Disable custom build override from user_config.pri")
+}
+
+DisableCustomBuild {
+    DEFINES -= CUSTOM_BUILD
+    DEFINES -= MINIMALIST_QGC
     AndroidBuild {
-        # Android
         include(Android.pri)
+    }
+} else {
+    exists($$PWD/custom/custom.pri) {
+        message("Including custom build")
+        DEFINES += CUSTOM_BUILD
+        include($$PWD/custom/custom.pri)
+    } else {
+        AndroidBuild {
+            include(Android.pri)
+        }
     }
 }
 
@@ -286,6 +304,7 @@ FORMS += \
 }
 
 HEADERS += \
+    src/AnalyzeView/ExifParser.h \
     src/AutoPilotPlugins/APM/APMAirframeLoader.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
     src/CmdLineOptParser.h \
@@ -519,7 +538,8 @@ SOURCES += \
     src/QmlControls/QGCImageProvider.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
     src/PositionManager/SimulatedPosition.cc \
-    src/PositionManager/PositionManager.cpp
+    src/PositionManager/PositionManager.cpp \
+    src/AnalyzeView/ExifParser.cc
 
 DebugBuild {
 SOURCES += \
