@@ -303,20 +303,27 @@ void MultiVehicleManager::setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled)
 
 void MultiVehicleManager::_sendGCSHeartbeat(void)
 {
-    for (int i=0; i< _vehicles.count(); i++) {
-        Vehicle* vehicle = qobject_cast<Vehicle*>(_vehicles[i]);
+    // Send a heartbeat out on each link
+    QmlObjectListModel* links = _toolbox->linkManager()->links();
+    for (int i=0; i<links->count(); i++) {
+        LinkInterface* link = links->value<LinkInterface*>(i);
+        if (link->isConnected()) {
+            mavlink_message_t message;
+            mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
+                                            _mavlinkProtocol->getComponentId(),
+                                            link->mavlinkChannel(),
+                                            &message,
+                                            MAV_TYPE_GCS,            // MAV_TYPE
+                                            MAV_AUTOPILOT_INVALID,   // MAV_AUTOPILOT
+                                            MAV_MODE_MANUAL_ARMED,   // MAV_MODE
+                                            0,                       // custom mode
+                                            MAV_STATE_ACTIVE);       // MAV_STATE
 
-        mavlink_message_t message;
-        mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
-                                        _mavlinkProtocol->getComponentId(),
-                                        vehicle->priorityLink()->mavlinkChannel(),
-                                        &message,
-                                        MAV_TYPE_GCS,            // MAV_TYPE
-                                        MAV_AUTOPILOT_INVALID,   // MAV_AUTOPILOT
-                                        MAV_MODE_MANUAL_ARMED,   // MAV_MODE
-                                        0,                       // custom mode
-                                        MAV_STATE_ACTIVE);       // MAV_STATE
-        vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
+            uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+            int len = mavlink_msg_to_send_buffer(buffer, &message);
+
+            link->writeBytesSafe((const char*)buffer, len);
+        }
     }
 }
 
