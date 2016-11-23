@@ -332,28 +332,6 @@ void RadioConfigTest::_switchMinMaxStep(void)
     QCOMPARE(_controller->_currentStep, saveStep + 1);
 }
 
-void RadioConfigTest::_switchSelectAutoStep(const char* functionStr, RadioComponentController::rcCalFunctions function)
-{
-    Q_UNUSED(functionStr);
-    ////qCDebug(RadioConfigTestLog)() << "_switchSelectAutoStep" << functionStr << "function:" << function;
-    
-    int buttonMask = cancelButtonMask;
-    if (function != RadioComponentController::rcCalFunctionModeSwitch) {
-        buttonMask |= skipButtonMask;
-    }
-    
-    CHK_BUTTONS(buttonMask);
-    
-    int saveStep = _controller->_currentStep;
-    
-    // Wiggle stick for channel
-    int channel = _rgFunctionChannelMap[function];
-    _mockLink->emitRemoteControlChannelRawChanged(channel, _testMinValue);
-    _mockLink->emitRemoteControlChannelRawChanged(channel, _testMaxValue);
-    
-    QCOMPARE(_controller->_currentStep, saveStep + 1);
-}
-
 void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
 {
     _init(firmwareType);
@@ -409,15 +387,15 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
     _channelHomePosition();
     _controller->nextButtonClicked();
     _beginCalibration();
-    _stickMoveAutoStep("Throttle", RadioComponentController::rcCalFunctionThrottle, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Throttle", RadioComponentController::rcCalFunctionThrottle, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Yaw", RadioComponentController::rcCalFunctionYaw, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Yaw", RadioComponentController::rcCalFunctionYaw, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Roll", RadioComponentController::rcCalFunctionRoll, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Roll", RadioComponentController::rcCalFunctionRoll, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToCenter, false /* not identify step */);
+    _stickMoveAutoStep("Throttle",  RadioComponentController::rcCalFunctionThrottle,    moveToMax,      true /* identify step */);
+    _stickMoveAutoStep("Throttle",  RadioComponentController::rcCalFunctionThrottle,    moveToMin,      false /* not identify step */);
+    _stickMoveAutoStep("Yaw",       RadioComponentController::rcCalFunctionYaw,         moveToMax,      true /* identify step */);
+    _stickMoveAutoStep("Yaw",       RadioComponentController::rcCalFunctionYaw,         moveToMin,      false /* not identify step */);
+    _stickMoveAutoStep("Roll",      RadioComponentController::rcCalFunctionRoll,        moveToMax,      true /* identify step */);
+    _stickMoveAutoStep("Roll",      RadioComponentController::rcCalFunctionRoll,        moveToMin,      false /* not identify step */);
+    _stickMoveAutoStep("Pitch",     RadioComponentController::rcCalFunctionPitch,       moveToMax,      true /* identify step */);
+    _stickMoveAutoStep("Pitch",     RadioComponentController::rcCalFunctionPitch,       moveToMin,      false /* not identify step */);
+    _stickMoveAutoStep("Pitch",     RadioComponentController::rcCalFunctionPitch,       moveToCenter,   false /* not identify step */);
     _switchMinMaxStep();
 
     // One more click and the parameters should get saved

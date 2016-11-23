@@ -374,6 +374,12 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
     src/ui/toolbar/MainToolBarController.h \
+    src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
+    src/AutoPilotPlugins/APM/APMAirframeLoader.h \
+    src/QmlControls/QGCImageProvider.h \
+    src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
+    src/PositionManager/PositionManager.h \
+    src/AnalyzeView/ExifParser.h
 
 DebugBuild {
 HEADERS += \
@@ -534,7 +540,8 @@ SOURCES += \
     src/QmlControls/QGCImageProvider.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
     src/PositionManager/SimulatedPosition.cc \
-    src/PositionManager/PositionManager.cpp
+    src/PositionManager/PositionManager.cpp \
+    src/AnalyzeView/ExifParser.cc
 
 DebugBuild {
 SOURCES += \
