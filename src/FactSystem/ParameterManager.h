@@ -28,7 +28,8 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerboseLog)
+Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)
+Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose2Log)
 
 /// Connects to Parameter Manager to load/update Facts
 class ParameterManager : public QObject
@@ -123,9 +124,6 @@ signals:
 
     /// Signalled to update progress of full parameter list request
     void parameterListProgress(float value);
-
-    /// Signalled to ourselves in order to get call on our own thread
-    void restartWaitingParamTimer(void);
     
 protected:
     Vehicle*            _vehicle;
@@ -133,7 +131,6 @@ protected:
     
     void _parameterUpdate(int vehicleId, int componentId, QString parameterName, int parameterCount, int parameterId, int mavType, QVariant value);
     void _valueUpdated(const QVariant& value);
-    void _restartWaitingParamTimer(void);
     void _waitingParamTimeout(void);
     void _tryCacheLookup(void);
     void _initialRequestTimeout(void);
@@ -150,6 +147,7 @@ private:
     void _addMetaDataToDefaultComponent(void);
     QString _remapParamNameToVersion(const QString& paramName);
     void _loadOfflineEditingParams(void);
+    QString _logVehiclePrefix(int componentId = -1);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
@@ -183,10 +181,11 @@ private:
     int         _prevWaitingWriteParamNameCount;
 
 
-    static const int _maxInitialRequestListRetry = 4;       ///< Maximum retries for request list
-    int              _initialRequestRetryCount;             ///< Current retry count for request list
-    static const int _maxInitialLoadRetrySingleParam = 10;  ///< Maximum retries for initial index based load of a single param
-    static const int _maxReadWriteRetry = 5;                ///< Maximum retries read/write
+    static const int    _maxInitialRequestListRetry = 4;        ///< Maximum retries for request list
+    int                 _initialRequestRetryCount;              ///< Current retry count for request list
+    static const int    _maxInitialLoadRetrySingleParam = 5;    ///< Maximum retries for initial index based load of a single param
+    static const int    _maxReadWriteRetry = 5;                 ///< Maximum retries read/write
+    bool                _disableAllRetries;                     ///< true: Don't retry any requests (used for testing)
 
     QMap<int, int>                  _paramCountMap;             ///< Key: Component id, Value: count of parameters in this component
     QMap<int, QMap<int, int> >      _waitingReadParamIndexMap;  ///< Key: Component id, Value: Map { Key: parameter index still waiting for, Value: retry count }
