@@ -35,14 +35,29 @@ DebugBuild {
 # runtime plugin architecture and not require a separate build.
 #
 
-exists($$PWD/custom/custom.pri) {
-    message("Including custom build")
-    DEFINES += CUSTOM_BUILD
-    include($$PWD/custom/custom.pri)
-} else {
+contains (DEFINES, QGC_DISABLE_CUSTOM) {
+    CONFIG += DisableCustomBuild
+    message("Disable custom build override from command line")
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_CUSTOM) {
+    CONFIG += DisableCustomBuild
+    message("Disable custom build override from user_config.pri")
+}
+
+DisableCustomBuild {
+    DEFINES -= CUSTOM_BUILD
+    DEFINES -= MINIMALIST_QGC
     AndroidBuild {
-        # Android
         include(Android.pri)
+    }
+} else {
+    exists($$PWD/custom/custom.pri) {
+        message("Including custom build")
+        DEFINES += CUSTOM_BUILD
+        include($$PWD/custom/custom.pri)
+    } else {
+        AndroidBuild {
+            include(Android.pri)
+        }
     }
 }
 
