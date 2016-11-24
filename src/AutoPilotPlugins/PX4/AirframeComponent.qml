@@ -208,6 +208,7 @@ Your vehicle will also be restarted in order to complete the process.")
 
                                 onCheckedChanged: {
                                     if (checked && combo.currentIndex != -1) {
+                                        console.log("check box change", combo.currentIndex)
                                         controller.autostartId = modelData.airframes[combo.currentIndex].autostartId
                                     }
                                 }
@@ -230,8 +231,9 @@ Your vehicle will also be restarted in order to complete the process.")
 
                                 onActivated: {
                                     applyButton.primary = true
-                                    controller.autostartId = modelData.airframes[index].autostartId
                                     airframeCheckBox.checked = true;
+                                    console.log("combo change", index)
+                                    controller.autostartId = modelData.airframes[index].autostartId
                                 }
                             }
                         }
