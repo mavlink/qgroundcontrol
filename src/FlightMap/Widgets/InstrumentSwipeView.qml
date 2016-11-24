@@ -67,7 +67,7 @@ Item {
             Rectangle {
                 height:         radius * 2
                 width:          radius * 2
-                radius:         2.5
+                radius:         ScreenTools.defaultFontPixelWidth / 3
                 border.color:   textColor
                 border.width:   1
                 color:          _currentPage == index ? textColor : "transparent"
@@ -75,6 +75,21 @@ Item {
         }
     }
 
+    MouseArea {
+        anchors.fill: parent
+
+        onClicked: {
+            if (_currentPage == _maxPage) {
+                _currentPage = 0
+            } else {
+                _currentPage++
+            }
+            showPage(_currentPage)
+        }
+    }
+
+    /*
+      Switching from swipe to click to change pages. Keeping swipe code for now in case of change back.
     MouseArea {
         anchors.fill: parent
 
@@ -104,4 +119,5 @@ Item {
             showPage(_currentPage)
         }
     }
+    */
 }
