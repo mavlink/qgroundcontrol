@@ -1191,7 +1191,6 @@ QGCView {
                     Layout.fillWidth:   true
                     onClicked:  {
                         syncButton.hideDropDown()
-                        _syncDropDownController.removeAll()
                         qgcView.showDialog(removeAllPromptDialog, qsTr("Remove all"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                     }
                 }
