@@ -25,7 +25,7 @@ public:
     bool inProgress             (void) const final;
     void loadFromVehicle        (void) final;
     void sendToVehicle          (const QList<QGeoCoordinate>& rgPoints) final;
-    bool rallyPointsSupported   (void) const final { return true; }
+    bool rallyPointsSupported   (void) const final;
 
     QString editorQml(void) const final { return QStringLiteral("qrc:/FirmwarePlugin/APM/APMRallyPointEditor.qml"); }
 
