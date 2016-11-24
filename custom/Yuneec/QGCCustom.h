@@ -92,15 +92,19 @@ public:
 class RxBindInfo {
 public:
     RxBindInfo()
-        : mode(0)
-        , panId(0)
-        , nodeId(0)
-        , aNum(0)
-        , aBit(0)
-        , swNum(0)
-        , swBit(0)
-        , txAddr(0)
     {
+        clear();
+    }
+    void clear()
+    {
+        mode    = 0;
+        panId   = 0;
+        nodeId  = 0;
+        aNum    = 0;
+        aBit    = 0;
+        swNum   = 0;
+        swBit   = 0;
+        txAddr  = 0;
     }
     int mode;
     int panId;
@@ -222,6 +226,7 @@ public:
 
     int     getm4State              () { return _m4State; }
     void    getControllerLocation   (ControllerLocation& location);
+    void    enterBindMode           ();
 
     static  uint8_t crc8            (uint8_t* buffer, int len);
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);

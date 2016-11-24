@@ -159,6 +159,18 @@ QGCCustom::init(QGCApplication* /*pApp*/)
 
 //-----------------------------------------------------------------------------
 void
+QGCCustom::enterBindMode()
+{
+    _rxBindInfoFeedback.clear();
+    _responseTryCount = 0;
+    _exitRun();
+    QThread::msleep(50);
+    _state = STATE_EXIT_RUN;
+    _timer.start(COMMAND_WAIT_INTERVAL);
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCCustom::_initSequence()
 {
     _responseTryCount = 0;
