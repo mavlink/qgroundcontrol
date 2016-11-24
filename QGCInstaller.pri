@@ -29,7 +29,7 @@ installer {
         QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
         QMAKE_POST_LINK += && cd $${DESTDIR} && $$dirname(QMAKE_QMAKE)/macdeployqt QGroundControl.app -appstore-compliant -verbose=2 -qmldir=$${BASEDIR}/src
         QMAKE_POST_LINK += && cd $${OUT_PWD}
-        QMAKE_POST_LINK += && hdiutil create -verbose -stretch 2g -layout SPUD -srcfolder $${DESTDIR}/QGroundControl.app -volname QGroundControl $${DESTDIR}/package/QGroundControl.dmg
+        QMAKE_POST_LINK += && hdiutil create -verbose -stretch 3g -layout SPUD -srcfolder $${DESTDIR}/QGroundControl.app -volname QGroundControl $${DESTDIR}/package/QGroundControl.dmg
     }
     WindowsBuild {
         # The pdb moving command are commented out for now since we are including the .pdb in the installer. This makes it much
