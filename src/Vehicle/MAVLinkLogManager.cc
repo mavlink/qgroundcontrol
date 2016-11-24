@@ -223,7 +223,6 @@ MAVLinkLogProcessor::_writeUlogMessage(QByteArray& data)
             break;
         _writeData(data.data(), message_length);
         data.remove(0, message_length);
-        return data;
     }
     return data;
 }
