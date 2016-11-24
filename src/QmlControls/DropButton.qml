@@ -111,7 +111,7 @@ Item {
             dropItemHolderRect.y = 0
 
             if (dropDirection == dropLeft) {
-                dropDownItem.x = dropDownItem.width + _dropMargin
+                dropDownItem.x = -(dropDownItem.width + _dropMargin)
 
                 dropItemHolderRect.x = 0
             } else {
