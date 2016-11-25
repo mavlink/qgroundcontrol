@@ -36,6 +36,10 @@
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
 
+//-- Plugin Architecture
+#include "IQGCApplication.h"
+#include "IQGCCorePlugin.h"
+
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #endif
@@ -44,10 +48,6 @@
 class QGCSingleton;
 class MainWindow;
 class QGCToolbox;
-
-#if defined(CUSTOM_BUILD)
-class QGCCustom;
-#endif
 
 /**
  * @brief The main application and management class.
@@ -62,6 +62,7 @@ class QGCApplication : public
 #else
     QApplication    // QtWidget based application
 #endif
+    , IQGCApplication
 {
     Q_OBJECT
 
@@ -122,9 +123,7 @@ public:
     QGeoCoordinate lastKnownHomePosition(void) { return _lastKnownHomePosition; }
     void setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosition);
 
-#if defined(CUSTOM_BUILD)
-    QGCCustom*  customObject() { return _pCustomObject; }
-#endif
+    IQGCUIOptions* uiOptions();
 
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
@@ -175,8 +174,9 @@ private slots:
     void _missingParamsDisplay(void);
 
 private:
-    void _loadCurrentStyle(void);
-    QObject* _rootQmlObject(void);
+    void        _loadCurrentStyle   ();
+    QObject*    _rootQmlObject      ();
+    void        _scanAndLoadPlugins ();
 
 #if defined(__mobile__)
     QQmlApplicationEngine* _qmlAppEngine;
@@ -215,10 +215,7 @@ private:
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
 
-    //-- Custom Object
-#if defined(CUSTOM_BUILD)
-    QGCCustom*  _pCustomObject;
-#endif
+    IQGCUIOptions*  _pUIOptions;
 };
 
 /// @brief Returns the QGCApplication object singleton.

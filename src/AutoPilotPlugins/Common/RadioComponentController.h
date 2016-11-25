@@ -76,9 +76,6 @@ public:
     };
 
     Q_INVOKABLE void spektrumBindMode(int mode);
-#if defined(MINIMALIST_BUILD)
-    Q_INVOKABLE void receiverBindMode(int mode = 0);
-#endif
     Q_INVOKABLE void cancelButtonClicked(void);
     Q_INVOKABLE void skipButtonClicked(void);
     Q_INVOKABLE void nextButtonClicked(void);

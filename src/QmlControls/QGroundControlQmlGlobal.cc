@@ -353,3 +353,38 @@ QMap<QString, FactMetaData*>& QGroundControlQmlGlobal::nameToMetaDataMap(void) {
 
     return map;
 }
+
+//-----------------------------------------------------------------------------
+bool
+QGroundControlQmlGlobal::colapseSettings()
+{
+    return qgcApp()->uiOptions()->colapseSettings();
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGroundControlQmlGlobal::mainViewIsMap()
+{
+    return qgcApp()->uiOptions()->mainViewIsMap();
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGroundControlQmlGlobal::enableVirtualJoystick()
+{
+    return qgcApp()->uiOptions()->enableVirtualJoystick();
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGroundControlQmlGlobal::enableAutoConnectOptions()
+{
+    return qgcApp()->uiOptions()->enableAutoConnectOptions();
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGroundControlQmlGlobal::enableVideoSourceOptions()
+{
+    return qgcApp()->uiOptions()->enableVideoSourceOptions();
+}

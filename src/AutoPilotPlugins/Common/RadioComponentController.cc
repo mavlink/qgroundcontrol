@@ -15,9 +15,6 @@
 #include "RadioComponentController.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
-#if defined (MINIMALIST_BUILD)
-#include "QGCCustom.h"
-#endif
 #include <QSettings>
 
 QGC_LOGGING_CATEGORY(RadioComponentControllerLog, "RadioComponentControllerLog")
@@ -654,14 +651,6 @@ void RadioComponentController::spektrumBindMode(int mode)
 {
     _uas->pairRX(0, mode);
 }
-
-#if defined (MINIMALIST_BUILD)
-void RadioComponentController::receiverBindMode(int mode)
-{
-    _uas->pairRX(1, mode);
-    qgcApp()->customObject()->enterBindMode();
-}
-#endif
 
 /// @brief Validates the current settings against the calibration rules resetting values as necessary.
 void RadioComponentController::_validateCalibration(void)

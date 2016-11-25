@@ -79,14 +79,19 @@ public:
     Q_PROPERTY(qreal                zOrderMapItems      READ zOrderMapItems         CONSTANT) ///< z order value for map items, for example: mission item indicators
 
     // Various QGC settings exposed to Qml
-    Q_PROPERTY(bool     isAdvancedMode          READ isAdvancedMode                                                 CONSTANT)                               ///< Global "Advance Mode" preference. Certain UI elements and features are different based on this.
     Q_PROPERTY(bool     isDarkStyle             READ isDarkStyle                WRITE setIsDarkStyle                NOTIFY isDarkStyleChanged)              // TODO: Should be in ScreenTools?
     Q_PROPERTY(bool     isAudioMuted            READ isAudioMuted               WRITE setIsAudioMuted               NOTIFY isAudioMutedChanged)
     Q_PROPERTY(bool     isSaveLogPrompt         READ isSaveLogPrompt            WRITE setIsSaveLogPrompt            NOTIFY isSaveLogPromptChanged)
     Q_PROPERTY(bool     isSaveLogPromptNotArmed READ isSaveLogPromptNotArmed    WRITE setIsSaveLogPromptNotArmed    NOTIFY isSaveLogPromptNotArmedChanged)
     Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
     Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
-    Q_PROPERTY(bool     isMinimalist            READ isMinimalist               CONSTANT)
+
+    //-- Options that can be set by plugins
+    Q_PROPERTY(bool     colapseSettings                 READ colapseSettings            CONSTANT)
+    Q_PROPERTY(bool     mainViewIsMap                   READ mainViewIsMap              CONSTANT)
+    Q_PROPERTY(bool     enableVirtualJoystick           READ enableVirtualJoystick      CONSTANT)
+    Q_PROPERTY(bool     enableAutoConnectOptions        READ enableAutoConnectOptions   CONSTANT)
+    Q_PROPERTY(bool     enableVideoSourceOptions        READ enableVideoSourceOptions   CONSTANT)
 
     // MavLink Protocol
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
@@ -186,11 +191,11 @@ public:
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
 
-#if defined(MINIMALIST_BUILD)
-    bool    isMinimalist            () { return true; }
-#else
-    bool    isMinimalist            () { return false; }
-#endif
+    bool    colapseSettings         ();
+    bool    mainViewIsMap           ();
+    bool    enableVirtualJoystick   ();
+    bool    enableAutoConnectOptions();
+    bool    enableVideoSourceOptions();
 
     QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
 
@@ -202,9 +207,6 @@ public:
     static Fact* areaUnits                      (void);
     static Fact* speedUnits                     (void);
     static Fact* batteryPercentRemainingAnnounce(void);
-
-    //-- TODO: Make this into an actual preference.
-    bool    isAdvancedMode          () { return false; }
 
     void    setIsDarkStyle              (bool dark);
     void    setIsAudioMuted             (bool muted);

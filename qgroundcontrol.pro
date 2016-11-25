@@ -49,17 +49,24 @@ contains (DEFINES, QGC_DISABLE_CUSTOM) {
 DisableCustomBuild {
     DEFINES -= CUSTOM_BUILD
     DEFINES -= MINIMALIST_QGC
-    AndroidBuild {
-        include(Android.pri)
-    }
+    CONFIG  -= CustomBuild
 } else {
-    exists($$PWD/custom/custom.pri) {
-        message("Including custom build")
+    exists($$PWD/custom/custom.pro) {
+        CONFIG += CustomBuild
+        message("Found custom build")
         DEFINES += CUSTOM_BUILD
-        include($$PWD/custom/custom.pri)
-    } else {
-        AndroidBuild {
-            include(Android.pri)
+        # Load additional config flags from custom-config.pri
+        exists($$PWD/custom/custom-config.pri) {
+            include($$PWD/custom/custom-config.pri)
+            message("Found custom configuration")
+            infile($$PWD/custom/custom-config.pri, CONFIG) {
+                CONFIG += $$fromfile($$PWD/custom/custom-config.pri, CONFIG)
+                message($$sprintf("Using additional custom config: '%1' specified in $$PWD/custom/custom-config.pri", $$fromfile($$PWD/custom/custom-config.pri, CONFIG)))
+            }
+            infile($$PWD/custom/custom-config.pri, DEFINES) {
+                DEFINES += $$fromfile($$PWD/custom/custom-config.pri, DEFINES)
+                message($$sprintf("Using additional custom config: '%1' specified in $$PWD/custom/custom-config.pri", $$fromfile($$PWD/custom/custom-config.pri, DEFINES)))
+            }
         }
     }
 }
@@ -247,6 +254,7 @@ INCLUDEPATH += .
 
 INCLUDEPATH += \
     include/ui \
+    api \
     src \
     src/AnalyzeView \
     src/AutoPilotPlugins \
@@ -302,6 +310,10 @@ FORMS += \
         src/ui/uas/UASQuickView.ui \
         src/ui/uas/UASQuickViewItemSelect.ui \
 }
+
+HEADERS += \
+    api/IQGCApplication.h \
+    api/IQGCCorePlugin.h \
 
 HEADERS += \
     src/AnalyzeView/ExifParser.h \
@@ -870,6 +882,15 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from user_config.pri)")
 } else {
     include(src/VideoStreaming/VideoStreaming.pri)
+}
+
+#-------------------------------------------------------------------------------------
+# Android
+
+contains (CONFIG, DISABLE_BUILTIN_ANDROID) {
+    message("Skipping builtin support for Android")
+} else {
+    include(android.pri)
 }
 
 #-------------------------------------------------------------------------------------

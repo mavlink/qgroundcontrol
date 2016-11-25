@@ -14,8 +14,8 @@
  *   The functions themselves have been completely rewriten from scratch.
  */
 
-#include "QGCCustom.h"
-#include "SerialComm.h"
+#include "m4.h"
+#include "m4serial.h"
 #include <QDebug>
 #include <QSettings>
 #include <math.h>
@@ -36,27 +36,11 @@ static const char* ktxAddr      = "txAddr";
 #define COMMAND_WAIT_INTERVAL   250
 #define DEBUG_DATA_DUMP         false
 
-QGC_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
-
-//-----------------------------------------------------------------------------
-static const unsigned char CRC8T[] = {
-    0, 7, 14, 9, 28, 27, 18, 21, 56, 63, 54, 49, 36, 35, 42, 45, 112, 119, 126, 121, 108, 107,
-    98, 101, 72, 79, 70, 65, 84, 83, 90, 93, 224, 231, 238, 233, 252, 251, 242, 245, 216, 223, 214, 209, 196,
-    195, 202, 205, 144, 151, 158, 153, 140, 139, 130, 133, 168, 175, 166, 161, 180, 179, 186, 189, 199, 192,
-    201, 206, 219, 220, 213, 210, 255, 248, 241, 246, 227, 228, 237, 234, 183, 176, 185, 190, 171, 172, 165,
-    162, 143, 136, 129, 134, 147, 148, 157, 154, 39, 32, 41, 46, 59, 60, 53, 50, 31, 24, 17, 22, 3, 4, 13, 10,
-    87, 80, 89, 94, 75, 76, 69, 66, 111, 104, 97, 102, 115, 116, 125, 122, 137, 142, 135, 128, 149, 146, 155,
-    156, 177, 182, 191, 184, 173, 170, 163, 164, 249, 254, 247, 240, 229, 226, 235, 236, 193, 198, 207, 200,
-    221, 218, 211, 212, 105, 110, 103, 96, 117, 114, 123, 124, 81, 86, 95, 88, 77, 74, 67, 68, 25, 30, 23, 16,
-    5, 2, 11, 12, 33, 38, 47, 40, 61, 58, 51, 52, 78, 73, 64, 71, 82, 85, 92, 91, 118, 113, 120, 127, 106, 109,
-    100, 99, 62, 57, 48, 55, 34, 37, 44, 43, 6, 1, 8, 15, 26, 29, 20, 19, 174, 169, 160, 167, 178, 181, 188,
-    187, 150, 145, 152, 159, 138, 141, 132, 131, 222, 217, 208, 215, 194, 197, 204, 203, 230, 225, 232, 239,
-    250, 253, 244, 243
-};
+Q_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
 
 //-----------------------------------------------------------------------------
 // RC Channel data provided by Yuneec
-#include "ChannelData.inc"
+#include "m4channeldata.h"
 
 //-----------------------------------------------------------------------------
 #if 0
@@ -83,20 +67,9 @@ dump_data_packet(QByteArray data)
     return resp;
 }
 #endif
-//-----------------------------------------------------------------------------
-/** x^8 + x^2 + x + 1 */
-uint8_t
-QGCCustom::crc8(uint8_t* buffer, int len)
-{
-    uint8_t ret = 0;
-    for(int i = 0; i < len; ++i) {
-        ret = CRC8T[ret ^ buffer[i]];
-    }
-    return ret;
-}
 
 //-----------------------------------------------------------------------------
-QGCCustom::QGCCustom(QObject* parent)
+TyphoonHCore::TyphoonHCore(QObject* parent)
     : QObject(parent)
     , _state(STATE_NONE)
     , _responseTryCount(0)
@@ -107,7 +80,7 @@ QGCCustom::QGCCustom(QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-QGCCustom::~QGCCustom()
+TyphoonHCore::~TyphoonHCore()
 {
     if(_commPort) {
         delete _commPort;
@@ -116,7 +89,7 @@ QGCCustom::~QGCCustom()
 
 //-----------------------------------------------------------------------------
 bool
-QGCCustom::init(QGCApplication* /*pApp*/)
+TyphoonHCore::init(IQGCApplication* /*pApp*/)
 {
     //-- Doing this here for the time being as there is no alternative on Android
 #if defined(QT_DEBUG)
@@ -128,8 +101,8 @@ QGCCustom::init(QGCApplication* /*pApp*/)
         qWarning() << "Could not start serial communication with M4";
         return false;
     }
-    connect(_commPort, &M4SerialComm::bytesReady, this, &QGCCustom::_bytesReady);
-    connect(&_timer, &QTimer::timeout, this, &QGCCustom::_stateManager);
+    connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHCore::_bytesReady);
+    connect(&_timer, &QTimer::timeout, this, &TyphoonHCore::_stateManager);
     _timer.setSingleShot(true);
     //-- Have we bound before?
     QSettings settings;
@@ -159,7 +132,7 @@ QGCCustom::init(QGCApplication* /*pApp*/)
 
 //-----------------------------------------------------------------------------
 void
-QGCCustom::enterBindMode()
+TyphoonHCore::enterBindMode()
 {
     _rxBindInfoFeedback.clear();
     _responseTryCount = 0;
@@ -171,7 +144,7 @@ QGCCustom::enterBindMode()
 
 //-----------------------------------------------------------------------------
 void
-QGCCustom::_initSequence()
+TyphoonHCore::_initSequence()
 {
     _responseTryCount = 0;
     //-- Check and see if we have binding info
@@ -197,7 +170,7 @@ QGCCustom::_initSequence()
  *
  */
 void
-QGCCustom::_stateManager()
+TyphoonHCore::_stateManager()
 {
     switch(_state) {
 
@@ -347,7 +320,7 @@ QGCCustom::_stateManager()
  * The next command you will send may be {@link _startBind}.
  */
 bool
-QGCCustom::_enterRun()
+TyphoonHCore::_enterRun()
 {
     qCDebug(YuneecLog) << "Sending: CMD_ENTER_RUN";
     m4Command enterRunCmd(Yuneec::CMD_ENTER_RUN);
@@ -360,7 +333,7 @@ QGCCustom::_enterRun()
  * This command is used for stopping control aircraft.
  */
 bool
-QGCCustom::_exitRun()
+TyphoonHCore::_exitRun()
 {
     qCDebug(YuneecLog) << "Sending: CMD_EXIT_RUN";
     m4Command exitRunCmd(Yuneec::CMD_EXIT_RUN);
@@ -375,7 +348,7 @@ QGCCustom::_exitRun()
  * The next command you will send may be {@link _startBind}.
  */
 bool
-QGCCustom::_enterBind()
+TyphoonHCore::_enterBind()
 {
     qCDebug(YuneecLog) << "Sending: CMD_ENTER_BIND";
     m4Command enterBindCmd(Yuneec::CMD_ENTER_BIND);
@@ -389,7 +362,7 @@ QGCCustom::_enterBind()
  */
 //-- TODO: Do we really need raw data? Maybe CMD_RECV_MIXED_CH_ONLY would be enough.
 bool
-QGCCustom::_sendRecvBothCh()
+TyphoonHCore::_sendRecvBothCh()
 {
     qCDebug(YuneecLog) << "Sending: CMD_RECV_BOTH_CH";
     m4Command enterRecvCmd(Yuneec::CMD_RECV_BOTH_CH);
@@ -402,7 +375,7 @@ QGCCustom::_sendRecvBothCh()
  * This command is used for exiting the progress of binding.
  */
 bool
-QGCCustom::_exitBind()
+TyphoonHCore::_exitBind()
 {
     qCDebug(YuneecLog) << "Sending: CMD_EXIT_BIND";
     m4Command exitBindCmd(Yuneec::CMD_EXIT_BIND);
@@ -416,7 +389,7 @@ QGCCustom::_exitBind()
  * The next command you will send may be {@link _bind}.
  */
 bool
-QGCCustom::_startBind()
+TyphoonHCore::_startBind()
 {
     qCDebug(YuneecLog) << "Sending: CMD_START_BIND";
     m4Message startBindMsg(Yuneec::CMD_START_BIND, Yuneec::TYPE_BIND);
@@ -433,7 +406,7 @@ QGCCustom::_startBind()
  * the progress of bind exits.
  */
 bool
-QGCCustom::_bind(int rxAddr)
+TyphoonHCore::_bind(int rxAddr)
 {
     qCDebug(YuneecLog) << "Sending: CMD_BIND";
     m4Message bindMsg(Yuneec::CMD_BIND, Yuneec::TYPE_BIND);
@@ -454,7 +427,7 @@ QGCCustom::_bind(int rxAddr)
  * The next command you will send may be {@link _syncMixingDataDeleteAll}.
  */
 bool
-QGCCustom::_setChannelSetting()
+TyphoonHCore::_setChannelSetting()
 {
     qCDebug(YuneecLog) << "Sending: CMD_SET_CHANNEL_SETTING";
     m4Command setChannelSettingCmd(Yuneec::CMD_SET_CHANNEL_SETTING);
@@ -474,7 +447,7 @@ QGCCustom::_setChannelSetting()
  * go out if set the value {@link BaseCommand#BIND_KEY_FUNCTION_PWR}.
  */
 bool
-QGCCustom::_setPowerKey(int function)
+TyphoonHCore::_setPowerKey(int function)
 {
     qCDebug(YuneecLog) << "Sending: CMD_SET_BINDKEY_FUNCTION";
     m4Command setPowerKeyCmd(Yuneec::CMD_SET_BINDKEY_FUNCTION);
@@ -491,7 +464,7 @@ QGCCustom::_setPowerKey(int function)
  * Suggest to use this command before using {@link _bind} first time.
  */
 bool
-QGCCustom::_unbind()
+TyphoonHCore::_unbind()
 {
     qCDebug(YuneecLog) << "Sending: CMD_UNBIND";
     m4Command unbindCmd(Yuneec::CMD_UNBIND);
@@ -506,7 +479,7 @@ QGCCustom::_unbind()
  * The next command you will send may be {@link _setChannelSetting}.
  */
 bool
-QGCCustom::_queryBindState()
+TyphoonHCore::_queryBindState()
 {
     qCDebug(YuneecLog) << "Sending: CMD_QUERY_BIND_STATE";
     m4Command queryBindStateCmd(Yuneec::CMD_QUERY_BIND_STATE);
@@ -520,7 +493,7 @@ QGCCustom::_queryBindState()
  * See {@link _syncMixingDataAdd}.
  */
 bool
-QGCCustom::_syncMixingDataDeleteAll()
+TyphoonHCore::_syncMixingDataDeleteAll()
 {
     qCDebug(YuneecLog) << "Sending: CMD_SYNC_MIXING_DATA_DELETE_ALL";
     m4Command syncMixingDataDeleteAllCmd(Yuneec::CMD_SYNC_MIXING_DATA_DELETE_ALL);
@@ -536,7 +509,7 @@ QGCCustom::_syncMixingDataDeleteAll()
  * Channel formula make the same hardware signal values to the different values we get finally. (What?)
  */
 bool
-QGCCustom::_syncMixingDataAdd()
+TyphoonHCore::_syncMixingDataAdd()
 {
     /*
      *  "Mixing Data" is an array of NUM_CHANNELS (25) sets of CHANNEL_LENGTH (96)
@@ -561,7 +534,7 @@ QGCCustom::_syncMixingDataAdd()
  * If send successful, the you can send {@link _enterRun}.
  */
 bool
-QGCCustom::_sendRxResInfo()
+TyphoonHCore::_sendRxResInfo()
 {
     /*
      * This is not working. Even though, as far as I can tell it follows the
@@ -625,7 +598,7 @@ QGCCustom::_sendRxResInfo()
  * The main difference is we also handle the machine state here.
  */
 void
-QGCCustom::_bytesReady(QByteArray data)
+TyphoonHCore::_bytesReady(QByteArray data)
 {
     m4Packet packet(data);
     int type = packet.type();
@@ -779,7 +752,7 @@ QGCCustom::_bytesReady(QByteArray data)
 
 //-----------------------------------------------------------------------------
 void
-QGCCustom::_handleQueryBindResponse(QByteArray data)
+TyphoonHCore::_handleQueryBindResponse(QByteArray data)
 {
     int nodeID = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
     qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID;
@@ -810,7 +783,7 @@ QGCCustom::_handleQueryBindResponse(QByteArray data)
 
 //-----------------------------------------------------------------------------
 bool
-QGCCustom::_handleNonTypePacket(m4Packet& packet)
+TyphoonHCore::_handleNonTypePacket(m4Packet& packet)
 {
     int commandId = packet.commandID();
     switch(commandId) {
@@ -823,7 +796,7 @@ QGCCustom::_handleNonTypePacket(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-QGCCustom::_handleBindResponse()
+TyphoonHCore::_handleBindResponse()
 {
     qCDebug(YuneecLog) << "Received TYPE_BIND: BIND Response";
     if(_state == STATE_BIND) {
@@ -836,7 +809,7 @@ QGCCustom::_handleBindResponse()
 
 //-----------------------------------------------------------------------------
 void
-QGCCustom::_handleRxBindInfo(m4Packet& packet)
+TyphoonHCore::_handleRxBindInfo(m4Packet& packet)
 {
     //-- TODO: If for some reason this is done where two or more Typhoons are in
     //   binding mode, we will be receiving multiple responses. No check for this
@@ -886,7 +859,7 @@ QGCCustom::_handleRxBindInfo(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-QGCCustom::_handleChannel(m4Packet& packet)
+TyphoonHCore::_handleChannel(m4Packet& packet)
 {
     Q_UNUSED(packet);
     switch(packet.commandID()) {
@@ -920,7 +893,7 @@ QGCCustom::_handleChannel(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 bool
-QGCCustom::_handleCommand(m4Packet& packet)
+TyphoonHCore::_handleCommand(m4Packet& packet)
 {
     Q_UNUSED(packet);
     switch(packet.commandID()) {
@@ -946,7 +919,7 @@ QGCCustom::_handleCommand(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-QGCCustom::_switchChanged(m4Packet& packet)
+TyphoonHCore::_switchChanged(m4Packet& packet)
 {
     Q_UNUSED(packet);
     QByteArray commandValues = packet.commandValues();
@@ -959,7 +932,7 @@ QGCCustom::_switchChanged(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-QGCCustom::_handleMixedChannelData(m4Packet& packet)
+TyphoonHCore::_handleMixedChannelData(m4Packet& packet)
 {
     int analogChannelCount = _rxBindInfoFeedback.aNum  ? _rxBindInfoFeedback.aNum  : 10;
     int switchChannelCount = _rxBindInfoFeedback.swNum ? _rxBindInfoFeedback.swNum : 2;
@@ -1003,14 +976,14 @@ QGCCustom::_handleMixedChannelData(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-QGCCustom::getControllerLocation(ControllerLocation& location)
+TyphoonHCore::getControllerLocation(ControllerLocation& location)
 {
     location = _controllerLocation;
 }
 
 //-----------------------------------------------------------------------------
 void
-QGCCustom::_handControllerFeedback(m4Packet& packet) {
+TyphoonHCore::_handControllerFeedback(m4Packet& packet) {
     QByteArray commandValues = packet.commandValues();
     _controllerLocation.latitude     = byteArrayToInt(commandValues, 0) / 1e7;
     _controllerLocation.longitude    = byteArrayToInt(commandValues, 4) / 1e7;
@@ -1024,7 +997,7 @@ QGCCustom::_handControllerFeedback(m4Packet& packet) {
 
 //-----------------------------------------------------------------------------
 int
-QGCCustom::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
+TyphoonHCore::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
 {
     int iRetVal = -1;
     if (data.size() < offset + 4)
@@ -1050,7 +1023,7 @@ QGCCustom::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
 
 //-----------------------------------------------------------------------------
 float
-QGCCustom::byteArrayToFloat(QByteArray data, int offset)
+TyphoonHCore::byteArrayToFloat(QByteArray data, int offset)
 {
     uint32_t val = (uint32_t)byteArrayToInt(data, offset);
     return *(float*)(void*)&val;
@@ -1058,7 +1031,7 @@ QGCCustom::byteArrayToFloat(QByteArray data, int offset)
 
 //-----------------------------------------------------------------------------
 short
-QGCCustom::byteArrayToShort(QByteArray data, int offset, bool isBigEndian)
+TyphoonHCore::byteArrayToShort(QByteArray data, int offset, bool isBigEndian)
 {
     short iRetVal = -1;
     if (data.size() < offset + 2)

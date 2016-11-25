@@ -261,7 +261,7 @@ Rectangle {
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
                 text:           "General"
-                visible:        QGroundControl.isMinimalist
+                visible:        QGroundControl.colapseSettings
                 onClicked:      panelLoader.setSource("GeneralSettings.qml")
             }
 
@@ -270,7 +270,7 @@ Rectangle {
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
                 text:           "MAVLink"
-                visible:        QGroundControl.isMinimalist
+                visible:        QGroundControl.colapseSettings
                 onClicked:      panelLoader.setSource("MavlinkSettings.qml")
             }
 

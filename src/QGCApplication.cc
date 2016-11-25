@@ -98,10 +98,6 @@
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
 
-#if defined(CUSTOM_BUILD)
-#include "QGCCustom.h"
-#endif
-
 #ifndef NO_SERIAL_LINK
     #include "SerialLink.h"
 #endif
@@ -203,9 +199,13 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _toolbox(NULL)
     , _bluetoothAvailable(false)
     , _lastKnownHomePosition(37.803784, -122.462276, 0.0)
+    , _pUIOptions(NULL)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
+
+    //-- Scan and load plugins
+    _scanAndLoadPlugins();
 
     // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
 #ifndef __android__
@@ -357,11 +357,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
 
-#if defined(CUSTOM_BUILD)
-    _pCustomObject = new QGCCustom(this);
-    _pCustomObject->init(this);
-#endif
-
 }
 
 QGCApplication::~QGCApplication()
@@ -372,10 +367,9 @@ QGCApplication::~QGCApplication()
         delete mainWindow;
     }
 #endif
-#if defined(CUSTOM_BUILD)
-    if(_pCustomObject)
-        delete _pCustomObject;
-#endif
+    if(_pUIOptions) {
+        delete _pUIOptions;
+    }
     shutdownVideoStreaming();
     delete _toolbox;
 }
@@ -601,7 +595,7 @@ void QGCApplication::setStyle(bool styleIsDark)
     emit styleChanged(_styleIsDark);
 }
 
-void QGCApplication::_loadCurrentStyle(void)
+void QGCApplication::_loadCurrentStyle()
 {
 #if !defined(__mobile__)
     bool success = true;
@@ -663,7 +657,7 @@ void QGCApplication::_missingParamsDisplay(void)
     showMessage(QString("Parameters missing from firmware: %1. You may be running an older version of firmware QGC does not work correctly with or your firmware has a bug in it.").arg(params));
 }
 
-QObject* QGCApplication::_rootQmlObject(void)
+QObject* QGCApplication::_rootQmlObject()
 {
 #if defined(__mobile__)
     return _qmlAppEngine->rootObjects()[0];
@@ -725,4 +719,18 @@ void QGCApplication::setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosit
     settings.setValue(_lastKnownHomePositionLonKey, lastKnownHomePosition.longitude());
     settings.setValue(_lastKnownHomePositionAltKey, lastKnownHomePosition.altitude());
     _lastKnownHomePosition = lastKnownHomePosition;
+}
+
+//-----------------------------------------------------------------------------
+IQGCUIOptions*
+QGCApplication::uiOptions()
+{
+    return _pUIOptions;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCApplication::_scanAndLoadPlugins()
+{
+    _pUIOptions = new IQGCUIOptions;
 }

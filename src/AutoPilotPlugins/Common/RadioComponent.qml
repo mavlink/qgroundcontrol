@@ -159,6 +159,7 @@ SetupPage {
                 }
             } // Component - spektrumBindDialogComponent
 
+            /*
             Component {
                 id: receiverBindDialogComponent
                 QGCViewDialog {
@@ -179,7 +180,8 @@ SetupPage {
                         }
                     }
                 }
-            } // Component - spektrumBindDialogComponent
+            }
+            */
 
             // Live channel monitor control component
             Component {
@@ -434,13 +436,11 @@ SetupPage {
                 QGCButton {
                     id:         bindButton
                     text:       qsTr("Spektrum Bind")
-                    visible:    !QGroundControl.isMinimalist
                     onClicked:  showDialog(spektrumBindDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
 
                 QGCButton {
                     text:       qsTr("Receiver Bind")
-                    visible:    QGroundControl.isMinimalist
                     onClicked:  showDialog(receiverBindDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
 
