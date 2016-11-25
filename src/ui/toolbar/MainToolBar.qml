@@ -439,7 +439,7 @@ Rectangle {
         id:             progressBar
         anchors.bottom: parent.bottom
         height:         toolBar.height * 0.05
-        width:          parent.width * _controller.progressBarValue
+        width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
         color:          colorGreen
     }
 
