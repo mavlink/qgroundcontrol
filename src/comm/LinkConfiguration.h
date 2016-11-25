@@ -79,7 +79,7 @@ public:
     /*!
      *
      * Is this an Auto Connect configuration?
-     * @return True if this is an Auto Connect configuration (connects automatically at boot time).
+     * @return True if this is an Auto Connect configuration (connects automatically).
      */
     bool isAutoConnect() { return _autoConnect; }
 
