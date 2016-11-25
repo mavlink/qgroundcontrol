@@ -50,6 +50,9 @@ QT += \
     quick \
     svg \
 
+RESOURCES += \
+    typhoonh.qrc \
+
 SOURCES += \
     $$PWD/src/m4.cc \
     $$PWD/src/m4serial.cc \

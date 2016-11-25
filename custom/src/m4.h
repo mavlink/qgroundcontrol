@@ -25,9 +25,9 @@ public:
     TyphoonHCore(QObject* parent = NULL);
     ~TyphoonHCore();
 
-    bool    init                    (IQGCApplication* pApp);
+    bool    init                    ();
 
-    enum {
+    enum M4State {
         M4_STATE_NONE           = 0,
         M4_STATE_AWAIT          = 1,
         M4_STATE_BIND           = 2,
@@ -38,9 +38,14 @@ public:
         M4_STATE_FACTORY_CALI   = 7
     };
 
-    int     getm4State              () { return _m4State; }
+    Q_ENUMS(M4State)
+
+    Q_PROPERTY(int      m4State     READ    m4State     NOTIFY m4StateChanged)
+
+    Q_INVOKABLE void    enterBindMode   ();
+
+    int     m4State                 () { return _m4State; }
     void    getControllerLocation   (ControllerLocation& location);
-    void    enterBindMode           ();
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  float   byteArrayToFloat(QByteArray data, int offset);

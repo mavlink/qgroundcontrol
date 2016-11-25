@@ -86,6 +86,7 @@ public:
     Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
     Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
 
+    //-------------------------------------------------------------------------
     //-- Options that can be set by plugins
     Q_PROPERTY(bool     colapseSettings                 READ colapseSettings            CONSTANT)
     Q_PROPERTY(bool     mainViewIsMap                   READ mainViewIsMap              CONSTANT)
@@ -93,6 +94,12 @@ public:
     Q_PROPERTY(bool     enableAutoConnectOptions        READ enableAutoConnectOptions   CONSTANT)
     Q_PROPERTY(bool     enableVideoSourceOptions        READ enableVideoSourceOptions   CONSTANT)
 
+    Q_PROPERTY(bool     hasCustomSettings               READ hasCustomSettings          CONSTANT)
+    Q_PROPERTY(QString  customSettingsURL               READ customSettingsURL          CONSTANT)
+    Q_PROPERTY(QString  customSettingsTitle             READ customSettingsTitle        CONSTANT)
+    Q_PROPERTY(QString  customSettingsLogoUrl           READ customSettingsLogoUrl      CONSTANT)
+
+    //-------------------------------------------------------------------------
     // MavLink Protocol
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
@@ -196,6 +203,10 @@ public:
     bool    enableVirtualJoystick   ();
     bool    enableAutoConnectOptions();
     bool    enableVideoSourceOptions();
+    bool    hasCustomSettings       ();
+    QString customSettingsTitle     ();
+    QString customSettingsURL       ();
+    QString customSettingsLogoUrl   ();
 
     QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
 

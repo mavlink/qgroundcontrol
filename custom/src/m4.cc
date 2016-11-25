@@ -89,7 +89,7 @@ TyphoonHCore::~TyphoonHCore()
 
 //-----------------------------------------------------------------------------
 bool
-TyphoonHCore::init(IQGCApplication* /*pApp*/)
+TyphoonHCore::init()
 {
     //-- Doing this here for the time being as there is no alternative on Android
 #if defined(QT_DEBUG)

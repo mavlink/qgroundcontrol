@@ -314,6 +314,8 @@ FORMS += \
 HEADERS += \
     api/IQGCApplication.h \
     api/IQGCCorePlugin.h \
+    api/IQGCOptions.h \
+    api/IQGCQMLSource.h \
 
 HEADERS += \
     src/AnalyzeView/ExifParser.h \

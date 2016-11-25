@@ -39,6 +39,8 @@
 //-- Plugin Architecture
 #include "IQGCApplication.h"
 #include "IQGCCorePlugin.h"
+#include "IQGCOptions.h"
+#include "IQGCQMLSource.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -124,7 +126,9 @@ public:
     void setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosition);
 
     /// Options (can be overwriten by a core plugin)
-    IQGCOptions* qgcOptions();
+    IQGCOptions*    qgcOptions();
+    /// Custom core plugin (NULL if none)
+    IQGCCorePlugin* customCorePlugin() { return _pCorePlugin; }
 
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.

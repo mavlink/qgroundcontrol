@@ -6,7 +6,19 @@
 #include "typhoonh.h"
 #include "m4.h"
 
+#include <QtQml>
+#include <QQmlEngine>
+
 Q_PLUGIN_METADATA(IID "org.qgroundcontrol.qgccoreplugin")
+
+//-----------------------------------------------------------------------------
+static QObject*
+typhoonHCoreSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    TyphoonHCore* pTyphoon = new TyphoonHCore();
+    pTyphoon->init();
+    return pTyphoon;
+}
 
 //-----------------------------------------------------------------------------
 class TyphoonHOptions : public IQGCOptions
@@ -24,20 +36,31 @@ public:
 };
 
 //-----------------------------------------------------------------------------
+class TyphoonHSettings : public IQGCQMLSource
+{
+public:
+    TyphoonHSettings() {}
+    QString     pageUrl                     () { return QString("/typhoonh/TyphoonSettings.qml"); }
+    QString     pageTitle                   () { return QString("Typhoon H"); }
+    QString     pageIconUrl                 () { return QString("/typhoonh/logoWhite.svg"); }
+};
+
+//-----------------------------------------------------------------------------
 TyphoonHPlugin::TyphoonHPlugin(QObject* parent)
     : IQGCCorePlugin(parent)
 {
-    _pOptions = new TyphoonHOptions;
+    _pOptions   = new TyphoonHOptions;
+    _pSettings  = new TyphoonHSettings;
 }
 
 //-----------------------------------------------------------------------------
 TyphoonHPlugin::~TyphoonHPlugin()
 {
-    if(_pTyphoonCore) {
-        delete _pTyphoonCore;
-    }
     if(_pOptions) {
         delete _pOptions;
+    }
+    if(_pSettings) {
+        delete _pSettings;
     }
 }
 
@@ -45,15 +68,21 @@ TyphoonHPlugin::~TyphoonHPlugin()
 bool
 TyphoonHPlugin::init(IQGCApplication* pApp)
 {
-    _pTyphoonCore = new TyphoonHCore(this);
-    if(_pTyphoonCore) {
-        return _pTyphoonCore->init(pApp);
-    }
-    return false;
+    Q_UNUSED(pApp);
+    qmlRegisterSingletonType<TyphoonHCore>("TyphoonHCore", 1, 0, "TyphoonHCore", typhoonHCoreSingletonFactory);
+    return true;
 }
+
 //-----------------------------------------------------------------------------
 IQGCOptions*
 TyphoonHPlugin::uiOptions()
 {
     return _pOptions;
+}
+
+//-----------------------------------------------------------------------------
+IQGCQMLSource*
+TyphoonHPlugin::settingsQML()
+{
+    return _pSettings;
 }

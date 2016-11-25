@@ -7,11 +7,13 @@
 
 #include "IQGCApplication.h"
 #include "IQGCCorePlugin.h"
+#include "IQGCOptions.h"
+#include "IQGCQMLSource.h"
 
 #include <QOBject>
 
-class TyphoonHCore;
 class TyphoonHOptions;
+class TyphoonHSettings;
 
 class TyphoonHPlugin : public QObject, IQGCCorePlugin
 {
@@ -23,9 +25,10 @@ public:
     ~TyphoonHPlugin();
 
     bool            init        (IQGCApplication* pApp);
-    IQGCOptions*  uiOptions   ();
+    IQGCOptions*    uiOptions   ();
+    IQGCQMLSource*  settingsQML ();
 
 private:
-    TyphoonHCore*       _pTyphoonCore;
     TyphoonHOptions*    _pOptions;
+    TyphoonHSettings*   _pSettings;
 };

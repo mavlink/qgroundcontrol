@@ -266,6 +266,15 @@ Rectangle {
             }
 
             SubMenuButton {
+                imageResource:  QGroundControl.customSettingsLogoUrl
+                setupIndicator: false
+                exclusiveGroup: setupButtonGroup
+                text:           QGroundControl.customSettingsTitle
+                visible:        QGroundControl.colapseSettings && QGroundControl.hasCustomSettings
+                onClicked:      panelLoader.setSource(QGroundControl.customSettingsURL)
+            }
+
+            SubMenuButton {
                 imageResource:  "/res/waves.svg"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
