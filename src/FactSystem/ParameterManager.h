@@ -49,6 +49,9 @@ public:
     Q_PROPERTY(bool missingParameters READ missingParameters NOTIFY missingParametersChanged)
     bool missingParameters(void) { return _missingParameters; }
 
+    Q_PROPERTY(double loadProgress READ loadProgress NOTIFY loadProgressChanged)
+    double loadProgress(void) const { return _loadProgress; }
+
     /// @return Directory of parameter caches
     static QDir parameterCacheDir();
 
@@ -121,9 +124,7 @@ public:
 signals:
     void parametersReadyChanged(bool parametersReady);
     void missingParametersChanged(bool missingParameters);
-
-    /// Signalled to update progress of full parameter list request
-    void parameterListProgress(float value);
+    void loadProgressChanged(float value);
     
 protected:
     Vehicle*            _vehicle;
@@ -148,6 +149,7 @@ private:
     QString _remapParamNameToVersion(const QString& paramName);
     void _loadOfflineEditingParams(void);
     QString _logVehiclePrefix(int componentId = -1);
+    void _setLoadProgress(double loadProgress);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
@@ -164,6 +166,7 @@ private:
     /// Second mapping is group name, to Fact
     QMap<int, QMap<QString, QStringList> > _mapGroup2ParameterName;
     
+    double      _loadProgress;                  ///< Parameter load progess, [0.0,1.0]
     bool        _parametersReady;               ///< true: parameter load complete
     bool        _missingParameters;             ///< true: parameter missing from initial load
     bool        _initialLoadComplete;           ///< true: Initial load of all parameters complete, whether successful or not
