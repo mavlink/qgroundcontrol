@@ -26,4 +26,4 @@ public:
     virtual IQGCUIOptions*    uiOptions() { return NULL; }
 };
 
-Q_DECLARE_INTERFACE(IQGCCorePlugin, "org.qgroundcontrol.qgccoreplugin/1.0")
+Q_DECLARE_INTERFACE(IQGCCorePlugin, "org.qgroundcontrol.qgccoreplugin")

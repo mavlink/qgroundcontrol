@@ -34,7 +34,9 @@ DebugBuild {
 
 TEMPLATE = lib
 CONFIG  += plugin
-TARGET   = TyphoonH
+
+DESTDIR = $$fromfile($$PWD/custom-config.pri, PLUGIN_DESTDIR)
+TARGET  = $$fromfile($$PWD/custom-config.pri, PLUGIN_TARGET)
 
 CONFIG += \
     thread \

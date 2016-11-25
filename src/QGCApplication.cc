@@ -200,6 +200,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _bluetoothAvailable(false)
     , _lastKnownHomePosition(37.803784, -122.462276, 0.0)
     , _pUIOptions(NULL)
+    , _pCorePlugin(NULL)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -732,5 +733,27 @@ QGCApplication::uiOptions()
 void
 QGCApplication::_scanAndLoadPlugins()
 {
+
+    QString filter = "*.core.so";
+    QString path = QCoreApplication::applicationDirPath();
+    qDebug() << "Plugin: App Path" << path;
+    QDirIterator it(path, QStringList() << filter, QDir::Files);
+    while(it.hasNext()) {
+        QString pluginFile = it.next();
+        qDebug() << "Plugin:" << pluginFile;
+        QPluginLoader loader(pluginFile);
+        QObject *plugin = loader.instance();
+        if(plugin) {
+            _pCorePlugin = qobject_cast<IQGCCorePlugin*>(plugin);
+            if(_pCorePlugin) {
+                qDebug() << "Plugin loaded";
+                _pUIOptions = _pCorePlugin->uiOptions();
+                return;
+            }
+        } else {
+            qDebug() << "Plugin:" << loader.errorString();
+        }
+    }
+    //-- No plugin found, use default options
     _pUIOptions = new IQGCUIOptions;
 }

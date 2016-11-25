@@ -11,16 +11,21 @@
 #include <QOBject>
 
 class TyphoonHCore;
+class TyphoonHOptions;
 
-class TyphoonHPlugin : public IQGCCorePlugin
+class TyphoonHPlugin : public QObject, IQGCCorePlugin
 {
-    Q_PLUGIN_METADATA(IID "org.qgroundcontrol.qgccoreplugin" FILE "TyphoonH.json")
+    Q_OBJECT
+    Q_PLUGIN_METADATA(IID "org.qgroundcontrol.qgccoreplugin" FILE "typhoonh.json")
     Q_INTERFACES(IQGCCorePlugin)
 public:
     TyphoonHPlugin(QObject* parent = NULL);
     ~TyphoonHPlugin();
-    bool init (IQGCApplication* pApp);
+
+    bool            init        (IQGCApplication* pApp);
+    IQGCUIOptions*  uiOptions   ();
 
 private:
-    TyphoonHCore* _pTyphoonCore;
+    TyphoonHCore*       _pTyphoonCore;
+    TyphoonHOptions*    _pOptions;
 };

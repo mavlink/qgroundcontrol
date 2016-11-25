@@ -215,7 +215,9 @@ private:
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
 
+    //-- Plugin Architecture
     IQGCUIOptions*  _pUIOptions;
+    IQGCCorePlugin* _pCorePlugin;
 };
 
 /// @brief Returns the QGCApplication object singleton.

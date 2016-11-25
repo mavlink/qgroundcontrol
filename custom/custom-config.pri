@@ -9,7 +9,14 @@ DEFINES += QGC_DISABLE_BLUETOOTH
 DEFINES += QGC_DISABLE_UVC
 DEFINES += DISABLE_ZEROCONF
 
+PLUGIN_DESTDIR = /tmp
+PLUGIN_TARGET  = TyphoonH.core
+PLUGIN_SOURCE  = $${PLUGIN_DESTDIR}/lib$${PLUGIN_TARGET}.so
+
 #-------------------------------------------------------------------------------------
 # Android
 
-include($$PWD/AndroidTyphoonH.pri)
+Androidx86Build {
+    ANDROID_EXTRA_LIBS += $${PLUGIN_SOURCE}
+    include($$PWD/AndroidTyphoonH.pri)
+}
