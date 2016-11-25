@@ -134,6 +134,16 @@ Rectangle {
                 QGroundControl.linkManager.disconnectLink(_currentSelection.link, false)
             }
         }
+        IndicatorButton {
+            text:           qsTr("Autoconnect")
+            width:          ScreenTools.defaultFontPixelWidth * 15
+            enabled:        _currentSelection && _currentSelection.linkType === LinkConfiguration.TypeUdp
+            indicatorGreen: _currentSelection && _currentSelection.autoConnect
+            onClicked:      {
+                _currentSelection.autoConnect = !_currentSelection.autoConnect
+                QGroundControl.linkManager.saveLinkConfigurationList()
+            }
+        }
     }
 
     Loader {
