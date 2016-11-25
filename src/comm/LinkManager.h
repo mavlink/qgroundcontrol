@@ -117,8 +117,8 @@ public:
     /// Load list of link configurations from disk
     void loadLinkConfigurationList();
 
-    /// Save list of link configurations from disk
-    void saveLinkConfigurationList();
+    /// Save list of link configurations to disk
+    Q_INVOKABLE void saveLinkConfigurationList();
 
     /// Suspend automatic confguration updates (during link maintenance for instance)
     void suspendConfigurationUpdates(bool suspend);
