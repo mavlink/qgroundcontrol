@@ -47,6 +47,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     : QObject(vehicle)
     , _vehicle(vehicle)
     , _mavlink(NULL)
+    , _loadProgress(0.0)
     , _parametersReady(false)
     , _missingParameters(false)
     , _initialLoadComplete(false)
@@ -247,10 +248,10 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         // We are no longer waiting for any reads to complete
         if (_prevWaitingReadParamIndexCount + _prevWaitingReadParamNameCount != 0) {
             // Set progress to 0 if not already there
-            emit parameterListProgress(0);
+            _setLoadProgress(0.0);
         }
     } else {
-        emit parameterListProgress((float)(_totalParamCount - readWaitingParamCount) / (float)_totalParamCount);
+        _setLoadProgress((double)(_totalParamCount - readWaitingParamCount) / (double)_totalParamCount);
     }
 
     // Get parameter set version
@@ -801,13 +802,13 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         ani->setDuration(750);
 
         connect(ani, &QVariantAnimation::valueChanged, [this](const QVariant &value) {
-            emit parameterListProgress(value.toFloat());
+            _setLoadProgress(value.toDouble());
         });
 
         // Hide 500ms after animation finishes
         connect(ani, &QVariantAnimation::finished, [this](){
             QTimer::singleShot(500, [this]() {
-                emit parameterListProgress(0);
+                _setLoadProgress(0);
             });
         });
 
@@ -1070,18 +1071,13 @@ void ParameterManager::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
 void ParameterManager::_initialRequestTimeout(void)
 {
     if (!_disableAllRetries && ++_initialRequestRetryCount <= _maxInitialRequestListRetry) {
-        if (!_vehicle->genericFirmware()) {
-            // Generic vehicles (like BeBop) may not have any parameters, so don't annoy the user
-            QString errorMsg = tr("Vehicle %1 did not respond to request for parameters, retrying").arg(_vehicle->id());
-            qCDebug(ParameterManagerLog) << errorMsg;
-            qgcApp()->showMessage(errorMsg);
-        }
         refreshAllParameters();
         _initialRequestTimeoutTimer.start();
     } else {
         if (!_vehicle->genericFirmware()) {
             // Generic vehicles (like BeBop) may not have any parameters, so don't annoy the user
-            QString errorMsg = tr("Vehicle %1 did not respond to request for parameters, failing after maximum number of retries").arg(_vehicle->id());
+            QString errorMsg = tr("Vehicle %1 did not respond to request for parameters"
+                                  "This will cause QGroundControl to be unable to display its full user interface.").arg(_vehicle->id());
             qCDebug(ParameterManagerLog) << errorMsg;
             qgcApp()->showMessage(errorMsg);
         }
@@ -1481,4 +1477,10 @@ QString ParameterManager::_logVehiclePrefix(int componentId)
     } else {
         return QString("V:%1 C:%2").arg(_vehicle->id()).arg(componentId);
     }
+}
+
+void ParameterManager::_setLoadProgress(double loadProgress)
+{
+    _loadProgress = loadProgress;
+    emit loadProgressChanged(loadProgress);
 }
