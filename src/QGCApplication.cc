@@ -199,7 +199,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _toolbox(NULL)
     , _bluetoothAvailable(false)
     , _lastKnownHomePosition(37.803784, -122.462276, 0.0)
-    , _pUIOptions(NULL)
+    , _pQGCOptions(NULL)
     , _pCorePlugin(NULL)
 {
     Q_ASSERT(_app == NULL);
@@ -368,11 +368,14 @@ QGCApplication::~QGCApplication()
         delete mainWindow;
     }
 #endif
-    if(_pUIOptions) {
-        delete _pUIOptions;
+    if(_pQGCOptions) {
+        delete _pQGCOptions;
     }
     shutdownVideoStreaming();
     delete _toolbox;
+    if(_pCorePlugin) {
+        delete _pCorePlugin;
+    }
 }
 
 void QGCApplication::_initCommon(void)
@@ -477,6 +480,14 @@ bool QGCApplication::_initForNormalAppBoot(void)
     }
 
     settings.sync();
+
+    //-- Initialize Core Plugin (if any)
+    if(_pCorePlugin) {
+        if(!_pCorePlugin->init(this)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -723,37 +734,34 @@ void QGCApplication::setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosit
 }
 
 //-----------------------------------------------------------------------------
-IQGCUIOptions*
-QGCApplication::uiOptions()
+IQGCOptions*
+QGCApplication::qgcOptions()
 {
-    return _pUIOptions;
+    return _pQGCOptions;
 }
 
 //-----------------------------------------------------------------------------
 void
 QGCApplication::_scanAndLoadPlugins()
 {
-
+    //-- Look for plugins
     QString filter = "*.core.so";
     QString path = QCoreApplication::applicationDirPath();
-    qDebug() << "Plugin: App Path" << path;
     QDirIterator it(path, QStringList() << filter, QDir::Files);
     while(it.hasNext()) {
         QString pluginFile = it.next();
-        qDebug() << "Plugin:" << pluginFile;
         QPluginLoader loader(pluginFile);
         QObject *plugin = loader.instance();
         if(plugin) {
             _pCorePlugin = qobject_cast<IQGCCorePlugin*>(plugin);
             if(_pCorePlugin) {
-                qDebug() << "Plugin loaded";
-                _pUIOptions = _pCorePlugin->uiOptions();
+                _pQGCOptions = _pCorePlugin->uiOptions();
                 return;
             }
         } else {
-            qDebug() << "Plugin:" << loader.errorString();
+            qWarning() << "Plugin" << pluginFile << " not loaded:" << loader.errorString();
         }
     }
     //-- No plugin found, use default options
-    _pUIOptions = new IQGCUIOptions;
+    _pQGCOptions = new IQGCOptions;
 }

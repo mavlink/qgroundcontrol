@@ -12,7 +12,7 @@
 #define QGCFILEDIALOG_H
 
 #if defined(__mobile__)
-#error Should not be included in mobile or minimalist builds
+#error Should not be included in mobile builds
 #endif
 
 #include <QFileDialog>

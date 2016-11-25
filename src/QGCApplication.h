@@ -123,7 +123,8 @@ public:
     QGeoCoordinate lastKnownHomePosition(void) { return _lastKnownHomePosition; }
     void setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosition);
 
-    IQGCUIOptions* uiOptions();
+    /// Options (can be overwriten by a core plugin)
+    IQGCOptions* qgcOptions();
 
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
@@ -216,7 +217,7 @@ private:
     friend class UnitTest;
 
     //-- Plugin Architecture
-    IQGCUIOptions*  _pUIOptions;
+    IQGCOptions*    _pQGCOptions;
     IQGCCorePlugin* _pCorePlugin;
 };
 

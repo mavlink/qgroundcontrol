@@ -358,33 +358,33 @@ QMap<QString, FactMetaData*>& QGroundControlQmlGlobal::nameToMetaDataMap(void) {
 bool
 QGroundControlQmlGlobal::colapseSettings()
 {
-    return qgcApp()->uiOptions()->colapseSettings();
+    return qgcApp()->qgcOptions()->colapseSettings();
 }
 
 //-----------------------------------------------------------------------------
 bool
 QGroundControlQmlGlobal::mainViewIsMap()
 {
-    return qgcApp()->uiOptions()->mainViewIsMap();
+    return qgcApp()->qgcOptions()->mainViewIsMap();
 }
 
 //-----------------------------------------------------------------------------
 bool
 QGroundControlQmlGlobal::enableVirtualJoystick()
 {
-    return qgcApp()->uiOptions()->enableVirtualJoystick();
+    return qgcApp()->qgcOptions()->enableVirtualJoystick();
 }
 
 //-----------------------------------------------------------------------------
 bool
 QGroundControlQmlGlobal::enableAutoConnectOptions()
 {
-    return qgcApp()->uiOptions()->enableAutoConnectOptions();
+    return qgcApp()->qgcOptions()->enableAutoConnectOptions();
 }
 
 //-----------------------------------------------------------------------------
 bool
 QGroundControlQmlGlobal::enableVideoSourceOptions()
 {
-    return qgcApp()->uiOptions()->enableVideoSourceOptions();
+    return qgcApp()->qgcOptions()->enableVideoSourceOptions();
 }

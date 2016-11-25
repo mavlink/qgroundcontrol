@@ -23,7 +23,7 @@ public:
     ~TyphoonHPlugin();
 
     bool            init        (IQGCApplication* pApp);
-    IQGCUIOptions*  uiOptions   ();
+    IQGCOptions*  uiOptions   ();
 
 private:
     TyphoonHCore*       _pTyphoonCore;

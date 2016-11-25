@@ -48,8 +48,19 @@ VideoManager::VideoManager(QGCApplication* app)
 #else
     setVideoSource(settings.value(kVideoSourceKey, kUDPStream).toString());
 #endif
-    setUdpPort(settings.value(kVideoUDPPortKey, 5600).toUInt());
-    setRtspURL(settings.value(kVideoRTSPUrlKey, "rtsp://192.168.42.1:554/live").toString()); //-- Example RTSP URL
+    //-- Check if core plugin defines its own video requirements
+    if(qgcApp()->qgcOptions()->definesVideo()) {
+        if(qgcApp()->qgcOptions()->videoUDPPort()) {
+            setUdpPort(qgcApp()->qgcOptions()->videoUDPPort());
+            setVideoSource(kUDPStream);
+        } else {
+            setVideoSource(kRTSPStream);
+            setRtspURL(qgcApp()->qgcOptions()->videoRSTPUrl());
+        }
+    } else {
+        setUdpPort(settings.value(kVideoUDPPortKey, 5600).toUInt());
+        setRtspURL(settings.value(kVideoRTSPUrlKey, "rtsp://192.168.42.1:554/live").toString()); //-- Example RTSP URL
+    }
     _init = true;
 #if defined(QGC_GST_STREAMING)
     _updateVideo();
