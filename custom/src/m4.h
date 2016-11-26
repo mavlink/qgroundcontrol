@@ -47,6 +47,10 @@ public:
     int     m4State                 () { return _m4State; }
     void    getControllerLocation   (ControllerLocation& location);
 
+
+    static  void            setSingletonInstance(TyphoonHCore* pInstance);
+    static  TyphoonHCore*   instance            ();
+
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  float   byteArrayToFloat(QByteArray data, int offset);
     static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
@@ -105,11 +109,12 @@ private:
         STATE_ENTER_RUN,
         STATE_RUNNING
     };
-    int                 _state;
-    int                 _responseTryCount;
-    int                 _currentChannelAdd;
-    int                 _m4State;
-    RxBindInfo          _rxBindInfoFeedback;
-    QTimer              _timer;
-    ControllerLocation  _controllerLocation;
+    int                     _state;
+    int                     _responseTryCount;
+    int                     _currentChannelAdd;
+    int                     _m4State;
+    RxBindInfo              _rxBindInfoFeedback;
+    QTimer                  _timer;
+    ControllerLocation      _controllerLocation;
+    static TyphoonHCore*    _pSingletonInstance;
 };

@@ -29,8 +29,8 @@ DebugBuild {
 }
 
 #-------------------------------------------------------------------------------------
-# Custom Build: QGC will create a QGCCustom object (exposed by your custom build) and
-# call its QGCCustom::init(QGCApplication* pApp) method, which you should expose. This
+# Custom Build: QGC will create a "CUSTOMCLASS" object (exposed by your custom build
+# and derived from IQGCCorePlugin) and call its IQGCCorePlugin::init() method. This
 # is the start of allowing custom Plugins, which will eventually use a more defined
 # runtime plugin architecture and not require a separate build. The idea is that we
 # should be able to have uneeded code only loaded (at runtime) if required. For
@@ -47,27 +47,15 @@ contains (DEFINES, QGC_DISABLE_CUSTOM) {
 }
 
 DisableCustomBuild {
-    DEFINES -= CUSTOM_BUILD
-    DEFINES -= MINIMALIST_QGC
+    DEFINES -= QGC_CUSTOM_BUILD
+    DEFINES += CUSTOMHEADER=\"\\\"dummy.h\\\"\"
     CONFIG  -= CustomBuild
 } else {
-    exists($$PWD/custom/custom.pro) {
-        CONFIG += CustomBuild
+    exists($$PWD/custom/custom.pri) {
         message("Found custom build")
-        DEFINES += CUSTOM_BUILD
-        # Load additional config flags from custom-config.pri
-        exists($$PWD/custom/custom-config.pri) {
-            include($$PWD/custom/custom-config.pri)
-            message("Found custom configuration")
-            infile($$PWD/custom/custom-config.pri, CONFIG) {
-                CONFIG += $$fromfile($$PWD/custom/custom-config.pri, CONFIG)
-                message($$sprintf("Using additional custom config: '%1' specified in $$PWD/custom/custom-config.pri", $$fromfile($$PWD/custom/custom-config.pri, CONFIG)))
-            }
-            infile($$PWD/custom/custom-config.pri, DEFINES) {
-                DEFINES += $$fromfile($$PWD/custom/custom-config.pri, DEFINES)
-                message($$sprintf("Using additional custom config: '%1' specified in $$PWD/custom/custom-config.pri", $$fromfile($$PWD/custom/custom-config.pri, DEFINES)))
-            }
-        }
+        CONFIG  += CustomBuild
+        DEFINES += QGC_CUSTOM_BUILD
+        include($$PWD/custom/custom.pri)
     }
 }
 
@@ -889,10 +877,12 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
 #-------------------------------------------------------------------------------------
 # Android
 
-contains (CONFIG, DISABLE_BUILTIN_ANDROID) {
-    message("Skipping builtin support for Android")
-} else {
-    include(android.pri)
+AndroidBuild {
+    contains (CONFIG, DISABLE_BUILTIN_ANDROID) {
+        message("Skipping builtin support for Android")
+    } else {
+        include(android.pri)
+    }
 }
 
 #-------------------------------------------------------------------------------------

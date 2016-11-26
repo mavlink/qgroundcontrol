@@ -16,7 +16,7 @@ static QObject*
 typhoonHCoreSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     TyphoonHCore* pTyphoon = new TyphoonHCore();
-    pTyphoon->init();
+    TyphoonHCore::setSingletonInstance(pTyphoon);
     return pTyphoon;
 }
 
@@ -66,7 +66,11 @@ TyphoonHPlugin::~TyphoonHPlugin()
 
 //-----------------------------------------------------------------------------
 bool
+#if defined (QGC_DYNAMIC_PLUGIN)
 TyphoonHPlugin::init(IQGCApplication* pApp)
+#else
+TyphoonHPlugin::init(QGCApplication* pApp)
+#endif
 {
     Q_UNUSED(pApp);
     qmlRegisterSingletonType<TyphoonHCore>("TyphoonHCore", 1, 0, "TyphoonHCore", typhoonHCoreSingletonFactory);

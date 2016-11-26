@@ -98,6 +98,8 @@
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
 
+#include CUSTOMHEADER
+
 #ifndef NO_SERIAL_LINK
     #include "SerialLink.h"
 #endif
@@ -733,18 +735,15 @@ void QGCApplication::setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosit
     _lastKnownHomePosition = lastKnownHomePosition;
 }
 
-//-----------------------------------------------------------------------------
-IQGCOptions*
-QGCApplication::qgcOptions()
+IQGCOptions* QGCApplication::qgcOptions()
 {
     return _pQGCOptions;
 }
 
-//-----------------------------------------------------------------------------
-void
-QGCApplication::_scanAndLoadPlugins()
+void QGCApplication::_scanAndLoadPlugins()
 {
-    //-- Look for plugins
+#if defined (QGC_DYNAMIC_PLUGIN)
+    //-- Look for plugins (Dynamic)
     QString filter = "*.core.so";
     QString path = QCoreApplication::applicationDirPath();
     QDirIterator it(path, QStringList() << filter, QDir::Files);
@@ -762,6 +761,14 @@ QGCApplication::_scanAndLoadPlugins()
             qWarning() << "Plugin" << pluginFile << " not loaded:" << loader.errorString();
         }
     }
-    //-- No plugin found, use default options
+#elif defined (QGC_CUSTOM_BUILD)
+    //-- Create custom plugin (Static)
+    _pCorePlugin = (IQGCCorePlugin*) new CUSTOMCLASS(this);
+    if(_pCorePlugin) {
+        _pQGCOptions = _pCorePlugin->uiOptions();
+        return;
+    }
+#endif
+    //-- No plugins found, use default options
     _pQGCOptions = new IQGCOptions;
 }

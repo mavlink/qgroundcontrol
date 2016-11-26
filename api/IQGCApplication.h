@@ -9,7 +9,7 @@
 
 
 /**
- *   @brief QGC Main Application Interface
+ *   @brief QGC Main Application Interface (used for Dynamic Loaded plugins)
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
@@ -20,4 +20,5 @@ class IQGCApplication
 public:
     IQGCApplication() {}
     virtual ~IQGCApplication() {}
+    //-- Not yet implemented
 };

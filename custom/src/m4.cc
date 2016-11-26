@@ -38,6 +38,8 @@ static const char* ktxAddr      = "txAddr";
 
 Q_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
 
+TyphoonHCore* TyphoonHCore::_pSingletonInstance = NULL;
+
 //-----------------------------------------------------------------------------
 // RC Channel data provided by Yuneec
 #include "m4channeldata.h"
@@ -128,6 +130,20 @@ TyphoonHCore::init()
     _state = STATE_EXIT_RUN;
     _timer.start(COMMAND_WAIT_INTERVAL);
     return true;
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHCore::setSingletonInstance(TyphoonHCore* pInstance)
+{
+    TyphoonHCore::_pSingletonInstance = pInstance;
+}
+
+//-----------------------------------------------------------------------------
+TyphoonHCore*
+TyphoonHCore::instance()
+{
+    return TyphoonHCore::_pSingletonInstance;
 }
 
 //-----------------------------------------------------------------------------
