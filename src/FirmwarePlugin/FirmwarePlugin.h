@@ -227,4 +227,36 @@ public:
     virtual QString brandImage(const Vehicle* vehicle) const { Q_UNUSED(vehicle) return QString(); }
 };
 
+class FirmwarePluginFactory : public QObject
+{
+    Q_OBJECT
+
+public:
+    FirmwarePluginFactory(void);
+
+    /// Returns appropriate plugin for autopilot type.
+    ///     @param autopilotType Type of autopilot to return plugin for.
+    ///     @param vehicleType Vehicle type of autopilot to return plugin for.
+    /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
+    FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) = 0;
+};
+
+class FirmwarePluginFactoryRegister : public QObject
+{
+    Q_OBJECT
+
+public:
+    static FirmwarePluginFactoryRegister* instance(void);
+
+    /// Registers the specified logging category to the system.
+    void registerPluginFactory(FirmwarePlugin* plugin);
+
+    QList<FirmwarePlugin*> plugins(void) const;
+
+private:
+    FirmwarePluginRegister(void) { }
+
+    QList<FirmwarePlugin*> _pluginList;
+};
+
 #endif

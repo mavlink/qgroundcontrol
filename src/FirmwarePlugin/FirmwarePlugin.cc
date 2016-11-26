@@ -7,13 +7,28 @@
  *
  ****************************************************************************/
 
-
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
 
 #include <QDebug>
 
+FirmwarePluginRegister* _instance = NULL;
+
 const char* guided_mode_not_supported_by_vehicle = "Guided mode not supported by Vehicle.";
+
+FirmwarePluginFactory::FirmwarePluginFactory(void)
+{
+    FirmwarePluginFactoryRegister::instance()->registerPluginFactory(this);
+}
+
+FirmwarePluginRegister* FirmwarePluginRegister::instance(void)
+{
+    if (!_instance) {
+        _instance = new FirmwarePluginRegister;
+    }
+
+    return _instance;
+}
 
 bool FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
