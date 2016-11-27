@@ -13,7 +13,6 @@
 
 #include <QObject>
 
-class AutoPilotPluginManager;
 class FactSystem;
 class FirmwarePluginManager;
 class FlightMapSettings;
@@ -41,7 +40,6 @@ public:
     QGCToolbox(QGCApplication* app);
     ~QGCToolbox();
 
-    AutoPilotPluginManager*     autopilotPluginManager(void)    { return _autopilotPluginManager; }
     FirmwarePluginManager*      firmwarePluginManager(void)     { return _firmwarePluginManager; }
     FlightMapSettings*          flightMapSettings(void)         { return _flightMapSettings; }
     GAudioOutput*               audioOutput(void)               { return _audioOutput; }
@@ -67,7 +65,6 @@ private:
     void setChildToolboxes(void);
 
     GAudioOutput*               _audioOutput;
-    AutoPilotPluginManager*     _autopilotPluginManager;
     FactSystem*                 _factSystem;
     FirmwarePluginManager*      _firmwarePluginManager;
     FlightMapSettings*          _flightMapSettings;

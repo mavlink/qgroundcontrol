@@ -13,7 +13,6 @@
 
 #include "PX4AdvancedFlightModesController.h"
 #include "QGCMAVLink.h"
-#include "AutoPilotPluginManager.h"
 
 #include <QVariant>
 #include <QQmlProperty>
