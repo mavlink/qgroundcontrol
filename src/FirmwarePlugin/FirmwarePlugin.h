@@ -61,6 +61,9 @@ public:
     ///     value:  remapParamNameMinorVersionRemapMap_t entry
     typedef QMap<int, remapParamNameMinorVersionRemapMap_t> remapParamNameMajorVersionMap_t;
 
+    /// @return The AutoPilotPlugin associated with this firmware plugin. Must be overriden.
+    virtual AutoPilotPlugin* autopilotPlugin(Vehicle* vehicle);
+
     /// Called when Vehicle is first created to perform any firmware specific setup.
     virtual void initializeVehicle(Vehicle* vehicle);
 
@@ -181,7 +184,7 @@ public:
     virtual void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion);
 
     /// Returns the internal resource parameter meta date file.
-    virtual QString internalParameterMetaDataFile(void) { return QString(); }
+    virtual QString internalParameterMetaDataFile(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
 
     /// Loads the specified parameter meta data file.
     /// @return Opaque parameter meta data information which must be stored with Vehicle. Vehicle is responsible to
@@ -225,6 +228,9 @@ public:
 
     /// Return the resource file which contains the brand image for the vehicle.
     virtual QString brandImage(const Vehicle* vehicle) const { Q_UNUSED(vehicle) return QString(); }
+
+    // FIXME: Hack workaround for non pluginize FollowMe support
+    static const char* px4FollowMeFlightMode;
 };
 
 class FirmwarePluginFactory : public QObject
@@ -238,7 +244,10 @@ public:
     ///     @param autopilotType Type of autopilot to return plugin for.
     ///     @param vehicleType Vehicle type of autopilot to return plugin for.
     /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
-    FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) = 0;
+    virtual FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) = 0;
+
+    /// @return List of autopilot types this plugin supports.
+    virtual QList<MAV_AUTOPILOT> knownFirmwareTypes(void) const = 0;
 };
 
 class FirmwarePluginFactoryRegister : public QObject
@@ -249,14 +258,12 @@ public:
     static FirmwarePluginFactoryRegister* instance(void);
 
     /// Registers the specified logging category to the system.
-    void registerPluginFactory(FirmwarePlugin* plugin);
+    void registerPluginFactory(FirmwarePluginFactory* pluginFactory) { _factoryList.append(pluginFactory); }
 
-    QList<FirmwarePlugin*> plugins(void) const;
+    QList<FirmwarePluginFactory*> pluginFactories(void) const { return _factoryList; }
 
 private:
-    FirmwarePluginRegister(void) { }
-
-    QList<FirmwarePlugin*> _pluginList;
+    QList<FirmwarePluginFactory*> _factoryList;
 };
 
 #endif

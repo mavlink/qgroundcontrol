@@ -239,11 +239,3 @@ ReleaseBuild {
         QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO += /OPT:ICF
     }
 }
-
-#
-# Unit Test specific configuration goes here
-#
-
-DebugBuild {
-    DEFINES += UNITTEST_BUILD
-}

@@ -21,7 +21,6 @@
 #include "QGCLoggingCategory.h"
 
 class FirmwarePluginManager;
-class AutoPilotPluginManager;
 class FollowMe;
 class JoystickManager;
 class QGCApplication;
@@ -113,7 +112,6 @@ private:
     QmlObjectListModel  _vehicles;
 
     FirmwarePluginManager*      _firmwarePluginManager;
-    AutoPilotPluginManager*     _autopilotPluginManager;
     JoystickManager*            _joystickManager;
     MAVLinkProtocol*            _mavlinkProtocol;
 

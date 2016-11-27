@@ -21,11 +21,6 @@
 #include "QGCToolbox.h"
 
 class QGCApplication;
-class ArduCopterFirmwarePlugin;
-class ArduPlaneFirmwarePlugin;
-class ArduRoverFirmwarePlugin;
-class ArduSubFirmwarePlugin;
-class PX4FirmwarePlugin;
 
 /// FirmwarePluginManager is a singleton which is used to return the correct FirmwarePlugin for a MAV_AUTOPILOT type.
 
@@ -37,7 +32,7 @@ public:
     FirmwarePluginManager(QGCApplication* app);
     ~FirmwarePluginManager();
 
-    QList<MAV_AUTOPILOT> knownFirmwareTypes(void) const;
+    QList<MAV_AUTOPILOT> knownFirmwareTypes(void);
 
     /// Returns appropriate plugin for autopilot type.
     ///     @param autopilotType Type of autopilot to return plugin for.
@@ -45,16 +40,9 @@ public:
     /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
     FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType);
 
-    /// Clears settings from all firmware plugins.
-    void clearSettings(void);
-
 private:
-    ArduCopterFirmwarePlugin*   _arduCopterFirmwarePlugin;
-    ArduPlaneFirmwarePlugin*    _arduPlaneFirmwarePlugin;
-    ArduRoverFirmwarePlugin*    _arduRoverFirmwarePlugin;
-    ArduSubFirmwarePlugin*    _arduSubFirmwarePlugin;
-    FirmwarePlugin*             _genericFirmwarePlugin;
-    PX4FirmwarePlugin*          _px4FirmwarePlugin;
+    FirmwarePlugin*         _genericFirmwarePlugin;
+    QList<MAV_AUTOPILOT>    _knownFirmwareTypes;
 };
 
 #endif

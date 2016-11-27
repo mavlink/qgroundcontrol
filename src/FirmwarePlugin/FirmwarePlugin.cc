@@ -9,25 +9,33 @@
 
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
+#include "Generic/GenericAutoPilotPlugin.h"
 
 #include <QDebug>
 
-FirmwarePluginRegister* _instance = NULL;
+static FirmwarePluginFactoryRegister* _instance = NULL;
 
 const char* guided_mode_not_supported_by_vehicle = "Guided mode not supported by Vehicle.";
+
+const char* FirmwarePlugin::px4FollowMeFlightMode = "Follow Me";
 
 FirmwarePluginFactory::FirmwarePluginFactory(void)
 {
     FirmwarePluginFactoryRegister::instance()->registerPluginFactory(this);
 }
 
-FirmwarePluginRegister* FirmwarePluginRegister::instance(void)
+FirmwarePluginFactoryRegister* FirmwarePluginFactoryRegister::instance(void)
 {
     if (!_instance) {
-        _instance = new FirmwarePluginRegister;
+        _instance = new FirmwarePluginFactoryRegister;
     }
 
     return _instance;
+}
+
+AutoPilotPlugin* FirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
+{
+    return new GenericAutoPilotPlugin(vehicle, vehicle);
 }
 
 bool FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)

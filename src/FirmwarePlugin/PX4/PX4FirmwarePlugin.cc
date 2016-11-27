@@ -14,7 +14,13 @@
 #include "PX4FirmwarePlugin.h"
 #include "PX4ParameterMetaData.h"
 #include "QGCApplication.h"
-#include "AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h"    // FIXME: Hack
+#include "PX4AutoPilotPlugin.h"
+#include "PX4AdvancedFlightModesController.h"
+#include "PX4SimpleFlightModesController.h"
+#include "AirframeComponentController.h"
+#include "SensorsComponentController.h"
+#include "PowerComponentController.h"
+#include "RadioComponentController.h"
 
 #include <QDebug>
 
@@ -72,7 +78,17 @@ static const struct Modes2Name rgModes2Name[] = {
 PX4FirmwarePlugin::PX4FirmwarePlugin(void)
     : _versionNotified(false)
 {
+    qmlRegisterType<PX4AdvancedFlightModesController>   ("QGroundControl.Controllers", 1, 0, "PX4AdvancedFlightModesController");
+    qmlRegisterType<PX4SimpleFlightModesController>     ("QGroundControl.Controllers", 1, 0, "PX4SimpleFlightModesController");
+    qmlRegisterType<AirframeComponentController>        ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
+    qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
+    qmlRegisterType<PowerComponentController>           ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
+    qmlRegisterType<RadioComponentController>           ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
+}
 
+AutoPilotPlugin* PX4FirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
+{
+    return new PX4AutoPilotPlugin(vehicle, vehicle);
 }
 
 QList<VehicleComponent*> PX4FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
@@ -177,10 +193,11 @@ bool PX4FirmwarePlugin::supportsManualControl(void)
 
 bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
-    if(vehicle->multiRotor()) {
+    if (vehicle->multiRotor()) {
         return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability | OrbitModeCapability)) == capabilities;
+    } else {
+        return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
     }
-    return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
 }
 
 void PX4FirmwarePlugin::initializeVehicle(Vehicle* vehicle)

@@ -15,7 +15,6 @@
 #include "AirframeComponentAirframes.h"
 #include "QGCMAVLink.h"
 #include "MultiVehicleManager.h"
-#include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
 
 #include <QVariant>
