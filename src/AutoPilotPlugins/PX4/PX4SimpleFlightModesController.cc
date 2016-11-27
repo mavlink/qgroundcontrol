@@ -10,7 +10,6 @@
 
 #include "PX4SimpleFlightModesController.h"
 #include "QGCMAVLink.h"
-#include "AutoPilotPluginManager.h"
 
 #include <QVariant>
 #include <QQmlProperty>

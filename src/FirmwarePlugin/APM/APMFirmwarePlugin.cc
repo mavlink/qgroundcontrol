@@ -12,9 +12,12 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "APMFirmwarePlugin.h"
-#include "AutoPilotPlugins/APM/APMAutoPilotPlugin.h"    // FIXME: Hack
+#include "APMAutoPilotPlugin.h"
 #include "QGCMAVLink.h"
 #include "QGCApplication.h"
+#include "APMFlightModesComponentController.h"
+#include "APMAirframeComponentController.h"
+#include "APMSensorsComponentController.h"
 
 #include <QTcpSocket>
 
@@ -140,7 +143,14 @@ APMFirmwarePlugin::APMFirmwarePlugin(void)
     : _coaxialMotors(false)
     , _textSeverityAdjustmentNeeded(false)
 {
+    qmlRegisterType<APMFlightModesComponentController>  ("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController");
+    qmlRegisterType<APMAirframeComponentController>     ("QGroundControl.Controllers", 1, 0, "APMAirframeComponentController");
+    qmlRegisterType<APMSensorsComponentController>      ("QGroundControl.Controllers", 1, 0, "APMSensorsComponentController");
+}
 
+AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
+{
+    return new APMAutoPilotPlugin(vehicle, vehicle);
 }
 
 bool APMFirmwarePlugin::isCapable(const Vehicle* /*vehicle*/, FirmwareCapabilities capabilities)
@@ -654,8 +664,8 @@ QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(void)
          << MAV_CMD_DO_AUTOTUNE_ENABLE
          << MAV_CMD_NAV_VTOL_TAKEOFF << MAV_CMD_NAV_VTOL_LAND << MAV_CMD_DO_VTOL_TRANSITION;
 #if 0
-        // Waiting for module update
-         << MAV_CMD_DO_SET_REVERSE;
+    // Waiting for module update
+    << MAV_CMD_DO_SET_REVERSE;
 #endif
 
     return list;
@@ -723,7 +733,7 @@ void APMFirmwarePlugin::_artooSocketError(QAbstractSocket::SocketError socketErr
     qgcApp()->showMessage(tr("Error during Solo video link setup: %1").arg(socketError));
 }
 
-QString APMFirmwarePlugin::getParameterMetaDataFile(Vehicle* vehicle)
+QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
 {
     switch (vehicle->vehicleType()) {
     case MAV_TYPE_QUADROTOR:

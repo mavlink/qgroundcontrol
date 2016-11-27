@@ -9,7 +9,6 @@
 
 
 #include "APMAutoPilotPlugin.h"
-#include "AutoPilotPluginManager.h"
 #include "UAS.h"
 #include "FirmwarePlugin/APM/APMParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/APM/APMFirmwarePlugin.h"  // FIXME: Hack

@@ -13,7 +13,6 @@
 ///     @author Gus Grubba <mavlink@grubba.com>
 
 #include "ESP8266ComponentController.h"
-#include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
 #include "UAS.h"
 #include "ParameterManager.h"
