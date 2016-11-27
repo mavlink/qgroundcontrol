@@ -87,7 +87,7 @@
 #include CUSTOMHEADER
 #endif
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     #include "SerialLink.h"
 #endif
 
