@@ -33,10 +33,11 @@
     #include "QGCSerialPortInfo.h"
 #endif
 
+#ifdef UNITTEST_BUILD
+    #include "UnitTest.h"
+#endif
+
 #ifdef QT_DEBUG
-    #ifndef __mobile__
-        #include "UnitTest.h"
-    #endif
     #include "CmdLineOptParser.h"
     #ifdef Q_OS_WIN
         #include <crtdbg.h>
@@ -229,8 +230,7 @@ int main(int argc, char *argv[])
 
     int exitCode = 0;
 
-#ifndef __mobile__
-#ifdef QT_DEBUG
+#ifdef UNITTEST_BUILD
     if (runUnitTests) {
         for (int i=0; i < (stressUnitTests ? 20 : 1); i++) {
             if (!app->_initForUnitTests()) {
@@ -249,7 +249,6 @@ int main(int argc, char *argv[])
             }
         }
     } else
-#endif
 #endif
     {
         if (!app->_initForNormalAppBoot()) {

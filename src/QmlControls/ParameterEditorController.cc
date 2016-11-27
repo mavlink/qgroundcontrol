@@ -12,7 +12,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "ParameterEditorController.h"
-#include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 

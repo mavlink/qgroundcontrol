@@ -99,7 +99,7 @@ public:
     ///     @param[out] majorVersion Major version for found meta data
     ///     @param[out] minorVersion Minor version for found meta data
     /// @return Meta data file name of best match, emptyString is none found
-    static QString parameterMetaDataFile(MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion);
+    static QString parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion);
 
     /// If this file is newer than anything in the cache, cache it as the latest version
     static void cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPILOT firmwareType);

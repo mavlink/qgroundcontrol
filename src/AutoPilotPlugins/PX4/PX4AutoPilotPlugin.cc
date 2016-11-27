@@ -9,7 +9,6 @@
 
 
 #include "PX4AutoPilotPlugin.h"
-#include "AutoPilotPluginManager.h"
 #include "PX4AirframeLoader.h"
 #include "PX4AdvancedFlightModesController.h"
 #include "AirframeComponentController.h"
