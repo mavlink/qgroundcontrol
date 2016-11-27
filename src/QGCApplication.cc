@@ -41,7 +41,6 @@
 #include "LinkManager.h"
 #include "HomePositionManager.h"
 #include "UASMessageHandler.h"
-#include "AutoPilotPluginManager.h"
 #include "QGCTemporaryFile.h"
 #include "QGCPalette.h"
 #include "QGCMapPalette.h"
@@ -49,14 +48,6 @@
 #include "ViewWidgetController.h"
 #include "ParameterEditorController.h"
 #include "CustomCommandWidgetController.h"
-#include "PX4AdvancedFlightModesController.h"
-#include "PX4SimpleFlightModesController.h"
-#include "APMFlightModesComponentController.h"
-#include "AirframeComponentController.h"
-#include "SensorsComponentController.h"
-#include "APMSensorsComponentController.h"
-#include "PowerComponentController.h"
-#include "RadioComponentController.h"
 #include "ESP8266ComponentController.h"
 #include "ScreenToolsController.h"
 #include "QGCMobileFileDialogController.h"
@@ -65,11 +56,6 @@
 #include "VehicleComponent.h"
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
-#include "APM/ArduCopterFirmwarePlugin.h"
-#include "APM/ArduPlaneFirmwarePlugin.h"
-#include "APM/ArduRoverFirmwarePlugin.h"
-#include "APM/APMAirframeComponentController.h"
-#include "PX4/PX4FirmwarePlugin.h"
 #include "Vehicle.h"
 #include "MavlinkQmlSingleton.h"
 #include "JoystickConfigController.h"
@@ -88,7 +74,6 @@
 #include "VideoSurface.h"
 #include "VideoReceiver.h"
 #include "LogDownloadController.h"
-#include "PX4AirframeLoader.h"
 #include "ValuesWidgetController.h"
 #include "AppMessages.h"
 #include "SimulatedPosition.h"
@@ -98,13 +83,15 @@
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
 
+#if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
+#endif
 
-#ifndef NO_SERIAL_LINK
+#ifndef __ios__
     #include "SerialLink.h"
 #endif
 
-#if !defined(__mobile__)
+#ifndef __mobile__
     #include "QGCFileDialog.h"
     #include "QGCMessageBox.h"
     #include "FirmwareUpgradeController.h"
@@ -181,7 +168,7 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
  **/
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
-#if defined(__mobile__)
+#ifdef __mobile__
     : QGuiApplication(argc, argv)
     , _qmlAppEngine(NULL)
 #else
@@ -219,7 +206,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
 #ifdef Q_OS_LINUX
-#if !defined(__mobile__)
+#ifndef __mobile__
     if (!_runningUnitTests) {
         if (getuid() == 0) {
             QMessageBox msgBox;
@@ -359,20 +346,16 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
-
 }
 
 QGCApplication::~QGCApplication()
 {
-#if !defined(__mobile__)
+#ifndef __mobile__
     MainWindow* mainWindow = MainWindow::instance();
     if (mainWindow) {
         delete mainWindow;
     }
 #endif
-    if(_pQGCOptions) {
-        delete _pQGCOptions;
-    }
     shutdownVideoStreaming();
     delete _toolbox;
     if(_pCorePlugin) {
@@ -407,15 +390,6 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<QGCMapPolygon>       ("QGroundControl.FlightMap",            1, 0, "QGCMapPolygon",          "Reference only");
 
     qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
-    qmlRegisterType<APMFlightModesComponentController>  ("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController");
-    qmlRegisterType<PX4AdvancedFlightModesController>   ("QGroundControl.Controllers", 1, 0, "PX4AdvancedFlightModesController");
-    qmlRegisterType<PX4SimpleFlightModesController>     ("QGroundControl.Controllers", 1, 0, "PX4SimpleFlightModesController");
-    qmlRegisterType<APMAirframeComponentController>     ("QGroundControl.Controllers", 1, 0, "APMAirframeComponentController");
-    qmlRegisterType<AirframeComponentController>        ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
-    qmlRegisterType<APMSensorsComponentController>      ("QGroundControl.Controllers", 1, 0, "APMSensorsComponentController");
-    qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
-    qmlRegisterType<PowerComponentController>           ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
-    qmlRegisterType<RadioComponentController>           ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
     qmlRegisterType<ESP8266ComponentController>         ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     qmlRegisterType<MainToolBarController>              ("QGroundControl.Controllers", 1, 0, "MainToolBarController");
@@ -426,7 +400,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<QGCMobileFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QGCMobileFileDialogController");
     qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
     qmlRegisterType<JoystickConfigController>           ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
-#if !defined(__mobile__)
+#ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
     qmlRegisterType<FirmwareUpgradeController>      ("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
@@ -450,7 +424,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     // Exit main application when last window is closed
     connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
 
-#if defined(__mobile__)
+#ifdef __mobile__
     _qmlAppEngine = new QQmlApplicationEngine(this);
     _qmlAppEngine->addImportPath("qrc:/qml");
     _qmlAppEngine->rootContext()->setContextProperty("joystickManager", toolbox()->joystickManager());
@@ -551,7 +525,7 @@ void QGCApplication::informationMessageBoxOnMainThread(const QString& title, con
 
 void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const QString& msg)
 {
-#if defined(__mobile__)
+#ifdef __mobile__
     Q_UNUSED(title)
     showMessage(msg);
 #else
@@ -561,7 +535,7 @@ void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const Q
 
 void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const QString& msg)
 {
-#if defined(__mobile__)
+#ifdef __mobile__
     Q_UNUSED(title)
     showMessage(msg);
 #else
@@ -569,7 +543,7 @@ void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const 
 #endif
 }
 
-#if !defined(__mobile__)
+#ifndef __mobile__
 void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
 {
     bool saveError;
@@ -611,7 +585,7 @@ void QGCApplication::setStyle(bool styleIsDark)
 
 void QGCApplication::_loadCurrentStyle()
 {
-#if !defined(__mobile__)
+#ifndef __mobile__
     bool success = true;
     QString styles;
 
@@ -673,7 +647,7 @@ void QGCApplication::_missingParamsDisplay(void)
 
 QObject* QGCApplication::_rootQmlObject()
 {
-#if defined(__mobile__)
+#ifdef __mobile__
     return _qmlAppEngine->rootObjects()[0];
 #else
     MainWindow * mainWindow = MainWindow::instance();
@@ -704,7 +678,7 @@ void QGCApplication::showMessage(const QString& message)
         QVariant varMessage = QVariant::fromValue(message);
 
         QMetaObject::invokeMethod(_rootQmlObject(), "showMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
-#if !defined(__mobile__)
+#ifndef __mobile__
     } else if (runningUnitTests()){
         // Unit test can run without a main window which will lead to no root qml object. Use QGCMessageBox instead
         QGCMessageBox::information("Unit Test", message);

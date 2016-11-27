@@ -7,10 +7,7 @@
  *
  ****************************************************************************/
 
-
 #include "MotorComponent.h"
-#include "APMAutoPilotPlugin.h"
-#include "APMAirframeComponent.h"
 
 MotorComponent::MotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),

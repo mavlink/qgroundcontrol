@@ -6,12 +6,7 @@
 ///     @brief Core Plugin Interface for QGroundControl
 ///     @author Gus Grubba <mavlink@grubba.com>
 
-/*!
-    When QGroundControl boots, it will look for a *.core.so plugin file. If one is found and it
-    implements the class below, it will load and use it. This allows you to implement custom
-    functionality that can be used by QGRroundControl without requiring maintaining your own
-    version of QGRroundControl.
-*/
+// Work In Progress
 
 class QGCApplication;
 class IQGCApplication;

@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 
-#include "AutoPilotPluginManager.h"
 #include "FactSystem.h"
 #include "FirmwarePluginManager.h"
 #include "FlightMapSettings.h"
@@ -32,7 +31,6 @@
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
     : _audioOutput(NULL)
-    , _autopilotPluginManager(NULL)
     , _factSystem(NULL)
     , _firmwarePluginManager(NULL)
     , _flightMapSettings(NULL)
@@ -54,7 +52,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     , _mavlinkLogManager(NULL)
 {
     _audioOutput =              new GAudioOutput(app);
-    _autopilotPluginManager =   new AutoPilotPluginManager(app);
     _factSystem =               new FactSystem(app);
     _firmwarePluginManager =    new FirmwarePluginManager(app);
     _flightMapSettings =        new FlightMapSettings(app);
@@ -79,7 +76,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 void QGCToolbox::setChildToolboxes(void)
 {
     _audioOutput->setToolbox(this);
-    _autopilotPluginManager->setToolbox(this);
     _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
     _flightMapSettings->setToolbox(this);
@@ -106,7 +102,6 @@ QGCToolbox::~QGCToolbox()
     delete _videoManager;
     delete _mavlinkLogManager;
     delete _audioOutput;
-    delete _autopilotPluginManager;
     delete _factSystem;
     delete _firmwarePluginManager;
     delete _flightMapSettings;

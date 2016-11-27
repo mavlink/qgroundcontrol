@@ -29,14 +29,15 @@
 
 #define  SINGLE_INSTANCE_PORT   14499
 
-#if !defined(__mobile__)
+#ifndef __mobile__
     #include "QGCSerialPortInfo.h"
 #endif
 
+#ifdef UNITTEST_BUILD
+    #include "UnitTest.h"
+#endif
+
 #ifdef QT_DEBUG
-    #if !defined(__mobile__)
-        #include "UnitTest.h"
-    #endif
     #include "CmdLineOptParser.h"
     #ifdef Q_OS_WIN
         #include <crtdbg.h>
@@ -55,7 +56,7 @@
 #undef main
 #endif
 
-#if !defined(__mobile__)
+#ifndef __mobile__
     Q_DECLARE_METATYPE(QGCSerialPortInfo)
 #endif
 
@@ -73,17 +74,21 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 
 #endif
 
-#if defined(__android__) && !defined(NO_SERIAL_LINK)
+#ifdef __android__
 #include <jni.h>
 #include "qserialport.h"
+
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     Q_UNUSED(reserved);
+
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return -1;
     }
+
     QSerialPort::setNativeMethods();
+
     return JNI_VERSION_1_6;
 }
 #endif
@@ -146,7 +151,7 @@ int main(int argc, char *argv[])
     // that we use these types in signals, and without calling qRegisterMetaType we can't queue
     // these signals. In general we don't queue these signals, but we do what the warning says
     // anyway to silence the debug output.
-#ifndef NO_SERIAL_LINK
+#ifndef __ios__
     qRegisterMetaType<QSerialPort::SerialPortError>();
 #endif
 #ifdef QGC_ENABLE_BLUETOOTH
@@ -154,7 +159,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QBluetoothServiceInfo>();
 #endif
     qRegisterMetaType<QAbstractSocket::SocketError>();
-#if !defined(__mobile__)
+#ifndef __mobile__
     qRegisterMetaType<QGCSerialPortInfo>();
 #endif
 
@@ -225,8 +230,7 @@ int main(int argc, char *argv[])
 
     int exitCode = 0;
 
-#if !defined(__mobile__)
-#ifdef QT_DEBUG
+#ifdef UNITTEST_BUILD
     if (runUnitTests) {
         for (int i=0; i < (stressUnitTests ? 20 : 1); i++) {
             if (!app->_initForUnitTests()) {
@@ -245,7 +249,6 @@ int main(int argc, char *argv[])
             }
         }
     } else
-#endif
 #endif
     {
         if (!app->_initForNormalAppBoot()) {

@@ -32,7 +32,6 @@
 #include "MultiVehicleManager.h"
 #include "JoystickManager.h"
 #include "GAudioOutput.h"
-#include "AutoPilotPluginManager.h"
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
 

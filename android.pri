@@ -18,9 +18,9 @@ OTHER_FILES += \
     $$PWD/android/src/org/qgroundcontrol/qgchelper/UsbIoManager.java
 
 DISTFILES += \
-    android/gradle/wrapper/gradle-wrapper.jar \
-    android/gradlew \
-    android/res/values/libs.xml \
-    android/build.gradle \
-    android/gradle/wrapper/gradle-wrapper.properties \
-    android/gradlew.bat
+    $$PWD/android/gradle/wrapper/gradle-wrapper.jar \
+    $$PWD/android/gradlew \
+    $$PWD/android/res/values/libs.xml \
+    $$PWD/android/build.gradle \
+    $$PWD/android/gradle/wrapper/gradle-wrapper.properties \
+    $$PWD/android/gradlew.bat

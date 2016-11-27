@@ -157,7 +157,7 @@ QGCFlickable {
         Rectangle {
             anchors.fill:   parent
             color:          backgroundColor
-            opacity:        0.95
+            opacity:        0.75
             visible:        _activeVehicle ? isNaN(_activeVehicle.vibration.xAxis.value) : false
 
             QGCLabel {
