@@ -40,7 +40,7 @@ Q_DECLARE_METATYPE(mavlink_message_t)
 
 QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "MAVLinkProtocolLog")
 
-#if !defined(__mobile__)
+#ifndef __mobile__
 const char* MAVLinkProtocol::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
 const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Extension for log files
 #endif
@@ -54,7 +54,7 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
     , m_enable_version_check(true)
     , versionMismatchIgnore(false)
     , systemId(255)
-#if !defined(__mobile__)
+#ifndef __mobile__
     , _logSuspendError(false)
     , _logSuspendReplay(false)
     , _logPromptForSave(false)
@@ -74,7 +74,7 @@ MAVLinkProtocol::~MAVLinkProtocol()
 {
     storeSettings();
 
-#if !defined(__mobile__)
+#ifndef __mobile__
     _closeLogFile();
 #endif
 }
@@ -103,7 +103,7 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
    }
 
    connect(this, &MAVLinkProtocol::protocolStatusMessage, _app, &QGCApplication::criticalMessageBoxOnMainThread);
-#if !defined(__mobile__)
+#ifndef __mobile__
    connect(this, &MAVLinkProtocol::saveTempFlightDataLog, _app, &QGCApplication::saveTempFlightDataLogOnMainThread);
 #endif
 
@@ -254,7 +254,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     rstatus.txbuf, rstatus.noise, rstatus.remnoise);
             }
 
-#if !defined(__mobile__)
+#ifndef __mobile__
             // Log data
 
             if (!_logSuspendError && !_logSuspendReplay && _tempLogFile.isOpen()) {
@@ -294,7 +294,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 #endif
 
             if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
-#if !defined(__mobile__)
+#ifndef __mobile__
                 // Start loggin on first heartbeat
                 _startLogging();
 #endif
@@ -388,7 +388,7 @@ void MAVLinkProtocol::enableVersionCheck(bool enabled)
 
 void MAVLinkProtocol::_vehicleCountChanged(int count)
 {
-#if !defined(__mobile__)
+#ifndef __mobile__
     if (count == 0) {
         // Last vehicle is gone, close out logging
         _stopLogging();
@@ -398,7 +398,7 @@ void MAVLinkProtocol::_vehicleCountChanged(int count)
 #endif
 }
 
-#if !defined(__mobile__)
+#ifndef __mobile__
 /// @brief Closes the log file if it is open
 bool MAVLinkProtocol::_closeLogFile(void)
 {

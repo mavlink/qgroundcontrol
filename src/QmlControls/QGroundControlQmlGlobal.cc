@@ -354,44 +354,32 @@ QMap<QString, FactMetaData*>& QGroundControlQmlGlobal::nameToMetaDataMap(void) {
     return map;
 }
 
-//-----------------------------------------------------------------------------
-bool
-QGroundControlQmlGlobal::colapseSettings()
+bool QGroundControlQmlGlobal::colapseSettings()
 {
     return qgcApp()->qgcOptions()->colapseSettings();
 }
 
-//-----------------------------------------------------------------------------
-bool
-QGroundControlQmlGlobal::mainViewIsMap()
+bool QGroundControlQmlGlobal::mainViewIsMap()
 {
     return qgcApp()->qgcOptions()->mainViewIsMap();
 }
 
-//-----------------------------------------------------------------------------
-bool
-QGroundControlQmlGlobal::enableVirtualJoystick()
+bool QGroundControlQmlGlobal::enableVirtualJoystick()
 {
     return qgcApp()->qgcOptions()->enableVirtualJoystick();
 }
 
-//-----------------------------------------------------------------------------
-bool
-QGroundControlQmlGlobal::enableAutoConnectOptions()
+bool QGroundControlQmlGlobal::enableAutoConnectOptions()
 {
     return qgcApp()->qgcOptions()->enableAutoConnectOptions();
 }
 
-//-----------------------------------------------------------------------------
-bool
-QGroundControlQmlGlobal::enableVideoSourceOptions()
+bool QGroundControlQmlGlobal::enableVideoSourceOptions()
 {
     return qgcApp()->qgcOptions()->enableVideoSourceOptions();
 }
 
-//-----------------------------------------------------------------------------
-bool
-QGroundControlQmlGlobal::hasCustomSettings()
+bool QGroundControlQmlGlobal::hasCustomSettings()
 {
     if(qgcApp()->customCorePlugin()) {
         if(qgcApp()->customCorePlugin()->settingsQML()) {
@@ -401,9 +389,7 @@ QGroundControlQmlGlobal::hasCustomSettings()
     return false;
 }
 
-//-----------------------------------------------------------------------------
-QString
-QGroundControlQmlGlobal::customSettingsURL()
+QString QGroundControlQmlGlobal::customSettingsURL()
 {
     if(qgcApp()->customCorePlugin()) {
         if(qgcApp()->customCorePlugin()->settingsQML()) {
@@ -413,9 +399,7 @@ QGroundControlQmlGlobal::customSettingsURL()
     return QString();
 }
 
-//-----------------------------------------------------------------------------
-QString
-QGroundControlQmlGlobal::customSettingsTitle()
+QString QGroundControlQmlGlobal::customSettingsTitle()
 {
     if(qgcApp()->customCorePlugin()) {
         if(qgcApp()->customCorePlugin()->settingsQML()) {
@@ -425,9 +409,7 @@ QGroundControlQmlGlobal::customSettingsTitle()
     return QString();
 }
 
-//-----------------------------------------------------------------------------
-QString
-QGroundControlQmlGlobal::customSettingsLogoUrl()
+QString QGroundControlQmlGlobal::customSettingsLogoUrl()
 {
     if(qgcApp()->customCorePlugin()) {
         if(qgcApp()->customCorePlugin()->settingsQML()) {

@@ -16,7 +16,7 @@
 #include "QGroundControlQmlGlobal.h"
 #include "ParameterManager.h"
 
-#if defined(__mobile__)
+#ifdef __mobile__
 #include "MobileScreenMgr.h"
 #endif
 
