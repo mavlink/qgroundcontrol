@@ -24,8 +24,8 @@
 static const char* kVideoSourceKey  = "VideoSource";
 static const char* kVideoUDPPortKey = "VideoUDPPort";
 static const char* kVideoRTSPUrlKey = "VideoRTSPUrl";
-static const char* kUDPStream       = "UDP Video Stream";
 #if defined(QGC_GST_STREAMING)
+static const char* kUDPStream       = "UDP Video Stream";
 static const char* kRTSPStream      = "RTSP Video Stream";
 #endif
 static const char* kNoVideo         = "No Video Available";
@@ -42,8 +42,9 @@ VideoManager::VideoManager(QGCApplication* app)
     , _init(false)
 {
     //-- Get saved settings
+#if defined(QGC_GST_STREAMING)
     QSettings settings;
-#if defined(NO_UDP_VIDEO) && defined(QGC_GST_STREAMING)
+#if defined(NO_UDP_VIDEO)
     setVideoSource(settings.value(kVideoSourceKey, kRTSPStream).toString());
 #else
     setVideoSource(settings.value(kVideoSourceKey, kUDPStream).toString());
@@ -61,6 +62,7 @@ VideoManager::VideoManager(QGCApplication* app)
         setUdpPort(settings.value(kVideoUDPPortKey, 5600).toUInt());
         setRtspURL(settings.value(kVideoRTSPUrlKey, "rtsp://192.168.42.1:554/live").toString()); //-- Example RTSP URL
     }
+#endif
     _init = true;
 #if defined(QGC_GST_STREAMING)
     _updateVideo();
