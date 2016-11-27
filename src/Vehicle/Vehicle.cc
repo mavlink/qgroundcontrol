@@ -933,7 +933,7 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
 /// @return Direct usb connection link to board if one, NULL if none
 LinkInterface* Vehicle::priorityLink(void)
 {
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     foreach (LinkInterface* link, _links) {
         if (link->isConnected()) {
             SerialLink* pSerialLink = qobject_cast<SerialLink*>(link);

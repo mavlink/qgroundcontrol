@@ -140,10 +140,10 @@ Item {
     }
 
     QGCLabel {
-        id:         flyLabel
-        text:       qsTr("Fly")
-        color:      mapPal.text
-        visible:    !ScreenTools.isShortScreen
+        id:                         flyLabel
+        text:                       qsTr("Fly")
+        color:                      mapPal.text
+        visible:                    !ScreenTools.isShortScreen && _mainIsMap
         anchors.topMargin:          _toolButtonTopMargin
         anchors.horizontalCenter:   toolColumn.horizontalCenter
         anchors.top:                parent.top

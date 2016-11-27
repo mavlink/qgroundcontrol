@@ -353,3 +353,68 @@ QMap<QString, FactMetaData*>& QGroundControlQmlGlobal::nameToMetaDataMap(void) {
 
     return map;
 }
+
+bool QGroundControlQmlGlobal::colapseSettings()
+{
+    return qgcApp()->qgcOptions()->colapseSettings();
+}
+
+bool QGroundControlQmlGlobal::mainViewIsMap()
+{
+    return qgcApp()->qgcOptions()->mainViewIsMap();
+}
+
+bool QGroundControlQmlGlobal::enableVirtualJoystick()
+{
+    return qgcApp()->qgcOptions()->enableVirtualJoystick();
+}
+
+bool QGroundControlQmlGlobal::enableAutoConnectOptions()
+{
+    return qgcApp()->qgcOptions()->enableAutoConnectOptions();
+}
+
+bool QGroundControlQmlGlobal::enableVideoSourceOptions()
+{
+    return qgcApp()->qgcOptions()->enableVideoSourceOptions();
+}
+
+bool QGroundControlQmlGlobal::hasCustomSettings()
+{
+    if(qgcApp()->customCorePlugin()) {
+        if(qgcApp()->customCorePlugin()->settingsQML()) {
+            return !qgcApp()->customCorePlugin()->settingsQML()->pageUrl().isEmpty();
+        }
+    }
+    return false;
+}
+
+QString QGroundControlQmlGlobal::customSettingsURL()
+{
+    if(qgcApp()->customCorePlugin()) {
+        if(qgcApp()->customCorePlugin()->settingsQML()) {
+            return qgcApp()->customCorePlugin()->settingsQML()->pageUrl();
+        }
+    }
+    return QString();
+}
+
+QString QGroundControlQmlGlobal::customSettingsTitle()
+{
+    if(qgcApp()->customCorePlugin()) {
+        if(qgcApp()->customCorePlugin()->settingsQML()) {
+            return qgcApp()->customCorePlugin()->settingsQML()->pageTitle();
+        }
+    }
+    return QString();
+}
+
+QString QGroundControlQmlGlobal::customSettingsLogoUrl()
+{
+    if(qgcApp()->customCorePlugin()) {
+        if(qgcApp()->customCorePlugin()->settingsQML()) {
+            return qgcApp()->customCorePlugin()->settingsQML()->pageIconUrl();
+        }
+    }
+    return QString();
+}

@@ -79,7 +79,6 @@ public:
     Q_PROPERTY(qreal                zOrderMapItems      READ zOrderMapItems         CONSTANT) ///< z order value for map items, for example: mission item indicators
 
     // Various QGC settings exposed to Qml
-    Q_PROPERTY(bool     isAdvancedMode          READ isAdvancedMode                                                 CONSTANT)                               ///< Global "Advance Mode" preference. Certain UI elements and features are different based on this.
     Q_PROPERTY(bool     isDarkStyle             READ isDarkStyle                WRITE setIsDarkStyle                NOTIFY isDarkStyleChanged)              // TODO: Should be in ScreenTools?
     Q_PROPERTY(bool     isAudioMuted            READ isAudioMuted               WRITE setIsAudioMuted               NOTIFY isAudioMutedChanged)
     Q_PROPERTY(bool     isSaveLogPrompt         READ isSaveLogPrompt            WRITE setIsSaveLogPrompt            NOTIFY isSaveLogPromptChanged)
@@ -87,6 +86,20 @@ public:
     Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
     Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
 
+    //-------------------------------------------------------------------------
+    //-- Options that can be set by plugins
+    Q_PROPERTY(bool     colapseSettings                 READ colapseSettings            CONSTANT)
+    Q_PROPERTY(bool     mainViewIsMap                   READ mainViewIsMap              CONSTANT)
+    Q_PROPERTY(bool     enableVirtualJoystick           READ enableVirtualJoystick      CONSTANT)
+    Q_PROPERTY(bool     enableAutoConnectOptions        READ enableAutoConnectOptions   CONSTANT)
+    Q_PROPERTY(bool     enableVideoSourceOptions        READ enableVideoSourceOptions   CONSTANT)
+
+    Q_PROPERTY(bool     hasCustomSettings               READ hasCustomSettings          CONSTANT)
+    Q_PROPERTY(QString  customSettingsURL               READ customSettingsURL          CONSTANT)
+    Q_PROPERTY(QString  customSettingsTitle             READ customSettingsTitle        CONSTANT)
+    Q_PROPERTY(QString  customSettingsLogoUrl           READ customSettingsLogoUrl      CONSTANT)
+
+    //-------------------------------------------------------------------------
     // MavLink Protocol
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
@@ -185,6 +198,16 @@ public:
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
 
+    bool    colapseSettings         ();
+    bool    mainViewIsMap           ();
+    bool    enableVirtualJoystick   ();
+    bool    enableAutoConnectOptions();
+    bool    enableVideoSourceOptions();
+    bool    hasCustomSettings       ();
+    QString customSettingsTitle     ();
+    QString customSettingsURL       ();
+    QString customSettingsLogoUrl   ();
+
     QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
 
     static Fact* offlineEditingFirmwareType     (void);
@@ -195,9 +218,6 @@ public:
     static Fact* areaUnits                      (void);
     static Fact* speedUnits                     (void);
     static Fact* batteryPercentRemainingAnnounce(void);
-
-    //-- TODO: Make this into an actual preference.
-    bool    isAdvancedMode          () { return false; }
 
     void    setIsDarkStyle              (bool dark);
     void    setIsAudioMuted             (bool muted);

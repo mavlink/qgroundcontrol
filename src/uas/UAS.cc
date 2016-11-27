@@ -36,7 +36,7 @@
 #include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 #include "FirmwarePluginManager.h"
