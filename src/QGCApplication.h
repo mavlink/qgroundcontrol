@@ -35,6 +35,12 @@
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
 
+//-- Plugin Architecture
+#include "IQGCApplication.h"
+#include "IQGCCorePlugin.h"
+#include "IQGCOptions.h"
+#include "IQGCQMLSource.h"
+
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #endif
@@ -117,6 +123,11 @@ public:
     QGeoCoordinate lastKnownHomePosition(void) { return _lastKnownHomePosition; }
     void setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosition);
 
+    /// Options (can be overwriten by a core plugin)
+    IQGCOptions*    qgcOptions();
+    /// Custom core plugin (NULL if none)
+    IQGCCorePlugin* customCorePlugin() { return _pCorePlugin; }
+
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
@@ -166,8 +177,9 @@ private slots:
     void _missingParamsDisplay(void);
 
 private:
-    void _loadCurrentStyle(void);
-    QObject* _rootQmlObject(void);
+    void        _loadCurrentStyle   ();
+    QObject*    _rootQmlObject      ();
+    void        _scanAndLoadPlugins ();
 
 #ifdef __mobile__
     QQmlApplicationEngine* _qmlAppEngine;
@@ -205,6 +217,10 @@ private:
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
+
+    //-- Plugin Architecture
+    IQGCOptions*    _pQGCOptions;
+    IQGCCorePlugin* _pCorePlugin;
 };
 
 /// @brief Returns the QGCApplication object singleton.
