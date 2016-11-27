@@ -83,6 +83,10 @@
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
 
+#if defined(QGC_CUSTOM_BUILD)
+#include CUSTOMHEADER
+#endif
+
 #ifndef __ios__
     #include "SerialLink.h"
 #endif
@@ -184,9 +188,14 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _toolbox(NULL)
     , _bluetoothAvailable(false)
     , _lastKnownHomePosition(37.803784, -122.462276, 0.0)
+    , _pQGCOptions(NULL)
+    , _pCorePlugin(NULL)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
+
+    //-- Scan and load plugins
+    _scanAndLoadPlugins();
 
     // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
 #ifndef __android__
@@ -349,6 +358,9 @@ QGCApplication::~QGCApplication()
 #endif
     shutdownVideoStreaming();
     delete _toolbox;
+    if(_pCorePlugin) {
+        delete _pCorePlugin;
+    }
 }
 
 void QGCApplication::_initCommon(void)
@@ -444,6 +456,13 @@ bool QGCApplication::_initForNormalAppBoot(void)
     }
 
     settings.sync();
+
+    //-- Initialize Core Plugin (if any)
+    if(_pCorePlugin) {
+        if(!_pCorePlugin->init(this)) {
+            return false;
+        }
+    }
 
     return true;
 }
@@ -564,7 +583,7 @@ void QGCApplication::setStyle(bool styleIsDark)
     emit styleChanged(_styleIsDark);
 }
 
-void QGCApplication::_loadCurrentStyle(void)
+void QGCApplication::_loadCurrentStyle()
 {
 #ifndef __mobile__
     bool success = true;
@@ -626,7 +645,7 @@ void QGCApplication::_missingParamsDisplay(void)
     showMessage(QString("Parameters missing from firmware: %1. You may be running an older version of firmware QGC does not work correctly with or your firmware has a bug in it.").arg(params));
 }
 
-QObject* QGCApplication::_rootQmlObject(void)
+QObject* QGCApplication::_rootQmlObject()
 {
 #ifdef __mobile__
     return _qmlAppEngine->rootObjects()[0];
@@ -688,4 +707,42 @@ void QGCApplication::setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosit
     settings.setValue(_lastKnownHomePositionLonKey, lastKnownHomePosition.longitude());
     settings.setValue(_lastKnownHomePositionAltKey, lastKnownHomePosition.altitude());
     _lastKnownHomePosition = lastKnownHomePosition;
+}
+
+IQGCOptions* QGCApplication::qgcOptions()
+{
+    return _pQGCOptions;
+}
+
+void QGCApplication::_scanAndLoadPlugins()
+{
+#if defined (QGC_DYNAMIC_PLUGIN)
+    //-- Look for plugins (Dynamic)
+    QString filter = "*.core.so";
+    QString path = QCoreApplication::applicationDirPath();
+    QDirIterator it(path, QStringList() << filter, QDir::Files);
+    while(it.hasNext()) {
+        QString pluginFile = it.next();
+        QPluginLoader loader(pluginFile);
+        QObject *plugin = loader.instance();
+        if(plugin) {
+            _pCorePlugin = qobject_cast<IQGCCorePlugin*>(plugin);
+            if(_pCorePlugin) {
+                _pQGCOptions = _pCorePlugin->uiOptions();
+                return;
+            }
+        } else {
+            qWarning() << "Plugin" << pluginFile << " not loaded:" << loader.errorString();
+        }
+    }
+#elif defined (QGC_CUSTOM_BUILD)
+    //-- Create custom plugin (Static)
+    _pCorePlugin = (IQGCCorePlugin*) new CUSTOMCLASS(this);
+    if(_pCorePlugin) {
+        _pQGCOptions = _pCorePlugin->uiOptions();
+        return;
+    }
+#endif
+    //-- No plugins found, use default options
+    _pQGCOptions = new IQGCOptions;
 }
