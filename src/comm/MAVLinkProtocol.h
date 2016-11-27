@@ -7,13 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Definition of class MAVLinkProtocol
- *   @author Lorenz Meier <mail@qgroundcontrol.org>
- */
-
 #ifndef MAVLINKPROTOCOL_H_
 #define MAVLINKPROTOCOL_H_
 
@@ -179,7 +172,7 @@ private:
 
     bool _logSuspendError;      ///< true: Logging suspended due to error
     bool _logSuspendReplay;     ///< true: Logging suspended due to replay
-    bool _logPromptForSave;     ///< true: Prompt for log save when appropriate
+    bool _vehicleWasArmed;      ///< true: Vehicle was armed during log sequence
 
     QGCTemporaryFile    _tempLogFile;            ///< File to log to
     static const char*  _tempLogFileTemplate;    ///< Template for temporary log file
