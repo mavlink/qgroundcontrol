@@ -503,7 +503,7 @@ contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
     src/comm/BluetoothLink.h \
 }
 
-!iOSBuild {
+!NoSerialBuild {
 HEADERS += \
     src/comm/QGCSerialPortInfo.h \
     src/comm/SerialLink.h \
@@ -651,7 +651,7 @@ SOURCES += \
     src/comm/MockLinkMissionItemHandler.cc \
 }
 
-!iOSBuild {
+!NoSerialBuild {
 SOURCES += \
     src/comm/QGCSerialPortInfo.cc \
     src/comm/SerialLink.cc \

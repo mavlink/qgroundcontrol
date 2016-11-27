@@ -21,7 +21,7 @@
 #include <QDebug>
 #include <QSignalSpy>
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
 #include "QGCSerialPortInfo.h"
 #endif
 
@@ -85,7 +85,7 @@ LinkManager::LinkManager(QGCApplication* app)
     _autoconnectRTKGPS =     settings.value(_autoconnectRTKGPSKey, true).toBool();
     _autoconnectLibrePilot = settings.value(_autoconnectLibrePilotKey, true).toBool();
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     _activeLinkCheckTimer.setInterval(_activeLinkCheckTimeoutMSecs);
     _activeLinkCheckTimer.setSingleShot(false);
     connect(&_activeLinkCheckTimer, &QTimer::timeout, this, &LinkManager::_activeLinkCheck);
@@ -113,7 +113,7 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
     Q_ASSERT(config);
     LinkInterface* pLink = NULL;
     switch(config->type()) {
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
         case LinkConfiguration::TypeSerial:
         {
             SerialConfiguration* serialConfig = dynamic_cast<SerialConfiguration*>(config);
@@ -373,7 +373,7 @@ void LinkManager::loadLinkConfigurationList()
                             LinkConfiguration* pLink = NULL;
                             bool autoConnect = settings.value(root + "/auto").toBool();
                             switch((LinkConfiguration::LinkType)type) {
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
                                 case LinkConfiguration::TypeSerial:
                                     pLink = (LinkConfiguration*)new SerialConfiguration(name);
                                     break;
@@ -443,7 +443,7 @@ void LinkManager::loadLinkConfigurationList()
     _configurationsLoaded = true;
 }
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
 SerialConfiguration* LinkManager::_autoconnectConfigurationsContainsPort(const QString& portName)
 {
     QString searchPort = portName.trimmed();
@@ -488,7 +488,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         emit linkConfigurationsChanged();
     }
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     QStringList currentPorts;
     QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
 
@@ -633,7 +633,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         }
         delete pDeleteConfig;
     }
-#endif // __ios__
+#endif // NO_SERIAL_LINK
 }
 
 void LinkManager::shutdown(void)
@@ -704,7 +704,7 @@ QStringList LinkManager::linkTypeStrings(void) const
     static QStringList list;
     if(!list.size())
     {
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
         list += "Serial";
 #endif
         list += "UDP";
@@ -727,7 +727,7 @@ void LinkManager::_updateSerialPorts()
 {
     _commPortList.clear();
     _commPortDisplayList.clear();
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
     foreach (const QSerialPortInfo &info, portList)
     {
@@ -758,7 +758,7 @@ QStringList LinkManager::serialPorts(void)
 
 QStringList LinkManager::serialBaudRates(void)
 {
-#ifdef __ios__
+#ifdef NO_SERIAL_LINK
     QStringList foo;
     return foo;
 #else
@@ -791,7 +791,7 @@ bool LinkManager::endCreateConfiguration(LinkConfiguration* config)
 
 LinkConfiguration* LinkManager::createConfiguration(int type, const QString& name)
 {
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     if((LinkConfiguration::LinkType)type == LinkConfiguration::TypeSerial)
         _updateSerialPorts();
 #endif
@@ -801,7 +801,7 @@ LinkConfiguration* LinkManager::createConfiguration(int type, const QString& nam
 LinkConfiguration* LinkManager::startConfigurationEditing(LinkConfiguration* config)
 {
     Q_ASSERT(config != NULL);
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     if(config->type() == LinkConfiguration::TypeSerial)
         _updateSerialPorts();
 #endif
@@ -815,7 +815,7 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
     //-- Check for "Unnamed"
     if (config->name() == "Unnamed") {
         switch(config->type()) {
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
             case LinkConfiguration::TypeSerial: {
                 QString tname = dynamic_cast<SerialConfiguration*>(config)->portName();
 #ifdef Q_OS_WIN
@@ -895,7 +895,7 @@ bool LinkManager::isBluetoothAvailable(void)
     return qgcApp()->isBluetoothAvailable();
 }
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
 void LinkManager::_activeLinkCheck(void)
 {
     SerialLink* link = NULL;
