@@ -131,7 +131,7 @@ QGCView {
 
     function addMissionItemCoordsForFit(coordList) {
         for (var i=1; i<qgcView._visualItems.count; i++) {
-            missionItem = qgcView._visualItems.get(i)
+            var missionItem = qgcView._visualItems.get(i)
             if (missionItem.specifiesCoordinate && !missionItem.isStandaloneCoordinate) {
                 coordList.push(missionItem.coordinate)
             }
@@ -148,7 +148,7 @@ QGCView {
         if (geoFenceController.circleSupported) {
             var azimuthList = [ 0, 180, 90, 270 ]
             for (var i=0; i<azimuthList.length; i++) {
-                var edgeCoordinate = homePos.coordinate.atDistanceAndAzimuth(geoFenceController.circleRadius, azimuthList[i])
+                var edgeCoordinate = _visualItems.get(0).coordinate.atDistanceAndAzimuth(geoFenceController.circleRadius, azimuthList[i])
                 coordList.push(edgeCoordinate)
             }
         }
