@@ -31,7 +31,6 @@ class UASInterface;
 class FirmwarePlugin;
 class FirmwarePluginManager;
 class AutoPilotPlugin;
-class AutoPilotPluginManager;
 class MissionManager;
 class GeoFenceManager;
 class RallyPointManager;
@@ -214,7 +213,6 @@ public:
             MAV_AUTOPILOT           firmwareType,
             MAV_TYPE                vehicleType,
             FirmwarePluginManager*  firmwarePluginManager,
-            AutoPilotPluginManager* autopilotPluginManager,
             JoystickManager*        joystickManager);
 
     // The following is used to create a disconnected Vehicle for use while offline editing.
@@ -579,6 +577,13 @@ public:
     /// @return true: X confiuration, false: Plus configuration
     bool xConfigMotors(void);
 
+    /// @return Firmware plugin instance data associated with this Vehicle
+    QObject* firmwarePluginInstanceData(void) { return _firmwarePluginInstanceData; }
+
+    /// Sets the firmware plugin instance data associated with this Vehicle. This object will be parented to the Vehicle
+    /// and destroyed when the vehicle goes away.
+    void setFirmwarePluginInstanceData(QObject* firmwarePluginInstanceData);
+
 public slots:
     void setLatitude(double latitude);
     void setLongitude(double longitude);
@@ -717,6 +722,7 @@ private:
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;
     FirmwarePlugin*     _firmwarePlugin;
+    QObject*            _firmwarePluginInstanceData;
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;
     bool                _soloFirmware;
@@ -806,7 +812,6 @@ private:
 
     // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;
-    AutoPilotPluginManager*     _autopilotPluginManager;
     JoystickManager*            _joystickManager;
 
     int                         _flowImageIndex;

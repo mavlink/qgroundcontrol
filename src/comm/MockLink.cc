@@ -11,8 +11,9 @@
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
-#ifndef __mobile__
-#include "UnitTest.h"
+
+#ifdef UNITTEST_BUILD
+    #include "UnitTest.h"
 #endif
 
 #include <QTimer>
@@ -21,7 +22,8 @@
 
 #include <string.h>
 
-#include "px4_custom_mode.h"
+// FIXME: Hack to work around clean headers
+#include "FirmwarePlugin/PX4/px4_custom_mode.h"
 
 QGC_LOGGING_CATEGORY(MockLinkLog, "MockLinkLog")
 QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "MockLinkVerboseLog")
@@ -1159,7 +1161,7 @@ void MockLink::_handleLogRequestData(const mavlink_message_t& msg)
     mavlink_msg_log_request_data_decode(&msg, &request);
 
     if (_logDownloadFilename.isEmpty()) {
-        #ifndef __mobile__
+        #ifdef UNITTEST_BUILD
         _logDownloadFilename = UnitTest::createRandomFile(_logDownloadFileSize);
         #endif
     }

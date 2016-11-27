@@ -33,7 +33,6 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     , _activeVehicle(NULL)
     , _offlineEditingVehicle(NULL)
     , _firmwarePluginManager(NULL)
-    , _autopilotPluginManager(NULL)
     , _joystickManager(NULL)
     , _mavlinkProtocol(NULL)
     , _gcsHeartbeatEnabled(true)
@@ -55,7 +54,6 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
    QGCTool::setToolbox(toolbox);
 
    _firmwarePluginManager =     _toolbox->firmwarePluginManager();
-   _autopilotPluginManager =    _toolbox->autopilotPluginManager();
    _joystickManager =           _toolbox->joystickManager();
    _mavlinkProtocol =           _toolbox->mavlinkProtocol();
 
@@ -98,7 +96,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 //        return;
 //    }
 
-    Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _autopilotPluginManager, _joystickManager);
+    Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _joystickManager);
     connect(vehicle, &Vehicle::allLinksInactive, this, &MultiVehicleManager::_deleteVehiclePhase1);
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MultiVehicleManager::_vehicleParametersReadyChanged);
 

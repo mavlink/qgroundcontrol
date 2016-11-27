@@ -17,7 +17,6 @@
 #include "QGCApplication.h"
 #include "UASMessageHandler.h"
 #include "FirmwarePlugin.h"
-#include "APMFirmwarePlugin.h"
 #include "UAS.h"
 #include "JsonHelper.h"
 
@@ -236,7 +235,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     int totalWaitingParamCount = readWaitingParamCount + waitingWriteParamNameCount;
     if (totalWaitingParamCount) {
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "totalWaitingParamCount:" << totalWaitingParamCount;
-    } else if (_defaultComponentId != MAV_COMP_ID_ALL) {
+    } else if (_defaultComponentId != MAV_COMP_ID_ALL || _defaultComponentIdParam.isEmpty()) {
         // No more parameters to wait for, stop the timeout. Be careful to not stop timer if we don't have the default
         // component yet.
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Stopping _waitingParamTimeoutTimer (all requests satisfied)";
@@ -574,7 +573,7 @@ void ParameterManager::_waitingParamTimeout(void)
         }
     }
 
-    if (!paramsRequested && _defaultComponentId == MAV_COMP_ID_ALL && !_waitingForDefaultComponent) {
+    if (!paramsRequested && _defaultComponentId == MAV_COMP_ID_ALL && !_defaultComponentIdParam.isEmpty() && !_waitingForDefaultComponent) {
         // Initial load is complete but we still don't have default component params. Wait one more cycle to see if the
         // default component finally shows up.
         qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Restarting _waitingParamTimeoutTimer - still don't have default component id";
@@ -975,16 +974,10 @@ void ParameterManager::_addMetaDataToDefaultComponent(void)
 
      QString metaDataFile;
      int majorVersion, minorVersion;
-     if (_vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-         // Parameter versioning is still not really figured out correctly. We need to handle ArduPilot specially based on vehicle version.
-         // The current three version are hardcoded in.
-         metaDataFile = ((APMFirmwarePlugin*)_vehicle->firmwarePlugin())->getParameterMetaDataFile(_vehicle);
-         qCDebug(ParameterManagerLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile;
-     } else {
-         // Load best parameter meta data set
-         metaDataFile = parameterMetaDataFile(_vehicle->firmwareType(), _parameterSetMajorVersion, majorVersion, minorVersion);
-         qCDebug(ParameterManagerLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile << majorVersion << minorVersion;
-     }
+
+     // Load best parameter meta data set
+     metaDataFile = parameterMetaDataFile(_vehicle, _vehicle->firmwareType(), _parameterSetMajorVersion, majorVersion, minorVersion);
+     qCDebug(ParameterManagerLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile << majorVersion << minorVersion;
 
      _parameterMetaData = _vehicle->firmwarePlugin()->loadParameterMetaData(metaDataFile);
 
@@ -1010,7 +1003,7 @@ void ParameterManager::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
         }
     }
 
-    if (!failIfNoDefaultComponent && _defaultComponentId == MAV_COMP_ID_ALL) {
+    if (!failIfNoDefaultComponent && _defaultComponentId == MAV_COMP_ID_ALL  && !_defaultComponentIdParam.isEmpty()) {
         // We are still waiting for default component to show up
         return;
     }
@@ -1046,7 +1039,7 @@ void ParameterManager::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
         if (!qgcApp()->runningUnitTests()) {
             qCWarning(ParameterManagerLog) << _logVehiclePrefix() << "The following parameter indices could not be loaded after the maximum number of retries: " << indexList;
         }
-    } else if (_defaultComponentId == FactSystem::defaultComponentId && !_defaultComponentIdParam.isEmpty()) {
+    } else if (_defaultComponentId == MAV_COMP_ID_ALL && !_defaultComponentIdParam.isEmpty()) {
         // Missing default component when we should have one
         _missingParameters = true;
         QString errorMsg = tr("QGroundControl did not receive parameters from the default component for vehicle %1. "
@@ -1084,7 +1077,7 @@ void ParameterManager::_initialRequestTimeout(void)
     }
 }
 
-QString ParameterManager::parameterMetaDataFile(MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion)
+QString ParameterManager::parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion)
 {
     bool            cacheHit = false;
     FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
@@ -1141,7 +1134,7 @@ QString ParameterManager::parameterMetaDataFile(MAV_AUTOPILOT firmwareType, int 
     }
 
     int internalMinorVersion, internalMajorVersion;
-    QString internalMetaDataFile = plugin->internalParameterMetaDataFile();
+    QString internalMetaDataFile = plugin->internalParameterMetaDataFile(vehicle);
     plugin->getParameterMetaDataVersionInfo(internalMetaDataFile, internalMajorVersion, internalMinorVersion);
     qCDebug(ParameterManagerLog) << "Internal meta data file:major:minor" << internalMetaDataFile << internalMajorVersion << internalMinorVersion;
     if (cacheHit) {
@@ -1190,7 +1183,7 @@ void ParameterManager::cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPI
 
     // Find the cache hit closest to this new file
     int cacheMajorVersion, cacheMinorVersion;
-    QString cacheHit = ParameterManager::parameterMetaDataFile(firmwareType, newMajorVersion, cacheMajorVersion, cacheMinorVersion);
+    QString cacheHit = ParameterManager::parameterMetaDataFile(NULL, firmwareType, newMajorVersion, cacheMajorVersion, cacheMinorVersion);
     qCDebug(ParameterManagerLog) << "ParameterManager::cacheMetaDataFile cacheHit file:firmware:major;minor" << cacheHit << cacheMajorVersion << cacheMinorVersion;
 
     bool cacheNewFile = false;

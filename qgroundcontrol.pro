@@ -70,6 +70,20 @@ CONFIG += qt \
     thread \
     c++11 \
 
+#
+# Plugin configuration
+#
+# This allows you to build custom versions of QGC which only include your specific vehicle plugin. To remove support for
+# a firmware type completely remove both the Plugin and PluginFactory entries. To include custom support for an existing
+# plugin type remove PluginFactory only. Then provide you own implementation of FirmwarePluginFactory and use the
+# FirmwarePlugin and AutoPilotPlugin classes as the base clase for your derived plugin implementation.
+#
+CONFIG += \
+    APMFirmwarePlugin \
+    PX4FirmwarePlugin \
+    APMFirmwarePluginFactory \
+    PX4FirmwarePluginFactory \
+
 contains(DEFINES, ENABLE_VERBOSE_OUTPUT) {
     message("Enable verbose compiler output (manual override from command line)")
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, ENABLE_VERBOSE_OUTPUT) {
@@ -267,6 +281,74 @@ FORMS += \
     src/ui/uas/UASQuickViewItemSelect.ui \
 }
 
+#
+# Unit Test specific configuration goes here (requires full debug build with all plugins)
+#
+
+DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin { APMFirmwarePluginFactory { !MobileBuild {
+    DEFINES += UNITTEST_BUILD
+
+    INCLUDEPATH += \
+        src/qgcunittest
+
+    HEADERS += \
+        src/AnalyzeView/LogDownloadTest.h \
+        src/FactSystem/FactSystemTestBase.h \
+        src/FactSystem/FactSystemTestGeneric.h \
+        src/FactSystem/FactSystemTestPX4.h \
+        src/FactSystem/ParameterManagerTest.h \
+        src/MissionManager/ComplexMissionItemTest.h \
+        src/MissionManager/MissionCommandTreeTest.h \
+        src/MissionManager/MissionControllerTest.h \
+        src/MissionManager/MissionControllerManagerTest.h \
+        src/MissionManager/MissionItemTest.h \
+        src/MissionManager/MissionManagerTest.h \
+        src/MissionManager/SimpleMissionItemTest.h \
+        src/qgcunittest/GeoTest.h \
+        src/qgcunittest/FileDialogTest.h \
+        src/qgcunittest/FileManagerTest.h \
+        src/qgcunittest/FlightGearTest.h \
+        src/qgcunittest/LinkManagerTest.h \
+        src/qgcunittest/MainWindowTest.h \
+        src/qgcunittest/MavlinkLogTest.h \
+        src/qgcunittest/MessageBoxTest.h \
+        src/qgcunittest/MultiSignalSpy.h \
+        src/qgcunittest/RadioConfigTest.h \
+        src/qgcunittest/TCPLinkTest.h \
+        src/qgcunittest/TCPLoopBackServer.h \
+        src/qgcunittest/UnitTest.h \
+
+    SOURCES += \
+        src/AnalyzeView/LogDownloadTest.cc \
+        src/FactSystem/FactSystemTestBase.cc \
+        src/FactSystem/FactSystemTestGeneric.cc \
+        src/FactSystem/FactSystemTestPX4.cc \
+        src/FactSystem/ParameterManagerTest.cc \
+        src/MissionManager/ComplexMissionItemTest.cc \
+        src/MissionManager/MissionCommandTreeTest.cc \
+        src/MissionManager/MissionControllerTest.cc \
+        src/MissionManager/MissionControllerManagerTest.cc \
+        src/MissionManager/MissionItemTest.cc \
+        src/MissionManager/MissionManagerTest.cc \
+        src/MissionManager/SimpleMissionItemTest.cc \
+        src/qgcunittest/GeoTest.cc \
+        src/qgcunittest/FileDialogTest.cc \
+        src/qgcunittest/FileManagerTest.cc \
+        src/qgcunittest/FlightGearTest.cc \
+        src/qgcunittest/LinkManagerTest.cc \
+        src/qgcunittest/MainWindowTest.cc \
+        src/qgcunittest/MavlinkLogTest.cc \
+        src/qgcunittest/MessageBoxTest.cc \
+        src/qgcunittest/MultiSignalSpy.cc \
+        src/qgcunittest/RadioConfigTest.cc \
+        src/qgcunittest/TCPLinkTest.cc \
+        src/qgcunittest/TCPLoopBackServer.cc \
+        src/qgcunittest/UnitTest.cc \
+        src/qgcunittest/UnitTestList.cc \
+} } } } } }
+
+# Main QGC Headers and Source files
+
 HEADERS += \
     src/audio/QGCAudioWorker.h \
     src/CmdLineOptParser.h \
@@ -278,6 +360,7 @@ HEADERS += \
     src/comm/QGCMAVLink.h \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
+    src/FirmwarePlugin/PX4/px4_custom_mode.h \
     src/FlightDisplay/VideoManager.h \
     src/FlightMap/FlightMapSettings.h \
     src/FlightMap/Widgets/ValuesWidgetController.h \
@@ -336,8 +419,6 @@ HEADERS += \
     src/uas/UASMessageHandler.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/ui/toolbar/MainToolBarController.h \
-    src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
-    src/AutoPilotPlugins/APM/APMAirframeLoader.h \
     src/QmlControls/QGCImageProvider.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
     src/PositionManager/PositionManager.h \
@@ -502,8 +583,6 @@ SOURCES += \
     src/uas/UASMessageHandler.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/ui/toolbar/MainToolBarController.cc \
-    src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
-    src/AutoPilotPlugins/APM/APMAirframeLoader.cc \
     src/QmlControls/QGCImageProvider.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
     src/PositionManager/SimulatedPosition.cc \
@@ -578,143 +657,31 @@ SOURCES += \
     src/ViewWidgets/ViewWidgetController.cc
 }
 
-#
-# Unit Test specific configuration goes here
-#
-
+# Palette test widget in debug builds
 DebugBuild {
-
-HEADERS += src/QmlControls/QmlTestWidget.h
-SOURCES += src/QmlControls/QmlTestWidget.cc
-
-!MobileBuild {
-
-INCLUDEPATH += \
-    src/qgcunittest
-
-HEADERS += \
-    src/AnalyzeView/LogDownloadTest.h \
-    src/FactSystem/FactSystemTestBase.h \
-    src/FactSystem/FactSystemTestGeneric.h \
-    src/FactSystem/FactSystemTestPX4.h \
-    src/FactSystem/ParameterManagerTest.h \
-    src/MissionManager/ComplexMissionItemTest.h \
-    src/MissionManager/MissionCommandTreeTest.h \
-    src/MissionManager/MissionControllerTest.h \
-    src/MissionManager/MissionControllerManagerTest.h \
-    src/MissionManager/MissionItemTest.h \
-    src/MissionManager/MissionManagerTest.h \
-    src/MissionManager/SimpleMissionItemTest.h \
-    src/qgcunittest/GeoTest.h \
-    src/qgcunittest/FileDialogTest.h \
-    src/qgcunittest/FileManagerTest.h \
-    src/qgcunittest/FlightGearTest.h \
-    src/qgcunittest/LinkManagerTest.h \
-    src/qgcunittest/MainWindowTest.h \
-    src/qgcunittest/MavlinkLogTest.h \
-    src/qgcunittest/MessageBoxTest.h \
-    src/qgcunittest/MultiSignalSpy.h \
-    src/qgcunittest/RadioConfigTest.h \
-    src/qgcunittest/TCPLinkTest.h \
-    src/qgcunittest/TCPLoopBackServer.h \
-    src/qgcunittest/UnitTest.h \
-
-SOURCES += \
-    src/AnalyzeView/LogDownloadTest.cc \
-    src/FactSystem/FactSystemTestBase.cc \
-    src/FactSystem/FactSystemTestGeneric.cc \
-    src/FactSystem/FactSystemTestPX4.cc \
-    src/FactSystem/ParameterManagerTest.cc \
-    src/MissionManager/ComplexMissionItemTest.cc \
-    src/MissionManager/MissionCommandTreeTest.cc \
-    src/MissionManager/MissionControllerTest.cc \
-    src/MissionManager/MissionControllerManagerTest.cc \
-    src/MissionManager/MissionItemTest.cc \
-    src/MissionManager/MissionManagerTest.cc \
-    src/MissionManager/SimpleMissionItemTest.cc \
-    src/qgcunittest/GeoTest.cc \
-    src/qgcunittest/FileDialogTest.cc \
-    src/qgcunittest/FileManagerTest.cc \
-    src/qgcunittest/FlightGearTest.cc \
-    src/qgcunittest/LinkManagerTest.cc \
-    src/qgcunittest/MainWindowTest.cc \
-    src/qgcunittest/MavlinkLogTest.cc \
-    src/qgcunittest/MessageBoxTest.cc \
-    src/qgcunittest/MultiSignalSpy.cc \
-    src/qgcunittest/RadioConfigTest.cc \
-    src/qgcunittest/TCPLinkTest.cc \
-    src/qgcunittest/TCPLoopBackServer.cc \
-    src/qgcunittest/UnitTest.cc \
-    src/qgcunittest/UnitTestList.cc \
-} # !MobileBuild
-} # DebugBuild
+    HEADERS += src/QmlControls/QmlTestWidget.h
+    SOURCES += src/QmlControls/QmlTestWidget.cc
+}
 
 #
 # Firmware Plugin Support
 #
 
 INCLUDEPATH += \
-    src/AutoPilotPlugins/APM \
     src/AutoPilotPlugins/Common \
-    src/AutoPilotPlugins/PX4 \
     src/FirmwarePlugin \
-    src/FirmwarePlugin/APM \
-    src/FirmwarePlugin/PX4 \
     src/Vehicle \
     src/VehicleSetup \
 
 HEADERS+= \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
-    src/AutoPilotPlugins/AutoPilotPluginManager.h \
-    src/AutoPilotPlugins/APM/APMAutoPilotPlugin.h \
-    src/AutoPilotPlugins/APM/APMAirframeComponent.h \
-    src/AutoPilotPlugins/APM/APMAirframeComponentController.h \
-    src/AutoPilotPlugins/APM/APMAirframeComponentAirframes.h \
-    src/AutoPilotPlugins/APM/APMCameraComponent.h \
-    src/AutoPilotPlugins/APM/APMLightsComponent.h \
-    src/AutoPilotPlugins/APM/APMCompassCal.h \
-    src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
-    src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
-    src/AutoPilotPlugins/APM/APMPowerComponent.h \
-    src/AutoPilotPlugins/APM/APMRadioComponent.h \
-    src/AutoPilotPlugins/APM/APMSafetyComponent.h \
-    src/AutoPilotPlugins/APM/APMSensorsComponent.h \
-    src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
-    src/AutoPilotPlugins/APM/APMTuningComponent.h \
     src/AutoPilotPlugins/Common/MotorComponent.h \
     src/AutoPilotPlugins/Common/RadioComponentController.h \
     src/AutoPilotPlugins/Common/ESP8266ComponentController.h \
     src/AutoPilotPlugins/Common/ESP8266Component.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
-    src/AutoPilotPlugins/PX4/AirframeComponent.h \
-    src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
-    src/AutoPilotPlugins/PX4/AirframeComponentController.h \
-    src/AutoPilotPlugins/PX4/FlightModesComponent.h \
-    src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.h \
-    src/AutoPilotPlugins/PX4/PX4SimpleFlightModesController.h \
-    src/AutoPilotPlugins/PX4/PowerComponent.h \
-    src/AutoPilotPlugins/PX4/PowerComponentController.h \
-    src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
-    src/AutoPilotPlugins/PX4/PX4RadioComponent.h \
-    src/AutoPilotPlugins/PX4/CameraComponent.h \
-    src/AutoPilotPlugins/PX4/SafetyComponent.h \
-    src/AutoPilotPlugins/PX4/SensorsComponent.h \
-    src/AutoPilotPlugins/PX4/SensorsComponentController.h \
-    src/AutoPilotPlugins/PX4/PX4TuningComponent.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
-    src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
-    src/FirmwarePlugin/APM/APMGeoFenceManager.h \
-    src/FirmwarePlugin/APM/APMParameterMetaData.h \
-    src/FirmwarePlugin/APM/APMRallyPointManager.h \
-    src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h \
-    src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h \
-    src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h \
-    src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h \
-    src/FirmwarePlugin/PX4/px4_custom_mode.h \
-    src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
-    src/FirmwarePlugin/PX4/PX4GeoFenceManager.h \
-    src/FirmwarePlugin/PX4/PX4ParameterMetaData.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/Vehicle.h \
     src/VehicleSetup/VehicleComponent.h \
@@ -730,66 +697,144 @@ HEADERS += \
 
 SOURCES += \
     src/AutoPilotPlugins/AutoPilotPlugin.cc \
-    src/AutoPilotPlugins/AutoPilotPluginManager.cc \
-    src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc \
-    src/AutoPilotPlugins/APM/APMAirframeComponent.cc \
-    src/AutoPilotPlugins/APM/APMAirframeComponentController.cc \
-    src/AutoPilotPlugins/APM/APMCameraComponent.cc \
-    src/AutoPilotPlugins/APM/APMLightsComponent.cc \
-    src/AutoPilotPlugins/APM/APMCompassCal.cc \
-    src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
-    src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
-    src/AutoPilotPlugins/APM/APMPowerComponent.cc \
-    src/AutoPilotPlugins/APM/APMRadioComponent.cc \
-    src/AutoPilotPlugins/APM/APMSafetyComponent.cc \
-    src/AutoPilotPlugins/APM/APMSensorsComponent.cc \
-    src/AutoPilotPlugins/APM/APMSensorsComponentController.cc \
-    src/AutoPilotPlugins/APM/APMTuningComponent.cc \
     src/AutoPilotPlugins/Common/MotorComponent.cc \
     src/AutoPilotPlugins/Common/RadioComponentController.cc \
     src/AutoPilotPlugins/Common/ESP8266ComponentController.cc \
     src/AutoPilotPlugins/Common/ESP8266Component.cc \
-    src/AutoPilotPlugins/APM/APMAirframeComponentAirframes.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
-    src/AutoPilotPlugins/PX4/AirframeComponent.cc \
-    src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \
-    src/AutoPilotPlugins/PX4/AirframeComponentController.cc \
-    src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
-    src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc \
-    src/AutoPilotPlugins/PX4/PX4SimpleFlightModesController.cc \
-    src/AutoPilotPlugins/PX4/PowerComponent.cc \
-    src/AutoPilotPlugins/PX4/PowerComponentController.cc \
-    src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
-    src/AutoPilotPlugins/PX4/PX4RadioComponent.cc \
-    src/AutoPilotPlugins/PX4/CameraComponent.cc \
-    src/AutoPilotPlugins/PX4/SafetyComponent.cc \
-    src/AutoPilotPlugins/PX4/SensorsComponent.cc \
-    src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
-    src/AutoPilotPlugins/PX4/PX4TuningComponent.cc \
-    src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
-    src/FirmwarePlugin/APM/APMGeoFenceManager.cc \
-    src/FirmwarePlugin/APM/APMParameterMetaData.cc \
-    src/FirmwarePlugin/APM/APMRallyPointManager.cc \
-    src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.cc \
-    src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.cc \
-    src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.cc \
-    src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
-    src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
-    src/FirmwarePlugin/PX4/PX4GeoFenceManager.cc \
-    src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/Vehicle.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
 !MobileBuild {
-SOURCES += \
+    SOURCES += \
     src/VehicleSetup/FirmwareUpgradeController.cc \
     src/VehicleSetup/Bootloader.cc \
     src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
     src/VehicleSetup/FirmwareImage.cc \
+    
+}
 
+# ArduPilot FirmwarePlugin
+
+APMFirmwarePlugin {
+    INCLUDEPATH += \
+        src/AutoPilotPlugins/APM \
+        src/FirmwarePlugin/APM \
+
+    HEADERS += \
+        src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
+        src/FirmwarePlugin/APM/APMGeoFenceManager.h \
+        src/FirmwarePlugin/APM/APMParameterMetaData.h \
+        src/FirmwarePlugin/APM/APMRallyPointManager.h \
+        src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h \
+        src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h \
+        src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h \
+        src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h \
+        src/AutoPilotPlugins/APM/APMAutoPilotPlugin.h \
+        src/AutoPilotPlugins/APM/APMAirframeComponent.h \
+        src/AutoPilotPlugins/APM/APMAirframeComponentController.h \
+        src/AutoPilotPlugins/APM/APMAirframeComponentAirframes.h \
+        src/AutoPilotPlugins/APM/APMAirframeLoader.h \
+        src/AutoPilotPlugins/APM/APMCameraComponent.h \
+        src/AutoPilotPlugins/APM/APMLightsComponent.h \
+        src/AutoPilotPlugins/APM/APMCompassCal.h \
+        src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
+        src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
+        src/AutoPilotPlugins/APM/APMPowerComponent.h \
+        src/AutoPilotPlugins/APM/APMRadioComponent.h \
+        src/AutoPilotPlugins/APM/APMSafetyComponent.h \
+        src/AutoPilotPlugins/APM/APMSensorsComponent.h \
+        src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
+        src/AutoPilotPlugins/APM/APMTuningComponent.h \
+
+    SOURCES += \
+        src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
+        src/FirmwarePlugin/APM/APMGeoFenceManager.cc \
+        src/FirmwarePlugin/APM/APMParameterMetaData.cc \
+        src/FirmwarePlugin/APM/APMRallyPointManager.cc \
+        src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.cc \
+        src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.cc \
+        src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.cc \
+        src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.cc \
+        src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc \
+        src/AutoPilotPlugins/APM/APMAirframeComponent.cc \
+        src/AutoPilotPlugins/APM/APMAirframeComponentAirframes.cc \
+        src/AutoPilotPlugins/APM/APMAirframeComponentController.cc \
+        src/AutoPilotPlugins/APM/APMAirframeLoader.cc \
+        src/AutoPilotPlugins/APM/APMCameraComponent.cc \
+        src/AutoPilotPlugins/APM/APMLightsComponent.cc \
+        src/AutoPilotPlugins/APM/APMCompassCal.cc \
+        src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
+        src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
+        src/AutoPilotPlugins/APM/APMPowerComponent.cc \
+        src/AutoPilotPlugins/APM/APMRadioComponent.cc \
+        src/AutoPilotPlugins/APM/APMSafetyComponent.cc \
+        src/AutoPilotPlugins/APM/APMSensorsComponent.cc \
+        src/AutoPilotPlugins/APM/APMSensorsComponentController.cc \
+        src/AutoPilotPlugins/APM/APMTuningComponent.cc \
+}
+
+APMFirmwarePluginFactory {
+    HEADERS += src/FirmwarePlugin/APM/APMFirmwarePluginFactory.h
+    SOURCES += src/FirmwarePlugin/APM/APMFirmwarePluginFactory.cc
+}
+
+# PX4 FirmwarePlugin
+
+PX4FirmwarePlugin {
+    INCLUDEPATH += \
+        src/AutoPilotPlugins/PX4 \
+        src/FirmwarePlugin/PX4 \
+
+    HEADERS+= \
+        src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
+        src/FirmwarePlugin/PX4/PX4GeoFenceManager.h \
+        src/FirmwarePlugin/PX4/PX4ParameterMetaData.h \
+        src/AutoPilotPlugins/PX4/AirframeComponent.h \
+        src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
+        src/AutoPilotPlugins/PX4/AirframeComponentController.h \
+        src/AutoPilotPlugins/PX4/FlightModesComponent.h \
+        src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
+        src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.h \
+        src/AutoPilotPlugins/PX4/PX4SimpleFlightModesController.h \
+        src/AutoPilotPlugins/PX4/PowerComponent.h \
+        src/AutoPilotPlugins/PX4/PowerComponentController.h \
+        src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
+        src/AutoPilotPlugins/PX4/PX4RadioComponent.h \
+        src/AutoPilotPlugins/PX4/CameraComponent.h \
+        src/AutoPilotPlugins/PX4/SafetyComponent.h \
+        src/AutoPilotPlugins/PX4/SensorsComponent.h \
+        src/AutoPilotPlugins/PX4/SensorsComponentController.h \
+        src/AutoPilotPlugins/PX4/PX4TuningComponent.h \
+
+    SOURCES += \
+        src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
+        src/FirmwarePlugin/PX4/PX4GeoFenceManager.cc \
+        src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc \
+        src/AutoPilotPlugins/PX4/AirframeComponent.cc \
+        src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \
+        src/AutoPilotPlugins/PX4/AirframeComponentController.cc \
+        src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
+        src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc \
+        src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
+        src/AutoPilotPlugins/PX4/PX4SimpleFlightModesController.cc \
+        src/AutoPilotPlugins/PX4/PowerComponent.cc \
+        src/AutoPilotPlugins/PX4/PowerComponentController.cc \
+        src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
+        src/AutoPilotPlugins/PX4/PX4RadioComponent.cc \
+        src/AutoPilotPlugins/PX4/CameraComponent.cc \
+        src/AutoPilotPlugins/PX4/SafetyComponent.cc \
+        src/AutoPilotPlugins/PX4/SensorsComponent.cc \
+        src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
+        src/AutoPilotPlugins/PX4/PX4TuningComponent.cc \
+}
+
+PX4FirmwarePluginFactory {
+    HEADERS += src/FirmwarePlugin/PX4/PX4FirmwarePluginFactory.h
+    SOURCES += src/FirmwarePlugin/PX4/PX4FirmwarePluginFactory.cc
 }
 
 # Fact System code
