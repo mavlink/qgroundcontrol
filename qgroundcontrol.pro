@@ -35,6 +35,34 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 }
 
 #
+# Custom Build
+#
+# QGC will create a "CUSTOMCLASS" object (exposed by your custom build
+# and derived from QGCCorePlugin).
+# This is the start of allowing custom Plugins, which will eventually use a
+# more defined runtime plugin architecture and not require a QGC project
+# file you would have to keep in sync with the upstream repo.
+#
+
+# This allows you to ignore the custom build even if the custom build
+# is present. It's useful to run "regular" builds to make sure you didn't
+# break anything.
+
+contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
+    message("Disable custom build override")
+} else {
+    exists($$PWD/custom/custom.pri) {
+        message("Found custom build")
+        CONFIG  += CustomBuild
+        DEFINES += QGC_CUSTOM_BUILD
+        # custom.pri must define:
+        # CUSTOMCLASS  = YourIQGCCorePluginDerivation
+        # CUSTOMHEADER = \"\\\"YourIQGCCorePluginDerivation.h\\\"\"
+        include($$PWD/custom/custom.pri)
+    }
+}
+
+#
 # Plugin configuration
 #
 # This allows you to build custom versions of QGC which only includes your
@@ -67,34 +95,6 @@ contains (CONFIG, QGC_DISABLE_PX4_PLUGIN_FACTORY) {
     message("Disable PX4 Plugin Factory")
 } else {
     CONFIG += PX4FirmwarePluginFactory
-}
-
-#
-# Custom Build
-#
-# QGC will create a "CUSTOMCLASS" object (exposed by your custom build
-# and derived from IQGCCorePlugin) and call its IQGCCorePlugin::init() method.
-# This is the start of allowing custom Plugins, which will eventually use a
-# more defined runtime plugin architecture and not require a QGC project
-# file you would have to keep in sync with the upstream repo.
-#
-
-# This allows you to ignore the custom build even if the custom build
-# is present. It's useful to run "regular" builds to make sure you didn't
-# break anything.
-
-contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
-    message("Disable custom build override")
-} else {
-    exists($$PWD/custom/custom.pri) {
-        message("Found custom build")
-        CONFIG  += CustomBuild
-        DEFINES += QGC_CUSTOM_BUILD
-        # custom.pri must define:
-        # CUSTOMCLASS  = YourIQGCCorePluginDerivation
-        # CUSTOMHEADER = \"\\\"YourIQGCCorePluginDerivation.h\\\"\"
-        include($$PWD/custom/custom.pri)
-    }
 }
 
 # Bluetooth
@@ -273,9 +273,9 @@ DEPENDPATH += \
 INCLUDEPATH += .
 
 INCLUDEPATH += \
-    api \
     include/ui \
     src \
+    src/api \
     src/AnalyzeView \
     src/AutoPilotPlugins \
     src/FlightDisplay \
@@ -336,10 +336,14 @@ FORMS += \
 #
 
 HEADERS += \
-    api/IQGCApplication.h \
-    api/IQGCCorePlugin.h \
-    api/IQGCOptions.h \
-    api/IQGCQMLSource.h \
+    src/api/QGCCorePlugin.h \
+    src/api/QGCOptions.h \
+    src/api/QGCSettings.h \
+
+SOURCES += \
+    src/api/QGCCorePlugin.cc \
+    src/api/QGCOptions.cc \
+    src/api/QGCSettings.cc \
 
 #
 # Unit Test specific configuration goes here (requires full debug build with all plugins)
