@@ -69,27 +69,20 @@ QGCView {
                         anchors.centerIn: parent
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            QGCLabel {
-                                width:              _labelWidth
-                                text:               qsTr("Current State:")
-                            }
-                            QGCLabel {
-                                width:              _labelWidth
-                                text:               TyphoonHCore.m4State
-                            }
-                        }
-                        Row {
-                            spacing:                ScreenTools.defaultFontPixelWidth
-                            QGCLabel {
-                                width:              _labelWidth
-                                text:               qsTr("Bind")
-                            }
                             QGCButton {
-                                width:              _editFieldWidth
-                                text:               "Bind"
-                                enabled:            false
-                                //-- TODO: Need to be able to send a MAVLink command to vehicle first
-                                //onClicked:          TyphoonHCore.enterBindMode
+                                text:       "Bind"
+                                width:      _labelWidth
+                                onClicked:  TyphoonHCore.enterBindMode()
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QGCLabel {
+                                text:       qsTr("Current State:")
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QGCLabel {
+                                width:      _editFieldWidth
+                                text:       TyphoonHCore.m4StateStr
+                                anchors.verticalCenter: parent.verticalCenter
                             }
                         }
                     }

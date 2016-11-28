@@ -14,6 +14,12 @@
  *   The functions themselves have been completely rewriten from scratch.
  */
 
+//-- I don't like having to include these two. There should be more abstraction so we
+//   we don't need this deep knowledge.
+#include "QGCApplication.h"
+#include "UAS.h"
+
+#include "typhoonh.h"
 #include "m4.h"
 #include "m4serial.h"
 #include <QDebug>
@@ -37,8 +43,6 @@ static const char* ktxAddr      = "txAddr";
 #define DEBUG_DATA_DUMP         false
 
 Q_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
-
-TyphoonHCore* TyphoonHCore::_pSingletonInstance = NULL;
 
 //-----------------------------------------------------------------------------
 // RC Channel data provided by Yuneec
@@ -71,6 +75,18 @@ dump_data_packet(QByteArray data)
 #endif
 
 //-----------------------------------------------------------------------------
+static QObject*
+typhoonHCoreSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
+    if(pPlug && pPlug->core()) {
+        QQmlEngine::setObjectOwnership(pPlug->core(), QQmlEngine::CppOwnership);
+        return pPlug->core();
+    }
+    return NULL;
+}
+
+//-----------------------------------------------------------------------------
 TyphoonHCore::TyphoonHCore(QObject* parent)
     : QObject(parent)
     , _state(STATE_NONE)
@@ -100,10 +116,9 @@ TyphoonHCore::init()
 #endif
     qCDebug(YuneecLog) << "Init M4 Handler";
     if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
-        qWarning() << "Could not start serial communication with M4";
+        qCWarning(YuneecLog) << "Could not start serial communication with M4";
         return false;
     }
-    connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHCore::_bytesReady);
     connect(&_timer, &QTimer::timeout, this, &TyphoonHCore::_stateManager);
     _timer.setSingleShot(true);
     //-- Have we bound before?
@@ -120,42 +135,57 @@ TyphoonHCore::init()
         _rxBindInfoFeedback.txAddr   = settings.value(ktxAddr, 0).toInt();
     }
     settings.endGroup();
-    //-- For now, make Power Key (Start/Stop on top of the ST16) work as a power button.
-    _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
-    QThread::msleep(50);
-    //-- Start with Exit run mode first. Eventually, when this is complete we
-    //   will check the current state (_m4State) to decide what to do.
-    _exitRun();
-    QThread::msleep(50);
-    _state = STATE_EXIT_RUN;
-    _timer.start(COMMAND_WAIT_INTERVAL);
+    qmlRegisterSingletonType<TyphoonHCore>("TyphoonHCore", 1, 0, "TyphoonHCore", typhoonHCoreSingletonFactory);
+    connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHCore::_bytesReady);
     return true;
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHCore::setSingletonInstance(TyphoonHCore* pInstance)
-{
-    TyphoonHCore::_pSingletonInstance = pInstance;
-}
-
-//-----------------------------------------------------------------------------
-TyphoonHCore*
-TyphoonHCore::instance()
-{
-    return TyphoonHCore::_pSingletonInstance;
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHCore::enterBindMode()
 {
+    qCDebug(YuneecLog) << "enterBindMode()";
+    //-- Send MAVLink command telling vehicle to enter bind mode
+    Vehicle* v = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    if(v) {
+        qCDebug(YuneecLog) << "pairRX()";
+        v->uas()->pairRX(1, 0);
+    }
+    //-- Set M4 into bind mode
     _rxBindInfoFeedback.clear();
-    _responseTryCount = 0;
-    _exitRun();
-    QThread::msleep(50);
-    _state = STATE_EXIT_RUN;
-    _timer.start(COMMAND_WAIT_INTERVAL);
+    if(_m4State == M4_STATE_BIND) {
+        _exitBind();
+        QThread::msleep(150);
+    } else if(_m4State == M4_STATE_RUN) {
+        _exitRun();
+        QThread::msleep(150);
+    }
+    _initSequence();
+}
+
+//-----------------------------------------------------------------------------
+QString
+TyphoonHCore::m4StateStr()
+{
+    switch(_m4State) {
+        case M4_STATE_AWAIT:
+            return QString("Waiting...");
+        case M4_STATE_BIND:
+            return QString("Binding...");
+        case M4_STATE_CALIBRATION:
+            return QString("Calibration...");
+        case M4_STATE_SETUP:
+            return QString("Setup...");
+        case M4_STATE_RUN:
+            return QString("Running...");
+        case M4_STATE_SIM:
+            return QString("Simulation...");
+        case M4_STATE_FACTORY_CALI:
+            return QString("Factory Calibration...");
+        default:
+            return QString("Unknown state...");
+    }
+    return QString();
 }
 
 //-----------------------------------------------------------------------------
@@ -193,7 +223,7 @@ TyphoonHCore::_stateManager()
         case STATE_EXIT_RUN:
             qCDebug(YuneecLog) << "STATE_EXIT_RUN Timeout";
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_EXIT_RUN Timeouts. Switching to initial run.";
+                qCWarning(YuneecLog) << "Too many STATE_EXIT_RUN Timeouts. Switching to initial run.";
                 _initSequence();
             } else {
                 _exitRun();
@@ -205,7 +235,7 @@ TyphoonHCore::_stateManager()
         case STATE_ENTER_BIND:
             qCDebug(YuneecLog) << "STATE_ENTER_BIND Timeout";
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_ENTER_BIND Timeouts.";
+                qCWarning(YuneecLog) << "Too many STATE_ENTER_BIND Timeouts.";
                 if(_rxBindInfoFeedback.nodeId) {
                     _responseTryCount = 0;
                     _state = STATE_SEND_RX_INFO;
@@ -213,7 +243,7 @@ TyphoonHCore::_stateManager()
                     _timer.start(COMMAND_WAIT_INTERVAL);
                 } else {
                     //-- We're stuck. Wen can't enter bind and we have no binding info.
-                    qCritical() << "Cannot enter binding mode";
+                    qCCritical(YuneecLog) << "Cannot enter binding mode";
                     _state = STATE_ENTER_BIND_ERROR;
                 }
             } else {
@@ -225,16 +255,20 @@ TyphoonHCore::_stateManager()
 
         case STATE_START_BIND:
             qCDebug(YuneecLog) << "STATE_START_BIND Timeout";
-            _startBind();
-            //-- Wait a bit longer as there may not be anyone listening
-            _timer.start(1000);
-            //-- TODO: This can't wait for ever...
+            if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
+                qCWarning(YuneecLog) << "Too many STATE_START_BIND Timeouts. Giving up...";
+            } else {
+                _startBind();
+                //-- Wait a bit longer as there may not be anyone listening
+                _timer.start(1000);
+                _responseTryCount++;
+            }
             break;
 
         case STATE_UNBIND:
             qCDebug(YuneecLog) << "STATE_UNBIND Timeout";
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_UNBIND Timeouts. Go straight to bind.";
+                qCWarning(YuneecLog) << "Too many STATE_UNBIND Timeouts. Go straight to bind.";
                 _responseTryCount = 0;
                 _state = STATE_BIND;
                 _bind(_rxBindInfoFeedback.nodeId);
@@ -269,7 +303,7 @@ TyphoonHCore::_stateManager()
 
         case STATE_RECV_BOTH_CH:
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_RECV_BOTH_CH Timeouts. Giving up...";
+                qCWarning(YuneecLog) << "Too many STATE_RECV_BOTH_CH Timeouts. Giving up...";
             } else {
                 qCDebug(YuneecLog) << "STATE_RECV_BOTH_CH Timeout";
                 _sendRecvBothCh();
@@ -303,7 +337,7 @@ TyphoonHCore::_stateManager()
 
         case STATE_SEND_RX_INFO:
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_SEND_RX_INFO Timeouts. Giving up...";
+                qCWarning(YuneecLog) << "Too many STATE_SEND_RX_INFO Timeouts. Giving up...";
             } else {
                 qCDebug(YuneecLog) << "STATE_SEND_RX_INFO Timeout";
                 _sendRxResInfo();
@@ -314,7 +348,7 @@ TyphoonHCore::_stateManager()
 
         case STATE_ENTER_RUN:
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_ENTER_RUN Timeouts. Giving up...";
+                qCWarning(YuneecLog) << "Too many STATE_ENTER_RUN Timeouts. Giving up...";
             } else {
                 qCDebug(YuneecLog) << "STATE_ENTER_RUN Timeout";
                 _enterRun();
@@ -663,6 +697,7 @@ TyphoonHCore::_bytesReady(QByteArray data)
                     qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_ENTER_BIND";
                     if(_state == STATE_ENTER_BIND) {
                         //-- Now we start scanning
+                        _responseTryCount = 0;
                         _state = STATE_START_BIND;
                         _startBind();
                         _timer.start(COMMAND_WAIT_INTERVAL);
@@ -792,7 +827,7 @@ TyphoonHCore::_handleQueryBindResponse(QByteArray data)
             settings.endGroup();
             _timer.start(COMMAND_WAIT_INTERVAL);
         } else {
-            qWarning() << "Response CMD_QUERY_BIND_STATE from unkown origin:" << nodeID;
+            qCWarning(YuneecLog) << "Response CMD_QUERY_BIND_STATE from unkown origin:" << nodeID;
         }
     }
 }
@@ -908,6 +943,31 @@ TyphoonHCore::_handleChannel(m4Packet& packet)
 }
 
 //-----------------------------------------------------------------------------
+void
+TyphoonHCore::_handleInitialState()
+{
+    qCDebug(YuneecLog) << "Initial state:" << _m4State;
+    if(_m4State == M4_STATE_BIND) {
+        //-- TX is not bound. Not much we can do.
+        _exitBind();
+        _state = STATE_EXIT_BIND;
+        QThread::msleep(50);
+        _timer.start(COMMAND_WAIT_INTERVAL);
+    } else if(_m4State == M4_STATE_AWAIT) {
+        //-- TX seems to be bound. Just start it all.
+        _initSequence();
+    } else if(_m4State == M4_STATE_RUN) {
+        //-- TX seems to be bound and running. Restart.
+        _exitRun();
+        QThread::msleep(150);
+        _initSequence();
+    } else {
+        //-- Anyting else we don't have much to do
+        qCDebug(YuneecLog) << "Idle state";
+    }
+}
+
+//-----------------------------------------------------------------------------
 bool
 TyphoonHCore::_handleCommand(m4Packet& packet)
 {
@@ -918,7 +978,11 @@ TyphoonHCore::_handleCommand(m4Packet& packet)
                 QByteArray commandValues = packet.commandValues();
                 int state = (int)(commandValues[0] & 0x1f);
                 if(state != _m4State) {
+                    int oldState = _m4State;
                     _m4State = state;
+                    if(oldState == M4_STATE_NONE) {
+                        _handleInitialState();
+                    }
                     emit m4StateChanged(_m4State);
                 }
             }

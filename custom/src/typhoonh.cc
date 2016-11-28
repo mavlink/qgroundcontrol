@@ -9,24 +9,13 @@
 #include <QtQml>
 #include <QQmlEngine>
 
-Q_PLUGIN_METADATA(IID "org.qgroundcontrol.qgccoreplugin")
+const char* kMainIsMap = "MainFlyWindowIsMap";
 
 //-----------------------------------------------------------------------------
-static QObject*
-typhoonHCoreSingletonFactory(QQmlEngine*, QJSEngine*)
-{
-    TyphoonHCore* pTyphoon = new TyphoonHCore();
-    TyphoonHCore::setSingletonInstance(pTyphoon);
-    return pTyphoon;
-}
-
-//-----------------------------------------------------------------------------
-class TyphoonHOptions : public IQGCOptions
+class TyphoonHOptions : public QGCOptions
 {
 public:
-    TyphoonHOptions() {}
-    bool        colapseSettings             () { return true;  }
-    bool        mainViewIsMap               () { return false; }
+    bool        combineSettingsAndSetup     () { return true;  }
     bool        enableVirtualJoystick       () { return false; }
     bool        enableAutoConnectOptions    () { return false; }
     bool        enableVideoSourceOptions    () { return false; }
@@ -36,57 +25,76 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-class TyphoonHSettings : public IQGCQMLSource
+TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
+    : QGCCorePlugin(app)
+    , _pTyphoonSettings(NULL)
+    , _pGeneral(NULL)
+    , _pOfflineMaps(NULL)
+    , _pMAVLink(NULL)
 {
-public:
-    TyphoonHSettings() {}
-    QString     pageUrl                     () { return QString("/typhoonh/TyphoonSettings.qml"); }
-    QString     pageTitle                   () { return QString("Typhoon H"); }
-    QString     pageIconUrl                 () { return QString("/typhoonh/logoWhite.svg"); }
-};
-
-//-----------------------------------------------------------------------------
-TyphoonHPlugin::TyphoonHPlugin(QObject* parent)
-    : IQGCCorePlugin(parent)
-{
-    _pOptions   = new TyphoonHOptions;
-    _pSettings  = new TyphoonHSettings;
+    _pOptions = new TyphoonHOptions;
+    _pCore = new TyphoonHCore(this);
+    //-- Make sure Main View Is Video
+    QSettings settings;
+    settings.beginGroup("QGCQml");
+    if(!settings.contains(kMainIsMap)) {
+        settings.setValue(kMainIsMap, false);
+    }
 }
 
 //-----------------------------------------------------------------------------
 TyphoonHPlugin::~TyphoonHPlugin()
 {
-    if(_pOptions) {
+    if(_pOptions)
         delete _pOptions;
-    }
-    if(_pSettings) {
-        delete _pSettings;
-    }
+    if(_pTyphoonSettings)
+        delete _pTyphoonSettings;
+    if(_pCore)
+        delete _pCore;
+    if(_pGeneral)
+        delete _pGeneral;
+    if(_pOfflineMaps)
+        delete _pOfflineMaps;
+    if(_pMAVLink)
+        delete _pMAVLink;
 }
 
 //-----------------------------------------------------------------------------
-bool
-#if defined (QGC_DYNAMIC_PLUGIN)
-TyphoonHPlugin::init(IQGCApplication* pApp)
-#else
-TyphoonHPlugin::init(QGCApplication* pApp)
-#endif
+void
+TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
 {
-    Q_UNUSED(pApp);
-    qmlRegisterSingletonType<TyphoonHCore>("TyphoonHCore", 1, 0, "TyphoonHCore", typhoonHCoreSingletonFactory);
-    return true;
+    QGCCorePlugin::setToolbox(toolbox);
+    _pCore->init();
 }
 
 //-----------------------------------------------------------------------------
-IQGCOptions*
-TyphoonHPlugin::uiOptions()
+QGCOptions*
+TyphoonHPlugin::options()
 {
     return _pOptions;
 }
 
 //-----------------------------------------------------------------------------
-IQGCQMLSource*
-TyphoonHPlugin::settingsQML()
+QVariantList&
+TyphoonHPlugin::settings()
 {
-    return _pSettings;
+    if(!_pTyphoonSettings) {
+        //-- If this is the first time, build our own setting
+        _pTyphoonSettings = new QGCSettings(tr("Typhoon H"),
+           QUrl::fromUserInput("qrc:/typhoonh/TyphoonSettings.qml"),
+           QUrl::fromUserInput("qrc:/typhoonh/logoWhite.svg"));
+        settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
+        _pGeneral = new QGCSettings(tr("General"),
+            QUrl::fromUserInput("qrc:/qml/GeneralSettings.qml"),
+            QUrl::fromUserInput("qrc:/res/gear-white.svg"));
+        settingsList.append(QVariant::fromValue((QGCSettings*)_pGeneral));
+        _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
+            QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"));
+        settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
+        _pMAVLink = new QGCSettings(tr("MAVLink"),
+            QUrl::fromUserInput("qrc:/qml/MavlinkSettings.qml"),
+            QUrl::fromUserInput("qrc:/res/waves.svg"));
+        settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
+    }
+    return settingsList;
 }

@@ -5,36 +5,33 @@
 
 #pragma once
 
-#include "IQGCApplication.h"
-#include "IQGCCorePlugin.h"
-#include "IQGCOptions.h"
-#include "IQGCQMLSource.h"
+#include "QGCCorePlugin.h"
+#include "QGCOptions.h"
+#include "QGCSettings.h"
 
-#include <QOBject>
-
+class TyphoonHCore;
 class TyphoonHOptions;
 class TyphoonHSettings;
 
-class TyphoonHPlugin : public QObject, IQGCCorePlugin
+class TyphoonHPlugin : public QGCCorePlugin
 {
     Q_OBJECT
-#if defined (QGC_DYNAMIC_PLUGIN)
-    Q_PLUGIN_METADATA(IID "org.qgroundcontrol.qgccoreplugin" FILE "typhoonh.json")
-    Q_INTERFACES(IQGCCorePlugin)
-#endif
 public:
-    TyphoonHPlugin(QObject* parent = NULL);
+    TyphoonHPlugin(QGCApplication* app);
     ~TyphoonHPlugin();
 
-#if defined (QGC_DYNAMIC_PLUGIN)
-    bool            init        (IQGCApplication* pApp);
-#else
-    bool            init        (QGCApplication* pApp);
-#endif
-    IQGCOptions*    uiOptions   ();
-    IQGCQMLSource*  settingsQML ();
+    QGCOptions*     options     ();
+    QVariantList&   settings    ();
+    TyphoonHCore*   core        () { return _pCore; }
+
+    void            setToolbox  (QGCToolbox* toolbox);
 
 private:
+    TyphoonHCore*       _pCore;
     TyphoonHOptions*    _pOptions;
-    TyphoonHSettings*   _pSettings;
+    QGCSettings*        _pTyphoonSettings;
+    QGCSettings*        _pGeneral;
+    QGCSettings*        _pOfflineMaps;
+    QGCSettings*        _pMAVLink;
+    QVariantList        settingsList;
 };

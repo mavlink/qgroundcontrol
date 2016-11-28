@@ -5,7 +5,9 @@ linux : android-g++ {
         error("Unsuported Android toolchain, only x86 supported")
     }
 } else {
-    error("Unsuported Platform, only Android x86 supported")
+    message("Non suported Platform, limited functionality development only")
+    DEFINES += __mobile__
+    CONFIG  += DISABLE_VIDEOSTREAMING
 }
 
 DEFINES += CUSTOMHEADER=\"\\\"typhoonh.h\\\"\"
@@ -13,7 +15,7 @@ DEFINES += CUSTOMCLASS=TyphoonHPlugin
 
 CONFIG  += NoSerialBuild
 CONFIG  += MobileBuild
-CONFIG  += DISABLE_BUILTIN_ANDROID
+CONFIG  += DISABLE_BUILTIN_ANDROID QGC_DISABLE_APM_PLUGIN QGC_DISABLE_APM_PLUGIN_FACTORY
 
 DEFINES += NO_SERIAL_LINK
 DEFINES += NO_UDP_VIDEO

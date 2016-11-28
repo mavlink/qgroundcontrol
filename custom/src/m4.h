@@ -15,8 +15,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(YuneecLog)
 
-class IQGCApplication;
-
 //-----------------------------------------------------------------------------
 class TyphoonHCore : public QObject
 {
@@ -25,8 +23,7 @@ public:
     TyphoonHCore(QObject* parent = NULL);
     ~TyphoonHCore();
 
-    bool    init                    ();
-
+    //-- QtQuick Interface
     enum M4State {
         M4_STATE_NONE           = 0,
         M4_STATE_AWAIT          = 1,
@@ -41,15 +38,16 @@ public:
     Q_ENUMS(M4State)
 
     Q_PROPERTY(int      m4State     READ    m4State     NOTIFY m4StateChanged)
+    Q_PROPERTY(QString  m4StateStr  READ    m4StateStr  NOTIFY m4StateChanged)
 
-    Q_INVOKABLE void    enterBindMode   ();
+    Q_INVOKABLE void enterBindMode  ();
 
     int     m4State                 () { return _m4State; }
+    QString m4StateStr              ();
+
+    //-- Regular interface
+    bool    init                    ();
     void    getControllerLocation   (ControllerLocation& location);
-
-
-    static  void            setSingletonInstance(TyphoonHCore* pInstance);
-    static  TyphoonHCore*   instance            ();
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  float   byteArrayToFloat(QByteArray data, int offset);
@@ -84,6 +82,7 @@ private:
     void    _switchChanged          (m4Packet& packet);
     void    _handleMixedChannelData (m4Packet& packet);
     void    _handControllerFeedback (m4Packet& packet);
+    void    _handleInitialState     ();
 signals:
     void    m4StateChanged             (int state);
     void    switchStateChanged         (int swId, int oldState, int newState);
@@ -116,5 +115,4 @@ private:
     RxBindInfo              _rxBindInfoFeedback;
     QTimer                  _timer;
     ControllerLocation      _controllerLocation;
-    static TyphoonHCore*    _pSingletonInstance;
 };
