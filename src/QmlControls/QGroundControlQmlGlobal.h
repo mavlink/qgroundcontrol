@@ -73,6 +73,7 @@ public:
     Q_PROPERTY(MissionCommandTree*  missionCommandTree  READ missionCommandTree     CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager        READ videoManager           CONSTANT)
     Q_PROPERTY(MAVLinkLogManager*   mavlinkLogManager   READ mavlinkLogManager      CONSTANT)
+    Q_PROPERTY(QGCCorePlugin*       corePlugin          READ corePlugin             CONSTANT)
 
     Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -85,19 +86,6 @@ public:
     Q_PROPERTY(bool     isSaveLogPromptNotArmed READ isSaveLogPromptNotArmed    WRITE setIsSaveLogPromptNotArmed    NOTIFY isSaveLogPromptNotArmedChanged)
     Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
     Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
-
-    //-------------------------------------------------------------------------
-    //-- Options that can be set by plugins
-    Q_PROPERTY(bool     colapseSettings                 READ colapseSettings            CONSTANT)
-    Q_PROPERTY(bool     mainViewIsMap                   READ mainViewIsMap              CONSTANT)
-    Q_PROPERTY(bool     enableVirtualJoystick           READ enableVirtualJoystick      CONSTANT)
-    Q_PROPERTY(bool     enableAutoConnectOptions        READ enableAutoConnectOptions   CONSTANT)
-    Q_PROPERTY(bool     enableVideoSourceOptions        READ enableVideoSourceOptions   CONSTANT)
-
-    Q_PROPERTY(bool     hasCustomSettings               READ hasCustomSettings          CONSTANT)
-    Q_PROPERTY(QString  customSettingsURL               READ customSettingsURL          CONSTANT)
-    Q_PROPERTY(QString  customSettingsTitle             READ customSettingsTitle        CONSTANT)
-    Q_PROPERTY(QString  customSettingsLogoUrl           READ customSettingsLogoUrl      CONSTANT)
 
     //-------------------------------------------------------------------------
     // MavLink Protocol
@@ -183,6 +171,7 @@ public:
     MissionCommandTree*     missionCommandTree  ()      { return _missionCommandTree; }
     VideoManager*           videoManager        ()      { return _videoManager; }
     MAVLinkLogManager*      mavlinkLogManager   ()      { return _mavlinkLogManager; }
+    QGCCorePlugin*          corePlugin          ()      { return _corePlugin; }
 
     qreal                   zOrderTopMost       ()      { return 1000; }
     qreal                   zOrderWidgets       ()      { return 100; }
@@ -197,16 +186,6 @@ public:
 
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
-
-    bool    colapseSettings         ();
-    bool    mainViewIsMap           ();
-    bool    enableVirtualJoystick   ();
-    bool    enableAutoConnectOptions();
-    bool    enableVideoSourceOptions();
-    bool    hasCustomSettings       ();
-    QString customSettingsTitle     ();
-    QString customSettingsURL       ();
-    QString customSettingsLogoUrl   ();
 
     QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
 
@@ -264,6 +243,7 @@ private:
     MissionCommandTree*     _missionCommandTree;
     VideoManager*           _videoManager;
     MAVLinkLogManager*      _mavlinkLogManager;
+    QGCCorePlugin*          _corePlugin;
 
     bool                    _virtualTabletJoystick;
     qreal                   _baseFontPointSize;

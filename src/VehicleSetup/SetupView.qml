@@ -256,31 +256,17 @@ Rectangle {
                 visible:                !ScreenTools.isShortScreen
             }
 
-            SubMenuButton {
-                imageResource:  "/res/gear-white.svg"
-                setupIndicator: false
-                exclusiveGroup: setupButtonGroup
-                text:           "General"
-                visible:        QGroundControl.colapseSettings
-                onClicked:      panelLoader.setSource("GeneralSettings.qml")
-            }
-
-            SubMenuButton {
-                imageResource:  QGroundControl.customSettingsLogoUrl
-                setupIndicator: false
-                exclusiveGroup: setupButtonGroup
-                text:           QGroundControl.customSettingsTitle
-                visible:        QGroundControl.colapseSettings && QGroundControl.hasCustomSettings
-                onClicked:      panelLoader.setSource(QGroundControl.customSettingsURL)
-            }
-
-            SubMenuButton {
-                imageResource:  "/res/waves.svg"
-                setupIndicator: false
-                exclusiveGroup: setupButtonGroup
-                text:           "MAVLink"
-                visible:        QGroundControl.colapseSettings
-                onClicked:      panelLoader.setSource("MavlinkSettings.qml")
+            Repeater {
+                model:              QGroundControl.corePlugin.settings
+                visible:            QGroundControl.corePlugin.options.combineSettingsAndSetup
+                SubMenuButton {
+                    imageResource:  modelData.icon
+                    setupIndicator: false
+                    exclusiveGroup: setupButtonGroup
+                    text:           modelData.title
+                    visible:        QGroundControl.corePlugin.options.combineSettingsAndSetup
+                    onClicked:      panelLoader.setSource(modelData.url)
+                }
             }
 
             SubMenuButton {

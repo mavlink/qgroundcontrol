@@ -338,7 +338,7 @@ Rectangle {
             source:             "/res/QGCLogoWhite"
             logo:               true
             onClicked:          toolBar.showSettingsView()
-            visible:            !QGroundControl.colapseSettings
+            visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
         }
 
         QGCToolBarButton {

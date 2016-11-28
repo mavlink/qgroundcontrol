@@ -364,7 +364,7 @@ QGCView {
                             text:       qsTr("Virtual Joystick")
                             checked:    QGroundControl.virtualTabletJoystick
                             onClicked:  QGroundControl.virtualTabletJoystick = checked
-                            visible:    QGroundControl.enableVirtualJoystick
+                            visible:    QGroundControl.corePlugin.options.enableVirtualJoystick
                         }
                         //-----------------------------------------------------------------
                         //-- Map Providers
@@ -434,7 +434,7 @@ QGCView {
                     height:             autoConnectLabel.height
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
-                    visible:            QGroundControl.enableAutoConnectOptions
+                    visible:            QGroundControl.corePlugin.options.enableAutoConnectOptions
                     QGCLabel {
                         id:             autoConnectLabel
                         text:           qsTr("Autoconnect to the following devices:")
@@ -445,7 +445,7 @@ QGCView {
                     height:         autoConnectCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:          qgcView.width * 0.8
                     color:          qgcPal.windowShade
-                    visible:        QGroundControl.enableAutoConnectOptions
+                    visible:        QGroundControl.corePlugin.options.enableAutoConnectOptions
                     anchors.margins: ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     Column {
@@ -497,7 +497,7 @@ QGCView {
                 Item {
                     width:              qgcView.width * 0.8
                     height:             videoLabel.height
-                    visible:            QGroundControl.enableVideoSourceOptions
+                    visible:            QGroundControl.corePlugin.options.enableVideoSourceOptions
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
@@ -510,7 +510,7 @@ QGCView {
                     height:         videoCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:          qgcView.width * 0.8
                     color:          qgcPal.windowShade
-                    visible:        QGroundControl.enableVideoSourceOptions
+                    visible:        QGroundControl.corePlugin.options.enableVideoSourceOptions
                     anchors.margins: ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     Column {
