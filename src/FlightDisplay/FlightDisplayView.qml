@@ -34,7 +34,7 @@ QGCView {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
-    property bool _mainIsMap:           QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey, QGroundControl.corePlugin.options.mainViewIsMap) : true
+    property bool _mainIsMap:           QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
     property bool _isPipVisible:        QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
 
     property real _roll:                _activeVehicle ? _activeVehicle.roll.value    : _defaultRoll

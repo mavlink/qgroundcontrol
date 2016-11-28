@@ -130,26 +130,7 @@ QGCToolbox::~QGCToolbox()
 
 void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)
 {
-#if defined (QGC_DYNAMIC_PLUGIN)
-    //-- Look for plugins (Dynamic)
-    QString filter = "*.core.so";
-    QString path = QCoreApplication::applicationDirPath();
-    QDirIterator it(path, QStringList() << filter, QDir::Files);
-    while(it.hasNext()) {
-        QString pluginFile = it.next();
-        QPluginLoader loader(pluginFile);
-        QObject *plugin = loader.instance();
-        if(plugin) {
-            _pCorePlugin = qobject_cast<IQGCCorePlugin*>(plugin);
-            if(_pCorePlugin) {
-                _pQGCOptions = _pCorePlugin->uiOptions();
-                return;
-            }
-        } else {
-            qWarning() << "Plugin" << pluginFile << " not loaded:" << loader.errorString();
-        }
-    }
-#elif defined (QGC_CUSTOM_BUILD)
+#if defined (QGC_CUSTOM_BUILD)
     //-- Create custom plugin (Static)
     _corePlugin = (QGCCorePlugin*) new CUSTOMCLASS(app);
     if(_corePlugin) {
