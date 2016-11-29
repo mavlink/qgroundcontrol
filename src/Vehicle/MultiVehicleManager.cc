@@ -16,7 +16,7 @@
 #include "QGroundControlQmlGlobal.h"
 #include "ParameterManager.h"
 
-#ifdef __mobile__
+#if defined (__ios__) || defined(__android__)
 #include "MobileScreenMgr.h"
 #endif
 
@@ -116,7 +116,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     // Mark link as active
     link->setActive(true);
 
-#ifdef __mobile__
+#if defined (__ios__) || defined(__android__)
     if(_vehicles.count() == 1) {
         //-- Once a vehicle is connected, keep screen from going off
         qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::keepScreenOn";
@@ -157,7 +157,7 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     emit parameterReadyVehicleAvailableChanged(false);
     emit vehicleRemoved(vehicle);
 
-#ifdef __mobile__
+#if defined (__ios__) || defined(__android__)
     if(_vehicles.count() == 0) {
         //-- Once no vehicles are connected, we no longer need to keep screen from going off
         qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::restoreScreenOn";

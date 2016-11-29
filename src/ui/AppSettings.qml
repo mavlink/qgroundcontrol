@@ -30,13 +30,13 @@ Rectangle {
     readonly property real _buttonHeight:       ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight * 2
     readonly property real _buttonWidth:        ScreenTools.defaultFontPixelWidth * 10
 
+    property bool _first: true
+
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
         //-- Default to General Settings
         __rightPanel.source = "GeneralSettings.qml"
-        _generalButton.checked = true
-        panelActionGroup.current = _generalButton
     }
 
     QGCFlickable {
@@ -81,90 +81,24 @@ Rectangle {
                 visible:                !ScreenTools.isShortScreen
             }
 
-            QGCButton {
-                id:             _generalButton
-                height:         _buttonHeight
-                text:           qsTr("General")
-                exclusiveGroup: panelActionGroup
-                onClicked: {
-                    if(__rightPanel.source != "GeneralSettings.qml") {
-                        __rightPanel.source = "GeneralSettings.qml"
+            Repeater {
+                model:  QGroundControl.corePlugin.settings
+                QGCButton {
+                    height:         _buttonHeight
+                    text:           modelData.title
+                    exclusiveGroup: panelActionGroup
+                    onClicked: {
+                        if(__rightPanel.source !== modelData.url) {
+                            __rightPanel.source = modelData.url
+                        }
+                        checked = true
                     }
-                    checked = true
-                }
-            }
-
-            QGCButton {
-                height:         _buttonHeight
-                text:           qsTr("Comm Links")
-                exclusiveGroup: panelActionGroup
-                onClicked: {
-                    if(__rightPanel.source != "LinkSettings.qml") {
-                        __rightPanel.source = "LinkSettings.qml"
+                    Component.onCompleted: {
+                        if(_first) {
+                            _first = false
+                            checked = true
+                        }
                     }
-                    checked = true
-                }
-            }
-
-            QGCButton {
-                height:         _buttonHeight
-                text:           qsTr("Offline Maps")
-                exclusiveGroup: panelActionGroup
-                onClicked: {
-                    if(__rightPanel.source != "OfflineMap.qml") {
-                        __rightPanel.source = "OfflineMap.qml"
-                    }
-                    checked = true
-                }
-            }
-
-            QGCButton {
-                height:         _buttonHeight
-                text:           qsTr("MAVLink")
-                exclusiveGroup: panelActionGroup
-                onClicked: {
-                    if(__rightPanel.source != "MavlinkSettings.qml") {
-                        __rightPanel.source = "MavlinkSettings.qml"
-                    }
-                    checked = true
-                }
-            }
-
-            QGCButton {
-                height:         _buttonHeight
-                text:           qsTr("Console")
-                exclusiveGroup: panelActionGroup
-                onClicked: {
-                    if(__rightPanel.source != "QGroundControl/Controls/AppMessages.qml") {
-                        __rightPanel.source = "QGroundControl/Controls/AppMessages.qml"
-                    }
-                    checked = true
-                }
-            }
-
-            QGCButton {
-                height:         _buttonHeight
-                text:           qsTr("Mock Link")
-                visible:        ScreenTools.isDebug
-                exclusiveGroup: panelActionGroup
-                onClicked: {
-                    if(__rightPanel.source != "MockLink.qml") {
-                        __rightPanel.source = "MockLink.qml"
-                    }
-                    checked = true
-                }
-            }
-
-            QGCButton {
-                height:         _buttonHeight
-                text:           qsTr("Debug")
-                visible:        ScreenTools.isDebug
-                exclusiveGroup: panelActionGroup
-                onClicked: {
-                    if(__rightPanel.source != "DebugWindow.qml") {
-                        __rightPanel.source = "DebugWindow.qml"
-                    }
-                    checked = true
                 }
             }
         }

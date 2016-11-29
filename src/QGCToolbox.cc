@@ -28,6 +28,12 @@
 #include "PositionManager.h"
 #include "VideoManager.h"
 #include "MAVLinkLogManager.h"
+#include "QGCCorePlugin.h"
+#include "QGCOptions.h"
+
+#if defined(QGC_CUSTOM_BUILD)
+#include CUSTOMHEADER
+#endif
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
     : _audioOutput(NULL)
@@ -50,7 +56,10 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     , _qgcPositionManager(NULL)
     , _videoManager(NULL)
     , _mavlinkLogManager(NULL)
+    , _corePlugin(NULL)
 {
+    //-- Scan and load plugins
+    _scanAndLoadPlugins(app);
     _audioOutput =              new GAudioOutput(app);
     _factSystem =               new FactSystem(app);
     _firmwarePluginManager =    new FirmwarePluginManager(app);
@@ -75,6 +84,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 
 void QGCToolbox::setChildToolboxes(void)
 {
+    _corePlugin->setToolbox(this);
     _audioOutput->setToolbox(this);
     _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
@@ -115,6 +125,20 @@ QGCToolbox::~QGCToolbox()
     delete _uasMessageHandler;
     delete _followMe;
     delete _qgcPositionManager;
+    delete _corePlugin;
+}
+
+void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)
+{
+#if defined (QGC_CUSTOM_BUILD)
+    //-- Create custom plugin (Static)
+    _corePlugin = (QGCCorePlugin*) new CUSTOMCLASS(app);
+    if(_corePlugin) {
+        return;
+    }
+#endif
+    //-- No plugins found, use default instance
+    _corePlugin = new QGCCorePlugin(app);
 }
 
 QGCTool::QGCTool(QGCApplication* app)
@@ -122,7 +146,6 @@ QGCTool::QGCTool(QGCApplication* app)
     , _app(app)
     , _toolbox(NULL)
 {
-
 }
 
 void QGCTool::setToolbox(QGCToolbox* toolbox)
