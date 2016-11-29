@@ -95,7 +95,7 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
         config = new BluetoothConfiguration(name);
         break;
 #endif
-#if !defined(__mobile__)
+#ifndef __mobile__
         case LinkConfiguration::TypeLogReplay:
             config = new LogReplayLinkConfiguration(name);
             break;
@@ -133,7 +133,7 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
             dupe = new BluetoothConfiguration(dynamic_cast<BluetoothConfiguration*>(source));
             break;
 #endif
-#if !defined(__mobile__)
+#ifndef __mobile__
         case TypeLogReplay:
             dupe = new LogReplayLinkConfiguration(dynamic_cast<LogReplayLinkConfiguration*>(source));
             break;

@@ -33,7 +33,7 @@
 #include "BluetoothLink.h"
 #endif
 
-#if !defined(__mobile__)
+#ifndef __mobile__
     #include "GPSManager.h"
 #endif
 
@@ -140,7 +140,7 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
             pLink = new BluetoothLink(dynamic_cast<BluetoothConfiguration*>(config));
             break;
 #endif
-#if !defined(__mobile__)
+#ifndef __mobile__
         case LinkConfiguration::TypeLogReplay:
             pLink = new LogReplayLink(dynamic_cast<LogReplayLinkConfiguration*>(config));
             break;
@@ -389,7 +389,7 @@ void LinkManager::loadLinkConfigurationList()
                                     pLink = (LinkConfiguration*)new BluetoothConfiguration(name);
                                     break;
 #endif
-#if !defined(__mobile__)
+#ifndef __mobile__
                                 case LinkConfiguration::TypeLogReplay:
                                     pLink = (LinkConfiguration*)new LogReplayLinkConfiguration(name);
                                     break;
@@ -576,7 +576,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                         pSerialConfig = new SerialConfiguration(QString("LibrePilot on %1").arg(portInfo.portName().trimmed()));
                     }
                     break;
-#if !defined(__mobile__)
+#ifndef __mobile__
                 case QGCSerialPortInfo::BoardTypeRTKGPS:
                     if (_autoconnectRTKGPS && !_toolbox->gpsManager()->connected()) {
                         qCDebug(LinkManagerLog) << "RTK GPS auto-connected";
@@ -715,7 +715,7 @@ QStringList LinkManager::linkTypeStrings(void) const
 #ifdef QT_DEBUG
         list += "Mock Link";
 #endif
-#if !defined(__mobile__)
+#ifndef __mobile__
         list += "Log Replay";
 #endif
         Q_ASSERT(list.size() == (int)LinkConfiguration::TypeLast);
@@ -849,7 +849,7 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
                 }
                 break;
 #endif
-#if !defined(__mobile__)
+#ifndef __mobile__
             case LinkConfiguration::TypeLogReplay: {
                     LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
                     if(tconfig) {

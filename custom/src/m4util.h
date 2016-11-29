@@ -5,15 +5,14 @@
  *
  */
 
-#ifndef YUNEEC_M4_H
-#define YUNEEC_M4_H
+#pragma once
 
-#include <QObject>
-#include <QTimer>
-#include "QGCLoggingCategory.h"
-#include "m4Defines.h"
+#include <QByteArray>
+#include <QString>
 
-Q_DECLARE_LOGGING_CATEGORY(YuneecLog)
+#include "m4def.h"
+
+extern uint8_t crc8(uint8_t* buffer, int len);
 
 //-- Comments (Google) translated from Chinese.
 //-- Nowhere I could find access through a struct. It's always numbered index into a byte array.
@@ -32,7 +31,6 @@ struct m4CommandHeader {
 };
 
 class M4SerialComm;
-class QGCApplication;
 
 //-----------------------------------------------------------------------------
 //-- Accessor class to handle data structure in an "Yuneec" way
@@ -91,29 +89,8 @@ public:
 //-----------------------------------------------------------------------------
 class RxBindInfo {
 public:
-    RxBindInfo()
-    {
-        clear();
-    }
-    void clear()
-    {
-        mode    = 0;
-        panId   = 0;
-        nodeId  = 0;
-        aNum    = 0;
-        aBit    = 0;
-        swNum   = 0;
-        swBit   = 0;
-        txAddr  = 0;
-    }
-    int mode;
-    int panId;
-    int nodeId;
-    int aNum;
-    int aBit;
-    int swNum;
-    int swBit;
-    int txAddr;
+    RxBindInfo();
+    void clear();
     enum {
         TYPE_NULL   = -1,
         TYPE_SR12S  = 0,
@@ -122,28 +99,15 @@ public:
         TYPE_RX24   = 3,
         TYPE_SR19P  = 4,
     };
-    QString getName() {
-        switch (mode) {
-            case TYPE_SR12S:
-                return QString("SR12S_%1").arg(nodeId);
-            case TYPE_SR12E:
-                return QString("SR12E_%1").arg(nodeId);
-            case TYPE_SR24S:
-                return QString("SR24S_%1 v1.03").arg(nodeId);
-            case TYPE_RX24:
-                return QString("RX24_%1").arg(nodeId);
-            case TYPE_SR19P:
-                return QString("SR19P_%1").arg(nodeId);
-            default:
-                if (mode >= 105) {
-                    QString fmt;
-                    fmt.sprintf("SR24S_%dv%.2f", nodeId, (float)mode / 100.0f);
-                    return fmt;
-                } else {
-                    return QString::number(nodeId);
-                }
-        }
-    }
+    QString getName();
+    int mode;
+    int panId;
+    int nodeId;
+    int aNum;
+    int aBit;
+    int swNum;
+    int swBit;
+    int txAddr;
 };
 
 //-----------------------------------------------------------------------------
@@ -204,99 +168,6 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-class QGCCustom : public QObject
-{
-    Q_OBJECT
-public:
-    QGCCustom(QObject* parent = NULL);
-    ~QGCCustom();
-
-    bool    init                    (QGCApplication* pApp);
-
-    enum {
-        M4_STATE_NONE           = 0,
-        M4_STATE_AWAIT          = 1,
-        M4_STATE_BIND           = 2,
-        M4_STATE_CALIBRATION    = 3,
-        M4_STATE_SETUP          = 4,
-        M4_STATE_RUN            = 5,
-        M4_STATE_SIM            = 6,
-        M4_STATE_FACTORY_CALI   = 7
-    };
-
-    int     getm4State              () { return _m4State; }
-    void    getControllerLocation   (ControllerLocation& location);
-    void    enterBindMode           ();
-
-    static  uint8_t crc8            (uint8_t* buffer, int len);
-    static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
-    static  float   byteArrayToFloat(QByteArray data, int offset);
-    static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
-
-private slots:
-    void    _bytesReady             (QByteArray data);
-    void    _stateManager           ();
-private:
-    bool    _enterRun               ();
-    bool    _exitRun                ();
-    bool    _startBind              ();
-    bool    _enterBind              ();
-    bool    _exitBind               ();
-    bool    _bind                   (int rxAddr);
-    bool    _unbind                 ();
-    void    _checkExitRun           ();
-    void    _initSequence           ();
-    bool    _queryBindState         ();
-    bool    _sendRecvBothCh         ();
-    bool    _setChannelSetting      ();
-    bool    _syncMixingDataDeleteAll();
-    bool    _syncMixingDataAdd      ();
-    bool    _sendRxResInfo          ();
-    bool    _setPowerKey            (int function);
-    void    _handleBindResponse     ();
-    void    _handleQueryBindResponse(QByteArray data);
-    bool    _handleNonTypePacket    (m4Packet& packet);
-    void    _handleRxBindInfo       (m4Packet& packet);
-    void    _handleChannel          (m4Packet& packet);
-    bool    _handleCommand          (m4Packet& packet);
-    void    _switchChanged          (m4Packet& packet);
-    void    _handleMixedChannelData (m4Packet& packet);
-    void    _handControllerFeedback (m4Packet& packet);
-signals:
-    void    m4StateChanged             (int state);
-    void    switchStateChanged         (int swId, int oldState, int newState);
-    void    channelDataStatus          (QByteArray channelData);
-    void    controllerLocationChanged  ();
-private:
-    M4SerialComm* _commPort;
-    enum {
-        STATE_NONE,
-        STATE_ENTER_BIND_ERROR,
-        STATE_EXIT_RUN,
-        STATE_ENTER_BIND,
-        STATE_START_BIND,
-        STATE_UNBIND,
-        STATE_BIND,
-        STATE_QUERY_BIND,
-        STATE_EXIT_BIND,
-        STATE_RECV_BOTH_CH,
-        STATE_SET_CHANNEL_SETTINGS,
-        STATE_MIX_CHANNEL_DELETE,
-        STATE_MIX_CHANNEL_ADD,
-        STATE_SEND_RX_INFO,
-        STATE_ENTER_RUN,
-        STATE_RUNNING
-    };
-    int                 _state;
-    int                 _responseTryCount;
-    int                 _currentChannelAdd;
-    int                 _m4State;
-    RxBindInfo          _rxBindInfoFeedback;
-    QTimer              _timer;
-    ControllerLocation  _controllerLocation;
-};
-
-//-----------------------------------------------------------------------------
 class SwitchChanged {
 public:
     /**
@@ -338,7 +209,7 @@ public:
         command[1] = 0x55;
         command[2] = (uint8_t)data.size() + 1;
         command.append(data);
-        uint8_t crc = QGCCustom::crc8((uint8_t*)data.data(), data.size());
+        uint8_t crc = crc8((uint8_t*)data.data(), data.size());
         command.append(crc);
         return command;
     }
@@ -365,11 +236,9 @@ public:
         command[1] = 0x55;
         command[2] = (uint8_t)data.size() + 1;
         command.append(data);
-        uint8_t crc = QGCCustom::crc8((uint8_t*)data.data(), data.size());
+        uint8_t crc = crc8((uint8_t*)data.data(), data.size());
         command.append(crc);
         return command;
     }
     QByteArray data;
 };
-
-#endif

@@ -12,10 +12,8 @@
 #include "QGCApplication.h"
 #include "MainWindow.h"
 
-#ifdef QT_DEBUG
-#if !defined(__mobile__)
-#include "UnitTest.h"
-#endif
+#ifdef UNITTEST_BUILD
+    #include "UnitTest.h"
 #endif
 
 #include <QRegularExpression>
@@ -29,13 +27,11 @@ QString QGCFileDialog::getExistingDirectory(
     Options options)
 {
     _validate(options);
-
-#ifdef QT_DEBUG
-#if !defined(__mobile__)
+    
+#ifdef UNITTEST_BUILD
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getExistingDirectory(parent, caption, dir, options);
     } else
-#endif
 #endif
     {
         return QFileDialog::getExistingDirectory(parent, caption, dir, options);
@@ -50,13 +46,11 @@ QString QGCFileDialog::getOpenFileName(
     Options options)
 {
     _validate(options);
-
-#ifdef QT_DEBUG
-#if !defined(__mobile__)
+    
+#ifdef UNITTEST_BUILD
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileName(parent, caption, dir, filter, options);
     } else
-#endif
 #endif
     {
         return QFileDialog::getOpenFileName(parent, caption, dir, filter, NULL, options);
@@ -71,13 +65,11 @@ QStringList QGCFileDialog::getOpenFileNames(
     Options options)
 {
     _validate(options);
-
-#ifdef QT_DEBUG
-#if !defined(__mobile__)
+    
+#ifdef UNITTEST_BUILD
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileNames(parent, caption, dir, filter, options);
     } else
-#endif
 #endif
     {
         return QFileDialog::getOpenFileNames(parent, caption, dir, filter, NULL, options);
@@ -95,12 +87,10 @@ QString QGCFileDialog::getSaveFileName(
 {
     _validate(options);
 
-#ifdef QT_DEBUG
-#if !defined(__mobile__)
+#ifdef UNITTEST_BUILD
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getSaveFileName(parent, caption, dir, filter, defaultSuffix, options);
     } else
-#endif
 #endif
     {
         QString defaultSuffixCopy(defaultSuffix);
@@ -208,7 +198,7 @@ void QGCFileDialog::_validate(Options& options)
 
     // You can't use QGCFileDialog if QGCApplication is not created yet.
     Q_ASSERT(qgcApp());
-
+    
     Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCFileDialog can only be called from main thread");
     if (MainWindow::instance()) {
     }

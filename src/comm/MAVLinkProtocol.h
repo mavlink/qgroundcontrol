@@ -7,13 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Definition of class MAVLinkProtocol
- *   @author Lorenz Meier <mail@qgroundcontrol.org>
- */
-
 #ifndef MAVLINKPROTOCOL_H_
 #define MAVLINKPROTOCOL_H_
 
@@ -59,7 +52,7 @@ public:
     int getSystemId();
     /** @brief Get the component id of this application */
     int getComponentId();
-
+    
     /** @brief Get protocol version check state */
     bool versionCheckEnabled() const {
         return m_enable_version_check;
@@ -93,7 +86,7 @@ public:
      * Reset the counters for all metadata for this link.
      */
     virtual void resetMetadataForLink(const LinkInterface *link);
-
+    
     /// Suspend/Restart logging during replay.
     void suspendLogForReplay(bool suspend);
 
@@ -103,7 +96,7 @@ public:
 public slots:
     /** @brief Receive bytes from a communication interface */
     void receiveBytes(LinkInterface* link, QByteArray b);
-
+    
     /** @brief Set the system id of this application */
     void setSystemId(int id);
 
@@ -114,11 +107,11 @@ public slots:
     void loadSettings();
     /** @brief Store protocol settings */
     void storeSettings();
-
-#if !defined(__mobile__)
+    
+#ifndef __mobile__
     /// @brief Deletes any log files which are in the temp directory
     static void deleteTempLogFiles(void);
-
+    
     /// Checks for lost log files
     void checkForLostLogFiles(void);
 #endif
@@ -164,22 +157,22 @@ signals:
      */
     void radioStatusChanged(LinkInterface* link, unsigned rxerrors, unsigned fixed, int rssi, int remrssi,
     unsigned txbuf, unsigned noise, unsigned remnoise);
-
+    
     /// @brief Emitted when a temporary log file is ready for saving
     void saveTempFlightDataLog(QString tempLogfile);
 
 private slots:
     void _vehicleCountChanged(int count);
-
+    
 private:
-#if !defined(__mobile__)
+#ifndef __mobile__
     bool _closeLogFile(void);
     void _startLogging(void);
     void _stopLogging(void);
 
     bool _logSuspendError;      ///< true: Logging suspended due to error
     bool _logSuspendReplay;     ///< true: Logging suspended due to replay
-    bool _logPromptForSave;     ///< true: Prompt for log save when appropriate
+    bool _vehicleWasArmed;      ///< true: Vehicle was armed during log sequence
 
     QGCTemporaryFile    _tempLogFile;            ///< File to log to
     static const char*  _tempLogFileTemplate;    ///< Template for temporary log file

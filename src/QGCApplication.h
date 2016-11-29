@@ -32,7 +32,6 @@
 #include "MultiVehicleManager.h"
 #include "JoystickManager.h"
 #include "GAudioOutput.h"
-#include "AutoPilotPluginManager.h"
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
 
@@ -45,10 +44,6 @@ class QGCSingleton;
 class MainWindow;
 class QGCToolbox;
 
-#if defined(CUSTOM_BUILD)
-class QGCCustom;
-#endif
-
 /**
  * @brief The main application and management class.
  *
@@ -57,7 +52,7 @@ class QGCCustom;
  *
  **/
 class QGCApplication : public
-#if defined(__mobile__)
+#ifdef __mobile__
     QGuiApplication // Native Qml based application
 #else
     QApplication    // QtWidget based application
@@ -122,10 +117,6 @@ public:
     QGeoCoordinate lastKnownHomePosition(void) { return _lastKnownHomePosition; }
     void setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosition);
 
-#if defined(CUSTOM_BUILD)
-    QGCCustom*  customObject() { return _pCustomObject; }
-#endif
-
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
@@ -140,7 +131,7 @@ public slots:
 
     void qmlAttemptWindowClose(void);
 
-#if !defined(__mobile__)
+#ifndef __mobile__
     /// Save the specified Flight Data Log
     void saveTempFlightDataLogOnMainThread(QString tempLogfile);
 #endif
@@ -175,10 +166,10 @@ private slots:
     void _missingParamsDisplay(void);
 
 private:
-    void _loadCurrentStyle(void);
-    QObject* _rootQmlObject(void);
+    void        _loadCurrentStyle   ();
+    QObject*    _rootQmlObject      ();
 
-#if defined(__mobile__)
+#ifdef __mobile__
     QQmlApplicationEngine* _qmlAppEngine;
 #endif
 
@@ -215,10 +206,6 @@ private:
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
 
-    //-- Custom Object
-#if defined(CUSTOM_BUILD)
-    QGCCustom*  _pCustomObject;
-#endif
 };
 
 /// @brief Returns the QGCApplication object singleton.

@@ -159,28 +159,6 @@ SetupPage {
                 }
             } // Component - spektrumBindDialogComponent
 
-            Component {
-                id: receiverBindDialogComponent
-                QGCViewDialog {
-                    function accept() {
-                        controller.receiverBindMode()
-                        hideDialog()
-                    }
-                    function reject() {
-                        hideDialog()
-                    }
-                    Column {
-                        anchors.fill:   parent
-                        spacing:        5
-                        QGCLabel {
-                            width:      parent.width
-                            wrapMode:   Text.WordWrap
-                            text:       qsTr("Click Ok to place your radio receiver in the bind mode. Select the specific receiver type below:")
-                        }
-                    }
-                }
-            } // Component - spektrumBindDialogComponent
-
             // Live channel monitor control component
             Component {
                 id: channelMonitorDisplayComponent
@@ -434,14 +412,8 @@ SetupPage {
                 QGCButton {
                     id:         bindButton
                     text:       qsTr("Spektrum Bind")
-                    visible:    !QGroundControl.isMinimalist
-                    onClicked:  showDialog(spektrumBindDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
-                }
 
-                QGCButton {
-                    text:       qsTr("Receiver Bind")
-                    visible:    QGroundControl.isMinimalist
-                    onClicked:  showDialog(receiverBindDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                    onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
 
                 QGCButton {
@@ -523,6 +495,6 @@ SetupPage {
                     width: parent.width
                 }
             } // Column - Right Column
-        } // Item
+        } // Item    
     } // Component - pageComponent
 } // SetupPage

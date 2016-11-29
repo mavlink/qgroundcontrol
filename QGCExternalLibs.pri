@@ -20,7 +20,6 @@ WindowsBuild {
 MAVLINKPATH_REL = libs/mavlink/include/mavlink/v2.0
 MAVLINKPATH = $$BASEDIR/$$MAVLINKPATH_REL
 MAVLINK_CONF = ardupilotmega
-
 DEFINES += MAVLINK_NO_DATA
 
 # First we select the dialect, checking for valid user selection
@@ -61,9 +60,9 @@ DEFINES += NOMINMAX
 # [REQUIRED] QWT plotting library dependency. Provides plotting capabilities.
 #
 !MobileBuild {
-    include(libs/qwt.pri)
-    DEPENDPATH += libs/qwt
-    INCLUDEPATH += libs/qwt
+include(libs/qwt.pri)
+DEPENDPATH += libs/qwt
+INCLUDEPATH += libs/qwt
 }
 
 #
@@ -115,6 +114,7 @@ contains(DEFINES, DISABLE_XBEE) {
 } else {
     message("Skipping support for XBee API (unsupported platform)")
 }
+
 #
 # [OPTIONAL] Opal RT-LAB Library. Provides integration with Opal-RT's RT-LAB simulator.
 #
@@ -161,6 +161,7 @@ contains(DEFINES, DISABLE_RTLAB) {
 } else {
     message("Skipping support for RT-LAB (unsupported platform)")
 }
+
 #
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
 # The SDL is packaged with QGC for the Mac and Windows. Linux support requires installing the SDL
@@ -184,6 +185,7 @@ MacBuild {
         -lSDL2main \
         -lSDL2
 }
+
 ##
 # [OPTIONAL] Speech synthesis library support.
 # Can be forcibly disabled by adding a `DEFINES+=DISABLE_SPEECH` argument to qmake.
@@ -240,3 +242,4 @@ contains (DEFINES, DISABLE_ZEROCONF) {
 } else {
     message("Skipping support for Zeroconf (unsupported platform)")
 }
+

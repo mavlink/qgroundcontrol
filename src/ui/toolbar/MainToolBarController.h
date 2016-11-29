@@ -38,7 +38,6 @@ public:
     ~MainToolBarController();
 
     Q_PROPERTY(double       height              MEMBER _toolbarHeight           NOTIFY heightChanged)
-    Q_PROPERTY(float        progressBarValue    MEMBER _progressBarValue        NOTIFY progressBarValueChanged)
     Q_PROPERTY(int          telemetryRRSSI      READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)
     Q_PROPERTY(int          telemetryLRSSI      READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
     Q_PROPERTY(unsigned int telemetryRXErrors   READ telemetryRXErrors          NOTIFY telemetryRXErrorsChanged)
@@ -58,7 +57,6 @@ public:
     unsigned int telemetryRNoise        () { return _telemetryRNoise; }
 
 signals:
-    void progressBarValueChanged        (float value);
     void telemetryRRSSIChanged          (int value);
     void telemetryLRSSIChanged          (int value);
     void heightChanged                  (double height);
@@ -70,13 +68,11 @@ signals:
 
 private slots:
     void _activeVehicleChanged          (Vehicle* vehicle);
-    void _setProgressBarValue           (float value);
     void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, int rssi, int remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
 
 private:
     Vehicle*        _vehicle;
     UASInterface*   _mav;
-    float           _progressBarValue;
     double          _remoteRSSIstore;
     int             _telemetryRRSSI;
     int             _telemetryLRSSI;

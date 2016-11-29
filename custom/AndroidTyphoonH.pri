@@ -1,6 +1,6 @@
-message("Adding Android Support for Yuneec")
+message("Adding Android Support for Typhoon H")
 QT += androidextras
-ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android_yuneec
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android_typhoonh
 OTHER_FILES += \
     $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml \
 

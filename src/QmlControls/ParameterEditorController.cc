@@ -12,11 +12,10 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "ParameterEditorController.h"
-#include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
-#if !defined(__mobile__)
+#ifndef __mobile__
 #include "QGCFileDialog.h"
 #include "QGCMapRCToParamDialog.h"
 #include "MainWindow.h"
@@ -44,7 +43,7 @@ ParameterEditorController::ParameterEditorController(void)
 
 ParameterEditorController::~ParameterEditorController()
 {
-
+    
 }
 
 QStringList ParameterEditorController::getGroupsForComponent(int componentId)
@@ -64,13 +63,13 @@ QStringList ParameterEditorController::getParametersForGroup(int componentId, QS
 QStringList ParameterEditorController::searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions)
 {
     QStringList list;
-
+    
     foreach(const QString &paramName, _vehicle->parameterManager()->parameterNames(componentId)) {
         if (searchText.isEmpty()) {
             list += paramName;
         } else {
             Fact* fact = _vehicle->parameterManager()->getParameter(componentId, paramName);
-
+            
             if (searchInName && fact->name().contains(searchText, Qt::CaseInsensitive)) {
                 list += paramName;
             } else if (searchInDescriptions && (fact->shortDescription().contains(searchText, Qt::CaseInsensitive) || fact->longDescription().contains(searchText, Qt::CaseInsensitive))) {
@@ -79,7 +78,7 @@ QStringList ParameterEditorController::searchParametersForComponent(int componen
         }
     }
     list.sort();
-
+    
     return list;
 }
 
@@ -98,12 +97,12 @@ void ParameterEditorController::saveToFile(const QString& filename)
 
     if (!filename.isEmpty()) {
         QFile file(filename);
-
+        
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             qgcApp()->showMessage(QString("Unable to create file: %1").arg(filename));
             return;
         }
-
+        
         QTextStream stream(&file);
         _vehicle->parameterManager()->writeParametersToStream(stream);
         file.close();
@@ -112,8 +111,8 @@ void ParameterEditorController::saveToFile(const QString& filename)
 
 void ParameterEditorController::saveToFilePicker(void)
 {
-#if !defined(__mobile__)
-    QString fileName = QGCFileDialog::getSaveFileName(NULL,
+#ifndef __mobile__
+    QString fileName = QGCFileDialog::getSaveFileName(MainWindow::instance(),
                                                       "Save Parameters",
                                                       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
                                                       "Parameter Files (*.params)",
@@ -126,7 +125,7 @@ void ParameterEditorController::saveToFilePicker(void)
 void ParameterEditorController::loadFromFile(const QString& filename)
 {
     QString errors;
-
+    
     if (!_autopilot) {
         qWarning() << "Internal error _autopilot==NULL";
         return;
@@ -134,16 +133,16 @@ void ParameterEditorController::loadFromFile(const QString& filename)
 
     if (!filename.isEmpty()) {
         QFile file(filename);
-
+        
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             qgcApp()->showMessage(QString("Unable to open file: %1").arg(filename));
             return;
         }
-
+        
         QTextStream stream(&file);
         errors = _vehicle->parameterManager()->readParametersFromStream(stream);
         file.close();
-
+        
         if (!errors.isEmpty()) {
             emit showErrorMessage(errors);
         }
@@ -152,8 +151,8 @@ void ParameterEditorController::loadFromFile(const QString& filename)
 
 void ParameterEditorController::loadFromFilePicker(void)
 {
-#if !defined(__mobile__)
-    QString fileName = QGCFileDialog::getOpenFileName(NULL,
+#ifndef __mobile__
+    QString fileName = QGCFileDialog::getOpenFileName(MainWindow::instance(),
                                                       "Load Parameters",
                                                       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
                                                       "Parameter Files (*.params);;All Files (*)");
@@ -174,7 +173,7 @@ void ParameterEditorController::resetAllToDefaults(void)
 
 void ParameterEditorController::setRCToParam(const QString& paramName)
 {
-#if defined(__mobile__)
+#ifdef __mobile__
     Q_UNUSED(paramName)
 #else
     Q_ASSERT(_uas);

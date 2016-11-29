@@ -4,8 +4,7 @@
  * @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef SERIALCOMM_H
-#define SERIALCOMM_H
+#pragma once
 
 #include <QString>
 #include <QThread>
@@ -54,4 +53,3 @@ private:
     struct termios  _savedtio;
 };
 
-#endif // SERIALCOMM_H

@@ -4,8 +4,8 @@
  * @author Gus Grubba <mavlink@grubba.com>
  */
 
-#include "SerialComm.h"
-#include "QGCCustom.h"
+#include "m4serial.h"
+#include "m4util.h"
 
 #include <QDebug>
 #include <stdio.h>
@@ -42,6 +42,7 @@ M4SerialComm::init(QString port, int baud)
 bool
 M4SerialComm::open()
 {
+#if defined(__android__)
     if(_status != SERIAL_PORT_CLOSED || _fd >= 0) {
         return false;
     }
@@ -57,7 +58,6 @@ M4SerialComm::open()
     }
     _status = SERIAL_PORT_OPEN;
     //-- Start reading thread
-#if defined(__android__)
     start();
 #endif
     return true;
@@ -67,12 +67,14 @@ M4SerialComm::open()
 void
 M4SerialComm::close()
 {
+#if defined(__android__)
     _status = SERIAL_PORT_CLOSED;
     if(_fd >= 0) {
         tcsetattr(_fd, TCSANOW, &_savedtio);
         ::close(_fd);
         _fd = -1;
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -131,7 +133,7 @@ M4SerialComm::_readPacket(uint8_t length)
             //-- CRC is appended to end of data block
             uint8_t iCRC;
             if(::read(_fd, &iCRC, 1) == 1) {
-                uint8_t oCRC = QGCCustom::crc8(buffer, length);
+                uint8_t oCRC = crc8(buffer, length);
                 if(iCRC == oCRC) {
                     QByteArray data((const char*)buffer, length);
                     emit bytesReady(data);
@@ -214,6 +216,6 @@ M4SerialComm::_writePort(void* buffer, int len)
 #else
     Q_UNUSED(buffer);
     Q_UNUSED(len);
-    return true;
+    return len;
 #endif
 }

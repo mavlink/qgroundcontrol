@@ -338,7 +338,7 @@ Rectangle {
             source:             "/res/QGCLogoWhite"
             logo:               true
             onClicked:          toolBar.showSettingsView()
-            visible:            !QGroundControl.isMinimalist
+            visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
         }
 
         QGCToolBarButton {
@@ -378,7 +378,7 @@ Rectangle {
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/Analyze.svg"
-            visible:            !ScreenTools.isMobile && !QGroundControl.isMinimalist
+            visible:            !ScreenTools.isMobile
             onClicked:          toolBar.showAnalyzeView()
         }
     }
@@ -440,7 +440,7 @@ Rectangle {
         id:             progressBar
         anchors.bottom: parent.bottom
         height:         toolBar.height * 0.05
-        width:          parent.width * _controller.progressBarValue
+        width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
         color:          colorGreen
     }
 

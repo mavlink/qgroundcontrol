@@ -16,7 +16,7 @@
 #include "QGroundControlQmlGlobal.h"
 #include "ParameterManager.h"
 
-#if defined(__mobile__)
+#if defined (__ios__) || defined(__android__)
 #include "MobileScreenMgr.h"
 #endif
 
@@ -33,7 +33,6 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     , _activeVehicle(NULL)
     , _offlineEditingVehicle(NULL)
     , _firmwarePluginManager(NULL)
-    , _autopilotPluginManager(NULL)
     , _joystickManager(NULL)
     , _mavlinkProtocol(NULL)
     , _gcsHeartbeatEnabled(true)
@@ -55,7 +54,6 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
    QGCTool::setToolbox(toolbox);
 
    _firmwarePluginManager =     _toolbox->firmwarePluginManager();
-   _autopilotPluginManager =    _toolbox->autopilotPluginManager();
    _joystickManager =           _toolbox->joystickManager();
    _mavlinkProtocol =           _toolbox->mavlinkProtocol();
 
@@ -98,7 +96,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 //        return;
 //    }
 
-    Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _autopilotPluginManager, _joystickManager);
+    Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _joystickManager);
     connect(vehicle, &Vehicle::allLinksInactive, this, &MultiVehicleManager::_deleteVehiclePhase1);
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MultiVehicleManager::_vehicleParametersReadyChanged);
 
@@ -109,12 +107,16 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 
     emit vehicleAdded(vehicle);
 
-    setActiveVehicle(vehicle);
+    if (_vehicles.count() > 1) {
+        qgcApp()->showMessage(tr("Connected to Vehicle %1").arg(vehicleId));
+    } else {
+        setActiveVehicle(vehicle);
+    }
 
     // Mark link as active
     link->setActive(true);
 
-#ifdef __mobile__
+#if defined (__ios__) || defined(__android__)
     if(_vehicles.count() == 1) {
         //-- Once a vehicle is connected, keep screen from going off
         qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::keepScreenOn";
@@ -155,7 +157,7 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     emit parameterReadyVehicleAvailableChanged(false);
     emit vehicleRemoved(vehicle);
 
-#ifdef __mobile__
+#if defined (__ios__) || defined(__android__)
     if(_vehicles.count() == 0) {
         //-- Once no vehicles are connected, we no longer need to keep screen from going off
         qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::restoreScreenOn";

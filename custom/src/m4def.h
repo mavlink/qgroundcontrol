@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef YUNEEC_M4DEFINES_H
-#define YUNEEC_M4DEFINES_H
+#pragma once
+
 namespace Yuneec {
 
 enum {
@@ -293,4 +293,3 @@ enum {
 };
 
 }
-#endif

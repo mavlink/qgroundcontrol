@@ -40,7 +40,7 @@ Q_DECLARE_METATYPE(mavlink_message_t)
 
 QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "MAVLinkProtocolLog")
 
-#if !defined(__mobile__)
+#ifndef __mobile__
 const char* MAVLinkProtocol::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
 const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Extension for log files
 #endif
@@ -54,10 +54,10 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
     , m_enable_version_check(true)
     , versionMismatchIgnore(false)
     , systemId(255)
-#if !defined(__mobile__)
+#ifndef __mobile__
     , _logSuspendError(false)
     , _logSuspendReplay(false)
-    , _logPromptForSave(false)
+    , _vehicleWasArmed(false)
     , _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension))
 #endif
     , _linkMgr(NULL)
@@ -74,7 +74,7 @@ MAVLinkProtocol::~MAVLinkProtocol()
 {
     storeSettings();
 
-#if !defined(__mobile__)
+#ifndef __mobile__
     _closeLogFile();
 #endif
 }
@@ -103,7 +103,7 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
    }
 
    connect(this, &MAVLinkProtocol::protocolStatusMessage, _app, &QGCApplication::criticalMessageBoxOnMainThread);
-#if !defined(__mobile__)
+#ifndef __mobile__
    connect(this, &MAVLinkProtocol::saveTempFlightDataLog, _app, &QGCApplication::saveTempFlightDataLogOnMainThread);
 #endif
 
@@ -254,7 +254,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     rstatus.txbuf, rstatus.noise, rstatus.remnoise);
             }
 
-#if !defined(__mobile__)
+#ifndef __mobile__
             // Log data
 
             if (!_logSuspendError && !_logSuspendReplay && _tempLogFile.isOpen()) {
@@ -283,18 +283,18 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
 
                 // Check for the vehicle arming going by. This is used to trigger log save.
-                if (!_logPromptForSave && message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+                if (!_vehicleWasArmed && message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
                     mavlink_heartbeat_t state;
                     mavlink_msg_heartbeat_decode(&message, &state);
                     if (state.base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY) {
-                        _logPromptForSave = true;
+                        _vehicleWasArmed = true;
                     }
                 }
             }
 #endif
 
             if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
-#if !defined(__mobile__)
+#ifndef __mobile__
                 // Start loggin on first heartbeat
                 _startLogging();
 #endif
@@ -388,7 +388,7 @@ void MAVLinkProtocol::enableVersionCheck(bool enabled)
 
 void MAVLinkProtocol::_vehicleCountChanged(int count)
 {
-#if !defined(__mobile__)
+#ifndef __mobile__
     if (count == 0) {
         // Last vehicle is gone, close out logging
         _stopLogging();
@@ -398,7 +398,7 @@ void MAVLinkProtocol::_vehicleCountChanged(int count)
 #endif
 }
 
-#if !defined(__mobile__)
+#ifndef __mobile__
 /// @brief Closes the log file if it is open
 bool MAVLinkProtocol::_closeLogFile(void)
 {
@@ -429,11 +429,7 @@ void MAVLinkProtocol::_startLogging(void)
                 return;
             }
 
-            if (_app->promptFlightDataSaveNotArmed()) {
-                _logPromptForSave = true;
-            }
-
-            qDebug() << "Temp log" << _tempLogFile.fileName() << _logPromptForSave;
+            qDebug() << "Temp log" << _tempLogFile.fileName();
 
             _logSuspendError = false;
         }
@@ -444,13 +440,13 @@ void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
         // If the signals are not connected it means we are running a unit test. In that case just delete log files
-        if (_logPromptForSave && _app->promptFlightDataSave()) {
+        if ((_vehicleWasArmed || _app->promptFlightDataSaveNotArmed()) && _app->promptFlightDataSave()) {
             emit saveTempFlightDataLog(_tempLogFile.fileName());
         } else {
             QFile::remove(_tempLogFile.fileName());
         }
     }
-    _logPromptForSave = false;
+    _vehicleWasArmed = false;
 }
 
 /// @brief Checks the temp directory for log files which may have been left there.
