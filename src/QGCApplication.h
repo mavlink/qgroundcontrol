@@ -57,7 +57,6 @@ class QGCApplication : public
 #else
     QApplication    // QtWidget based application
 #endif
-    , IQGCApplication
 {
     Q_OBJECT
 
