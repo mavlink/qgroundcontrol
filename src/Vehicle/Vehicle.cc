@@ -1635,6 +1635,11 @@ bool Vehicle::supportsThrottleModeCenterZero(void) const
     return _firmwarePlugin->supportsThrottleModeCenterZero();
 }
 
+bool Vehicle::supportsMissionManager(void) const
+{
+    return _firmwarePlugin->supportsMissionManager();
+}
+
 bool Vehicle::supportsRadio(void) const
 {
     return _firmwarePlugin->supportsRadio();

@@ -32,6 +32,7 @@ SettingsFact* QGroundControlQmlGlobal::_offlineEditingHoverSpeedFact =          
 SettingsFact* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceFact =       NULL;
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
+const char* QGroundControlQmlGlobal::_forceShowMissionManagerKey= "ForceShowMissionManager";
 const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
@@ -47,10 +48,12 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _mavlinkLogManager(NULL)
     , _corePlugin(NULL)
     , _virtualTabletJoystick(false)
+    , _forceShowMissionManager(false)
     , _baseFontPointSize(0.0)
 {
     QSettings settings;
     _virtualTabletJoystick  = settings.value(_virtualTabletJoystickKey, false).toBool();
+    _forceShowMissionManager= settings.value(_forceShowMissionManagerKey, false).toBool();
     _baseFontPointSize      = settings.value(_baseFontPointSizeKey, 0.0).toDouble();
 
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
@@ -209,6 +212,16 @@ void QGroundControlQmlGlobal::setVirtualTabletJoystick(bool enabled)
         settings.setValue(_virtualTabletJoystickKey, enabled);
         _virtualTabletJoystick = enabled;
         emit virtualTabletJoystickChanged(enabled);
+    }
+}
+
+void QGroundControlQmlGlobal::setForceShowMissionManager(bool enabled)
+{
+    if (_forceShowMissionManager != enabled) {
+        QSettings settings;
+        settings.setValue(_forceShowMissionManagerKey, enabled);
+        _forceShowMissionManager = enabled;
+        emit forceShowMissionManagerChanged(enabled);
     }
 }
 

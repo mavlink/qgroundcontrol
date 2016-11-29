@@ -112,6 +112,12 @@ bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
     return true;
 }
 
+bool FirmwarePlugin::supportsMissionManager(void)
+{
+    // By default, this is supported
+    return true;
+}
+
 bool FirmwarePlugin::supportsManualControl(void)
 {
     return false;

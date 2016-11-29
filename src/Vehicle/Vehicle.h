@@ -268,6 +268,7 @@ public:
     Q_PROPERTY(bool                 rover                   READ rover                                                  CONSTANT)
     Q_PROPERTY(bool                 supportsManualControl   READ supportsManualControl                                  CONSTANT)
     Q_PROPERTY(bool        supportsThrottleModeCenterZero   READ supportsThrottleModeCenterZero                         CONSTANT)
+    Q_PROPERTY(bool                 supportsMissionManager  READ supportsMissionManager                                 CONSTANT)
     Q_PROPERTY(bool                 supportsJSButton        READ supportsJSButton                                       CONSTANT)
     Q_PROPERTY(bool                 supportsRadio           READ supportsRadio                                          CONSTANT)
     Q_PROPERTY(bool                 sub                     READ sub                                                    CONSTANT)
@@ -471,6 +472,7 @@ public:
 
     bool supportsManualControl(void) const;
     bool supportsThrottleModeCenterZero(void) const;
+    bool supportsMissionManager(void) const;
     bool supportsRadio(void) const;
     bool supportsJSButton(void) const;
 

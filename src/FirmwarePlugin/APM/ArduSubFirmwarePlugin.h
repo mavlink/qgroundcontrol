@@ -71,6 +71,8 @@ public:
 
     bool supportsThrottleModeCenterZero(void);
 
+    bool supportsMissionManager(void);
+
     bool supportsManualControl(void);
 
     bool supportsRadio(void);
