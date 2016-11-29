@@ -46,7 +46,7 @@ public:
     ///  The link types supported by QGC
     ///  Any changes here MUST be reflected in LinkManager::linkTypeStrings()
     enum LinkType {
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
         TypeSerial,     ///< Serial Link
 #endif
         TypeUdp,        ///< UDP Link

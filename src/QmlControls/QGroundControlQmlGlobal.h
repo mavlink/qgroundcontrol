@@ -73,13 +73,13 @@ public:
     Q_PROPERTY(MissionCommandTree*  missionCommandTree  READ missionCommandTree     CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager        READ videoManager           CONSTANT)
     Q_PROPERTY(MAVLinkLogManager*   mavlinkLogManager   READ mavlinkLogManager      CONSTANT)
+    Q_PROPERTY(QGCCorePlugin*       corePlugin          READ corePlugin             CONSTANT)
 
     Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
     Q_PROPERTY(qreal                zOrderMapItems      READ zOrderMapItems         CONSTANT) ///< z order value for map items, for example: mission item indicators
 
     // Various QGC settings exposed to Qml
-    Q_PROPERTY(bool     isAdvancedMode          READ isAdvancedMode                                                 CONSTANT)                               ///< Global "Advance Mode" preference. Certain UI elements and features are different based on this.
     Q_PROPERTY(bool     isDarkStyle             READ isDarkStyle                WRITE setIsDarkStyle                NOTIFY isDarkStyleChanged)              // TODO: Should be in ScreenTools?
     Q_PROPERTY(bool     isAudioMuted            READ isAudioMuted               WRITE setIsAudioMuted               NOTIFY isAudioMutedChanged)
     Q_PROPERTY(bool     isSaveLogPrompt         READ isSaveLogPrompt            WRITE setIsSaveLogPrompt            NOTIFY isSaveLogPromptChanged)
@@ -87,6 +87,7 @@ public:
     Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
     Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
 
+    //-------------------------------------------------------------------------
     // MavLink Protocol
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
@@ -170,6 +171,7 @@ public:
     MissionCommandTree*     missionCommandTree  ()      { return _missionCommandTree; }
     VideoManager*           videoManager        ()      { return _videoManager; }
     MAVLinkLogManager*      mavlinkLogManager   ()      { return _mavlinkLogManager; }
+    QGCCorePlugin*          corePlugin          ()      { return _corePlugin; }
 
     qreal                   zOrderTopMost       ()      { return 1000; }
     qreal                   zOrderWidgets       ()      { return 100; }
@@ -195,9 +197,6 @@ public:
     static Fact* areaUnits                      (void);
     static Fact* speedUnits                     (void);
     static Fact* batteryPercentRemainingAnnounce(void);
-
-    //-- TODO: Make this into an actual preference.
-    bool    isAdvancedMode          () { return false; }
 
     void    setIsDarkStyle              (bool dark);
     void    setIsAudioMuted             (bool muted);
@@ -244,6 +243,7 @@ private:
     MissionCommandTree*     _missionCommandTree;
     VideoManager*           _videoManager;
     MAVLinkLogManager*      _mavlinkLogManager;
+    QGCCorePlugin*          _corePlugin;
 
     bool                    _virtualTabletJoystick;
     qreal                   _baseFontPointSize;

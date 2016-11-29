@@ -24,12 +24,12 @@
 #include "QGCToolbox.h"
 #include "ProtocolInterface.h"
 #include "MAVLinkProtocol.h"
-#ifndef __mobile__
+#if !defined(__mobile__)
 #include "LogReplayLink.h"
 #endif
 #include "QmlObjectListModel.h"
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     #include "SerialLink.h"
 #endif
 
@@ -199,7 +199,7 @@ private slots:
     void _linkConnected(void);
     void _linkDisconnected(void);
     void _linkConnectionRemoved(LinkInterface* link);
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     void _activeLinkCheck(void);
 #endif
 
@@ -210,7 +210,7 @@ private:
     void _fixUnnamed(LinkConfiguration* config);
     bool _setAutoconnectWorker(bool& currentAutoconnect, bool newAutoconnect, const char* autoconnectKey);
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     SerialConfiguration* _autoconnectConfigurationsContainsPort(const QString& portName);
 #endif
 
@@ -237,7 +237,7 @@ private:
     bool _autoconnectPX4Flow;
     bool _autoconnectRTKGPS;
     bool _autoconnectLibrePilot;
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     QTimer              _activeLinkCheckTimer;                  ///< Timer which checks for a vehicle showing up on a usb direct link
     QList<SerialLink*>  _activeLinkCheckList;                   ///< List of links we are waiting for a vehicle to show up on
     static const int    _activeLinkCheckTimeoutMSecs = 15000;   ///< Amount of time to wait for a heatbeat. Keep in mind ArduPilot stack heartbeat is slow to come.

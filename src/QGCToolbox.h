@@ -32,6 +32,7 @@ class UASMessageHandler;
 class QGCPositionManager;
 class VideoManager;
 class MAVLinkLogManager;
+class QGCCorePlugin;
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox {
@@ -56,6 +57,7 @@ public:
     QGCPositionManager*         qgcPositionManager(void)        { return _qgcPositionManager; }
     VideoManager*               videoManager(void)              { return _videoManager; }
     MAVLinkLogManager*          mavlinkLogManager(void)         { return _mavlinkLogManager; }
+    QGCCorePlugin*              corePlugin(void)                { return _corePlugin; }
 
 #ifndef __mobile__
     GPSManager*                 gpsManager(void)                { return _gpsManager; }
@@ -63,6 +65,8 @@ public:
 
 private:
     void setChildToolboxes(void);
+    void _scanAndLoadPlugins(QGCApplication *app);
+
 
     GAudioOutput*               _audioOutput;
     FactSystem*                 _factSystem;
@@ -84,6 +88,7 @@ private:
     QGCPositionManager*         _qgcPositionManager;
     VideoManager*               _videoManager;
     MAVLinkLogManager*          _mavlinkLogManager;
+    QGCCorePlugin*              _corePlugin;
 
     friend class QGCApplication;
 };

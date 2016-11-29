@@ -74,7 +74,7 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 
 #endif
 
-#ifdef __android__
+#if defined(__android__) && !defined(NO_SERIAL_LINK)
 #include <jni.h>
 #include "qserialport.h"
 
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
     // that we use these types in signals, and without calling qRegisterMetaType we can't queue
     // these signals. In general we don't queue these signals, but we do what the warning says
     // anyway to silence the debug output.
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     qRegisterMetaType<QSerialPort::SerialPortError>();
 #endif
 #ifdef QGC_ENABLE_BLUETOOTH
