@@ -38,7 +38,6 @@ linux {
         equals(ANDROID_TARGET_ARCH, x86)  {
             CONFIG += Androidx86Build
             DEFINES += __androidx86__
-            DEFINES += QGC_DISABLE_UVC
             message("Android x86 build")
         } else {
             message("Android Arm build")
@@ -77,9 +76,10 @@ linux {
         error("Unsupported Qt version, 5.5.x or greater is required for iOS")
     }
     message("iOS build")
-    CONFIG += iOSBuild MobileBuild app_bundle
+    CONFIG  += iOSBuild MobileBuild app_bundle NoSerialBuild
     DEFINES += __ios__
     DEFINES += QGC_NO_GOOGLE_MAPS
+    DEFINES += NO_SERIAL_LINK
     QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
     QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie

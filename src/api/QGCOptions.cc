@@ -7,18 +7,13 @@
  *
  ****************************************************************************/
 
+#include "QGCOptions.h"
 
-/**
- *   @brief QGC Main Application Interface (used for Dynamic Loaded plugins)
- *   @author Gus Grubba <mavlink@grubba.com>
- */
+/// @file
+///     @brief Core Plugin Interface for QGroundControl - Application Options
+///     @author Gus Grubba <mavlink@grubba.com>
 
-#pragma once
-
-class IQGCApplication
+QGCOptions::QGCOptions(QObject* parent)
+    : QObject(parent)
 {
-public:
-    IQGCApplication() {}
-    virtual ~IQGCApplication() {}
-    //-- Not yet implemented
-};
+}

@@ -54,7 +54,7 @@
 #include "AppMessages.h"
 #endif
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 

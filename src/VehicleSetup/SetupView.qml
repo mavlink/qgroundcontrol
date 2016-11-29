@@ -256,6 +256,19 @@ Rectangle {
                 visible:                !ScreenTools.isShortScreen
             }
 
+            Repeater {
+                model:              QGroundControl.corePlugin.settings
+                visible:            QGroundControl.corePlugin.options.combineSettingsAndSetup
+                SubMenuButton {
+                    imageResource:  modelData.icon
+                    setupIndicator: false
+                    exclusiveGroup: setupButtonGroup
+                    text:           modelData.title
+                    visible:        QGroundControl.corePlugin.options.combineSettingsAndSetup
+                    onClicked:      panelLoader.setSource(modelData.url)
+                }
+            }
+
             SubMenuButton {
                 id:             summaryButton
                 imageResource: "/qmlimages/VehicleSummaryIcon.png"
