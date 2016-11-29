@@ -146,7 +146,6 @@ QGCTool::QGCTool(QGCApplication* app)
     , _app(app)
     , _toolbox(NULL)
 {
-
 }
 
 void QGCTool::setToolbox(QGCToolbox* toolbox)
