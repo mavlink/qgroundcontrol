@@ -9,6 +9,7 @@ FactSliderPanel         1.0 FactSliderPanel.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
 MainToolBar             1.0 MainToolBar.qml
+MainToolBarIndicators   1.0 MainToolBarIndicators.qml
 MissionCommandDialog    1.0 MissionCommandDialog.qml
 MissionItemEditor       1.0 MissionItemEditor.qml
 MissionItemIndexLabel   1.0 MissionItemIndexLabel.qml
