@@ -26,6 +26,7 @@ APMSensorsComponentController::APMSensorsComponentController(void) :
     _compassButton(NULL),
     _accelButton(NULL),
     _compassMotButton(NULL),
+    _levelButton(NULL),
     _nextButton(NULL),
     _cancelButton(NULL),
     _setOrientationsButton(NULL),
@@ -33,6 +34,7 @@ APMSensorsComponentController::APMSensorsComponentController(void) :
     _magCalInProgress(false),
     _accelCalInProgress(false),
     _compassMotCalInProgress(false),
+    _levelInProgress(false),
     _orientationCalDownSideDone(false),
     _orientationCalUpsideDownSideDone(false),
     _orientationCalLeftSideDone(false),
@@ -66,6 +68,8 @@ APMSensorsComponentController::APMSensorsComponentController(void) :
 
     _sensorsComponent = apmPlugin->sensorsComponent();
     connect(_sensorsComponent, &VehicleComponent::setupCompleteChanged, this, &APMSensorsComponentController::setupNeededChanged);
+
+    connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }
 
 /// Appends the specified text to the status log area in the ui
@@ -90,6 +94,7 @@ void APMSensorsComponentController::_startLogCalibration(void)
     _compassButton->setEnabled(false);
     _accelButton->setEnabled(false);
     _compassMotButton->setEnabled(false);
+    _levelButton->setEnabled(false);
     _setOrientationsButton->setEnabled(false);
     if (_accelCalInProgress || _compassMotCalInProgress) {
         _nextButton->setEnabled(true);
@@ -102,6 +107,7 @@ void APMSensorsComponentController::_startVisualCalibration(void)
     _compassButton->setEnabled(false);
     _accelButton->setEnabled(false);
     _compassMotButton->setEnabled(false);
+    _levelButton->setEnabled(false);
     _setOrientationsButton->setEnabled(false);
     _cancelButton->setEnabled(true);
 
@@ -145,6 +151,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     _compassButton->setEnabled(true);
     _accelButton->setEnabled(true);
     _compassMotButton->setEnabled(true);
+    _levelButton->setEnabled(true);
     _setOrientationsButton->setEnabled(true);
     _nextButton->setEnabled(false);
     _cancelButton->setEnabled(false);
@@ -168,6 +175,10 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
         emit calibrationComplete();
         break;
 
+    case StopCalibrationSuccessShowLog:
+        emit calibrationComplete();
+        break;
+
     case StopCalibrationCancelled:
         emit resetStatusTextArea();
         _hideAllCalAreas();
@@ -183,6 +194,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     _magCalInProgress = false;
     _accelCalInProgress = false;
     _compassMotCalInProgress = false;
+    _levelInProgress = false;
 }
 
 void APMSensorsComponentController::calibrateCompass(void)
@@ -208,6 +220,15 @@ void APMSensorsComponentController::calibrateMotorInterference(void)
     _appendStatusLog(tr("Quickly bring the throttle back down to zero"));
     _appendStatusLog(tr("Press the Next button to complete the calibration"));
     _uas->startCalibration(UASInterface::StartCalibrationCompassMot);
+}
+
+void APMSensorsComponentController::levelHorizon(void)
+{
+    _levelInProgress = true;
+    _vehicle->setConnectionLostEnabled(false);
+    _startLogCalibration();
+    _appendStatusLog(tr("Hold the vehicle in its level flight position."));
+    _uas->startCalibration(UASInterface::StartCalibrationLevel);
 }
 
 void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
@@ -494,4 +515,31 @@ bool APMSensorsComponentController::accelSetupNeeded(void) const
 bool APMSensorsComponentController::usingUDPLink(void)
 {
     return _vehicle->priorityLink()->getLinkConfiguration()->type() == LinkConfiguration::TypeUdp;
+}
+
+void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
+{
+    Q_UNUSED(link);
+
+    if (message.sysid != _vehicle->id()) {
+        return;
+    }
+
+    if (message.msgid == MAVLINK_MSG_ID_COMMAND_ACK && _levelInProgress) {
+        mavlink_command_ack_t commandAck;
+        mavlink_msg_command_ack_decode(&message, &commandAck);
+
+        if (commandAck.command == MAV_CMD_PREFLIGHT_CALIBRATION) {
+            switch (commandAck.result) {
+            case MAV_RESULT_ACCEPTED:
+                _appendStatusLog(tr("Level horizon complete"));
+                _stopCalibration(StopCalibrationSuccessShowLog);
+                break;
+            default:
+                _appendStatusLog(tr("Level horizon failed"));
+                _stopCalibration(StopCalibrationFailed);
+                break;
+            }
+        }
+    }
 }
