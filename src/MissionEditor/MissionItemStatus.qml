@@ -10,6 +10,7 @@
 
 import QtQuick          2.5
 import QtQuick.Controls 1.3
+import QtQuick.Layouts  1.2
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
@@ -89,14 +90,14 @@ Rectangle {
         anchors.margins:    _margins
         spacing:            _margins
 
-        Grid {
-            id:                 valueGrid
-            columns:            2
-            columnSpacing:      _margins
+        GridLayout {
+            id:                     valueGrid
+            columns:                2
+            rowSpacing:             0
+            columnSpacing:          _margins
             anchors.verticalCenter: parent.verticalCenter
 
-            QGCLabel { text: qsTr("Selected waypoint") }
-            QGCLabel { text: qsTr(" ") }
+            QGCLabel { text: qsTr("Selected waypoint"); Layout.columnSpan: 2 }
 
             QGCLabel { text: qsTr("Distance:") }
             QGCLabel { text: _distanceText }
