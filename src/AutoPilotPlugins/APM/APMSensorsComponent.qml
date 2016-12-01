@@ -157,6 +157,7 @@ SetupPage {
                 compassButton:              compassButton
                 accelButton:                accelButton
                 compassMotButton:           motorInterferenceButton
+                levelButton:                levelHorizonButton
                 nextButton:                 nextButton
                 cancelButton:               cancelButton
                 setOrientationsButton:      setOrientationsButton
@@ -453,6 +454,26 @@ SetupPage {
                 } // QGCViewDialog
             } // Component - compassMotDialogComponent
 
+            Component {
+                id: levelHorizonDialogComponent
+
+                QGCViewDialog {
+                    id: levelHorizonDialog
+
+                    function accept() {
+                        controller.levelHorizon()
+                        levelHorizonDialog.hideDialog()
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           qsTr("To level the horizon you need to place the vehicle in its level flight position and press Ok.")
+                    }
+                } // QGCViewDialog
+            } // Component - levelHorizonDialogComponent
+
             Column {
                 spacing:            ScreenTools.defaultFontPixelHeight / 2
                 Layout.alignment:   Qt.AlignLeft | Qt.AlignTop
@@ -479,6 +500,22 @@ SetupPage {
                             showMessage(qsTr("Calibrate Compass"), qsTr("Accelerometer must be calibrated prior to Compass."), StandardButton.Ok)
                         } else {
                             showOrientationsDialog(_calTypeCompass)
+                        }
+                    }
+                }
+
+                QGCButton {
+                    id:     levelHorizonButton
+                    width:  parent.buttonWidth
+                    text:   _levelHorizonText
+
+                    readonly property string _levelHorizonText: qsTr("Level Horizon")
+
+                    onClicked: {
+                        if (controller.accelSetupNeeded) {
+                            showMessage(_levelHorizonText, qsTr("Accelerometer must be calibrated prior to Level Horizon."), StandardButton.Ok)
+                        } else {
+                            showDialog(levelHorizonDialogComponent, _levelHorizonText, qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                         }
                     }
                 }
