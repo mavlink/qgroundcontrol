@@ -152,6 +152,9 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     if (code == StopCalibrationSuccess) {
         _resetInternalState();
         _progressBar->setProperty("value", 1);
+        if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("COMPASS_LEARN"))) {
+            _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("COMPASS_LEARN"))->setRawValue(0);
+        }
     } else {
         _progressBar->setProperty("value", 0);
     }
