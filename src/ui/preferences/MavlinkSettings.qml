@@ -340,7 +340,7 @@ Rectangle {
                         color:          qgcPal.window
                         border.color:   qgcPal.text
                         border.width:   0.5
-                        ListView {
+                        QGCListView {
                             width:          ScreenTools.defaultFontPixelWidth  * 56
                             height:         ScreenTools.defaultFontPixelHeight * 12
                             anchors.centerIn: parent

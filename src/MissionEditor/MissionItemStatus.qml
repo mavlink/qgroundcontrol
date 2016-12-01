@@ -111,7 +111,7 @@ Rectangle {
             QGCLabel { text: _azimuthText }
         }
 
-        ListView {
+        QGCListView {
             id:                     statusListView
             model:                  missionItems
             highlightMoveDuration:  250
