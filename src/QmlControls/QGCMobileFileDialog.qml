@@ -96,7 +96,7 @@ QGCViewDialog {
             anchors.margins:    _margins
             anchors.fill:       parent
 
-            ListView {
+            QGCListView {
                 anchors.fill:   parent
                 spacing:        _margins / 2
                 orientation:    ListView.Vertical

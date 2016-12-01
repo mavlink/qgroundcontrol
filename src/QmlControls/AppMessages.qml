@@ -96,7 +96,7 @@ QGCView {
                 }
             }
 
-            ListView {
+            QGCListView {
                 Component.onCompleted: {
                     loaded = true
                 }
