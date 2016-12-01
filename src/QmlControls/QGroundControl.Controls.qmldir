@@ -27,6 +27,7 @@ QGCColoredImage         1.0 QGCColoredImage.qml
 QGCComboBox             1.0 QGCComboBox.qml
 QGCFlickable            1.0 QGCFlickable.qml
 QGCLabel                1.0 QGCLabel.qml
+QGCListView             1.0 QGCListView.qml
 QGCMobileFileDialog     1.0 QGCMobileFileDialog.qml
 QGCMovableItem          1.0 QGCMovableItem.qml
 QGCPipable              1.0 QGCPipable.qml

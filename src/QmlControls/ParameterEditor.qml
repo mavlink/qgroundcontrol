@@ -180,7 +180,7 @@ QGCView {
         }
 
         /// Parameter list
-        ListView {
+        QGCListView {
             id:                 editorListView
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth
             anchors.left:       _searchFilter ? parent.left : groupScroll.right
