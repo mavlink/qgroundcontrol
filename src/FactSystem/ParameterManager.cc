@@ -72,7 +72,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     _initialRequestTimeoutTimer.setSingleShot(true);
-    _initialRequestTimeoutTimer.setInterval(20000);
+    _initialRequestTimeoutTimer.setInterval(5000);
     connect(&_initialRequestTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_initialRequestTimeout);
 
     _waitingParamTimeoutTimer.setSingleShot(true);
@@ -135,12 +135,8 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         return;
     }
 
-    if (parameterId >= parameterCount) {
-        qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Discarding bogus update name:id:count" << parameterName << parameterId << parameterCount;
-        return;
-    }
-
     _initialRequestTimeoutTimer.stop();
+    _waitingParamTimeoutTimer.stop();
 
     _dataMutex.lock();
 
@@ -179,14 +175,9 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         componentParamsComplete = true;
     }
 
-    if (_waitingReadParamIndexMap[componentId].contains(parameterId) ||
-        _waitingReadParamNameMap[componentId].contains(parameterName) ||
-        _waitingWriteParamNameMap[componentId].contains(parameterName)) {
-        // We were waiting for this parameter, restart wait timer. Otherwise it is a spurious parameter update which
-        // means we should not reset the wait timer.
-        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Restarting _waitingParamTimeoutTimer (valid param received)";
-        _waitingParamTimeoutTimer.start();
-    } else {
+    if (!_waitingReadParamIndexMap[componentId].contains(parameterId) &&
+        !_waitingReadParamNameMap[componentId].contains(parameterName) &&
+        !_waitingWriteParamNameMap[componentId].contains(parameterName)) {
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Unrequested param update" << parameterName;
     }
 
@@ -234,12 +225,17 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     int readWaitingParamCount = waitingReadParamIndexCount + waitingReadParamNameCount;
     int totalWaitingParamCount = readWaitingParamCount + waitingWriteParamNameCount;
     if (totalWaitingParamCount) {
-        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "totalWaitingParamCount:" << totalWaitingParamCount;
-    } else if (_defaultComponentId != MAV_COMP_ID_ALL || _defaultComponentIdParam.isEmpty()) {
-        // No more parameters to wait for, stop the timeout. Be careful to not stop timer if we don't have the default
-        // component yet.
-        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Stopping _waitingParamTimeoutTimer (all requests satisfied)";
-        _waitingParamTimeoutTimer.stop();
+        // More params to wait for, restart timer
+        _waitingParamTimeoutTimer.start();
+        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Restarting _waitingParamTimeoutTimer: totalWaitingParamCount:" << totalWaitingParamCount;
+    } else {
+        if (_defaultComponentId == MAV_COMP_ID_ALL && !_defaultComponentIdParam.isEmpty()) {
+            // Still waiting for default component id, restart timer
+            qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Restarting _waitingParamTimeoutTimer (still waiting for default component)";
+            _waitingParamTimeoutTimer.start();
+        } else {
+            qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Not restarting _waitingParamTimeoutTimer (all requests satisfied)";
+        }
     }
 
     // Update progress bar for waiting reads
@@ -1064,6 +1060,7 @@ void ParameterManager::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
 void ParameterManager::_initialRequestTimeout(void)
 {
     if (!_disableAllRetries && ++_initialRequestRetryCount <= _maxInitialRequestListRetry) {
+        qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Retyring initial parameter request list";
         refreshAllParameters();
         _initialRequestTimeoutTimer.start();
     } else {
