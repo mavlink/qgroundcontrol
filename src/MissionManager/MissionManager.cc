@@ -162,7 +162,7 @@ void MissionManager::requestMissionItems(void)
         qCDebug(MissionManagerLog) << "requestMissionItems called while transaction in progress";
         return;
     }
-
+    _readTransactionInProgress=true;
     _retryCount = 0;
     emit inProgressChanged(true);
     _requestList();
