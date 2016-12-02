@@ -192,6 +192,11 @@ TyphoonHCore::m4StateStr()
 void
 TyphoonHCore::_initSequence()
 {
+    //-- There are two defines for the argument to this function. One sets the
+    //   button to turn the screen on/off (BIND_KEY_FUNCTION_PWR). The other is
+    //   anybody's guess (BIND_KEY_FUNCTION_BIND).
+    _setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
+    QThread::msleep(50);
     _responseTryCount = 0;
     //-- Check and see if we have binding info
     if(_rxBindInfoFeedback.nodeId) {
