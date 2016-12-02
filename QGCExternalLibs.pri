@@ -9,7 +9,7 @@ WindowsBuild {
 # [REQUIRED] Add support for the MAVLink communications protocol.
 # Mavlink dialect is hardwired to arudpilotmega for now. The reason being
 # the current codebase supports both PX4 and APM flight stack. PX4 flight stack
-# only usese common mavlink specifications, wherease APM flight stack uses custom
+# only usese common mavlink specifications, whereas APM flight stack uses custom
 # mavlink specifications which add to common. So by using the adupilotmega dialect
 # QGC can support both in the same codebase.
 #
@@ -17,7 +17,7 @@ WindowsBuild {
 # a single compiled codebase this hardwiring of dialect can go away. But until then
 # this "workaround" is needed.
 
-MAVLINKPATH_REL = libs/mavlink/include/mavlink/v1.0
+MAVLINKPATH_REL = libs/mavlink/include/mavlink/v2.0
 MAVLINKPATH = $$BASEDIR/$$MAVLINKPATH_REL
 MAVLINK_CONF = ardupilotmega
 DEFINES += MAVLINK_NO_DATA
@@ -116,51 +116,6 @@ contains(DEFINES, DISABLE_XBEE) {
 }
 
 #
-# [OPTIONAL] Magellan 3DxWare library. Provides support for 3DConnexion's 3D mice.
-#
-contains(DEFINES, DISABLE_3DMOUSE) {
-    message("Skipping support for 3DConnexion mice (manual override from command line)")
-    DEFINES -= DISABLE_3DMOUSE
-# Otherwise the user can still disable this feature in the user_config.pri file.
-} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_3DMOUSE) {
-    message("Skipping support for 3DConnexion mice (manual override from user_config.pri)")
-} else:LinuxBuild {
-    exists(/usr/local/lib/libxdrvlib.so) {
-        message("Including support for 3DConnexion mice")
-
-                DEFINES += \
-        QGC_MOUSE_ENABLED_LINUX \
-                ParameterCheck
-                # Hack: Has to be defined for magellan usage
-
-        HEADERS += src/input/Mouse6dofInput.h
-        SOURCES += src/input/Mouse6dofInput.cpp
-        LIBS += -L/usr/local/lib/ -lxdrvlib
-    } else {
-        warning("Skipping support for 3DConnexion mice (missing libraries, see README)")
-    }
-} else:WindowsBuild {
-    message("Including support for 3DConnexion mice")
-
-    DEFINES += QGC_MOUSE_ENABLED_WIN
-
-    INCLUDEPATH += libs/thirdParty/3DMouse/win
-
-    HEADERS += \
-        libs/thirdParty/3DMouse/win/I3dMouseParams.h \
-        libs/thirdParty/3DMouse/win/MouseParameters.h \
-        libs/thirdParty/3DMouse/win/Mouse3DInput.h \
-        src/input/Mouse6dofInput.h
-
-    SOURCES += \
-        libs/thirdParty/3DMouse/win/MouseParameters.cpp \
-        libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
-        src/input/Mouse6dofInput.cpp
-} else {
-    message("Skipping support for 3DConnexion mice (unsupported platform)")
-}
-
-#
 # [OPTIONAL] Opal RT-LAB Library. Provides integration with Opal-RT's RT-LAB simulator.
 #
 contains(DEFINES, DISABLE_RTLAB) {
@@ -214,21 +169,21 @@ contains(DEFINES, DISABLE_RTLAB) {
 #
 MacBuild {
     INCLUDEPATH += \
-        $$BASEDIR/libs/lib/Frameworks/SDL.framework/Headers
+        $$BASEDIR/libs/lib/Frameworks/SDL2.framework/Headers
 
     LIBS += \
         -F$$BASEDIR/libs/lib/Frameworks \
-        -framework SDL
+        -framework SDL2
 } else:LinuxBuild {
-    PKGCONFIG = sdl
+    PKGCONFIG = sdl2
 } else:WindowsBuild {
     INCLUDEPATH += \
-        $$BASEDIR/libs/lib/sdl/msvc/include \
+        $$BASEDIR/libs/lib/sdl2/msvc/include \
 
     LIBS += \
-        -L$$BASEDIR/libs/lib/sdl/msvc/lib \
-        -lSDLmain \
-        -lSDL
+        -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86 \
+        -lSDL2main \
+        -lSDL2
 }
 
 ##

@@ -1,16 +1,33 @@
-import QtQuick 2.4
-import QtQuick.Controls 1.2
-import QtGraphicalEffects 1.0
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
+
+import QtQuick          2.4
+import QtQuick.Controls 1.2
+
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 
 Item {
-    id: _root
+    id:     _root
+    state:  "HelpShown"
+    clip:   true
 
-    property alias          source:  icon.source
-    property bool           checked: false
+    property alias          source:         icon.source
+    property bool           checked:        false
+    property bool           logo:           false
     property ExclusiveGroup exclusiveGroup:  null
 
-    signal   clicked()
+    readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight / 2
+
+    signal clicked()
 
     onExclusiveGroupChanged: {
         if (exclusiveGroup) {
@@ -18,22 +35,34 @@ Item {
         }
     }
 
-    Image {
-        id:             icon
-        width:          parent.height * 0.9
-        height:         parent.height * 0.9
-        mipmap:         true
-        fillMode:       Image.PreserveAspectFit
-        visible:        false
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.horizontalCenter: parent.horizontalCenter
+    QGCPalette { id: qgcPal }
+
+    Rectangle {
+        anchors.fill:   parent
+        visible:        logo
+        color:          "#4A2C6D"
     }
 
-    ColorOverlay {
-        id:             iconOverlay
-        anchors.fill:   icon
-        source:         icon
-        color:          (checked ? "#e4e428" : "#ffffff")
+    QGCColoredImage {
+        id:                     icon
+        anchors.left:           parent.left
+        anchors.right:          parent.right
+        anchors.topMargin:      _topBottomMargins
+        anchors.top:            parent.top
+        anchors.bottomMargin:   _topBottomMargins
+        anchors.bottom:         parent.bottom
+        sourceSize.height:      parent.height
+        fillMode:               Image.PreserveAspectFit
+        color:                  logo ? "white" : (checked ? qgcPal.buttonHighlight : qgcPal.buttonText)
+    }
+
+    Rectangle {
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.bottom: parent.bottom
+        height:         _topBottomMargins * 0.25
+        color:          qgcPal.buttonHighlight
+        visible:        checked
     }
 
     MouseArea {
@@ -44,62 +73,3 @@ Item {
         }
     }
 }
-
-/*
-QGCButton {
-    id: button
-    property bool repaintChevron: false
-    property var  __qgcPal: QGCPalette { colorGroupEnabled: enabled }
-    property bool showHighlight: __showHighlight
-    style: ButtonStyle {
-        background: Item {
-            anchors.margins: height * 0.1 // 3
-            Canvas {
-                id: chevron
-                anchors.fill: parent
-                antialiasing: true
-                Connections {
-                    target: button
-                    onHoveredChanged: chevron.requestPaint()
-                    onPressedChanged: chevron.requestPaint()
-                    onCheckedChanged: chevron.requestPaint()
-                    onShowHighlightChanged: chevron.requestPaint()
-                    onRepaintChevronChanged: {
-                        if(repaintChevron) {
-                            chevron.requestPaint()
-                            repaintChevron = false;
-                        }
-                    }
-                }
-                onPaint: {
-                    var vMiddle = height / 2;
-                    var context = getContext("2d");
-                    var w12 = button.height * 0.4 // 12
-                    var w3  = button.height * 0.1 // 3
-                    var w15 = w12 + w3
-                    context.reset();
-                    context.beginPath();
-                    context.lineWidth = button.height * 0.2; // 6
-                    context.beginPath();
-                    context.moveTo(0, 0);
-                    context.lineTo(width - w15, 0);
-                    context.lineTo(width - w3,  vMiddle);
-                    context.lineTo(width - w15, height);
-                    context.lineTo(0, height);
-                    context.closePath();
-                    context.strokeStyle = __qgcPal.windowShade
-                    context.fillStyle = showHighlight ? __qgcPal.buttonHighlight : (button.checked ? __qgcPal.buttonHighlight : __qgcPal.button);
-                    context.stroke();
-                    context.fill();
-                }
-            }
-        }
-        label: QGCLabel {
-            text: button.text
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment:   Text.AlignVCenter
-            color: showHighlight ? __qgcPal.buttonHighlightText : (button.checked ? __qgcPal.primaryButtonText : __qgcPal.buttonText)
-        }
-    }
-}
-*/

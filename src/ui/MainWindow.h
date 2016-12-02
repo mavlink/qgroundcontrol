@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -46,9 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "LogCompressor.h"
 #include "QGCMAVLinkInspector.h"
-#ifndef __mobile__
 #include "QGCMAVLinkLogPlayer.h"
-#endif
 #include "MAVLinkDecoder.h"
 #include "Vehicle.h"
 #include "QGCDockWidget.h"
@@ -96,16 +81,12 @@ public:
     void saveLastUsedConnection(const QString connection);
 
     // Called from MainWindow.qml when the user accepts the window close dialog
-    Q_INVOKABLE void acceptWindowClose(void);
+    Q_INVOKABLE void reallyClose(void);
 
     /// @return Root qml object of main window QML
     QObject* rootQmlObject(void);
 
 public slots:
-#ifndef __mobile__
-    void showSettings();
-#endif
-
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { _lowPowerMode = enabled; }
 
@@ -119,16 +100,6 @@ protected slots:
      * @brief Enable/Disable Status Bar
      */
     void showStatusBarCallback(bool checked);
-
-    /**
-     * @brief Disable the other QActions that trigger view mode changes
-     *
-     * When a user hits Ctrl+1, Ctrl+2, Ctrl+3  - only one view is set to active
-     * (and in the QML file for the MainWindow the others are set to have
-     * visibility = false), but on the Menu all of them would be selected making
-     * this incoherent.
-     */
-    void handleActiveViewActionState(bool triggered);
 
 signals:
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
@@ -144,12 +115,10 @@ signals:
 #endif //QGC_MOUSE_ENABLED_LINUX
 
 public:
-#ifndef __mobile__
     QGCMAVLinkLogPlayer* getLogPlayer()
     {
         return logPlayer;
     }
-#endif
 
 protected:
     void connectCommonActions();
@@ -160,9 +129,7 @@ protected:
     QSettings settings;
 
     QPointer<MAVLinkDecoder> mavlinkDecoder;
-#ifndef __mobile__
     QGCMAVLinkLogPlayer* logPlayer;
-#endif
 #ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief 3d Mouse support (WIN only) */
     Mouse3DInput* mouseInput;               ///< 3dConnexion 3dMouse SDK
@@ -191,10 +158,7 @@ protected:
 private slots:
     void _closeWindow(void) { close(); }
     void _vehicleAdded(Vehicle* vehicle);
-
-#ifndef __mobile__
     void _showDockWidgetAction(bool show);
-#endif
 
 #ifdef UNITTEST_BUILD
     void _showQmlTestWidget(void);
@@ -206,28 +170,17 @@ private:
 
     void _openUrl(const QString& url, const QString& errorMessage);
 
-    // Center widgets
-    QPointer<QWidget> _planView;
-    QPointer<QWidget> _flightView;
-    QPointer<QWidget> _setupView;
-    QPointer<QWidget> _missionEditorView;
-
-#ifndef __mobile__
     QMap<QString, QGCDockWidget*>   _mapName2DockWidget;
     QMap<QString, QAction*>         _mapName2Action;
-#endif
 
     void _storeCurrentViewState(void);
     void _loadCurrentViewState(void);
-
-#ifndef __mobile__
     bool _createInnerDockWidget(const QString& widgetName);
     void _buildCommonWidgets(void);
     void _hideAllDockWidgets(void);
     void _showDockWidget(const QString &name, bool show);
     void _loadVisibleWidgetsSettings(void);
     void _storeVisibleWidgetsSettings(void);
-#endif
 
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets
     bool                    _showStatusBar;
@@ -235,6 +188,8 @@ private:
     Ui::MainWindow          _ui;
 
     QGCQmlWidgetHolder*     _mainQmlWidgetHolder;
+
+    bool    _forceClose;
 
     QString _getWindowGeometryKey();
 };

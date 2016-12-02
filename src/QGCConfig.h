@@ -6,8 +6,6 @@
 /** @brief Polling interval in ms */
 #define SERIAL_POLL_INTERVAL 4
 
-/** @brief Heartbeat emission rate, in Hertz (times per second) */
-#define MAVLINK_HEARTBEAT_DEFAULT_RATE 1
 #define WITH_TEXT_TO_SPEECH 1
 
 // If you need to make an incompatible changes to stored settings, bump this version number

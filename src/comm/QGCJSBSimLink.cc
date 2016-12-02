@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -61,7 +48,7 @@ QGCJSBSimLink::QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString
 
 QGCJSBSimLink::~QGCJSBSimLink()
 {   //do not disconnect unless it is connected.
-    //disconnectSimulation will delete the memory that was allocated for proces, terraSync and socket
+    //disconnectSimulation will delete the memory that was allocated for process, terraSync and socket
     if(connectState){
        disconnectSimulation();
     }
@@ -80,20 +67,19 @@ void QGCJSBSimLink::run()
     socket->moveToThread(this);
     connectState = socket->bind(host, port, QAbstractSocket::ReuseAddressHint);
 
-    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+    QObject::connect(socket, &QUdpSocket::readyRead, this, &QGCJSBSimLink::readBytes);
 
     process = new QProcess(this);
 
-    connect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-
+    connect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCJSBSimLink::updateControls);
+    connect(this, &QGCJSBSimLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState);
 
     _vehicle->uas()->startHil();
 
     //connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
     // Catch process error
-    QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
-                      this, SLOT(processError(QProcess::ProcessError)));
+    connect(process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
+            this, &QGCJSBSimLink::processError);
 
     // Start Flightgear
     QStringList arguments;
@@ -234,19 +220,6 @@ void QGCJSBSimLink::setRemoteHost(const QString& host)
 
 }
 
-void QGCJSBSimLink::updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
-{
-    Q_UNUSED(time);
-    Q_UNUSED(act1);
-    Q_UNUSED(act2);
-    Q_UNUSED(act3);
-    Q_UNUSED(act4);
-    Q_UNUSED(act5);
-    Q_UNUSED(act6);
-    Q_UNUSED(act7);
-    Q_UNUSED(act8);
-}
-
 void QGCJSBSimLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
 {
     // magnetos,aileron,elevator,rudder,throttle\n
@@ -256,26 +229,26 @@ void QGCJSBSimLink::updateControls(quint64 time, float rollAilerons, float pitch
     Q_UNUSED(systemMode);
     Q_UNUSED(navMode);
 
-    if(!isnan(rollAilerons) && !isnan(pitchElevator) && !isnan(yawRudder) && !isnan(throttle))
+    if(!qIsNaN(rollAilerons) && !qIsNaN(pitchElevator) && !qIsNaN(yawRudder) && !qIsNaN(throttle))
     {
         QString state("%1\t%2\t%3\t%4\t%5\n");
         state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
-        writeBytes(state.toLatin1().constData(), state.length());
+        emit _invokeWriteBytes(state.toLatin1());
     }
     else
     {
-        qDebug() << "HIL: Got NaN values from the hardware: isnan output: roll: " << isnan(rollAilerons) << ", pitch: " << isnan(pitchElevator) << ", yaw: " << isnan(yawRudder) << ", throttle: " << isnan(throttle);
+        qDebug() << "HIL: Got NaN values from the hardware: isnan output: roll: " << qIsNaN(rollAilerons) << ", pitch: " << qIsNaN(pitchElevator) << ", yaw: " << qIsNaN(yawRudder) << ", throttle: " << qIsNaN(throttle);
     }
     //qDebug() << "Updated controls" << state;
 }
 
-void QGCJSBSimLink::writeBytes(const char* data, qint64 size)
+void QGCJSBSimLink::_writeBytes(const QByteArray data)
 {
     //#define QGCJSBSimLink_DEBUG
 #ifdef QGCJSBSimLink_DEBUG
     QString bytes;
     QString ascii;
-    for (int i=0; i<size; i++)
+    for (int i=0, size = data.size(); i<size; i++)
     {
         unsigned char v = data[i];
         bytes.append(QString().sprintf("%02x ", v));
@@ -292,7 +265,7 @@ void QGCJSBSimLink::writeBytes(const char* data, qint64 size)
     qDebug() << bytes;
     qDebug() << "ASCII:" << ascii;
 #endif
-    if (connectState && socket) socket->writeDatagram(data, size, currentHost, currentPort);
+    if (connectState && socket) socket->writeDatagram(data, currentHost, currentPort);
 }
 
 /**
@@ -358,10 +331,10 @@ qint64 QGCJSBSimLink::bytesAvailable()
  **/
 bool QGCJSBSimLink::disconnectSimulation()
 {
-    disconnect(process, SIGNAL(error(QProcess::ProcessError)),
-               this, SLOT(processError(QProcess::ProcessError)));
-    disconnect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+    disconnect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCJSBSimLink::updateControls);
+    disconnect(this, &QGCJSBSimLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState);
+    disconnect(process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
+            this, &QGCJSBSimLink::processError);
 
     if (process)
     {

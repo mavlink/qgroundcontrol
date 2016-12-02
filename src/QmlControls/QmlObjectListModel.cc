@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -151,7 +138,7 @@ void QmlObjectListModel::clear(void)
 QObject* QmlObjectListModel::removeAt(int i)
 {
     QObject* removedObject = _objectList[i];
-    
+
     // Look for a dirtyChanged signal on the object
     if (_objectList[i]->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
         if (!_skipDirtyFirstItem || i != 0) {
@@ -192,6 +179,16 @@ void QmlObjectListModel::append(QObject* object)
     insert(_objectList.count(), object);
 }
 
+QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
+{
+    QObjectList oldlist(_objectList);
+    beginResetModel();
+    _objectList = newlist;
+    endResetModel();
+    emit countChanged(count());
+    return oldlist;
+}
+
 int QmlObjectListModel::count(void) const
 {
     return rowCount();
@@ -219,4 +216,20 @@ void QmlObjectListModel::_childDirtyChanged(bool dirty)
     // We want to emit dirtyChanged even if the actual value of _dirty didn't change. It can be a useful
     // signal to know when a child has changed dirty state
     emit dirtyChanged(_dirty);
+}
+
+void QmlObjectListModel::deleteListAndContents(void)
+{
+    for (int i=0; i<_objectList.count(); i++) {
+        _objectList[i]->deleteLater();
+    }
+    deleteLater();
+}
+
+void QmlObjectListModel::clearAndDeleteContents(void)
+{
+    for (int i=0; i<_objectList.count(); i++) {
+        _objectList[i]->deleteLater();
+    }
+    clear();
 }

@@ -56,7 +56,7 @@ Rectangle {
                 horizontalAlignment:	Text.AlignHCenter
                 verticalAlignment:		Text.AlignVCenter
 
-                text: "missing connected implementation"
+                text: qsTr("missing connected implementation")
             }
         }
     }
@@ -76,7 +76,7 @@ Rectangle {
                 horizontalAlignment:	Text.AlignHCenter
                 verticalAlignment:		Text.AlignVCenter
 
-                text: "no vehicle connected"
+                text: qsTr("no vehicle connected")
             }
         }
     }

@@ -1,54 +1,47 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 #include "QGCUASFileView.h"
 #include "FileManager.h"
 #include "QGCFileDialog.h"
+#include "UAS.h"
 
 #include <QFileDialog>
 #include <QDir>
 #include <QDebug>
 
-QGCUASFileView::QGCUASFileView(QWidget *parent, FileManager *manager) :
-    QWidget(parent),
-    _manager(manager),
-    _currentCommand(commandNone)
+QGCUASFileView::QGCUASFileView(QWidget *parent, Vehicle* vehicle)
+    : QWidget(parent)
+    , _manager(vehicle->uas()->getFileManager())
+    , _currentCommand(commandNone)
 {
     _ui.setupUi(this);
-    
-    _ui.progressBar->reset();
-    
-    // Connect UI signals
-    connect(_ui.listFilesButton,    &QPushButton::clicked,              this, &QGCUASFileView::_refreshTree);
-    connect(_ui.downloadButton,     &QPushButton::clicked,              this, &QGCUASFileView::_downloadFile);
-    connect(_ui.uploadButton,       &QPushButton::clicked,              this, &QGCUASFileView::_uploadFile);
-    connect(_ui.treeWidget,         &QTreeWidget::currentItemChanged,   this, &QGCUASFileView::_currentItemChanged);
 
-    // Connect signals from FileManager
-    connect(_manager, &FileManager::commandProgress,    this, &QGCUASFileView::_commandProgress);
-    connect(_manager, &FileManager::commandComplete,    this, &QGCUASFileView::_commandComplete);
-    connect(_manager, &FileManager::commandError,       this, &QGCUASFileView::_commandError);
-    connect(_manager, &FileManager::listEntry,  this, &QGCUASFileView::_listEntryReceived);
+    if (vehicle->px4Firmware()) {
+        _ui.progressBar->reset();
+
+        // Connect UI signals
+        connect(_ui.listFilesButton,    &QPushButton::clicked,              this, &QGCUASFileView::_refreshTree);
+        connect(_ui.downloadButton,     &QPushButton::clicked,              this, &QGCUASFileView::_downloadFile);
+        connect(_ui.uploadButton,       &QPushButton::clicked,              this, &QGCUASFileView::_uploadFile);
+        connect(_ui.treeWidget,         &QTreeWidget::currentItemChanged,   this, &QGCUASFileView::_currentItemChanged);
+
+        // Connect signals from FileManager
+        connect(_manager, &FileManager::commandProgress,    this, &QGCUASFileView::_commandProgress);
+        connect(_manager, &FileManager::commandComplete,    this, &QGCUASFileView::_commandComplete);
+        connect(_manager, &FileManager::commandError,       this, &QGCUASFileView::_commandError);
+        connect(_manager, &FileManager::listEntry,  this, &QGCUASFileView::_listEntryReceived);
+    } else {
+        _setAllButtonsEnabled(false);
+        _ui.statusText->setText(QStringLiteral("Onboard Files not supported by this Vehicle"));
+    }
 }
 
 /// @brief Downloads the file currently selected in the tree view

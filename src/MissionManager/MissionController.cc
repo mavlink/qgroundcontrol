@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 #include "MissionController.h"
 #include "MultiVehicleManager.h"
@@ -27,25 +14,37 @@ This file is part of the QGROUNDCONTROL project
 #include "CoordinateVector.h"
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
+#include "SimpleMissionItem.h"
+#include "SurveyMissionItem.h"
+#include "JsonHelper.h"
+#include "ParameterManager.h"
+#include "QGroundControlQmlGlobal.h"
 
 #ifndef __mobile__
+#include "MainWindow.h"
 #include "QGCFileDialog.h"
 #endif
 
 QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
 
-const char* MissionController::_settingsGroup = "MissionController";
+const char* MissionController::jsonSimpleItemsKey = "items";
+
+const char* MissionController::_settingsGroup =                 "MissionController";
+const char* MissionController::_jsonMavAutopilotKey =           "MAV_AUTOPILOT";
+const char* MissionController::_jsonComplexItemsKey =           "complexItems";
+const char* MissionController::_jsonPlannedHomePositionKey =    "plannedHomePosition";
 
 MissionController::MissionController(QObject *parent)
-    : QObject(parent)
-    , _editMode(false)
-    , _missionItems(NULL)
-    , _activeVehicle(NULL)
-    , _liveHomePositionAvailable(false)
-    , _autoSync(false)
+    : PlanElementController(parent)
+    , _visualItems(NULL)
+    , _complexItems(NULL)
     , _firstItemsFromVehicle(false)
     , _missionItemsRequested(false)
     , _queuedSend(false)
+    , _missionDistance(0.0)
+    , _missionMaxTelemetry(0.0)
+    , _cruiseDistance(0.0)
+    , _hoverDistance(0.0)
 {
 
 }
@@ -59,86 +58,51 @@ void MissionController::start(bool editMode)
 {
     qCDebug(MissionControllerLog) << "start editMode" << editMode;
 
-    _editMode = editMode;
+    PlanElementController::start(editMode);
 
-    MultiVehicleManager* multiVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
-
-    connect(multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &MissionController::_activeVehicleChanged);
-
-    _setupMissionItems(true /* loadFromVehicle */, true /* forceLoad */);
-    _setupActiveVehicle(multiVehicleMgr->activeVehicle(), true /* forceLoadFromVehicle */);
+    // We start with an empty mission
+    _visualItems = new QmlObjectListModel(this);
+    _addPlannedHomePosition(_visualItems, false /* addToCenter */);
+    _initAllVisualItems();
 }
 
+// Called when new mission items have completed downloading from Vehicle
 void MissionController::_newMissionItemsAvailableFromVehicle(void)
 {
     qCDebug(MissionControllerLog) << "_newMissionItemsAvailableFromVehicle";
 
-    _setupMissionItems(true /* loadFromVehicle */, false /* forceLoad */);
-}
+    if (!_editMode || _missionItemsRequested || _visualItems->count() == 1) {
+        // Fly Mode:
+        //      - Always accepts new items from the vehicle so Fly view is kept up to date
+        // Edit Mode:
+        //      - Either a load from vehicle was manually requested or
+        //      - The initial automatic load from a vehicle completed and the current editor is empty
 
-/// @param loadFromVehicle true: load items from vehicle
-/// @param forceLoad true: disregard any flags which may prevent load
-void MissionController::_setupMissionItems(bool loadFromVehicle, bool forceLoad)
-{
-    qCDebug(MissionControllerLog) << "_setupMissionItems loadFromVehicle:forceLoad:_editMode:_firstItemsFromVehicle"
-                                  << loadFromVehicle << forceLoad << _editMode << _firstItemsFromVehicle;
+        QmlObjectListModel* newControllerMissionItems = new QmlObjectListModel(this);
+        const QList<MissionItem*>& newMissionItems = _activeVehicle->missionManager()->missionItems();
 
-    MissionManager* missionManager = NULL;
-    if (_activeVehicle) {
-        missionManager = _activeVehicle->missionManager();
-    } else {
-        qCDebug(MissionControllerLog) << "running offline";
-    }
-
-    if (!forceLoad) {
-        if (_editMode && loadFromVehicle) {
-            if (_firstItemsFromVehicle) {
-                if (missionManager) {
-                    if (missionManager->inProgress()) {
-                        // Still in progress of retrieving items from vehicle, leave current set alone and wait for
-                        // mission manager to finish
-                        qCDebug(MissionControllerLog) << "disregarding due to MissionManager in progress";
-                        return;
-                    } else {
-                        // We have the first set of items from the vehicle. If we haven't already started creating a
-                        // new mission, switch to the items from the vehicle
-                        _firstItemsFromVehicle = false;
-                        if (_missionItems->count() != 1) {
-                            qCDebug(MissionControllerLog) << "disregarding due to existing items";
-                            return;
-                        }
-                    }
-                }
-            } else if (!_missionItemsRequested) {
-                // We didn't specifically ask for new mission items. Disregard the new set since it is
-                // the most likely the set we just sent to the vehicle.
-                qCDebug(MissionControllerLog) << "disregarding due to unrequested notification";
-                return;
-            }
+        qCDebug(MissionControllerLog) << "loading from vehicle: count"<< _visualItems->count();
+        foreach(const MissionItem* missionItem, newMissionItems) {
+            newControllerMissionItems->append(new SimpleMissionItem(_activeVehicle, *missionItem, this));
         }
+
+        _deinitAllVisualItems();
+
+        _visualItems->deleteListAndContents();
+        _visualItems = newControllerMissionItems;
+
+        if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() || _visualItems->count() == 0) {
+            _addPlannedHomePosition(_visualItems,true /* addToCenter */);
+        }
+
+        _missionItemsRequested = false;
+
+        _initAllVisualItems();
+        emit newItemsFromVehicle();
     }
-
-    qCDebug(MissionControllerLog) << "fell through to main setup";
-
-    _missionItemsRequested = false;
-
-    if (_missionItems) {
-        _deinitAllMissionItems();
-        _missionItems->deleteLater();
-    }
-
-    if (!missionManager || !loadFromVehicle || missionManager->inProgress()) {
-        _missionItems = new QmlObjectListModel(this);
-        qCDebug(MissionControllerLog) << "creating empty set";
-    } else {
-        _missionItems = missionManager->copyMissionItems();
-        qCDebug(MissionControllerLog) << "loading from vehicle count"<< _missionItems->count();
-    }
-
-    _initAllMissionItems();
 }
 
-void MissionController::getMissionItems(void)
+void MissionController::loadFromVehicle(void)
 {
     Vehicle* activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
 
@@ -148,179 +112,475 @@ void MissionController::getMissionItems(void)
     }
 }
 
-void MissionController::sendMissionItems(void)
+void MissionController::sendToVehicle(void)
 {
-    Vehicle* activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    if (_activeVehicle) {
+        // Convert to MissionItems so we can send to vehicle
+        QList<MissionItem*> missionItems;
 
-    if (activeVehicle) {
-        activeVehicle->missionManager()->writeMissionItems(*_missionItems);
-        _missionItems->setDirty(false);
+        for (int i=0; i<_visualItems->count(); i++) {
+            VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+            if (visualItem->isSimpleItem()) {
+                missionItems.append(new MissionItem(qobject_cast<SimpleMissionItem*>(visualItem)->missionItem()));
+            } else {
+                ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
+                QmlObjectListModel* complexMissionItems = complexItem->getMissionItems();
+                for (int j=0; j<complexMissionItems->count(); j++) {
+                    missionItems.append(new MissionItem(*qobject_cast<MissionItem*>(complexMissionItems->get(j))));
+                }
+                delete complexMissionItems;
+            }
+        }
+
+        _activeVehicle->missionManager()->writeMissionItems(missionItems);
+        _visualItems->setDirty(false);
+
+        for (int i=0; i<missionItems.count(); i++) {
+            delete missionItems[i];
+        }
     }
 }
 
-int MissionController::addMissionItem(QGeoCoordinate coordinate)
+int MissionController::_nextSequenceNumber(void)
 {
-    MissionItem * newItem = new MissionItem(this);
-    newItem->setSequenceNumber(_missionItems->count());
+    if (_visualItems->count() == 0) {
+        qWarning() << "Internal error: Empty visual item list";
+        return 0;
+    } else {
+        VisualMissionItem* lastItem = qobject_cast<VisualMissionItem*>(_visualItems->get(_visualItems->count() - 1));
+
+        if (lastItem->isSimpleItem()) {
+            return lastItem->sequenceNumber() + 1;
+        } else {
+            return qobject_cast<ComplexMissionItem*>(lastItem)->lastSequenceNumber() + 1;
+        }
+    }
+}
+
+int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
+{
+    int sequenceNumber = _nextSequenceNumber();
+    SimpleMissionItem * newItem = new SimpleMissionItem(_activeVehicle, this);
+    newItem->setSequenceNumber(sequenceNumber);
     newItem->setCoordinate(coordinate);
-    newItem->setCommand(MAV_CMD_NAV_WAYPOINT);
-    _initMissionItem(newItem);
-    if (_missionItems->count() == 1) {
+    newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
+    _initVisualItem(newItem);
+    if (_visualItems->count() == 1) {
         newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
     }
     newItem->setDefaultsForCommand();
     if ((MAV_CMD)newItem->command() == MAV_CMD_NAV_WAYPOINT) {
         double lastValue;
+        MAV_FRAME lastFrame;
 
         if (_findLastAcceptanceRadius(&lastValue)) {
-            newItem->setParam2(lastValue);
+            newItem->missionItem().setParam2(lastValue);
         }
-        if (_findLastAltitude(&lastValue)) {
-            newItem->setParam7(lastValue);
+        if (_findLastAltitude(&lastValue, &lastFrame)) {
+            newItem->missionItem().setFrame(lastFrame);
+            newItem->missionItem().setParam7(lastValue);
         }
     }
-    _missionItems->append(newItem);
+    _visualItems->insert(i, newItem);
 
     _recalcAll();
 
-    return _missionItems->count() - 1;
+    return newItem->sequenceNumber();
+}
+
+int MissionController::insertComplexMissionItem(QGeoCoordinate coordinate, int i)
+{
+    int sequenceNumber = _nextSequenceNumber();
+    SurveyMissionItem* newItem = new SurveyMissionItem(_activeVehicle, this);
+    newItem->setSequenceNumber(sequenceNumber);
+    newItem->setCoordinate(coordinate);
+    _initVisualItem(newItem);
+
+    _visualItems->insert(i, newItem);
+    _complexItems->append(newItem);
+
+    _recalcAll();
+
+    return newItem->sequenceNumber();
 }
 
 void MissionController::removeMissionItem(int index)
 {
-    MissionItem* item = qobject_cast<MissionItem*>(_missionItems->removeAt(index));
+    VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->removeAt(index));
 
-    _deinitMissionItem(item);
+    _deinitVisualItem(item);
+    if (!item->isSimpleItem()) {
+        ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(_complexItems->removeOne(item));
+        if (!complexItem) {
+            qWarning() << "Complex item missing";
+        }
+    }
+    item->deleteLater();
 
     _recalcAll();
 
     // Set the new current item
 
-    if (index >= _missionItems->count()) {
+    if (index >= _visualItems->count()) {
         index--;
     }
-    for (int i=0; i<_missionItems->count(); i++) {
-        MissionItem* item =  qobject_cast<MissionItem*>(_missionItems->get(i));
+    for (int i=0; i<_visualItems->count(); i++) {
+        VisualMissionItem* item =  qobject_cast<VisualMissionItem*>(_visualItems->get(i));
         item->setIsCurrentItem(i == index);
     }
+    _visualItems->setDirty(true);
 }
 
-void MissionController::removeAllMissionItems(void)
+void MissionController::removeAll(void)
 {
-    if (_missionItems) {
-        _deinitAllMissionItems();
-        _missionItems->deleteLater();
+    if (_visualItems) {
+        _deinitAllVisualItems();
+        _visualItems->deleteListAndContents();
+        _visualItems = new QmlObjectListModel(this);
+        _addPlannedHomePosition(_visualItems, false /* addToCenter */);
+        _initAllVisualItems();
+        _visualItems->setDirty(true);
     }
-    _missionItems = new QmlObjectListModel(this);
-
-    _initAllMissionItems();
-    _missionItems->setDirty(true);
 }
 
-void MissionController::loadMissionFromFile(void)
+bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString)
 {
-#ifndef __mobile__
+    QJsonParseError jsonParseError;
+    QJsonDocument   jsonDoc(QJsonDocument::fromJson(bytes, &jsonParseError));
+
+    if (jsonParseError.error != QJsonParseError::NoError) {
+        errorString = jsonParseError.errorString();
+        return false;
+    }
+
+    QJsonObject json = jsonDoc.object();
+
+    // Check for required keys
+    QStringList requiredKeys;
+    requiredKeys << JsonHelper::jsonVersionKey << _jsonPlannedHomePositionKey;
+    if (!JsonHelper::validateRequiredKeys(json, requiredKeys, errorString)) {
+        return false;
+    }
+
+    // Validate base key types
+    QStringList             keyList;
+    QList<QJsonValue::Type> typeList;
+    keyList << jsonSimpleItemsKey << JsonHelper::jsonVersionKey << JsonHelper::jsonGroundStationKey << _jsonMavAutopilotKey << _jsonComplexItemsKey << _jsonPlannedHomePositionKey;
+    typeList << QJsonValue::Array << QJsonValue::String << QJsonValue::String << QJsonValue::Double << QJsonValue::Array << QJsonValue::Object;
+    if (!JsonHelper::validateKeyTypes(json, keyList, typeList, errorString)) {
+        return false;
+    }
+
+    // Version check
+    if (json[JsonHelper::jsonVersionKey].toString() != "1.0") {
+        errorString = QStringLiteral("QGroundControl does not support this file version");
+        return false;
+    }
+
+    // Read complex items
+    QJsonArray complexArray(json[_jsonComplexItemsKey].toArray());
+    qCDebug(MissionControllerLog) << "Json load: complex item count" << complexArray.count();
+    for (int i=0; i<complexArray.count(); i++) {
+        const QJsonValue& itemValue = complexArray[i];
+
+        if (!itemValue.isObject()) {
+            errorString = QStringLiteral("Mission item is not an object");
+            return false;
+        }
+
+        SurveyMissionItem* item = new SurveyMissionItem(_activeVehicle, this);
+        if (item->load(itemValue.toObject(), errorString)) {
+            qCDebug(MissionControllerLog) << "Json load: complex item start:stop" << item->sequenceNumber() << item->lastSequenceNumber();
+            complexItems->append(item);
+        } else {
+            return false;
+        }
+    }
+
+    // Read simple items, interspersing complex items into the full list
+
+    int nextSimpleItemIndex= 0;
+    int nextComplexItemIndex= 0;
+    int nextSequenceNumber = 1; // Start with 1 since home is in 0
+    QJsonArray itemArray(json[jsonSimpleItemsKey].toArray());
+
+    qCDebug(MissionControllerLog) << "Json load: simple item loop start simpleItemCount:ComplexItemCount" << itemArray.count() << complexItems->count();
+    do {
+        qCDebug(MissionControllerLog) << "Json load: simple item loop nextSimpleItemIndex:nextComplexItemIndex:nextSequenceNumber" << nextSimpleItemIndex << nextComplexItemIndex << nextSequenceNumber;
+
+        // If there is a complex item that should be next in sequence add it in
+        if (nextComplexItemIndex < complexItems->count()) {
+            SurveyMissionItem* complexItem = qobject_cast<SurveyMissionItem*>(complexItems->get(nextComplexItemIndex));
+
+            if (complexItem->sequenceNumber() == nextSequenceNumber) {
+                qCDebug(MissionControllerLog) << "Json load: injecting complex item expectedSequence:actualSequence:" << nextSequenceNumber << complexItem->sequenceNumber();
+                visualItems->append(complexItem);
+                nextSequenceNumber = complexItem->lastSequenceNumber() + 1;
+                nextComplexItemIndex++;
+                continue;
+            }
+        }
+
+        // Add the next available simple item
+        if (nextSimpleItemIndex < itemArray.count()) {
+            const QJsonValue& itemValue = itemArray[nextSimpleItemIndex++];
+
+            if (!itemValue.isObject()) {
+                errorString = QStringLiteral("Mission item is not an object");
+                return false;
+            }
+
+            SimpleMissionItem* item = new SimpleMissionItem(_activeVehicle, this);
+            if (item->load(itemValue.toObject(), errorString)) {
+                qCDebug(MissionControllerLog) << "Json load: adding simple item expectedSequence:actualSequence" << nextSequenceNumber << item->sequenceNumber();
+                visualItems->append(item);
+            } else {
+                return false;
+            }
+
+            nextSequenceNumber++;
+        }
+    } while (nextSimpleItemIndex < itemArray.count() || nextComplexItemIndex < complexItems->count());
+
+    if (json.contains(_jsonPlannedHomePositionKey)) {
+        SimpleMissionItem* item = new SimpleMissionItem(_activeVehicle, this);
+
+        if (item->load(json[_jsonPlannedHomePositionKey].toObject(), errorString)) {
+            visualItems->insert(0, item);
+        } else {
+            return false;
+        }
+    } else {
+        _addPlannedHomePosition(visualItems, true /* addToCenter */);
+    }
+
+    return true;
+}
+
+bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString)
+{
+    bool addPlannedHomePosition = false;
+
+    QString firstLine = stream.readLine();
+    const QStringList& version = firstLine.split(" ");
+
+    bool versionOk = false;
+    if (version.size() == 3 && version[0] == "QGC" && version[1] == "WPL") {
+        if (version[2] == "110") {
+            // ArduPilot file, planned home position is already in position 0
+            versionOk = true;
+        } else if (version[2] == "120") {
+            // Old QGC file, no planned home position
+            versionOk = true;
+            addPlannedHomePosition = true;
+        }
+    }
+
+    if (versionOk) {
+        while (!stream.atEnd()) {
+            SimpleMissionItem* item = new SimpleMissionItem(_activeVehicle, this);
+
+            if (item->load(stream)) {
+                visualItems->append(item);
+            } else {
+                errorString = QStringLiteral("The mission file is corrupted.");
+                return false;
+            }
+        }
+    } else {
+        errorString = QStringLiteral("The mission file is not compatible with this version of QGroundControl.");
+        return false;
+    }
+
+    if (addPlannedHomePosition || visualItems->count() == 0) {
+        _addPlannedHomePosition(visualItems, true /* addToCenter */);
+
+        // Update sequence numbers in DO_JUMP commands to take into account added home position in index 0
+        for (int i=1; i<visualItems->count(); i++) {
+            SimpleMissionItem* item = qobject_cast<SimpleMissionItem*>(visualItems->get(i));
+            if (item && item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
+                item->missionItem().setParam1((int)item->missionItem().param1() + 1);
+            }
+        }
+    }
+
+    return true;
+}
+
+void MissionController::loadFromFile(const QString& filename)
+{
     QString errorString;
-    QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Mission File to load");
 
     if (filename.isEmpty()) {
         return;
     }
 
-    if (_missionItems) {
-        _deinitAllMissionItems();
-        _missionItems->deleteLater();
-    }
-    _missionItems = new QmlObjectListModel(this);
-
-    // FIXME: This needs to handle APM files which have WP 0 in them
+    QmlObjectListModel* newVisualItems = new QmlObjectListModel(this);
+    QmlObjectListModel* newComplexItems = new QmlObjectListModel(this);
 
     QFile file(filename);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         errorString = file.errorString();
     } else {
-        QTextStream in(&file);
+        QByteArray  bytes = file.readAll();
+        QTextStream stream(&bytes);
 
-        const QStringList& version = in.readLine().split(" ");
-
-        if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "120")) {
-            errorString = "The mission file is not compatible with the current version of QGroundControl.";
+        QString firstLine = stream.readLine();
+        if (firstLine.contains(QRegExp("QGC.*WPL"))) {
+            stream.seek(0);
+            _loadTextMissionFile(stream, newVisualItems, errorString);
         } else {
-            while (!in.atEnd()) {
-                MissionItem* item = new MissionItem();
-
-                if (item->load(in)) {
-                    _missionItems->append(item);
-                } else {
-                    errorString = "The mission file is corrupted.";
-                    break;
-                }
-            }
+            _loadJsonMissionFile(bytes, newVisualItems, newComplexItems, errorString);
         }
-
     }
 
     if (!errorString.isEmpty()) {
-        _missionItems->clear();
+        for (int i=0; i<newVisualItems->count(); i++) {
+            newVisualItems->get(i)->deleteLater();
+        }
+        for (int i=0; i<newComplexItems->count(); i++) {
+            newComplexItems->get(i)->deleteLater();
+        }
+        delete newVisualItems;
+        delete newComplexItems;
+
+        qgcApp()->showMessage(errorString);
+        return;
     }
 
-    _initAllMissionItems();
+    if (_visualItems) {
+        _deinitAllVisualItems();
+        _visualItems->deleteListAndContents();
+    }
+    if (_complexItems) {
+        _complexItems->deleteLater();
+    }
+
+    _visualItems = newVisualItems;
+    _complexItems = newComplexItems;
+
+    if (_visualItems->count() == 0) {
+        _addPlannedHomePosition(_visualItems, true /* addToCenter */);
+    }
+
+    _initAllVisualItems();
+}
+
+void MissionController::loadFromFilePicker(void)
+{
+#ifndef __mobile__
+    QString filename = QGCFileDialog::getOpenFileName(MainWindow::instance(), "Select Mission File to load", QString(), "Mission file (*.mission);;All Files (*.*)");
+
+    if (filename.isEmpty()) {
+        return;
+    }
+    loadFromFile(filename);
 #endif
 }
 
-void MissionController::saveMissionToFile(void)
+void MissionController::saveToFile(const QString& filename)
 {
-#ifndef __mobile__
-    QString errorString;
-    QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save mission to");
+    qDebug() << filename;
 
     if (filename.isEmpty()) {
         return;
     }
 
-    QFile file(filename);
-
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        errorString = file.errorString();
-    } else {
-        QTextStream out(&file);
-
-        out << "QGC WPL 120\r\n";   // Version string
-
-        for (int i=1; i<_missionItems->count(); i++) {
-            qobject_cast<MissionItem*>(_missionItems->get(i))->save(out);
-        }
+    QString missionFilename = filename;
+    if (!QFileInfo(filename).fileName().contains(".")) {
+        missionFilename += QString(".%1").arg(QGCApplication::missionFileExtension);
     }
 
-    _missionItems->setDirty(false);
+    QFile file(missionFilename);
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qgcApp()->showMessage(file.errorString());
+    } else {
+        QJsonObject missionFileObject;      // top level json object
+        QJsonArray  simpleItemsObject;
+        QJsonArray  complexItemsObject;
+
+        missionFileObject[JsonHelper::jsonVersionKey] =         "1.0";
+        missionFileObject[JsonHelper::jsonGroundStationKey] =   JsonHelper::jsonGroundStationValue;
+
+        MAV_AUTOPILOT firmwareType = MAV_AUTOPILOT_GENERIC;
+        if (_activeVehicle) {
+            firmwareType = _activeVehicle->firmwareType();
+        } else {
+            // FIXME: Hack duplicated code from QGroundControlQmlGlobal. Had to do this for now since
+            // QGroundControlQmlGlobal is not available from C++ side.
+
+            QSettings settings;
+            firmwareType = (MAV_AUTOPILOT)settings.value("OfflineEditingFirmwareType", MAV_AUTOPILOT_ARDUPILOTMEGA).toInt();
+        }
+        missionFileObject[_jsonMavAutopilotKey] = firmwareType;
+
+        // Save planned home position
+        QJsonObject homePositionObject;
+        SimpleMissionItem* homeItem = qobject_cast<SimpleMissionItem*>(_visualItems->get(0));
+        if (homeItem) {
+            homeItem->missionItem().save(homePositionObject);
+        } else {
+            qgcApp()->showMessage(QStringLiteral("Internal error: VisualMissionItem at index 0 not SimpleMissionItem"));
+            return;
+        }
+        missionFileObject[_jsonPlannedHomePositionKey] = homePositionObject;
+
+        // Save the visual items
+        for (int i=1; i<_visualItems->count(); i++) {
+            QJsonObject itemObject;
+
+            VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+            visualItem->save(itemObject);
+
+            if (visualItem->isSimpleItem()) {
+                simpleItemsObject.append(itemObject);
+            } else {
+                complexItemsObject.append(itemObject);
+            }
+        }
+
+        missionFileObject[jsonSimpleItemsKey] = simpleItemsObject;
+        missionFileObject[_jsonComplexItemsKey] = complexItemsObject;
+
+        QJsonDocument saveDoc(missionFileObject);
+        file.write(saveDoc.toJson());
+    }
+
+    _visualItems->setDirty(false);
+}
+
+void MissionController::saveToFilePicker(void)
+{
+#ifndef __mobile__
+    QString filename = QGCFileDialog::getSaveFileName(MainWindow::instance(), "Select file to save mission to", QString(), "Mission file (*.mission);;All Files (*.*)");
+
+    if (filename.isEmpty()) {
+        return;
+    }
+    saveToFile(filename);
 #endif
 }
 
-void MissionController::_calcPrevWaypointValues(bool homePositionValid, double homeAlt, MissionItem* currentItem, MissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
+void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
 {
     QGeoCoordinate  currentCoord =  currentItem->coordinate();
-    QGeoCoordinate  prevCoord =     prevItem->coordinate();
+    QGeoCoordinate  prevCoord =     prevItem->exitCoordinate();
     bool            distanceOk =    false;
 
     // Convert to fixed altitudes
 
-    qCDebug(MissionControllerLog) << homePositionValid << homeAlt
-                                  << currentItem->relativeAltitude() << currentItem->coordinate().altitude()
-                                  << prevItem->relativeAltitude() << prevItem->coordinate().altitude();
+    qCDebug(MissionControllerLog) << homeAlt
+                                  << currentItem->coordinateHasRelativeAltitude() << currentItem->coordinate().altitude()
+                                  << prevItem->exitCoordinateHasRelativeAltitude() << prevItem->exitCoordinate().altitude();
 
-    if (homePositionValid) {
-        distanceOk = true;
-        if (currentItem->relativeAltitude()) {
-            currentCoord.setAltitude(homeAlt + currentCoord.altitude());
-        }
-        if (prevItem->relativeAltitude()) {
-            prevCoord.setAltitude(homeAlt + prevCoord.altitude());
-        }
-    } else {
-        if (prevItem->relativeAltitude() && currentItem->relativeAltitude()) {
-            distanceOk = true;
-        }
+    distanceOk = true;
+    if (currentItem->coordinateHasRelativeAltitude()) {
+        currentCoord.setAltitude(homeAlt + currentCoord.altitude());
+    }
+    if (prevItem->exitCoordinateHasRelativeAltitude()) {
+        prevCoord.setAltitude(homeAlt + prevCoord.altitude());
     }
 
     qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
@@ -332,19 +592,125 @@ void MissionController::_calcPrevWaypointValues(bool homePositionValid, double h
     } else {
         *altDifference = 0.0;
         *azimuth = 0.0;
-        *distance = -1.0;   // Signals no values
+        *distance = 0.0;
+    }
+}
+
+void MissionController::_calcHomeDist(VisualMissionItem* currentItem, VisualMissionItem* homeItem, double* distance)
+{
+    QGeoCoordinate  currentCoord =  currentItem->coordinate();
+    QGeoCoordinate  homeCoord =     homeItem->exitCoordinate();
+    bool            distanceOk =    false;
+
+    distanceOk = true;
+
+    qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
+
+    if (distanceOk) {
+        *distance = homeCoord.distanceTo(currentCoord);
+    } else {
+        *distance = 0.0;
     }
 }
 
 void MissionController::_recalcWaypointLines(void)
 {
-    MissionItem*    lastCoordinateItem =    qobject_cast<MissionItem*>(_missionItems->get(0));
-    MissionItem*    homeItem =              lastCoordinateItem;
-    bool            firstCoordinateItem =   true;
-    bool            homePositionValid =     homeItem->homePositionValid();
-    double          homeAlt =               homeItem->coordinate().altitude();
+    bool                firstCoordinateItem =   true;
+    VisualMissionItem*  lastCoordinateItem =    qobject_cast<VisualMissionItem*>(_visualItems->get(0));
+
+    SimpleMissionItem*  homeItem = qobject_cast<SimpleMissionItem*>(lastCoordinateItem);
+
+    if (!homeItem) {
+        qWarning() << "Home item is not SimpleMissionItem";
+    }
+
+    bool    showHomePosition =  homeItem->showHomePosition();
 
     qCDebug(MissionControllerLog) << "_recalcWaypointLines";
+
+    CoordVectHashTable old_table = _linesTable;
+    _linesTable.clear();
+    _waypointLines.clear();
+
+    bool linkBackToHome = false;
+    for (int i=1; i<_visualItems->count(); i++) {
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+
+
+        // If we still haven't found the first coordinate item and we hit a a takeoff command link back to home
+        if (firstCoordinateItem &&
+                item->isSimpleItem() &&
+                (qobject_cast<SimpleMissionItem*>(item)->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF ||
+                 qobject_cast<SimpleMissionItem*>(item)->command() == MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF)) {
+            linkBackToHome = true;
+        }
+
+        if (item->specifiesCoordinate()) {
+            if (!item->isStandaloneCoordinate()) {
+                firstCoordinateItem = false;
+                VisualItemPair pair(lastCoordinateItem, item);
+                if (lastCoordinateItem != homeItem || (showHomePosition && linkBackToHome)) {
+                    if (old_table.contains(pair)) {
+                        // Do nothing, this segment already exists and is wired up
+                        _linesTable[pair] = old_table.take(pair);
+                    } else {
+                        // Create a new segment and wire update notifiers
+                        auto linevect       = new CoordinateVector(lastCoordinateItem->isSimpleItem() ? lastCoordinateItem->coordinate() : lastCoordinateItem->exitCoordinate(), item->coordinate(), this);
+                        auto originNotifier = lastCoordinateItem->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged,
+                             endNotifier    = &VisualMissionItem::coordinateChanged;
+                        // Use signals/slots to update the coordinate endpoints
+                        connect(lastCoordinateItem, originNotifier, linevect, &CoordinateVector::setCoordinate1);
+                        connect(item,               endNotifier,    linevect, &CoordinateVector::setCoordinate2);
+
+                        // FIXME: We should ideally have signals for 2D position change, alt change, and 3D position change
+                        // Not optimal, but still pretty fast, do a full update of range/bearing/altitudes
+                        connect(item, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcAltitudeRangeBearing);
+                        _linesTable[pair] = linevect;
+                    }
+                }
+                lastCoordinateItem = item;
+            }
+        }
+    }
+
+
+    {
+        // Create a temporary QObjectList and replace the model data
+        QObjectList objs;
+        objs.reserve(_linesTable.count());
+        foreach(CoordinateVector *vect, _linesTable.values()) {
+            objs.append(vect);
+        }
+
+        // We don't delete here because many links may still be valid
+        _waypointLines.swapObjectList(objs);
+    }
+
+
+    // Anything left in the old table is an obsolete line object that can go
+    qDeleteAll(old_table);
+
+    _recalcAltitudeRangeBearing();
+
+    emit waypointLinesChanged();
+}
+
+void MissionController::_recalcAltitudeRangeBearing()
+{
+    if (!_visualItems->count())
+        return;
+
+    bool                firstCoordinateItem =   true;
+    VisualMissionItem*  lastCoordinateItem =    qobject_cast<VisualMissionItem*>(_visualItems->get(0));
+    SimpleMissionItem*  homeItem = qobject_cast<SimpleMissionItem*>(lastCoordinateItem);
+
+    if (!homeItem) {
+        qWarning() << "Home item is not SimpleMissionItem";
+    }
+
+    bool    showHomePosition =  homeItem->showHomePosition();
+
+    qCDebug(MissionControllerLog) << "_recalcAltitudeRangeBearing";
 
     // If home position is valid we can calculate distances between all waypoints.
     // If home position is not valid we can only calculate distances between waypoints which are
@@ -353,71 +719,145 @@ void MissionController::_recalcWaypointLines(void)
     // No values for first item
     lastCoordinateItem->setAltDifference(0.0);
     lastCoordinateItem->setAzimuth(0.0);
-    lastCoordinateItem->setDistance(-1.0);
+    lastCoordinateItem->setDistance(0.0);
 
     double minAltSeen = 0.0;
     double maxAltSeen = 0.0;
-    double homePositionAltitude = homeItem->coordinate().altitude();
+    const double homePositionAltitude = homeItem->coordinate().altitude();
     minAltSeen = maxAltSeen = homeItem->coordinate().altitude();
 
-    _waypointLines.clear();
+    double missionDistance = 0.0;
+    double missionMaxTelemetry = 0.0;
 
-    for (int i=1; i<_missionItems->count(); i++) {
-        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+    bool vtolCalc = (QGroundControlQmlGlobal::offlineEditingVehicleType()->enumStringValue() == "VTOL" || (_activeVehicle && _activeVehicle->vtol())) ? true : false ;
+    double cruiseDistance = 0.0;
+    double hoverDistance = 0.0;
+    bool hoverDistanceCalc = false;
+    bool hoverTransition = false;
+    bool cruiseTransition = false;
+    bool hoverDistanceReset = false;
 
+    bool linkBackToHome = false;
+
+
+    for (int i=1; i<_visualItems->count(); i++) {
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
         // Assume the worst
         item->setAzimuth(0.0);
-        item->setDistance(-1.0);
+        item->setDistance(0.0);
+
+        // If we still haven't found the first coordinate item and we hit a takeoff command link back to home
+        if (firstCoordinateItem &&
+                item->isSimpleItem() &&
+                qobject_cast<SimpleMissionItem*>(item)->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
+            linkBackToHome = true;
+            hoverDistanceCalc = true;
+        }
+
+        if (item->isSimpleItem() && vtolCalc) {
+            SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(item);
+            if (simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_DO_VTOL_TRANSITION){  //transition waypoint value
+                if (simpleItem->missionItem().param1() == 3){ //hover mode value
+                    hoverDistanceCalc = true;
+                    hoverTransition = true;
+                }
+                else if (simpleItem->missionItem().param1() == 4){
+                    hoverDistanceCalc = false;
+                    cruiseTransition = true;
+                }
+            }
+            if(!hoverTransition && cruiseTransition && !hoverDistanceReset && !linkBackToHome){
+                hoverDistance = missionDistance;
+                hoverDistanceReset = true;
+            }
+        }
 
         if (item->specifiesCoordinate()) {
+            // Keep track of the min/max altitude for all waypoints so we can show altitudes as a percentage
+
             double absoluteAltitude = item->coordinate().altitude();
-            if (item->relativeAltitude() && homePositionValid) {
+            if (item->coordinateHasRelativeAltitude()) {
                 absoluteAltitude += homePositionAltitude;
             }
             minAltSeen = std::min(minAltSeen, absoluteAltitude);
             maxAltSeen = std::max(maxAltSeen, absoluteAltitude);
 
-            if (!item->standaloneCoordinate()) {
-                if (firstCoordinateItem) {
-                    if (item->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
-                        // The first coordinate we hit is a takeoff command so link back to home position if valid
-                        if (homePositionValid) {
-                            double azimuth, distance, altDifference;
+            if (!item->exitCoordinateSameAsEntry()) {
+                absoluteAltitude = item->exitCoordinate().altitude();
+                if (item->exitCoordinateHasRelativeAltitude()) {
+                    absoluteAltitude += homePositionAltitude;
+                }
+                minAltSeen = std::min(minAltSeen, absoluteAltitude);
+                maxAltSeen = std::max(maxAltSeen, absoluteAltitude);
+            }
 
-                            _waypointLines.append(new CoordinateVector(homeItem->coordinate(), item->coordinate()));
-                            _calcPrevWaypointValues(homePositionValid, homeAlt, item, homeItem, &azimuth, &distance, &altDifference);
-                            item->setAltDifference(altDifference);
-                            item->setAzimuth(azimuth);
-                            item->setDistance(distance);
-                        }
-                    } else {
-                        // First coordiante is not a takeoff command, it does not link backwards to anything
-                    }
-                    firstCoordinateItem = false;
-                } else if (!lastCoordinateItem->homePosition() || lastCoordinateItem->homePositionValid()) {
-                    double azimuth, distance, altDifference;
+            if (!item->isStandaloneCoordinate()) {
+                firstCoordinateItem = false;
+                if (lastCoordinateItem != homeItem || (showHomePosition && linkBackToHome)) {
+                    double azimuth, distance, altDifference, telemetryDistance;
 
                     // Subsequent coordinate items link to last coordinate item. If the last coordinate item
                     // is an invalid home position we skip the line
-                    _calcPrevWaypointValues(homePositionValid, homeAlt, item, lastCoordinateItem, &azimuth, &distance, &altDifference);
+                    _calcPrevWaypointValues(homePositionAltitude, item, lastCoordinateItem, &azimuth, &distance, &altDifference);
                     item->setAltDifference(altDifference);
                     item->setAzimuth(azimuth);
                     item->setDistance(distance);
-                    _waypointLines.append(new CoordinateVector(lastCoordinateItem->coordinate(), item->coordinate()));
+
+                    missionDistance += distance;
+
+                    if (item->isSimpleItem()) {
+                        _calcHomeDist(item, homeItem, &telemetryDistance);
+
+                        if (vtolCalc) {
+                            SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(item);
+                            if (simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF || hoverDistanceCalc){
+                                hoverDistance += distance;
+                            }
+                            cruiseDistance = missionDistance - hoverDistance;
+                            if(simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_NAV_LAND && !linkBackToHome && !cruiseTransition && !hoverTransition){
+                                hoverDistance = cruiseDistance;
+                                cruiseDistance = missionDistance - hoverDistance;
+                            }
+                        }
+                    } else {
+                        missionDistance += qobject_cast<ComplexMissionItem*>(item)->complexDistance();
+                        telemetryDistance = qobject_cast<ComplexMissionItem*>(item)->greatestDistanceTo(homeItem->exitCoordinate());
+
+                        if (vtolCalc){
+                            cruiseDistance += qobject_cast<ComplexMissionItem*>(item)->complexDistance(); //assume all survey missions undertaken in cruise
+                        }
+                    }
+
+                    if (telemetryDistance > missionMaxTelemetry) {
+                        missionMaxTelemetry = telemetryDistance;
+                    }
+                }
+                else if (lastCoordinateItem == homeItem && !item->isSimpleItem()){
+                    missionDistance += qobject_cast<ComplexMissionItem*>(item)->complexDistance();
+                    missionMaxTelemetry = qobject_cast<ComplexMissionItem*>(item)->greatestDistanceTo(homeItem->exitCoordinate());
+
+                    if (vtolCalc){
+                        cruiseDistance += qobject_cast<ComplexMissionItem*>(item)->complexDistance(); //assume all survey missions undertaken in cruise
+                    }
                 }
                 lastCoordinateItem = item;
             }
         }
     }
 
+    setMissionDistance(missionDistance);
+    setMissionMaxTelemetry(missionMaxTelemetry);
+    setCruiseDistance(cruiseDistance);
+    setHoverDistance(hoverDistance);
+
     // Walk the list again calculating altitude percentages
     double altRange = maxAltSeen - minAltSeen;
-    for (int i=0; i<_missionItems->count(); i++) {
-        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+    for (int i=0; i<_visualItems->count(); i++) {
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
         if (item->specifiesCoordinate()) {
             double absoluteAltitude = item->coordinate().altitude();
-            if (item->relativeAltitude() && homePositionValid) {
+            if (item->coordinateHasRelativeAltitude()) {
                 absoluteAltitude += homePositionAltitude;
             }
             if (altRange == 0.0) {
@@ -427,36 +867,45 @@ void MissionController::_recalcWaypointLines(void)
             }
         }
     }
-
-    emit waypointLinesChanged();
 }
 
 // This will update the sequence numbers to be sequential starting from 0
 void MissionController::_recalcSequence(void)
 {
-    for (int i=0; i<_missionItems->count(); i++) {
-        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+    // Setup ascending sequence numbers for all visual items
 
-        // Setup ascending sequence numbers
-        item->setSequenceNumber(i);
+    int sequenceNumber = 0;
+    for (int i=0; i<_visualItems->count(); i++) {
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+
+        item->setSequenceNumber(sequenceNumber++);
+        if (!item->isSimpleItem()) {
+            ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(item);
+
+            if (complexItem) {
+                 sequenceNumber = complexItem->lastSequenceNumber() + 1;
+            } else {
+                qWarning() << "isSimpleItem == false, yet not ComplexMissionItem";
+            }
+        }
     }
 }
 
 // This will update the child item hierarchy
 void MissionController::_recalcChildItems(void)
 {
-    MissionItem* currentParentItem = qobject_cast<MissionItem*>(_missionItems->get(0));
+    VisualMissionItem* currentParentItem = qobject_cast<VisualMissionItem*>(_visualItems->get(0));
 
     currentParentItem->childItems()->clear();
 
-    for (int i=1; i<_missionItems->count(); i++) {
-        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+    for (int i=1; i<_visualItems->count(); i++) {
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
         // Set up non-coordinate item child hierarchy
         if (item->specifiesCoordinate()) {
             item->childItems()->clear();
             currentParentItem = item;
-        } else {
+        } else if (item->isSimpleItem()) {
             currentParentItem->childItems()->append(item);
         }
     }
@@ -469,226 +918,247 @@ void MissionController::_recalcAll(void)
     _recalcWaypointLines();
 }
 
-/// Initializes a new set of mission items which may have come from the vehicle or have been loaded from a file
-void MissionController::_initAllMissionItems(void)
+/// Initializes a new set of mission items
+void MissionController::_initAllVisualItems(void)
 {
-    MissionItem* homeItem = NULL;
+    SimpleMissionItem* homeItem = NULL;
 
-    if (_activeVehicle && _activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() && _missionItems->count() != 0) {
-        homeItem = qobject_cast<MissionItem*>(_missionItems->get(0));
-    } else {
-        // Add the home position item to the front
-        homeItem = new MissionItem(this);
-        homeItem->setSequenceNumber(0);
-        _missionItems->insert(0, homeItem);
+    // Setup home position at index 0
+
+    homeItem = qobject_cast<SimpleMissionItem*>(_visualItems->get(0));
+    if (!homeItem) {
+        qWarning() << "homeItem not SimpleMissionItem";
+        return;
     }
+
     homeItem->setHomePositionSpecialCase(true);
-    if (_activeVehicle) {
-        homeItem->setHomePositionValid(_activeVehicle->homePositionAvailable());
-        if (homeItem->homePositionValid()) {
-            homeItem->setCoordinate(_activeVehicle->homePosition());
+    homeItem->setShowHomePosition(_editMode);
+    homeItem->missionItem().setCommand(MAV_CMD_NAV_WAYPOINT);
+    homeItem->missionItem().setFrame(MAV_FRAME_GLOBAL);
+    homeItem->setIsCurrentItem(true);
+
+    if (!_editMode && _activeVehicle && _activeVehicle->homePositionAvailable()) {
+        homeItem->setCoordinate(_activeVehicle->homePosition());
+        homeItem->setShowHomePosition(true);
+    }
+
+    emit plannedHomePositionChanged(plannedHomePosition());
+
+    connect(homeItem, &VisualMissionItem::coordinateChanged, this, &MissionController::_homeCoordinateChanged);
+
+    QmlObjectListModel* newComplexItems = new QmlObjectListModel(this);
+    for (int i=0; i<_visualItems->count(); i++) {
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        _initVisualItem(item);
+
+        // Set up complex item list
+        if (!item->isSimpleItem()) {
+            ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(item);
+
+            if (complexItem) {
+                newComplexItems->append(item);
+            } else {
+                qWarning() << "isSimpleItem == false, but not ComplexMissionItem";
+            }
         }
-    } else {
-        homeItem->setHomePositionValid(false);
-    }
-    homeItem->setCommand(MAV_CMD_NAV_WAYPOINT);
-    homeItem->setFrame(MAV_FRAME_GLOBAL);
-    if (!homeItem->homePositionValid()) {
-        // Set a bogus home position, the important value is 0.0 Altitude
-        homeItem->setCoordinate(QGeoCoordinate(37.803784, -122.462276, 0.0));
     }
 
-    qDebug() << "home item" << homeItem->homePositionValid() << homeItem->coordinate();
-
-    for (int i=0; i<_missionItems->count(); i++) {
-        _initMissionItem(qobject_cast<MissionItem*>(_missionItems->get(i)));
+    if (_complexItems) {
+        _complexItems->deleteLater();
     }
+    _complexItems = newComplexItems;
 
     _recalcAll();
 
-    emit missionItemsChanged();
+    emit visualItemsChanged();
+    emit complexVisualItemsChanged();
 
-    _missionItems->setDirty(false);
+    connect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::dirtyChanged);
 
-    connect(_missionItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::_dirtyChanged);
+    _visualItems->setDirty(false);
 }
 
-void MissionController::_deinitAllMissionItems(void)
+void MissionController::_deinitAllVisualItems(void)
 {
-    for (int i=0; i<_missionItems->count(); i++) {
-        _deinitMissionItem(qobject_cast<MissionItem*>(_missionItems->get(i)));
+    for (int i=0; i<_visualItems->count(); i++) {
+        _deinitVisualItem(qobject_cast<VisualMissionItem*>(_visualItems->get(i)));
     }
 
-    connect(_missionItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::_dirtyChanged);
+    disconnect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::dirtyChanged);
 }
 
-void MissionController::_initMissionItem(MissionItem* item)
+void MissionController::_initVisualItem(VisualMissionItem* visualItem)
 {
-    _missionItems->setDirty(false);
+    _visualItems->setDirty(false);
 
-    connect(item, &MissionItem::commandChanged,     this, &MissionController::_itemCommandChanged);
-    connect(item, &MissionItem::coordinateChanged,  this, &MissionController::_itemCoordinateChanged);
-    connect(item, &MissionItem::frameChanged,       this, &MissionController::_itemFrameChanged);
+    connect(visualItem, &VisualMissionItem::specifiesCoordinateChanged,                 this, &MissionController::_recalcWaypointLines);
+    connect(visualItem, &VisualMissionItem::coordinateHasRelativeAltitudeChanged,       this, &MissionController::_recalcWaypointLines);
+    connect(visualItem, &VisualMissionItem::exitCoordinateHasRelativeAltitudeChanged,   this, &MissionController::_recalcWaypointLines);
+
+    if (visualItem->isSimpleItem()) {
+        // We need to track commandChanged on simple item since recalc has special handling for takeoff command
+        SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
+        if (simpleItem) {
+            connect(&simpleItem->missionItem()._commandFact, &Fact::valueChanged, this, &MissionController::_itemCommandChanged);
+        } else {
+            qWarning() << "isSimpleItem == true, yet not SimpleMissionItem";
+        }
+    } else {
+        // We need to track changes of lastSequenceNumber so we can recalc sequence numbers for subsequence items
+        ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
+        connect(complexItem, &ComplexMissionItem::lastSequenceNumberChanged, this, &MissionController::_recalcSequence);
+        connect(complexItem, &ComplexMissionItem::complexDistanceChanged, this, &MissionController::_recalcAltitudeRangeBearing);
+    }
 }
 
-void MissionController::_deinitMissionItem(MissionItem* item)
+void MissionController::_deinitVisualItem(VisualMissionItem* visualItem)
 {
-    disconnect(item, &MissionItem::commandChanged,     this, &MissionController::_itemCommandChanged);
-    disconnect(item, &MissionItem::coordinateChanged,  this, &MissionController::_itemCoordinateChanged);
-    disconnect(item, &MissionItem::frameChanged,       this, &MissionController::_itemFrameChanged);
+    // Disconnect all signals
+    disconnect(visualItem, 0, 0, 0);
 }
 
-void MissionController::_itemCoordinateChanged(const QGeoCoordinate& coordinate)
+void MissionController::_itemCommandChanged(void)
 {
-    Q_UNUSED(coordinate);
-    _recalcWaypointLines();
-}
-
-void MissionController::_itemFrameChanged(int frame)
-{
-    Q_UNUSED(frame);
-    _recalcWaypointLines();
-}
-
-void MissionController::_itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command)
-{
-    Q_UNUSED(command);;
     _recalcChildItems();
     _recalcWaypointLines();
 }
 
-void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
+void MissionController::_activeVehicleBeingRemoved(void)
 {
-    qCDebug(MissionControllerLog) << "_activeVehicleChanged activeVehicle" << activeVehicle;
+    qCDebug(MissionControllerLog) << "MissionController::_activeVehicleBeingRemoved";
 
-    if (_activeVehicle) {
-        MissionManager* missionManager = _activeVehicle->missionManager();
+    MissionManager* missionManager = _activeVehicle->missionManager();
 
-        disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailableFromVehicle);
-        disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
-        disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,      this, &MissionController::_activeVehicleHomePositionAvailableChanged);
-        disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionController::_activeVehicleHomePositionChanged);
-        _activeVehicle = NULL;
+    disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailableFromVehicle);
+    disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
+    disconnect(missionManager, &MissionManager::currentItemChanged,         this, &MissionController::_currentMissionItemChanged);
+    disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,      this, &MissionController::_activeVehicleHomePositionAvailableChanged);
+    disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionController::_activeVehicleHomePositionChanged);
 
-        // When the active vehicle goes away we toss the editor items
-        _setupMissionItems(false /* loadFromVehicle */, true /* forceLoad */);
-        _activeVehicleHomePositionAvailableChanged(false);
-    }
-
-    _setupActiveVehicle(activeVehicle, false /* forceLoadFromVehicle */);
+    // We always remove all items on vehicle change. This leaves a user model hole:
+    //      If the user has unsaved changes in the Plan view they will lose them
+    removeAll();
 }
 
-void MissionController::_setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle)
+void MissionController::_activeVehicleSet(void)
 {
-    qCDebug(MissionControllerLog) << "_setupActiveVehicle activeVehicle:forceLoadFromVehicle"
-                                  << activeVehicle << forceLoadFromVehicle;
+    // We always remove all items on vehicle change. This leaves a user model hole:
+    //      If the user has unsaved changes in the Plan view they will lose them
+    removeAll();
 
-    if (_activeVehicle) {
-        qCWarning(MissionControllerLog) << "_activeVehicle != NULL";
+    MissionManager* missionManager = _activeVehicle->missionManager();
+
+    connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailableFromVehicle);
+    connect(missionManager, &MissionManager::inProgressChanged,         this, &MissionController::_inProgressChanged);
+    connect(missionManager, &MissionManager::currentItemChanged,        this, &MissionController::_currentMissionItemChanged);
+    connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
+    connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
+
+    if (_activeVehicle->parameterManager()->parametersReady() && !syncInProgress()) {
+        // We are switching between two previously existing vehicles. We have to manually ask for the items from the Vehicle.
+        // We don't request mission items for new vehicles since that will happen autamatically.
+        loadFromVehicle();
     }
 
-    _activeVehicle = activeVehicle;
-
-    if (_activeVehicle) {
-        MissionManager* missionManager = activeVehicle->missionManager();
-
-        connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailableFromVehicle);
-        connect(missionManager, &MissionManager::inProgressChanged,         this, &MissionController::_inProgressChanged);
-        connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
-        connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
-
-        _firstItemsFromVehicle = true;
-        _setupMissionItems(true /* fromVehicle */, forceLoadFromVehicle);
-
-        _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
-        _activeVehicleHomePositionAvailableChanged(_activeVehicle->homePositionAvailable());
-    }
+    _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
+    _activeVehicleHomePositionAvailableChanged(_activeVehicle->homePositionAvailable());
 }
 
 void MissionController::_activeVehicleHomePositionAvailableChanged(bool homePositionAvailable)
 {
-    _liveHomePositionAvailable = homePositionAvailable;
-    qobject_cast<MissionItem*>(_missionItems->get(0))->setHomePositionValid(homePositionAvailable);
-    emit liveHomePositionAvailableChanged(_liveHomePositionAvailable);
-    _recalcWaypointLines();
-}
+    if (!_editMode && _visualItems) {
+        SimpleMissionItem* homeItem = qobject_cast<SimpleMissionItem*>(_visualItems->get(0));
 
-void MissionController::_activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
-{
-    _liveHomePosition = homePosition;
-    qobject_cast<MissionItem*>(_missionItems->get(0))->setCoordinate(_liveHomePosition);
-    emit liveHomePositionChanged(_liveHomePosition);
-    _recalcWaypointLines();
-}
-
-void MissionController::setAutoSync(bool autoSync)
-{
-    // FIXME: AutoSync temporarily turned off
-#if 0
-    _autoSync = autoSync;
-    emit autoSyncChanged(_autoSync);
-
-    if (_autoSync) {
-        _dirtyChanged(true);
-    }
-#else
-    Q_UNUSED(autoSync)
-#endif
-}
-
-void MissionController::_dirtyChanged(bool dirty)
-{
-    if (dirty && _autoSync) {
-        Vehicle* activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
-
-        if (activeVehicle && !activeVehicle->armed()) {
-            if (_activeVehicle->missionManager()->inProgress()) {
-                _queuedSend = true;
-            } else {
-                _autoSyncSend();
-            }
+        if (homeItem) {
+            homeItem->setShowHomePosition(homePositionAvailable);
+            emit plannedHomePositionChanged(plannedHomePosition());
+            _recalcWaypointLines();
+        } else {
+            qWarning() << "Unabled to cast home item to SimpleMissionItem";
         }
     }
 }
 
-void MissionController::_autoSyncSend(void)
+void MissionController::_activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
 {
-    qDebug() << "Auto-syncing with vehicle";
-    _queuedSend = false;
-    if (_missionItems) {
-        sendMissionItems();
-        _missionItems->setDirty(false);
+    if (!_editMode && _visualItems) {
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(0));
+        if (item) {
+            if (item->coordinate() != homePosition) {
+                item->setCoordinate(homePosition);
+                qCDebug(MissionControllerLog) << "Home position update" << homePosition;
+                emit plannedHomePositionChanged(plannedHomePosition());
+                _recalcWaypointLines();
+            }
+        } else {
+            qWarning() << "Unabled to cast home item to VisualMissionItem";
+        }
+    }
+}
+
+void MissionController::setMissionDistance(double missionDistance)
+{
+    if (!qFuzzyCompare(_missionDistance, missionDistance)) {
+        _missionDistance = missionDistance;
+        emit missionDistanceChanged(_missionDistance);
+    }
+}
+
+void MissionController::setMissionMaxTelemetry(double missionMaxTelemetry)
+{
+    if (!qFuzzyCompare(_missionMaxTelemetry, missionMaxTelemetry)) {
+        _missionMaxTelemetry = missionMaxTelemetry;
+        emit missionMaxTelemetryChanged(_missionMaxTelemetry);
+    }
+}
+
+void MissionController::setCruiseDistance(double cruiseDistance)
+{
+    if (!qFuzzyCompare(_cruiseDistance, cruiseDistance)) {
+        _cruiseDistance = cruiseDistance;
+        emit cruiseDistanceChanged(_cruiseDistance);
+    }
+}
+
+void MissionController::setHoverDistance(double hoverDistance)
+{
+    if (!qFuzzyCompare(_hoverDistance, hoverDistance)) {
+        _hoverDistance = hoverDistance;
+        emit hoverDistanceChanged(_hoverDistance);
     }
 }
 
 void MissionController::_inProgressChanged(bool inProgress)
 {
-    if (!inProgress && _queuedSend) {
-        _autoSyncSend();
-    }
+    emit syncInProgressChanged(inProgress);
 }
 
-QmlObjectListModel* MissionController::missionItems(void)
-{
-    return _missionItems;
-}
-
-bool MissionController::_findLastAltitude(double* lastAltitude)
+bool MissionController::_findLastAltitude(double* lastAltitude, MAV_FRAME* frame)
 {
     bool found = false;
     double foundAltitude;
+    MAV_FRAME foundFrame;
 
-    for (int i=0; i<_missionItems->count(); i++) {
-        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+    // Don't use home position
+    for (int i=1; i<_visualItems->count(); i++) {
+        VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
-        if (item->specifiesCoordinate() && !item->standaloneCoordinate()) {
-            foundAltitude = item->param7();
-            found = true;
+        if (visualItem->specifiesCoordinate() && !visualItem->isStandaloneCoordinate()) {
+
+            if (visualItem->isSimpleItem()) {
+                SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
+                if ((MAV_CMD)simpleItem->command() != MAV_CMD_NAV_TAKEOFF) {
+                    foundAltitude = simpleItem->exitCoordinate().altitude();
+                    foundFrame = simpleItem->missionItem().frame();
+                    found = true;
+                }
+            }
         }
     }
 
     if (found) {
         *lastAltitude = foundAltitude;
+        *frame = foundFrame;
     }
 
     return found;
@@ -699,12 +1169,20 @@ bool MissionController::_findLastAcceptanceRadius(double* lastAcceptanceRadius)
     bool found = false;
     double foundAcceptanceRadius;
 
-    for (int i=0; i<_missionItems->count(); i++) {
-        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+    for (int i=0; i<_visualItems->count(); i++) {
+        VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
-        if ((MAV_CMD)item->command() == MAV_CMD_NAV_WAYPOINT) {
-            foundAcceptanceRadius = item->param2();
-            found = true;
+        if (visualItem->isSimpleItem()) {
+            SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
+
+            if (simpleItem) {
+                if ((MAV_CMD)simpleItem->command() == MAV_CMD_NAV_WAYPOINT) {
+                    foundAcceptanceRadius = simpleItem->missionItem().param2();
+                    found = true;
+                }
+            } else {
+                qWarning() << "isSimpleItem == true, yet not SimpleMissionItem";
+            }
         }
     }
 
@@ -713,4 +1191,103 @@ bool MissionController::_findLastAcceptanceRadius(double* lastAcceptanceRadius)
     }
 
     return found;
+}
+
+double MissionController::_normalizeLat(double lat)
+{
+    // Normalize latitude to range: 0 to 180, S to N
+    return lat + 90.0;
+}
+
+double MissionController::_normalizeLon(double lon)
+{
+    // Normalize longitude to range: 0 to 360, W to E
+    return lon  + 180.0;
+}
+
+/// Add the home position item to the front of the list
+void MissionController::_addPlannedHomePosition(QmlObjectListModel* visualItems, bool addToCenter)
+{
+    SimpleMissionItem* homeItem = new SimpleMissionItem(_activeVehicle, this);
+    visualItems->insert(0, homeItem);
+
+    if (visualItems->count() > 1  && addToCenter) {
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(visualItems->get(1));
+
+        double north = _normalizeLat(item->coordinate().latitude());
+        double south = north;
+        double east = _normalizeLon(item->coordinate().longitude());
+        double west = east;
+
+        for (int i=2; i<visualItems->count(); i++) {
+            item = qobject_cast<VisualMissionItem*>(visualItems->get(i));
+
+            double lat = _normalizeLat(item->coordinate().latitude());
+            double lon = _normalizeLon(item->coordinate().longitude());
+
+            north = fmax(north, lat);
+            south = fmin(south, lat);
+            east = fmax(east, lon);
+            west = fmin(west, lon);
+        }
+
+        homeItem->setCoordinate(QGeoCoordinate((south + ((north - south) / 2)) - 90.0, (west + ((east - west) / 2)) - 180.0, 0.0));
+    } else {
+        homeItem->setCoordinate(qgcApp()->lastKnownHomePosition());
+    }
+}
+
+void MissionController::_currentMissionItemChanged(int sequenceNumber)
+{
+    if (!_editMode) {
+        if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle()) {
+            sequenceNumber++;
+        }
+
+        for (int i=0; i<_visualItems->count(); i++) {
+            VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+            item->setIsCurrentItem(item->sequenceNumber() == sequenceNumber);
+        }
+    }
+}
+
+bool MissionController::syncInProgress(void) const
+{
+    return _activeVehicle ? _activeVehicle->missionManager()->inProgress() : false;
+}
+
+bool MissionController::dirty(void) const
+{
+    return _visualItems ? _visualItems->dirty() : false;
+}
+
+
+void MissionController::setDirty(bool dirty)
+{
+    if (_visualItems) {
+        _visualItems->setDirty(dirty);
+    }
+}
+
+QGeoCoordinate MissionController::plannedHomePosition(void)
+{
+    if (_visualItems && _visualItems->count() > 0) {
+        SimpleMissionItem* item = qobject_cast<SimpleMissionItem*>(_visualItems->get(0));
+        if (item && item->showHomePosition()) {
+            return item->coordinate();
+        }
+    }
+
+    return QGeoCoordinate();
+}
+
+void MissionController::_homeCoordinateChanged(void)
+{
+    emit plannedHomePositionChanged(plannedHomePosition());
+    _recalcAltitudeRangeBearing();
+}
+
+QString MissionController::fileExtension(void) const
+{
+    return QGCApplication::missionFileExtension;
 }

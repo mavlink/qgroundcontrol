@@ -76,9 +76,6 @@ QGCAudioWorker::QGCAudioWorker(QObject *parent) :
     #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
     pVoice(NULL),
     #endif
-    #ifdef QGC_NOTIFY_TUNES_ENABLED
-    sound(NULL),
-    #endif
     emergency(false),
     muted(false)
 {
@@ -89,12 +86,8 @@ QGCAudioWorker::QGCAudioWorker(QObject *parent) :
 
 void QGCAudioWorker::init()
 {
-#ifdef QGC_NOTIFY_TUNES_ENABLED
-    sound = new QSound(":/res/Alert");
-#endif
-
 #if defined Q_OS_LINUX && !defined __android__ && defined QGC_SPEECH_ENABLED
-    espeak_Initialize(AUDIO_OUTPUT_SYNCH_PLAYBACK, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
+    espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
     espeak_VOICE *espeak_voice = espeak_GetCurrentVoice();
     espeak_voice->languages = "en-uk"; // Default to British English
     espeak_voice->identifier = NULL; // no specific voice file specified
@@ -135,11 +128,10 @@ QGCAudioWorker::~QGCAudioWorker()
 #endif
 }
 
-void QGCAudioWorker::say(QString inText, int severity)
+void QGCAudioWorker::say(QString inText)
 {
 #ifdef __android__
     Q_UNUSED(inText);
-    Q_UNUSED(severity);
 #else
     static bool threadInit = false;
     if (!threadInit) {
@@ -150,17 +142,6 @@ void QGCAudioWorker::say(QString inText, int severity)
     if (!muted)
     {
         QString text = fixTextMessageForAudio(inText);
-        // Prepend high priority text with alert beep
-        if (severity < GAudioOutput::AUDIO_SEVERITY_CRITICAL) {
-            beep();
-        }
-
-#ifdef QGC_NOTIFY_TUNES_ENABLED
-        // Wait for the last sound to finish
-        while (!sound->isFinished()) {
-            QGC::SLEEP::msleep(100);
-        }
-#endif
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
         HRESULT hr = pVoice->Speak(text.toStdWString().c_str(), SPF_DEFAULT, NULL);
@@ -171,7 +152,7 @@ void QGCAudioWorker::say(QString inText, int severity)
         // Set size of string for espeak: +1 for the null-character
         unsigned int espeak_size = strlen(text.toStdString().c_str()) + 1;
         espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
-
+        espeak_Synchronize();
 #elif (defined __macos__) && defined QGC_SPEECH_ENABLED
         macSpeech.say(text.toStdString().c_str());
 #elif (defined __ios__) && defined QGC_SPEECH_ENABLED
@@ -192,17 +173,6 @@ void QGCAudioWorker::mute(bool mute)
         QSettings settings;
         settings.setValue(QGC_GAUDIOOUTPUT_KEY + "muted", this->muted);
 //        emit mutedChanged(muted);
-    }
-}
-
-void QGCAudioWorker::beep()
-{
-
-    if (!muted)
-    {
-#ifdef QGC_NOTIFY_TUNES_ENABLED
-        sound->play(":/res/Alert");
-#endif
     }
 }
 

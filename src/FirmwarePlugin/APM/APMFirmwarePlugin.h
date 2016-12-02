@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -30,6 +17,10 @@
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "APMParameterMetaData.h"
+#include "APMGeoFenceManager.h"
+#include "APMRallyPointManager.h"
+
+#include <QAbstractSocket>
 
 Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 
@@ -77,36 +68,65 @@ private:
 class APMFirmwarePlugin : public FirmwarePlugin
 {
     Q_OBJECT
-    
+
 public:
     // Overrides from FirmwarePlugin
-    virtual bool isCapable(FirmwareCapabilities capabilities);
-    virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
-    virtual QStringList flightModes(void);
-    virtual QString flightMode(uint8_t base_mode, uint32_t custom_mode);
-    virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
-    virtual int manualControlReservedButtonCount(void);
-    virtual void adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
-    virtual void initializeVehicle(Vehicle* vehicle);
-    virtual bool sendHomePositionToVehicle(void);
-    virtual void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
-    virtual QString getDefaultComponentIdParam(void) const { return QString("SYSID_SW_TYPE"); }
-    virtual QList<MAV_CMD> supportedMissionCommands(void);
+
+    QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) final;
+    QList<MAV_CMD> supportedMissionCommands(void) final;
+
+    AutoPilotPlugin*        autopilotPlugin                 (Vehicle* vehicle) final;
+    bool                    isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities);
+    QStringList             flightModes                     (Vehicle* vehicle) final;
+    QString                 flightMode                      (uint8_t base_mode, uint32_t custom_mode) const final;
+    bool                    setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
+    bool                    isGuidedMode                    (const Vehicle* vehicle) const final;
+    void                    pauseVehicle                    (Vehicle* vehicle);
+    int                     manualControlReservedButtonCount(void);
+    bool                    adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message) final;
+    void                    adjustOutgoingMavlinkMessage    (Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message) final;
+    void                    initializeVehicle               (Vehicle* vehicle) final;
+    bool                    sendHomePositionToVehicle       (void) final;
+    void                    addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;
+    QString                 getDefaultComponentIdParam      (void) const final { return QString("SYSID_SW_TYPE"); }
+    QString                 missionCommandOverrides         (MAV_TYPE vehicleType) const;
+    QString                 getVersionParam                 (void) final { return QStringLiteral("SYSID_SW_MREV"); }
+    QString                 internalParameterMetaDataFile   (Vehicle* vehicle) final;
+    void                    getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) final { APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
+    QObject*                loadParameterMetaData           (const QString& metaDataFile);
+    GeoFenceManager*        newGeoFenceManager              (Vehicle* vehicle) { return new APMGeoFenceManager(vehicle); }
+    RallyPointManager*      newRallyPointManager            (Vehicle* vehicle) { return new APMRallyPointManager(vehicle); }
+    QString                 brandImage                      (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
 
 protected:
     /// All access to singleton is through stack specific implementation
     APMFirmwarePlugin(void);
     void setSupportedModes(QList<APMCustomMode> supportedModes);
-    
+
+    bool _coaxialMotors;
+
+private slots:
+    void _artooSocketError(QAbstractSocket::SocketError socketError);
+
 private:
     void _adjustSeverity(mavlink_message_t* message) const;
     void _adjustCalibrationMessageSeverity(mavlink_message_t* message) const;
     static bool _isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion);
+    void _setInfoSeverity(mavlink_message_t* message) const;
+    QString _getMessageText(mavlink_message_t* message) const;
+    void _handleIncomingParamValue(Vehicle* vehicle, mavlink_message_t* message);
+    bool _handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message);
+    void _handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
+    void _handleOutgoingParamSet(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
+    void _soloVideoHandshake(Vehicle* vehicle);
 
-    APMFirmwareVersion      _firmwareVersion;
     bool                    _textSeverityAdjustmentNeeded;
     QList<APMCustomMode>    _supportedModes;
-    APMParameterMetaData    _parameterMetaData;
+    QMap<QString, QTime>    _noisyPrearmMap;
+
+    static const char*  _artooIP;
+    static const int    _artooVideoHandshakePort;
+
 };
 
 #endif

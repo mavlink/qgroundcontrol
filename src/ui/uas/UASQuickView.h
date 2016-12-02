@@ -61,7 +61,7 @@ signals:
 public slots:
     void valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant& value,const quint64 msecs);
     void actionTriggered(bool checked);
-    void actionTriggered();
+    void addActionTriggered();
     void updateTimerTick();
     void selectDialogClosed();
     void valueEnabled(QString value);

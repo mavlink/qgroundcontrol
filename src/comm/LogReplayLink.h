@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 #ifndef LogReplayLink_H
 #define LogReplayLink_H
@@ -70,6 +57,8 @@ class LogReplayLink : public LinkInterface
     friend class LinkManager;
 
 public:
+    virtual LinkConfiguration* getLinkConfiguration() { return _config; }
+
     /// @return true: log is currently playing, false: log playback is paused
     bool isPlaying(void) { return _readTickTimer.isActive(); }
 
@@ -98,8 +87,8 @@ public:
     bool connect(void);
     bool disconnect(void);
 
-public slots:
-    virtual void writeBytes(const char *bytes, qint64 cBytes);
+private slots:
+    virtual void _writeBytes(const QByteArray bytes);
 
 signals:
     void logFileStats(bool logTimestamped, int logDurationSecs, int binaryBaudRate);
@@ -113,10 +102,6 @@ signals:
     void _playOnThread(void);
     void _pauseOnThread(void);
     void _setAccelerationFactorOnThread(int factor);
-
-protected slots:
-    // FIXME: This should not be part of LinkInterface. It is an internal link implementation detail.
-    virtual void readBytes(void);
 
 private slots:
     void _readNextLogEntry(void);

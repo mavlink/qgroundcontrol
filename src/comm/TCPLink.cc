@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 #include <QTimer>
 #include <QList>
@@ -46,7 +33,7 @@ TCPLink::TCPLink(TCPConfiguration *config)
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
-    qDebug() << "TCP Created " << _config->name();
+    //qDebug() << "TCP Created " << _config->name();
 }
 
 TCPLink::~TCPLink()
@@ -65,11 +52,11 @@ void TCPLink::run()
 }
 
 #ifdef TCPLINK_READWRITE_DEBUG
-void TCPLink::_writeDebugBytes(const char *data, qint16 size)
+void TCPLink::_writeDebugBytes(const QByteArray data)
 {
     QString bytes;
     QString ascii;
-    for (int i=0; i<size; i++)
+    for (int i=0, size = data.size(); i<size; i++)
     {
         unsigned char v = data[i];
         bytes.append(QString().sprintf("%02x ", v));
@@ -88,13 +75,16 @@ void TCPLink::_writeDebugBytes(const char *data, qint16 size)
 }
 #endif
 
-void TCPLink::writeBytes(const char* data, qint64 size)
+void TCPLink::_writeBytes(const QByteArray data)
 {
 #ifdef TCPLINK_READWRITE_DEBUG
-    _writeDebugBytes(data, size);
+    _writeDebugBytes(data);
 #endif
-    _socket->write(data, size);
-    _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
+    if (!_socket)
+        return;
+
+    _socket->write(data);
+    _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
 }
 
 /**
@@ -156,10 +146,14 @@ bool TCPLink::_hardwareConnect()
 {
     Q_ASSERT(_socket == NULL);
     _socket = new QTcpSocket();
-    QSignalSpy errorSpy(_socket, SIGNAL(error(QAbstractSocket::SocketError)));
+
+    QSignalSpy errorSpy(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error));
     _socket->connectToHost(_config->address(), _config->port());
-    QObject::connect(_socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
-    QObject::connect(_socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(_socketError(QAbstractSocket::SocketError)));
+    QObject::connect(_socket, &QTcpSocket::readyRead, this, &TCPLink::readBytes);
+
+    QObject::connect(_socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),
+                     this, &TCPLink::_socketError);
+
     // Give the socket a second to connect to the other side otherwise error out
     if (!_socket->waitForConnected(1000))
     {

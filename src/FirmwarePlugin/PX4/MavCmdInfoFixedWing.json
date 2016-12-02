@@ -1,0 +1,18 @@
+{
+    "comment":  "PX4 Pro, Fixed Wing",
+
+    "version": 1,
+
+    "mavCmdInfo": [
+        {
+            "id":           21,
+            "comment":      "MAV_CMD_NAV_LAND",
+            "paramRemove":  "1,4"
+        },
+        {
+            "id":           22,
+            "comment":      "MAV_CMD_NAV_TAKEOFF",
+            "paramRemove":  "4"
+        }
+    ]
+}

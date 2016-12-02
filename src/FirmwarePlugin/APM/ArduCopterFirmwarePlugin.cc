@@ -1,31 +1,23 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "ArduCopterFirmwarePlugin.h"
-#include "Generic/GenericFirmwarePlugin.h"
+#include "QGCApplication.h"
+#include "MissionManager.h"
+#include "ParameterManager.h"
+
+bool ArduCopterFirmwarePlugin::_remapParamNameIntialized = false;
+FirmwarePlugin::remapParamNameMajorVersionMap_t ArduCopterFirmwarePlugin::_remapParamName;
 
 APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)
@@ -73,4 +65,165 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
     supportedFlightModes << APMCopterMode(APMCopterMode::POS_HOLD  ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::BRAKE     ,true);
     setSupportedModes(supportedFlightModes);
+
+    if (!_remapParamNameIntialized) {
+        FirmwarePlugin::remapParamNameMap_t& remap = _remapParamName[3][4];
+
+        remap["ATC_ANG_RLL_P"] =    QStringLiteral("STB_RLL_P");
+        remap["ATC_ANG_PIT_P"] =    QStringLiteral("STB_PIT_P");
+        remap["ATC_ANG_YAW_P"] =    QStringLiteral("STB_YAW_P");
+
+        remap["ATC_RAT_RLL_P"] =    QStringLiteral("RATE_RLL_P");
+        remap["ATC_RAT_RLL_I"] =    QStringLiteral("RATE_RLL_I");
+        remap["ATC_RAT_RLL_IMAX"] = QStringLiteral("RATE_RLL_IMAX");
+        remap["ATC_RAT_RLL_D"] =    QStringLiteral("RATE_RLL_D");
+        remap["ATC_RAT_RLL_FILT"] = QStringLiteral("RATE_RLL_FILT_HZ");
+
+        remap["ATC_RAT_PIT_P"] =    QStringLiteral("RATE_PIT_P");
+        remap["ATC_RAT_PIT_I"] =    QStringLiteral("RATE_PIT_I");
+        remap["ATC_RAT_PIT_IMAX"] = QStringLiteral("RATE_PIT_IMAX");
+        remap["ATC_RAT_PIT_D"] =    QStringLiteral("RATE_PIT_D");
+        remap["ATC_RAT_PIT_FILT"] = QStringLiteral("RATE_PIT_FILT_HZ");
+
+        remap["ATC_RAT_YAW_P"] =    QStringLiteral("RATE_YAW_P");
+        remap["ATC_RAT_YAW_I"] =    QStringLiteral("RATE_YAW_I");
+        remap["ATC_RAT_YAW_IMAX"] = QStringLiteral("RATE_YAW_IMAX");
+        remap["ATC_RAT_YAW_D"] =    QStringLiteral("RATE_YAW_D");
+        remap["ATC_RAT_YAW_FILT"] = QStringLiteral("RATE_YAW_FILT_HZ");
+    }
+}
+
+int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
+{
+    // Remapping supports up to 3.4
+    return majorVersionNumber == 3 ? 4: Vehicle::versionNotSetValue;
+}
+
+bool ArduCopterFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
+{
+    Q_UNUSED(vehicle);
+
+    uint32_t vehicleCapabilities = SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability;
+
+    return (capabilities & vehicleCapabilities) == capabilities;
+}
+
+void ArduCopterFirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
+{
+    vehicle->setFlightMode("RTL");
+}
+
+void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)
+{
+    vehicle->setFlightMode("Land");
+}
+
+void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
+{
+    if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to takeoff, vehicle position not known."));
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd;
+
+    cmd.command = (uint16_t)MAV_CMD_NAV_TAKEOFF;
+    cmd.confirmation = 0;
+    cmd.param1 = 0.0f;
+    cmd.param2 = 0.0f;
+    cmd.param3 = 0.0f;
+    cmd.param4 = 0.0f;
+    cmd.param5 = 0.0f;
+    cmd.param6 = 0.0f;
+    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toFloat() +  altitudeRel; // AMSL meters
+    cmd.target_system = vehicle->id();
+    cmd.target_component = vehicle->defaultComponentId();
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_long_encode_chan(mavlink->getSystemId(),
+                                         mavlink->getComponentId(),
+                                         vehicle->priorityLink()->mavlinkChannel(),
+                                         &msg,
+                                         &cmd);
+
+    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
+}
+
+void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
+        return;
+    }
+
+    QGeoCoordinate coordWithAltitude = gotoCoord;
+    coordWithAltitude.setAltitude(vehicle->altitudeRelative()->rawValue().toDouble());
+    vehicle->missionManager()->writeArduPilotGuidedMissionItem(coordWithAltitude, false /* altChangeOnly */);
+}
+
+void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to change altitude, vehicle altitude not known."));
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_set_position_target_local_ned_t cmd;
+
+    memset(&cmd, 0, sizeof(mavlink_set_position_target_local_ned_t));
+
+    cmd.target_system = vehicle->id();
+    cmd.target_component = vehicle->defaultComponentId();
+    cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
+    cmd.type_mask = 0xFFF8; // Only x/y/z valid
+    cmd.x = 0.0f;
+    cmd.y = 0.0f;
+    cmd.z = -(altitudeRel - vehicle->altitudeRelative()->rawValue().toDouble());
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_set_position_target_local_ned_encode_chan(mavlink->getSystemId(),
+                                                          mavlink->getComponentId(),
+                                                          vehicle->priorityLink()->mavlinkChannel(),
+                                                          &msg,
+                                                          &cmd);
+
+    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
+}
+
+bool ArduCopterFirmwarePlugin::isPaused(const Vehicle* vehicle) const
+{
+    return vehicle->flightMode() == "Brake";
+}
+
+void ArduCopterFirmwarePlugin::pauseVehicle(Vehicle* vehicle)
+{
+    vehicle->setFlightMode("Brake");
+}
+
+void ArduCopterFirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
+{
+    if (guidedMode) {
+        vehicle->setFlightMode("Guided");
+    } else {
+        pauseVehicle(vehicle);
+    }
+}
+
+bool ArduCopterFirmwarePlugin::multiRotorCoaxialMotors(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    return _coaxialMotors;
+}
+
+bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
+{
+    return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
+}
+
+QString ArduCopterFirmwarePlugin::geoFenceRadiusParam(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    return QStringLiteral("FENCE_RADIUS");
 }

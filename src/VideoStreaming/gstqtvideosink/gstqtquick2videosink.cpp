@@ -410,7 +410,7 @@ gst_qt_quick2_video_sink_class_init (GstQtQuick2VideoSinkClass *klass)
      * inside its updateNode function to render the video. It takes a QSGNode*
      * and the item's area rectangle as arguments. You should schedule to call
      * this function to repaint the surface whenever the ::update signal is
-     * emited.
+     * emitted.
      *
      * Note that the x,y,width and height arguments are actually qreal.
      * This means that on architectures like arm they will be float instead
@@ -432,7 +432,7 @@ gst_qt_quick2_video_sink_class_init (GstQtQuick2VideoSinkClass *klass)
     /**
      * GstQtQuick2VideoSink::update
      *
-     * This signal is emited when the surface should be repainted. It should
+     * This signal is emitted when the surface should be repainted. It should
      * be connected to QQuickItem::update().
      */
     s_signals[SIGNAL_UPDATE] =

@@ -1,39 +1,30 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "APMAirframeComponentController.h"
 #include "APMAirframeComponentAirframes.h"
-#include "APMRemoteParamsDownloader.h"
 #include "QGCMAVLink.h"
 #include "MultiVehicleManager.h"
-#include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
+#include "QGCFileDownload.h"
+#include "ParameterManager.h"
 
 #include <QVariant>
 #include <QQmlProperty>
+#include <QStandardPaths>
+#include <QDir>
+#include <QJsonParseError>
+#include <QJsonObject>
 
 bool APMAirframeComponentController::_typesRegistered = false;
 
@@ -42,12 +33,12 @@ APMAirframeComponentController::APMAirframeComponentController(void) :
 {
     if (!_typesRegistered) {
         _typesRegistered = true;
-        qmlRegisterUncreatableType<APMAirframeType>("QGroundControl.Controllers", 1, 0, "APMAiframeType", "Can only reference APMAirframeType");
-        qmlRegisterUncreatableType<APMAirframe>("QGroundControl.Controllers", 1, 0, "APMAiframe", "Can only reference APMAirframe");
+        qmlRegisterUncreatableType<APMAirframeType>("QGroundControl.Controllers", 1, 0, "APMAiframeType", QStringLiteral("Can only reference APMAirframeType"));
+        qmlRegisterUncreatableType<APMAirframe>("QGroundControl.Controllers", 1, 0, "APMAiframe", QStringLiteral("Can only reference APMAirframe"));
     }
     _fillAirFrames();
 
-    Fact *frame = getParameterFact(FactSystem::defaultComponentId, "FRAME");
+    Fact *frame = getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME"));
     connect(frame, &Fact::vehicleUpdated, this, &APMAirframeComponentController::_factFrameChanged);
     _factFrameChanged(frame->rawValue());
 }
@@ -92,12 +83,14 @@ void APMAirframeComponentController::_fillAirFrames()
     emit loadAirframesCompleted();
 }
 
-void APMAirframeComponentController::_finishVehicleSetup() {
-    QDir dataLocation = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).at(0)
-           + QDir::separator() + qApp->applicationName();
-
-    QFile parametersFile(dataLocation.absoluteFilePath(_currentAirframe->params()));
-    parametersFile.open(QIODevice::ReadOnly);
+void APMAirframeComponentController::_loadParametersFromDownloadFile(const QString& downloadedParamFile)
+{
+    QFile parametersFile(downloadedParamFile);
+    if (!parametersFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "Unable to open downloaded parameter file" << downloadedParamFile << parametersFile.errorString();
+        qgcApp()->restoreOverrideCursor();
+        return;
+    }
 
     QTextStream reader(&parametersFile);
 
@@ -113,9 +106,8 @@ void APMAirframeComponentController::_finishVehicleSetup() {
             param->setRawValue(QVariant::fromValue(aux.at(1)));
         }
     }
-    qgcApp()->setOverrideCursor(Qt::ArrowCursor);
-    sender()->deleteLater();
-    emit currentAirframeChanged(_currentAirframe);
+    qgcApp()->restoreOverrideCursor();
+    _vehicle->parameterManager()->refreshAllParameters();
 }
 
 APMAirframeType::APMAirframeType(const QString& name, const QString& imageResource, int type, QObject* parent) :
@@ -186,23 +178,73 @@ APMAirframeType *APMAirframeComponentController::currentAirframeType() const
     return _currentAirframeType;
 }
 
-APMAirframe *APMAirframeComponentController::currentAirframe() const
+QString APMAirframeComponentController::currentAirframeTypeName() const
 {
-    return _currentAirframe;
-}
-
-void APMAirframeComponentController::setCurrentAirframe(APMAirframe *t)
-{
-    _currentAirframe = t;
-    qgcApp()->setOverrideCursor(Qt::WaitCursor);
-    APMRemoteParamsDownloader *paramDownloader = new APMRemoteParamsDownloader(_currentAirframe->params());
-    connect(paramDownloader, &APMRemoteParamsDownloader::finished, this, &APMAirframeComponentController::_finishVehicleSetup);
+    return _vehicle->vehicleTypeName();
 }
 
 void APMAirframeComponentController::setCurrentAirframeType(APMAirframeType *t)
 {
-    Fact *param = getParameterFact(-1, "FRAME");
+    Fact *param = getParameterFact(-1, QStringLiteral("FRAME"));
     Q_ASSERT(param);
     param->setRawValue(t->type());
 }
 
+void APMAirframeComponentController::loadParameters(const QString& paramFile)
+{
+    qgcApp()->setOverrideCursor(Qt::WaitCursor);
+
+    QString paramFileUrl = QStringLiteral("https://api.github.com/repos/ArduPilot/ardupilot/contents/Tools/Frame_params/%1?ref=master");
+
+    QGCFileDownload* downloader = new QGCFileDownload(this);
+    connect(downloader, &QGCFileDownload::downloadFinished, this, &APMAirframeComponentController::_githubJsonDownloadFinished);
+    connect(downloader, &QGCFileDownload::error, this, &APMAirframeComponentController::_githubJsonDownloadError);
+    downloader->download(paramFileUrl.arg(paramFile));
+}
+
+void APMAirframeComponentController::_githubJsonDownloadFinished(QString remoteFile, QString localFile)
+{
+    Q_UNUSED(remoteFile);
+
+    QFile jsonFile(localFile);
+    if (!jsonFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "Unable to open github json file" << localFile << jsonFile.errorString();
+        qgcApp()->restoreOverrideCursor();
+        return;
+    }
+    QByteArray bytes = jsonFile.readAll();
+    jsonFile.close();
+
+    QJsonParseError jsonParseError;
+    QJsonDocument doc = QJsonDocument::fromJson(bytes, &jsonParseError);
+    if (jsonParseError.error != QJsonParseError::NoError) {
+        qWarning() <<  "Unable to open json document" << localFile << jsonParseError.errorString();
+        qgcApp()->restoreOverrideCursor();
+        return;
+    }
+    QJsonObject json = doc.object();
+
+    QGCFileDownload* downloader = new QGCFileDownload(this);
+    connect(downloader, &QGCFileDownload::downloadFinished, this, &APMAirframeComponentController::_paramFileDownloadFinished);
+    connect(downloader, &QGCFileDownload::error, this, &APMAirframeComponentController::_paramFileDownloadError);
+    downloader->download(json["download_url"].toString());
+}
+
+void APMAirframeComponentController::_githubJsonDownloadError(QString errorMsg)
+{
+    qgcApp()->showMessage(tr("Param file github json download failed: %1").arg(errorMsg));
+    qgcApp()->restoreOverrideCursor();
+}
+
+void APMAirframeComponentController::_paramFileDownloadFinished(QString remoteFile, QString localFile)
+{
+    Q_UNUSED(remoteFile);
+
+    _loadParametersFromDownloadFile(localFile);
+}
+
+void APMAirframeComponentController::_paramFileDownloadError(QString errorMsg)
+{
+    qgcApp()->showMessage(tr("Param file download failed: %1").arg(errorMsg));
+    qgcApp()->restoreOverrideCursor();
+}

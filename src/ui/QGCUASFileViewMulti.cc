@@ -41,7 +41,7 @@ void QGCUASFileViewMulti::_vehicleAdded(Vehicle* vehicle)
     UAS* uas = vehicle->uas();
     
     if (!lists.contains(uas)) {
-        QGCUASFileView* list = new QGCUASFileView(ui->stackedWidget, uas->getFileManager());
+        QGCUASFileView* list = new QGCUASFileView(ui->stackedWidget, vehicle);
         lists.insert(uas, list);
         ui->stackedWidget->addWidget(list);
     }

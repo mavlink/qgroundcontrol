@@ -124,6 +124,21 @@ class Array
     }
 #endif
 
+#ifdef EIGEN_HAVE_RVALUE_REFERENCES
+    Array(Array&& other)
+      : Base(std::move(other))
+    {
+      Base::_check_template_params();
+      if (RowsAtCompileTime!=Dynamic && ColsAtCompileTime!=Dynamic)
+        Base::_set_noalias(other);
+    }
+    Array& operator=(Array&& other)
+    {
+      other.swap(*this);
+      return *this;
+    }
+#endif
+
     /** Constructs a vector or row-vector with given dimension. \only_for_vectors
       *
       * Note that this is only useful for dynamic-size vectors. For fixed-size vectors,
@@ -210,7 +225,7 @@ class Array
       : Base(other.derived().rows() * other.derived().cols(), other.derived().rows(), other.derived().cols())
     {
       Base::_check_template_params();
-      Base::resize(other.rows(), other.cols());
+      Base::_resize_to_match(other);
       *this = other;
     }
 

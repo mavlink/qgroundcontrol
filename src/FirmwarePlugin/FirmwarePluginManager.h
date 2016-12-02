@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -34,11 +21,6 @@
 #include "QGCToolbox.h"
 
 class QGCApplication;
-class ArduCopterFirmwarePlugin;
-class ArduPlaneFirmwarePlugin;
-class ArduRoverFirmwarePlugin;
-class PX4FirmwarePlugin;
-class GenericFirmwarePlugin;
 
 /// FirmwarePluginManager is a singleton which is used to return the correct FirmwarePlugin for a MAV_AUTOPILOT type.
 
@@ -50,6 +32,8 @@ public:
     FirmwarePluginManager(QGCApplication* app);
     ~FirmwarePluginManager();
 
+    QList<MAV_AUTOPILOT> knownFirmwareTypes(void);
+
     /// Returns appropriate plugin for autopilot type.
     ///     @param autopilotType Type of autopilot to return plugin for.
     ///     @param vehicleType Vehicle type of autopilot to return plugin for.
@@ -57,11 +41,8 @@ public:
     FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType);
 
 private:
-    ArduCopterFirmwarePlugin*   _arduCopterFirmwarePlugin;
-    ArduPlaneFirmwarePlugin*    _arduPlaneFirmwarePlugin;
-    ArduRoverFirmwarePlugin*    _arduRoverFirmwarePlugin;
-    GenericFirmwarePlugin*      _genericFirmwarePlugin;
-    PX4FirmwarePlugin*          _px4FirmwarePlugin;
+    FirmwarePlugin*         _genericFirmwarePlugin;
+    QList<MAV_AUTOPILOT>    _knownFirmwareTypes;
 };
 
 #endif

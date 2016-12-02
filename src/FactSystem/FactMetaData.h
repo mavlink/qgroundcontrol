@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -30,10 +17,11 @@
 #include <QObject>
 #include <QString>
 #include <QVariant>
+#include <QJsonObject>
 
 /// Holds the meta data associated with a Fact.
 ///
-/// Holds the meta data associated with a Fact. This is kept in a seperate object from the Fact itself
+/// Holds the meta data associated with a Fact. This is kept in a separate object from the Fact itself
 /// since you may have multiple instances of the same Fact. But there is only ever one FactMetaData
 /// instance or each Fact.
 class FactMetaData : public QObject
@@ -58,9 +46,31 @@ public:
     FactMetaData(ValueType_t type, QObject* parent = NULL);
     FactMetaData(const FactMetaData& other, QObject* parent = NULL);
 
+    static QMap<QString, FactMetaData*> createMapFromJsonFile(const QString& jsonFilename, QObject* metaDataParent);
+
+    static FactMetaData* createFromJsonObject(const QJsonObject& json, QObject* metaDataParent);
+
     const FactMetaData& operator=(const FactMetaData& other);
 
-    int             decimalPlaces           (void) const { return _decimalPlaces; }
+    /// Converts from meters to the user specified distance unit
+    static QVariant metersToAppSettingsDistanceUnits(const QVariant& meters);
+
+    /// Converts from user specified distance unit to meters
+    static QVariant appSettingsDistanceUnitsToMeters(const QVariant& distance);
+
+    /// Returns the string for distance units which has configued by user
+    static QString appSettingsDistanceUnitsString(void);
+
+    /// Converts from meters to the user specified distance unit
+    static QVariant squareMetersToAppSettingsAreaUnits(const QVariant& squareMeters);
+
+    /// Converts from user specified distance unit to meters
+    static QVariant appSettingsAreaUnitsToSquareMeters(const QVariant& area);
+
+    /// Returns the string for distance units which has configued by user
+    static QString appSettingsAreaUnitsString(void);
+
+    int             decimalPlaces           (void) const;
     QVariant        rawDefaultValue         (void) const;
     QVariant        cookedDefaultValue      (void) const { return _rawTranslator(rawDefaultValue()); }
     bool            defaultValueAvailable   (void) const { return _defaultValueAvailable; }
@@ -81,6 +91,11 @@ public:
     ValueType_t     type                    (void) const { return _type; }
     QString         rawUnits                (void) const { return _rawUnits; }
     QString         cookedUnits             (void) const { return _cookedUnits; }
+    bool            rebootRequired          (void) const { return _rebootRequired; }
+
+    /// Amount to increment value when used in controls such as spin button or slider with detents.
+    /// NaN for no increment available.
+    double          increment               (void) const { return _increment; }
 
     Translator      rawTranslator           (void) const { return _rawTranslator; }
     Translator      cookedTranslator        (void) const { return _cookedTranslator; }
@@ -102,8 +117,13 @@ public:
     void setName            (const QString& name)               { _name = name; }
     void setShortDescription(const QString& shortDescription)   { _shortDescription = shortDescription; }
     void setRawUnits        (const QString& rawUnits);
+    void setRebootRequired  (bool rebootRequired)               { _rebootRequired = rebootRequired; }
+    void setIncrement       (double increment)                  { _increment = increment; }
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
+
+    /// Set the translators to the standard built in versions
+    void setBuiltInTranslator(void);
 
     /// Converts the specified raw value, validating against meta data
     ///     @param rawValue Value to convert, can be string
@@ -116,12 +136,16 @@ public:
     /// Same as convertAndValidateRaw except for cookedValue input
     bool convertAndValidateCooked(const QVariant& cookedValue, bool convertOnly, QVariant& typedValue, QString& errorString);
 
-    static const int defaultDecimalPlaces = 3;
+    static const int defaultDecimalPlaces = 3;  ///< Default value for decimal places if not specified/known
+    static const int unknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
+
+    static ValueType_t stringToType(const QString& typeString, bool& unknownType);
+    static size_t typeToSize(ValueType_t type);
 
 private:
     QVariant _minForType(void) const;
     QVariant _maxForType(void) const;
-    void _setBuiltInTranslator(void);
+    void _setAppSettingsTranslators(void);
 
     // Built in translators
     static QVariant _defaultTranslator(const QVariant& from) { return from; }
@@ -129,6 +153,39 @@ private:
     static QVariant _radiansToDegrees(const QVariant& radians);
     static QVariant _centiDegreesToDegrees(const QVariant& centiDegrees);
     static QVariant _degreesToCentiDegrees(const QVariant& degrees);
+    static QVariant _metersToFeet(const QVariant& meters);
+    static QVariant _feetToMeters(const QVariant& feet);
+    static QVariant _squareMetersToSquareKilometers(const QVariant& squareMeters);
+    static QVariant _squareKilometersToSquareMeters(const QVariant& squareKilometers);
+    static QVariant _squareMetersToHectares(const QVariant& squareMeters);
+    static QVariant _hectaresToSquareMeters(const QVariant& hectares);
+    static QVariant _squareMetersToSquareFeet(const QVariant& squareMeters);
+    static QVariant _squareFeetToSquareMeters(const QVariant& squareFeet);
+    static QVariant _squareMetersToAcres(const QVariant& squareMeters);
+    static QVariant _acresToSquareMeters(const QVariant& acres);
+    static QVariant _squareMetersToSquareMiles(const QVariant& squareMeters);
+    static QVariant _squareMilesToSquareMeters(const QVariant& squareMiles);
+    static QVariant _metersPerSecondToMilesPerHour(const QVariant& metersPerSecond);
+    static QVariant _milesPerHourToMetersPerSecond(const QVariant& milesPerHour);
+    static QVariant _metersPerSecondToKilometersPerHour(const QVariant& metersPerSecond);
+    static QVariant _kilometersPerHourToMetersPerSecond(const QVariant& kilometersPerHour);
+    static QVariant _metersPerSecondToKnots(const QVariant& metersPerSecond);
+    static QVariant _knotsToMetersPerSecond(const QVariant& knots);
+    static QVariant _percentToNorm(const QVariant& percent);
+    static QVariant _normToPercent(const QVariant& normalized);
+
+    struct AppSettingsTranslation_s {
+        const char* rawUnits;
+        const char* cookedUnits;
+        bool        speed;
+        uint32_t    speedOrDistanceUnits;
+        Translator  rawTranslator;
+        Translator  cookedTranslator;
+
+    };
+
+    static const AppSettingsTranslation_s* _findAppSettingsDistanceUnitsTranslation(const QString& rawUnits);
+    static const AppSettingsTranslation_s* _findAppSettingsAreaUnitsTranslation(const QString& rawUnits);
 
     ValueType_t     _type;                  // must be first for correct constructor init
     int             _decimalPlaces;
@@ -150,6 +207,16 @@ private:
     QString         _cookedUnits;
     Translator      _rawTranslator;
     Translator      _cookedTranslator;
+    bool            _rebootRequired;
+    double          _increment;
+
+    // Exact conversion constants
+    static const struct UnitConsts_s {
+        static const qreal secondsPerHour;
+        static const qreal knotsToKPH;
+        static const qreal milesToMeters;
+        static const qreal feetToMeters;
+    } constants;
 
     struct BuiltInTranslation_s {
         const char* rawUnits;
@@ -159,7 +226,19 @@ private:
 
     };
 
-    static const BuiltInTranslation_s _rgBuildInTranslations[];
+    static const BuiltInTranslation_s _rgBuiltInTranslations[];
+
+    static const AppSettingsTranslation_s _rgAppSettingsTranslations[];
+
+    static const char*  _nameJsonKey;
+    static const char*  _decimalPlacesJsonKey;
+    static const char*  _typeJsonKey;
+    static const char*  _shortDescriptionJsonKey;
+    static const char*  _longDescriptionJsonKey;
+    static const char*  _unitsJsonKey;
+    static const char*  _defaultValueJsonKey;
+    static const char*  _minJsonKey;
+    static const char*  _maxJsonKey;
 };
 
 #endif

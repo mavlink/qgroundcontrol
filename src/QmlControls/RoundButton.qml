@@ -9,8 +9,10 @@ Item {
     id: _root
 
     signal          clicked()
-    property alias  buttonImage:        button.source
-    property real   radius:             ScreenTools.defaultFontPixelHeight * 1.5
+    property alias  buttonImage:    button.source
+    property real   radius:         ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.75 : ScreenTools.defaultFontPixelHeight * 1.25
+    property bool   rotateImage:    false
+    property bool   lightBorders:   true
 
     width:  radius * 2
     height: radius * 2
@@ -26,19 +28,39 @@ Item {
         }
     }
 
+    onRotateImageChanged: {
+        if (rotateImage) {
+            imageRotation.running = true
+        } else {
+            imageRotation.running = false
+            button.rotation = 0
+        }
+    }
+
     Rectangle {
         anchors.fill:   parent
         radius:         width / 2
         border.width:   ScreenTools.defaultFontPixelHeight * 0.0625
-        border.color:   "white"
-        color:          checked ? qgcPal.mapButtonHighlight : qgcPal.mapButton
+        border.color:   lightBorders ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
+        color:          checked ? qgcPal.buttonHighlight : qgcPal.button
 
-        Image {
-            id:             button
-            anchors.fill:   parent
-            fillMode:       Image.PreserveAspectFit
-            mipmap:         true
-            smooth:         true
+        QGCColoredImage {
+            id:                 button
+            anchors.fill:       parent
+            sourceSize.height:  parent.height
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            color:              checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+
+            RotationAnimation on rotation {
+                id:             imageRotation
+                loops:          Animation.Infinite
+                from:           0
+                to:             360
+                duration:       500
+                running:        false
+            }
 
             MouseArea {
                 anchors.fill:   parent

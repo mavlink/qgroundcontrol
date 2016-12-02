@@ -29,8 +29,7 @@ ChartPlot::ChartPlot(QWidget *parent):
     nextColorIndex(0),
     symbolWidth(2.0f),
     curveWidth(2.0f),
-    gridWidth(0.8f),
-    zoomerWidth(2.0f)
+    gridWidth(0.8f)
 {
     // Initialize the list of curves.
     curves = QMap<QString, QwtPlotCurve*>();
@@ -39,10 +38,6 @@ ChartPlot::ChartPlot(QWidget *parent):
     grid = new QwtPlotGrid;
     grid->enableXMin(true);
     grid->attach(this);
-
-    // Enable zooming
-    QwtPlotCanvas *c = static_cast<QwtPlotCanvas*>(canvas());
-    zoomer = new ScrollZoomer(c);
 
     colors = QList<QColor>();
 
@@ -100,10 +95,6 @@ void ChartPlot::styleChanged(bool styleIsDark)
     // Configure the rest of the UI colors based on the current theme.
     if (styleIsDark)
     {
-        // Set the coloring of the area selector for zooming.
-        zoomer->setRubberBandPen(QPen(QColor(0xB8, 0xD3, 0xE6), zoomerWidth, Qt::DotLine));
-        zoomer->setTrackerPen(QPen(QColor(0xB8, 0xD3, 0xE6)));
-        
         // Set canvas background
         setCanvasBackground(QColor(0, 0, 0));
         
@@ -113,10 +104,6 @@ void ChartPlot::styleChanged(bool styleIsDark)
     }
     else
     {
-        // Set the coloring of the area selector for zooming.
-        zoomer->setRubberBandPen(QPen(QColor(0x37, 0x9A, 0xC3), zoomerWidth, Qt::DotLine));
-        zoomer->setTrackerPen(QPen(QColor(0x37, 0x9A, 0xC3)));
-        
         // Set canvas background
         setCanvasBackground(QColor(0xFF, 0xFF, 0xFF));
         

@@ -1,28 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
 
 #include "APMParameterMetaData.h"
 #include "QGCApplication.h"
@@ -32,17 +16,15 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QDebug>
+#include <QStack>
 
-QGC_LOGGING_CATEGORY(APMParameterMetaDataLog, "APMParameterMetaDataLog")
-QGC_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog, "APMParameterMetaDataVerboseLog")
+QGC_LOGGING_CATEGORY(APMParameterMetaDataLog,           "APMParameterMetaDataLog")
+QGC_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog,    "APMParameterMetaDataVerboseLog")
 
-bool                                          APMParameterMetaData::_parameterMetaDataLoaded = false;
-QMap<QString, ParameterNametoFactMetaDataMap> APMParameterMetaData::_vehicleTypeToParametersMap;
-
-APMParameterMetaData::APMParameterMetaData(QObject* parent) :
-    QObject(parent)
+APMParameterMetaData::APMParameterMetaData(void)
+    : _parameterMetaDataLoaded(false)
 {
-    _loadParameterFactMetaData();
+
 }
 
 /// Converts a string to a typed QVariant
@@ -74,9 +56,9 @@ QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string,
             convertTo = QVariant::Double;
             break;
     }
-    
+
     *convertOk = var.convert(convertTo);
-    
+
     return var;
 }
 
@@ -91,7 +73,6 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:
         case MAV_TYPE_HELICOPTER:
-        case MAV_TYPE_SUBMARINE:
         case MAV_TYPE_HEXAROTOR:
         case MAV_TYPE_OCTOROTOR:
         case MAV_TYPE_TRICOPTER:
@@ -107,7 +88,10 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
             break;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_SURFACE_BOAT:
-            vehicleName = "ArduRover";
+            vehicleName = "APMrover2";
+            break;
+        case MAV_TYPE_SUBMARINE:
+            vehicleName = "ArduSub";
             break;
         case MAV_TYPE_FLAPPING_WING:
         case MAV_TYPE_KITE:
@@ -127,30 +111,19 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
     return vehicleName;
 }
 
-/// Load Parameter Fact meta data
-///
-/// The meta data comes from firmware parameters.xml file.
-void APMParameterMetaData::_loadParameterFactMetaData()
+void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaDataFile)
 {
     if (_parameterMetaDataLoaded) {
         return;
     }
     _parameterMetaDataLoaded = true;
 
-    QRegExp parameterCategories = QRegExp("ArduCopter|ArduPlane|APMrover2|AntennaTracker");
+    QRegExp parameterCategories = QRegExp("ArduCopter|ArduPlane|APMrover2|ArduSub|AntennaTracker");
     QString currentCategory;
 
-    QString parameterFilename;
+    qCDebug(APMParameterMetaDataLog) << "Loading parameter meta data:" << metaDataFile;
 
-    // Fixme:: always picking up the bundled xml, we would like to update it from web
-    // just not sure right now as the xml is in bad shape.
-    if (parameterFilename.isEmpty() || !QFile(parameterFilename).exists()) {
-        parameterFilename = ":/FirmwarePlugin/APM/apm.pdef.xml";
-    }
-
-    qCDebug(APMParameterMetaDataLog) << "Loading parameter meta data:" << parameterFilename;
-
-    QFile xmlFile(parameterFilename);
+    QFile xmlFile(metaDataFile);
     Q_ASSERT(xmlFile.exists());
 
     bool success = xmlFile.open(QIODevice::ReadOnly);
@@ -246,7 +219,7 @@ void APMParameterMetaData::_loadParameterFactMetaData()
                 group = group.remove(QRegExp("[0-9]*$")); // remove any numbers from the end
 
                 QString shortDescription = xml.attributes().value("humanName").toString();
-                QString longDescription = xml.attributes().value("docmentation").toString();
+                QString longDescription = xml.attributes().value("documentation").toString();
                 QString userLevel = xml.attributes().value("user").toString();
 
                 qCDebug(APMParameterMetaDataVerboseLog) << "Found parameter name:" << name
@@ -339,9 +312,10 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
     // as long as param doens't end
     while (!(elementName == "param" && xml.isEndElement())) {
         if (elementName.isEmpty()) {
-            // skip empty elements. Somehow I am getting lot of these. Dont know what to do with them.
+            // skip empty elements. Somehow I am getting lot of these. Don't know what to do with them.
         } else if (elementName == "field") {
             QString attributeName = xml.attributes().value("name").toString();
+
             if ( attributeName == "Range") {
                 QString range = xml.readElementText().trimmed();
                 QStringList rangeList = range.split(' ');
@@ -402,6 +376,11 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
                 if (parseError) {
                     rawMetaData->bitmask.clear();
                 }
+            } else if (attributeName == "RebootRequired") {
+                QString strValue = xml.readElementText().trimmed();
+                if (strValue.compare("true", Qt::CaseInsensitive) == 0) {
+                    rawMetaData->rebootRequired = true;
+                }
             }
         } else if (elementName == "values") {
             // doing nothing individual value will follow anyway. May be used for sanity checking.
@@ -421,11 +400,8 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
     return true;
 }
 
-/// Override from FactLoad which connects the meta data to the fact
 void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 {
-    _loadParameterFactMetaData();
-
     const QString mavTypeString = mavTypeToString(vehicleType);
     APMFactMetaDataRaw* rawMetaData = NULL;
 
@@ -447,6 +423,7 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 
     metaData->setName(rawMetaData->name);
     metaData->setGroup(rawMetaData->group);
+    metaData->setRebootRequired(rawMetaData->rebootRequired);
 
     if (!rawMetaData->shortDescription.isEmpty()) {
         metaData->setShortDescription(rawMetaData->shortDescription);
@@ -580,6 +557,29 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
         }
     }
 
-    // FixMe:: not handling increment size as their is no place for it in FactMetaData and no ui
+    if (!rawMetaData->incrementSize.isEmpty()) {
+        double  increment;
+        bool    ok;
+        increment = rawMetaData->incrementSize.toDouble(&ok);
+        if (ok) {
+            metaData->setIncrement(increment);
+        } else {
+            qCDebug(APMParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << rawMetaData->incrementSize;
+        }
+    }
+
     fact->setMetaData(metaData);
+}
+
+void APMParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
+{
+    majorVersion = -1;
+    minorVersion = -1;
+
+    // Meta data version is hacked in for now based on file name
+    QRegExp regExp(".*\\.(\\d)\\.(\\d)\\.xml$");
+    if (regExp.exactMatch(metaDataFile) && regExp.captureCount() == 2) {
+        majorVersion = regExp.cap(2).toInt();
+        minorVersion = 0;
+    }
 }

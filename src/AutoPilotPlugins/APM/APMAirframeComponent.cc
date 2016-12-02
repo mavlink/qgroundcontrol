@@ -1,34 +1,18 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
 #include "APMAirframeComponent.h"
 #include "ArduCopterFirmwarePlugin.h"
+#include "ParameterManager.h"
 
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : APMComponent(vehicle, autopilot, parent)
+    : VehicleComponent(vehicle, autopilot, parent)
     , _requiresFrameSetup(false)
     , _name("Airframe")
 {
@@ -48,13 +32,13 @@ QString APMAirframeComponent::name(void) const
 
 QString APMAirframeComponent::description(void) const
 {
-    return tr("The Airframe Component is used to select the airframe which matches your vehicle. "
-              "This will in turn set up the various tuning values for flight paramters.");
+    return tr("Airframe Setup is used to select the airframe which matches your vehicle. "
+              "You can also the load default parameter values associated with known vehicle types.");
 }
 
 QString APMAirframeComponent::iconResource(void) const
 {
-    return "/qmlimages/AirframeComponentIcon.png";
+    return QStringLiteral("/qmlimages/AirframeComponentIcon.png");
 }
 
 bool APMAirframeComponent::requiresSetup(void) const
@@ -65,7 +49,7 @@ bool APMAirframeComponent::requiresSetup(void) const
 bool APMAirframeComponent::setupComplete(void) const
 {
     if (_requiresFrameSetup) {
-        return _autopilot->getParameterFact(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() >= 0;
+        return _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("FRAME"))->rawValue().toInt() >= 0;
     } else {
         return true;
     }
@@ -76,7 +60,7 @@ QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
     QStringList list;
 
     if (_requiresFrameSetup) {
-        list << "FRAME";
+        list << QStringLiteral("FRAME");
     }
 
     return list;
@@ -85,7 +69,7 @@ QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
 QUrl APMAirframeComponent::setupSource(void) const
 {
     if (_requiresFrameSetup) {
-        return QUrl::fromUserInput("qrc:/qml/APMAirframeComponent.qml");
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponent.qml"));
     } else {
         return QUrl();
     }
@@ -94,7 +78,7 @@ QUrl APMAirframeComponent::setupSource(void) const
 QUrl APMAirframeComponent::summaryQmlSource(void) const
 {
     if (_requiresFrameSetup) {
-        return QUrl::fromUserInput("qrc:/qml/APMAirframeComponentSummary.qml");
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponentSummary.qml"));
     } else {
         return QUrl();
     }

@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -89,19 +76,14 @@ QString BluetoothLink::getName() const
     return _config->name();
 }
 
-void BluetoothLink::writeBytes(const char* data, qint64 size)
-{
-    _sendBytes(data, size);
-}
-
-void BluetoothLink::_sendBytes(const char* data, qint64 size)
+void BluetoothLink::_writeBytes(const QByteArray bytes)
 {
     if(_targetSocket)
     {
         if(_targetSocket->isWritable())
         {
-            if(_targetSocket->write(data, size) > 0) {
-                _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
+            if(_targetSocket->write(bytes) > 0) {
+                _logOutputDataRate(bytes.size(), QDateTime::currentMSecsSinceEpoch());
             }
             else
                 qWarning() << "Bluetooth write error";
@@ -158,10 +140,12 @@ bool BluetoothLink::_hardwareConnect()
         _discoveryAgent = NULL;
     }
     _discoveryAgent = new QBluetoothServiceDiscoveryAgent(this);
-    QObject::connect(_discoveryAgent, SIGNAL(serviceDiscovered(QBluetoothServiceInfo)),     this, SLOT(serviceDiscovered(QBluetoothServiceInfo)));
-    QObject::connect(_discoveryAgent, SIGNAL(finished()),                                   this, SLOT(discoveryFinished()));
-    QObject::connect(_discoveryAgent, SIGNAL(canceled()),                                   this, SLOT(discoveryFinished()));
-    QObject::connect(_discoveryAgent, SIGNAL(error(QBluetoothServiceDiscoveryAgent::Error)),this, SLOT(discoveryError(QBluetoothServiceDiscoveryAgent::Error)));
+    QObject::connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::serviceDiscovered, this, &BluetoothLink::serviceDiscovered);
+    QObject::connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::finished, this, &BluetoothLink::discoveryFinished);
+    QObject::connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::canceled, this, &BluetoothLink::discoveryFinished);
+
+    QObject::connect(_discoveryAgent, static_cast<void (QBluetoothServiceDiscoveryAgent::*)(QBluetoothSocket::SocketError)>(&QBluetoothServiceDiscoveryAgent::error),
+            this, &BluetoothLink::discoveryError);
     _shutDown = false;
     _discoveryAgent->start();
 #else
@@ -179,10 +163,13 @@ void BluetoothLink::_createSocket()
         _targetSocket = NULL;
     }
     _targetSocket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
-    QObject::connect(_targetSocket, SIGNAL(connected()), this, SLOT(deviceConnected()));
-    QObject::connect(_targetSocket, SIGNAL(error(QBluetoothSocket::SocketError)), this, SLOT(deviceError(QBluetoothSocket::SocketError)));
-    QObject::connect(_targetSocket, SIGNAL(readyRead()), this, SLOT(readBytes()));
-    QObject::connect(_targetSocket, SIGNAL(disconnected()), this, SLOT(deviceDisconnected()));
+    QObject::connect(_targetSocket, &QBluetoothSocket::connected, this, &BluetoothLink::deviceConnected);
+
+    QObject::connect(_targetSocket, &QBluetoothSocket::readyRead, this, &BluetoothLink::readBytes);
+    QObject::connect(_targetSocket, &QBluetoothSocket::disconnected, this, &BluetoothLink::deviceDisconnected);
+
+    QObject::connect(_targetSocket, static_cast<void (QBluetoothSocket::*)(QBluetoothSocket::SocketError)>(&QBluetoothSocket::error),
+            this, &BluetoothLink::deviceError);
 }
 
 #ifdef __ios__

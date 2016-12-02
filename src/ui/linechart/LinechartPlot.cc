@@ -78,10 +78,10 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval):
 
     // Start QTimer for plot update
     updateTimer = new QTimer(this);
-    connect(updateTimer, SIGNAL(timeout()), this, SLOT(paintRealtime()));
+    connect(updateTimer, &QTimer::timeout, this, &LinechartPlot::paintRealtime);
     //updateTimer->start(DEFAULT_REFRESH_RATE);
 
-    connect(&timeoutTimer, SIGNAL(timeout()), this, SLOT(removeTimedOutCurves()));
+    connect(&timeoutTimer, &QTimer::timeout, this, &LinechartPlot::removeTimedOutCurves);
     //timeoutTimer.start(5000);
 }
 
@@ -679,15 +679,7 @@ void LinechartPlot::paintRealtime()
 
         windowLock.unlock();
 
-        // Only set current view as zoombase if zoomer is not active
-        // else we could not zoom out any more
-
-        if(zoomer->zoomStack().size() < 2) {
-            zoomer->setZoomBase(true);
-        } else {
-            replot();
-        }
-
+        replot();
 
         /*
         QMap<QString, QwtPlotCurve*>::iterator i;

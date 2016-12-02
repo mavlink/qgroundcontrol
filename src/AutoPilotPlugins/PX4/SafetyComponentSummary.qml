@@ -17,36 +17,43 @@ FactPanel {
     property Fact returnAltFact:    controller.getParameterFact(-1, "RTL_RETURN_ALT")
     property Fact descendAltFact:   controller.getParameterFact(-1, "RTL_DESCEND_ALT")
     property Fact landDelayFact:    controller.getParameterFact(-1, "RTL_LAND_DELAY")
-    property Fact commDLLossFact:   controller.getParameterFact(-1, "COM_DL_LOSS_EN")
     property Fact commRCLossFact:   controller.getParameterFact(-1, "COM_RC_LOSS_T")
+    property Fact lowBattAction:    controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
+    property Fact rcLossAction:     controller.getParameterFact(-1, "NAV_RCL_ACT")
+    property Fact dataLossAction:   controller.getParameterFact(-1, "NAV_DLL_ACT")
 
     Column {
         anchors.fill:       parent
-        anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: "RTL min alt:"
-            valueText: returnAltFact.valueString
+            labelText: qsTr("RTL min alt:")
+            valueText: returnAltFact ? returnAltFact.valueString + " " + returnAltFact.units : ""
         }
 
         VehicleSummaryRow {
-            labelText: "RTL home alt:"
-            valueText: descendAltFact.valueString
+            labelText: qsTr("RTL home alt:")
+            valueText: descendAltFact ? descendAltFact.valueString + " " + descendAltFact.units : ""
         }
 
         VehicleSummaryRow {
-            labelText: "RTL loiter delay:"
-            valueText: landDelayFact.value < 0 ? "Disabled" : landDelayFact.valueString
+            labelText: qsTr("RC loss RTL:")
+            valueText: commRCLossFact ? commRCLossFact.valueString + " " + commRCLossFact.units : ""
         }
 
         VehicleSummaryRow {
-            labelText: "Telemetry loss RTL:"
-            valueText: commDLLossFact.value != -1 ? "Disabled" : commDLLossFact.valueString
+            labelText: qsTr("RC loss action:")
+            valueText: rcLossAction ? rcLossAction.enumStringValue : ""
         }
 
         VehicleSummaryRow {
-            labelText: "RC loss RTL (seconds):"
-            valueText: commRCLossFact.valueString
+            labelText: qsTr("Link loss action:")
+            valueText: dataLossAction ? dataLossAction.enumStringValue : ""
         }
+
+        VehicleSummaryRow {
+            labelText: qsTr("Low battery action:")
+            valueText: lowBattAction ? lowBattAction.enumStringValue : ""
+        }
+
     }
 }

@@ -1,58 +1,82 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 import QtQuick          2.5
 import QtQuick.Controls 1.3
+import QtQuick.Layouts  1.2
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
+import QGroundControl               1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 
 Rectangle {
+    readonly property var       _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+
+    property Fact   _offlineEditingVehicleType:     QGroundControl.offlineEditingVehicleType
+    property Fact   _offlineEditingCruiseSpeed:     QGroundControl.offlineEditingCruiseSpeed
+    property Fact   _offlineEditingHoverSpeed:      QGroundControl.offlineEditingHoverSpeed
+
     property var    currentMissionItem          ///< Mission item to display status for
     property var    missionItems                ///< List of all available mission items
     property real   expandedWidth               ///< Width of control when expanded
-    property bool   homePositionValid:  false   /// true: home position in missionItems[0] is valid
+    property real   missionDistance
+    property real   missionMaxTelemetry
+    property real   cruiseDistance
+    property real   hoverDistance
 
     width:      _expanded ? expandedWidth : _collapsedWidth
-    height:     expandLabel.y + expandLabel.height + _margins
-    radius:     ScreenTools.defaultFontPixelWidth
+    height:     Math.max(valueGrid.height, valueMissionGrid.height) + (_margins * 2)
+    radius:     ScreenTools.defaultFontPixelWidth * 0.5
     color:      qgcPal.window
     opacity:    0.80
     clip:       true
 
     readonly property real margins: ScreenTools.defaultFontPixelWidth
 
-    property real   _collapsedWidth:    distanceLabel.width + (margins * 2)
+    property real   _collapsedWidth:    valueGrid.width + (margins * 2)
     property bool   _expanded:          true
-    property real   _distance:          _currentMissionItem ? _currentMissionItem.distance : -1
-    property real   _altDifference:     _currentMissionItem ? _currentMissionItem.altDifference : -1
-    property real   _azimuth:           _currentMissionItem ? _currentMissionItem.azimuth : -1
-    property real   _isHomePosition:    _currentMissionItem ? _currentMissionItem.homePosition : false
-    property bool   _statusValid:       _distance != -1 && ((_isHomePosition && homePositionValid) || !_isHomePosition)
-    property string _distanceText:      _statusValid ? Math.round(_distance) + " meters" : ""
-    property string _altText:           _statusValid ? Math.round(_altDifference) + " meters" : ""
-    property string _azimuthText:       _statusValid ? Math.round(_azimuth) : ""
+
+    property real   _distance:          _statusValid ? _currentMissionItem.distance : 0
+    property real   _altDifference:     _statusValid ? _currentMissionItem.altDifference : 0
+    property real   _gradient:          _statusValid && _currentMissionItem.distance > 0 ? Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) : 0
+    property real   _gradientPercent:   isNaN(_gradient) ? 0 : _gradient * 100
+    property real   _azimuth:           _statusValid ? _currentMissionItem.azimuth : -1
+    property real   _missionDistance:   _missionValid ? missionDistance : 0
+    property real   _missionMaxTelemetry: _missionValid ? missionMaxTelemetry : 0
+    property real   _missionTime:       _missionValid && _missionSpeed > 0 ?  (_isVTOL ? _hoverTime + _cruiseTime : _missionDistance / _missionSpeed) : 0
+    property real   _hoverDistance:    _missionValid ? hoverDistance : 0
+    property real   _cruiseDistance:    _missionValid ? cruiseDistance : 0
+    property real   _hoverTime:         _missionValid && _offlineEditingHoverSpeed.value > 0 ? _hoverDistance / _offlineEditingHoverSpeed.value : 0
+    property real   _cruiseTime:        _missionValid && _offlineEditingCruiseSpeed.value > 0 ? _cruiseDistance / _offlineEditingCruiseSpeed.value : 0
+
+    property bool   _statusValid:       currentMissionItem != undefined
+    property bool   _vehicleValid:      _activeVehicle != undefined
+    property bool   _missionValid:      missionItems != undefined
+    property bool   _currentSurvey:     _statusValid ? _currentMissionItem.commandName == "Survey" : false
+    property bool   _isVTOL:            _vehicleValid ? _activeVehicle.vtol : _offlineEditingVehicleType.enumStringValue == "VTOL" //hardcoded
+    property real   _missionSpeed:      _offlineEditingVehicleType.enumStringValue == "Fixedwing" ? _offlineEditingCruiseSpeed.value : _offlineEditingHoverSpeed.value
+
+    property string _distanceText:      _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _altText:           _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _gradientText:      _statusValid ? _gradientPercent.toFixed(0) + "%" : " "
+    property string _azimuthText:       _statusValid ? Math.round(_azimuth) : " "
+    property string _missionDistanceText: _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_missionDistance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _missionTimeText:     _missionValid ? Number(_missionTime / 60).toFixed(1) + " min" : " "
+    property string _missionMaxTelemetryText:  _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _hoverDistanceText: _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_hoverDistance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _cruiseDistanceText: _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_cruiseDistance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
+    property string _hoverTimeText:     _missionValid ? _hoverTime.toFixed(0) + "s" : " "
+    property string _cruiseTimeText:    _missionValid ? _cruiseTime.toFixed(0) + "s" : " "
 
     readonly property real _margins:    ScreenTools.defaultFontPixelWidth
 
@@ -61,80 +85,122 @@ Rectangle {
         onClicked:      _expanded = !_expanded
     }
 
-    QGCLabel {
-        id:                 distanceLabel
+    Row {
+        anchors.fill:       parent
         anchors.margins:    _margins
-        anchors.left:       parent.left
-        anchors.top:        parent.top
-        text:               "Distance: " + _distanceText
-    }
+        spacing:            _margins
 
-    QGCLabel {
-        id:                 altLabel
-        anchors.left:       distanceLabel.left
-        anchors.top:        distanceLabel.bottom
-        text:               "Alt diff: " + _altText
-    }
+        GridLayout {
+            id:                     valueGrid
+            columns:                2
+            rowSpacing:             0
+            columnSpacing:          _margins
+            anchors.verticalCenter: parent.verticalCenter
 
-    QGCLabel {
-        id:                 azimuthLabel
-        anchors.left:       altLabel.left
-        anchors.top:        altLabel.bottom
-        text:               "Azimuth: " + _azimuthText
-    }
+            QGCLabel { text: qsTr("Selected waypoint"); Layout.columnSpan: 2 }
 
-    QGCLabel {
-        id:                 expandLabel
-        anchors.left:       azimuthLabel.left
-        anchors.top:        azimuthLabel.bottom
-        text:               _expanded ? "<<" : ">>"
-    }
+            QGCLabel { text: qsTr("Distance:") }
+            QGCLabel { text: _distanceText }
 
-    Flickable {
-        anchors.leftMargin:     _margins
-        anchors.rightMargin:    _margins
-        anchors.left:           distanceLabel.right
-        anchors.right:          parent.right
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
+            QGCLabel { text: qsTr("Alt diff:") }
+            QGCLabel { text: _altText }
 
-        Row {
-            id:             graphRow
-            anchors.top:    parent.top
-            anchors.bottom: parent.bottom
-            spacing:        ScreenTools.smallFontPixelWidth
+            QGCLabel { text: qsTr("Gradient:") }
+            QGCLabel { text: _gradientText }
 
-            Repeater {
-                model: missionItems
+            QGCLabel { text: qsTr("Azimuth:") }
+            QGCLabel { text: _azimuthText }
+        }
 
-                Item {
-                    height: graphRow.height
-                    width:  ScreenTools.smallFontPixelWidth * 2
+        QGCListView {
+            id:                     statusListView
+            model:                  missionItems
+            highlightMoveDuration:  250
+            anchors.leftMargin:     _margins
+            anchors.rightMargin:    _margins
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            orientation:            ListView.Horizontal
+            spacing:                0
+            visible:                _expanded
+            width:                  parent.width - valueGrid.width - valueMissionGrid.width - (_margins * 2)
+            clip:                   true
+            currentIndex:           _currentMissionIndex
 
-                    property real availableHeight: height - ScreenTools.smallFontPixelHeight - indicator.height
+            delegate: Item {
+                height:     statusListView.height
+                width:      display ? (indicator.width + spacing)  : 0
+                visible:    display
 
-                    // If home position is not valid we are graphing relative based on a home alt of 0. Because of this
-                    // we cannot graph absolute altitudes since we have no basis for comparison against the relative values.
-                    property bool graphAbsolute:    homePositionValid
+                property real availableHeight:  height - indicator.height
+                property bool graphAbsolute:    true
+                readonly property bool display: object.specifiesCoordinate && !object.isStandaloneCoordinate
+                readonly property real spacing: ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
 
-                    MissionItemIndexLabel {
-                        id:                         indicator
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        y:                          availableHeight - (availableHeight * object.altPercent)
-                        small:                      true
-                        isCurrentItem:              object.isCurrentItem
-                        label:                      object.homePosition ? "H" : object.sequenceNumber
-                        visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
-                    }
-
-                    QGCLabel {
-                        anchors.bottom:             parent.bottom
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        font.pixelSize:             ScreenTools.smallFontPixelSize
-                        text:                       (object.relativeAltitude ? "" : "=") + object.coordinate.altitude
-                    }
+                MissionItemIndexLabel {
+                    id:                         indicator
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    y:                          availableHeight - (availableHeight * object.altPercent)
+                    small:                      true
+                    checked:                    object.isCurrentItem
+                    label:                      object.abbreviation
+                    visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
                 }
+            }
+        }
 
+        Grid {
+            id:                 valueMissionGrid
+            columns:            2
+            columnSpacing:      _margins
+            anchors.verticalCenter: parent.verticalCenter
+
+            QGCLabel { text: qsTr("Total mission") }
+            QGCLabel { text: qsTr(" ") }
+
+            QGCLabel { text: qsTr("Distance:") }
+            QGCLabel { text: _missionDistanceText }
+
+            QGCLabel { text: qsTr("Time:") }
+            QGCLabel { text: _missionTimeText }
+
+            QGCLabel { text: qsTr("Max telem dist:") }
+            QGCLabel { text: _missionMaxTelemetryText }
+
+            QGCLabel {
+                text: qsTr("Hover distance:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _hoverDistanceText
+                visible: _isVTOL
+            }
+
+            QGCLabel {
+                text: qsTr("Cruise distance:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _cruiseDistanceText
+                visible: _isVTOL
+            }
+
+            QGCLabel {
+                text: qsTr("Hover time:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _hoverTimeText
+                visible: _isVTOL
+            }
+
+            QGCLabel {
+                text: qsTr("Cruise time:")
+                visible: _isVTOL
+            }
+            QGCLabel {
+                text: _cruiseTimeText
+                visible: _isVTOL
             }
         }
     }

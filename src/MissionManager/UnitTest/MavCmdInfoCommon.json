@@ -1,0 +1,222 @@
+{
+    "comment":  "Any Firmware, Any Vehicle (unit test)",
+
+    "version": 1,
+
+    "mavCmdInfo": [
+        {
+            "comment":              "Check defaults",
+            "id":                   1,
+            "rawName":              "UNITTEST_1"
+        },
+        {
+            "comment":              "Check param defaults",
+            "id":                   2,
+            "rawName":              "UNITTEST_2",
+            "param1": {
+                "label":            "param1"
+            }
+        },
+        {
+            "comment":              "Check all values",
+            "id":                   3,
+            "rawName":              "UNITTEST_3",
+            "friendlyName":         "Unit Test 3",
+            "description":          "description",
+            "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
+            "friendlyEdit":         true,
+            "category":             "category",
+            "param1": {
+                "label":            "param1",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param2": {
+                "label":            "param2",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param3": {
+                "label":            "param3",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param4": {
+                "label":            "param4",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param5": {
+                "label":            "param5",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param6": {
+                "label":            "param6",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param7": {
+                "label":            "param7",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            }
+        },
+        {
+            "comment":              "Full values set for override testing",
+            "id":                   4,
+            "rawName":              "UNITTEST_4",
+            "friendlyName":         "Unit Test 4",
+            "description":          "description",
+            "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
+            "friendlyEdit":         true,
+            "category":             "category",
+            "param1": {
+                "label":            "param1",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param2": {
+                "label":            "param2",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param3": {
+                "label":            "param3",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param4": {
+                "label":            "param4",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param5": {
+                "label":            "param5",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param6": {
+                "label":            "param6",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param7": {
+                "label":            "param7",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            }
+        },
+        {
+            "comment":              "Full values set for override testing",
+            "id":                   5,
+            "rawName":              "UNITTEST_5",
+            "friendlyName":         "Unit Test 5",
+            "description":          "description",
+            "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
+            "friendlyEdit":         true,
+            "category":             "category",
+            "param1": {
+                "label":            "param1",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param2": {
+                "label":            "param2",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param3": {
+                "label":            "param3",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param4": {
+                "label":            "param4",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param5": {
+                "label":            "param5",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param6": {
+                "label":            "param6",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            },
+            "param7": {
+                "label":            "param7",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "units"
+            }
+        }
+    ]
+}

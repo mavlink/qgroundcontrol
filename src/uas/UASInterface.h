@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -132,7 +119,8 @@ public:
         StartCalibrationLevel,
         StartCalibrationEsc,
         StartCalibrationCopyTrims,
-        StartCalibrationUavcanEsc
+        StartCalibrationUavcanEsc,
+        StartCalibrationCompassMot,
     };
 
     enum StartBusConfigType {
@@ -204,7 +192,7 @@ signals:
     /**
      * @brief Update the error count of a device
      *
-     * The error count indicates how many errors occured during the use of a device.
+     * The error count indicates how many errors occurred during the use of a device.
      * Usually a random error from time to time is acceptable, e.g. through electromagnetic
      * interferences on device lines like I2C and SPI. A constantly and rapidly increasing
      * error count however can help to identify broken cables or misbehaving drivers.
@@ -212,7 +200,7 @@ signals:
      * @param uasid System ID
      * @param component Name of the component, e.g. "IMU"
      * @param device Name of the device, e.g. "SPI0" or "I2C1"
-     * @param count Errors occured since system startup
+     * @param count Errors occurred since system startup
      */
     void errCountChanged(int uasid, QString component, QString device, int count);
 
@@ -253,10 +241,8 @@ signals:
      * @param seconds estimated remaining flight time in seconds
      */
     void batteryChanged(UASInterface* uas, double voltage, double current, double percent, int seconds);
-    void batteryConsumedChanged(UASInterface* uas, double current_consumed);
     void statusChanged(UASInterface* uas, QString status);
     void thrustChanged(UASInterface*, double thrust);
-    void heartbeat(UASInterface* uas);
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
     void attitudeChanged(UASInterface*, int component, double roll, double pitch, double yaw, quint64 usec);
     void attitudeRotationRatesChanged(int uas, double rollrate, double pitchrate, double yawrate, quint64 usec);
@@ -265,8 +251,8 @@ signals:
     void positionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     /** @brief A user (or an autonomous mission or obstacle avoidance planner) requested to set a new setpoint */
     void userPositionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired);
-    void globalPositionChanged(UASInterface*, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
-    void altitudeChanged(UASInterface*, double altitudeAMSL, double altitudeWGS84, double altitudeRelative, double climbRate, quint64 usec);
+    void globalPositionChanged(UASInterface*, double lat, double lon, double altAMSL, quint64 usec);
+    void altitudeChanged(UASInterface*, double altitudeAMSL, double altitudeRelative, double climbRate, quint64 usec);
     /** @brief Update the status of one satellite used for localization */
     void gpsSatelliteStatusChanged(int uasid, int satid, float azimuth, float direction, float snr, bool used);
 
@@ -313,24 +299,14 @@ signals:
     void localizationChanged(UASInterface* uas, int fix);
 
     // ERROR AND STATUS SIGNALS
-    /** @brief Heartbeat timed out or was regained */
-    void heartbeatTimeout(bool timeout, unsigned int ms);
     /** @brief Name of system changed */
     void nameChanged(QString newName);
     /** @brief Core specifications have changed */
     void systemSpecsChanged(int uasId);
 
-    // HOME POSITION / ORIGIN CHANGES
-    void homePositionChanged(int uas, double lat, double lon, double alt);
-
     // Log Download Signals
     void logEntry   (UASInterface* uas, uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
     void logData    (UASInterface* uas, uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data);
-
-protected:
-
-    // TIMEOUT CONSTANTS
-    static const unsigned int timeoutIntervalHeartbeat = 3500 * 1000; ///< Heartbeat timeout is 3.5 seconds
 
 };
 

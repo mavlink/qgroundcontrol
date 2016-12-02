@@ -1,31 +1,17 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Pritam Ghanghas <pritam.ghanghas@gmail.com>
 
 #include "ArduPlaneFirmwarePlugin.h"
-#include "Generic/GenericFirmwarePlugin.h"
 
 APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable)
     : APMCustomMode(mode, settable)
@@ -45,6 +31,11 @@ APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable)
     enumToString.insert(LOITER,         "Loiter");
     enumToString.insert(GUIDED,         "Guided");
     enumToString.insert(INITIALIZING,   "Initializing");
+    enumToString.insert(QSTABILIZE,     "QuadPlane Stabilize");
+    enumToString.insert(QHOVER,         "QuadPlane Hover");
+    enumToString.insert(QLOITER,        "QuadPlane Loiter");
+    enumToString.insert(QLAND,          "QuadPlane Land");
+    enumToString.insert(QRTL,           "QuadPlane RTL");
 
     setEnumToStringMapping(enumToString);
 }
@@ -66,5 +57,10 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
     supportedFlightModes << APMPlaneMode(APMPlaneMode::LOITER          ,true);
     supportedFlightModes << APMPlaneMode(APMPlaneMode::GUIDED          ,true);
     supportedFlightModes << APMPlaneMode(APMPlaneMode::INITIALIZING    ,false);
+    supportedFlightModes << APMPlaneMode(APMPlaneMode::QSTABILIZE      ,true);
+    supportedFlightModes << APMPlaneMode(APMPlaneMode::QHOVER          ,true);
+    supportedFlightModes << APMPlaneMode(APMPlaneMode::QLOITER         ,true);
+    supportedFlightModes << APMPlaneMode(APMPlaneMode::QLAND           ,true);
+    supportedFlightModes << APMPlaneMode(APMPlaneMode::QRTL            ,true);
     setSupportedModes(supportedFlightModes);
 }

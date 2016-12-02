@@ -1,6 +1,10 @@
 #!/bin/sh
-export LD_LIBRARY_PATH=`pwd`/libs:$LD_LIBRARY_PATH
-export QML_IMPORT_PATH=`pwd`/libs/qml
-export QML2_IMPORT_PATH=`pwd`/libs/qml
-export QT_QPA_PLATFORM_PLUGIN_PATH=`pwd`/libs/platforms
-./qgroundcontrol "$@"
+HERE="$(dirname "$(readlink -f "${0}")")"
+export LD_LIBRARY_PATH="${HERE}/usr/lib/x86_64-linux-gnu":"${HERE}/Qt/libs":$LD_LIBRARY_PATH
+export QML2_IMPORT_PATH="${HERE}/Qt/qml"
+export QT_PLUGIN_PATH="${HERE}/Qt/plugins"
+
+# hack until icon issue with AppImage is resolved
+mkdir -p ~/.icons && cp ${HERE}/qgroundcontrol.png ~/.icons
+
+"${HERE}/QGroundControl" "$@"

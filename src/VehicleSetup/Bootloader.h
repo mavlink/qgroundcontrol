@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -74,12 +61,15 @@ public:
     bool reboot(QextSerialPort* port);
     
     // Supported bootloader board ids
-    static const int boardIDPX4FMUV1 = 5;   ///< PX4 V1 board
-    static const int boardIDPX4FMUV2 = 9;   ///< PX4 V2 board
-    static const int boardIDPX4FMUV4 = 11;   ///< PX4 V4 board
-    static const int boardIDPX4Flow = 6;    ///< PX4 Flow board
-    static const int boardIDAeroCore = 98;  ///< Gumstix AeroCore board
-    static const int boardID3DRRadio = 78;  ///< 3DR Radio
+    static const int boardIDPX4FMUV1 = 5;   ///< PX4 V1 board, as from USB PID
+    static const int boardIDPX4FMUV2 = 9;   ///< PX4 V2 board, as from USB PID
+    static const int boardIDPX4FMUV4 = 11;   ///< PX4 V4 board, as from USB PID
+    static const int boardIDPX4Flow = 6;    ///< PX4 Flow board, as from USB PID
+    static const int boardIDAeroCore = 98;  ///< Gumstix AeroCore board, as from USB PID
+    static const int boardID3DRRadio = 78;  ///< 3DR Radio. This is an arbitrary value unrelated to the PID
+    static const int boardIDMINDPXFMUV2 = 88;  ///< MindPX V2 board, as from USB PID
+    static const int boardIDTAPV1 = 64;     ///< TAP V1 board, as from USB PID
+    static const int boardIDASCV1 = 65;     ///< ASC V1 board, as from USB PID
     
 signals:
     /// @brief Signals progress indicator for long running bootloader utility routines
@@ -134,8 +124,8 @@ private:
         INFO_BOARD_REV		=   3,    ///< board revision
         INFO_FLASH_SIZE		=   4,    ///< max firmware size in bytes
         
-        PROG_MULTI_MAX		=   64,   ///< write size for PROTO_PROG_MULTI, must be multiple of 4
-        READ_MULTI_MAX		=   255   ///< read size for PROTO_READ_MULTI, must be multiple of 4
+        PROG_MULTI_MAX		=   64,     ///< write size for PROTO_PROG_MULTI, must be multiple of 4
+        READ_MULTI_MAX		=   0x28    ///< read size for PROTO_READ_MULTI, must be multiple of 4. Sik Radio max size is 0x28
     };
     
     uint32_t    _boardID;           ///< board id for currently connected board
@@ -150,7 +140,7 @@ private:
     static const int _eraseTimeout = 20000;     ///< Msecs to wait for response from erase command
     static const int _rebootTimeout = 10000;    ///< Msecs to wait for reboot command to cause serial port to disconnect
     static const int _verifyTimeout = 5000;     ///< Msecs to wait for response to PROTO_GET_CRC command
-    static const int _readTimout = 2000;        ///< Msecs to wait for read bytes to become avilable
+    static const int _readTimout = 2000;        ///< Msecs to wait for read bytes to become available
     static const int _responseTimeout = 2000;   ///< Msecs to wait for command response bytes
 };
 

@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -34,7 +21,7 @@ QList<QGCPalette*>   QGCPalette::_paletteObjects;
 QGCPalette::Theme QGCPalette::_theme = QGCPalette::Dark;
 
 QColor QGCPalette::_window[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#f9f8f4"), QColor("#f9f8f4") },
+    { QColor("#ffffff"), QColor("#ffffff") },
     { QColor(0x22, 0x22, 0x22), QColor(0x22, 0x22, 0x22) }
 };
 
@@ -59,7 +46,7 @@ QColor QGCPalette::_warningText[QGCPalette::_cThemes][QGCPalette::_cColorGroups]
 };
 
 QColor QGCPalette::_button[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#ffffff"), QColor("#ffffff") },
+    { QColor("#ffffff"),  QColor("#ffffff") },
     { QColor(0x58, 0x58, 0x58), QColor(98, 98, 100) },
 };
 
@@ -69,7 +56,7 @@ QColor QGCPalette::_buttonText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] 
 };
 
 QColor QGCPalette::_buttonHighlight[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#e4e4e4"), QColor("#91d1e4") },
+    { QColor("#e4e4e4"), QColor("#33b5e5") },
     { QColor(0x58, 0x58, 0x58), QColor(237, 235, 51) },
 };
 
@@ -106,6 +93,27 @@ QColor QGCPalette::_mapButton[QGCPalette::_cThemes][QGCPalette::_cColorGroups] =
 QColor QGCPalette::_mapButtonHighlight[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
     { QColor(0x58, 0x58, 0x58), QColor(190, 120, 28) },
     { QColor(0x58, 0x58, 0x58), QColor(190, 120, 28) },
+};
+
+// Map widget colors are not affecting by theming
+QColor QGCPalette::_mapWidgetBorderLight[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(255, 255, 255), QColor(255, 255, 255) },
+    { QColor(255, 255, 255), QColor(255, 255, 255) },
+};
+
+QColor QGCPalette::_mapWidgetBorderDark[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0, 0, 0), QColor(0, 0, 0) },
+    { QColor(0, 0, 0), QColor(0, 0, 0) },
+};
+
+QColor QGCPalette::_brandingPurple[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#4A2C6D"), QColor("#4A2C6D") },
+    { QColor("#4A2C6D"), QColor("#4A2C6D") },
+};
+
+QColor QGCPalette::_brandingBlue[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#48D6FF"), QColor("#48D6FF") },
+    { QColor("#48D6FF"), QColor("#48D6FF") },
 };
 
 QGCPalette::QGCPalette(QObject* parent) :

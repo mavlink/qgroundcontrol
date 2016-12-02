@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 #include "JoystickConfigController.h"
 #include "JoystickManager.h"
@@ -37,7 +24,7 @@ const int JoystickConfigController::_calDefaultMinValue =   -32768;     ///< Def
 const int JoystickConfigController::_calDefaultMaxValue =   32767;      ///< Default value for Max if not set
 const int JoystickConfigController::_calRoughCenterDelta =  500;        ///< Delta around center point which is considered to be roughly centered
 const int JoystickConfigController::_calMoveDelta =         32768/2;    ///< Amount of delta past center which is considered stick movement
-const int JoystickConfigController::_calSettleDelta =       100;        ///< Amount of delta which is considered no stick movement
+const int JoystickConfigController::_calSettleDelta =       600;        ///< Amount of delta which is considered no stick movement
 const int JoystickConfigController::_calMinDelta =          1000;       ///< Amount of delta allowed around min value to consider channel at min
 
 const int JoystickConfigController::_stickDetectSettleMSecs = 500;
@@ -223,6 +210,18 @@ void JoystickConfigController::cancelButtonClicked(void)
     _stopCalibration();
 }
 
+bool JoystickConfigController::getDeadbandToggle() {
+    return _activeJoystick->deadband();
+}
+
+void JoystickConfigController::setDeadbandToggle(bool deadband) {
+    _activeJoystick->setDeadband(deadband);
+
+    _signalAllAttiudeValueChanges();
+
+    emit deadbandToggled(deadband);
+}
+
 void JoystickConfigController::_saveAllTrims(void)
 {
     // We save all trims as the first step. At this point no axes are mapped but it should still
@@ -237,16 +236,28 @@ void JoystickConfigController::_saveAllTrims(void)
     _advanceState();
 }
 
+void JoystickConfigController::_axisDeadbandChanged(int axis, int value)
+{
+    value = abs(value)<_calValidMaxValue?abs(value):_calValidMaxValue;
+
+    _rgAxisInfo[axis].deadband = value;
+
+    qCDebug(JoystickConfigControllerLog) << "Axis:" << axis << "Deadband:" << _rgAxisInfo[axis].deadband;
+}
+
 /// @brief Waits for the sticks to be centered, enabling Next when done.
 void JoystickConfigController::_inputCenterWaitBegin(Joystick::AxisFunction_t function, int axis, int value)
 {
     Q_UNUSED(function);
-    Q_UNUSED(axis);
-    Q_UNUSED(value);
-    
-    // FIXME: Doesn't wait for center
-    
+
+    //sensing deadband
+    if (abs(value)*1.1f>_rgAxisInfo[axis].deadband) {   //add 10% on top of existing deadband
+        _axisDeadbandChanged(axis,abs(value)*1.1f);
+    }
+
     _nextButton->setEnabled(true);
+
+    // FIXME: Doesn't wait for center
 }
 
 bool JoystickConfigController::_stickSettleComplete(int axis, int value)
@@ -386,11 +397,6 @@ void JoystickConfigController::_inputStickMin(Joystick::AxisFunction_t function,
             } else {
                 _rgAxisInfo[axis].axisMin = value;
             }
-
-            // Check if this is throttle and set trim accordingly
-            if (function == Joystick::throttleFunction) {
-                _rgAxisInfo[axis].axisTrim = value;
-            }
             
             qCDebug(JoystickConfigControllerLog) << "_inputStickMin saving values, function:axis:value:reversed" << function << axis << value << info->reversed;
             
@@ -438,6 +444,7 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
         struct AxisInfo* info = &_rgAxisInfo[i];
         info->function = Joystick::maxFunction;
         info->reversed = false;
+        info->deadband = 0;
         info->axisMin = JoystickConfigController::_calCenterPoint;
         info->axisMax = JoystickConfigController::_calCenterPoint;
         info->axisTrim = JoystickConfigController::_calCenterPoint;
@@ -475,7 +482,8 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
         info->axisMin = calibration.min;
         info->axisMax = calibration.max;
         info->reversed = calibration.reversed;
-        
+        info->deadband = calibration.deadband;
+
         qCDebug(JoystickConfigControllerLog) << "Read settings name:axis:min:max:trim:reversed" << joystick->name() << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
     }
     
@@ -530,6 +538,7 @@ void JoystickConfigController::_validateCalibration(void)
             info->axisMin = _calDefaultMinValue;
             info->axisMax = _calDefaultMaxValue;
             info->axisTrim = info->axisMin + ((info->axisMax - info->axisMin) / 2);
+            info->deadband = 0;
             info->reversed = false;
         }
     }
@@ -552,6 +561,7 @@ void JoystickConfigController::_writeCalibration(void)
         calibration.min = info->axisMin;
         calibration.max = info->axisMax;
         calibration.reversed = info->reversed;
+        calibration.deadband = info->deadband;
         
         joystick->setCalibration(axis, calibration);
     }
@@ -682,6 +692,42 @@ int JoystickConfigController::throttleAxisValue(void)
     }
 }
 
+int JoystickConfigController::rollAxisDeadband(void)
+{
+    if ((_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::rollFunction]].deadband;
+    } else {
+        return 0;
+    }
+}
+
+int JoystickConfigController::pitchAxisDeadband(void)
+{
+    if ((_rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::pitchFunction]].deadband;
+    } else {
+        return 0;
+    }
+}
+
+int JoystickConfigController::yawAxisDeadband(void)
+{
+    if ((_rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::yawFunction]].deadband;
+    } else {
+        return 0;
+    }
+}
+
+int JoystickConfigController::throttleAxisDeadband(void)
+{
+    if ((_rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::throttleFunction]].deadband;
+    } else {
+        return 0;
+    }
+}
+
 bool JoystickConfigController::rollAxisMapped(void)
 {
     return _rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis;
@@ -749,6 +795,11 @@ void JoystickConfigController::_signalAllAttiudeValueChanges(void)
     emit pitchAxisReversedChanged(pitchAxisReversed());
     emit yawAxisReversedChanged(yawAxisReversed());
     emit throttleAxisReversedChanged(throttleAxisReversed());
+
+    emit rollAxisDeadbandChanged(rollAxisDeadband());
+    emit pitchAxisDeadbandChanged(pitchAxisDeadband());
+    emit yawAxisDeadbandChanged(yawAxisDeadband());
+    emit throttleAxisDeadbandChanged(throttleAxisDeadband());
 }
 
 void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)

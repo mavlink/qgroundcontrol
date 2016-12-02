@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 #ifndef QGCSerialPortInfo_H
 #define QGCSerialPortInfo_H
@@ -44,8 +31,13 @@ public:
         BoardTypePX4FMUV2,
         BoardTypePX4FMUV4,
         BoardTypePX4Flow,
-        BoardType3drRadio,
+        BoardTypeSikRadio,
         BoardTypeAeroCore,
+        BoardTypeRTKGPS,
+        BoardTypeMINDPXFMUV2,
+        BoardTypeTAPV1,
+        BoardTypeASCV1,
+        BoardTypeLibrePilot,
         BoardTypeUnknown
     } BoardType_t;
 
@@ -62,8 +54,24 @@ public:
     
     static const int px4FlowProductId =                     21;     ///< Product ID for PX4 Flow board
 
+    static const int MindPXFMUV2ProductId =                 48;     ///< Product ID for the MindPX V2 board
+    static const int TAPV1ProductId =                       64;     ///< Product ID for the TAP V1 board
+    static const int ASCV1ProductId =                       65;     ///< Product ID for the ASC V1 board
+
     static const int threeDRRadioVendorId =                 1027;   ///< Vendor ID for 3DR Radio
     static const int threeDRRadioProductId =                24597;  ///< Product ID for 3DR Radio
+
+    static const int siLabsRadioVendorId =                  0x10c4; ///< Vendor ID for SILabs Radio
+    static const int siLabsRadioProductId =                 0xea60; ///< Product ID for SILabs Radio
+
+    static const int ubloxRTKVendorId =                     5446;   ///< Vendor ID for ublox RTK
+    static const int ubloxRTKProductId =                    424;    ///< Product ID for ublox RTK
+
+    static const int openpilotVendorId =                    0x20A0; ///< Vendor ID for OpenPilot
+    static const int revolutionProductId =                  0x415E; ///< Product ID for OpenPilot Revolution
+    static const int oplinkProductId =                      0x415C; ///< Product ID for OpenPilot OPLink
+    static const int sparky2ProductId =                     0x41D0; ///< Product ID for Taulabs Sparky2
+    static const int CC3DProductId =                        0x415D; ///< Product ID for OpenPilot CC3D
 
     QGCSerialPortInfo(void);
     QGCSerialPortInfo(const QSerialPort & port);
@@ -73,12 +81,16 @@ public:
 
     BoardType_t boardType(void) const;
 
+    /// @return true: we can flash this board type
+    bool canFlash(void);
+
     /// @return true: board is a Pixhawk board
     bool boardTypePixhawk(void) const;
 
     /// @return true: Board is currently in bootloader
     bool isBootloader(void) const;
 
+private:
 };
 
 #endif

@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -30,19 +17,26 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QtGlobal>
 #include <QApplication>
+#include <QIcon>
 #include <QSslSocket>
 #include <QProcessEnvironment>
-
+#include <QHostAddress>
+#include <QUdpSocket>
+#include <QtPlugin>
+#include <QStringListModel>
 #include "QGCApplication.h"
+#include "AppMessages.h"
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
+    #include "RunGuard.h"
+#endif
+
+#ifdef UNITTEST_BUILD
+    #include "UnitTest.h"
 #endif
 
 #ifdef QT_DEBUG
-    #ifndef __mobile__
-        #include "UnitTest.h"
-    #endif
     #include "CmdLineOptParser.h"
     #ifdef Q_OS_WIN
         #include <crtdbg.h>
@@ -54,6 +48,7 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 #include <iostream>
+#include "QGCMapEngine.h"
 
 /* SDL does ugly things to main() */
 #ifdef main
@@ -65,17 +60,6 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 #ifdef Q_OS_WIN
-
-/// @brief Message handler which is installed using qInstallMsgHandler so you do not need
-/// the MSFT debug tools installed to see qDebug(), qWarning(), qCritical and qAbort
-void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
-{
-    const char symbols[] = { 'I', 'E', '!', 'X' };
-    QString output = QString("[%1] at %2:%3 - \"%4\"").arg(symbols[type]).arg(context.file).arg(context.line).arg(msg);
-    std::cerr << output.toStdString() << std::endl;
-    if( type == QtFatalMsg ) abort();
-}
-
 /// @brief CRT Report Hook installed using _CrtSetReportHook. We install this hook when
 /// we don't want asserts to pop a dialog on windows.
 int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
@@ -89,7 +73,7 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 
 #endif
 
-#ifdef __android__
+#if defined(__android__) && !defined(NO_SERIAL_LINK)
 #include <jni.h>
 #include "qserialport.h"
 
@@ -118,6 +102,21 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
 int main(int argc, char *argv[])
 {
+#ifndef __mobile__
+    RunGuard guard("QGroundControlRunGuardKey");
+    if (!guard.tryToRun()) {
+        return 0;
+    }
+#endif
+
+#ifdef Q_OS_UNIX
+    //Force writing to the console on UNIX/BSD devices
+    if (!qEnvironmentVariableIsSet("QT_LOGGING_TO_CONSOLE"))
+        qputenv("QT_LOGGING_TO_CONSOLE", "1");
+#endif
+
+    // install the message handler
+    AppMessages::installHandler();
 
 #ifdef Q_OS_MAC
 #ifndef __ios__
@@ -127,16 +126,28 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-    // install the message handler
 #ifdef Q_OS_WIN
-    qInstallMessageHandler(msgHandler);
+    // Set our own OpenGL buglist
+    qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
+
+    // Allow for command line override of renderer
+    for (int i = 0; i < argc; i++) {
+        const QString arg(argv[i]);
+        if (arg == QStringLiteral("-angle")) {
+            QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
+            break;
+        } else if (arg == QStringLiteral("-swrast")) {
+            QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+            break;
+        }
+    }
 #endif
 
     // The following calls to qRegisterMetaType are done to silence debug output which warns
     // that we use these types in signals, and without calling qRegisterMetaType we can't queue
     // these signals. In general we don't queue these signals, but we do what the warning says
     // anyway to silence the debug output.
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
     qRegisterMetaType<QSerialPort::SerialPortError>();
 #endif
 #ifdef QGC_ENABLE_BLUETOOTH
@@ -198,6 +209,10 @@ int main(int argc, char *argv[])
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
 
+#ifdef Q_OS_LINUX
+    QApplication::setWindowIcon(QIcon(":/res/resources/icons/qgroundcontrol.ico"));
+#endif /* Q_OS_LINUX */
+
     // There appears to be a threading issue in qRegisterMetaType which can cause it to throw a qWarning
     // about duplicate type converters. This is caused by a race condition in the Qt code. Still working
     // with them on tracking down the bug. For now we register the type which is giving us problems here
@@ -206,11 +221,12 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QList<QPair<QByteArray,QByteArray> > >();
 
     app->_initCommon();
+    //-- Initialize Cache System
+    getQGCMapEngine()->init();
 
     int exitCode = 0;
 
-#ifndef __mobile__
-#ifdef QT_DEBUG
+#ifdef UNITTEST_BUILD
     if (runUnitTests) {
         for (int i=0; i < (stressUnitTests ? 20 : 1); i++) {
             if (!app->_initForUnitTests()) {
@@ -230,7 +246,6 @@ int main(int argc, char *argv[])
         }
     } else
 #endif
-#endif
     {
         if (!app->_initForNormalAppBoot()) {
             return -1;
@@ -239,6 +254,8 @@ int main(int argc, char *argv[])
     }
 
     delete app;
+    //-- Shutdown Cache System
+    destroyMapEngine();
 
     qDebug() << "After app delete";
 

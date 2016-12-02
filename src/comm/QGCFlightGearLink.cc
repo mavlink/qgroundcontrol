@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -81,13 +68,13 @@ QGCFlightGearLink::QGCFlightGearLink(Vehicle* vehicle, QString startupArguments,
 
 QGCFlightGearLink::~QGCFlightGearLink()
 {   //do not disconnect unless it is connected.
-    //disconnectSimulation will delete the memory that was allocated for proces, terraSync and _udpCommSocket
+    //disconnectSimulation will delete the memory that was allocated for process, terraSync and _udpCommSocket
     if(connectState){
        disconnectSimulation();
     }
 }
 
-/// @brief Runs the simulation thread. We do setup work here which needs to happen in the seperate thread.
+/// @brief Runs the simulation thread. We do setup work here which needs to happen in the separate thread.
 void QGCFlightGearLink::run()
 {
     Q_ASSERT(_vehicle);
@@ -98,31 +85,29 @@ void QGCFlightGearLink::run()
     Q_CHECK_PTR(_udpCommSocket);
     _udpCommSocket->moveToThread(this);
     _udpCommSocket->bind(host, port, QAbstractSocket::ReuseAddressHint);
-    QObject::connect(_udpCommSocket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+    QObject::connect(_udpCommSocket, &QUdpSocket::readyRead, this, &QGCFlightGearLink::readBytes);
 
 
     // Connect to the various HIL signals that we use to then send information across the UDP protocol to FlightGear.
-    connect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)),
-            this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    connect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)),
-            _vehicle->uas(), SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
-    connect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)),
-            _vehicle->uas(), SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
-    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)),
-            _vehicle->uas(), SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
-    connect(this, SIGNAL(sensorHilOpticalFlowChanged(quint64, qint16, qint16, float,float, quint8, float)),
-            _vehicle->uas(), SLOT(sendHilOpticalFlow(quint64, qint16, qint16, float, float, quint8, float)));
+    connect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCFlightGearLink::updateControls);
+
+    connect(this, &QGCFlightGearLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState);
+    connect(this, &QGCFlightGearLink::sensorHilGpsChanged, _vehicle->uas(), &UAS::sendHilGps);
+    connect(this, &QGCFlightGearLink::sensorHilRawImuChanged, _vehicle->uas(), &UAS::sendHilSensors);
+    connect(this, &QGCFlightGearLink::sensorHilOpticalFlowChanged, _vehicle->uas(), &UAS::sendHilOpticalFlow);
 
     // Start a new QProcess to run FlightGear in
     _fgProcess = new QProcess(this);
     Q_CHECK_PTR(_fgProcess);
     _fgProcess->moveToThread(this);
 
-    connect(_fgProcess, SIGNAL(error(QProcess::ProcessError)), this, SLOT(processError(QProcess::ProcessError)));
-#ifdef DEBUG_FLIGHTGEAR_CONNECT
-    connect(_fgProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(_printFgfsOutput()));
-    connect(_fgProcess, SIGNAL(readyReadStandardError()), this, SLOT(_printFgfsError()));
-#endif
+    connect(_fgProcess, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
+            this, &QGCFlightGearLink::processError);
+
+//#ifdef DEBUG_FLIGHTGEAR_CONNECT
+    connect(_fgProcess, &QProcess::readyReadStandardOutput, this, &QGCFlightGearLink::_printFgfsOutput);
+    connect(_fgProcess, &QProcess::readyReadStandardError, this, &QGCFlightGearLink::_printFgfsError);
+//#endif
 
     if (!_fgProcessWorkingDirPath.isEmpty()) {
         _fgProcess->setWorkingDirectory(_fgProcessWorkingDirPath);
@@ -223,19 +208,6 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
 
 }
 
-void QGCFlightGearLink::updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
-{
-    Q_UNUSED(time);
-    Q_UNUSED(act1);
-    Q_UNUSED(act2);
-    Q_UNUSED(act3);
-    Q_UNUSED(act4);
-    Q_UNUSED(act5);
-    Q_UNUSED(act6);
-    Q_UNUSED(act7);
-    Q_UNUSED(act8);
-}
-
 void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
 {
     // magnetos,aileron,elevator,rudder,throttle\n
@@ -245,27 +217,27 @@ void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float p
     Q_UNUSED(systemMode);
     Q_UNUSED(navMode);
 
-    if(!isnan(rollAilerons) && !isnan(pitchElevator) && !isnan(yawRudder) && !isnan(throttle))
+    if(!qIsNaN(rollAilerons) && !qIsNaN(pitchElevator) && !qIsNaN(yawRudder) && !qIsNaN(throttle))
     {
         QString state("%1\t%2\t%3\t%4\t%5\n");
         state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
-        writeBytes(state.toLatin1().constData(), state.length());
+        emit _invokeWriteBytes(state.toLatin1());
         //qDebug() << "Updated controls" << rollAilerons << pitchElevator << yawRudder << throttle;
         //qDebug() << "Updated controls" << state;
     }
     else
     {
-        qDebug() << "HIL: Got NaN values from the hardware: isnan output: roll: " << isnan(rollAilerons) << ", pitch: " << isnan(pitchElevator) << ", yaw: " << isnan(yawRudder) << ", throttle: " << isnan(throttle);
+        qDebug() << "HIL: Got NaN values from the hardware: isnan output: roll: " << qIsNaN(rollAilerons) << ", pitch: " << qIsNaN(pitchElevator) << ", yaw: " << qIsNaN(yawRudder) << ", throttle: " << qIsNaN(throttle);
     }
 }
 
-void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
+void QGCFlightGearLink::_writeBytes(const QByteArray data)
 {
     //#define QGCFlightGearLink_DEBUG
 #ifdef QGCFlightGearLink_DEBUG
     QString bytes;
     QString ascii;
-    for (int i=0; i<size; i++)
+    for (int i=0, size = data.size(); i<size; i++)
     {
         unsigned char v = data[i];
         bytes.append(QString().sprintf("%02x ", v));
@@ -282,7 +254,7 @@ void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
     qDebug() << bytes;
     qDebug() << "ASCII:" << ascii;
 #endif
-    if (connectState && _udpCommSocket) _udpCommSocket->writeDatagram(data, size, currentHost, currentPort);
+    if (connectState && _udpCommSocket) _udpCommSocket->writeDatagram(data, currentHost, currentPort);
 }
 
 /**
@@ -491,14 +463,15 @@ qint64 QGCFlightGearLink::bytesAvailable()
  **/
 bool QGCFlightGearLink::disconnectSimulation()
 {
-    disconnect(_fgProcess, SIGNAL(error(QProcess::ProcessError)),
-               this, SLOT(processError(QProcess::ProcessError)));
-    disconnect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    disconnect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), _vehicle->uas(), SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
-    disconnect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)), _vehicle->uas(), SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
-    disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), _vehicle->uas(), SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
-    disconnect(this, SIGNAL(sensorHilOpticalFlowChanged(quint64, qint16, qint16, float,float, quint8, float)),
-            _vehicle->uas(), SLOT(sendHilOpticalFlow(quint64, qint16, qint16, float, float, quint8, float)));
+    disconnect(_fgProcess, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
+            this, &QGCFlightGearLink::processError);
+
+    disconnect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCFlightGearLink::updateControls);
+
+    disconnect(this, &QGCFlightGearLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState);
+    disconnect(this, &QGCFlightGearLink::sensorHilGpsChanged, _vehicle->uas(), &UAS::sendHilGps);
+    disconnect(this, &QGCFlightGearLink::sensorHilRawImuChanged, _vehicle->uas(), &UAS::sendHilSensors);
+    disconnect(this, &QGCFlightGearLink::sensorHilOpticalFlowChanged, _vehicle->uas(), &UAS::sendHilOpticalFlow);
 
     if (_fgProcess)
     {
@@ -524,7 +497,7 @@ bool QGCFlightGearLink::disconnectSimulation()
     return !connectState;
 }
 
-/// @brief Splits a space seperated set of command line arguments into a QStringList.
+/// @brief Splits a space separated set of command line arguments into a QStringList.
 ///         Quoted strings are allowed and handled correctly.
 ///     @param uiArgs Arguments to parse
 ///     @param argList Returned argument list
@@ -629,7 +602,7 @@ bool QGCFlightGearLink::connectSimulation()
     // We setup all the information we need to start FlightGear here such that if something goes
     // wrong we can return false out of here. All of this happens on the main UI thread. Once we
     // have that information setup we start the thread which will call run, which will in turn
-    // start the various FG processes on the seperate thread.
+    // start the various FG processes on the separate thread.
 
     if (!_vehicle->uas()) {
         return false;
@@ -644,7 +617,7 @@ bool QGCFlightGearLink::connectSimulation()
     QDir        fgAppDir;						// Location of main FlightGear application
 
     // Reset the list of arguments which will be provided to FG to the arguments set by the user via the UI
-    // First split the space seperated command line arguments coming in from the ui into a QStringList since
+    // First split the space separated command line arguments coming in from the ui into a QStringList since
     // that is what QProcess::start needs.
     QStringList uiArgList;
     bool mismatchedQuotes = parseUIArguments(startupArguments, uiArgList);
@@ -736,7 +709,7 @@ bool QGCFlightGearLink::connectSimulation()
 
                 regExp.setPattern("^fg_scenery:(.*)");
                 if (regExp.indexIn(line) == 0 && regExp.captureCount() == 1) {
-                    // Scenery can contain multiple paths seperated by ';' so don't do QDir::absolutePath on it
+                    // Scenery can contain multiple paths separated by ';' so don't do QDir::absolutePath on it
                     fgSceneryPath = regExp.cap(1);
                     qDebug() << "fg_scenery" << fgSceneryPath;
                     continue;

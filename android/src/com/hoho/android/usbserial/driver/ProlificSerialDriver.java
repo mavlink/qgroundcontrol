@@ -217,7 +217,7 @@ public class ProlificSerialDriver extends CommonUsbSerialDriver {
             }
         }
 
-        /* throw and clear an exception which occured in the status read thread */
+        /* throw and clear an exception which occurred in the status read thread */
         IOException readStatusException = mReadStatusException;
         if (mReadStatusException != null) {
             mReadStatusException = null;
@@ -288,7 +288,7 @@ public class ProlificSerialDriver extends CommonUsbSerialDriver {
                             + "available! Assuming that it is a HX device");
                     mDeviceType = DEVICE_TYPE_HX;
                 } catch (Exception e) {
-                    Log.e(TAG, "An unexpected exception occured while trying "
+                    Log.e(TAG, "An unexpected exception occurred while trying "
                             + "to detect PL2303 subtype", e);
                 }
             }
@@ -318,7 +318,7 @@ public class ProlificSerialDriver extends CommonUsbSerialDriver {
                     try {
                         mReadStatusThread.join();
                     } catch (Exception e) {
-                        Log.w(TAG, "An error occured while waiting for status read thread", e);
+                        Log.w(TAG, "An error occurred while waiting for status read thread", e);
                     }
                 }
             }

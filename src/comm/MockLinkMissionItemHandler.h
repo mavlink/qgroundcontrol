@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
 
 #ifndef MockLinkMissionItemHandler_H
 #define MockLinkMissionItemHandler_H
@@ -55,18 +42,21 @@ public:
     typedef enum {
         FailNone,                           // No failures
         FailReadRequestListNoResponse,      // Don't send MISSION_COUNT in response to MISSION_REQUEST_LIST
+        FailReadRequestListFirstResponse,   // Don't send MISSION_COUNT in response to first MISSION_REQUEST_LIST, allow subsequent to go through
         FailReadRequest0NoResponse,         // Don't send MISSION_ITEM in response to MISSION_REQUEST item 0
         FailReadRequest1NoResponse,         // Don't send MISSION_ITEM in response to MISSION_REQUEST item 1
+        FailReadRequest1FirstResponse,      // Don't send MISSION_ITEM in response to MISSION_REQUEST item 1 on first try, allow subsequent request to go through
         FailReadRequest0IncorrectSequence,  // Respond to MISSION_REQUEST 0 with incorrect sequence number in  MISSION_ITEM
         FailReadRequest1IncorrectSequence,  // Respond to MISSION_REQUEST 1 with incorrect sequence number in  MISSION_ITEM
         FailReadRequest0ErrorAck,           // Respond to MISSION_REQUEST 0 with MISSION_ACK error
         FailReadRequest1ErrorAck,           // Respond to MISSION_REQUEST 1 bogus MISSION_ACK error
-        FailWriteRequest0NoResponse,        // Don't respond to MISSION_COUNT with MISSION_REQUEST 0
+        FailWriteMissionCountNoResponse,    // Don't respond to MISSION_COUNT with MISSION_REQUEST 0
+        FailWriteMissionCountFirstResponse, // Don't respond to first MISSION_COUNT with MISSION_REQUEST 0, respond to subsequent MISSION_COUNT requests
         FailWriteRequest1NoResponse,        // Don't respond to MISSION_ITEM 0 with MISSION_REQUEST 1
-        FailWriteRequest0IncorrectSequence, // Respond to MISSION_COUNT 0 with MISSION_REQUEST with wrong sequence number
-        FailWriteRequest1IncorrectSequence, // Respond to MISSION_ITEM 0 with MISSION_REQUEST with wrong sequence number
-        FailWriteRequest0ErrorAck,          // Respond to MISSION_COUNT 0 with MISSION_ACK error
-        FailWriteRequest1ErrorAck,          // Respond to MISSION_ITEM 0 with MISSION_ACK error
+        FailWriteRequest0IncorrectSequence, // Item 0 MISSION_REQUEST sent has wrong sequence number
+        FailWriteRequest1IncorrectSequence, // Item 1 MISSION_REQUEST sent has wrong sequence number
+        FailWriteRequest0ErrorAck,          // Instead of sending MISSION_REQUEST 0, send MISSION_ACK error
+        FailWriteRequest1ErrorAck,          // Instead of sending MISSION_REQUEST 1, send MISSION_ACK error
         FailWriteFinalAckNoResponse,        // Don't send the final MISSION_ACK
         FailWriteFinalAckErrorAck,          // Send an error as the final MISSION_ACK
         FailWriteFinalAckMissingRequests,   // Send the MISSION_ACK before all items have been requested
@@ -115,6 +105,9 @@ private:
     FailureMode_t       _failureMode;
     bool                _sendHomePositionOnEmptyList;
     MAVLinkProtocol*    _mavlinkProtocol;
+    bool                _failReadRequestListFirstResponse;
+    bool                _failReadRequest1FirstResponse;
+    bool                _failWriteMissionCountFirstResponse;
 };
 
 #endif

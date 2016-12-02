@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -29,12 +16,6 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include <QtGlobal>
-#if QT_VERSION > 0x050401
-#define UDP_BROKEN_SIGNAL 1
-#else
-#define UDP_BROKEN_SIGNAL 0
-#endif
-
 #include <QTimer>
 #include <QList>
 #include <QDebug>
@@ -99,8 +80,6 @@ UDPLink::UDPLink(UDPConfiguration* config)
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
-
-    //qDebug() << "UDP Created " << _config->name();
 }
 
 UDPLink::~UDPLink()
@@ -113,9 +92,6 @@ UDPLink::~UDPLink()
     quit();
     // Wait for it to exit
     wait();
-    while(_outQueue.count() > 0) {
-        delete _outQueue.dequeue();
-    }
     this->deleteLater();
 }
 
@@ -126,25 +102,7 @@ UDPLink::~UDPLink()
 void UDPLink::run()
 {
     if(_hardwareConnect()) {
-        if(UDP_BROKEN_SIGNAL) {
-            bool loop = false;
-            while(true) {
-                //-- Anything to read?
-                loop = _socket->hasPendingDatagrams();
-                if(loop) {
-                    readBytes();
-                }
-                //-- Loop right away if busy
-                if((_dequeBytes() || loop) && _running)
-                    continue;
-                if(!_running)
-                    break;
-                //-- Settle down (it gets here if there is nothing to read or write)
-                this->msleep(50);
-            }
-        } else {
-            exec();
-        }
+        exec();
     }
     if (_socket) {
         _deregisterZeroconf();
@@ -176,36 +134,11 @@ void UDPLink::removeHost(const QString& host)
     _config->removeHost(host);
 }
 
-void UDPLink::writeBytes(const char* data, qint64 size)
+void UDPLink::_writeBytes(const QByteArray data)
 {
-    if (!_socket) {
+    if (!_socket)
         return;
-    }
-    if(UDP_BROKEN_SIGNAL) {
-        QByteArray* qdata = new QByteArray(data, size);
-        QMutexLocker lock(&_mutex);
-        _outQueue.enqueue(qdata);
-    } else {
-        _sendBytes(data, size);
-    }
-}
 
-
-bool UDPLink::_dequeBytes()
-{
-    QMutexLocker lock(&_mutex);
-    if(_outQueue.count() > 0) {
-        QByteArray* qdata = _outQueue.dequeue();
-        lock.unlock();
-        _sendBytes(qdata->data(), qdata->size());
-        delete qdata;
-        lock.relock();
-    }
-    return (_outQueue.count() > 0);
-}
-
-void UDPLink::_sendBytes(const char* data, qint64 size)
-{
     QStringList goneHosts;
     // Send to all connected systems
     QString host;
@@ -213,7 +146,7 @@ void UDPLink::_sendBytes(const char* data, qint64 size)
     if(_config->firstHost(host, port)) {
         do {
             QHostAddress currentHost(host);
-            if(_socket->writeDatagram(data, size, currentHost, (quint16)port) < 0) {
+            if(_socket->writeDatagram(data, currentHost, (quint16)port) < 0) {
                 // This host is gone. Add to list to be removed
                 // We should keep track of hosts that were manually added (static) and
                 // hosts that were added because we heard from them (dynamic). Only
@@ -227,7 +160,7 @@ void UDPLink::_sendBytes(const char* data, qint64 size)
                 // "host not there" takes time too regardless of size of data. In fact,
                 // 1 byte or "UDP frame size" bytes are the same as that's the data
                 // unit sent by UDP.
-                _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
+                _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
             }
         } while (_config->nextHost(host, port));
         //-- Remove hosts that are no longer there
@@ -242,37 +175,30 @@ void UDPLink::_sendBytes(const char* data, qint64 size)
  **/
 void UDPLink::readBytes()
 {
+    QByteArray databuffer;
     while (_socket->hasPendingDatagrams())
     {
         QByteArray datagram;
         datagram.resize(_socket->pendingDatagramSize());
-
         QHostAddress sender;
         quint16 senderPort;
         _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-
-        // FIXME TODO Check if this method is better than retrieving the data by individual processes
-        emit bytesReceived(this, datagram);
-
+        databuffer.append(datagram);
+        //-- Wait a bit before sending it over
+        if(databuffer.size() > 10 * 1024) {
+            emit bytesReceived(this, databuffer);
+            databuffer.clear();
+        }
         _logInputDataRate(datagram.length(), QDateTime::currentMSecsSinceEpoch());
-
-//        // Echo data for debugging purposes
-//        std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
-//        int i;
-//        for (i=0; i<s; i++)
-//        {
-//            unsigned int v=data[i];
-//            fprintf(stderr,"%02x ", v);
-//        }
-//        std::cerr << std::endl;
-
         // TODO This doesn't validade the sender. Anything sending UDP packets to this port gets
         // added to the list and will start receiving datagrams from here. Even a port scanner
         // would trigger this.
         // Add host to broadcast list if not yet present, or update its port
         _config->addHost(sender.toString(), (int)senderPort);
-        if(UDP_BROKEN_SIGNAL && !_running)
-            break;
+    }
+    //-- Send whatever is left
+    if(databuffer.size()) {
+        emit bytesReceived(this, databuffer);
     }
 }
 
@@ -324,11 +250,16 @@ bool UDPLink::_hardwareConnect()
     _socket->setProxy(QNetworkProxy::NoProxy);
     _connectState = _socket->bind(host, _config->localPort(), QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
     if (_connectState) {
+        //-- Make sure we have a large enough IO buffers
+#ifdef __mobile__
+        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
+        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
+#else
+        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    256 * 1024);
+        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);
+#endif
         _registerZeroconf(_config->localPort(), kZeroconfRegistration);
-        //-- Connect signal if this version of Qt is not broken
-        if(!UDP_BROKEN_SIGNAL) {
-            QObject::connect(_socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
-        }
+        QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
         emit connected();
     } else {
         emit communicationError("UDP Link Error", "Error binding UDP port");
@@ -451,17 +382,18 @@ void UDPConfiguration::addHost(const QString host)
 
 void UDPConfiguration::addHost(const QString& host, int port)
 {
+    bool changed = false;
     QMutexLocker locker(&_confMutex);
     if(_hosts.contains(host)) {
         if(_hosts[host] != port) {
             _hosts[host] = port;
+            changed = true;
         }
     } else {
         QString ipAdd = get_ip_address(host);
         if(ipAdd.isEmpty()) {
             qWarning() << "UDP:" << "Could not resolve host:" << host << "port:" << port;
         } else {
-
             // In simulation and testing setups the vehicle and the GCS can be
             // running on the same host. This leads to packets arriving through
             // the local network or the loopback adapter, which makes it look
@@ -470,21 +402,17 @@ void UDPConfiguration::addHost(const QString& host, int port)
             //
             // We detect this case and force all traffic to a simulated instance
             // onto the local loopback interface.
-
             bool not_local = true;
-
             // Run through all IPv4 interfaces and check if their canonical
             // IP address in string representation matches the source IP address
             foreach (const QHostAddress &address, QNetworkInterface::allAddresses()) {
                 if (address.protocol() == QAbstractSocket::IPv4Protocol) {
-
                     if (ipAdd.endsWith(address.toString())) {
                         // This is a local address of the same host
                         not_local = false;
                     }
                 }
             }
-
             if (not_local) {
                 // This is a normal remote host, add it using its IPv4 address
                 _hosts[ipAdd] = port;
@@ -493,9 +421,12 @@ void UDPConfiguration::addHost(const QString& host, int port)
                 // It is localhost, so talk to it through the IPv4 loopback interface
                 _hosts["127.0.0.1"] = port;
             }
+            changed = true;
         }
     }
-    _updateHostList();
+    if(changed) {
+        _updateHostList();
+    }
 }
 
 void UDPConfiguration::removeHost(const QString host)

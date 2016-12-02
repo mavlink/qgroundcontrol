@@ -34,13 +34,11 @@ protected:
     QList<QColor> colors;  ///< Colormap for curves
     int nextColorIndex;         ///< Next index in color map
     QMap<QString, QwtPlotCurve* > curves;  ///< Plot curves
-    ScrollZoomer* zoomer;  ///< Zoomer class for widget
     QwtPlotGrid* grid;     ///< Plot grid
 
     float symbolWidth; ///< Width of curve symbols in pixels
     float curveWidth; ///< Width of curve lines in pixels
     float gridWidth; ///< Width of gridlines in pixels
-    float zoomerWidth; ///< Width of zoomer selection box
 };
 
 #endif // CHARTPLOT_H

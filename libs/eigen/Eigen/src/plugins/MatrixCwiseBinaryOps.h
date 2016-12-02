@@ -83,7 +83,7 @@ cwiseMin(const EIGEN_CURRENT_STORAGE_BASE_CLASS<OtherDerived> &other) const
 EIGEN_STRONG_INLINE const CwiseBinaryOp<internal::scalar_min_op<Scalar>, const Derived, const ConstantReturnType>
 cwiseMin(const Scalar &other) const
 {
-  return cwiseMin(Derived::PlainObject::Constant(rows(), cols(), other));
+  return cwiseMin(Derived::Constant(rows(), cols(), other));
 }
 
 /** \returns an expression of the coefficient-wise max of *this and \a other
@@ -107,7 +107,7 @@ cwiseMax(const EIGEN_CURRENT_STORAGE_BASE_CLASS<OtherDerived> &other) const
 EIGEN_STRONG_INLINE const CwiseBinaryOp<internal::scalar_max_op<Scalar>, const Derived, const ConstantReturnType>
 cwiseMax(const Scalar &other) const
 {
-  return cwiseMax(Derived::PlainObject::Constant(rows(), cols(), other));
+  return cwiseMax(Derived::Constant(rows(), cols(), other));
 }
 
 
@@ -123,4 +123,21 @@ EIGEN_STRONG_INLINE const CwiseBinaryOp<internal::scalar_quotient_op<Scalar>, co
 cwiseQuotient(const EIGEN_CURRENT_STORAGE_BASE_CLASS<OtherDerived> &other) const
 {
   return CwiseBinaryOp<internal::scalar_quotient_op<Scalar>, const Derived, const OtherDerived>(derived(), other.derived());
+}
+
+typedef CwiseBinaryOp<internal::scalar_cmp_op<Scalar,internal::cmp_EQ>, const Derived, const ConstantReturnType> CwiseScalarEqualReturnType;
+
+/** \returns an expression of the coefficient-wise == operator of \c *this and a scalar \a s
+  *
+  * \warning this performs an exact comparison, which is generally a bad idea with floating-point types.
+  * In order to check for equality between two vectors or matrices with floating-point coefficients, it is
+  * generally a far better idea to use a fuzzy comparison as provided by isApprox() and
+  * isMuchSmallerThan().
+  *
+  * \sa cwiseEqual(const MatrixBase<OtherDerived> &) const
+  */
+inline const CwiseScalarEqualReturnType
+cwiseEqual(const Scalar& s) const
+{
+  return CwiseScalarEqualReturnType(derived(), Derived::Constant(rows(), cols(), s), internal::scalar_cmp_op<Scalar,internal::cmp_EQ>());
 }

@@ -1,24 +1,12 @@
-/*===================================================================
-QGroundControl Open Source Ground Control Station
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-	QGROUNDCONTROL is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	QGROUNDCONTROL is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -82,7 +70,7 @@ void LogCompressor::run()
 
 
 	// First we search the input file through keySearchLimit number of lines
-	// looking for variables. This is neccessary before CSV files require
+	// looking for variables. This is necessary before CSV files require
 	// the same number of fields for every line.
 	const unsigned int keySearchLimit = 15000;
 	unsigned int keyCounter = 0;

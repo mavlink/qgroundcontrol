@@ -1,0 +1,61 @@
+{
+    "name": "QGroundControl OpenGL Driver Blacklist",
+    "version": "5.5",
+    "entries": [
+        {
+            "id": 1,
+            "description": "Desktop OpenGL is unreliable on some Intel HD laptops (QTBUG-43263, QTBUG-42240)",
+            "vendor_id": "0x8086",
+            "device_id": [ "0x0A16" ],
+            "os": {
+                "type": "win"
+            },
+            "driver_version": {
+                "op": "<=",
+                "value": "10.18.10.3277"
+            },
+            "features": [
+                "disable_desktopgl"
+            ]
+        },
+        {
+            "id": 2,
+            "description": "Desktop OpenGL is unreliable on some Intel Mobile GMA Devices",
+            "vendor_id": "0x8086",
+            "device_id": [ "0x2972", "0x2973",
+                "0x2992", "0x2993",
+                "0x29A2", "0x29A3",
+                "0x2982", "0x2983",
+                "0x2A02", "0x2A03", "0x2A12", "0x2A13",
+                "0x2E42", "0x2E43", "0x2E92", "0x2E93",
+                "0x2E12", "0x2E13",
+                "0x2E32", "0x2E33",
+                "0x2E22", "0x2E23",
+                "0x2A42", "0x2A43",
+                "0x2E5B",
+                "0x8108", "0x8109",
+                "0x4102",
+                "0x0BE0", "0x0BE1", "0x0BE2", "0x0BE0",
+                "0x08C7", "0x08C8", "0x08C9", "0x08CA", "0x08CB", "0x08CC", "0x08CD", "0x08CE", "0x08CF"
+            ],
+            "os": {
+                "type": "win"
+            },
+            "features": [
+                "disable_desktopgl"
+            ]
+        },
+        {
+           "id": 6,
+           "description": "Intel(R) HD Graphics 4000 / 5500 cause crashes on orientation changes in fullscreen mode (QTBUG-49541)",
+           "vendor_id": "0x8086",
+           "device_id": [ "0x0166", "0x1616" ],
+           "os": {
+               "type": "win"
+           },
+           "features": [
+               "disable_rotation"
+           ]
+        }
+    ]
+}

@@ -7,14 +7,16 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 Button {
+    id: _rootButton
     property bool   setupComplete:  true                                    ///< true: setup complete indicator shows as completed
     property bool   setupIndicator: true                                    ///< true: show setup complete indicator
     property string imageResource:  "/qmlimages/subMenuButtonImage.png"     ///< Button image
+    property size   sourceSize:     Qt.size(ScreenTools.defaultFontPixelHeight * 2, ScreenTools.defaultFontPixelHeight * 2)
 
     text: "Button"  ///< Pass in your own button text
 
     checkable:      true
-    implicitHeight: ScreenTools.defaultFontPixelHeight * 2.5
+    implicitHeight: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 3.5 : ScreenTools.defaultFontPixelHeight * 2.5
 
     style: ButtonStyle {
         id: buttonStyle
@@ -40,9 +42,10 @@ Button {
                 width:                  ScreenTools.defaultFontPixelHeight * 2
                 height:                 ScreenTools.defaultFontPixelHeight * 2
                 fillMode:               Image.PreserveAspectFit
-                smooth:                 true
+                mipmap:                 true
                 color:                  control.setupComplete ? qgcPal.button : "red"
                 source:                 control.imageResource
+                sourceSize:             _rootButton.sourceSize
             }
 
             QGCLabel {

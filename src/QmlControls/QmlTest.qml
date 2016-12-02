@@ -17,7 +17,7 @@ Rectangle {
             height: themeChoice.height * 2
             color:  palette.window
             QGCLabel {
-                text: "Window Color"
+                text: qsTr("Window Color")
                 anchors.left:           parent.left
                 anchors.leftMargin:     20
                 anchors.verticalCenter: parent.horizontalCenter
@@ -29,13 +29,13 @@ Rectangle {
                 spacing:         20
                 ExclusiveGroup { id: themeGroup }
                 QGCRadioButton {
-                    text: "Light"
+                    text: qsTr("Light")
                     checked: palette.globalTheme === QGCPalette.Light
                     exclusiveGroup: themeGroup
                     onClicked: { palette.globalTheme = QGCPalette.Light }
                 }
                 QGCRadioButton {
-                    text: "Dark"
+                    text: qsTr("Dark")
                     checked: palette.globalTheme === QGCPalette.Dark
                     exclusiveGroup: themeGroup
                     onClicked: { palette.globalTheme = QGCPalette.Dark }
@@ -73,28 +73,28 @@ Rectangle {
                     height: 20
                     color: "black"
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Disabled"
+                    text: qsTr("Disabled")
                 }
                 Text {
                     width: 80
                     height: 20
                     color: "black"
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Enabled"
+                    text: qsTr("Enabled")
                 }
                 Text {
                     width: 80
                     height: 20
                     color: "black"
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Value"
+                    text: qsTr("Value")
                 }
                 Text {
                     width: 80
                     height: 20
                     color: "black"
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Value"
+                    text: qsTr("Value")
                 }
 
                 // window
@@ -542,14 +542,14 @@ Rectangle {
                     height: 20
                     color: "black"
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Enabled"
+                    text: qsTr("Enabled")
                 }
                 Text {
                     width: 100
                     height: 20
                     color: "black"
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Disabled"
+                    text: qsTr("Disabled")
                 }
 
                 // QGCLabel
@@ -560,12 +560,12 @@ Rectangle {
                 QGCLabel {
                     width: 100
                     height: 20
-                    text: "Label"
+                    text: qsTr("Label")
                 }
                 QGCLabel {
                     width: 100
                     height: 20
-                    text: "Label"
+                    text: qsTr("Label")
                     enabled: false
                 }
 
@@ -577,12 +577,12 @@ Rectangle {
                 QGCButton {
                     width: 100
                     height: 20
-                    text: "Button"
+                    text: qsTr("Button")
                 }
                 QGCButton {
                     width: 100
                     height: 20
-                    text: "Button"
+                    text: qsTr("Button")
                     enabled: false
                 }
 
@@ -595,12 +595,12 @@ Rectangle {
                     width: 100
                     height: 20
                     primary: true
-                    text: "Button"
+                    text: qsTr("Button")
                 }
                 QGCButton {
                     width: 100
                     height: 20
-                    text: "Button"
+                    text: qsTr("Button")
                     primary: true
                     enabled: false
                 }
@@ -613,25 +613,25 @@ Rectangle {
                 Menu {
                     id: buttonMenu
                     MenuItem {
-                        text: "Item 1"
+                        text: qsTr("Item 1")
                     }
                     MenuItem {
-                        text: "Item 2"
+                        text: qsTr("Item 2")
                     }
                     MenuItem {
-                        text: "Item 3"
+                        text: qsTr("Item 3")
                     }
                 }
                 QGCButton {
                     width: 100
                     height: 20
-                    text: "Button"
+                    text: qsTr("Button")
                     menu: buttonMenu
                 }
                 QGCButton {
                     width: 100
                     height: 20
-                    text: "Button"
+                    text: qsTr("Button")
                     enabled: false
                     menu: buttonMenu
                 }
@@ -644,12 +644,12 @@ Rectangle {
                 QGCRadioButton {
                     width: 100
                     height: 20
-                    text: "Radio"
+                    text: qsTr("Radio")
                 }
                 QGCRadioButton {
                     width: 100
                     height: 20
-                    text: "Radio"
+                    text: qsTr("Radio")
                     enabled: false
                 }
 
@@ -661,12 +661,12 @@ Rectangle {
                 QGCCheckBox {
                     width: 100
                     height: 20
-                    text: "Check Box"
+                    text: qsTr("Check Box")
                 }
                 QGCCheckBox {
                     width: 100
                     height: 20
-                    text: "Check Box"
+                    text: qsTr("Check Box")
                     enabled: false
                 }
 
@@ -695,12 +695,12 @@ Rectangle {
                 QGCComboBox {
                     width: 100
                     height: 20
-                    model: [ "Item 1", "Item 2", "Item 3" ]
+                    model: [ qsTr("Item 1"), qsTr("Item 2"), qsTr("Item 3") ]
                 }
                 QGCComboBox {
                     width: 100
                     height: 20
-                    model: [ "Item 1", "Item 2", "Item 3" ]
+                    model: [ qsTr("Item 1"), qsTr("Item 2"), qsTr("Item 3") ]
                     enabled: false
                 }
 
@@ -712,12 +712,12 @@ Rectangle {
                 SubMenuButton {
                     width: 100
                     height: 100
-                    text: "SUB MENU"
+                    text: qsTr("SUB MENU")
                 }
                 SubMenuButton {
                     width: 100
                     height: 100
-                    text: "SUB MENU"
+                    text: qsTr("SUB MENU")
                     enabled: false
                 }
             }

@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -35,6 +22,8 @@ Fact::Fact(QObject* parent)
     , _rawValue(0)
     , _type(FactMetaData::valueTypeInt32)
     , _metaData(NULL)
+    , _sendValueChangedSignals(true)
+    , _deferredValueChangeSignal(false)
 {    
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
@@ -47,6 +36,8 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
     , _rawValue(0)
     , _type(type)
     , _metaData(NULL)
+    , _sendValueChangedSignals(true)
+    , _deferredValueChangeSignal(false)
 {
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
@@ -60,11 +51,13 @@ Fact::Fact(const Fact& other, QObject* parent)
 
 const Fact& Fact::operator=(const Fact& other)
 {
-    _name           = other._name;
-    _componentId    = other._componentId;
-    _rawValue          = other._rawValue;
-    _type           = other._type;
-    
+    _name                       = other._name;
+    _componentId                = other._componentId;
+    _rawValue                   = other._rawValue;
+    _type                       = other._type;
+    _sendValueChangedSignals    = other._sendValueChangedSignals;
+    _deferredValueChangeSignal  = other._deferredValueChangeSignal;
+
     if (_metaData && other._metaData) {
         *_metaData = *other._metaData;
     } else {
@@ -82,8 +75,9 @@ void Fact::forceSetRawValue(const QVariant& value)
         
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
             _rawValue.setValue(typedValue);
-            emit valueChanged(cookedValue());
+            _sendValueChangedSignal(cookedValue());
             emit _containerRawValueChanged(rawValue());
+            emit rawValueChanged(_rawValue);
         }
     } else {
         qWarning() << "Meta data pointer missing";
@@ -99,8 +93,9 @@ void Fact::setRawValue(const QVariant& value)
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
             if (typedValue != _rawValue) {
                 _rawValue.setValue(typedValue);
-                emit valueChanged(cookedValue());
+                _sendValueChangedSignal(cookedValue());
                 emit _containerRawValueChanged(rawValue());
+                emit rawValueChanged(_rawValue);
             }
         }
     } else {
@@ -141,8 +136,9 @@ void Fact::setEnumIndex(int index)
 void Fact::_containerSetRawValue(const QVariant& value)
 {
     _rawValue = value;
-    emit valueChanged(cookedValue());
+    _sendValueChangedSignal(cookedValue());
     emit vehicleUpdated(_rawValue);
+    emit rawValueChanged(_rawValue);
 }
 
 QString Fact::name(void) const
@@ -243,33 +239,53 @@ QVariantList Fact::bitmaskValues(void) const
     }
 }
 
-QString Fact::_variantToString(const QVariant& variant) const
+QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
 {
     QString valueString;
 
     switch (type()) {
-        case FactMetaData::valueTypeFloat:
-            valueString = QString("%1").arg(variant.toFloat(), 0, 'f', decimalPlaces());
-            break;
-        case FactMetaData::valueTypeDouble:
-            valueString = QString("%1").arg(variant.toDouble(), 0, 'f', decimalPlaces());
-            break;
-        default:
-            valueString = variant.toString();
-            break;
+    case FactMetaData::valueTypeFloat:
+    {
+        float fValue = variant.toFloat();
+        if (qIsNaN(fValue)) {
+            valueString = QStringLiteral("--.--");
+        } else {
+            valueString = QString("%1").arg(fValue, 0, 'f', decimalPlaces);
+        }
+    }
+        break;
+    case FactMetaData::valueTypeDouble:
+    {
+        double dValue = variant.toDouble();
+        if (qIsNaN(dValue)) {
+            valueString = QStringLiteral("--.--");
+        } else {
+            valueString = QString("%1").arg(dValue, 0, 'f', decimalPlaces);
+        }
+    }
+        break;
+    default:
+        valueString = variant.toString();
+        break;
     }
 
     return valueString;
 }
 
+QString Fact::rawValueStringFullPrecision(void) const
+{
+    return _variantToString(rawValue(), 18);
+}
+
+
 QString Fact::rawValueString(void) const
 {
-    return _variantToString(rawValue());
+    return _variantToString(rawValue(), decimalPlaces());
 }
 
 QString Fact::cookedValueString(void) const
 {
-    return _variantToString(cookedValue());
+    return _variantToString(cookedValue(), decimalPlaces());
 }
 
 QVariant Fact::rawDefaultValue(void) const
@@ -300,7 +316,7 @@ QVariant Fact::cookedDefaultValue(void) const
 
 QString Fact::cookedDefaultValueString(void) const
 {
-    return _variantToString(cookedDefaultValue());
+    return _variantToString(cookedDefaultValue(), decimalPlaces());
 }
 
 FactMetaData::ValueType_t Fact::type(void) const
@@ -370,7 +386,7 @@ QVariant Fact::cookedMin(void) const
 
 QString Fact::cookedMinString(void) const
 {
-    return _variantToString(cookedMin());
+    return _variantToString(cookedMin(), decimalPlaces());
 }
 
 QVariant Fact::rawMax(void) const
@@ -395,7 +411,7 @@ QVariant Fact::cookedMax(void) const
 
 QString Fact::cookedMaxString(void) const
 {
-    return _variantToString(cookedMax());
+    return _variantToString(cookedMax(), decimalPlaces());
 }
 
 bool Fact::minIsDefaultForType(void) const
@@ -481,4 +497,64 @@ QString Fact::validate(const QString& cookedValue, bool convertOnly)
         qWarning() << "Meta data pointer missing";
         return QString("Internal error: Meta data pointer missing");
     }
+}
+
+bool Fact::rebootRequired(void) const
+{
+    if (_metaData) {
+        return _metaData->rebootRequired();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return false;
+    }
+}
+
+void Fact::setSendValueChangedSignals (bool sendValueChangedSignals)
+{
+    if (sendValueChangedSignals != _sendValueChangedSignals) {
+        _sendValueChangedSignals = sendValueChangedSignals;
+        emit sendValueChangedSignalsChanged(_sendValueChangedSignals);
+    }
+}
+
+void Fact::_sendValueChangedSignal(QVariant value)
+{
+    if (_sendValueChangedSignals) {
+        emit valueChanged(value);
+        _deferredValueChangeSignal = false;
+    } else {
+        _deferredValueChangeSignal = true;
+    }
+}
+
+void Fact::sendDeferredValueChangedSignal(void)
+{
+    if (_deferredValueChangeSignal) {
+        _deferredValueChangeSignal = false;
+        emit valueChanged(cookedValue());
+    }
+}
+
+QString Fact::enumOrValueString(void)
+{
+    if (_metaData) {
+        if (_metaData->enumStrings().count()) {
+            return enumStringValue();
+        } else {
+            return cookedValueString();
+        }
+    } else {
+        qWarning() << "Meta data pointer missing";
+    }
+    return QString();
+}
+
+double Fact::increment(void) const
+{
+    if (_metaData) {
+        return _metaData->increment();
+    } else {
+        qWarning() << "Meta data pointer missing";
+    }
+    return std::numeric_limits<double>::quiet_NaN();
 }
