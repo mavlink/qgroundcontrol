@@ -18,6 +18,9 @@
 #define VIDEORECEIVER_H
 
 #include <QObject>
+#include <QTimer>
+#include <QTcpSocket>
+
 #if defined(QGC_GST_STREAMING)
 #include <gst/gst.h>
 #endif
@@ -33,10 +36,17 @@ public:
     void setVideoSink(GstElement* sink);
 #endif
 
-public Q_SLOTS:
-    void start  ();
-    void stop   ();
-    void setUri (const QString& uri);
+public slots:
+    void start      ();
+    void stop       ();
+    void setUri     (const QString& uri);
+
+private slots:
+#if defined(QGC_GST_STREAMING)
+    void _timeout       ();
+    void _connected     ();
+    void _socketError   (QAbstractSocket::SocketError socketError);
+#endif
 
 private:
 
@@ -52,6 +62,12 @@ private:
     GstElement* _videoSink;
 #endif
 
+    //-- Wait for Video Server to show up before starting
+#if defined(QGC_GST_STREAMING)
+    QTimer      _timer;
+    QTcpSocket* _socket;
+    bool        _serverPresent;
+#endif
 };
 
 #endif // VIDEORECEIVER_H
