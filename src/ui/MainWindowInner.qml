@@ -66,12 +66,13 @@ Item {
         }
         //-- In settings view, the full height is available. Set to 0 so it is ignored.
         ScreenTools.availableHeight = 0
+        hideAllViews()
         if (settingsViewLoader.source != _settingsViewSource) {
             settingsViewLoader.source  = _settingsViewSource
         }
-        hideAllViews()
         settingsViewLoader.visible  = true
         toolBar.checkSettingsButton()
+        console.log("showSettingsView")
     }
 
     function showSetupView() {
@@ -80,10 +81,10 @@ Item {
         }
         //-- In setup view, the full height is available. Set to 0 so it is ignored.
         ScreenTools.availableHeight = 0
+        hideAllViews()
         if (setupViewLoader.source  != _setupViewSource) {
             setupViewLoader.source  = _setupViewSource
         }
-        hideAllViews()
         setupViewLoader.visible  = true
         toolBar.checkSetupButton()
     }
@@ -284,13 +285,13 @@ Item {
         anchors.top:        toolBar.bottom
         anchors.bottom:     parent.bottom
         visible:            false
-
+/*
         onVisibleChanged: {
             if (!visible) {
                 // Free up the memory for this when not shown. No need to persist.
                 source = ""
             }
-        }
+        }*/
     }
 
     Loader {
