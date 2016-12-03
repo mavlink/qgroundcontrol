@@ -7,17 +7,9 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief QGC Main Tool Bar
- *   @author Gus Grubba <mavlink@grubba.com>
- */
-
-import QtQuick 2.5
-import QtQuick.Layouts 1.2
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.2
+import QtQuick              2.5
+import QtQuick.Layouts      1.2
+import QtQuick.Controls     1.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -316,123 +308,136 @@ Rectangle {
         visible:        qgcPal.globalTheme == QGCPalette.Light
     }
 
-    //---------------------------------------------
-    // Toolbar Row
-    Row {
-        id:                     viewRow
-        height:                 mainWindow.tbCellHeight
-        spacing:                mainWindow.tbSpacing
-        anchors.left:           parent.left
+    RowLayout {
         anchors.bottomMargin:   1
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 2
+        anchors.fill:           parent
+        spacing:                mainWindow.tbSpacing * 2
 
-        ExclusiveGroup { id: mainActionGroup }
+        //---------------------------------------------
+        // Toolbar Row
+        Row {
+            id:             viewRow
+            height:         mainWindow.tbCellHeight
+            spacing:        mainWindow.tbSpacing
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
 
-        QGCToolBarButton {
-            id:                 settingsButton
-            width:              mainWindow.tbButtonWidth
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/res/QGCLogoWhite"
-            logo:               true
-            onClicked:          toolBar.showSettingsView()
-            visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
+            ExclusiveGroup { id: mainActionGroup }
+
+            QGCToolBarButton {
+                id:                 settingsButton
+                width:              mainWindow.tbButtonWidth
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                exclusiveGroup:     mainActionGroup
+                source:             "/res/QGCLogoWhite"
+                logo:               true
+                onClicked:          toolBar.showSettingsView()
+                visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
+            }
+
+            QGCToolBarButton {
+                id:                 setupButton
+                width:              mainWindow.tbButtonWidth
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                exclusiveGroup:     mainActionGroup
+                source:             "/qmlimages/Gears.svg"
+                onClicked:          toolBar.showSetupView()
+            }
+
+            QGCToolBarButton {
+                id:                 planButton
+                width:              mainWindow.tbButtonWidth
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                exclusiveGroup:     mainActionGroup
+                source:             "/qmlimages/Plan.svg"
+                onClicked:          toolBar.showPlanView()
+            }
+
+            QGCToolBarButton {
+                id:                 flyButton
+                width:              mainWindow.tbButtonWidth
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                exclusiveGroup:     mainActionGroup
+                source:             "/qmlimages/PaperPlane.svg"
+                onClicked:          toolBar.showFlyView()
+            }
+
+            QGCToolBarButton {
+                id:                 analyzeButton
+                width:              mainWindow.tbButtonWidth
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                exclusiveGroup:     mainActionGroup
+                source:             "/qmlimages/Analyze.svg"
+                visible:            !ScreenTools.isMobile
+                onClicked:          toolBar.showAnalyzeView()
+            }
         }
 
-        QGCToolBarButton {
-            id:                 setupButton
-            width:              mainWindow.tbButtonWidth
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/qmlimages/Gears.svg"
-            onClicked:          toolBar.showSetupView()
-        }
-
-        QGCToolBarButton {
-            id:                 planButton
-            width:              mainWindow.tbButtonWidth
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/qmlimages/Plan.svg"
-            onClicked:          toolBar.showPlanView()
-        }
-
-        QGCToolBarButton {
-            id:                 flyButton
-            width:              mainWindow.tbButtonWidth
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/qmlimages/PaperPlane.svg"
-            onClicked:          toolBar.showFlyView()
-        }
-
-        QGCToolBarButton {
-            id:                 analyzeButton
-            width:              mainWindow.tbButtonWidth
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/qmlimages/Analyze.svg"
-            visible:            !ScreenTools.isMobile
-            onClicked:          toolBar.showAnalyzeView()
-        }
-    }
-
-    Item {
-        id:                     vehicleIndicators
-        height:                 mainWindow.tbCellHeight
-        anchors.leftMargin:     mainWindow.tbSpacing * 2
-        anchors.left:           viewRow.right
-        anchors.right:          parent.right
-        anchors.verticalCenter: parent.verticalCenter
-
-        property bool vehicleConnectionLost: activeVehicle ? activeVehicle.connectionLost : false
-
-        Loader {
-            id:                     indicatorLoader
-            source:                 activeVehicle && !parent.vehicleConnectionLost ? "MainToolBarIndicators.qml" : ""
-            anchors.left:           parent.left
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        QGCLabel {
-            id:                     connectionLost
-            text:                   qsTr("COMMUNICATION LOST")
-            font.pointSize:         ScreenTools.largeFontPointSize
-            font.family:            ScreenTools.demiboldFontFamily
-            color:                  colorRed
-            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-            anchors.right:          disconnectButton.left
-            anchors.verticalCenter: parent.verticalCenter
-            visible:                parent.vehicleConnectionLost
-        }
-
+        //-------------------------------------------------------------------------
+        //-- Vehicle Selector
         QGCButton {
-            id:                     disconnectButton
-            anchors.rightMargin:     mainWindow.tbSpacing * 2
-            anchors.right:          parent.right
+            id:                     vehicleSelectorButton
+            width:                  ScreenTools.defaultFontPixelHeight * 8
+            text:                   "Vehicle " + (activeVehicle ? activeVehicle.id : "None")
+            visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
             anchors.verticalCenter: parent.verticalCenter
-            text:                   qsTr("Disconnect")
-            visible:                parent.vehicleConnectionLost
-            primary:                true
-            onClicked:              activeVehicle.disconnectInactiveVehicle()
+
+            menu: vehicleMenu
+
+            Menu {
+                id: vehicleMenu
+            }
+
+            Component {
+                id: vehicleMenuItemComponent
+
+                MenuItem {
+                    checkable:      true
+                    onTriggered:    QGroundControl.multiVehicleManager.activeVehicle = vehicle
+
+                    property int vehicleId: Number(text.split(" ")[1])
+                    property var vehicle:   QGroundControl.multiVehicleManager.getVehicleById(vehicleId)
+                }
+            }
+
+            property var vehicleMenuItems: []
+
+            function updateVehicleMenu() {
+                // Remove old menu items
+                for (var i = 0; i < vehicleMenuItems.length; i++) {
+                    vehicleMenu.removeItem(vehicleMenuItems[i])
+                }
+                vehicleMenuItems.length = 0
+
+                // Add new items
+                for (var i=0; i<QGroundControl.multiVehicleManager.vehicles.count; i++) {
+                    var vehicle = QGroundControl.multiVehicleManager.vehicles.get(i)
+                    var menuItem = vehicleMenuItemComponent.createObject(null, { "text": "Vehicle " + vehicle.id })
+                    vehicleMenuItems.push(menuItem)
+                    vehicleMenu.insertItem(i, menuItem)
+                }
+            }
+
+            Component.onCompleted: updateVehicleMenu()
+
+            Connections {
+                target:         QGroundControl.multiVehicleManager.vehicles
+                onCountChanged: vehicleSelectorButton.updateVehicleMenu()
+            }
         }
 
-        Image {
-            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 2
-            anchors.right:          parent.right
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            visible:                x > indicatorLoader.x + indicatorLoader.width && !disconnectButton.visible && source != ""
-            fillMode:               Image.PreserveAspectFit
-            source:                 activeVehicle ? activeVehicle.brandImage : ""
+        MainToolBarIndicators {
+            height:                 mainWindow.tbCellHeight
+            Layout.fillWidth:       true
+            anchors.verticalCenter: parent.verticalCenter
+            visible:                activeVehicle
         }
-
     }
 
     // Progress bar

@@ -16,15 +16,21 @@
 
 #include "VideoReceiver.h"
 #include <QDebug>
+#include <QUrl>
 
 VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
 #if defined(QGC_GST_STREAMING)
     , _pipeline(NULL)
     , _videoSink(NULL)
+    , _socket(NULL)
+    , _serverPresent(false)
 #endif
 {
-
+#if defined(QGC_GST_STREAMING)
+    _timer.setSingleShot(true);
+    connect(&_timer, &QTimer::timeout, this, &VideoReceiver::_timeout);
+#endif
 }
 
 VideoReceiver::~VideoReceiver()
@@ -32,6 +38,9 @@ VideoReceiver::~VideoReceiver()
 #if defined(QGC_GST_STREAMING)
     stop();
     setVideoSink(NULL);
+    if(_socket) {
+        delete _socket;
+    }
 #endif
 }
 
@@ -66,6 +75,51 @@ static void newPadCB(GstElement * element, GstPad* pad, gpointer data)
 }
 #endif
 
+#if defined(QGC_GST_STREAMING)
+void VideoReceiver::_connected()
+{
+    //-- Server showed up. Now we start the stream.
+    _timer.stop();
+    delete _socket;
+    _socket = NULL;
+    _serverPresent = true;
+    start();
+}
+#endif
+
+#if defined(QGC_GST_STREAMING)
+void VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
+{
+    Q_UNUSED(socketError);
+    delete _socket;
+    _socket = NULL;
+    //-- Try again in 5 seconds
+    _timer.start(5000);
+}
+#endif
+
+#if defined(QGC_GST_STREAMING)
+void VideoReceiver::_timeout()
+{
+    //-- If socket is live, we got no connection nor a socket error
+    if(_socket) {
+        delete _socket;
+        _socket = NULL;
+    }
+    //-- RTSP will try to connect to the server. If it cannot connect,
+    //   it will simply give up and never try again. Instead, we keep
+    //   attempting a connection on this timer. Once a connection is
+    //   found to be working, only then we actually start the stream.
+    QUrl url(_uri);
+    _socket = new QTcpSocket;
+    connect(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &VideoReceiver::_socketError);
+    connect(_socket, &QTcpSocket::connected, this, &VideoReceiver::_connected);
+    //qDebug() << "Trying to connect to:" << url.host() << url.port();
+    _socket->connectToHost(url.host(), url.port());
+    _timer.start(5000);
+}
+#endif
+
 void VideoReceiver::start()
 {
 #if defined(QGC_GST_STREAMING)
@@ -78,7 +132,15 @@ void VideoReceiver::start()
         return;
     }
 
+    bool isUdp = _uri.contains("udp://");
+
     stop();
+
+    //-- For RTSP, check to see if server is there first
+    if(!_serverPresent && !isUdp) {
+        _timer.start(100);
+        return;
+    }
 
     bool running = false;
 
@@ -87,8 +149,6 @@ void VideoReceiver::start()
     GstElement*     demux       = NULL;
     GstElement*     parser      = NULL;
     GstElement*     decoder     = NULL;
-
-    bool isUdp = _uri.contains("udp://");
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == NULL) {
@@ -114,7 +174,7 @@ void VideoReceiver::start()
             }
             g_object_set(G_OBJECT(dataSource), "uri", qPrintable(_uri), "caps", caps, NULL);
         } else {
-            g_object_set(G_OBJECT(dataSource), "location", qPrintable(_uri), "latency", 0, NULL);
+            g_object_set(G_OBJECT(dataSource), "location", qPrintable(_uri), "latency", 0, "udp-reconnect", 1, "timeout", 5000000, NULL);
         }
 
         if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == NULL) {
@@ -208,6 +268,7 @@ void VideoReceiver::stop()
         gst_element_set_state(_pipeline, GST_STATE_NULL);
         gst_object_unref(_pipeline);
         _pipeline = NULL;
+        _serverPresent = false;
     }
 #endif
 }

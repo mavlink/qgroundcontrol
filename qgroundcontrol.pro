@@ -529,6 +529,7 @@ HEADERS += \
     src/Joystick/JoystickSDL.h \
     src/QGCFileDialog.h \
     src/QGCMessageBox.h \
+    src/RunGuard.h \
     src/ViewWidgets/CustomCommandWidget.h \
     src/ViewWidgets/CustomCommandWidgetController.h \
     src/ViewWidgets/ViewWidgetController.h \
@@ -677,6 +678,7 @@ SOURCES += \
     src/GPS/RTCM/RTCMMavlink.cc \
     src/Joystick/JoystickSDL.cc \
     src/QGCFileDialog.cc \
+    src/RunGuard.cc \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \
     src/ViewWidgets/ViewWidgetController.cc \
