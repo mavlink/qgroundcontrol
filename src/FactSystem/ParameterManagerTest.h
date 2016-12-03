@@ -22,8 +22,7 @@ class ParameterManagerTest : public UnitTest
     
 private slots:
     void _noFailure(void);
-    // FIXME: Hack to work around changed no reponse handling
-    //void _requestListNoResponse(void);
+    void _requestListNoResponse(void);
     void _requestListMissingParamSuccess(void);
     void _requestListMissingParamFail(void);
 

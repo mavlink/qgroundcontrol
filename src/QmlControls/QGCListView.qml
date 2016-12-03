@@ -2,8 +2,8 @@ import QtQuick 2.5
 
 import QGroundControl.Palette 1.0
 
-/// QGC version of Flickable control that shows horizontal/vertial scroll indicators
-Flickable {
+/// QGC version of ListVIew control that shows horizontal/vertial scroll indicators
+ListView {
     id:             root
     boundsBehavior: Flickable.StopAtBounds
 

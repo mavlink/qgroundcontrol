@@ -64,10 +64,12 @@ void ParameterManagerTest::_requestListMissingParamSuccess(void)
     _noFailureWorker(MockConfiguration::FailMissingParamOnInitialReqest);
 }
 
-#if 0
 // Test no response to param_request_list
 void ParameterManagerTest::_requestListNoResponse(void)
 {
+    // Will pop error about request failure
+    setExpectedMessageBox(QMessageBox::Ok);
+
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
 
@@ -93,9 +95,8 @@ void ParameterManagerTest::_requestListNoResponse(void)
     QCOMPARE(spyParamsReady.wait(40000), false);
 
     // User should have been notified
-    checkMultipleExpectedMessageBox(5);
+    checkExpectedMessageBox();
 }
-#endif
 
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
 // param_read requests.
