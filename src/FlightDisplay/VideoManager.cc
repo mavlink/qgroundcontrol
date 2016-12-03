@@ -223,6 +223,15 @@ void VideoManager::_updateTimer()
             _videoRunning = false;
             _videoSurface->setLastFrame(0);
             emit videoRunningChanged();
+            if(_videoReceiver) {
+                if(isGStreamer()) {
+                    //-- Stop it
+                    _videoReceiver->stop();
+                    QThread::msleep(100);
+                    //-- And start over
+                    _videoReceiver->start();
+                }
+            }
         }
     }
     else
