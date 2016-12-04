@@ -1208,31 +1208,43 @@ double MissionController::_normalizeLon(double lon)
 /// Add the home position item to the front of the list
 void MissionController::_addPlannedHomePosition(QmlObjectListModel* visualItems, bool addToCenter)
 {
+    bool homePositionSet = false;
+
     SimpleMissionItem* homeItem = new SimpleMissionItem(_activeVehicle, this);
     visualItems->insert(0, homeItem);
 
     if (visualItems->count() > 1  && addToCenter) {
-        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(visualItems->get(1));
+        double north, south, east, west;
+        bool firstCoordSet = false;
 
-        double north = _normalizeLat(item->coordinate().latitude());
-        double south = north;
-        double east = _normalizeLon(item->coordinate().longitude());
-        double west = east;
+        for (int i=1; i<visualItems->count(); i++) {
+            VisualMissionItem* item = qobject_cast<VisualMissionItem*>(visualItems->get(i));
 
-        for (int i=2; i<visualItems->count(); i++) {
-            item = qobject_cast<VisualMissionItem*>(visualItems->get(i));
-
-            double lat = _normalizeLat(item->coordinate().latitude());
-            double lon = _normalizeLon(item->coordinate().longitude());
-
-            north = fmax(north, lat);
-            south = fmin(south, lat);
-            east = fmax(east, lon);
-            west = fmin(west, lon);
+            if (item->specifiesCoordinate()) {
+                if (firstCoordSet) {
+                    double lat = _normalizeLat(item->coordinate().latitude());
+                    double lon = _normalizeLon(item->coordinate().longitude());
+                    north = fmax(north, lat);
+                    south = fmin(south, lat);
+                    east = fmax(east, lon);
+                    west = fmin(west, lon);
+                } else {
+                    firstCoordSet = true;
+                    north = _normalizeLat(item->coordinate().latitude());
+                    south = north;
+                    east = _normalizeLon(item->coordinate().longitude());
+                    west = east;
+                }
+            }
         }
 
-        homeItem->setCoordinate(QGeoCoordinate((south + ((north - south) / 2)) - 90.0, (west + ((east - west) / 2)) - 180.0, 0.0));
-    } else {
+        if (firstCoordSet) {
+            homePositionSet = true;
+            homeItem->setCoordinate(QGeoCoordinate((south + ((north - south) / 2)) - 90.0, (west + ((east - west) / 2)) - 180.0, 0.0));
+        }
+    }
+
+    if (!homePositionSet) {
         homeItem->setCoordinate(qgcApp()->lastKnownHomePosition());
     }
 }
