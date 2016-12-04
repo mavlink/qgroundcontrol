@@ -490,7 +490,16 @@ void LinkManager::_updateAutoConnectLinks(void)
 
 #ifndef NO_SERIAL_LINK
     QStringList currentPorts;
-    QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
+    QList<QGCSerialPortInfo> portList;
+
+#ifdef __android__
+    // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
+    // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
+    // bug after we connect the first serial port we stop probing for additional ports.
+    if (!_autoconnectConfigurations.count()) {
+        portList = QGCSerialPortInfo::availablePorts();
+    }
+#endif
 
     // Iterate Comm Ports
     foreach (QGCSerialPortInfo portInfo, portList) {
@@ -601,6 +610,13 @@ void LinkManager::_updateAutoConnectLinks(void)
         }
     }
 
+#ifndef __android__
+    // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
+    // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
+    // bug after we connect the first serial port we stop probing for additional ports. The means we must rely on
+    // the port disconnecting itself when the radio is pulled to signal communication list as opposed to automatically
+    // closing the Link.
+
     // Now we go through the current configuration list and make sure any dynamic config has gone away
     QList<LinkConfiguration*>  _confToDelete;
     for (int i=0; i<_autoconnectConfigurations.count(); i++) {
@@ -633,6 +649,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         }
         delete pDeleteConfig;
     }
+#endif
 #endif // NO_SERIAL_LINK
 }
 
