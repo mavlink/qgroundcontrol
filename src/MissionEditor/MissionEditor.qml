@@ -1054,7 +1054,6 @@ QGCView {
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * (0.66)
                     anchors.bottom:     waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
                     anchors.left:       parent.left
-                    z:                  QGroundControl.zOrderWidgets
                     mapControl:         editorMap
                     visible:            !ScreenTools.isTinyScreen
                 }
