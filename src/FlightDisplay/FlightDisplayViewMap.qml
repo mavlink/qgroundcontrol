@@ -169,7 +169,6 @@ FlightMap {
         anchors.rightMargin:    ScreenTools.defaultFontPixelHeight * (0.33)
         anchors.bottom:         parent.bottom
         anchors.right:          parent.right
-        z:                      QGroundControl.zOrderWidgets
         mapControl:             flightMap
         visible:                !ScreenTools.isTinyScreen
     }
