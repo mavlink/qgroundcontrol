@@ -1233,33 +1233,6 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
     emit parameterUpdate(uasId, compId, paramName, rawValue.param_count, rawValue.param_index, rawValue.param_type, paramValue);
 }
 
-void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component)
-{
-    if (!_vehicle) {
-        return;
-    }
-
-    mavlink_message_t msg;
-    mavlink_command_long_t cmd;
-    cmd.command = (uint16_t)command;
-    cmd.confirmation = confirmation;
-    cmd.param1 = param1;
-    cmd.param2 = param2;
-    cmd.param3 = param3;
-    cmd.param4 = param4;
-    cmd.param5 = param5;
-    cmd.param6 = param6;
-    cmd.param7 = param7;
-    cmd.target_system = uasId;
-    cmd.target_component = component;
-    mavlink_msg_command_long_encode_chan(mavlink->getSystemId(),
-                                         mavlink->getComponentId(),
-                                         _vehicle->priorityLink()->mavlinkChannel(),
-                                         &msg,
-                                         &cmd);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-}
-
 /**
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.

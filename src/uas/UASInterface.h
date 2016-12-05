@@ -141,10 +141,6 @@ public:
     virtual void stopBusConfig(void) = 0;
 
 public slots:
-
-    /** @brief Executes a command **/
-    virtual void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component) = 0;
-
     /** @brief Order the robot to pair its receiver **/
     virtual void pairRX(int rxType, int rxSubType) = 0;
 

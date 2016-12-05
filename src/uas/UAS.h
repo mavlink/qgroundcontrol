@@ -472,9 +472,6 @@ public:
     void requestImage();
 
 public slots:
-    /** @brief Executes a command with 7 params */
-    void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component);
-
     /** @brief Order the robot to pair its receiver **/
     void pairRX(int rxType, int rxSubType);
 
