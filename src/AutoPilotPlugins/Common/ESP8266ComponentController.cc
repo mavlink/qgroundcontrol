@@ -38,7 +38,7 @@ ESP8266ComponentController::ESP8266ComponentController()
     _baudRates.append("460800");
     _baudRates.append("921600");
     connect(&_timer, &QTimer::timeout, this, &ESP8266ComponentController::_processTimeout);
-    connect(_vehicle, &Vehicle::commandLongAck, this, &ESP8266ComponentController::_commandAck);
+    connect(_vehicle, &Vehicle::mavCommandResult, this, &ESP8266ComponentController::_mavCommandResult);
     Fact* ssid = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID4");
     connect(ssid, &Fact::valueChanged, this, &ESP8266ComponentController::_ssidChanged);
     Fact* paswd = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_PASSWORD4");
@@ -381,21 +381,23 @@ ESP8266ComponentController::_processTimeout()
 
 //-----------------------------------------------------------------------------
 void
-ESP8266ComponentController::_commandAck(uint8_t compID, uint16_t command, uint8_t result)
+ESP8266ComponentController::_mavCommandResult(int vehicleId, int component, MAV_CMD command, MAV_RESULT result, bool noReponseFromVehicle)
 {
-    if(compID == MAV_COMP_ID_UDP_BRIDGE) {
-        if(result != MAV_RESULT_ACCEPTED) {
+    Q_UNUSED(vehicleId);
+    Q_UNUSED(noReponseFromVehicle);
+
+    if (component == MAV_COMP_ID_UDP_BRIDGE) {
+        if (result != MAV_RESULT_ACCEPTED) {
             qWarning() << "ESP8266ComponentController command" << command << "rejected.";
             return;
         }
-        if((_waitType == WAIT_FOR_REBOOT  && command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN) ||
-           (_waitType == WAIT_FOR_RESTORE && command == MAV_CMD_PREFLIGHT_STORAGE))
-        {
+        if ((_waitType == WAIT_FOR_REBOOT  && command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN) ||
+                (_waitType == WAIT_FOR_RESTORE && command == MAV_CMD_PREFLIGHT_STORAGE)) {
             _timer.stop();
             _waitType = WAIT_FOR_NOTHING;
             emit busyChanged();
             qCDebug(ESP8266ComponentControllerLog) << "_commandAck for" << command;
-            if(command == MAV_CMD_PREFLIGHT_STORAGE) {
+            if (command == MAV_CMD_PREFLIGHT_STORAGE) {
                 _vehicle->parameterManager()->refreshAllParameters(MAV_COMP_ID_UDP_BRIDGE);
             }
         }

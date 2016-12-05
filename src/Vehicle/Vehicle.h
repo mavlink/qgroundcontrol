@@ -553,7 +553,13 @@ public:
     static const int cMaxRcChannels = 18;
 
     bool containsLink(LinkInterface* link) { return _links.contains(link); }
-    void doCommandLong(int component, MAV_CMD command, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
+
+    /// Sends the specified MAV_CMD to the vehicle. If no Ack is received command will be retried. If a sendMavCommand is already in progress
+    /// the command will be queued and sent when the previous command completes.
+    ///     @param component Component to send to
+    ///     @param command MAV_CMD to send
+    ///     @param showError true: Display error to user if command failed, false:  no error shown
+    void sendMavCommand(int component, MAV_CMD command, bool showError, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
     int firmwareMajorVersion(void) const { return _firmwareMajorVersion; }
     int firmwareMinorVersion(void) const { return _firmwareMinorVersion; }
@@ -609,7 +615,6 @@ signals:
     void flyingChanged(bool flying);
     void guidedModeChanged(bool guidedMode);
     void prearmErrorChanged(const QString& prearmError);
-    void commandLongAck(uint8_t compID, uint16_t command, uint8_t result);
     void soloFirmwareChanged(bool soloFirmware);
     void unhealthySensorsChanged(void);
 
@@ -653,6 +658,14 @@ signals:
     // Mavlink Log Download
     void mavlinkLogData (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, QByteArray data, bool acked);
 
+    /// Signalled in response to usage of sendMavCommand
+    ///     @param vehicleId Vehicle which command was sent to
+    ///     @param component Component which command was sent to
+    ///     @param command MAV_CMD Command which was sent
+    ///     @param result MAV_RESULT returned in ack
+    ///     @param noResponseFromVehicle true: vehicle did not respond to command, false: vehicle responsed, MAV_RESULT in result
+    void mavCommandResult(int vehicleId, int component, MAV_CMD command, MAV_RESULT result, bool noReponseFromVehicle);
+
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
     void _linkInactiveOrDeleted(LinkInterface* link);
@@ -682,6 +695,7 @@ private slots:
     void _prearmErrorTimeout(void);
     void _newMissionItemsAvailable(void);
     void _newGeoFenceAvailable(void);
+    void _sendMavCommandAgain(void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -713,6 +727,7 @@ private:
     void _handleMavlinkLoggingData(mavlink_message_t& message);
     void _handleMavlinkLoggingDataAcked(mavlink_message_t& message);
     void _ackMavlinkLogData(uint16_t sequence);
+    void _sendNextQueuedMavCommand(void);
 
 private:
     int     _id;                    ///< Mavlink system id
@@ -764,6 +779,19 @@ private:
     uint32_t        _onboardControlSensorsEnabled;
     uint32_t        _onboardControlSensorsHealth;
     uint32_t        _onboardControlSensorsUnhealthy;
+
+    typedef struct {
+        int     component;
+        MAV_CMD command;
+        float   rgParam[7];
+        bool    showError;
+    } MavCommandQueueEntry_t;
+
+    QList<MavCommandQueueEntry_t>   _mavCommandQueue;
+    QTimer                          _mavCommandAckTimer;
+    int                             _mavCommandRetryCount;
+    static const int                _mavCommandMaxRetryCount = 3;
+    static const int                _mavCommandAckTimeoutMSecs = 1000;
 
     QString             _prearmError;
     QTimer              _prearmErrorTimer;

@@ -174,11 +174,17 @@ Vehicle::Vehicle(LinkInterface*             link,
     _prearmErrorTimer.setInterval(_prearmErrorTimeoutMSecs);
     _prearmErrorTimer.setSingleShot(true);
 
-    // Connection Lost time
-    _connectionLostTimer.setInterval(Vehicle::_connectionLostTimeoutMSecs);
+    // Connection Lost timer
+    _connectionLostTimer.setInterval(_connectionLostTimeoutMSecs);
     _connectionLostTimer.setSingleShot(false);
     _connectionLostTimer.start();
     connect(&_connectionLostTimer, &QTimer::timeout, this, &Vehicle::_connectionLostTimeout);
+
+    // Send MAV_CMD ack timer
+    _mavCommandAckTimer.setSingleShot(true);
+    _mavCommandAckTimer.setInterval(_mavCommandAckTimeoutMSecs);
+    _mavCommandAckTimer.setSingleShot(false);
+    connect(&_mavCommandAckTimer, &QTimer::timeout, this, &Vehicle::_sendMavCommandAgain);
 
     _mav = uas();
 
@@ -212,23 +218,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     _rallyPointManager = _firmwarePlugin->newRallyPointManager(this);
     connect(_rallyPointManager, &RallyPointManager::error, this, &Vehicle::_rallyPointManagerError);
 
-    // Ask the vehicle for firmware version info. This must be MAV_COMP_ID_ALL since we don't know default component id yet.
-
-    mavlink_message_t       versionMsg;
-    mavlink_command_long_t  versionCmd;
-
-    versionCmd.command = MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
-    versionCmd.confirmation = 0;
-    versionCmd.param1 = 1; // Request firmware version
-    versionCmd.param2 = versionCmd.param3 = versionCmd.param4 = versionCmd.param5 = versionCmd.param6 = versionCmd.param7 = 0;
-    versionCmd.target_system = id();
-    versionCmd.target_component = MAV_COMP_ID_ALL;
-    mavlink_msg_command_long_encode_chan(_mavlink->getSystemId(),
-                                         _mavlink->getComponentId(),
-                                         priorityLink()->mavlinkChannel(),
-                                         &versionMsg,
-                                         &versionCmd);
-    sendMessageMultiple(versionMsg);
+    // Ask the vehicle for firmware version info.
+    sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
+                    MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,
+                   false,                                   // No error shown if fails
+                    1);                                     // Request firmware version
 
     _firmwarePlugin->initializeVehicle(this);
 
@@ -564,40 +558,41 @@ void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
 
 void Vehicle::_handleCommandAck(mavlink_message_t& message)
 {
+    bool showError = true;
+
     mavlink_command_ack_t ack;
     mavlink_msg_command_ack_decode(&message, &ack);
 
-    emit commandLongAck(message.compid, ack.command, ack.result);
+    if (_mavCommandQueue.count() && ack.command == _mavCommandQueue[0].command) {
+        showError = _mavCommandQueue[0].showError;
+        _mavCommandQueue.removeFirst();
+    }
 
-    // Disregard failures for these (handled above)
-    switch (ack.command) {
-        case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
-        case MAV_CMD_LOGGING_START:
-        case MAV_CMD_LOGGING_STOP:
-            return;
-        default:
+    emit mavCommandResult(_id, message.compid, (MAV_CMD)ack.command, (MAV_RESULT)ack.result, false /* noResponsefromVehicle */);
+
+    if (showError) {
+        QString commandName = qgcApp()->toolbox()->missionCommandTree()->friendlyName((MAV_CMD)ack.command);
+
+        switch (ack.result) {
+        case MAV_RESULT_TEMPORARILY_REJECTED:
+            qgcApp()->showMessage(tr("%1 command temporarily rejected").arg(commandName));
             break;
+        case MAV_RESULT_DENIED:
+            qgcApp()->showMessage(tr("%1 command denied").arg(commandName));
+            break;
+        case MAV_RESULT_UNSUPPORTED:
+            qgcApp()->showMessage(tr("%1 command not supported").arg(commandName));
+            break;
+        case MAV_RESULT_FAILED:
+            qgcApp()->showMessage(tr("%1 command failed").arg(commandName));
+            break;
+        default:
+            // Do nothing
+            break;
+        }
     }
 
-    QString commandName = qgcApp()->toolbox()->missionCommandTree()->friendlyName((MAV_CMD)ack.command);
-
-    switch (ack.result) {
-    case MAV_RESULT_TEMPORARILY_REJECTED:
-        qgcApp()->showMessage(tr("%1 command temporarily rejected").arg(commandName));
-        break;
-    case MAV_RESULT_DENIED:
-        qgcApp()->showMessage(tr("%1 command denied").arg(commandName));
-        break;
-    case MAV_RESULT_UNSUPPORTED:
-        qgcApp()->showMessage(tr("%1 command not supported").arg(commandName));
-        break;
-    case MAV_RESULT_FAILED:
-        qgcApp()->showMessage(tr("%1 command failed").arg(commandName));
-        break;
-    default:
-        // Do nothing
-        break;
-    }
+    _sendNextQueuedMavCommand();
 }
 
 void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
@@ -1303,29 +1298,10 @@ QGeoCoordinate Vehicle::homePosition(void)
 void Vehicle::setArmed(bool armed)
 {
     // We specifically use COMMAND_LONG:MAV_CMD_COMPONENT_ARM_DISARM since it is supported by more flight stacks.
-
-    mavlink_message_t msg;
-    mavlink_command_long_t cmd;
-
-    cmd.command = (uint16_t)MAV_CMD_COMPONENT_ARM_DISARM;
-    cmd.confirmation = 0;
-    cmd.param1 = armed ? 1.0f : 0.0f;
-    cmd.param2 = 0.0f;
-    cmd.param3 = 0.0f;
-    cmd.param4 = 0.0f;
-    cmd.param5 = 0.0f;
-    cmd.param6 = 0.0f;
-    cmd.param7 = 0.0f;
-    cmd.target_system = id();
-    cmd.target_component = defaultComponentId();
-
-    mavlink_msg_command_long_encode_chan(_mavlink->getSystemId(),
-                                         _mavlink->getComponentId(),
-                                         priorityLink()->mavlinkChannel(),
-                                         &msg,
-                                         &cmd);
-
-    sendMessageOnLink(priorityLink(), msg);
+    sendMavCommand(defaultComponentId(),
+                   MAV_CMD_COMPONENT_ARM_DISARM,
+                   true,    // show error if fails
+                   armed ? 1.0f : 0.0f);
 }
 
 bool Vehicle::flightModeSetAvailable(void)
@@ -1812,27 +1788,11 @@ void Vehicle::setGuidedMode(bool guidedMode)
 
 void Vehicle::emergencyStop(void)
 {
-    mavlink_message_t msg;
-    mavlink_command_long_t cmd;
-
-    cmd.command = (uint16_t)MAV_CMD_COMPONENT_ARM_DISARM;
-    cmd.confirmation = 0;
-    cmd.param1 = 0.0f;
-    cmd.param2 = 21196.0f;  // Magic number for emergency stop
-    cmd.param3 = 0.0f;
-    cmd.param4 = 0.0f;
-    cmd.param5 = 0.0f;
-    cmd.param6 = 0.0f;
-    cmd.param7 = 0.0f;
-    cmd.target_system = id();
-    cmd.target_component = defaultComponentId();
-    mavlink_msg_command_long_encode_chan(_mavlink->getSystemId(),
-                                         _mavlink->getComponentId(),
-                                         priorityLink()->mavlinkChannel(),
-                                         &msg,
-                                         &cmd);
-
-    sendMessageOnLink(priorityLink(), msg);
+    sendMavCommand(defaultComponentId(),
+                   MAV_CMD_COMPONENT_ARM_DISARM,
+                   true,        // show error if fails
+                   0.0f,
+                   21196.0f);  // Magic number for emergency stop
 }
 
 void Vehicle::setCurrentMissionSequence(int seq)
@@ -1851,22 +1811,59 @@ void Vehicle::setCurrentMissionSequence(int seq)
     sendMessageOnLink(priorityLink(), msg);
 }
 
-void Vehicle::doCommandLong(int component, MAV_CMD command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+void Vehicle::sendMavCommand(int component, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
+    MavCommandQueueEntry_t entry;
+
+    entry.component = component;
+    entry.command = command;
+    entry.showError = showError;
+    entry.rgParam[0] = param1;
+    entry.rgParam[1] = param2;
+    entry.rgParam[2] = param3;
+    entry.rgParam[3] = param4;
+    entry.rgParam[4] = param5;
+    entry.rgParam[5] = param6;
+    entry.rgParam[6] = param7;
+
+    _mavCommandQueue.append(entry);
+
+    if (_mavCommandQueue.count() == 1) {
+        _mavCommandRetryCount = 0;
+        _sendMavCommandAgain();
+    }
+}
+
+void Vehicle::_sendMavCommandAgain(void)
+{
+    MavCommandQueueEntry_t& queuedCommand = _mavCommandQueue[0];
+
+    if (_mavCommandRetryCount++ > _mavCommandMaxRetryCount) {
+        emit mavCommandResult(_id, queuedCommand.component, queuedCommand.command, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
+        if (queuedCommand.showError) {
+            qgcApp()->showMessage(tr("Vehicle did not respond to command: %1").arg(qgcApp()->toolbox()->missionCommandTree()->friendlyName(queuedCommand.command)));
+        }
+        _mavCommandQueue.removeFirst();
+        _sendNextQueuedMavCommand();
+        return;
+    }
+
+    _mavCommandAckTimer.start();
+
     mavlink_message_t       msg;
     mavlink_command_long_t  cmd;
 
-    cmd.command = command;
+    cmd.command = queuedCommand.command;
     cmd.confirmation = 0;
-    cmd.param1 = param1;
-    cmd.param2 = param2;
-    cmd.param3 = param3;
-    cmd.param4 = param4;
-    cmd.param5 = param5;
-    cmd.param6 = param6;
-    cmd.param7 = param7;
-    cmd.target_system = id();
-    cmd.target_component = component;
+    cmd.param1 = queuedCommand.rgParam[0];
+    cmd.param2 = queuedCommand.rgParam[1];
+    cmd.param3 = queuedCommand.rgParam[2];
+    cmd.param4 = queuedCommand.rgParam[3];
+    cmd.param5 = queuedCommand.rgParam[4];
+    cmd.param6 = queuedCommand.rgParam[5];
+    cmd.param7 = queuedCommand.rgParam[6];
+    cmd.target_system = _id;
+    cmd.target_component = queuedCommand.component;
     mavlink_msg_command_long_encode_chan(_mavlink->getSystemId(),
                                          _mavlink->getComponentId(),
                                          priorityLink()->mavlinkChannel(),
@@ -1875,6 +1872,15 @@ void Vehicle::doCommandLong(int component, MAV_CMD command, float param1, float 
 
     sendMessageOnLink(priorityLink(), msg);
 }
+
+void Vehicle::_sendNextQueuedMavCommand(void)
+{
+    if (_mavCommandQueue.count()) {
+        _mavCommandRetryCount = 0;
+        _sendMavCommandAgain();
+    }
+}
+
 
 void Vehicle::setPrearmError(const QString& prearmError)
 {
@@ -1921,7 +1927,7 @@ QString Vehicle::firmwareVersionTypeString(void) const
 
 void Vehicle::rebootVehicle()
 {
-    doCommandLong(defaultComponentId(), MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    sendMavCommand(defaultComponentId(), MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, true, 1.0f);
 }
 
 int Vehicle::defaultComponentId(void)
@@ -1941,7 +1947,7 @@ void Vehicle::setSoloFirmware(bool soloFirmware)
     // Temporarily removed, waiting for new command implementation
 void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
 {
-    doCommandLong(defaultComponentId(), MAV_CMD_DO_MOTOR_TEST, motor, MOTOR_TEST_THROTTLE_PERCENT, percent, timeoutSecs);
+    doCommandLongUnverified(defaultComponentId(), MAV_CMD_DO_MOTOR_TEST, motor, MOTOR_TEST_THROTTLE_PERCENT, percent, timeoutSecs);
 }
 #endif
 
@@ -2044,12 +2050,12 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
 
 void Vehicle::startMavlinkLog()
 {
-    doCommandLong(defaultComponentId(), MAV_CMD_LOGGING_START);
+    sendMavCommand(defaultComponentId(), MAV_CMD_LOGGING_START, false /* showError */);
 }
 
 void Vehicle::stopMavlinkLog()
 {
-    doCommandLong(defaultComponentId(), MAV_CMD_LOGGING_STOP);
+    sendMavCommand(defaultComponentId(), MAV_CMD_LOGGING_STOP, false /* showError */);
 }
 
 void Vehicle::_ackMavlinkLogData(uint16_t sequence)

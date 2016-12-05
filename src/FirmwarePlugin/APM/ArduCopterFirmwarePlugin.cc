@@ -125,29 +125,11 @@ void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitu
         return;
     }
 
-    mavlink_message_t msg;
-    mavlink_command_long_t cmd;
-
-    cmd.command = (uint16_t)MAV_CMD_NAV_TAKEOFF;
-    cmd.confirmation = 0;
-    cmd.param1 = 0.0f;
-    cmd.param2 = 0.0f;
-    cmd.param3 = 0.0f;
-    cmd.param4 = 0.0f;
-    cmd.param5 = 0.0f;
-    cmd.param6 = 0.0f;
-    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toFloat() +  altitudeRel; // AMSL meters
-    cmd.target_system = vehicle->id();
-    cmd.target_component = vehicle->defaultComponentId();
-
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_command_long_encode_chan(mavlink->getSystemId(),
-                                         mavlink->getComponentId(),
-                                         vehicle->priorityLink()->mavlinkChannel(),
-                                         &msg,
-                                         &cmd);
-
-    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
+    vehicle->sendMavCommand(vehicle->defaultComponentId(),
+                            MAV_CMD_NAV_TAKEOFF,
+                            true, // show error
+                            0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                            vehicle->altitudeAMSL()->rawValue().toFloat() +  altitudeRel); // AMSL meters
 }
 
 void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
