@@ -791,7 +791,7 @@ private:
     QTimer                          _mavCommandAckTimer;
     int                             _mavCommandRetryCount;
     static const int                _mavCommandMaxRetryCount = 3;
-    static const int                _mavCommandAckTimeoutMSecs = 1000;
+    static const int                _mavCommandAckTimeoutMSecs = 3000;
 
     QString             _prearmError;
     QTimer              _prearmErrorTimer;
