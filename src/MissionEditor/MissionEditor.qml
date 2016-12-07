@@ -145,14 +145,14 @@ QGCView {
     }
 
     function addFenceItemCoordsForFit(coordList) {
-        if (geoFenceController.circleSupported) {
+        if (geoFenceController.circleEnabled) {
             var azimuthList = [ 0, 180, 90, 270 ]
             for (var i=0; i<azimuthList.length; i++) {
                 var edgeCoordinate = _visualItems.get(0).coordinate.atDistanceAndAzimuth(geoFenceController.circleRadius, azimuthList[i])
                 coordList.push(edgeCoordinate)
             }
         }
-        if (geoFenceController.polygonSupported && geoFenceController.polygon.count() > 2) {
+        if (geoFenceController.polygonEnabled && geoFenceController.polygon.count() > 2) {
             for (var i=0; i<geoFenceController.polygon.count(); i++) {
                 coordList.push(geoFenceController.polygon.path[i])
             }
@@ -477,7 +477,7 @@ QGCView {
                             }
                             break
                         case _layerGeoFence:
-                            if (geoFenceController.breachReturnSupported) {
+                            if (geoFenceController.breachReturnEnabled) {
                                 geoFenceController.breachReturnPoint = coordinate
                                 geoFenceController.validateBreachReturn()
                             }
@@ -788,7 +788,7 @@ QGCView {
                     border.width:   3
                     path:           geoFenceController.polygon.path
                     z:              QGroundControl.zOrderMapItems
-                    visible:        geoFenceController.polygonSupported
+                    visible:        geoFenceController.polygonEnabled
                 }
 
                 // GeoFence circle
@@ -796,16 +796,16 @@ QGCView {
                     border.color:   "#80FF0000"
                     border.width:   3
                     center:         missionController.plannedHomePosition
-                    radius:         geoFenceController.circleSupported ? geoFenceController.circleRadius : 0
+                    radius:         geoFenceController.circleRadius
                     z:              QGroundControl.zOrderMapItems
-                    visible:        geoFenceController.circleSupported
+                    visible:        geoFenceController.circleEnabled
                 }
 
                 // GeoFence breach return point
                 MapQuickItem {
                     anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
                     coordinate:     geoFenceController.breachReturnPoint
-                    visible:        geoFenceController.breachReturnSupported
+                    visible:        geoFenceController.breachReturnEnabled
                     sourceItem:     MissionItemIndexLabel { label: "F" }
                     z:              QGroundControl.zOrderMapItems
                 }

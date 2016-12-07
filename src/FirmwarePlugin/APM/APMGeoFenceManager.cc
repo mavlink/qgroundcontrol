@@ -21,14 +21,15 @@ const char* APMGeoFenceManager::_fenceEnableParam = "FENCE_ENABLE";
 APMGeoFenceManager::APMGeoFenceManager(Vehicle* vehicle)
     : GeoFenceManager(vehicle)
     , _fenceSupported(false)
-    , _breachReturnSupported(vehicle->fixedWing())
-    , _circleSupported(false)
-    , _polygonSupported(false)
+    , _breachReturnEnabled(vehicle->fixedWing())
+    , _circleEnabled(false)
+    , _polygonEnabled(false)
     , _firstParamLoadComplete(false)
-    , _circleRadiusFact(NULL)
     , _readTransactionInProgress(false)
     , _writeTransactionInProgress(false)
     , _fenceTypeFact(NULL)
+    , _fenceEnableFact(NULL)
+    , _circleRadiusFact(NULL)
 {
     connect(_vehicle,                       &Vehicle::mavlinkMessageReceived,           this, &APMGeoFenceManager::_mavlinkMessageReceived);
     connect(_vehicle->parameterManager(),   &ParameterManager::parametersReadyChanged,  this, &APMGeoFenceManager::_parametersReady);
@@ -54,15 +55,15 @@ void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, const
         return;
     }
 
-    if (!_geoFenceSupported()) {
+    if (!_fenceSupported) {
         return;
     }
 
     // Validate
-    int validatedPolygonCount = polygon.count();
-    if (polygonSupported()) {
-        if (polygon.count() < 3) {
-            validatedPolygonCount = 0;
+    int validatedPolygonCount = 0;
+    if (polygonEnabled()) {
+        if (polygon.count() >= 3) {
+            validatedPolygonCount = polygon.count();
         }
         if (polygon.count() > std::numeric_limits<uint8_t>::max()) {
             _sendError(TooManyPoints, QStringLiteral("Geo-Fence polygon has too many points: %1.").arg(_polygon.count()));
@@ -71,7 +72,11 @@ void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, const
     }
 
     _breachReturnPoint = breachReturn;
-    _polygon = polygon;
+    if (validatedPolygonCount) {
+        _polygon = polygon;
+    } else {
+        _polygon.clear();
+    }
 
     // Total point count, +1 polygon close in last index, +1 for breach in index 0
     _cWriteFencePoints = validatedPolygonCount ? validatedPolygonCount + 1 + 1 : 0;
@@ -94,7 +99,7 @@ void APMGeoFenceManager::loadFromVehicle(void)
     _breachReturnPoint = QGeoCoordinate();
     _polygon.clear();
 
-    if (!_geoFenceSupported()) {
+    if (!_fenceSupported) {
         return;
     }
 
@@ -217,57 +222,27 @@ bool APMGeoFenceManager::inProgress(void) const
     return _readTransactionInProgress || _writeTransactionInProgress;
 }
 
-bool APMGeoFenceManager::_geoFenceSupported(void)
+void APMGeoFenceManager::_updateEnabledFlags(void)
 {
-    // FIXME: MockLink doesn't support geo fence yet
-    if (qgcApp()->runningUnitTests()) {
-        return false;
-    }
-
-    if (!_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, _fenceTotalParam) ||
-            !_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, _fenceActionParam)) {
-        return false;
+    bool fenceEnabled;
+    if (_fenceEnableFact) {
+        fenceEnabled = _fenceEnableFact->rawValue().toBool();
     } else {
-        return true;
-    }
-}
-
-bool APMGeoFenceManager::fenceEnabled(void) const
-{
-    if (qgcApp()->runningUnitTests()) {
-        return false;
+        fenceEnabled = true;
     }
 
-    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, _fenceEnableParam)) {
-        bool fenceEnabled = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _fenceEnableParam)->rawValue().toBool();
-        qCDebug(GeoFenceManagerLog) << "FENCE_ENABLE available" << fenceEnabled;
-        return fenceEnabled;
+    bool newCircleEnabled = _fenceSupported && fenceEnabled && _fenceTypeFact && (_fenceTypeFact->rawValue().toInt() & 2);
+    if (newCircleEnabled != _circleEnabled) {
+        _circleEnabled = newCircleEnabled;
+        emit circleEnabledChanged(newCircleEnabled);
     }
 
-    qCDebug(GeoFenceManagerLog) << "FENCE_ENABLE not available";
-    return true;
-}
-
-void APMGeoFenceManager::_fenceEnabledRawValueChanged(QVariant value)
-{
-    qCDebug(GeoFenceManagerLog) << "FENCE_ENABLE changed" << value.toBool();
-    emit fenceEnabledChanged(!qgcApp()->runningUnitTests() && value.toBool());
-}
-
-void APMGeoFenceManager::_updateSupportedFlags(void)
-{
-    bool newCircleSupported = _fenceSupported && _vehicle->multiRotor() && _fenceTypeFact && (_fenceTypeFact->rawValue().toInt() & 2);
-    if (newCircleSupported != _circleSupported) {
-        _circleSupported = newCircleSupported;
-        emit circleSupportedChanged(newCircleSupported);
-    }
-
-    bool newPolygonSupported = _fenceSupported &&
+    bool newPolygonEnabled = _fenceSupported && fenceEnabled &&
             ((_vehicle->multiRotor() && _fenceTypeFact && (_fenceTypeFact->rawValue().toInt() & 4)) ||
              _vehicle->fixedWing());
-    if (newPolygonSupported != _polygonSupported) {
-        _polygonSupported = newPolygonSupported;
-        emit polygonSupportedChanged(newPolygonSupported);
+    if (newPolygonEnabled != _polygonEnabled) {
+        _polygonEnabled = newPolygonEnabled;
+        emit polygonEnabledChanged(newPolygonEnabled);
     }
 }
 
@@ -276,20 +251,21 @@ void APMGeoFenceManager::_parametersReady(void)
     if (!_firstParamLoadComplete) {
         _firstParamLoadComplete = true;
 
-        _fenceSupported = _vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("FENCE_ACTION"));
+        _fenceSupported = _vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("FENCE_ACTION")) &&
+                            !qgcApp()->runningUnitTests();
 
         if (_fenceSupported) {
             QStringList paramNames;
             QStringList paramLabels;
 
             if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, _fenceEnableParam)) {
-                connect(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _fenceEnableParam), &Fact::rawValueChanged, this, &APMGeoFenceManager::_fenceEnabledRawValueChanged);
+                _fenceEnableFact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _fenceEnableParam);
+                connect(_fenceEnableFact, &Fact::rawValueChanged, this, &APMGeoFenceManager::_updateEnabledFlags);
             }
 
             if (_vehicle->multiRotor()) {
                 _fenceTypeFact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("FENCE_TYPE"));
-
-                connect(_fenceTypeFact, &Fact::rawValueChanged, this, &APMGeoFenceManager::_updateSupportedFlags);
+                connect(_fenceTypeFact, &Fact::rawValueChanged, this, &APMGeoFenceManager::_updateEnabledFlags);
 
                 _circleRadiusFact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("FENCE_RADIUS"));
                 connect(_circleRadiusFact, &Fact::rawValueChanged, this, &APMGeoFenceManager::_circleRadiusRawValueChanged);
@@ -319,18 +295,17 @@ void APMGeoFenceManager::_parametersReady(void)
             emit paramsChanged(_params);
             emit paramLabelsChanged(_paramLabels);
 
-            emit fenceSupportedChanged(_fenceSupported);
-            _updateSupportedFlags();
+            _updateEnabledFlags();
         }
 
-        qCDebug(GeoFenceManagerLog) << "fenceSupported:circleSupported:polygonSupported:breachReturnSupported" <<
-                                       _fenceSupported << circleSupported() << polygonSupported() << _breachReturnSupported;
+        qCDebug(GeoFenceManagerLog) << "fenceSupported:circleEnabled:polygonEnabled:breachReturnEnabled" <<
+                                       _fenceSupported << _circleEnabled << _polygonEnabled << _breachReturnEnabled;
     }
 }
 
 float APMGeoFenceManager::circleRadius(void) const
 {
-    if (_circleRadiusFact) {
+    if (_circleEnabled) {
         return _circleRadiusFact->rawValue().toFloat();
     } else {
         return 0.0;
@@ -340,16 +315,6 @@ float APMGeoFenceManager::circleRadius(void) const
 void APMGeoFenceManager::_circleRadiusRawValueChanged(QVariant value)
 {
     emit circleRadiusChanged(value.toFloat());
-}
-
-bool APMGeoFenceManager::circleSupported(void) const
-{
-    return _circleSupported;
-}
-
-bool APMGeoFenceManager::polygonSupported(void) const
-{
-    return _polygonSupported;
 }
 
 QString APMGeoFenceManager::editorQml(void) const
