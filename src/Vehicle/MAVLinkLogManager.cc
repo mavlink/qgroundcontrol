@@ -769,7 +769,7 @@ MAVLinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system
 
 //-----------------------------------------------------------------------------
 void
-MAVLinkLogManager::_mavCommandResult(int vehicleId, int component, MAV_CMD command, MAV_RESULT result, bool noReponseFromVehicle)
+MAVLinkLogManager::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
 {
     Q_UNUSED(vehicleId);
     Q_UNUSED(component);

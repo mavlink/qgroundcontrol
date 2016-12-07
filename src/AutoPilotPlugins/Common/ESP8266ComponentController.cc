@@ -381,7 +381,7 @@ ESP8266ComponentController::_processTimeout()
 
 //-----------------------------------------------------------------------------
 void
-ESP8266ComponentController::_mavCommandResult(int vehicleId, int component, MAV_CMD command, MAV_RESULT result, bool noReponseFromVehicle)
+ESP8266ComponentController::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
 {
     Q_UNUSED(vehicleId);
     Q_UNUSED(noReponseFromVehicle);
