@@ -381,6 +381,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/qgcunittest/TCPLinkTest.h \
         src/qgcunittest/TCPLoopBackServer.h \
         src/qgcunittest/UnitTest.h \
+        src/Vehicle/SendMavCommandTest.h \
 
     SOURCES += \
         src/AnalyzeView/LogDownloadTest.cc \
@@ -409,6 +410,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/qgcunittest/TCPLoopBackServer.cc \
         src/qgcunittest/UnitTest.cc \
         src/qgcunittest/UnitTestList.cc \
+        src/Vehicle/SendMavCommandTest.cc \
 } } } } } }
 
 # Main QGC Headers and Source files
