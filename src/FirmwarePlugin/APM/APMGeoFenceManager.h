@@ -23,42 +23,36 @@ public:
     ~APMGeoFenceManager();
 
     // Overrides from GeoFenceManager
-    bool            inProgress              (void) const final;
-    void            loadFromVehicle         (void) final;
-    void            sendToVehicle           (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon) final;
-    bool            fenceSupported          (void) const final { return _fenceSupported; }
-    bool            fenceEnabled            (void) const final;
-    bool            circleSupported         (void) const final;
-    bool            polygonSupported        (void) const final;
-    bool            breachReturnSupported   (void) const final { return _breachReturnSupported; }
-    float           circleRadius            (void) const final;
-    QVariantList    params                  (void) const final { return _params; }
-    QStringList     paramLabels             (void) const final { return _paramLabels; }
-    QString         editorQml               (void) const final;
+    bool            inProgress          (void) const final;
+    void            loadFromVehicle     (void) final;
+    void            sendToVehicle       (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon) final;
+    bool            circleEnabled       (void) const final { return _circleEnabled; }
+    bool            polygonEnabled      (void) const final { return _polygonEnabled; }
+    bool            breachReturnEnabled (void) const final { return _breachReturnEnabled; }
+    float           circleRadius        (void) const final;
+    QVariantList    params              (void) const final { return _params; }
+    QStringList     paramLabels         (void) const final { return _paramLabels; }
+    QString         editorQml           (void) const final;
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
-    void _updateSupportedFlags(void);
+    void _updateEnabledFlags(void);
     void _circleRadiusRawValueChanged(QVariant value);
     void _parametersReady(void);
-    void _fenceEnabledRawValueChanged(QVariant value);
     
 private:
     void _requestFencePoint(uint8_t pointIndex);
     void _sendFencePoint(uint8_t pointIndex);
-    bool _geoFenceSupported(void);
 
 private:
     bool _fenceSupported;
-    bool _breachReturnSupported;
-    bool _circleSupported;
-    bool _polygonSupported;
+    bool _breachReturnEnabled;
+    bool _circleEnabled;
+    bool _polygonEnabled;
     bool _firstParamLoadComplete;
 
     QVariantList    _params;
     QStringList     _paramLabels;
-
-    Fact* _circleRadiusFact;
 
     bool _readTransactionInProgress;
     bool _writeTransactionInProgress;
@@ -68,6 +62,8 @@ private:
     uint8_t _currentFencePoint;
 
     Fact* _fenceTypeFact;
+    Fact* _fenceEnableFact;
+    Fact* _circleRadiusFact;
 
     static const char* _fenceTotalParam;
     static const char* _fenceActionParam;

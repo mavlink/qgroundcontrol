@@ -111,7 +111,7 @@ FlightMap {
         border.color:   "#80FF0000"
         border.width:   3
         path:           geoFenceController.polygon.path
-        visible:        geoFenceController.fenceEnabled && geoFenceController.polygonSupported
+        visible:        geoFenceController.polygonEnabled
     }
 
     // GeoFence circle
@@ -119,16 +119,16 @@ FlightMap {
         border.color:   "#80FF0000"
         border.width:   3
         center:         missionController.plannedHomePosition
-        radius:         (geoFenceController.fenceEnabled && geoFenceController.circleSupported) ? geoFenceController.circleRadius : 0
+        radius:         geoFenceController.circleRadius
         z:              QGroundControl.zOrderMapItems
-        visible:         geoFenceController.fenceEnabled && geoFenceController.circleSupported
+        visible:        geoFenceController.circleEnabled
     }
 
     // GeoFence breach return point
     MapQuickItem {
         anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
         coordinate:     geoFenceController.breachReturnPoint
-        visible:        geoFenceController.fenceEnabled && geoFenceController.breachReturnSupported
+        visible:        geoFenceController.breachReturnEnabled
         sourceItem:     MissionItemIndexLabel { label: "F" }
         z:              QGroundControl.zOrderMapItems
     }
