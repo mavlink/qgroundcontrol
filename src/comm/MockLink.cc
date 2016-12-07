@@ -807,6 +807,40 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         commandResult = MAV_RESULT_ACCEPTED;
         _respondWithAutopilotVersion();
         break;
+    case MAV_CMD_USER_1:
+        // Test command which always returns MAV_RESULT_ACCEPTED
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    case MAV_CMD_USER_2:
+        // Test command which always returns MAV_RESULT_FAILED
+        commandResult = MAV_RESULT_FAILED;
+        break;
+    case MAV_CMD_USER_3:
+        // Test command which returns MAV_RESULT_ACCEPTED on second attempt
+        static bool firstCmdUser3 = true;
+        if (firstCmdUser3) {
+           firstCmdUser3 = false;
+           return;
+        } else {
+            firstCmdUser3 = true;
+            commandResult = MAV_RESULT_ACCEPTED;
+        }
+        break;
+    case MAV_CMD_USER_4:
+        // Test command which returns MAV_RESULT_FAILED on second attempt
+        static bool firstCmdUser4 = true;
+        if (firstCmdUser4) {
+           firstCmdUser4 = false;
+           return;
+        } else {
+            firstCmdUser4 = true;
+            commandResult = MAV_RESULT_FAILED;
+        }
+        break;
+    case MAV_CMD_USER_5:
+        // No response
+        return;
+        break;
     }
 
     mavlink_message_t commandAck;
