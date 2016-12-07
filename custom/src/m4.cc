@@ -29,7 +29,7 @@
 
 static const char* kUartName        = "/dev/ttyMFD0";
 
-static const char* kRxInfoGroup     = "YuneecRxInfo";
+static const char* kRxInfoGroup     = "YuneecM4RxInfo";
 static const char* kmode            = "mode";
 static const char* kpanId           = "panId";
 static const char* knodeId          = "nodeId";
