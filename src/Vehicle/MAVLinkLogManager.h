@@ -172,7 +172,7 @@ private slots:
     void _activeVehicleChanged      (Vehicle* vehicle);
     void _mavlinkLogData            (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, QByteArray data, bool acked);
     void _armedChanged              (bool armed);
-    void _mavCommandResult          (int vehicleId, int component, MAV_CMD command, MAV_RESULT result, bool noReponseFromVehicle);
+    void _mavCommandResult          (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
 
 private:
     bool _sendLog                   (const QString& logFile);

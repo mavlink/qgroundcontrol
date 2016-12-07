@@ -664,7 +664,7 @@ signals:
     ///     @param command MAV_CMD Command which was sent
     ///     @param result MAV_RESULT returned in ack
     ///     @param noResponseFromVehicle true: vehicle did not respond to command, false: vehicle responsed, MAV_RESULT in result
-    void mavCommandResult(int vehicleId, int component, MAV_CMD command, MAV_RESULT result, bool noReponseFromVehicle);
+    void mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
