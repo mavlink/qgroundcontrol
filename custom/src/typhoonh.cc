@@ -9,7 +9,11 @@
 #include <QtQml>
 #include <QQmlEngine>
 
+#include "MultiVehicleManager.h"
+
+//-- From QGC. Needs to be in sync.
 const char* kMainIsMap = "MainFlyWindowIsMap";
+const char* kStyleKey  = "StyleIsDark";
 
 //-----------------------------------------------------------------------------
 class TyphoonHOptions : public QGCOptions
@@ -34,8 +38,13 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
 {
     _pOptions = new TyphoonHOptions;
     _pCore = new TyphoonHCore(this);
-    //-- Make sure Main View Is Video
+    //-- Set our own "defaults"
     QSettings settings;
+    //-- Make "Dark" style default
+    if(!settings.contains(kStyleKey)) {
+        settings.setValue(kStyleKey, true);
+    }
+    //-- Make sure Main View Is Video
     settings.beginGroup("QGCQml");
     if(!settings.contains(kMainIsMap)) {
         settings.setValue(kMainIsMap, false);
@@ -65,6 +74,7 @@ TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
 {
     QGCCorePlugin::setToolbox(toolbox);
     _pCore->init();
+    connect(toolbox->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &TyphoonHPlugin::_vehicleReady);
 }
 
 //-----------------------------------------------------------------------------
@@ -97,4 +107,13 @@ TyphoonHPlugin::settings()
         settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
     }
     return settingsList;
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHPlugin::_vehicleReady(bool parameterReadyVehicleAvailable)
+{
+    if(parameterReadyVehicleAvailable) {
+        _pCore->vehicleReady();
+    }
 }

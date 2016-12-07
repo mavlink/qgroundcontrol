@@ -46,7 +46,8 @@ public:
     QString m4StateStr              ();
 
     //-- Regular interface
-    bool    init                    ();
+    void    init                    ();
+    bool    vehicleReady            ();
     void    getControllerLocation   (ControllerLocation& location);
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
@@ -77,8 +78,8 @@ private:
     void    _generateTableDeviceLocalInfo       (TableDeviceLocalInfo_t *localInfo);
     bool    _generateTableDeviceChannelInfo     (TableDeviceChannelInfo_t *channelInfo);
     bool    _sendTableDeviceChannelNumInfo      (ChannelNumType_t channelNumTpye);
-    bool    _generateTableDeviceChannelNumInfo  (TableDeviceChannelNumInfo_t *channelNumInfo,ChannelNumType_t channelNumTpye,int &num);
-    void    _fillTableDeviceChannelNumMap       (TableDeviceChannelNumInfo_t *channelNumInfo,int num,QList<QVariant> list);
+    bool    _generateTableDeviceChannelNumInfo  (TableDeviceChannelNumInfo_t *channelNumInfo, ChannelNumType_t channelNumTpye, int& num);
+    bool    _fillTableDeviceChannelNumMap       (TableDeviceChannelNumInfo_t *channelNumInfo, int num, QByteArray list);
     bool    _setPowerKey                        (int function);
     void    _handleBindResponse                 ();
     void    _handleQueryBindResponse            (QByteArray data);
@@ -119,6 +120,10 @@ private:
     int                     _responseTryCount;
     int                     _currentChannelAdd;
     int                     _m4State;
+    uint8_t                 _rxLocalIndex;
+    uint8_t                 _rxchannelInfoIndex;
+    uint8_t                 _channelNumIndex;
+    bool                    _sendRxInfoEnd;
     RxBindInfo              _rxBindInfoFeedback;
     QTimer                  _timer;
     ControllerLocation      _controllerLocation;
