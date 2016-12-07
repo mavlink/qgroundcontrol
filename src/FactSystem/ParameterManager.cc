@@ -816,15 +816,11 @@ void ParameterManager::_saveToEEPROM(void)
     if (_saveRequired) {
         _saveRequired = false;
         if (_vehicle->firmwarePlugin()->isCapable(_vehicle, FirmwarePlugin::MavCmdPreflightStorageCapability)) {
-            mavlink_message_t msg;
-            mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
-                                               _mavlink->getComponentId(),
-                                               _vehicle->priorityLink()->mavlinkChannel(),
-                                               &msg,
-                                               _vehicle->id(),
-                                               0,
-                                               MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
-            _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+            _vehicle->sendMavCommand(MAV_COMP_ID_ALL,
+                                     MAV_CMD_PREFLIGHT_STORAGE,
+                                     true,  // showError
+                                     1,     // Write parameters to EEPROM
+                                     -1);   // Don't do anything with mission storage
             qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_saveToEEPROM";
         } else {
             qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_saveToEEPROM skipped due to FirmwarePlugin::isCapable";
@@ -1442,22 +1438,11 @@ bool ParameterManager::loadFromJson(const QJsonObject& json, bool required, QStr
 
 void ParameterManager::resetAllParametersToDefaults(void)
 {
-    mavlink_message_t msg;
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-
-    mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       _vehicle->id(),                   // Target systeem
-                                       _vehicle->defaultComponentId(),   // Target component
-                                       MAV_CMD_PREFLIGHT_STORAGE,
-                                       0,                                // Confirmation
-                                       2,                                // 2 = Reset params to default
-                                       -1,                               // -1 = No change to mission storage
-                                       0,                                // 0 = Ignore
-                                       0, 0, 0, 0);                      // Unused
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMavCommand(MAV_COMP_ID_ALL,
+                             MAV_CMD_PREFLIGHT_STORAGE,
+                             true,  // showError
+                             2,     // Reset params to default
+                             -1);   // Don't do anything with mission storage
 }
 
 QString ParameterManager::_logVehiclePrefix(int componentId)

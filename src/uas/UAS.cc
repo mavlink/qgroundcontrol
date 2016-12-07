@@ -797,6 +797,8 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
         break;
     }
 
+    // We can't use sendMavCommand here since we have no idea how long it will be before the command returns a result. This in turn
+    // causes the retry logic to break down.
     mavlink_message_t msg;
     mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
                                        mavlink->getComponentId(),
@@ -822,23 +824,16 @@ void UAS::stopCalibration(void)
         return;
     }
 
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       uasId,
-                                       _vehicle->defaultComponentId(),   // target component
-                                       MAV_CMD_PREFLIGHT_CALIBRATION,    // command id
-                                       0,                                // 0=first transmission of command
-                                       0,                                // gyro cal
-                                       0,                                // mag cal
-                                       0,                                // ground pressure
-                                       0,                                // radio cal
-                                       0,                                // accel cal
-                                       0,                                // airspeed cal
-                                       0);                               // unused
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
+                             MAV_CMD_PREFLIGHT_CALIBRATION,     // command id
+                             true,                              // showError
+                             0,                                 // gyro cal
+                             0,                                 // mag cal
+                             0,                                 // ground pressure
+                             0,                                 // radio cal
+                             0,                                 // accel cal
+                             0,                                 // airspeed cal
+                             0);                                // unused
 }
 
 void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
@@ -858,23 +853,10 @@ void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
         break;
     }
 
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       uasId,
-                                       _vehicle->defaultComponentId(),   // target component
-                                       MAV_CMD_PREFLIGHT_UAVCAN,         // command id
-                                       0,                                // 0=first transmission of command
-                                       actuatorCal,                      // actuators
-                                       0,
-                                       0,
-                                       0,
-                                       0,
-                                       0,
-                                       0);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
+                             MAV_CMD_PREFLIGHT_UAVCAN,          // command id
+                             true,                              // showError
+                             actuatorCal);                      // actuators
 }
 
 void UAS::stopBusConfig(void)
@@ -883,23 +865,10 @@ void UAS::stopBusConfig(void)
         return;
     }
 
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       uasId,
-                                       _vehicle->defaultComponentId(),   // target component
-                                       MAV_CMD_PREFLIGHT_UAVCAN,         // command id
-                                       0,                                // 0=first transmission of command
-                                       0,
-                                       0,
-                                       0,
-                                       0,
-                                       0,
-                                       0,
-                                       0);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
+                             MAV_CMD_PREFLIGHT_UAVCAN,          // command id
+                             true,                              // showError
+                             0);                                // cancel
 }
 
 /**
@@ -1478,16 +1447,11 @@ void UAS::pairRX(int rxType, int rxSubType)
         return;
     }
 
-    mavlink_message_t msg;
-
-    mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       uasId,
-                                       _vehicle->defaultComponentId(),
-                                       MAV_CMD_START_RX_PAIR, 0, rxType, rxSubType, 0, 0, 0, 0, 0);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
+                             MAV_CMD_START_RX_PAIR,             // command id
+                             true,                              // showError
+                             rxType,
+                             rxSubType);
 }
 
 /**
