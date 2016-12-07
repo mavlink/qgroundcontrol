@@ -564,11 +564,12 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     mavlink_msg_command_ack_decode(&message, &ack);
 
     if (_mavCommandQueue.count() && ack.command == _mavCommandQueue[0].command) {
+        _mavCommandAckTimer.stop();
         showError = _mavCommandQueue[0].showError;
         _mavCommandQueue.removeFirst();
     }
 
-    emit mavCommandResult(_id, message.compid, (MAV_CMD)ack.command, (MAV_RESULT)ack.result, false /* noResponsefromVehicle */);
+    emit mavCommandResult(_id, message.compid, ack.command, ack.result, false /* noResponsefromVehicle */);
 
     if (showError) {
         QString commandName = qgcApp()->toolbox()->missionCommandTree()->friendlyName((MAV_CMD)ack.command);
