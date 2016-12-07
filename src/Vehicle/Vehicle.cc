@@ -657,7 +657,8 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     if (sysStatus.current_battery == -1) {
         _batteryFactGroup.current()->setRawValue(VehicleBatteryFactGroup::_currentUnavailable);
     } else {
-        _batteryFactGroup.current()->setRawValue((double)sysStatus.current_battery * 10);
+        // Current is in Amps, current_battery is 10 * milliamperes (1 = 10 milliampere)
+        _batteryFactGroup.current()->setRawValue((int)(sysStatus.current_battery / 100));
     }
     if (sysStatus.voltage_battery == UINT16_MAX) {
         _batteryFactGroup.voltage()->setRawValue(VehicleBatteryFactGroup::_voltageUnavailable);
