@@ -57,6 +57,11 @@ RxBindInfo::clear()
     extraNum    = 0;
     extraBit    = 0;
     txAddr      = 0;
+    achName.clear();
+    trName.clear();
+    swName.clear();
+    monitName.clear();
+    extraName.clear();
 }
 
 //-----------------------------------------------------------------------------

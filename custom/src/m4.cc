@@ -27,40 +27,43 @@
 #include "QGC.h"
 #include <math.h>
 
-static const char* kUartName    = "/dev/ttyMFD0";
+static const char* kUartName        = "/dev/ttyMFD0";
 
-static const char* kRxInfoGroup = "YuneecRxInfo";
-static const char* kmode        = "mode";
-static const char* kpanId       = "panId";
-static const char* knodeId      = "nodeId";
-static const char* kaNum        = "aNum";
-static const char* kaBit        = "aBit";
-static const char* ktrNum        = "trNum";
-static const char* ktrBit        = "trBit";
-static const char* kswNum       = "swNum";
-static const char* kswBit       = "swBit";
+static const char* kRxInfoGroup     = "YuneecRxInfo";
+static const char* kmode            = "mode";
+static const char* kpanId           = "panId";
+static const char* knodeId          = "nodeId";
+static const char* kaNum            = "aNum";
+static const char* kaBit            = "aBit";
+static const char* ktrNum           = "trNum";
+static const char* ktrBit           = "trBit";
+static const char* kswNum           = "swNum";
+static const char* kswBit           = "swBit";
 static const char* kmonitNum        = "monitNum";
 static const char* kmonitBit        = "monitBit";
-static const char* kextraNum       = "extraNum";
-static const char* kextraBit       = "extraBit";
-static const char* ktxAddr      = "txAddr";
+static const char* kextraNum        = "extraNum";
+static const char* kextraBit        = "extraBit";
+static const char* ktxAddr          = "txAddr";
 
-static const char* kacName      = "acName";
-static const char* ktrName      = "trName";
-static const char* kswName      = "swName";
-static const char* kmonitName      = "monitName";
-static const char* kextraName      = "extraName";
+static const char* kacName          = "acName";
+static const char* ktrName          = "trName";
+static const char* kswName          = "swName";
+static const char* kmonitName       = "monitName";
+static const char* kextraName       = "extraName";
 
-static uint8_t		mRxLocalIndex       = 		0;
-static uint8_t      mRxchannelInfoIndex = 		2;
-static uint8_t      mChannelNumIndex    =       6;
-#define SEND_INTERVAL	 60000
+static uint8_t	mRxLocalIndex       = 0;
+static uint8_t  mRxchannelInfoIndex = 2;
+static uint8_t  mChannelNumIndex    = 6;
+
+bool sendRxInfoEnd                  = false;
+
+#define SEND_INTERVAL           60000
 
 #define COMMAND_RESPONSE_TRIES  4
 #define COMMAND_WAIT_INTERVAL   250
 #define DEBUG_DATA_DUMP         false
 
-bool sendRxInfoEnd = false;
+
 Q_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
 
 //-----------------------------------------------------------------------------
@@ -74,17 +77,6 @@ dump_data_packet(QByteArray data)
 {
     QString resp;
     QString temp;
-//    resp += "\n";
-//    for(int i = 0; i < data.size(); i++) {
-//        temp.sprintf("%03d, ", i);
-//        resp += temp;
-//    }
-//    resp += "\n";
-//    for(int i = 0; i < data.size(); i++) {
-//        temp.sprintf("%03d, ", (uint8_t)data[i]);
-//        resp += temp;
-//    }
-//    resp += "\n";
     for(int i = 0; i < data.size(); i++) {
         temp.sprintf(" %02X, ", (uint8_t)data[i]);
         resp += temp;
@@ -637,27 +629,6 @@ TyphoonHCore::_sendRxResInfo()
      * This is what the original Java code looks like:
 
      */
-
-//    qCDebug(YuneecLog) << "Sending: CMD_SEND_RX_RESINFO";
-//    m4Command sendRxResInfoCmd(Yuneec::CMD_SEND_RX_RESINFO);
-//    QByteArray payload;
-//    int len = 44;
-//    payload.fill(0, len); //-- Creates a 44-byte array and fill it with zeroes
-//    payload[6]  = (uint8_t)( _rxBindInfoFeedback.mode     & 0xff);
-//    payload[7]  = (uint8_t)((_rxBindInfoFeedback.mode     & 0xff00) >> 8);
-//    payload[8]  = (uint8_t)( _rxBindInfoFeedback.panId    & 0xff);
-//    payload[9]  = (uint8_t)((_rxBindInfoFeedback.panId    & 0xff00) >> 8);
-//    payload[10] = (uint8_t)( _rxBindInfoFeedback.nodeId   & 0xff);
-//    payload[11] = (uint8_t)((_rxBindInfoFeedback.nodeId   & 0xff00) >> 8);
-//    payload[20] = (uint8_t)( _rxBindInfoFeedback.aNum);
-//    payload[21] = (uint8_t)( _rxBindInfoFeedback.aBit);
-//    payload[24] = (uint8_t)( _rxBindInfoFeedback.swNum);
-//    payload[25] = (uint8_t)( _rxBindInfoFeedback.swBit);
-//    payload[len - 2] = (uint8_t)( _rxBindInfoFeedback.txAddr & 0xff);
-//    payload[len - 1] = (uint8_t)((_rxBindInfoFeedback.txAddr & 0xff00) >> 8);
-//    QByteArray cmd = sendRxResInfoCmd.pack(payload);
-//    //qCDebug(YuneecLog) << dump_data_packet(cmd);
-//    return _commPort->write(cmd, DEBUG_DATA_DUMP);
 
     sendRxInfoEnd = false;
 
