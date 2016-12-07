@@ -43,14 +43,20 @@ RxBindInfo::RxBindInfo()
 void
 RxBindInfo::clear()
 {
-    mode    = 0;
-    panId   = 0;
-    nodeId  = 0;
-    aNum    = 0;
-    aBit    = 0;
-    swNum   = 0;
-    swBit   = 0;
-    txAddr  = 0;
+    mode        = 0;
+    panId       = 0;
+    nodeId      = 0;
+    aNum        = 0;
+    aBit        = 0;
+    trNum       = 0;
+    trBit       = 0;
+    swNum       = 0;
+    swBit       = 0;
+    monitNum    = 0;
+    monitBit    = 0;
+    extraNum    = 0;
+    extraBit    = 0;
+    txAddr      = 0;
 }
 
 //-----------------------------------------------------------------------------

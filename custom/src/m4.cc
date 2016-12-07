@@ -24,6 +24,7 @@
 #include "m4serial.h"
 #include <QDebug>
 #include <QSettings>
+#include "QGC.h"
 #include <math.h>
 
 static const char* kUartName    = "/dev/ttyMFD0";
@@ -34,14 +35,32 @@ static const char* kpanId       = "panId";
 static const char* knodeId      = "nodeId";
 static const char* kaNum        = "aNum";
 static const char* kaBit        = "aBit";
+static const char* ktrNum        = "trNum";
+static const char* ktrBit        = "trBit";
 static const char* kswNum       = "swNum";
 static const char* kswBit       = "swBit";
+static const char* kmonitNum        = "monitNum";
+static const char* kmonitBit        = "monitBit";
+static const char* kextraNum       = "extraNum";
+static const char* kextraBit       = "extraBit";
 static const char* ktxAddr      = "txAddr";
+
+static const char* kacName      = "acName";
+static const char* ktrName      = "trName";
+static const char* kswName      = "swName";
+static const char* kmonitName      = "monitName";
+static const char* kextraName      = "extraName";
+
+static uint8_t		mRxLocalIndex       = 		0;
+static uint8_t      mRxchannelInfoIndex = 		2;
+static uint8_t      mChannelNumIndex    =       6;
+#define SEND_INTERVAL	 60000
 
 #define COMMAND_RESPONSE_TRIES  4
 #define COMMAND_WAIT_INTERVAL   250
 #define DEBUG_DATA_DUMP         false
 
+bool sendRxInfoEnd = false;
 Q_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
 
 //-----------------------------------------------------------------------------
@@ -49,23 +68,23 @@ Q_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
 #include "m4channeldata.h"
 
 //-----------------------------------------------------------------------------
-#if 0
+#if 1
 static QString
 dump_data_packet(QByteArray data)
 {
     QString resp;
     QString temp;
-    resp += "\n";
-    for(int i = 0; i < data.size(); i++) {
-        temp.sprintf("%03d, ", i);
-        resp += temp;
-    }
-    resp += "\n";
-    for(int i = 0; i < data.size(); i++) {
-        temp.sprintf("%03d, ", (uint8_t)data[i]);
-        resp += temp;
-    }
-    resp += "\n";
+//    resp += "\n";
+//    for(int i = 0; i < data.size(); i++) {
+//        temp.sprintf("%03d, ", i);
+//        resp += temp;
+//    }
+//    resp += "\n";
+//    for(int i = 0; i < data.size(); i++) {
+//        temp.sprintf("%03d, ", (uint8_t)data[i]);
+//        resp += temp;
+//    }
+//    resp += "\n";
     for(int i = 0; i < data.size(); i++) {
         temp.sprintf(" %02X, ", (uint8_t)data[i]);
         resp += temp;
@@ -100,6 +119,10 @@ TyphoonHCore::TyphoonHCore(QObject* parent)
 //-----------------------------------------------------------------------------
 TyphoonHCore::~TyphoonHCore()
 {
+    mRxLocalIndex = 0;
+    mRxchannelInfoIndex = 2;
+    mChannelNumIndex = 6;
+    sendRxInfoEnd = false;
     if(_commPort) {
         delete _commPort;
     }
@@ -130,11 +153,24 @@ TyphoonHCore::init()
         _rxBindInfoFeedback.nodeId   = settings.value(knodeId, 0).toInt();
         _rxBindInfoFeedback.aNum     = settings.value(kaNum,   0).toInt();
         _rxBindInfoFeedback.aBit     = settings.value(kaBit,   0).toInt();
+        _rxBindInfoFeedback.trNum     = settings.value(ktrNum,   0).toInt();
+        _rxBindInfoFeedback.trBit     = settings.value(ktrBit,   0).toInt();
         _rxBindInfoFeedback.swNum    = settings.value(kswNum,  0).toInt();
         _rxBindInfoFeedback.swBit    = settings.value(kswBit,  0).toInt();
+        _rxBindInfoFeedback.monitNum     = settings.value(kmonitNum,   0).toInt();
+        _rxBindInfoFeedback.monitBit     = settings.value(kmonitBit,   0).toInt();
+        _rxBindInfoFeedback.extraNum    = settings.value(kextraNum,  0).toInt();
+        _rxBindInfoFeedback.extraBit    = settings.value(kextraBit,  0).toInt();
+        _rxBindInfoFeedback.achName    = settings.value(kacName,  0).toList();
+        _rxBindInfoFeedback.trName    = settings.value(ktrName,  0).toList();
+        _rxBindInfoFeedback.swName    = settings.value(kswName,  0).toList();
+        _rxBindInfoFeedback.monitName    = settings.value(kmonitName,  0).toList();
+        _rxBindInfoFeedback.extraName    = settings.value(kextraName,  0).toList();
         _rxBindInfoFeedback.txAddr   = settings.value(ktxAddr, 0).toInt();
+
     }
     settings.endGroup();
+    sendRxInfoEnd = false;
     qmlRegisterSingletonType<TyphoonHCore>("TyphoonHCore", 1, 0, "TyphoonHCore", typhoonHCoreSingletonFactory);
     connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHCore::_bytesReady);
     return true;
@@ -600,46 +636,272 @@ TyphoonHCore::_sendRxResInfo()
      *
      * This is what the original Java code looks like:
 
-        public byte[] toByte() {
-            int len = 44;
-            byte data[] = new byte[len];
-            data[6] = (byte) (mode & 0xff);
-            data[7] = (byte) ((mode & 0xff00) >> 8);
-            data[8] = (byte) (panId & 0xff);
-            data[9] = (byte) ((panId & 0xff00) >> 8);
-            data[10] = (byte) (nodeId & 0xff);
-            data[11] = (byte) ((nodeId & 0xff00) >> 8);
-            data[20] = (byte) aNum;
-            data[21] = (byte) aBit;
-            data[24] = (byte) swNum;
-            data[25] = (byte) swBit;
-            data[len - 2] = (byte) (txAddr & 0xff);
-            data[len - 1] = (byte) ((txAddr & 0xff00) >> 8);
-            return data;
-        }
-
      */
 
-    qCDebug(YuneecLog) << "Sending: CMD_SEND_RX_RESINFO";
+//    qCDebug(YuneecLog) << "Sending: CMD_SEND_RX_RESINFO";
+//    m4Command sendRxResInfoCmd(Yuneec::CMD_SEND_RX_RESINFO);
+//    QByteArray payload;
+//    int len = 44;
+//    payload.fill(0, len); //-- Creates a 44-byte array and fill it with zeroes
+//    payload[6]  = (uint8_t)( _rxBindInfoFeedback.mode     & 0xff);
+//    payload[7]  = (uint8_t)((_rxBindInfoFeedback.mode     & 0xff00) >> 8);
+//    payload[8]  = (uint8_t)( _rxBindInfoFeedback.panId    & 0xff);
+//    payload[9]  = (uint8_t)((_rxBindInfoFeedback.panId    & 0xff00) >> 8);
+//    payload[10] = (uint8_t)( _rxBindInfoFeedback.nodeId   & 0xff);
+//    payload[11] = (uint8_t)((_rxBindInfoFeedback.nodeId   & 0xff00) >> 8);
+//    payload[20] = (uint8_t)( _rxBindInfoFeedback.aNum);
+//    payload[21] = (uint8_t)( _rxBindInfoFeedback.aBit);
+//    payload[24] = (uint8_t)( _rxBindInfoFeedback.swNum);
+//    payload[25] = (uint8_t)( _rxBindInfoFeedback.swBit);
+//    payload[len - 2] = (uint8_t)( _rxBindInfoFeedback.txAddr & 0xff);
+//    payload[len - 1] = (uint8_t)((_rxBindInfoFeedback.txAddr & 0xff00) >> 8);
+//    QByteArray cmd = sendRxResInfoCmd.pack(payload);
+//    //qCDebug(YuneecLog) << dump_data_packet(cmd);
+//    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+
+    sendRxInfoEnd = false;
+
+    TableDeviceChannelInfo_t channelInfo ;
+    memset(&channelInfo,0,sizeof(TableDeviceChannelInfo_t));
+
+    TableDeviceLocalInfo_t localInfo;
+    memset(&localInfo,0,sizeof(TableDeviceLocalInfo_t));
+
+
+    if(!_generateTableDeviceChannelInfo(&channelInfo))
+        return sendRxInfoEnd;
+
+    if(!_sendTableDeviceChannelInfo(channelInfo))
+        return sendRxInfoEnd;
+
+    QGC::SLEEP::usleep(SEND_INTERVAL);
+
+    _generateTableDeviceLocalInfo(&localInfo);
+
+    if(!_sendTableDeviceLocalInfo(localInfo))
+       return sendRxInfoEnd;
+
+    sendRxInfoEnd = true;
+
+    return sendRxInfoEnd;
+
+}
+
+/**
+ * This funtion is used for sending the Local information to aircraft
+ * Local information such as structure TableDeviceLocalInfo_t
+ */
+bool TyphoonHCore::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
+{
     m4Command sendRxResInfoCmd(Yuneec::CMD_SEND_RX_RESINFO);
     QByteArray payload;
-    int len = 44;
-    payload.fill(0, len); //-- Creates a 44-byte array and fill it with zeroes
-    payload[6]  = (uint8_t)( _rxBindInfoFeedback.mode     & 0xff);
-    payload[7]  = (uint8_t)((_rxBindInfoFeedback.mode     & 0xff00) >> 8);
-    payload[8]  = (uint8_t)( _rxBindInfoFeedback.panId    & 0xff);
-    payload[9]  = (uint8_t)((_rxBindInfoFeedback.panId    & 0xff00) >> 8);
-    payload[10] = (uint8_t)( _rxBindInfoFeedback.nodeId   & 0xff);
-    payload[11] = (uint8_t)((_rxBindInfoFeedback.nodeId   & 0xff00) >> 8);
-    payload[20] = (uint8_t)( _rxBindInfoFeedback.aNum);
-    payload[21] = (uint8_t)( _rxBindInfoFeedback.aBit);
-    payload[24] = (uint8_t)( _rxBindInfoFeedback.swNum);
-    payload[25] = (uint8_t)( _rxBindInfoFeedback.swBit);
-    payload[len - 2] = (uint8_t)( _rxBindInfoFeedback.txAddr & 0xff);
-    payload[len - 1] = (uint8_t)((_rxBindInfoFeedback.txAddr & 0xff00) >> 8);
+    int len = 11;
+    payload.fill(0, len);
+    payload[0] = localInfo.index;
+    payload[1] = (uint8_t)( localInfo.mode     & 0xff);
+    payload[2]  = (uint8_t)((localInfo.mode     & 0xff00) >> 8);
+    payload[3] = (uint8_t)( localInfo.nodeId   & 0xff);
+    payload[4] = (uint8_t)((localInfo.nodeId    & 0xff00) >> 8);
+    payload[5] = localInfo.parseIndex;
+    payload[7]  = (uint8_t)( localInfo.panId    & 0xff);
+    payload[8]  = (uint8_t)((localInfo.panId      & 0xff00) >> 8);
+    payload[9]  = (uint8_t)( localInfo.txAddr    & 0xff);
+    payload[10]  = (uint8_t)((localInfo.txAddr      & 0xff00) >> 8);
     QByteArray cmd = sendRxResInfoCmd.pack(payload);
-    //qCDebug(YuneecLog) << dump_data_packet(cmd);
+    qCDebug(YuneecLog) << "_sendTableDeviceLocalInfo" <<dump_data_packet(cmd);
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
+
+}
+/**
+ * This funtion is used for sending the Channel information to aircraft
+ * Channel information such as structure TableDeviceChannelInfo_t
+ */
+bool TyphoonHCore::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo)
+{
+    m4Command sendRxResInfoCmd(Yuneec::CMD_SEND_RX_RESINFO);
+    QByteArray payload;
+    int len = sizeof(channelInfo);
+    payload.fill(0, len);
+    payload[0] = channelInfo.index;
+    payload[1] = channelInfo.aNum;
+    payload[2] = channelInfo.aBits;
+    payload[3] = channelInfo.trNum;
+    payload[4] = channelInfo.trBits;
+    payload[5] = channelInfo.swNum;
+    payload[6] = channelInfo.swBits;
+    payload[7] = channelInfo.replyChannelNum;
+    payload[8] = channelInfo.replyChannelBits;
+    payload[9] = channelInfo.requestChannelNum;
+    payload[10] = channelInfo.requestChannelBits;
+    payload[11] = channelInfo.extraNum;
+    payload[12] = channelInfo.extraBits;
+    payload[13] = channelInfo.analogType;
+    payload[14] = channelInfo.trimType;
+
+    payload[15] = channelInfo.switchType;
+    payload[16] = channelInfo.replyChannelType;
+    payload[17] = channelInfo.requestChannelType;
+    payload[18] = channelInfo.extraType;
+
+    QByteArray cmd = sendRxResInfoCmd.pack(payload);
+    qCDebug(YuneecLog) << "_sendTableDeviceChannelInfo" <<dump_data_packet(cmd);
+    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+}
+/**
+ * This funtion is used for filling TableDeviceLocalInfo_t with the Local information
+ * information from RxBindInfo
+ */
+void TyphoonHCore::_generateTableDeviceLocalInfo(TableDeviceLocalInfo_t *localInfo)
+{
+    localInfo->index = mRxLocalIndex;
+    localInfo->mode = _rxBindInfoFeedback.mode;
+    localInfo->nodeId = _rxBindInfoFeedback.nodeId;
+    localInfo->parseIndex = mRxchannelInfoIndex-1;
+    localInfo->panId = _rxBindInfoFeedback.panId;
+    localInfo->txAddr = _rxBindInfoFeedback.txAddr;
+
+    mRxLocalIndex++;
+}
+
+/**
+ * This funtion is used for filling TableDeviceChannelInfo_t with the channel information
+ * information from RxBindInfo
+ */
+bool TyphoonHCore::_generateTableDeviceChannelInfo(TableDeviceChannelInfo_t *channelInfo){
+    channelInfo->index = mRxchannelInfoIndex;
+    channelInfo->aNum = _rxBindInfoFeedback.aNum;
+    channelInfo->aBits = _rxBindInfoFeedback.aBit;
+    channelInfo->trNum = _rxBindInfoFeedback.trNum;
+    channelInfo->trBits = _rxBindInfoFeedback.trBit;
+    channelInfo->swNum = _rxBindInfoFeedback.swNum;
+    channelInfo->swBits = _rxBindInfoFeedback.swBit;
+    channelInfo->replyChannelNum  = _rxBindInfoFeedback.monitNum;
+    channelInfo->replyChannelBits = _rxBindInfoFeedback.monitBit;
+    channelInfo->requestChannelNum  = _rxBindInfoFeedback.monitNum;
+    channelInfo->requestChannelBits = _rxBindInfoFeedback.monitBit;
+
+    channelInfo->extraNum = _rxBindInfoFeedback.extraNum;
+    channelInfo->extraBits = _rxBindInfoFeedback.extraBit;
+
+    if(!_sendTableDeviceChannelNumInfo(ChannelNumAanlog))
+        return false;
+    QGC::SLEEP::usleep(SEND_INTERVAL);
+
+    channelInfo->analogType = mChannelNumIndex - 1;
+    if(!_sendTableDeviceChannelNumInfo(ChannelNumTrim))
+        return false;
+
+    QGC::SLEEP::usleep(SEND_INTERVAL);
+    channelInfo->trimType = mChannelNumIndex - 1;
+    if(!_sendTableDeviceChannelNumInfo(ChannelNumSwitch))
+        return false;
+
+    QGC::SLEEP::usleep(SEND_INTERVAL);
+    channelInfo->switchType = mChannelNumIndex - 1;
+
+
+    //generate reply channel-map
+    if(!_sendTableDeviceChannelNumInfo(ChannelNumMonitor))
+        return false;
+    QGC::SLEEP::usleep(SEND_INTERVAL);
+    channelInfo->replyChannelType = mChannelNumIndex - 1;
+    channelInfo->requestChannelType = mChannelNumIndex - 1;
+
+    //generate extra channel-map
+    if(!_sendTableDeviceChannelNumInfo(ChannelNumExtra))
+        return false;
+    channelInfo->extraType = mChannelNumIndex - 1;
+
+    QGC::SLEEP::usleep(SEND_INTERVAL);
+
+    mRxchannelInfoIndex++;
+
+    return true;
+}
+
+/**
+ * This funtion is used for sending the Channel number information to aircraft
+ * Channel information such as structure TableDeviceChannelNumInfo_t
+ * This feature is distributed according to enum ChannelNumType_t
+ */
+bool TyphoonHCore::_sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumTpye)
+{
+    TableDeviceChannelNumInfo_t channelNumInfo;
+    memset(&channelNumInfo,0,sizeof(TableDeviceChannelNumInfo_t));
+    int num =  0;
+    if(_generateTableDeviceChannelNumInfo(&channelNumInfo,channelNumTpye,num))
+    {
+        m4Command sendRxResInfoCmd(Yuneec::CMD_SEND_RX_RESINFO);
+        QByteArray payload;
+        int len = num + 1;
+        payload.fill(0, len);
+        payload[0] = channelNumInfo.index;
+        for(int i = 0;i < num;i++)
+        {
+            payload[i+1] = channelNumInfo.channelMap[i];
+        }
+        QByteArray cmd = sendRxResInfoCmd.pack(payload);
+         qCDebug(YuneecLog) << channelNumTpye <<dump_data_packet(cmd);
+        return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    }
+    return true;
+}
+
+/**
+ * This feature is based on different types of fill information
+ *
+ */
+bool TyphoonHCore::_generateTableDeviceChannelNumInfo(TableDeviceChannelNumInfo_t *channelNumInfo,ChannelNumType_t channelNumTpye,int &num)
+{
+    switch(channelNumTpye){
+    case ChannelNumAanlog:
+        num = _rxBindInfoFeedback.aNum;
+        _fillTableDeviceChannelNumMap(channelNumInfo,num,_rxBindInfoFeedback.achName);
+        break;
+    case ChannelNumTrim:
+        num = _rxBindInfoFeedback.trNum;
+        _fillTableDeviceChannelNumMap(channelNumInfo,num,_rxBindInfoFeedback.trName);
+        break;
+    case ChannelNumSwitch:
+        num = _rxBindInfoFeedback.swNum;
+        _fillTableDeviceChannelNumMap(channelNumInfo,num,_rxBindInfoFeedback.swName);
+        break;
+    case ChannelNumMonitor:
+        num = _rxBindInfoFeedback.monitNum;
+
+        if(num <= 0){
+            return false;
+        }
+        _fillTableDeviceChannelNumMap(channelNumInfo,num,_rxBindInfoFeedback.monitName);
+        break;
+    case ChannelNumExtra:
+        num = _rxBindInfoFeedback.extraNum;
+        if(num <= 0){
+            return false;
+        }
+        _fillTableDeviceChannelNumMap(channelNumInfo,num,_rxBindInfoFeedback.extraName);
+        break;
+    default:
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * This funtion is used for filling TableDeviceChannelNumInfo_t with the channel number information
+ * information from RxBindInfo
+ */
+void TyphoonHCore::_fillTableDeviceChannelNumMap(TableDeviceChannelNumInfo_t *channelNumInfo,int num,QList<QVariant> list)
+{
+    channelNumInfo->index = mChannelNumIndex;
+
+    uint8_t i;
+    for(i=0; i<num; i++){
+        channelNumInfo->channelMap[i] = list[i].toInt();
+    }
+
+    mChannelNumIndex++;
 }
 
 //-----------------------------------------------------------------------------
@@ -772,8 +1034,9 @@ TyphoonHCore::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_SEND_RX_RESINFO:
                     //-- Response from _sendRxResInfo()
-                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_SEND_RX_RESINFO";
-                    if(_state == STATE_SEND_RX_INFO) {
+
+                    if(_state == STATE_SEND_RX_INFO && sendRxInfoEnd) {
+                        qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_SEND_RX_RESINFO";
                         _state = STATE_ENTER_RUN;
                         _responseTryCount = 0;
                         _enterRun();
@@ -826,8 +1089,19 @@ TyphoonHCore::_handleQueryBindResponse(QByteArray data)
             settings.setValue(knodeId,_rxBindInfoFeedback.nodeId);
             settings.setValue(kaNum,  _rxBindInfoFeedback.aNum);
             settings.setValue(kaBit,  _rxBindInfoFeedback.aBit);
+            settings.setValue(ktrNum,  _rxBindInfoFeedback.trNum);  //add parameter
+            settings.setValue(ktrBit,  _rxBindInfoFeedback.trBit);
             settings.setValue(kswNum, _rxBindInfoFeedback.swNum);
             settings.setValue(kswBit, _rxBindInfoFeedback.swBit);
+            settings.setValue(kmonitNum,  _rxBindInfoFeedback.monitNum);
+            settings.setValue(kmonitBit,  _rxBindInfoFeedback.monitBit);
+            settings.setValue(kextraNum, _rxBindInfoFeedback.extraNum);
+            settings.setValue(kextraBit, _rxBindInfoFeedback.extraBit);
+            settings.setValue(kacName,_rxBindInfoFeedback.achName);
+            settings.setValue(ktrName,_rxBindInfoFeedback.trName);
+            settings.setValue(kswName,_rxBindInfoFeedback.swName);
+            settings.setValue(kmonitName,_rxBindInfoFeedback.monitName);
+            settings.setValue(kextraName,_rxBindInfoFeedback.extraName);
             settings.setValue(ktxAddr,_rxBindInfoFeedback.txAddr);
             settings.endGroup();
             _timer.start(COMMAND_WAIT_INTERVAL);
@@ -900,8 +1174,43 @@ TyphoonHCore::_handleRxBindInfo(m4Packet& packet)
         _rxBindInfoFeedback.nodeId   = ((uint8_t)packet.data[10] & 0xff) | ((uint8_t)packet.data[11] << 8 & 0xff00);
         _rxBindInfoFeedback.aNum     = (uint8_t)packet.data[20];
         _rxBindInfoFeedback.aBit     = (uint8_t)packet.data[21];
+
+        _rxBindInfoFeedback.trNum     = (uint8_t)packet.data[22];
+        _rxBindInfoFeedback.trBit     = (uint8_t)packet.data[23];
         _rxBindInfoFeedback.swNum    = (uint8_t)packet.data[24];
         _rxBindInfoFeedback.swBit    = (uint8_t)packet.data[25];
+
+        _rxBindInfoFeedback.monitNum     = (uint8_t)packet.data[26];
+        _rxBindInfoFeedback.monitBit     = (uint8_t)packet.data[27];
+        _rxBindInfoFeedback.extraNum    = (uint8_t)packet.data[28];
+        _rxBindInfoFeedback.extraBit    = (uint8_t)packet.data[29];
+        int ilen = 30;
+        _rxBindInfoFeedback.achName.clear();
+        for(int i = 0;i< _rxBindInfoFeedback.aNum ; i++)
+        {
+            _rxBindInfoFeedback.achName.append((uint8_t)packet.data[ilen++]);
+        }
+        _rxBindInfoFeedback.trName.clear();
+        for(int i = 0;i< _rxBindInfoFeedback.trNum ; i++)
+        {
+            _rxBindInfoFeedback.trName.append((uint8_t)packet.data[ilen++]);
+        }
+        _rxBindInfoFeedback.swName.clear();
+        for(int i = 0;i< _rxBindInfoFeedback.swNum ; i++)
+        {
+             _rxBindInfoFeedback.swName.append((uint8_t)packet.data[ilen++]);
+        }
+        _rxBindInfoFeedback.monitName.clear();
+        for(int i = 0;i< _rxBindInfoFeedback.monitNum ; i++)
+        {
+             _rxBindInfoFeedback.monitName.append((uint8_t)packet.data[ilen++]);
+        }
+        _rxBindInfoFeedback.extraName.clear();
+        for(int i = 0;i< _rxBindInfoFeedback.extraNum ; i++)
+        {
+             _rxBindInfoFeedback.extraName.append((uint8_t)packet.data[ilen++]);
+        }
+
         int p = packet.data.length() - 2;
         _rxBindInfoFeedback.txAddr   = ((uint8_t)packet.data[p] & 0xff) | ((uint8_t)packet.data[p + 1] << 8 & 0xff00);
         qCDebug(YuneecLog) << "RxBindInfo:" << _rxBindInfoFeedback.getName() << _rxBindInfoFeedback.nodeId;

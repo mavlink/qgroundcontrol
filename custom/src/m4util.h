@@ -9,7 +9,7 @@
 
 #include <QByteArray>
 #include <QString>
-
+#include <qsettings.h>
 #include "m4def.h"
 
 extern uint8_t crc8(uint8_t* buffer, int len);
@@ -29,6 +29,54 @@ struct m4CommandHeader {
     uint16_t   NodeIDsource;        // The node address
     uint8_t    command;
 };
+
+#define DEFAULT_TX_MAX_CHANNEL			24
+
+
+typedef  struct  TableDeviceLocalInfo{
+    uint8_t 	index;
+    uint16_t    mode;
+    uint16_t    nodeId;
+    uint8_t 	parseIndex;
+    uint8_t 	extAddr;
+    uint16_t    panId;
+    uint16_t    txAddr;
+}TableDeviceLocalInfo_t;
+
+typedef  struct  TableDeviceChannelInfo{
+    uint8_t index;
+    uint8_t aNum;
+    uint8_t aBits;
+    uint8_t trNum;
+    uint8_t trBits;
+    uint8_t swNum;
+    uint8_t swBits;
+    uint8_t replyChannelNum;
+    uint8_t replyChannelBits;
+    uint8_t requestChannelNum;
+    uint8_t requestChannelBits;
+    uint8_t extraNum;
+    uint8_t extraBits;
+    uint8_t analogType;
+    uint8_t trimType;
+    uint8_t switchType;
+    uint8_t replyChannelType;
+    uint8_t requestChannelType;
+    uint8_t extraType;
+}TableDeviceChannelInfo_t;
+
+typedef  struct  TableDeviceChannelNumInfo{
+    uint8_t index;
+    uint8_t channelMap[DEFAULT_TX_MAX_CHANNEL];
+}TableDeviceChannelNumInfo_t;
+
+typedef enum {
+    ChannelNumAanlog = 1,
+    ChannelNumTrim,
+    ChannelNumSwitch,
+    ChannelNumMonitor,
+    ChannelNumExtra,
+}ChannelNumType_t;
 
 class M4SerialComm;
 
@@ -105,9 +153,22 @@ public:
     int nodeId;
     int aNum;
     int aBit;
+    int trNum;
+    int trBit;
     int swNum;
     int swBit;
+
+    int monitNum;
+    int monitBit;
+    int extraNum;
+    int extraBit;
     int txAddr;
+
+    QList<QVariant> achName;
+    QList<QVariant> trName;
+    QList<QVariant> swName;
+    QList<QVariant> monitName;
+    QList<QVariant> extraName;
 };
 
 //-----------------------------------------------------------------------------
