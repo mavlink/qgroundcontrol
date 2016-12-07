@@ -72,6 +72,7 @@ QGCView {
                             QGCButton {
                                 text:       "Bind"
                                 width:      _labelWidth
+                                enabled:    QGroundControl.multiVehicleManager.activeVehicle
                                 onClicked:  TyphoonHCore.enterBindMode()
                                 anchors.verticalCenter: parent.verticalCenter
                             }

@@ -145,6 +145,7 @@ TyphoonHCore::init()
         _rxBindInfoFeedback.txAddr      = settings.value(ktxAddr,       0).toInt();
     }
     settings.endGroup();
+    qmlRegisterSingletonType<TyphoonHCore>("TyphoonHCore", 1, 0, "TyphoonHCore", typhoonHCoreSingletonFactory);
 }
 
 //-----------------------------------------------------------------------------
@@ -159,7 +160,6 @@ TyphoonHCore::vehicleReady()
     connect(&_timer, &QTimer::timeout, this, &TyphoonHCore::_stateManager);
     _timer.setSingleShot(true);
     _sendRxInfoEnd = false;
-    qmlRegisterSingletonType<TyphoonHCore>("TyphoonHCore", 1, 0, "TyphoonHCore", typhoonHCoreSingletonFactory);
     connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHCore::_bytesReady);
     return true;
 }
@@ -192,6 +192,8 @@ QString
 TyphoonHCore::m4StateStr()
 {
     switch(_m4State) {
+        case M4_STATE_NONE:
+            return QString("Waiting for vehicle to connect...");
         case M4_STATE_AWAIT:
             return QString("Waiting...");
         case M4_STATE_BIND:
