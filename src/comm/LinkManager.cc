@@ -499,6 +499,8 @@ void LinkManager::_updateAutoConnectLinks(void)
     if (!_autoconnectConfigurations.count()) {
         portList = QGCSerialPortInfo::availablePorts();
     }
+#else
+    portList = QGCSerialPortInfo::availablePorts();
 #endif
 
     // Iterate Comm Ports
