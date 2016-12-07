@@ -15,6 +15,7 @@
 PX4GeoFenceManager::PX4GeoFenceManager(Vehicle* vehicle)
     : GeoFenceManager(vehicle)
     , _firstParamLoadComplete(false)
+    , _circleEnabled(false)
     , _circleRadiusFact(NULL)
 {
     connect(_vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &PX4GeoFenceManager::_parametersReady);
@@ -57,10 +58,11 @@ void PX4GeoFenceManager::_parametersReady(void)
         emit paramsChanged(_params);
         emit paramLabelsChanged(_paramLabels);
 
-        emit circleSupportedChanged(circleSupported());
+        _circleEnabled = true;
+        emit circleEnabledChanged(true);
 
         qCDebug(GeoFenceManagerLog) << "fenceSupported:circleSupported:polygonSupported:breachReturnSupported" <<
-                                       fenceSupported() << circleSupported() << polygonSupported() << breachReturnSupported();
+                                       _circleEnabled << polygonEnabled() << breachReturnEnabled();
     }
 }
 
@@ -76,14 +78,5 @@ float PX4GeoFenceManager::circleRadius(void) const
 void PX4GeoFenceManager::_circleRadiusRawValueChanged(QVariant value)
 {
     emit circleRadiusChanged(value.toFloat());
-    emit circleSupportedChanged(circleSupported());
 }
 
-bool PX4GeoFenceManager::circleSupported(void) const
-{
-    if (_circleRadiusFact) {
-        return _circleRadiusFact->rawValue().toFloat() >= 0.0;
-    }
-
-    return false;
-}
