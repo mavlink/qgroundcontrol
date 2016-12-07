@@ -25,7 +25,7 @@
     "shortDescription": "Current",
     "type":             "int32",
     "decimalPlaces":    0,
-    "units":            "mA"
+    "units":            "A"
 },
 {
     "name":             "temperature",
