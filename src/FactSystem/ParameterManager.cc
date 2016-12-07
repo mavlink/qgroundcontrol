@@ -1066,7 +1066,7 @@ void ParameterManager::_initialRequestTimeout(void)
     } else {
         if (!_vehicle->genericFirmware()) {
             // Generic vehicles (like BeBop) may not have any parameters, so don't annoy the user
-            QString errorMsg = tr("Vehicle %1 did not respond to request for parameters"
+            QString errorMsg = tr("Vehicle %1 did not respond to request for parameters. "
                                   "This will cause QGroundControl to be unable to display its full user interface.").arg(_vehicle->id());
             qCDebug(ParameterManagerLog) << errorMsg;
             qgcApp()->showMessage(errorMsg);
