@@ -568,6 +568,15 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
         }
     }
 
+    // ArduPilot does not yet support decimal places meta data. So for P/I/D parameters we force to 6 places
+    if ((fact->name().endsWith(QStringLiteral("_P")) ||
+         fact->name().endsWith(QStringLiteral("_I")) ||
+         fact->name().endsWith(QStringLiteral("_D"))) &&
+            (fact->type() == FactMetaData::valueTypeFloat ||
+             fact->type() == FactMetaData::valueTypeDouble)) {
+        metaData->setDecimalPlaces(6);
+    }
+
     fact->setMetaData(metaData);
 }
 

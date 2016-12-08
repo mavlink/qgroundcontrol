@@ -164,6 +164,7 @@ void MissionManager::requestMissionItems(void)
     }
 
     _retryCount = 0;
+    _readTransactionInProgress = true;
     emit inProgressChanged(true);
     _requestList();
 }
@@ -177,7 +178,6 @@ void MissionManager::_requestList(void)
     mavlink_mission_request_list_t  request;
 
     _itemIndicesToRead.clear();
-    _readTransactionInProgress = true;
     _clearMissionItems();
 
     request.target_system = _vehicle->id();
