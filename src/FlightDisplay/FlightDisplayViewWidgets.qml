@@ -437,7 +437,7 @@ Item {
                 break;
             case confirmChangeAlt:
                 altitudeSlider.visible = true
-                altitudeSlider.setInitialValueAppSettingsDistanceUnits(_activeVehicle.altitudeAMSL.value)
+                altitudeSlider.setInitialValueAppSettingsDistanceUnits(_activeVehicle.altitudeRelative.value)
                 guidedModeConfirm.confirmText = qsTr("change altitude")
                 break;
             case confirmGoTo:
