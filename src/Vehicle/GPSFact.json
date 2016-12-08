@@ -29,7 +29,6 @@
 {
     "name":             "count",
     "shortDescription": "Sat Count",
-    "type":             "double",
-    "decimalPlaces":    0
+    "type":             "uint32"
 }
 ]
