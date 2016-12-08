@@ -183,7 +183,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     // Send MAV_CMD ack timer
     _mavCommandAckTimer.setSingleShot(true);
     _mavCommandAckTimer.setInterval(_mavCommandAckTimeoutMSecs);
-    _mavCommandAckTimer.setSingleShot(false);
     connect(&_mavCommandAckTimer, &QTimer::timeout, this, &Vehicle::_sendMavCommandAgain);
 
     _mav = uas();
