@@ -1838,6 +1838,12 @@ void Vehicle::sendMavCommand(int component, MAV_CMD command, bool showError, flo
 
 void Vehicle::_sendMavCommandAgain(void)
 {
+    if(!_mavCommandQueue.size()) {
+        qWarning() << "Command resend with no commands in queue";
+        _mavCommandAckTimer.stop();
+        return;
+    }
+
     MavCommandQueueEntry_t& queuedCommand = _mavCommandQueue[0];
 
     if (_mavCommandRetryCount++ > _mavCommandMaxRetryCount) {
