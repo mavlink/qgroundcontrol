@@ -26,6 +26,9 @@ public:
 
     void            setToolbox  (QGCToolbox* toolbox);
 
+private slots:
+    void            _vehicleReady(bool parameterReadyVehicleAvailable);
+
 private:
     TyphoonHCore*       _pCore;
     TyphoonHOptions*    _pOptions;

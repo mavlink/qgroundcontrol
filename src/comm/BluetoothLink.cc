@@ -150,7 +150,7 @@ bool BluetoothLink::_hardwareConnect()
     _discoveryAgent->start();
 #else
     _createSocket();
-    _targetSocket->connectToService(QBluetoothAddress(_config->device().address), QBluetoothUuid(QBluetoothUuid::Rfcomm));
+    _targetSocket->connectToService(QBluetoothAddress(_config->device().address), QBluetoothUuid(QBluetoothUuid::SerialPort));
 #endif
     return true;
 }
@@ -352,9 +352,17 @@ void BluetoothConfiguration::startScan()
 
 void BluetoothConfiguration::deviceDiscovered(QBluetoothDeviceInfo info)
 {
-    //print_device_info(info);
     if(!info.name().isEmpty() && info.isValid())
     {
+#if 0
+        qDebug() << "Name:           " << info.name();
+        qDebug() << "Address:        " << info.address().toString();
+        qDebug() << "Service Classes:" << info.serviceClasses();
+        QList<QBluetoothUuid> uuids = info.serviceUuids();
+        foreach (QBluetoothUuid uuid, uuids) {
+            qDebug() << "Service UUID:   " << uuid.toString();
+        }
+#endif
         BluetoothData data;
         data.name    = info.name();
 #ifdef __ios__

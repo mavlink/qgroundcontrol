@@ -19,8 +19,6 @@
 #include <QFile>
 #include <QFileInfo>
 
-#define kTimeOutMilliseconds 1000
-
 QGC_LOGGING_CATEGORY(MAVLinkLogManagerLog, "MAVLinkLogManagerLog")
 
 static const char* kEmailAddressKey         = "MAVLinkLogEmail";
@@ -301,7 +299,6 @@ MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app)
     , _loggingDisabled(false)
     , _logProcessor(NULL)
     , _deleteAfterUpload(false)
-    , _loggingCmdTryCount(0)
 {
     //-- Get saved settings
     QSettings settings;
@@ -347,7 +344,6 @@ MAVLinkLogManager::setToolbox(QGCToolbox* toolbox)
     qmlRegisterUncreatableType<MAVLinkLogManager>("QGroundControl.MAVLinkLogManager", 1, 0, "MAVLinkLogManager", "Reference only");
     if(!_loggingDisabled) {
         connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkLogManager::_activeVehicleChanged);
-        connect(&_ackTimer, &QTimer::timeout, this, &MAVLinkLogManager::_processCmdAck);
     }
 }
 
@@ -540,8 +536,6 @@ MAVLinkLogManager::startLogging()
         if(_createNewLog()) {
             _vehicle->startMavlinkLog();
             _logRunning = true;
-            _loggingCmdTryCount = 0;
-            _ackTimer.start(kTimeOutMilliseconds);
             emit logRunningChanged();
         }
     }
@@ -570,11 +564,6 @@ MAVLinkLogManager::stopLogging()
         delete _logProcessor;
         _logProcessor = NULL;
         _logRunning = false;
-        if(_vehicle) {
-            //-- Setup a timer to make sure vehicle received the command
-            _loggingCmdTryCount = 0;
-            _ackTimer.start(kTimeOutMilliseconds);
-        }
         emit logRunningChanged();
     }
 }
@@ -742,9 +731,9 @@ MAVLinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
     //   For now, we only handle one log download at a time.
     // Disconnect the previous one (if any)
     if(_vehicle) {
-        disconnect(_vehicle, &Vehicle::armedChanged,   this, &MAVLinkLogManager::_armedChanged);
-        disconnect(_vehicle, &Vehicle::mavlinkLogData, this, &MAVLinkLogManager::_mavlinkLogData);
-        disconnect(_vehicle, &Vehicle::commandLongAck, this, &MAVLinkLogManager::_commandLongAck);
+        disconnect(_vehicle, &Vehicle::armedChanged,        this, &MAVLinkLogManager::_armedChanged);
+        disconnect(_vehicle, &Vehicle::mavlinkLogData,      this, &MAVLinkLogManager::_mavlinkLogData);
+        disconnect(_vehicle, &Vehicle::mavCommandResult,    this, &MAVLinkLogManager::_mavCommandResult);
         _vehicle = NULL;
         //-- Stop logging (if that's the case)
         stopLogging();
@@ -753,40 +742,10 @@ MAVLinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
     // Connect new system
     if(vehicle) {
         _vehicle = vehicle;
-        connect(_vehicle, &Vehicle::armedChanged,   this, &MAVLinkLogManager::_armedChanged);
-        connect(_vehicle, &Vehicle::mavlinkLogData, this, &MAVLinkLogManager::_mavlinkLogData);
-        connect(_vehicle, &Vehicle::commandLongAck, this, &MAVLinkLogManager::_commandLongAck);
+        connect(_vehicle, &Vehicle::armedChanged,       this, &MAVLinkLogManager::_armedChanged);
+        connect(_vehicle, &Vehicle::mavlinkLogData,     this, &MAVLinkLogManager::_mavlinkLogData);
+        connect(_vehicle, &Vehicle::mavCommandResult,   this, &MAVLinkLogManager::_mavCommandResult);
         emit canStartLogChanged();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-MAVLinkLogManager::_processCmdAck()
-{
-    if(_loggingCmdTryCount++ > 3) {
-        _ackTimer.stop();
-        //-- Give up
-        if(_logRunning) {
-            qCWarning(MAVLinkLogManagerLog) << "Start MAVLink log command had no response.";
-            _discardLog();
-        } else {
-            qCWarning(MAVLinkLogManagerLog) << "Stop MAVLink log command had no response.";
-        }
-    } else {
-        if(_vehicle) {
-            if(_logRunning) {
-                _vehicle->startMavlinkLog();
-                qCWarning(MAVLinkLogManagerLog) << "Start MAVLink log command sent again.";
-            } else {
-                _vehicle->stopMavlinkLog();
-                qCWarning(MAVLinkLogManagerLog) << "Stop MAVLink log command sent again.";
-            }
-            _ackTimer.start(kTimeOutMilliseconds);
-        } else {
-            //-- Vehicle went away on us
-            _ackTimer.stop();
-        }
     }
 }
 
@@ -794,10 +753,6 @@ MAVLinkLogManager::_processCmdAck()
 void
 MAVLinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system*/, uint8_t /*target_component*/, uint16_t sequence, uint8_t first_message, QByteArray data, bool /*acked*/)
 {
-    //-- Disable timer if we got a message before an ACK for the start command
-    if(_logRunning) {
-        _ackTimer.stop();
-    }
     if(_logProcessor && _logProcessor->valid()) {
         if(!_logProcessor->processStreamData(sequence, first_message, data)) {
             qCCritical(MAVLinkLogManagerLog) << "Error writing MAVLink log file:" << _logProcessor->fileName();
@@ -814,12 +769,15 @@ MAVLinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system
 
 //-----------------------------------------------------------------------------
 void
-MAVLinkLogManager::_commandLongAck(uint8_t /*compID*/, uint16_t command, uint8_t result)
+MAVLinkLogManager::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
 {
+    Q_UNUSED(vehicleId);
+    Q_UNUSED(component);
+    Q_UNUSED(noReponseFromVehicle)
+
     if(command == MAV_CMD_LOGGING_START || command == MAV_CMD_LOGGING_STOP) {
-        _ackTimer.stop();
         //-- Did it fail?
-        if(result) {
+        if(result != MAV_RESULT_ACCEPTED) {
             if(command == MAV_CMD_LOGGING_STOP) {
                 //-- Not that it could happen but...
                 qCWarning(MAVLinkLogManagerLog) << "Stop MAVLink log command failed.";

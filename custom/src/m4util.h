@@ -14,24 +14,7 @@
 
 extern uint8_t crc8(uint8_t* buffer, int len);
 
-//-- Comments (Google) translated from Chinese.
-//-- Nowhere I could find access through a struct. It's always numbered index into a byte array.
-//-- Also note that throughout the code, the header is given as 10 bytes long and the payload
-//   starts at index 10. The command starts at index 3 (FCF below). CRC is of payload only and
-//   follows it (single uint8_t byte).
-struct m4CommandHeader {
-    uint16_t   start_str;           // 0x5555
-    uint8_t    size;                // Len bytes, the data length, with len M3 generated
-    uint16_t   FCF;                 // The frame control domain is shown in Table 2
-    uint8_t    Type;                // Frame type, binding is set to a binding frame in Table 4
-    uint16_t   PANID;               // Address? (Google says it's "Website address")
-    uint16_t   NodeIDdest;          // The node address
-    uint16_t   NodeIDsource;        // The node address
-    uint8_t    command;
-};
-
 #define DEFAULT_TX_MAX_CHANNEL			24
-
 
 typedef  struct  TableDeviceLocalInfo{
     uint8_t 	index;
@@ -41,7 +24,7 @@ typedef  struct  TableDeviceLocalInfo{
     uint8_t 	extAddr;
     uint16_t    panId;
     uint16_t    txAddr;
-}TableDeviceLocalInfo_t;
+} TableDeviceLocalInfo_t;
 
 typedef  struct  TableDeviceChannelInfo{
     uint8_t index;
@@ -63,12 +46,12 @@ typedef  struct  TableDeviceChannelInfo{
     uint8_t replyChannelType;
     uint8_t requestChannelType;
     uint8_t extraType;
-}TableDeviceChannelInfo_t;
+} TableDeviceChannelInfo_t;
 
 typedef  struct  TableDeviceChannelNumInfo{
     uint8_t index;
     uint8_t channelMap[DEFAULT_TX_MAX_CHANNEL];
-}TableDeviceChannelNumInfo_t;
+} TableDeviceChannelNumInfo_t;
 
 typedef enum {
     ChannelNumAanlog = 1,
@@ -76,7 +59,7 @@ typedef enum {
     ChannelNumSwitch,
     ChannelNumMonitor,
     ChannelNumExtra,
-}ChannelNumType_t;
+} ChannelNumType_t;
 
 class M4SerialComm;
 
@@ -157,18 +140,16 @@ public:
     int trBit;
     int swNum;
     int swBit;
-
     int monitNum;
     int monitBit;
     int extraNum;
     int extraBit;
     int txAddr;
-
-    QList<QVariant> achName;
-    QList<QVariant> trName;
-    QList<QVariant> swName;
-    QList<QVariant> monitName;
-    QList<QVariant> extraName;
+    QByteArray achName;
+    QByteArray trName;
+    QByteArray swName;
+    QByteArray monitName;
+    QByteArray extraName;
 };
 
 //-----------------------------------------------------------------------------
