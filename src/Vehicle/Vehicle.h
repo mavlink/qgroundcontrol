@@ -137,13 +137,6 @@ public:
     static const char* _countFactName;
     static const char* _lockFactName;
 
-private slots:
-    void _setSatelliteCount(double val, QString);
-    void _setSatRawHDOP(double val);
-    void _setSatRawVDOP(double val);
-    void _setSatRawCOG(double val);
-    void _setSatLoc(UASInterface*, int fix);
-
 private:
     Vehicle*    _vehicle;
     Fact        _hdopFact;
@@ -683,11 +676,6 @@ private slots:
     void _updateAttitude                    (UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     /** @brief Attitude from one specific component / redundant autopilot */
     void _updateAttitude                    (UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
-    void _updateSpeed                       (UASInterface* uas, double _groundSpeed, double _airSpeed, quint64 timestamp);
-    void _updateAltitude                    (UASInterface* uas, double _altitudeAMSL, double _altitudeRelative, double _climbRate, quint64 timestamp);
-    void _updateNavigationControllerErrors  (UASInterface* uas, double altitudeError, double speedError, double xtrackError);
-    void _updateNavigationControllerData    (UASInterface *uas, float navRoll, float navPitch, float navBearing, float targetBearing, float targetDistance);
-    void _checkUpdate                       ();
     void _updateState                       (UASInterface* system, QString name, QString description);
     /** @brief A new camera image has arrived */
     void _imageReady                        (UASInterface* uas);
@@ -716,6 +704,10 @@ private:
     void _handleCommandAck(mavlink_message_t& message);
     void _handleAutopilotVersion(LinkInterface* link, mavlink_message_t& message);
     void _handleHilActuatorControls(mavlink_message_t& message);
+    void _handleGpsRawInt(mavlink_message_t& message);
+    void _handleGlobalPositionInt(mavlink_message_t& message);
+    void _handleAltitude(mavlink_message_t& message);
+    void _handleVfrHud(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
@@ -763,11 +755,6 @@ private:
     int             _currentNormalCount;
     MessageType_t   _currentMessageType;
     QString         _latestError;
-    float           _navigationAltitudeError;
-    float           _navigationSpeedError;
-    float           _navigationCrosstrackError;
-    float           _navigationTargetBearing;
-    QTimer*         _refreshTimer;
     QString         _currentState;
     int             _updateCount;
     QString         _formatedMessage;
@@ -779,6 +766,9 @@ private:
     uint32_t        _onboardControlSensorsEnabled;
     uint32_t        _onboardControlSensorsHealth;
     uint32_t        _onboardControlSensorsUnhealthy;
+    bool            _useGpsRawIntForPosition;
+    bool            _useGpsRawIntForAltitude;
+    bool            _useAltitudeForAltitude;
 
     typedef struct {
         int     component;
