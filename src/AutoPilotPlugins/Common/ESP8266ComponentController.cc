@@ -37,7 +37,6 @@ ESP8266ComponentController::ESP8266ComponentController()
     _baudRates.append("230400");
     _baudRates.append("460800");
     _baudRates.append("921600");
-    connect(&_timer, &QTimer::timeout, this, &ESP8266ComponentController::_processTimeout);
     connect(_vehicle, &Vehicle::mavCommandResult, this, &ESP8266ComponentController::_mavCommandResult);
     Fact* ssid = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, "WIFI_SSID4");
     connect(ssid, &Fact::valueChanged, this, &ESP8266ComponentController::_ssidChanged);
@@ -316,67 +315,16 @@ ESP8266ComponentController::restoreDefaults()
 void
 ESP8266ComponentController::_reboot()
 {
-    mavlink_message_t msg;
-
-    mavlink_msg_command_long_pack_chan(
-        qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-        _vehicle->priorityLink()->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        MAV_COMP_ID_UDP_BRIDGE,
-        MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
-        1.0f, // Confirmation
-        0.0f, // Param1
-        1.0f, // Param2
-        0.0f,0.0f,0.0f,0.0f,0.0f);
+    _vehicle->sendMavCommand(MAV_COMP_ID_UDP_BRIDGE, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, true /* showError */, 0.0f, 1.0f);
     qCDebug(ESP8266ComponentControllerLog) << "_reboot()";
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-    _timer.start(1000);
 }
 
 //-----------------------------------------------------------------------------
 void
 ESP8266ComponentController::_restoreDefaults()
 {
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(
-        qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-        _vehicle->priorityLink()->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        MAV_COMP_ID_UDP_BRIDGE,
-        MAV_CMD_PREFLIGHT_STORAGE,
-        1.0f, // Confirmation
-        2.0f, // Param1
-        0.0f,0.0f,0.0f,0.0f,0.0f,0.0f);
+    _vehicle->sendMavCommand(MAV_COMP_ID_UDP_BRIDGE, MAV_CMD_PREFLIGHT_STORAGE, true /* showError */, 2.0f);
     qCDebug(ESP8266ComponentControllerLog) << "_restoreDefaults()";
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-    _timer.start(1000);
-}
-
-//-----------------------------------------------------------------------------
-void
-ESP8266ComponentController::_processTimeout()
-{
-    if(!--_retries) {
-        qCDebug(ESP8266ComponentControllerLog) << "_processTimeout Giving Up";
-        _timer.stop();
-        _waitType = WAIT_FOR_NOTHING;
-        emit busyChanged();
-    } else {
-        switch(_waitType) {
-            case WAIT_FOR_REBOOT:
-                qCDebug(ESP8266ComponentControllerLog) << "_processTimeout for Reboot";
-                _reboot();
-                break;
-            case WAIT_FOR_RESTORE:
-                qCDebug(ESP8266ComponentControllerLog) << "_processTimeout for Restore Defaults";
-                _restoreDefaults();
-                break;
-        }
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -393,7 +341,6 @@ ESP8266ComponentController::_mavCommandResult(int vehicleId, int component, int 
         }
         if ((_waitType == WAIT_FOR_REBOOT  && command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN) ||
                 (_waitType == WAIT_FOR_RESTORE && command == MAV_CMD_PREFLIGHT_STORAGE)) {
-            _timer.stop();
             _waitType = WAIT_FOR_NOTHING;
             emit busyChanged();
             qCDebug(ESP8266ComponentControllerLog) << "_commandAck for" << command;
