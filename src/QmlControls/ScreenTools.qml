@@ -87,8 +87,8 @@ Item {
     function _setBasePointSize(pointSize) {
         _textMeasure.font.pointSize = pointSize
         defaultFontPointSize    = pointSize
-        defaultFontPixelHeight  = _textMeasure.fontHeight
-        defaultFontPixelWidth   = _textMeasure.fontWidth
+        defaultFontPixelHeight  = Math.round(_textMeasure.fontHeight/2.0)*2
+        defaultFontPixelWidth   = Math.round(_textMeasure.fontWidth/2.0)*2
         smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
         mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
         largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
