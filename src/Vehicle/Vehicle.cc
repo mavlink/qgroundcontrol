@@ -1856,6 +1856,10 @@ void Vehicle::_sendMavCommandAgain(void)
         return;
     }
 
+    if (_mavCommandRetryCount > 1) {
+        qDebug() << "Vehicle::_sendMavCommandAgain retrying command:_mavCommandRetryCount" << queuedCommand.command << _mavCommandRetryCount;
+    }
+
     _mavCommandAckTimer.start();
 
     mavlink_message_t       msg;
