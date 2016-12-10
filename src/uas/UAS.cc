@@ -979,6 +979,10 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
         return;
     }
 
+    if (!_vehicle->priorityLink()) {
+        return;
+    }
+
     // Store the previous manual commands
     static float manualRollAngle = 0.0;
     static float manualPitchAngle = 0.0;
