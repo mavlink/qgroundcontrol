@@ -52,6 +52,22 @@ Rectangle {
         }
     }
 
+    function saveItems()
+    {
+        QGroundControl.mavlinkSystemID = parseInt(sysidField.text)
+        QGroundControl.mavlinkLogManager.videoURL = videoUrlField.text
+        QGroundControl.mavlinkLogManager.feedback = feedbackTextArea.text
+        QGroundControl.mavlinkLogManager.emailAddress = emailField.text
+        QGroundControl.mavlinkLogManager.description = descField.text
+        QGroundControl.mavlinkLogManager.uploadURL = urlField.text
+        QGroundControl.mavlinkLogManager.emailAddress = emailField.text
+        if(autoUploadCheck.checked && QGroundControl.mavlinkLogManager.emailAddress === "") {
+            autoUploadCheck.checked = false
+        } else {
+            QGroundControl.mavlinkLogManager.enableAutoUpload = autoUploadCheck.checked
+        }
+    }
+
     MessageDialog {
         id:         emptyEmailDialog
         visible:    false
@@ -111,7 +127,7 @@ Rectangle {
                             inputMethodHints:       Qt.ImhFormattedNumbersOnly
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
-                                QGroundControl.mavlinkSystemID = parseInt(sysidField.text)
+                                saveItems();
                             }
                         }
                     }
@@ -234,11 +250,7 @@ Rectangle {
                             inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhEmailCharactersOnly
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
-                                QGroundControl.mavlinkLogManager.emailAddress = emailField.text
-                                if(emailField.text === "") {
-                                    autoUploadCheck.checked = false
-                                    QGroundControl.mavlinkLogManager.enableAutoUpload = false
-                                }
+                                saveItems();
                             }
                         }
                     }
@@ -257,7 +269,7 @@ Rectangle {
                             width:  _valueWidth
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
-                                QGroundControl.mavlinkLogManager.description = descField.text
+                                saveItems();
                             }
                         }
                     }
@@ -277,8 +289,128 @@ Rectangle {
                             inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
-                                QGroundControl.mavlinkLogManager.uploadURL = urlField.text
+                                saveItems();
                             }
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Video URL
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   videoUrlField.baseline
+                            text:               qsTr("Video URL:")
+                        }
+                        QGCTextField {
+                            id:     videoUrlField
+                            text:   QGroundControl.mavlinkLogManager.videoURL
+                            width:  _valueWidth
+                            inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Wind Speed
+                    Row {
+                        spacing:                ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   windCombo.baseline
+                            text:               qsTr("Wind Speed:")
+                        }
+                        QGCComboBox {
+                            id:                 windCombo
+                            width:              _valueWidth
+                            model: ListModel {
+                                id: windItems
+                                ListElement { text: "Please Select"; value: -1 }
+                                ListElement { text: "Calm";     value: 0 }
+                                ListElement { text: "Breeze";   value: 5 }
+                                ListElement { text: "Gale";     value: 8 }
+                                ListElement { text: "Storm";    value: 10 }
+                            }
+                            onActivated: {
+                                saveItems();
+                                QGroundControl.mavlinkLogManager.windSpeed = windItems.get(index).value
+                                console.log('Set Wind: ' + windItems.get(index).value)
+                            }
+                            Component.onCompleted: {
+                                for(var i = 0; i < windItems.count; i++) {
+                                    if(windItems.get(i).value === QGroundControl.mavlinkLogManager.windSpeed) {
+                                        windCombo.currentIndex = i;
+                                        console.log('Wind: ' + windItems.get(i).value)
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Flight Rating
+                    Row {
+                        spacing:                ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   ratingCombo.baseline
+                            text:               qsTr("Flight Rating:")
+                        }
+                        QGCComboBox {
+                            id:                 ratingCombo
+                            width:              _valueWidth
+                            model: ListModel {
+                                id: ratingItems
+                                ListElement { text: "Please Select";            value: "notset"}
+                                ListElement { text: "Crashed (Pilot Error)";    value: "crash_pilot" }
+                                ListElement { text: "Crashed (Software or Hardware issue)";   value: "crash_sw_hw" }
+                                ListElement { text: "Unsatisfactory";           value: "unsatisfactory" }
+                                ListElement { text: "Good";                     value: "good" }
+                                ListElement { text: "Great";                    value: "great" }
+                            }
+                            onActivated: {
+                                saveItems();
+                                QGroundControl.mavlinkLogManager.rating = ratingItems.get(index).value
+                                console.log('Set Rating: ' + ratingItems.get(index).value)
+                            }
+                            Component.onCompleted: {
+                                for(var i = 0; i < ratingItems.count; i++) {
+                                    if(ratingItems.get(i).value === QGroundControl.mavlinkLogManager.rating) {
+                                        ratingCombo.currentIndex = i;
+                                        console.log('Rating: ' + ratingItems.get(i).value)
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Feedback
+                    Row {
+                        spacing:                ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            text:               qsTr("Additional Feedback:")
+                        }
+                        TextArea {
+                            id:                 feedbackTextArea
+                            width:              _valueWidth
+                            height:             ScreenTools.defaultFontPixelHeight * 4
+                            frameVisible:       false
+                            font.pointSize:     ScreenTools.defaultFontPointSize
+                            text:               QGroundControl.mavlinkLogManager.feedback
+                            style: TextAreaStyle {
+                                textColor:          qgcPal.windowShade
+                                backgroundColor:    qgcPal.text
+                            }
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Public Log
+                    QGCCheckBox {
+                        text:       qsTr("Make this log publicly available")
+                        checked:    QGroundControl.mavlinkLogManager.publicLog
+                        onClicked: {
+                            QGroundControl.mavlinkLogManager.publicLog = checked
                         }
                     }
                     //-----------------------------------------------------------------
@@ -288,13 +420,9 @@ Rectangle {
                         text:       qsTr("Enable automatic log uploads")
                         checked:    QGroundControl.mavlinkLogManager.enableAutoUpload
                         onClicked: {
-                            QGroundControl.mavlinkLogManager.emailAddress = emailField.text
-                            if(checked && QGroundControl.mavlinkLogManager.emailAddress === "") {
-                                checked = false
+                            saveItems();
+                            if(checked && QGroundControl.mavlinkLogManager.emailAddress === "")
                                 emptyEmailDialog.open()
-                            } else {
-                                QGroundControl.mavlinkLogManager.enableAutoUpload = checked
-                            }
                         }
                     }
                     //-----------------------------------------------------------------
@@ -443,7 +571,7 @@ Rectangle {
                             enabled:    _selectedCount > 0 && !QGroundControl.mavlinkLogManager.uploading && !QGroundControl.mavlinkLogManager.logRunning && !_uploadedSelected
                             visible:    !QGroundControl.mavlinkLogManager.uploading
                             onClicked:  {
-                                QGroundControl.mavlinkLogManager.emailAddress = emailField.text
+                                saveItems();
                                 if(QGroundControl.mavlinkLogManager.emailAddress === "")
                                     emptyEmailDialog.open()
                                 else
