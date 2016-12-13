@@ -65,196 +65,12 @@ public:
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
 
-    Q_PROPERTY(double   latitude                READ getLatitude            WRITE setLatitude           NOTIFY latitudeChanged)
-    Q_PROPERTY(double   longitude               READ getLongitude           WRITE setLongitude          NOTIFY longitudeChanged)
-    Q_PROPERTY(double   satelliteCount          READ getSatelliteCount      WRITE setSatelliteCount     NOTIFY satelliteCountChanged)
-    Q_PROPERTY(bool     isGlobalPositionKnown   READ globalPositionKnown)
     Q_PROPERTY(double   roll                    READ getRoll                WRITE setRoll               NOTIFY rollChanged)
     Q_PROPERTY(double   pitch                   READ getPitch               WRITE setPitch              NOTIFY pitchChanged)
     Q_PROPERTY(double   yaw                     READ getYaw                 WRITE setYaw                NOTIFY yawChanged)
-    Q_PROPERTY(double   distToWaypoint          READ getDistToWaypoint      WRITE setDistToWaypoint     NOTIFY distToWaypointChanged)
-    Q_PROPERTY(double   airSpeed                READ getGroundSpeed         WRITE setGroundSpeed        NOTIFY airSpeedChanged)
-    Q_PROPERTY(double   groundSpeed             READ getGroundSpeed         WRITE setGroundSpeed        NOTIFY groundSpeedChanged)
-    Q_PROPERTY(double   bearingToWaypoint       READ getBearingToWaypoint   WRITE setBearingToWaypoint  NOTIFY bearingToWaypointChanged)
-    Q_PROPERTY(double   altitudeAMSL            READ getAltitudeAMSL        WRITE setAltitudeAMSL       NOTIFY altitudeAMSLChanged)
-    Q_PROPERTY(double   altitudeAMSLFT          READ getAltitudeAMSLFT                                  NOTIFY altitudeAMSLFTChanged)
-    Q_PROPERTY(double   altitudeRelative        READ getAltitudeRelative    WRITE setAltitudeRelative   NOTIFY altitudeRelativeChanged)
-    Q_PROPERTY(double   satRawHDOP              READ getSatRawHDOP                                      NOTIFY satRawHDOPChanged)
-    Q_PROPERTY(double   satRawVDOP              READ getSatRawVDOP                                      NOTIFY satRawVDOPChanged)
-    Q_PROPERTY(double   satRawCOG               READ getSatRawCOG                                       NOTIFY satRawCOGChanged)
 
     /// Vehicle is about to go away
     void shutdownVehicle(void);
-
-    void setGroundSpeed(double val)
-    {
-        groundSpeed = val;
-        emit groundSpeedChanged(val,"groundSpeed");
-        emit valueChanged(this->uasId,"groundSpeed","m/s",QVariant(val),getUnixTime());
-    }
-    double getGroundSpeed() const
-    {
-        return groundSpeed;
-    }
-
-    void setAirSpeed(double val)
-    {
-        airSpeed = val;
-        emit airSpeedChanged(val,"airSpeed");
-        emit valueChanged(this->uasId,"airSpeed","m/s",QVariant(val),getUnixTime());
-    }
-
-    double getAirSpeed() const
-    {
-        return airSpeed;
-    }
-
-    void setLocalX(double val)
-    {
-        localX = val;
-        emit localXChanged(val,"localX");
-        emit valueChanged(this->uasId,"localX","m",QVariant(val),getUnixTime());
-    }
-
-    double getLocalX() const
-    {
-        return localX;
-    }
-
-    void setLocalY(double val)
-    {
-        localY = val;
-        emit localYChanged(val,"localY");
-        emit valueChanged(this->uasId,"localY","m",QVariant(val),getUnixTime());
-    }
-    double getLocalY() const
-    {
-        return localY;
-    }
-
-    void setLocalZ(double val)
-    {
-        localZ = val;
-        emit localZChanged(val,"localZ");
-        emit valueChanged(this->uasId,"localZ","m",QVariant(val),getUnixTime());
-    }
-    double getLocalZ() const
-    {
-        return localZ;
-    }
-
-    void setLatitude(double val)
-    {
-        latitude = val;
-        emit latitudeChanged(val,"latitude");
-        emit valueChanged(this->uasId,"latitude","deg",QVariant(val),getUnixTime());
-    }
-
-    double getLatitude() const
-    {
-        return latitude;
-    }
-
-    void setLongitude(double val)
-    {
-        longitude = val;
-        emit longitudeChanged(val,"longitude");
-        emit valueChanged(this->uasId,"longitude","deg",QVariant(val),getUnixTime());
-    }
-
-    double getLongitude() const
-    {
-        return longitude;
-    }
-
-    void setAltitudeAMSL(double val)
-    {
-        altitudeAMSL = val;
-        emit altitudeAMSLChanged(val, "altitudeAMSL");
-        emit valueChanged(this->uasId,"altitudeAMSL","m",QVariant(altitudeAMSL),getUnixTime());
-        altitudeAMSLFT = 3.28084 * altitudeAMSL;
-        emit altitudeAMSLFTChanged(val, "altitudeAMSLFT");
-        emit valueChanged(this->uasId,"altitudeAMSLFT","m",QVariant(altitudeAMSLFT),getUnixTime());
-    }
-
-    double getAltitudeAMSL() const
-    {
-        return altitudeAMSL;
-    }
-
-    double getAltitudeAMSLFT() const
-    {
-        return altitudeAMSLFT;
-    }
-
-    void setAltitudeRelative(double val)
-    {
-        altitudeRelative = val;
-        emit altitudeRelativeChanged(val, "altitudeRelative");
-        emit valueChanged(this->uasId,"altitudeRelative","m",QVariant(val),getUnixTime());
-    }
-
-    double getAltitudeRelative() const
-    {
-        return altitudeRelative;
-    }
-
-    double getSatRawHDOP() const
-    {
-        return satRawHDOP;
-    }
-
-    double getSatRawVDOP() const
-    {
-        return satRawVDOP;
-    }
-
-    double getSatRawCOG() const
-    {
-        return satRawCOG;
-    }
-
-    void setSatelliteCount(double val)
-    {
-        satelliteCount = val;
-        emit satelliteCountChanged(val,"satelliteCount");
-        emit valueChanged(this->uasId,"satelliteCount","",QVariant(val),getUnixTime());
-    }
-
-    double getSatelliteCount() const
-    {
-        return satelliteCount;
-    }
-
-    virtual bool globalPositionKnown() const
-    {
-        return isGlobalPositionKnown;
-    }
-
-    void setDistToWaypoint(double val)
-    {
-        distToWaypoint = val;
-        emit distToWaypointChanged(val,"distToWaypoint");
-        emit valueChanged(this->uasId,"distToWaypoint","m",QVariant(val),getUnixTime());
-    }
-
-    double getDistToWaypoint() const
-    {
-        return distToWaypoint;
-    }
-
-    void setBearingToWaypoint(double val)
-    {
-        bearingToWaypoint = val;
-        emit bearingToWaypointChanged(val,"bearingToWaypoint");
-        emit valueChanged(this->uasId,"bearingToWaypoint","deg",QVariant(val),getUnixTime());
-    }
-
-    double getBearingToWaypoint() const
-    {
-        return bearingToWaypoint;
-    }
-
 
     void setRoll(double val)
     {
@@ -377,34 +193,6 @@ protected: //COMMENTS FOR TEST UNIT
     /// POSITION
     bool isGlobalPositionKnown; ///< If the global position has been received for this MAV
 
-    double localX;
-    double localY;
-    double localZ;
-
-    double latitude;            ///< Global latitude as estimated by position estimator
-    double longitude;           ///< Global longitude as estimated by position estimator
-    double altitudeAMSL;        ///< Global altitude as estimated by position estimator, AMSL
-    double altitudeAMSLFT;      ///< Global altitude as estimated by position estimator, AMSL
-    double altitudeRelative;    ///< Altitude above home as estimated by position estimator
-
-    double satRawHDOP;
-    double satRawVDOP;
-    double satRawCOG;
-
-    double satelliteCount;      ///< Number of satellites visible to raw GPS
-    bool globalEstimatorActive; ///< Global position estimator present, do not fall back to GPS raw for position
-    double latitude_gps;        ///< Global latitude as estimated by raw GPS
-    double longitude_gps;       ///< Global longitude as estimated by raw GPS
-    double altitude_gps;        ///< Global altitude as estimated by raw GPS
-    double speedX;              ///< True speed in X axis
-    double speedY;              ///< True speed in Y axis
-    double speedZ;              ///< True speed in Z axis
-
-    /// WAYPOINT NAVIGATION
-    double distToWaypoint;       ///< Distance to next waypoint
-    double airSpeed;             ///< Airspeed
-    double groundSpeed;          ///< Groundspeed
-    double bearingToWaypoint;    ///< Bearing to next waypoint
 #ifndef __mobile__
     FileManager   fileManager;
 #endif
@@ -545,34 +333,16 @@ public slots:
     /** @brief Send command to disable all bindings/maps between RC and parameters */
     void unsetRCToParameterMap();
 signals:
-    void loadChanged(UASInterface* uas, double load);
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
     /** @brief HIL controls have changed */
     void hilControlsChanged(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
 
-    void localXChanged(double val,QString name);
-    void localYChanged(double val,QString name);
-    void localZChanged(double val,QString name);
-    void longitudeChanged(double val,QString name);
-    void latitudeChanged(double val,QString name);
-    void altitudeAMSLChanged(double val,QString name);
-    void altitudeAMSLFTChanged(double val,QString name);
-    void altitudeRelativeChanged(double val,QString name);
-
-    void satRawHDOPChanged  (double value);
-    void satRawVDOPChanged  (double value);
-    void satRawCOGChanged   (double value);
-
     void rollChanged(double val,QString name);
     void pitchChanged(double val,QString name);
     void yawChanged(double val,QString name);
-    void satelliteCountChanged(double val,QString name);
-    void distToWaypointChanged(double val,QString name);
-    void groundSpeedChanged(double val, QString name);
-    void airSpeedChanged(double val, QString name);
-    void bearingToWaypointChanged(double val,QString name);
+
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
     quint64 getUnixTime(quint64 time=0);

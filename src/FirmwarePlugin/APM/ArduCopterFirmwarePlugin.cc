@@ -120,16 +120,11 @@ void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)
 
 void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 {
-    if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
-        qgcApp()->showMessage(QStringLiteral("Unable to takeoff, vehicle position not known."));
-        return;
-    }
-
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
                             MAV_CMD_NAV_TAKEOFF,
                             true, // show error
                             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                            vehicle->altitudeAMSL()->rawValue().toFloat() +  altitudeRel); // AMSL meters
+                            altitudeRel);
 }
 
 void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
