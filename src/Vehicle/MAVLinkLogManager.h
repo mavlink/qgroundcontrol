@@ -112,13 +112,18 @@ public:
     Q_PROPERTY(QString              emailAddress        READ    emailAddress        WRITE setEmailAddress       NOTIFY emailAddressChanged)
     Q_PROPERTY(QString              description         READ    description         WRITE setDescription        NOTIFY descriptionChanged)
     Q_PROPERTY(QString              uploadURL           READ    uploadURL           WRITE setUploadURL          NOTIFY uploadURLChanged)
+    Q_PROPERTY(QString              feedback            READ    feedback            WRITE setFeedback           NOTIFY feedbackChanged)
+    Q_PROPERTY(QString              videoURL            READ    videoURL            WRITE setVideoURL           NOTIFY videoURLChanged)
     Q_PROPERTY(bool                 enableAutoUpload    READ    enableAutoUpload    WRITE setEnableAutoUpload   NOTIFY enableAutoUploadChanged)
     Q_PROPERTY(bool                 enableAutoStart     READ    enableAutoStart     WRITE setEnableAutoStart    NOTIFY enableAutoStartChanged)
     Q_PROPERTY(bool                 deleteAfterUpload   READ    deleteAfterUpload   WRITE setDeleteAfterUpload  NOTIFY deleteAfterUploadChanged)
+    Q_PROPERTY(bool                 publicLog           READ    publicLog           WRITE setPublicLog          NOTIFY publicLogChanged)
     Q_PROPERTY(bool                 uploading           READ    uploading                                       NOTIFY uploadingChanged)
     Q_PROPERTY(bool                 logRunning          READ    logRunning                                      NOTIFY logRunningChanged)
     Q_PROPERTY(bool                 canStartLog         READ    canStartLog                                     NOTIFY canStartLogChanged)
     Q_PROPERTY(QmlObjectListModel*  logFiles            READ    logFiles                                        NOTIFY logFilesChanged)
+    Q_PROPERTY(int                  windSpeed           READ    windSpeed           WRITE setWindSpeed          NOTIFY windSpeedChanged)
+    Q_PROPERTY(QString              rating              READ    rating              WRITE setRating             NOTIFY ratingChanged)
 
     Q_INVOKABLE void uploadLog      ();
     Q_INVOKABLE void deleteLog      ();
@@ -129,21 +134,31 @@ public:
     QString     emailAddress        () { return _emailAddress; }
     QString     description         () { return _description; }
     QString     uploadURL           () { return _uploadURL; }
+    QString     feedback            () { return _feedback; }
+    QString     videoURL            () { return _videoURL; }
     bool        enableAutoUpload    () { return _enableAutoUpload; }
     bool        enableAutoStart     () { return _enableAutoStart; }
     bool        uploading                ();
     bool        logRunning          () { return _logRunning; }
     bool        canStartLog         () { return _vehicle != NULL; }
     bool        deleteAfterUpload   () { return _deleteAfterUpload; }
+    bool        publicLog           () { return _publicLog; }
+    int         windSpeed           () { return _windSpeed; }
+    QString     rating              () { return _rating; }
 
     QmlObjectListModel* logFiles    () { return &_logFiles; }
 
     void        setEmailAddress     (QString email);
     void        setDescription      (QString description);
     void        setUploadURL        (QString url);
+    void        setFeedback         (QString feedback);
+    void        setVideoURL         (QString url);
     void        setEnableAutoUpload (bool enable);
     void        setEnableAutoStart  (bool enable);
     void        setDeleteAfterUpload(bool enable);
+    void        setWindSpeed        (int speed);
+    void        setRating           (QString rate);
+    void        setPublicLog        (bool publicLog);
 
     // Override from QGCTool
     void        setToolbox          (QGCToolbox *toolbox);
@@ -152,6 +167,7 @@ signals:
     void emailAddressChanged        ();
     void descriptionChanged         ();
     void uploadURLChanged           ();
+    void feedbackChanged            ();
     void enableAutoUploadChanged    ();
     void enableAutoStartChanged     ();
     void logFilesChanged            ();
@@ -164,6 +180,10 @@ signals:
     void logRunningChanged          ();
     void canStartLogChanged         ();
     void deleteAfterUploadChanged   ();
+    void windSpeedChanged           ();
+    void ratingChanged              ();
+    void videoURLChanged            ();
+    void publicLogChanged           ();
 
 private slots:
     void _uploadFinished            ();
@@ -188,7 +208,9 @@ private:
     QString                 _description;
     QString                 _emailAddress;
     QString                 _uploadURL;
+    QString                 _feedback;
     QString                 _logPath;
+    QString                 _videoURL;
     bool                    _enableAutoUpload;
     bool                    _enableAutoStart;
     QNetworkAccessManager*  _nam;
@@ -199,6 +221,9 @@ private:
     bool                    _loggingDisabled;
     MAVLinkLogProcessor*    _logProcessor;
     bool                    _deleteAfterUpload;
+    int                     _windSpeed;
+    QString                 _rating;
+    bool                    _publicLog;
 };
 
 #endif
