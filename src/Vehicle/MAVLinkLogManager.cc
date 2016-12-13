@@ -21,16 +21,23 @@
 
 QGC_LOGGING_CATEGORY(MAVLinkLogManagerLog, "MAVLinkLogManagerLog")
 
-static const char* kEmailAddressKey         = "MAVLinkLogEmail";
-static const char* kDescriptionsKey         = "MAVLinkLogDescription";
+static const char* kMAVLinkLogGroup         = "MAVLinkLogGroup";
+static const char* kEmailAddressKey         = "Email";
+static const char* kDescriptionsKey         = "Description";
 static const char* kDefaultDescr            = "QGroundControl Session";
-static const char* kPx4URLKey               = "MAVLinkLogURL";
+static const char* kPx4URLKey               = "LogURL";
 static const char* kDefaultPx4URL           = "http://logs.px4.io/upload";
-static const char* kEnableAutoUploadKey     = "EnableAutoUploadKey";
-static const char* kEnableAutoStartKey      = "EnableAutoStartKey";
-static const char* kEnableDeletetKey        = "EnableDeleteKey";
+static const char* kEnableAutoUploadKey     = "EnableAutoUpload";
+static const char* kEnableAutoStartKey      = "EnableAutoStart";
+static const char* kEnableDeletetKey        = "EnableDelete";
 static const char* kUlogExtension           = ".ulg";
 static const char* kSidecarExtension        = ".uploaded";
+static const char* kVideoURLKey             = "VideoURL";
+static const char* kWindSpeedKey            = "WindSpeed";
+static const char* kRateKey                 = "RateKey";
+static const char* kPublicLogKey            = "PublicLog";
+static const char* kFeedback                = "feedback";
+static const char* kVideoURL                = "videoUrl";
 
 //-----------------------------------------------------------------------------
 MAVLinkLogFiles::MAVLinkLogFiles(MAVLinkLogManager* manager, const QString& filePath, bool newFile)
@@ -299,15 +306,22 @@ MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app)
     , _loggingDisabled(false)
     , _logProcessor(NULL)
     , _deleteAfterUpload(false)
+    , _windSpeed(-1)
+    , _publicLog(false)
 {
     //-- Get saved settings
     QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
     setEmailAddress(settings.value(kEmailAddressKey, QString()).toString());
     setDescription(settings.value(kDescriptionsKey, QString(kDefaultDescr)).toString());
     setUploadURL(settings.value(kPx4URLKey, QString(kDefaultPx4URL)).toString());
+    setVideoURL(settings.value(kVideoURLKey, QString()).toString());
     setEnableAutoUpload(settings.value(kEnableAutoUploadKey, true).toBool());
     setEnableAutoStart(settings.value(kEnableAutoStartKey, true).toBool());
     setDeleteAfterUpload(settings.value(kEnableDeletetKey, false).toBool());
+    setWindSpeed(settings.value(kWindSpeedKey, -1).toInt());
+    setRating(settings.value(kRateKey, "notset").toString());
+    setPublicLog(settings.value(kPublicLogKey, true).toBool());
     //-- Logging location
     _logPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     _logPath += "/MAVLinkLogs";
@@ -353,6 +367,7 @@ MAVLinkLogManager::setEmailAddress(QString email)
 {
     _emailAddress = email;
     QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
     settings.setValue(kEmailAddressKey, email);
     emit emailAddressChanged();
 }
@@ -363,6 +378,7 @@ MAVLinkLogManager::setDescription(QString description)
 {
     _description = description;
     QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
     settings.setValue(kDescriptionsKey, description);
     emit descriptionChanged();
 }
@@ -376,8 +392,28 @@ MAVLinkLogManager::setUploadURL(QString url)
         _uploadURL = kDefaultPx4URL;
     }
     QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
     settings.setValue(kPx4URLKey, _uploadURL);
     emit uploadURLChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkLogManager::setFeedback(QString fb)
+{
+    _feedback = fb;
+    emit feedbackChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkLogManager::setVideoURL(QString url)
+{
+    _videoURL = url;
+    QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
+    settings.setValue(kVideoURLKey, url);
+    emit videoURLChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -386,6 +422,7 @@ MAVLinkLogManager::setEnableAutoUpload(bool enable)
 {
     _enableAutoUpload = enable;
     QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
     settings.setValue(kEnableAutoUploadKey, enable);
     emit enableAutoUploadChanged();
 }
@@ -396,6 +433,7 @@ MAVLinkLogManager::setEnableAutoStart(bool enable)
 {
     _enableAutoStart = enable;
     QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
     settings.setValue(kEnableAutoStartKey, enable);
     emit enableAutoStartChanged();
 }
@@ -406,8 +444,42 @@ MAVLinkLogManager::setDeleteAfterUpload(bool enable)
 {
     _deleteAfterUpload = enable;
     QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
     settings.setValue(kEnableDeletetKey, enable);
     emit deleteAfterUploadChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkLogManager::setWindSpeed(int speed)
+{
+    _windSpeed = speed;
+    QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
+    settings.setValue(kWindSpeedKey, speed);
+    emit windSpeedChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkLogManager::setRating(QString rate)
+{
+    _rating = rate;
+    QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
+    settings.setValue(kRateKey, rate);
+    emit ratingChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkLogManager::setPublicLog(bool pub)
+{
+    _publicLog = pub;
+    QSettings settings;
+    settings.beginGroup(kMAVLinkLogGroup);
+    settings.setValue(kPublicLogKey, pub);
+    emit publicLogChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -619,17 +691,41 @@ MAVLinkLogManager::_sendLog(const QString& logFile)
     QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
     QHttpPart emailPart = create_form_part("email", _emailAddress);
     QHttpPart descriptionPart = create_form_part("description", _description);
-    QHttpPart sourcePart = create_form_part("source", "QGroundControl");
-    QHttpPart versionPart = create_form_part("version", _app->applicationVersion());
-    QHttpPart logPart;
-    logPart.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
-    logPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; name=\"filearg\"; filename=\"%1\"").arg(fi.fileName()));
-    logPart.setBodyDevice(file);
+    QHttpPart sourcePart      = create_form_part("source", "QGroundControl");
+    QHttpPart versionPart     = create_form_part("version", _app->applicationVersion());
+    QHttpPart typePart        = create_form_part("type", "flightreport");
+    QHttpPart windPart        = create_form_part("windSpeed", QString::number(_windSpeed));
+    QHttpPart ratingPart      = create_form_part("rating", _rating);
+    QHttpPart publicPart      = create_form_part("public", _publicLog ? "true" : "false");
     //-- Assemble request and POST it
     multiPart->append(emailPart);
     multiPart->append(descriptionPart);
     multiPart->append(sourcePart);
     multiPart->append(versionPart);
+    multiPart->append(typePart);
+    multiPart->append(windPart);
+    multiPart->append(ratingPart);
+    multiPart->append(publicPart);
+    //-- Optional
+    QHttpPart feedbackPart;
+    if(_feedback.isEmpty()) {
+        feedbackPart = create_form_part(kFeedback, "None Given");
+    } else {
+        feedbackPart = create_form_part(kFeedback, _feedback);
+    }
+    multiPart->append(feedbackPart);
+    QHttpPart videoPart;
+    if(_videoURL.isEmpty()) {
+        videoPart = create_form_part(kVideoURL, "None");
+    } else {
+        videoPart = create_form_part(kVideoURL, _videoURL);
+    }
+    multiPart->append(videoPart);
+    //-- Actual Log File
+    QHttpPart logPart;
+    logPart.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
+    logPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; name=\"filearg\"; filename=\"%1\"").arg(fi.fileName()));
+    logPart.setBodyDevice(file);
     multiPart->append(logPart);
     file->setParent(multiPart);
     QNetworkRequest request(_uploadURL);
