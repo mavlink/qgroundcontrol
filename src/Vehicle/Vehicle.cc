@@ -1742,6 +1742,11 @@ bool Vehicle::supportsJSButton(void) const
     return _firmwarePlugin->supportsJSButton();
 }
 
+bool Vehicle::supportsCalibratePressure(void) const
+{
+    return _firmwarePlugin->supportsCalibratePressure();
+}
+
 void Vehicle::_setCoordinateValid(bool coordinateValid)
 {
     if (coordinateValid != _coordinateValid) {

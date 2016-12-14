@@ -528,6 +528,7 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
     int airspeedCal = 0;
     int radioCal = 0;
     int accelCal = 0;
+    int pressureCal = 0;
     int escCal = 0;
 
     switch (calType) {
@@ -551,6 +552,9 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
         break;
     case StartCalibrationLevel:
         accelCal = 2;
+        break;
+    case StartCalibrationPressure:
+        pressureCal = 1;
         break;
     case StartCalibrationEsc:
         escCal = 1;
@@ -576,7 +580,7 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
                                        0,                                // 0=first transmission of command
                                        gyroCal,                          // gyro cal
                                        magCal,                           // mag cal
-                                       0,                                // ground pressure
+                                       pressureCal,                      // ground pressure
                                        radioCal,                         // radio cal
                                        accelCal,                         // accel cal
                                        airspeedCal,                      // PX4: airspeed cal, ArduPilot: compass mot
