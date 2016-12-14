@@ -298,7 +298,7 @@ MAVLinkLogProcessor::processStreamData(uint16_t sequence, uint8_t first_message,
 MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app)
     : QGCTool(app)
     , _enableAutoUpload(true)
-    , _enableAutoStart(true)
+    , _enableAutoStart(false)
     , _nam(NULL)
     , _currentLogfile(NULL)
     , _vehicle(NULL)
@@ -317,7 +317,7 @@ MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app)
     setUploadURL(settings.value(kPx4URLKey, QString(kDefaultPx4URL)).toString());
     setVideoURL(settings.value(kVideoURLKey, QString()).toString());
     setEnableAutoUpload(settings.value(kEnableAutoUploadKey, true).toBool());
-    setEnableAutoStart(settings.value(kEnableAutoStartKey, true).toBool());
+    setEnableAutoStart(settings.value(kEnableAutoStartKey, false).toBool());
     setDeleteAfterUpload(settings.value(kEnableDeletetKey, false).toBool());
     setWindSpeed(settings.value(kWindSpeedKey, -1).toInt());
     setRating(settings.value(kRateKey, "notset").toString());
