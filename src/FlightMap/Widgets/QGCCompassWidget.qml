@@ -48,7 +48,7 @@ Item {
 
         Image {
             id:                 pointer
-            source:             "/qmlimages/compassInstrumentAirplane.svg"
+            source:             "/qmlimages/compassInstrumentArrow.svg"
             mipmap:             true
             width:              size * 0.75
             sourceSize.width:   width
