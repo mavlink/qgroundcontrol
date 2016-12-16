@@ -690,6 +690,8 @@ private slots:
     void _newGeoFenceAvailable(void);
     void _sendMavCommandAgain(void);
 
+    void _activeJoystickChanged(void);
+
 private:
     bool _containsLink(LinkInterface* link);
     void _addLink(LinkInterface* link);

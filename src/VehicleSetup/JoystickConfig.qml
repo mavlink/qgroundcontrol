@@ -27,6 +27,16 @@ SetupPage {
     pageName:           qsTr("Joystick")
     pageDescription:    qsTr("Joystick Setup is used to configure a calibrate joysticks.")
 
+    Connections {
+        target: joystickManager
+        onAvailableJoysticksChanged: {
+            if( joystickManager.joysticks.length == 0 ) {
+                summaryButton.checked = true
+                setupView.showSummaryPanel()
+            }
+        }
+    }
+
     Component {
         id: pageComponent
 
@@ -358,11 +368,20 @@ SetupPage {
 
 
                             QGCCheckBox {
-                                enabled:    checked || _activeJoystick.calibrated
+                                id:         enabledCheckBox
+                                enabled:    _activeJoystick.calibrated
                                 text:       _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)")
                                 checked:    _activeVehicle.joystickEnabled
 
                                 onClicked:  _activeVehicle.joystickEnabled = checked
+
+                                Connections {
+                                    target: joystickManager
+
+                                    onActiveJoystickChanged: {
+                                            enabledCheckBox.checked = Qt.binding(function() { return _activeJoystick.calibrated && _activeVehicle.joystickEnabled })
+                                    }
+                                }
                             }
 
                             Row {
@@ -388,6 +407,18 @@ SetupPage {
                                             console.warn(qsTr("Active joystick name not in combo"), joystickManager.activeJoystickName)
                                         } else {
                                             joystickCombo.currentIndex = index
+                                        }
+                                    }
+
+                                    Connections {
+                                        target: joystickManager
+                                        onAvailableJoysticksChanged: {
+                                            var index = joystickCombo.find(joystickManager.activeJoystickName)
+                                            if (index == -1) {
+                                                console.warn(qsTr("Active joystick name not in combo"), joystickManager.activeJoystickName)
+                                            } else {
+                                                joystickCombo.currentIndex = index
+                                            }
                                         }
                                     }
                                 }
