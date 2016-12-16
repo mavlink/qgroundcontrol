@@ -12,15 +12,21 @@ JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, in
 {
 }
 
-QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicleManager) {
-    static QMap<QString, Joystick*> ret;
-
+bool JoystickSDL::init(void) {
     if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0) {
+        SDL_JoystickEventState(SDL_ENABLE);
         qWarning() << "Couldn't initialize SimpleDirectMediaLayer:" << SDL_GetError();
-        return ret;
+        return false;
     }
 
     _loadGameControllerMappings();
+    return true;
+}
+
+QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicleManager) {
+    static QMap<QString, Joystick*> ret;
+
+    QMap<QString,Joystick*> newRet;
 
     // Load available joysticks
 
@@ -29,6 +35,7 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
     for (int i=0; i<SDL_NumJoysticks(); i++) {
         QString name = SDL_JoystickNameForIndex(i);
 
+        // TODO use GUID instead of name in case of two joysticks with same name
         if (!ret.contains(name)) {
             int axisCount, buttonCount, hatCount;
             bool isGameController;
@@ -57,11 +64,24 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
             }
 
             qCDebug(JoystickLog) << "\t" << name << "axes:" << axisCount << "buttons:" << buttonCount << "hats:" << hatCount << "isGC:" << isGameController;
-            ret[name] = new JoystickSDL(name, qMax(0,axisCount), qMax(0,buttonCount), qMax(0,hatCount), i, isGameController, _multiVehicleManager);
+            newRet[name] = new JoystickSDL(name, qMax(0,axisCount), qMax(0,buttonCount), qMax(0,hatCount), i, isGameController, _multiVehicleManager);
         } else {
+            newRet[name] = ret[name];
+            if (newRet[name]->index() != i) {
+                newRet[name]->setIndex(i); // This joystick index has been remapped by SDL
+            }
+            // Anything left in ret after we exit the loop has been removed (unplugged) and needs to be cleaned up.
+            // We will handle that in JoystickManager in case the removed joystick was in use.
+            ret.remove(name);
             qCDebug(JoystickLog) << "\tSkipping duplicate" << name;
         }
     }
+
+    if (!newRet.count()) {
+        qCDebug(JoystickLog) << "\tnone found";
+    }
+
+    ret = newRet;
     return ret;
 }
 
@@ -93,11 +113,32 @@ bool JoystickSDL::_open(void) {
         return false;
     }
 
+    qCDebug(JoystickLog) << "Opened joystick at" << sdlJoystick;
+
     return true;
 }
 
 void JoystickSDL::_close(void) {
-    SDL_JoystickClose(sdlJoystick);
+    if (sdlJoystick == NULL) {
+        qCDebug(JoystickLog) << "Attempt to close null joystick!";
+        return;
+    }
+
+    qCDebug(JoystickLog) << "Closing" << SDL_JoystickName(sdlJoystick) << "at" << sdlJoystick;
+
+    // We get a segfault if we try to close a joystick that has been detached
+    if (SDL_JoystickGetAttached(sdlJoystick) == SDL_FALSE) {
+        qCDebug(JoystickLog) << "\tJoystick is not attached!";
+    } else {
+
+        if (SDL_JoystickInstanceID(sdlJoystick) != -1) {
+            qCDebug(JoystickLog) << "\tID:" << SDL_JoystickInstanceID(sdlJoystick);
+            SDL_JoystickClose(sdlJoystick);
+        }
+    }
+
+    sdlJoystick = NULL;
+    sdlController = NULL;
 }
 
 bool JoystickSDL::_update(void)
@@ -131,4 +172,3 @@ uint8_t JoystickSDL::_getHat(int hat,int i) {
     }
     return 0;
 }
-

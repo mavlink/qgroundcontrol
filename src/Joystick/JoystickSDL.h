@@ -13,6 +13,10 @@ public:
     JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, MultiVehicleManager* multiVehicleManager);
 
     static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager); 
+    static bool init(void);
+
+    int index(void) { return _index; }
+    void setIndex(int index) { _index = index; }
 
 private:
     static void _loadGameControllerMappings();

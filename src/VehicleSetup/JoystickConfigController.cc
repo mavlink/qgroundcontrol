@@ -69,7 +69,9 @@ void JoystickConfigController::start(void)
 
 JoystickConfigController::~JoystickConfigController()
 {
-    _activeJoystick->stopCalibrationMode(Joystick::CalibrationModeMonitor);
+    if(_activeJoystick) {
+        _activeJoystick->stopCalibrationMode(Joystick::CalibrationModeMonitor);
+    }
 }
 
 /// @brief Returns the state machine entry for the specified state.
@@ -491,9 +493,10 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
         int paramAxis;
         
         paramAxis = joystick->getFunctionAxis((Joystick::AxisFunction_t)function);
-        
-        _rgFunctionAxisMapping[function] = paramAxis;
-        _rgAxisInfo[paramAxis].function = (Joystick::AxisFunction_t)function;
+        if(paramAxis >= 0) {
+            _rgFunctionAxisMapping[function] = paramAxis;
+            _rgAxisInfo[paramAxis].function = (Joystick::AxisFunction_t)function;
+        }
     }
     
     _signalAllAttiudeValueChanges();
@@ -809,9 +812,11 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
     if (_activeJoystick) {
         joystickTransition = true;
         disconnect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
-        delete _rgAxisInfo;
-        delete _axisValueSave;
-        delete _axisRawValue;
+        // This will reset _rgFunctionAxis values to -1 to prevent out-of-bounds accesses
+        _resetInternalCalibrationValues();
+        delete[] _rgAxisInfo;
+        delete[] _axisValueSave;
+        delete[] _axisRawValue;
         _axisCount = 0;
         _activeJoystick = NULL;
     }
@@ -826,6 +831,7 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
         _rgAxisInfo = new struct AxisInfo[_axisCount];
         _axisValueSave = new int[_axisCount];
         _axisRawValue = new int[_axisCount];
+        _setInternalCalibrationValuesFromSettings();
         connect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
     }
 }
