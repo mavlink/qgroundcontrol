@@ -97,6 +97,7 @@
         <file alias="buttonHome.svg">src/FlightMap/Images/buttonHome.svg</file>
         <file alias="buttonMore.svg">src/FlightMap/Images/buttonMore.svg</file>
         <file alias="compassInstrumentAirplane.svg">src/FlightMap/Images/compassInstrumentAirplane.svg</file>
+        <file alias="compassInstrumentArrow.svg">src/FlightMap/Images/compassInstrumentArrow.svg</file>
         <file alias="compassInstrumentDial.svg">src/FlightMap/Images/compassInstrumentDial.svg</file>
         <file alias="crossHair.svg">src/FlightMap/Images/crossHair.svg</file>
         <file alias="PiP.svg">src/FlightMap/Images/PiP.svg</file>
