@@ -143,7 +143,7 @@ void IncrementalPlot::showLegend(bool show)
 void IncrementalPlot::setStyleText(const QString &style)
 {
     styleText = style.toLower();
-    foreach (QwtPlotCurve* curve, curves) {
+    foreach (QwtPlotCurve* curve, _curves) {
         updateStyle(curve);
     }
     replot();
@@ -161,24 +161,24 @@ void IncrementalPlot::updateStyle(QwtPlotCurve *curve)
     // Update the symbol style
     QwtSymbol *newSymbol = NULL;
     if (styleText.contains("circles")) {
-        newSymbol = new QwtSymbol(QwtSymbol::Ellipse, Qt::NoBrush, QPen(oldColor, symbolWidth), QSize(6, 6));
+        newSymbol = new QwtSymbol(QwtSymbol::Ellipse, Qt::NoBrush, QPen(oldColor, _symbolWidth), QSize(6, 6));
     } else if (styleText.contains("crosses")) {
-        newSymbol = new QwtSymbol(QwtSymbol::XCross, Qt::NoBrush, QPen(oldColor, symbolWidth), QSize(5, 5));
+        newSymbol = new QwtSymbol(QwtSymbol::XCross, Qt::NoBrush, QPen(oldColor, _symbolWidth), QSize(5, 5));
     } else if (styleText.contains("rect")) {
-        newSymbol = new QwtSymbol(QwtSymbol::Rect, Qt::NoBrush, QPen(oldColor, symbolWidth), QSize(6, 6));
+        newSymbol = new QwtSymbol(QwtSymbol::Rect, Qt::NoBrush, QPen(oldColor, _symbolWidth), QSize(6, 6));
     }
     // Else-case already handled by NULL value, which indicates no symbol
     curve->setSymbol(newSymbol);
 
     // Update the line style
     if (styleText.contains("dotted")) {
-        curve->setPen(QPen(oldColor, curveWidth, Qt::DotLine));
+        curve->setPen(QPen(oldColor, _curveWidth, Qt::DotLine));
     } else if (styleText.contains("dashed")) {
-        curve->setPen(QPen(oldColor, curveWidth, Qt::DashLine));
+        curve->setPen(QPen(oldColor, _curveWidth, Qt::DashLine));
     } else if (styleText.contains("line") || styleText.contains("solid")) {
-        curve->setPen(QPen(oldColor, curveWidth, Qt::SolidLine));
+        curve->setPen(QPen(oldColor, _curveWidth, Qt::SolidLine));
     } else {
-        curve->setPen(QPen(oldColor, curveWidth, Qt::NoPen));
+        curve->setPen(QPen(oldColor, _curveWidth, Qt::NoPen));
     }
     curve->setStyle(QwtPlotCurve::Lines);
 }
@@ -260,22 +260,22 @@ void IncrementalPlot::appendData(const QString &key, double *x, double *y, int s
     }
 
     // If this is a new curve, create it.
-    if (!curves.contains(key)) {
+    if (!_curves.contains(key)) {
         curve = new QwtPlotCurve(key);
-        curves.insert(key, curve);
+        _curves.insert(key, curve);
         curve->setStyle(QwtPlotCurve::NoCurve);
         curve->setPaintAttribute(QwtPlotCurve::FilterPoints);
 
         // Set the color. Only the pen needs to be set
         const QColor &c = getNextColor();
-        curve->setPen(c, symbolWidth);
+        curve->setPen(c, _symbolWidth);
 
         qDebug() << "Creating curve" << key << "with color" << c;
 
         updateStyle(curve);
         curve->attach(this);
     } else {
-        curve = curves.value(key);
+        curve = _curves.value(key);
     }
 
     data->append(x, y, size);
@@ -359,21 +359,21 @@ int IncrementalPlot::data(const QString &key, double* r_x, double* r_y, int maxS
  */
 void IncrementalPlot::showGrid(bool show)
 {
-    grid->setVisible(show);
+    _grid->setVisible(show);
     replot();
 }
 
 bool IncrementalPlot::gridEnabled() const
 {
-    return grid->isVisible();
+    return _grid->isVisible();
 }
 
 void IncrementalPlot::removeData()
 {
-    foreach (QwtPlotCurve* curve, curves) {
+    foreach (QwtPlotCurve* curve, _curves) {
         delete curve;
     }
-    curves.clear();
+    _curves.clear();
 
     foreach (CurveData* data, d_data) {
         delete data;
