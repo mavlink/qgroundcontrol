@@ -152,11 +152,16 @@ QGeoTiledMapReplyQGC::cacheError(QGCMapTask::TaskType type, QString /*errorStrin
         qWarning() << "QGeoTiledMapReplyQGC::cacheError() for wrong task";
     }
     //-- Tile not in cache. Get it off the Internet.
+    QNetworkProxy proxy = _networkManager->proxy();
+    QNetworkProxy tProxy;
+    tProxy.setType(QNetworkProxy::DefaultProxy);
+    _networkManager->setProxy(tProxy);
     _reply = _networkManager->get(_request);
     _reply->setParent(0);
     connect(_reply, SIGNAL(finished()),                         this, SLOT(networkReplyFinished()));
     connect(_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
     connect(_reply, SIGNAL(destroyed()),                        this, SLOT(replyDestroyed()));
+    _networkManager->setProxy(proxy);
 }
 
 //-----------------------------------------------------------------------------
