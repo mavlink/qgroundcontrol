@@ -109,6 +109,8 @@
         <file alias="scale_endLight.png">src/FlightMap/Images/scale_endLight.png</file>
         <file alias="airplaneOutline.svg">src/FlightMap/Images/airplaneOutline.svg</file>
         <file alias="airplaneOpaque.svg">src/FlightMap/Images/airplaneOpaque.svg</file>
+        <file alias="vehicleArrowOutline.svg">src/FlightMap/Images/vehicleArrowOutline.svg</file>
+        <file alias="vehicleArrowOpaque.svg">src/FlightMap/Images/vehicleArrowOpaque.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
         <file alias="ArrowHead.svg">src/FlightMap/Images/ArrowHead.svg</file>
