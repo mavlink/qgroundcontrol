@@ -47,7 +47,7 @@ const char* LinkManager::_autoconnect3DRRadioKey =   "Autoconnect3DRRadio";
 const char* LinkManager::_autoconnectPX4FlowKey =    "AutoconnectPX4Flow";
 const char* LinkManager::_autoconnectRTKGPSKey =     "AutoconnectRTKGPS";
 const char* LinkManager::_autoconnectLibrePilotKey = "AutoconnectLibrePilot";
-const char* LinkManager::_defaultUPDLinkName =       "Default UDP Link";
+const char* LinkManager::_defaultUPDLinkName =       "UDP Link (AutoConnect)";
 
 const int LinkManager::_autoconnectUpdateTimerMSecs =   1000;
 #ifdef Q_OS_WIN
@@ -353,9 +353,6 @@ void LinkManager::saveLinkConfigurationList()
 void LinkManager::loadLinkConfigurationList()
 {
     bool linksChanged = false;
-#ifdef QT_DEBUG
-    bool mockPresent  = false;
-#endif
     QSettings settings;
     // Is the group even there?
     if(settings.contains(LinkConfiguration::settingsRoot() + "/count")) {
@@ -397,7 +394,6 @@ void LinkManager::loadLinkConfigurationList()
 #ifdef QT_DEBUG
                                 case LinkConfiguration::TypeMock:
                                     pLink = (LinkConfiguration*)new MockConfiguration(name);
-                                    mockPresent = true;
                                     break;
 #endif
                                 default:
@@ -425,16 +421,6 @@ void LinkManager::loadLinkConfigurationList()
             }
         }
     }
-    // Debug buids always add MockLink automatically (if one is not already there)
-#ifdef QT_DEBUG
-    if(!mockPresent)
-    {
-        MockConfiguration* pMock = new MockConfiguration("Mock Link PX4");
-        pMock->setDynamic(true);
-        _linkConfigurations.append(pMock);
-        linksChanged = true;
-    }
-#endif
 
     if(linksChanged) {
         emit linkConfigurationsChanged();
@@ -544,47 +530,47 @@ void LinkManager::_updateAutoConnectLinks(void)
                 case QGCSerialPortInfo::BoardTypePX4FMUV2:
                 case QGCSerialPortInfo::BoardTypePX4FMUV4:
                     if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("Pixhawk on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypeAeroCore:
                     if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(QString("AeroCore on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("AeroCore on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypeMINDPXFMUV2:
                     if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(QString("MindPX on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("MindPX on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypeTAPV1:
                     if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(QString("TAP on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("TAP on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypeASCV1:
                     if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(QString("ASC on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("ASC on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypePX4Flow:
                     if (_autoconnectPX4Flow) {
-                        pSerialConfig = new SerialConfiguration(QString("PX4Flow on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("PX4Flow on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypeSikRadio:
                     if (_autoconnect3DRRadio) {
-                        pSerialConfig = new SerialConfiguration(QString("SiK Radio on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("SiK Radio on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypeLibrePilot:
                     if (_autoconnectLibrePilot) {
-                        pSerialConfig = new SerialConfiguration(QString("LibrePilot on %1").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("LibrePilot on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
                     }
                     break;
 #ifndef __mobile__
