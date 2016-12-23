@@ -560,8 +560,8 @@ void Vehicle::_handleAltitude(mavlink_message_t& message)
 
     _useAltitudeForAltitude = true;
     _useGpsRawIntForAltitude = false;
-    _altitudeRelativeFact.setRawValue(altitude.altitude_relative / 1000.0);
-    _altitudeAMSLFact.setRawValue(altitude.altitude_amsl / 1000.0);
+    _altitudeRelativeFact.setRawValue(altitude.altitude_relative);
+    _altitudeAMSLFact.setRawValue(altitude.altitude_amsl);
 
 }
 
