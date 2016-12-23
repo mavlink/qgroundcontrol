@@ -61,12 +61,13 @@ Rectangle {
             spacing:            ScreenTools.defaultFontPixelHeight / 2
             Repeater {
                 model: QGroundControl.linkManager.linkConfigurations
-                delegate:
-                QGCButton {
-                    text:   object.name
-                    width:  _linkRoot.width * 0.5
-                    exclusiveGroup: linkGroup
-                    anchors.horizontalCenter: settingsColumn.horizontalCenter
+                delegate: QGCButton {
+                    anchors.horizontalCenter:   settingsColumn.horizontalCenter
+                    width:                      _linkRoot.width * 0.5
+                    text:                       object.name
+                    exclusiveGroup:             linkGroup
+                    visible:                    !object.dynamic
+
                     onClicked: {
                         checked = true
                         _currentSelection = object
