@@ -437,7 +437,7 @@ QGCView {
                     visible:            QGroundControl.corePlugin.options.enableAutoConnectOptions
                     QGCLabel {
                         id:             autoConnectLabel
-                        text:           qsTr("Autoconnect to the following devices:")
+                        text:           qsTr("AutoConnect to the following devices:")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
                 }
