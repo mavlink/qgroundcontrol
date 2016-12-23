@@ -1875,6 +1875,14 @@ void Vehicle::_sendMavCommandAgain(void)
     }
 
     if (_mavCommandRetryCount > 1) {
+        if (queuedCommand.command == MAV_CMD_START_RX_PAIR) {
+            // Implementation of this command in all firmwares is incorrect. It does not send Ack so we can't retry.
+            return;
+        }
+        if (px4Firmware()) {
+            // PX4 stack is inconsistent with repect to sending back an Ack from a COMMAND_LONG, hence we can't support retry logic for it.
+            return;
+        }
         qDebug() << "Vehicle::_sendMavCommandAgain retrying command:_mavCommandRetryCount" << queuedCommand.command << _mavCommandRetryCount;
     }
 
