@@ -766,9 +766,8 @@ private:
     uint32_t        _onboardControlSensorsEnabled;
     uint32_t        _onboardControlSensorsHealth;
     uint32_t        _onboardControlSensorsUnhealthy;
-    bool            _useGpsRawIntForPosition;
-    bool            _useGpsRawIntForAltitude;
-    bool            _useAltitudeForAltitude;
+    bool            _gpsRawIntMessageAvailable;
+    bool            _globalPositionIntMessageAvailable;
 
     typedef struct {
         int     component;
