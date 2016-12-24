@@ -94,9 +94,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
     , _onboardControlSensorsUnhealthy(0)
-    , _useGpsRawIntForPosition(true)
-    , _useGpsRawIntForAltitude(true)
-    , _useAltitudeForAltitude(false)
+    , _gpsRawIntMessageAvailable(false)
+    , _globalPositionIntMessageAvailable(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -275,9 +274,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
     , _onboardControlSensorsUnhealthy(0)
-    , _useGpsRawIntForPosition(true)
-    , _useGpsRawIntForAltitude(true)
-    , _useAltitudeForAltitude(false)
+    , _gpsRawIntMessageAvailable(false)
+    , _globalPositionIntMessageAvailable(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -516,20 +514,20 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
     mavlink_gps_raw_int_t gpsRawInt;
     mavlink_msg_gps_raw_int_decode(&message, &gpsRawInt);
 
+    _gpsRawIntMessageAvailable = true;
+
     if (gpsRawInt.fix_type >= GPS_FIX_TYPE_3D_FIX) {
-        if (_useGpsRawIntForPosition) {
+        if (!_globalPositionIntMessageAvailable) {
             setLatitude(gpsRawInt.lat / (double)1E7);
             setLongitude(gpsRawInt.lon / (double)1E7);
-        }
-        if (_useGpsRawIntForAltitude) {
-            _altitudeRelativeFact.setRawValue(gpsRawInt.alt / 1000.0);
+            _altitudeAMSLFact.setRawValue(gpsRawInt.alt / 1000.0);
         }
     }
 
     _gpsFactGroup.count()->setRawValue(gpsRawInt.satellites_visible == 255 ? 0 : gpsRawInt.satellites_visible);
-    _gpsFactGroup.hdop()->setRawValue(gpsRawInt.eph == UINT16_MAX ? 1e10f : gpsRawInt.eph / 100.0);
-    _gpsFactGroup.vdop()->setRawValue(gpsRawInt.epv == UINT16_MAX ? 1e10f : gpsRawInt.epv / 100.0);
-    _gpsFactGroup.courseOverGround()->setRawValue(gpsRawInt.cog == UINT16_MAX ? 0.0 : gpsRawInt.cog / 100.0);
+    _gpsFactGroup.hdop()->setRawValue(gpsRawInt.eph == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.eph / 100.0);
+    _gpsFactGroup.vdop()->setRawValue(gpsRawInt.epv == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.epv / 100.0);
+    _gpsFactGroup.courseOverGround()->setRawValue(gpsRawInt.cog == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.cog / 100.0);
     _gpsFactGroup.lock()->setRawValue(gpsRawInt.fix_type);
 
     if (gpsRawInt.fix_type >= GPS_FIX_TYPE_3D_FIX) {
@@ -542,15 +540,12 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
 
-    _useGpsRawIntForPosition = false;
-    _useGpsRawIntForAltitude = false;
+    _globalPositionIntMessageAvailable = true;
 
     setLatitude(globalPositionInt.lat / (double)1E7);
     setLongitude(globalPositionInt.lon / (double)1E7);
-    if (!_useAltitudeForAltitude) {
-        _altitudeRelativeFact.setRawValue(globalPositionInt.relative_alt / 1000.0);
-        _altitudeAMSLFact.setRawValue(globalPositionInt.alt / 1000.0);
-    }
+    _altitudeRelativeFact.setRawValue(globalPositionInt.relative_alt / 1000.0);
+    _altitudeAMSLFact.setRawValue(globalPositionInt.alt / 1000.0);
 }
 
 void Vehicle::_handleAltitude(mavlink_message_t& message)
@@ -558,11 +553,13 @@ void Vehicle::_handleAltitude(mavlink_message_t& message)
     mavlink_altitude_t altitude;
     mavlink_msg_altitude_decode(&message, &altitude);
 
-    _useAltitudeForAltitude = true;
-    _useGpsRawIntForAltitude = false;
-    _altitudeRelativeFact.setRawValue(altitude.altitude_relative);
-    _altitudeAMSLFact.setRawValue(altitude.altitude_amsl);
-
+    // If data from GPS is available it takes precedence over ALTITUDE message
+    if (!_globalPositionIntMessageAvailable) {
+        _altitudeRelativeFact.setRawValue(altitude.altitude_relative);
+        if (!_gpsRawIntMessageAvailable) {
+            _altitudeAMSLFact.setRawValue(altitude.altitude_amsl);
+        }
+    }
 }
 
 void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& message)
