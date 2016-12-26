@@ -24,16 +24,14 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-TCPLink::TCPLink(TCPConfiguration *config)
-    : _config(config)
+TCPLink::TCPLink(SharedLinkConfigurationPointer& config)
+    : LinkInterface(config)
+    , _tcpConfig(qobject_cast<TCPConfiguration*>(config.data()))
     , _socket(NULL)
     , _socketIsConnected(false)
 {
-    Q_ASSERT(_config != NULL);
-    // We're doing it wrong - because the Qt folks got the API wrong:
-    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    Q_ASSERT(_tcpConfig);
     moveToThread(this);
-    //qDebug() << "TCP Created " << _config->name();
 }
 
 TCPLink::~TCPLink()
@@ -69,7 +67,7 @@ void TCPLink::_writeDebugBytes(const QByteArray data)
             ascii.append(219);
         }
     }
-    qDebug() << "Sent" << size << "bytes to" << _config->address().toString() << ":" << _config->port() << "data:";
+    qDebug() << "Sent" << size << "bytes to" << _tcpConfig->address().toString() << ":" << _tcpConfig->port() << "data:";
     qDebug() << bytes;
     qDebug() << "ASCII:" << ascii;
 }
@@ -148,7 +146,7 @@ bool TCPLink::_hardwareConnect()
     _socket = new QTcpSocket();
 
     QSignalSpy errorSpy(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error));
-    _socket->connectToHost(_config->address(), _config->port());
+    _socket->connectToHost(_tcpConfig->address(), _tcpConfig->port());
     QObject::connect(_socket, &QTcpSocket::readyRead, this, &TCPLink::readBytes);
 
     QObject::connect(_socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),
@@ -189,7 +187,7 @@ bool TCPLink::isConnected() const
 
 QString TCPLink::getName() const
 {
-    return _config->name();
+    return _tcpConfig->name();
 }
 
 qint64 TCPLink::getConnectionSpeed() const

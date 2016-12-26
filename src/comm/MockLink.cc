@@ -44,8 +44,9 @@ const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
 const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
 const char* MockConfiguration::_failureModeKey =    "FailureMode";
 
-MockLink::MockLink(MockConfiguration* config)
-    : _missionItemHandler(this, qgcApp()->toolbox()->mavlinkProtocol())
+MockLink::MockLink(SharedLinkConfigurationPointer& config)
+    : LinkInterface(config)
+    , _missionItemHandler(this, qgcApp()->toolbox()->mavlinkProtocol())
     , _name("MockLink")
     , _connected(false)
     , _vehicleSystemId(_nextVehicleSystemId++)
@@ -67,14 +68,11 @@ MockLink::MockLink(MockConfiguration* config)
     , _logDownloadCurrentOffset(0)
     , _logDownloadBytesRemaining(0)
 {
-    _config = config;
-    if (_config) {
-        _firmwareType = config->firmwareType();
-        _vehicleType = config->vehicleType();
-        _sendStatusText = config->sendStatusText();
-        _failureMode = config->failureMode();
-        _config->setLink(this);
-    }
+    MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.data());
+    _firmwareType = mockConfig->firmwareType();
+    _vehicleType = mockConfig->vehicleType();
+    _sendStatusText = mockConfig->sendStatusText();
+    _failureMode = mockConfig->failureMode();
 
     union px4_custom_mode   px4_cm;
 
@@ -1041,12 +1039,12 @@ void MockConfiguration::updateSettings()
 
 MockLink*  MockLink::_startMockLink(MockConfiguration* mockConfig)
 {
-    LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
+    LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
 
     mockConfig->setDynamic(true);
-    linkManager->linkConfigurations()->append(mockConfig);
+    SharedLinkConfigurationPointer config = linkMgr->addConfiguration(mockConfig);
 
-    return qobject_cast<MockLink*>(linkManager->createConnectedLink(mockConfig));
+    return qobject_cast<MockLink*>(linkMgr->createConnectedLink(config));
 }
 
 MockLink*  MockLink::startPX4MockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)

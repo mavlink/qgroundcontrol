@@ -155,8 +155,8 @@ void QGroundControlQmlGlobal::stopAllMockLinks(void)
 #ifdef QT_DEBUG
     LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
 
-    for (int i=0; i<linkManager->links()->count(); i++) {
-        LinkInterface* link = linkManager->links()->value<LinkInterface*>(i);
+    for (int i=0; i<linkManager->links().count(); i++) {
+        LinkInterface* link = linkManager->links()[i];
         MockLink* mockLink = qobject_cast<MockLink*>(link);
 
         if (mockLink) {

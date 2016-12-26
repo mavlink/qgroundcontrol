@@ -64,12 +64,13 @@ QString LogReplayLinkConfiguration::logFilenameShort(void)
     return fi.fileName();
 }
 
-LogReplayLink::LogReplayLink(LogReplayLinkConfiguration* config) :
-    _connected(false),
-    _replayAccelerationFactor(1.0f)
+LogReplayLink::LogReplayLink(SharedLinkConfigurationPointer& config)
+    : LinkInterface(config)
+    , _logReplayConfig(qobject_cast<LogReplayLinkConfiguration*>(config.data()))
+    , _connected(false)
+    , _replayAccelerationFactor(1.0f)
 {
-    Q_ASSERT(config);
-    _config = config;
+    Q_ASSERT(_logReplayConfig);
     
     _readTickTimer.moveToThread(this);
     
@@ -184,7 +185,7 @@ quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
 bool LogReplayLink::_loadLogFile(void)
 {
     QString errorMsg;
-    QString logFilename = _config->logFilename();
+    QString logFilename = _logReplayConfig->logFilename();
     QFileInfo logFileInfo;
     int logDurationSecondsTotal;
     

@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #ifndef LINKCONFIGURATION_H
 #define LINKCONFIGURATION_H
 
@@ -37,7 +36,7 @@ public:
 
     // Property accessors
 
-    const QString   name(void)  { return _name; }
+    QString         name(void) const { return _name; }
     LinkInterface*  link(void)  { return _link; }
 
     void            setName(const QString name);
@@ -189,5 +188,7 @@ private:
     bool    _dynamic;       ///< A connection added automatically and not persistent (unless it's edited).
     bool    _autoConnect;   ///< This connection is started automatically at boot
 };
+
+typedef QSharedPointer<LinkConfiguration> SharedLinkConfigurationPointer;
 
 #endif // LINKCONFIGURATION_H
