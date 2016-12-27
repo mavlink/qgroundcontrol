@@ -398,7 +398,7 @@ SetupPage {
             QGCCheckBox {
                 id:         showUAVCAN
                 text:       qsTr("Show UAVCAN Settings")
-                visible:    uavcanEnable !== -1
+                checked:    uavcanEnable.rawValue != 0
             }
 
             QGCLabel {
@@ -409,24 +409,27 @@ SetupPage {
 
             Rectangle {
                 width:      parent.width
-                height:     uavCanConfigColumn.height + ScreenTools.defaultFontPixelHeight
+                height:     uavCanConfigRow.height + ScreenTools.defaultFontPixelHeight
                 color:      qgcPal.windowShade
                 visible:    showUAVCAN.checked
 
-                Column {
-                    id:                 uavCanConfigColumn
+                Row {
+                    id:                 uavCanConfigRow
                     anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
                     anchors.left:       parent.left
                     anchors.top:        parent.top
                     spacing:            ScreenTools.defaultFontPixelWidth
 
-                    FactCheckBox {
+                    FactComboBox {
                         id:                 uavcanEnabledCheckBox
                         width:              ScreenTools.defaultFontPixelWidth * 20
                         fact:               uavcanEnable
-                        checkedValue:       3
-                        uncheckedValue:     0
-                        text:               qsTr("Enable UAVCAN as the default MAIN output bus (requires autopilot restart)")
+                        indexModel:         false
+                    }
+
+                    QGCLabel {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text:                   qsTr("Change required restart")
                     }
                 }
             }
