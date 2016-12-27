@@ -268,33 +268,6 @@
     <qresource prefix="/res/audio">
         <file alias="Alert">resources/audio/alert.wav</file>
     </qresource>
-    <qresource prefix="/AutoPilotPlugins/PX4">
-        <file alias="AirframeFactMetaData.xml">src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>
-    </qresource>
-    <qresource prefix="/AutoPilotPlugins/APM">
-        <file alias="APMAirframeFactMetaData.xml">src/AutoPilotPlugins/APM/APMAirframeFactMetaData.xml</file>
-    </qresource>
-    <qresource prefix="/FirmwarePlugin/APM">
-        <file alias="APMParameterFactMetaData.Plane.3.3.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.3.xml</file>
-        <file alias="APMParameterFactMetaData.Plane.3.5.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.5.xml</file>
-        <file alias="APMParameterFactMetaData.Plane.3.7.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.7.xml</file>
-        <file alias="APMParameterFactMetaData.Copter.3.3.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.3.xml</file>
-        <file alias="APMParameterFactMetaData.Copter.3.4.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.4.xml</file>
-        <file alias="APMParameterFactMetaData.Rover.3.0.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.0.xml</file>
-        <file alias="APMParameterFactMetaData.Sub.3.4.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.4.xml</file>
-        <file alias="CopterGeoFenceEditor.qml">src/FirmwarePlugin/APM/CopterGeoFenceEditor.qml</file>
-        <file alias="PlaneGeoFenceEditor.qml">src/FirmwarePlugin/APM/PlaneGeoFenceEditor.qml</file>
-        <file alias="Copter.OfflineEditing.params">src/FirmwarePlugin/APM/Copter3.4.OfflineEditing.params</file>
-        <file alias="Plane.OfflineEditing.params">src/FirmwarePlugin/APM/Plane3.7.OfflineEditing.params</file>
-    </qresource>
-    <qresource prefix="/FirmwarePlugin">
-        <file alias="GeoFenceEditor.qml">src/FirmwarePlugin/GeoFenceEditor.qml</file>
-    </qresource>
-    <qresource prefix="/FirmwarePlugin/PX4">
-        <file alias="PX4ParameterFactMetaData.xml">src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml</file>
-        <file alias="PX4GeoFenceEditor.qml">src/FirmwarePlugin/PX4/PX4GeoFenceEditor.qml</file>
-        <file alias="PX4.OfflineEditing.params">src/FirmwarePlugin/PX4/V1.4.OfflineEditing.params</file>
-    </qresource>
     <qresource prefix="/opengl">
         <file>resources/opengl/buglist.json</file>
     </qresource>

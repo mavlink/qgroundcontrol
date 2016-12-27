@@ -188,14 +188,14 @@ void MockLink::_loadParams(void)
 
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         if (_vehicleType == MAV_TYPE_FIXED_WING) {
-            paramFile.setFileName(":/unittest/APMArduPlaneMockLink.params");
+            paramFile.setFileName(":/MockLink/APMArduPlaneMockLink.params");
         } else if (_vehicleType == MAV_TYPE_SUBMARINE ) {
-            paramFile.setFileName(":/unittest/APMArduSubMockLink.params");
+            paramFile.setFileName(":/MockLink/APMArduSubMockLink.params");
         } else {
-            paramFile.setFileName(":/unittest/APMArduCopterMockLink.params");
+            paramFile.setFileName(":/MockLink/APMArduCopterMockLink.params");
         }
     } else {
-        paramFile.setFileName(":/unittest/PX4MockLink.params");
+        paramFile.setFileName(":/MockLink/PX4MockLink.params");
     }
 
 
