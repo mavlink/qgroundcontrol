@@ -780,6 +780,9 @@ void MockLink::_handleFTP(const mavlink_message_t& msg)
 
 void MockLink::_handleCommandLong(const mavlink_message_t& msg)
 {
+    static bool firstCmdUser3 = true;
+    static bool firstCmdUser4 = true;
+
     mavlink_command_long_t request;
     uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
 
@@ -815,7 +818,6 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         break;
     case MAV_CMD_USER_3:
         // Test command which returns MAV_RESULT_ACCEPTED on second attempt
-        static bool firstCmdUser3 = true;
         if (firstCmdUser3) {
            firstCmdUser3 = false;
            return;
@@ -826,7 +828,6 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         break;
     case MAV_CMD_USER_4:
         // Test command which returns MAV_RESULT_FAILED on second attempt
-        static bool firstCmdUser4 = true;
         if (firstCmdUser4) {
            firstCmdUser4 = false;
            return;
