@@ -782,7 +782,7 @@ SOURCES += \
 # ArduPilot FirmwarePlugin
 
 APMFirmwarePlugin {
-    RESOURCES *= apmresources.qrc
+    RESOURCES *= src/FirmwarePlugin/APM/APMResources.qrc
 
     INCLUDEPATH += \
         src/AutoPilotPlugins/APM \
@@ -842,7 +842,6 @@ APMFirmwarePlugin {
 }
 
 APMFirmwarePluginFactory {
-    RESOURCES *= apmresources.qrc
     HEADERS   += src/FirmwarePlugin/APM/APMFirmwarePluginFactory.h
     SOURCES   += src/FirmwarePlugin/APM/APMFirmwarePluginFactory.cc
 }
@@ -850,7 +849,7 @@ APMFirmwarePluginFactory {
 # PX4 FirmwarePlugin
 
 PX4FirmwarePlugin {
-    RESOURCES *= px4resources.qrc
+    RESOURCES *= src/FirmwarePlugin/PX4/PX4Resources.qrc
 
     INCLUDEPATH += \
         src/AutoPilotPlugins/PX4 \
@@ -900,7 +899,6 @@ PX4FirmwarePlugin {
 }
 
 PX4FirmwarePluginFactory {
-    RESOURCES *= px4resources.qrc
     HEADERS   += src/FirmwarePlugin/PX4/PX4FirmwarePluginFactory.h
     SOURCES   += src/FirmwarePlugin/PX4/PX4FirmwarePluginFactory.cc
 }
