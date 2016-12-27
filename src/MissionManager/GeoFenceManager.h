@@ -49,7 +49,7 @@ public:
     virtual QVariantList    params      (void) const { return QVariantList(); }
     virtual QStringList     paramLabels (void) const { return QStringList(); }
 
-    virtual QString editorQml(void) const { return QStringLiteral("qrc:/FirmwarePlugin/GeoFenceEditor.qml"); }
+    virtual QString editorQml(void) const { return QStringLiteral("qrc:/FirmwarePlugin/NoGeoFenceEditor.qml"); }
 
     /// Error codes returned in error signal
     typedef enum {
