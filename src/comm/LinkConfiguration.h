@@ -53,12 +53,6 @@ public:
 #ifdef QGC_ENABLE_BLUETOOTH
         TypeBluetooth,  ///< Bluetooth Link
 #endif
-#if 0
-        // TODO Below is not yet implemented
-        TypeForwarding, ///< Forwarding Link
-        TypeXbee,       ///< XBee Proprietary Link
-        TypeOpal,       ///< Opal-RT Link
-#endif
 #ifdef QT_DEBUG
         TypeMock,       ///< Mock Link for Unitesting
 #endif
