@@ -399,6 +399,7 @@ SetupPage {
                 id:         showUAVCAN
                 text:       qsTr("Show UAVCAN Settings")
                 visible:    uavcanEnable !== -1
+                checked:    uavcanEnable.value > 0
             }
 
             QGCLabel {
