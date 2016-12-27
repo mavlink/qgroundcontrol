@@ -28,7 +28,8 @@ QGCComboBox             1.0 QGCComboBox.qml
 QGCFlickable            1.0 QGCFlickable.qml
 QGCLabel                1.0 QGCLabel.qml
 QGCListView             1.0 QGCListView.qml
-QGCMobileFileDialog     1.0 QGCMobileFileDialog.qml
+QGCMobileFileOpenDialog 1.0 QGCMobileFileOpenDialog.qml
+QGCMobileFileSaveDialog 1.0 QGCMobileFileSaveDialog.qml
 QGCMovableItem          1.0 QGCMovableItem.qml
 QGCPipable              1.0 QGCPipable.qml
 QGCRadioButton          1.0 QGCRadioButton.qml
