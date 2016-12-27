@@ -923,8 +923,9 @@ bool Vehicle::_containsLink(LinkInterface* link)
 void Vehicle::_addLink(LinkInterface* link)
 {
     if (!_containsLink(link)) {
-        _links += link;
         qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
+        _links += link;
+        _updatePriorityLink();
         connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactiveOrDeleted);
         connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDeleted, this, &Vehicle::_linkInactiveOrDeleted);
     }
@@ -935,6 +936,7 @@ void Vehicle::_linkInactiveOrDeleted(LinkInterface* link)
     qCDebug(VehicleLog) << "_linkInactiveOrDeleted linkCount" << _links.count();
 
     _links.removeOne(link);
+    _updatePriorityLink();
 
     if (_links.count() == 0 && !_allLinksInactiveSent) {
         qCDebug(VehicleLog) << "All links inactive";
@@ -980,26 +982,42 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
     emit messagesSentChanged();
 }
 
-/// @return Direct usb connection link to board if one, NULL if none
-LinkInterface* Vehicle::priorityLink(void)
+void Vehicle::_updatePriorityLink(void)
 {
 #ifndef NO_SERIAL_LINK
-    foreach (LinkInterface* link, _links) {
+    LinkInterface* newPriorityLink = NULL;
+
+    // Note that this routine specificallty does not clear _priorityLink when there are no links remaining.
+    // By doing this we hold a reference on the last link as the Vehicle shuts down. Thus preventing shutdown
+    // ordering NULL pointer crashes where priorityLink() is still called during shutdown sequence.
+    for (int i=0; i<_links.count(); i++) {
+        LinkInterface* link = _links[i];
         if (link->isConnected()) {
             SerialLink* pSerialLink = qobject_cast<SerialLink*>(link);
             if (pSerialLink) {
-                LinkConfiguration* pLinkConfig = pSerialLink->getLinkConfiguration();
-                if (pLinkConfig) {
-                    SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(pLinkConfig);
+                LinkConfiguration* config = pSerialLink->getLinkConfiguration();
+                if (config) {
+                    SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(config);
                     if (pSerialConfig && pSerialConfig->usbDirect()) {
-                        return link;
+                        if (_priorityLink.data() != link) {
+                            newPriorityLink = link;
+                            break;
+                        }
+                        return;
                     }
                 }
             }
         }
     }
+
+    if (!newPriorityLink && !_priorityLink.data() && _links.count()) {
+        newPriorityLink = _links[0];
+    }
+
+    if (newPriorityLink) {
+        _priorityLink = qgcApp()->toolbox()->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
+    }
 #endif
-    return _links.count() ? _links[0] : NULL;
 }
 
 void Vehicle::setLatitude(double latitude)

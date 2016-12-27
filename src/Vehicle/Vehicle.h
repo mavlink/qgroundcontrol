@@ -416,8 +416,9 @@ public:
     MAV_TYPE vehicleType(void) const { return _vehicleType; }
     Q_INVOKABLE QString vehicleTypeName(void) const;
 
-    /// Returns the highest quality link available to the Vehicle
-    LinkInterface* priorityLink(void);
+    /// Returns the highest quality link available to the Vehicle. If you need to hold a refernce to this link use
+    /// LinkManager::sharedLinkInterfaceForGet to get QSharedPointer for link.
+    LinkInterface* priorityLink(void) { return _priorityLink.data(); }
 
     /// Sends a message to the specified link
     /// @return true: message sent, false: Link no longer connected
@@ -720,6 +721,7 @@ private:
     void _handleMavlinkLoggingDataAcked(mavlink_message_t& message);
     void _ackMavlinkLogData(uint16_t sequence);
     void _sendNextQueuedMavCommand(void);
+    void _updatePriorityLink(void);
 
 private:
     int     _id;                    ///< Mavlink system id
@@ -849,6 +851,8 @@ private:
 
     static const int    _lowBatteryAnnounceRepeatMSecs; // Amount of time in between each low battery announcement
     QElapsedTimer       _lowBatteryAnnounceTimer;
+
+    SharedLinkInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
 
     // FactGroup facts
 

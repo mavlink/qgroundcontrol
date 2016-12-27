@@ -85,7 +85,10 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
     linkConfig->setLogFilename(logFilename);
     linkConfig->setName(linkConfig->logFilenameShort());
     _ui->logFileNameLabel->setText(linkConfig->logFilenameShort());
-    _replayLink = (LogReplayLink*)qgcApp()->toolbox()->linkManager()->createConnectedLink(linkConfig);
+
+    LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
+    SharedLinkConfigurationPointer sharedConfig = linkMgr->addConfiguration(linkConfig);
+    _replayLink = (LogReplayLink*)qgcApp()->toolbox()->linkManager()->createConnectedLink(sharedConfig);
 
     connect(_replayLink, &LogReplayLink::logFileStats, this, &QGCMAVLinkLogPlayer::_logFileStats);
     connect(_replayLink, &LogReplayLink::playbackStarted, this, &QGCMAVLinkLogPlayer::_playbackStarted);
