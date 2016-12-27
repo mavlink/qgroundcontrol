@@ -493,7 +493,7 @@ void LinkManager::_updateAutoConnectLinks(void)
     // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
     // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
     // bug after we connect the first serial port we stop probing for additional ports.
-    if (!_autoconnectConfigurations.count()) {
+    if (!_sharedAutoconnectConfigurations.count()) {
         portList = QGCSerialPortInfo::availablePorts();
     }
 #else
