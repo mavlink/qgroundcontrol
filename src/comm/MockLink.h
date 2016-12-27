@@ -90,8 +90,7 @@ class MockLink : public LinkInterface
     Q_OBJECT
 
 public:
-    // LinkConfiguration is optional for MockLink
-    MockLink(MockConfiguration* config = NULL);
+    MockLink(SharedLinkConfigurationPointer& config);
     ~MockLink(void);
 
     // MockLink methods
@@ -125,8 +124,6 @@ public:
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
     bool connect(void);
     bool disconnect(void);
-
-    LinkConfiguration* getLinkConfiguration() { return _config; }
 
     /// Sets a failure mode for unit testing
     ///     @param failureMode Type of failure to simulate
@@ -216,7 +213,6 @@ private:
     uint32_t    _mavCustomMode;
     uint8_t     _mavState;
 
-    MockConfiguration*  _config;
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;
 

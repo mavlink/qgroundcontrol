@@ -641,6 +641,7 @@ SOURCES += \
     src/VehicleSetup/JoystickConfigController.cc \
     src/audio/QGCAudioWorker.cpp \
     src/comm/LinkConfiguration.cc \
+    src/comm/LinkInterface.cc \
     src/comm/LinkManager.cc \
     src/comm/MAVLinkProtocol.cc \
     src/comm/QGCMAVLink.cc \

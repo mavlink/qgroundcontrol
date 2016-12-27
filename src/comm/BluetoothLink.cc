@@ -29,24 +29,20 @@
 #include "BluetoothLink.h"
 #include "QGC.h"
 
-BluetoothLink::BluetoothLink(BluetoothConfiguration* config)
-    : _connectState(false)
+BluetoothLink::BluetoothLink(SharedLinkConfigurationPointer& config)
+    : LinkInterface(config)
+    , _connectState(false)
     , _targetSocket(NULL)
 #ifdef __ios__
     , _discoveryAgent(NULL)
 #endif
     , _shutDown(false)
 {
-    Q_ASSERT(config != NULL);
-    _config = config;
-    _config->setLink(this);
-    //moveToThread(this);
+
 }
 
 BluetoothLink::~BluetoothLink()
 {
-    // Disconnect link from configuration
-    _config->setLink(NULL);
     _disconnect();
 #ifdef __ios__
     if(_discoveryAgent) {

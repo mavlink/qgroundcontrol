@@ -306,9 +306,9 @@ void MultiVehicleManager::setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled)
 void MultiVehicleManager::_sendGCSHeartbeat(void)
 {
     // Send a heartbeat out on each link
-    QmlObjectListModel* links = _toolbox->linkManager()->links();
-    for (int i=0; i<links->count(); i++) {
-        LinkInterface* link = links->value<LinkInterface*>(i);
+    LinkManager* linkMgr = _toolbox->linkManager();
+    for (int i=0; i<linkMgr->links().count(); i++) {
+        LinkInterface* link = linkMgr->links()[i];
         if (link->isConnected()) {
             mavlink_message_t message;
             mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
