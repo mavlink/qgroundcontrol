@@ -243,7 +243,7 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
                 qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 2";
             } else {
                 _rgCompassCalComplete[1] = true;
-                _rgCompassCalSucceeded[1] = MAG_CAL_SUCCESS;
+                _rgCompassCalSucceeded[1] = true;
                 _rgCompassCalFitness[1] = 0;
             }
             if (getParameterFact(FactSystem::defaultComponentId, "COMPASS_DEV_ID3")->rawValue().toInt() > 0) {
@@ -251,7 +251,7 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
                 qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 3";
             } else {
                 _rgCompassCalComplete[2] = true;
-                _rgCompassCalSucceeded[2] = MAG_CAL_SUCCESS;
+                _rgCompassCalSucceeded[2] = true;
                 _rgCompassCalFitness[2] = 0;
             }
 
