@@ -207,7 +207,7 @@ QGCView {
 
         function loadFromSelectedFile() {
             if (ScreenTools.isMobile) {
-                qgcView.showDialog(mobileFilePicker, qsTr("Select Mission File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                qgcView.showDialog(mobileFilePicker, qsTr("Select Mission File"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
             } else {
                 missionController.loadFromFilePicker()
                 fitMapViewportToMissionItems()
@@ -366,9 +366,8 @@ QGCView {
     Component {
         id: mobileFilePicker
 
-        QGCMobileFileDialog {
-            openDialog:         true
-            fileExtension:      _syncDropDownController.fileExtension
+        QGCMobileFileOpenDialog {
+            fileExtension: _syncDropDownController.fileExtension
             onFilenameReturned: {
                 _syncDropDownController.loadFromFile(filename)
                 _syncDropDownController.fitViewportToItems()
@@ -379,8 +378,7 @@ QGCView {
     Component {
         id: mobileFileSaver
 
-        QGCMobileFileDialog {
-            openDialog:         false
+        QGCMobileFileSaveDialog {
             fileExtension:      _syncDropDownController.fileExtension
             onFilenameReturned: _syncDropDownController.saveToFile(filename)
         }
