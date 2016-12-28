@@ -96,7 +96,7 @@ QGCView {
                     text:           qsTr("Load from file...")
                     onTriggered: {
                         if (ScreenTools.isMobile) {
-                            qgcView.showDialog(mobileFilePicker, qsTr("Select Parameter File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                            qgcView.showDialog(mobileFilePicker, qsTr("Select Parameter File"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
                         } else {
                             controller.loadFromFilePicker()
                         }
@@ -263,7 +263,7 @@ QGCView {
     Component {
         id: mobileFilePicker
 
-        QGCMobileFileDialog {
+        QGCMobileFileOpenDialog {
             fileExtension:      QGroundControl.parameterFileExtension
             onFilenameReturned: controller.loadFromFile(filename)
         }
@@ -272,8 +272,7 @@ QGCView {
     Component {
         id: mobileFileSaver
 
-        QGCMobileFileDialog {
-            openDialog:         false
+        QGCMobileFileSaveDialog {
             fileExtension:      QGroundControl.parameterFileExtension
             onFilenameReturned: controller.saveToFile(filename)
         }
