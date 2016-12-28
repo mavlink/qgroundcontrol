@@ -168,6 +168,6 @@
         <file alias="PX4MockLink.params">src/comm/PX4MockLink.params</file>
     </qresource>
     <qresource prefix="/FirmwarePlugin">
-        <file alias="GeoFenceEditor.qml">src/FirmwarePlugin/GeoFenceEditor.qml</file>
+        <file alias="NoGeoFenceEditor.qml">src/FirmwarePlugin/NoGeoFenceEditor.qml</file>
     </qresource>
 </RCC>

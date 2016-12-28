@@ -251,8 +251,9 @@ void APMGeoFenceManager::_parametersReady(void)
     if (!_firstParamLoadComplete) {
         _firstParamLoadComplete = true;
 
-        _fenceSupported = _vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("FENCE_ACTION")) &&
-                            !qgcApp()->runningUnitTests();
+        _fenceSupported = _vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, _fenceTotalParam) &&
+                _vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, _fenceActionParam) &&
+                !qgcApp()->runningUnitTests();
 
         if (_fenceSupported) {
             QStringList paramNames;
@@ -319,7 +320,11 @@ void APMGeoFenceManager::_circleRadiusRawValueChanged(QVariant value)
 
 QString APMGeoFenceManager::editorQml(void) const
 {
-    return _vehicle->multiRotor() ?
-                QStringLiteral("qrc:/FirmwarePlugin/APM/CopterGeoFenceEditor.qml") :
-                QStringLiteral("qrc:/FirmwarePlugin/APM/PlaneGeoFenceEditor.qml");
+    if (_fenceSupported) {
+        return _vehicle->multiRotor() ?
+                    QStringLiteral("qrc:/FirmwarePlugin/APM/CopterGeoFenceEditor.qml") :
+                    QStringLiteral("qrc:/FirmwarePlugin/APM/PlaneGeoFenceEditor.qml");
+    } else {
+        return QStringLiteral("qrc:/FirmwarePlugin/NoGeoFenceEditor.qml");
+    }
 }
