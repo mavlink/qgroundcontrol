@@ -116,7 +116,6 @@ QGCView {
     onActiveVehicleJoystickEnabledChanged: px4JoystickCheck()
 
     Component.onCompleted: {
-        widgetsLoader.source = "FlightDisplayViewWidgets.qml"
         setStates()
         px4JoystickCheck()
     }
@@ -153,9 +152,10 @@ QGCView {
                 }
             ]
             FlightDisplayViewMap {
-                id:             _flightMap
-                anchors.fill:   parent
-                flightWidgets:  widgetsLoader.item
+                id:                 _flightMap
+                anchors.fill:       parent
+                flightWidgets:      flightDisplayViewWidgets
+                rightPanelWidth:    ScreenTools.defaultFontPixelHeight * 9
             }
         }
 
@@ -218,16 +218,13 @@ QGCView {
             }
         }
 
-        //-- Widgets
-        Loader {
-            id:             widgetsLoader
+        FlightDisplayViewWidgets {
+            id:             flightDisplayViewWidgets
             z:              _panel.z + 4
             height:         ScreenTools.availableHeight
             anchors.left:   parent.left
             anchors.right:  parent.right
             anchors.bottom: parent.bottom
-            asynchronous:   true
-            visible:        status == Loader.Ready
 
             property bool isBackgroundDark: root.isBackgroundDark
             property var qgcView: root
@@ -242,7 +239,7 @@ QGCView {
             visible:                    QGroundControl.virtualTabletJoystick
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
-            anchors.horizontalCenter:   widgetsLoader.horizontalCenter
+            anchors.horizontalCenter:   flightDisplayViewWidgets.horizontalCenter
             source:                     "qrc:/qml/VirtualJoystick.qml"
             active:                     QGroundControl.virtualTabletJoystick
 
