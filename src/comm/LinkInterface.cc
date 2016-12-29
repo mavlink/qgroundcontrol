@@ -26,6 +26,7 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
     , _mavlinkChannelSet(false)
     , _active(false)
     , _enableRateCollection(false)
+    , _decodedFirstMavlinkPacket(false)
 {
     _config->setLink(this);
 
