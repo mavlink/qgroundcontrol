@@ -99,6 +99,16 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
 
 }
 
+// This should only be used by Qml code
+void LinkManager::createConnectedLink(LinkConfiguration* config)
+{
+    for(int i = 0; i < _sharedConfigurations.count(); i++) {
+        SharedLinkConfigurationPointer& sharedConf = _sharedConfigurations[i];
+        if (sharedConf->name() == config->name())
+            createConnectedLink(sharedConf);
+    }
+}
+
 LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& config)
 {
     if (!config) {
