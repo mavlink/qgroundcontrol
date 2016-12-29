@@ -566,15 +566,6 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
     mavlink_autopilot_version_t autopilotVersion;
     mavlink_msg_autopilot_version_decode(&message, &autopilotVersion);
 
-    mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(link->mavlinkChannel());
-
-    bool vehicleSupportsMavlink2 = (autopilotVersion.capabilities & MAV_PROTOCOL_CAPABILITY_MAVLINK2) != 0;
-    bool qgcIsSendingMavlink1 = mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-    if (vehicleSupportsMavlink2 && qgcIsSendingMavlink1) {
-        qDebug() << "Switching outbound to mavlink 2.0 due to vehicle capable of mavlink 2.0:" << mavlinkStatus << link->mavlinkChannel() << mavlinkStatus->flags;
-        mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-    }
-
     if (autopilotVersion.flight_sw_version != 0) {
         int majorVersion, minorVersion, patchVersion;
         FIRMWARE_VERSION_TYPE versionType;
