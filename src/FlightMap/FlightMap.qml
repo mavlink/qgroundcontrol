@@ -82,6 +82,14 @@ Map {
         scaleText.text = text
     }
 
+    function setVisibleRegion(region) {
+        // This works around a bug on Qt where if you set a visibleRegion and then the user moves or zooms the map
+        // and then you set the same visibleRegion the map will not move/scale appropriately since it thinks there
+        // is nothing to do.
+        _map.visibleRegion = QtPositioning.rectangle(QtPositioning.coordinate(0, 0), QtPositioning.coordinate(0, 0))
+        _map.visibleRegion = region
+    }
+
     zoomLevel:                  18
     center:                     QGroundControl.lastKnownHomePosition
     gesture.flickDeceleration:  3000
