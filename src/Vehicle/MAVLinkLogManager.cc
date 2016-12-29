@@ -243,7 +243,7 @@ MAVLinkLogProcessor::processStreamData(uint16_t sequence, uint8_t first_message,
         if(!_gotHeader) {
             if(data.size() < 16) {
                 //-- Shouldn't happen but if it does, we might as well close shop.
-                qCCritical(MAVLinkLogManagerLog) << "Corrupt log header. Canceling log download.";
+                qCWarning(MAVLinkLogManagerLog) << "Corrupt log header. Canceling log download.";
                 return false;
             }
             //-- Write header
@@ -327,7 +327,7 @@ MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app)
     _logPath += "/MAVLinkLogs";
     if(!QDir(_logPath).exists()) {
         if(!QDir().mkpath(_logPath)) {
-            qCCritical(MAVLinkLogManagerLog) << "Could not create MAVLink log download path:" << _logPath;
+            qCWarning(MAVLinkLogManagerLog) << "Could not create MAVLink log download path:" << _logPath;
             _loggingDisabled = true;
         }
     }
@@ -604,7 +604,7 @@ MAVLinkLogManager::cancelUpload()
 void
 MAVLinkLogManager::startLogging()
 {
-    if(_vehicle) {
+    if(_vehicle && _vehicle->px4Firmware()) {
         if(_createNewLog()) {
             _vehicle->startMavlinkLog();
             _logRunning = true;
@@ -617,7 +617,7 @@ MAVLinkLogManager::startLogging()
 void
 MAVLinkLogManager::stopLogging()
 {
-    if(_vehicle) {
+    if(_vehicle && _vehicle->px4Firmware()) {
         //-- Tell vehicle to stop sending logs
         _vehicle->stopMavlinkLog();
     }
@@ -660,16 +660,16 @@ MAVLinkLogManager::_sendLog(const QString& logFile)
         defaultDescription = kDefaultDescr;
     }
     if(_emailAddress.isEmpty()) {
-        qCCritical(MAVLinkLogManagerLog) << "User email missing.";
+        qCWarning(MAVLinkLogManagerLog) << "User email missing.";
         return false;
     }
     if(_uploadURL.isEmpty()) {
-        qCCritical(MAVLinkLogManagerLog) << "Upload URL missing.";
+        qCWarning(MAVLinkLogManagerLog) << "Upload URL missing.";
         return false;
     }
     QFileInfo fi(logFile);
     if(!fi.exists()) {
-        qCCritical(MAVLinkLogManagerLog) << "Log file missing:" << logFile;
+        qCWarning(MAVLinkLogManagerLog) << "Log file missing:" << logFile;
         return false;
     }
     QFile* file = new QFile(logFile);
@@ -677,7 +677,7 @@ MAVLinkLogManager::_sendLog(const QString& logFile)
         if(file) {
             delete file;
         }
-        qCCritical(MAVLinkLogManagerLog) << "Could not open log file:" << logFile;
+        qCWarning(MAVLinkLogManagerLog) << "Could not open log file:" << logFile;
         return false;
     }
     if(!_nam) {
@@ -826,7 +826,7 @@ MAVLinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
     //   far, I'm working on the assumption that multiple vehicles is a rare exception.
     //   For now, we only handle one log download at a time.
     // Disconnect the previous one (if any)
-    if(_vehicle) {
+    if(_vehicle && _vehicle->px4Firmware()) {
         disconnect(_vehicle, &Vehicle::armedChanged,        this, &MAVLinkLogManager::_armedChanged);
         disconnect(_vehicle, &Vehicle::mavlinkLogData,      this, &MAVLinkLogManager::_mavlinkLogData);
         disconnect(_vehicle, &Vehicle::mavCommandResult,    this, &MAVLinkLogManager::_mavCommandResult);
@@ -836,7 +836,7 @@ MAVLinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
         emit canStartLogChanged();
     }
     // Connect new system
-    if(vehicle) {
+    if(_vehicle && _vehicle->px4Firmware()) {
         _vehicle = vehicle;
         connect(_vehicle, &Vehicle::armedChanged,       this, &MAVLinkLogManager::_armedChanged);
         connect(_vehicle, &Vehicle::mavlinkLogData,     this, &MAVLinkLogManager::_mavlinkLogData);
@@ -851,7 +851,7 @@ MAVLinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system
 {
     if(_logProcessor && _logProcessor->valid()) {
         if(!_logProcessor->processStreamData(sequence, first_message, data)) {
-            qCCritical(MAVLinkLogManagerLog) << "Error writing MAVLink log file:" << _logProcessor->fileName();
+            qCWarning(MAVLinkLogManagerLog) << "Error writing MAVLink log file:" << _logProcessor->fileName();
             delete _logProcessor;
             _logProcessor = NULL;
             _logRunning = false;
@@ -916,7 +916,7 @@ MAVLinkLogManager::_createNewLog()
         _insertNewLog(_logProcessor->record());
         emit logFilesChanged();
     } else {
-        qCCritical(MAVLinkLogManagerLog) << "Could not create MAVLink log file:" << _logProcessor->fileName();
+        qCWarning(MAVLinkLogManagerLog) << "Could not create MAVLink log file:" << _logProcessor->fileName();
         delete _logProcessor;
         _logProcessor = NULL;
     }
@@ -927,7 +927,7 @@ MAVLinkLogManager::_createNewLog()
 void
 MAVLinkLogManager::_armedChanged(bool armed)
 {
-    if(_vehicle) {
+    if(_vehicle && _vehicle->px4Firmware()) {
         if(armed) {
             if(_enableAutoStart) {
                 startLogging();

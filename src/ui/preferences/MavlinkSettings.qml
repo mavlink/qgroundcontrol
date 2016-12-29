@@ -160,7 +160,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
                     id:             mavlogLabel
-                    text:           qsTr("Vehicle MAVLink Logging")
+                    text:           qsTr("MAVLink 2.0 Logging (PX4 Firmware Only)")
                     font.family:    ScreenTools.demiboldFontFamily
                 }
             }
@@ -220,7 +220,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
                     id:             logLabel
-                    text:           qsTr("MAVLink Log Uploads")
+                    text:           qsTr("MAVLink 2.0 Log Uploads (PX4 Firmware Only)")
                     font.family:    ScreenTools.demiboldFontFamily
                 }
             }
