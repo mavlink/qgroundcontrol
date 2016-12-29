@@ -642,16 +642,15 @@ void LinkManager::_updateAutoConnectLinks(void)
     // Now remove all configs that are gone
     foreach (LinkConfiguration* pDeleteConfig, _confToDelete) {
         qCDebug(LinkManagerLog) << "Removing unused autoconnect config" << pDeleteConfig->name();
+        if (pDeleteConfig->link()) {
+            disconnectLink(pDeleteConfig->link());
+        }
         for (int i=0; i<_sharedAutoconnectConfigurations.count(); i++) {
             if (_sharedAutoconnectConfigurations[i].data() == pDeleteConfig) {
                 _sharedAutoconnectConfigurations.removeAt(i);
                 break;
             }
         }
-        if (pDeleteConfig->link()) {
-            disconnectLink(pDeleteConfig->link());
-        }
-        delete pDeleteConfig;
     }
 #endif
 #endif // NO_SERIAL_LINK
