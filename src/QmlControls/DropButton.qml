@@ -15,6 +15,7 @@ Item {
     property int    dropDirection:      dropDown
     property alias  dropDownComponent:  dropDownLoader.sourceComponent
     property real   viewportMargins:    0
+    property real   topMargin:          parent.height - ScreenTools.availableHeight
     property alias  lightBorders:       roundButton.lightBorders
 
     width:  radius * 2
@@ -35,7 +36,7 @@ Item {
 
     property real   _viewportMaxLeft:   -x + viewportMargins
     property real   _viewportMaxRight:  parent.width  - (viewportMargins * 2) - x
-    property real   _viewportMaxTop:    -y + viewportMargins
+    property real   _viewportMaxTop:    -y + viewportMargins + topMargin
     property real   _viewportMaxBottom: parent.height - (viewportMargins * 2) - y
 
     // Set up ExclusiveGroup support. We use the checked property to drive visibility of drop down.
@@ -52,8 +53,6 @@ Item {
     function hideDropDown() {
         checked = false
     }
-
-    Component.onCompleted: _calcPositions()
 
     function _calcPositions() {
         var dropComponentWidth = dropDownLoader.item.width
@@ -161,6 +160,7 @@ Item {
         id:             roundButton
         radius:         parent.width / 2
         onClicked:  {
+            _calcPositions()
             _root.clicked()
         }
     }
@@ -216,20 +216,11 @@ Item {
 
         Item {
             id:     dropItemHolderRect
-            //color:  qgcPal.button
-            //radius: _dropCornerRadius
 
             Loader {
                 id: dropDownLoader
                 x:  _dropMargin
                 y:  _dropMargin
-
-                Connections {
-                    target: dropDownLoader.item
-
-                    onWidthChanged: _calcPositions()
-                    onHeightChanged: _calcPositions()
-                }
             }
         }
     } // Item - dropDownItem
