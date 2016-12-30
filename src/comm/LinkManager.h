@@ -124,7 +124,10 @@ public:
 
     /// Creates, connects (and adds) a link  based on the given configuration instance.
     /// Link takes ownership of config.
-    Q_INVOKABLE LinkInterface* createConnectedLink(SharedLinkConfigurationPointer& config);
+    LinkInterface* createConnectedLink(SharedLinkConfigurationPointer& config);
+
+    // This should only be used by Qml code
+    Q_INVOKABLE void createConnectedLink(LinkConfiguration* config);
 
     /// Creates, connects (and adds) a link  based on the given configuration name.
     LinkInterface* createConnectedLink(const QString& name);
