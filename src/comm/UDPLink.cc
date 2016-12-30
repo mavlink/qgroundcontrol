@@ -257,7 +257,7 @@ bool UDPLink::_hardwareConnect()
         QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
         emit connected();
     } else {
-        emit communicationError("UDP Link Error", "Error binding UDP port");
+        emit communicationError(tr("UDP Link Error"), tr("Error binding UDP port: %1").arg(_socket->errorString()));
     }
     return _connectState;
 }
