@@ -768,136 +768,152 @@ QGCView {
                 }
 
                 QGCLabel {
-                    id:         planLabel
-                    text:       qsTr("Plan")
-                    color:      mapPal.text
-                    visible:    !ScreenTools.isShortScreen
+                    id:                         planLabel
+                    text:                       qsTr("Plan")
+                    color:                      mapPal.text
+                    visible:                    !ScreenTools.isShortScreen
                     anchors.topMargin:          _toolButtonTopMargin
-                    anchors.horizontalCenter:   toolColumn.horizontalCenter
+                    anchors.horizontalCenter:   addMissionItemsButton.horizontalCenter
                     anchors.top:                parent.top
                 }
 
+                // IMPORTANT NOTE: Drop Buttons must be parented directly to the map. If they are placed in a Column for example the drop control positioning
+                // will not work correctly.
+
                 //-- Vertical Tool Buttons
-                Column {
-                    id:                 toolColumn
-                    anchors.topMargin:  ScreenTools.isShortScreen ? _toolButtonTopMargin : ScreenTools.defaultFontPixelHeight / 2
+
+                RoundButton {
+                    id:                 addMissionItemsButton
+                    anchors.topMargin:  planLabel.visible ? ScreenTools.defaultFontPixelHeight / 2 : _toolButtonTopMargin
                     anchors.leftMargin: ScreenTools.defaultFontPixelHeight
                     anchors.left:       parent.left
-                    anchors.top:        ScreenTools.isShortScreen ? parent.top : planLabel.bottom
-                    spacing:            ScreenTools.defaultFontPixelHeight
-                    z:                  QGroundControl.zOrderWidgets
+                    anchors.top:        planLabel.visible  ? planLabel.bottom : parent.top
+                    buttonImage:        "/qmlimages/MapAddMission.svg"
+                    lightBorders:       _lightWidgetBorders
+                    visible:            _editingLayer == _layerMission
+                }
 
-                    RoundButton {
-                        id:             addMissionItemsButton
-                        buttonImage:    "/qmlimages/MapAddMission.svg"
-                        lightBorders:   _lightWidgetBorders
-                        visible:        _editingLayer == _layerMission
+                RoundButton {
+                    id:                 addShapeButton
+                    anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                    anchors.top:        addMissionItemsButton.bottom
+                    anchors.left:       addMissionItemsButton.left
+                    buttonImage:        "/qmlimages/MapDrawShape.svg"
+                    lightBorders:       _lightWidgetBorders
+                    visible:            _editingLayer == _layerMission
+
+                    onClicked: {
+                        var coordinate = editorMap.center
+                        coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+                        coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
+                        coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+                        var sequenceNumber = missionController.insertComplexMissionItem(coordinate, missionController.visualItems.count)
+                        setCurrentItem(sequenceNumber)
+                        checked = false
+                        addMissionItemsButton.checked = false
                     }
+                }
 
-                    RoundButton {
-                        id:             addShapeButton
-                        buttonImage:    "/qmlimages/MapDrawShape.svg"
-                        lightBorders:   _lightWidgetBorders
-                        visible:        _editingLayer == _layerMission
+                DropButton {
+                    id:                 syncButton
+                    anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                    anchors.top:        addShapeButton.bottom
+                    anchors.left:       addShapeButton.left
+                    dropDirection:      dropRight
+                    buttonImage:        _syncDropDownController.dirty ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
+                    viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+                    exclusiveGroup:     _dropButtonsExclusiveGroup
+                    dropDownComponent:  syncDropDownComponent
+                    enabled:            !_syncDropDownController.syncInProgress
+                    rotateImage:        _syncDropDownController.syncInProgress
+                    lightBorders:       _lightWidgetBorders
+                }
 
-                        onClicked: {
-                            var coordinate = editorMap.center
-                            coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
-                            coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
-                            coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-                            var sequenceNumber = missionController.insertComplexMissionItem(coordinate, missionController.visualItems.count)
-                            setCurrentItem(sequenceNumber)
-                            checked = false
-                            addMissionItemsButton.checked = false
-                        }
-                    }
+                CenterMapDropButton {
+                    id:                     centerMapButton
+                    anchors.topMargin:      ScreenTools.defaultFontPixelHeight
+                    anchors.top:            syncButton.bottom
+                    anchors.left:           syncButton.left
+                    exclusiveGroup:         _dropButtonsExclusiveGroup
+                    map:                    editorMap
+                    mapFitViewport:         Qt.rect(leftToolWidth, toolbarHeight, editorMap.width - leftToolWidth - rightPanelWidth, editorMap.height - toolbarHeight)
+                    usePlannedHomePosition: true
+                    geoFenceController:     geoFenceController
+                    missionController:      missionController
+                    rallyPointController:   rallyPointController
 
-                    DropButton {
-                        id:                 syncButton
-                        dropDirection:      dropRight
-                        buttonImage:        _syncDropDownController.dirty ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
-                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-                        exclusiveGroup:     _dropButtonsExclusiveGroup
-                        dropDownComponent:  syncDropDownComponent
-                        enabled:            !_syncDropDownController.syncInProgress
-                        rotateImage:        _syncDropDownController.syncInProgress
-                        lightBorders:       _lightWidgetBorders
-                    }
+                    property real toolbarHeight:    qgcView.height - ScreenTools.availableHeight
+                    property real rightPanelWidth:  _rightPanelWidth
+                    property real leftToolWidth:    centerMapButton.x + centerMapButton.width
+                }
 
-                    CenterMapDropButton {
-                        id:                     centerMapButton
-                        exclusiveGroup:         _dropButtonsExclusiveGroup
-                        map:                    editorMap
-                        mapFitViewport:         Qt.rect(leftToolWidth, toolbarHeight, editorMap.width - leftToolWidth - rightPanelWidth, editorMap.height - toolbarHeight)
-                        usePlannedHomePosition: true
-                        geoFenceController:     geoFenceController
-                        missionController:      missionController
-                        rallyPointController:   rallyPointController
+                DropButton {
+                    id:                 mapTypeButton
+                    anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                    anchors.top:        centerMapButton.bottom
+                    anchors.left:       centerMapButton.left
+                    dropDirection:      dropRight
+                    buttonImage:        "/qmlimages/MapType.svg"
+                    viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+                    exclusiveGroup:     _dropButtonsExclusiveGroup
+                    lightBorders:       _lightWidgetBorders
 
-                        property real toolbarHeight:    qgcView.height - ScreenTools.availableHeight
-                        property real rightPanelWidth:  _rightPanelWidth
-                        property real leftToolWidth:    centerMapButton.x + centerMapButton.width
-                    }
+                    dropDownComponent: Component {
+                        Column {
+                            spacing: _margin
+                            QGCLabel { text: qsTr("Map type:") }
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                Repeater {
+                                    model: QGroundControl.flightMapSettings.mapTypes
 
-                    DropButton {
-                        id:                 mapTypeButton
-                        dropDirection:      dropRight
-                        buttonImage:        "/qmlimages/MapType.svg"
-                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-                        exclusiveGroup:     _dropButtonsExclusiveGroup
-                        lightBorders:       _lightWidgetBorders
-
-                        dropDownComponent: Component {
-                            Column {
-                                spacing: _margin
-                                QGCLabel { text: qsTr("Map type:") }
-                                Row {
-                                    spacing: ScreenTools.defaultFontPixelWidth
-                                    Repeater {
-                                        model: QGroundControl.flightMapSettings.mapTypes
-
-                                        QGCButton {
-                                            checkable:      true
-                                            checked:        QGroundControl.flightMapSettings.mapType === text
-                                            text:           modelData
-                                            exclusiveGroup: _mapTypeButtonsExclusiveGroup
-                                            onClicked: {
-                                                QGroundControl.flightMapSettings.mapType = text
-                                                checked = true
-                                                mapTypeButton.hideDropDown()
-                                            }
+                                    QGCButton {
+                                        checkable:      true
+                                        checked:        QGroundControl.flightMapSettings.mapType === text
+                                        text:           modelData
+                                        exclusiveGroup: _mapTypeButtonsExclusiveGroup
+                                        onClicked: {
+                                            QGroundControl.flightMapSettings.mapType = text
+                                            checked = true
+                                            mapTypeButton.hideDropDown()
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                }
 
-                    //-- Zoom Map In
-                    RoundButton {
-                        id:             mapZoomPlus
-                        visible:        !ScreenTools.isTinyScreen && !ScreenTools.isShortScreen
-                        buttonImage:    "/qmlimages/ZoomPlus.svg"
-                        lightBorders:   _lightWidgetBorders
+                //-- Zoom Map In
+                RoundButton {
+                    id:                 mapZoomPlus
+                    anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                    anchors.top:        mapTypeButton.bottom
+                    anchors.left:       mapTypeButton.left
+                    visible:            !ScreenTools.isTinyScreen && !ScreenTools.isShortScreen
+                    buttonImage:        "/qmlimages/ZoomPlus.svg"
+                    lightBorders:   _lightWidgetBorders
 
-                        onClicked: {
-                            if(editorMap)
-                                editorMap.zoomLevel += 0.5
-                            checked = false
-                        }
+                    onClicked: {
+                        if(editorMap)
+                            editorMap.zoomLevel += 0.5
+                        checked = false
                     }
+                }
 
-                    //-- Zoom Map Out
-                    RoundButton {
-                        id:             mapZoomMinus
-                        visible:        !ScreenTools.isTinyScreen && !ScreenTools.isShortScreen
-                        buttonImage:    "/qmlimages/ZoomMinus.svg"
-                        lightBorders:   _lightWidgetBorders
-                        onClicked: {
-                            if(editorMap)
-                                editorMap.zoomLevel -= 0.5
-                            checked = false
-                        }
+                //-- Zoom Map Out
+                RoundButton {
+                    id:                 mapZoomMinus
+                    anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                    anchors.top:        mapZoomPlus.bottom
+                    anchors.left:       mapZoomPlus.left
+                    visible:            !ScreenTools.isTinyScreen && !ScreenTools.isShortScreen
+                    buttonImage:        "/qmlimages/ZoomMinus.svg"
+                    lightBorders:       _lightWidgetBorders
+                    onClicked: {
+                        if(editorMap)
+                            editorMap.zoomLevel -= 0.5
+                        checked = false
                     }
                 }
 
