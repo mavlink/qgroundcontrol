@@ -43,7 +43,6 @@
 #include "QGCImageProvider.h"
 
 #ifndef __mobile__
-#include "QGCDataPlot2D.h"
 #include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
 #include "UASQuickView.h"

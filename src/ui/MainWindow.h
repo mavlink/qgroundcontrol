@@ -47,7 +47,6 @@
 
 class QGCStatusBar;
 class Linecharts;
-class QGCDataPlot2D;
 
 /**
  * @brief Main Application Window
