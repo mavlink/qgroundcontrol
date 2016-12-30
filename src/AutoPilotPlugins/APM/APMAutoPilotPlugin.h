@@ -25,6 +25,7 @@ class APMPowerComponent;
 class MotorComponent;
 class APMCameraComponent;
 class APMLightsComponent;
+class APMSubFrameComponent;
 class ESP8266Component;
 
 /// This is the APM specific implementation of the AutoPilot class.
@@ -42,6 +43,7 @@ public:
     APMAirframeComponent*       airframeComponent   (void) const { return _airframeComponent; }
     APMCameraComponent*         cameraComponent     (void) const { return _cameraComponent; }
     APMLightsComponent*         lightsComponent     (void) const { return _lightsComponent; }
+    APMSubFrameComponent*       subFrameComponent   (void) const { return _subFrameComponent; }
     APMFlightModesComponent*    flightModesComponent(void) const { return _flightModesComponent; }
     APMPowerComponent*          powerComponent      (void) const { return _powerComponent; }
 #if 0
@@ -61,6 +63,7 @@ private:
     APMAirframeComponent*       _airframeComponent;
     APMCameraComponent*         _cameraComponent;
     APMLightsComponent*         _lightsComponent;
+    APMSubFrameComponent*       _subFrameComponent;
     APMFlightModesComponent*    _flightModesComponent;
     APMPowerComponent*          _powerComponent;
 #if 0
