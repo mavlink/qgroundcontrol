@@ -1877,13 +1877,25 @@ void Vehicle::_sendMavCommandAgain(void)
     }
 
     if (_mavCommandRetryCount > 1) {
-        if (queuedCommand.command == MAV_CMD_START_RX_PAIR) {
-            // Implementation of this command in all firmwares is incorrect. It does not send Ack so we can't retry.
-            return;
-        }
-        if (px4Firmware()) {
-            // PX4 stack is inconsistent with repect to sending back an Ack from a COMMAND_LONG, hence we can't support retry logic for it.
-            return;
+        // We always let AUTOPILOT_CAPABILITIES go through multiple times even if we don't get acks. This is because
+        // we really need to get capabilities and version info back over a lossy link.
+        if (queuedCommand.command != MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES) {
+            if (px4Firmware()) {
+                // Older PX4 firmwares are inconsistent with repect to sending back an Ack from a COMMAND_LONG, hence we can't support retry logic for it.
+                if (_firmwareMajorVersion != versionNotSetValue) {
+                    // If no version set assume lastest master dev build, so acks are suppored
+                    if (_firmwareMajorVersion <= 1 && _firmwareMinorVersion <= 5 && _firmwarePatchVersion <= 3) {
+                        // Acks not supported in this version
+                        return;
+                    }
+                }
+            } else {
+                if (queuedCommand.command == MAV_CMD_START_RX_PAIR) {
+                    // The implementation of this command comes from the IO layer and is shared across stacks. So for other firmwares
+                    // we aren't really sure whether they are correct or not.
+                    return;
+                }
+            }
         }
         qDebug() << "Vehicle::_sendMavCommandAgain retrying command:_mavCommandRetryCount" << queuedCommand.command << _mavCommandRetryCount;
     }
