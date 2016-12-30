@@ -314,7 +314,6 @@ FORMS += \
 FORMS += \
     src/ui/Linechart.ui \
     src/ui/MultiVehicleDockWidget.ui \
-    src/ui/QGCDataPlot2D.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
@@ -545,7 +544,6 @@ HEADERS += \
     src/ui/MAVLinkDecoder.h \
     src/ui/MainWindow.h \
     src/ui/MultiVehicleDockWidget.h \
-    src/ui/QGCDataPlot2D.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
     src/ui/QGCHilJSBSimConfiguration.h \
@@ -694,7 +692,6 @@ SOURCES += \
     src/ui/MAVLinkDecoder.cc \
     src/ui/MainWindow.cc \
     src/ui/MultiVehicleDockWidget.cc \
-    src/ui/QGCDataPlot2D.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
