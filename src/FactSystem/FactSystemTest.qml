@@ -32,7 +32,7 @@ FactPanel {
     TextInput {
         text:       fact2.value
 
-        property Fact fact2: controller.getParameterFact(50, "RC_MAP_THROTTLE")
+        property Fact fact2: controller.getParameterFact(1, "RC_MAP_THROTTLE")
 
         onAccepted: fact2.value = text
     }
