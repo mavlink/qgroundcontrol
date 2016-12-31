@@ -67,7 +67,6 @@ Item {
         }
         settingsViewLoader.visible  = true
         toolBar.checkSettingsButton()
-        console.log("showSettingsView")
     }
 
     function showSetupView() {

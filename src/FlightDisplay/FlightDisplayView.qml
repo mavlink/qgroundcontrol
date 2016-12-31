@@ -219,15 +219,14 @@ QGCView {
         }
 
         FlightDisplayViewWidgets {
-            id:             flightDisplayViewWidgets
-            z:              _panel.z + 4
-            height:         ScreenTools.availableHeight
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            anchors.bottom: parent.bottom
-
-            property bool isBackgroundDark: root.isBackgroundDark
-            property var qgcView: root
+            id:                 flightDisplayViewWidgets
+            z:                  _panel.z + 4
+            height:             ScreenTools.availableHeight
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            anchors.bottom:     parent.bottom
+            qgcView:            root
+            isBackgroundDark:   root.isBackgroundDark
         }
 
         //-- Virtual Joystick
