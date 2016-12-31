@@ -218,7 +218,7 @@ SetupPage {
                         spacing:            Math.round(ScreenTools.defaultFontPixelHeight / 4)
 
                         QGCLabel {
-                            text: "Compass " + index + " " +
+                            text: "Compass " + (index+1) + " " +
                                   (sensorParams.rgCompassPrimary[index] ? "(primary" : "(secondary") +
                                   (sensorParams.rgCompassExternalParamAvailable[index] ?
                                        (sensorParams.rgCompassExternal[index] ? ", external" : ", internal" ) :
@@ -272,7 +272,7 @@ SetupPage {
                     visible: sensorParams.rgCompassAvailable[index]
 
                     QGCLabel {
-                        text: "Compass " + index + " " +
+                        text: "Compass " + (index+1) + " " +
                               (sensorParams.rgCompassPrimary[index] ? "(primary" : "(secondary") +
                               (sensorParams.rgCompassExternalParamAvailable[index] ?
                                    (sensorParams.rgCompassExternal[index] ? ", external" : ", internal" ) :
