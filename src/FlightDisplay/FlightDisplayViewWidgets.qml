@@ -25,8 +25,10 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    property alias  guidedModeBar:  _guidedModeBar
-    property bool   gotoEnabled:    _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
+    property alias  guidedModeBar:      _guidedModeBar
+    property bool   gotoEnabled:        _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
+    property var    qgcView
+    property bool   isBackgroundDark
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:               _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
@@ -87,7 +89,7 @@ Item {
         airSpeedFact:           _airSpeedFact
         lightBorders:           _lightWidgetBorders
         z:                      QGroundControl.zOrderWidgets
-        qgcView:                parent.parent.qgcView
+        qgcView:                _root.qgcView
         maxHeight:              parent.height - (anchors.margins * 2)
     }
 
@@ -113,7 +115,7 @@ Item {
         anchors.top:                instrumentGadgetAlternate.bottom
         anchors.horizontalCenter:   instrumentGadgetAlternate.horizontalCenter
         width:                      getGadgetWidth()
-        qgcView:                    parent.parent.qgcView
+        qgcView:                    _root.qgcView
         textColor:                  _isSatellite ? "white" : "black"
         visible:                    _useAlternateInstruments
         maxHeight:                  virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.y - y : parent.height - anchors.margins - y

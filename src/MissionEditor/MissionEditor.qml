@@ -583,6 +583,7 @@ QGCView {
                         exclusiveGroup: planElementSelectorGroup
                         text:           qsTr("Mission")
                         checked:        true
+                        color:          mapPal.text
                     }
 
                     Item { height: 1; width: 1 }
@@ -591,6 +592,7 @@ QGCView {
                         id:             planElementGeoFence
                         exclusiveGroup: planElementSelectorGroup
                         text:           qsTr("Fence")
+                        color:          mapPal.text
                     }
 
                     Item { height: 1; width: 1 }
@@ -599,6 +601,7 @@ QGCView {
                         id:             planElementRallyPoints
                         exclusiveGroup: planElementSelectorGroup
                         text:           qsTr("Rally")
+                        color:          mapPal.text
                     }
                 } // Row - Plan Element Selector
 
