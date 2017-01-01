@@ -112,7 +112,6 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _lightsComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_lightsComponent));
 
-                qWarning() << "ArduSub Version Detected:" << _vehicle->firmwareMajorVersion() << _vehicle->firmwareMinorVersion();
                 if(_vehicle->firmwareMajorVersion() > 3 || (_vehicle->firmwareMajorVersion() == 3 && _vehicle->firmwareMinorVersion() >= 5)) {
                     _subFrameComponent = new APMSubFrameComponent(_vehicle, this);
                     _subFrameComponent->setupTriggerSignals();
