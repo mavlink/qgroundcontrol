@@ -67,12 +67,5 @@ QUrl APMSubFrameComponent::summaryQmlSource(void) const
 
 QString APMSubFrameComponent::prerequisiteSetup(void) const
 {
-    APMAutoPilotPlugin* plugin = dynamic_cast<APMAutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    }
-
     return QString();
 }
