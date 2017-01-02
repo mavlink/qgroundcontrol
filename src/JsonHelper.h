@@ -25,13 +25,13 @@ public:
     /// Validates the standard parts of a QGC json file:
     ///     jsonFileTypeKey - Required and checked to be equal to expectedFileType
     ///     jsonVersionKey - Required and checked to be below supportedMajorVersion, supportedMinorVersion
+    ///     jsonGroundStationKey - Required and checked to be string type
     /// @return false: validation failed
-    static bool validateQGCJsonFile(const QJsonObject&  jsonObject,             ///< top level json object in file
+    static bool validateQGCJsonFile(const QJsonObject&  jsonObject,             ///< root json object
                                     const QString&      expectedFileType,       ///< correct file type for file
-                                    int                 supportedMajorVersion,  ///< maximum supported major version
-                                    int                 supportedMinorVersion,  ///< maximum supported minor version
-                                    int                 &fileMajorVersion,      ///< returned file major version
-                                    int                 &fileMinorVersion,      ///< returned file minor version
+                                    int                 minSupportedVersion,    ///< minimum supported version
+                                    int                 maxSupportedVersion,    ///< maximum supported major version
+                                    int                 &version,               ///< returned file version
                                     QString&            errorString);           ///< returned error string if validation fails
 
     static bool validateRequiredKeys(const QJsonObject& jsonObject, const QStringList& keys, QString& errorString);
@@ -85,6 +85,8 @@ public:
     static const char* jsonFileTypeKey;
 
 private:
+    static QString _jsonValueTypeToString(QJsonValue::Type type);
+
     static const char*  _enumStringsJsonKey;
     static const char*  _enumValuesJsonKey;
 };

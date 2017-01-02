@@ -74,6 +74,7 @@ public:
     double          param6          (void) const { return _param6Fact.rawValue().toDouble(); }
     double          param7          (void) const { return _param7Fact.rawValue().toDouble(); }
     QGeoCoordinate  coordinate      (void) const;
+    int             doJumpId        (void) const { return _doJumpId; }
 
     void setCommand         (MAV_CMD command);
     void setSequenceNumber  (int sequenceNumber);
@@ -91,7 +92,7 @@ public:
     
     void save(QJsonObject& json) const;
     bool load(QTextStream &loadStream);
-    bool load(const QJsonObject& json, QString& errorString);
+    bool load(const QJsonObject& json, int sequenceNumber, QString& errorString);
 
     bool relativeAltitude(void) const { return frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
 
@@ -100,8 +101,11 @@ signals:
     void sequenceNumberChanged      (int sequenceNumber);
     
 private:
-    int         _sequenceNumber;
-    bool        _isCurrentItem;
+    bool _convertJsonV1ToV2(const QJsonObject& json, QJsonObject& v2Json, QString& errorString);
+
+    int     _sequenceNumber;
+    int     _doJumpId;
+    bool    _isCurrentItem;
 
     Fact    _autoContinueFact;
     Fact    _commandFact;
@@ -115,17 +119,18 @@ private:
     Fact    _param7Fact;
     
     // Keys for Json save
-    static const char*  _itemType;
-    static const char*  _jsonTypeKey;
-    static const char*  _jsonIdKey;
     static const char*  _jsonFrameKey;
     static const char*  _jsonCommandKey;
+    static const char*  _jsonAutoContinueKey;
+    static const char*  _jsonCoordinateKey;
+    static const char*  _jsonParamsKey;
+    static const char*  _jsonDoJumpIdKey;
+
+    // Deprecated V1 format keys
     static const char*  _jsonParam1Key;
     static const char*  _jsonParam2Key;
     static const char*  _jsonParam3Key;
     static const char*  _jsonParam4Key;
-    static const char*  _jsonAutoContinueKey;
-    static const char*  _jsonCoordinateKey;
 
     friend class SurveyMissionItem;
     friend class SimpleMissionItem;
