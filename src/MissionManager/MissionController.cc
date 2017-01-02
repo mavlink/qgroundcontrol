@@ -464,7 +464,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     for (int i=0; i<visualItems->count(); i++) {
         if (visualItems->value<VisualMissionItem*>(i)->isSimpleItem()) {
             SimpleMissionItem* doJumpItem = visualItems->value<SimpleMissionItem*>(i);
-            if (doJumpItem->command() == MAV_CMD_DO_JUMP) {
+            if (doJumpItem->command() == (MAV_CMD)MAV_CMD_DO_JUMP) {
                 bool found = false;
                 int findDoJumpId = doJumpItem->missionItem().param1();
                 for (int j=0; j<visualItems->count(); j++) {
