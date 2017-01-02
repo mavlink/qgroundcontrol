@@ -30,7 +30,7 @@ const char* SurveyMissionItem::_jsonCameraTriggerKey =              "cameraTrigg
 const char* SurveyMissionItem::_jsonCameraTriggerDistanceKey =      "cameraTriggerDistance";
 const char* SurveyMissionItem::_jsonGroundResolutionKey =           "groundResolution";
 const char* SurveyMissionItem::_jsonFrontalOverlapKey =             "imageFrontalOverlap";
-const char* SurveyMissionItem::_jsonSideOverlapKey =                "imageSizeOverlap";
+const char* SurveyMissionItem::_jsonSideOverlapKey =                "imageSideOverlap";
 const char* SurveyMissionItem::_jsonCameraSensorWidthKey =          "sensorWidth";
 const char* SurveyMissionItem::_jsonCameraSensorHeightKey =         "sensorHeight";
 const char* SurveyMissionItem::_jsonCameraResolutionWidthKey =      "resolutionWidth";
@@ -392,6 +392,13 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
         }
 
         QJsonObject cameraObject = v2Object[_jsonCameraObjectKey].toObject();
+
+        // Older code had typo on "imageSideOverlap" incorrectly being "imageSizeOverlap"
+        QString incorrectImageSideOverlap = "imageSizeOverlap";
+        if (cameraObject.contains(incorrectImageSideOverlap)) {
+            cameraObject[_jsonSideOverlapKey] = cameraObject[incorrectImageSideOverlap];
+            cameraObject.remove(incorrectImageSideOverlap);
+        }
 
         QList<JsonHelper::KeyValidateInfo> cameraKeyInfoList = {
             { _jsonGroundResolutionKey,             QJsonValue::Double, true },
