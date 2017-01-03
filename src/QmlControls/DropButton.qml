@@ -2,11 +2,13 @@ import QtQuick                  2.4
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
 
+import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 
 Item {
     id: _root
+    z:  QGroundControl.zOrderWidgets
 
     signal          clicked()
     property alias  buttonImage:        roundButton.buttonImage
