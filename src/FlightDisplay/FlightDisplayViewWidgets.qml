@@ -106,10 +106,13 @@ Item {
         pitchAngle:             _pitch
         groundSpeedFact:        _groundSpeedFact
         airSpeedFact:           _airSpeedFact
-        isSatellite:            _isSatellite
+        lightBorders:           _lightWidgetBorders
+        qgcView:                _root.qgcView
+        maxHeight:              parent.height - (anchors.margins * 2)
         z:                      QGroundControl.zOrderWidgets
     }
 
+    /*
     ValuesWidget {
         anchors.topMargin:          ScreenTools.defaultFontPixelHeight
         anchors.top:                instrumentGadgetAlternate.bottom
@@ -119,7 +122,7 @@ Item {
         textColor:                  _isSatellite ? "white" : "black"
         visible:                    _useAlternateInstruments
         maxHeight:                  virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.y - y : parent.height - anchors.margins - y
-    }
+    }*/
 
     //-- Guided mode buttons
     Rectangle {
