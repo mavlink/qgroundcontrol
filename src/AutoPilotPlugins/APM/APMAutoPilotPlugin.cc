@@ -27,6 +27,7 @@
 #include "MotorComponent.h"
 #include "APMCameraComponent.h"
 #include "APMLightsComponent.h"
+#include "APMSubFrameComponent.h"
 #include "ESP8266Component.h"
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
@@ -36,6 +37,7 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _airframeComponent(NULL)
     , _cameraComponent(NULL)
     , _lightsComponent(NULL)
+    , _subFrameComponent(NULL)
     , _flightModesComponent(NULL)
     , _powerComponent(NULL)
 #if 0
@@ -109,6 +111,12 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _lightsComponent = new APMLightsComponent(_vehicle, this);
                 _lightsComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_lightsComponent));
+
+                if(_vehicle->firmwareMajorVersion() > 3 || (_vehicle->firmwareMajorVersion() == 3 && _vehicle->firmwareMinorVersion() >= 5)) {
+                    _subFrameComponent = new APMSubFrameComponent(_vehicle, this);
+                    _subFrameComponent->setupTriggerSignals();
+                    _components.append(QVariant::fromValue((VehicleComponent*)_subFrameComponent));
+                }
             }
 
             //-- Is there an ESP8266 Connected?

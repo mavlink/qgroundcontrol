@@ -796,6 +796,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
         src/AutoPilotPlugins/APM/APMLightsComponent.h \
+        src/AutoPilotPlugins/APM/APMSubFrameComponent.h \
         src/AutoPilotPlugins/APM/APMPowerComponent.h \
         src/AutoPilotPlugins/APM/APMRadioComponent.h \
         src/AutoPilotPlugins/APM/APMSafetyComponent.h \
@@ -822,6 +823,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
         src/AutoPilotPlugins/APM/APMLightsComponent.cc \
+        src/AutoPilotPlugins/APM/APMSubFrameComponent.cc \
         src/AutoPilotPlugins/APM/APMPowerComponent.cc \
         src/AutoPilotPlugins/APM/APMRadioComponent.cc \
         src/AutoPilotPlugins/APM/APMSafetyComponent.cc \
