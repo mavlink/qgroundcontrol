@@ -71,7 +71,7 @@ public:
     void setDistance        (double distance);
 
     bool load(QTextStream &loadStream);
-    bool load(const QJsonObject& json, QString& errorString);
+    bool load(const QJsonObject& json, int sequenceNumber, QString& errorString);
 
     bool relativeAltitude(void) { return _missionItem.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
 

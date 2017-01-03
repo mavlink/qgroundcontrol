@@ -123,6 +123,10 @@ public:
     ///     @param saveObject Save the item to this json object
     virtual void save(QJsonObject& saveObject) const = 0;
 
+    static const char* jsonTypeKey;                 ///< Json file attribute which specifies the item type
+    static const char* jsonTypeSimpleItemValue;     ///< Item type is MISSION_ITEM
+    static const char* jsonTypeComplexItemValue;    ///< Item type is Complex Item
+
 signals:
     void altDifferenceChanged           (double altDifference);
     void altPercentChanged              (double altPercent);

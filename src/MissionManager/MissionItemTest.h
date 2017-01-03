@@ -29,12 +29,15 @@ private slots:
     void _testFactSignals(void);
     void _testLoadFromStream(void);
     void _testSimpleLoadFromStream(void);
-    void _testLoadFromJson(void);
+    void _testLoadFromJsonV1(void);
+    void _testLoadFromJsonV2(void);
     void _testSimpleLoadFromJson(void);
     void _testSaveToJson(void);
 
 private:
     void _checkExpectedMissionItem(const MissionItem& missionItem);
+
+    int _seq = 10;
 };
 
 #endif

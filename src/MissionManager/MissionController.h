@@ -88,7 +88,6 @@ public:
     void setCruiseDistance          (double cruiseDistance );
     void setHoverDistance           (double hoverDistance );
 
-    static const char* jsonSimpleItemsKey;  ///< Key for simple items in a json file
 
 signals:
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
@@ -129,6 +128,8 @@ private:
     double _normalizeLat(double lat);
     double _normalizeLon(double lon);
     bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
+    bool _loadJsonMissionFileV1(const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
+    bool _loadJsonMissionFileV2(const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
     bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
     int _nextSequenceNumber(void);
 
@@ -150,9 +151,17 @@ private:
     double              _hoverDistance;
 
     static const char*  _settingsGroup;
+    static const char*  _jsonFileTypeValue;
+    static const char*  _jsonFirmwareTypeKey;
+    static const char*  _jsonItemsKey;
+    static const char*  _jsonPlannedHomePositionKey;
+    static const char*  _jsonParamsKey;
+
+    // Deprecated V1 format keys
     static const char*  _jsonMavAutopilotKey;
     static const char*  _jsonComplexItemsKey;
-    static const char*  _jsonPlannedHomePositionKey;
+
+    static const int    _missionFileVersion;
 };
 
 #endif
