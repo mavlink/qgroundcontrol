@@ -2179,7 +2179,7 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     , _voltageFact                  (0, _voltageFactName,                   FactMetaData::valueTypeDouble)
     , _percentRemainingFact         (0, _percentRemainingFactName,          FactMetaData::valueTypeInt32)
     , _mahConsumedFact              (0, _mahConsumedFactName,               FactMetaData::valueTypeInt32)
-    , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeInt32)
+    , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeFloat)
     , _temperatureFact              (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
     , _cellCountFact                (0, _cellCountFactName,                 FactMetaData::valueTypeInt32)
 {
