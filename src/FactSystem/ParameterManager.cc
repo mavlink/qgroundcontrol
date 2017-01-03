@@ -875,9 +875,9 @@ QString ParameterManager::readParametersFromStream(QTextStream& stream)
 
 void ParameterManager::writeParametersToStream(QTextStream &stream)
 {
-    stream << "# Onboard parameters for vehicle " << _vehicle->id() << "\n";
+    stream << "# Onboard parameters for Vehicle " << _vehicle->id() << "\n";
     stream << "#\n";
-    stream << "# MAV ID  COMPONENT ID  PARAM NAME  VALUE (FLOAT)\n";
+    stream << "# Vehicle-Id Component-Id Name Value Type\n";
 
     foreach (int componentId, _mapParameterName2Variant.keys()) {
         foreach (const QString &paramName, _mapParameterName2Variant[componentId].keys()) {
