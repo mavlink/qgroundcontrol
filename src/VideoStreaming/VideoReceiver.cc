@@ -20,124 +20,143 @@
 #include <QDir>
 #include <QDateTime>
 
-VideoReceiver::Sink* VideoReceiver::sink = NULL;
+VideoReceiver::Sink* VideoReceiver::_sink = NULL;
 GstElement*          VideoReceiver::_pipeline = NULL;
 GstElement*          VideoReceiver::_pipeline2 = NULL;
-GstElement*          VideoReceiver::tee = NULL;
+GstElement*          VideoReceiver::_tee = NULL;
 
+// -EOS has appeared on the bus of the temporary pipeline
+// -At this point all of the recoring elements have been flushed, and the video file has been finalized
+// -Now we can remove the temporary pipeline and its elements
 gboolean VideoReceiver::_eosCB(GstBus* bus, GstMessage* message, gpointer user_data)
 {
     Q_UNUSED(bus);
     Q_UNUSED(message);
     Q_UNUSED(user_data);
 
-    gst_bin_remove(GST_BIN(_pipeline2), sink->queue);
-    gst_bin_remove(GST_BIN(_pipeline2), sink->mux);
-    gst_bin_remove(GST_BIN(_pipeline2), sink->filesink);
+    gst_bin_remove(GST_BIN(_pipeline2), _sink->queue);
+    gst_bin_remove(GST_BIN(_pipeline2), _sink->mux);
+    gst_bin_remove(GST_BIN(_pipeline2), _sink->filesink);
 
     gst_element_set_state(_pipeline2, GST_STATE_NULL);
     gst_object_unref(_pipeline2);
 
-    gst_element_set_state(sink->filesink, GST_STATE_NULL);
-    gst_element_set_state(sink->mux, GST_STATE_NULL);
-    gst_element_set_state(sink->queue, GST_STATE_NULL);
+    gst_element_set_state(_sink->filesink, GST_STATE_NULL);
+    gst_element_set_state(_sink->mux, GST_STATE_NULL);
+    gst_element_set_state(_sink->queue, GST_STATE_NULL);
 
-    gst_object_unref(sink->queue);
-    gst_object_unref(sink->mux);
-    gst_object_unref(sink->filesink);
+    gst_object_unref(_sink->queue);
+    gst_object_unref(_sink->mux);
+    gst_object_unref(_sink->filesink);
 
-    delete sink;
-    sink = NULL;
+    delete _sink;
+    _sink = NULL;
 
     return true;
 }
 
+// -Unlink the recording branch from the tee in the main pipeline
+// -Create a second temporary pipeline, and place the recording branch elements into that pipeline
+// -Setup watch and handler for EOS event on the temporary pipeline's bus
+// -Send an EOS event at the beginning of that pipeline and set up a callback for
 GstPadProbeReturn VideoReceiver::_unlinkCB(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
 {
     Q_UNUSED(pad);
     Q_UNUSED(info);
     Q_UNUSED(user_data);
 
-    if(!g_atomic_int_compare_and_exchange(&sink->removing, FALSE, TRUE))
+    // We will only execute once
+    if(!g_atomic_int_compare_and_exchange(&_sink->removing, FALSE, TRUE))
         return GST_PAD_PROBE_OK;
 
-    GstPad* sinkpad = gst_element_get_static_pad(sink->queue, "sink");
-    gst_pad_unlink (sink->teepad, sinkpad);
-    gst_object_unref (sinkpad);
-
-    gst_element_release_request_pad(tee, sink->teepad);
-    gst_object_unref(sink->teepad);
-
     // Also unlinks and unrefs
-    gst_bin_remove (GST_BIN (_pipeline), sink->queue);
-    gst_bin_remove (GST_BIN (_pipeline), sink->mux);
-    gst_bin_remove (GST_BIN (_pipeline), sink->filesink);
+    gst_bin_remove_many(GST_BIN (_pipeline), _sink->queue, _sink->mux, _sink->filesink, NULL);
 
+    // Give tee its pad back
+    gst_element_release_request_pad(_tee, _sink->teepad);
+    gst_object_unref(_sink->teepad);
+
+    // Create temporary pipeline
     _pipeline2 = gst_pipeline_new("pipe2");
 
-    gst_bin_add_many(GST_BIN(_pipeline2), sink->queue, sink->mux, sink->filesink, NULL);
-    gst_element_link_many(sink->queue, sink->mux, sink->filesink, NULL);
+    // Put our elements from the recording branch into the temporary pipeline
+    gst_bin_add_many(GST_BIN(_pipeline2), _sink->queue, _sink->mux, _sink->filesink, NULL);
+    gst_element_link_many(_sink->queue, _sink->mux, _sink->filesink, NULL);
 
+    // Add watch for EOS event
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline2));
     gst_bus_add_signal_watch(bus);
     g_signal_connect(bus, "message::eos", G_CALLBACK(_eosCB), NULL);
+    gst_object_unref(bus);
 
     if(gst_element_set_state(_pipeline2, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
         qDebug() << "problem starting pipeline2";
     }
 
-    GstPad* eosInjectPad = gst_element_get_static_pad(sink->queue, "sink");
-    gst_pad_send_event(eosInjectPad, gst_event_new_eos());
-    gst_object_unref(eosInjectPad);
+    // Send EOS at the beginning of the pipeline
+    GstPad* sinkpad = gst_element_get_static_pad(_sink->queue, "sink");
+    gst_pad_send_event(sinkpad, gst_event_new_eos());
+    gst_object_unref(sinkpad);
 
     return GST_PAD_PROBE_REMOVE;
 }
 
-void VideoReceiver::_startRecording(void)
+// When we finish our pipeline will look like this:
+//
+//                                   +-->queue-->decoder-->_videosink
+//                                   |
+//    datasource-->demux-->parser-->tee
+//                                   |
+//                                   |    +--------------_sink-------------------+
+//                                   |    |                                      |
+//   we are adding these elements->  +->teepad-->queue-->matroskamux-->_filesink |
+//                                        |                                      |
+//                                        +--------------------------------------+
+void VideoReceiver::startRecording(void)
 {
     // exit immediately if we are already recording
     if(_pipeline == NULL || _recording) {
         return;
     }
 
-    sink = g_new0(Sink, 1);
+    _sink = g_new0(Sink, 1);
 
-    sink->teepad = gst_element_get_request_pad(tee, "src_%u");
-    sink->queue = gst_element_factory_make("queue", NULL);
-    sink->mux = gst_element_factory_make("matroskamux", NULL);
-    sink->filesink = gst_element_factory_make("filesink", NULL);
-    sink->removing = false;
+    _sink->teepad = gst_element_get_request_pad(_tee, "src_%u");
+    _sink->queue = gst_element_factory_make("queue", NULL);
+    _sink->mux = gst_element_factory_make("matroskamux", NULL);
+    _sink->filesink = gst_element_factory_make("filesink", NULL);
+    _sink->removing = false;
 
     QString filename = QDir::homePath() + "/" + QDateTime::currentDateTime().toString() + ".mkv";
-    g_object_set(G_OBJECT(sink->filesink), "location", qPrintable(filename), NULL);
+    g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(filename), NULL);
 
-    gst_object_ref(sink->queue);
-    gst_object_ref(sink->mux);
-    gst_object_ref(sink->filesink);
+    gst_object_ref(_sink->queue);
+    gst_object_ref(_sink->mux);
+    gst_object_ref(_sink->filesink);
 
-    gst_bin_add_many(GST_BIN(_pipeline), sink->queue, sink->mux, sink->filesink, NULL);
-    gst_element_link_many(sink->queue, sink->mux, sink->filesink, NULL);
+    gst_bin_add_many(GST_BIN(_pipeline), _sink->queue, _sink->mux, _sink->filesink, NULL);
+    gst_element_link_many(_sink->queue, _sink->mux, _sink->filesink, NULL);
 
-    gst_element_sync_state_with_parent(sink->queue);
-    gst_element_sync_state_with_parent(sink->mux);
-    gst_element_sync_state_with_parent(sink->filesink);
+    gst_element_sync_state_with_parent(_sink->queue);
+    gst_element_sync_state_with_parent(_sink->mux);
+    gst_element_sync_state_with_parent(_sink->filesink);
 
-    GstPad* sinkpad = gst_element_get_static_pad(sink->queue, "sink");
-    gst_pad_link(sink->teepad, sinkpad);
+    GstPad* sinkpad = gst_element_get_static_pad(_sink->queue, "sink");
+    gst_pad_link(_sink->teepad, sinkpad);
     gst_object_unref(sinkpad);
 
     _recording = true;
     emit recordingChanged();
 }
 
-void VideoReceiver::_stopRecording(void)
+void VideoReceiver::stopRecording(void)
 {
     // exit immediately if we are not recording
     if(_pipeline == NULL || !_recording) {
         return;
     }
 
-    gst_pad_add_probe(sink->teepad, GST_PAD_PROBE_TYPE_IDLE, _unlinkCB, sink, NULL);
+    gst_pad_add_probe(_sink->teepad, GST_PAD_PROBE_TYPE_IDLE, _unlinkCB, _sink, NULL);
 
     _recording = false;
     emit recordingChanged();
@@ -246,6 +265,16 @@ void VideoReceiver::_timeout()
 }
 #endif
 
+
+// When we finish our pipeline will look like this:
+//
+//                                   +-->queue-->decoder-->_videosink
+//                                   |
+//    datasource-->demux-->parser-->tee
+//
+//                                   ^
+//                                   |
+//                                   +-Here we will later link elements for recording
 void VideoReceiver::start()
 {
 #if defined(QGC_GST_STREAMING)
@@ -280,10 +309,6 @@ void VideoReceiver::start()
     // Pads to link queues and tee
     GstPad*         teeSrc1     = NULL; // tee source pad 1
     GstPad*         q1Sink      = NULL; // queue1 sink pad
-
-    //                                 /queue1---decoder---_videosink
-    //datasource---demux---parser---tee
-    //                                 \queue2---matroskamux---filesink
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == NULL) {
@@ -331,7 +356,7 @@ void VideoReceiver::start()
             break;
         }
 
-        if((tee = gst_element_factory_make("tee", "stream-file-tee")) == NULL)  {
+        if((_tee = gst_element_factory_make("tee", "stream-file-tee")) == NULL)  {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('tee')";
             break;
         }
@@ -341,7 +366,7 @@ void VideoReceiver::start()
             break;
         }
 
-        gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, tee, queue1, decoder, _videoSink, NULL);
+        gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue1, decoder, _videoSink, NULL);
 
 //        if(isUdp) {
 //            res = gst_element_link_many(dataSource, demux, parser, decoder, tee, _videoSink, NULL);
@@ -350,7 +375,7 @@ void VideoReceiver::start()
 //        }
 
         // Link the pipeline in front of the tee
-        if(!gst_element_link_many(dataSource, demux, parser, tee, NULL)) {
+        if(!gst_element_link_many(dataSource, demux, parser, _tee, NULL)) {
             qCritical() << "Unable to link datasource and tee.";
             break;
         }
@@ -362,7 +387,7 @@ void VideoReceiver::start()
         }
 
         // Link the queues to the tee
-        teeSrc1 = gst_element_get_request_pad(tee, "src_%u");
+        teeSrc1 = gst_element_get_request_pad(_tee, "src_%u");
         q1Sink = gst_element_get_static_pad(queue1, "sink");
 
         // Link the tee to queue1
@@ -418,8 +443,8 @@ void VideoReceiver::start()
             dataSource = NULL;
         }
 
-        if (tee != NULL) {
-            gst_object_unref(tee);
+        if (_tee != NULL) {
+            gst_object_unref(_tee);
             dataSource = NULL;
         }
 
@@ -445,8 +470,9 @@ void VideoReceiver::EOS() {
 void VideoReceiver::stop()
 {
 #if defined(QGC_GST_STREAMING)
+    qDebug() << "stop()";
     if (_pipeline != NULL) {
-        qCritical() << "stopping pipeline";
+        qDebug() << "Stopping pipeline";
         gst_element_set_state(_pipeline, GST_STATE_NULL);
         gst_object_unref(_pipeline);
         _pipeline = NULL;

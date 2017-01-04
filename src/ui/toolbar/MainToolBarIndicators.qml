@@ -494,7 +494,8 @@ Item {
         Item {
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
-            width: height
+            width:          height
+            visible:        QGroundControl.videoManager.videoRunning
 
             Rectangle {
                 anchors.top:        parent.top
@@ -506,7 +507,7 @@ Item {
 
             MouseArea {
                 anchors.fill:   parent
-                onClicked:      QGroundControl.videoManager.videoReceiver.recording? QGroundControl.videoManager.videoReceiver._stopRecording() : QGroundControl.videoManager.videoReceiver._startRecording()
+                onClicked:      QGroundControl.videoManager.videoReceiver.recording? QGroundControl.videoManager.videoReceiver.stopRecording() : QGroundControl.videoManager.videoReceiver.startRecording()
             }
         }
 
