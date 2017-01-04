@@ -41,6 +41,18 @@ QGCView {
 
     QGCPalette { id: qgcPal }
 
+    FileDialog {
+        id: fileDialog
+        title: "Choose a location to save video files."
+        folder: shortcuts.home
+        selectFolder: true
+        onAccepted: {
+            var path = fileDialog.fileUrl.toString();
+            path = path.replace(/^(file:\/{2})/,"");
+            QGroundControl.videoManager.videoSavePath = path
+        }
+    }
+
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
@@ -497,6 +509,25 @@ QGCView {
                                 onEditingFinished: {
                                     QGroundControl.videoManager.rtspURL = text
                                 }
+                            }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.videoManager.isGStreamer
+                            QGCLabel {
+                                anchors.baseline:   pathField.baseline
+                                text:               qsTr("Save Path:")
+                                width:              _labelWidth
+                            }
+                            QGCTextField {
+                                id:                 pathField
+                                width:              _editFieldWidth
+                                readOnly:           true
+                                text:               QGroundControl.videoManager.videoSavePath
+                            }
+                            Button {
+                                text: "Browse"
+                                onClicked: fileDialog.visible = true
                             }
                         }
                     }

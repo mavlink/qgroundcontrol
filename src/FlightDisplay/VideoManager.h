@@ -37,6 +37,7 @@ public:
     Q_PROPERTY(bool             videoRunning    READ    videoRunning                            NOTIFY videoRunningChanged)
     Q_PROPERTY(quint16          udpPort         READ    udpPort         WRITE setUdpPort        NOTIFY udpPortChanged)
     Q_PROPERTY(QString          rtspURL         READ    rtspURL         WRITE setRtspURL        NOTIFY rtspURLChanged)
+    Q_PROPERTY(QString          videoSavePath   READ    videoSavePath   WRITE setVideoSavePath  NOTIFY videoSavePathChanged)
     Q_PROPERTY(bool             uvcEnabled      READ    uvcEnabled                              CONSTANT)
     Q_PROPERTY(VideoSurface*    videoSurface    MEMBER  _videoSurface                           CONSTANT)
     Q_PROPERTY(VideoReceiver*   videoReceiver   MEMBER  _videoReceiver                          CONSTANT)
@@ -49,6 +50,7 @@ public:
     QStringList videoSourceList     ();
     quint16     udpPort             () { return _udpPort; }
     QString     rtspURL             () { return _rtspURL; }
+    QString     videoSavePath       () { return _videoSavePath; }
 
 #if defined(QGC_DISABLE_UVC)
     bool        uvcEnabled          () { return false; }
@@ -59,6 +61,7 @@ public:
     void        setVideoSource      (QString vSource);
     void        setUdpPort          (quint16 port);
     void        setRtspURL          (QString url);
+    void        setVideoSavePath    (QString path);
 
     // Override from QGCTool
     void        setToolbox          (QGCToolbox *toolbox);
@@ -72,6 +75,7 @@ signals:
     void videoSourceIDChanged   ();
     void udpPortChanged         ();
     void rtspURLChanged         ();
+    void videoSavePathChanged   ();
 
 private:
     void _updateTimer           ();
@@ -89,6 +93,7 @@ private:
     QStringList         _videoSourceList;
     quint16             _udpPort;
     QString             _rtspURL;
+    QString             _videoSavePath;
     bool                _init;
 };
 

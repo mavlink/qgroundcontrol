@@ -27,6 +27,7 @@
 static const char* kVideoSourceKey  = "VideoSource";
 static const char* kVideoUDPPortKey = "VideoUDPPort";
 static const char* kVideoRTSPUrlKey = "VideoRTSPUrl";
+static const char* kVideoSavePathKey = "VideoSaveDir";
 #if defined(QGC_GST_STREAMING)
 static const char* kUDPStream       = "UDP Video Stream";
 static const char* kRTSPStream      = "RTSP Video Stream";
@@ -80,6 +81,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
        setUdpPort(settings.value(kVideoUDPPortKey, 5600).toUInt());
        setRtspURL(settings.value(kVideoRTSPUrlKey, "rtsp://192.168.42.1:554/live").toString()); //-- Example RTSP URL
    }
+   setVideoSavePath(settings.value(kVideoSavePathKey, QDir::homePath()).toString());
 #endif
    _init = true;
 #if defined(QGC_GST_STREAMING)
@@ -186,6 +188,17 @@ VideoManager::setRtspURL(QString url)
     */
 }
 
+void
+VideoManager::setVideoSavePath(QString path)
+{
+    _videoSavePath = path;
+    QSettings settings;
+    settings.setValue(kVideoSavePathKey, path);
+    if(_videoReceiver)
+        _videoReceiver->setVideoSavePath(_videoSavePath);
+    emit videoSavePathChanged();
+}
+
 //-----------------------------------------------------------------------------
 QStringList
 VideoManager::videoSourceList()
@@ -265,6 +278,7 @@ void VideoManager::_updateVideo()
             _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_udpPort));
         else
             _videoReceiver->setUri(_rtspURL);
+        _videoReceiver->setVideoSavePath(_videoSavePath);
         #endif
         _videoReceiver->start();
     }
