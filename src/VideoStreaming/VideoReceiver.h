@@ -30,6 +30,7 @@ class VideoReceiver : public QObject
     Q_OBJECT
 public:
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
+    Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
 
     explicit VideoReceiver(QObject* parent = 0);
     ~VideoReceiver();
@@ -39,9 +40,11 @@ public:
 #endif
 
     bool recording() { return _recording; }
+    bool streaming() { return GST_STATE(_pipeline) == GST_STATE_PLAYING; }
 
 signals:
     void recordingChanged();
+    void streamingChanged();
 
 public slots:
     void start          ();
@@ -71,6 +74,7 @@ private:
     } Sink;
 
     bool                _recording;
+    bool                _streaming;
     static Sink*        _sink;
     static GstElement*  _tee;
 
