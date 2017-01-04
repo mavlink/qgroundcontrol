@@ -236,7 +236,9 @@ void VideoManager::_updateTimer()
     }
     else
     {
-        if(_videoSurface && _videoSurface->lastFrame()) {
+//        if(_videoSurface && _videoSurface->lastFrame()) {
+        if(_videoSurface && _videoReceiver->streaming()) {
+            qDebug() << _videoSurface->lastFrame();
             if(!_videoRunning)
             {
                 _videoRunning = true;
