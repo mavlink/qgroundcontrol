@@ -48,7 +48,6 @@ signals:
 
 public slots:
     void start          ();
-    void EOS            ();
     void stop           ();
     void setUri         (const QString& uri);
     void stopRecording  ();
