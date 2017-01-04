@@ -70,7 +70,7 @@ GstPadProbeReturn VideoReceiver::_unlinkCB(GstPad* pad, GstPadProbeInfo* info, g
         return GST_PAD_PROBE_OK;
 
     // Also unlinks and unrefs
-    gst_bin_remove_many(GST_BIN (_pipeline), _sink->queue, _sink->mux, _sink->filesink, NULL);
+    gst_bin_remove_many(GST_BIN(_pipeline), _sink->queue, _sink->mux, _sink->filesink, NULL);
 
     // Give tee its pad back
     gst_element_release_request_pad(_tee, _sink->teepad);
