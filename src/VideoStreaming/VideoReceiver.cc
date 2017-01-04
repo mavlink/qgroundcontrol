@@ -19,6 +19,7 @@
 #include <QUrl>
 #include <QDir>
 #include <QDateTime>
+#include <QSysInfo>
 
 VideoReceiver::Sink* VideoReceiver::_sink = NULL;
 GstElement*          VideoReceiver::_pipeline = NULL;
@@ -127,8 +128,14 @@ void VideoReceiver::startRecording(void)
     _sink->filesink = gst_element_factory_make("filesink", NULL);
     _sink->removing = false;
 
-    QString filename = QDir::homePath() + "/" + QDateTime::currentDateTime().toString() + ".mkv";
-    g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(filename), NULL);
+    QString fileName;
+    if(QSysInfo::WindowsVersion != QSysInfo::WV_None) {
+        fileName = _path + "\\QGC-" + QDateTime::currentDateTime().toString("yyyy-MM-dd-hh:mm:ss") + ".mkv";
+    } else {
+        fileName = _path + "/QGC-" + QDateTime::currentDateTime().toString("yyyy-MM-dd-hh:mm:ss") + ".mkv";
+    }
+    g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(fileName), NULL);
+    qDebug() << "New video file:" << fileName;
 
     gst_object_ref(_sink->queue);
     gst_object_ref(_sink->mux);
@@ -480,6 +487,12 @@ void VideoReceiver::setUri(const QString & uri)
 {
     stop();
     _uri = uri;
+}
+
+void VideoReceiver::setVideoSavePath(const QString & path)
+{
+    _path = path;
+    qDebug() << "New Path:" << _path;
 }
 
 #if defined(QGC_GST_STREAMING)

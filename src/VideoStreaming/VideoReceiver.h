@@ -47,11 +47,12 @@ signals:
     void streamingChanged();
 
 public slots:
-    void start          ();
-    void stop           ();
-    void setUri         (const QString& uri);
-    void stopRecording  ();
-    void startRecording ();
+    void start              ();
+    void stop               ();
+    void setUri             (const QString& uri);
+    void setVideoSavePath   (const QString& path);
+    void stopRecording      ();
+    void startRecording     ();
 
 private slots:
 #if defined(QGC_GST_STREAMING)
@@ -85,6 +86,7 @@ private:
 #endif
 
     QString     _uri;
+    QString     _path;
 
 #if defined(QGC_GST_STREAMING)
     static GstElement*   _pipeline;
