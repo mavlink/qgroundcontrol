@@ -567,6 +567,17 @@ Item {
                 color:              colorRed
             }
 
+            QGCColoredImage {
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                width:              height * 0.625
+                sourceSize.width:   width
+                source:             "/qmlimages/CameraIcon.svg"
+                fillMode:           Image.PreserveAspectFit
+                color:              colorWhite
+            }
+
             MouseArea {
                 anchors.fill:   parent
                 onClicked:      QGroundControl.videoManager.videoReceiver.recording? QGroundControl.videoManager.videoReceiver.stopRecording() : QGroundControl.videoManager.videoReceiver.startRecording()
