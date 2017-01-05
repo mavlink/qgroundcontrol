@@ -21,6 +21,8 @@
 #include <QDateTime>
 #include <QSysInfo>
 
+QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
+
 VideoReceiver::Sink* VideoReceiver::_sink = NULL;
 GstElement*          VideoReceiver::_pipeline = NULL;
 GstElement*          VideoReceiver::_pipeline2 = NULL;
@@ -94,7 +96,7 @@ GstPadProbeReturn VideoReceiver::_unlinkCB(GstPad* pad, GstPadProbeInfo* info, g
     gst_object_unref(bus);
 
     if(gst_element_set_state(_pipeline2, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
-        qDebug() << "problem starting pipeline2";
+        qCDebug(VideoReceiverLog) << "problem starting pipeline2";
     }
 
     // Send EOS at the beginning of the pipeline
@@ -139,7 +141,7 @@ void VideoReceiver::startRecording(void)
         fileName = _path + "/QGC-" + QDateTime::currentDateTime().toString("yyyy-MM-dd-hh:mm:ss") + ".mkv";
     }
     g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(fileName), NULL);
-    qDebug() << "New video file:" << fileName;
+    qCDebug(VideoReceiverLog) << "New video file:" << fileName;
 
     gst_object_ref(_sink->queue);
     gst_object_ref(_sink->mux);
@@ -169,8 +171,8 @@ void VideoReceiver::stopRecording(void)
         return;
     }
 
+    // Wait for data block before unlinking
     gst_pad_add_probe(_sink->teepad, GST_PAD_PROBE_TYPE_IDLE, _unlinkCB, _sink, NULL);
-
     _recording = false;
     emit recordingChanged();
 #endif
@@ -225,7 +227,7 @@ static void newPadCB(GstElement* element, GstPad* pad, gpointer data)
     g_print("A new pad %s was created\n", name);
     GstCaps* p_caps = gst_pad_get_pad_template_caps (pad);
     gchar* description = gst_caps_to_string(p_caps);
-    qDebug() << p_caps << ", " << description;
+    qCDebug(VideoReceiverLog) << p_caps << ", " << description;
     g_free(description);
     GstElement* p_rtph264depay = GST_ELEMENT(data);
     if(gst_element_link_pads(element, name, p_rtph264depay, "sink") == false)
@@ -273,7 +275,7 @@ void VideoReceiver::_timeout()
     _socket = new QTcpSocket;
     connect(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &VideoReceiver::_socketError);
     connect(_socket, &QTcpSocket::connected, this, &VideoReceiver::_connected);
-    //qDebug() << "Trying to connect to:" << url.host() << url.port();
+    //qCDebug(VideoReceiverLog) << "Trying to connect to:" << url.host() << url.port();
     _socket->connectToHost(url.host(), url.port());
     _timer.start(5000);
 }
@@ -447,7 +449,7 @@ void VideoReceiver::start()
             _pipeline = NULL;
         }
     }
-    qDebug() << "Video Receiver started.";
+    qCDebug(VideoReceiverLog) << "Video Receiver started.";
 #endif
 }
 
@@ -455,7 +457,7 @@ void VideoReceiver::stop()
 {
 #if defined(QGC_GST_STREAMING)
     if (_pipeline != NULL) {
-        qDebug() << "Stopping pipeline";
+        qCDebug(VideoReceiverLog) << "Stopping pipeline";
         stopRecording();
         gst_element_set_state(_pipeline, GST_STATE_NULL);
         gst_object_unref(_pipeline);
@@ -475,7 +477,7 @@ void VideoReceiver::setUri(const QString & uri)
 void VideoReceiver::setVideoSavePath(const QString & path)
 {
     _path = path;
-    qDebug() << "New Path:" << _path;
+    qCDebug(VideoReceiverLog) << "New Path:" << _path;
 }
 
 #if defined(QGC_GST_STREAMING)

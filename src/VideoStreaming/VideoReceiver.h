@@ -17,6 +17,7 @@
 #ifndef VIDEORECEIVER_H
 #define VIDEORECEIVER_H
 
+#include "QGCLoggingCategory.h"
 #include <QObject>
 #include <QTimer>
 #include <QTcpSocket>
@@ -24,6 +25,8 @@
 #if defined(QGC_GST_STREAMING)
 #include <gst/gst.h>
 #endif
+
+Q_DECLARE_LOGGING_CATEGORY(VideoReceiverLog)
 
 class VideoReceiver : public QObject
 {
