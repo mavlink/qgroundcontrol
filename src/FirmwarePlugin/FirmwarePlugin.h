@@ -125,6 +125,15 @@ public:
     /// Command vehicle to change to the specified relatice altitude
     virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel);
 
+    /// Returns the flight mode for running missions
+    virtual QString missionFlightMode(void);
+
+    /// Returns the flight mode for RTL
+    virtual QString rtlFlightMode(void);
+
+    /// Returns the flight mode to use when the operator wants to take back control from autonomouse flight.
+    virtual QString takeControlFlightMode(void);
+
     /// FIXME: This isn't quite correct being here. All code for Joystick suvehicleTypepport is currently firmware specific
     /// not just this. I'm going to try to change that. If not, this will need to be removed.
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink

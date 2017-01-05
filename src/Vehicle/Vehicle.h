@@ -271,6 +271,9 @@ public:
     Q_PROPERTY(bool                 isOfflineEditingVehicle READ isOfflineEditingVehicle                                CONSTANT)
     Q_PROPERTY(QString              brandImage              READ brandImage                                             CONSTANT)
     Q_PROPERTY(QStringList          unhealthySensors        READ unhealthySensors                                       NOTIFY unhealthySensorsChanged)
+    Q_PROPERTY(QString              missionFlightMode       READ missionFlightMode                                      CONSTANT)
+    Q_PROPERTY(QString              rtlFlightMode           READ rtlFlightMode                                          CONSTANT)
+    Q_PROPERTY(QString              takeControlFlightMode   READ takeControlFlightMode                                  CONSTANT)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying      READ flying     WRITE setFlying     NOTIFY flyingChanged)
@@ -522,6 +525,9 @@ public:
     bool            isOfflineEditingVehicle () const { return _offlineEditingVehicle; }
     QString         brandImage              () const;
     QStringList     unhealthySensors        () const;
+    QString         missionFlightMode       () const;
+    QString         rtlFlightMode           () const;
+    QString         takeControlFlightMode   () const;
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
