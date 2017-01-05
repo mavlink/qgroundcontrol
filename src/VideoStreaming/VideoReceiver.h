@@ -40,7 +40,7 @@ public:
 #endif
 
     bool recording() { return _recording; }
-    bool streaming() { return GST_STATE(_pipeline) == GST_STATE_PLAYING; }
+    bool streaming() { return _streaming; }
 
 signals:
     void recordingChanged();
