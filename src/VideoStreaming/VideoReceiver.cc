@@ -180,6 +180,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
 #if defined(QGC_GST_STREAMING)
     , _recording(false)
+    , _streaming(false)
     , _videoSink(NULL)
     , _socket(NULL)
     , _serverPresent(false)
@@ -460,6 +461,7 @@ void VideoReceiver::stop()
         gst_object_unref(_pipeline);
         _pipeline = NULL;
         _serverPresent = false;
+        _streaming = false;
     }
 #endif
 }
@@ -494,6 +496,9 @@ void VideoReceiver::_onBusMessage(GstMessage* msg)
         } while(0);
         stop();
         break;
+    case GST_MESSAGE_STATE_CHANGED:
+      _streaming = GST_STATE(_pipeline) == GST_STATE_PLAYING;
+      break;
     default:
         break;
     }
