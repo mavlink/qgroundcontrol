@@ -47,6 +47,7 @@ Item {
     property real largeFontPointSize:       10
 
     property real availableHeight:          0
+    property real toolbarHeight:            defaultFontPixelHeight * 3
 
     readonly property real smallFontPointRatio:      0.75
     readonly property real mediumFontPointRatio:     1.25

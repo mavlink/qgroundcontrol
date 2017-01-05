@@ -64,3 +64,8 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
     supportedFlightModes << APMPlaneMode(APMPlaneMode::QRTL            ,true);
     setSupportedModes(supportedFlightModes);
 }
+
+QString ArduPlaneFirmwarePlugin::takeControlFlightMode(void)
+{
+    return QStringLiteral("Manual");
+}
