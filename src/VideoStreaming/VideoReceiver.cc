@@ -316,12 +316,8 @@ void VideoReceiver::start()
     GstCaps*        caps        = NULL;
     GstElement*     demux       = NULL;
     GstElement*     parser      = NULL;
+    GstElement*     queue      = NULL;
     GstElement*     decoder     = NULL;
-    GstElement*     queue1      = NULL;
-
-    // Pads to link queue and tee
-    GstPad*         teeSrc1     = NULL; // tee source pad 1
-    GstPad*         q1Sink      = NULL; // queue1 sink pad
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == NULL) {
@@ -369,53 +365,32 @@ void VideoReceiver::start()
             break;
         }
 
-        if((_tee = gst_element_factory_make("tee", "stream-file-tee")) == NULL)  {
+        if((_tee = gst_element_factory_make("tee", NULL)) == NULL)  {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('tee')";
             break;
         }
 
-        if((queue1 = gst_element_factory_make("queue", NULL)) == NULL)  {
+        if((queue = gst_element_factory_make("queue", NULL)) == NULL)  {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue1')";
             break;
         }
 
-        gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue1, decoder, _videoSink, NULL);
+        gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, _videoSink, NULL);
 
         if(isUdp) {
             // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, demux, parser, _tee, NULL)) {
-                qCritical() << "Unable to link datasource and tee.";
+            if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, _videoSink, NULL)) {
+                qCritical() << "Unable to link elements.";
                 break;
             }
         } else {
-            if(!gst_element_link_many(demux, parser, _tee, NULL)) {
-                qCritical() << "Unable to link datasource and tee.";
+            if(!gst_element_link_many(demux, parser, _tee, queue, decoder, _videoSink, NULL)) {
+                qCritical() << "Unable to link elements.";
                 break;
             }
         }
 
-        // Link the videostream to queue1
-        if(!gst_element_link_many(queue1, decoder, _videoSink, NULL)) {
-            qCritical() << "Unable to link queue1 and videosink.";
-            break;
-        }
-
-        // Link the queues to the tee
-        teeSrc1 = gst_element_get_request_pad(_tee, "src_%u");
-        q1Sink = gst_element_get_static_pad(queue1, "sink");
-
-        // Link the tee to queue1
-        if (gst_pad_link(teeSrc1, q1Sink) != GST_PAD_LINK_OK ){
-            qCritical() << "Tee for queue1 could not be linked.\n";
-            break;
-        }
-
-        gst_object_unref(teeSrc1);
-        gst_object_unref(q1Sink);
-
-        teeSrc1 = q1Sink = NULL;
-        queue1 = NULL;
-        dataSource = demux = parser = decoder = NULL;
+        dataSource = demux = parser = queue = decoder = NULL;
 
         GstBus* bus = NULL;
 
@@ -462,8 +437,8 @@ void VideoReceiver::start()
             dataSource = NULL;
         }
 
-        if (queue1 != NULL) {
-            gst_object_unref(queue1);
+        if (queue != NULL) {
+            gst_object_unref(queue);
             dataSource = NULL;
         }
 
@@ -472,7 +447,6 @@ void VideoReceiver::start()
             _pipeline = NULL;
         }
     }
-
     qDebug() << "Video Receiver started.";
 #endif
 }
