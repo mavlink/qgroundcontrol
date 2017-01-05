@@ -46,13 +46,6 @@ RallyPointController::~RallyPointController()
 
 }
 
-void RallyPointController::start(bool editMode)
-{
-    qCDebug(RallyPointControllerLog) << "start editMode" << editMode;
-
-    PlanElementController::start(editMode);
-}
-
 void RallyPointController::_activeVehicleBeingRemoved(void)
 {
     _activeVehicle->rallyPointManager()->disconnect(this);
