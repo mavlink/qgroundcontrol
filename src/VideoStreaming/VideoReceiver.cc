@@ -195,7 +195,6 @@ VideoReceiver::VideoReceiver(QObject* parent)
 VideoReceiver::~VideoReceiver()
 {
 #if defined(QGC_GST_STREAMING)
-    stopRecording();
     stop();
     setVideoSink(NULL);
     if(_socket) {
@@ -457,6 +456,7 @@ void VideoReceiver::stop()
 #if defined(QGC_GST_STREAMING)
     if (_pipeline != NULL) {
         qDebug() << "Stopping pipeline";
+        stopRecording();
         gst_element_set_state(_pipeline, GST_STATE_NULL);
         gst_object_unref(_pipeline);
         _pipeline = NULL;
