@@ -39,6 +39,10 @@ public:
     ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
     Q_INVOKABLE virtual void start(bool editMode);
 
+    /// Starts the controller using a single static active vehicle. Will not track global active vehicle changes.
+    ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
+    Q_INVOKABLE virtual void startStaticActiveVehicle(Vehicle* vehicle);
+
     Q_INVOKABLE virtual void loadFromVehicle(void) = 0;
     Q_INVOKABLE virtual void sendToVehicle(void) = 0;
     Q_INVOKABLE virtual void loadFromFilePicker(void) = 0;

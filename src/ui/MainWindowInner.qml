@@ -255,7 +255,7 @@ Item {
 
     MainToolBar {
         id:                 toolBar
-        height:             ScreenTools.defaultFontPixelHeight * 3
+        height:             ScreenTools.toolbarHeight
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        parent.top
