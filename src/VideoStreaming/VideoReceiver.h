@@ -78,13 +78,15 @@ private:
 
     bool                _recording;
     bool                _streaming;
-    static Sink*        _sink;
-    static GstElement*  _tee;
+    Sink*               _sink;
+    GstElement*         _tee;
 
     void                        _onBusMessage(GstMessage* message);
-    static gboolean             _onBusMessage(GstBus* bus, GstMessage* msg, gpointer user_data);
-    static gboolean             _eosCB(GstBus* bus, GstMessage* message, gpointer user_data);
-    static GstPadProbeReturn    _unlinkCB(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
+    void                        _eosCB(GstMessage* message);
+    void                        _unlinkCB(GstPadProbeInfo* info);
+    static gboolean             _onBusMessage(GstBus* bus, GstMessage* message, gpointer user_data);
+    static gboolean             _eosCallBack(GstBus* bus, GstMessage* message, gpointer user_data);
+    static GstPadProbeReturn    _unlinkCallBack(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
 
 #endif
 
@@ -92,9 +94,9 @@ private:
     QString     _path;
 
 #if defined(QGC_GST_STREAMING)
-    static GstElement*   _pipeline;
-    static GstElement*   _pipeline2;
-    GstElement*          _videoSink;
+    GstElement*         _pipeline;
+    GstElement*         _pipeline2;
+    GstElement*         _videoSink;
 #endif
 
     //-- Wait for Video Server to show up before starting
