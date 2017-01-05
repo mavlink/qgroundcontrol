@@ -23,20 +23,13 @@
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
-VideoReceiver::Sink* VideoReceiver::_sink = NULL;
-GstElement*          VideoReceiver::_pipeline = NULL;
-GstElement*          VideoReceiver::_pipeline2 = NULL;
-GstElement*          VideoReceiver::_tee = NULL;
-
 // -EOS has appeared on the bus of the temporary pipeline
 // -At this point all of the recoring elements have been flushed, and the video file has been finalized
 // -Now we can remove the temporary pipeline and its elements
 #if defined(QGC_GST_STREAMING)
-gboolean VideoReceiver::_eosCB(GstBus* bus, GstMessage* message, gpointer user_data)
+void VideoReceiver::_eosCB(GstMessage* message)
 {
-    Q_UNUSED(bus);
-    Q_UNUSED(message);
-    Q_UNUSED(user_data);
+    Q_UNUSED(message)
 
     gst_bin_remove(GST_BIN(_pipeline2), _sink->queue);
     gst_bin_remove(GST_BIN(_pipeline2), _sink->mux);
@@ -56,7 +49,8 @@ gboolean VideoReceiver::_eosCB(GstBus* bus, GstMessage* message, gpointer user_d
     delete _sink;
     _sink = NULL;
 
-    return true;
+    _recording = false;
+    emit recordingChanged();
 }
 #endif
 
@@ -65,15 +59,9 @@ gboolean VideoReceiver::_eosCB(GstBus* bus, GstMessage* message, gpointer user_d
 // -Setup watch and handler for EOS event on the temporary pipeline's bus
 // -Send an EOS event at the beginning of that pipeline and set up a callback for
 #if defined(QGC_GST_STREAMING)
-GstPadProbeReturn VideoReceiver::_unlinkCB(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
+void VideoReceiver::_unlinkCB(GstPadProbeInfo* info)
 {
-    Q_UNUSED(pad);
-    Q_UNUSED(info);
-    Q_UNUSED(user_data);
-
-    // We will only execute once
-    if(!g_atomic_int_compare_and_exchange(&_sink->removing, FALSE, TRUE))
-        return GST_PAD_PROBE_OK;
+    Q_UNUSED(info)
 
     // Also unlinks and unrefs
     gst_bin_remove_many(GST_BIN(_pipeline), _sink->queue, _sink->mux, _sink->filesink, NULL);
@@ -92,7 +80,7 @@ GstPadProbeReturn VideoReceiver::_unlinkCB(GstPad* pad, GstPadProbeInfo* info, g
     // Add watch for EOS event
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline2));
     gst_bus_add_signal_watch(bus);
-    g_signal_connect(bus, "message::eos", G_CALLBACK(_eosCB), NULL);
+    g_signal_connect(bus, "message::eos", G_CALLBACK(_eosCallBack), this);
     gst_object_unref(bus);
 
     if(gst_element_set_state(_pipeline2, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
@@ -104,8 +92,33 @@ GstPadProbeReturn VideoReceiver::_unlinkCB(GstPad* pad, GstPadProbeInfo* info, g
     gst_pad_send_event(sinkpad, gst_event_new_eos());
     gst_object_unref(sinkpad);
 
+}
+#endif
+
+#if defined(QGC_GST_STREAMING)
+gboolean VideoReceiver::_eosCallBack(GstBus* bus, GstMessage* message, gpointer user_data)
+{
+    Q_UNUSED(bus)
+    Q_ASSERT(message != NULL && user_data != NULL);
+    VideoReceiver* pThis = (VideoReceiver*)user_data;
+    pThis->_eosCB(message);
+    return FALSE;
+}
+#endif
+
+#if defined(QGC_GST_STREAMING)
+GstPadProbeReturn VideoReceiver::_unlinkCallBack(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
+{
+    Q_UNUSED(pad);
+    Q_ASSERT(info != NULL && user_data != NULL);
+    VideoReceiver* pThis = (VideoReceiver*)user_data;
+    // We will only execute once
+    if(!g_atomic_int_compare_and_exchange(&pThis->_sink->removing, FALSE, TRUE))
+        return GST_PAD_PROBE_REMOVE;
+    pThis->_unlinkCB(info);
     return GST_PAD_PROBE_REMOVE;
 }
+
 #endif
 
 // When we finish our pipeline will look like this:
@@ -140,6 +153,7 @@ void VideoReceiver::startRecording(void)
     } else {
         fileName = _path + "/QGC-" + QDateTime::currentDateTime().toString("yyyy-MM-dd-hh:mm:ss") + ".mkv";
     }
+
     g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(fileName), NULL);
     qCDebug(VideoReceiverLog) << "New video file:" << fileName;
 
@@ -172,9 +186,7 @@ void VideoReceiver::stopRecording(void)
     }
 
     // Wait for data block before unlinking
-    gst_pad_add_probe(_sink->teepad, GST_PAD_PROBE_TYPE_IDLE, _unlinkCB, _sink, NULL);
-    _recording = false;
-    emit recordingChanged();
+    gst_pad_add_probe(_sink->teepad, GST_PAD_PROBE_TYPE_IDLE, _unlinkCallBack, this, NULL);
 #endif
 }
 
@@ -183,6 +195,10 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _recording(false)
     , _streaming(false)
 #if defined(QGC_GST_STREAMING)
+    , _sink(NULL)
+    , _tee(NULL)
+    , _pipeline(NULL)
+    , _pipeline2(NULL)
     , _videoSink(NULL)
     , _socket(NULL)
     , _serverPresent(false)
