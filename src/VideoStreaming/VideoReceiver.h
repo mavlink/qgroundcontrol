@@ -69,7 +69,6 @@ private slots:
 
 private:
 #if defined(QGC_GST_STREAMING)
-
     typedef struct
     {
         GstPad*         teepad;
@@ -93,7 +92,6 @@ private:
     static gboolean             _onBusMessage(GstBus* bus, GstMessage* message, gpointer user_data);
     static gboolean             _eosCallBack(GstBus* bus, GstMessage* message, gpointer user_data);
     static GstPadProbeReturn    _unlinkCallBack(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
-
 #endif
 
     QString     _uri;
