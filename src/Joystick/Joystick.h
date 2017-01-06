@@ -19,6 +19,7 @@
 #include "MultiVehicleManager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
+Q_DECLARE_LOGGING_CATEGORY(JoystickVerboseLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
 class Joystick : public QThread
@@ -30,12 +31,26 @@ public:
 
     ~Joystick();
 
-    typedef struct {
+    typedef enum {
+        stickLeftX,
+        stickLeftY,
+        stickRightX,
+        stickRightY,
+        maxAxis
+    } Axis_t;
+
+    typedef struct Calibration_t {
         int     min;
         int     max;
         int     center;
         int     deadband;
         bool    reversed;
+        Calibration_t()
+            : min(-32768)
+            , max(32768)
+            , center(0)
+            , deadband(0)
+            , reversed(false) {}
     } Calibration_t;
 
     typedef enum {
@@ -51,6 +66,11 @@ public:
         ThrottleModeDownZero,
         ThrottleModeMax
     } ThrottleMode_t;
+
+    AxisFunction_t modes[2][maxAxis] = {
+    { rollFunction, pitchFunction, yawFunction, throttleFunction },
+    { rollFunction, throttleFunction, yawFunction, pitchFunction }
+    };
 
     Q_PROPERTY(QString name READ name CONSTANT)
 
@@ -68,6 +88,8 @@ public:
     Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
     Q_PROPERTY(bool exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
     Q_PROPERTY(bool accumulator READ accumulator WRITE setAccumulator NOTIFY accumulatorChanged)
+    Q_PROPERTY(int mode         READ mode        WRITE setMode           NOTIFY modeChanged)
+    Q_PROPERTY(bool requiresCalibration READ requiresCalibration CONSTANT)
 
     // Property accessors
 
@@ -88,6 +110,14 @@ public:
     QVariantList buttonActions(void);
 
     QString name(void) { return _name; }
+
+    void setMode(int mode);
+    int  mode(void) { return Joystick::_mode; }
+
+    virtual bool requiresCalibration(void) { return true; }
+
+    void setAxisMapping(Axis_t axis, int map) { _rgAxisMapping[axis] = map; }
+    int getMappedAxis(Axis_t axis) { return _rgAxisMapping[axis]; }
 
     int throttleMode(void);
     void setThrottleMode(int mode);
@@ -116,6 +146,8 @@ public:
 signals:
     void calibratedChanged(bool calibrated);
 
+    void modeChanged(int mode);
+
     // The raw signals are only meant for use by calibration
     void rawAxisValueChanged(int index, int value);
     void rawButtonPressedChanged(int index, int pressed);
@@ -141,12 +173,13 @@ signals:
     void buttonActionTriggered(int action);
 
 protected:
-    void _saveSettings(void);
-    void _loadSettings(void);
-    float _adjustRange(int value, Calibration_t calibration, bool withDeadbands);
-    void _buttonAction(const QString& action);
-    bool _validAxis(int axis);
-    bool _validButton(int button);
+    void    _setDefaultCalibration(void);
+    void    _saveSettings(void);
+    void    _loadSettings(void);
+    float   _adjustRange(int value, Calibration_t calibration, bool withDeadbands);
+    void    _buttonAction(const QString& action);
+    bool    _validAxis(int axis);
+    bool    _validButton(int button);
 
 private:
     virtual bool _open() = 0;
@@ -176,7 +209,9 @@ protected:
 
     int*                _rgAxisValues;
     Calibration_t*      _rgCalibration;
-    int                 _rgFunctionAxis[maxFunction];
+    Axis_t              _rgFunctionAxis[maxFunction];
+    int                 _rgAxisMapping[maxAxis];
+    static int          _mode;
 
     bool*               _rgButtonValues;
     QStringList         _rgButtonActions;
@@ -194,8 +229,8 @@ protected:
     MultiVehicleManager*    _multiVehicleManager;
 
 private:
-    static const char*  _rgFunctionSettingsKey[maxFunction];
-
+//    static const char*  _rgFunctionSettingsKey[maxFunction];
+    static const char* _rgAxisMappingKey[maxAxis];
     static const char* _settingsGroup;
     static const char* _calibratedSettingsKey;
     static const char* _buttonActionSettingsKey;
@@ -203,6 +238,7 @@ private:
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;
     static const char* _deadbandSettingsKey;
+    static const char* _modeSettingsKey;
 };
 
 #endif

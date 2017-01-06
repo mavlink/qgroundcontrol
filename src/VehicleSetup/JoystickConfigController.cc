@@ -15,6 +15,7 @@
 #include <QSettings>
 
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
+QGC_LOGGING_CATEGORY(JoystickConfigControllerVerboseLog, "JoystickConfigControllerVerboseLog")
 
 const int JoystickConfigController::_updateInterval =       150;        ///< Interval for timer which updates radio channel widgets
 const int JoystickConfigController::_calCenterPoint =       0;
@@ -76,30 +77,30 @@ JoystickConfigController::~JoystickConfigController()
 const JoystickConfigController::stateMachineEntry* JoystickConfigController::_getStateMachineEntry(int step)
 {
     static const char* msgBegin =           "Allow all sticks to center as shown in diagram.\n\nClick Next to continue";
-    static const char* msgThrottleUp =      "Move the Throttle stick all the way up and hold it there...";
-    static const char* msgThrottleDown =    "Move the Throttle stick all the way down and hold it there...";
-    static const char* msgYawLeft =         "Move the Yaw stick all the way to the left and hold it there...";
-    static const char* msgYawRight =        "Move the Yaw stick all the way to the right and hold it there...";
-    static const char* msgRollLeft =        "Move the Roll stick all the way to the left and hold it there...";
-    static const char* msgRollRight =       "Move the Roll stick all the way to the right and hold it there...";
-    static const char* msgPitchDown =       "Move the Pitch stick all the way down and hold it there...";
-    static const char* msgPitchUp =         "Move the Pitch stick all the way up and hold it there...";
-    static const char* msgPitchCenter =     "Allow the Pitch stick to move back to center...";
+    static const char* msgLStickUp =      "Move the LEFT stick all the way up and hold it there...";
+    static const char* msgLStickDown =    "Move the LEFT stick all the way down and hold it there...";
+    static const char* msgLStickLeft =         "Move the LEFT stick all the way to the left and hold it there...";
+    static const char* msgLStickRight =        "Move the LEFT stick all the way to the right and hold it there...";
+    static const char* msgRStickLeft =        "Move the RIGHT stick all the way to the left and hold it there...";
+    static const char* msgRStickRight =       "Move the RIGHT stick all the way to the right and hold it there...";
+    static const char* msgRStickDown =       "Move the RIGHT stick all the way down and hold it there...";
+    static const char* msgRStickUp =         "Move the RIGHT stick all the way up and hold it there...";
+    static const char* msgRStickCenter =     "Allow the RIGHT stick to move back to center...";
     static const char* msgComplete =        "All settings have been captured. Click Next to enable the joystick.";
     
     static const stateMachineEntry rgStateMachine[] = {
-        //Function
-        { Joystick::maxFunction,       msgBegin,           _imageCenter,       &JoystickConfigController::_inputCenterWaitBegin,   &JoystickConfigController::_saveAllTrims,       NULL },
-        { Joystick::throttleFunction,  msgThrottleUp,      _imageThrottleUp,   &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
-        { Joystick::throttleFunction,  msgThrottleDown,    _imageThrottleDown, &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
-        { Joystick::yawFunction,       msgYawRight,        _imageYawRight,     &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
-        { Joystick::yawFunction,       msgYawLeft,         _imageYawLeft,      &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
-        { Joystick::rollFunction,      msgRollRight,       _imageRollRight,    &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
-        { Joystick::rollFunction,      msgRollLeft,        _imageRollLeft,     &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
-        { Joystick::pitchFunction,     msgPitchUp,         _imagePitchUp,      &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
-        { Joystick::pitchFunction,     msgPitchDown,       _imagePitchDown,    &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
-        { Joystick::pitchFunction,     msgPitchCenter,     _imageCenter,       &JoystickConfigController::_inputCenterWait,        NULL,                                           NULL },
-        { Joystick::maxFunction,       msgComplete,        _imageCenter,       NULL,                                               &JoystickConfigController::_writeCalibration,   NULL },
+        //Axis                   Message           Image               RCInputFunction                                     NextFunction                                    SkipFunction
+        { Joystick::maxAxis,     msgBegin,         _imageCenter,       &JoystickConfigController::_inputCenterWaitBegin,   &JoystickConfigController::_saveAllTrims,       NULL },
+        { Joystick::stickLeftY,  msgLStickUp,      _imageThrottleUp,   &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
+        { Joystick::stickLeftY,  msgLStickDown,    _imageThrottleDown, &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
+        { Joystick::stickLeftX,  msgLStickRight,   _imageYawRight,     &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
+        { Joystick::stickLeftX,  msgLStickLeft,    _imageYawLeft,      &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
+        { Joystick::stickRightX, msgRStickRight,   _imageRollRight,    &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
+        { Joystick::stickRightX, msgRStickLeft,    _imageRollLeft,     &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
+        { Joystick::stickRightY, msgRStickUp,      _imagePitchUp,      &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
+        { Joystick::stickRightY, msgRStickDown,    _imagePitchDown,    &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
+        { Joystick::stickRightY, msgRStickCenter,  _imageCenter,       &JoystickConfigController::_inputCenterWait,        NULL,                                           NULL },
+        { Joystick::maxAxis,     msgComplete,      _imageCenter,       NULL,                                               &JoystickConfigController::_writeCalibration,   NULL },
     };
     
     Q_ASSERT(step >=0 && step < (int)(sizeof(rgStateMachine) / sizeof(rgStateMachine[0])));
@@ -140,7 +141,7 @@ void JoystickConfigController::_axisValueChanged(int axis, int value)
         emit axisValueChanged(axis, _axisRawValue[axis]);
         
         // Signal attitude axis values to Qml if mapped
-        if (_rgAxisInfo[axis].function != Joystick::maxFunction) {
+        if (_rgAxisInfo[axis].axis != Joystick::maxAxis) {
             switch (_rgAxisInfo[axis].function) {
                 case Joystick::rollFunction:
                     emit rollAxisValueChanged(_axisRawValue[axis]);
@@ -172,7 +173,7 @@ void JoystickConfigController::_axisValueChanged(int axis, int value)
             const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
             Q_ASSERT(state);
             if (state->rcInputFn) {
-                (this->*state->rcInputFn)(state->function, axis, value);
+                (this->*state->rcInputFn)(state->axis, axis, value);
             }
         }
     }
@@ -228,9 +229,9 @@ void JoystickConfigController::_saveAllTrims(void)
     // allow us to get good trims for the roll/pitch/yaw/throttle even though we don't know which
     // axis they are yet. As we continue through the process the other axes will get their
     // trims reset to correct values.
-    
+    qCDebug(JoystickConfigControllerLog) << "_saveAllTrims";
     for (int i=0; i<_axisCount; i++) {
-        qCDebug(JoystickConfigControllerLog) << "_saveAllTrims trim" << _axisRawValue[i];
+        qCDebug(JoystickConfigControllerVerboseLog) << "\taxis:" << i << "\ttrim:" << _axisRawValue[i];
         _rgAxisInfo[i].axisTrim = _axisRawValue[i];
     }
     _advanceState();
@@ -242,17 +243,17 @@ void JoystickConfigController::_axisDeadbandChanged(int axis, int value)
 
     _rgAxisInfo[axis].deadband = value;
 
-    qCDebug(JoystickConfigControllerLog) << "Axis:" << axis << "Deadband:" << _rgAxisInfo[axis].deadband;
+    //qCDebug(JoystickConfigControllerLog) << "Axis:" << axis << "Deadband:" << _rgAxisInfo[axis].deadband;
 }
 
 /// @brief Waits for the sticks to be centered, enabling Next when done.
-void JoystickConfigController::_inputCenterWaitBegin(Joystick::AxisFunction_t function, int axis, int value)
+void JoystickConfigController::_inputCenterWaitBegin(Joystick::Axis_t axis, int map, int value)
 {
-    Q_UNUSED(function);
+    Q_UNUSED(axis);
 
     //sensing deadband
-    if (abs(value)*1.1f>_rgAxisInfo[axis].deadband) {   //add 10% on top of existing deadband
-        _axisDeadbandChanged(axis,abs(value)*1.1f);
+    if (abs(value)*1.1f>_rgAxisInfo[map].deadband) {   //add 10% on top of existing deadband
+        _axisDeadbandChanged(map,abs(value)*1.1f);
     }
 
     _nextButton->setEnabled(true);
@@ -272,7 +273,7 @@ bool JoystickConfigController::_stickSettleComplete(int axis, int value)
     if (abs(_stickDetectValue - value) > _calSettleDelta) {
         // Stick is moving too much to consider stopped
         
-        qCDebug(JoystickConfigControllerLog) << "_stickSettleComplete still moving, axis:_stickDetectValue:value" << axis << _stickDetectValue << value;
+        qCDebug(JoystickConfigControllerVerboseLog) << "_stickSettleComplete still moving, axis:_stickDetectValue:value" << axis << _stickDetectValue << value;
 
         _stickDetectValue = value;
         _stickDetectSettleStarted = false;
@@ -300,52 +301,54 @@ bool JoystickConfigController::_stickSettleComplete(int axis, int value)
     return false;
 }
 
-void JoystickConfigController::_inputStickDetect(Joystick::AxisFunction_t function, int axis, int value)
-{
-    qCDebug(JoystickConfigControllerLog) << "_inputStickDetect function:axis:value" << function << axis << value;
-    
-    if (!_validAxis(axis)) {
-        qCWarning(JoystickConfigControllerLog) << "Invalid axis axis:_axisCount" << axis << _axisCount;
+void JoystickConfigController::_inputStickDetect(Joystick::Axis_t axis, int map, int value)
+{    
+    if (!_validAxis(map)) {
+        qCWarning(JoystickConfigControllerLog) << "Invalid axis map:_axisCount" << map << _axisCount;
         return;
     }
 
     // If this axis is already used in a mapping we can't use it again
-    if (_rgAxisInfo[axis].function != Joystick::maxFunction) {
+    if (_rgAxisInfo[map].axis != Joystick::maxAxis) {
         return;
     }
-    
+
     if (_stickDetectAxis == _axisNoAxis) {
         // We have not detected enough movement on a axis yet
         
-        if (abs(_axisValueSave[axis] - value) > _calMoveDelta) {
+        if (abs(_axisValueSave[map] - value) > _calMoveDelta) {
             // Stick has moved far enough to consider it as being selected for the function
             
-            qCDebug(JoystickConfigControllerLog) << "_inputStickDetect starting settle wait, function:axis:value" << function << axis << value;
+            qCDebug(JoystickConfigControllerLog) << "_inputStickDetect starting settle wait, axis:map:value" << axis << map << value;
             
             // Setup up to detect stick being pegged to min or max value
-            _stickDetectAxis = axis;
+            _stickDetectAxis = map;
             _stickDetectInitialValue = value;
             _stickDetectValue = value;
         }
-    } else if (axis == _stickDetectAxis) {
-        if (_stickSettleComplete(axis, value)) {
-            AxisInfo* info = &_rgAxisInfo[axis];
+    } else if (map == _stickDetectAxis) {
+        if (_stickSettleComplete(map, value)) {
+            AxisInfo* info = &_rgAxisInfo[map];
             
             // Stick detection is complete. Stick should be at max position.
             // Map the axis to the function
-            _rgFunctionAxisMapping[function] = axis;
-            info->function = function;
+            //_rgFunctionAxisMapping[axis] = map;
+            info->axis = axis;
+            //info->function = joystick->
+
+            _rgAxisMapping[axis] = map;
+//            _rgFunctionAxisMapping = joystick->get
             
             // Axis should be at max value, if it is below initial set point the the axis is reversed.
-            info->reversed = value < _axisValueSave[axis];
+            info->reversed = value < _axisValueSave[map];
             
             if (info->reversed) {
-                _rgAxisInfo[axis].axisMin = value;
+                _rgAxisInfo[map].axisMin = value;
             } else {
-                _rgAxisInfo[axis].axisMax = value;
+                _rgAxisInfo[map].axisMax = value;
             }
             
-            qCDebug(JoystickConfigControllerLog) << "_inputStickDetect saving values, function:axis:value:reversed:_axisValueSave" << function << axis << value << info->reversed << _axisValueSave[axis];
+            qCDebug(JoystickConfigControllerLog) << "_inputStickDetect saving values, axis:map:value:reversed:_axisValueSave" << axis << map << value << info->reversed << _axisValueSave[map];
             
             _signalAllAttiudeValueChanges();
             
@@ -354,32 +357,30 @@ void JoystickConfigController::_inputStickDetect(Joystick::AxisFunction_t functi
     }
 }
 
-void JoystickConfigController::_inputStickMin(Joystick::AxisFunction_t function, int axis, int value)
-{
-    qCDebug(JoystickConfigControllerLog) << "_inputStickMin function:axis:value" << function << axis << value;
-    
-    if (!_validAxis(axis)) {
-        qCWarning(JoystickConfigControllerLog) << "Invalid axis axis:_axisCount" << axis << _axisCount;
+void JoystickConfigController::_inputStickMin(Joystick::Axis_t axis, int map, int value)
+{    
+    if (!_validAxis(map)) {
+        qCWarning(JoystickConfigControllerLog) << "Invalid axis map:_axisCount" << map << _axisCount;
         return;
     }
 
     // We only care about the axis mapped to the function we are working on
-    if (_rgFunctionAxisMapping[function] != axis) {
+    if (_rgAxisMapping[axis] != map) {
         return;
     }
 
     if (_stickDetectAxis == _axisNoAxis) {
         // Setup up to detect stick being pegged to extreme position
-        if (_rgAxisInfo[axis].reversed) {
+        if (_rgAxisInfo[map].reversed) {
             if (value > _calCenterPoint + _calMoveDelta) {
-                _stickDetectAxis = axis;
+                _stickDetectAxis = map;
                 _stickDetectInitialValue = value;
                 _stickDetectValue = value;
                 qCDebug(JoystickConfigControllerLog) << "_inputStickMin detected movement _stickDetectAxis:_stickDetectInitialValue" << _stickDetectAxis << _stickDetectInitialValue;
             }
         } else {
             if (value < _calCenterPoint - _calMoveDelta) {
-                _stickDetectAxis = axis;
+                _stickDetectAxis = map;
                 _stickDetectInitialValue = value;
                 _stickDetectValue = value;
                 qCDebug(JoystickConfigControllerLog) << "_inputStickMin detected movement _stickDetectAxis:_stickDetectInitialValue" << _stickDetectAxis << _stickDetectInitialValue;
@@ -388,34 +389,32 @@ void JoystickConfigController::_inputStickMin(Joystick::AxisFunction_t function,
     } else {
         // We are waiting for the selected axis to settle out
         
-        if (_stickSettleComplete(axis, value)) {
-            AxisInfo* info = &_rgAxisInfo[axis];
+        if (_stickSettleComplete(map, value)) {
+            AxisInfo* info = &_rgAxisInfo[map];
             
             // Stick detection is complete. Stick should be at min position.
             if (info->reversed) {
-                _rgAxisInfo[axis].axisMax = value;
+                _rgAxisInfo[map].axisMax = value;
             } else {
-                _rgAxisInfo[axis].axisMin = value;
+                _rgAxisInfo[map].axisMin = value;
             }
             
-            qCDebug(JoystickConfigControllerLog) << "_inputStickMin saving values, function:axis:value:reversed" << function << axis << value << info->reversed;
+            qCDebug(JoystickConfigControllerLog) << "_inputStickMin saving values, axis:map:value:reversed" << axis << map << value << info->reversed;
             
             _advanceState();
         }
     }
 }
 
-void JoystickConfigController::_inputCenterWait(Joystick::AxisFunction_t function, int axis, int value)
-{
-    qCDebug(JoystickConfigControllerLog) << "_inputCenterWait function:axis:value" << function << axis << value;
-    
-    if (!_validAxis(axis)) {
-        qCWarning(JoystickConfigControllerLog) << "Invalid axis axis:_axisCount" << axis << _axisCount;
+void JoystickConfigController::_inputCenterWait(Joystick::Axis_t axis, int map, int value)
+{    
+    if (!_validAxis(map)) {
+        qCWarning(JoystickConfigControllerLog) << "Invalid axis map:_axisCount" << map << _axisCount;
         return;
     }
 
     // We only care about the axis mapped to the function we are working on
-    if (_rgFunctionAxisMapping[function] != axis) {
+    if (_rgAxisMapping[axis] != map) {
         return;
     }
     
@@ -424,13 +423,13 @@ void JoystickConfigController::_inputCenterWait(Joystick::AxisFunction_t functio
         
         if (abs(_calCenterPoint - value) < _calRoughCenterDelta) {
             // Stick has moved close enough to center that we can start waiting for it to settle
-            _stickDetectAxis = axis;
+            _stickDetectAxis = map;
             _stickDetectInitialValue = value;
             _stickDetectValue = value;
             qCDebug(JoystickConfigControllerLog) << "_inputStickMin detected possible center _stickDetectAxis:_stickDetectInitialValue" << _stickDetectAxis << _stickDetectInitialValue;
         }
     } else {
-        if (_stickSettleComplete(axis, value)) {
+        if (_stickSettleComplete(map, value)) {
             _advanceState();
         }
     }
@@ -439,10 +438,12 @@ void JoystickConfigController::_inputCenterWait(Joystick::AxisFunction_t functio
 /// @brief Resets internal calibration values to their initial state in preparation for a new calibration sequence.
 void JoystickConfigController::_resetInternalCalibrationValues(void)
 {
-    // Set all raw axiss to not reversed and center point values
+    qCDebug(JoystickConfigControllerLog) << "Internal calibrations reset";
+    // Set all raw axes to not reversed and center point values
     for (int i=0; i<_axisCount; i++) {
         struct AxisInfo* info = &_rgAxisInfo[i];
-        info->function = Joystick::maxFunction;
+        //info->function = Joystick::maxFunction;
+        info->axis = Joystick::maxAxis;
         info->reversed = false;
         info->deadband = 0;
         info->axisMin = JoystickConfigController::_calCenterPoint;
@@ -452,7 +453,11 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
     
     // Initialize attitude function mapping to function axis not set
     for (size_t i=0; i<Joystick::maxFunction; i++) {
-        _rgFunctionAxisMapping[i] = _axisNoAxis;
+        //_rgFunctionAxisMapping[i] = _axisNoAxis;
+    }
+
+    for (size_t i=0; i<Joystick::maxAxis; i++) {
+        _rgAxisMapping[i] = _axisNoAxis;
     }
     
     _signalAllAttiudeValueChanges();
@@ -468,10 +473,16 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
     for (int i=0; i<_axisCount; i++) {
         struct AxisInfo* info = &_rgAxisInfo[i];
         info->function = Joystick::maxFunction;
+        info->axis = Joystick::maxAxis;
     }
-    
+    qCDebug(JoystickConfigControllerLog) << "_setInternalCalibrationValuesFromSettings: Axes and function mappings cleared";
+
     for (size_t i=0; i<Joystick::maxFunction; i++) {
         _rgFunctionAxisMapping[i] = _axisNoAxis;
+    }
+
+    for (size_t i=0; i<Joystick::maxAxis; i++) {
+        _rgAxisMapping[i] = _axisNoAxis;
     }
     
     for (int axis=0; axis<_axisCount; axis++) {
@@ -484,7 +495,7 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
         info->reversed = calibration.reversed;
         info->deadband = calibration.deadband;
 
-        qCDebug(JoystickConfigControllerLog) << "Read settings name:axis:min:max:trim:reversed" << joystick->name() << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
+        qCDebug(JoystickConfigControllerVerboseLog) << "Read settings name:axis:min:max:trim:reversed" << joystick->name() << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
     }
     
     for (int function=0; function<Joystick::maxFunction; function++) {
@@ -494,6 +505,14 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
         
         _rgFunctionAxisMapping[function] = paramAxis;
         _rgAxisInfo[paramAxis].function = (Joystick::AxisFunction_t)function;
+
+        qCDebug(JoystickConfigControllerLog) << "paramAxis:" << paramAxis << "function:" << function;
+    }
+
+    for (int axis=0; axis<Joystick::maxAxis; axis++) {
+        int mappedAxis = joystick->getMappedAxis((Joystick::Axis_t)axis);
+        _rgAxisMapping[axis] = mappedAxis;
+        _rgAxisInfo[mappedAxis].axis = (Joystick::Axis_t)axis;
     }
     
     _signalAllAttiudeValueChanges();
@@ -533,7 +552,7 @@ void JoystickConfigController::_validateCalibration(void)
                     break;
             }
         } else {
-            // Unavailable axiss are set to defaults
+            // Unavailable axes are set to defaults
             qCDebug(JoystickConfigControllerLog) << "_validateCalibration resetting unavailable axis" << chan;
             info->axisMin = _calDefaultMinValue;
             info->axisMax = _calDefaultMaxValue;
@@ -566,9 +585,13 @@ void JoystickConfigController::_writeCalibration(void)
         joystick->setCalibration(axis, calibration);
     }
     
-    // Write function mapping parameters
-    for (int function=0; function<Joystick::maxFunction; function++) {
-        joystick->setFunctionAxis((Joystick::AxisFunction_t)function, _rgFunctionAxisMapping[function]);
+    // Write axis mapping parameters
+//    for (int function=0; function<Joystick::maxFunction; function++) {
+//        joystick->setFunctionAxis((Joystick::AxisFunction_t)function, _rgFunctionAxisMapping[function]);
+//    }
+
+    for (int axis=0; axis<Joystick::maxAxis; axis++) {
+        joystick->setAxisMapping((Joystick::Axis_t)axis, _rgAxisMapping[axis]);
     }
     
     _stopCalibration();
@@ -611,10 +634,10 @@ void JoystickConfigController::_stopCalibration(void)
     _setHelpImage(_imageCenter);
 }
 
-/// @brief Saves the current axis values, so that we can detect when the use moves an input.
+/// @brief Saves the current axis values, so that we can detect when the user moves an input.
 void JoystickConfigController::_calSaveCurrentValues(void)
 {
-	qCDebug(JoystickConfigControllerLog) << "_calSaveCurrentValues";
+    //qCDebug(JoystickConfigControllerLog) << "_calSaveCurrentValues";
     for (int i = 0; i < _axisCount; i++) {
         _axisValueSave[i] = _axisRawValue[i];
     }
@@ -730,22 +753,46 @@ int JoystickConfigController::throttleAxisDeadband(void)
 
 bool JoystickConfigController::rollAxisMapped(void)
 {
-    return _rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis;
+    int axis = _rgFunctionAxisMapping[Joystick::rollFunction];
+    int mappedAxis = _rgAxisMapping[axis];
+    if (mappedAxis == _axisNoAxis) {
+        return false;
+    }
+    qCDebug(JoystickConfigControllerLog) << "axis:mappedAxis:rollAxisMapped:" << axis << mappedAxis << _rgAxisInfo[mappedAxis].axis;
+    return _rgAxisInfo[mappedAxis].axis != Joystick::maxAxis;
 }
 
 bool JoystickConfigController::pitchAxisMapped(void)
 {
-    return _rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis;
+    int axis = _rgFunctionAxisMapping[Joystick::pitchFunction];
+    int mappedAxis = _rgAxisMapping[axis];
+    if (mappedAxis == _axisNoAxis) {
+        return false;
+    }
+    qCDebug(JoystickConfigControllerLog) << "axis:mappedAxis:pitchAxisMapped:" << axis << mappedAxis << _rgAxisInfo[mappedAxis].axis;
+    return _rgAxisInfo[mappedAxis].axis != Joystick::maxAxis;
 }
 
 bool JoystickConfigController::yawAxisMapped(void)
 {
-    return _rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis;
+    int axis = _rgFunctionAxisMapping[Joystick::yawFunction];
+    int mappedAxis = _rgAxisMapping[axis];
+    if (mappedAxis == _axisNoAxis) {
+        return false;
+    }
+    qCDebug(JoystickConfigControllerLog) << "axis:mappedAxis:yawAxisMapped:" << axis << mappedAxis << _rgAxisInfo[mappedAxis].axis;
+    return _rgAxisInfo[mappedAxis].axis != Joystick::maxAxis;
 }
 
 bool JoystickConfigController::throttleAxisMapped(void)
 {
-    return _rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis;
+    int axis = _rgFunctionAxisMapping[Joystick::throttleFunction];
+    int mappedAxis = _rgAxisMapping[axis];
+    if (mappedAxis == _axisNoAxis) {
+        return false;
+    }
+    qCDebug(JoystickConfigControllerLog) << "axis:mappedAxis:throttleAxisMapped:" << axis << mappedAxis << _rgAxisInfo[mappedAxis].axis;
+    return _rgAxisInfo[mappedAxis].axis != Joystick::maxAxis;
 }
 
 bool JoystickConfigController::rollAxisReversed(void)
@@ -786,6 +833,7 @@ bool JoystickConfigController::throttleAxisReversed(void)
 
 void JoystickConfigController::_signalAllAttiudeValueChanges(void)
 {
+    qCDebug(JoystickConfigControllerLog) << "_signalAllAttitudeValueChanges";
     emit rollAxisMappedChanged(rollAxisMapped());
     emit pitchAxisMappedChanged(pitchAxisMapped());
     emit yawAxisMappedChanged(yawAxisMapped());
@@ -809,6 +857,7 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
     if (_activeJoystick) {
         joystickTransition = true;
         disconnect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
+        disconnect(_activeJoystick, &Joystick::modeChanged, this, &JoystickConfigController::_modeChanged);
         delete _rgAxisInfo;
         delete _axisValueSave;
         delete _axisRawValue;
@@ -827,7 +876,24 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
         _axisValueSave = new int[_axisCount];
         _axisRawValue = new int[_axisCount];
         connect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
+        connect(_activeJoystick, &Joystick::modeChanged, this, &JoystickConfigController::_modeChanged);
     }
+}
+
+void JoystickConfigController::_modeChanged(int mode)
+{
+    qCDebug(JoystickConfigControllerLog) << "Mode changed:" << mode;
+    for (int function=0; function<Joystick::maxFunction; function++) {
+        int paramAxis;
+
+        paramAxis = _activeJoystick->getFunctionAxis((Joystick::AxisFunction_t)function);
+
+        _rgFunctionAxisMapping[function] = paramAxis;
+        _rgAxisInfo[paramAxis].function = (Joystick::AxisFunction_t)function;
+
+        qCDebug(JoystickConfigControllerLog) << "paramAxis:" << paramAxis << "function:" << function;
+    }
+    _signalAllAttiudeValueChanges();
 }
 
 bool JoystickConfigController::_validAxis(int axis)

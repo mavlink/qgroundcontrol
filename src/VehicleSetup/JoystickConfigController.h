@@ -23,6 +23,7 @@
 #include "Joystick.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)
+Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerVerboseLog)
 
 class RadioConfigest;
 class JoystickManager;
@@ -135,6 +136,7 @@ private slots:
     void _activeJoystickChanged(Joystick* joystick);
     void _axisValueChanged(int axis, int value);
     void _axisDeadbandChanged(int axis, int value);
+    void _modeChanged(int mode);
    
 private:
     /// @brief The states of the calibration state machine.
@@ -149,10 +151,10 @@ private:
         calStateSave
     };
     
-    typedef void (JoystickConfigController::*inputFn)(Joystick::AxisFunction_t function, int axis, int value);
+    typedef void (JoystickConfigController::*inputFn)(Joystick::Axis_t axis, int map, int value);
     typedef void (JoystickConfigController::*buttonFn)(void);
     struct stateMachineEntry {
-        Joystick::AxisFunction_t    function;
+        Joystick::Axis_t            axis;
         const char*                 instructions;
         const char*                 image;
         inputFn                     rcInputFn;
@@ -162,7 +164,8 @@ private:
     
     /// @brief A set of information associated with a radio axis.
     struct AxisInfo {
-        Joystick::AxisFunction_t    function;   ///< Function mapped to this axis, Joystick::maxFunction for none
+        Joystick::Axis_t            axis;       ///< Physical axis mapped to the arbitrary axis index reported by joystick, Joystick::maxAxis for none
+        Joystick::AxisFunction_t    function;
         bool                        reversed;   ///< true: axis is reverse, false: not reversed
         int                         axisMin;    ///< Minimum axis value
         int                         axisMax;    ///< Maximum axis value
@@ -181,15 +184,15 @@ private:
     
     bool _validAxis(int axis);
 
-    void _inputCenterWaitBegin  (Joystick::AxisFunction_t function, int axis, int value);
-    void _inputStickDetect      (Joystick::AxisFunction_t function, int axis, int value);
-    void _inputStickMin         (Joystick::AxisFunction_t function, int axis, int value);
-    void _inputCenterWait       (Joystick::AxisFunction_t function, int axis, int value);
+    void _inputCenterWaitBegin  (Joystick::Axis_t axis, int map, int value);
+    void _inputStickDetect      (Joystick::Axis_t axis, int map, int value);
+    void _inputStickMin         (Joystick::Axis_t axis, int map, int value);
+    void _inputCenterWait       (Joystick::Axis_t axis, int map, int value);
     
-    void _switchDetect(Joystick::AxisFunction_t function, int axis, int value, bool moveToNextStep);
-    
-    void _saveFlapsDown(void);
-    void _skipFlaps(void);
+    void _switchDetect(Joystick::AxisFunction_t function, int axis, int value, bool moveToNextStep); // Undefined
+
+    void _saveFlapsDown(void); // Undefined
+    void _skipFlaps(void); // Undefined
     void _saveAllTrims(void);
     
     bool _stickSettleComplete(int axis, int value);
@@ -226,8 +229,9 @@ private:
     static const int _updateInterval;   ///< Interval for ui update timer
     
     int _rgFunctionAxisMapping[Joystick::maxFunction]; ///< Maps from joystick function to axis index. _axisMax indicates axis not set for this function.
+    int _rgAxisMapping[Joystick::maxAxis];
 
-    static const int _attitudeControls = 5;
+    static const int _attitudeControls = 5; // Unused.. and should be 4?
     
     int                 _axisCount;         ///< Number of actual joystick axes available
     static const int    _axisNoAxis = -1;   ///< Signals no axis set

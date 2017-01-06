@@ -12,7 +12,9 @@ class JoystickSDL : public Joystick
 public:
     JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, MultiVehicleManager* multiVehicleManager);
 
-    static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager); 
+    static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager);
+
+    bool requiresCalibration(void) final { return !_isGameController; }
 
 private:
     static void _loadGameControllerMappings();
