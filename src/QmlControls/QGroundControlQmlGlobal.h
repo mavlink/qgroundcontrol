@@ -17,7 +17,6 @@
 #include "QGCToolbox.h"
 #include "QGCApplication.h"
 #include "LinkManager.h"
-#include "HomePositionManager.h"
 #include "FlightMapSettings.h"
 #include "SettingsFact.h"
 #include "FactMetaData.h"
@@ -65,7 +64,6 @@ public:
     Q_ENUMS(SpeedUnits)
 
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
-    Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager    CONSTANT)
     Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager    READ mapEngineManager       CONSTANT)
@@ -163,7 +161,6 @@ public:
     // Property accesors
 
     FlightMapSettings*      flightMapSettings   ()      { return _flightMapSettings; }
-    HomePositionManager*    homePositionManager ()      { return _homePositionManager; }
     LinkManager*            linkManager         ()      { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()      { return _multiVehicleManager; }
     QGCMapEngineManager*    mapEngineManager    ()      { return _mapEngineManager; }
@@ -235,7 +232,6 @@ private:
     static QMap<QString, FactMetaData*>& nameToMetaDataMap(void);
 
     FlightMapSettings*      _flightMapSettings;
-    HomePositionManager*    _homePositionManager;
     LinkManager*            _linkManager;
     MultiVehicleManager*    _multiVehicleManager;
     QGCMapEngineManager*    _mapEngineManager;

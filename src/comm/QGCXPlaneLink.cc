@@ -30,7 +30,6 @@
 #include "UAS.h"
 #include "UASInterface.h"
 #include "QGCMessageBox.h"
-#include "HomePositionManager.h"
 
 QGCXPlaneLink::QGCXPlaneLink(Vehicle* vehicle, QString remoteHost, QHostAddress localHost, quint16 localPort) :
     _vehicle(vehicle),
