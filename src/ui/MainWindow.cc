@@ -37,7 +37,6 @@
 #include "MAVLinkDecoder.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
-#include "HomePositionManager.h"
 #include "LogCompressor.h"
 #include "UAS.h"
 #include "QGCImageProvider.h"
