@@ -27,7 +27,6 @@
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "FlightMapSettings.h"
-#include "HomePositionManager.h"
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
 #include "JoystickManager.h"

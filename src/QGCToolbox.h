@@ -18,7 +18,6 @@ class FirmwarePluginManager;
 class FlightMapSettings;
 class GAudioOutput;
 class GPSManager;
-class HomePositionManager;
 class JoystickManager;
 class FollowMe;
 class LinkManager;
@@ -44,7 +43,6 @@ public:
     FirmwarePluginManager*      firmwarePluginManager(void)     { return _firmwarePluginManager; }
     FlightMapSettings*          flightMapSettings(void)         { return _flightMapSettings; }
     GAudioOutput*               audioOutput(void)               { return _audioOutput; }
-    HomePositionManager*        homePositionManager(void)       { return _homePositionManager; }
     JoystickManager*            joystickManager(void)           { return _joystickManager; }
     LinkManager*                linkManager(void)               { return _linkManager; }
     MAVLinkProtocol*            mavlinkProtocol(void)           { return _mavlinkProtocol; }
@@ -75,7 +73,6 @@ private:
 #ifndef __mobile__
     GPSManager*                 _gpsManager;
 #endif
-    HomePositionManager*        _homePositionManager;
     QGCImageProvider*           _imageProvider;
     JoystickManager*            _joystickManager;
     LinkManager*                _linkManager;
