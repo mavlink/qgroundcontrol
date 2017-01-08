@@ -508,6 +508,8 @@ QGCView {
                         gesture.enabled:    false
                         visible:            _showPreview
 
+                        property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+
                         plugin: Plugin { name: "QGroundControl" }
 
                         MapScale {
@@ -523,9 +525,9 @@ QGCView {
                             border.color:   _mapAdjustedColor
                             color:          "transparent"
 
-                            QGCLabel {
+                            QGCMapLabel {
                                 anchors.centerIn:   parent
-                                color:              _mapAdjustedColor
+                                map:                minZoomPreview
                                 text:               qsTr("Min Zoom: %1").arg(sliderMinZoom.value)
                             }
                             MouseArea {
@@ -545,6 +547,8 @@ QGCView {
                         gesture.enabled:    false
                         visible:            _showPreview
 
+                        property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+
                         plugin: Plugin { name: "QGroundControl" }
 
                         MapScale {
@@ -560,9 +564,9 @@ QGCView {
                             border.color:   _mapAdjustedColor
                             color:          "transparent"
 
-                            QGCLabel {
+                            QGCMapLabel {
                                 anchors.centerIn:   parent
-                                color:              _mapAdjustedColor
+                                map:                maxZoomPreview
                                 text:               qsTr("Max Zoom: %1").arg(sliderMaxZoom.value)
                             }
                             MouseArea {

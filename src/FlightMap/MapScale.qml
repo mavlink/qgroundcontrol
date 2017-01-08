@@ -138,9 +138,9 @@ Item {
         onTriggered: calculateScale()
     }
 
-    QGCLabel {
+    QGCMapLabel {
         id:                     scaleText
-        color:                  _color
+        map:                    mapControl
         font.family:            ScreenTools.demiboldFontFamily
         anchors.left:           parent.left
         anchors.right:          parent.right
