@@ -71,10 +71,10 @@ FlightMap {
         Component.onCompleted: start(false /* editMode */)
     }
 
-    QGCLabel {
+    QGCMapLabel {
         id:                         flyLabel
+        map:                        flightMap
         text:                       qsTr("Fly")
-        color:                      mapPal.text
         visible:                    !ScreenTools.isShortScreen
         anchors.topMargin:          _toolButtonTopMargin
         anchors.horizontalCenter:   centerMapDropButton.horizontalCenter
