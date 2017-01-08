@@ -584,6 +584,8 @@ QGCView {
                         text:           qsTr("Mission")
                         checked:        true
                         color:          mapPal.text
+                        textStyle:      Text.Outline
+                        textStyleColor: mapPal.textOutline
                     }
 
                     Item { height: 1; width: 1 }
@@ -593,6 +595,8 @@ QGCView {
                         exclusiveGroup: planElementSelectorGroup
                         text:           qsTr("Fence")
                         color:          mapPal.text
+                        textStyle:      Text.Outline
+                        textStyleColor: mapPal.textOutline
                     }
 
                     Item { height: 1; width: 1 }
@@ -602,6 +606,8 @@ QGCView {
                         exclusiveGroup: planElementSelectorGroup
                         text:           qsTr("Rally")
                         color:          mapPal.text
+                        textStyle:      Text.Outline
+                        textStyleColor: mapPal.textOutline
                     }
                 } // Row - Plan Element Selector
 
@@ -770,10 +776,10 @@ QGCView {
                     }
                 }
 
-                QGCLabel {
+                QGCMapLabel {
                     id:                         planLabel
+                    map:                        editorMap
                     text:                       qsTr("Plan")
-                    color:                      mapPal.text
                     visible:                    !ScreenTools.isShortScreen
                     anchors.topMargin:          _toolButtonTopMargin
                     anchors.horizontalCenter:   addMissionItemsButton.horizontalCenter
