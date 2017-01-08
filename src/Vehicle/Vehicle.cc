@@ -979,9 +979,9 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
 
 void Vehicle::_updatePriorityLink(void)
 {
-#ifndef NO_SERIAL_LINK
     LinkInterface* newPriorityLink = NULL;
 
+#ifndef NO_SERIAL_LINK
     // Note that this routine specificallty does not clear _priorityLink when there are no links remaining.
     // By doing this we hold a reference on the last link as the Vehicle shuts down. Thus preventing shutdown
     // ordering NULL pointer crashes where priorityLink() is still called during shutdown sequence.
@@ -1004,6 +1004,7 @@ void Vehicle::_updatePriorityLink(void)
             }
         }
     }
+#endif
 
     if (!newPriorityLink && !_priorityLink.data() && _links.count()) {
         newPriorityLink = _links[0];
@@ -1012,7 +1013,6 @@ void Vehicle::_updatePriorityLink(void)
     if (newPriorityLink) {
         _priorityLink = qgcApp()->toolbox()->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
     }
-#endif
 }
 
 void Vehicle::setLatitude(double latitude)
