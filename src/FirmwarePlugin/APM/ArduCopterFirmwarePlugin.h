@@ -68,6 +68,7 @@ public:
     bool multiRotorXConfig(Vehicle* vehicle) final;
     QString geoFenceRadiusParam(Vehicle* vehicle) final;
     QString offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
+    QString takeControlFlightMode(void) final;
 
 private:
     static bool _remapParamNameIntialized;

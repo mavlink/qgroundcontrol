@@ -57,6 +57,7 @@ public:
 
     // Overrides from FirmwarePlugin
     QString offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Plane.OfflineEditing.params"); }
+    QString takeControlFlightMode(void) final;
 };
 
 #endif

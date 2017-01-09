@@ -67,19 +67,12 @@ public:
     Q_PROPERTY(bool autoconnectPX4Flow                  READ autoconnectPX4Flow                 WRITE setAutoconnectPX4Flow     NOTIFY autoconnectPX4FlowChanged)
     Q_PROPERTY(bool autoconnectRTKGPS                   READ autoconnectRTKGPS                  WRITE setAutoconnectRTKGPS      NOTIFY autoconnectRTKGPSChanged)
     Q_PROPERTY(bool autoconnectLibrePilot               READ autoconnectLibrePilot              WRITE setAutoconnectLibrePilot  NOTIFY autoconnectLibrePilotChanged)
-    Q_PROPERTY(bool isBluetoothAvailable                READ isBluetoothAvailable               CONSTANT)
+    Q_PROPERTY(bool isBluetoothAvailable                READ isBluetoothAvailable                                               CONSTANT)
 
-    /// LinkInterface Accessor
-    Q_PROPERTY(QmlObjectListModel*  links               READ links                              CONSTANT)
-    /// LinkConfiguration Accessor
-    Q_PROPERTY(QmlObjectListModel*  linkConfigurations  READ linkConfigurations                                                 NOTIFY linkConfigurationsChanged)
-    /// List of comm type strings
-    Q_PROPERTY(QStringList          linkTypeStrings     READ linkTypeStrings                    CONSTANT)
-    /// List of supported baud rates for serial links
-    Q_PROPERTY(QStringList          serialBaudRates     READ serialBaudRates                    CONSTANT)
-    /// List of comm ports display names
+    Q_PROPERTY(QmlObjectListModel*  linkConfigurations  READ _qmlLinkConfigurations                                             NOTIFY linkConfigurationsChanged)
+    Q_PROPERTY(QStringList          linkTypeStrings     READ linkTypeStrings                                                    CONSTANT)
+    Q_PROPERTY(QStringList          serialBaudRates     READ serialBaudRates                                                    CONSTANT)
     Q_PROPERTY(QStringList          serialPortStrings   READ serialPortStrings                                                  NOTIFY commPortStringsChanged)
-    /// List of comm ports
     Q_PROPERTY(QStringList          serialPorts         READ serialPorts                                                        NOTIFY commPortsChanged)
 
     // Create/Edit Link Configuration
@@ -100,12 +93,11 @@ public:
     bool autoconnectLibrePilot      (void)  { return _autoconnectLibrePilot; }
     bool isBluetoothAvailable       (void);
 
-    QmlObjectListModel* links               (void) { return &_links; }
-    QmlObjectListModel* linkConfigurations  (void) { return &_linkConfigurations; }
-    QStringList         linkTypeStrings     (void) const;
-    QStringList         serialBaudRates     (void);
-    QStringList         serialPortStrings   (void);
-    QStringList         serialPorts         (void);
+    QList<LinkInterface*> links                 (void);
+    QStringList         linkTypeStrings         (void) const;
+    QStringList         serialBaudRates         (void);
+    QStringList         serialPortStrings       (void);
+    QStringList         serialPorts             (void);
 
     void setAutoconnectUDP        (bool autoconnect);
     void setAutoconnectPixhawk    (bool autoconnect);
@@ -132,7 +124,10 @@ public:
 
     /// Creates, connects (and adds) a link  based on the given configuration instance.
     /// Link takes ownership of config.
-    Q_INVOKABLE LinkInterface* createConnectedLink(LinkConfiguration* config);
+    LinkInterface* createConnectedLink(SharedLinkConfigurationPointer& config);
+
+    // This should only be used by Qml code
+    Q_INVOKABLE void createConnectedLink(LinkConfiguration* config);
 
     /// Creates, connects (and adds) a link  based on the given configuration name.
     LinkInterface* createConnectedLink(const QString& name);
@@ -164,6 +159,17 @@ public:
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
+
+    /// @return This mavlink channel is never assigned to a vehicle.
+    uint8_t reservedMavlinkChannel(void) { return 0; }
+
+    /// If you are going to hold a reference to a LinkInterface* in your object you must reference count it
+    /// by using this method to get access to the shared pointer.
+    SharedLinkInterfacePointer sharedLinkInterfacePointerForLink(LinkInterface* link);
+
+    bool containsLink(LinkInterface* link);
+
+    SharedLinkConfigurationPointer addConfiguration(LinkConfiguration* config);
 
 signals:
     void autoconnectUDPChanged        (bool autoconnect);
@@ -204,11 +210,13 @@ private slots:
 #endif
 
 private:
+    QmlObjectListModel* _qmlLinkConfigurations  (void) { return &_qmlConfigurations; }
     bool _connectionsSuspendedMsg(void);
     void _updateAutoConnectLinks(void);
     void _updateSerialPorts();
     void _fixUnnamed(LinkConfiguration* config);
     bool _setAutoconnectWorker(bool& currentAutoconnect, bool newAutoconnect, const char* autoconnectKey);
+    void _removeConfiguration(LinkConfiguration* config);
 
 #ifndef NO_SERIAL_LINK
     SerialConfiguration* _autoconnectConfigurationsContainsPort(const QString& portName);
@@ -223,9 +231,11 @@ private:
 
     MAVLinkProtocol*    _mavlinkProtocol;
 
-    QmlObjectListModel  _links;
-    QmlObjectListModel  _linkConfigurations;
-    QmlObjectListModel  _autoconnectConfigurations;
+
+    QList<SharedLinkInterfacePointer>       _sharedLinks;
+    QList<SharedLinkConfigurationPointer>   _sharedConfigurations;
+    QList<SharedLinkConfigurationPointer>   _sharedAutoconnectConfigurations;
+    QmlObjectListModel                      _qmlConfigurations;
 
     QMap<QString, int>  _autoconnectWaitList;   ///< key: QGCSerialPortInfo.systemLocation, value: wait count
     QStringList _commPortList;

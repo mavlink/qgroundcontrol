@@ -28,7 +28,7 @@ Item {
     Item {
         id: artificialHorizon
         width:  root.width  * 4
-        height: root.height * 4
+        height: root.height * 8
         anchors.centerIn: parent
         Rectangle {
             id: sky

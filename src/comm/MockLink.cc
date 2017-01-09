@@ -44,8 +44,9 @@ const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
 const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
 const char* MockConfiguration::_failureModeKey =    "FailureMode";
 
-MockLink::MockLink(MockConfiguration* config)
-    : _missionItemHandler(this, qgcApp()->toolbox()->mavlinkProtocol())
+MockLink::MockLink(SharedLinkConfigurationPointer& config)
+    : LinkInterface(config)
+    , _missionItemHandler(this, qgcApp()->toolbox()->mavlinkProtocol())
     , _name("MockLink")
     , _connected(false)
     , _vehicleSystemId(_nextVehicleSystemId++)
@@ -67,14 +68,11 @@ MockLink::MockLink(MockConfiguration* config)
     , _logDownloadCurrentOffset(0)
     , _logDownloadBytesRemaining(0)
 {
-    _config = config;
-    if (_config) {
-        _firmwareType = config->firmwareType();
-        _vehicleType = config->vehicleType();
-        _sendStatusText = config->sendStatusText();
-        _failureMode = config->failureMode();
-        _config->setLink(this);
-    }
+    MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.data());
+    _firmwareType = mockConfig->firmwareType();
+    _vehicleType = mockConfig->vehicleType();
+    _sendStatusText = mockConfig->sendStatusText();
+    _failureMode = mockConfig->failureMode();
 
     union px4_custom_mode   px4_cm;
 
@@ -190,14 +188,14 @@ void MockLink::_loadParams(void)
 
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         if (_vehicleType == MAV_TYPE_FIXED_WING) {
-            paramFile.setFileName(":/unittest/APMArduPlaneMockLink.params");
+            paramFile.setFileName(":/MockLink/APMArduPlaneMockLink.params");
         } else if (_vehicleType == MAV_TYPE_SUBMARINE ) {
-            paramFile.setFileName(":/unittest/APMArduSubMockLink.params");
+            paramFile.setFileName(":/MockLink/APMArduSubMockLink.params");
         } else {
-            paramFile.setFileName(":/unittest/APMArduCopterMockLink.params");
+            paramFile.setFileName(":/MockLink/APMArduCopterMockLink.params");
         }
     } else {
-        paramFile.setFileName(":/unittest/PX4MockLink.params");
+        paramFile.setFileName(":/MockLink/PX4MockLink.params");
     }
 
 
@@ -782,6 +780,9 @@ void MockLink::_handleFTP(const mavlink_message_t& msg)
 
 void MockLink::_handleCommandLong(const mavlink_message_t& msg)
 {
+    static bool firstCmdUser3 = true;
+    static bool firstCmdUser4 = true;
+
     mavlink_command_long_t request;
     uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
 
@@ -817,7 +818,6 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         break;
     case MAV_CMD_USER_3:
         // Test command which returns MAV_RESULT_ACCEPTED on second attempt
-        static bool firstCmdUser3 = true;
         if (firstCmdUser3) {
            firstCmdUser3 = false;
            return;
@@ -828,7 +828,6 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         break;
     case MAV_CMD_USER_4:
         // Test command which returns MAV_RESULT_FAILED on second attempt
-        static bool firstCmdUser4 = true;
         if (firstCmdUser4) {
            firstCmdUser4 = false;
            return;
@@ -1041,12 +1040,12 @@ void MockConfiguration::updateSettings()
 
 MockLink*  MockLink::_startMockLink(MockConfiguration* mockConfig)
 {
-    LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
+    LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
 
     mockConfig->setDynamic(true);
-    linkManager->linkConfigurations()->append(mockConfig);
+    SharedLinkConfigurationPointer config = linkMgr->addConfiguration(mockConfig);
 
-    return qobject_cast<MockLink*>(linkManager->createConnectedLink(mockConfig));
+    return qobject_cast<MockLink*>(linkMgr->createConnectedLink(config));
 }
 
 MockLink*  MockLink::startPX4MockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)

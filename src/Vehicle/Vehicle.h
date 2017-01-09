@@ -230,7 +230,6 @@ public:
     Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                                       CONSTANT)
     Q_PROPERTY(float                latitude                READ latitude                                               NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude               READ longitude                                              NOTIFY coordinateChanged)
-    Q_PROPERTY(QString              currentState            READ currentState                                           NOTIFY currentStateChanged)
     Q_PROPERTY(bool                 messageTypeNone         READ messageTypeNone                                        NOTIFY messageTypeChanged)
     Q_PROPERTY(bool                 messageTypeNormal       READ messageTypeNormal                                      NOTIFY messageTypeChanged)
     Q_PROPERTY(bool                 messageTypeWarning      READ messageTypeWarning                                     NOTIFY messageTypeChanged)
@@ -272,6 +271,9 @@ public:
     Q_PROPERTY(bool                 isOfflineEditingVehicle READ isOfflineEditingVehicle                                CONSTANT)
     Q_PROPERTY(QString              brandImage              READ brandImage                                             CONSTANT)
     Q_PROPERTY(QStringList          unhealthySensors        READ unhealthySensors                                       NOTIFY unhealthySensorsChanged)
+    Q_PROPERTY(QString              missionFlightMode       READ missionFlightMode                                      CONSTANT)
+    Q_PROPERTY(QString              rtlFlightMode           READ rtlFlightMode                                          CONSTANT)
+    Q_PROPERTY(QString              takeControlFlightMode   READ takeControlFlightMode                                  CONSTANT)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying      READ flying     WRITE setFlying     NOTIFY flyingChanged)
@@ -416,8 +418,9 @@ public:
     MAV_TYPE vehicleType(void) const { return _vehicleType; }
     Q_INVOKABLE QString vehicleTypeName(void) const;
 
-    /// Returns the highest quality link available to the Vehicle
-    LinkInterface* priorityLink(void);
+    /// Returns the highest quality link available to the Vehicle. If you need to hold a refernce to this link use
+    /// LinkManager::sharedLinkInterfaceForGet to get QSharedPointer for link.
+    LinkInterface* priorityLink(void) { return _priorityLink.data(); }
 
     /// Sends a message to the specified link
     /// @return true: message sent, false: Link no longer connected
@@ -506,7 +509,6 @@ public:
     float           latitude                () { return _coordinate.latitude(); }
     float           longitude               () { return _coordinate.longitude(); }
     bool            mavPresent              () { return _mav != NULL; }
-    QString         currentState            () { return _currentState; }
     int             rcRSSI                  () { return _rcRSSI; }
     bool            px4Firmware             () const { return _firmwareType == MAV_AUTOPILOT_PX4; }
     bool            apmFirmware             () const { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
@@ -523,6 +525,9 @@ public:
     bool            isOfflineEditingVehicle () const { return _offlineEditingVehicle; }
     QString         brandImage              () const;
     QStringList     unhealthySensors        () const;
+    QString         missionFlightMode       () const;
+    QString         rtlFlightMode           () const;
+    QString         takeControlFlightMode   () const;
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -626,7 +631,6 @@ signals:
     void latestErrorChanged     ();
     void longitudeChanged       ();
     void currentConfigChanged   ();
-    void currentStateChanged    ();
     void flowImageIndexChanged  ();
     void rcRSSIChanged          (int rcRSSI);
 
@@ -676,7 +680,6 @@ private slots:
     void _updateAttitude                    (UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     /** @brief Attitude from one specific component / redundant autopilot */
     void _updateAttitude                    (UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
-    void _updateState                       (UASInterface* system, QString name, QString description);
     /** @brief A new camera image has arrived */
     void _imageReady                        (UASInterface* uas);
     void _connectionLostTimeout(void);
@@ -720,6 +723,7 @@ private:
     void _handleMavlinkLoggingDataAcked(mavlink_message_t& message);
     void _ackMavlinkLogData(uint16_t sequence);
     void _sendNextQueuedMavCommand(void);
+    void _updatePriorityLink(void);
 
 private:
     int     _id;                    ///< Mavlink system id
@@ -755,7 +759,6 @@ private:
     int             _currentNormalCount;
     MessageType_t   _currentMessageType;
     QString         _latestError;
-    QString         _currentState;
     int             _updateCount;
     QString         _formatedMessage;
     int             _rcRSSI;
@@ -766,9 +769,8 @@ private:
     uint32_t        _onboardControlSensorsEnabled;
     uint32_t        _onboardControlSensorsHealth;
     uint32_t        _onboardControlSensorsUnhealthy;
-    bool            _useGpsRawIntForPosition;
-    bool            _useGpsRawIntForAltitude;
-    bool            _useAltitudeForAltitude;
+    bool            _gpsRawIntMessageAvailable;
+    bool            _globalPositionIntMessageAvailable;
 
     typedef struct {
         int     component;
@@ -850,6 +852,8 @@ private:
 
     static const int    _lowBatteryAnnounceRepeatMSecs; // Amount of time in between each low battery announcement
     QElapsedTimer       _lowBatteryAnnounceTimer;
+
+    SharedLinkInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
 
     // FactGroup facts
 

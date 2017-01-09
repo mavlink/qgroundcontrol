@@ -19,9 +19,9 @@
 #include <QDebug>
 
 #include "QGCMAVLink.h"
+#include "LinkConfiguration.h"
 
 class LinkManager;
-class LinkConfiguration;
 
 /**
 * The link interface defines the interface for all links used to communicate
@@ -35,18 +35,16 @@ class LinkInterface : public QThread
     // Only LinkManager is allowed to create/delete or _connect/_disconnect a link
     friend class LinkManager;
 
-public:
+public:    
+    ~LinkInterface() { _config->setLink(NULL); }
+
     Q_PROPERTY(bool active      READ active         WRITE setActive         NOTIFY activeChanged)
 
     // Property accessors
-    bool active(void)                       { return _active; }
-    void setActive(bool active)             { _active = active; emit activeChanged(active); }
+    bool active(void)           { return _active; }
+    void setActive(bool active) { _active = active; emit activeChanged(active); }
 
-    /**
-     * @brief Get link configuration
-     * @return A pointer to the instance of LinkConfiguration
-     **/
-    virtual LinkConfiguration* getLinkConfiguration() = 0;
+    LinkConfiguration* getLinkConfiguration(void) { return _config.data(); }
 
     /* Connection management */
 
@@ -116,13 +114,10 @@ public:
     
     /// mavlink channel to use for this link, as used by mavlink_parse_char. The mavlink channel is only
     /// set into the link when it is added to LinkManager
-    uint8_t mavlinkChannel(void) const
-    {
-        if (!_mavlinkChannelSet) {
-            qWarning() << "Call to LinkInterface::mavlinkChannel with _mavlinkChannelSet == false";
-        }
-        return _mavlinkChannel;
-    }
+    uint8_t mavlinkChannel(void) const;
+
+    bool decodedFirstMavlinkPacket(void) const { return _decodedFirstMavlinkPacket; }
+    bool setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { return _decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
@@ -192,43 +187,21 @@ signals:
 
 protected:
     // Links are only created by LinkManager so constructor is not public
-    LinkInterface() :
-        QThread(0)
-        , _mavlinkChannelSet(false)
-        , _active(false)
-        , _enableRateCollection(false)
-    {
-        // Initialize everything for the data rate calculation buffers.
-        _inDataIndex  = 0;
-        _outDataIndex = 0;
-        
-        // Initialize our data rate buffers.
-        memset(_inDataWriteAmounts, 0, sizeof(_inDataWriteAmounts));
-        memset(_inDataWriteTimes,   0, sizeof(_inDataWriteTimes));
-        memset(_outDataWriteAmounts,0, sizeof(_outDataWriteAmounts));
-        memset(_outDataWriteTimes,  0, sizeof(_outDataWriteTimes));
-        
-        QObject::connect(this, &LinkInterface::_invokeWriteBytes, this, &LinkInterface::_writeBytes);
-        qRegisterMetaType<LinkInterface*>("LinkInterface*");
-    }
+    LinkInterface(SharedLinkConfigurationPointer& config);
 
     /// This function logs the send times and amounts of datas for input. Data is used for calculating
     /// the transmission rate.
     ///     @param byteCount Number of bytes received
     ///     @param time Time in ms send occurred
-    void _logInputDataRate(quint64 byteCount, qint64 time) {
-        if(_enableRateCollection)
-            _logDataRateToBuffer(_inDataWriteAmounts, _inDataWriteTimes, &_inDataIndex, byteCount, time);
-    }
+    void _logInputDataRate(quint64 byteCount, qint64 time);
     
     /// This function logs the send times and amounts of datas for output. Data is used for calculating
     /// the transmission rate.
     ///     @param byteCount Number of bytes sent
     ///     @param time Time in ms receive occurred
-    void _logOutputDataRate(quint64 byteCount, qint64 time) {
-        if(_enableRateCollection)
-            _logDataRateToBuffer(_outDataWriteAmounts, _outDataWriteTimes, &_outDataIndex, byteCount, time);
-    }
+    void _logOutputDataRate(quint64 byteCount, qint64 time);
+
+    SharedLinkConfigurationPointer _config;
     
 private:
     /**
@@ -243,24 +216,7 @@ private:
      * @param bytes The amount of bytes transmit.
      * @param time The time (in ms) this transmission occurred.
      */
-    void _logDataRateToBuffer(quint64 *bytesBuffer, qint64 *timeBuffer, int *writeIndex, quint64 bytes, qint64 time)
-    {
-        QMutexLocker dataRateLocker(&_dataRateMutex);
-        
-        int i = *writeIndex;
-
-        // Now write into the buffer, if there's no room, we just overwrite the first data point.
-        bytesBuffer[i] = bytes;
-        timeBuffer[i] = time;
-
-        // Increment and wrap the write index
-        ++i;
-        if (i == _dataRateBufferSize)
-        {
-            i = 0;
-        }
-        *writeIndex = i;
-    }
+    void _logDataRateToBuffer(quint64 *bytesBuffer, qint64 *timeBuffer, int *writeIndex, quint64 bytes, qint64 time);
 
     /**
      * @brief getCurrentDataRate Get the current data rate given a data rate buffer.
@@ -275,48 +231,7 @@ private:
      * @param dataWriteAmounts The amount of data (in bits) that was transferred.
      * @return The bits per second of data transferrence of the interface over the last [-statsCurrentTimespan, 0] timespan.
      */
-    qint64 _getCurrentDataRate(int index, const qint64 dataWriteTimes[], const quint64 dataWriteAmounts[]) const
-    {
-        const qint64 now = QDateTime::currentMSecsSinceEpoch();
-
-        // Limit the time we calculate to the recent past
-        const qint64 cutoff = now - _dataRateCurrentTimespan;
-
-        // Grab the mutex for working with the stats variables
-        QMutexLocker dataRateLocker(&_dataRateMutex);
-
-        // Now iterate through the buffer of all received data packets adding up all values
-        // within now and our cutof.
-        qint64 totalBytes = 0;
-        qint64 totalTime = 0;
-        qint64 lastTime = 0;
-        int size = _dataRateBufferSize;
-        while (size-- > 0)
-        {
-            // If this data is within our cutoff time, include it in our calculations.
-            // This also accounts for when the buffer is empty and filled with 0-times.
-            if (dataWriteTimes[index] > cutoff && lastTime > 0) {
-                // Track the total time, using the previous time as our timeperiod.
-                totalTime += dataWriteTimes[index] - lastTime;
-                totalBytes += dataWriteAmounts[index];
-            }
-
-            // Track the last time sample for doing timespan calculations
-            lastTime = dataWriteTimes[index];
-
-            // Increment and wrap the index if necessary.
-            if (++index == _dataRateBufferSize)
-            {
-                index = 0;
-            }
-        }
-
-        // Return the final calculated value in bits / s, converted from bytes/ms.
-        qint64 dataRate = (totalTime != 0)?(qint64)((float)totalBytes * 8.0f / ((float)totalTime / 1000.0f)):0;
-
-        // Finally return our calculated data rate.
-        return dataRate;
-    }
+    qint64 _getCurrentDataRate(int index, const qint64 dataWriteTimes[], const quint64 dataWriteAmounts[]) const;
 
     /**
      * @brief Connect this interface logically
@@ -328,7 +243,7 @@ private:
     virtual void _disconnect(void) = 0;
     
     /// Sets the mavlink channel to use for this link
-    void _setMavlinkChannel(uint8_t channel) { Q_ASSERT(!_mavlinkChannelSet); _mavlinkChannelSet = true; _mavlinkChannel = channel; }
+    void _setMavlinkChannel(uint8_t channel);
     
     bool _mavlinkChannelSet;    ///< true: _mavlinkChannel has been set
     uint8_t _mavlinkChannel;    ///< mavlink channel to use for this link, as used by mavlink_parse_char
@@ -351,10 +266,11 @@ private:
     
     mutable QMutex _dataRateMutex; // Mutex for accessing the data rate member variables
 
-    bool _active;       ///< true: link is actively receiving mavlink messages
+    bool _active;                       ///< true: link is actively receiving mavlink messages
     bool _enableRateCollection;
+    bool _decodedFirstMavlinkPacket;    ///< true: link has correctly decoded it's first mavlink packet
 };
 
-typedef QSharedPointer<LinkInterface> SharedLinkInterface;
+typedef QSharedPointer<LinkInterface> SharedLinkInterfacePointer;
 
 #endif // _LINKINTERFACE_H_

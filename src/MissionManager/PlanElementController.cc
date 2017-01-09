@@ -32,6 +32,12 @@ void PlanElementController::start(bool editMode)
     _activeVehicleChanged(_multiVehicleMgr->activeVehicle());
 }
 
+void PlanElementController::startStaticActiveVehicle(Vehicle* vehicle)
+{
+    _editMode = false;
+    _activeVehicleChanged(vehicle);
+}
+
 void PlanElementController::_activeVehicleChanged(Vehicle* activeVehicle)
 {
     if (_activeVehicle) {

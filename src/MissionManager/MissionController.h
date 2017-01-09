@@ -57,17 +57,18 @@ public:
     Q_INVOKABLE int insertComplexMissionItem(QGeoCoordinate coordinate, int i);
 
     // Overrides from PlanElementController
-    void start              (bool editMode) final;
-    void loadFromVehicle    (void) final;
-    void sendToVehicle      (void) final;
-    void loadFromFilePicker (void) final;
-    void loadFromFile       (const QString& filename) final;
-    void saveToFilePicker   (void) final;
-    void saveToFile         (const QString& filename) final;
-    void removeAll          (void) final;
-    bool syncInProgress     (void) const final;
-    bool dirty              (void) const final;
-    void setDirty           (bool dirty) final;
+    void start                      (bool editMode) final;
+    void startStaticActiveVehicle   (Vehicle* vehicle) final;
+    void loadFromVehicle            (void) final;
+    void sendToVehicle              (void) final;
+    void loadFromFilePicker         (void) final;
+    void loadFromFile               (const QString& filename) final;
+    void saveToFilePicker           (void) final;
+    void saveToFile                 (const QString& filename) final;
+    void removeAll                  (void) final;
+    bool syncInProgress             (void) const final;
+    bool dirty                      (void) const final;
+    void setDirty                   (bool dirty) final;
 
     QString fileExtension(void) const final;
 
@@ -88,7 +89,6 @@ public:
     void setCruiseDistance          (double cruiseDistance );
     void setHoverDistance           (double hoverDistance );
 
-    static const char* jsonSimpleItemsKey;  ///< Key for simple items in a json file
 
 signals:
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
@@ -113,6 +113,7 @@ private slots:
     void _homeCoordinateChanged(void);
 
 private:
+    void _init(void);
     void _recalcSequence(void);
     void _recalcChildItems(void);
     void _recalcAll(void);
@@ -129,6 +130,8 @@ private:
     double _normalizeLat(double lat);
     double _normalizeLon(double lon);
     bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
+    bool _loadJsonMissionFileV1(const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
+    bool _loadJsonMissionFileV2(const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
     bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
     int _nextSequenceNumber(void);
 
@@ -150,9 +153,17 @@ private:
     double              _hoverDistance;
 
     static const char*  _settingsGroup;
+    static const char*  _jsonFileTypeValue;
+    static const char*  _jsonFirmwareTypeKey;
+    static const char*  _jsonItemsKey;
+    static const char*  _jsonPlannedHomePositionKey;
+    static const char*  _jsonParamsKey;
+
+    // Deprecated V1 format keys
     static const char*  _jsonMavAutopilotKey;
     static const char*  _jsonComplexItemsKey;
-    static const char*  _jsonPlannedHomePositionKey;
+
+    static const int    _missionFileVersion;
 };
 
 #endif

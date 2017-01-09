@@ -204,3 +204,8 @@ QString ArduCopterFirmwarePlugin::geoFenceRadiusParam(Vehicle* vehicle)
     Q_UNUSED(vehicle);
     return QStringLiteral("FENCE_RADIUS");
 }
+
+QString ArduCopterFirmwarePlugin::takeControlFlightMode(void)
+{
+    return QStringLiteral("Stabilize");
+}

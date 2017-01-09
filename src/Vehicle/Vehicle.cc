@@ -94,9 +94,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
     , _onboardControlSensorsUnhealthy(0)
-    , _useGpsRawIntForPosition(true)
-    , _useGpsRawIntForAltitude(true)
-    , _useAltitudeForAltitude(false)
+    , _gpsRawIntMessageAvailable(false)
+    , _globalPositionIntMessageAvailable(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -181,7 +180,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     // Now connect the new UAS
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,double,double,double,quint64)),              this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,int,double,double,double,quint64)),          this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
-    connect(_mav, SIGNAL(statusChanged                      (UASInterface*,QString,QString)),                           this, SLOT(_updateState(UASInterface*, QString,QString)));
 
     _loadSettings();
 
@@ -275,9 +273,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
     , _onboardControlSensorsUnhealthy(0)
-    , _useGpsRawIntForPosition(true)
-    , _useGpsRawIntForAltitude(true)
-    , _useAltitudeForAltitude(false)
+    , _gpsRawIntMessageAvailable(false)
+    , _globalPositionIntMessageAvailable(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -516,20 +513,20 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
     mavlink_gps_raw_int_t gpsRawInt;
     mavlink_msg_gps_raw_int_decode(&message, &gpsRawInt);
 
+    _gpsRawIntMessageAvailable = true;
+
     if (gpsRawInt.fix_type >= GPS_FIX_TYPE_3D_FIX) {
-        if (_useGpsRawIntForPosition) {
+        if (!_globalPositionIntMessageAvailable) {
             setLatitude(gpsRawInt.lat / (double)1E7);
             setLongitude(gpsRawInt.lon / (double)1E7);
-        }
-        if (_useGpsRawIntForAltitude) {
-            _altitudeRelativeFact.setRawValue(gpsRawInt.alt / 1000.0);
+            _altitudeAMSLFact.setRawValue(gpsRawInt.alt / 1000.0);
         }
     }
 
     _gpsFactGroup.count()->setRawValue(gpsRawInt.satellites_visible == 255 ? 0 : gpsRawInt.satellites_visible);
-    _gpsFactGroup.hdop()->setRawValue(gpsRawInt.eph == UINT16_MAX ? 1e10f : gpsRawInt.eph / 100.0);
-    _gpsFactGroup.vdop()->setRawValue(gpsRawInt.epv == UINT16_MAX ? 1e10f : gpsRawInt.epv / 100.0);
-    _gpsFactGroup.courseOverGround()->setRawValue(gpsRawInt.cog == UINT16_MAX ? 0.0 : gpsRawInt.cog / 100.0);
+    _gpsFactGroup.hdop()->setRawValue(gpsRawInt.eph == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.eph / 100.0);
+    _gpsFactGroup.vdop()->setRawValue(gpsRawInt.epv == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.epv / 100.0);
+    _gpsFactGroup.courseOverGround()->setRawValue(gpsRawInt.cog == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.cog / 100.0);
     _gpsFactGroup.lock()->setRawValue(gpsRawInt.fix_type);
 
     if (gpsRawInt.fix_type >= GPS_FIX_TYPE_3D_FIX) {
@@ -542,15 +539,12 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
 
-    _useGpsRawIntForPosition = false;
-    _useGpsRawIntForAltitude = false;
+    _globalPositionIntMessageAvailable = true;
 
     setLatitude(globalPositionInt.lat / (double)1E7);
     setLongitude(globalPositionInt.lon / (double)1E7);
-    if (!_useAltitudeForAltitude) {
-        _altitudeRelativeFact.setRawValue(globalPositionInt.relative_alt / 1000.0);
-        _altitudeAMSLFact.setRawValue(globalPositionInt.alt / 1000.0);
-    }
+    _altitudeRelativeFact.setRawValue(globalPositionInt.relative_alt / 1000.0);
+    _altitudeAMSLFact.setRawValue(globalPositionInt.alt / 1000.0);
 }
 
 void Vehicle::_handleAltitude(mavlink_message_t& message)
@@ -558,23 +552,21 @@ void Vehicle::_handleAltitude(mavlink_message_t& message)
     mavlink_altitude_t altitude;
     mavlink_msg_altitude_decode(&message, &altitude);
 
-    _useAltitudeForAltitude = true;
-    _useGpsRawIntForAltitude = false;
-    _altitudeRelativeFact.setRawValue(altitude.altitude_relative / 1000.0);
-    _altitudeAMSLFact.setRawValue(altitude.altitude_amsl / 1000.0);
-
+    // If data from GPS is available it takes precedence over ALTITUDE message
+    if (!_globalPositionIntMessageAvailable) {
+        _altitudeRelativeFact.setRawValue(altitude.altitude_relative);
+        if (!_gpsRawIntMessageAvailable) {
+            _altitudeAMSLFact.setRawValue(altitude.altitude_amsl);
+        }
+    }
 }
 
 void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& message)
 {
+    Q_UNUSED(link);
+
     mavlink_autopilot_version_t autopilotVersion;
     mavlink_msg_autopilot_version_decode(&message, &autopilotVersion);
-
-    bool isMavlink2 = (autopilotVersion.capabilities & MAV_PROTOCOL_CAPABILITY_MAVLINK2) != 0;
-    if(isMavlink2) {
-        mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(link->mavlinkChannel());
-        mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-    }
 
     if (autopilotVersion.flight_sw_version != 0) {
         int majorVersion, minorVersion, patchVersion;
@@ -714,7 +706,7 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
         _batteryFactGroup.current()->setRawValue(VehicleBatteryFactGroup::_currentUnavailable);
     } else {
         // Current is in Amps, current_battery is 10 * milliamperes (1 = 10 milliampere)
-        _batteryFactGroup.current()->setRawValue((int)(sysStatus.current_battery / 100));
+        _batteryFactGroup.current()->setRawValue((float)sysStatus.current_battery / 100.0f);
     }
     if (sysStatus.voltage_battery == UINT16_MAX) {
         _batteryFactGroup.voltage()->setRawValue(VehicleBatteryFactGroup::_voltageUnavailable);
@@ -926,8 +918,9 @@ bool Vehicle::_containsLink(LinkInterface* link)
 void Vehicle::_addLink(LinkInterface* link)
 {
     if (!_containsLink(link)) {
-        _links += link;
         qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
+        _links += link;
+        _updatePriorityLink();
         connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactiveOrDeleted);
         connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDeleted, this, &Vehicle::_linkInactiveOrDeleted);
     }
@@ -938,6 +931,7 @@ void Vehicle::_linkInactiveOrDeleted(LinkInterface* link)
     qCDebug(VehicleLog) << "_linkInactiveOrDeleted linkCount" << _links.count();
 
     _links.removeOne(link);
+    _updatePriorityLink();
 
     if (_links.count() == 0 && !_allLinksInactiveSent) {
         qCDebug(VehicleLog) << "All links inactive";
@@ -983,26 +977,42 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
     emit messagesSentChanged();
 }
 
-/// @return Direct usb connection link to board if one, NULL if none
-LinkInterface* Vehicle::priorityLink(void)
+void Vehicle::_updatePriorityLink(void)
 {
+    LinkInterface* newPriorityLink = NULL;
+
 #ifndef NO_SERIAL_LINK
-    foreach (LinkInterface* link, _links) {
+    // Note that this routine specificallty does not clear _priorityLink when there are no links remaining.
+    // By doing this we hold a reference on the last link as the Vehicle shuts down. Thus preventing shutdown
+    // ordering NULL pointer crashes where priorityLink() is still called during shutdown sequence.
+    for (int i=0; i<_links.count(); i++) {
+        LinkInterface* link = _links[i];
         if (link->isConnected()) {
             SerialLink* pSerialLink = qobject_cast<SerialLink*>(link);
             if (pSerialLink) {
-                LinkConfiguration* pLinkConfig = pSerialLink->getLinkConfiguration();
-                if (pLinkConfig) {
-                    SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(pLinkConfig);
+                LinkConfiguration* config = pSerialLink->getLinkConfiguration();
+                if (config) {
+                    SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(config);
                     if (pSerialConfig && pSerialConfig->usbDirect()) {
-                        return link;
+                        if (_priorityLink.data() != link) {
+                            newPriorityLink = link;
+                            break;
+                        }
+                        return;
                     }
                 }
             }
         }
     }
 #endif
-    return _links.count() ? _links[0] : NULL;
+
+    if (!newPriorityLink && !_priorityLink.data() && _links.count()) {
+        newPriorityLink = _links[0];
+    }
+
+    if (newPriorityLink) {
+        _priorityLink = qgcApp()->toolbox()->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
+    }
 }
 
 void Vehicle::setLatitude(double latitude)
@@ -1106,14 +1116,6 @@ void Vehicle::_handletextMessageReceived(UASMessage* message)
     {
         _formatedMessage = message->getFormatedText();
         emit formatedMessageChanged();
-    }
-}
-
-void Vehicle::_updateState(UASInterface*, QString name, QString)
-{
-    if (_currentState != name) {
-        _currentState = name;
-        emit currentStateChanged();
     }
 }
 
@@ -1343,6 +1345,8 @@ void Vehicle::setFlightMode(const QString& flightMode)
 {
     uint8_t     base_mode;
     uint32_t    custom_mode;
+
+    qDebug() << flightMode;
 
     if (_firmwarePlugin->setFlightMode(flightMode, &base_mode, &custom_mode)) {
         // setFlightMode will only set MAV_MODE_FLAG_CUSTOM_MODE_ENABLED in base_mode, we need to move back in the existing
@@ -1875,6 +1879,26 @@ void Vehicle::_sendMavCommandAgain(void)
     }
 
     if (_mavCommandRetryCount > 1) {
+        // We always let AUTOPILOT_CAPABILITIES go through multiple times even if we don't get acks. This is because
+        // we really need to get capabilities and version info back over a lossy link.
+        if (queuedCommand.command != MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES) {
+            if (px4Firmware()) {
+                // Older PX4 firmwares are inconsistent with repect to sending back an Ack from a COMMAND_LONG, hence we can't support retry logic for it.
+                if (_firmwareMajorVersion != versionNotSetValue) {
+                    // If no version set assume lastest master dev build, so acks are suppored
+                    if (_firmwareMajorVersion <= 1 && _firmwareMinorVersion <= 5 && _firmwarePatchVersion <= 3) {
+                        // Acks not supported in this version
+                        return;
+                    }
+                }
+            } else {
+                if (queuedCommand.command == MAV_CMD_START_RX_PAIR) {
+                    // The implementation of this command comes from the IO layer and is shared across stacks. So for other firmwares
+                    // we aren't really sure whether they are correct or not.
+                    return;
+                }
+            }
+        }
         qDebug() << "Vehicle::_sendMavCommandAgain retrying command:_mavCommandRetryCount" << queuedCommand.command << _mavCommandRetryCount;
     }
 
@@ -2127,6 +2151,21 @@ void Vehicle::setFirmwarePluginInstanceData(QObject* firmwarePluginInstanceData)
     _firmwarePluginInstanceData = firmwarePluginInstanceData;
 }
 
+QString Vehicle::missionFlightMode(void) const
+{
+    return _firmwarePlugin->missionFlightMode();
+}
+
+QString Vehicle::rtlFlightMode(void) const
+{
+    return _firmwarePlugin->rtlFlightMode();
+}
+
+QString Vehicle::takeControlFlightMode(void) const
+{
+    return _firmwarePlugin->takeControlFlightMode();
+}
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
@@ -2157,7 +2196,7 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     , _voltageFact                  (0, _voltageFactName,                   FactMetaData::valueTypeDouble)
     , _percentRemainingFact         (0, _percentRemainingFactName,          FactMetaData::valueTypeInt32)
     , _mahConsumedFact              (0, _mahConsumedFactName,               FactMetaData::valueTypeInt32)
-    , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeInt32)
+    , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeFloat)
     , _temperatureFact              (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
     , _cellCountFact                (0, _cellCountFactName,                 FactMetaData::valueTypeInt32)
 {

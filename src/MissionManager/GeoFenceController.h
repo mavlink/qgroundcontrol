@@ -50,17 +50,18 @@ public:
     Q_PROPERTY(bool                 breachReturnSupported   READ breachReturnSupported                              NOTIFY breachReturnSupportedChanged)
 #endif
 
-    void start              (bool editMode) final;
-    void loadFromVehicle    (void) final;
-    void sendToVehicle      (void) final;
-    void loadFromFilePicker (void) final;
-    void loadFromFile       (const QString& filename) final;
-    void saveToFilePicker   (void) final;
-    void saveToFile         (const QString& filename) final;
-    void removeAll          (void) final;
-    bool syncInProgress     (void) const final;
-    bool dirty              (void) const final;
-    void setDirty           (bool dirty) final;
+    void start                      (bool editMode) final;
+    void startStaticActiveVehicle   (Vehicle* vehicle) final;
+    void loadFromVehicle            (void) final;
+    void sendToVehicle              (void) final;
+    void loadFromFilePicker         (void) final;
+    void loadFromFile               (const QString& filename) final;
+    void saveToFilePicker           (void) final;
+    void saveToFile                 (const QString& filename) final;
+    void removeAll                  (void) final;
+    bool syncInProgress             (void) const final;
+    bool dirty                      (void) const final;
+    void setDirty                   (bool dirty) final;
 
     QString fileExtension(void) const final;
 
@@ -96,6 +97,7 @@ private slots:
     void _loadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
 
 private:
+    void _init(void);
     void _signalAll(void);
     bool _loadJsonFile(QJsonDocument& jsonDoc, QString& errorString);
 

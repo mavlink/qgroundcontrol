@@ -20,6 +20,7 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
+import QGroundControl.ArduPilot     1.0
 
 SetupPage {
     id:             sensorsPage
@@ -29,8 +30,8 @@ SetupPage {
         id:             sensorsPageComponent
 
         RowLayout {
-            width:      1000//availableWidth
-            height:     1000//availableHeight
+            width:      availableWidth
+            height:     availableHeight
             spacing:    ScreenTools.defaultFontPixelWidth / 2
 
             // Help text which is shown both in the status text area prior to pressing a cal button and in the
@@ -62,49 +63,12 @@ SetupPage {
 
             readonly property int rotationColumnWidth: 250
 
-            property Fact compass1Id:           controller.getParameterFact(-1, "COMPASS_DEV_ID")
-            property Fact compass2Id:           controller.getParameterFact(-1, "COMPASS_DEV_ID2")
-            property Fact compass3Id:           controller.getParameterFact(-1, "COMPASS_DEV_ID3")
-            property Fact compass1ExternalFact: controller.getParameterFact(-1, "COMPASS_EXTERNAL")
-            property Fact compass1Rot:          controller.getParameterFact(-1, "COMPASS_ORIENT")
-
-            property Fact boardRot:             controller.getParameterFact(-1, "AHRS_ORIENTATION")
-
-            property bool accelCalNeeded:       controller.accelSetupNeeded
-            property bool compassCalNeeded:     controller.compassSetupNeeded
-
-
-            // The following parameters are not available in olders firmwares
-
-            property bool compass2ExternalParamAvailable:   controller.parameterExists(-1, "COMPASS_EXTERN2")
-            property bool compass3ExternalParamAvailable:   controller.parameterExists(-1, "COMPASS_EXTERN3")
-            property bool compass2RotParamAvailable:        controller.parameterExists(-1, "COMPASS_ORIENT2")
-            property bool compass3RotParamAvailable:        controller.parameterExists(-1, "COMPASS_ORIENT3")
-            property bool compass1UseParamAvailable:        controller.parameterExists(-1, "COMPASS_USE")
-            property bool compass2UseParamAvailable:        controller.parameterExists(-1, "COMPASS_USE2")
-            property bool compass3UseParamAvailable:        controller.parameterExists(-1, "COMPASS_USE3")
-
             property Fact noFact: Fact { }
-            property Fact compass2ExternalFact: compass2ExternalParamAvailable ? controller.getParameterFact(-1, "COMPASS_EXTERN2") : noFact
-            property Fact compass3ExternalFact: compass3ExternalParamAvailable ? controller.getParameterFact(-1, "COMPASS_EXTERN3") : noFact
-            property Fact compass2Rot:          compass2RotParamAvailable ? controller.getParameterFact(-1, "COMPASS_ORIENT2") : noFact
-            property Fact compass3Rot:          compass3RotParamAvailable ? controller.getParameterFact(-1, "COMPASS_ORIENT3") : noFact
-            property Fact compass1UseFact:      compass1UseParamAvailable ? controller.getParameterFact(-1, "COMPASS_USE") : noFact
-            property Fact compass2UseFact:      compass2UseParamAvailable ? controller.getParameterFact(-1, "COMPASS_USE2") : noFact
-            property Fact compass3UseFact:      compass3UseParamAvailable ? controller.getParameterFact(-1, "COMPASS_USE3") : noFact
 
-            // We track these values by binding through a separate property so we can handle missing params
-            property bool compass1External: compass1ExternalFact.value
-            property bool compass2External: compass2ExternalParamAvailable ? compass2ExternalFact.value : false // false: Simulate internal so we don't show rotation combos
-            property bool compass3External: compass3ExternalParamAvailable ? compass3ExternalFact.value : false // false: Simulate internal so we don't show rotation combos
-            property bool compass1Use:      compass1UseParamAvailable ? compass1UseFact.value : true
-            property bool compass2Use:      compass2UseParamAvailable ? compass2UseFact.value : true
-            property bool compass3Use:      compass3UseParamAvailable ? compass3UseFact.value : true
+            property bool accelCalNeeded:                   controller.accelSetupNeeded
+            property bool compassCalNeeded:                 controller.compassSetupNeeded
 
-            // Id > = signals compass available, rot < 0 signals internal compass
-            property bool showCompass1: compass1Id.value > 0
-            property bool showCompass2: compass2Id.value > 0
-            property bool showCompass3: compass3Id.value > 0
+            property Fact boardRot:                         controller.getParameterFact(-1, "AHRS_ORIENTATION")
 
             readonly property int _calTypeCompass:  1   ///< Calibrate compass
             readonly property int _calTypeAccel:    2   ///< Calibrate accel
@@ -113,13 +77,6 @@ SetupPage {
             property bool   _orientationsDialogShowCompass: true
             property string _orientationDialogHelp:         orientationHelpSet
             property int    _orientationDialogCalType
-
-            function validCompassOffsets(compassParamPrefix) {
-                var ofsX = controller.getParameterFact(-1, compassParamPrefix + "X")
-                var ofsY = controller.getParameterFact(-1, compassParamPrefix + "Y")
-                var ofsZ = controller.getParameterFact(-1, compassParamPrefix + "Z")
-                return Math.sqrt(ofsX.value^2 + ofsY.value^2 + ofsZ.value^2) < 600
-            }
 
             function showOrientationsDialog(calType) {
                 var dialogTitle
@@ -149,6 +106,11 @@ SetupPage {
                 showDialog(orientationsDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, buttons)
             }
 
+            APMSensorParams {
+                id:                     sensorParams
+                factPanelController:    controller
+            }
+
             APMSensorsComponentController {
                 id:                         controller
                 factPanel:                  sensorsPage.viewPanel
@@ -163,6 +125,8 @@ SetupPage {
                 setOrientationsButton:      setOrientationsButton
                 orientationCalAreaHelpText: orientationCalAreaHelpText
 
+                property var rgCompassCalFitness: [ controller.compass1CalFitness, controller.compass2CalFitness, controller.compass3CalFitness ]
+
                 onResetStatusTextArea: statusLog.text = statusTextAreaDefaultText
 
                 onWaitingForCancelChanged: {
@@ -174,43 +138,16 @@ SetupPage {
                 }
 
                 onCalibrationComplete: {
-                    if (_orientationDialogCalType == _calTypeAccel) {
-                        _postCalibrationDialogText = qsTr("Accelerometer calibration complete.")
-                        _postCalibrationDialogParams = [ "INS_ACCSCAL_X", "INS_ACCSCAL_Y", "INS_ACCSCAL_Z",
-                                                        "INS_ACC2SCAL_X", "INS_ACC2SCAL_Y", "INS_ACC2SCAL_Z",
-                                                        "INS_ACC3SCAL_X", "INS_ACC3SCAL_Y", "INS_ACC3SCAL_Z",
-                                                        "INS_GYROFFS_X", "INS_GYROFFS_Y", "INS_GYROFFS_Z",
-                                                        "INS_GYR2OFFS_X", "INS_GYR2OFFS_Y", "INS_GYR2OFFS_Z",
-                                                        "INS_GYR3OFFS_X", "INS_GYR3OFFS_Y", "INS_GYR3OFFS_Z" ]
-                        showDialog(postCalibrationDialogComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
-                    } else if (_orientationDialogCalType == _calTypeCompass) {
-                        _postCalibrationDialogText = qsTr("Compass calibration complete. ")
-                        _postCalibrationDialogParams = [];
-                        if (compass1Id.value > 0) {
-                            if (!validCompassOffsets("COMPASS_OFS_")) {
-                                _postCalibrationDialogText += _badCompassCalText.replace("%1", 1)
-                            }
-                            _postCalibrationDialogParams.push("COMPASS_OFS_X")
-                            _postCalibrationDialogParams.push("COMPASS_OFS_Y")
-                            _postCalibrationDialogParams.push("COMPASS_OFS_Z")
-                        }
-                        if (compass2Id.value > 0) {
-                            if (!validCompassOffsets("COMPASS_OFS_")) {
-                                _postCalibrationDialogText += _badCompassCalText.replace("%1", 2)
-                            }
-                            _postCalibrationDialogParams.push("COMPASS_OFS2_X")
-                            _postCalibrationDialogParams.push("COMPASS_OFS2_Y")
-                            _postCalibrationDialogParams.push("COMPASS_OFS2_Z")
-                        }
-                        if (compass3Id.value > 0) {
-                            if (!validCompassOffsets("COMPASS_OFS_")) {
-                                _postCalibrationDialogText += _badCompassCalText.replace("%1", 3)
-                            }
-                            _postCalibrationDialogParams.push("COMPASS_OFS3_X")
-                            _postCalibrationDialogParams.push("COMPASS_OFS3_Y")
-                            _postCalibrationDialogParams.push("COMPASS_OFS3_Z")
-                        }
-                        showDialog(postCalibrationDialogComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                    switch (calType) {
+                    case APMSensorsComponentController.CalTypeAccel:
+                        showMessage(qsTr("Calibration complete"), qsTr("Accelerometer calibration complete."), StandardButton.Ok)
+                        break
+                    case APMSensorsComponentController.CalTypeOffboardCompass:
+                        showMessage(qsTr("Calibration complete"), qsTr("Compass calibration complete."), StandardButton.Ok)
+                        break
+                    case APMSensorsComponentController.CalTypeOnboardCompass:
+                        showDialog(postOnboardCompassCalibrationComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                        break
                     }
                 }
             }
@@ -218,51 +155,151 @@ SetupPage {
             Component.onCompleted: {
                 var usingUDP = controller.usingUDPLink()
                 if (usingUDP) {
-                    console.log("onUsingUDPLink")
-                    showMessage("Sensor Calibration", "Performing sensor calibration over a WiFi connection is known to be unreliable. You should disconnect and perform calibration using a direct USB connection instead.", StandardButton.Ok)
+                    showMessage("Sensor Calibration", "Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead.", StandardButton.Ok)
                 }
             }
 
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             Component {
-                id: postCalibrationDialogComponent
+                id: singleCompassOnboardResultsComponent
 
-                QGCViewDialog {
-                    QGCLabel {
-                        id:             textLabel
+                Column {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    spacing:        Math.round(ScreenTools.defaultFontPixelHeight / 2)
+                    visible:        sensorParams.rgCompassAvailable[index]
+
+                    property real greenMaxThreshold:   8 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
+                    property real yellowMaxThreshold:  15 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
+                    property real fitnessRange:        25 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
+
+                    Item {
                         anchors.left:   parent.left
                         anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           _postCalibrationDialogText
+                        height:         ScreenTools.defaultFontPixelHeight
+
+                        Row {
+                            id:             fitnessRow
+                            anchors.fill:   parent
+
+                            Rectangle {
+                                width:  parent.width * (greenMaxThreshold / fitnessRange)
+                                height: parent.height
+                                color:  "green"
+                            }
+                            Rectangle {
+                                width:  parent.width * ((yellowMaxThreshold - greenMaxThreshold) / fitnessRange)
+                                height: parent.height
+                                color:  "yellow"
+                            }
+                            Rectangle {
+                                width:  parent.width * ((fitnessRange - yellowMaxThreshold) / fitnessRange)
+                                height: parent.height
+                                color:  "red"
+                            }
+                        }
+
+                        Rectangle {
+                            height:                 fitnessRow.height * 0.66
+                            width:                  height
+                            anchors.verticalCenter: fitnessRow.verticalCenter
+                            x:                      (fitnessRow.width * (Math.min(Math.max(controller.rgCompassCalFitness[index], 0.0), fitnessRange) / fitnessRange)) - (width / 2)
+                            radius:                 height / 2
+                            color:                  "white"
+                            border.color:           "black"
+                        }
                     }
 
-                    QGCCheckBox {
-                        id:                 showValues
-                        anchors.topMargin:  ScreenTools.defaultFontPixelHeight
-                        anchors.top:        textLabel.bottom
-                        text:               qsTr("Show values")
+                    Column {
+                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        spacing:            Math.round(ScreenTools.defaultFontPixelHeight / 4)
+
+                        QGCLabel {
+                            text: "Compass " + (index+1) + " " +
+                                  (sensorParams.rgCompassPrimary[index] ? "(primary" : "(secondary") +
+                                  (sensorParams.rgCompassExternalParamAvailable[index] ?
+                                       (sensorParams.rgCompassExternal[index] ? ", external" : ", internal" ) :
+                                       "") +
+                                  ")"
+                        }
+
+                        FactCheckBox {
+                            text:       "Use Compass"
+                            fact:       sensorParams.rgCompassUseFact[index]
+                            visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
+                        }
+                    }
+                }
+            }
+
+            Component {
+                id: postOnboardCompassCalibrationComponent
+
+                QGCViewDialog {
+                    Column {
+                        anchors.margins:    ScreenTools.defaultFontPixelWidth
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        spacing:            ScreenTools.defaultFontPixelHeight
+
+                        Repeater {
+                            model:      3
+                            delegate:   singleCompassOnboardResultsComponent
+                        }
+
+                        QGCLabel {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            wrapMode:       Text.WordWrap
+                            text:           qsTr("Shown in the indicator bars is the quality of the calibration for each compass.\n\n") +
+                                            qsTr("- Green indicates a well functioning compass.\n") +
+                                            qsTr("- Yellow indicates a questionable compass or calibration.\n") +
+                                            qsTr("- Red indicates a compass which should not be used.\n\n") +
+                                            qsTr("YOU MUST REBOOT YOUR VEHICLE AFTER EACH CALIBRATION.")
+                        }
+                    }
+                }
+            }
+
+            Component {
+                id: singleCompassSettingsComponent
+
+                Column {
+                    spacing: Math.round(ScreenTools.defaultFontPixelHeight / 2)
+                    visible: sensorParams.rgCompassAvailable[index]
+
+                    QGCLabel {
+                        text: "Compass " + (index+1) + " " +
+                              (sensorParams.rgCompassPrimary[index] ? "(primary" : "(secondary") +
+                              (sensorParams.rgCompassExternalParamAvailable[index] ?
+                                   (sensorParams.rgCompassExternal[index] ? ", external" : ", internal" ) :
+                                   "") +
+                              ")"
                     }
 
-                    QGCFlickable {
-                        anchors.topMargin:  ScreenTools.defaultFontPixelHeight
-                        anchors.top:        showValues.bottom
-                        anchors.bottom:     parent.bottom
-                        contentHeight:      valueColumn.height
-                        flickableDirection: Flickable.VerticalFlick
-                        visible:            showValues.checked
+                    Column {
+                        anchors.margins:    ScreenTools.defaultFontPixelWidth * 2
+                        anchors.left:       parent.left
+                        spacing:            Math.round(ScreenTools.defaultFontPixelHeight / 4)
+
+                        FactCheckBox {
+                            text:       "Use Compass"
+                            fact:       sensorParams.rgCompassUseFact[index]
+                            visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
+                        }
 
                         Column {
-                            id: valueColumn
+                            visible: sensorParams.rgCompassExternal[index] && sensorParams.rgCompassRotParamAvailable[index]
 
-                            Repeater {
-                                model: _postCalibrationDialogParams
+                            QGCLabel { text: qsTr("Orientation:") }
 
-                                QGCLabel {
-                                    text: fact.name +": " + fact.valueString
-
-                                    property Fact fact: controller.getParameterFact(-1, modelData)
-                                }
+                            FactComboBox {
+                                width:      rotationColumnWidth
+                                indexModel: false
+                                fact:       sensorParams.rgCompassRotFact[index]
                             }
                         }
                     }
@@ -304,9 +341,7 @@ SetupPage {
                             }
 
                             Column {
-                                QGCLabel {
-                                    text: qsTr("Autopilot Orientation:")
-                                }
+                                QGCLabel { text: qsTr("Autopilot Orientation:") }
 
                                 FactComboBox {
                                     width:      rotationColumnWidth
@@ -315,73 +350,9 @@ SetupPage {
                                 }
                             }
 
-                            Column {
-                                visible: _orientationsDialogShowCompass && showCompass1
-
-                                FactCheckBox {
-                                    text: "Use Compass 1"
-                                    fact: compass1UseFact
-                                }
-
-                                Column {
-                                    visible: showCompass1Rot
-
-                                    QGCLabel {
-                                        text: qsTr("Compass 1 Orientation:")
-                                    }
-
-                                    FactComboBox {
-                                        width:      rotationColumnWidth
-                                        indexModel: false
-                                        fact:       compass1Rot
-                                    }
-                                }
-                            }
-
-                            Column {
-                                visible: _orientationsDialogShowCompass && showCompass2
-
-                                FactCheckBox {
-                                    text: "Use Compass 2"
-                                    fact: compass2UseFact
-                                }
-
-                                Column {
-                                    visible: showCompass1Rot
-
-                                    QGCLabel {
-                                        text: qsTr("Compass 2 Orientation:")
-                                    }
-
-                                    FactComboBox {
-                                        width:      rotationColumnWidth
-                                        indexModel: false
-                                        fact:       compass2Rot
-                                    }
-                                }
-                            }
-
-                            Column {
-                                visible: _orientationsDialogShowCompass && showCompass3
-
-                                FactCheckBox {
-                                    text: "Use Compass 3"
-                                    fact: compass3UseFact
-                                }
-
-                                Column {
-                                    visible: showCompass3Rot
-
-                                    QGCLabel {
-                                        text: qsTr("Compass 3 Orientation:")
-                                    }
-
-                                    FactComboBox {
-                                        width:      rotationColumnWidth
-                                        indexModel: false
-                                        fact:       compass3Rot
-                                    }
-                                }
+                            Repeater {
+                                model:      _orientationsDialogShowCompass ? 3 : 0
+                                delegate:   singleCompassSettingsComponent
                             }
                         } // Column
                     } // QGCFlickable
@@ -474,6 +445,7 @@ SetupPage {
                 } // QGCViewDialog
             } // Component - levelHorizonDialogComponent
 
+            /// Left button column
             Column {
                 spacing:            ScreenTools.defaultFontPixelHeight / 2
                 Layout.alignment:   Qt.AlignLeft | Qt.AlignTop
@@ -551,6 +523,7 @@ SetupPage {
                 }
             } // Column - Buttons
 
+            /// Right column - cal area
             Column {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom

@@ -14,7 +14,7 @@
 
 void SendMavCommandTest::_noFailure(void)
 {
-    _connectMockLink();
+    _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
 
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
@@ -37,7 +37,7 @@ void SendMavCommandTest::_failureShowError(void)
     // Will pop error about request failure
     setExpectedMessageBox(QMessageBox::Ok);
 
-    _connectMockLink();
+    _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
 
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
@@ -60,7 +60,7 @@ void SendMavCommandTest::_failureShowError(void)
 
 void SendMavCommandTest::_failureNoShowError(void)
 {
-    _connectMockLink();
+    _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
 
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
@@ -80,7 +80,7 @@ void SendMavCommandTest::_failureNoShowError(void)
 
 void SendMavCommandTest::_noFailureAfterRetry(void)
 {
-    _connectMockLink();
+    _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
 
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
@@ -103,7 +103,7 @@ void SendMavCommandTest::_failureAfterRetry(void)
     // Will pop error about request failure
     setExpectedMessageBox(QMessageBox::Ok);
 
-    _connectMockLink();
+    _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
 
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
@@ -129,7 +129,7 @@ void SendMavCommandTest::_failureAfterNoReponse(void)
     // Will pop error about request failure
     setExpectedMessageBox(QMessageBox::Ok);
 
-    _connectMockLink();
+    _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
 
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
@@ -138,7 +138,7 @@ void SendMavCommandTest::_failureAfterNoReponse(void)
     vehicle->sendMavCommand(MAV_COMP_ID_ALL, MAV_CMD_USER_5, true /* showError */);
 
     QSignalSpy spyResult(vehicle, SIGNAL(mavCommandResult(int, int, int, int, bool)));
-    QCOMPARE(spyResult.wait(10000), true);
+    QCOMPARE(spyResult.wait(20000), true);
     QList<QVariant> arguments = spyResult.takeFirst();
     QCOMPARE(arguments.count(), 5);
     QCOMPARE(arguments.at(0).toInt(), vehicle->id());

@@ -6,6 +6,8 @@ ClickableColor          1.0 ClickableColor.qml
 DropButton              1.0 DropButton.qml
 ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
 FactSliderPanel         1.0 FactSliderPanel.qml
+FlightModeDropdown      1.0 FlightModeDropdown.qml
+GuidedBar               1.0 GuidedBar.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
 MainToolBar             1.0 MainToolBar.qml
@@ -28,7 +30,9 @@ QGCComboBox             1.0 QGCComboBox.qml
 QGCFlickable            1.0 QGCFlickable.qml
 QGCLabel                1.0 QGCLabel.qml
 QGCListView             1.0 QGCListView.qml
-QGCMobileFileDialog     1.0 QGCMobileFileDialog.qml
+QGCMapLabel             1.0 QGCMapLabel.qml
+QGCMobileFileOpenDialog 1.0 QGCMobileFileOpenDialog.qml
+QGCMobileFileSaveDialog 1.0 QGCMobileFileSaveDialog.qml
 QGCMovableItem          1.0 QGCMovableItem.qml
 QGCPipable              1.0 QGCPipable.qml
 QGCRadioButton          1.0 QGCRadioButton.qml

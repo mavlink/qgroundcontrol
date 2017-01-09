@@ -48,7 +48,19 @@ void GeoFenceController::start(bool editMode)
     qCDebug(GeoFenceControllerLog) << "start editMode" << editMode;
 
     PlanElementController::start(editMode);
+    _init();
+}
 
+void GeoFenceController::startStaticActiveVehicle(Vehicle* vehicle)
+{
+    qCDebug(GeoFenceControllerLog) << "startStaticActiveVehicle";
+
+    PlanElementController::startStaticActiveVehicle(vehicle);
+    _init();
+}
+
+void GeoFenceController::_init(void)
+{
     connect(&_polygon, &QGCMapPolygon::dirtyChanged, this, &GeoFenceController::_polygonDirtyChanged);
 }
 
@@ -103,27 +115,13 @@ bool GeoFenceController::_loadJsonFile(QJsonDocument& jsonDoc, QString& errorStr
 {
     QJsonObject json = jsonDoc.object();
 
-    // Check for required keys
-    QStringList requiredKeys;
-    requiredKeys << JsonHelper::jsonVersionKey << JsonHelper::jsonFileTypeKey;
-    if (!JsonHelper::validateRequiredKeys(json, requiredKeys, errorString)) {
-        return false;
-    }
-
-#if 0
-    // Validate base key types
-    QStringList             keyList;
-    QList<QJsonValue::Type> typeList;
-    keyList << jsonSimpleItemsKey << _jsonVersionKey << _jsonGroundStationKey << _jsonMavAutopilotKey << _jsonComplexItemsKey << _jsonPlannedHomePositionKey;
-    typeList << QJsonValue::Array << QJsonValue::String << QJsonValue::String << QJsonValue::Double << QJsonValue::Array << QJsonValue::Object;
-    if (!JsonHelper::validateKeyTypes(json, keyList, typeList, errorString)) {
-        return false;
-    }
-#endif
-
-    // Version check
-    if (json[JsonHelper::jsonVersionKey].toString() != "1.0") {
-        errorString = QStringLiteral("QGroundControl does not support this file version");
+    int fileVersion;
+    if (!JsonHelper::validateQGCJsonFile(json,
+                                         _jsonFileTypeValue,    // expected file type
+                                         1,                     // minimum supported version
+                                         1,                     // maximum supported version
+                                         fileVersion,
+                                         errorString)) {
         return false;
     }
 
@@ -269,7 +267,7 @@ void GeoFenceController::saveToFile(const QString& filename)
         QJsonObject fenceFileObject;    // top level json object
 
         fenceFileObject[JsonHelper::jsonFileTypeKey] =      _jsonFileTypeValue;
-        fenceFileObject[JsonHelper::jsonVersionKey] =       QStringLiteral("1.0");
+        fenceFileObject[JsonHelper::jsonVersionKey] =       1;
         fenceFileObject[JsonHelper::jsonGroundStationKey] = JsonHelper::jsonGroundStationValue;
 
         QStringList         paramNames;

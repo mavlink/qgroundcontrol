@@ -41,14 +41,15 @@ QGCView {
     property real _pitch:               _activeVehicle ? _activeVehicle.pitch.value   : _defaultPitch
     property real _heading:             _activeVehicle ? _activeVehicle.heading.value : _defaultHeading
 
-
     property Fact _emptyFact:               Fact { }
     property Fact _groundSpeedFact:         _activeVehicle ? _activeVehicle.groundSpeed      : _emptyFact
     property Fact _airSpeedFact:            _activeVehicle ? _activeVehicle.airSpeed         : _emptyFact
 
     property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
 
-    property real _savedZoomLevel:      0
+    property real _savedZoomLevel:  0
+    property real _margins:         ScreenTools.defaultFontPixelWidth / 2
+
 
     property real pipSize:              mainWindow.width * 0.2
 
@@ -116,10 +117,11 @@ QGCView {
     onActiveVehicleJoystickEnabledChanged: px4JoystickCheck()
 
     Component.onCompleted: {
-        widgetsLoader.source = "FlightDisplayViewWidgets.qml"
         setStates()
         px4JoystickCheck()
     }
+
+    QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? _flightMap.isSatelliteMap : true }
 
     QGCViewPanel {
         id:             _panel
@@ -153,9 +155,10 @@ QGCView {
                 }
             ]
             FlightDisplayViewMap {
-                id:             _flightMap
-                anchors.fill:   parent
-                flightWidgets:  widgetsLoader.item
+                id:                 _flightMap
+                anchors.fill:       parent
+                flightWidgets:      flightDisplayViewWidgets
+                rightPanelWidth:    ScreenTools.defaultFontPixelHeight * 9
             }
         }
 
@@ -218,20 +221,55 @@ QGCView {
             }
         }
 
-        //-- Widgets
-        Loader {
-            id:             widgetsLoader
-            z:              _panel.z + 4
-            height:         ScreenTools.availableHeight
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            anchors.bottom: parent.bottom
-            asynchronous:   true
-            visible:        status == Loader.Ready
+        Row {
+            id:                     singleMultiSelector
+            anchors.topMargin:      ScreenTools.toolbarHeight + _margins
+            anchors.rightMargin:    _margins
+            anchors.right:          parent.right
+            anchors.top:            parent.top
+            spacing:                ScreenTools.defaultFontPixelWidth
+            z:                      _panel.z + 4
+            visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
 
-            property bool isBackgroundDark: root.isBackgroundDark
-            property var qgcView: root
+            ExclusiveGroup { id: multiVehicleSelectorGroup }
+
+            QGCRadioButton {
+                id:             singleVehicleView
+                exclusiveGroup: multiVehicleSelectorGroup
+                text:           qsTr("Single")
+                checked:        true
+                color:          mapPal.text
+            }
+
+            QGCRadioButton {
+                exclusiveGroup: multiVehicleSelectorGroup
+                text:           qsTr("Multi-Vehicle (WIP)")
+                color:          mapPal.text
+            }
         }
+
+        FlightDisplayViewWidgets {
+            id:                 flightDisplayViewWidgets
+            z:                  _panel.z + 4
+            height:             ScreenTools.availableHeight
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            anchors.bottom:     parent.bottom
+            qgcView:            root
+            isBackgroundDark:   root.isBackgroundDark
+            visible:            singleVehicleView.checked
+        }
+
+        MultiVehicleList {
+            anchors.margins:    _margins
+            anchors.top:        singleMultiSelector.bottom
+            anchors.right:      parent.right
+            anchors.bottom:     parent.bottom
+            width:              ScreenTools.defaultFontPixelWidth * 30
+            visible:            !singleVehicleView.checked
+            z:                  _panel.z + 4
+        }
+
 
         //-- Virtual Joystick
         Loader {
@@ -242,7 +280,7 @@ QGCView {
             visible:                    QGroundControl.virtualTabletJoystick
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
-            anchors.horizontalCenter:   widgetsLoader.horizontalCenter
+            anchors.horizontalCenter:   flightDisplayViewWidgets.horizontalCenter
             source:                     "qrc:/qml/VirtualJoystick.qml"
             active:                     QGroundControl.virtualTabletJoystick
 

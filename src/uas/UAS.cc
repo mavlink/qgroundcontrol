@@ -23,7 +23,6 @@
 
 #include "UAS.h"
 #include "LinkInterface.h"
-#include "HomePositionManager.h"
 #include "QGC.h"
 #include "GAudioOutput.h"
 #include "MAVLinkProtocol.h"
@@ -976,6 +975,10 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
 void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode)
 {
     if (!_vehicle) {
+        return;
+    }
+
+    if (!_vehicle->priorityLink()) {
         return;
     }
 
