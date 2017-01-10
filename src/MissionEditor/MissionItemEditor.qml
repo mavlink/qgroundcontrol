@@ -26,8 +26,9 @@ Rectangle {
     signal insert
     signal moveHomeToMapCenter
 
-    property bool   _currentItem:       missionItem.isCurrentItem
-    property color  _outerTextColor:    _currentItem ? "black" : qgcPal.text
+    property bool   _currentItem:           missionItem.isCurrentItem
+    property color  _outerTextColor:        _currentItem ? "black" : qgcPal.text
+    property bool   _noMissionItemsAdded:   ListView.view.model.count == 1
 
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 12)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
@@ -37,7 +38,6 @@ Rectangle {
         id: qgcPal
         colorGroupEnabled: enabled
     }
-
 
     MouseArea {
         anchors.fill:   parent
@@ -121,7 +121,6 @@ Rectangle {
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.left:           label.right
         anchors.top:            parent.top
-        //anchors.right:          hamburger.left
         visible:                missionItem.sequenceNumber != 0 && missionItem.isCurrentItem && !missionItem.rawEdit && missionItem.isSimpleItem
         text:                   missionItem.commandName
 
@@ -133,7 +132,7 @@ Rectangle {
             }
         }
 
-        onClicked:              qgcView.showDialog(commandDialog, qsTr("Select Mission Command"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+        onClicked: qgcView.showDialog(commandDialog, qsTr("Select Mission Command"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
     }
 
     QGCLabel {
@@ -141,7 +140,7 @@ Rectangle {
         visible:            missionItem.sequenceNumber == 0 || !missionItem.isCurrentItem || !missionItem.isSimpleItem
         verticalAlignment:  Text.AlignVCenter
         text:               missionItem.sequenceNumber == 0 ?
-                                qsTr("Planned Home Position") :
+                                qsTr("Mission Settings") :
                                 (missionItem.isSimpleItem ? missionItem.commandName : qsTr("Survey"))
         color:              _outerTextColor
     }
@@ -153,8 +152,12 @@ Rectangle {
         anchors.left:       parent.left
         anchors.top:        commandPicker.bottom
         height:             item ? item.height : 0
-        source:             missionItem.isSimpleItem ? "qrc:/qml/SimpleItemEditor.qml" : "qrc:/qml/SurveyItemEditor.qml"
-        onLoaded:         { item.visible = Qt.binding(function() { return _currentItem; }) }
+        source:             missionItem.sequenceNumber == 0 ? "qrc:/qml/MissionSettingsEditor.qml" : (missionItem.isSimpleItem ? "qrc:/qml/SimpleItemEditor.qml" : "qrc:/qml/SurveyItemEditor.qml")
+
+        onLoaded: {
+            item.visible = Qt.binding(function() { return _currentItem; })
+        }
+
         property real   availableWidth: _root.width - (_margin * 2) ///< How wide the editor should be
         property var    editorRoot:     _root
     }

@@ -12,6 +12,7 @@
 #include "JsonHelper.h"
 #include "MissionController.h"
 #include "QGCGeo.h"
+#include "QGroundControlQmlGlobal.h"
 
 #include <QPolygonF>
 
@@ -70,6 +71,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _surveyDistance(0.0)
     , _cameraShots(0)
     , _coveredArea(0.0)
+    , _timeBetweenShots(0.0)
     , _gridAltitudeFact             (0, _gridAltitudeFactName,              FactMetaData::valueTypeDouble)
     , _gridAngleFact                (0, _gridAngleFactName,                 FactMetaData::valueTypeDouble)
     , _gridSpacingFact              (0, _gridSpacingFactName,               FactMetaData::valueTypeDouble)
@@ -132,7 +134,11 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     connect(&_cameraResolutionHeightFact,   &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
     connect(&_cameraFocalLengthFact,        &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
 
-    connect(this, &SurveyMissionItem::cameraTriggerChanged, this, &SurveyMissionItem::_cameraTriggerChanged);
+    connect(this, &SurveyMissionItem::cameraTriggerChanged,     this, &SurveyMissionItem::_cameraTriggerChanged);
+
+    connect(&_cameraTriggerDistanceFact,    &Fact::valueChanged,                        this, &SurveyMissionItem::timeBetweenShotsChanged);
+    connect(_vehicle,                       &Vehicle::cruiseSpeedChanged,               this, &SurveyMissionItem::timeBetweenShotsChanged);
+    connect(_vehicle,                       &Vehicle::hoverSpeedChanged,                this, &SurveyMissionItem::timeBetweenShotsChanged);
 }
 
 void SurveyMissionItem::_setSurveyDistance(double surveyDistance)
@@ -780,6 +786,7 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
         pMissionItems->append(item);
 
         if (_cameraTrigger && i == 0) {
+            // Turn on camera
             MissionItem* item = new MissionItem(seqNum++,                       // sequence number
                                                 MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // MAV_CMD
                                                 MAV_FRAME_MISSION,              // MAV_FRAME
@@ -793,6 +800,7 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
     }
 
     if (_cameraTrigger) {
+        // Turn off camera
         MissionItem* item = new MissionItem(seqNum++,                       // sequence number
                                             MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // MAV_CMD
                                             MAV_FRAME_MISSION,              // MAV_FRAME
@@ -810,10 +818,9 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
 void SurveyMissionItem::_cameraTriggerChanged(void)
 {
     setDirty(true);
-    if (_gridPoints.count()) {
-        // If we have grid turn on/off camera trigger will add/remove two camera trigger mission items
-        emit lastSequenceNumberChanged(lastSequenceNumber());
-    }
+    // Camera trigger adds items
+    emit lastSequenceNumberChanged(lastSequenceNumber());
+    // We now have camera shot count
     emit cameraShotsChanged(cameraShots());
 }
 
@@ -825,4 +832,17 @@ int SurveyMissionItem::cameraShots(void) const
 void SurveyMissionItem::_cameraValueChanged(void)
 {
     emit cameraValueChanged();
+}
+
+double SurveyMissionItem::timeBetweenShots(void) const
+{
+    return _cruiseSpeed == 0 ? 0 : _cameraTriggerDistanceFact.rawValue().toDouble() / _cruiseSpeed;
+}
+
+void SurveyMissionItem::setCruiseSpeed(double cruiseSpeed)
+{
+    if (!qFuzzyCompare(_cruiseSpeed, cruiseSpeed)) {
+        _cruiseSpeed = cruiseSpeed;
+        emit timeBetweenShotsChanged();
+    }
 }

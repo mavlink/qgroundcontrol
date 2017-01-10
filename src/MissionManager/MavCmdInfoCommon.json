@@ -5,7 +5,7 @@
 
     "mavCmdInfo": [
         {
-            "comment":              "MAV_CMD_NAV_LAST: Used for fake home position waypoint",
+            "comment":              "MAV_CMD_NAV_LAST: Used for mission settings / planned home position waypoint",
             "id":                   95,
             "rawName":              "HomeRaw",
             "friendlyName":         "Home Position",

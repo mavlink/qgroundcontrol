@@ -579,14 +579,17 @@ Rectangle {
         }
 
         Grid {
-            columns: 2
-            spacing: ScreenTools.defaultFontPixelWidth
+            columns:        2
+            columnSpacing:  ScreenTools.defaultFontPixelWidth
 
             QGCLabel { text: qsTr("Survey area:") }
             QGCLabel { text: QGroundControl.squareMetersToAppSettingsAreaUnits(missionItem.coveredArea).toFixed(2) + " " + QGroundControl.appSettingsAreaUnitsString }
 
             QGCLabel { text: qsTr("# shots:") }
             QGCLabel { text: missionItem.cameraShots }
+
+            QGCLabel { text: qsTr("Shot interval:") }
+            QGCLabel { text: missionItem.timeBetweenShots.toFixed(1) + " " + qsTr("secs")}
         }
     }
 }
