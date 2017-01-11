@@ -91,6 +91,7 @@ public:
     QGeoCoordinate  coordinate              (void) const final { return _missionItem.coordinate(); }
     QGeoCoordinate  exitCoordinate          (void) const final { return coordinate(); }
     int             sequenceNumber          (void) const final { return _missionItem.sequenceNumber(); }
+    double          flightSpeed             (void) final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return _missionItem.relativeAltitude(); }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return coordinateHasRelativeAltitude(); }

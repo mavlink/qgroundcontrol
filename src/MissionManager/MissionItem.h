@@ -76,6 +76,9 @@ public:
     QGeoCoordinate  coordinate      (void) const;
     int             doJumpId        (void) const { return _doJumpId; }
 
+    /// @return Flight speed change value if this item supports it. If not it returns NaN.
+    double          flightSpeed     (void) const;
+
     void setCommand         (MAV_CMD command);
     void setSequenceNumber  (int sequenceNumber);
     void setIsCurrentItem   (bool isCurrentItem);
@@ -97,8 +100,12 @@ public:
     bool relativeAltitude(void) const { return frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
 
 signals:
-    void isCurrentItemChanged       (bool isCurrentItem);
-    void sequenceNumberChanged      (int sequenceNumber);
+    void isCurrentItemChanged   (bool isCurrentItem);
+    void sequenceNumberChanged  (int sequenceNumber);
+    void flightSpeedChanged     (double flightSpeed);
+
+private slots:
+    void _param2Changed         (QVariant value);
     
 private:
     bool _convertJsonV1ToV2(const QJsonObject& json, QJsonObject& v2Json, QString& errorString);

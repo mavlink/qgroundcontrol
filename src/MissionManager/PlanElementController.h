@@ -35,6 +35,8 @@ public:
     Q_PROPERTY(QString fileExtension READ fileExtension CONSTANT)
     virtual QString fileExtension(void) const = 0;
 
+    Q_PROPERTY(Vehicle* vehicle READ vehicle NOTIFY vehicleChanged)
+
     /// Should be called immediately upon Component.onCompleted.
     ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
     Q_INVOKABLE virtual void start(bool editMode);
@@ -55,9 +57,12 @@ public:
     virtual bool dirty          (void) const = 0;
     virtual void setDirty       (bool dirty) = 0;
 
+    Vehicle* vehicle(void) { return _activeVehicle; }
+
 signals:
     void syncInProgressChanged  (bool syncInProgress);
     void dirtyChanged           (bool dirty);
+    void vehicleChanged         (Vehicle* vehicle);
 
 protected:
     MultiVehicleManager*    _multiVehicleMgr;

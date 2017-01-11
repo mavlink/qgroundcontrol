@@ -63,8 +63,6 @@ public:
     Fact* clipCount2    (void) { return &_clipCount2Fact; }
     Fact* clipCount3    (void) { return &_clipCount3Fact; }
 
-    void setVehicle(Vehicle* vehicle);
-
     static const char* _xAxisFactName;
     static const char* _yAxisFactName;
     static const char* _zAxisFactName;
@@ -73,7 +71,6 @@ public:
     static const char* _clipCount3FactName;
 
 private:
-    Vehicle*    _vehicle;
     Fact        _xAxisFact;
     Fact        _yAxisFact;
     Fact        _zAxisFact;
@@ -97,14 +94,11 @@ public:
     Fact* speed         (void) { return &_speedFact; }
     Fact* verticalSpeed (void) { return &_verticalSpeedFact; }
 
-    void setVehicle(Vehicle* vehicle);
-
     static const char* _directionFactName;
     static const char* _speedFactName;
     static const char* _verticalSpeedFactName;
 
 private:
-    Vehicle*    _vehicle;
     Fact        _directionFact;
     Fact        _speedFact;
     Fact        _verticalSpeedFact;
@@ -129,8 +123,6 @@ public:
     Fact* count             (void) { return &_countFact; }
     Fact* lock              (void) { return &_lockFact; }
 
-    void setVehicle(Vehicle* vehicle);
-
     static const char* _hdopFactName;
     static const char* _vdopFactName;
     static const char* _courseOverGroundFactName;
@@ -138,7 +130,6 @@ public:
     static const char* _lockFactName;
 
 private:
-    Vehicle*    _vehicle;
     Fact        _hdopFact;
     Fact        _vdopFact;
     Fact        _courseOverGroundFact;
@@ -168,8 +159,6 @@ public:
     Fact* cellCount                 (void) { return &_cellCountFact; }
 
 
-    void setVehicle(Vehicle* vehicle);
-
     static const char* _voltageFactName;
     static const char* _percentRemainingFactName;
     static const char* _mahConsumedFactName;
@@ -187,7 +176,6 @@ public:
     static const int    _cellCountUnavailable;
 
 private:
-    Vehicle*        _vehicle;
     Fact            _voltageFact;
     Fact            _percentRemainingFact;
     Fact            _mahConsumedFact;
@@ -245,8 +233,8 @@ public:
     Q_PROPERTY(bool                 active                  READ active                 WRITE setActive                 NOTIFY activeChanged)
     Q_PROPERTY(int                  flowImageIndex          READ flowImageIndex                                         NOTIFY flowImageIndexChanged)
     Q_PROPERTY(int                  rcRSSI                  READ rcRSSI                                                 NOTIFY rcRSSIChanged)
-    Q_PROPERTY(bool                 px4Firmware             READ px4Firmware                                            CONSTANT)
-    Q_PROPERTY(bool                 apmFirmware             READ apmFirmware                                            CONSTANT)
+    Q_PROPERTY(bool                 px4Firmware             READ px4Firmware                                            NOTIFY firmwareTypeChanged)
+    Q_PROPERTY(bool                 apmFirmware             READ apmFirmware                                            NOTIFY firmwareTypeChanged)
     Q_PROPERTY(bool                 soloFirmware            READ soloFirmware           WRITE setSoloFirmware           NOTIFY soloFirmwareChanged)
     Q_PROPERTY(bool                 genericFirmware         READ genericFirmware                                        CONSTANT)
     Q_PROPERTY(bool                 connectionLost          READ connectionLost                                         NOTIFY connectionLostChanged)
@@ -254,26 +242,28 @@ public:
     Q_PROPERTY(uint                 messagesReceived        READ messagesReceived                                       NOTIFY messagesReceivedChanged)
     Q_PROPERTY(uint                 messagesSent            READ messagesSent                                           NOTIFY messagesSentChanged)
     Q_PROPERTY(uint                 messagesLost            READ messagesLost                                           NOTIFY messagesLostChanged)
-    Q_PROPERTY(bool                 fixedWing               READ fixedWing                                              CONSTANT)
-    Q_PROPERTY(bool                 multiRotor              READ multiRotor                                             CONSTANT)
-    Q_PROPERTY(bool                 vtol                    READ vtol                                                   CONSTANT)
-    Q_PROPERTY(bool                 rover                   READ rover                                                  CONSTANT)
+    Q_PROPERTY(bool                 fixedWing               READ fixedWing                                              NOTIFY vehicleTypeChanged)
+    Q_PROPERTY(bool                 multiRotor              READ multiRotor                                             NOTIFY vehicleTypeChanged)
+    Q_PROPERTY(bool                 vtol                    READ vtol                                                   NOTIFY vehicleTypeChanged)
+    Q_PROPERTY(bool                 rover                   READ rover                                                  NOTIFY vehicleTypeChanged)
+    Q_PROPERTY(bool                 sub                     READ sub                                                    NOTIFY vehicleTypeChanged)
     Q_PROPERTY(bool                 supportsManualControl   READ supportsManualControl                                  CONSTANT)
     Q_PROPERTY(bool        supportsThrottleModeCenterZero   READ supportsThrottleModeCenterZero                         CONSTANT)
     Q_PROPERTY(bool                 supportsJSButton        READ supportsJSButton                                       CONSTANT)
     Q_PROPERTY(bool                 supportsRadio           READ supportsRadio                                          CONSTANT)
-    Q_PROPERTY(bool                 sub                     READ sub                                                    CONSTANT)
     Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                                      NOTIFY autoDisconnectChanged)
     Q_PROPERTY(QString              prearmError             READ prearmError            WRITE setPrearmError            NOTIFY prearmErrorChanged)
     Q_PROPERTY(int                  motorCount              READ motorCount                                             CONSTANT)
     Q_PROPERTY(bool                 coaxialMotors           READ coaxialMotors                                          CONSTANT)
     Q_PROPERTY(bool                 xConfigMotors           READ xConfigMotors                                          CONSTANT)
     Q_PROPERTY(bool                 isOfflineEditingVehicle READ isOfflineEditingVehicle                                CONSTANT)
-    Q_PROPERTY(QString              brandImage              READ brandImage                                             CONSTANT)
+    Q_PROPERTY(QString              brandImage              READ brandImage                                             NOTIFY firmwareTypeChanged)
     Q_PROPERTY(QStringList          unhealthySensors        READ unhealthySensors                                       NOTIFY unhealthySensorsChanged)
     Q_PROPERTY(QString              missionFlightMode       READ missionFlightMode                                      CONSTANT)
     Q_PROPERTY(QString              rtlFlightMode           READ rtlFlightMode                                          CONSTANT)
     Q_PROPERTY(QString              takeControlFlightMode   READ takeControlFlightMode                                  CONSTANT)
+    Q_PROPERTY(QString              firmwareTypeString      READ firmwareTypeString                                     NOTIFY firmwareTypeChanged)
+    Q_PROPERTY(QString              vehicleTypeString       READ vehicleTypeString                                      NOTIFY vehicleTypeChanged)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying      READ flying     WRITE setFlying     NOTIFY flyingChanged)
@@ -528,6 +518,10 @@ public:
     QString         missionFlightMode       () const;
     QString         rtlFlightMode           () const;
     QString         takeControlFlightMode   () const;
+    double          cruiseSpeed             () const { return _cruiseSpeed; }
+    double          hoverSpeed              () const { return _hoverSpeed; }
+    QString         firmwareTypeString      () const;
+    QString         vehicleTypeString      () const;
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -615,6 +609,10 @@ signals:
     void prearmErrorChanged(const QString& prearmError);
     void soloFirmwareChanged(bool soloFirmware);
     void unhealthySensorsChanged(void);
+    void cruiseSpeedChanged(double cruiseSpeed);
+    void hoverSpeedChanged(double hoverSpeed);
+    void firmwareTypeChanged(void);
+    void vehicleTypeChanged(void);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -673,6 +671,10 @@ private slots:
     void _remoteControlRSSIChanged(uint8_t rssi);
     void _handleFlightModeChanged(const QString& flightMode);
     void _announceArmedChanged(bool armed);
+    void _offlineFirmwareTypeSettingChanged(QVariant value);
+    void _offlineVehicleTypeSettingChanged(QVariant value);
+    void _offlineCruiseSpeedSettingChanged(QVariant value);
+    void _offlineHoverSpeedSettingChanged(QVariant value);
 
     void _handleTextMessage                 (int newCount);
     void _handletextMessageReceived         (UASMessage* message);
@@ -724,8 +726,8 @@ private:
     void _ackMavlinkLogData(uint16_t sequence);
     void _sendNextQueuedMavCommand(void);
     void _updatePriorityLink(void);
+    void _commonInit(void);
 
-private:
     int     _id;                    ///< Mavlink system id
     bool    _active;
     bool    _offlineEditingVehicle; ///< This Vehicle is a "disconnected" vehicle for ui use while offline editing
@@ -771,6 +773,8 @@ private:
     uint32_t        _onboardControlSensorsUnhealthy;
     bool            _gpsRawIntMessageAvailable;
     bool            _globalPositionIntMessageAvailable;
+    double          _cruiseSpeed;
+    double          _hoverSpeed;
 
     typedef struct {
         int     component;

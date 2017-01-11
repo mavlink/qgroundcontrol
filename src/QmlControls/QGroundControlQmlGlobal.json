@@ -3,7 +3,7 @@
     "name":             "OfflineEditingFirmwareType",
     "shortDescription": "Offline editing firmware type",
     "type":             "uint32",
-    "enumStrings":      "ArduPilot Firmware,PX4 Pro Firmware,Mavlink Generic Firmware",
+    "enumStrings":      "ArduPilot,PX4 Pro,Mavlink Generic",
     "enumValues":       "3,12,0",
     "defaultValue":     3
 },
@@ -11,7 +11,7 @@
     "name":             "OfflineEditingVehicleType",
     "shortDescription": "Offline editing vehicle type",
     "type":             "uint32",
-    "enumStrings":      "Fixedwing,Multicopter,VTOL,Rover,Sub",
+    "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
     "enumValues":       "1,2,19,10,12",
     "defaultValue":     1
 },
