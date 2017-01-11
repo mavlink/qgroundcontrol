@@ -71,6 +71,8 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     _connectSignals();
 
     setDefaultsForCommand();
+
+    connect(&_missionItem, &MissionItem::flightSpeedChanged, this, &SimpleMissionItem::flightSpeedChanged);
 }
 
 SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missionItem, QObject* parent)
@@ -606,4 +608,9 @@ void SimpleMissionItem::setSequenceNumber(int sequenceNumber)
         // This is too likely to ignore
         emit abbreviationChanged();
     }
+}
+
+double SimpleMissionItem::flightSpeed(void)
+{
+    return missionItem().flightSpeed();
 }
