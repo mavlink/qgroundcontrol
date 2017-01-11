@@ -54,4 +54,6 @@ void PlanElementController::_activeVehicleChanged(Vehicle* activeVehicle)
 
     // Whenever vehicle changes we need to update syncInProgress
     emit syncInProgressChanged(syncInProgress());
+
+    emit vehicleChanged(_activeVehicle);
 }

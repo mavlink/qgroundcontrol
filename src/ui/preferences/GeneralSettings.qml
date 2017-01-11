@@ -13,6 +13,7 @@ import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
 import QtQuick.Dialogs          1.1
 import QtMultimedia             5.5
+import QtQuick.Layouts          1.2
 
 import QGroundControl                       1.0
 import QGroundControl.FactSystem            1.0
@@ -33,6 +34,10 @@ QGCView {
     property Fact _percentRemainingAnnounce:    QGroundControl.batteryPercentRemainingAnnounce
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
+    property bool _showCruiseSpeed:             offlineVehicleCombo.currentText != "Multicopter"
+    property bool _showHoverSpeed:              offlineVehicleCombo.currentText != "FixedWing"
+
+    readonly property string _requiresRestart:  qsTr("(Requires Restart)")
 
     QGCPalette { id: qgcPal }
 
@@ -117,90 +122,6 @@ QGCView {
                     }
                 }
                 //-----------------------------------------------------------------
-                //-- Offline mission editing
-                Item {
-                    width:              qgcView.width * 0.8
-                    height:             offlineLabel.height
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    QGCLabel {
-                        id:             offlineLabel
-                        text:           qsTr("Offline Mission Editing (Requires Restart)")
-                        font.family:    ScreenTools.demiboldFontFamily
-                    }
-                }
-                Rectangle {
-                    height:         offlineCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:          qgcView.width * 0.8
-                    color:          qgcPal.windowShade
-                    anchors.margins: ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    Column {
-                        id:         offlineCol
-                        spacing:    ScreenTools.defaultFontPixelWidth
-                        anchors.centerIn: parent
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
-                            QGCLabel {
-                                text:               qsTr("Firmware:")
-                                width:              _labelWidth
-                                anchors.baseline:   offlineTypeCombo.baseline
-                            }
-                            FactComboBox {
-                                id:                 offlineTypeCombo
-                                width:              _editFieldWidth
-                                fact:               QGroundControl.offlineEditingFirmwareType
-                                indexModel:         false
-                            }
-                        }
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
-                            QGCLabel {
-                                text:               qsTr("Vehicle:")
-                                width:              _labelWidth
-                                anchors.baseline:   offlineVehicleCombo.baseline
-                            }
-                            FactComboBox {
-                                id:                 offlineVehicleCombo
-                                width:              _editFieldWidth
-                                fact:               QGroundControl.offlineEditingVehicleType
-                                indexModel:         false
-                            }
-                        }
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
-                            visible:  offlineVehicleCombo.currentText != "Multicopter"
-                            QGCLabel {
-                                text:               qsTr("Cruise speed:")
-                                width:              _labelWidth
-                                anchors.baseline:   cruiseSpeedField.baseline
-                            }
-                            FactTextField {
-                                id:                 cruiseSpeedField
-                                width:              _editFieldWidth
-                                fact:               QGroundControl.offlineEditingCruiseSpeed
-                                enabled:            true
-                            }
-                        }
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
-                            visible:  offlineVehicleCombo.currentText != "Fixedwing"
-                            QGCLabel {
-                                id:                 hoverSpeedLabel
-                                text:               qsTr("Hover speed:")
-                                width:              _labelWidth
-                                anchors.baseline:   hoverSpeedField.baseline
-                            }
-                            FactTextField {
-                                id:                 hoverSpeedField
-                                width:              _editFieldWidth
-                                fact:               QGroundControl.offlineEditingHoverSpeed
-                                enabled:            true
-                            }
-                        }
-                    }
-                }
-                //-----------------------------------------------------------------
                 //-- Miscelanous
                 Item {
                     width:              qgcView.width * 0.8
@@ -274,7 +195,7 @@ QGCView {
                             }
                             QGCLabel {
                                 anchors.verticalCenter: parent.verticalCenter
-                                text:                   qsTr("(Requires Restart)")
+                                text:                   _requiresRestart
                             }
                         }
                         //-----------------------------------------------------------------

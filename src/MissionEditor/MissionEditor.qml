@@ -944,9 +944,8 @@ QGCView {
                     missionItems:           missionController.visualItems
                     expandedWidth:          missionItemEditor.x - (ScreenTools.defaultFontPixelWidth * 2)
                     missionDistance:        missionController.missionDistance
+                    missionTime:            missionController.missionTime
                     missionMaxTelemetry:    missionController.missionMaxTelemetry
-                    cruiseDistance:         missionController.cruiseDistance
-                    hoverDistance:          missionController.hoverDistance
                     visible:                _editingLayer == _layerMission && !ScreenTools.isShortScreen
                 }
             } // FlightMap
