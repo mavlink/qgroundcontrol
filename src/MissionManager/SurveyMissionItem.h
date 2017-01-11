@@ -97,6 +97,7 @@ public:
     QGeoCoordinate  coordinate              (void) const final { return _coordinate; }
     QGeoCoordinate  exitCoordinate          (void) const final { return _exitCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
+    double          flightSpeed             (void) final { return std::numeric_limits<double>::quiet_NaN(); }
 
     bool coordinateHasRelativeAltitude      (void) const final { return _gridAltitudeRelative; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return _gridAltitudeRelative; }
