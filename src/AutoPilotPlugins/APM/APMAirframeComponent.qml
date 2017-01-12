@@ -14,6 +14,7 @@ import QtQuick.Dialogs  1.2
 import QtQuick.Layouts  1.2
 
 import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
@@ -21,10 +22,13 @@ import QGroundControl.ScreenTools   1.0
 
 SetupPage {
     id:             airframePage
-    pageComponent:  airframePageComponent
+    pageComponent:  _useOldFrameParam ?  oldFramePageComponent: newFramePageComponent
 
-    property real _margins: ScreenTools.defaultFontPixelWidth
-    property Fact _frame:   controller.getParameterFact(-1, "FRAME")
+    property real _margins:             ScreenTools.defaultFontPixelWidth
+    property bool _useOldFrameParam:    controller.parameterExists(-1, "FRAME")
+    property Fact _oldFrameParam:       controller.getParameterFact(-1, "FRAME", false)
+    property Fact _newFrameParam:       controller.getParameterFact(-1, "FRAME_CLASS", false)
+    property Fact _frameTypeParam:      controller.getParameterFact(-1, "FRAME_TYPE", false)
 
     APMAirframeComponentController {
         id:         controller
@@ -88,7 +92,7 @@ SetupPage {
     }
 
     Component {
-        id: airframePageComponent
+        id: oldFramePageComponent
 
         Column {
             width:      availableWidth
@@ -129,5 +133,36 @@ SetupPage {
                 }
             }
         } // Column
-    } // Component - pageComponent
+    } // Component - oldFramePageComponent
+
+    Component {
+        id: newFramePageComponent
+
+        Grid {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        _margins
+            columns:        2
+
+            QGCLabel {
+                text:               qsTr("Frame Class:")
+            }
+
+            FactComboBox {
+                fact:       _newFrameParam
+                indexModel: false
+                width:      ScreenTools.defaultFontPixelWidth * 15
+            }
+
+            QGCLabel {
+                text:               qsTr("Frame Type:")
+            }
+
+            FactComboBox {
+                fact:       _frameTypeParam
+                indexModel: false
+                width:      ScreenTools.defaultFontPixelWidth * 15
+            }
+        }
+    }
 } // SetupPage
