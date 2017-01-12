@@ -11,16 +11,27 @@
 #include "ArduCopterFirmwarePlugin.h"
 #include "ParameterManager.h"
 
+const char* APMAirframeComponent::_oldFrameParam = "FRAME";
+const char* APMAirframeComponent::_newFrameParam = "FRAME_CLASS";
+
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)
     , _requiresFrameSetup(false)
     , _name("Airframe")
 {
     if (qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) != NULL) {
+        ParameterManager* paramMgr = _vehicle->parameterManager();
         _requiresFrameSetup = true;
-        MAV_TYPE vehicleType = vehicle->vehicleType();
-        if (vehicleType == MAV_TYPE_TRICOPTER || vehicleType == MAV_TYPE_HELICOPTER) {
-            _requiresFrameSetup = false;
+        if (paramMgr->parameterExists(FactSystem::defaultComponentId, _oldFrameParam)) {
+            _useNewFrameParam = false;
+            _frameParamFact = paramMgr->getParameter(FactSystem::defaultComponentId, _oldFrameParam);
+            MAV_TYPE vehicleType = vehicle->vehicleType();
+            if (vehicleType == MAV_TYPE_TRICOPTER || vehicleType == MAV_TYPE_HELICOPTER) {
+                _requiresFrameSetup = false;
+            }
+        } else {
+            _useNewFrameParam = true;
+            _frameParamFact = paramMgr->getParameter(FactSystem::defaultComponentId, _newFrameParam);
         }
     }
 }
@@ -49,7 +60,11 @@ bool APMAirframeComponent::requiresSetup(void) const
 bool APMAirframeComponent::setupComplete(void) const
 {
     if (_requiresFrameSetup) {
-        return _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("FRAME"))->rawValue().toInt() >= 0;
+        if (_useNewFrameParam) {
+            return _frameParamFact->rawValue().toInt() > 0;
+        } else {
+            return _frameParamFact->rawValue().toInt() >= 0;
+        }
     } else {
         return true;
     }
@@ -60,7 +75,7 @@ QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
     QStringList list;
 
     if (_requiresFrameSetup) {
-        list << QStringLiteral("FRAME");
+        list << (_useNewFrameParam ? _newFrameParam : _oldFrameParam);
     }
 
     return list;
