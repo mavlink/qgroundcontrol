@@ -744,8 +744,10 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_HELICOPTER:
         if (vehicle->firmwareMajorVersion() < 3 || (vehicle->firmwareMajorVersion() == 3 && vehicle->firmwareMinorVersion() <= 3)) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.3.xml");
-        } else {
+        } else if (vehicle->firmwareMajorVersion() == 3 && vehicle->firmwareMinorVersion() == 4) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.4.xml");
+        } else {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
         }
     case MAV_TYPE_FIXED_WING:
         if (vehicle->firmwareMajorVersion() < 3 || (vehicle->firmwareMajorVersion() == 3 && vehicle->firmwareMinorVersion() <= 3)) {
