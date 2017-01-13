@@ -335,10 +335,13 @@ void VideoReceiver::start()
             gst_object_unref(_pipeline);
             _pipeline = NULL;
         }
+
+        _running = false;
+    } else {
+        _running = true;
+        qCDebug(VideoReceiverLog) << "Running";
     }
     _starting = false;
-    _running = true;
-    qCDebug(VideoReceiverLog) << "Running";
 #endif
 }
 
