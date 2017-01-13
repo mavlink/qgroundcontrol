@@ -11,6 +11,7 @@
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QSettings>
+#include <QUrl>
 
 #ifndef QGC_DISABLE_UVC
 #include <QCameraInfo>
@@ -186,6 +187,11 @@ VideoManager::setRtspURL(QString url)
     if(_videoSource == kRTSPStream)
         _updateVideo();
     */
+}
+
+void
+VideoManager::setVideoSavePathByUrl(QUrl url) {
+    setVideoSavePath(url.toLocalFile());
 }
 
 void

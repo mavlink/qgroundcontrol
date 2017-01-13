@@ -46,11 +46,7 @@ QGCView {
         title: "Choose a location to save video files."
         folder: shortcuts.home
         selectFolder: true
-        onAccepted: {
-            var path = fileDialog.fileUrl.toString();
-            path = path.replace(/^(file:\/{2})/,"");
-            QGroundControl.videoManager.videoSavePath = path
-        }
+        onAccepted: QGroundControl.videoManager.setVideoSavePathByUrl(fileDialog.fileUrl)
     }
 
     QGCViewPanel {
