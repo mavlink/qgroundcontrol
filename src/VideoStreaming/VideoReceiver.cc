@@ -31,12 +31,12 @@ void VideoReceiver::_eosCB(GstMessage* message)
 {
     Q_UNUSED(message)
 
-    gst_bin_remove(GST_BIN(_pipeline2), _sink->queue);
-    gst_bin_remove(GST_BIN(_pipeline2), _sink->mux);
-    gst_bin_remove(GST_BIN(_pipeline2), _sink->filesink);
+    gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->queue);
+    gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->mux);
+    gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->filesink);
 
-    gst_element_set_state(_pipeline2, GST_STATE_NULL);
-    gst_object_unref(_pipeline2);
+    gst_element_set_state(_pipelineStopRec, GST_STATE_NULL);
+    gst_object_unref(_pipelineStopRec);
 
     gst_element_set_state(_sink->filesink, GST_STATE_NULL);
     gst_element_set_state(_sink->mux, GST_STATE_NULL);
@@ -51,6 +51,7 @@ void VideoReceiver::_eosCB(GstMessage* message)
 
     _recording = false;
     emit recordingChanged();
+    qCDebug(VideoReceiverLog) << "Recording Stopped";
 }
 #endif
 
@@ -71,27 +72,27 @@ void VideoReceiver::_unlinkCB(GstPadProbeInfo* info)
     gst_object_unref(_sink->teepad);
 
     // Create temporary pipeline
-    _pipeline2 = gst_pipeline_new("pipe2");
+    _pipelineStopRec = gst_pipeline_new("pipeStopRec");
 
     // Put our elements from the recording branch into the temporary pipeline
-    gst_bin_add_many(GST_BIN(_pipeline2), _sink->queue, _sink->mux, _sink->filesink, NULL);
+    gst_bin_add_many(GST_BIN(_pipelineStopRec), _sink->queue, _sink->mux, _sink->filesink, NULL);
     gst_element_link_many(_sink->queue, _sink->mux, _sink->filesink, NULL);
 
     // Add watch for EOS event
-    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline2));
+    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipelineStopRec));
     gst_bus_add_signal_watch(bus);
     g_signal_connect(bus, "message::eos", G_CALLBACK(_eosCallBack), this);
     gst_object_unref(bus);
 
-    if(gst_element_set_state(_pipeline2, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
-        qCDebug(VideoReceiverLog) << "problem starting pipeline2";
+    if(gst_element_set_state(_pipelineStopRec, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
+        qCDebug(VideoReceiverLog) << "problem starting _pipelineStopRec";
     }
 
     // Send EOS at the beginning of the pipeline
     GstPad* sinkpad = gst_element_get_static_pad(_sink->queue, "sink");
     gst_pad_send_event(sinkpad, gst_event_new_eos());
     gst_object_unref(sinkpad);
-
+    qCDebug(VideoReceiverLog) << "Recording branch unlinked";
 }
 #endif
 
@@ -135,8 +136,10 @@ GstPadProbeReturn VideoReceiver::_unlinkCallBack(GstPad* pad, GstPadProbeInfo* i
 void VideoReceiver::startRecording(void)
 {
 #if defined(QGC_GST_STREAMING)
+    qCDebug(VideoReceiverLog) << "startRecording()";
     // exit immediately if we are already recording
     if(_pipeline == NULL || _recording) {
+        qCDebug(VideoReceiverLog) << "Already recording!";
         return;
     }
 
@@ -174,17 +177,19 @@ void VideoReceiver::startRecording(void)
 
     _recording = true;
     emit recordingChanged();
+    qCDebug(VideoReceiverLog) << "Recording started";
 #endif
 }
 
 void VideoReceiver::stopRecording(void)
 {
 #if defined(QGC_GST_STREAMING)
+    qCDebug(VideoReceiverLog) << "stopRecording()";
     // exit immediately if we are not recording
     if(_pipeline == NULL || !_recording) {
+        qCDebug(VideoReceiverLog) << "Not recording!";
         return;
     }
-
     // Wait for data block before unlinking
     gst_pad_add_probe(_sink->teepad, GST_PAD_PROBE_TYPE_IDLE, _unlinkCallBack, this, NULL);
 #endif
@@ -192,13 +197,16 @@ void VideoReceiver::stopRecording(void)
 
 VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
+    , _running(false)
     , _recording(false)
     , _streaming(false)
+    , _starting(false)
+    , _stopping(false)
 #if defined(QGC_GST_STREAMING)
     , _sink(NULL)
     , _tee(NULL)
     , _pipeline(NULL)
-    , _pipeline2(NULL)
+    , _pipelineStopRec(NULL)
     , _videoSink(NULL)
     , _socket(NULL)
     , _serverPresent(false)
@@ -214,7 +222,6 @@ VideoReceiver::~VideoReceiver()
 {
 #if defined(QGC_GST_STREAMING)
     stop();
-    setVideoSink(NULL);
     if(_socket) {
         delete _socket;
     }
@@ -309,6 +316,8 @@ void VideoReceiver::_timeout()
 void VideoReceiver::start()
 {
 #if defined(QGC_GST_STREAMING)
+    qCDebug(VideoReceiverLog) << "start()";
+
     if (_uri.isEmpty()) {
         qCritical() << "VideoReceiver::start() failed because URI is not specified";
         return;
@@ -317,10 +326,14 @@ void VideoReceiver::start()
         qCritical() << "VideoReceiver::start() failed because video sink is not set";
         return;
     }
+    if(_running) {
+        qCDebug(VideoReceiverLog) << "Already running!";
+        return;
+    }
+
+    _starting = true;
 
     bool isUdp = _uri.contains("udp://");
-
-    stop();
 
     //-- For RTSP, check to see if server is there first
     if(!_serverPresent && !isUdp) {
@@ -334,7 +347,7 @@ void VideoReceiver::start()
     GstCaps*        caps        = NULL;
     GstElement*     demux       = NULL;
     GstElement*     parser      = NULL;
-    GstElement*     queue      = NULL;
+    GstElement*     queue       = NULL;
     GstElement*     decoder     = NULL;
 
     do {
@@ -389,7 +402,7 @@ void VideoReceiver::start()
         }
 
         if((queue = gst_element_factory_make("queue", NULL)) == NULL)  {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue1')";
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue')";
             break;
         }
 
@@ -465,28 +478,30 @@ void VideoReceiver::start()
             _pipeline = NULL;
         }
     }
-    qCDebug(VideoReceiverLog) << "Video Receiver started.";
+    _starting = false;
+    _running = true;
+    qCDebug(VideoReceiverLog) << "Running";
 #endif
 }
 
 void VideoReceiver::stop()
 {
 #if defined(QGC_GST_STREAMING)
-    if (_pipeline != NULL) {
-        qCDebug(VideoReceiverLog) << "Stopping pipeline";
-        stopRecording();
-        gst_element_set_state(_pipeline, GST_STATE_NULL);
-        gst_object_unref(_pipeline);
-        _pipeline = NULL;
-        _serverPresent = false;
-        _streaming = false;
+    qCDebug(VideoReceiverLog) << "stop()";
+    if (_pipeline != NULL && !_stopping) {
+        qCDebug(VideoReceiverLog) << "Stopping _pipeline";
+        gst_element_send_event(_pipeline, gst_event_new_eos());
+        _stopping = true;
+        GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
+        GstMessage* message = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, GST_MESSAGE_EOS);
+        gst_object_unref(bus);
+        _onBusMessage(message);
     }
 #endif
 }
 
 void VideoReceiver::setUri(const QString & uri)
 {
-    stop();
     _uri = uri;
 }
 
@@ -501,7 +516,18 @@ void VideoReceiver::_onBusMessage(GstMessage* msg)
 {
     switch (GST_MESSAGE_TYPE(msg)) {
     case GST_MESSAGE_EOS:
-        stop();
+        gst_element_set_state(_pipeline, GST_STATE_NULL);
+        gst_bin_remove(GST_BIN(_pipeline), _videoSink);
+        gst_object_unref(_pipeline);
+        _pipeline = NULL;
+        _serverPresent = false;
+        _streaming = false;
+        _recording = false;
+        _stopping = false;
+        _running = false;
+        emit recordingChanged();
+        emit streamingChanged();
+        qCDebug(VideoReceiverLog) << "Stopped";
         break;
     case GST_MESSAGE_ERROR:
         do {

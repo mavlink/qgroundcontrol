@@ -42,8 +42,11 @@ public:
     void setVideoSink(GstElement* _sink);
 #endif
 
+    bool running()   { return _running;   }
     bool recording() { return _recording; }
     bool streaming() { return _streaming; }
+    bool starting()  { return _starting;  }
+    bool stopping()  { return _stopping;  }
 
 signals:
     void recordingChanged();
@@ -76,8 +79,11 @@ private:
         gboolean        removing;
     } Sink;
 
+    bool                _running;
     bool                _recording;
     bool                _streaming;
+    bool                _starting;
+    bool                _stopping;
     Sink*               _sink;
     GstElement*         _tee;
 
@@ -95,7 +101,7 @@ private:
 
 #if defined(QGC_GST_STREAMING)
     GstElement*         _pipeline;
-    GstElement*         _pipeline2;
+    GstElement*         _pipelineStopRec;
     GstElement*         _videoSink;
 #endif
 
