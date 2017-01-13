@@ -490,6 +490,27 @@ Item {
         }
 
         //-------------------------------------------------------------------------
+        //-- Video Recording
+        Item {
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
+            width: height
+
+            Rectangle {
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                width:              height
+                radius:             QGroundControl.videoManager.videoReceiver.recording ? 0 : height
+                color:              colorRed
+            }
+
+            MouseArea {
+                anchors.fill:   parent
+                onClicked:      QGroundControl.videoManager.videoReceiver.recording? QGroundControl.videoManager.videoReceiver._stopRecording() : QGroundControl.videoManager.videoReceiver._startRecording()
+            }
+        }
+
+        //-------------------------------------------------------------------------
         //-- Mode Selector
         QGCLabel {
             id:                     flightModeSelector

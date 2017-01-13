@@ -17,11 +17,136 @@
 #include "VideoReceiver.h"
 #include <QDebug>
 #include <QUrl>
+#include <QDir>
+#include <QDateTime>
+
+VideoReceiver::Sink* VideoReceiver::sink = NULL;
+GstElement*          VideoReceiver::_pipeline = NULL;
+GstElement*          VideoReceiver::_pipeline2 = NULL;
+GstElement*          VideoReceiver::tee = NULL;
+
+gboolean VideoReceiver::_eosCB(GstBus* bus, GstMessage* message, gpointer user_data)
+{
+    Q_UNUSED(bus);
+    Q_UNUSED(message);
+    Q_UNUSED(user_data);
+
+    gst_bin_remove(GST_BIN(_pipeline2), sink->queue);
+    gst_bin_remove(GST_BIN(_pipeline2), sink->mux);
+    gst_bin_remove(GST_BIN(_pipeline2), sink->filesink);
+
+    gst_element_set_state(_pipeline2, GST_STATE_NULL);
+    gst_object_unref(_pipeline2);
+
+    gst_element_set_state(sink->filesink, GST_STATE_NULL);
+    gst_element_set_state(sink->mux, GST_STATE_NULL);
+    gst_element_set_state(sink->queue, GST_STATE_NULL);
+
+    gst_object_unref(sink->queue);
+    gst_object_unref(sink->mux);
+    gst_object_unref(sink->filesink);
+
+    delete sink;
+    sink = NULL;
+
+    return true;
+}
+
+GstPadProbeReturn VideoReceiver::_unlinkCB(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
+{
+    Q_UNUSED(pad);
+    Q_UNUSED(info);
+    Q_UNUSED(user_data);
+
+    if(!g_atomic_int_compare_and_exchange(&sink->removing, FALSE, TRUE))
+        return GST_PAD_PROBE_OK;
+
+    GstPad* sinkpad = gst_element_get_static_pad(sink->queue, "sink");
+    gst_pad_unlink (sink->teepad, sinkpad);
+    gst_object_unref (sinkpad);
+
+    gst_element_release_request_pad(tee, sink->teepad);
+    gst_object_unref(sink->teepad);
+
+    // Also unlinks and unrefs
+    gst_bin_remove (GST_BIN (_pipeline), sink->queue);
+    gst_bin_remove (GST_BIN (_pipeline), sink->mux);
+    gst_bin_remove (GST_BIN (_pipeline), sink->filesink);
+
+    _pipeline2 = gst_pipeline_new("pipe2");
+
+    gst_bin_add_many(GST_BIN(_pipeline2), sink->queue, sink->mux, sink->filesink, NULL);
+    gst_element_link_many(sink->queue, sink->mux, sink->filesink, NULL);
+
+    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline2));
+    gst_bus_add_signal_watch(bus);
+    g_signal_connect(bus, "message::eos", G_CALLBACK(_eosCB), NULL);
+
+    if(gst_element_set_state(_pipeline2, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
+        qDebug() << "problem starting pipeline2";
+    }
+
+    GstPad* eosInjectPad = gst_element_get_static_pad(sink->queue, "sink");
+    gst_pad_send_event(eosInjectPad, gst_event_new_eos());
+    gst_object_unref(eosInjectPad);
+
+    return GST_PAD_PROBE_REMOVE;
+}
+
+void VideoReceiver::_startRecording(void)
+{
+    // exit immediately if we are already recording
+    if(_pipeline == NULL || _recording) {
+        return;
+    }
+
+    sink = g_new0(Sink, 1);
+
+    sink->teepad = gst_element_get_request_pad(tee, "src_%u");
+    sink->queue = gst_element_factory_make("queue", NULL);
+    sink->mux = gst_element_factory_make("matroskamux", NULL);
+    sink->filesink = gst_element_factory_make("filesink", NULL);
+    sink->removing = false;
+
+    QString filename = QDir::homePath() + "/" + QDateTime::currentDateTime().toString() + ".mkv";
+    g_object_set(G_OBJECT(sink->filesink), "location", qPrintable(filename), NULL);
+
+    gst_object_ref(sink->queue);
+    gst_object_ref(sink->mux);
+    gst_object_ref(sink->filesink);
+
+    gst_bin_add_many(GST_BIN(_pipeline), sink->queue, sink->mux, sink->filesink, NULL);
+    gst_element_link_many(sink->queue, sink->mux, sink->filesink, NULL);
+
+    gst_element_sync_state_with_parent(sink->queue);
+    gst_element_sync_state_with_parent(sink->mux);
+    gst_element_sync_state_with_parent(sink->filesink);
+
+    GstPad* sinkpad = gst_element_get_static_pad(sink->queue, "sink");
+    gst_pad_link(sink->teepad, sinkpad);
+    gst_object_unref(sinkpad);
+
+    _recording = true;
+    emit recordingChanged();
+}
+
+void VideoReceiver::_stopRecording(void)
+{
+    // exit immediately if we are not recording
+    if(_pipeline == NULL || !_recording) {
+        return;
+    }
+
+    gst_pad_add_probe(sink->teepad, GST_PAD_PROBE_TYPE_IDLE, _unlinkCB, sink, NULL);
+
+    _recording = false;
+    emit recordingChanged();
+}
 
 VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
 #if defined(QGC_GST_STREAMING)
-    , _pipeline(NULL)
+    , _recording(false)
     , _videoSink(NULL)
     , _socket(NULL)
     , _serverPresent(false)
@@ -36,11 +161,12 @@ VideoReceiver::VideoReceiver(QObject* parent)
 VideoReceiver::~VideoReceiver()
 {
 #if defined(QGC_GST_STREAMING)
-    stop();
-    setVideoSink(NULL);
-    if(_socket) {
-        delete _socket;
-    }
+//    stop();
+//    setVideoSink(NULL);
+//    if(_socket) {
+//        delete _socket;
+//    }
+    EOS();
 #endif
 }
 
@@ -149,6 +275,15 @@ void VideoReceiver::start()
     GstElement*     demux       = NULL;
     GstElement*     parser      = NULL;
     GstElement*     decoder     = NULL;
+    GstElement*     queue1      = NULL;
+
+    // Pads to link queues and tee
+    GstPad*         teeSrc1     = NULL; // tee source pad 1
+    GstPad*         q1Sink      = NULL; // queue1 sink pad
+
+    //                                 /queue1---decoder---_videosink
+    //datasource---demux---parser---tee
+    //                                 \queue2---matroskamux---filesink
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == NULL) {
@@ -196,21 +331,51 @@ void VideoReceiver::start()
             break;
         }
 
-        gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, decoder, _videoSink, NULL);
-
-        gboolean res = FALSE;
-
-        if(isUdp) {
-            res = gst_element_link_many(dataSource, demux, parser, decoder, _videoSink, NULL);
-        } else {
-            res = gst_element_link_many(demux, parser, decoder, _videoSink, NULL);
-        }
-
-        if (!res) {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_element_link_many()";
+        if((tee = gst_element_factory_make("tee", "stream-file-tee")) == NULL)  {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('tee')";
             break;
         }
 
+        if((queue1 = gst_element_factory_make("queue", NULL)) == NULL)  {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue1')";
+            break;
+        }
+
+        gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, tee, queue1, decoder, _videoSink, NULL);
+
+//        if(isUdp) {
+//            res = gst_element_link_many(dataSource, demux, parser, decoder, tee, _videoSink, NULL);
+//        } else {
+//            res = gst_element_link_many(demux, parser, decoder, tee, _videoSink, NULL);
+//        }
+
+        // Link the pipeline in front of the tee
+        if(!gst_element_link_many(dataSource, demux, parser, tee, NULL)) {
+            qCritical() << "Unable to link datasource and tee.";
+            break;
+        }
+
+        // Link the videostream to queue1
+        if(!gst_element_link_many(queue1, decoder, _videoSink, NULL)) {
+            qCritical() << "Unable to link queue1 and videosink.";
+            break;
+        }
+
+        // Link the queues to the tee
+        teeSrc1 = gst_element_get_request_pad(tee, "src_%u");
+        q1Sink = gst_element_get_static_pad(queue1, "sink");
+
+        // Link the tee to queue1
+        if (gst_pad_link(teeSrc1, q1Sink) != GST_PAD_LINK_OK ){
+            qCritical() << "Tee for queue1 could not be linked.\n";
+            break;
+        }
+
+        gst_object_unref(teeSrc1);
+        gst_object_unref(q1Sink);
+
+        teeSrc1 = q1Sink = NULL;
+        queue1 = NULL;
         dataSource = demux = parser = decoder = NULL;
 
         GstBus* bus = NULL;
@@ -253,18 +418,35 @@ void VideoReceiver::start()
             dataSource = NULL;
         }
 
+        if (tee != NULL) {
+            gst_object_unref(tee);
+            dataSource = NULL;
+        }
+
+        if (queue1 != NULL) {
+            gst_object_unref(queue1);
+            dataSource = NULL;
+        }
+
         if (_pipeline != NULL) {
             gst_object_unref(_pipeline);
             _pipeline = NULL;
         }
     }
+
+    qDebug() << "Video Receiver started.";
 #endif
+}
+
+void VideoReceiver::EOS() {
+    gst_element_send_event(_pipeline, gst_event_new_eos());
 }
 
 void VideoReceiver::stop()
 {
 #if defined(QGC_GST_STREAMING)
     if (_pipeline != NULL) {
+        qCritical() << "stopping pipeline";
         gst_element_set_state(_pipeline, GST_STATE_NULL);
         gst_object_unref(_pipeline);
         _pipeline = NULL;
@@ -282,9 +464,12 @@ void VideoReceiver::setUri(const QString & uri)
 #if defined(QGC_GST_STREAMING)
 void VideoReceiver::_onBusMessage(GstMessage* msg)
 {
+    //qDebug() << "Got bus message";
+
     switch (GST_MESSAGE_TYPE(msg)) {
     case GST_MESSAGE_EOS:
-        stop();
+        qDebug() << "Got EOS";
+        //stop();
         break;
     case GST_MESSAGE_ERROR:
         do {
