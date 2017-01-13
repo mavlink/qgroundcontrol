@@ -116,43 +116,14 @@ void FirmwareUpgradeController::cancel(void)
     _threadController->cancel();
 }
 
-void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPortInfo& info, int boardType)
+void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPortInfo& info, int boardType, QString boardName)
 {
     _foundBoardInfo = info;
     _foundBoardType = (QGCSerialPortInfo::BoardType_t)boardType;
+    _foundBoardTypeName = boardName;
+    _startFlashWhenBootloaderFound = false;
 
-    switch (boardType) {
-    case QGCSerialPortInfo::BoardTypePX4FMUV1:
-        _foundBoardTypeName = "PX4 FMU V1";
-        _startFlashWhenBootloaderFound = false;
-        break;
-    case QGCSerialPortInfo::BoardTypePX4FMUV2:
-    case QGCSerialPortInfo::BoardTypePX4FMUV4:
-        _foundBoardTypeName = "Pixhawk";
-        _startFlashWhenBootloaderFound = false;
-        break;
-    case QGCSerialPortInfo::BoardTypeAeroCore:
-        _foundBoardTypeName = "AeroCore";
-        _startFlashWhenBootloaderFound = false;
-        break;
-    case QGCSerialPortInfo::BoardTypeMINDPXFMUV2:
-        _foundBoardTypeName = "MindPX";
-        _startFlashWhenBootloaderFound = false;
-        break;
-    case QGCSerialPortInfo::BoardTypeTAPV1:
-        _foundBoardTypeName = "TAP V1";
-        _startFlashWhenBootloaderFound = false;
-        break;
-    case QGCSerialPortInfo::BoardTypeASCV1:
-        _foundBoardTypeName = "ASC V1";
-        _startFlashWhenBootloaderFound = false;
-        break;
-    case QGCSerialPortInfo::BoardTypePX4Flow:
-        _foundBoardTypeName = "PX4 Flow";
-        _startFlashWhenBootloaderFound = false;
-        break;
-    case QGCSerialPortInfo::BoardTypeSikRadio:
-        _foundBoardTypeName = "SiK Radio";
+    if (_foundBoardType == QGCSerialPortInfo::BoardTypeSiKRadio) {
         if (!firstAttempt) {
             // Radio always flashes latest firmware, so we can start right away without
             // any further user input.
@@ -161,12 +132,10 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
                                                                                 StableFirmware,
                                                                                 DefaultVehicleFirmware);
         }
-        break;
     }
     
-    qCDebug(FirmwareUpgradeLog) << _foundBoardType;
+    qCDebug(FirmwareUpgradeLog) << _foundBoardType << _foundBoardTypeName;
     emit boardFound();
-    _loadAPMVersions(_foundBoardType);
 }
 
 
@@ -197,6 +166,8 @@ void FirmwareUpgradeController::_foundBootloader(int bootloaderVersion, int boar
     if (_startFlashWhenBootloaderFound) {
         flash(_startFlashWhenBootloaderFoundFirmwareIdentity);
     }
+
+    _loadAPMVersions(_bootloaderBoardID);
 }
 
 
@@ -463,48 +434,6 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
     }
 }
 
-QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_firmwareHashForBoardType(QGCSerialPortInfo::BoardType_t boardType)
-{
-    int boardId = Bootloader::boardIDPX4FMUV2;
-
-    switch (boardType) {
-    case QGCSerialPortInfo::BoardTypePX4FMUV1:
-        boardId = Bootloader::boardIDPX4FMUV1;
-        break;
-    case QGCSerialPortInfo::BoardTypePX4FMUV2:
-        boardId = Bootloader::boardIDPX4FMUV2;
-        break;
-    case QGCSerialPortInfo::BoardTypePX4FMUV4:
-        boardId = Bootloader::boardIDPX4FMUV4;
-        break;
-    case QGCSerialPortInfo::BoardTypeAeroCore:
-        boardId = Bootloader::boardIDAeroCore;
-        break;
-    case QGCSerialPortInfo::BoardTypeMINDPXFMUV2:
-        boardId = Bootloader::boardIDMINDPXFMUV2;
-        break;
-    case QGCSerialPortInfo::BoardTypeTAPV1:
-        boardId = Bootloader::boardIDTAPV1;
-        break;
-    case QGCSerialPortInfo::BoardTypeASCV1:
-        boardId = Bootloader::boardIDASCV1;
-        break;
-    case QGCSerialPortInfo::BoardTypePX4Flow:
-        boardId = Bootloader::boardIDPX4Flow;
-        break;
-    case QGCSerialPortInfo::BoardTypeSikRadio:
-        boardId = Bootloader::boardID3DRRadio;
-        break;
-    default:
-        qWarning() << "Internal error: invalid board type for flashing" << boardType;
-        boardId = Bootloader::boardIDPX4FMUV2;
-        break;
-    }
-
-    return _firmwareHashForBoardId(boardId);
-}
-
-
 /// @brief Prompts the user to select a firmware file if needed and moves the state machine to the next state.
 void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
@@ -697,11 +626,11 @@ void FirmwareUpgradeController::_eraseComplete(void)
     _eraseTimer.stop();
 }
 
-void FirmwareUpgradeController::_loadAPMVersions(QGCSerialPortInfo::BoardType_t boardType)
+void FirmwareUpgradeController::_loadAPMVersions(uint32_t bootloaderBoardID)
 {
     _apmVersionMap.clear();
 
-    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardType(boardType);
+    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(bootloaderBoardID);
 
     foreach (FirmwareIdentifier firmwareId, prgFirmware->keys()) {
         if (firmwareId.autopilotStackType == AutoPilotStackAPM) {
@@ -740,7 +669,7 @@ void FirmwareUpgradeController::_apmVersionDownloadFinished(QString remoteFile, 
 
     // In order to determine the firmware and vehicle type for this file we find the matching entry in the firmware list
 
-    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardType(_foundBoardType);
+    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(_bootloaderBoardID);
 
     QString remotePath = QFileInfo(remoteFile).path();
     foreach (FirmwareIdentifier firmwareId, prgFirmware->keys()) {
