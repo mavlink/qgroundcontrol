@@ -224,37 +224,36 @@ VideoManager::videoSourceList()
 void VideoManager::_updateTimer()
 {
 #if defined(QGC_GST_STREAMING)
-    if(_videoRunning)
-    {
-        time_t elapsed = 0;
-        if(_videoSurface)
-        {
-            elapsed = time(0) - _videoSurface->lastFrame();
+    if(_videoReceiver && _videoSurface) {
+        if(_videoReceiver->stopping() || _videoReceiver->starting()) {
+            return;
         }
-        if(elapsed > 2 && _videoSurface)
-        {
-            _videoRunning = false;
-            _videoSurface->setLastFrame(0);
-            emit videoRunningChanged();
-            if(_videoReceiver) {
-                if(isGStreamer()) {
-                    //-- Stop it
-                    _videoReceiver->stop();
-                    QThread::msleep(100);
-                    //-- And start over
-                    _videoReceiver->start();
-                }
-            }
-        }
-    }
-    else
-    {
-        if(_videoSurface && _videoReceiver->streaming()) {
-            qDebug() << _videoSurface->lastFrame();
-            if(!_videoRunning)
-            {
+
+        if(_videoReceiver->streaming()) {
+            if(!_videoRunning) {
+                _videoSurface->setLastFrame(0);
                 _videoRunning = true;
                 emit videoRunningChanged();
+            }
+        } else {
+            if(_videoRunning) {
+                _videoRunning = false;
+                emit videoRunningChanged();
+            }
+        }
+
+        if(_videoRunning) {
+            time_t elapsed = 0;
+            time_t lastFrame = _videoSurface->lastFrame();
+            if(lastFrame != 0) {
+                elapsed = time(0) - _videoSurface->lastFrame();
+            }
+            if(elapsed > 2 && _videoSurface) {
+                _videoReceiver->stop();
+            }
+        } else {
+            if(!_videoReceiver->running()) {
+                _videoReceiver->start();
             }
         }
     }
