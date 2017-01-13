@@ -541,48 +541,6 @@ Item {
                 onClicked:      flightModesMenu.popup()
             }
         } // QGCLabel - Flight mode selector
-
-        Rectangle {
-//            anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            width:              1
-            color:              qgcPal.text
-            visible:            QGroundControl.videoManager.videoRunning
-        }
-
-        //-------------------------------------------------------------------------
-        //-- Video Recording
-        Item {
-            anchors.top:    parent.top
-            anchors.bottom: parent.bottom
-            width:          height
-            visible:        QGroundControl.videoManager.videoRunning
-
-            Rectangle {
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                width:              height
-                radius:             QGroundControl.videoManager.videoReceiver.recording ? 0 : height
-                color:              colorRed
-            }
-
-            QGCColoredImage {
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                width:              height * 0.625
-                sourceSize.width:   width
-                source:             "/qmlimages/CameraIcon.svg"
-                fillMode:           Image.PreserveAspectFit
-                color:              colorWhite
-            }
-
-            MouseArea {
-                anchors.fill:   parent
-                onClicked:      QGroundControl.videoManager.videoReceiver.recording? QGroundControl.videoManager.videoReceiver.stopRecording() : QGroundControl.videoManager.videoReceiver.startRecording()
-            }
-        }
     } // Row - Vehicle indicators
 
     Image {

@@ -27,7 +27,7 @@
 static const char* kVideoSourceKey  = "VideoSource";
 static const char* kVideoUDPPortKey = "VideoUDPPort";
 static const char* kVideoRTSPUrlKey = "VideoRTSPUrl";
-static const char* kVideoSavePathKey = "VideoSaveDir";
+static const char* kVideoSavePathKey = "VideoSavePath";
 #if defined(QGC_GST_STREAMING)
 static const char* kUDPStream       = "UDP Video Stream";
 static const char* kRTSPStream      = "RTSP Video Stream";
@@ -249,7 +249,6 @@ void VideoManager::_updateTimer()
     }
     else
     {
-//        if(_videoSurface && _videoSurface->lastFrame()) {
         if(_videoSurface && _videoReceiver->streaming()) {
             qDebug() << _videoSurface->lastFrame();
             if(!_videoRunning)
