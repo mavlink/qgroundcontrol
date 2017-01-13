@@ -33,7 +33,6 @@ class VideoReceiver : public QObject
     Q_OBJECT
 public:
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
-    Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
 
     explicit VideoReceiver(QObject* parent = 0);
     ~VideoReceiver();
@@ -50,7 +49,6 @@ public:
 
 signals:
     void recordingChanged();
-    void streamingChanged();
 
 public slots:
     void start              ();

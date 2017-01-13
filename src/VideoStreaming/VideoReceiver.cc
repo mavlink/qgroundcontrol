@@ -399,7 +399,6 @@ void VideoReceiver::_onBusMessage(GstMessage* msg)
         _stopping = false;
         _running = false;
         emit recordingChanged();
-        emit streamingChanged();
         qCDebug(VideoReceiverLog) << "Stopped";
         break;
     case GST_MESSAGE_STATE_CHANGED:
