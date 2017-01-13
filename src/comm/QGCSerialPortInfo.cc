@@ -227,6 +227,8 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t& boardType, 
 
 QString QGCSerialPortInfo::_boardTypeToString(BoardType_t boardType)
 {
+    QString unknown = QObject::tr("Unknown");
+
     switch (boardType) {
     case BoardTypePixhawk:
         return QObject::tr("Pixhawk");
@@ -239,8 +241,10 @@ QString QGCSerialPortInfo::_boardTypeToString(BoardType_t boardType)
     case BoardTypeRTKGPS:
         return QObject::tr("RTK GPS");
     case BoardTypeUnknown:
-        return QObject::tr("Unknown");
+        return unknown;
     }
+
+    return unknown;
 }
 
 
