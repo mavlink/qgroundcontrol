@@ -29,6 +29,8 @@ class VideoReceiver : public QObject
 {
     Q_OBJECT
 public:
+    Q_PROPERTY(bool             recording        READ    recording                                NOTIFY recordingChanged)
+
     explicit VideoReceiver(QObject* parent = 0);
     ~VideoReceiver();
 
@@ -36,10 +38,18 @@ public:
     void setVideoSink(GstElement* sink);
 #endif
 
+    bool recording() { return _recording; }
+
+signals:
+    void recordingChanged();
+
 public slots:
     void start      ();
+    void EOS        ();
     void stop       ();
     void setUri     (const QString& uri);
+    void _stopRecording();
+    void _startRecording();
 
 private slots:
 #if defined(QGC_GST_STREAMING)
@@ -49,16 +59,34 @@ private slots:
 #endif
 
 private:
-
 #if defined(QGC_GST_STREAMING)
-    void            _onBusMessage(GstMessage* message);
-    static gboolean _onBusMessage(GstBus* bus, GstMessage* msg, gpointer data);
+    typedef struct
+    {
+        GstPad* teepad;
+        GstElement* queue;
+        GstElement* mux;
+        GstElement* filesink;
+        gboolean removing;
+    } Sink;
+
+    static Sink* sink;
+
+    void                        _onBusMessage(GstMessage* message);
+    static gboolean             _onBusMessage(GstBus* bus, GstMessage* msg, gpointer user_data);
+    static gboolean             _eosCB(GstBus* bus, GstMessage* message, gpointer user_data);
+    static GstPadProbeReturn    _unlinkCB(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
+
+    bool _recording;
+    static GstElement*     tee;
+
 #endif
 
     QString     _uri;
 
 #if defined(QGC_GST_STREAMING)
-    GstElement* _pipeline;
+    static GstElement* _pipeline;
+    static GstElement* _pipeline2;
+
     GstElement* _videoSink;
 #endif
 
