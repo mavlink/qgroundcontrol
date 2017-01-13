@@ -62,6 +62,7 @@ public slots:
 
 private slots:
 #if defined(QGC_GST_STREAMING)
+    void _busCheck      ();
     void _timeout       ();
     void _connected     ();
     void _socketError   (QAbstractSocket::SocketError socketError);
@@ -85,6 +86,7 @@ private:
     bool                _stopping;
     Sink*               _sink;
     GstElement*         _tee;
+    QTimer              _busCheckTimer;
 
     void                        _onBusMessage(GstMessage* message);
     void                        _eosCB(GstMessage* message);
