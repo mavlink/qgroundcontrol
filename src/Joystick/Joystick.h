@@ -62,6 +62,14 @@ public:
     } AxisFunction_t;
 
     typedef enum {
+        Mode1,
+        Mode2,
+        Mode3,
+        Mode4,
+        maxMode
+    } JoystickTXMode_t;
+
+    typedef enum {
         ThrottleModeCenterZero,
         ThrottleModeDownZero,
         ThrottleModeMax
@@ -85,11 +93,11 @@ public:
     Q_INVOKABLE void setButtonAction(int button, const QString& action);
     Q_INVOKABLE QString getButtonAction(int button);
 
-    Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
-    Q_PROPERTY(bool exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
-    Q_PROPERTY(bool accumulator READ accumulator WRITE setAccumulator NOTIFY accumulatorChanged)
-    Q_PROPERTY(int mode         READ mode        WRITE setMode           NOTIFY modeChanged)
-    Q_PROPERTY(bool requiresCalibration READ requiresCalibration CONSTANT)
+    Q_PROPERTY(int  throttleMode        READ throttleMode       WRITE setThrottleMode   NOTIFY throttleModeChanged)
+    Q_PROPERTY(bool exponential         READ exponential        WRITE setExponential    NOTIFY exponentialChanged)
+    Q_PROPERTY(bool accumulator         READ accumulator        WRITE setAccumulator    NOTIFY accumulatorChanged)
+    Q_PROPERTY(int  mode                READ mode               WRITE setMode           NOTIFY modeChanged)
+    Q_PROPERTY(bool requiresCalibration READ requiresCalibration                        CONSTANT)
 
     // Property accessors
 
@@ -111,7 +119,7 @@ public:
 
     QString name(void) { return _name; }
 
-    void setMode(int mode);
+    void setMode(int mode, bool save=true);
     int  mode(void) { return Joystick::_mode; }
 
     virtual bool requiresCalibration(void) { return true; }
@@ -238,7 +246,16 @@ private:
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;
     static const char* _deadbandSettingsKey;
+    //static const char* _modeSettingsKey;
+    static const char* _fixedWingModeSettingsKey;
+    static const char* _multiRotorModeSettingsKey;
+    static const char* _roverModeSettingsKey;
+    static const char* _vtolModeSettingsKey;
+    static const char* _submarineModeSettingsKey;
     static const char* _modeSettingsKey;
+
+private slots:
+    void _activeVehicleChanged(Vehicle* activeVehicle);
 };
 
 #endif

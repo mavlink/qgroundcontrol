@@ -453,7 +453,8 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
     
     // Initialize attitude function mapping to function axis not set
     for (size_t i=0; i<Joystick::maxFunction; i++) {
-        //_rgFunctionAxisMapping[i] = _axisNoAxis;
+        // I had commented this..
+        _rgFunctionAxisMapping[i] = _axisNoAxis;
     }
 
     for (size_t i=0; i<Joystick::maxAxis; i++) {

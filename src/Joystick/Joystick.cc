@@ -26,7 +26,13 @@ const char* Joystick::_throttleModeSettingsKey =    "ThrottleMode";
 const char* Joystick::_exponentialSettingsKey =     "Exponential";
 const char* Joystick::_accumulatorSettingsKey =     "Accumulator";
 const char* Joystick::_deadbandSettingsKey =        "Deadband";
-const char* Joystick::_modeSettingsKey =            "Mode";
+const char* Joystick::_modeSettingsKey =            NULL;
+const char* Joystick::_fixedWingModeSettingsKey =   "TXMode_FixedWing";
+const char* Joystick::_multiRotorModeSettingsKey =  "TXMode_MultiRotor";
+const char* Joystick::_roverModeSettingsKey =       "TXMode_Rover";
+const char* Joystick::_vtolModeSettingsKey =        "TXMode_VTOL";
+const char* Joystick::_submarineModeSettingsKey =   "TXMode_Submarine";
+
 //const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
 //    "RollAxis",
 //    "PitchAxis",
@@ -76,6 +82,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     }
 
     _loadSettings();
+
+    connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
 }
 
 Joystick::~Joystick()
@@ -116,13 +124,43 @@ void Joystick::_setDefaultCalibration(void) {
     _saveSettings();
 }
 
+void Joystick::_activeVehicleChanged(Vehicle *activeVehicle)
+{
+    if(activeVehicle) {
+        if(activeVehicle->fixedWing()) {
+            _modeSettingsKey = _fixedWingModeSettingsKey;
+        } else if(activeVehicle->multiRotor()) {
+            _modeSettingsKey = _multiRotorModeSettingsKey;
+        } else if(activeVehicle->rover()) {
+            _modeSettingsKey = _roverModeSettingsKey;
+        } else if(activeVehicle->vtol()) {
+            _modeSettingsKey = _vtolModeSettingsKey;
+        } else if(activeVehicle->sub()) {
+            _modeSettingsKey = _submarineModeSettingsKey;
+        } else {
+            _modeSettingsKey = NULL;
+            qWarning() << "No valid joystick TXmode settings key for selected vehicle";
+            return;
+        }
+
+        QSettings settings;
+        settings.beginGroup(_settingsGroup);
+        int mode = settings.value(_modeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
+
+        setMode(mode);
+    }
+}
+
 void Joystick::_loadSettings(void)
 {    
     QSettings   settings;
 
     settings.beginGroup(_settingsGroup);
 
-    int mode = settings.value(_modeSettingsKey, 2).toInt();
+    int mode = 2;
+    if(_modeSettingsKey)
+        mode = settings.value(_modeSettingsKey, 2).toInt();
+
     qCDebug(JoystickLog) << "_loadSettings Mode:" << mode;
 
     settings.beginGroup(_name);
@@ -199,7 +237,7 @@ void Joystick::_loadSettings(void)
         settings.setValue(_calibratedSettingsKey, false);
     }
 
-    setMode(mode); // defaults to 2
+    setMode(mode, false); // defaults to 2
 }
 
 void Joystick::_saveSettings(void)
@@ -606,7 +644,7 @@ QVariantList Joystick::buttonActions(void)
     return list;
 }
 
-void Joystick::setMode(int mode)
+void Joystick::setMode(int mode, bool save)
 {
     Joystick::_mode = mode;
     qCDebug(JoystickLog) << "New Mode:" << Joystick::_mode;
@@ -642,7 +680,10 @@ void Joystick::setMode(int mode)
         qCDebug(JoystickLog) << "Invalid Mode:" << Joystick::_mode;
     }
 
-    _saveSettings();
+    if(save) {
+        _saveSettings();
+    }
+
     emit modeChanged(Joystick::_mode);
 }
 

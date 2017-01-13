@@ -106,6 +106,11 @@ int FirmwarePlugin::manualControlReservedButtonCount(void)
     return -1;
 }
 
+int FirmwarePlugin::defaultJoystickTXMode(void)
+{
+    return 2;
+}
+
 bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
 {
     // By default, this is supported
