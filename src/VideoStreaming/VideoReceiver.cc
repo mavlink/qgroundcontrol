@@ -321,7 +321,7 @@ void VideoReceiver::stop()
         gst_element_send_event(_pipeline, gst_event_new_eos());
         _stopping = true;
         GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
-        GstMessage* message = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, GST_MESSAGE_EOS);
+        GstMessage* message = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, (GstMessageType)(GST_MESSAGE_EOS|GST_MESSAGE_ERROR));
         gst_object_unref(bus);
         _onBusMessage(message);
     }
@@ -343,6 +343,16 @@ void VideoReceiver::setVideoSavePath(const QString & path)
 void VideoReceiver::_onBusMessage(GstMessage* msg)
 {
     switch (GST_MESSAGE_TYPE(msg)) {
+    case GST_MESSAGE_ERROR:
+        do {
+            gchar* debug;
+            GError* error;
+            gst_message_parse_error(msg, &error, &debug);
+            g_free(debug);
+            qCritical() << error->message;
+            g_error_free(error);
+        } while(0);
+        // No break!
     case GST_MESSAGE_EOS:
         gst_element_set_state(_pipeline, GST_STATE_NULL);
         gst_bin_remove(GST_BIN(_pipeline), _videoSink);
@@ -356,17 +366,6 @@ void VideoReceiver::_onBusMessage(GstMessage* msg)
         emit recordingChanged();
         emit streamingChanged();
         qCDebug(VideoReceiverLog) << "Stopped";
-        break;
-    case GST_MESSAGE_ERROR:
-        do {
-            gchar* debug;
-            GError* error;
-            gst_message_parse_error(msg, &error, &debug);
-            g_free(debug);
-            qCritical() << error->message;
-            g_error_free(error);
-        } while(0);
-        stop();
         break;
     case GST_MESSAGE_STATE_CHANGED:
       _streaming = GST_STATE(_pipeline) == GST_STATE_PLAYING;
