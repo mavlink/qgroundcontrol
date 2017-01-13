@@ -60,6 +60,7 @@ public:
             YFirmware,
             Y6Firmware,
             HeliFirmware,
+            CopterFirmware,
             PlaneFirmware,
             RoverFirmware,
             DefaultVehicleFirmware
