@@ -61,15 +61,15 @@ public:
     bool reboot(QextSerialPort* port);
     
     // Supported bootloader board ids
-    static const int boardIDPX4FMUV1 = 5;   ///< PX4 V1 board, as from USB PID
-    static const int boardIDPX4FMUV2 = 9;   ///< PX4 V2 board, as from USB PID
-    static const int boardIDPX4FMUV4 = 11;   ///< PX4 V4 board, as from USB PID
-    static const int boardIDPX4Flow = 6;    ///< PX4 Flow board, as from USB PID
-    static const int boardIDAeroCore = 98;  ///< Gumstix AeroCore board, as from USB PID
-    static const int boardID3DRRadio = 78;  ///< 3DR Radio. This is an arbitrary value unrelated to the PID
-    static const int boardIDMINDPXFMUV2 = 88;  ///< MindPX V2 board, as from USB PID
-    static const int boardIDTAPV1 = 64;     ///< TAP V1 board, as from USB PID
-    static const int boardIDASCV1 = 65;     ///< ASC V1 board, as from USB PID
+    static const int boardIDPX4FMUV1 = 5;       ///< PX4 V1 board, as from USB PID
+    static const int boardIDPX4FMUV2 = 9;       ///< PX4 V2 board, as from USB PID
+    static const int boardIDPX4FMUV4 = 11;      ///< PX4 V4 board, as from USB PID
+    static const int boardIDPX4Flow = 6;        ///< PX4 Flow board, as from USB PID
+    static const int boardIDAeroCore = 98;      ///< Gumstix AeroCore board, as from USB PID
+    static const int boardID3DRRadio = 78;      ///< 3DR Radio. This is an arbitrary value unrelated to the PID
+    static const int boardIDMINDPXFMUV2 = 88;   ///< MindPX V2 board, as from USB PID
+    static const int boardIDTAPV1 = 64;         ///< TAP V1 board, as from USB PID
+    static const int boardIDASCV1 = 65;         ///< ASC V1 board, as from USB PID
     
 signals:
     /// @brief Signals progress indicator for long running bootloader utility routines
