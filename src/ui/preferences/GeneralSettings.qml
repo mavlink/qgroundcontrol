@@ -34,8 +34,6 @@ QGCView {
     property Fact _percentRemainingAnnounce:    QGroundControl.batteryPercentRemainingAnnounce
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
-    property bool _showCruiseSpeed:             offlineVehicleCombo.currentText != "Multicopter"
-    property bool _showHoverSpeed:              offlineVehicleCombo.currentText != "FixedWing"
 
     readonly property string _requiresRestart:  qsTr("(Requires Restart)")
 
