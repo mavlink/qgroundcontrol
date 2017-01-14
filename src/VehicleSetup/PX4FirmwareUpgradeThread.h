@@ -43,7 +43,7 @@ public:
     
 signals:
     void updateProgress(int curr, int total);
-    void foundBoard(bool firstAttempt, const QGCSerialPortInfo& portInfo, int type);
+    void foundBoard(bool firstAttempt, const QGCSerialPortInfo& portInfo, int type, QString boardName);
     void noBoardFound(void);
     void boardGone(void);
     void foundBootloader(int bootloaderVersion, int boardID, int flashSize);
@@ -64,7 +64,7 @@ private slots:
     void _cancel(void);
     
 private:
-    bool _findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType);
+    bool _findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType, QString& boardName);
     bool _findBootloader(const QGCSerialPortInfo& portInfo, bool radioMode, bool errorOnNotFound);
     void _3drRadioForceBootloader(const QGCSerialPortInfo& portInfo);
     bool _erase(void);
@@ -107,7 +107,7 @@ public:
     
 signals:
     /// @brief Emitted by the find board process when it finds a board.
-    void foundBoard(bool firstAttempt, const QGCSerialPortInfo &portInfo, int boardType);
+    void foundBoard(bool firstAttempt, const QGCSerialPortInfo &portInfo, int boardType, QString boardName);
     
     void noBoardFound(void);
     
@@ -142,7 +142,7 @@ signals:
     void _cancel(void);
     
 private slots:
-    void _foundBoard(bool firstAttempt, const QGCSerialPortInfo& portInfo, int type) { emit foundBoard(firstAttempt, portInfo, type); }
+    void _foundBoard(bool firstAttempt, const QGCSerialPortInfo& portInfo, int type, QString name) { emit foundBoard(firstAttempt, portInfo, type, name); }
     void _noBoardFound(void) { emit noBoardFound(); }
     void _boardGone(void) { emit boardGone(); }
     void _foundBootloader(int bootloaderVersion, int boardID, int flashSize) { emit foundBootloader(bootloaderVersion, boardID, flashSize); }
