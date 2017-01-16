@@ -43,7 +43,8 @@ VideoReceiver::VideoReceiver(QObject* parent)
 #if defined(QGC_GST_STREAMING)
     _timer.setSingleShot(true);
     connect(&_timer, &QTimer::timeout, this, &VideoReceiver::_timeout);
-    connect(&_busCheckTimer, &QTimer::timeout, this, &VideoReceiver::_busCheck);
+    connect(this, &VideoReceiver::recordingEOSReceived, this, &VideoReceiver::_eosCB);
+    connect(this, &VideoReceiver::busMessage, this, &VideoReceiver::_handleBusMessage);
 #endif
 }
 
@@ -92,7 +93,6 @@ static void newPadCB(GstElement* element, GstPad* pad, gpointer data)
 void VideoReceiver::_connected()
 {
     //-- Server showed up. Now we start the stream.
-    _timer.stop();
     delete _socket;
     _socket = NULL;
     _serverPresent = true;
@@ -130,33 +130,6 @@ void VideoReceiver::_timeout()
     //qCDebug(VideoReceiverLog) << "Trying to connect to:" << url.host() << url.port();
     _socket->connectToHost(url.host(), url.port());
     _timer.start(5000);
-}
-#endif
-
-#if defined(QGC_GST_STREAMING)
-void VideoReceiver::_busCheck() {
-    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
-
-    GstMessage* message;
-
-    while((message = gst_bus_pop(bus)) != NULL) {
-        _onBusMessage(message);
-        gst_message_unref(message);
-    }
-
-    gst_object_unref(bus);
-
-    if(_pipelineStopRec == NULL) {
-        return;
-    }
-
-    bus = gst_pipeline_get_bus(GST_PIPELINE(_pipelineStopRec));
-    if((message = gst_bus_pop_filtered(bus, GST_MESSAGE_EOS)) != NULL) {
-        _eosCB(message);
-        gst_message_unref(message);
-    }
-
-    gst_object_unref(bus);
 }
 #endif
 
@@ -279,15 +252,14 @@ void VideoReceiver::start()
 
         dataSource = demux = parser = queue = decoder = NULL;
 
-//        GstBus* bus = NULL;
+        GstBus* bus = NULL;
 
-//        if ((bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline))) != NULL) {
-//            gst_bus_add_watch(bus, _onBusMessage, this);
-//            gst_object_unref(bus);
-//            bus = NULL;
-//        }
-        // Workaround for above watch on Windows
-        _busCheckTimer.start(0);
+        if ((bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline))) != NULL) {
+            gst_bus_enable_sync_message_emission(bus);
+            g_signal_connect(bus, "sync-message", G_CALLBACK(_onBusMessage), this);
+            gst_object_unref(bus);
+            bus = NULL;
+        }
 
         running = gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE;
 
@@ -350,14 +322,13 @@ void VideoReceiver::stop()
 #if defined(QGC_GST_STREAMING)
     qCDebug(VideoReceiverLog) << "stop()";
     if (_pipeline != NULL && !_stopping) {
-        _busCheckTimer.stop();
         qCDebug(VideoReceiverLog) << "Stopping _pipeline";
         gst_element_send_event(_pipeline, gst_event_new_eos());
         _stopping = true;
         GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
         GstMessage* message = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, (GstMessageType)(GST_MESSAGE_EOS|GST_MESSAGE_ERROR));
         gst_object_unref(bus);
-        _onBusMessage(message);
+        _handleBusMessage(message);
         gst_message_unref(message);
     }
 #endif
@@ -375,7 +346,7 @@ void VideoReceiver::setVideoSavePath(const QString & path)
 }
 
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::_onBusMessage(GstMessage* msg)
+void VideoReceiver::_handleBusMessage(GstMessage* msg)
 {
     switch (GST_MESSAGE_TYPE(msg)) {
     case GST_MESSAGE_ERROR:
@@ -389,6 +360,13 @@ void VideoReceiver::_onBusMessage(GstMessage* msg)
         } while(0);
         // No break!
     case GST_MESSAGE_EOS:
+    {
+        GstBus* bus = NULL;
+        if ((bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline))) != NULL) {
+            gst_bus_disable_sync_message_emission(bus);
+            gst_object_unref(bus);
+            bus = NULL;
+        }
         gst_element_set_state(_pipeline, GST_STATE_NULL);
         gst_bin_remove(GST_BIN(_pipeline), _videoSink);
         gst_object_unref(_pipeline);
@@ -400,6 +378,7 @@ void VideoReceiver::_onBusMessage(GstMessage* msg)
         _running = false;
         emit recordingChanged();
         qCDebug(VideoReceiverLog) << "Stopped";
+    }
         break;
     case GST_MESSAGE_STATE_CHANGED:
       _streaming = GST_STATE(_pipeline) == GST_STATE_PLAYING;
@@ -417,7 +396,7 @@ gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer dat
     Q_UNUSED(bus)
     Q_ASSERT(msg != NULL && data != NULL);
     VideoReceiver* pThis = (VideoReceiver*)data;
-    pThis->_onBusMessage(msg);
+    pThis->busMessage(msg);
     return TRUE;
 }
 #endif
@@ -559,13 +538,11 @@ void VideoReceiver::_unlinkCB(GstPadProbeInfo* info)
     gst_bin_add_many(GST_BIN(_pipelineStopRec), _sink->queue, _sink->mux, _sink->filesink, NULL);
     gst_element_link_many(_sink->queue, _sink->mux, _sink->filesink, NULL);
 
-    // Add watch for EOS event
-//    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipelineStopRec));
-//    gst_bus_add_signal_watch(bus);
-//    g_signal_connect(bus, "message::eos", G_CALLBACK(_eosCallBack), this);
-//    gst_object_unref(bus);
-
-    // Above watch is handled by _busCheck now
+    // Add handler for EOS event
+    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipelineStopRec));
+    gst_bus_enable_sync_message_emission(bus);
+    g_signal_connect(bus, "sync-message", G_CALLBACK(_eosCallBack), this);
+    gst_object_unref(bus);
 
     if(gst_element_set_state(_pipelineStopRec, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
         qCDebug(VideoReceiverLog) << "problem starting _pipelineStopRec";
@@ -586,8 +563,10 @@ gboolean VideoReceiver::_eosCallBack(GstBus* bus, GstMessage* message, gpointer 
 {
     Q_UNUSED(bus)
     Q_ASSERT(message != NULL && user_data != NULL);
-    VideoReceiver* pThis = (VideoReceiver*)user_data;
-    pThis->_eosCB(message);
+    if(GST_MESSAGE_TYPE(message) == GST_MESSAGE_EOS) {
+        VideoReceiver* pThis = (VideoReceiver*)user_data;
+        pThis->recordingEOSReceived(message);
+    }
     return FALSE;
 }
 #endif
