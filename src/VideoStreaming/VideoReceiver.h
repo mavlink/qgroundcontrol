@@ -32,24 +32,27 @@ class VideoReceiver : public QObject
 {
     Q_OBJECT
 public:
+#if defined(QGC_GST_STREAMING)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
+#endif
 
     explicit VideoReceiver(QObject* parent = 0);
     ~VideoReceiver();
 
 #if defined(QGC_GST_STREAMING)
-    void setVideoSink(GstElement* _sink);
-#endif
+    void setVideoSink(GstElement* sink);
 
     bool running()   { return _running;   }
     bool recording() { return _recording; }
     bool streaming() { return _streaming; }
     bool starting()  { return _starting;  }
     bool stopping()  { return _stopping;  }
+#endif
+
 
 signals:
-    void recordingChanged();
 #if defined(QGC_GST_STREAMING)
+    void recordingChanged();
     void msgErrorReceived();
     void msgEOSReceived();
     void msgStateChangedReceived();
