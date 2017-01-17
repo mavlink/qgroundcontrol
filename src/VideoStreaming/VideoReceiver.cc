@@ -351,6 +351,7 @@ void VideoReceiver::setVideoSavePath(const QString & path)
     qCDebug(VideoReceiverLog) << "New Path:" << _path;
 }
 
+#if defined(QGC_GST_STREAMING)
 void VideoReceiver::_shutdownPipeline() {
     GstBus* bus = NULL;
     if ((bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline))) != NULL) {
@@ -371,6 +372,7 @@ void VideoReceiver::_shutdownPipeline() {
     _running = false;
     emit recordingChanged();
 }
+#endif
 
 #if defined(QGC_GST_STREAMING)
 void VideoReceiver::_handleError() {
