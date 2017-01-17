@@ -12,6 +12,7 @@
 #include <QQmlEngine>
 #include <QSettings>
 #include <QUrl>
+#include <QDir>
 
 #ifndef QGC_DISABLE_UVC
 #include <QCameraInfo>
