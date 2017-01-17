@@ -275,7 +275,7 @@ QGCView {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 width:              height
-                radius:             QGroundControl.videoManager.videoReceiver.recording ? 0 : height
+                radius:             QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording ? 0 : height
                 color:              "red"
             }
 
@@ -292,7 +292,7 @@ QGCView {
 
             MouseArea {
                 anchors.fill:   parent
-                onClicked:      QGroundControl.videoManager.videoReceiver.recording ? QGroundControl.videoManager.videoReceiver.stopRecording() : QGroundControl.videoManager.videoReceiver.startRecording()
+                onClicked:      QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording ? QGroundControl.videoManager.videoReceiver.stopRecording() : QGroundControl.videoManager.videoReceiver.startRecording()
             }
         }
 
