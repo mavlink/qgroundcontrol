@@ -49,8 +49,11 @@ public:
 
 signals:
     void recordingChanged();
-    void recordingEOSReceived(GstMessage* message);
-    void busMessage(GstMessage* message);
+#if defined(QGC_GST_STREAMING)
+    void msgErrorReceived();
+    void msgEOSReceived();
+    void msgStateChangedReceived();
+#endif
 
 public slots:
     void start              ();
@@ -63,10 +66,12 @@ public slots:
 
 private slots:
 #if defined(QGC_GST_STREAMING)
-    void _eosCB(GstMessage* message);
     void _timeout       ();
     void _connected     ();
     void _socketError   (QAbstractSocket::SocketError socketError);
+    void _handleError();
+    void _handleEOS();
+    void _handleStateChanged();
 #endif
 
 private:
@@ -88,11 +93,12 @@ private:
     Sink*               _sink;
     GstElement*         _tee;
 
-    void                        _handleBusMessage(GstMessage* message);
-    void                        _unlinkCB(GstPadProbeInfo* info);
     static gboolean             _onBusMessage(GstBus* bus, GstMessage* message, gpointer user_data);
-    static gboolean             _eosCallBack(GstBus* bus, GstMessage* message, gpointer user_data);
     static GstPadProbeReturn    _unlinkCallBack(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
+    void                        _detachRecordingBranch(GstPadProbeInfo* info);
+    void                        _shutdownRecordingBranch();
+    void                        _shutdownPipeline();
+
 #endif
 
     QString     _uri;
