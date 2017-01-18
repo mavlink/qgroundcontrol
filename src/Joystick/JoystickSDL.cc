@@ -41,9 +41,13 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
                 hatCount = 0;
             } else {
                 isGameController = false;
+                SDL_ClearError();
                 axisCount = SDL_JoystickNumAxes(sdlJoystick);
                 buttonCount = SDL_JoystickNumButtons(sdlJoystick);
                 hatCount = SDL_JoystickNumHats(sdlJoystick);
+                if (axisCount < 0 || buttonCount < 0 || hatCount < 0) {
+                    qCWarning(JoystickLog) << "\t libsdl error parsing joystick features:" << SDL_GetError();
+                }
             }
 
             SDL_JoystickClose(sdlJoystick);
