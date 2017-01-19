@@ -33,7 +33,7 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
             int axisCount, buttonCount, hatCount;
             bool isGameController;
 
-            SDL_Joystick* sdlJoystick = SDL_JoystickOpen(i);
+
             if (SDL_IsGameController(i)) {
                 isGameController = true;
                 axisCount = SDL_CONTROLLER_AXIS_MAX;
@@ -41,16 +41,20 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
                 hatCount = 0;
             } else {
                 isGameController = false;
-                SDL_ClearError();
-                axisCount = SDL_JoystickNumAxes(sdlJoystick);
-                buttonCount = SDL_JoystickNumButtons(sdlJoystick);
-                hatCount = SDL_JoystickNumHats(sdlJoystick);
-                if (axisCount < 0 || buttonCount < 0 || hatCount < 0) {
-                    qCWarning(JoystickLog) << "\t libsdl error parsing joystick features:" << SDL_GetError();
+                if (SDL_Joystick* sdlJoystick = SDL_JoystickOpen(i)) {
+                    SDL_ClearError();
+                    axisCount = SDL_JoystickNumAxes(sdlJoystick);
+                    buttonCount = SDL_JoystickNumButtons(sdlJoystick);
+                    hatCount = SDL_JoystickNumHats(sdlJoystick);
+                    if (axisCount < 0 || buttonCount < 0 || hatCount < 0) {
+                        qCWarning(JoystickLog) << "\t libsdl error parsing joystick features:" << SDL_GetError();
+                    }
+                    SDL_JoystickClose(sdlJoystick);
+                } else {
+                    qCWarning(JoystickLog) << "\t libsdl failed opening joystick" << qPrintable(name) << "error:" << SDL_GetError();
+                    continue;
                 }
             }
-
-            SDL_JoystickClose(sdlJoystick);
 
             qCDebug(JoystickLog) << "\t" << name << "axes:" << axisCount << "buttons:" << buttonCount << "hats:" << hatCount << "isGC:" << isGameController;
             ret[name] = new JoystickSDL(name, qMax(0,axisCount), qMax(0,buttonCount), qMax(0,hatCount), i, isGameController, _multiVehicleManager);
