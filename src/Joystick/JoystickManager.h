@@ -48,6 +48,9 @@ public:
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
+public slots:
+    void discoverJoysticks();
+
 signals:
     void activeJoystickChanged(Joystick* joystick);
     void activeJoystickNameChanged(const QString& name);
