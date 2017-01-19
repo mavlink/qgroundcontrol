@@ -147,7 +147,7 @@ void Joystick::_activeVehicleChanged(Vehicle *activeVehicle)
         settings.beginGroup(_settingsGroup);
         int mode = settings.value(_modeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
 
-        setMode(mode);
+        setMode(mode, false);
     }
 }
 
@@ -562,6 +562,12 @@ void Joystick::setCalibration(int axis, Calibration_t& calibration)
     emit calibratedChanged(_calibrated);
 }
 
+void Joystick::setAxisMapping(Axis_t axis, int map)
+{
+    _rgAxisMapping[axis] = map;
+    _saveSettings();
+}
+
 Joystick::Calibration_t Joystick::getCalibration(int axis)
 {
     if (!_validAxis(axis)) {
@@ -592,10 +598,6 @@ int Joystick::getFunctionAxis(AxisFunction_t function)
 
     return _rgFunctionAxis[function];
 }
-
-//int Joystick::getAxisFunction(Axis_t axis) {
-//    return
-//}
 
 QStringList Joystick::actions(void)
 {

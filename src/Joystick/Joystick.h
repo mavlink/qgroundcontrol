@@ -31,14 +31,6 @@ public:
 
     ~Joystick();
 
-    typedef enum {
-        stickLeftX,
-        stickLeftY,
-        stickRightX,
-        stickRightY,
-        maxAxis
-    } Axis_t;
-
     typedef struct Calibration_t {
         int     min;
         int     max;
@@ -46,12 +38,20 @@ public:
         int     deadband;
         bool    reversed;
         Calibration_t()
-            : min(-32768)
-            , max(32768)
+            : min(-32767)
+            , max(32767)
             , center(0)
             , deadband(0)
             , reversed(false) {}
     } Calibration_t;
+
+    typedef enum {
+        stickLeftX,
+        stickLeftY,
+        stickRightX,
+        stickRightY,
+        maxAxis
+    } Axis_t;
 
     typedef enum {
         rollFunction,
@@ -124,7 +124,7 @@ public:
 
     virtual bool requiresCalibration(void) { return true; }
 
-    void setAxisMapping(Axis_t axis, int map) { _rgAxisMapping[axis] = map; }
+    void setAxisMapping(Axis_t axis, int map);
     int getMappedAxis(Axis_t axis) { return _rgAxisMapping[axis]; }
 
     int throttleMode(void);
