@@ -15,7 +15,7 @@ JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, in
 QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicleManager) {
     static QMap<QString, Joystick*> ret;
 
-    if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_NOPARACHUTE) < 0) {
+    if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0) {
         qWarning() << "Couldn't initialize SimpleDirectMediaLayer:" << SDL_GetError();
         return ret;
     }
