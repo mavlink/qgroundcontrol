@@ -164,8 +164,8 @@ private:
     
     /// @brief A set of information associated with a radio axis.
     struct AxisInfo {
-        Joystick::Axis_t            axis;       ///< Physical axis mapped to the arbitrary axis index reported by joystick, Joystick::maxAxis for none
-        Joystick::AxisFunction_t    function;
+        Joystick::Axis_t            axis;       ///< Physical real-life axis (stickLeft/Right/X/Y) mapped to this arbitrary raw axis index. _axisNoAxis (-1) for none.
+        Joystick::AxisFunction_t    function;   ///< Function mapped to this raw axis
         bool                        reversed;   ///< true: axis is reverse, false: not reversed
         int                         axisMin;    ///< Minimum axis value
         int                         axisMax;    ///< Maximum axis value
@@ -227,8 +227,15 @@ private:
     static const char* _imagePitchDown;
     
     static const int _updateInterval;   ///< Interval for ui update timer
-    
-    int _rgFunctionAxisMapping[Joystick::maxFunction]; ///< Maps from joystick function to axis index. _axisMax indicates axis not set for this function.
+
+    /// Get the real life axis mapped to a function (roll->stickRightX).
+    /// This mapping is determined by the current JoystickTXMode
+    /// _axisNoAxis (-1) indicates axis not set for this function.
+    Joystick::Axis_t _rgFunctionAxisMapping[Joystick::maxFunction];
+
+    /// Get the raw joystick axis mapped to a real life axis (stickRightX->n).
+    /// This mapping is determined through the calibration process
+    /// _axisNoAxis (-1) indicates axis not mapped
     int _rgAxisMapping[Joystick::maxAxis];
 
     static const int _attitudeControls = 5; // Unused.. and should be 4?

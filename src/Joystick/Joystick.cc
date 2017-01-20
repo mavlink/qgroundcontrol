@@ -577,7 +577,7 @@ Joystick::Calibration_t Joystick::getCalibration(int axis)
     return _rgCalibration[axis];
 }
 
-void Joystick::setFunctionAxis(AxisFunction_t function, int axis)
+void Joystick::setFunctionAxis(AxisFunction_t function, Axis_t axis)
 {
     if (!_validAxis(axis)) {
         qCWarning(JoystickLog) << "Invalid axis index" << axis;
@@ -585,12 +585,12 @@ void Joystick::setFunctionAxis(AxisFunction_t function, int axis)
     }
 
     _calibrated = true;
-    _rgFunctionAxis[function] = (Axis_t)axis;
+    _rgFunctionAxis[function] = axis;
     _saveSettings();
     emit calibratedChanged(_calibrated);
 }
 
-int Joystick::getFunctionAxis(AxisFunction_t function)
+Joystick::Axis_t Joystick::getFunctionAxis(AxisFunction_t function)
 {
     if (function < 0 || function >= maxFunction) {
         qCWarning(JoystickLog) << "Invalid function" << function;
@@ -653,14 +653,12 @@ void Joystick::setMode(int mode, bool save)
 
     switch(Joystick::_mode) {
     case 1:
-        qCDebug(JoystickLog) << "Setting Mode:" << Joystick::_mode;
         _rgFunctionAxis[rollFunction] = stickRightX;
         _rgFunctionAxis[pitchFunction] = stickLeftY;
         _rgFunctionAxis[yawFunction] = stickLeftX;
         _rgFunctionAxis[throttleFunction] = stickRightY;
         break;
     case 2:
-        qCDebug(JoystickLog) << "Setting Mode:" << Joystick::_mode;
         _rgFunctionAxis[rollFunction] = stickRightX;
         _rgFunctionAxis[pitchFunction] = stickRightY;
         _rgFunctionAxis[yawFunction] = stickLeftX;

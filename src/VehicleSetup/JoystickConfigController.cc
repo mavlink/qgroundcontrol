@@ -139,11 +139,8 @@ void JoystickConfigController::_axisValueChanged(int axis, int value)
         // We always update raw values
         _axisRawValue[axis] = value;
         emit axisValueChanged(axis, _axisRawValue[axis]);
-        //int mappedAxis = _rgAxisMapping[axis];
         // Signal attitude axis values to Qml if mapped
         if (_rgAxisInfo[axis].axis != Joystick::maxAxis) {
-//            _rgAxisMapping[_]
-//            _rgFunctionAxisMapping[]
             switch (_rgAxisInfo[axis].function) {
                 case Joystick::rollFunction:
                     emit rollAxisValueChanged(_axisRawValue[axis]);
@@ -471,12 +468,12 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
 //    }
 
     for (int function=0; function<Joystick::maxFunction; function++) {
-        int paramAxis;
+        Joystick::Axis_t realAxis;
 
-        paramAxis = _activeJoystick->getFunctionAxis((Joystick::AxisFunction_t)function);
+        realAxis = _activeJoystick->getFunctionAxis((Joystick::AxisFunction_t)function);
 
-        _rgFunctionAxisMapping[function] = paramAxis;
-        _rgAxisInfo[paramAxis].function = (Joystick::AxisFunction_t)function;
+        _rgFunctionAxisMapping[function] = realAxis;
+        _rgAxisInfo[_rgAxisMapping[realAxis]].function = (Joystick::AxisFunction_t)function;
 
         //qCDebug(JoystickConfigControllerLog) << "paramAxis:" << paramAxis << "function:" << function;
     }
@@ -507,7 +504,7 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
     qCDebug(JoystickConfigControllerLog) << "_setInternalCalibrationValuesFromSettings: Axes and function mappings cleared";
 
     for (size_t i=0; i<Joystick::maxFunction; i++) {
-        _rgFunctionAxisMapping[i] = _axisNoAxis;
+        _rgFunctionAxisMapping[i] = (Joystick::Axis_t)_axisNoAxis;
     }
 
     for (size_t i=0; i<Joystick::maxAxis; i++) {
@@ -535,12 +532,14 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
     }
 
     for (int function=0; function<Joystick::maxFunction; function++) {
-        int paramAxis;
+        Joystick::Axis_t realAxis;
 
-        paramAxis = joystick->getFunctionAxis((Joystick::AxisFunction_t)function);
+        realAxis = joystick->getFunctionAxis((Joystick::AxisFunction_t)function);
 
-        _rgFunctionAxisMapping[function] = paramAxis;
-        _rgAxisInfo[_rgAxisMapping[paramAxis]].function = (Joystick::AxisFunction_t)function;
+        _rgFunctionAxisMapping[function] = realAxis;
+
+        int mappedAxis = _rgAxisMapping[realAxis];
+        _rgAxisInfo[mappedAxis].function = (Joystick::AxisFunction_t)function;
     }
 
 
@@ -920,14 +919,15 @@ void JoystickConfigController::_modeChanged(int mode)
 {
     qCDebug(JoystickConfigControllerLog) << "Mode changed:" << mode;
     for (int function=0; function<Joystick::maxFunction; function++) {
-        int functionAxis;
+        Joystick::Axis_t realAxis;
 
         // Get axis for this function (stickRightX etc.)
-        functionAxis = _activeJoystick->getFunctionAxis((Joystick::AxisFunction_t)function);
-        _rgFunctionAxisMapping[function] = functionAxis;
-        _rgAxisInfo[_rgAxisMapping[functionAxis]].function = (Joystick::AxisFunction_t)function;
-        // unnecessary, calibration hasn't changed
-        //_rgAxisInfo[_rgAxisMapping[functionAxis]].reversed = _activeJoystick->getCalibration(_rgAxisMapping[functionAxis]).reversed;
+        realAxis = _activeJoystick->getFunctionAxis((Joystick::AxisFunction_t)function);
+
+        _rgFunctionAxisMapping[function] = realAxis;
+
+        int mappedAxis = _rgAxisMapping[realAxis];
+        _rgAxisInfo[mappedAxis].function = (Joystick::AxisFunction_t)function;
     }
     _signalAllAttiudeValueChanges();
 }
