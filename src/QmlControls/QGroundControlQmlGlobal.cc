@@ -33,6 +33,7 @@ SettingsFact* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceFact =   
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
 const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
+const char* QGroundControlQmlGlobal::_missionAutoLoadDirKey     = "MissionAutoLoadDir";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     : QGCTool(app)
@@ -352,4 +353,16 @@ QMap<QString, FactMetaData*>& QGroundControlQmlGlobal::nameToMetaDataMap(void) {
     }
 
     return map;
+}
+
+QString QGroundControlQmlGlobal::missionAutoLoadDir(void)
+{
+    QSettings settings;
+    return settings.value(_missionAutoLoadDirKey).toString();
+}
+
+void QGroundControlQmlGlobal::setMissionAutoLoadDir(const QString& missionAutoLoadDir)
+{
+    QSettings settings;
+    settings.setValue(_missionAutoLoadDirKey, missionAutoLoadDir);
 }
