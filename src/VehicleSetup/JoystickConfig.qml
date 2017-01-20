@@ -371,44 +371,6 @@ SetupPage {
                                 spacing:    ScreenTools.defaultFontPixelWidth
 
                                 QGCLabel {
-                                    id:                 modeLabel
-                                    text:               qsTr("Mode:")
-                                }
-
-                                Row {
-                                    ExclusiveGroup { id: modeGroup }
-                                    RadioButton {
-                                        text: "1"
-                                        checked: _activeJoystick.mode == 1
-                                        exclusiveGroup: modeGroup
-                                        onClicked: _activeJoystick.mode = 1
-                                    }
-                                    RadioButton {
-                                        text: "2"
-                                        checked: _activeJoystick.mode == 2
-                                        exclusiveGroup: modeGroup
-                                        onClicked: _activeJoystick.mode = 2
-                                    }
-                                    RadioButton {
-                                        text: "3"
-                                        checked: _activeJoystick.mode == 3
-                                        exclusiveGroup: modeGroup
-                                        onClicked: _activeJoystick.mode = 3
-                                    }
-                                    RadioButton {
-                                        text: "4"
-                                        checked: _activeJoystick.mode == 4
-                                        exclusiveGroup: modeGroup
-                                        onClicked: _activeJoystick.mode = 4
-                                    }
-                                }
-                            }
-
-                            Row {
-                                width:      parent.width
-                                spacing:    ScreenTools.defaultFontPixelWidth
-
-                                QGCLabel {
                                     id:                 activeJoystickLabel
                                     anchors.baseline:   joystickCombo.baseline
                                     text:               qsTr("Active joystick:")
@@ -490,6 +452,45 @@ SetupPage {
                                 onClicked: {
                                     if (!checked) {
                                         _activeVehicle.joystickMode = 0
+                                    }
+                                }
+                            }
+
+                            Row {
+                                width:      parent.width
+                                spacing:    ScreenTools.defaultFontPixelWidth
+                                visible:    advancedSettings.checked
+
+                                QGCLabel {
+                                    id:                 modeLabel
+                                    text:               qsTr("Stick Layout (Transmitter Mode):")
+                                }
+
+                                Row {
+                                    ExclusiveGroup { id: modeGroup }
+                                    RadioButton {
+                                        text: "1"
+                                        checked: _activeJoystick.mode == 1
+                                        exclusiveGroup: modeGroup
+                                        onClicked: _activeJoystick.mode = 1
+                                    }
+                                    RadioButton {
+                                        text: "2"
+                                        checked: _activeJoystick.mode == 2
+                                        exclusiveGroup: modeGroup
+                                        onClicked: _activeJoystick.mode = 2
+                                    }
+                                    RadioButton {
+                                        text: "3"
+                                        checked: _activeJoystick.mode == 3
+                                        exclusiveGroup: modeGroup
+                                        onClicked: _activeJoystick.mode = 3
+                                    }
+                                    RadioButton {
+                                        text: "4"
+                                        checked: _activeJoystick.mode == 4
+                                        exclusiveGroup: modeGroup
+                                        onClicked: _activeJoystick.mode = 4
                                     }
                                 }
                             }
