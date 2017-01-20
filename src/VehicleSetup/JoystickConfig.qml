@@ -176,7 +176,7 @@ SetupPage {
                         QGCLabel {
                             id:     rollLabel
                             width:  defaultTextWidth * 10
-                            text:   qsTr("Roll")
+                            text:   _activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
                         }
 
                         Loader {
@@ -208,7 +208,7 @@ SetupPage {
                         QGCLabel {
                             id:     pitchLabel
                             width:  defaultTextWidth * 10
-                            text:   qsTr("Pitch")
+                            text:   _activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
                         }
 
                         Loader {
