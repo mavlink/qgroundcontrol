@@ -286,6 +286,33 @@ QGCView {
                             visible:    QGroundControl.corePlugin.options.enableVirtualJoystick
                         }
                         //-----------------------------------------------------------------
+                        //-- AutoLoad
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+                            QGCCheckBox {
+                                id:                     autoLoadCheckbox
+                                anchors.verticalCenter: parent.verticalCenter
+                                text:                   qsTr("AutoLoad mission directory:")
+                                checked:                QGroundControl.missionAutoLoadDir != ""
+
+                                onClicked: {
+                                    autoLoadDir.enabled = checked
+                                    if (!checked) {
+                                        QGroundControl.missionAutoLoadDir = ""
+                                        autoLoadDir.text = ""
+                                    }
+                                }
+                            }
+                            QGCTextField {
+                                id:                     autoLoadDir
+                                width:                  _editFieldWidth
+                                enabled:                autoLoadCheckbox.checked
+                                anchors.verticalCenter: parent.verticalCenter
+                                text:                   QGroundControl.missionAutoLoadDir
+                                onEditingFinished:      QGroundControl.missionAutoLoadDir = text
+                            }
+                        }
+                        //-----------------------------------------------------------------
                         //-- Map Providers
                         Row {
                             /*

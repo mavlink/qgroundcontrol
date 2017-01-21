@@ -87,7 +87,7 @@ void MissionController::_init(void)
 {
     // We start with an empty mission
     _visualItems = new QmlObjectListModel(this);
-    _addPlannedHomePosition(_visualItems, false /* addToCenter */);
+    _addPlannedHomePosition(_activeVehicle, _visualItems, false /* addToCenter */);
     _initAllVisualItems();
 }
 
@@ -113,11 +113,11 @@ void MissionController::_newMissionItemsAvailableFromVehicle(void)
 
         _deinitAllVisualItems();
 
-        _visualItems->deleteListAndContents();
+        _visualItems->deleteLater();
         _visualItems = newControllerMissionItems;
 
         if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() || _visualItems->count() == 0) {
-            _addPlannedHomePosition(_visualItems,true /* addToCenter */);
+            _addPlannedHomePosition(_activeVehicle, _visualItems,true /* addToCenter */);
         }
 
         _missionItemsRequested = false;
@@ -139,12 +139,18 @@ void MissionController::loadFromVehicle(void)
 
 void MissionController::sendToVehicle(void)
 {
-    if (_activeVehicle) {
+    sendItemsToVehicle(_activeVehicle, _visualItems);
+    _visualItems->setDirty(false);
+}
+
+void MissionController::sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems)
+{
+    if (vehicle) {
         // Convert to MissionItems so we can send to vehicle
         QList<MissionItem*> missionItems;
 
-        for (int i=0; i<_visualItems->count(); i++) {
-            VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        for (int i=0; i<visualMissionItems->count(); i++) {
+            VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(visualMissionItems->get(i));
             if (visualItem->isSimpleItem()) {
                 missionItems.append(new MissionItem(qobject_cast<SimpleMissionItem*>(visualItem)->missionItem()));
             } else {
@@ -153,15 +159,14 @@ void MissionController::sendToVehicle(void)
                 for (int j=0; j<complexMissionItems->count(); j++) {
                     missionItems.append(new MissionItem(*qobject_cast<MissionItem*>(complexMissionItems->get(j))));
                 }
-                delete complexMissionItems;
+                complexMissionItems->deleteLater();
             }
         }
 
-        _activeVehicle->missionManager()->writeMissionItems(missionItems);
-        _visualItems->setDirty(false);
+        vehicle->missionManager()->writeMissionItems(missionItems);
 
         for (int i=0; i<missionItems.count(); i++) {
-            delete missionItems[i];
+            missionItems[i]->deleteLater();
         }
     }
 }
@@ -216,7 +221,7 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
 int MissionController::insertComplexMissionItem(QGeoCoordinate coordinate, int i)
 {
     int sequenceNumber = _nextSequenceNumber();
-    SurveyMissionItem* newItem = new SurveyMissionItem(_activeVehicle, this);
+    SurveyMissionItem* newItem = new SurveyMissionItem(_activeVehicle, _visualItems);
     newItem->setSequenceNumber(sequenceNumber);
     newItem->setCoordinate(coordinate);
     _initVisualItem(newItem);
@@ -260,15 +265,15 @@ void MissionController::removeAll(void)
 {
     if (_visualItems) {
         _deinitAllVisualItems();
-        _visualItems->deleteListAndContents();
+        _visualItems->deleteLater();
         _visualItems = new QmlObjectListModel(this);
-        _addPlannedHomePosition(_visualItems, false /* addToCenter */);
+        _addPlannedHomePosition(_activeVehicle, _visualItems, false /* addToCenter */);
         _initAllVisualItems();
         _visualItems->setDirty(true);
     }
 }
 
-bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString)
+bool MissionController::_loadJsonMissionFile(Vehicle* vehicle, const QByteArray& bytes, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString)
 {
     QJsonParseError jsonParseError;
     QJsonDocument   jsonDoc(QJsonDocument::fromJson(bytes, &jsonParseError));
@@ -295,13 +300,13 @@ bool MissionController::_loadJsonMissionFile(const QByteArray& bytes, QmlObjectL
     }
 
     if (fileVersion == 1) {
-        return _loadJsonMissionFileV1(json, visualItems, complexItems, errorString);
+        return _loadJsonMissionFileV1(vehicle, json, visualItems, complexItems, errorString);
     } else {
-        return _loadJsonMissionFileV2(json, visualItems, complexItems, errorString);
+        return _loadJsonMissionFileV2(vehicle, json, visualItems, complexItems, errorString);
     }
 }
 
-bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString)
+bool MissionController::_loadJsonMissionFileV1(Vehicle* vehicle, const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString)
 {
     // Validate root object keys
     QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
@@ -325,7 +330,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
             return false;
         }
 
-        SurveyMissionItem* item = new SurveyMissionItem(_activeVehicle, this);
+        SurveyMissionItem* item = new SurveyMissionItem(vehicle, visualItems);
         const QJsonObject itemObject = itemValue.toObject();
         if (item->load(itemObject, itemObject["id"].toInt(), errorString)) {
             complexItems->append(item);
@@ -368,7 +373,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
             }
 
             const QJsonObject itemObject = itemValue.toObject();
-            SimpleMissionItem* item = new SimpleMissionItem(_activeVehicle, this);
+            SimpleMissionItem* item = new SimpleMissionItem(vehicle, visualItems);
             if (item->load(itemObject, itemObject["id"].toInt(), errorString)) {
                 qCDebug(MissionControllerLog) << "Json load: adding simple item expectedSequence:actualSequence" << nextSequenceNumber << item->sequenceNumber();
                 visualItems->append(item);
@@ -381,7 +386,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
     } while (nextSimpleItemIndex < itemArray.count() || nextComplexItemIndex < complexItems->count());
 
     if (json.contains(_jsonPlannedHomePositionKey)) {
-        SimpleMissionItem* item = new SimpleMissionItem(_activeVehicle, this);
+        SimpleMissionItem* item = new SimpleMissionItem(vehicle, visualItems);
 
         if (item->load(json[_jsonPlannedHomePositionKey].toObject(), 0, errorString)) {
             visualItems->insert(0, item);
@@ -389,13 +394,13 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
             return false;
         }
     } else {
-        _addPlannedHomePosition(visualItems, true /* addToCenter */);
+        _addPlannedHomePosition(vehicle, visualItems, true /* addToCenter */);
     }
 
     return true;
 }
 
-bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString)
+bool MissionController::_loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString)
 {
     // Validate root object keys
     QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
@@ -417,7 +422,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     if (!JsonHelper::loadGeoCoordinate(json[_jsonPlannedHomePositionKey], true /* altitudeRequired */, homeCoordinate, errorString)) {
         return false;
     }
-    if (json.contains(_jsonVehicleTypeKey) && _activeVehicle->isOfflineEditingVehicle()) {
+    if (json.contains(_jsonVehicleTypeKey) && vehicle->isOfflineEditingVehicle()) {
         QGroundControlQmlGlobal::offlineEditingVehicleType()->setRawValue(json[_jsonVehicleTypeKey].toDouble());
     }
     if (json.contains(_jsonCruiseSpeedKey)) {
@@ -427,7 +432,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
         QGroundControlQmlGlobal::offlineEditingHoverSpeed()->setRawValue(json[_jsonHoverSpeedKey].toDouble());
     }
 
-    SimpleMissionItem* homeItem = new SimpleMissionItem(_activeVehicle, this);
+    SimpleMissionItem* homeItem = new SimpleMissionItem(vehicle, visualItems);
     homeItem->setCoordinate(homeCoordinate);
     visualItems->insert(0, homeItem);
     qCDebug(MissionControllerLog) << "plannedHomePosition" << homeCoordinate;
@@ -457,7 +462,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
 
         if (itemType == VisualMissionItem::jsonTypeSimpleItemValue) {
             qCDebug(MissionControllerLog) << "Loading MISSION_ITEM: nextSequenceNumber" << nextSequenceNumber;
-            SimpleMissionItem* simpleItem = new SimpleMissionItem(_activeVehicle, this);
+            SimpleMissionItem* simpleItem = new SimpleMissionItem(vehicle, visualItems);
             if (simpleItem->load(itemObject, nextSequenceNumber++, errorString)) {
                 visualItems->append(simpleItem);
             } else {
@@ -474,7 +479,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
 
             if (complexItemType == SurveyMissionItem::jsonComplexItemTypeValue) {
                 qCDebug(MissionControllerLog) << "Loading Survey: nextSequenceNumber" << nextSequenceNumber;
-                SurveyMissionItem* surveyItem = new SurveyMissionItem(_activeVehicle, this);
+                SurveyMissionItem* surveyItem = new SurveyMissionItem(vehicle, visualItems);
                 if (!surveyItem->load(itemObject, nextSequenceNumber++, errorString)) {
                     return false;
                 }
@@ -519,7 +524,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     return true;
 }
 
-bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString)
+bool MissionController::_loadTextMissionFile(Vehicle* vehicle, QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString)
 {
     bool addPlannedHomePosition = false;
 
@@ -540,7 +545,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
 
     if (versionOk) {
         while (!stream.atEnd()) {
-            SimpleMissionItem* item = new SimpleMissionItem(_activeVehicle, this);
+            SimpleMissionItem* item = new SimpleMissionItem(vehicle, visualItems);
 
             if (item->load(stream)) {
                 visualItems->append(item);
@@ -555,7 +560,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
     }
 
     if (addPlannedHomePosition || visualItems->count() == 0) {
-        _addPlannedHomePosition(visualItems, true /* addToCenter */);
+        _addPlannedHomePosition(vehicle, visualItems, true /* addToCenter */);
 
         // Update sequence numbers in DO_JUMP commands to take into account added home position in index 0
         for (int i=1; i<visualItems->count(); i++) {
@@ -571,49 +576,16 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
 
 void MissionController::loadFromFile(const QString& filename)
 {
-    QString errorString;
+    QmlObjectListModel* newVisualItems = NULL;
+    QmlObjectListModel* newComplexItems = NULL;
 
-    if (filename.isEmpty()) {
-        return;
-    }
-
-    QmlObjectListModel* newVisualItems = new QmlObjectListModel(this);
-    QmlObjectListModel* newComplexItems = new QmlObjectListModel(this);
-
-    QFile file(filename);
-
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        errorString = file.errorString();
-    } else {
-        QByteArray  bytes = file.readAll();
-        QTextStream stream(&bytes);
-
-        QString firstLine = stream.readLine();
-        if (firstLine.contains(QRegExp("QGC.*WPL"))) {
-            stream.seek(0);
-            _loadTextMissionFile(stream, newVisualItems, errorString);
-        } else {
-            _loadJsonMissionFile(bytes, newVisualItems, newComplexItems, errorString);
-        }
-    }
-
-    if (!errorString.isEmpty()) {
-        for (int i=0; i<newVisualItems->count(); i++) {
-            newVisualItems->get(i)->deleteLater();
-        }
-        for (int i=0; i<newComplexItems->count(); i++) {
-            newComplexItems->get(i)->deleteLater();
-        }
-        delete newVisualItems;
-        delete newComplexItems;
-
-        qgcApp()->showMessage(errorString);
+    if (!loadItemsFromFile(_activeVehicle, filename, &newVisualItems, &newComplexItems)) {
         return;
     }
 
     if (_visualItems) {
         _deinitAllVisualItems();
-        _visualItems->deleteListAndContents();
+        _visualItems->deleteLater();
     }
     if (_complexItems) {
         _complexItems->deleteLater();
@@ -623,10 +595,52 @@ void MissionController::loadFromFile(const QString& filename)
     _complexItems = newComplexItems;
 
     if (_visualItems->count() == 0) {
-        _addPlannedHomePosition(_visualItems, true /* addToCenter */);
+        _addPlannedHomePosition(_activeVehicle, _visualItems, true /* addToCenter */);
     }
 
     _initAllVisualItems();
+}
+
+bool MissionController::loadItemsFromFile(Vehicle* vehicle, const QString& filename, QmlObjectListModel** visualItems, QmlObjectListModel** complexItems)
+{
+    *visualItems = NULL;
+    *complexItems = NULL;
+
+    QString errorString;
+
+    if (filename.isEmpty()) {
+        return false;
+    }
+
+    *visualItems = new QmlObjectListModel();
+    *complexItems = new QmlObjectListModel();
+
+    QFile file(filename);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        errorString = file.errorString() + QStringLiteral(" ") + filename;
+    } else {
+        QByteArray  bytes = file.readAll();
+        QTextStream stream(&bytes);
+
+        QString firstLine = stream.readLine();
+        if (firstLine.contains(QRegExp("QGC.*WPL"))) {
+            stream.seek(0);
+            _loadTextMissionFile(vehicle, stream, *visualItems, errorString);
+        } else {
+            _loadJsonMissionFile(vehicle, bytes, *visualItems, *complexItems, errorString);
+        }
+    }
+
+    if (!errorString.isEmpty()) {
+        (*visualItems)->deleteLater();
+        (*complexItems)->deleteLater();
+
+        qgcApp()->showMessage(errorString);
+        return false;
+    }
+
+    return true;
 }
 
 void MissionController::loadFromFilePicker(void)
@@ -1394,11 +1408,11 @@ double MissionController::_normalizeLon(double lon)
 }
 
 /// Add the home position item to the front of the list
-void MissionController::_addPlannedHomePosition(QmlObjectListModel* visualItems, bool addToCenter)
+void MissionController::_addPlannedHomePosition(Vehicle* vehicle, QmlObjectListModel* visualItems, bool addToCenter)
 {
     bool homePositionSet = false;
 
-    SimpleMissionItem* homeItem = new SimpleMissionItem(_activeVehicle, this);
+    SimpleMissionItem* homeItem = new SimpleMissionItem(vehicle, visualItems);
     visualItems->insert(0, homeItem);
 
     if (visualItems->count() > 1  && addToCenter) {

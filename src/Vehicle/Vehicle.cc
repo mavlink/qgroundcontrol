@@ -16,6 +16,7 @@
 #include "UAS.h"
 #include "JoystickManager.h"
 #include "MissionManager.h"
+#include "MissionController.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
 #include "CoordinateVector.h"
@@ -153,7 +154,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(this, &Vehicle::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
 
     _commonInit();
-    _autopilotPlugin    = _firmwarePlugin->autopilotPlugin(this);
+    _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this);
 
     // connect this vehicle to the follow me handle manager
     connect(this, &Vehicle::flightModeChanged,qgcApp()->toolbox()->followMe(), &FollowMe::followMeHandleManager);
@@ -294,6 +295,7 @@ void Vehicle::_commonInit(void)
     connect(_missionManager, &MissionManager::error, this, &Vehicle::_missionManagerError);
 
     _parameterManager = new ParameterManager(this);
+    connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
 
     // GeoFenceManager needs to access ParameterManager so make sure to create after
     _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
@@ -1518,7 +1520,18 @@ void Vehicle::_parametersReady(bool parametersReady)
 {
     if (parametersReady && !_missionManagerInitialRequestSent) {
         _missionManagerInitialRequestSent = true;
-        _missionManager->requestMissionItems();
+        QString missionAutoLoadDirPath = QGroundControlQmlGlobal::missionAutoLoadDir();
+        if (missionAutoLoadDirPath.isEmpty()) {
+            _missionManager->requestMissionItems();
+        } else {
+            QmlObjectListModel* visualItems = NULL;
+            QmlObjectListModel* complexItems = NULL;
+            QDir missionAutoLoadDir(missionAutoLoadDirPath);
+            QString autoloadFilename = missionAutoLoadDir.absoluteFilePath(tr("AutoLoad%1.mission").arg(_id));
+            if (MissionController::loadItemsFromFile(this, autoloadFilename, &visualItems, &complexItems)) {
+                MissionController::sendItemsToVehicle(this, visualItems);
+            }
+        }
     }
 
     if (parametersReady) {
@@ -2032,7 +2045,7 @@ void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
 
 void Vehicle::_newMissionItemsAvailable(void)
 {
-    // After the initial mission request complets we ask for the geofence
+    // After the initial mission request completes we ask for the geofence
     if (!_geoFenceManagerInitialRequestSent) {
         _geoFenceManagerInitialRequestSent = true;
         _geoFenceManager->loadFromVehicle();
@@ -2041,7 +2054,7 @@ void Vehicle::_newMissionItemsAvailable(void)
 
 void Vehicle::_newGeoFenceAvailable(void)
 {
-    // After the initial mission request complets we ask for the geofence
+    // After geofence request completes we ask for the rally points
     if (!_rallyPointManagerInitialRequestSent) {
         _rallyPointManagerInitialRequestSent = true;
         _rallyPointManager->loadFromVehicle();

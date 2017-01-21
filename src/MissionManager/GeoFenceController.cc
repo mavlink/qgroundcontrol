@@ -214,7 +214,7 @@ void GeoFenceController::loadFromFile(const QString& filename)
     QFile file(filename);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        errorString = file.errorString();
+        errorString = file.errorString() + QStringLiteral(" ") + filename;
     } else {
         QJsonDocument   jsonDoc;
         QByteArray      bytes = file.readAll();
