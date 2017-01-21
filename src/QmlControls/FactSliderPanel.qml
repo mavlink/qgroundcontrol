@@ -12,6 +12,7 @@ import QtQuick              2.5
 import QtQuick.Controls     1.4
 
 import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
@@ -110,6 +111,25 @@ Column {
                         onValueChanged: {
                             if (_loadComplete) {
                                 fact.value = value
+                                    }
+                                }
+
+                                activeFocusOnPress:         true
+
+                                MultiPointTouchArea {
+                                    anchors.fill: parent
+
+                                    minimumTouchPoints: 1
+                                    maximumTouchPoints: 1
+                                    mouseEnabled:       false
+                                }
+
+                                // Block wheel events
+                                MouseArea {
+                                    anchors.fill: parent
+                                    acceptedButtons: Qt.NoButton
+                                    onWheel: {
+                                        wheel.accepted = true
                             }
                         }
                     } // Slider
