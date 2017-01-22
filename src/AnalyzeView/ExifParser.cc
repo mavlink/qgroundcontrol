@@ -178,17 +178,17 @@ bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
     // Filling up the additional information that does not fit into the fields
     gpsData.readable.extendedData.gpsLat[0] = abs(static_cast<int>(coordinate.latitude()));
     gpsData.readable.extendedData.gpsLat[1] = 1;
-    gpsData.readable.extendedData.gpsLat[2] = static_cast<int>((fabs(coordinate.latitude()) - floor(fabs(coordinate.latitude()))) * 60000.0);
-    gpsData.readable.extendedData.gpsLat[3] = 1000;
-    gpsData.readable.extendedData.gpsLat[4] = 0;
-    gpsData.readable.extendedData.gpsLat[5] = 1;
+    gpsData.readable.extendedData.gpsLat[2] = static_cast<int>((fabs(coordinate.latitude()) - floor(fabs(coordinate.latitude()))) * 60.0);
+    gpsData.readable.extendedData.gpsLat[3] = 1;
+    gpsData.readable.extendedData.gpsLat[4] = static_cast<int>((fabs(coordinate.latitude()) * 60.0 - floor(fabs(coordinate.latitude()) * 60.0)) * 60000.0);
+    gpsData.readable.extendedData.gpsLat[5] = 1000;
 
     gpsData.readable.extendedData.gpsLon[0] = abs(static_cast<int>(coordinate.longitude()));
     gpsData.readable.extendedData.gpsLon[1] = 1;
-    gpsData.readable.extendedData.gpsLon[2] = static_cast<int>((fabs(coordinate.longitude()) - floor(fabs(coordinate.longitude()))) * 60000.0);
-    gpsData.readable.extendedData.gpsLon[3] = 1000;
-    gpsData.readable.extendedData.gpsLon[4] = 0;
-    gpsData.readable.extendedData.gpsLon[5] = 1;
+    gpsData.readable.extendedData.gpsLon[2] = static_cast<int>((fabs(coordinate.longitude()) - floor(fabs(coordinate.longitude()))) * 60.0);
+    gpsData.readable.extendedData.gpsLon[3] = 1;
+    gpsData.readable.extendedData.gpsLon[4] = static_cast<int>((fabs(coordinate.longitude()) * 60.0 - floor(fabs(coordinate.longitude()) * 60.0)) * 60000.0);
+    gpsData.readable.extendedData.gpsLon[5] = 1000;
 
     gpsData.readable.extendedData.gpsAlt[0] = coordinate.altitude() * 100;
     gpsData.readable.extendedData.gpsAlt[1] = 100;
