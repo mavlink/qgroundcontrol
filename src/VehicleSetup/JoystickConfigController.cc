@@ -466,7 +466,6 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
         realAxis = _activeJoystick->getFunctionAxis((Joystick::AxisFunction_t)function);
 
         _rgFunctionAxisMapping[function] = realAxis;
-        _rgAxisInfo[_rgAxisMapping[realAxis]].function = (Joystick::AxisFunction_t)function;
     }
 
     for (size_t i=0; i<Joystick::maxAxis; i++) {
