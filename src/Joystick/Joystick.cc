@@ -92,6 +92,7 @@ void Joystick::_setDefaultCalibration(void) {
     settings.beginGroup(_name);
     _calibrated = settings.value(_calibratedSettingsKey, false).toBool();
 
+    // Only set default calibrations if we do not have a calibration for this gamecontroller
     if(_calibrated) return;
 
     for (int axis=0; axis<_axisCount; axis++) {
