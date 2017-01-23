@@ -217,14 +217,14 @@ private:
     static const char* _imageFileMode2Dir;
     static const char* _imageFilePrefix;
     static const char* _imageCenter;
-    static const char* _imageThrottleUp;
-    static const char* _imageThrottleDown;
-    static const char* _imageYawLeft;
-    static const char* _imageYawRight;
-    static const char* _imageRollLeft;
-    static const char* _imageRollRight;
-    static const char* _imagePitchUp;
-    static const char* _imagePitchDown;
+    static const char* _imageLeftStickUp;
+    static const char* _imageLeftStickDown;
+    static const char* _imageLeftStickLeft;
+    static const char* _imageLeftStickRight;
+    static const char* _imageRightStickLeft;
+    static const char* _imageRightStickRight;
+    static const char* _imageRightStickUp;
+    static const char* _imageRightStickDown;
     
     static const int _updateInterval;   ///< Interval for ui update timer
 
