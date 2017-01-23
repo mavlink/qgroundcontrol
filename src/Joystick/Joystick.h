@@ -19,7 +19,6 @@
 #include "MultiVehicleManager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
-Q_DECLARE_LOGGING_CATEGORY(JoystickVerboseLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
 class Joystick : public QThread
@@ -62,23 +61,10 @@ public:
     } AxisFunction_t;
 
     typedef enum {
-        Mode1,
-        Mode2,
-        Mode3,
-        Mode4,
-        maxMode
-    } JoystickTXMode_t;
-
-    typedef enum {
         ThrottleModeCenterZero,
         ThrottleModeDownZero,
         ThrottleModeMax
     } ThrottleMode_t;
-
-    AxisFunction_t modes[2][maxAxis] = {
-    { rollFunction, pitchFunction, yawFunction, throttleFunction },
-    { rollFunction, throttleFunction, yawFunction, pitchFunction }
-    };
 
     Q_PROPERTY(QString name READ name CONSTANT)
 
@@ -111,7 +97,7 @@ public:
     void setCalibration(int axis, Calibration_t& calibration);
     Calibration_t getCalibration(int axis);
 
-    void setFunctionAxis(AxisFunction_t function, Axis_t axis); // Unused, set via mode signal
+    void setFunctionAxis(AxisFunction_t function, Axis_t axis); // Unused, always determined internally via TXmode
     Axis_t getFunctionAxis(AxisFunction_t function);
 
     void setAxisMapping(Axis_t axis, int map);
@@ -237,7 +223,6 @@ protected:
     MultiVehicleManager*    _multiVehicleManager;
 
 private:
-//    static const char*  _rgFunctionSettingsKey[maxFunction];
     static const char* _rgAxisMappingKey[maxAxis];
     static const char* _settingsGroup;
     static const char* _calibratedSettingsKey;

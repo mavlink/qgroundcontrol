@@ -23,7 +23,6 @@
 #include "Joystick.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)
-Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerVerboseLog)
 
 class RadioConfigest;
 class JoystickManager;
@@ -151,7 +150,7 @@ private:
         calStateSave
     };
     
-    typedef void (JoystickConfigController::*inputFn)(Joystick::Axis_t axis, int map, int value);
+    typedef void (JoystickConfigController::*inputFn)(Joystick::Axis_t axis, int mappedAxis, int value);
     typedef void (JoystickConfigController::*buttonFn)(void);
     struct stateMachineEntry {
         Joystick::Axis_t            axis;
@@ -184,10 +183,10 @@ private:
     
     bool _validAxis(int axis);
 
-    void _inputCenterWaitBegin  (Joystick::Axis_t axis, int map, int value);
-    void _inputStickDetect      (Joystick::Axis_t axis, int map, int value);
-    void _inputStickMin         (Joystick::Axis_t axis, int map, int value);
-    void _inputCenterWait       (Joystick::Axis_t axis, int map, int value);
+    void _inputCenterWaitBegin  (Joystick::Axis_t axis, int mappedAxis, int value);
+    void _inputStickDetect      (Joystick::Axis_t axis, int mappedAxis, int value);
+    void _inputStickMin         (Joystick::Axis_t axis, int mappedAxis, int value);
+    void _inputCenterWait       (Joystick::Axis_t axis, int mappedAxis, int value);
     
     void _switchDetect(Joystick::AxisFunction_t function, int axis, int value, bool moveToNextStep); // Undefined
 
