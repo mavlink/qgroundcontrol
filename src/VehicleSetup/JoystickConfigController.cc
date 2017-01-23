@@ -451,7 +451,7 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
     // Set all raw axes to not reversed and center point values
     for (int i=0; i<_axisCount; i++) {
         struct AxisInfo* info = &_rgAxisInfo[i];
-        //info->function = Joystick::maxFunction;
+        info->function = Joystick::maxFunction;
         info->axis = Joystick::maxAxis;
         info->reversed = false;
         info->deadband = 0;

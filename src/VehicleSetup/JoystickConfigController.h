@@ -164,8 +164,8 @@ private:
     
     /// @brief A set of information associated with a radio axis.
     struct AxisInfo {
-        Joystick::Axis_t            axis;       ///< Physical real-life axis (stickLeft/Right/X/Y) mapped to this arbitrary raw axis index. _axisNoAxis (-1) for none.
-        Joystick::AxisFunction_t    function;   ///< Function mapped to this raw axis
+        Joystick::Axis_t            axis;       ///< Physical real-life axis (stickLeft/Right/X/Y) mapped to this arbitrary raw axis index. Joystick::maxAxis for none.
+        Joystick::AxisFunction_t    function;   ///< Function mapped to this raw axis. Joystick::maxFunction for none.
         bool                        reversed;   ///< true: axis is reverse, false: not reversed
         int                         axisMin;    ///< Minimum axis value
         int                         axisMax;    ///< Maximum axis value
