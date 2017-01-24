@@ -131,12 +131,13 @@ public:
     QStringList hostList    () { return _hostList; }
 
     /// From LinkConfiguration
-    LinkType    type            () { return LinkConfiguration::TypeUdp; }
-    void        copyFrom        (LinkConfiguration* source);
-    void        loadSettings    (QSettings& settings, const QString& root);
-    void        saveSettings    (QSettings& settings, const QString& root);
-    void        updateSettings  ();
-    QString     settingsURL     () { return "UdpSettings.qml"; }
+    LinkType    type                 () { return LinkConfiguration::TypeUdp; }
+    void        copyFrom             (LinkConfiguration* source);
+    void        loadSettings         (QSettings& settings, const QString& root);
+    void        saveSettings         (QSettings& settings, const QString& root);
+    void        updateSettings       ();
+    bool        isAutoConnectAllowed () { return true; }
+    QString     settingsURL          () { return "UdpSettings.qml"; }
 
 signals:
     void localPortChanged   ();
