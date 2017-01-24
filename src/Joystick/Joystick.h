@@ -101,6 +101,9 @@ public:
     bool deadband(void);
     void setDeadband(bool accu);
 
+    void setTXMode(int mode);
+    int getTXMode(void) { return _transmitterMode; }
+
     typedef enum {
         CalibrationModeOff,         // Not calibrating
         CalibrationModeMonitor,     // Monitors are active, continue to send to vehicle if already polling
@@ -157,6 +160,9 @@ private:
     virtual int _getAxis(int i) = 0;
     virtual uint8_t _getHat(int hat,int i) = 0;
 
+    int _mapFunctionMode(int mode, int function);
+    void _remapAxes(int currentMode, int newMode, int (&newMapping)[maxFunction]);
+
     // Override from QThread
     virtual void run(void);
 
@@ -172,6 +178,7 @@ protected:
     int     _hatButtonCount;
     int     _totalButtonCount;
 
+    static int          _transmitterMode;
     CalibrationMode_t   _calibrationMode;
 
     int*                _rgAxisValues;
@@ -203,6 +210,7 @@ private:
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;
     static const char* _deadbandSettingsKey;
+    static const char* _txModeSettingsKey;
 };
 
 #endif
