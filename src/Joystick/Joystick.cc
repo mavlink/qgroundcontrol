@@ -79,6 +79,36 @@ Joystick::~Joystick()
     delete _rgButtonValues;
 }
 
+void Joystick::_setDefaultCalibration(void) {
+    QSettings   settings;
+    settings.beginGroup(_settingsGroup);
+    settings.beginGroup(_name);
+    _calibrated = settings.value(_calibratedSettingsKey, false).toBool();
+
+    // Only set default calibrations if we do not have a calibration for this gamecontroller
+    if(_calibrated) return;
+
+    for(int axis = 0; axis < _axisCount; axis++) {
+        Joystick::Calibration_t calibration;
+        _rgCalibration[axis] = calibration;
+    }
+
+    _rgCalibration[1].reversed = true;
+    _rgCalibration[3].reversed = true;
+
+    for(int function = 0; function < maxFunction; function++) {
+        _rgFunctionAxis[function] = function;
+    }
+
+    _exponential = false;
+    _accumulator = false;
+    _deadband = false;
+    _throttleMode = ThrottleModeCenterZero;
+    _calibrated = true;
+
+    _saveSettings();
+}
+
 void Joystick::_loadSettings(void)
 {
     QSettings   settings;
@@ -102,7 +132,7 @@ void Joystick::_loadSettings(void)
     _throttleMode = (ThrottleMode_t)settings.value(_throttleModeSettingsKey, ThrottleModeCenterZero).toInt(&convertOk);
     badSettings |= !convertOk;
 
-    qCDebug(JoystickLog) << "_loadSettings calibrated:throttlemode:exponential:deadband:badsettings" << _calibrated << _throttleMode << _exponential << _deadband << badSettings;
+    qCDebug(JoystickLog) << "_loadSettings calibrated:txmode:throttlemode:exponential:deadband:badsettings" << _calibrated << _transmitterMode << _throttleMode << _exponential << _deadband << badSettings;
 
     QString minTpl  ("Axis%1Min");
     QString maxTpl  ("Axis%1Max");

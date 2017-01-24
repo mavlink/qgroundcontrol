@@ -30,12 +30,18 @@ public:
 
     ~Joystick();
 
-    typedef struct {
+    typedef struct Calibration_t {
         int     min;
         int     max;
         int     center;
         int     deadband;
         bool    reversed;
+        Calibration_t()
+            : min(-32767)
+            , max(32767)
+            , center(0)
+            , deadband(0)
+            , reversed(false) {}
     } Calibration_t;
 
     typedef enum {
@@ -68,7 +74,8 @@ public:
     Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
     Q_PROPERTY(bool exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
     Q_PROPERTY(bool accumulator READ accumulator WRITE setAccumulator NOTIFY accumulatorChanged)
-
+	Q_PROPERTY(bool requiresCalibration READ requiresCalibration CONSTANT)
+    
     // Property accessors
 
     int axisCount(void) { return _axisCount; }
@@ -88,6 +95,8 @@ public:
     QVariantList buttonActions(void);
 
     QString name(void) { return _name; }
+
+	virtual bool requiresCalibration(void) { return true; }
 
     int throttleMode(void);
     void setThrottleMode(int mode);
@@ -144,12 +153,13 @@ signals:
     void buttonActionTriggered(int action);
 
 protected:
-    void _saveSettings(void);
-    void _loadSettings(void);
-    float _adjustRange(int value, Calibration_t calibration, bool withDeadbands);
-    void _buttonAction(const QString& action);
-    bool _validAxis(int axis);
-    bool _validButton(int button);
+    void    _setDefaultCalibration(void);
+    void    _saveSettings(void);
+    void    _loadSettings(void);
+    float   _adjustRange(int value, Calibration_t calibration, bool withDeadbands);
+    void    _buttonAction(const QString& action);
+    bool    _validAxis(int axis);
+    bool    _validButton(int button);
 
 private:
     virtual bool _open() = 0;
