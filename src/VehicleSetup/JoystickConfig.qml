@@ -643,12 +643,53 @@ SetupPage {
                 id:             rightColumn
                 anchors.top:    parent.top
                 anchors.right:  parent.right
-                width:          defaultTextWidth * 35
-                spacing:        10
+                width:          Math.min(joystickPage.defaultTextWidth * 35, availableWidth * 0.4)
+                spacing:        ScreenTools.defaultFontPixelHeight / 2
+
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth
+
+                    ExclusiveGroup { id: modeGroup }
+
+                    QGCLabel {
+                        text: "TX Mode:"
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "1"
+                        checked:        controller.transmitterMode == 1
+
+                        onClicked: controller.transmitterMode = 1
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "2"
+                        checked:        controller.transmitterMode == 2
+
+                        onClicked: controller.transmitterMode = 2
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "3"
+                        checked:        controller.transmitterMode == 3
+
+                        onClicked: controller.transmitterMode = 3
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "4"
+                        checked:        controller.transmitterMode == 4
+
+                        onClicked: controller.transmitterMode = 4
+                    }
+                }
 
                 Image {
-                    //width:      parent.width
-                    height:     defaultTextHeight * 15
+                    width:      parent.width
                     fillMode:   Image.PreserveAspectFit
                     smooth:     true
                     source:     controller.imageHelp
