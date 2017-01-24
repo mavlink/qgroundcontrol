@@ -597,6 +597,7 @@ void JoystickConfigController::_startCalibration(void)
     
     _currentStep = 0;
     _setupCurrentState();
+    emit calibratingChanged();
 }
 
 /// @brief Cancels the calibration process, setting things back to initial state.
@@ -615,6 +616,7 @@ void JoystickConfigController::_stopCalibration(void)
     _skipButton->setEnabled(false);
     
     _setHelpImage(_imageCenter);
+    emit calibratingChanged();
 }
 
 /// @brief Saves the current axis values, so that we can detect when the use moves an input.
@@ -810,7 +812,7 @@ void JoystickConfigController::setTransmitterMode(int mode)
 {
     if (mode > 0 && mode <= 4) {
         _transmitterMode = mode;
-        if (_currentStep != -1) {
+        if (_currentStep != -1) { // This should never be true, mode selection is disabled during calibration
             const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
             _setHelpImage(state->image);
         } else {
