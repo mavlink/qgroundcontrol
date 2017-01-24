@@ -659,6 +659,7 @@ SetupPage {
                         exclusiveGroup: modeGroup
                         text:           "1"
                         checked:        controller.transmitterMode == 1
+                        enabled:        !controller.calibrating
 
                         onClicked: controller.transmitterMode = 1
                     }
@@ -667,6 +668,7 @@ SetupPage {
                         exclusiveGroup: modeGroup
                         text:           "2"
                         checked:        controller.transmitterMode == 2
+                        enabled:        !controller.calibrating
 
                         onClicked: controller.transmitterMode = 2
                     }
@@ -675,6 +677,7 @@ SetupPage {
                         exclusiveGroup: modeGroup
                         text:           "3"
                         checked:        controller.transmitterMode == 3
+                        enabled:        !controller.calibrating
 
                         onClicked: controller.transmitterMode = 3
                     }
@@ -683,6 +686,7 @@ SetupPage {
                         exclusiveGroup: modeGroup
                         text:           "4"
                         checked:        controller.transmitterMode == 4
+                        enabled:        !controller.calibrating
 
                         onClicked: controller.transmitterMode = 4
                     }

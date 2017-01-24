@@ -71,6 +71,7 @@ public:
 
     Q_PROPERTY(int transmitterMode READ transmitterMode WRITE setTransmitterMode NOTIFY transmitterModeChanged)
     Q_PROPERTY(QString imageHelp MEMBER _imageHelp NOTIFY imageHelpChanged)
+    Q_PROPERTY(bool calibrating READ calibrating NOTIFY calibratingChanged)
     
     Q_INVOKABLE void cancelButtonClicked(void);
     Q_INVOKABLE void skipButtonClicked(void);
@@ -104,6 +105,8 @@ public:
 
     int transmitterMode(void) { return _transmitterMode; }
     void setTransmitterMode(int mode);
+
+    bool calibrating(void) { return _currentStep != -1; }
     
 signals:
     void axisValueChanged(int axis, int value);
@@ -132,6 +135,7 @@ signals:
     
     void imageHelpChanged(QString source);
     void transmitterModeChanged(int mode);
+    void calibratingChanged(void);
     
     // @brief Signalled when in unit test mode and a message box should be displayed by the next button
     void nextButtonMessageBoxDisplayed(void);
