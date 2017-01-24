@@ -25,6 +25,7 @@ const char* Joystick::_throttleModeSettingsKey =    "ThrottleMode";
 const char* Joystick::_exponentialSettingsKey =     "Exponential";
 const char* Joystick::_accumulatorSettingsKey =     "Accumulator";
 const char* Joystick::_deadbandSettingsKey =        "Deadband";
+const char* Joystick::_txModeSettingsKey =          "TXMode";
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -32,6 +33,8 @@ const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "YawAxis",
     "ThrottleAxis"
 };
+
+int Joystick::_transmitterMode = 2;
 
 Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, MultiVehicleManager* multiVehicleManager)
     : _exitThread(false)
@@ -81,6 +84,9 @@ void Joystick::_loadSettings(void)
     QSettings   settings;
 
     settings.beginGroup(_settingsGroup);
+
+    _transmitterMode = settings.value(_txModeSettingsKey, 2).toInt();
+
     settings.beginGroup(_name);
 
     bool badSettings = false;
@@ -136,6 +142,10 @@ void Joystick::_loadSettings(void)
         qCDebug(JoystickLog) << "_loadSettings function:axis:badsettings" << function << functionAxis << badSettings;
     }
 
+    // FunctionAxis mappings are always stored in TX mode 2
+    // Remap to stored TX mode in settings
+    _remapAxes(2, _transmitterMode, _rgFunctionAxis);
+
     for (int button=0; button<_totalButtonCount; button++) {
         _rgButtonActions << settings.value(QString(_buttonActionSettingsKey).arg(button), QString()).toString();
         qCDebug(JoystickLog) << "_loadSettings button:action" << button << _rgButtonActions[button];
@@ -152,6 +162,11 @@ void Joystick::_saveSettings(void)
     QSettings settings;
 
     settings.beginGroup(_settingsGroup);
+
+    // Transmitter mode is static
+    // Save the mode we are using
+    settings.setValue(_txModeSettingsKey, _transmitterMode);
+
     settings.beginGroup(_name);
 
     settings.setValue(_calibratedSettingsKey, _calibrated);
@@ -160,7 +175,7 @@ void Joystick::_saveSettings(void)
     settings.setValue(_deadbandSettingsKey, _deadband);
     settings.setValue(_throttleModeSettingsKey, _throttleMode);
 
-    qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode:deadband" << _calibrated << _throttleMode << _deadband;
+    qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode:deadband:txmode" << _calibrated << _throttleMode << _deadband << _transmitterMode;
 
     QString minTpl  ("Axis%1Min");
     QString maxTpl  ("Axis%1Max");
@@ -187,14 +202,55 @@ void Joystick::_saveSettings(void)
                                 << calibration->deadband;
     }
 
+    // Always save function Axis mappings in TX Mode 2
+    // Write mode 2 mappings without changing mapping currently in use
+    int temp[maxFunction];
+    _remapAxes(_transmitterMode, 2, temp);
+
     for (int function=0; function<maxFunction; function++) {
-        settings.setValue(_rgFunctionSettingsKey[function], _rgFunctionAxis[function]);
+        settings.setValue(_rgFunctionSettingsKey[function], temp[function]);
         qCDebug(JoystickLog) << "_saveSettings name:function:axis" << _name << function << _rgFunctionSettingsKey[function];
     }
 
     for (int button=0; button<_totalButtonCount; button++) {
         settings.setValue(QString(_buttonActionSettingsKey).arg(button), _rgButtonActions[button]);
         qCDebug(JoystickLog) << "_saveSettings button:action" << button << _rgButtonActions[button];
+    }
+}
+
+// Relative mappings of axis functions between different TX modes
+int Joystick::_mapFunctionMode(int mode, int function) {
+
+    static const int mapping[][4] = {
+        { 2, 1, 0, 3 },
+        { 2, 3, 0, 1 },
+        { 0, 1, 2, 3 },
+        { 0, 3, 2, 1 }};
+
+    return mapping[mode-1][function];
+}
+
+// Remap current axis functions from current TX mode to new TX mode
+void Joystick::_remapAxes(int currentMode, int newMode, int (&newMapping)[maxFunction]) {
+    int temp[maxFunction];
+
+    for(int function = 0; function < maxFunction; function++) {
+        temp[_mapFunctionMode(newMode, function)] = _rgFunctionAxis[_mapFunctionMode(currentMode, function)];
+    }
+
+    for(int function = 0; function < maxFunction; function++) {
+        newMapping[function] = temp[function];
+    }
+
+}
+
+void Joystick::setTXMode(int mode) {
+    if(mode > 0 && mode <= 4) {
+        _remapAxes(_transmitterMode, mode, _rgFunctionAxis);
+        _transmitterMode = mode;
+        _saveSettings();
+    } else {
+        qCWarning(JoystickLog) << "Invalid mode:" << mode;
     }
 }
 
@@ -471,6 +527,7 @@ void Joystick::setFunctionAxis(AxisFunction_t function, int axis)
 
     _calibrated = true;
     _rgFunctionAxis[function] = axis;
+
     _saveSettings();
     emit calibratedChanged(_calibrated);
 }

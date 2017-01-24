@@ -499,6 +499,8 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
         _rgFunctionAxisMapping[function] = paramAxis;
         _rgAxisInfo[paramAxis].function = (Joystick::AxisFunction_t)function;
     }
+
+    _transmitterMode = joystick->getTXMode();
     
     _signalAllAttiudeValueChanges();
 }
@@ -806,11 +808,14 @@ bool JoystickConfigController::throttleAxisReversed(void)
 
 void JoystickConfigController::setTransmitterMode(int mode)
 {
-    if (mode == 1 || mode == 2 || mode == 3 || mode == 4) {
+    if (mode > 0 && mode <= 4) {
         _transmitterMode = mode;
         if (_currentStep != -1) {
             const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
             _setHelpImage(state->image);
+        } else {
+            _activeJoystick->setTXMode(mode);
+            _setInternalCalibrationValuesFromSettings();
         }
     }
 }
@@ -831,6 +836,8 @@ void JoystickConfigController::_signalAllAttiudeValueChanges(void)
     emit pitchAxisDeadbandChanged(pitchAxisDeadband());
     emit yawAxisDeadbandChanged(yawAxisDeadband());
     emit throttleAxisDeadbandChanged(throttleAxisDeadband());
+
+    emit transmitterModeChanged(_transmitterMode);
 }
 
 void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
