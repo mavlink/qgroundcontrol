@@ -171,6 +171,8 @@ public:
 
     SharedLinkConfigurationPointer addConfiguration(LinkConfiguration* config);
 
+    void startAutoConnectedLinks(void);
+
 signals:
     void autoconnectUDPChanged        (bool autoconnect);
     void autoconnectPixhawkChanged    (bool autoconnect);
