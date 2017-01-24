@@ -302,6 +302,7 @@ SetupPage {
                 // Command Buttons
                 Row {
                     spacing: 10
+                    visible: _activeJoystick.requiresCalibration
 
                     QGCButton {
                         id:     skipButton
