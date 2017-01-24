@@ -229,18 +229,17 @@ private:
 
     /// Get the real life axis mapped to a function (roll->stickRightX).
     /// This mapping is determined by the current JoystickTXMode
-    /// _axisNoAxis (-1) indicates axis not set for this function.
+    /// Joystick::maxAxis indicates axis not set for this function.
     Joystick::Axis_t _rgFunctionAxisMapping[Joystick::maxFunction];
 
     /// Get the raw joystick axis mapped to a real life axis (stickRightX->n).
     /// This mapping is determined through the calibration process
-    /// _axisNoAxis (-1) indicates axis not mapped
+    /// Joystick::maxAxis indicates axis not mapped
     int _rgAxisMapping[Joystick::maxAxis];
 
     static const int _attitudeControls = 5; // Unused.. and should be 4?
     
     int                 _axisCount;         ///< Number of actual joystick axes available
-    static const int    _axisNoAxis = -1;   ///< Signals no axis set
     static const int    _axisMinimum = 4;   ///< Minimum numner of joystick axes required to run PX4
     struct AxisInfo*    _rgAxisInfo;        ///< Information associated with each axis
     int*                _axisValueSave;     ///< Saved values prior to detecting axis movement

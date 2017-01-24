@@ -203,7 +203,7 @@ void Joystick::_loadSettings(void)
 
     for (int axis=0; axis<maxAxis; axis++) {
         int mappedAxis;
-        mappedAxis = settings.value(_rgAxisMappingKey[axis], -1).toInt(&convertOk);
+        mappedAxis = settings.value(_rgAxisMappingKey[axis], maxAxis).toInt(&convertOk);
         badSettings |= !convertOk || (mappedAxis == -1);
 
         _rgAxisMapping[axis] = mappedAxis;

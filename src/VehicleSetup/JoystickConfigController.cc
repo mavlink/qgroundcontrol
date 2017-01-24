@@ -123,7 +123,7 @@ void JoystickConfigController::_setupCurrentState(void)
     
     _setHelpImage(state->image);
     
-    _stickDetectAxis = _axisNoAxis;
+    _stickDetectAxis = Joystick::maxAxis;
     _stickDetectSettleStarted = false;
     
     _calSaveCurrentValues();
@@ -314,7 +314,7 @@ void JoystickConfigController::_inputStickDetect(Joystick::Axis_t axis, int mapp
         return;
     }
     
-    if (_stickDetectAxis == _axisNoAxis) {
+    if (_stickDetectAxis == Joystick::maxAxis) {
         // We have not detected enough movement on a axis yet
         
         if (abs(_axisValueSave[mappedAxis] - value) > _calMoveDelta) {
@@ -377,7 +377,7 @@ void JoystickConfigController::_inputStickMin(Joystick::Axis_t axis, int mappedA
         return;
     }
 
-    if (_stickDetectAxis == _axisNoAxis) {
+    if (_stickDetectAxis == Joystick::maxAxis) {
         // Setup up to detect stick being pegged to extreme position
         if (_rgAxisInfo[mappedAxis].reversed) {
             if (value > _calCenterPoint + _calMoveDelta) {
@@ -428,7 +428,7 @@ void JoystickConfigController::_inputCenterWait(Joystick::Axis_t axis, int mappe
         return;
     }
     
-    if (_stickDetectAxis == _axisNoAxis) {
+    if (_stickDetectAxis == Joystick::maxAxis) {
         // Sticks have not yet moved close enough to center
         
         if (abs(_calCenterPoint - value) < _calRoughCenterDelta) {
@@ -469,7 +469,7 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
     }
 
     for (size_t i=0; i<Joystick::maxAxis; i++) {
-        _rgAxisMapping[i] = _axisNoAxis;
+        _rgAxisMapping[i] = Joystick::maxAxis;
     }
     
     _signalAllAttiudeValueChanges();
@@ -489,11 +489,11 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
     }
 
     for (size_t i=0; i<Joystick::maxFunction; i++) {
-        _rgFunctionAxisMapping[i] = (Joystick::Axis_t)_axisNoAxis;
+        _rgFunctionAxisMapping[i] = (Joystick::Axis_t)Joystick::maxAxis;
     }
 
     for (size_t i=0; i<Joystick::maxAxis; i++) {
-        _rgAxisMapping[i] = _axisNoAxis;
+        _rgAxisMapping[i] = Joystick::maxAxis;
     }
     
     for (int axis=0; axis<_axisCount; axis++) {
@@ -694,7 +694,7 @@ int JoystickConfigController::axisCount(void)
 
 int JoystickConfigController::rollAxisValue(void)
 {    
-    if (_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) {
+    if (_rgFunctionAxisMapping[Joystick::rollFunction] != Joystick::maxAxis) {
         return _axisRawValue[Joystick::rollFunction];
     } else {
         return 1500;
@@ -703,7 +703,7 @@ int JoystickConfigController::rollAxisValue(void)
 
 int JoystickConfigController::pitchAxisValue(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis) {
+    if (_rgFunctionAxisMapping[Joystick::pitchFunction] != Joystick::maxAxis) {
         return _axisRawValue[Joystick::pitchFunction];
     } else {
         return 1500;
@@ -712,7 +712,7 @@ int JoystickConfigController::pitchAxisValue(void)
 
 int JoystickConfigController::yawAxisValue(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis) {
+    if (_rgFunctionAxisMapping[Joystick::yawFunction] != Joystick::maxAxis) {
         return _axisRawValue[Joystick::yawFunction];
     } else {
         return 1500;
@@ -721,7 +721,7 @@ int JoystickConfigController::yawAxisValue(void)
 
 int JoystickConfigController::throttleAxisValue(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis) {
+    if (_rgFunctionAxisMapping[Joystick::throttleFunction] != Joystick::maxAxis) {
         return _axisRawValue[Joystick::throttleFunction];
     } else {
         return 1500;
@@ -730,7 +730,7 @@ int JoystickConfigController::throttleAxisValue(void)
 
 int JoystickConfigController::rollAxisDeadband(void)
 {
-    if ((_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
+    if ((_rgFunctionAxisMapping[Joystick::rollFunction] != Joystick::maxAxis) && (_activeJoystick->deadband())) {
         return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::rollFunction]].deadband;
     } else {
         return 0;
@@ -739,7 +739,7 @@ int JoystickConfigController::rollAxisDeadband(void)
 
 int JoystickConfigController::pitchAxisDeadband(void)
 {
-    if ((_rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
+    if ((_rgFunctionAxisMapping[Joystick::pitchFunction] != Joystick::maxAxis) && (_activeJoystick->deadband())) {
         return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::pitchFunction]].deadband;
     } else {
         return 0;
@@ -748,7 +748,7 @@ int JoystickConfigController::pitchAxisDeadband(void)
 
 int JoystickConfigController::yawAxisDeadband(void)
 {
-    if ((_rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
+    if ((_rgFunctionAxisMapping[Joystick::yawFunction] != Joystick::maxAxis) && (_activeJoystick->deadband())) {
         return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::yawFunction]].deadband;
     } else {
         return 0;
@@ -757,7 +757,7 @@ int JoystickConfigController::yawAxisDeadband(void)
 
 int JoystickConfigController::throttleAxisDeadband(void)
 {
-    if ((_rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
+    if ((_rgFunctionAxisMapping[Joystick::throttleFunction] != Joystick::maxAxis) && (_activeJoystick->deadband())) {
         return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::throttleFunction]].deadband;
     } else {
         return 0;
@@ -768,7 +768,7 @@ bool JoystickConfigController::rollAxisMapped(void)
 {
     int axis = _rgFunctionAxisMapping[Joystick::rollFunction];
     int mappedAxis = _rgAxisMapping[axis];
-    if (mappedAxis == _axisNoAxis) {
+    if (mappedAxis == Joystick::maxAxis) {
         return false;
     }
     return _rgAxisInfo[mappedAxis].axis != Joystick::maxAxis;
@@ -778,7 +778,7 @@ bool JoystickConfigController::pitchAxisMapped(void)
 {
     int axis = _rgFunctionAxisMapping[Joystick::pitchFunction];
     int mappedAxis = _rgAxisMapping[axis];
-    if (mappedAxis == _axisNoAxis) {
+    if (mappedAxis == Joystick::maxAxis) {
         return false;
     }
     return _rgAxisInfo[mappedAxis].axis != Joystick::maxAxis;
@@ -788,7 +788,7 @@ bool JoystickConfigController::yawAxisMapped(void)
 {
     int axis = _rgFunctionAxisMapping[Joystick::yawFunction];
     int mappedAxis = _rgAxisMapping[axis];
-    if (mappedAxis == _axisNoAxis) {
+    if (mappedAxis == Joystick::maxAxis) {
         return false;
     }
     return _rgAxisInfo[mappedAxis].axis != Joystick::maxAxis;
@@ -798,7 +798,7 @@ bool JoystickConfigController::throttleAxisMapped(void)
 {
     int axis = _rgFunctionAxisMapping[Joystick::throttleFunction];
     int mappedAxis = _rgAxisMapping[axis];
-    if (mappedAxis == _axisNoAxis) {
+    if (mappedAxis == Joystick::maxAxis) {
         return false;
     }
     return _rgAxisInfo[mappedAxis].axis != Joystick::maxAxis;
@@ -806,7 +806,7 @@ bool JoystickConfigController::throttleAxisMapped(void)
 
 bool JoystickConfigController::rollAxisReversed(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) {
+    if (_rgFunctionAxisMapping[Joystick::rollFunction] != Joystick::maxAxis) {
         return _rgAxisInfo[_rgAxisMapping[_rgFunctionAxisMapping[Joystick::rollFunction]]].reversed;
     } else {
         return false;
@@ -815,7 +815,7 @@ bool JoystickConfigController::rollAxisReversed(void)
 
 bool JoystickConfigController::pitchAxisReversed(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis) {
+    if (_rgFunctionAxisMapping[Joystick::pitchFunction] != Joystick::maxAxis) {
         return _rgAxisInfo[_rgAxisMapping[_rgFunctionAxisMapping[Joystick::pitchFunction]]].reversed;
     } else {
         return false;
@@ -824,7 +824,7 @@ bool JoystickConfigController::pitchAxisReversed(void)
 
 bool JoystickConfigController::yawAxisReversed(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis) {
+    if (_rgFunctionAxisMapping[Joystick::yawFunction] != Joystick::maxAxis) {
         return _rgAxisInfo[_rgAxisMapping[_rgFunctionAxisMapping[Joystick::yawFunction]]].reversed;
     } else {
         return false;
@@ -833,7 +833,7 @@ bool JoystickConfigController::yawAxisReversed(void)
 
 bool JoystickConfigController::throttleAxisReversed(void)
 {
-    if (_rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis) {
+    if (_rgFunctionAxisMapping[Joystick::throttleFunction] != Joystick::maxAxis) {
         return _rgAxisInfo[_rgAxisMapping[_rgFunctionAxisMapping[Joystick::throttleFunction]]].reversed;
     } else {
         return false;
