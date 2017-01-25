@@ -18,14 +18,19 @@
 QGC_LOGGING_CATEGORY(JoystickLog, "JoystickLog")
 QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
 
-const char* Joystick::_settingsGroup =              "Joysticks";
-const char* Joystick::_calibratedSettingsKey =      "Calibrated1"; // Increment number to force recalibration
-const char* Joystick::_buttonActionSettingsKey =    "ButtonActionName%1";
-const char* Joystick::_throttleModeSettingsKey =    "ThrottleMode";
-const char* Joystick::_exponentialSettingsKey =     "Exponential";
-const char* Joystick::_accumulatorSettingsKey =     "Accumulator";
-const char* Joystick::_deadbandSettingsKey =        "Deadband";
-const char* Joystick::_txModeSettingsKey =          "TXMode";
+const char* Joystick::_settingsGroup =                  "Joysticks";
+const char* Joystick::_calibratedSettingsKey =          "Calibrated1"; // Increment number to force recalibration
+const char* Joystick::_buttonActionSettingsKey =        "ButtonActionName%1";
+const char* Joystick::_throttleModeSettingsKey =        "ThrottleMode";
+const char* Joystick::_exponentialSettingsKey =         "Exponential";
+const char* Joystick::_accumulatorSettingsKey =         "Accumulator";
+const char* Joystick::_deadbandSettingsKey =            "Deadband";
+const char* Joystick::_txModeSettingsKey =              NULL;
+const char* Joystick::_fixedWingTXModeSettingsKey =     "TXMode_FixedWing";
+const char* Joystick::_multiRotorTXModeSettingsKey =    "TXMode_MultiRotor";
+const char* Joystick::_roverTXModeSettingsKey =         "TXMode_Rover";
+const char* Joystick::_vtolTXModeSettingsKey =          "TXMode_VTOL";
+const char* Joystick::_submarineTXModeSettingsKey =     "TXMode_Submarine";
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -70,6 +75,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     }
 
     _loadSettings();
+
+    connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
 }
 
 Joystick::~Joystick()
@@ -96,9 +103,11 @@ void Joystick::_setDefaultCalibration(void) {
     _rgCalibration[1].reversed = true;
     _rgCalibration[3].reversed = true;
 
-    for(int function = 0; function < maxFunction; function++) {
-        _rgFunctionAxis[function] = function;
-    }
+    // Default TX Mode 2 axis assignments for gamecontrollers
+    _rgFunctionAxis[rollFunction]       = 2;
+    _rgFunctionAxis[pitchFunction]      = 3;
+    _rgFunctionAxis[yawFunction]        = 0;
+    _rgFunctionAxis[throttleFunction]   = 1;
 
     _exponential = false;
     _accumulator = false;
@@ -109,13 +118,41 @@ void Joystick::_setDefaultCalibration(void) {
     _saveSettings();
 }
 
+void Joystick::_activeVehicleChanged(Vehicle *activeVehicle)
+{
+    if(activeVehicle) {
+        if(activeVehicle->fixedWing()) {
+            _txModeSettingsKey = _fixedWingTXModeSettingsKey;
+        } else if(activeVehicle->multiRotor()) {
+            _txModeSettingsKey = _multiRotorTXModeSettingsKey;
+        } else if(activeVehicle->rover()) {
+            _txModeSettingsKey = _roverTXModeSettingsKey;
+        } else if(activeVehicle->vtol()) {
+            _txModeSettingsKey = _vtolTXModeSettingsKey;
+        } else if(activeVehicle->sub()) {
+            _txModeSettingsKey = _submarineTXModeSettingsKey;
+        } else {
+            _txModeSettingsKey = NULL;
+            qWarning() << "No valid joystick TXmode settings key for selected vehicle";
+            return;
+        }
+
+        QSettings settings;
+        settings.beginGroup(_settingsGroup);
+        int mode = settings.value(_txModeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
+
+        setTXMode(mode);
+    }
+}
+
 void Joystick::_loadSettings(void)
 {
     QSettings   settings;
 
     settings.beginGroup(_settingsGroup);
 
-    _transmitterMode = settings.value(_txModeSettingsKey, 2).toInt();
+    if(_txModeSettingsKey)
+        _transmitterMode = settings.value(_txModeSettingsKey, 2).toInt();
 
     settings.beginGroup(_name);
 
@@ -195,7 +232,8 @@ void Joystick::_saveSettings(void)
 
     // Transmitter mode is static
     // Save the mode we are using
-    settings.setValue(_txModeSettingsKey, _transmitterMode);
+    if(_txModeSettingsKey)
+        settings.setValue(_txModeSettingsKey, _transmitterMode);
 
     settings.beginGroup(_name);
 
