@@ -142,6 +142,10 @@ public:
     /// @return -1: reserver all buttons, >0 number of buttons to reserve
     virtual int manualControlReservedButtonCount(void);
 
+    /// Default tx mode to apply to joystick axes
+    /// TX modes are as outlined here: http://www.rc-airplane-world.com/rc-transmitter-modes.html
+    virtual int defaultJoystickTXMode(void);
+
     /// Returns true if the vehicle and firmware supports the use of a throttle joystick that
     /// is zero when centered. Typically not supported on vehicles that have bidirectional
     /// throttle.

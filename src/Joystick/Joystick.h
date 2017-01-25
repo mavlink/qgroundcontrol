@@ -221,6 +221,14 @@ private:
     static const char* _accumulatorSettingsKey;
     static const char* _deadbandSettingsKey;
     static const char* _txModeSettingsKey;
+    static const char* _fixedWingTXModeSettingsKey;
+    static const char* _multiRotorTXModeSettingsKey;
+    static const char* _roverTXModeSettingsKey;
+    static const char* _vtolTXModeSettingsKey;
+    static const char* _submarineTXModeSettingsKey;
+
+private slots:
+    void _activeVehicleChanged(Vehicle* activeVehicle);
 };
 
 #endif
