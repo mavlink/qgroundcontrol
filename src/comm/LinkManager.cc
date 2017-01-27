@@ -524,9 +524,10 @@ void LinkManager::_updateAutoConnectLinks(void)
         // Save port name
         currentPorts << portInfo.systemLocation();
 
-        QGCSerialPortInfo::BoardType_t boardType = portInfo.boardType();
+        QGCSerialPortInfo::BoardType_t boardType;
+        QString boardName;
 
-        if (boardType != QGCSerialPortInfo::BoardTypeUnknown) {
+        if (portInfo.getBoardInfo(boardType, boardName)) {
             if (portInfo.isBootloader()) {
                 // Don't connect to bootloader
                 qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
@@ -547,51 +548,25 @@ void LinkManager::_updateAutoConnectLinks(void)
                 _autoconnectWaitList.remove(portInfo.systemLocation());
 
                 switch (boardType) {
-                case QGCSerialPortInfo::BoardTypePX4FMUV1:
-                case QGCSerialPortInfo::BoardTypePX4FMUV2:
-                case QGCSerialPortInfo::BoardTypePX4FMUV4:
+                case QGCSerialPortInfo::BoardTypePixhawk:
                     if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(tr("Pixhawk on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
-                        pSerialConfig->setUsbDirect(true);
-                    }
-                    break;
-                case QGCSerialPortInfo::BoardTypeAeroCore:
-                    if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(tr("AeroCore on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
-                        pSerialConfig->setUsbDirect(true);
-                    }
-                    break;
-                case QGCSerialPortInfo::BoardTypeMINDPXFMUV2:
-                    if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(tr("MindPX on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
-                        pSerialConfig->setUsbDirect(true);
-                    }
-                    break;
-                case QGCSerialPortInfo::BoardTypeTAPV1:
-                    if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(tr("TAP on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
-                        pSerialConfig->setUsbDirect(true);
-                    }
-                    break;
-                case QGCSerialPortInfo::BoardTypeASCV1:
-                    if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(tr("ASC on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypePX4Flow:
                     if (_autoconnectPX4Flow) {
-                        pSerialConfig = new SerialConfiguration(tr("PX4Flow on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
                     }
                     break;
-                case QGCSerialPortInfo::BoardTypeSikRadio:
+                case QGCSerialPortInfo::BoardTypeSiKRadio:
                     if (_autoconnect3DRRadio) {
-                        pSerialConfig = new SerialConfiguration(tr("SiK Radio on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
                     }
                     break;
-                case QGCSerialPortInfo::BoardTypeLibrePilot:
+                case QGCSerialPortInfo::BoardTypeOpenPilot:
                     if (_autoconnectLibrePilot) {
-                        pSerialConfig = new SerialConfiguration(tr("LibrePilot on %1 (AutoConnect)").arg(portInfo.portName().trimmed()));
+                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
                     }
                     break;
 #ifndef __mobile__
@@ -609,7 +584,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 
                 if (pSerialConfig) {
                     qCDebug(LinkManagerLog) << "New auto-connect port added: " << pSerialConfig->name() << portInfo.systemLocation();
-                    pSerialConfig->setBaud(boardType == QGCSerialPortInfo::BoardTypeSikRadio ? 57600 : 115200);
+                    pSerialConfig->setBaud(boardType == QGCSerialPortInfo::BoardTypeSiKRadio ? 57600 : 115200);
                     pSerialConfig->setDynamic(true);
                     pSerialConfig->setPortName(portInfo.systemLocation());
                     _sharedAutoconnectConfigurations.append(SharedLinkConfigurationPointer(pSerialConfig));

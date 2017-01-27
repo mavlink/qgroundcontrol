@@ -429,6 +429,9 @@ bool QGCApplication::_initForNormalAppBoot(void)
     // Load known link configurations
     toolbox()->linkManager()->loadLinkConfigurationList();
 
+    // Probe for joysticks - TODO: manage on a timer or use events to deal with hotplug
+    toolbox()->joystickManager()->discoverJoysticks();
+
     if (_settingsUpgraded) {
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);

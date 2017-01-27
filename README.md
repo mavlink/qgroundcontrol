@@ -33,7 +33,7 @@ https://donlakeflyer.gitbooks.io/qgroundcontrol-user-guide/content/
 
 #### Native Builds
 QGroundControl builds are supported for OSX, Linux, Windows, iOS and Android. QGroundControl uses [Qt](http://www.qt.io) as its cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as its default build environment.
-* OSX: OSX 10.7 or higher, 64 bit, clang compiler (IMPORTANT: XCode 8 not supported due to Qt bug. Currently only workaround is to use XCode 7.3.1)
+* OSX: OSX 10.7 or higher, 64 bit, clang compiler (IMPORTANT: XCode 8 requires a workaround described below)
 * Ubuntu: 64 bit, gcc compiler
 * Windows: Vista or higher, 32 bit, [Visual Studio 2013 compiler](http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop)
 * iOS: 8.0 and higher

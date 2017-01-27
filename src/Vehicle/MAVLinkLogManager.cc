@@ -836,7 +836,7 @@ MAVLinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
         emit canStartLogChanged();
     }
     // Connect new system
-    if(_vehicle && _vehicle->px4Firmware()) {
+    if(vehicle && vehicle->px4Firmware()) {
         _vehicle = vehicle;
         connect(_vehicle, &Vehicle::armedChanged,       this, &MAVLinkLogManager::_armedChanged);
         connect(_vehicle, &Vehicle::mavlinkLogData,     this, &MAVLinkLogManager::_mavlinkLogData);

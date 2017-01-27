@@ -51,6 +51,8 @@ MissionItem::MissionItem(QObject* parent)
     _frameFact.setRawValue(MAV_FRAME_GLOBAL_RELATIVE_ALT);
 
     setAutoContinue(true);
+
+    connect(&_param2Fact, &Fact::rawValueChanged, this, &MissionItem::_param2Changed);
 }
 
 MissionItem::MissionItem(int             sequenceNumber,
@@ -95,6 +97,8 @@ MissionItem::MissionItem(int             sequenceNumber,
     _param5Fact.setRawValue(param5);
     _param6Fact.setRawValue(param6);
     _param7Fact.setRawValue(param7);
+
+    connect(&_param2Fact, &Fact::rawValueChanged, this, &MissionItem::_param2Changed);
 }
 
 MissionItem::MissionItem(const MissionItem& other, QObject* parent)
@@ -117,6 +121,8 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     _frameFact.setRawValue(MAV_FRAME_GLOBAL_RELATIVE_ALT);
 
     *this = other;
+
+    connect(&_param2Fact, &Fact::rawValueChanged, this, &MissionItem::_param2Changed);
 }
 
 const MissionItem& MissionItem::operator=(const MissionItem& other)
@@ -139,8 +145,10 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
 
     return *this;
 }
+
 MissionItem::~MissionItem()
 {    
+
 }
 
 void MissionItem::save(QJsonObject& json) const
@@ -374,4 +382,22 @@ void MissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 QGeoCoordinate MissionItem::coordinate(void) const
 {
     return QGeoCoordinate(param5(), param6(), param7());
+}
+
+double MissionItem::flightSpeed(void) const
+{
+    double flightSpeed = std::numeric_limits<double>::quiet_NaN();
+
+    if (_commandFact.rawValue().toInt() == MAV_CMD_DO_CHANGE_SPEED && _param2Fact.rawValue().toDouble() > 0) {
+        flightSpeed = _param2Fact.rawValue().toDouble();
+    }
+
+    return flightSpeed;
+}
+
+void MissionItem::_param2Changed(QVariant value)
+{
+    if (_commandFact.rawValue().toInt() == MAV_CMD_DO_CHANGE_SPEED && _param2Fact.rawValue().toDouble() > 0) {
+        emit flightSpeedChanged(value.toDouble());
+    }
 }
