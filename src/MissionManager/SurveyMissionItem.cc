@@ -12,14 +12,15 @@
 #include "JsonHelper.h"
 #include "MissionController.h"
 #include "QGCGeo.h"
+#include "QGroundControlQmlGlobal.h"
 
 #include <QPolygonF>
 
 QGC_LOGGING_CATEGORY(SurveyMissionItemLog, "SurveyMissionItemLog")
 
-const char* SurveyMissionItem::_jsonTypeKey =                       "type";
+const char* SurveyMissionItem::jsonComplexItemTypeValue =           "survey";
+
 const char* SurveyMissionItem::_jsonPolygonObjectKey =              "polygon";
-const char* SurveyMissionItem::_jsonIdKey =                         "id";
 const char* SurveyMissionItem::_jsonGridObjectKey =                 "grid";
 const char* SurveyMissionItem::_jsonGridAltitudeKey =               "altitude";
 const char* SurveyMissionItem::_jsonGridAltitudeRelativeKey =       "relativeAltitude";
@@ -30,7 +31,7 @@ const char* SurveyMissionItem::_jsonCameraTriggerKey =              "cameraTrigg
 const char* SurveyMissionItem::_jsonCameraTriggerDistanceKey =      "cameraTriggerDistance";
 const char* SurveyMissionItem::_jsonGroundResolutionKey =           "groundResolution";
 const char* SurveyMissionItem::_jsonFrontalOverlapKey =             "imageFrontalOverlap";
-const char* SurveyMissionItem::_jsonSideOverlapKey =                "imageSizeOverlap";
+const char* SurveyMissionItem::_jsonSideOverlapKey =                "imageSideOverlap";
 const char* SurveyMissionItem::_jsonCameraSensorWidthKey =          "sensorWidth";
 const char* SurveyMissionItem::_jsonCameraSensorHeightKey =         "sensorHeight";
 const char* SurveyMissionItem::_jsonCameraResolutionWidthKey =      "resolutionWidth";
@@ -56,8 +57,6 @@ const char* SurveyMissionItem::_cameraResolutionWidthFactName =     "Camera reso
 const char* SurveyMissionItem::_cameraResolutionHeightFactName =    "Camera resolution height";
 const char* SurveyMissionItem::_cameraFocalLengthFactName =         "Focal length";
 
-const char* SurveyMissionItem::_complexType = "survey";
-
 QMap<QString, FactMetaData*> SurveyMissionItem::_metaDataMap;
 
 SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
@@ -72,6 +71,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _surveyDistance(0.0)
     , _cameraShots(0)
     , _coveredArea(0.0)
+    , _timeBetweenShots(0.0)
     , _gridAltitudeFact             (0, _gridAltitudeFactName,              FactMetaData::valueTypeDouble)
     , _gridAngleFact                (0, _gridAngleFactName,                 FactMetaData::valueTypeDouble)
     , _gridSpacingFact              (0, _gridSpacingFactName,               FactMetaData::valueTypeDouble)
@@ -134,7 +134,11 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     connect(&_cameraResolutionHeightFact,   &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
     connect(&_cameraFocalLengthFact,        &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
 
-    connect(this, &SurveyMissionItem::cameraTriggerChanged, this, &SurveyMissionItem::_cameraTriggerChanged);
+    connect(this, &SurveyMissionItem::cameraTriggerChanged,     this, &SurveyMissionItem::_cameraTriggerChanged);
+
+    connect(&_cameraTriggerDistanceFact,    &Fact::valueChanged,                        this, &SurveyMissionItem::timeBetweenShotsChanged);
+    connect(_vehicle,                       &Vehicle::cruiseSpeedChanged,               this, &SurveyMissionItem::timeBetweenShotsChanged);
+    connect(_vehicle,                       &Vehicle::hoverSpeedChanged,                this, &SurveyMissionItem::timeBetweenShotsChanged);
 }
 
 void SurveyMissionItem::_setSurveyDistance(double surveyDistance)
@@ -239,12 +243,12 @@ void SurveyMissionItem::setDirty(bool dirty)
 
 void SurveyMissionItem::save(QJsonObject& saveObject) const
 {
-    saveObject[JsonHelper::jsonVersionKey] =    2;
-    saveObject[_jsonTypeKey] =                  _complexType;
-    saveObject[_jsonIdKey] =                    sequenceNumber();
-    saveObject[_jsonCameraTriggerKey] =         _cameraTrigger;
-    saveObject[_jsonManualGridKey] =            _manualGrid;
-    saveObject[_jsonFixedValueIsAltitudeKey] =  _fixedValueIsAltitude;
+    saveObject[JsonHelper::jsonVersionKey] =                    3;
+    saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
+    saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
+    saveObject[_jsonCameraTriggerKey] =                         _cameraTrigger;
+    saveObject[_jsonManualGridKey] =                            _manualGrid;
+    saveObject[_jsonFixedValueIsAltitudeKey] =                  _fixedValueIsAltitude;
 
     if (_cameraTrigger) {
         saveObject[_jsonCameraTriggerDistanceKey] = _cameraTriggerDistanceFact.rawValue().toDouble();
@@ -306,26 +310,62 @@ void SurveyMissionItem::_clear(void)
 }
 
 
-bool SurveyMissionItem::load(const QJsonObject& complexObject, QString& errorString)
+bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
 {
-    struct jsonKeyInfo_s {
-        const char*         key;
-        QJsonValue::Type    type;
-        bool                required;
+    QJsonObject v2Object = complexObject;
+
+    // We need to pull version first to determine what validation/conversion needs to be performed.
+    QList<JsonHelper::KeyValidateInfo> versionKeyInfoList = {
+        { JsonHelper::jsonVersionKey, QJsonValue::Double, true },
     };
+    if (!JsonHelper::validateKeys(v2Object, versionKeyInfoList, errorString)) {
+        return false;
+    }
+
+    int version = v2Object[JsonHelper::jsonVersionKey].toInt();
+    if (version != 2 && version != 3) {
+        errorString = tr("QGroundControl does not support this version of survey items");
+        return false;
+    }
+    if (version == 2) {
+        // Convert to v3
+        if (v2Object.contains(VisualMissionItem::jsonTypeKey) && v2Object[VisualMissionItem::jsonTypeKey].toString() == QStringLiteral("survey")) {
+            v2Object[VisualMissionItem::jsonTypeKey] = VisualMissionItem::jsonTypeComplexItemValue;
+            v2Object[ComplexMissionItem::jsonComplexItemTypeKey] = jsonComplexItemTypeValue;
+        }
+    }
 
     QList<JsonHelper::KeyValidateInfo> mainKeyInfoList = {
-        { JsonHelper::jsonVersionKey,           QJsonValue::Double, true },
-        { _jsonTypeKey,                         QJsonValue::String, true },
-        { _jsonPolygonObjectKey,                QJsonValue::Array,  true },
-        { _jsonIdKey,                           QJsonValue::Double, true },
-        { _jsonGridObjectKey,                   QJsonValue::Object, true },
-        { _jsonCameraObjectKey,                 QJsonValue::Object, false },
-        { _jsonCameraTriggerKey,                QJsonValue::Bool,   true },
-        { _jsonCameraTriggerDistanceKey,        QJsonValue::Double, false },
-        { _jsonManualGridKey,                   QJsonValue::Bool,   true },
-        { _jsonFixedValueIsAltitudeKey,         QJsonValue::Bool,   true },
+        { JsonHelper::jsonVersionKey,                   QJsonValue::Double, true },
+        { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
+        { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
+        { _jsonPolygonObjectKey,                        QJsonValue::Array,  true },
+        { _jsonGridObjectKey,                           QJsonValue::Object, true },
+        { _jsonCameraObjectKey,                         QJsonValue::Object, false },
+        { _jsonCameraTriggerKey,                        QJsonValue::Bool,   true },
+        { _jsonCameraTriggerDistanceKey,                QJsonValue::Double, false },
+        { _jsonManualGridKey,                           QJsonValue::Bool,   true },
+        { _jsonFixedValueIsAltitudeKey,                 QJsonValue::Bool,   true },
     };
+    if (!JsonHelper::validateKeys(v2Object, mainKeyInfoList, errorString)) {
+        return false;
+    }
+
+    QString itemType = v2Object[VisualMissionItem::jsonTypeKey].toString();
+    QString complexType = v2Object[ComplexMissionItem::jsonComplexItemTypeKey].toString();
+    if (itemType != VisualMissionItem::jsonTypeComplexItemValue || complexType != jsonComplexItemTypeValue) {
+        errorString = tr("QGroundControl does not support loading this complex mission item type: %1:2").arg(itemType).arg(complexType);
+        return false;
+    }
+
+    _clear();
+
+    setSequenceNumber(sequenceNumber);
+
+    _manualGrid =           v2Object[_jsonManualGridKey].toBool(true);
+    _cameraTrigger =        v2Object[_jsonCameraTriggerKey].toBool(false);
+    _fixedValueIsAltitude = v2Object[_jsonFixedValueIsAltitudeKey].toBool(true);
+    _gridAltitudeRelative = v2Object[_jsonGridAltitudeRelativeKey].toBool(true);
 
     QList<JsonHelper::KeyValidateInfo> gridKeyInfoList = {
         { _jsonGridAltitudeKey,                 QJsonValue::Double, true },
@@ -334,70 +374,50 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, QString& errorStr
         { _jsonGridSpacingKey,                  QJsonValue::Double, true },
         { _jsonTurnaroundDistKey,               QJsonValue::Double, true },
     };
-
-    QList<JsonHelper::KeyValidateInfo> cameraKeyInfoList = {
-        { _jsonGroundResolutionKey,             QJsonValue::Double, true },
-        { _jsonFrontalOverlapKey,               QJsonValue::Double, true },
-        { _jsonSideOverlapKey,                  QJsonValue::Double, true },
-        { _jsonCameraSensorWidthKey,            QJsonValue::Double, true },
-        { _jsonCameraSensorHeightKey,           QJsonValue::Double, true },
-        { _jsonCameraResolutionWidthKey,        QJsonValue::Double, true },
-        { _jsonCameraResolutionHeightKey,       QJsonValue::Double, true },
-        { _jsonCameraFocalLengthKey,            QJsonValue::Double, true },
-        { _jsonCameraNameKey,                   QJsonValue::String, true },
-        { _jsonCameraOrientationLandscapeKey,   QJsonValue::Bool,   true },
-    };
-
-    if (!JsonHelper::validateKeys(complexObject, mainKeyInfoList, errorString)) {
+    QJsonObject gridObject = v2Object[_jsonGridObjectKey].toObject();
+    if (!JsonHelper::validateKeys(gridObject, gridKeyInfoList, errorString)) {
         return false;
     }
-    if (!JsonHelper::validateKeys(complexObject[_jsonGridObjectKey].toObject(), gridKeyInfoList, errorString)) {
-        return false;
-    }
-
-    // Version check
-    if (complexObject[JsonHelper::jsonVersionKey].toInt() != 2) {
-        errorString = tr("QGroundControl does not support this version of survey items");
-        return false;
-    }
-    QString complexType = complexObject[_jsonTypeKey].toString();
-    if (complexType != _complexType) {
-        errorString = tr("QGroundControl does not support loading this complex mission item type: %1").arg(complexType);
-        return false;
-    }
-
-    _clear();
-
-    setSequenceNumber(complexObject[_jsonIdKey].toInt());
-
-    _manualGrid =           complexObject[_jsonManualGridKey].toBool(true);
-    _cameraTrigger =        complexObject[_jsonCameraTriggerKey].toBool(false);
-    _fixedValueIsAltitude = complexObject[_jsonFixedValueIsAltitudeKey].toBool(true);
-    _gridAltitudeRelative = complexObject[_jsonGridAltitudeRelativeKey].toBool(true);
-
-    QJsonObject gridObject = complexObject[_jsonGridObjectKey].toObject();
-
     _gridAltitudeFact.setRawValue   (gridObject[_jsonGridAltitudeKey].toDouble());
     _gridAngleFact.setRawValue      (gridObject[_jsonGridAngleKey].toDouble());
     _gridSpacingFact.setRawValue    (gridObject[_jsonGridSpacingKey].toDouble());
     _turnaroundDistFact.setRawValue (gridObject[_jsonTurnaroundDistKey].toDouble());
 
     if (_cameraTrigger) {
-        if (!complexObject.contains(_jsonCameraTriggerDistanceKey)) {
+        if (!v2Object.contains(_jsonCameraTriggerDistanceKey)) {
             errorString = tr("%1 but %2 is missing").arg("cameraTrigger = true").arg("cameraTriggerDistance");
             return false;
         }
-        _cameraTriggerDistanceFact.setRawValue(complexObject[_jsonCameraTriggerDistanceKey].toDouble());
+        _cameraTriggerDistanceFact.setRawValue(v2Object[_jsonCameraTriggerDistanceKey].toDouble());
     }
 
     if (!_manualGrid) {
-        if (!complexObject.contains(_jsonCameraObjectKey)) {
+        if (!v2Object.contains(_jsonCameraObjectKey)) {
             errorString = tr("%1 but %2 object is missing").arg("manualGrid = false").arg("camera");
             return false;
         }
 
-        QJsonObject cameraObject = complexObject[_jsonCameraObjectKey].toObject();
+        QJsonObject cameraObject = v2Object[_jsonCameraObjectKey].toObject();
 
+        // Older code had typo on "imageSideOverlap" incorrectly being "imageSizeOverlap"
+        QString incorrectImageSideOverlap = "imageSizeOverlap";
+        if (cameraObject.contains(incorrectImageSideOverlap)) {
+            cameraObject[_jsonSideOverlapKey] = cameraObject[incorrectImageSideOverlap];
+            cameraObject.remove(incorrectImageSideOverlap);
+        }
+
+        QList<JsonHelper::KeyValidateInfo> cameraKeyInfoList = {
+            { _jsonGroundResolutionKey,             QJsonValue::Double, true },
+            { _jsonFrontalOverlapKey,               QJsonValue::Double, true },
+            { _jsonSideOverlapKey,                  QJsonValue::Double, true },
+            { _jsonCameraSensorWidthKey,            QJsonValue::Double, true },
+            { _jsonCameraSensorHeightKey,           QJsonValue::Double, true },
+            { _jsonCameraResolutionWidthKey,        QJsonValue::Double, true },
+            { _jsonCameraResolutionHeightKey,       QJsonValue::Double, true },
+            { _jsonCameraFocalLengthKey,            QJsonValue::Double, true },
+            { _jsonCameraNameKey,                   QJsonValue::String, true },
+            { _jsonCameraOrientationLandscapeKey,   QJsonValue::Bool,   true },
+        };
         if (!JsonHelper::validateKeys(cameraObject, cameraKeyInfoList, errorString)) {
             return false;
         }
@@ -416,7 +436,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, QString& errorStr
     }
 
     // Polygon shape
-    QJsonArray polygonArray(complexObject[_jsonPolygonObjectKey].toArray());
+    QJsonArray polygonArray(v2Object[_jsonPolygonObjectKey].toArray());
     for (int i=0; i<polygonArray.count(); i++) {
         const QJsonValue& pointValue = polygonArray[i];
 
@@ -766,6 +786,7 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
         pMissionItems->append(item);
 
         if (_cameraTrigger && i == 0) {
+            // Turn on camera
             MissionItem* item = new MissionItem(seqNum++,                       // sequence number
                                                 MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // MAV_CMD
                                                 MAV_FRAME_MISSION,              // MAV_FRAME
@@ -779,6 +800,7 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
     }
 
     if (_cameraTrigger) {
+        // Turn off camera
         MissionItem* item = new MissionItem(seqNum++,                       // sequence number
                                             MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // MAV_CMD
                                             MAV_FRAME_MISSION,              // MAV_FRAME
@@ -796,10 +818,9 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
 void SurveyMissionItem::_cameraTriggerChanged(void)
 {
     setDirty(true);
-    if (_gridPoints.count()) {
-        // If we have grid turn on/off camera trigger will add/remove two camera trigger mission items
-        emit lastSequenceNumberChanged(lastSequenceNumber());
-    }
+    // Camera trigger adds items
+    emit lastSequenceNumberChanged(lastSequenceNumber());
+    // We now have camera shot count
     emit cameraShotsChanged(cameraShots());
 }
 
@@ -811,4 +832,17 @@ int SurveyMissionItem::cameraShots(void) const
 void SurveyMissionItem::_cameraValueChanged(void)
 {
     emit cameraValueChanged();
+}
+
+double SurveyMissionItem::timeBetweenShots(void) const
+{
+    return _cruiseSpeed == 0 ? 0 : _cameraTriggerDistanceFact.rawValue().toDouble() / _cruiseSpeed;
+}
+
+void SurveyMissionItem::setCruiseSpeed(double cruiseSpeed)
+{
+    if (!qFuzzyCompare(_cruiseSpeed, cruiseSpeed)) {
+        _cruiseSpeed = cruiseSpeed;
+        emit timeBetweenShotsChanged();
+    }
 }

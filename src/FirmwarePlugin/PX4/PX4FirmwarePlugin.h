@@ -60,25 +60,28 @@ public:
     GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) { return new PX4GeoFenceManager(vehicle); }
     QString             offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/PX4/PX4.OfflineEditing.params"); }
     QString             brandImage                      (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
+    QString             missionFlightMode               (void) final;
+    QString             rtlFlightMode                   (void) final;
+    QString             takeControlFlightMode           (void) final;
 
+    // NOTE: For internal use only. Do not use in mainline QGC code.
     // Use these constants to set flight modes using setFlightMode method. Don't use hardcoded string names since the
     // names may change.
-
-    static const char* manualFlightMode;
-    static const char* acroFlightMode;
-    static const char* stabilizedFlightMode;
-    static const char* rattitudeFlightMode;
-    static const char* altCtlFlightMode;
-    static const char* posCtlFlightMode;
-    static const char* offboardFlightMode;
-    static const char* readyFlightMode;
-    static const char* takeoffFlightMode;
-    static const char* holdFlightMode;
-    static const char* missionFlightMode;
-    static const char* rtlFlightMode;
-    static const char* landingFlightMode;
-    static const char* rtgsFlightMode;
-    static const char* followMeFlightMode;
+    static const char* _manualFlightMode;
+    static const char* _acroFlightMode;
+    static const char* _stabilizedFlightMode;
+    static const char* _rattitudeFlightMode;
+    static const char* _altCtlFlightMode;
+    static const char* _posCtlFlightMode;
+    static const char* _offboardFlightMode;
+    static const char* _readyFlightMode;
+    static const char* _takeoffFlightMode;
+    static const char* _holdFlightMode;
+    static const char* _missionFlightMode;
+    static const char* _rtlFlightMode;
+    static const char* _landingFlightMode;
+    static const char* _rtgsFlightMode;
+    static const char* _followMeFlightMode;
 
 private:
     void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);

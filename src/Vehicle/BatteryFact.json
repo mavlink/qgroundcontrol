@@ -23,8 +23,8 @@
 {
     "name":             "current",
     "shortDescription": "Current",
-    "type":             "int32",
-    "decimalPlaces":    0,
+    "type":             "float",
+    "decimalPlaces":    2,
     "units":            "A"
 },
 {

@@ -314,7 +314,6 @@ FORMS += \
 FORMS += \
     src/ui/Linechart.ui \
     src/ui/MultiVehicleDockWidget.ui \
-    src/ui/QGCDataPlot2D.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
@@ -424,7 +423,6 @@ HEADERS += \
     src/FlightMap/Widgets/ValuesWidgetController.h \
     src/FollowMe/FollowMe.h \
     src/GAudioOutput.h \
-    src/HomePositionManager.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
     src/JsonHelper.h \
@@ -545,7 +543,6 @@ HEADERS += \
     src/ui/MAVLinkDecoder.h \
     src/ui/MainWindow.h \
     src/ui/MultiVehicleDockWidget.h \
-    src/ui/QGCDataPlot2D.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
     src/ui/QGCHilJSBSimConfiguration.h \
@@ -590,7 +587,6 @@ SOURCES += \
     src/FlightMap/Widgets/ValuesWidgetController.cc \
     src/FollowMe/FollowMe.cc \
     src/GAudioOutput.cc \
-    src/HomePositionManager.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
     src/JsonHelper.cc \
@@ -641,6 +637,7 @@ SOURCES += \
     src/VehicleSetup/JoystickConfigController.cc \
     src/audio/QGCAudioWorker.cpp \
     src/comm/LinkConfiguration.cc \
+    src/comm/LinkInterface.cc \
     src/comm/LinkManager.cc \
     src/comm/MAVLinkProtocol.cc \
     src/comm/QGCMAVLink.cc \
@@ -693,7 +690,6 @@ SOURCES += \
     src/ui/MAVLinkDecoder.cc \
     src/ui/MainWindow.cc \
     src/ui/MultiVehicleDockWidget.cc \
-    src/ui/QGCDataPlot2D.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
@@ -781,7 +777,7 @@ SOURCES += \
 # ArduPilot FirmwarePlugin
 
 APMFirmwarePlugin {
-    RESOURCES *= apmresources.qrc
+    RESOURCES *= src/FirmwarePlugin/APM/APMResources.qrc
 
     INCLUDEPATH += \
         src/AutoPilotPlugins/APM \
@@ -798,6 +794,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
         src/AutoPilotPlugins/APM/APMLightsComponent.h \
+        src/AutoPilotPlugins/APM/APMSubFrameComponent.h \
         src/AutoPilotPlugins/APM/APMPowerComponent.h \
         src/AutoPilotPlugins/APM/APMRadioComponent.h \
         src/AutoPilotPlugins/APM/APMSafetyComponent.h \
@@ -824,6 +821,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
         src/AutoPilotPlugins/APM/APMLightsComponent.cc \
+        src/AutoPilotPlugins/APM/APMSubFrameComponent.cc \
         src/AutoPilotPlugins/APM/APMPowerComponent.cc \
         src/AutoPilotPlugins/APM/APMRadioComponent.cc \
         src/AutoPilotPlugins/APM/APMSafetyComponent.cc \
@@ -841,7 +839,6 @@ APMFirmwarePlugin {
 }
 
 APMFirmwarePluginFactory {
-    RESOURCES *= apmresources.qrc
     HEADERS   += src/FirmwarePlugin/APM/APMFirmwarePluginFactory.h
     SOURCES   += src/FirmwarePlugin/APM/APMFirmwarePluginFactory.cc
 }
@@ -849,7 +846,7 @@ APMFirmwarePluginFactory {
 # PX4 FirmwarePlugin
 
 PX4FirmwarePlugin {
-    RESOURCES *= px4resources.qrc
+    RESOURCES *= src/FirmwarePlugin/PX4/PX4Resources.qrc
 
     INCLUDEPATH += \
         src/AutoPilotPlugins/PX4 \
@@ -899,7 +896,6 @@ PX4FirmwarePlugin {
 }
 
 PX4FirmwarePluginFactory {
-    RESOURCES *= px4resources.qrc
     HEADERS   += src/FirmwarePlugin/PX4/PX4FirmwarePluginFactory.h
     SOURCES   += src/FirmwarePlugin/PX4/PX4FirmwarePluginFactory.cc
 }

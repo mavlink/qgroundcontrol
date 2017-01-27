@@ -1,0 +1,56 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file alias="APMAirframeComponent.qml">../../AutoPilotPlugins/APM/APMAirframeComponent.qml</file>
+        <file alias="APMAirframeComponentSummary.qml">../../AutoPilotPlugins/APM/APMAirframeComponentSummary.qml</file>
+        <file alias="APMCameraComponent.qml">../../AutoPilotPlugins/APM/APMCameraComponent.qml</file>
+        <file alias="APMCameraComponentSummary.qml">../../AutoPilotPlugins/APM/APMCameraComponentSummary.qml</file>
+        <file alias="APMFlightModesComponent.qml">../../AutoPilotPlugins/APM/APMFlightModesComponent.qml</file>
+        <file alias="APMFlightModesComponentSummary.qml">../../AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml</file>
+        <file alias="APMLightsComponent.qml">../../AutoPilotPlugins/APM/APMLightsComponent.qml</file>
+        <file alias="APMLightsComponentSummary.qml">../../AutoPilotPlugins/APM/APMLightsComponentSummary.qml</file>
+        <file alias="APMSubFrameComponent.qml">../../AutoPilotPlugins/APM/APMSubFrameComponent.qml</file>
+        <file alias="APMSubFrameComponentSummary.qml">../../AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml</file>
+        <file alias="APMNotSupported.qml">../../AutoPilotPlugins/APM/APMNotSupported.qml</file>
+        <file alias="APMPowerComponent.qml">../../AutoPilotPlugins/APM/APMPowerComponent.qml</file>
+        <file alias="APMPowerComponentSummary.qml">../../AutoPilotPlugins/APM/APMPowerComponentSummary.qml</file>
+        <file alias="APMRadioComponentSummary.qml">../../AutoPilotPlugins/APM/APMRadioComponentSummary.qml</file>
+        <file alias="APMSafetyComponentCopter.qml">../../AutoPilotPlugins/APM/APMSafetyComponentCopter.qml</file>
+        <file alias="APMSafetyComponentPlane.qml">../../AutoPilotPlugins/APM/APMSafetyComponentPlane.qml</file>
+        <file alias="APMSafetyComponentRover.qml">../../AutoPilotPlugins/APM/APMSafetyComponentRover.qml</file>
+        <file alias="APMSafetyComponentSub.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSub.qml</file>
+        <file alias="APMSafetyComponentSummaryCopter.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml</file>
+        <file alias="APMSafetyComponentSummaryPlane.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml</file>
+        <file alias="APMSafetyComponentSummaryRover.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml</file>
+        <file alias="APMSafetyComponentSummarySub.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml</file>
+        <file alias="APMSensorsComponent.qml">../../AutoPilotPlugins/APM/APMSensorsComponent.qml</file>
+        <file alias="APMSensorsComponentSummary.qml">../../AutoPilotPlugins/APM/APMSensorsComponentSummary.qml</file>
+        <file alias="APMTuningComponentCopter.qml">../../AutoPilotPlugins/APM/APMTuningComponentCopter.qml</file>
+        <file alias="QGroundControl/ArduPilot/APMSensorParams.qml">APMSensorParams.qml</file>
+        <file alias="QGroundControl/ArduPilot/qmldir">QGroundControl.ArduPilot.qmldir</file>
+    </qresource>
+    <qresource prefix="/json">
+        <file alias="APM/MavCmdInfoCommon.json">MavCmdInfoCommon.json</file>
+        <file alias="APM/MavCmdInfoFixedWing.json">MavCmdInfoFixedWing.json</file>
+        <file alias="APM/MavCmdInfoMultiRotor.json">MavCmdInfoMultiRotor.json</file>
+        <file alias="APM/MavCmdInfoRover.json">MavCmdInfoRover.json</file>
+        <file alias="APM/MavCmdInfoSub.json">MavCmdInfoSub.json</file>
+        <file alias="APM/MavCmdInfoVTOL.json">MavCmdInfoVTOL.json</file>
+    </qresource>
+    <qresource prefix="/AutoPilotPlugins/APM">
+        <file alias="APMAirframeFactMetaData.xml">../../AutoPilotPlugins/APM/APMAirframeFactMetaData.xml</file>
+    </qresource>
+    <qresource prefix="/FirmwarePlugin/APM">
+        <file alias="APMParameterFactMetaData.Plane.3.3.xml">APMParameterFactMetaData.Plane.3.3.xml</file>
+        <file alias="APMParameterFactMetaData.Plane.3.5.xml">APMParameterFactMetaData.Plane.3.5.xml</file>
+        <file alias="APMParameterFactMetaData.Plane.3.7.xml">APMParameterFactMetaData.Plane.3.7.xml</file>
+        <file alias="APMParameterFactMetaData.Copter.3.3.xml">APMParameterFactMetaData.Copter.3.3.xml</file>
+        <file alias="APMParameterFactMetaData.Copter.3.4.xml">APMParameterFactMetaData.Copter.3.4.xml</file>
+        <file alias="APMParameterFactMetaData.Copter.3.5.xml">APMParameterFactMetaData.Copter.3.5.xml</file>
+        <file alias="APMParameterFactMetaData.Rover.3.0.xml">APMParameterFactMetaData.Rover.3.0.xml</file>
+        <file alias="APMParameterFactMetaData.Sub.3.4.xml">APMParameterFactMetaData.Sub.3.4.xml</file>
+        <file alias="CopterGeoFenceEditor.qml">CopterGeoFenceEditor.qml</file>
+        <file alias="PlaneGeoFenceEditor.qml">PlaneGeoFenceEditor.qml</file>
+        <file alias="Copter.OfflineEditing.params">Copter3.4.OfflineEditing.params</file>
+        <file alias="Plane.OfflineEditing.params">Plane3.7.OfflineEditing.params</file>
+    </qresource>
+</RCC>

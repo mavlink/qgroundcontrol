@@ -40,12 +40,15 @@ public:
 
     const VisualMissionItem& operator=(const VisualMissionItem& other);
 
-    // The following properties are calculated/set by the MissionControll recalc methods
+    // The following properties are calculated/set by the MissionController recalc methods
 
     Q_PROPERTY(double altDifference READ altDifference  WRITE setAltDifference  NOTIFY altDifferenceChanged)    ///< Change in altitude from previous waypoint
     Q_PROPERTY(double altPercent    READ altPercent     WRITE setAltPercent     NOTIFY altPercentChanged)       ///< Percent of total altitude change in mission altitude
     Q_PROPERTY(double azimuth       READ azimuth        WRITE setAzimuth        NOTIFY azimuthChanged)          ///< Azimuth to previous waypoint
     Q_PROPERTY(double distance      READ distance       WRITE setDistance       NOTIFY distanceChanged)         ///< Distance to previous waypoint
+
+    /// This property returns whether the item supports changing flight speed. If it does not it will return NaN.
+    Q_PROPERTY(double flightSpeed   READ flightSpeed                            NOTIFY flightSpeedChanged)
 
     // Visual mission items have two coordinates associated with them:
 
@@ -110,6 +113,7 @@ public:
     virtual QGeoCoordinate  coordinate              (void) const = 0;
     virtual QGeoCoordinate  exitCoordinate          (void) const = 0;
     virtual int             sequenceNumber          (void) const = 0;
+    virtual double          flightSpeed             (void) = 0;
 
     virtual bool coordinateHasRelativeAltitude      (void) const = 0;
     virtual bool exitCoordinateHasRelativeAltitude  (void) const = 0;
@@ -122,6 +126,10 @@ public:
     /// Save the item(s) in Json format
     ///     @param saveObject Save the item to this json object
     virtual void save(QJsonObject& saveObject) const = 0;
+
+    static const char* jsonTypeKey;                 ///< Json file attribute which specifies the item type
+    static const char* jsonTypeSimpleItemValue;     ///< Item type is MISSION_ITEM
+    static const char* jsonTypeComplexItemValue;    ///< Item type is Complex Item
 
 signals:
     void altDifferenceChanged           (double altDifference);
@@ -139,6 +147,7 @@ signals:
     void isSimpleItemChanged            (bool isSimpleItem);
     void specifiesCoordinateChanged     (void);
     void isStandaloneCoordinateChanged  (void);
+    void flightSpeedChanged             (double flightSpeed);
 
     void coordinateHasRelativeAltitudeChanged       (bool coordinateHasRelativeAltitude);
     void exitCoordinateHasRelativeAltitudeChanged   (bool exitCoordinateHasRelativeAltitude);

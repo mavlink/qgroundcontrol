@@ -190,7 +190,7 @@ void LinechartPlot::removeTimedOutCurves()
         {
             // Remove this curve
             // Delete curves
-            QwtPlotCurve* curve = curves.take(key);
+            QwtPlotCurve* curve = _curves.take(key);
             // Delete the object
             delete curve;
             // Set the pointer null
@@ -276,7 +276,7 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     valueInterval = maxValue - minValue;
 
     // Assign dataset to curve
-    QwtPlotCurve* curve = curves.value(dataname);
+    QwtPlotCurve* curve = _curves.value(dataname);
     curve->setRawSamples(dataset->getPlotX(), dataset->getPlotY(), dataset->getPlotCount());
 
     //    qDebug() << "mintime" << minTime << "maxtime" << maxTime << "last max time" << "window position" << getWindowPosition();
@@ -321,7 +321,7 @@ void LinechartPlot::addCurve(QString id)
     // Create new curve and set style
     QwtPlotCurve* curve = new QwtPlotCurve(id);
     // Add curve to list
-    curves.insert(id, curve);
+    _curves.insert(id, curve);
 
     curve->setStyle(QwtPlotCurve::Lines);
     curve->setPaintAttribute(QwtPlotCurve::FilterPoints, true);
@@ -414,15 +414,15 @@ void LinechartPlot::setScaling(int scaling)
  **/
 void LinechartPlot::setVisibleById(QString id, bool visible)
 {
-    if(curves.contains(id)) {
-        curves.value(id)->setVisible(visible);
+    if(_curves.contains(id)) {
+        _curves.value(id)->setVisible(visible);
         if(visible)
         {
-            curves.value(id)->attach(this);
+            _curves.value(id)->attach(this);
         }
         else
         {
-            curves.value(id)->detach();
+            _curves.value(id)->detach();
         }
     }
 }
@@ -467,9 +467,9 @@ void LinechartPlot::showCurve(QString id)
  **/
 void LinechartPlot::setCurveColor(QString id, QColor color)
 {
-    QwtPlotCurve* curve = curves.value(id);
+    QwtPlotCurve* curve = _curves.value(id);
     // Change the color of the curve.
-    curve->setPen(QPen(QBrush(color), curveWidth));
+    curve->setPen(QPen(QBrush(color), _curveWidth));
 
     //qDebug() << "Setting curve" << id << "to" << color;
 
@@ -477,7 +477,7 @@ void LinechartPlot::setCurveColor(QString id, QColor color)
     const QwtSymbol *oldSymbol = curve->symbol();
     QwtSymbol *newSymbol = NULL;
     if (oldSymbol) {
-        newSymbol = new QwtSymbol(oldSymbol->style(), QBrush(color), QPen(color, symbolWidth), QSize(symbolWidth, symbolWidth));
+        newSymbol = new QwtSymbol(oldSymbol->style(), QBrush(color), QPen(color, _symbolWidth), QSize(_symbolWidth, _symbolWidth));
     }
     curve->setSymbol(newSymbol);
 }
@@ -490,7 +490,7 @@ void LinechartPlot::setCurveColor(QString id, QColor color)
  **/
 bool LinechartPlot::isVisible(QString id)
 {
-    return curves.value(id)->isVisible();
+    return _curves.value(id)->isVisible();
 }
 
 /**
@@ -499,9 +499,9 @@ bool LinechartPlot::isVisible(QString id)
 bool LinechartPlot::anyCurveVisible()
 {
     bool visible = false;
-    foreach (const QString &key, curves.keys())
+    foreach (const QString &key, _curves.keys())
     {
-        if (curves.value(key)->isVisible())
+        if (_curves.value(key)->isVisible())
         {
             visible = true;
         }
@@ -530,7 +530,7 @@ void LinechartPlot::setAutoScroll(bool active)
  **/
 QList<QwtPlotCurve*> LinechartPlot::getCurves()
 {
-    return curves.values();
+    return _curves.values();
 }
 
 /**
@@ -702,10 +702,10 @@ void LinechartPlot::removeAllData()
     datalock.lock();
     // Delete curves
     QMap<QString, QwtPlotCurve*>::iterator i;
-    for(i = curves.begin(); i != curves.end(); ++i)
+    for(i = _curves.begin(); i != _curves.end(); ++i)
     {
         // Remove from curve list
-        QwtPlotCurve* curve = curves.take(i.key());
+        QwtPlotCurve* curve = _curves.take(i.key());
         // Delete the object
         delete curve;
         // Set the pointer null

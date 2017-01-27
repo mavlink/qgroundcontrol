@@ -48,6 +48,7 @@ public:
     Q_PROPERTY(bool                 cameraOrientationLandscape  MEMBER _cameraOrientationLandscape  NOTIFY cameraOrientationLandscapeChanged)
     Q_PROPERTY(bool                 manualGrid                  MEMBER _manualGrid                  NOTIFY manualGridChanged)
     Q_PROPERTY(QString              camera                      MEMBER _camera                      NOTIFY cameraChanged)
+    Q_PROPERTY(double               timeBetweenShots            READ timeBetweenShots               NOTIFY timeBetweenShotsChanged)
 
     Q_INVOKABLE void clearPolygon(void);
     Q_INVOKABLE void addPolygonCoordinate(const QGeoCoordinate coordinate);
@@ -72,14 +73,17 @@ public:
 
     int     cameraShots(void) const;
     double  coveredArea(void) const { return _coveredArea; }
+    double  timeBetweenShots(void) const;
 
     // Overrides from ComplexMissionItem
 
     double              complexDistance     (void) const final { return _surveyDistance; }
     int                 lastSequenceNumber  (void) const final;
     QmlObjectListModel* getMissionItems     (void) const final;
-    bool                load                (const QJsonObject& complexObject, QString& errorString) final;
+    bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
+    void                setCruiseSpeed      (double cruiseSpeed) final;
+
 
     // Overrides from VisualMissionItem
 
@@ -93,6 +97,7 @@ public:
     QGeoCoordinate  coordinate              (void) const final { return _coordinate; }
     QGeoCoordinate  exitCoordinate          (void) const final { return _exitCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
+    double          flightSpeed             (void) final { return std::numeric_limits<double>::quiet_NaN(); }
 
     bool coordinateHasRelativeAltitude      (void) const final { return _gridAltitudeRelative; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return _gridAltitudeRelative; }
@@ -103,6 +108,8 @@ public:
     void setSequenceNumber  (int sequenceNumber) final;
     void setTurnaroundDist  (double dist) { _turnaroundDistFact.setRawValue(dist); }
     void save               (QJsonObject& saveObject) const final;
+
+    static const char* jsonComplexItemTypeValue;
 
 signals:
     void polygonPathChanged                 (void);
@@ -119,6 +126,7 @@ signals:
     void cameraOrientationLandscapeChanged  (bool cameraOrientationLandscape);
     void cameraChanged                      (QString camera);
     void manualGridChanged                  (bool manualGrid);
+    void timeBetweenShotsChanged            (void);
 
 private slots:
     void _cameraTriggerChanged(void);
@@ -156,6 +164,8 @@ private:
     double          _surveyDistance;
     int             _cameraShots;
     double          _coveredArea;
+    double          _timeBetweenShots;
+    double          _cruiseSpeed;
 
     Fact            _gridAltitudeFact;
     Fact            _gridAngleFact;
@@ -173,9 +183,7 @@ private:
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
-    static const char* _jsonTypeKey;
     static const char* _jsonPolygonObjectKey;
-    static const char* _jsonIdKey;
     static const char* _jsonGridObjectKey;
     static const char* _jsonGridAltitudeKey;
     static const char* _jsonGridAltitudeRelativeKey;
@@ -198,7 +206,6 @@ private:
     static const char* _jsonCameraOrientationLandscapeKey;
     static const char* _jsonFixedValueIsAltitudeKey;
 
-
     static const char* _gridAltitudeFactName;
     static const char* _gridAngleFactName;
     static const char* _gridSpacingFactName;
@@ -212,8 +219,6 @@ private:
     static const char* _cameraResolutionWidthFactName;
     static const char* _cameraResolutionHeightFactName;
     static const char* _cameraFocalLengthFactName;
-
-    static const char* _complexType;
 };
 
 #endif

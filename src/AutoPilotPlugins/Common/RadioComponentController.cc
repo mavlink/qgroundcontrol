@@ -743,8 +743,8 @@ void RadioComponentController::_writeCalibration(void)
             }
 
             // For multi-rotor we can determine reverse setting during radio cal. For anything other than multi-rotor, servo installation
-            // may affect channel reversing so we can't automatically determine it.
-            if (_vehicle->multiRotor()) {
+            // may affect channel reversing so we can't automatically determine it. This is ok for PX4 given how it uses mixers, but not for ArduPilot.
+            if (_vehicle->px4Firmware() || _vehicle->multiRotor()) {
                 // APM multi-rotor has a backwards interpretation of "reversed" on the Pitch control. So be careful.
                 float reversedParamValue;
                 if (_px4Vehicle() || info->function != rcCalFunctionPitch) {

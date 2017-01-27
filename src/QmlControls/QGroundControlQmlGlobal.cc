@@ -33,11 +33,11 @@ SettingsFact* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceFact =   
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
 const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
+const char* QGroundControlQmlGlobal::_missionAutoLoadDirKey     = "MissionAutoLoadDir";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     : QGCTool(app)
     , _flightMapSettings(NULL)
-    , _homePositionManager(NULL)
     , _linkManager(NULL)
     , _multiVehicleManager(NULL)
     , _mapEngineManager(NULL)
@@ -66,7 +66,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
     _flightMapSettings      = toolbox->flightMapSettings();
-    _homePositionManager    = toolbox->homePositionManager();
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
     _mapEngineManager       = toolbox->mapEngineManager();
@@ -155,8 +154,8 @@ void QGroundControlQmlGlobal::stopAllMockLinks(void)
 #ifdef QT_DEBUG
     LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
 
-    for (int i=0; i<linkManager->links()->count(); i++) {
-        LinkInterface* link = linkManager->links()->value<LinkInterface*>(i);
+    for (int i=0; i<linkManager->links().count(); i++) {
+        LinkInterface* link = linkManager->links()[i];
         MockLink* mockLink = qobject_cast<MockLink*>(link);
 
         if (mockLink) {
@@ -354,4 +353,16 @@ QMap<QString, FactMetaData*>& QGroundControlQmlGlobal::nameToMetaDataMap(void) {
     }
 
     return map;
+}
+
+QString QGroundControlQmlGlobal::missionAutoLoadDir(void)
+{
+    QSettings settings;
+    return settings.value(_missionAutoLoadDirKey).toString();
+}
+
+void QGroundControlQmlGlobal::setMissionAutoLoadDir(const QString& missionAutoLoadDir)
+{
+    QSettings settings;
+    settings.setValue(_missionAutoLoadDirKey, missionAutoLoadDir);
 }

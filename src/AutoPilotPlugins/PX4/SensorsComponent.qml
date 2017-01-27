@@ -97,6 +97,8 @@ SetupPage {
 
             property Fact sens_board_rot:   controller.getParameterFact(-1, "SENS_BOARD_ROT")
             property Fact sens_board_x_off: controller.getParameterFact(-1, "SENS_BOARD_X_OFF")
+            property Fact sens_board_y_off: controller.getParameterFact(-1, "SENS_BOARD_Y_OFF")
+            property Fact sens_board_z_off: controller.getParameterFact(-1, "SENS_BOARD_Z_OFF")
             property Fact sens_dpres_off:   controller.getParameterFact(-1, "SENS_DPRES_OFF")
 
             // Id > = signals compass available, rot < 0 signals internal compass
@@ -372,7 +374,7 @@ SetupPage {
                     id:             levelButton
                     width:          parent.buttonWidth
                     text:           qsTr("Level Horizon")
-                    indicatorGreen: sens_board_x_off.value != 0
+                    indicatorGreen: sens_board_x_off.value != 0 || sens_board_y_off != 0 | sens_board_z_off != 0
                     enabled:        cal_acc0_id.value != 0 && cal_gyro0_id.value != 0
 
                     onClicked: {

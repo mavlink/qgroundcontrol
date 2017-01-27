@@ -37,13 +37,11 @@
 #include "MAVLinkDecoder.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
-#include "HomePositionManager.h"
 #include "LogCompressor.h"
 #include "UAS.h"
 #include "QGCImageProvider.h"
 
 #ifndef __mobile__
-#include "QGCDataPlot2D.h"
 #include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
 #include "UASQuickView.h"

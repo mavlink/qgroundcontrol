@@ -52,7 +52,6 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     curveMeans(new QMap<QString, QLabel*>()),
     curveMedians(new QMap<QString, QLabel*>()),
     curveVariances(new QMap<QString, QLabel*>()),
-    curveMenu(new QMenu(this)),
     logFile(new QFile()),
     logindex(1),
     logging(false),
@@ -63,34 +62,28 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
 {
     // Add elements defined in Qt Designer
     ui.setupUi(this);
-    this->setMinimumSize(200, 150);
+    this->setMinimumSize(600, 400);
 
     // Add and customize curve list elements (left side)
     curvesWidget = new QWidget(ui.curveListWidget);
     ui.curveListWidget->setWidget(curvesWidget);
     curvesWidgetLayout = new QGridLayout(curvesWidget);
-    curvesWidgetLayout->setMargin(2);
-    curvesWidgetLayout->setSpacing(4);
-    //curvesWidgetLayout->setSizeConstraint(QSizePolicy::Expanding);
+    curvesWidgetLayout->setMargin(6);
+    curvesWidgetLayout->setSpacing(6);
     curvesWidgetLayout->setAlignment(Qt::AlignTop);
+    curvesWidgetLayout->setColumnMinimumWidth(0, 10);
 
     curvesWidgetLayout->setColumnStretch(0, 0);
-    curvesWidgetLayout->setColumnStretch(1, 0);
+    curvesWidgetLayout->setColumnStretch(1, 10);
     curvesWidgetLayout->setColumnStretch(2, 80);
     curvesWidgetLayout->setColumnStretch(3, 50);
     curvesWidgetLayout->setColumnStretch(4, 50);
     curvesWidgetLayout->setColumnStretch(5, 50);
-//    horizontalLayout->setColumnStretch(median, 50);
     curvesWidgetLayout->setColumnStretch(6, 50);
 
     curvesWidget->setLayout(curvesWidgetLayout);
 
     // Create curve list headings
-    QLabel* label;
-    QLabel* value;
-    QLabel* mean;
-    QLabel* variance;
-
     connect(ui.recolorButton, &QPushButton::clicked, this, &LinechartWidget::recolor);
     connect(ui.shortNameCheckBox, &QCheckBox::clicked, this, &LinechartWidget::setShortNames);
     connect(ui.plotFilterLineEdit, &QLineEdit::textChanged, this, &LinechartWidget::filterCurves);
@@ -100,31 +93,24 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
 
     int labelRow = curvesWidgetLayout->rowCount();
 
-    selectAllCheckBox = new QCheckBox("", this);
+    selectAllCheckBox = new QCheckBox(this);
     connect(selectAllCheckBox, &QCheckBox::clicked, this, &LinechartWidget::selectAllCurves);
-    curvesWidgetLayout->addWidget(selectAllCheckBox, labelRow, 0, 1, 2);
+    curvesWidgetLayout->addWidget(selectAllCheckBox, labelRow, 0);
 
-    label = new QLabel(this);
-    label->setText("Name");
-    curvesWidgetLayout->addWidget(label, labelRow, 2);
+    QWidget* colorIcon = new QWidget(this);
+    colorIcon->setMinimumSize(QSize(5, 14));
+    colorIcon->setMaximumSize(QSize(5, 14));
+    curvesWidgetLayout->addWidget(colorIcon, labelRow, 1);
 
-    // Value
-    value = new QLabel(this);
-    value->setText("Val");
-    curvesWidgetLayout->addWidget(value, labelRow, 3);
+    curvesWidgetLayout->addWidget(new QLabel(tr("Name")),     labelRow, 2);
+    curvesWidgetLayout->addWidget(new QLabel(tr("Val")),      labelRow, 3, Qt::AlignRight);
 
-    // Unit
-    //curvesWidgetLayout->addWidget(new QLabel(tr("Unit")), labelRow, 4);
+    QLabel* pUnit = new QLabel(tr("Unit"));
+    curvesWidgetLayout->addWidget(pUnit,                      labelRow, 4);
 
-    // Mean
-    mean = new QLabel(this);
-    mean->setText("Mean");
-    curvesWidgetLayout->addWidget(mean, labelRow, 5);
+    curvesWidgetLayout->addWidget(new QLabel(tr("Mean")),     labelRow, 5, Qt::AlignRight);
+    curvesWidgetLayout->addWidget(new QLabel(tr("Variance")), labelRow, 6, Qt::AlignRight);
 
-    // Variance
-    variance = new QLabel(this);
-    variance->setText("Variance");
-    curvesWidgetLayout->addWidget(variance, labelRow, 6);
 
     // Create the layout
     createLayout();
@@ -134,9 +120,11 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
 
     updateTimer->setInterval(updateInterval);
     connect(updateTimer, &QTimer::timeout, this, &LinechartWidget::refresh);
-    connect(ui.uasSelectionBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-            this, &LinechartWidget::selectActiveSystem);
+    connect(ui.uasSelectionBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &LinechartWidget::selectActiveSystem);
+
     readSettings();
+    pUnit->setVisible(ui.showUnitsCheckBox->isChecked());
+    connect(ui.showUnitsCheckBox, &QCheckBox::clicked, pUnit, &QLabel::setVisible);
 }
 
 LinechartWidget::~LinechartWidget()
@@ -320,24 +308,25 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     if(!ok || type == QMetaType::QByteArray || type == QMetaType::QString)
         return;
     bool isDouble = type == QMetaType::Float || type == QMetaType::Double;
+    QString curveID = curve + unit;
 
     if ((selectedMAV == -1 && isVisible()) || (selectedMAV == uasId && isVisible()))
     {
         // Order matters here, first append to plot, then update curve list
-        activePlot->appendData(curve+unit, usec, value);
+        activePlot->appendData(curveID, usec, value);
         // Store data
-        QLabel* label = curveLabels->value(curve+unit, NULL);
+        QLabel* label = curveLabels->value(curveID, NULL);
         // Make sure the curve will be created if it does not yet exist
         if(!label)
         {
             if(!isDouble)
-                intData.insert(curve+unit, 0);
+                intData.insert(curveID, 0);
             addCurve(curve, unit);
         }
 
         // Add int data
         if(!isDouble)
-            intData.insert(curve+unit, variant.toInt());
+            intData.insert(curveID, variant.toInt());
     }
 
     if (lastTimestamp == 0 && usec != 0)
@@ -360,7 +349,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     // Log data
     if (logging)
     {
-        if (activePlot->isVisible(curve+unit))
+        if (activePlot->isVisible(curveID))
         {
             if (usec == 0) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
@@ -514,67 +503,59 @@ void LinechartWidget::createActions()
 void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 {
     LinechartPlot* plot = activePlot;
-//    QHBoxLayout *horizontalLayout;
-    QCheckBox *checkBox;
-    QLabel* label;
-    QLabel* value;
-    QLabel* unitLabel;
-    QLabel* mean;
-    QLabel* variance;
-
-    curveNames.insert(curve+unit, curve);
-
+    QString curveID = curve + unit;
+    curveNames.insert(curveID, curve);
     int labelRow = curvesWidgetLayout->rowCount();
 
     // Checkbox
-    checkBox = new QCheckBox(this);
+    QCheckBox* checkBox = new QCheckBox(this);
     checkBox->setCheckable(true);
-    checkBox->setObjectName(curve+unit);
+    checkBox->setObjectName(curveID);
     checkBox->setToolTip(tr("Enable the curve in the graph window"));
     checkBox->setWhatsThis(tr("Enable the curve in the graph window"));
-    checkBoxes.insert(curve+unit, checkBox);
+    checkBoxes.insert(curveID, checkBox);
     curvesWidgetLayout->addWidget(checkBox, labelRow, 0);
 
     // Icon
     QWidget* colorIcon = new QWidget(this);
-    colorIcons.insert(curve+unit, colorIcon);
+    colorIcons.insert(curveID, colorIcon);
     colorIcon->setMinimumSize(QSize(5, 14));
-    colorIcon->setMaximumSize(4, 14);
+    colorIcon->setMaximumSize(QSize(5, 14));
     curvesWidgetLayout->addWidget(colorIcon, labelRow, 1);
 
     // Label
-    label = new QLabel(this);
-    label->setText(getCurveName(curve+unit, ui.shortNameCheckBox->isChecked()));
-    curveNameLabels.insert(curve+unit, label);
+    QLabel* label = new QLabel(this);
+    label->setText(getCurveName(curveID, ui.shortNameCheckBox->isChecked()));
+    curveNameLabels.insert(curveID, label);
     curvesWidgetLayout->addWidget(label, labelRow, 2);
 
     // Value
-    value = new QLabel(this);
+    QLabel* value = new QLabel(this);
     value->setNum(0.00);
     value->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
     value->setToolTip(tr("Current value of %1 in %2 units").arg(curve, unit));
     value->setWhatsThis(tr("Current value of %1 in %2 units").arg(curve, unit));
-    curveLabels->insert(curve+unit, value);
-    curvesWidgetLayout->addWidget(value, labelRow, 3);
+    curveLabels->insert(curveID, value);
+    curvesWidgetLayout->addWidget(value, labelRow, 3, Qt::AlignRight);
 
     // Unit
-    unitLabel = new QLabel(this);
+    QLabel* unitLabel = new QLabel(this);
     unitLabel->setText(unit);
     unitLabel->setToolTip(tr("Unit of ") + curve);
     unitLabel->setWhatsThis(tr("Unit of ") + curve);
-    curveUnits.insert(curve+unit, unitLabel);
+    curveUnits.insert(curveID, unitLabel);
     curvesWidgetLayout->addWidget(unitLabel, labelRow, 4);
     unitLabel->setVisible(ui.showUnitsCheckBox->isChecked());
     connect(ui.showUnitsCheckBox, &QCheckBox::clicked, unitLabel, &QLabel::setVisible);
 
     // Mean
-    mean = new QLabel(this);
+    QLabel* mean = new QLabel(this);
     mean->setNum(0.00);
     mean->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
     mean->setToolTip(tr("Arithmetic mean of %1 in %2 units").arg(curve, unit));
     mean->setWhatsThis(tr("Arithmetic mean of %1 in %2 units").arg(curve, unit));
-    curveMeans->insert(curve+unit, mean);
-    curvesWidgetLayout->addWidget(mean, labelRow, 5);
+    curveMeans->insert(curveID, mean);
+    curvesWidgetLayout->addWidget(mean, labelRow, 5, Qt::AlignRight);
 
 //    // Median
 //    median = new QLabel(form);
@@ -583,13 +564,13 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 //    horizontalLayout->addWidget(median);
 
     // Variance
-    variance = new QLabel(this);
+    QLabel* variance = new QLabel(this);
     variance->setNum(0.00);
     variance->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
     variance->setToolTip(tr("Variance of %1 in (%2)^2 units").arg(curve, unit));
     variance->setWhatsThis(tr("Variance of %1 in (%2)^2 units").arg(curve, unit));
-    curveVariances->insert(curve+unit, variance);
-    curvesWidgetLayout->addWidget(variance, labelRow, 6);
+    curveVariances->insert(curveID, variance);
+    curvesWidgetLayout->addWidget(variance, labelRow, 6, Qt::AlignRight);
 
     /* Color picker
     QColor color = QColorDialog::getColor(Qt::green, this);
@@ -612,7 +593,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 
     // Set UI components to initial state
     checkBox->setChecked(false);
-    plot->setVisibleById(curve+unit, false);
+    plot->setVisibleById(curveID, false);
 }
 
 /**
@@ -684,7 +665,7 @@ void LinechartWidget::filterCurve(const QString &key, bool match)
             (*curveLabels)[key]->setVisible(match);
             (*curveMeans)[key]->setVisible(match);
             (*curveVariances)[key]->setVisible(match);
-            curveUnits[key]->setVisible(match);
+            curveUnits[key]->setVisible(match && ui.showUnitsCheckBox->isChecked());
             checkBoxes[key]->setVisible(match);
         }
 }

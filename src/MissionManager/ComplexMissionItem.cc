@@ -7,8 +7,9 @@
  *
  ****************************************************************************/
 
-
 #include "ComplexMissionItem.h"
+
+const char* ComplexMissionItem::jsonComplexItemTypeKey = "complexItemType";
 
 ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
     : VisualMissionItem(vehicle, parent)

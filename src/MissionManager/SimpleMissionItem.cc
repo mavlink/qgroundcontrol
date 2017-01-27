@@ -18,14 +18,14 @@
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 
-const double SimpleMissionItem::defaultAltitude =             50.0;
+const double SimpleMissionItem::defaultAltitude =           50.0;
 
-FactMetaData* SimpleMissionItem::_altitudeMetaData =          NULL;
-FactMetaData* SimpleMissionItem::_commandMetaData =           NULL;
-FactMetaData* SimpleMissionItem::_defaultParamMetaData =      NULL;
-FactMetaData* SimpleMissionItem::_frameMetaData =             NULL;
-FactMetaData* SimpleMissionItem::_latitudeMetaData =          NULL;
-FactMetaData* SimpleMissionItem::_longitudeMetaData =         NULL;
+FactMetaData* SimpleMissionItem::_altitudeMetaData =        NULL;
+FactMetaData* SimpleMissionItem::_commandMetaData =         NULL;
+FactMetaData* SimpleMissionItem::_defaultParamMetaData =    NULL;
+FactMetaData* SimpleMissionItem::_frameMetaData =           NULL;
+FactMetaData* SimpleMissionItem::_latitudeMetaData =        NULL;
+FactMetaData* SimpleMissionItem::_longitudeMetaData =       NULL;
 
 struct EnumInfo_s {
     const char *    label;
@@ -71,6 +71,8 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     _connectSignals();
 
     setDefaultsForCommand();
+
+    connect(&_missionItem, &MissionItem::flightSpeedChanged, this, &SimpleMissionItem::flightSpeedChanged);
 }
 
 SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missionItem, QObject* parent)
@@ -248,9 +250,9 @@ bool SimpleMissionItem::load(QTextStream &loadStream)
     return _missionItem.load(loadStream);
 }
 
-bool SimpleMissionItem::load(const QJsonObject& json, QString& errorString)
+bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QString& errorString)
 {
-    return _missionItem.load(json, errorString);
+    return _missionItem.load(json, sequenceNumber, errorString);
 }
 
 bool SimpleMissionItem::isStandaloneCoordinate(void) const
@@ -606,4 +608,9 @@ void SimpleMissionItem::setSequenceNumber(int sequenceNumber)
         // This is too likely to ignore
         emit abbreviationChanged();
     }
+}
+
+double SimpleMissionItem::flightSpeed(void)
+{
+    return missionItem().flightSpeed();
 }

@@ -5,7 +5,7 @@
 
     "mavCmdInfo": [
         {
-            "comment":              "MAV_CMD_NAV_LAST: Used for fake home position waypoint",
+            "comment":              "MAV_CMD_NAV_LAST: Used for mission settings / planned home position waypoint",
             "id":                   95,
             "rawName":              "HomeRaw",
             "friendlyName":         "Home Position",
@@ -503,23 +503,23 @@
                 "label":            "Type:",
                 "enumStrings":      "Airspeed,Ground Speed",
                 "enumValues":       "0,1",
-                "default":          1
+                "default":          0
             },
             "param2": {
                 "label":            "Speed:",
                 "units":            "m/s",
-                "default":          -1
+                "default":          0
             },
             "param3": {
                 "label":            "Throttle:",
                 "units":            "%",
-                "default":          -1
+                "default":          0
             },
             "param4": {
                 "label":            "Offset:",
                 "enumStrings":      "Relative,Absolute",
                 "enumValues":       "1,0",
-                "default":          1
+                "default":          0
             }
         },
         {

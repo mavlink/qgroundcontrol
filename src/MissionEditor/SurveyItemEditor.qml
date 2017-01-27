@@ -29,28 +29,6 @@ Rectangle {
     readonly property int _gridTypeCustomCamera:    1
     readonly property int _gridTypeCamera:          2
 
-    Component.onCompleted: {
-        console.log("gridAltitude", missionItem.gridAltitude.value)
-        console.log("gridAltitudeRelative", missionItem.gridAltitudeRelative)
-        console.log("gridAngle", missionItem.gridAngle.value)
-        console.log("gridSpacing", missionItem.gridSpacing.value)
-        console.log("turnaroundDist", missionItem.turnaroundDist.value)
-        console.log("cameraTrigger", missionItem.cameraTrigger)
-        console.log("cameraTriggerDistance", missionItem.cameraTriggerDistance.value)
-        console.log("groundResolution", missionItem.groundResolution.value)
-        console.log("frontalOverlap", missionItem.frontalOverlap.value)
-        console.log("sideOverlap", missionItem.sideOverlap.value)
-        console.log("cameraSensorWidth", missionItem.cameraSensorWidth.value)
-        console.log("cameraSensorHeight", missionItem.cameraSensorHeight.value)
-        console.log("cameraResolutionWidth", missionItem.cameraResolutionWidth.value)
-        console.log("cameraResolutionHeight", missionItem.cameraResolutionHeight.value)
-        console.log("cameraFocalLength", missionItem.cameraFocalLength.value)
-        console.log("fixedValueIsAltitude", missionItem.fixedValueIsAltitude)
-        console.log("cameraOrientationLandscape", missionItem.cameraOrientationLandscape)
-        console.log("manualGrid", missionItem.manualGrid)
-        console.log("camera", missionItem.camera)
-    }
-
     ListModel {
         id: cameraModelList
 
@@ -601,14 +579,17 @@ Rectangle {
         }
 
         Grid {
-            columns: 2
-            spacing: ScreenTools.defaultFontPixelWidth
+            columns:        2
+            columnSpacing:  ScreenTools.defaultFontPixelWidth
 
             QGCLabel { text: qsTr("Survey area:") }
             QGCLabel { text: QGroundControl.squareMetersToAppSettingsAreaUnits(missionItem.coveredArea).toFixed(2) + " " + QGroundControl.appSettingsAreaUnitsString }
 
             QGCLabel { text: qsTr("# shots:") }
             QGCLabel { text: missionItem.cameraShots }
+
+            QGCLabel { text: qsTr("Shot interval:") }
+            QGCLabel { text: missionItem.timeBetweenShots.toFixed(1) + " " + qsTr("secs")}
         }
     }
 }

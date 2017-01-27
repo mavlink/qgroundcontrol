@@ -39,7 +39,6 @@
 #include "CmdLineOptParser.h"
 #include "UDPLink.h"
 #include "LinkManager.h"
-#include "HomePositionManager.h"
 #include "UASMessageHandler.h"
 #include "QGCTemporaryFile.h"
 #include "QGCPalette.h"
@@ -63,7 +62,6 @@
 #include "QmlObjectListModel.h"
 #include "MissionManager.h"
 #include "QGroundControlQmlGlobal.h"
-#include "HomePositionManager.h"
 #include "FlightMapSettings.h"
 #include "CoordinateVector.h"
 #include "MainToolBarController.h"
@@ -430,6 +428,9 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     // Load known link configurations
     toolbox()->linkManager()->loadLinkConfigurationList();
+
+    // Probe for joysticks - TODO: manage on a timer or use events to deal with hotplug
+    toolbox()->joystickManager()->discoverJoysticks();
 
     if (_settingsUpgraded) {
         settings.clear();

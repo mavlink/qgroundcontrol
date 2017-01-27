@@ -53,7 +53,10 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
     _multiVehicleManager = _toolbox->multiVehicleManager();
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+}
 
+void JoystickManager::discoverJoysticks()
+{
 #ifdef __sdljoystick__
     _name2JoystickMap = JoystickSDL::discover(_multiVehicleManager);
 #elif defined(__android__)

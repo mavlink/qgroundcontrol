@@ -172,8 +172,7 @@ Rectangle {
                 id: vehicleMenuItemComponent
 
                 MenuItem {
-                    checkable:      true
-                    onTriggered:    QGroundControl.multiVehicleManager.activeVehicle = vehicle
+                    onTriggered: QGroundControl.multiVehicleManager.activeVehicle = vehicle
 
                     property int vehicleId: Number(text.split(" ")[1])
                     property var vehicle:   QGroundControl.multiVehicleManager.getVehicleById(vehicleId)
