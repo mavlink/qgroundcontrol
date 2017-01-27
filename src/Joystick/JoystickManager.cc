@@ -57,11 +57,17 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
 
 void JoystickManager::init()
 {
+#ifdef __sdljoystick__
     if (JoystickSDL::init()) {
         _setActiveJoystickFromSettings();
         connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
         _joystickCheckTimer.start(250);
     }
+#elif defined(__android__)
+    /*
+     * Android Joystick not yet supported
+     */
+#endif
 }
 
 void JoystickManager::_setActiveJoystickFromSettings(void)
@@ -182,6 +188,7 @@ void JoystickManager::setActiveJoystickName(const QString& name)
 
 void JoystickManager::_updateAvailableJoysticks(void)
 {
+#ifdef __sdljoystick__
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
     	switch(event.type) {
@@ -200,4 +207,9 @@ void JoystickManager::_updateAvailableJoysticks(void)
             break;
         }
     }
+#elif defined(__android__)
+    /*
+     * Android Joystick not yet supported
+     */
+#endif
 }
