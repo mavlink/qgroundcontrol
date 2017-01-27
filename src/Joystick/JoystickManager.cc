@@ -92,11 +92,10 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
             qCDebug(JoystickManagerLog) << "Releasing joystick:" << i.key();
             if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
                 qCDebug(JoystickManagerLog) << "\twas active";
-                _activeJoystick->stopPolling();
-                _activeJoystick = NULL;
+                setActiveJoystick(NULL);
             }
-            // FIXME: Don't leave this hanging! We need to free the object.
-            //i.value()->deleteLater();
+            i.value()->wait(1000);
+            i.value()->deleteLater();
         }
     }
 
@@ -150,9 +149,10 @@ void JoystickManager::setActiveJoystick(Joystick* joystick)
 
         settings.beginGroup(_settingsGroup);
         settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
-        emit activeJoystickChanged(_activeJoystick);
-        emit activeJoystickNameChanged(_activeJoystick->name());
     }
+
+    emit activeJoystickChanged(_activeJoystick);
+    emit activeJoystickNameChanged(_activeJoystick?_activeJoystick->name():"");
 }
 
 QVariantList JoystickManager::joysticks(void)
