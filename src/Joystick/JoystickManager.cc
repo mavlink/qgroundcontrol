@@ -84,16 +84,18 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
      */
 #endif
 
+    if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
+        qCDebug(JoystickManagerLog) << "Active joystick removed";
+        setActiveJoystick(NULL);
+    }
+
     // Check to see if our current mapping contains any joysticks that are not in the new mapping
     // If so, those joysticks have been unplugged, and need to be cleaned up
     QMap<QString, Joystick*>::iterator i;
     for (i = _name2JoystickMap.begin(); i != _name2JoystickMap.end(); ++i) {
         if (!newMap.contains(i.key())) {
             qCDebug(JoystickManagerLog) << "Releasing joystick:" << i.key();
-            if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
-                qCDebug(JoystickManagerLog) << "\twas active";
-                setActiveJoystick(NULL);
-            }
+            i.value()->stopPolling();
             i.value()->wait(1000);
             i.value()->deleteLater();
         }
