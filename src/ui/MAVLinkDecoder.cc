@@ -305,6 +305,239 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
 
     name = name.prepend(QString("M%1:").arg(msg->sysid));
 
+    // handle dynamic field messages
+    if (msgid == MAVLINK_MSG_ID_ESTIMATOR_STATE
+            || msgid == MAVLINK_MSG_ID_ESTIMATOR_STATE_STD
+            || msgid == MAVLINK_MSG_ID_ESTIMATOR_INNOV
+            || msgid == MAVLINK_MSG_ID_ESTIMATOR_INNOV_STD
+            )
+    {
+        // ignore id and sensor fields
+        if (fieldName == "id" || fieldName == "sensor" || fieldName == "n") {
+            return;
+        }
+        if (msgInfo->fields[fieldid].type == MAVLINK_TYPE_FLOAT && msgInfo->fields[fieldid].array_length > 0)
+        {
+            float* nums = (float*)(m+msgInfo->fields[fieldid].wire_offset);
+            uint8_t* id_array = (uint8_t*)(m+msgInfo->fields[3].wire_offset);
+            uint8_t* sensor_array = (uint8_t*)(m+msgInfo->fields[4].wire_offset);
+            fieldType = QString("float[%1]").arg(msgInfo->fields[fieldid].array_length);
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
+            {
+                uint8_t id_val = id_array[j];
+                QString id = QString("%1").arg(id_val);
+                switch (id_val) {
+                case MAV_FIELD_UNUSED:
+					// use number
+                    break;
+                case MAV_FIELD_POS_N:
+                    id = "pos_N";
+                    break;
+                case MAV_FIELD_POS_E:
+                    id = "pos_E";
+                    break;
+                case MAV_FIELD_POS_D:
+                    id = "pos_D";
+                    break;
+                case MAV_FIELD_ASL:
+                    id = "asl";
+                    break;
+                case MAV_FIELD_AGL:
+                    id = "agl";
+                    break;
+                case MAV_FIELD_VEL_N:
+                    id = "vel_N";
+                    break;
+                case MAV_FIELD_VEL_E:
+                    id = "vel_E";
+                    break;
+                case MAV_FIELD_VEL_D:
+                    id = "vel_D";
+                    break;
+                case MAV_FIELD_VEL_X:
+                    id = "vel_X";
+                    break;
+                case MAV_FIELD_VEL_Y:
+                    id = "vel_Y";
+                    break;
+                case MAV_FIELD_VEL_Z:
+                    id = "vel_Z";
+                    break;
+                case MAV_FIELD_ACC_N:
+                    id = "acc_N";
+                    break;
+                case MAV_FIELD_ACC_E:
+                    id = "acc_E";
+                    break;
+                case MAV_FIELD_ACC_D:
+                    id = "acc_D";
+                    break;
+                case MAV_FIELD_ACC_X:
+                    id = "acc_X";
+                    break;
+                case MAV_FIELD_ACC_Y:
+                    id = "acc_Y";
+                    break;
+                case MAV_FIELD_ACC_Z:
+                    id = "acc_Z";
+                    break;
+                case MAV_FIELD_Q0:
+                    id = "q0";
+                    break;
+                case MAV_FIELD_Q1:
+                    id = "q1";
+                    break;
+                case MAV_FIELD_Q2:
+                    id = "q2";
+                    break;
+                case MAV_FIELD_Q3:
+                    id = "q3";
+                    break;
+                case MAV_FIELD_ROLL:
+                    id = "roll";
+                    break;
+                case MAV_FIELD_PITCH:
+                    id = "pitch";
+                    break;
+                case MAV_FIELD_YAW:
+                    id = "yaw";
+                    break;
+                case MAV_FIELD_ANGVEL_X:
+                    id = "angvel_X";
+                    break;
+                case MAV_FIELD_ANGVEL_Y:
+                    id = "angvel_Y";
+                    break;
+                case MAV_FIELD_ANGVEL_Z:
+                    id = "angvel_Z";
+                    break;
+                case MAV_FIELD_ROLLRATE:
+                    id = "rollrate";
+                    break;
+                case MAV_FIELD_PITCHRATE:
+                    id = "pitchrate";
+                    break;
+                case MAV_FIELD_YAWRATE:
+                    id = "yawrate";
+                    break;
+                case MAV_FIELD_LAT:
+                    id = "lat";
+                    break;
+                case MAV_FIELD_LON:
+                    id = "lon";
+                    break;
+                case MAV_FIELD_BIAS_N:
+                    id = "bias_N";
+                    break;
+                case MAV_FIELD_BIAS_E:
+                    id = "bias_E";
+                    break;
+                case MAV_FIELD_BIAS_D:
+                    id = "bias_D";
+                    break;
+                case MAV_FIELD_BIAS_X:
+                    id = "bias_X";
+                    break;
+                case MAV_FIELD_BIAS_Y:
+                    id = "bias_Y";
+                    break;
+                case MAV_FIELD_BIAS_Z:
+                    id = "bias_Z";
+                    break;
+                case MAV_FIELD_TERRAIN_ASL:
+                    id = "terrain_asl";
+                    break;
+                case MAV_FIELD_AIRSPEED:
+                    id = "airspeed";
+                    break;
+                case MAV_FIELD_FLOW_X:
+                    id = "flow_X";
+                    break;
+                case MAV_FIELD_FLOW_Y:
+                    id = "flow_Y";
+                    break;
+                case MAV_FIELD_MAG_X:
+                    id = "mag_X";
+                    break;
+                case MAV_FIELD_MAG_Y:
+                    id = "mag_Y";
+                    break;
+                case MAV_FIELD_MAG_Z:
+                    id = "mag_Z";
+                    break;
+                case MAV_FIELD_MAG_HDG:
+                    id = "mag_HDG";
+                    break;
+                case MAV_FIELD_DIST_TOP:
+                    id = "dist_top";
+                    break;
+                case MAV_FIELD_DIST_BOTTOM:
+                    id = "dist_bottom";
+                    break;
+                case MAV_FIELD_DIST_FRONT:
+                    id = "dist_front";
+                    break;
+                case MAV_FIELD_DIST_BACK:
+                    id = "dist_back";
+                    break;
+                case MAV_FIELD_DIST_LEFT:
+                    id = "dist_left";
+                    break;
+                case MAV_FIELD_DIST_RIGHT:
+                    id = "dist_right";
+                    break;
+                }
+
+                uint8_t sensor_val = sensor_array[j];
+                QString sensor = QString("%1").arg(sensor_val);
+                switch (sensor_val) {
+                case MAV_SENSOR_TYPE_NONE:
+                    sensor = "";
+                    break;
+                case MAV_SENSOR_TYPE_GPS:
+                    sensor = "gps";
+                    break;
+                case MAV_SENSOR_TYPE_SONAR:
+                    sensor = "sonar";
+                    break;
+                case MAV_SENSOR_TYPE_LIDAR:
+                    sensor = "lidar";
+                    break;
+                case MAV_SENSOR_TYPE_GYRO:
+                    sensor = "gyro";
+                    break;
+                case MAV_SENSOR_TYPE_ACCEL:
+                    sensor = "accel";
+                    break;
+                case MAV_SENSOR_TYPE_MAG:
+                    sensor = "mag";
+                    break;
+                case MAV_SENSOR_TYPE_BARO:
+                    sensor = "baro";
+                    break;
+                case MAV_SENSOR_TYPE_PITOT:
+                    sensor = "pitot";
+                    break;
+                case MAV_SENSOR_TYPE_MOCAP:
+                    sensor = "mocap";
+                    break;
+                case MAV_SENSOR_TYPE_FLOW:
+                    sensor = "flow";
+                    break;
+                case MAV_SENSOR_TYPE_LAND:
+                    sensor = "land";
+                    break;
+                case MAV_SENSOR_TYPE_VISION:
+                    sensor = "vision";
+                    break;
+                }
+                emit valueChanged(msg->sysid, QString("%1-%2-%3").arg(name).arg(sensor).arg(id), fieldType, nums[j], time);
+            }
+        }
+        // we already emit the fields here, return early
+        return;
+    }
+
     switch (msgInfo->fields[fieldid].type)
     {
     case MAVLINK_TYPE_CHAR:
