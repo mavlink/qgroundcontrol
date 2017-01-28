@@ -25,7 +25,7 @@ protected:
     /** @brief Shift a timestamp in Unix time if necessary */
     quint64 getUnixTimeFromMs(int systemID, quint64 time);
 
-    static const size_t cMessageIds = 256;
+    static const size_t cMessageIds = 512;
 
     mavlink_message_t receivedMessages[cMessageIds];        ///< Available / known messages
     QMap<uint16_t, bool> messageFilter;                     ///< Message/field names not to emit

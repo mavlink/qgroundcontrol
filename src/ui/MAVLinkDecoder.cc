@@ -11,8 +11,8 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
 
-    memset(receivedMessages, 0, sizeof(mavlink_message_t)*256);
-    for (unsigned int i = 0; i<255;++i)
+    memset(receivedMessages, 0, sizeof(mavlink_message_t)*cMessageIds);
+    for (unsigned int i = 0; i<cMessageIds;++i)
     {
         componentID[i] = -1;
         componentMulti[i] = false;
@@ -68,14 +68,17 @@ void MAVLinkDecoder::run()
 void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t message)
 {
     if (message.msgid >= cMessageIds) {
-        // No support for messag ids above 255
+        // XXX No support for messag ids above 512
+	// instead of an array, should use a std::map to
+	// save memory, can't allocate for 10000 mavlink message
+        // which would be required by current internals
         return;
     }
 
     Q_UNUSED(link);
     memcpy(receivedMessages+message.msgid, &message, sizeof(mavlink_message_t));
 
-    uint8_t msgid = message.msgid;
+    uint32_t msgid = message.msgid;
     const mavlink_message_info_t* msgInfo = mavlink_get_message_info(&message);
 
     // Store an arrival time for this message. This value ends up being calculated later.
@@ -220,7 +223,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
     if (componentMulti[msg->msgid] == true) multiComponentSourceDetected = true;
 
     // Add field tree widget item
-    uint8_t msgid = msg->msgid;
+    uint32_t msgid = msg->msgid;
     if (messageFilter.contains(msgid)) return;
     QString fieldName(msgInfo->fields[fieldid].name);
     QString fieldType;
