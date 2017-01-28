@@ -10,16 +10,6 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol) :
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
 
-    memset(receivedMessages, 0, sizeof(mavlink_message_t)*256);
-    for (unsigned int i = 0; i<255;++i)
-    {
-        componentID[i] = -1;
-        componentMulti[i] = false;
-        onboardTimeOffset[i] = 0;
-        onboardToGCSUnixTimeOffsetAndDelay[i] = 0;
-        firstOnboardTime[i] = 0;
-    }
-
     // Fill filter
     // Allow system status
 //    messageFilter.insert(MAVLINK_MSG_ID_HEARTBEAT, false);
@@ -68,15 +58,11 @@ void MAVLinkDecoder::run()
 
 void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t message)
 {
-    if (message.msgid >= cMessageIds) {
-        // No support for messag ids above 255
-        return;
-    }
-
     Q_UNUSED(link);
-    memcpy(receivedMessages+message.msgid, &message, sizeof(mavlink_message_t));
 
-    uint8_t msgid = message.msgid;
+    msgDict[message.msgid] = message;
+
+    uint32_t msgid = message.msgid;
     const mavlink_message_info_t* msgInfo = mavlink_get_message_info(&message);
 
     // Store an arrival time for this message. This value ends up being calculated later.
@@ -87,15 +73,15 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
     {
         mavlink_system_time_t timebase;
         mavlink_msg_system_time_decode(&message, &timebase);
-        onboardTimeOffset[message.sysid] = (timebase.time_unix_usec+500)/1000 - timebase.time_boot_ms;
-        onboardToGCSUnixTimeOffsetAndDelay[message.sysid] = static_cast<qint64>(QGC::groundTimeMilliseconds() - (timebase.time_unix_usec+500)/1000);
+        sysDict[msgid].onboardTimeOffset = (timebase.time_unix_usec+500)/1000 - timebase.time_boot_ms;
+        sysDict[msgid].onboardToGCSUnixTimeOffsetAndDelay  = static_cast<qint64>(QGC::groundTimeMilliseconds() - (timebase.time_unix_usec+500)/1000);
     }
     else
     {
 
         // See if first value is a time value and if it is, use that as the arrival time for this data.
         uint8_t fieldid = 0;
-        uint8_t* m = (uint8_t*)&((mavlink_message_t*)(receivedMessages+msgid))->payload64[0];
+        uint8_t* m = (uint8_t*)(msgDict[msgid].payload64);
 
         if (QString(msgInfo->fields[fieldid].name) == QString("time_boot_ms") && msgInfo->fields[fieldid].type == MAVLINK_TYPE_UINT32_T)
         {
@@ -126,7 +112,7 @@ quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
     quint64 ret = 0;
     if (time == 0)
     {
-        ret = QGC::groundTimeMilliseconds() - onboardToGCSUnixTimeOffsetAndDelay[systemID];
+        ret = QGC::groundTimeMilliseconds() - sysDict[systemID].onboardToGCSUnixTimeOffsetAndDelay;
     }
     // Check if time is smaller than 40 years,
     // assuming no system without Unix timestamp
@@ -150,15 +136,15 @@ quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
     else if (time < 1261440000000)
 #endif
     {
-        if (onboardTimeOffset[systemID] == 0 || time < (firstOnboardTime[systemID]-100))
+        if (sysDict[systemID].onboardTimeOffset == 0 || time < (sysDict[systemID].firstOnboardTime -100))
         {
-            firstOnboardTime[systemID] = time;
-            onboardTimeOffset[systemID] = QGC::groundTimeMilliseconds() - time;
+            sysDict[systemID].firstOnboardTime = time;
+            sysDict[systemID].onboardTimeOffset = QGC::groundTimeMilliseconds() - time;
         }
 
-        if (time > firstOnboardTime[systemID]) firstOnboardTime[systemID] = time;
+        if (time > sysDict[systemID].firstOnboardTime ) sysDict[systemID].firstOnboardTime = time;
 
-        ret = time + onboardTimeOffset[systemID];
+        ret = time + sysDict[systemID].onboardTimeOffset;
     }
     else
     {
@@ -204,28 +190,36 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
     bool multiComponentSourceDetected = false;
     const mavlink_message_info_t* msgInfo = mavlink_get_message_info(msg);
 
+    uint32_t msgid = msg->msgid;
+
+    // create new system data if it wasn't dectected yet
+    if (!(sysDict.keys().contains(msgid))) {
+        sysDict[msgid] = SystemData();
+    }
+
     // Store component ID
-    if (componentID[msg->msgid] == -1)
+    if (sysDict[msgid].componentID == -1)
     {
-        componentID[msg->msgid] = msg->compid;
+        sysDict[msgid].componentID = msg->compid;
     }
     else
     {
         // Got this message already
-        if (componentID[msg->msgid] != msg->compid)
+        if (sysDict[msgid].componentID != msg->compid)
         {
-            componentMulti[msg->msgid] = true;
+            sysDict[msgid].componentMulti = true;
         }
     }
 
-    if (componentMulti[msg->msgid] == true) multiComponentSourceDetected = true;
+    if (sysDict[msgid].componentMulti == true) {
+        multiComponentSourceDetected = true;
+    }
 
     // Add field tree widget item
-    uint8_t msgid = msg->msgid;
     if (messageFilter.contains(msgid)) return;
     QString fieldName(msgInfo->fields[fieldid].name);
     QString fieldType;
-    uint8_t* m = (uint8_t*)&((mavlink_message_t*)(receivedMessages+msgid))->payload64[0];
+    uint8_t* m = (uint8_t*)(msgDict[msgid].payload64);
     QString name("%1.%2");
     QString unit("");
 
