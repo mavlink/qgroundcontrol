@@ -212,6 +212,16 @@ Rectangle {
             Layout.fillWidth:   true
             visible:            _activeVehicle
         }
+
+        QGCLabel {
+            id:                     waitForVehicle
+            anchors.verticalCenter: parent.verticalCenter
+            text:                   qsTr("Waiting For Vehicle Connection")
+            font.pointSize:         ScreenTools.mediumFontPointSize
+            font.family:            ScreenTools.demiboldFontFamily
+            color:                  colorRed
+            visible:                !_activeVehicle
+        }
     }
 
     // Progress bar
