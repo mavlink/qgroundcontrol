@@ -18,8 +18,8 @@ Rectangle {
     color:  _currentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
     radius: _radius
 
-    property var    missionItem ///< MissionItem associated with this editor
-    property bool   readOnly    ///< true: read only view, false: full editing view
+    property var    missionItem     ///< MissionItem associated with this editor
+    property bool   readOnly        ///< true: read only view, false: full editing view
 
     signal clicked
     signal remove
@@ -33,6 +33,7 @@ Rectangle {
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 12)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
+    readonly property real  _hamburgerSize:     commandPicker.height * 0.75
 
     QGCPalette {
         id: qgcPal
@@ -59,9 +60,9 @@ Rectangle {
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.right:          parent.right
         anchors.verticalCenter: commandPicker.verticalCenter
-        width:                  commandPicker.height
-        height:                 commandPicker.height
-        sourceSize.height:      height
+        width:                  _hamburgerSize
+        height:                 _hamburgerSize
+        sourceSize.height:      _hamburgerSize
         source:                 "qrc:/qmlimages/Hamburger.svg"
         visible:                missionItem.isCurrentItem && missionItem.sequenceNumber != 0
 
