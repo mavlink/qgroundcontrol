@@ -99,6 +99,7 @@ public:
     Q_PROPERTY(Fact*    areaUnits                       READ areaUnits                          CONSTANT)
     Q_PROPERTY(Fact*    speedUnits                      READ speedUnits                         CONSTANT)
     Q_PROPERTY(Fact*    batteryPercentRemainingAnnounce READ batteryPercentRemainingAnnounce    CONSTANT)
+    Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount             CONSTANT)
 
     Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
     Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
@@ -196,6 +197,8 @@ public:
     static Fact* speedUnits                     (void);
     static Fact* batteryPercentRemainingAnnounce(void);
 
+    int     supportedFirmwareCount      ();
+
     void    setIsDarkStyle              (bool dark);
     void    setIsAudioMuted             (bool muted);
     void    setIsSaveLogPrompt          (bool prompt);
@@ -245,6 +248,7 @@ private:
     VideoManager*           _videoManager;
     MAVLinkLogManager*      _mavlinkLogManager;
     QGCCorePlugin*          _corePlugin;
+    FirmwarePluginManager*  _firmwarePluginManager;
 
     bool                    _virtualTabletJoystick;
     qreal                   _baseFontPointSize;
