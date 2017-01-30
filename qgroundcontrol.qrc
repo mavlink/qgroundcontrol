@@ -186,6 +186,7 @@
         <file alias="FWLandingPattern.FactMetaData.json">src/MissionManager/FWLandingPattern.FactMetaData.json</file>
         <file alias="Survey.FactMetaData.json">src/MissionManager/Survey.FactMetaData.json</file>
         <file alias="USBBoardInfo.json">src/comm/USBBoardInfo.json</file>
+        <file alias="Vehicle/TemperatureFact.json">src/Vehicle/TemperatureFact.json</file>
     </qresource>
     <qresource prefix="/MockLink">
         <file alias="APMArduCopterMockLink.params">src/comm/APMArduCopterMockLink.params</file>
