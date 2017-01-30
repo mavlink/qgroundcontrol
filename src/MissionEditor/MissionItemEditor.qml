@@ -55,7 +55,7 @@ Rectangle {
         color:                  _outerTextColor
     }
 
-    Image {
+    QGCColoredImage {
         id:                     hamburger
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.right:          parent.right
@@ -65,6 +65,7 @@ Rectangle {
         sourceSize.height:      _hamburgerSize
         source:                 "qrc:/qmlimages/Hamburger.svg"
         visible:                missionItem.isCurrentItem && missionItem.sequenceNumber != 0
+        color:                  qgcPal.windowShade
 
         MouseArea {
             anchors.fill:   parent
