@@ -185,6 +185,35 @@ private:
     Fact            _cellCountFact;
 };
 
+class VehicleTemperatureFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    VehicleTemperatureFactGroup(QObject* parent = NULL);
+
+    Q_PROPERTY(Fact* temperature1       READ temperature1       CONSTANT)
+    Q_PROPERTY(Fact* temperature2       READ temperature2       CONSTANT)
+    Q_PROPERTY(Fact* temperature3       READ temperature3       CONSTANT)
+
+    Fact* temperature1 (void) { return &_temperature1Fact; }
+    Fact* temperature2 (void) { return &_temperature2Fact; }
+    Fact* temperature3 (void) { return &_temperature3Fact; }
+
+    static const char* _temperature1FactName;
+    static const char* _temperature2FactName;
+    static const char* _temperature3FactName;
+
+    static const char* _settingsGroup;
+
+    static const double _temperatureUnavailable;
+
+private:
+    Fact            _temperature1Fact;
+    Fact            _temperature2Fact;
+    Fact            _temperature3Fact;
+};
+
 class Vehicle : public FactGroup
 {
     Q_OBJECT
@@ -305,10 +334,11 @@ public:
     Q_PROPERTY(Fact* altitudeRelative   READ altitudeRelative   CONSTANT)
     Q_PROPERTY(Fact* altitudeAMSL       READ altitudeAMSL       CONSTANT)
 
-    Q_PROPERTY(FactGroup* gps       READ gpsFactGroup       CONSTANT)
-    Q_PROPERTY(FactGroup* battery   READ batteryFactGroup   CONSTANT)
-    Q_PROPERTY(FactGroup* wind      READ windFactGroup      CONSTANT)
-    Q_PROPERTY(FactGroup* vibration READ vibrationFactGroup CONSTANT)
+    Q_PROPERTY(FactGroup* gps         READ gpsFactGroup         CONSTANT)
+    Q_PROPERTY(FactGroup* battery     READ batteryFactGroup     CONSTANT)
+    Q_PROPERTY(FactGroup* wind        READ windFactGroup        CONSTANT)
+    Q_PROPERTY(FactGroup* vibration   READ vibrationFactGroup   CONSTANT)
+    Q_PROPERTY(FactGroup* temperature READ temperatureFactGroup CONSTANT)
 
     Q_PROPERTY(int firmwareMajorVersion READ firmwareMajorVersion NOTIFY firmwareMajorVersionChanged)
     Q_PROPERTY(int firmwareMinorVersion READ firmwareMinorVersion NOTIFY firmwareMinorVersionChanged)
@@ -558,6 +588,7 @@ public:
     FactGroup* batteryFactGroup     (void) { return &_batteryFactGroup; }
     FactGroup* windFactGroup        (void) { return &_windFactGroup; }
     FactGroup* vibrationFactGroup   (void) { return &_vibrationFactGroup; }
+    FactGroup* temperatureFactGroup (void) { return &_temperatureFactGroup; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -752,6 +783,9 @@ private:
     void _handleGlobalPositionInt(mavlink_message_t& message);
     void _handleAltitude(mavlink_message_t& message);
     void _handleVfrHud(mavlink_message_t& message);
+    void _handleScaledPressure(mavlink_message_t& message);
+    void _handleScaledPressure2(mavlink_message_t& message);
+    void _handleScaledPressure3(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
@@ -922,6 +956,7 @@ private:
     VehicleBatteryFactGroup     _batteryFactGroup;
     VehicleWindFactGroup        _windFactGroup;
     VehicleVibrationFactGroup   _vibrationFactGroup;
+    VehicleTemperatureFactGroup _temperatureFactGroup;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;
@@ -936,6 +971,7 @@ private:
     static const char* _batteryFactGroupName;
     static const char* _windFactGroupName;
     static const char* _vibrationFactGroupName;
+    static const char* _temperatureFactGroupName;
 
     static const int _vehicleUIUpdateRateMSecs = 100;
 
