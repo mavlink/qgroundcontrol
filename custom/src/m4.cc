@@ -1366,7 +1366,7 @@ float
 TyphoonHCore::byteArrayToFloat(QByteArray data, int offset)
 {
     uint32_t val = (uint32_t)byteArrayToInt(data, offset);
-    return *(float*)(void*)&val;
+    return (float)val;
 }
 
 //-----------------------------------------------------------------------------

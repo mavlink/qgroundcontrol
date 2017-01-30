@@ -2,5 +2,6 @@
     <qresource prefix="/typhoonh">
         <file alias="logoWhite.svg">res/logoWhite.svg</file>
         <file alias="TyphoonSettings.qml">res/TyphoonSettings.qml</file>
+        <file alias="YuneecBrandImage.png">src/FirmwarePlugin/YuneecBrandImage.png</file>
     </qresource>
 </RCC>
