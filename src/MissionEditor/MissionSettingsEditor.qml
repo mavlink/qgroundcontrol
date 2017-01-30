@@ -37,6 +37,7 @@ Rectangle {
                 property bool   _showOfflineEditingCombos:  _offlineEditing && _noMissionItemsAdded
                 property bool   _showCruiseSpeed:           !_missionVehicle.multiRotor
                 property bool   _showHoverSpeed:            _missionVehicle.multiRotor || missionController.vehicle.vtol
+                property bool   _multipleFirmware:          QGroundControl.supportedFirmwareCount > 2
 
                 readonly property string _firmwareLabel:    qsTr("Firmware:")
                 readonly property string _vehicleLabel:     qsTr("Vehicle:")
@@ -50,7 +51,9 @@ Rectangle {
                     anchors.top:    parent.top
                     spacing:        _margin
 
-                    QGCLabel { text: qsTr("Planned Home Position:") }
+                    QGCLabel {
+                        text: qsTr("Planned Home Position")
+                    }
 
                     Rectangle {
                         anchors.left:   parent.left
@@ -90,27 +93,25 @@ Rectangle {
                         }
                     }
 
-                    QGCButton {
-                        text:       qsTr("Move Home to map center")
-                        visible:    missionItem.homePosition
-                        onClicked:  editorRoot.moveHomeToMapCenter()
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-
                     QGCLabel {
                         width:          parent.width
                         wrapMode:       Text.WordWrap
                         font.pointSize: ScreenTools.smallFontPointSize
-                        text:           qsTr("Note: Planned home position for mission display only. Actual home position set by vehicle at flight time.")
+                        text:           qsTr("Actual position set by vehicle at flight time.")
+                        horizontalAlignment: Text.AlignHCenter
                     }
 
-                    QGCLabel { text: qsTr("Vehicle Info:") }
+                    QGCLabel {
+                        text:           qsTr("Vehicle Info:")
+                        visible:        _multipleFirmware
+                    }
 
                     Rectangle {
                         anchors.left:   parent.left
                         anchors.right:  parent.right
                         height:         1
                         color:          qgcPal.text
+                        visible:        _multipleFirmware
                     }
 
                     GridLayout {
@@ -119,6 +120,7 @@ Rectangle {
                         columnSpacing:  ScreenTools.defaultFontPixelWidth
                         rowSpacing:     columnSpacing
                         columns:        2
+                        visible:        _multipleFirmware
 
                         QGCLabel {
                             text:       _firmwareLabel
@@ -187,8 +189,23 @@ Rectangle {
                         width:          parent.width
                         wrapMode:       Text.WordWrap
                         font.pointSize: ScreenTools.smallFontPointSize
-                        text:           qsTr("Note: Speeds are planned speeds only for time calculations. Actual vehicle will not be affected.")
+                        visible:        _multipleFirmware
+                        text:           qsTr("Speeds are only for time calculations. Actual vehicle will not be affected.")
                     }
+
+                    Rectangle {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        height:         1
+                        color:          qgcPal.text
+                    }
+
+                    QGCButton {
+                        text:       qsTr("Set Home To Map Center")
+                        onClicked:  editorRoot.moveHomeToMapCenter()
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+
                 } // Column
             } // Item
         } // Component

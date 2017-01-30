@@ -24,6 +24,7 @@ ComboBox {
             Rectangle {
                 anchors.fill:   parent
                 color:          _showHighlight ? control._qgcPal.buttonHighlight : control._qgcPal.button
+                radius:         3
                 border.width:   _showBorder ? 1: 0
                 border.color:  control._qgcPal.buttonText
             }
