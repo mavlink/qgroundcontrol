@@ -84,6 +84,7 @@ public:
     Q_PROPERTY(bool     isSaveLogPromptNotArmed READ isSaveLogPromptNotArmed    WRITE setIsSaveLogPromptNotArmed    NOTIFY isSaveLogPromptNotArmedChanged)
     Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
     Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
+    Q_PROPERTY(QString  missionAutoLoadDir      READ missionAutoLoadDir         WRITE setMissionAutoLoadDir         NOTIFY missionAutoLoadDirChanged STORED false)
 
     //-------------------------------------------------------------------------
     // MavLink Protocol
@@ -98,6 +99,7 @@ public:
     Q_PROPERTY(Fact*    areaUnits                       READ areaUnits                          CONSTANT)
     Q_PROPERTY(Fact*    speedUnits                      READ speedUnits                         CONSTANT)
     Q_PROPERTY(Fact*    batteryPercentRemainingAnnounce READ batteryPercentRemainingAnnounce    CONSTANT)
+    Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount             CONSTANT)
 
     Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
     Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
@@ -148,10 +150,10 @@ public:
     Q_INVOKABLE QStringList loggingCategories(void) const { return QGCLoggingCategoryRegister::instance()->registeredCategories(); }
 
     /// Turns on/off logging for the specified category. State is saved in app settings.
-    Q_INVOKABLE void setCategoryLoggingOn(const QString& category, bool enable) { QGCLoggingCategoryRegister::instance()->setCategoryLoggingOn(category, enable); };
+    Q_INVOKABLE void setCategoryLoggingOn(const QString& category, bool enable) { QGCLoggingCategoryRegister::instance()->setCategoryLoggingOn(category, enable); }
 
     /// Returns true if logging is turned on for the specified category.
-    Q_INVOKABLE bool categoryLoggingOn(const QString& category) { return QGCLoggingCategoryRegister::instance()->categoryLoggingOn(category); };
+    Q_INVOKABLE bool categoryLoggingOn(const QString& category) { return QGCLoggingCategoryRegister::instance()->categoryLoggingOn(category); }
 
     /// Updates the logging filter rules after settings have changed
     Q_INVOKABLE void updateLoggingFilterRules(void) { QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(QString()); }
@@ -195,6 +197,8 @@ public:
     static Fact* speedUnits                     (void);
     static Fact* batteryPercentRemainingAnnounce(void);
 
+    int     supportedFirmwareCount      ();
+
     void    setIsDarkStyle              (bool dark);
     void    setIsAudioMuted             (bool muted);
     void    setIsSaveLogPrompt          (bool prompt);
@@ -211,6 +215,9 @@ public:
 
     QString qgcVersion(void) const { return qgcApp()->applicationVersion(); }
 
+    static QString missionAutoLoadDir(void);
+    static void setMissionAutoLoadDir(const QString& missionAutoLoadDir);
+
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
 
@@ -226,6 +233,7 @@ signals:
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
+    void missionAutoLoadDirChanged      (QString missionAutoLoadDir);
 
 private:
     static SettingsFact* _createSettingsFact(const QString& name);
@@ -240,6 +248,7 @@ private:
     VideoManager*           _videoManager;
     MAVLinkLogManager*      _mavlinkLogManager;
     QGCCorePlugin*          _corePlugin;
+    FirmwarePluginManager*  _firmwarePluginManager;
 
     bool                    _virtualTabletJoystick;
     qreal                   _baseFontPointSize;
@@ -261,6 +270,7 @@ private:
 
     static const char*  _virtualTabletJoystickKey;
     static const char*  _baseFontPointSizeKey;
+    static const char*  _missionAutoLoadDirKey;
 };
 
 #endif

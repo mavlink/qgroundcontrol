@@ -60,6 +60,7 @@ public:
             YFirmware,
             Y6Firmware,
             HeliFirmware,
+            CopterFirmware,
             PlaneFirmware,
             RoverFirmware,
             DefaultVehicleFirmware
@@ -96,6 +97,8 @@ public:
     Q_PROPERTY(QString          boardPort                   READ boardPort                                              NOTIFY boardFound)
     Q_PROPERTY(QString          boardDescription            READ boardDescription                                       NOTIFY boardFound)
     Q_PROPERTY(QString          boardType                   MEMBER _foundBoardTypeName                                  NOTIFY boardFound)
+    Q_PROPERTY(bool             pixhawkBoard                READ pixhawkBoard                                           NOTIFY boardFound)
+    Q_PROPERTY(bool             px4FlowBoard                READ px4FlowBoard                                           NOTIFY boardFound)
     Q_PROPERTY(FirmwareType_t   selectedFirmwareType        READ selectedFirmwareType   WRITE setSelectedFirmwareType   NOTIFY selectedFirmwareTypeChanged)
     Q_PROPERTY(QStringList      apmAvailableVersions        READ apmAvailableVersions                                   NOTIFY apmAvailableVersionsChanged)
     Q_PROPERTY(QString          px4StableVersion            READ px4StableVersion                                       NOTIFY px4StableVersionChanged)
@@ -142,6 +145,9 @@ public:
     QString px4StableVersion(void) { return _px4StableVersion; }
     QString px4BetaVersion(void) { return _px4BetaVersion; }
 
+    bool pixhawkBoard(void) const { return _foundBoardType == QGCSerialPortInfo::BoardTypePixhawk; }
+    bool px4FlowBoard(void) const { return _foundBoardType == QGCSerialPortInfo::BoardTypePX4Flow; }
+
 signals:
     void boardFound(void);
     void noBoardFound(void);
@@ -158,7 +164,7 @@ private slots:
     void _firmwareDownloadProgress(qint64 curr, qint64 total);
     void _firmwareDownloadFinished(QString remoteFile, QString localFile);
     void _firmwareDownloadError(QString errorMsg);
-    void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int boardType);
+    void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int boardType, QString boardName);
     void _noBoardFound(void);
     void _boardGone();
     void _foundBootloader(int bootloaderVersion, int boardID, int flashSize);
@@ -180,9 +186,8 @@ private:
     void _downloadFirmware(void);
     void _appendStatusLog(const QString& text, bool critical = false);
     void _errorCancel(const QString& msg);
-    void _loadAPMVersions(QGCSerialPortInfo::BoardType_t boardType);
+    void _loadAPMVersions(uint32_t bootloaderBoardID);
     QHash<FirmwareIdentifier, QString>* _firmwareHashForBoardId(int boardId);
-    QHash<FirmwareIdentifier, QString>* _firmwareHashForBoardType(QGCSerialPortInfo::BoardType_t boardType);
     void _determinePX4StableVersion(void);
 
     QString _portName;

@@ -34,8 +34,6 @@ QGCView {
     property Fact _percentRemainingAnnounce:    QGroundControl.batteryPercentRemainingAnnounce
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
-    property bool _showCruiseSpeed:             offlineVehicleCombo.currentText != "Multicopter"
-    property bool _showHoverSpeed:              offlineVehicleCombo.currentText != "FixedWing"
 
     readonly property string _requiresRestart:  qsTr("(Requires Restart)")
 
@@ -294,6 +292,33 @@ QGCView {
                             checked:    QGroundControl.virtualTabletJoystick
                             onClicked:  QGroundControl.virtualTabletJoystick = checked
                             visible:    QGroundControl.corePlugin.options.enableVirtualJoystick
+                        }
+                        //-----------------------------------------------------------------
+                        //-- AutoLoad
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+                            QGCCheckBox {
+                                id:                     autoLoadCheckbox
+                                anchors.verticalCenter: parent.verticalCenter
+                                text:                   qsTr("AutoLoad mission directory:")
+                                checked:                QGroundControl.missionAutoLoadDir != ""
+
+                                onClicked: {
+                                    autoLoadDir.enabled = checked
+                                    if (!checked) {
+                                        QGroundControl.missionAutoLoadDir = ""
+                                        autoLoadDir.text = ""
+                                    }
+                                }
+                            }
+                            QGCTextField {
+                                id:                     autoLoadDir
+                                width:                  _editFieldWidth
+                                enabled:                autoLoadCheckbox.checked
+                                anchors.verticalCenter: parent.verticalCenter
+                                text:                   QGroundControl.missionAutoLoadDir
+                                onEditingFinished:      QGroundControl.missionAutoLoadDir = text
+                            }
                         }
                         //-----------------------------------------------------------------
                         //-- Map Providers

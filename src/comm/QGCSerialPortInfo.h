@@ -27,25 +27,19 @@ class QGCSerialPortInfo : public QSerialPortInfo
 {
 public:
     typedef enum {
-        BoardTypePX4FMUV1,
-        BoardTypePX4FMUV2,
-        BoardTypePX4FMUV4,
+        BoardTypePixhawk,
+        BoardTypeSiKRadio,
         BoardTypePX4Flow,
-        BoardTypeSikRadio,
-        BoardTypeAeroCore,
+        BoardTypeOpenPilot,
         BoardTypeRTKGPS,
-        BoardTypeMINDPXFMUV2,
-        BoardTypeTAPV1,
-        BoardTypeASCV1,
-        BoardTypeLibrePilot,
         BoardTypeUnknown
     } BoardType_t;
 
     // Vendor and products ids for the boards we care about
 
-    static const int px4VendorId =                          9900;   ///< Vendor ID for Pixhawk board (V2 and V1) and PX4 Flow
-
-    static const int pixhawkFMUV4ProductId =                18;     ///< Product ID for Pixhawk V2 board
+    static const int px4VendorId =                          9900;   ///< Vendor ID for all Pixhawk boards and PX4 Flow
+    static const int pixhawkFMUV4ProductId =                18;     ///< Product ID for Pixhawk V4 board
+    static const int pixhawkFMUV4ProProductId =             19;     ///< Product ID for Pixhawk V4 Pro board
     static const int pixhawkFMUV2ProductId =                17;     ///< Product ID for Pixhawk V2 board
     static const int pixhawkFMUV2OldBootloaderProductId =   22;     ///< Product ID for Bootloader on older Pixhawk V2 boards
     static const int pixhawkFMUV1ProductId =                16;     ///< Product ID for PX4 FMU V1 board
@@ -79,18 +73,51 @@ public:
     /// Override of QSerialPortInfo::availablePorts
     static QList<QGCSerialPortInfo> availablePorts(void);
 
-    BoardType_t boardType(void) const;
+    bool getBoardInfo(BoardType_t& boardType, QString& name) const;
 
     /// @return true: we can flash this board type
     bool canFlash(void);
-
-    /// @return true: board is a Pixhawk board
-    bool boardTypePixhawk(void) const;
 
     /// @return true: Board is currently in bootloader
     bool isBootloader(void) const;
 
 private:
+    typedef struct {
+        const char* classString;
+        BoardType_t boardType;
+    } BoardClassString2BoardType_t;
+
+    typedef struct {
+        int         vendorId;
+        int         productId;
+        BoardType_t boardType;
+        QString     name;
+    } BoardInfo_t;
+
+    typedef struct {
+        QString     regExp;
+        BoardType_t boardType;
+        bool        androidOnly;
+    } BoardFallback_t;
+
+    static void _loadJsonData(void);
+    static BoardType_t _boardClassStringToType(const QString& boardClass);
+    static QString _boardTypeToString(BoardType_t boardType);
+
+    static bool         _jsonLoaded;
+    static const char*  _jsonFileTypeValue;
+    static const char*  _jsonBoardInfoKey;
+    static const char*  _jsonBoardFallbackKey;
+    static const char*  _jsonVendorIDKey;
+    static const char*  _jsonProductIDKey;
+    static const char*  _jsonBoardClassKey;
+    static const char*  _jsonNameKey;
+    static const char*  _jsonRegExpKey;
+    static const char*  _jsonAndroidOnlyKey;
+
+    static const BoardClassString2BoardType_t   _rgBoardClass2BoardType[BoardTypeUnknown];
+    static QList<BoardInfo_t>                   _boardInfoList;
+    static QList<BoardFallback_t>               _boardFallbackList;
 };
 
 #endif

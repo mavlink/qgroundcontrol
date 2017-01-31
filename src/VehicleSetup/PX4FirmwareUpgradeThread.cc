@@ -86,14 +86,15 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
     
     QGCSerialPortInfo               portInfo;
     QGCSerialPortInfo::BoardType_t  boardType;
+    QString                         boardName;
     
-    if (_findBoardFromPorts(portInfo, boardType)) {
+    if (_findBoardFromPorts(portInfo, boardType, boardName)) {
         if (!_foundBoard) {
             _foundBoard = true;
             _foundBoardPortInfo = portInfo;
-            emit foundBoard(_findBoardFirstAttempt, portInfo, boardType);
+            emit foundBoard(_findBoardFirstAttempt, portInfo, boardType, boardName);
             if (!_findBoardFirstAttempt) {
-                if (boardType == QGCSerialPortInfo::BoardTypeSikRadio) {
+                if (boardType == QGCSerialPortInfo::BoardTypeSiKRadio) {
                     _3drRadioForceBootloader(portInfo);
                     return;
                 } else {
@@ -116,18 +117,20 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
     _timerRetry->start();
 }
 
-bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType)
+bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType, QString& boardName)
 {
     foreach (QGCSerialPortInfo info, QGCSerialPortInfo::availablePorts()) {
+        info.getBoardInfo(boardType, boardName);
+
         qCDebug(FirmwareUpgradeVerboseLog) << "Serial Port --------------";
-        qCDebug(FirmwareUpgradeVerboseLog) << "\tboard type" << info.boardType();
+        qCDebug(FirmwareUpgradeVerboseLog) << "\tboard type" << boardType;
+        qCDebug(FirmwareUpgradeVerboseLog) << "\tboard name" << boardName;
         qCDebug(FirmwareUpgradeVerboseLog) << "\tport name:" << info.portName();
         qCDebug(FirmwareUpgradeVerboseLog) << "\tdescription:" << info.description();
         qCDebug(FirmwareUpgradeVerboseLog) << "\tsystem location:" << info.systemLocation();
         qCDebug(FirmwareUpgradeVerboseLog) << "\tvendor ID:" << info.vendorIdentifier();
         qCDebug(FirmwareUpgradeVerboseLog) << "\tproduct ID:" << info.productIdentifier();
         
-        boardType = info.boardType();
         if (info.canFlash()) {
             portInfo = info;
             return true;
