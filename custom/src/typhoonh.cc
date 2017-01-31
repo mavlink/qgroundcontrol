@@ -27,7 +27,11 @@ public:
     uint16_t    videoUDPPort                () { return 0; }
     QString     videoRSTPUrl                () { return QString("rtsp://192.168.42.1:554/live"); }
     double      toolbarHeightMultiplier     () { return 1.25; }
+#if !defined(__macos__)
     double      defaultFontPointSize        () { return 16.0; }
+#else
+    double      defaultFontPointSize        () { return 13.0; }
+#endif
     bool        enablePlanViewSelector      () { return false; }
 };
 
