@@ -354,6 +354,10 @@ void VideoReceiver::setVideoSavePath(const QString & path)
 
 #if defined(QGC_GST_STREAMING)
 void VideoReceiver::_shutdownPipeline() {
+    if(!_pipeline) {
+        qCDebug(VideoReceiverLog) << "No pipeline";
+        return;
+    }
     GstBus* bus = NULL;
     if ((bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline))) != NULL) {
         gst_bus_disable_sync_message_emission(bus);
