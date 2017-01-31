@@ -554,6 +554,7 @@ QGCView {
                     anchors.leftMargin: parent.width - _rightPanelWidth
                     anchors.left:       parent.left
                     spacing:            _horizontalMargin
+                    visible:            QGroundControl.corePlugin.options.enablePlanViewSelector
 
                     readonly property real _buttonRadius: ScreenTools.defaultFontPixelHeight * 0.75
 
@@ -615,7 +616,7 @@ QGCView {
                 Item {
                     id:                 missionItemEditor
                     anchors.topMargin:  _margin
-                    anchors.top:        planElementSelectorRow.bottom
+                    anchors.top:        planElementSelectorRow.visible ? planElementSelectorRow.bottom : planElementSelectorRow.top
                     anchors.bottom:     parent.bottom
                     anchors.right:      parent.right
                     width:              _rightPanelWidth

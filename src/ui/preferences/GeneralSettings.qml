@@ -145,6 +145,7 @@ QGCView {
                         //-----------------------------------------------------------------
                         //-- Base UI Font Point Size
                         Row {
+                            visible: QGroundControl.corePlugin.options.defaultFontPointSize < 1.0
                             spacing: ScreenTools.defaultFontPixelWidth
                             QGCLabel {
                                 id:     baseFontLabel

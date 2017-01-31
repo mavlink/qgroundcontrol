@@ -47,7 +47,7 @@ Item {
     property real largeFontPointSize:       10
 
     property real availableHeight:          0
-    property real toolbarHeight:            defaultFontPixelHeight * 3
+    property real toolbarHeight:            0
 
     readonly property real smallFontPointRatio:      0.75
     readonly property real mediumFontPointRatio:     1.25
@@ -93,6 +93,7 @@ Item {
         smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
         mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
         largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
+        toolbarHeight           = defaultFontPixelHeight * 3 * QGroundControl.corePlugin.options.toolbarHeightMultiplier
     }
 
     Text {
@@ -107,7 +108,10 @@ Item {
         property real   fontWidth:    contentWidth
         property real   fontHeight:   contentHeight
         Component.onCompleted: {
-            var baseSize = QGroundControl.baseFontPointSize;
+            var baseSize = QGroundControl.corePlugin.options.defaultFontPointSize
+            if(baseSize == 0.0) {
+                baseSize = QGroundControl.baseFontPointSize;
+            }
             //-- If this is the first time (not saved in settings)
             if(baseSize < 6 || baseSize > 48) {
                 //-- Init base size base on the platform
