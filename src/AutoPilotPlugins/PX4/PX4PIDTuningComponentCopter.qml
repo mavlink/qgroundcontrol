@@ -29,26 +29,22 @@ SetupPage {
 
                 ///////////////////////////////////////////////////////////////
                 ListElement {
-                    title: qsTr("Roll P")
                     param: "MC_ROLL_P"
                     group: qsTr("Roll")
                     acro: false
                 }
 
                 ListElement {
-                    title: qsTr("Roll Rate P")
                     param: "MC_ROLLRATE_P"
                     group: qsTr("Roll")
                 }
 
                 ListElement {
-                    title: qsTr("Roll Rate I")
                     param: "MC_ROLLRATE_I"
                     group: qsTr("Roll")
                 }
 
                 ListElement {
-                    title: qsTr("Roll Rate D")
                     param: "MC_ROLLRATE_D"
                     group: qsTr("Roll")
                 }
@@ -66,26 +62,22 @@ SetupPage {
 
                 ///////////////////////////////////////////////////////////////
                 ListElement {
-                    title: qsTr("Pitch P")
                     param: "MC_PITCH_P"
                     group: qsTr("Pitch")
                     acro: false
                 }
 
                 ListElement {
-                    title: qsTr("Pitch Rate P")
                     param: "MC_PITCHRATE_P"
                     group: qsTr("Pitch")
                 }
 
                 ListElement {
-                    title: qsTr("Pitch Rate I")
                     param: "MC_PITCHRATE_I"
                     group: qsTr("Pitch")
                 }
 
                 ListElement {
-                    title: qsTr("Pitch Rate D")
                     param: "MC_PITCHRATE_D"
                     group: qsTr("Pitch")
                 }
@@ -104,7 +96,6 @@ SetupPage {
 
                 ///////////////////////////////////////////////////////////////
                 ListElement {
-                    title: qsTr("Yaw P")
                     param: "MC_YAW_P"
                     group: qsTr("Yaw")
                     acro: false
@@ -117,19 +108,16 @@ SetupPage {
                 }
 
                 ListElement {
-                    title: qsTr("Yaw Rate P")
                     param: "MC_YAWRATE_P"
                     group: qsTr("Yaw")
                 }
 
                 ListElement {
-                    title: qsTr("Yaw Rate I")
                     param: "MC_YAWRATE_I"
                     group: qsTr("Yaw")
                 }
 
                 ListElement {
-                    title: qsTr("Yaw Rate D")
                     param: "MC_YAWRATE_D"
                     group: qsTr("Yaw")
                     advanced: true

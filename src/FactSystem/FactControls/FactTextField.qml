@@ -27,7 +27,7 @@ QGCTextField {
     onEditingFinished: {
         if (typeof qgcView !== 'undefined' && qgcView) {
             var errorString = fact.validate(text, false /* convertOnly */)
-            if (errorString == "") {
+            if (errorString === "") {
                 setFactValue(text)
             } else {
                 validationError(text)

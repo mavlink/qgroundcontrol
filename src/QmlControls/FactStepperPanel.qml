@@ -111,9 +111,7 @@ QGCView {
 
                     QGCLabel {
                         id: nameLabel
-                        text: (title
-                               && !title.isEmpty) ? title : (fact
-                                                             && fact.shortDescription ? fact.shortDescription : "")
+                        text: fact && fact.shortDescription ? fact.shortDescription : ""
                         wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignRight
                         verticalAlignment: Text.AlignVCenter
@@ -131,7 +129,7 @@ QGCView {
                         fact: stepperRect.fact
 
                         onValidationError: {
-                            descriptionLabel.visible = !descriptionLabel.visible
+                            helpDetails.visible = true
                         }
                     }
 
@@ -148,21 +146,48 @@ QGCView {
                         Layout.maximumHeight: stepper.height
 
                         onClicked: {
-                            descriptionLabel.visible = !descriptionLabel.visible
+                            helpDetails.visible = !helpDetails.visible
                         }
                     } // QGCButton _tooltipButton
                 }
 
-                QGCLabel {
-                    id: descriptionLabel
 
-                    Layout.fillWidth: true
-
+                Column {
+                    id: helpDetails
                     visible: false
-                    text: fact ? fact.longDescription : ""
-                    wrapMode: Text.WordWrap
-                    horizontalAlignment: Text.AlignLeft
-                } // QGCLabel descriptionLabel
+                    Layout.fillWidth: true
+                    spacing:        defaultTextHeight / 2
+
+                    QGCLabel {
+                        width:      parent.width
+                        wrapMode:   Text.WordWrap
+                        visible:    fact.longDescription
+                        text:       fact.longDescription
+                    }
+
+                    Row {
+                        spacing: defaultTextWidth
+                        visible: !fact.minIsDefaultForType
+
+                        QGCLabel { text: qsTr("Minimum value:") }
+                        QGCLabel { text: fact.minString }
+                    }
+
+                    Row {
+                        spacing: defaultTextWidth
+                        visible: !fact.maxIsDefaultForType
+
+                        QGCLabel { text: qsTr("Maximum value:") }
+                        QGCLabel { text: fact.maxString }
+                    }
+
+                    Row {
+                        spacing: defaultTextWidth
+
+                        QGCLabel { text: qsTr("Parameter:") }
+                        QGCLabel { text: param }
+                    }
+                }
             }
         }
     } // QGCListView
