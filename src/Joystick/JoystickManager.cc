@@ -48,7 +48,7 @@ JoystickManager::~JoystickManager() {
 
 void JoystickManager::setToolbox(QGCToolbox *toolbox)
 {
-   QGCTool::setToolbox(toolbox);
+    QGCTool::setToolbox(toolbox);
 
     _multiVehicleManager = _toolbox->multiVehicleManager();
 
@@ -108,7 +108,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
         setActiveJoystick(NULL);
         return;
     }
-	
+
     QSettings settings;
     
     settings.beginGroup(_settingsGroup);
@@ -193,7 +193,7 @@ void JoystickManager::_updateAvailableJoysticks(void)
 #ifdef __sdljoystick__
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-    	switch(event.type) {
+        switch(event.type) {
         case SDL_QUIT:
             qCDebug(JoystickManagerLog) << "SDL ERROR:" << SDL_GetError();
             break;
@@ -205,7 +205,7 @@ void JoystickManager::_updateAvailableJoysticks(void)
             qCDebug(JoystickManagerLog) << "Joystick removed:" << event.jdevice.which;
             _setActiveJoystickFromSettings();
             break;
-		default:
+        default:
             break;
         }
     }
