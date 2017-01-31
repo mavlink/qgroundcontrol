@@ -118,6 +118,11 @@ QGCView {
                     onTriggered:	controller.clearRCToParam()
                     visible:        _showRCToParam
                 }
+                MenuSeparator { }
+                MenuItem {
+                    text:           qsTr("Reboot Vehicle")
+                    onTriggered:    showDialog(rebootVehicleConfirmComponent, qsTr("Reboot Vehicle"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                }
             }
         }
 
@@ -291,6 +296,23 @@ QGCView {
                 width:              parent.width
                 wrapMode:           Text.WordWrap
                 text:               qsTr("Select Reset to reset all parameters to their defaults.")
+            }
+        }
+    }
+
+    Component {
+        id: rebootVehicleConfirmComponent
+
+        QGCViewDialog {
+            function accept() {
+                QGroundControl.multiVehicleManager.activeVehicle.rebootVehicle()
+                hideDialog()
+            }
+
+            QGCLabel {
+                width:              parent.width
+                wrapMode:           Text.WordWrap
+                text:               qsTr("Select Ok to reboot vehicle.")
             }
         }
     }
