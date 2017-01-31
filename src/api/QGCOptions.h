@@ -29,6 +29,9 @@ public:
     Q_PROPERTY(bool     definesVideo                READ definesVideo               CONSTANT)
     Q_PROPERTY(uint16_t videoUDPPort                READ videoUDPPort               CONSTANT)
     Q_PROPERTY(QString  videoRSTPUrl                READ videoRSTPUrl               CONSTANT)
+    Q_PROPERTY(double   toolbarHeightMultiplier     READ toolbarHeightMultiplier    CONSTANT)
+    Q_PROPERTY(double   defaultFontPointSize        READ defaultFontPointSize       CONSTANT)
+    Q_PROPERTY(bool     enablePlanViewSelector      READ enablePlanViewSelector     CONSTANT)
 
     //! Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /*!
@@ -65,4 +68,19 @@ public:
         @return RTSP url to use. Return "" to disable RTSP.
     */
     virtual QString     videoRSTPUrl                () { return QString(); }
+    //! Main ToolBar Multiplier.
+    /*!
+        @return Factor to use when computing toolbar height
+    */
+    virtual double      toolbarHeightMultiplier     () { return 1.0; }
+    //! Application wide default font point size
+    /*!
+        @return Font size or 0.0 to use computed size.
+    */
+    virtual double      defaultFontPointSize        () { return 0.0; }
+    //! Enable Plan View Selector (Mission, Fence or Rally)
+    /*!
+        @return True or false
+    */
+    virtual bool        enablePlanViewSelector      () { return true; }
 };
