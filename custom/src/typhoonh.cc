@@ -26,6 +26,9 @@ public:
     bool        definesVideo                () { return true; }
     uint16_t    videoUDPPort                () { return 0; }
     QString     videoRSTPUrl                () { return QString("rtsp://192.168.42.1:554/live"); }
+    double      toolbarHeightMultiplier     () { return 1.25; }
+    double      defaultFontPointSize        () { return 16.0; }
+    bool        enablePlanViewSelector      () { return false; }
 };
 
 //-----------------------------------------------------------------------------

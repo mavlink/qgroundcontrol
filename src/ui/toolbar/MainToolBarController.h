@@ -37,7 +37,6 @@ public:
     MainToolBarController(QObject* parent = NULL);
     ~MainToolBarController();
 
-    Q_PROPERTY(double       height              MEMBER _toolbarHeight           NOTIFY heightChanged)
     Q_PROPERTY(int          telemetryRRSSI      READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)
     Q_PROPERTY(int          telemetryLRSSI      READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
     Q_PROPERTY(unsigned int telemetryRXErrors   READ telemetryRXErrors          NOTIFY telemetryRXErrorsChanged)
@@ -81,8 +80,6 @@ private:
     uint32_t        _telemetryTXBuffer;
     uint32_t        _telemetryLNoise;
     uint32_t        _telemetryRNoise;
-
-    double          _toolbarHeight;
 
     QStringList     _toolbarMessageQueue;
     QMutex          _toolbarMessageQueueMutex;
