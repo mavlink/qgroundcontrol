@@ -260,6 +260,42 @@ QGCView {
             visible:            singleVehicleView.checked
         }
 
+        // Button to start/stop video recording
+        Item {
+            z:                  _flightVideoPipControl.z + 1
+            anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+            anchors.bottom:     _flightVideo.bottom
+            anchors.right:      _flightVideo.right
+            height:             ScreenTools.defaultFontPixelHeight * 2
+            width:              height
+            visible:            QGroundControl.videoManager.videoRunning
+            opacity:            0.75
+
+            Rectangle {
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                width:              height
+                radius:             QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording ? 0 : height
+                color:              "red"
+            }
+
+            QGCColoredImage {
+                anchors.top:                parent.top
+                anchors.bottom:             parent.bottom
+                anchors.horizontalCenter:   parent.horizontalCenter
+                width:                      height * 0.625
+                sourceSize.width:           width
+                source:                     "/qmlimages/CameraIcon.svg"
+                fillMode:                   Image.PreserveAspectFit
+                color:                      "white"
+            }
+
+            MouseArea {
+                anchors.fill:   parent
+                onClicked:      QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording ? QGroundControl.videoManager.videoReceiver.stopRecording() : QGroundControl.videoManager.videoReceiver.startRecording()
+            }
+        }
+
         MultiVehicleList {
             anchors.margins:    _margins
             anchors.top:        singleMultiSelector.bottom
