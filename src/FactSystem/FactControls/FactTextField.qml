@@ -17,7 +17,6 @@ QGCTextField {
     showHelp:   true
 
     property Fact   fact:           null
-    property string _validateString
 
     // At this point all Facts are numeric
     validator:          DoubleValidator {}
@@ -29,19 +28,27 @@ QGCTextField {
         if (typeof qgcView !== 'undefined' && qgcView) {
             var errorString = fact.validate(text, false /* convertOnly */)
             if (errorString == "") {
-                fact.value = text
+                setFactValue(text)
             } else {
-                _validateString = text
-                qgcView.showDialog(validationErrorDialogComponent, qsTr("Invalid Value"), qgcView.showDialogDefaultWidth, StandardButton.Save)
+                validationError(text)
             }
         } else {
-            fact.value = text
-            fact.valueChanged(fact.value)
+            setFactValue(text)
         }
     }
 
-    onHelpClicked: qgcView.showDialog(helpDialogComponent, qsTr("Value Details"), qgcView.showDialogDefaultWidth, StandardButton.Save)
+    function setFactValue(newValue) {
+        fact.value = text
+        fact.valueChanged(fact.value)
+    }
 
+    signal validationError(string text)
+
+    property string _validateString
+    onValidationError: {
+        _validateString = text
+        qgcView.showDialog(validationErrorDialogComponent, qsTr("Invalid Value"), qgcView.showDialogDefaultWidth, StandardButton.Save)
+    }
 
     Component {
         id: validationErrorDialogComponent
@@ -52,6 +59,8 @@ QGCTextField {
             fact:           _textField.fact
         }
     }
+
+    onHelpClicked: qgcView.showDialog(helpDialogComponent, qsTr("Value Details"), qgcView.showDialogDefaultWidth, StandardButton.Save)
 
     Component {
         id: helpDialogComponent

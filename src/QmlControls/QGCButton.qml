@@ -47,6 +47,40 @@ Button {
         }
     }
 
+    Timer {
+        id: longPressTimer
+
+        interval: 500 // press-and-hold delay
+        repeat: false
+        running: false
+
+        onTriggered: {
+            clicked()
+            longPressRepeatTimer.start()
+        }
+    }
+
+    Timer {
+        id: longPressRepeatTimer
+
+        interval: 100 // press-and-hold repeat interval
+        repeat: true
+        running: false
+
+        onTriggered: {
+            clicked()
+        }
+    }
+
+    onPressedChanged: {
+        if ( pressed ) {
+            longPressTimer.start();
+        } else {
+            longPressTimer.stop();
+            longPressRepeatTimer.stop();
+        }
+    }
+
     style: ButtonStyle {
             /*! The padding between the background and the label components. */
             padding {
