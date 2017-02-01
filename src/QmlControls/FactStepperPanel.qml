@@ -62,7 +62,6 @@ QGCView {
         focus: false
         interactive: false
         orientation: ListView.Vertical
-        anchors.margins: _margins
         anchors.fill: parent
         spacing: 5
 
