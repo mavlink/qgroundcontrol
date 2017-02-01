@@ -87,7 +87,7 @@ Item {
             }
         }
 
-        FactTextField {
+        FactBaseTextField {
             id: factInput
             width : parent.width / 2
             height: parent.height
