@@ -128,9 +128,8 @@ QGCView {
 
                         fact: stepperRect.fact
 
-                        onValidationError: {
-                            helpDetails.toggleVisible(true)
-                        }
+                        onValidationError: validationErrorLabel.text = errorText
+                        onValueChanged: validationErrorLabel.text = ""
                     }
 
                     QGCButton {
@@ -151,6 +150,14 @@ QGCView {
                     } // QGCButton _tooltipButton
                 }
 
+
+                QGCLabel {
+                    id: validationErrorLabel
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    visible: text !== ""
+                    color: qgcPal.warningText
+                }
 
                 Column {
                     id: helpDetails

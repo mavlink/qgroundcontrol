@@ -24,22 +24,23 @@ Item {
     property alias showHelp: factInput.showHelp
     property alias showUnits: factInput.showUnits
 
-    property string _valueText:          fact ? fact.valueString : "N/A"
-    property double _factValue:          Number(_valueText)
+    property double _factValue: Number(factInput.text)
 
-    property double minimumValue:       !fact || isNaN(fact.min) ? 0 : fact.min
-    property double maximumValue:       !fact || isNaN(fact.max) ? 1 : fact.max
-    property double stepSize:           !fact || isNaN(fact.increment) ? 0 : fact.increment
-    property double stepRatio:          0.1
+    property double minimumValue: !fact || isNaN(fact.min) ? 0 : fact.min
+    property double maximumValue: !fact || isNaN(fact.max) ? 1 : fact.max
+    property double stepSize: !fact || isNaN(fact.increment) ? 0 : fact.increment
+    property double stepRatio: 0.1
 
     implicitHeight: 50
     implicitWidth: implicitHeight * 4
 
-    signal validationError(string text)
+    signal validationError(string text, string errorText)
+    signal valueChanged(string text)
     signal helpClicked
 
     Component.onCompleted: {
         factInput.validationError.connect(validationError)
+        factInput.valueChanged.connect(valueChanged)
         factInput.helpClicked.connect(helpClicked)
    }
 
@@ -49,7 +50,7 @@ Item {
             step = Math.abs(stepRatio * _factValue);
         }
 
-        newValue = _factValue + (step * multiplier)
+        var newValue = _factValue + (step * multiplier)
         if (newValue < fact.min) {
             newValue = fact.min;
         }
@@ -67,7 +68,7 @@ Item {
         running: false
 
         onTriggered: {
-            factInput.setFactValueImpl(_factValue)
+            factInput.setFactValueImpl(factInput.text)
         }
     }
 
@@ -93,21 +94,11 @@ Item {
 
             horizontalAlignment: TextInput.AlignHCenter
 
-            text: _valueText
-
             function setFactValue(newValue) {
                 factValueChangeDelay.stop()
-                _valueText = newValue.toLocaleString(Qt.locale(), 'f', fact.decimalPlaces)
 
+                text = newValue.toLocaleString(Qt.locale(), 'f', fact.decimalPlaces)
                 factValueChangeDelay.start()
-            }
-
-            onValidationError: {
-                // remove default handler that shows dialog
-            }
-
-            onHelpClicked: {
-                // remove default handler that shows dialog
             }
         }
 
