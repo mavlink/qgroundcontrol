@@ -648,7 +648,6 @@ QGCView {
                         delegate: MissionItemEditor {
                             missionItem:    object
                             width:          parent.width
-                            readOnly:       false
 
                             onClicked:  setCurrentItem(object.sequenceNumber)
 
