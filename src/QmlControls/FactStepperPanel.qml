@@ -41,7 +41,7 @@ QGCView {
     ///     }
     property ListModel steppersModel
 
-    property alias contentHeight: pidGroupsListView.contentHeight
+    property alias contentHeight: pidsView.height
 
     property var qgcViewPanel
     FactPanelController {
@@ -56,34 +56,56 @@ QGCView {
     property real _margins: ScreenTools.defaultFontPixelHeight
     property real _thinMargins: ScreenTools.smallFontPointSize
 
-    ListView {
-        id: pidGroupsListView
-        model: steppersModel
-        focus: false
-        interactive: false
-        orientation: ListView.Vertical
-        anchors.fill: parent
-        spacing: 5
 
-        section {
-            property: "group"
-            delegate: QGCLabel {
-                id: groupTitleLabel
-                lineHeight: 1.3
-                lineHeightMode: Text.ProportionalHeight
-                verticalAlignment: Text.AlignVCenter
-                text: qsTr(section)
-                font.pointSize: ScreenTools.mediumFontPointSize
-            }
+    ColumnLayout {
+        id: pidsView
+
+
+        QGCView {
+            height: pidGroupsListView.contentHeight
+
+            ListView {
+                id: pidGroupsListView
+                model: steppersModel
+                focus: false
+                interactive: false
+                orientation: ListView.Vertical
+                anchors.fill: parent
+                spacing: 5
+
+                section {
+                    property: "group"
+                    delegate: listSection
+                }
+
+                delegate: listItem
+            } // QGCListView
         }
+    }
 
-        delegate: Rectangle {
+    Component {
+        id: listSection
+
+        QGCLabel {
+            id: groupTitleLabel
+            lineHeight: 1.3
+            lineHeightMode: Text.ProportionalHeight
+            verticalAlignment: Text.AlignVCenter
+            text: qsTr(section)
+            font.pointSize: ScreenTools.mediumFontPointSize
+        }
+    } // listSection
+
+    Component {
+        id: listItem
+
+        Rectangle {
             visible: fact
             id: stepperRect
             anchors.left: parent.left
             anchors.right: parent.right
             height: cellColumn.height + _thinMargins * 2
-            color: palette.windowShade
+            color: qgcPal.windowShade
 
             property Fact fact
 
@@ -201,6 +223,6 @@ QGCView {
                     }
                 }
             }
-        }
-    } // QGCListView
+        } // listItem
+    }
 } // QGCView
