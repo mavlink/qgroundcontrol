@@ -100,6 +100,9 @@ Item {
                 text = newValue.toLocaleString(Qt.locale(), 'f', fact.decimalPlaces)
                 factValueChangeDelay.start()
             }
+
+            onValidationError: textColor = qgcPal.warningText
+            onValueChanged: textColor = qgcPal.textFieldText
         }
 
         QGCButton {
