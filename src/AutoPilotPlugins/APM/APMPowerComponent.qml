@@ -138,11 +138,11 @@ SetupPage {
 
                                 onClicked:  {
                                     var measuredVoltageValue = parseFloat(measuredVoltage.text)
-                                    if (measuredVoltageValue == 0) {
+                                    if (measuredVoltageValue == 0 || isNaN(measuredVoltageValue)) {
                                         return
                                     }
                                     var newVoltageMultiplier = (measuredVoltageValue * battVoltMult.value) / controller.vehicle.battery.voltage.value
-                                    if (newVoltageMultiplier != 0) {
+                                    if (newVoltageMultiplier > 0) {
                                         battVoltMult.value = newVoltageMultiplier
                                     }
                                 }
