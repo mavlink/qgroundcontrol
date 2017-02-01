@@ -49,7 +49,14 @@ Item {
             step = Math.abs(stepRatio * _factValue);
         }
 
-        factInput.setFactValue(_factValue + (step * multiplier));
+        newValue = _factValue + (step * multiplier)
+        if (newValue < fact.min) {
+            newValue = fact.min;
+        }
+        if (newValue > fact.max) {
+            newValue = fact.max;
+        }
+        factInput.setFactValue(newValue);
     }
 
     Timer {
@@ -86,18 +93,9 @@ Item {
 
             horizontalAlignment: TextInput.AlignHCenter
 
-            text:       _valueText
-
-            fact: _fact
+            text: _valueText
 
             function setFactValue(newValue) {
-                if (newValue < fact.min) {
-                    newValue = fact.min;
-                }
-                if (newValue > fact.max) {
-                    newValue = fact.max;
-                }
-
                 factValueChangeDelay.stop()
                 _valueText = newValue.toLocaleString(Qt.locale(), 'f', fact.decimalPlaces)
 
