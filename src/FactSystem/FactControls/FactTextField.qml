@@ -45,8 +45,6 @@ QGCTextField {
     function setFactValueImpl(newValue) {
         fact.value = newValue
         fact.valueChanged(fact.value)
-
-        console.log(fact.name, "=", newValue)
     }
 
     signal validationError(string text)
