@@ -60,8 +60,7 @@ Item {
         running: false
 
         onTriggered: {
-            fact.value = _factValue;
-            fact.valueChanged(fact.value)
+            factInput.setFactValueImpl(_factValue)
         }
     }
 
@@ -102,16 +101,15 @@ Item {
                 factValueChangeDelay.stop()
                 _valueText = newValue.toLocaleString(Qt.locale(), 'f', fact.decimalPlaces)
 
-                console.log(fact.name, ": _factValue=", _factValue)
                 factValueChangeDelay.start()
             }
 
             onValidationError: {
-                // do nothing by default
+                // remove default handler that shows dialog
             }
 
             onHelpClicked: {
-                // do nothing by default
+                // remove default handler that shows dialog
             }
         }
 

@@ -129,7 +129,7 @@ QGCView {
                         fact: stepperRect.fact
 
                         onValidationError: {
-                            helpDetails.visible = true
+                            helpDetails.toggleVisible(true)
                         }
                     }
 
@@ -146,7 +146,7 @@ QGCView {
                         Layout.maximumHeight: stepper.height
 
                         onClicked: {
-                            helpDetails.visible = !helpDetails.visible
+                            helpDetails.toggleVisible()
                         }
                     } // QGCButton _tooltipButton
                 }
@@ -157,6 +157,12 @@ QGCView {
                     visible: false
                     Layout.fillWidth: true
                     spacing:        defaultTextHeight / 2
+
+                    function toggleVisible(forceShow) {
+                        forceShow = typeof forceShow !== 'undefined' ? forceShow : false
+
+                        visible = fact && (!visible || forceShow)
+                    }
 
                     QGCLabel {
                         width:      parent.width

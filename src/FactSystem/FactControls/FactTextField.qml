@@ -38,8 +38,15 @@ QGCTextField {
     }
 
     function setFactValue(newValue) {
-        fact.value = text
+        setFactValueImpl(newValue)
+    }
+
+    // Extra layer of indirections to allow 'super' call if setFactValue is overriden
+    function setFactValueImpl(newValue) {
+        fact.value = newValue
         fact.valueChanged(fact.value)
+
+        console.log(fact.name, "=", newValue)
     }
 
     signal validationError(string text)
