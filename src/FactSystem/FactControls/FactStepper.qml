@@ -28,7 +28,7 @@ Item {
 
     property double minimumValue: !fact || isNaN(fact.min) ? 0 : fact.min
     property double maximumValue: !fact || isNaN(fact.max) ? 10000 : fact.max
-    property double increment: !fact || isNaN(fact.increment) ? 0 : fact.increment
+    property double increment: !fact || isNaN(fact.increment) ? 0.001 : fact.increment
     property double incrementRatio: 1.0
 
     implicitHeight: 50
@@ -45,12 +45,7 @@ Item {
    }
 
     function incrementWithScale(multiplier) {
-        var step = increment
-        if (step == 0) {
-            step = Math.abs(0.1 * _factValue)
-        }
-
-        var newValue = _factValue + (step * incrementRatio * multiplier)
+        var newValue = _factValue + (increment * incrementRatio * multiplier)
         newValue = Math.max(newValue, minimumValue)
         newValue = Math.min(newValue, maximumValue)
 
