@@ -3,10 +3,9 @@
 
 #include <QDebug>
 
-MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
-    QThread()
+MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol) :
+    QThread(), creationThread(QThread::currentThread())
 {
-    Q_UNUSED(parent);
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
@@ -52,6 +51,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
 //    textMessageFilter.insert(MAVLINK_MSG_ID_HIGHRES_IMU, false);
 
     connect(protocol, &MAVLinkProtocol::messageReceived, this, &MAVLinkDecoder::receiveMessage);
+    connect(this, &MAVLinkDecoder::finish, this, &QThread::quit);
 
     start(LowPriority);
 }
@@ -63,6 +63,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
 void MAVLinkDecoder::run()
 {
     exec();
+    moveToThread(creationThread);
 }
 
 void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t message)
