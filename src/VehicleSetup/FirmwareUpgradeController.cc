@@ -301,7 +301,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackAPM, DeveloperFirmware, PlaneFirmware,          "http://firmware.ardupilot.org/Plane/latest/PX4/ArduPlane-v1.px4"},
         { AutoPilotStackAPM, DeveloperFirmware, RoverFirmware,          "http://firmware.ardupilot.org/Rover/latest/PX4/APMrover2-v1.px4"}
     };
-
+    //////////////////////////////////// AUAVX2_1 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgAUAVX2_1FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/auav-x21_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/auav-x21_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/auav-x21_default.px4"},
+    };
     //////////////////////////////////// MindPXFMUV2 firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgMindPXFMUV2FirmwareArray[] = {
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/mindpx-v2_default.px4"},
@@ -355,6 +360,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgPX4FMUV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
+    size = sizeof(rgAUAVX2_1FirmwareArray)/sizeof(rgAUAVX2_1FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgAUAVX2_1FirmwareArray[i];
+        _rgAUAVX2_1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
     size = sizeof(rgMindPXFMUV2FirmwareArray)/sizeof(rgMindPXFMUV2FirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgMindPXFMUV2FirmwareArray[i];
@@ -406,6 +417,8 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         return &_rgPX4FMUV4Firmware;
     case Bootloader::boardIDAeroCore:
         return &_rgAeroCoreFirmware;
+    case Bootloader::boardIDAUAVX2_1:
+        return &_rgAUAVX2_1Firmware;
     case Bootloader::boardIDMINDPXFMUV2:
         return &_rgMindPXFMUV2Firmware;
     case Bootloader::boardIDTAPV1:
