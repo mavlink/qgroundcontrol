@@ -42,34 +42,35 @@ public:
     Q_INVOKABLE int mouseX(void) { return QCursor::pos().x(); }
     Q_INVOKABLE int mouseY(void) { return QCursor::pos().y(); }
 
+#if defined(__mobile__)
+    bool    isMobile            () { return true;  }
+#else
+    bool    isMobile            () { return qgcApp()->fakeMobile(); }
+#endif
+
 #if defined (__android__)
     bool    isAndroid           () { return true;  }
     bool    isiOS               () { return false; }
-    bool    isMobile            () { return true;  }
     bool    isLinux             () { return false; }
     bool    isMacOS             () { return false; }
 #elif defined(__ios__)
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return true; }
-    bool    isMobile            () { return true; }
     bool    isLinux             () { return false; }
     bool    isMacOS             () { return false; }
 #elif defined(__macos__)
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return false; }
-    bool    isMobile            () { return qgcApp()->fakeMobile(); }
     bool    isLinux             () { return false; }
     bool    isMacOS             () { return true; }
 #elif defined(Q_OS_LINUX)
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return false; }
-    bool    isMobile            () { return qgcApp()->fakeMobile(); }
     bool    isLinux             () { return true; }
     bool    isMacOS             () { return false; }
 #else
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return false; }
-    bool    isMobile            () { return qgcApp()->fakeMobile(); }
     bool    isLinux             () { return false; }
     bool    isMacOS             () { return false; }
 #endif
