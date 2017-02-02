@@ -25,6 +25,7 @@ import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Controls.Private 1.0
+import QtQml.Models 2.2
 
 import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
@@ -41,7 +42,7 @@ QGCView {
     ///     }
     property ListModel steppersModel
 
-    property alias contentHeight: pidsView.height
+    property alias contentHeight: pidsView.implicitHeight
 
     property var qgcViewPanel
     FactPanelController {
@@ -56,31 +57,99 @@ QGCView {
     property real _margins: ScreenTools.defaultFontPixelHeight
     property real _thinMargins: ScreenTools.smallFontPointSize
 
+    DelegateModel {
+        id: steppersFilteredModel
+        delegate: listItem
+        model: steppersModel
+        groups: [
+            DelegateModelGroup {
+                includeByDefault: false
+                name: "simple"
+            },
+            DelegateModelGroup {
+                includeByDefault: true
+                name: "advanced"
+            },
+            DelegateModelGroup {
+                includeByDefault: false
+                name: "stabilized"
+            },
+            DelegateModelGroup {
+                includeByDefault: false
+                name: "acro"
+            }
+        ]
+        filterOnGroup: "advanced"
+
+        Component.onCompleted: {
+            var rowCount = steppersModel.count
+            items.remove(0, rowCount)
+            for (var i = 0; i < rowCount; i++) {
+                var entry = steppersModel.get(i)
+                if (typeof entry.advanced === "undefined" || !entry.advanced) {
+                    items.insert(entry, "simple")
+                } else {
+                    items.insert(entry, "advanced")
+                }
+
+                if (typeof entry.acro === "undefined" || !entry.acro) {
+                    items.insert(entry, "stabilized")
+                } else {
+                    items.insert(entry, "acro")
+                }
+            }
+        }
+    }
+
 
     ColumnLayout {
         id: pidsView
+        anchors.fill: parent
+        ListView {
+            id: pidGroupsListView
+            model: steppersFilteredModel
+            focus: false
+            clip: true
+            interactive: false
+            orientation: ListView.Vertical
+            Layout.fillWidth: true
+            spacing: 5
 
+            Layout.minimumHeight: contentHeight
+        } // QGCListView
 
-        QGCView {
-            height: pidGroupsListView.contentHeight
+//        RowLayout {
+//            Layout.fillWidth: true
 
-            ListView {
-                id: pidGroupsListView
-                model: steppersModel
-                focus: false
-                interactive: false
-                orientation: ListView.Vertical
-                anchors.fill: parent
-                spacing: 5
+//            QGCButton {
+//                text:       qsTr("Advanced")
+//                onClicked:  steppersFilteredModel.filterOnGroup = "advanced"
+//            }
+//            QGCButton {
+//                text:       qsTr("Simple")
+//                onClicked:  steppersFilteredModel.filterOnGroup = "simple"
+//            }
+//            QGCButton {
+//                text:       qsTr("Acro")
+//                onClicked:  steppersFilteredModel.filterOnGroup = "acro"
+//            }
+//            QGCButton {
+//                text:       qsTr("Stabilized")
+//                onClicked:  steppersFilteredModel.filterOnGroup = "stabilized"
+//            }
+//        }
 
-                section {
-                    property: "group"
-                    delegate: listSection
-                }
+//        ListView {
+//            id: pidGroupsListView
+//            model: steppersFilteredModel
+//            focus: false
+//            interactive: false
+//            orientation: ListView.Vertical
+////            anchors.fill: parent
+//            Layout.fillWidth: true
+//            spacing: 5
 
-                delegate: listItem
-            } // QGCListView
-        }
+//        } // QGCListView
     }
 
     Component {
