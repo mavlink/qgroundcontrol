@@ -57,6 +57,8 @@ public:
 private slots:
     void    _bytesReady                         (QByteArray data);
     void    _stateManager                       ();
+    void    _vehicleReady                       (bool parameterReadyVehicleAvailable);
+
 private:
     bool    _enterRun                           ();
     bool    _exitRun                            ();

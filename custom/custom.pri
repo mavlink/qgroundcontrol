@@ -1,13 +1,15 @@
 message("Adding Yuneec Typhoon H plugin")
 
 linux : android-g++ {
-    !equals(ANDROID_TARGET_ARCH, x86)  {
-        error("Unsuported Android toolchain, only x86 supported")
+    equals(ANDROID_TARGET_ARCH, x86)  {
+        CONFIG  += DISABLE_BUILTIN_ANDROID
+        message("Using Typhoon specific Android interfaces")
+    } else {
+        message("Unsuported Android toolchain, limited functionality for development only")
     }
 } else {
-    message("Non suported Platform, limited functionality development only")
+    message("Non suported Platform, limited functionality for development only")
     DEFINES += __mobile__
-    #CONFIG  += DISABLE_VIDEOSTREAMING
 }
 
 QGCROOT = $$PWD/..
@@ -17,7 +19,8 @@ DEFINES += CUSTOMCLASS=TyphoonHPlugin
 
 CONFIG  += NoSerialBuild
 CONFIG  += MobileBuild
-CONFIG  += DISABLE_BUILTIN_ANDROID QGC_DISABLE_APM_PLUGIN QGC_DISABLE_APM_PLUGIN_FACTORY QGC_DISABLE_PX4_PLUGIN QGC_DISABLE_PX4_PLUGIN_FACTORY
+CONFIG  += QGC_DISABLE_APM_PLUGIN QGC_DISABLE_APM_PLUGIN_FACTORY QGC_DISABLE_PX4_PLUGIN QGC_DISABLE_PX4_PLUGIN_FACTORY
+CONFIG  += DISABLE_VIDEORECORDING
 
 DEFINES += NO_SERIAL_LINK
 DEFINES += NO_UDP_VIDEO
@@ -45,10 +48,15 @@ HEADERS += \
 INCLUDEPATH += \
     $$PWD/src \
 
+ReleaseBuild {
+    QT      += qml-private
+    CONFIG  += qtquickcompiler
+}
+
 #-------------------------------------------------------------------------------------
 # Firmware Plugin
 
-RESOURCES *= $$QGCROOT/src/FirmwarePlugin/PX4/PX4Resources.qrc
+RESOURCES += $$QGCROOT/src/FirmwarePlugin/PX4/PX4Resources.qrc
 
 INCLUDEPATH += \
     $$PWD/src/FirmwarePlugin \

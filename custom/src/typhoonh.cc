@@ -16,6 +16,15 @@ const char* kMainIsMap = "MainFlyWindowIsMap";
 const char* kStyleKey  = "StyleIsDark";
 
 //-----------------------------------------------------------------------------
+static QObject*
+typhoonHCoreSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    TyphoonHCore* pCore = new TyphoonHCore();
+    pCore->init();
+    return pCore;
+}
+
+//-----------------------------------------------------------------------------
 class TyphoonHOptions : public QGCOptions
 {
 public:
@@ -44,7 +53,6 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
     , _pMAVLink(NULL)
 {
     _pOptions = new TyphoonHOptions;
-    _pCore = new TyphoonHCore(this);
     //-- Set our own "defaults"
     QSettings settings;
     //-- Make "Dark" style default
@@ -65,8 +73,6 @@ TyphoonHPlugin::~TyphoonHPlugin()
         delete _pOptions;
     if(_pTyphoonSettings)
         delete _pTyphoonSettings;
-    if(_pCore)
-        delete _pCore;
     if(_pGeneral)
         delete _pGeneral;
     if(_pOfflineMaps)
@@ -80,8 +86,7 @@ void
 TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
 {
     QGCCorePlugin::setToolbox(toolbox);
-    _pCore->init();
-    connect(toolbox->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &TyphoonHPlugin::_vehicleReady);
+    qmlRegisterSingletonType<TyphoonHCore>("TyphoonHCore", 1, 0, "TyphoonHCore", typhoonHCoreSingletonFactory);
 }
 
 //-----------------------------------------------------------------------------
@@ -114,13 +119,4 @@ TyphoonHPlugin::settings()
         settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
     }
     return settingsList;
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHPlugin::_vehicleReady(bool parameterReadyVehicleAvailable)
-{
-    if(parameterReadyVehicleAvailable) {
-        _pCore->vehicleReady();
-    }
 }

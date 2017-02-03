@@ -22,15 +22,10 @@ public:
 
     QGCOptions*     options     ();
     QVariantList&   settings    ();
-    TyphoonHCore*   core        () { return _pCore; }
 
     void            setToolbox  (QGCToolbox* toolbox);
 
-private slots:
-    void            _vehicleReady(bool parameterReadyVehicleAvailable);
-
 private:
-    TyphoonHCore*       _pCore;
     TyphoonHOptions*    _pOptions;
     QGCSettings*        _pTyphoonSettings;
     QGCSettings*        _pGeneral;
