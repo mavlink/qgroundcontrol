@@ -120,6 +120,15 @@ VideoEnabled {
 
     message("Including support for video streaming")
 
+    contains (CONFIG, DISABLE_VIDEORECORDING) {
+        message("Skipping support for video recording (manual override from command line)")
+    # Otherwise the user can still disable this feature in the user_config.pri file.
+    } else:exists($$BASEDIR/user_config.pri):infile($$BASEDIR/user_config.pri, DEFINES, DISABLE_VIDEORECORDING) {
+        message("Skipping support for video recording (manual override from user_config.pri)")
+    } else {
+        DEFINES += QGC_ENABLE_VIDEORECORDING
+    }
+
     DEFINES += \
         QGC_GST_STREAMING \
         GST_PLUGIN_BUILD_STATIC \

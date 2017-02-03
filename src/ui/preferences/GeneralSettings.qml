@@ -535,7 +535,7 @@ QGCView {
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer
+                            visible:    QGroundControl.videoManager.isGStreamer && QGroundControl.videoManager.recordingEnabled
                             QGCLabel {
                                 anchors.baseline:   pathField.baseline
                                 text:               qsTr("Save Path:")
