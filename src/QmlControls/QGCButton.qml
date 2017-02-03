@@ -66,7 +66,7 @@ Button {
                     anchors.fill:   parent
                     border.width:   _showBorder ? 1: 0
                     border.color:   _qgcPal.buttonText
-                    radius:         3
+                    //radius:       3
                     color:          _showHighlight ?
                                         control._qgcPal.buttonHighlight :
                                         (primary ? control._qgcPal.primaryButton : control._qgcPal.button)
