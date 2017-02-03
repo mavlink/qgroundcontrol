@@ -29,12 +29,15 @@
 static const char* kVideoSourceKey  = "VideoSource";
 static const char* kVideoUDPPortKey = "VideoUDPPort";
 static const char* kVideoRTSPUrlKey = "VideoRTSPUrl";
-static const char* kVideoSavePathKey = "VideoSavePath";
+static const char* kNoVideo         = "No Video Available";
+
 #if defined(QGC_GST_STREAMING)
+#if defined(QGC_ENABLE_VIDEORECORDING)
+static const char* kVideoSavePathKey= "VideoSavePath";
+#endif
 static const char* kUDPStream       = "UDP Video Stream";
 static const char* kRTSPStream      = "RTSP Video Stream";
 #endif
-static const char* kNoVideo         = "No Video Available";
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
@@ -83,7 +86,9 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
        setUdpPort(settings.value(kVideoUDPPortKey, 5600).toUInt());
        setRtspURL(settings.value(kVideoRTSPUrlKey, "rtsp://192.168.42.1:554/live").toString()); //-- Example RTSP URL
    }
+#if defined(QGC_ENABLE_VIDEORECORDING)
    setVideoSavePath(settings.value(kVideoSavePathKey, QDir::homePath()).toString());
+#endif
 #endif
    _init = true;
 #if defined(QGC_GST_STREAMING)
@@ -192,18 +197,26 @@ VideoManager::setRtspURL(QString url)
 
 void
 VideoManager::setVideoSavePathByUrl(QUrl url) {
+#if defined(QGC_ENABLE_VIDEORECORDING)
     setVideoSavePath(url.toLocalFile());
+#else
+    Q_UNUSED(url);
+#endif
 }
 
 void
 VideoManager::setVideoSavePath(QString path)
 {
+#if defined(QGC_ENABLE_VIDEORECORDING)
     _videoSavePath = path;
     QSettings settings;
     settings.setValue(kVideoSavePathKey, path);
     if(_videoReceiver)
         _videoReceiver->setVideoSavePath(_videoSavePath);
     emit videoSavePathChanged();
+#else
+    Q_UNUSED(path);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -277,14 +290,16 @@ void VideoManager::_updateVideo()
             delete _videoSurface;
         _videoSurface  = new VideoSurface;
         _videoReceiver = new VideoReceiver(this);
-        #if defined(QGC_GST_STREAMING)
+#if defined(QGC_GST_STREAMING)
         _videoReceiver->setVideoSink(_videoSurface->videoSink());
         if(_videoSource == kUDPStream)
             _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_udpPort));
         else
             _videoReceiver->setUri(_rtspURL);
+#if defined(QGC_ENABLE_VIDEORECORDING)
         _videoReceiver->setVideoSavePath(_videoSavePath);
-        #endif
+#endif
+#endif
         _videoReceiver->start();
     }
 }

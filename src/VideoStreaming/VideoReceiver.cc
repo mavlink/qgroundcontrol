@@ -346,10 +346,14 @@ void VideoReceiver::setUri(const QString & uri)
     _uri = uri;
 }
 
-void VideoReceiver::setVideoSavePath(const QString & path)
+void VideoReceiver::setVideoSavePath(const QString& path)
 {
+#if defined(QGC_ENABLE_VIDEORECORDING)
     _path = path;
     qCDebug(VideoReceiverLog) << "New Path:" << _path;
+#else
+    Q_UNUSED(path);
+#endif
 }
 
 #if defined(QGC_GST_STREAMING)
@@ -452,7 +456,8 @@ gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer dat
 //                                        +--------------------------------------+
 void VideoReceiver::startRecording(void)
 {
-#if defined(QGC_GST_STREAMING)
+#if defined(QGC_GST_STREAMING) && defined(QGC_ENABLE_VIDEORECORDING)
+
     qCDebug(VideoReceiverLog) << "startRecording()";
     // exit immediately if we are already recording
     if(_pipeline == NULL || _recording) {
@@ -506,7 +511,7 @@ void VideoReceiver::startRecording(void)
 
 void VideoReceiver::stopRecording(void)
 {
-#if defined(QGC_GST_STREAMING)
+#if defined(QGC_GST_STREAMING) && defined(QGC_ENABLE_VIDEORECORDING)
     qCDebug(VideoReceiverLog) << "stopRecording()";
     // exit immediately if we are not recording
     if(_pipeline == NULL || !_recording) {
