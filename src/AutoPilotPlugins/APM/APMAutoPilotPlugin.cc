@@ -25,6 +25,7 @@
 #include "APMPowerComponent.h"
 #include "MotorComponent.h"
 #include "APMCameraComponent.h"
+#include "APMVideoStreamingComponent.h"
 #include "APMLightsComponent.h"
 #include "APMSubFrameComponent.h"
 #include "ESP8266Component.h"
@@ -105,6 +106,10 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _cameraComponent = new APMCameraComponent(_vehicle, this);
             _cameraComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_cameraComponent));
+
+            _videoStreamingComponent = new APMVideoStreamingComponent(_vehicle, this);
+            _videoStreamingComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_videoStreamingComponent));
 
             if (_vehicle->sub()) {
                 _lightsComponent = new APMLightsComponent(_vehicle, this);

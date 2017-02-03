@@ -804,6 +804,8 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMSensorsComponent.h \
         src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
         src/AutoPilotPlugins/APM/APMTuningComponent.h \
+        src/AutoPilotPlugins/APM/APMVideoStreamingComponent.h \
+        src/AutoPilotPlugins/APM/APMVideoStreamingComponentController.h \
         src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
         src/FirmwarePlugin/APM/APMGeoFenceManager.h \
         src/FirmwarePlugin/APM/APMParameterMetaData.h \
@@ -831,6 +833,8 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMSensorsComponent.cc \
         src/AutoPilotPlugins/APM/APMSensorsComponentController.cc \
         src/AutoPilotPlugins/APM/APMTuningComponent.cc \
+        src/AutoPilotPlugins/APM/APMVideoStreamingComponent.cc \
+        src/AutoPilotPlugins/APM/APMVideoStreamingComponentController.cc \
         src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
         src/FirmwarePlugin/APM/APMGeoFenceManager.cc \
         src/FirmwarePlugin/APM/APMParameterMetaData.cc \

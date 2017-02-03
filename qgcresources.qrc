@@ -59,6 +59,7 @@
         <file alias="LandModeCopter.svg">src/AutoPilotPlugins/PX4/Images/LandModeCopter.svg</file>
         <file alias="LightsComponentIcon.png">src/AutoPilotPlugins/APM/Images/LightsComponentIcon.png</file>
         <file alias="SubFrameComponentIcon.png">src/AutoPilotPlugins/APM/Images/SubFrameComponentIcon.png</file>
+        <file alias="VideoComponentIcon.png">src/AutoPilotPlugins/APM/Images/VideoComponentIcon.png</file>
         <file alias="Frames/BlueROV1.png">src/AutoPilotPlugins/APM/Images/bluerov-frame.png</file>
         <file alias="Frames/Vectored.png">src/AutoPilotPlugins/APM/Images/vectored-frame.png</file>
         <file alias="Frames/Vectored6DOF.png">src/AutoPilotPlugins/APM/Images/vectored6dof-frame.png</file>
