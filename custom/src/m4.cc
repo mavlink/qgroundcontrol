@@ -77,18 +77,6 @@ dump_data_packet(QByteArray data)
 #endif
 
 //-----------------------------------------------------------------------------
-static QObject*
-typhoonHCoreSingletonFactory(QQmlEngine*, QJSEngine*)
-{
-    TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
-    if(pPlug && pPlug->core()) {
-        QQmlEngine::setObjectOwnership(pPlug->core(), QQmlEngine::CppOwnership);
-        return pPlug->core();
-    }
-    return NULL;
-}
-
-//-----------------------------------------------------------------------------
 TyphoonHCore::TyphoonHCore(QObject* parent)
     : QObject(parent)
     , _state(STATE_NONE)
@@ -145,23 +133,24 @@ TyphoonHCore::init()
         _rxBindInfoFeedback.txAddr      = settings.value(ktxAddr,       0).toInt();
     }
     settings.endGroup();
-    qmlRegisterSingletonType<TyphoonHCore>("TyphoonHCore", 1, 0, "TyphoonHCore", typhoonHCoreSingletonFactory);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &TyphoonHCore::_vehicleReady);
 }
 
 //-----------------------------------------------------------------------------
-bool
-TyphoonHCore::vehicleReady()
+void
+TyphoonHCore::_vehicleReady(bool parameterReadyVehicleAvailable)
 {
-    qCDebug(YuneecLog) << "Init M4 Handler";
-    if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
-        qCWarning(YuneecLog) << "Could not start serial communication with M4";
-        return false;
+    if(parameterReadyVehicleAvailable) {
+        qCDebug(YuneecLog) << "Init M4 Handler";
+        if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
+            qCWarning(YuneecLog) << "Could not start serial communication with M4";
+            return;
+        }
+        connect(&_timer, &QTimer::timeout, this, &TyphoonHCore::_stateManager);
+        _timer.setSingleShot(true);
+        _sendRxInfoEnd = false;
+        connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHCore::_bytesReady);
     }
-    connect(&_timer, &QTimer::timeout, this, &TyphoonHCore::_stateManager);
-    _timer.setSingleShot(true);
-    _sendRxInfoEnd = false;
-    connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHCore::_bytesReady);
-    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -174,17 +163,17 @@ TyphoonHCore::enterBindMode()
     if(v) {
         qCDebug(YuneecLog) << "pairRX()";
         v->uas()->pairRX(1, 0);
+        //-- Set M4 into bind mode
+        _rxBindInfoFeedback.clear();
+        if(_m4State == M4_STATE_BIND) {
+            _exitBind();
+            QThread::msleep(150);
+        } else if(_m4State == M4_STATE_RUN) {
+            _exitRun();
+            QThread::msleep(150);
+        }
+        _initSequence();
     }
-    //-- Set M4 into bind mode
-    _rxBindInfoFeedback.clear();
-    if(_m4State == M4_STATE_BIND) {
-        _exitBind();
-        QThread::msleep(150);
-    } else if(_m4State == M4_STATE_RUN) {
-        _exitRun();
-        QThread::msleep(150);
-    }
-    _initSequence();
 }
 
 //-----------------------------------------------------------------------------
