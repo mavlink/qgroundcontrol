@@ -561,6 +561,12 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_VFR_HUD:
         _handleVfrHud(message);
         break;
+    case MAVLINK_MSG_ID_VIDEO_STREAM_TARGET:
+        emit mavlinkVideoStreamTarget(message);
+        break;
+    case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
+        emit mavlinkCameraCaptureStatus(message);
+        break;
 
     // Following are ArduPilot dialect messages
 
