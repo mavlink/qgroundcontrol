@@ -156,6 +156,7 @@
         <file alias="Signal100.svg">src/ui/toolbar/Images/Signal100.svg</file>
         <file alias="TelemRSSI.svg">src/ui/toolbar/Images/TelemRSSI.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
+        <file alias="CameraIcon.svg">src/ui/toolbar/Images/CameraIcon.svg</file>
         <file alias="CogWheel.svg">src/MissionManager/CogWheel.svg</file>
         <file alias="StationMode.svg">src/AutoPilotPlugins/Common/Images/StationMode.svg</file>
         <file alias="APMode.svg">src/AutoPilotPlugins/Common/Images/APMode.svg</file>

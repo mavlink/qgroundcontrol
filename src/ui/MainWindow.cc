@@ -274,6 +274,11 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
+    // Enforce thread-safe shutdown of the mavlink decoder
+    mavlinkDecoder->finish();
+    mavlinkDecoder->wait(1000);
+    mavlinkDecoder->deleteLater();
+
     // This needs to happen before we get into the QWidget dtor
     // otherwise  the QML engine reads freed data and tries to
     // destroy MainWindow a second time.
@@ -290,8 +295,7 @@ QString MainWindow::_getWindowGeometryKey()
 void MainWindow::_buildCommonWidgets(void)
 {
     // Add generic MAVLink decoder
-    // TODO: This is never deleted
-    mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol(), this);
+    mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol());
     connect(mavlinkDecoder.data(), &MAVLinkDecoder::valueChanged, this, &MainWindow::valueChanged);
 
     // Log player
