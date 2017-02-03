@@ -74,6 +74,9 @@ M4SerialComm::close()
         ::close(_fd);
         _fd = -1;
     }
+    if(!wait(500)) {
+        qDebug() << "SERIAL: Timeout waiting for thread to end";
+    }
 #endif
 }
 
