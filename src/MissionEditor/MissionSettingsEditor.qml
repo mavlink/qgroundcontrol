@@ -62,33 +62,30 @@ Rectangle {
                         color:          qgcPal.text
                     }
 
-                    Repeater {
-                        model: missionItem.textFieldFacts
+                    GridLayout {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        columns:        2
 
-                        Item {
-                            width:  valuesColumn.width
-                            height: textField.height
+                        Repeater {
+                            model: missionItem.textFieldFacts
 
                             QGCLabel {
-                                id:                 textFieldLabel
-                                anchors.baseline:   textField.baseline
-                                text:               object.name
+                                text:           object.name
+                                Layout.column:  0
+                                Layout.row:     index
                             }
+                        }
+
+                        Repeater {
+                            model: missionItem.textFieldFacts
 
                             FactTextField {
-                                id:             textField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                showUnits:      true
-                                fact:           object
-                                visible:        !_root.readOnly
-                            }
-
-                            FactLabel {
-                                anchors.baseline:   textFieldLabel.baseline
-                                anchors.right:      parent.right
+                                showUnits:          true
                                 fact:               object
-                                visible:            _root.readOnly
+                                Layout.column:      1
+                                Layout.row:         index
+                                Layout.fillWidth:   true
                             }
                         }
                     }
