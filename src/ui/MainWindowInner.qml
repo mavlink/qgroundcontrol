@@ -42,6 +42,8 @@ Item {
     readonly property string _planViewSource:       "MissionEditor.qml"
     readonly property string _analyzeViewSource:    "AnalyzeView.qml"
 
+    Component.onCompleted: QGroundControl.startPX4MockLink(true)
+
     onHeightChanged: {
         //-- We only deal with the available height if within the Fly or Plan view
         if(!setupViewLoader.visible) {
