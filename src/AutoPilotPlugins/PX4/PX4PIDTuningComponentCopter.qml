@@ -30,129 +30,134 @@ SetupPage {
                 ///////////////////////////////////////////////////////////////
                 ListElement {
                     param: "MC_ROLL_P"
-                    group: qsTr("Roll")
-                    acro: false
+                    group: "roll"
+                    stabilized: true
                 }
 
                 ListElement {
                     param: "MC_ROLLRATE_P"
-                    group: qsTr("Roll")
+                    group: "roll"
                 }
 
                 ListElement {
                     param: "MC_ROLLRATE_I"
-                    group: qsTr("Roll")
+                    group: "roll"
                 }
 
                 ListElement {
                     param: "MC_ROLLRATE_D"
-                    group: qsTr("Roll")
+                    group: "roll"
                 }
 
                 ListElement {
                     param: "MC_ROLL_TC"
-                    group: qsTr("Roll")
+                    group: "roll"
                     advanced: true
                 }
                 ListElement {
                     param: "MC_ROLLRATE_FF"
-                    group: qsTr("Roll")
+                    group: "roll"
                     advanced: true
                 }
 
                 ///////////////////////////////////////////////////////////////
                 ListElement {
                     param: "MC_PITCH_P"
-                    group: qsTr("Pitch")
-                    acro: false
+                    group: "pitch"
+                    stabilized: true
                 }
 
                 ListElement {
                     param: "MC_PITCHRATE_P"
-                    group: qsTr("Pitch")
+                    group: "pitch"
                 }
 
                 ListElement {
                     param: "MC_PITCHRATE_I"
-                    group: qsTr("Pitch")
+                    group: "pitch"
                 }
 
                 ListElement {
                     param: "MC_PITCHRATE_D"
-                    group: qsTr("Pitch")
+                    group: "pitch"
                 }
 
                 ListElement {
                     param: "MC_PITCH_TC"
-                    group: qsTr("Pitch")
+                    group: "pitch"
                     advanced: true
                 }
 
                 ListElement {
                     param: "MC_PITCHRATE_FF"
-                    group: qsTr("Pitch")
+                    group: "pitch"
                     advanced: true
                 }
 
                 ///////////////////////////////////////////////////////////////
                 ListElement {
                     param: "MC_YAW_P"
-                    group: qsTr("Yaw")
-                    acro: false
+                    group: "yaw"
+                    stabilized: true
                 }
 
                 ListElement {
                     param: "MC_YAW_FF"
-                    group: qsTr("Yaw")
-                    acro: false
+                    group: "yaw"
                 }
 
                 ListElement {
                     param: "MC_YAWRATE_P"
-                    group: qsTr("Yaw")
+                    group: "yaw"
                 }
 
                 ListElement {
                     param: "MC_YAWRATE_I"
-                    group: qsTr("Yaw")
+                    group: "yaw"
                 }
 
                 ListElement {
                     param: "MC_YAWRATE_D"
-                    group: qsTr("Yaw")
+                    group: "yaw"
                     advanced: true
                 }
 
                 ListElement {
                     param: "MC_YAWRATE_FF"
-                    group: qsTr("Yaw")
+                    group: "yaw"
                     advanced: true
                 }
 
                 ///////////////////////////////////////////////////////////////
                 ListElement {
                     param: "MC_TPA_BREAK_P"
-                    group: qsTr("Throttle PID Attenuation (TPA)")
+                    group: "tpa"
+                    advanced: false
                 }
                 ListElement {
                     param: "MC_TPA_BREAK_I"
-                    group: qsTr("Throttle PID Attenuation (TPA)")
+                    group: "tpa"
+                    advanced: true
                 }
                 ListElement {
                     param: "MC_TPA_BREAK_D"
-                    group: qsTr("Throttle PID Attenuation (TPA)")
+                    group: "tpa"
+                    advanced: true
                 }
                 ListElement {
                     param: "MC_TPA_RATE_P"
-                    group: qsTr("Throttle PID Attenuation (TPA)")
+                    group: "tpa"
+                    advanced: false
                 }
                 ListElement {
                     param: "MC_TPA_RATE_I"
-                    group: qsTr("Throttle PID Attenuation (TPA)")
+                    group: "tpa"
+                    advanced: true
                 }
                 ListElement {
                     param: "MC_TPA_RATE_D"
-                    group: qsTr("Throttle PID Attenuation (TPA)")
+                    group: "tpa"
+                    advanced: true
                 }
             }
         }

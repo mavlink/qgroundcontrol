@@ -57,54 +57,96 @@ QGCView {
     property real _margins: ScreenTools.defaultFontPixelHeight
     property real _thinMargins: ScreenTools.smallFontPointSize
 
-    DelegateModel {
-        id: steppersFilteredModel
-        delegate: listItem
-        model: steppersModel
-        groups: [
-            DelegateModelGroup {
-                includeByDefault: false
-                name: "simple"
-            },
-            DelegateModelGroup {
-                includeByDefault: true
-                name: "advanced"
-            },
-            DelegateModelGroup {
-                includeByDefault: false
-                name: "stabilized"
-            },
-            DelegateModelGroup {
-                includeByDefault: false
-                name: "acro"
-            }
-        ]
-        filterOnGroup: "advanced"
-
-        Component.onCompleted: {
-            var rowCount = steppersModel.count
-            items.remove(0, rowCount)
-            for (var i = 0; i < rowCount; i++) {
-                var entry = steppersModel.get(i)
-                if (typeof entry.advanced === "undefined" || !entry.advanced) {
-                    items.insert(entry, "simple")
-                } else {
-                    items.insert(entry, "advanced")
-                }
-
-                if (typeof entry.acro === "undefined" || !entry.acro) {
-                    items.insert(entry, "stabilized")
-                } else {
-                    items.insert(entry, "acro")
-                }
-            }
-        }
-    }
 
 
     ColumnLayout {
         id: pidsView
         anchors.fill: parent
+
+        GridLayout {
+            Layout.fillWidth: true
+
+            ToggleButton {
+                id: includeAdvancedToggle
+                text: qsTr("Advanced")
+                checked: false
+            }
+
+            ToggleButton {
+                id: includeStabilizedToggle
+                text: qsTr("Stabilized")
+                checked: true
+            }
+
+            ToggleButton {
+                id: includeRollToggle
+                text: qsTr("Roll")
+                checked:  true
+            }
+            ToggleButton {
+                id: includePitchToggle
+                text: qsTr("Pitch")
+                checked:  true
+            }
+            ToggleButton {
+                id: includeYawToggle
+                text: qsTr("Yaw")
+                checked:  true
+            }
+            ToggleButton {
+                id: includeTPAToggle
+                text: qsTr("TPA")
+                checked: false
+            }
+        }
+
+        DelegateModel {
+            id: steppersFilteredModel
+            delegate: listItem
+            model: steppersModel
+            property bool loaded: false
+
+            function filtersChanged() {
+                if (!loaded) {
+                    return
+                }
+
+                items.remove(0, items.count)
+
+                for (var i = 0; i < steppersModel.count; i++) {
+                    var entry = steppersModel.get(i)
+
+                    if (entry.advanced && !includeAdvanced) continue
+                    if (entry.stabilized && !includeStabilized) continue
+                    if (entry.group === "roll" && !includeRoll) continue
+                    if (entry.group === "pitch" && !includePitch) continue
+                    if (entry.group === "yaw" && !includeYaw) continue
+                    if (entry.group === "tpa" && !includeTPA) continue
+
+                    items.insert(entry)
+                }
+            }
+
+            property bool includeAdvanced: includeAdvancedToggle.checked
+            property bool includeStabilized: includeStabilizedToggle.checked
+            property bool includeRoll: includeRollToggle.checked
+            property bool includePitch: includePitchToggle.checked
+            property bool includeYaw: includeYawToggle.checked
+            property bool includeTPA: includeTPAToggle.checked
+            property bool lockPitchRoll: true
+
+            onIncludeAdvancedChanged: filtersChanged()
+            onIncludeStabilizedChanged: filtersChanged()
+            onLockPitchRollChanged: filtersChanged()
+
+            onIncludeRollChanged: filtersChanged()
+            onIncludePitchChanged: filtersChanged()
+            onIncludeYawChanged: filtersChanged()
+            onIncludeTPAChanged: filtersChanged()
+
+            onLoadedChanged: filtersChanged()
+        }
+
         ListView {
             id: pidGroupsListView
             model: steppersFilteredModel
@@ -118,38 +160,10 @@ QGCView {
             Layout.minimumHeight: contentHeight
         } // QGCListView
 
-//        RowLayout {
-//            Layout.fillWidth: true
 
-//            QGCButton {
-//                text:       qsTr("Advanced")
-//                onClicked:  steppersFilteredModel.filterOnGroup = "advanced"
-//            }
-//            QGCButton {
-//                text:       qsTr("Simple")
-//                onClicked:  steppersFilteredModel.filterOnGroup = "simple"
-//            }
-//            QGCButton {
-//                text:       qsTr("Acro")
-//                onClicked:  steppersFilteredModel.filterOnGroup = "acro"
-//            }
-//            QGCButton {
-//                text:       qsTr("Stabilized")
-//                onClicked:  steppersFilteredModel.filterOnGroup = "stabilized"
-//            }
-//        }
-
-//        ListView {
-//            id: pidGroupsListView
-//            model: steppersFilteredModel
-//            focus: false
-//            interactive: false
-//            orientation: ListView.Vertical
-////            anchors.fill: parent
-//            Layout.fillWidth: true
-//            spacing: 5
-
-//        } // QGCListView
+        Component.onCompleted: {
+            steppersFilteredModel.loaded = true
+        }
     }
 
     Component {
