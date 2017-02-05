@@ -236,22 +236,16 @@ QGCView {
                         onValueChanged: validationErrorLabel.text = ""
                     }
 
-                    QGCButton {
-                        id: _tooltipButton
+                    ToggleButton {
+                        id: helpButton
                         visible: fact
 
                         text: "?"
                         tooltip: fact ? fact.longDescription : ""
 
                         Layout.minimumWidth: stepper.height
-                        Layout.maximumWidth: stepper.height
                         Layout.minimumHeight: stepper.height
-                        Layout.maximumHeight: stepper.height
-
-                        onClicked: {
-                            helpDetails.toggleVisible()
-                        }
-                    } // QGCButton _tooltipButton
+                    } // QGCButton helpButton
                 }
 
 
@@ -265,15 +259,9 @@ QGCView {
 
                 Column {
                     id: helpDetails
-                    visible: false
+                    visible: helpButton.checked
                     Layout.fillWidth: true
                     spacing:        defaultTextHeight / 2
-
-                    function toggleVisible(forceShow) {
-                        forceShow = typeof forceShow !== 'undefined' ? forceShow : false
-
-                        visible = fact && (!visible || forceShow)
-                    }
 
                     QGCLabel {
                         width:      parent.width
