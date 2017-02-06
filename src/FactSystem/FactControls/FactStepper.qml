@@ -31,7 +31,7 @@ Item {
     property double increment: !fact || isNaN(fact.increment) ? 0.001 : fact.increment
     property double incrementRatio: 1.0
 
-    implicitHeight: 50
+    implicitHeight: 44
     implicitWidth: implicitHeight * 4
 
     signal validationError(string text, string errorText)

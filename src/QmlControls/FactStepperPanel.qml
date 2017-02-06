@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-QGROUNDCONTROL is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-QGROUNDCONTROL is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 import QtQuick 2.5
 import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
@@ -62,6 +49,7 @@ QGCView {
     ColumnLayout {
         id: pidsView
         anchors.fill: parent
+        spacing: 8
 
         GridLayout {
             Layout.fillWidth: true
@@ -148,16 +136,19 @@ QGCView {
         }
 
         ListView {
-            id: pidGroupsListView
+            id: pidListView
             model: steppersFilteredModel
             focus: false
             clip: true
             interactive: false
             orientation: ListView.Vertical
             Layout.fillWidth: true
-            spacing: 5
+            spacing: 8
 
             Layout.minimumHeight: contentHeight
+
+            property int maxNameTextWidth: 0
+            onModelChanged: maxNameTextWidth = 0
         } // QGCListView
 
 
@@ -182,13 +173,13 @@ QGCView {
     Component {
         id: listItem
 
-        Rectangle {
-            visible: fact
-            id: stepperRect
+        ColumnLayout {
+            id: factEditor
+            spacing: _thinMargins
             anchors.left: parent.left
             anchors.right: parent.right
-            height: cellColumn.height + _thinMargins * 2
-            color: qgcPal.windowShade
+
+            visible: fact
 
             property Fact fact
 
@@ -198,102 +189,101 @@ QGCView {
                 }
             }
 
-            ColumnLayout {
-                id: cellColumn
-                spacing: _thinMargins
-                anchors.margins: _thinMargins
+            RowLayout {
+                id: stepperRow
+                spacing: _margins
                 anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-
-                property alias labelWidth: nameLabel.width
-
-                RowLayout {
-                    id: stepperRow
-                    spacing: _margins
-                    anchors.left: parent.left
-
-                    QGCLabel {
-                        id: nameLabel
-                        text: fact && fact.shortDescription ? fact.shortDescription : ""
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignRight
-                        verticalAlignment: Text.AlignVCenter
-
-                        Layout.minimumWidth: stepper.width
-                        Layout.maximumWidth: stepper.width
-                    }
-
-                    FactStepper {
-                        id: stepper
-                        visible: fact
-                        showHelp: false
-                        showUnits: true
-
-                        fact: stepperRect.fact
-
-                        onValidationError: validationErrorLabel.text = errorText
-                        onValueChanged: validationErrorLabel.text = ""
-                    }
-
-                    ToggleButton {
-                        id: helpButton
-                        visible: fact
-
-                        text: "?"
-                        tooltip: fact ? fact.longDescription : ""
-
-                        Layout.minimumWidth: stepper.height
-                        Layout.minimumHeight: stepper.height
-                    } // QGCButton helpButton
-                }
-
 
                 QGCLabel {
-                    id: validationErrorLabel
-                    Layout.fillWidth: true
+                    id: nameLabel
+                    text: fact && fact.shortDescription ? fact.shortDescription : ""
                     wrapMode: Text.WordWrap
-                    visible: text !== ""
-                    color: qgcPal.warningText
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+
+                    Layout.minimumWidth: pidListView.maxNameTextWidth
+
+                    onTextChanged: {
+                        pidListView.maxNameTextWidth = Math.max(width, pidListView.maxNameTextWidth)
+                    }
                 }
 
-                Column {
-                    id: helpDetails
-                    visible: helpButton.checked
+                FactStepper {
+                    id: stepper
+                    visible: fact
+                    showHelp: false
+                    showUnits: true
+
+                    fact: factEditor.fact
+
+                    onValidationError: validationErrorLabel.text = errorText
+                    onValueChanged: validationErrorLabel.text = ""
+                }
+
+                ToggleButton {
+                    id: helpButton
+                    visible: fact
+
+                    text: "?"
+                    tooltip: fact ? fact.longDescription : ""
+
+                    Layout.minimumWidth: stepper.height
+                    Layout.minimumHeight: stepper.height
+                } // QGCButton helpButton
+            }
+
+
+            QGCLabel {
+                id: validationErrorLabel
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: text !== ""
+                color: qgcPal.warningText
+            }
+
+            ColumnLayout {
+                id: helpDetails
+                visible: helpButton.checked
+                Layout.fillWidth: true
+                spacing: defaultTextHeight / 2
+
+                QGCLabel {
                     Layout.fillWidth: true
-                    spacing:        defaultTextHeight / 2
+                    wrapMode:   Text.WordWrap
+                    visible:    fact.longDescription
+                    text:       fact.longDescription
+                }
 
-                    QGCLabel {
-                        width:      parent.width
-                        wrapMode:   Text.WordWrap
-                        visible:    fact.longDescription
-                        text:       fact.longDescription
-                    }
+                Row {
+                    spacing: defaultTextWidth
+                    visible: !fact.minIsDefaultForType
 
-                    Row {
-                        spacing: defaultTextWidth
-                        visible: !fact.minIsDefaultForType
+                    QGCLabel { text: qsTr("Minimum value:") }
+                    QGCLabel { text: fact.minString }
+                }
 
-                        QGCLabel { text: qsTr("Minimum value:") }
-                        QGCLabel { text: fact.minString }
-                    }
+                Row {
+                    spacing: defaultTextWidth
+                    visible: !fact.maxIsDefaultForType
 
-                    Row {
-                        spacing: defaultTextWidth
-                        visible: !fact.maxIsDefaultForType
+                    QGCLabel { text: qsTr("Maximum value:") }
+                    QGCLabel { text: fact.maxString }
+                }
 
-                        QGCLabel { text: qsTr("Maximum value:") }
-                        QGCLabel { text: fact.maxString }
-                    }
+                Row {
+                    spacing: defaultTextWidth
 
-                    Row {
-                        spacing: defaultTextWidth
+                    QGCLabel { text: qsTr("Parameter:") }
+                    QGCLabel { text: param }
+                }
 
-                        QGCLabel { text: qsTr("Parameter:") }
-                        QGCLabel { text: param }
-                    }
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: 1
+                    Layout.maximumHeight: 1
+                    color: qgcPal.windowShade
                 }
             }
-        } // listItem
+        }
     }
 } // QGCView
