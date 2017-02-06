@@ -38,6 +38,7 @@ Rectangle {
                 property bool   _showCruiseSpeed:           !_missionVehicle.multiRotor
                 property bool   _showHoverSpeed:            _missionVehicle.multiRotor || missionController.vehicle.vtol
                 property bool   _multipleFirmware:          QGroundControl.supportedFirmwareCount > 2
+                property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 16
 
                 readonly property string _firmwareLabel:    qsTr("Firmware:")
                 readonly property string _vehicleLabel:     qsTr("Vehicle:")
@@ -53,6 +54,7 @@ Rectangle {
 
                     QGCLabel {
                         text: qsTr("Planned Home Position")
+                        color: qgcPal.buttonHighlight
                     }
 
                     Rectangle {
@@ -64,31 +66,21 @@ Rectangle {
 
                     Repeater {
                         model: missionItem.textFieldFacts
-
-                        Item {
-                            width:  valuesColumn.width
-                            height: textField.height
-
-                            QGCLabel {
-                                id:                 textFieldLabel
-                                anchors.baseline:   textField.baseline
-                                text:               object.name
-                            }
-
+                        RowLayout {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            spacing:        _margin
+                            QGCLabel { text: object.name; Layout.fillWidth: true }
                             FactTextField {
-                                id:             textField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                showUnits:      true
-                                fact:           object
-                                visible:        !_root.readOnly
+                                Layout.preferredWidth:  _fieldWidth
+                                showUnits:  true
+                                fact:       object
+                                visible:    !_root.readOnly
                             }
-
                             FactLabel {
-                                anchors.baseline:   textFieldLabel.baseline
-                                anchors.right:      parent.right
-                                fact:               object
-                                visible:            _root.readOnly
+                                Layout.preferredWidth:  _fieldWidth
+                                fact:       object
+                                visible:    _root.readOnly
                             }
                         }
                     }
@@ -102,7 +94,8 @@ Rectangle {
                     }
 
                     QGCLabel {
-                        text:           qsTr("Vehicle Info:")
+                        text:           qsTr("Vehicle Info")
+                        color:          qgcPal.buttonHighlight
                         visible:        _multipleFirmware
                     }
 
@@ -125,72 +118,93 @@ Rectangle {
                         QGCLabel {
                             text:       _firmwareLabel
                             visible:    _showOfflineEditingCombos
+                            Layout.fillWidth: true
                         }
                         FactComboBox {
-                            Layout.fillWidth:   true
                             fact:               QGroundControl.offlineEditingFirmwareType
                             indexModel:         false
                             visible:            _showOfflineEditingCombos
+                            Layout.preferredWidth:  _fieldWidth
                         }
 
                         QGCLabel {
                             text:       _firmwareLabel
                             visible:    !_showOfflineEditingCombos
+                            Layout.fillWidth: true
                         }
                         QGCLabel {
                             text:       _missionVehicle.firmwareTypeString
                             visible:    !_showOfflineEditingCombos
+                            Layout.preferredWidth:  _fieldWidth
                         }
 
                         QGCLabel {
                             text:       _vehicleLabel
                             visible:    _showOfflineEditingCombos
+                            Layout.fillWidth: true
                         }
                         FactComboBox {
                             id:                 offlineVehicleCombo
-                            Layout.fillWidth:   true
                             fact:               QGroundControl.offlineEditingVehicleType
                             indexModel:         false
                             visible:            _showOfflineEditingCombos
+                            Layout.preferredWidth:  _fieldWidth
                         }
 
                         QGCLabel {
                             text:       _vehicleLabel
                             visible:    !_showOfflineEditingCombos
+                            Layout.fillWidth: true
                         }
                         QGCLabel {
                             text:       _missionVehicle.vehicleTypeString
                             visible:    !_showOfflineEditingCombos
+                            Layout.preferredWidth:  _fieldWidth
                         }
+
                         QGCLabel {
                             Layout.row: 2
                             text:       qsTr("Cruise speed:")
                             visible:    _showCruiseSpeed
+                            Layout.fillWidth: true
                         }
                         FactTextField {
-                            Layout.fillWidth:   true
                             fact:               QGroundControl.offlineEditingCruiseSpeed
                             visible:            _showCruiseSpeed
+                            Layout.preferredWidth:  _fieldWidth
                         }
 
                         QGCLabel {
                             Layout.row: 3
                             text:       qsTr("Hover speed:")
                             visible:    _showHoverSpeed
+                            Layout.fillWidth: true
                         }
                         FactTextField {
-                            Layout.fillWidth:   true
                             fact:               QGroundControl.offlineEditingHoverSpeed
                             visible:            _showHoverSpeed
+                            Layout.preferredWidth:  _fieldWidth
                         }
                     } // GridLayout
+
+                    RowLayout {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        spacing:        _margin
+                        visible:        !_multipleFirmware
+                        QGCLabel { text: qsTr("Hover speed:"); Layout.fillWidth: true }
+                        FactTextField {
+                            Layout.preferredWidth:  _fieldWidth
+                            fact:       QGroundControl.offlineEditingHoverSpeed
+                        }
+                    }
 
                     QGCLabel {
                         width:          parent.width
                         wrapMode:       Text.WordWrap
                         font.pointSize: ScreenTools.smallFontPointSize
-                        visible:        _multipleFirmware
-                        text:           qsTr("Speeds are only for time calculations. Actual vehicle will not be affected.")
+                        text:           qsTr("Speeds are only used for time calculations. Actual vehicle speed will not be affected.")
+                        horizontalAlignment: Text.AlignHCenter
                     }
 
                     Rectangle {
@@ -201,6 +215,7 @@ Rectangle {
                     }
 
                     QGCButton {
+                        width:      parent.width * 0.9
                         text:       qsTr("Set Home To Map Center")
                         onClicked:  editorRoot.moveHomeToMapCenter()
                         anchors.horizontalCenter: parent.horizontalCenter
