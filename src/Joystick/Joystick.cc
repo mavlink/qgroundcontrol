@@ -19,7 +19,7 @@ QGC_LOGGING_CATEGORY(JoystickLog, "JoystickLog")
 QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
 
 const char* Joystick::_settingsGroup =                  "Joysticks";
-const char* Joystick::_calibratedSettingsKey =          "Calibrated1"; // Increment number to force recalibration
+const char* Joystick::_calibratedSettingsKey =          "Calibrated2"; // Increment number to force recalibration
 const char* Joystick::_buttonActionSettingsKey =        "ButtonActionName%1";
 const char* Joystick::_throttleModeSettingsKey =        "ThrottleMode";
 const char* Joystick::_exponentialSettingsKey =         "Exponential";
