@@ -51,8 +51,9 @@ QGCView {
         anchors.fill: parent
         spacing: 8
 
-        GridLayout {
+        Flow {
             Layout.fillWidth: true
+            spacing: 8
 
             ToggleButton {
                 id: includeAdvancedToggle
@@ -94,7 +95,8 @@ QGCView {
             model: steppersModel
             property bool loaded: false
 
-            function filtersChanged() {
+            signal filtersChanged
+            onFiltersChanged: {
                 if (!loaded) {
                     return
                 }
@@ -148,7 +150,6 @@ QGCView {
             Layout.minimumHeight: contentHeight
 
             property int maxNameTextWidth: 0
-            onModelChanged: maxNameTextWidth = 0
         } // QGCListView
 
 

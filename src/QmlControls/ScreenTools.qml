@@ -53,6 +53,8 @@ Item {
     readonly property real mediumFontPointRatio:     1.25
     readonly property real largeFontPointRatio:      1.5
 
+    readonly property real mobileMinimumButtonSize:  44
+
     property bool isAndroid:        ScreenToolsController.isAndroid
     property bool isiOS:            ScreenToolsController.isiOS
     property bool isMobile:         ScreenToolsController.isMobile
