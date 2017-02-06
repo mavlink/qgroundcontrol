@@ -87,6 +87,21 @@ QGCView {
                 text: qsTr("TPA")
                 checked: false
             }
+            ToggleButton {
+                id: includePToggle
+                text: qsTr("P")
+                checked: true
+            }
+            ToggleButton {
+                id: includeIToggle
+                text: qsTr("I")
+                checked: true
+            }
+            ToggleButton {
+                id: includeDToggle
+                text: qsTr("D")
+                checked: true
+            }
         }
 
         DelegateModel {
@@ -112,9 +127,14 @@ QGCView {
                     if (entry.group === "pitch" && !includePitch) continue
                     if (entry.group === "yaw" && !includeYaw) continue
                     if (entry.group === "tpa" && !includeTPA) continue
+                    if (entry.subGroup === "p" && !includeP) continue
+                    if (entry.subGroup === "i" && !includeI) continue
+                    if (entry.subGroup === "d" && !includeD) continue
 
                     items.insert(entry)
                 }
+
+                pidListView.maxNameTextWidth = 0
             }
 
             property bool includeAdvanced: includeAdvancedToggle.checked
@@ -123,6 +143,9 @@ QGCView {
             property bool includePitch: includePitchToggle.checked
             property bool includeYaw: includeYawToggle.checked
             property bool includeTPA: includeTPAToggle.checked
+            property bool includeP: includePToggle.checked
+            property bool includeI: includeIToggle.checked
+            property bool includeD: includeDToggle.checked
             property bool lockPitchRoll: true
 
             onIncludeAdvancedChanged: filtersChanged()
@@ -133,6 +156,9 @@ QGCView {
             onIncludePitchChanged: filtersChanged()
             onIncludeYawChanged: filtersChanged()
             onIncludeTPAChanged: filtersChanged()
+            onIncludePChanged: filtersChanged()
+            onIncludeIChanged: filtersChanged()
+            onIncludeDChanged: filtersChanged()
 
             onLoadedChanged: filtersChanged()
         }
