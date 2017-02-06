@@ -22,8 +22,9 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
+    property real   _margin:        ScreenTools.defaultFontPixelWidth * 0.25
     property int    _cameraIndex:   1
+    property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 10.5
 
     readonly property int _gridTypeManual:          0
     readonly property int _gridTypeCustomCamera:    1
@@ -33,11 +34,11 @@ Rectangle {
         id: cameraModelList
 
         Component.onCompleted: {
-            cameraModelList.setProperty(_gridTypeCustomCamera, "sensorWidth", missionItem.cameraSensorWidth.rawValue)
-            cameraModelList.setProperty(_gridTypeCustomCamera, "sensorHeight", missionItem.cameraSensorHeight.rawValue)
-            cameraModelList.setProperty(_gridTypeCustomCamera, "imageWidth", missionItem.cameraResolutionWidth.rawValue)
-            cameraModelList.setProperty(_gridTypeCustomCamera, "imageHeight", missionItem.cameraResolutionHeight.rawValue)
-            cameraModelList.setProperty(_gridTypeCustomCamera, "focalLength", missionItem.cameraFocalLength.rawValue)
+            cameraModelList.setProperty(_gridTypeCustomCamera, "sensorWidth",   missionItem.cameraSensorWidth.rawValue)
+            cameraModelList.setProperty(_gridTypeCustomCamera, "sensorHeight",  missionItem.cameraSensorHeight.rawValue)
+            cameraModelList.setProperty(_gridTypeCustomCamera, "imageWidth",    missionItem.cameraResolutionWidth.rawValue)
+            cameraModelList.setProperty(_gridTypeCustomCamera, "imageHeight",   missionItem.cameraResolutionHeight.rawValue)
+            cameraModelList.setProperty(_gridTypeCustomCamera, "focalLength",   missionItem.cameraFocalLength.rawValue)
         }
 
         ListElement {
@@ -45,6 +46,14 @@ Rectangle {
         }
         ListElement {
             text:           qsTr("Custom Camera Grid")
+        }
+        ListElement {
+            text:           qsTr("Typhoon H CGO3+")
+            sensorWidth:    6.264
+            sensorHeight:   4.698
+            imageWidth:     4000
+            imageHeight:    3000
+            focalLength:    14
         }
         ListElement {
             text:           qsTr("Sony ILCE-QX1") //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
@@ -89,16 +98,16 @@ Rectangle {
     }
 
     function recalcFromCameraValues() {
-        var focalLength = missionItem.cameraFocalLength.rawValue
-        var sensorWidth = missionItem.cameraSensorWidth.rawValue
-        var sensorHeight = missionItem.cameraSensorHeight.rawValue
-        var imageWidth = missionItem.cameraResolutionWidth.rawValue
-        var imageHeight = missionItem.cameraResolutionHeight.rawValue
+        var focalLength     = missionItem.cameraFocalLength.rawValue
+        var sensorWidth     = missionItem.cameraSensorWidth.rawValue
+        var sensorHeight    = missionItem.cameraSensorHeight.rawValue
+        var imageWidth      = missionItem.cameraResolutionWidth.rawValue
+        var imageHeight     = missionItem.cameraResolutionHeight.rawValue
 
-        var altitude = missionItem.gridAltitude.rawValue
-        var groundResolution = missionItem.groundResolution.rawValue
-        var frontalOverlap = missionItem.frontalOverlap.rawValue
-        var sideOverlap = missionItem.sideOverlap.rawValue
+        var altitude        = missionItem.gridAltitude.rawValue
+        var groundResolution= missionItem.groundResolution.rawValue
+        var frontalOverlap  = missionItem.frontalOverlap.rawValue
+        var sideOverlap     = missionItem.sideOverlap.rawValue
 
         if (focalLength <= 0 || sensorWidth <= 0 || sensorHeight <= 0 || imageWidth <= 0 || imageHeight <= 0 || groundResolution <= 0) {
             return
@@ -110,17 +119,17 @@ Rectangle {
         var cameraTriggerDistance
 
         if (missionItem.fixedValueIsAltitude) {
-            groundResolution = (altitude * sensorWidth * 100) /  (imageWidth * focalLength)
+            groundResolution = (altitude * sensorWidth * 100) / (imageWidth * focalLength)
         } else {
             altitude = (imageWidth * groundResolution * focalLength) / (sensorWidth * 100)
         }
 
         if (cameraOrientationLandscape.checked) {
-            imageSizeSideGround = (imageWidth * groundResolution) / 100
+            imageSizeSideGround  = (imageWidth  * groundResolution) / 100
             imageSizeFrontGround = (imageHeight * groundResolution) / 100
         } else {
-            imageSizeSideGround = (imageHeight * groundResolution) / 100
-            imageSizeFrontGround = (imageWidth * groundResolution) / 100
+            imageSizeSideGround  = (imageHeight * groundResolution) / 100
+            imageSizeFrontGround = (imageWidth  * groundResolution) / 100
         }
 
         gridSpacing = imageSizeSideGround * ( (100-sideOverlap) / 100 )
@@ -238,25 +247,6 @@ Rectangle {
         anchors.right:      parent.right
         spacing:            _margin
 
-        QGCLabel {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            wrapMode:       Text.WordWrap
-            font.pointSize: ScreenTools.smallFontPointSize
-            text:           gridTypeCombo.currentIndex == 0 ?
-                                qsTr("Create a flight path which covers a polygonal area by specifying all grid parameters.") :
-                                qsTr("Create a flight path which fully covers a polygonal area using camera specifications.")
-        }
-
-        QGCLabel { text: qsTr("Camera:") }
-
-        Rectangle {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            height:         1
-            color:          qgcPal.text
-        }
-
         QGCComboBox {
             id:             gridTypeCombo
             anchors.left:   parent.left
@@ -285,15 +275,25 @@ Rectangle {
                     missionItem.manualGrid = false
                     missionItem.camera = gridTypeCombo.textAt(index)
                     _noCameraValueRecalc = true
-                    missionItem.cameraSensorWidth.rawValue = cameraModelList.get(index).sensorWidth
-                    missionItem.cameraSensorHeight.rawValue = cameraModelList.get(index).sensorHeight
-                    missionItem.cameraResolutionWidth.rawValue = cameraModelList.get(index).imageWidth
+                    missionItem.cameraSensorWidth.rawValue      = cameraModelList.get(index).sensorWidth
+                    missionItem.cameraSensorHeight.rawValue     = cameraModelList.get(index).sensorHeight
+                    missionItem.cameraResolutionWidth.rawValue  = cameraModelList.get(index).imageWidth
                     missionItem.cameraResolutionHeight.rawValue = cameraModelList.get(index).imageHeight
-                    missionItem.cameraFocalLength.rawValue = cameraModelList.get(index).focalLength
+                    missionItem.cameraFocalLength.rawValue      = cameraModelList.get(index).focalLength
                     _noCameraValueRecalc = false
                     recalcFromCameraValues()
                 }
             }
+        }
+
+        QGCLabel { text: qsTr("Camera"); color: qgcPal.buttonHighlight; visible: gridTypeCombo.currentIndex !== _gridTypeManual}
+
+        Rectangle {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            height:         1
+            color:          qgcPal.text
+            visible:        gridTypeCombo.currentIndex !== _gridTypeManual
         }
 
         // Camera based grid ui
@@ -305,6 +305,7 @@ Rectangle {
 
             Row {
                 spacing: _margin
+                anchors.horizontalCenter: parent.horizontalCenter
 
                 QGCRadioButton {
                     id:             cameraOrientationLandscape
@@ -322,82 +323,104 @@ Rectangle {
             }
 
             Column {
+                id:             custCameraCol
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 spacing:        _margin
-                visible:        gridTypeCombo.currentIndex == _gridTypeCustomCamera
+                visible:        gridTypeCombo.currentIndex === _gridTypeCustomCamera
 
-                GridLayout {
-                    columns:        3
-                    columnSpacing:  _margin
-                    rowSpacing:     _margin
+                RowLayout {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    spacing:        _margin
+                    Item { Layout.fillWidth: true }
+                    QGCLabel {
+                        Layout.preferredWidth:  _root._fieldWidth
+                        text:                   qsTr("Width")
+                    }
+                    QGCLabel {
+                        Layout.preferredWidth:  _root._fieldWidth
+                        text:                   qsTr("Height")
+                    }
+                }
 
-                    property real _fieldWidth: ScreenTools.defaultFontPixelWidth * 10
-
-                    QGCLabel { }
-                    QGCLabel { text: qsTr("Width") }
-                    QGCLabel { text: qsTr("Height") }
-
-                    QGCLabel { text: qsTr("Sensor:") }
+                RowLayout {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    spacing:        _margin
+                    QGCLabel { text: qsTr("Sensor:"); Layout.fillWidth: true }
                     FactTextField {
-                        Layout.preferredWidth:  parent._fieldWidth
+                        Layout.preferredWidth:  _root._fieldWidth
                         fact:                   missionItem.cameraSensorWidth
                     }
                     FactTextField {
-                        Layout.preferredWidth:  parent._fieldWidth
+                        Layout.preferredWidth:  _root._fieldWidth
                         fact:                   missionItem.cameraSensorHeight
                     }
+                }
 
-                    QGCLabel { text: qsTr("Image:") }
+                RowLayout {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    spacing:        _margin
+                    QGCLabel { text: qsTr("Image:"); Layout.fillWidth: true }
                     FactTextField {
-                        Layout.preferredWidth:  parent._fieldWidth
+                        Layout.preferredWidth:  _root._fieldWidth
                         fact:                   missionItem.cameraResolutionWidth
                     }
                     FactTextField {
-                        Layout.preferredWidth:  parent._fieldWidth
+                        Layout.preferredWidth:  _root._fieldWidth
                         fact:                   missionItem.cameraResolutionHeight
                     }
                 }
 
-                FactTextFieldRow {
-                    spacing: _margin
-                    fact:       missionItem.cameraFocalLength
+                RowLayout {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    spacing:        _margin
+                    QGCLabel {
+                        text:                   missionItem.cameraFocalLength.name + ":"
+                        Layout.fillWidth:       true
+                    }
+                    FactTextField {
+                        Layout.preferredWidth:  _root._fieldWidth
+                        fact:                   missionItem.cameraFocalLength
+                    }
                 }
+
             } // Column - custom camera
 
-            QGCLabel { text: qsTr("Image Overlap") }
-
-            Row {
+            RowLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
                 spacing:        _margin
-
-                Item {
-                    width:  ScreenTools.defaultFontPixelWidth * 2
-                    height: 1
-                }
-
+                Item { Layout.fillWidth: true }
                 QGCLabel {
-                    anchors.baseline:   frontalOverlapField.baseline
-                    text:               qsTr("Frontal:")
+                    Layout.preferredWidth:  _root._fieldWidth
+                    text:                   qsTr("Frontal")
                 }
-
-                FactTextField {
-                    id:     frontalOverlapField
-                    width:  ScreenTools.defaultFontPixelWidth * 7
-                    fact:   missionItem.frontalOverlap
-                }
-
                 QGCLabel {
-                    anchors.baseline:   frontalOverlapField.baseline
-                    text:               qsTr("Side:")
-                }
-
-                FactTextField {
-                    width:  frontalOverlapField.width
-                    fact:   missionItem.sideOverlap
+                    Layout.preferredWidth:  _root._fieldWidth
+                    text:                   qsTr("Side")
                 }
             }
 
-            QGCLabel { text: qsTr("Grid:") }
+            RowLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+                QGCLabel { text: qsTr("Overlap:"); Layout.fillWidth: true }
+                FactTextField {
+                    Layout.preferredWidth:  _root._fieldWidth
+                    fact:                   missionItem.frontalOverlap
+                }
+                FactTextField {
+                    Layout.preferredWidth:  _root._fieldWidth
+                    fact:                   missionItem.sideOverlap
+                }
+            }
+
+            QGCLabel { text: qsTr("Grid"); color: qgcPal.buttonHighlight;}
 
             Rectangle {
                 anchors.left:   parent.left
@@ -406,12 +429,36 @@ Rectangle {
                 color:          qgcPal.text
             }
 
-            FactTextFieldGrid {
+            RowLayout {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
-                columnSpacing:  _margin
-                rowSpacing:     _margin
-                factList:       [ missionItem.gridAngle, missionItem.turnaroundDist ]
+                spacing:        _margin
+                QGCLabel {
+                    text:                   missionItem.gridAngle.name + ":"
+                    Layout.fillWidth:       true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                FactTextField {
+                    fact:                   missionItem.gridAngle
+                    anchors.verticalCenter: parent.verticalCenter
+                    Layout.preferredWidth:  _root._fieldWidth
+                }
+            }
+
+            RowLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+                QGCLabel {
+                    text:                   missionItem.turnaroundDist.name + ":"
+                    Layout.fillWidth:       true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                FactTextField {
+                    fact:                   missionItem.turnaroundDist
+                    anchors.verticalCenter: parent.verticalCenter
+                    Layout.preferredWidth:  _root._fieldWidth
+                }
             }
 
             QGCLabel {
@@ -428,19 +475,20 @@ Rectangle {
                 spacing:        _margin
 
                 QGCRadioButton {
-                    id:                 fixedAltitudeRadio
-                    anchors.baseline:   gridAltitudeField.baseline
-                    text:               qsTr("Altitude:")
-                    checked:            missionItem.fixedValueIsAltitude
-                    exclusiveGroup:     fixedValueGroup
-                    onClicked:          missionItem.fixedValueIsAltitude = true
+                    id:                     fixedAltitudeRadio
+                    text:                   qsTr("Altitude:")
+                    checked:                missionItem.fixedValueIsAltitude
+                    exclusiveGroup:         fixedValueGroup
+                    onClicked:              missionItem.fixedValueIsAltitude = true
+                    Layout.fillWidth:       true
+                    anchors.verticalCenter: parent.verticalCenter
                 }
 
                 FactTextField {
-                    id:                 gridAltitudeField
-                    Layout.fillWidth:   true
-                    fact:               missionItem.gridAltitude
-                    enabled:            fixedAltitudeRadio.checked
+                    fact:                   missionItem.gridAltitude
+                    enabled:                fixedAltitudeRadio.checked
+                    Layout.preferredWidth:  _root._fieldWidth
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
 
@@ -450,19 +498,20 @@ Rectangle {
                 spacing:        _margin
 
                 QGCRadioButton {
-                    id:                 fixedGroundResolutionRadio
-                    anchors.baseline:   groundResolutionField.baseline
-                    text:               qsTr("Ground res:")
-                    checked:            !missionItem.fixedValueIsAltitude
-                    exclusiveGroup:     fixedValueGroup
-                    onClicked:          missionItem.fixedValueIsAltitude = false
+                    id:                     fixedGroundResolutionRadio
+                    text:                   qsTr("Ground res:")
+                    checked:                !missionItem.fixedValueIsAltitude
+                    exclusiveGroup:         fixedValueGroup
+                    onClicked:              missionItem.fixedValueIsAltitude = false
+                    Layout.fillWidth:       true
+                    anchors.verticalCenter: parent.verticalCenter
                 }
 
                 FactTextField {
-                    id:                 groundResolutionField
-                    Layout.fillWidth:   true
-                    fact:               missionItem.groundResolution
-                    enabled:            fixedGroundResolutionRadio.checked
+                    fact:                   missionItem.groundResolution
+                    enabled:                fixedGroundResolutionRadio.checked
+                    Layout.preferredWidth:  _root._fieldWidth
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
         }
@@ -474,7 +523,7 @@ Rectangle {
             spacing:        _margin
             visible:        gridTypeCombo.currentIndex == _gridTypeManual
 
-            QGCLabel { text: qsTr("Grid:") }
+            QGCLabel { text: qsTr("Grid"); color: qgcPal.buttonHighlight;}
 
             Rectangle {
                 anchors.left:   parent.left
@@ -486,7 +535,7 @@ Rectangle {
             FactTextFieldGrid {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
-                columnSpacing:  _margin
+                columnSpacing:  _margin * 10
                 rowSpacing:     _margin
                 factList:       [ missionItem.gridAngle, missionItem.gridSpacing, missionItem.gridAltitude, missionItem.turnaroundDist ]
             }
@@ -498,7 +547,7 @@ Rectangle {
                 onClicked:      missionItem.gridAltitudeRelative = checked
             }
 
-            QGCLabel { text: qsTr("Camera:") }
+            QGCLabel { text: qsTr("Camera"); color: qgcPal.buttonHighlight;}
 
             Rectangle {
                 anchors.left:   parent.left
@@ -529,7 +578,7 @@ Rectangle {
             }
         }
 
-        QGCLabel { text: qsTr("Polygon:") }
+        QGCLabel { text: qsTr("Polygon"); color: qgcPal.buttonHighlight;}
 
         Rectangle {
             anchors.left:   parent.left
@@ -540,8 +589,10 @@ Rectangle {
 
         Row {
             spacing: ScreenTools.defaultFontPixelWidth
+            anchors.horizontalCenter: parent.horizontalCenter
 
             QGCButton {
+                width:      _root.width * 0.45
                 text:       editorMap.polygonDraw.drawingPolygon ? qsTr("Finish Draw") : qsTr("Draw")
                 visible:    !editorMap.polygonDraw.adjustingPolygon
                 enabled:    ((editorMap.polygonDraw.drawingPolygon && editorMap.polygonDraw.polygonReady) || !editorMap.polygonDraw.drawingPolygon)
@@ -556,6 +607,7 @@ Rectangle {
             }
 
             QGCButton {
+                width:      _root.width * 0.4
                 text:       editorMap.polygonDraw.adjustingPolygon ? qsTr("Finish Adjust") : qsTr("Adjust")
                 visible:    missionItem.polygonPath.length > 0 && !editorMap.polygonDraw.drawingPolygon
 
@@ -569,7 +621,7 @@ Rectangle {
             }
         }
 
-        QGCLabel { text: qsTr("Statistics:") }
+        QGCLabel { text: qsTr("Statistics"); color: qgcPal.buttonHighlight;}
 
         Rectangle {
             anchors.left:   parent.left
@@ -585,11 +637,19 @@ Rectangle {
             QGCLabel { text: qsTr("Survey area:") }
             QGCLabel { text: QGroundControl.squareMetersToAppSettingsAreaUnits(missionItem.coveredArea).toFixed(2) + " " + QGroundControl.appSettingsAreaUnitsString }
 
-            QGCLabel { text: qsTr("# shots:") }
+            QGCLabel { text: qsTr("Photo count:") }
             QGCLabel { text: missionItem.cameraShots }
 
-            QGCLabel { text: qsTr("Shot interval:") }
-            QGCLabel { text: missionItem.timeBetweenShots.toFixed(1) + " " + qsTr("secs")}
+            QGCLabel { text: qsTr("Photo interval:") }
+            QGCLabel {
+                text: {
+                    var timeVal = missionItem.timeBetweenShots
+                    if(!isFinite(timeVal) || missionItem.cameraShots === 0) {
+                        return qsTr("N/A")
+                    }
+                    return timeVal.toFixed(1) + " " + qsTr("secs")
+                }
+            }
         }
     }
 }
