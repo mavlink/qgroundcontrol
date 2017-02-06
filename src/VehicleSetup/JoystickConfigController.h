@@ -135,6 +135,7 @@ private slots:
     void _activeJoystickChanged(Joystick* joystick);
     void _axisValueChanged(int axis, int value);
     void _axisDeadbandChanged(int axis, int value);
+    void _modeChanged(int mode);
    
 private:
     /// @brief The states of the calibration state machine.
@@ -149,10 +150,10 @@ private:
         calStateSave
     };
     
-    typedef void (JoystickConfigController::*inputFn)(Joystick::AxisFunction_t function, int axis, int value);
+    typedef void (JoystickConfigController::*inputFn)(Joystick::Axis_t axis, int mappedAxis, int value);
     typedef void (JoystickConfigController::*buttonFn)(void);
     struct stateMachineEntry {
-        Joystick::AxisFunction_t    function;
+        Joystick::Axis_t            axis;
         const char*                 instructions;
         const char*                 image;
         inputFn                     rcInputFn;
@@ -162,7 +163,8 @@ private:
     
     /// @brief A set of information associated with a radio axis.
     struct AxisInfo {
-        Joystick::AxisFunction_t    function;   ///< Function mapped to this axis, Joystick::maxFunction for none
+        Joystick::Axis_t            axis;       ///< Physical real-life axis (stickLeft/Right/X/Y) mapped to this arbitrary raw axis index. Joystick::maxAxis for none.
+        Joystick::AxisFunction_t    function;   ///< Function mapped to this raw axis. Joystick::maxFunction for none.
         bool                        reversed;   ///< true: axis is reverse, false: not reversed
         int                         axisMin;    ///< Minimum axis value
         int                         axisMax;    ///< Maximum axis value
@@ -181,15 +183,15 @@ private:
     
     bool _validAxis(int axis);
 
-    void _inputCenterWaitBegin  (Joystick::AxisFunction_t function, int axis, int value);
-    void _inputStickDetect      (Joystick::AxisFunction_t function, int axis, int value);
-    void _inputStickMin         (Joystick::AxisFunction_t function, int axis, int value);
-    void _inputCenterWait       (Joystick::AxisFunction_t function, int axis, int value);
+    void _inputCenterWaitBegin  (Joystick::Axis_t axis, int mappedAxis, int value);
+    void _inputStickDetect      (Joystick::Axis_t axis, int mappedAxis, int value);
+    void _inputStickMin         (Joystick::Axis_t axis, int mappedAxis, int value);
+    void _inputCenterWait       (Joystick::Axis_t axis, int mappedAxis, int value);
     
-    void _switchDetect(Joystick::AxisFunction_t function, int axis, int value, bool moveToNextStep);
-    
-    void _saveFlapsDown(void);
-    void _skipFlaps(void);
+    void _switchDetect(Joystick::AxisFunction_t function, int axis, int value, bool moveToNextStep); // Undefined
+
+    void _saveFlapsDown(void); // Undefined
+    void _skipFlaps(void); // Undefined
     void _saveAllTrims(void);
     
     bool _stickSettleComplete(int axis, int value);
@@ -214,23 +216,30 @@ private:
     static const char* _imageFileMode2Dir;
     static const char* _imageFilePrefix;
     static const char* _imageCenter;
-    static const char* _imageThrottleUp;
-    static const char* _imageThrottleDown;
-    static const char* _imageYawLeft;
-    static const char* _imageYawRight;
-    static const char* _imageRollLeft;
-    static const char* _imageRollRight;
-    static const char* _imagePitchUp;
-    static const char* _imagePitchDown;
+    static const char* _imageLeftStickUp;
+    static const char* _imageLeftStickDown;
+    static const char* _imageLeftStickLeft;
+    static const char* _imageLeftStickRight;
+    static const char* _imageRightStickLeft;
+    static const char* _imageRightStickRight;
+    static const char* _imageRightStickUp;
+    static const char* _imageRightStickDown;
     
     static const int _updateInterval;   ///< Interval for ui update timer
-    
-    int _rgFunctionAxisMapping[Joystick::maxFunction]; ///< Maps from joystick function to axis index. _axisMax indicates axis not set for this function.
 
-    static const int _attitudeControls = 5;
+    /// Get the real life axis mapped to a function (roll->stickRightX).
+    /// This mapping is determined by the current JoystickTXMode
+    /// Joystick::maxAxis indicates axis not set for this function.
+    Joystick::Axis_t _rgFunctionAxisMapping[Joystick::maxFunction];
+
+    /// Get the raw joystick axis mapped to a real life axis (stickRightX->n).
+    /// This mapping is determined through the calibration process
+    /// Joystick::maxAxis indicates axis not mapped
+    int _rgAxisMapping[Joystick::maxAxis];
+
+    static const int _attitudeControls = 5; // Unused.. and should be 4?
     
     int                 _axisCount;         ///< Number of actual joystick axes available
-    static const int    _axisNoAxis = -1;   ///< Signals no axis set
     static const int    _axisMinimum = 4;   ///< Minimum numner of joystick axes required to run PX4
     struct AxisInfo*    _rgAxisInfo;        ///< Information associated with each axis
     int*                _axisValueSave;     ///< Saved values prior to detecting axis movement

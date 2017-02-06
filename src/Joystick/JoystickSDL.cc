@@ -10,6 +10,7 @@ JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, in
     , _isGameController(isGameController)
     , _index(index)
 {
+    if(_isGameController) _setDefaultCalibration();
 }
 
 QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicleManager) {

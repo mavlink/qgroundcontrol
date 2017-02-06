@@ -30,13 +30,27 @@ public:
 
     ~Joystick();
 
-    typedef struct {
+    typedef struct Calibration_t {
         int     min;
         int     max;
         int     center;
         int     deadband;
         bool    reversed;
+        Calibration_t()
+            : min(-32767)
+            , max(32767)
+            , center(0)
+            , deadband(0)
+            , reversed(false) {}
     } Calibration_t;
+
+    typedef enum {
+        stickLeftX,
+        stickLeftY,
+        stickRightX,
+        stickRightY,
+        maxAxis
+    } Axis_t;
 
     typedef enum {
         rollFunction,
@@ -65,9 +79,11 @@ public:
     Q_INVOKABLE void setButtonAction(int button, const QString& action);
     Q_INVOKABLE QString getButtonAction(int button);
 
-    Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
-    Q_PROPERTY(bool exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
-    Q_PROPERTY(bool accumulator READ accumulator WRITE setAccumulator NOTIFY accumulatorChanged)
+    Q_PROPERTY(int  throttleMode        READ throttleMode       WRITE setThrottleMode   NOTIFY throttleModeChanged)
+    Q_PROPERTY(bool exponential         READ exponential        WRITE setExponential    NOTIFY exponentialChanged)
+    Q_PROPERTY(bool accumulator         READ accumulator        WRITE setAccumulator    NOTIFY accumulatorChanged)
+    Q_PROPERTY(int  mode                READ mode               WRITE setMode           NOTIFY modeChanged)
+    Q_PROPERTY(bool requiresCalibration READ requiresCalibration                        CONSTANT)
 
     // Property accessors
 
@@ -81,13 +97,21 @@ public:
     void setCalibration(int axis, Calibration_t& calibration);
     Calibration_t getCalibration(int axis);
 
-    void setFunctionAxis(AxisFunction_t function, int axis);
-    int getFunctionAxis(AxisFunction_t function);
+    void setFunctionAxis(AxisFunction_t function, Axis_t axis); // Unused, always determined internally via TXmode
+    Axis_t getFunctionAxis(AxisFunction_t function);
+
+    void setAxisMapping(Axis_t axis, int map);
+    int getMappedAxis(Axis_t axis) { return _rgAxisMapping[axis]; }
 
     QStringList actions(void);
     QVariantList buttonActions(void);
 
     QString name(void) { return _name; }
+
+    void setMode(int mode, bool save=true);
+    int  mode(void) { return Joystick::_mode; }
+
+    virtual bool requiresCalibration(void) { return true; }
 
     int throttleMode(void);
     void setThrottleMode(int mode);
@@ -116,6 +140,8 @@ public:
 signals:
     void calibratedChanged(bool calibrated);
 
+    void modeChanged(int mode);
+
     // The raw signals are only meant for use by calibration
     void rawAxisValueChanged(int index, int value);
     void rawButtonPressedChanged(int index, int pressed);
@@ -141,12 +167,13 @@ signals:
     void buttonActionTriggered(int action);
 
 protected:
-    void _saveSettings(void);
-    void _loadSettings(void);
-    float _adjustRange(int value, Calibration_t calibration, bool withDeadbands);
-    void _buttonAction(const QString& action);
-    bool _validAxis(int axis);
-    bool _validButton(int button);
+    void    _setDefaultCalibration(void);
+    void    _saveSettings(void);
+    void    _loadSettings(void);
+    float   _adjustRange(int value, Calibration_t calibration, bool withDeadbands);
+    void    _buttonAction(const QString& action);
+    bool    _validAxis(int axis);
+    bool    _validButton(int button);
 
 private:
     virtual bool _open() = 0;
@@ -176,7 +203,9 @@ protected:
 
     int*                _rgAxisValues;
     Calibration_t*      _rgCalibration;
-    int                 _rgFunctionAxis[maxFunction];
+    Axis_t              _rgFunctionAxis[maxFunction];
+    int                 _rgAxisMapping[maxAxis];
+    static int          _mode;
 
     bool*               _rgButtonValues;
     QStringList         _rgButtonActions;
@@ -194,8 +223,7 @@ protected:
     MultiVehicleManager*    _multiVehicleManager;
 
 private:
-    static const char*  _rgFunctionSettingsKey[maxFunction];
-
+    static const char* _rgAxisMappingKey[maxAxis];
     static const char* _settingsGroup;
     static const char* _calibratedSettingsKey;
     static const char* _buttonActionSettingsKey;
@@ -203,6 +231,15 @@ private:
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;
     static const char* _deadbandSettingsKey;
+    static const char* _modeSettingsKey;
+    static const char* _fixedWingModeSettingsKey;
+    static const char* _multiRotorModeSettingsKey;
+    static const char* _roverModeSettingsKey;
+    static const char* _vtolModeSettingsKey;
+    static const char* _submarineModeSettingsKey;
+
+private slots:
+    void _activeVehicleChanged(Vehicle* activeVehicle);
 };
 
 #endif
