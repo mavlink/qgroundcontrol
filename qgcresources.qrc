@@ -100,9 +100,6 @@
         <file alias="attitudeDial.svg">src/FlightMap/Images/attitudeDial.svg</file>
         <file alias="attitudeInstrument.svg">src/FlightMap/Images/attitudeInstrument.svg</file>
         <file alias="attitudePointer.svg">src/FlightMap/Images/attitudePointer.svg</file>
-        <file alias="buttonHome.svg">src/FlightMap/Images/buttonHome.svg</file>
-        <file alias="buttonMore.svg">src/FlightMap/Images/buttonMore.svg</file>
-        <file alias="compassInstrumentAirplane.svg">src/FlightMap/Images/compassInstrumentAirplane.svg</file>
         <file alias="compassInstrumentArrow.svg">src/FlightMap/Images/compassInstrumentArrow.svg</file>
         <file alias="compassInstrumentDial.svg">src/FlightMap/Images/compassInstrumentDial.svg</file>
         <file alias="crossHair.svg">src/FlightMap/Images/crossHair.svg</file>
@@ -113,13 +110,10 @@
         <file alias="scale_end.png">src/FlightMap/Images/scale_end.png</file>
         <file alias="scaleLight.png">src/FlightMap/Images/scaleLight.png</file>
         <file alias="scale_endLight.png">src/FlightMap/Images/scale_endLight.png</file>
-        <file alias="airplaneOutline.svg">src/FlightMap/Images/airplaneOutline.svg</file>
-        <file alias="airplaneOpaque.svg">src/FlightMap/Images/airplaneOpaque.svg</file>
         <file alias="vehicleArrowOutline.svg">src/FlightMap/Images/vehicleArrowOutline.svg</file>
         <file alias="vehicleArrowOpaque.svg">src/FlightMap/Images/vehicleArrowOpaque.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
-        <file alias="ArrowHead.svg">src/FlightMap/Images/ArrowHead.svg</file>
         <file alias="Help.svg">src/FlightMap/Images/Help.svg</file>
         <file alias="HelpBlack.svg">src/FlightMap/Images/HelpBlack.svg</file>
         <file alias="MapAddMission.svg">src/FlightMap/Images/MapAddMission.svg</file>
