@@ -203,6 +203,8 @@ QGCView {
         ColumnLayout {
             id: factEditor
             spacing: _thinMargins
+            anchors.leftMargin: _thinMargins
+            anchors.rightMargin: _thinMargins
             anchors.left: parent.left
             anchors.right: parent.right
 
