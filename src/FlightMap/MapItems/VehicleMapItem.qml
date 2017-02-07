@@ -30,7 +30,7 @@ MapQuickItem {
 
     sourceItem: Image {
         id:                 vehicleIcon
-        source:             isSatellite ? "/qmlimages/vehicleArrowOpaque.svg" : "/qmlimages/vehicleArrowOutline.svg"
+        source:             isSatellite ? vehicle.vehicleImageOpaque : vehicle.vehicleImageOutline
         mipmap:             true
         width:              size
         sourceSize.width:   size
