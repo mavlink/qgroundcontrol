@@ -150,8 +150,8 @@ Item {
         QGCCompassWidget {
             id:                 compass
             size:               parent.width * 0.95
-            active:             instrumentPanel.active
             visible:            _showCompass
+            vehicle:            _activeVehicle
             anchors.horizontalCenter: parent.horizontalCenter
         }
     }

@@ -52,8 +52,8 @@ QGCListView {
 
             QGCCompassWidget {
                 size:       _widgetHeight
-                active:     true
                 heading:    _vehicle.heading.rawValue
+                vehicle:    _vehicle
             }
 
             QGCAttitudeWidget {

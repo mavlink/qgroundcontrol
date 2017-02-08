@@ -70,9 +70,20 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)
 {
-    if (_ignoreVehicleIds.contains(vehicleId) || getVehicleById(vehicleId)
-            || vehicleId == 0) {
+    if (_ignoreVehicleIds.contains(vehicleId) || getVehicleById(vehicleId) || vehicleId == 0) {
         return;
+    }
+
+    switch (vehicleType) {
+    case MAV_TYPE_GCS:
+    case MAV_TYPE_ONBOARD_CONTROLLER:
+    case MAV_TYPE_GIMBAL:
+    case MAV_TYPE_ADSB:
+        // These are not vehicles, so don't create a vehicle for them
+        return;
+    default:
+        // All other MAV_TYPEs create vehicles
+        break;
     }
 
     qCDebug(MultiVehicleManagerLog()) << "Adding new vehicle link:vehicleId:vehicleMavlinkVersion:vehicleFirmwareType:vehicleType "

@@ -16,6 +16,7 @@
 #include "QGCApplication.h"
 #include "QGCToolbox.h"
 #include "QGCMapEngine.h"
+#include "ParameterManager.h"
 #include "Vehicle.h"
 #include "MainWindow.h"
 
@@ -583,8 +584,14 @@ LogDownloadController::_prepareLogDownload()
     }
     _downloadData = new LogDownloadData(entry);
     _downloadData->filename = QString("log_") + QString::number(entry->id()) + "_" + ftime;
-    if(_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
-        _downloadData->filename += ".px4log";
+    if (_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
+
+        // This is a stopgap and should be removed once log file types are properly supported by the log download protocol
+        if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "SYS_LOGGER")->rawValue().toInt() == 0) {
+            _downloadData->filename += ".px4log";
+        } else {
+            _downloadData->filename += ".ulg";
+        }
     } else {
         _downloadData->filename += ".bin";
     }
