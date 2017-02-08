@@ -242,6 +242,15 @@ public:
     /// Return the resource file which contains the brand image for the vehicle.
     virtual QString brandImage(const Vehicle* vehicle) const { Q_UNUSED(vehicle) return QString(); }
 
+    /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
+    virtual QString vehicleImageOpaque(const Vehicle* vehicle) const;
+
+    /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
+    virtual QString vehicleImageOutline(const Vehicle* vehicle) const;
+
+    /// Return the resource file which contains the vehicle icon used in the compass
+    virtual QString vehicleImageCompass(const Vehicle* vehicle) const;
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
 };
