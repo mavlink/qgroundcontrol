@@ -81,7 +81,6 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         visible:                !_useAlternateInstruments
         size:                   getGadgetWidth()
-        active:                 _activeVehicle != null
         heading:                _heading
         rollAngle:              _roll
         pitchAngle:             _pitch
@@ -100,7 +99,6 @@ Item {
         anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
         visible:                _useAlternateInstruments
         width:                  ScreenTools.isTinyScreen ? getGadgetWidth() * 1.5 : getGadgetWidth()
-        active:                 _activeVehicle != null
         heading:                _heading
         rollAngle:              _roll
         pitchAngle:             _pitch

@@ -144,11 +144,11 @@ SetupPage {
 
                                 onClicked:  {
                                     var measuredVoltageValue = parseFloat(measuredVoltage.text)
-                                    if (measuredVoltageValue == 0) {
+                                    if (measuredVoltageValue == 0 || isNaN(measuredVoltageValue)) {
                                         return
                                     }
                                     var newVoltageDivider = (measuredVoltageValue * battVoltageDivider.value) / controller.vehicle.battery.voltage.value
-                                    if (newVoltageDivider != 0) {
+                                    if (newVoltageDivider > 0) {
                                         battVoltageDivider.value = newVoltageDivider
                                     }
                                 }

@@ -15,5 +15,8 @@ class YuneecFirmwarePlugin : public PX4FirmwarePlugin
     Q_OBJECT
 public:
     YuneecFirmwarePlugin(void);
-    QString             brandImage      (const Vehicle* vehicle) const;
+    QString     brandImage          (const Vehicle* vehicle) const;
+    QString     vehicleImageOpaque  (const Vehicle* vehicle) const;
+    QString     vehicleImageOutline (const Vehicle* vehicle) const;
+    QString     vehicleImageCompass (const Vehicle* vehicle) const;
 };

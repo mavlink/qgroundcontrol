@@ -10,6 +10,7 @@
 
 import QtQuick 2.4
 
+import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.FactSystem    1.0
@@ -68,7 +69,7 @@ Rectangle {
         anchors.leftMargin: _spacing
         anchors.left:       attitude.right
         size:               _innerRadius * 2
-        active:             root.active
+        vehicle:            QGroundControl.multiVehicleManager.activeVehicle
         anchors.verticalCenter: parent.verticalCenter
     }
 
