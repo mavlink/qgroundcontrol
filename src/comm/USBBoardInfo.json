@@ -36,8 +36,6 @@
         { "regExp": "^PX4 BL FMU v2.x$",    "boardClass": "Pixhawk" },
         { "regExp": "^PX4 FMU v1.x$",       "boardClass": "Pixhawk" },
         { "regExp": "^PX4 BL FMU v1.x$",    "boardClass": "Pixhawk" },
-        { "regExp": "^PX4 AUAV X2.1.x$",    "boardClass": "Pixhawk" },
-        { "regExp": "^PX4 BL AUAV X2.1.x$", "boardClass": "Pixhawk" },
         { "regExp": "^MindPX FMU v2.x$",    "boardClass": "Pixhawk" },
         { "regExp": "^MindPX BL FMU v2.x$", "boardClass": "Pixhawk" },
         { "regExp": "^PX4 TAP v1.x$",       "boardClass": "Pixhawk" },
