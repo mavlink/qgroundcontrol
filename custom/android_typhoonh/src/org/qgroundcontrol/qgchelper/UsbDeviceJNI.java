@@ -6,6 +6,7 @@ import android.os.PowerManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.view.WindowManager;
 
 import org.qtproject.qt5.android.bindings.QtActivity;
 import org.qtproject.qt5.android.bindings.QtApplication;
@@ -36,15 +37,26 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         m_tts = new TextToSpeech(this,this);
         PowerManager pm = (PowerManager)m_instance.getSystemService(Context.POWER_SERVICE);
         m_wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
-        Log.i(TAG, "onCreate()");
+        if(m_wl != null) {
+            m_wl.acquire();
+            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK acquired.");
+        } else {
+            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!!!");
+        }
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
     protected void onDestroy() {
+        if(m_wl != null) {
+            m_wl.release();
+            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK released.");
+        }
         super.onDestroy();
         m_tts.shutdown();
     }
@@ -60,20 +72,10 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
 
     public static void keepScreenOn()
     {
-        if(m_wl != null) {
-            m_wl.acquire();
-            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK acquired.");
-        } else {
-            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!!!");
-        }
     }
 
     public static void restoreScreenOn()
     {
-        if(m_wl != null) {
-            m_wl.release();
-            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK released.");
-        }
     }
 
 }
