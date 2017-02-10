@@ -55,16 +55,12 @@ QGCView {
             Layout.fillWidth: true
             spacing: 8
 
-            ToggleButton {
-                id: includeAdvancedToggle
-                text: qsTr("Advanced")
-                checked: false
-            }
-
-            ToggleButton {
-                id: includeStabilizedToggle
-                text: qsTr("Stabilized")
-                checked: true
+            QGCLabel {
+                height: parent.height
+                text: qsTr("Quick Filters")
+                font.pointSize: ScreenTools.mediumFontPointSize
+                verticalAlignment: Text.AlignVCenter
+                visible: !ScreenTools.isShortScreen
             }
 
             ToggleButton {
@@ -88,6 +84,22 @@ QGCView {
                 checked: false
             }
             ToggleButton {
+                id: includeAdvancedToggle
+                text: qsTr("Advanced")
+                checked: false
+            }
+            Rectangle {
+                height: parent.height
+                width: 1
+                color: qgcPal.windowShade
+            }
+
+            ToggleButton {
+                id: includeStabilizedToggle
+                text: qsTr("Stabilized")
+                checked: true
+            }
+            ToggleButton {
                 id: includePToggle
                 text: qsTr("P")
                 checked: true
@@ -101,6 +113,25 @@ QGCView {
                 id: includeDToggle
                 text: qsTr("D")
                 checked: true
+            }
+        }
+
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+
+            QGCLabel {
+                height: parent.height
+                text: qsTr("Options")
+                font.pointSize: ScreenTools.mediumFontPointSize
+                verticalAlignment: Text.AlignVCenter
+                // visible: !ScreenTools.isShortScreen
+            }
+
+            ToggleButton {
+                id: lockPitchRoll
+                text: qsTr("Lock Pitch/Roll")
+                checked: false
             }
         }
 
@@ -262,19 +293,27 @@ QGCView {
             }
 
 
-            QGCLabel {
-                id: validationErrorLabel
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                visible: text !== ""
-                color: qgcPal.warningText
+            RowLayout {
+                Item {
+                    id: validationErrorOffset
+                    Layout.minimumWidth: stepper.x
+                    Layout.maximumWidth: stepper.x
+                }
+
+                QGCLabel {
+                    id: validationErrorLabel
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    visible: text !== ""
+                    color: qgcPal.warningText
+                }
             }
 
             ColumnLayout {
                 id: helpDetails
                 visible: helpButton.checked
                 Layout.fillWidth: true
-                spacing: defaultTextHeight / 2
+                spacing: _margins / 2
 
                 QGCLabel {
                     Layout.fillWidth: true
@@ -305,13 +344,14 @@ QGCView {
                     QGCLabel { text: qsTr("Parameter:") }
                     QGCLabel { text: param }
                 }
+            }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.minimumHeight: 1
-                    Layout.maximumHeight: 1
-                    color: qgcPal.windowShade
-                }
+            Rectangle {
+                visible: validationErrorLabel.visible || helpDetails.visible
+                Layout.fillWidth: true
+                Layout.minimumHeight: 1
+                Layout.maximumHeight: 1
+                color: qgcPal.windowShade
             }
         }
     }
