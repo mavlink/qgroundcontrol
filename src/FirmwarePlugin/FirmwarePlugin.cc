@@ -16,6 +16,7 @@
 static FirmwarePluginFactoryRegister* _instance = NULL;
 
 const char* guided_mode_not_supported_by_vehicle = "Guided mode not supported by Vehicle.";
+const char* landing_aborted = "Landing aborted.";
 
 const char* FirmwarePlugin::px4FollowMeFlightMode = "Follow Me";
 
@@ -229,6 +230,12 @@ void FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+}
+
+void FirmwarePlugin::abortLanding(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    qgcApp()->showMessage(landing_aborted);
 }
 
 void FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)

@@ -105,6 +105,9 @@ public:
     /// If not, vehicle will be left in Loiter.
     virtual void pauseVehicle(Vehicle* vehicle);
 
+    /// Command vehicle to abort landing
+    virtual void abortLanding(Vehicle* vehicle);
+
     /// Command vehicle to return to launch
     virtual void guidedModeRTL(Vehicle* vehicle);
 

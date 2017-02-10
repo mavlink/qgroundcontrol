@@ -1838,6 +1838,16 @@ void Vehicle::pauseVehicle(void)
     _firmwarePlugin->pauseVehicle(this);
 }
 
+void Vehicle::abortLanding(void)
+{
+    sendMavCommand(defaultComponentId(),
+                   MAV_CMD_DO_GO_AROUND,
+                   true,        // show error if fails
+                   50);
+
+    //_firmwarePlugin->abortLanding(this);
+}
+
 bool Vehicle::guidedMode(void) const
 {
     return _firmwarePlugin->isGuidedMode(this);

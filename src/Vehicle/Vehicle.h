@@ -355,6 +355,9 @@ public:
     /// Command vehicle to kill all motors no matter what state
     Q_INVOKABLE void emergencyStop(void);
 
+    /// Command vehicle to abort landing
+    Q_INVOKABLE void abortLanding(void);
+
     /// Alter the current mission item on the vehicle
     Q_INVOKABLE void setCurrentMissionSequence(int seq);
 
