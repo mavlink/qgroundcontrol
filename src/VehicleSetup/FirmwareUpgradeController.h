@@ -198,6 +198,7 @@ private:
     QHash<FirmwareIdentifier, QString> _rgPX4FMUV2Firmware;
     QHash<FirmwareIdentifier, QString> _rgAeroCoreFirmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FMUV1Firmware;
+    QHash<FirmwareIdentifier, QString> _rgAUAVX2_1Firmware;
     QHash<FirmwareIdentifier, QString> _rgMindPXFMUV2Firmware;
     QHash<FirmwareIdentifier, QString> _rgTAPV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgASCV1Firmware;
