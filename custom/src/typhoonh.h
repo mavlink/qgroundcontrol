@@ -9,7 +9,7 @@
 #include "QGCOptions.h"
 #include "QGCSettings.h"
 
-class TyphoonHCore;
+class TyphoonM4Handler;
 class TyphoonHOptions;
 class TyphoonHSettings;
 
@@ -20,10 +20,10 @@ public:
     TyphoonHPlugin(QGCApplication* app);
     ~TyphoonHPlugin();
 
-    QGCOptions*     options     ();
-    QVariantList&   settings    ();
-
-    void            setToolbox  (QGCToolbox* toolbox);
+    QGCOptions*         options     ();
+    QVariantList&       settings    ();
+    TyphoonM4Handler*   handler     () { return _pHandler; }
+    void                setToolbox  (QGCToolbox* toolbox);
 
 private:
     TyphoonHOptions*    _pOptions;
@@ -31,5 +31,6 @@ private:
     QGCSettings*        _pGeneral;
     QGCSettings*        _pOfflineMaps;
     QGCSettings*        _pMAVLink;
-    QVariantList        settingsList;
+    QVariantList        _settingsList;
+    TyphoonM4Handler*   _pHandler;
 };

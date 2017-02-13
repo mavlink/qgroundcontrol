@@ -17,7 +17,7 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.Controllers           1.0
-import TyphoonHCore                         1.0
+import TyphoonHQuickInterface               1.0
 
 QGCView {
     id:                 qgcView
@@ -73,7 +73,7 @@ QGCView {
                                 text:       "Bind"
                                 width:      _labelWidth
                                 enabled:    QGroundControl.multiVehicleManager.activeVehicle
-                                onClicked:  TyphoonHCore.enterBindMode()
+                                onClicked:  TyphoonHQuickInterface.enterBindMode()
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QGCLabel {
@@ -82,7 +82,7 @@ QGCView {
                             }
                             QGCLabel {
                                 width:      _editFieldWidth
-                                text:       TyphoonHCore.m4StateStr
+                                text:       TyphoonHQuickInterface.m4StateStr
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }

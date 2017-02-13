@@ -10,6 +10,7 @@
 #include <QQmlEngine>
 
 #include "MultiVehicleManager.h"
+#include "QGCApplication.h"
 
 //-- From QGC. Needs to be in sync.
 const char* kMainIsMap = "MainFlyWindowIsMap";
@@ -17,11 +18,17 @@ const char* kStyleKey  = "StyleIsDark";
 
 //-----------------------------------------------------------------------------
 static QObject*
-typhoonHCoreSingletonFactory(QQmlEngine*, QJSEngine*)
+typhoonHQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
 {
-    TyphoonHCore* pCore = new TyphoonHCore();
-    pCore->init();
-    return pCore;
+    qDebug() << "Creating TyphoonHQuickInterface instance";
+    TyphoonHQuickInterface* pIFace = new TyphoonHQuickInterface();
+    TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
+    if(pPlug) {
+        pIFace->init(pPlug->handler());
+    } else {
+        qCritical() << "Error obtaining instance of TyphoonHPlugin";
+    }
+    return pIFace;
 }
 
 //-----------------------------------------------------------------------------
@@ -51,6 +58,7 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
     , _pGeneral(NULL)
     , _pOfflineMaps(NULL)
     , _pMAVLink(NULL)
+    , _pHandler(NULL)
 {
     _pOptions = new TyphoonHOptions;
     //-- Set our own "defaults"
@@ -64,6 +72,7 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
     if(!settings.contains(kMainIsMap)) {
         settings.setValue(kMainIsMap, false);
     }
+    _pHandler = new TyphoonM4Handler();
 }
 
 //-----------------------------------------------------------------------------
@@ -79,6 +88,8 @@ TyphoonHPlugin::~TyphoonHPlugin()
         delete _pOfflineMaps;
     if(_pMAVLink)
         delete _pMAVLink;
+    if(_pHandler)
+        delete _pHandler;
 }
 
 //-----------------------------------------------------------------------------
@@ -86,7 +97,8 @@ void
 TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
 {
     QGCCorePlugin::setToolbox(toolbox);
-    qmlRegisterSingletonType<TyphoonHCore>("TyphoonHCore", 1, 0, "TyphoonHCore", typhoonHCoreSingletonFactory);
+    qmlRegisterSingletonType<TyphoonHQuickInterface>("TyphoonHQuickInterface", 1, 0, "TyphoonHQuickInterface", typhoonHQuickInterfaceSingletonFactory);
+    _pHandler->init(toolbox);
 }
 
 //-----------------------------------------------------------------------------
@@ -105,18 +117,18 @@ TyphoonHPlugin::settings()
         _pTyphoonSettings = new QGCSettings(tr("Typhoon H"),
            QUrl::fromUserInput("qrc:/typhoonh/TyphoonSettings.qml"),
            QUrl::fromUserInput("qrc:/typhoonh/logoWhite.svg"));
-        settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
+        _settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
         _pGeneral = new QGCSettings(tr("General"),
             QUrl::fromUserInput("qrc:/qml/GeneralSettings.qml"),
             QUrl::fromUserInput("qrc:/res/gear-white.svg"));
-        settingsList.append(QVariant::fromValue((QGCSettings*)_pGeneral));
+        _settingsList.append(QVariant::fromValue((QGCSettings*)_pGeneral));
         _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
             QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"));
-        settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
+        _settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
         _pMAVLink = new QGCSettings(tr("MAVLink"),
             QUrl::fromUserInput("qrc:/qml/MavlinkSettings.qml"),
             QUrl::fromUserInput("qrc:/res/waves.svg"));
-        settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
+        _settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
     }
-    return settingsList;
+    return _settingsList;
 }
