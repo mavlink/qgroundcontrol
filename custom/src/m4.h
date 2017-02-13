@@ -9,19 +9,20 @@
 
 #include <QObject>
 #include <QTimer>
-#include <QLoggingCategory>
 #include "m4def.h"
 #include "m4util.h"
 
-Q_DECLARE_LOGGING_CATEGORY(YuneecLog)
+class QGCToolbox;
+class TyphoonM4Handler;
 
 //-----------------------------------------------------------------------------
-class TyphoonHCore : public QObject
+// QtQuick Interface (UI)
+class TyphoonHQuickInterface : public QObject
 {
     Q_OBJECT
 public:
-    TyphoonHCore(QObject* parent = NULL);
-    ~TyphoonHCore();
+    TyphoonHQuickInterface(QObject* parent = NULL);
+    ~TyphoonHQuickInterface() {}
 
     //-- QtQuick Interface
     enum M4State {
@@ -42,13 +43,37 @@ public:
 
     Q_INVOKABLE void enterBindMode  ();
 
-    int     m4State                 () { return _m4State; }
+    int     m4State                 ();
     QString m4StateStr              ();
 
-    //-- Regular interface
-    void    init                    ();
+    void    init                    (TyphoonM4Handler* pHandler);
+
+signals:
+    void    m4StateChanged          (int state);
+
+private slots:
+    void    _m4StateChanged         (int state);
+    void    _destroyed              ();
+
+private:
+    TyphoonM4Handler* _pHandler;
+
+};
+
+//-----------------------------------------------------------------------------
+// M4 Handler
+class TyphoonM4Handler : public QObject
+{
+    Q_OBJECT
+public:
+    TyphoonM4Handler(QObject* parent = NULL);
+    ~TyphoonM4Handler();
+
+    void    init                    (QGCToolbox* toolbox);
     bool    vehicleReady            ();
     void    getControllerLocation   (ControllerLocation& location);
+    int     m4State                 () { return _m4State; }
+    void    enterBindMode           ();
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  float   byteArrayToFloat(QByteArray data, int offset);
@@ -58,6 +83,7 @@ private slots:
     void    _bytesReady                         (QByteArray data);
     void    _stateManager                       ();
     void    _vehicleReady                       (bool parameterReadyVehicleAvailable);
+    void    _initSequence                       ();
 
 private:
     bool    _enterRun                           ();
@@ -68,7 +94,6 @@ private:
     bool    _bind                               (int rxAddr);
     bool    _unbind                             ();
     void    _checkExitRun                       ();
-    void    _initSequence                       ();
     bool    _queryBindState                     ();
     bool    _sendRecvBothCh                     ();
     bool    _setChannelSetting                  ();
@@ -93,11 +118,14 @@ private:
     void    _handleMixedChannelData             (m4Packet& packet);
     void    _handControllerFeedback             (m4Packet& packet);
     void    _handleInitialState                 ();
+
 signals:
     void    m4StateChanged                      (int state);
     void    switchStateChanged                  (int swId, int oldState, int newState);
     void    channelDataStatus                   (QByteArray channelData);
     void    controllerLocationChanged           ();
+    void    destroyed                           ();
+
 private:
     M4SerialComm* _commPort;
     enum {
