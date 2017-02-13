@@ -1843,9 +1843,9 @@ void Vehicle::abortLanding(void)
     sendMavCommand(defaultComponentId(),
                    MAV_CMD_DO_GO_AROUND,
                    true,        // show error if fails
-                   50);
+                   50);         // this is a dummy value that is currently ignored
 
-    //_firmwarePlugin->abortLanding(this);
+    _firmwarePlugin->abortLanding(this);
 }
 
 bool Vehicle::guidedMode(void) const
