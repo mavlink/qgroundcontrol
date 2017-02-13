@@ -86,7 +86,9 @@ public:
     void                        setMaxMemCache      (quint32 size);
     const QString               getCachePath        () { return _cachePath; }
     const QString               getCacheFilename    () { return _cacheFile; }
+    void                        testInternet        ();
     bool                        wasCacheReset       () { return _cacheWasReset; }
+    bool                        isInternetActive    () { return _isInternetActive; }
 
     UrlFactory*                 urlFactory          () { return _urlFactory; }
 
@@ -103,6 +105,7 @@ public:
 private slots:
     void _updateTotals          (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
     void _pruned                ();
+    void _internetStatus        (bool active);
 
 signals:
     void updateTotals           (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
@@ -123,6 +126,7 @@ private:
     quint32                 _maxMemCache;
     bool                    _prunning;
     bool                    _cacheWasReset;
+    bool                    _isInternetActive;
 };
 
 extern QGCMapEngine*    getQGCMapEngine();

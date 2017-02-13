@@ -46,10 +46,13 @@
 
 #include "QGCMapEngine.h"
 #include "QGeoMapReplyQGC.h"
+#include "QGeoTileFetcherQGC.h"
 
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QFile>
+
+int QGeoTiledMapReplyQGC::_requestCount = 0;
 
 //-----------------------------------------------------------------------------
 QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager, const QNetworkRequest &request, const QGeoTileSpec &spec, QObject *parent)
@@ -59,15 +62,7 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
     , _networkManager(networkManager)
 {
     if(_request.url().isEmpty()) {
-        if(!_badMapBox.size()) {
-            QFile b(":/res/notile.png");
-            if(b.open(QFile::ReadOnly))
-                _badMapBox = b.readAll();
-        }
-        setMapImageData(_badMapBox);
-        setMapImageFormat("png");
-        setFinished(true);
-        setCached(false);
+        _returnBadTile();
     } else {
         QGCFetchTileTask* task = getQGCMapEngine()->createFetchTileTask((UrlFactory::MapType)spec.mapId(), spec.x(), spec.y(), spec.zoom());
         connect(task, &QGCFetchTileTask::tileFetched, this, &QGeoTiledMapReplyQGC::cacheReply);
@@ -79,11 +74,35 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
 //-----------------------------------------------------------------------------
 QGeoTiledMapReplyQGC::~QGeoTiledMapReplyQGC()
 {
+    _clearReply();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGeoTiledMapReplyQGC::_clearReply()
+{
     if (_reply) {
         _reply->deleteLater();
         _reply = 0;
+        _requestCount--;
     }
 }
+
+//-----------------------------------------------------------------------------
+void
+QGeoTiledMapReplyQGC::_returnBadTile()
+{
+    if(!_badMapBox.size()) {
+        QFile b(":/res/notile.png");
+        if(b.open(QFile::ReadOnly))
+            _badMapBox = b.readAll();
+    }
+    setMapImageData(_badMapBox);
+    setMapImageFormat("png");
+    setFinished(true);
+    setCached(false);
+}
+
 //-----------------------------------------------------------------------------
 void
 QGeoTiledMapReplyQGC::abort()
@@ -94,15 +113,9 @@ QGeoTiledMapReplyQGC::abort()
 
 //-----------------------------------------------------------------------------
 void
-QGeoTiledMapReplyQGC::replyDestroyed()
-{
-    _reply = 0;
-}
-
-//-----------------------------------------------------------------------------
-void
 QGeoTiledMapReplyQGC::networkReplyFinished()
 {
+    _timer.stop();
     if (!_reply) {
         return;
     }
@@ -117,51 +130,54 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
         getQGCMapEngine()->cacheTile((UrlFactory::MapType)tileSpec().mapId(), tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
     }
     setFinished(true);
-    _reply->deleteLater();
-    _reply = 0;
+    _clearReply();
 }
 
 //-----------------------------------------------------------------------------
 void
 QGeoTiledMapReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
 {
+    _timer.stop();
     if (!_reply) {
         return;
     }
     if (error != QNetworkReply::OperationCanceledError) {
         qWarning() << "Fetch tile error:" << _reply->errorString();
     }
-    _reply->deleteLater();
-    _reply = 0;
-    if(!_badTile.size()) {
-        QFile b(":/res/notile.png");
-        if(b.open(QFile::ReadOnly))
-            _badTile = b.readAll();
-    }
-    setMapImageData(_badTile);
-    setMapImageFormat("png");
-    setFinished(true);
-    setCached(false);
+    _returnBadTile();
+    _clearReply();
 }
 
 //-----------------------------------------------------------------------------
 void
 QGeoTiledMapReplyQGC::cacheError(QGCMapTask::TaskType type, QString /*errorString*/)
 {
-    if(type != QGCMapTask::taskFetchTile) {
-        qWarning() << "QGeoTiledMapReplyQGC::cacheError() for wrong task";
+    if(_networkManager->networkAccessible() < QNetworkAccessManager::Accessible || !getQGCMapEngine()->isInternetActive()) {
+        _returnBadTile();
+    } else {
+        if(type != QGCMapTask::taskFetchTile) {
+            qWarning() << "QGeoTiledMapReplyQGC::cacheError() for wrong task";
+        }
+        //-- Tile not in cache. Get it off the Internet.
+#if !defined(__mobile__)
+        QNetworkProxy proxy = _networkManager->proxy();
+        QNetworkProxy tProxy;
+        tProxy.setType(QNetworkProxy::DefaultProxy);
+        _networkManager->setProxy(tProxy);
+#endif
+        _reply = _networkManager->get(_request);
+        _reply->setParent(0);
+        connect(_reply, SIGNAL(finished()),                         this, SLOT(networkReplyFinished()));
+        connect(_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
+#if !defined(__mobile__)
+        _networkManager->setProxy(proxy);
+#endif
+        //- Wait for an answer up to 10 seconds
+        connect(&_timer, &QTimer::timeout, this, &QGeoTiledMapReplyQGC::timeout);
+        _timer.setSingleShot(true);
+        _timer.start(10000);
+        _requestCount++;
     }
-    //-- Tile not in cache. Get it off the Internet.
-    QNetworkProxy proxy = _networkManager->proxy();
-    QNetworkProxy tProxy;
-    tProxy.setType(QNetworkProxy::DefaultProxy);
-    _networkManager->setProxy(tProxy);
-    _reply = _networkManager->get(_request);
-    _reply->setParent(0);
-    connect(_reply, SIGNAL(finished()),                         this, SLOT(networkReplyFinished()));
-    connect(_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
-    connect(_reply, SIGNAL(destroyed()),                        this, SLOT(replyDestroyed()));
-    _networkManager->setProxy(proxy);
 }
 
 //-----------------------------------------------------------------------------
@@ -173,4 +189,13 @@ QGeoTiledMapReplyQGC::cacheReply(QGCCacheTile* tile)
     setFinished(true);
     setCached(true);
     tile->deleteLater();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGeoTiledMapReplyQGC::timeout()
+{
+    if(_reply) {
+        _reply->abort();
+    }
 }

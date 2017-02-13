@@ -43,6 +43,7 @@ public:
     static const int pixhawkFMUV2ProductId =                17;     ///< Product ID for Pixhawk V2 board
     static const int pixhawkFMUV2OldBootloaderProductId =   22;     ///< Product ID for Bootloader on older Pixhawk V2 boards
     static const int pixhawkFMUV1ProductId =                16;     ///< Product ID for PX4 FMU V1 board
+    static const int auavx2_1FMUV2ProductId =               33;     ///< Product ID for AUAV X2.1 FMU V2 board
 
     static const int AeroCoreProductId =                    4097;   ///< Product ID for the AeroCore board
     

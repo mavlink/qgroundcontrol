@@ -268,7 +268,7 @@ QGCView {
             anchors.right:      _flightVideo.right
             height:             ScreenTools.defaultFontPixelHeight * 2
             width:              height
-            visible:            QGroundControl.videoManager.videoRunning
+            visible:            QGroundControl.videoManager.videoRunning && QGroundControl.videoManager.recordingEnabled
             opacity:            0.75
 
             Rectangle {

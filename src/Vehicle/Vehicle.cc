@@ -2203,6 +2203,30 @@ QString Vehicle::takeControlFlightMode(void) const
     return _firmwarePlugin->takeControlFlightMode();
 }
 
+QString Vehicle::vehicleImageOpaque() const
+{
+    if(_firmwarePlugin)
+        return _firmwarePlugin->vehicleImageOpaque(this);
+    else
+        return QString();
+}
+
+QString Vehicle::vehicleImageOutline() const
+{
+    if(_firmwarePlugin)
+        return _firmwarePlugin->vehicleImageOutline(this);
+    else
+        return QString();
+}
+
+QString Vehicle::vehicleImageCompass() const
+{
+    if(_firmwarePlugin)
+        return _firmwarePlugin->vehicleImageCompass(this);
+    else
+        return QString();
+}
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
