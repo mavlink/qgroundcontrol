@@ -89,6 +89,12 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _tuningComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
 
+            if (PX4PIDTuningComponent::isSupported(_vehicle)) {
+                _pidTuningComponent = new PX4PIDTuningComponent(_vehicle, this);
+                _pidTuningComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_pidTuningComponent));
+            }
+
             //-- Is there support for cameras?
             if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "TRIG_MODE")) {
                 _cameraComponent = new CameraComponent(_vehicle, this);
