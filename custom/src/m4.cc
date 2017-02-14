@@ -131,6 +131,15 @@ TyphoonHQuickInterface::m4StateStr()
 
 //-----------------------------------------------------------------------------
 void
+TyphoonHQuickInterface::initM4()
+{
+    if(_pHandler) {
+        _pHandler->softReboot();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonHQuickInterface::enterBindMode()
 {
     if(_pHandler) {
@@ -163,10 +172,13 @@ TyphoonM4Handler::TyphoonM4Handler(QObject* parent)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
     , _rxLocalIndex(0)
     , _sendRxInfoEnd(false)
+    , _binding(false)
 {
     _rxchannelInfoIndex = 2;
     _channelNumIndex    = 6;
     _commPort = new M4SerialComm(this);
+    connect(&_timer, &QTimer::timeout, this, &TyphoonM4Handler::_stateManager);
+    _timer.setSingleShot(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -212,8 +224,6 @@ TyphoonM4Handler::init()
         qWarning() << "Could not start serial communication with M4";
         return;
     }
-    connect(&_timer, &QTimer::timeout, this, &TyphoonM4Handler::_stateManager);
-    _timer.setSingleShot(true);
     _sendRxInfoEnd = false;
     connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonM4Handler::_bytesReady);
 }
@@ -227,6 +237,7 @@ TyphoonM4Handler::enterBindMode()
     Vehicle* v = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     if(v) {
         qDebug() << "pairRX()";
+        _binding = true;
         v->uas()->pairRX(1, 0);
         //-- Set M4 into bind mode
         _rxBindInfoFeedback.clear();
@@ -237,6 +248,29 @@ TyphoonM4Handler::enterBindMode()
         }
         QTimer::singleShot(1000, this, &TyphoonM4Handler::_initSequence);
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonM4Handler::softReboot()
+{
+    qDebug() << "softReboot()";
+    _timer.stop();
+    if(_commPort) {
+        disconnect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonM4Handler::_bytesReady);
+        delete _commPort;
+    }
+    _state              = STATE_NONE;
+    _responseTryCount   = 0;
+    _currentChannelAdd  = 0;
+    _m4State            = TyphoonHQuickInterface::M4_STATE_NONE;
+    _rxLocalIndex       = 0;
+    _sendRxInfoEnd      = false;
+    _rxchannelInfoIndex = 2;
+    _channelNumIndex    = 6;
+    QThread::msleep(SEND_INTERVAL);
+    _commPort = new M4SerialComm(this);
+    init();
 }
 
 //-----------------------------------------------------------------------------
@@ -1055,7 +1089,13 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     if(_state == STATE_ENTER_RUN) {
                         _state = STATE_RUNNING;
                         _timer.stop();
-                        qDebug() << "M4 ready, in run state.";
+                        if(_binding) {
+                            _binding = false;
+                            qDebug() << "Soft reboot...";
+                            QTimer::singleShot(1000, this, &TyphoonM4Handler::softReboot);
+                        } else {
+                            qDebug() << "M4 ready, in run state.";
+                        }
                     }
                     break;
                 case Yuneec::CMD_SET_BINDKEY_FUNCTION:
@@ -1295,6 +1335,7 @@ TyphoonM4Handler::_handleCommand(m4Packet& packet)
                         _handleInitialState();
                     }
                     emit m4StateChanged(_m4State);
+                    qDebug() << "New State:" << _m4State;
                 }
             }
             break;
