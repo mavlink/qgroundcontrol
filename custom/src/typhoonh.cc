@@ -98,7 +98,7 @@ TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
 {
     QGCCorePlugin::setToolbox(toolbox);
     qmlRegisterSingletonType<TyphoonHQuickInterface>("TyphoonHQuickInterface", 1, 0, "TyphoonHQuickInterface", typhoonHQuickInterfaceSingletonFactory);
-    _pHandler->init(toolbox);
+    _pHandler->init();
 }
 
 //-----------------------------------------------------------------------------

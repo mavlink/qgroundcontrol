@@ -180,7 +180,7 @@ TyphoonM4Handler::~TyphoonM4Handler()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonM4Handler::init(QGCToolbox *toolbox)
+TyphoonM4Handler::init()
 {
     //-- Have we bound before?
     QSettings settings;
@@ -207,24 +207,15 @@ TyphoonM4Handler::init(QGCToolbox *toolbox)
         _rxBindInfoFeedback.txAddr      = settings.value(ktxAddr,       0).toInt();
     }
     settings.endGroup();
-    connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleAvailableChanged, this, &TyphoonM4Handler::_vehicleReady);
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::_vehicleReady(bool parameterReadyVehicleAvailable)
-{
-    if(parameterReadyVehicleAvailable) {
-        qDebug() << "Init M4 Handler";
-        if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
-            qWarning() << "Could not start serial communication with M4";
-            return;
-        }
-        connect(&_timer, &QTimer::timeout, this, &TyphoonM4Handler::_stateManager);
-        _timer.setSingleShot(true);
-        _sendRxInfoEnd = false;
-        connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonM4Handler::_bytesReady);
+    qDebug() << "Init M4 Handler";
+    if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
+        qWarning() << "Could not start serial communication with M4";
+        return;
     }
+    connect(&_timer, &QTimer::timeout, this, &TyphoonM4Handler::_stateManager);
+    _timer.setSingleShot(true);
+    _sendRxInfoEnd = false;
+    connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonM4Handler::_bytesReady);
 }
 
 //-----------------------------------------------------------------------------
