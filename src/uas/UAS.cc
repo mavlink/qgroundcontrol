@@ -1211,7 +1211,6 @@ void UAS::pairRX(int rxType, int rxSubType)
 {
     if (_vehicle) {
         _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
-                                 MAV_CMD_IMAGE_START_CAPTURE,       // command id
                                  MAV_CMD_START_RX_PAIR,             // command id
                                  true,                              // showError
                                  rxType,
