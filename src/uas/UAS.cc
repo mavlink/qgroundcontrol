@@ -1226,6 +1226,7 @@ void UAS::takePhoto()
     if (_vehicle) {
         _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
                                  MAV_CMD_IMAGE_START_CAPTURE,       // command id
+                                 true,                              // showError
                                  0,                                 // Duration between two consecutive pictures (in seconds)
                                  1,                                 // Number of images to capture total - 0 for unlimited capture
                                  0,                                 // Resolution in megapixels (0.3 for 640x480, 1.3 for 1280x720, etc), set to 0 if param 4/5 are used
@@ -1242,6 +1243,7 @@ void UAS::toggleVideo()
     if (_vehicle) {
         _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
                                  MAV_CMD_VIDEO_START_CAPTURE,       // command id
+                                 true,                              // showError
                                  0,                                 // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
                                  60,                                // Frames per second
                                  0,                                 // Resolution in megapixels (0.3 for 640x480, 1.3 for 1280x720, etc), set to 0 if param 4/5 are used
