@@ -69,7 +69,7 @@ public:
     TyphoonM4Handler(QObject* parent = NULL);
     ~TyphoonM4Handler();
 
-    void    init                    (QGCToolbox* toolbox);
+    void    init                    ();
     bool    vehicleReady            ();
     void    getControllerLocation   (ControllerLocation& location);
     int     m4State                 () { return _m4State; }
@@ -82,7 +82,6 @@ public:
 private slots:
     void    _bytesReady                         (QByteArray data);
     void    _stateManager                       ();
-    void    _vehicleReady                       (bool parameterReadyVehicleAvailable);
     void    _initSequence                       ();
 
 private:
