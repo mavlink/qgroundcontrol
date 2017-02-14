@@ -128,7 +128,7 @@ QGCView {
                     }
                 }
                 //-----------------------------------------------------------------
-                //-- Miscelanous
+                //-- Miscellanous
                 Item {
                     width:              qgcView.width * 0.8
                     height:             miscLabel.height
@@ -136,7 +136,7 @@ QGCView {
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
                         id:             miscLabel
-                        text:           qsTr("Miscelaneous")
+                        text:           qsTr("Miscellaneous")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
                 }

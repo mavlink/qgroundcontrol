@@ -137,6 +137,10 @@ public:
 public slots:
     /** @brief Order the robot to pair its receiver **/
     virtual void pairRX(int rxType, int rxSubType) = 0;
+    /** @brief Order the robot to take a picture **/
+    virtual void takePhoto() {}
+    /** @brief Order the robot to toggle video recording **/
+    virtual void toggleVideo() {}
 
     /** @brief Send the full HIL state to the MAV */
 #ifndef __mobile__
