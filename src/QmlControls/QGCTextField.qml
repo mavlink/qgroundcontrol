@@ -97,9 +97,10 @@ TextField {
             }
 
             MouseArea {
-                anchors.fill:   unitsHelpLayout
-                enabled:        control.activeFocus
-                onClicked:      root.helpClicked()
+                anchors.margins:    ScreenTools.isMobile ? -(ScreenTools.defaultFontPixelWidth * 0.66) : 0 // Larger touch area for mobile
+                anchors.fill:       unitsHelpLayout
+                enabled:            control.activeFocus
+                onClicked:          root.helpClicked()
             }
         }
 
