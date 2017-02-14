@@ -18,6 +18,9 @@ public:
     int index(void) { return _index; }
     void setIndex(int index) { _index = index; }
 
+    // This can be uncommented to hide the calibration buttons for gamecontrollers in the future
+    // bool requiresCalibration(void) final { return !_isGameController; }
+
 private:
     static void _loadGameControllerMappings();
 

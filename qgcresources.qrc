@@ -100,9 +100,6 @@
         <file alias="attitudeDial.svg">src/FlightMap/Images/attitudeDial.svg</file>
         <file alias="attitudeInstrument.svg">src/FlightMap/Images/attitudeInstrument.svg</file>
         <file alias="attitudePointer.svg">src/FlightMap/Images/attitudePointer.svg</file>
-        <file alias="buttonHome.svg">src/FlightMap/Images/buttonHome.svg</file>
-        <file alias="buttonMore.svg">src/FlightMap/Images/buttonMore.svg</file>
-        <file alias="compassInstrumentAirplane.svg">src/FlightMap/Images/compassInstrumentAirplane.svg</file>
         <file alias="compassInstrumentArrow.svg">src/FlightMap/Images/compassInstrumentArrow.svg</file>
         <file alias="compassInstrumentDial.svg">src/FlightMap/Images/compassInstrumentDial.svg</file>
         <file alias="crossHair.svg">src/FlightMap/Images/crossHair.svg</file>
@@ -113,13 +110,10 @@
         <file alias="scale_end.png">src/FlightMap/Images/scale_end.png</file>
         <file alias="scaleLight.png">src/FlightMap/Images/scaleLight.png</file>
         <file alias="scale_endLight.png">src/FlightMap/Images/scale_endLight.png</file>
-        <file alias="airplaneOutline.svg">src/FlightMap/Images/airplaneOutline.svg</file>
-        <file alias="airplaneOpaque.svg">src/FlightMap/Images/airplaneOpaque.svg</file>
         <file alias="vehicleArrowOutline.svg">src/FlightMap/Images/vehicleArrowOutline.svg</file>
         <file alias="vehicleArrowOpaque.svg">src/FlightMap/Images/vehicleArrowOpaque.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
-        <file alias="ArrowHead.svg">src/FlightMap/Images/ArrowHead.svg</file>
         <file alias="Help.svg">src/FlightMap/Images/Help.svg</file>
         <file alias="HelpBlack.svg">src/FlightMap/Images/HelpBlack.svg</file>
         <file alias="MapAddMission.svg">src/FlightMap/Images/MapAddMission.svg</file>
@@ -156,6 +150,7 @@
         <file alias="Signal100.svg">src/ui/toolbar/Images/Signal100.svg</file>
         <file alias="TelemRSSI.svg">src/ui/toolbar/Images/TelemRSSI.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
+        <file alias="CameraIcon.svg">src/ui/toolbar/Images/CameraIcon.svg</file>
         <file alias="CogWheel.svg">src/MissionManager/CogWheel.svg</file>
         <file alias="StationMode.svg">src/AutoPilotPlugins/Common/Images/StationMode.svg</file>
         <file alias="APMode.svg">src/AutoPilotPlugins/Common/Images/APMode.svg</file>
@@ -253,17 +248,6 @@
         <file alias="radioThrottleDown.png">resources/calibration/mode2/radioThrottleDown.png</file>
         <file alias="radioSwitchMinMax.png">resources/calibration/mode2/radioSwitchMinMax.png</file>
     </qresource>
-    <qresource prefix="/qml/calibration/joystick">
-        <file alias="joystickCenter.png">resources/calibration/joystick/joystickCenter.png</file>
-        <file alias="joystickRollLeft.png">resources/calibration/joystick/joystickRollLeft.png</file>
-        <file alias="joystickRollRight.png">resources/calibration/joystick/joystickRollRight.png</file>
-        <file alias="joystickPitchUp.png">resources/calibration/joystick/joystickPitchUp.png</file>
-        <file alias="joystickPitchDown.png">resources/calibration/joystick/joystickPitchDown.png</file>
-        <file alias="joystickYawLeft.png">resources/calibration/joystick/joystickYawLeft.png</file>
-        <file alias="joystickYawRight.png">resources/calibration/joystick/joystickYawRight.png</file>
-        <file alias="joystickThrottleUp.png">resources/calibration/joystick/joystickThrottleUp.png</file>
-        <file alias="joystickThrottleDown.png">resources/calibration/joystick/joystickThrottleDown.png</file>
-    </qresource>
     <qresource prefix="/db/mapping/joystick">
         <file alias="gamecontrollerdb.txt">resources/SDL_GameControllerDB/gamecontrollerdb.txt</file>
     </qresource>
@@ -276,5 +260,49 @@
     </qresource>
     <qresource prefix="/opengl">
         <file>resources/opengl/buglist.json</file>
+    </qresource>
+    <qresource prefix="/qml/calibration/joystick/mode1">
+        <file alias="joystickCenter.png">resources/calibration/joystick/mode1/joystickCenter.png</file>
+        <file alias="joystickPitchDown.png">resources/calibration/joystick/mode1/joystickPitchDown.png</file>
+        <file alias="joystickPitchUp.png">resources/calibration/joystick/mode1/joystickPitchUp.png</file>
+        <file alias="joystickRollLeft.png">resources/calibration/joystick/mode1/joystickRollLeft.png</file>
+        <file alias="joystickRollRight.png">resources/calibration/joystick/mode1/joystickRollRight.png</file>
+        <file alias="joystickThrottleDown.png">resources/calibration/joystick/mode1/joystickThrottleDown.png</file>
+        <file alias="joystickThrottleUp.png">resources/calibration/joystick/mode1/joystickThrottleUp.png</file>
+        <file alias="joystickYawLeft.png">resources/calibration/joystick/mode1/joystickYawLeft.png</file>
+        <file alias="joystickYawRight.png">resources/calibration/joystick/mode1/joystickYawRight.png</file>
+    </qresource>
+    <qresource prefix="/qml/calibration/joystick/mode2">
+        <file alias="joystickCenter.png">resources/calibration/joystick/mode2/joystickCenter.png</file>
+        <file alias="joystickPitchDown.png">resources/calibration/joystick/mode2/joystickPitchDown.png</file>
+        <file alias="joystickPitchUp.png">resources/calibration/joystick/mode2/joystickPitchUp.png</file>
+        <file alias="joystickRollLeft.png">resources/calibration/joystick/mode2/joystickRollLeft.png</file>
+        <file alias="joystickRollRight.png">resources/calibration/joystick/mode2/joystickRollRight.png</file>
+        <file alias="joystickThrottleDown.png">resources/calibration/joystick/mode2/joystickThrottleDown.png</file>
+        <file alias="joystickThrottleUp.png">resources/calibration/joystick/mode2/joystickThrottleUp.png</file>
+        <file alias="joystickYawLeft.png">resources/calibration/joystick/mode2/joystickYawLeft.png</file>
+        <file alias="joystickYawRight.png">resources/calibration/joystick/mode2/joystickYawRight.png</file>
+    </qresource>
+    <qresource prefix="/qml/calibration/joystick/mode3">
+        <file alias="joystickCenter.png">resources/calibration/joystick/mode3/joystickCenter.png</file>
+        <file alias="joystickPitchDown.png">resources/calibration/joystick/mode3/joystickPitchDown.png</file>
+        <file alias="joystickPitchUp.png">resources/calibration/joystick/mode3/joystickPitchUp.png</file>
+        <file alias="joystickRollLeft.png">resources/calibration/joystick/mode3/joystickRollLeft.png</file>
+        <file alias="joystickRollRight.png">resources/calibration/joystick/mode3/joystickRollRight.png</file>
+        <file alias="joystickThrottleDown.png">resources/calibration/joystick/mode3/joystickThrottleDown.png</file>
+        <file alias="joystickThrottleUp.png">resources/calibration/joystick/mode3/joystickThrottleUp.png</file>
+        <file alias="joystickYawLeft.png">resources/calibration/joystick/mode3/joystickYawLeft.png</file>
+        <file alias="joystickYawRight.png">resources/calibration/joystick/mode3/joystickYawRight.png</file>
+    </qresource>
+    <qresource prefix="/qml/calibration/joystick/mode4">
+        <file alias="joystickCenter.png">resources/calibration/joystick/mode4/joystickCenter.png</file>
+        <file alias="joystickPitchDown.png">resources/calibration/joystick/mode4/joystickPitchDown.png</file>
+        <file alias="joystickPitchUp.png">resources/calibration/joystick/mode4/joystickPitchUp.png</file>
+        <file alias="joystickRollLeft.png">resources/calibration/joystick/mode4/joystickRollLeft.png</file>
+        <file alias="joystickRollRight.png">resources/calibration/joystick/mode4/joystickRollRight.png</file>
+        <file alias="joystickThrottleDown.png">resources/calibration/joystick/mode4/joystickThrottleDown.png</file>
+        <file alias="joystickThrottleUp.png">resources/calibration/joystick/mode4/joystickThrottleUp.png</file>
+        <file alias="joystickYawLeft.png">resources/calibration/joystick/mode4/joystickYawLeft.png</file>
+        <file alias="joystickYawRight.png">resources/calibration/joystick/mode4/joystickYawRight.png</file>
     </qresource>
 </RCC>
