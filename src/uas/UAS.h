@@ -262,6 +262,10 @@ public:
 public slots:
     /** @brief Order the robot to pair its receiver **/
     void pairRX(int rxType, int rxSubType);
+    /** @brief Order the robot to take a picture **/
+    void takePhoto();
+    /** @brief Order the robot to toggle video recording **/
+    void toggleVideo();
 
     /** @brief Enable / disable HIL */
 #ifndef __mobile__
