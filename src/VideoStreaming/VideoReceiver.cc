@@ -323,7 +323,9 @@ void VideoReceiver::stop()
 {
 #if defined(QGC_GST_STREAMING)
     qCDebug(VideoReceiverLog) << "stop()";
-    if (_pipeline != NULL && !_stopping) {
+    if(!_streaming) {
+        _shutdownPipeline();
+    } else if (_pipeline != NULL && !_stopping) {
         qCDebug(VideoReceiverLog) << "Stopping _pipeline";
         gst_element_send_event(_pipeline, gst_event_new_eos());
         _stopping = true;
