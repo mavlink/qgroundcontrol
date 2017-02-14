@@ -52,7 +52,6 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     , _initialLoadComplete(false)
     , _waitingForDefaultComponent(false)
     , _saveRequired(false)
-    , _defaultComponentId(MAV_COMP_ID_ALL)
     , _parameterSetMajorVersion(-1)
     , _parameterMetaData(NULL)
     , _prevWaitingReadParamIndexCount(0)
@@ -80,9 +79,6 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_waitingParamTimeout);
 
     connect(_vehicle->uas(), &UASInterface::parameterUpdate, this, &ParameterManager::_parameterUpdate);
-
-    _defaultComponentIdParam = vehicle->firmwarePlugin()->getDefaultComponentIdParam();
-    qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Default component param" << _defaultComponentIdParam;
 
     // Ensure the cache directory exists
     QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
@@ -163,12 +159,6 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Seeing component for first time - paramcount:" << parameterCount;
     }
 
-    // Determine default component id
-    if (!_defaultComponentIdParam.isEmpty() && _defaultComponentIdParam == parameterName) {
-        qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Default component id determined";
-        _defaultComponentId = componentId;
-    }
-
     bool componentParamsComplete = false;
     if (_waitingReadParamIndexMap[componentId].count() == 1) {
         // We need to know when we get the last param from a component in order to complete setup
@@ -229,13 +219,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         _waitingParamTimeoutTimer.start();
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Restarting _waitingParamTimeoutTimer: totalWaitingParamCount:" << totalWaitingParamCount;
     } else {
-        if (_defaultComponentId == MAV_COMP_ID_ALL && !_defaultComponentIdParam.isEmpty()) {
-            // Still waiting for default component id, restart timer
-            qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Restarting _waitingParamTimeoutTimer (still waiting for default component)";
-            _waitingParamTimeoutTimer.start();
-        } else {
-            qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Not restarting _waitingParamTimeoutTimer (all requests satisfied)";
-        }
+        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Not restarting _waitingParamTimeoutTimer (all requests satisfied)";
     }
 
     // Update progress bar for waiting reads
@@ -306,7 +290,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     fact->_containerSetRawValue(value);
 
     if (componentParamsComplete) {
-        if (componentId == _defaultComponentId) {
+        if (componentId == _vehicle->defaultComponentId()) {
             // Add meta data to default component. We need to do this before we setup the group map since group
             // map requires meta data.
             _addMetaDataToDefaultComponent();
@@ -337,8 +321,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     _prevWaitingReadParamNameCount = waitingReadParamNameCount;
     _prevWaitingWriteParamNameCount = waitingWriteParamNameCount;
 
-    // Don't fail initial load complete if default component isn't found yet. That will be handled in wait timeout check.
-    _checkInitialLoadComplete(false /* failIfNoDefaultComponent */);
+    _checkInitialLoadComplete();
 
     qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "_parameterUpdate complete";
 }
@@ -409,33 +392,11 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
     qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Request to refresh all parameters for component ID:" << what;
 }
 
-void ParameterManager::_determineDefaultComponentId(void)
-{
-    if (_defaultComponentId == MAV_COMP_ID_ALL) {
-        // We don't have a default component id yet. That means the plugin can't provide
-        // the param to trigger off of. Instead we use the most prominent component id in
-        // the set of parameters. Better than nothing!
-
-        int largestCompParamCount = 0;
-        foreach(int componentId, _mapParameterName2Variant.keys()) {
-            int compParamCount = _mapParameterName2Variant[componentId].count();
-            if (compParamCount > largestCompParamCount) {
-                largestCompParamCount = compParamCount;
-                _defaultComponentId = componentId;
-            }
-        }
-
-        if (_defaultComponentId == MAV_COMP_ID_ALL) {
-            qWarning() << _logVehiclePrefix() << "All parameters missing, unable to determine default component id";
-        }
-    }
-}
-
 /// Translates FactSystem::defaultComponentId to real component id if needed
 int ParameterManager::_actualComponentId(int componentId)
 {
     if (componentId == FactSystem::defaultComponentId) {
-        componentId = _defaultComponentId;
+        componentId = _vehicle->defaultComponentId();
         if (componentId == FactSystem::defaultComponentId) {
             qWarning() << _logVehiclePrefix() << "Default component id not set";
         }
@@ -569,18 +530,17 @@ void ParameterManager::_waitingParamTimeout(void)
         }
     }
 
-    if (!paramsRequested && _defaultComponentId == MAV_COMP_ID_ALL && !_defaultComponentIdParam.isEmpty() && !_waitingForDefaultComponent) {
-        // Initial load is complete but we still don't have default component params. Wait one more cycle to see if the
-        // default component finally shows up.
-        qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Restarting _waitingParamTimeoutTimer - still don't have default component id";
+    if (!paramsRequested && !_waitingForDefaultComponent && !_mapParameterName2Variant.contains(_vehicle->defaultComponentId())) {
+        // Initial load is complete but we still don't have any default component params. Wait one more cycle to see if the
+        // any show up.
+        qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Restarting _waitingParamTimeoutTimer - still don't have default component params";
         _waitingParamTimeoutTimer.start();
         _waitingForDefaultComponent = true;
         return;
     }
     _waitingForDefaultComponent = false;
 
-    // Check for initial load complete success/failure. Fail load if we don't have a default component at this point.
-    _checkInitialLoadComplete(true /* failIfNoDefaultComponent */);
+    _checkInitialLoadComplete();
 
     if (!paramsRequested) {
         foreach(int componentId, _waitingWriteParamNameMap.keys()) {
@@ -955,11 +915,6 @@ FactMetaData::ValueType_t ParameterManager::_mavTypeToFactType(MAV_PARAM_TYPE ma
 
 void ParameterManager::_addMetaDataToDefaultComponent(void)
 {
-     if (_defaultComponentId == MAV_COMP_ID_ALL) {
-         // We don't know what the default component is so we can't support meta data
-         return;
-     }
-
      if (_parameterMetaData) {
          return;
      }
@@ -974,14 +929,13 @@ void ParameterManager::_addMetaDataToDefaultComponent(void)
      _parameterMetaData = _vehicle->firmwarePlugin()->loadParameterMetaData(metaDataFile);
 
     // Loop over all parameters in default component adding meta data
-    QVariantMap& factMap = _mapParameterName2Variant[_defaultComponentId];
+    QVariantMap& factMap = _mapParameterName2Variant[_vehicle->defaultComponentId()];
     foreach (const QString& key, factMap.keys()) {
         _vehicle->firmwarePlugin()->addMetaDataToFact(_parameterMetaData, factMap[key].value<Fact*>(), _vehicle->vehicleType());
     }
 }
 
-/// @param failIfNoDefaultComponent true: Fails parameter load if no default component but we should have one
-void ParameterManager::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
+void ParameterManager::_checkInitialLoadComplete(void)
 {
     // Already processed?
     if (_initialLoadComplete) {
@@ -993,11 +947,6 @@ void ParameterManager::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
             // We are still waiting on some parameters, not done yet
             return;
         }
-    }
-
-    if (!failIfNoDefaultComponent && _defaultComponentId == MAV_COMP_ID_ALL  && !_defaultComponentIdParam.isEmpty()) {
-        // We are still waiting for default component to show up
-        return;
     }
 
     // We aren't waiting for any more initial parameter updates, initial parameter loading is complete
@@ -1031,23 +980,10 @@ void ParameterManager::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
         if (!qgcApp()->runningUnitTests()) {
             qCWarning(ParameterManagerLog) << _logVehiclePrefix() << "The following parameter indices could not be loaded after the maximum number of retries: " << indexList;
         }
-    } else if (_defaultComponentId == MAV_COMP_ID_ALL && !_defaultComponentIdParam.isEmpty()) {
-        // Missing default component when we should have one
-        _missingParameters = true;
-        QString errorMsg = tr("QGroundControl did not receive parameters from the default component for vehicle %1. "
-                              "This will cause QGroundControl to be unable to display its full user interface. "
-                              "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
-                              "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.").arg(_vehicle->id());
-        qCDebug(ParameterManagerLog) << errorMsg;
-        qgcApp()->showMessage(errorMsg);
-        if (!qgcApp()->runningUnitTests()) {
-            qCWarning(ParameterManagerLog) << _logVehiclePrefix() << "Default component was never found, param:" << _defaultComponentIdParam;
-        }
     }
 
     // Signal load complete
     _parametersReady = true;
-    _determineDefaultComponentId();
     _vehicle->autopilotPlugin()->parametersReadyPreChecks();
     emit parametersReadyChanged(true);
     emit missingParametersChanged(_missingParameters);
@@ -1056,12 +992,11 @@ void ParameterManager::_checkInitialLoadComplete(bool failIfNoDefaultComponent)
 void ParameterManager::_initialRequestTimeout(void)
 {
     if (!_disableAllRetries && ++_initialRequestRetryCount <= _maxInitialRequestListRetry) {
-        qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Retyring initial parameter request list";
+        qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Retrying initial parameter request list";
         refreshAllParameters();
         _initialRequestTimeoutTimer.start();
     } else {
         if (!_vehicle->genericFirmware()) {
-            // Generic vehicles (like BeBop) may not have any parameters, so don't annoy the user
             QString errorMsg = tr("Vehicle %1 did not respond to request for parameters. "
                                   "This will cause QGroundControl to be unable to display its full user interface.").arg(_vehicle->id());
             qCDebug(ParameterManagerLog) << errorMsg;
@@ -1282,7 +1217,8 @@ void ParameterManager::_loadOfflineEditingParams(void)
         QStringList paramData = line.split("\t");
         Q_ASSERT(paramData.count() == 5);
 
-        _defaultComponentId = paramData.at(1).toInt();
+        int defaultComponentId = paramData.at(1).toInt();
+        _vehicle->setOfflineEditingDefaultComponentId(defaultComponentId);
         QString paramName = paramData.at(2);
         QString valStr = paramData.at(3);
         MAV_PARAM_TYPE paramType = static_cast<MAV_PARAM_TYPE>(paramData.at(4).toUInt());
@@ -1321,8 +1257,8 @@ void ParameterManager::_loadOfflineEditingParams(void)
             _parameterSetMajorVersion = paramValue.toInt();
         }
 
-        Fact* fact = new Fact(_defaultComponentId, paramName, _mavTypeToFactType(paramType), this);
-        _mapParameterName2Variant[_defaultComponentId][paramName] = QVariant::fromValue(fact);
+        Fact* fact = new Fact(defaultComponentId, paramName, _mavTypeToFactType(paramType), this);
+        _mapParameterName2Variant[defaultComponentId][paramName] = QVariant::fromValue(fact);
     }
 
     _addMetaDataToDefaultComponent();
