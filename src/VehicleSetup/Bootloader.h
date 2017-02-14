@@ -66,6 +66,7 @@ public:
     static const int boardIDPX4FMUV4 = 11;      ///< PX4 V4 board, as from USB PID
     static const int boardIDPX4Flow = 6;        ///< PX4 Flow board, as from USB PID
     static const int boardIDAeroCore = 98;      ///< Gumstix AeroCore board, as from USB PID
+    static const int boardIDAUAVX2_1 = 33;      ///< AUAV X2.1 board, as from USB PID
     static const int boardID3DRRadio = 78;      ///< 3DR Radio. This is an arbitrary value unrelated to the PID
     static const int boardIDMINDPXFMUV2 = 88;   ///< MindPX V2 board, as from USB PID
     static const int boardIDTAPV1 = 64;         ///< TAP V1 board, as from USB PID

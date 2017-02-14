@@ -74,6 +74,8 @@ public:
     void    getControllerLocation   (ControllerLocation& location);
     int     m4State                 () { return _m4State; }
     void    enterBindMode           ();
+    void    takePhoto               ();
+    void    toggleVideo             ();
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  float   byteArrayToFloat(QByteArray data, int offset);

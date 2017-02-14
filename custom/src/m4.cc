@@ -241,6 +241,30 @@ TyphoonM4Handler::enterBindMode()
 
 //-----------------------------------------------------------------------------
 void
+TyphoonM4Handler::takePhoto()
+{
+    qDebug() << "takePhoto()";
+    //-- Send MAVLink command telling vehicle to take photo
+    Vehicle* v = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    if(v) {
+        v->uas()->takePhoto();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonM4Handler::toggleVideo()
+{
+    qDebug() << "toggleVideo()";
+    //-- Send MAVLink command telling vehicle to toggle video recording
+    Vehicle* v = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    if(v) {
+        v->uas()->toggleVideo();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonM4Handler::_initSequence()
 {
     //-- There are two defines for the argument to this function. One sets the
@@ -1295,6 +1319,20 @@ TyphoonM4Handler::_switchChanged(m4Packet& packet)
     switchChanged.oldState  = (int)commandValues[1];
     switchChanged.newState  = (int)commandValues[2];
     emit switchStateChanged(switchChanged.hwId, switchChanged.oldState, switchChanged.newState);
+    qDebug() << "Switches:" << switchChanged.hwId << switchChanged.oldState << switchChanged.newState;
+    //-- On Button Down
+    if(switchChanged.newState == 1) {
+        switch(switchChanged.hwId) {
+            case 53: // Camera Shutter
+                takePhoto();
+                break;
+            case 54: // Video Button
+                toggleVideo();
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
