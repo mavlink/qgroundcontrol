@@ -136,9 +136,13 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
 
     connect(this, &SurveyMissionItem::cameraTriggerChanged,     this, &SurveyMissionItem::_cameraTriggerChanged);
 
-    connect(&_cameraTriggerDistanceFact,    &Fact::valueChanged,                        this, &SurveyMissionItem::timeBetweenShotsChanged);
-    connect(_vehicle,                       &Vehicle::cruiseSpeedChanged,               this, &SurveyMissionItem::timeBetweenShotsChanged);
-    connect(_vehicle,                       &Vehicle::hoverSpeedChanged,                this, &SurveyMissionItem::timeBetweenShotsChanged);
+    connect(&_cameraTriggerDistanceFact, &Fact::valueChanged, this, &SurveyMissionItem::timeBetweenShotsChanged);
+
+    // NULL check since object creation during unit testing passes NULL for vehicle
+    if (_vehicle) {
+        connect(_vehicle, &Vehicle::cruiseSpeedChanged, this, &SurveyMissionItem::timeBetweenShotsChanged);
+        connect(_vehicle, &Vehicle::hoverSpeedChanged,  this, &SurveyMissionItem::timeBetweenShotsChanged);
+    }
 }
 
 void SurveyMissionItem::_setSurveyDistance(double surveyDistance)

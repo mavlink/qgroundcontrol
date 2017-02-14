@@ -50,10 +50,10 @@ Button {
     style: ButtonStyle {
             /*! The padding between the background and the label components. */
             padding {
-                top:    __padding
+                top:    __padding * 0.5
                 left:   __padding
                 right:  control.menu !== null ? Math.round(ScreenTools.defaultFontPixelHeight) : __padding
-                bottom: __padding
+                bottom: __padding * 0.5
             }
 
             /*! This defines the background of the button. */
@@ -66,6 +66,7 @@ Button {
                     anchors.fill:   parent
                     border.width:   _showBorder ? 1: 0
                     border.color:   _qgcPal.buttonText
+                    //radius:       3
                     color:          _showHighlight ?
                                         control._qgcPal.buttonHighlight :
                                         (primary ? control._qgcPal.primaryButton : control._qgcPal.button)

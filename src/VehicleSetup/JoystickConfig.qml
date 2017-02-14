@@ -186,7 +186,7 @@ SetupPage {
                         QGCLabel {
                             id:     rollLabel
                             width:  defaultTextWidth * 10
-                            text:   qsTr("Roll")
+                            text:   _activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
                         }
 
                         Loader {
@@ -218,7 +218,7 @@ SetupPage {
                         QGCLabel {
                             id:     pitchLabel
                             width:  defaultTextWidth * 10
-                            text:   qsTr("Pitch")
+                            text:   _activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
                         }
 
                         Loader {
@@ -312,6 +312,7 @@ SetupPage {
                 // Command Buttons
                 Row {
                     spacing: 10
+                    visible: _activeJoystick.requiresCalibration
 
                     QGCButton {
                         id:     skipButton
@@ -674,12 +675,57 @@ SetupPage {
                 id:             rightColumn
                 anchors.top:    parent.top
                 anchors.right:  parent.right
-                width:          defaultTextWidth * 35
-                spacing:        10
+                width:          Math.min(joystickPage.defaultTextWidth * 35, availableWidth * 0.4)
+                spacing:        ScreenTools.defaultFontPixelHeight / 2
+
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth
+
+                    ExclusiveGroup { id: modeGroup }
+
+                    QGCLabel {
+                        text: "TX Mode:"
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "1"
+                        checked:        controller.transmitterMode == 1
+                        enabled:        !controller.calibrating
+
+                        onClicked: controller.transmitterMode = 1
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "2"
+                        checked:        controller.transmitterMode == 2
+                        enabled:        !controller.calibrating
+
+                        onClicked: controller.transmitterMode = 2
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "3"
+                        checked:        controller.transmitterMode == 3
+                        enabled:        !controller.calibrating
+
+                        onClicked: controller.transmitterMode = 3
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "4"
+                        checked:        controller.transmitterMode == 4
+                        enabled:        !controller.calibrating
+
+                        onClicked: controller.transmitterMode = 4
+                    }
+                }
 
                 Image {
-                    //width:      parent.width
-                    height:     defaultTextHeight * 15
+                    width:      parent.width
                     fillMode:   Image.PreserveAspectFit
                     smooth:     true
                     source:     controller.imageHelp

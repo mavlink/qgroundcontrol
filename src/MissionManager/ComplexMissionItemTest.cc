@@ -180,26 +180,6 @@ void ComplexMissionItemTest::_testCameraTrigger(void)
 {
     QCOMPARE(_complexItem->property("cameraTrigger").toBool(), true);
 
-    // Turning on/off camera triggering while there is no grid should trigger:
-    //      cameraTriggerChanged
-    //      dirtyChanged
-    // lastSequenceNumber should not change
-
-    int lastSeq = _complexItem->lastSequenceNumber();
-
-    _complexItem->setProperty("cameraTrigger", false);
-    QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask | cameraTriggerChangedMask));
-    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(cameraTriggerChangedIndex));
-    QCOMPARE(_complexItem->lastSequenceNumber(), lastSeq);
-
-    _complexItem->setDirty(false);
-    _multiSpy->clearAllSignals();
-
-    _complexItem->setProperty("cameraTrigger", true);
-    QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask | cameraTriggerChangedMask));
-    QVERIFY(_multiSpy->pullBoolFromSignalIndex(cameraTriggerChangedIndex));
-    QCOMPARE(_complexItem->lastSequenceNumber(), lastSeq);
-
     // Set up a grid
 
     for (int i=0; i<3; i++) {
@@ -209,7 +189,7 @@ void ComplexMissionItemTest::_testCameraTrigger(void)
     _complexItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
-    lastSeq = _complexItem->lastSequenceNumber();
+    int lastSeq = _complexItem->lastSequenceNumber();
     QVERIFY(lastSeq > 0);
 
     // Turning off camera triggering should remove two camera trigger mission items, this should trigger:

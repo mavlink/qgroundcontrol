@@ -56,6 +56,17 @@ QGCView {
             anchors.right:  parent.right
             spacing:        ScreenTools.defaultFontPixelWidth
 
+            Timer {
+                id:         clearTimer
+                interval:   100;
+                running:    false;
+                repeat:     false
+                onTriggered: {
+                    searchText.text = ""
+                    controller.searchText = ""
+                }
+            }
+
             QGCLabel {
                 anchors.baseline:   clearButton.baseline
                 text:               qsTr("Search:")
@@ -71,7 +82,12 @@ QGCView {
             QGCButton {
                 id:         clearButton
                 text:       qsTr("Clear")
-                onClicked:  searchText.text = ""
+                onClicked: {
+                    if(ScreenTools.isMobile) {
+                        Qt.inputMethod.hide();
+                    }
+                    clearTimer.start()
+                }
             }
         } // Row - Header
 
@@ -117,6 +133,11 @@ QGCView {
                     text:           qsTr("Clear RC to Param")
                     onTriggered:	controller.clearRCToParam()
                     visible:        _showRCToParam
+                }
+                MenuSeparator { }
+                MenuItem {
+                    text:           qsTr("Reboot Vehicle")
+                    onTriggered:    showDialog(rebootVehicleConfirmComponent, qsTr("Reboot Vehicle"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                 }
             }
         }
@@ -291,6 +312,23 @@ QGCView {
                 width:              parent.width
                 wrapMode:           Text.WordWrap
                 text:               qsTr("Select Reset to reset all parameters to their defaults.")
+            }
+        }
+    }
+
+    Component {
+        id: rebootVehicleConfirmComponent
+
+        QGCViewDialog {
+            function accept() {
+                QGroundControl.multiVehicleManager.activeVehicle.rebootVehicle()
+                hideDialog()
+            }
+
+            QGCLabel {
+                width:              parent.width
+                wrapMode:           Text.WordWrap
+                text:               qsTr("Select Ok to reboot vehicle.")
             }
         }
     }

@@ -142,6 +142,10 @@ public:
     /// @return -1: reserver all buttons, >0 number of buttons to reserve
     virtual int manualControlReservedButtonCount(void);
 
+    /// Default tx mode to apply to joystick axes
+    /// TX modes are as outlined here: http://www.rc-airplane-world.com/rc-transmitter-modes.html
+    virtual int defaultJoystickTXMode(void);
+
     /// Returns true if the vehicle and firmware supports the use of a throttle joystick that
     /// is zero when centered. Typically not supported on vehicles that have bidirectional
     /// throttle.
@@ -237,6 +241,15 @@ public:
 
     /// Return the resource file which contains the brand image for the vehicle.
     virtual QString brandImage(const Vehicle* vehicle) const { Q_UNUSED(vehicle) return QString(); }
+
+    /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
+    virtual QString vehicleImageOpaque(const Vehicle* vehicle) const;
+
+    /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
+    virtual QString vehicleImageOutline(const Vehicle* vehicle) const;
+
+    /// Return the resource file which contains the vehicle icon used in the compass
+    virtual QString vehicleImageCompass(const Vehicle* vehicle) const;
 
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;

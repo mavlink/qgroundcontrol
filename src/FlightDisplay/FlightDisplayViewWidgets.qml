@@ -81,7 +81,6 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         visible:                !_useAlternateInstruments
         size:                   getGadgetWidth()
-        active:                 _activeVehicle != null
         heading:                _heading
         rollAngle:              _roll
         pitchAngle:             _pitch
@@ -100,7 +99,6 @@ Item {
         anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
         visible:                _useAlternateInstruments
         width:                  ScreenTools.isTinyScreen ? getGadgetWidth() * 1.5 : getGadgetWidth()
-        active:                 _activeVehicle != null
         heading:                _heading
         rollAngle:              _roll
         pitchAngle:             _pitch
@@ -452,8 +450,8 @@ Item {
             anchors.left:       parent.left
             anchors.right:      parent.right
             orientation:        Qt.Vertical
-            minimumValue:       QGroundControl.metersToAppSettingsDistanceUnits(2)
-            maximumValue:       QGroundControl.metersToAppSettingsDistanceUnits((_activeVehicle && _activeVehicle.flying) ? 100 : 10)
+            minimumValue:       QGroundControl.metersToAppSettingsDistanceUnits(0)
+            maximumValue:       QGroundControl.metersToAppSettingsDistanceUnits((_activeVehicle && _activeVehicle.flying) ? Math.round((_activeVehicle.altitudeRelative.value + 100) / 100) * 100 : 10)
         }
     }
 }

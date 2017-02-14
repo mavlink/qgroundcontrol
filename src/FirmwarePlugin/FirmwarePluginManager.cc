@@ -30,14 +30,11 @@ QList<MAV_AUTOPILOT> FirmwarePluginManager::knownFirmwareTypes(void)
 {
     if (_knownFirmwareTypes.isEmpty()) {
         QList<FirmwarePluginFactory*> factoryList = FirmwarePluginFactoryRegister::instance()->pluginFactories();
-
-        for (int i=0; i<factoryList.count(); i++) {
+        for (int i = 0; i < factoryList.count(); i++) {
             _knownFirmwareTypes.append(factoryList[i]->knownFirmwareTypes());
         }
+        _knownFirmwareTypes.append(MAV_AUTOPILOT_GENERIC);
     }
-
-    _knownFirmwareTypes.append(MAV_AUTOPILOT_GENERIC);
-
     return _knownFirmwareTypes;
 }
 
