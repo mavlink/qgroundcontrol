@@ -39,8 +39,11 @@ APMAirframeComponentController::APMAirframeComponentController(void) :
     _fillAirFrames();
 
     Fact *frame = getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME"));
-    connect(frame, &Fact::vehicleUpdated, this, &APMAirframeComponentController::_factFrameChanged);
-    _factFrameChanged(frame->rawValue());
+    if (frame) {
+        // Not available in newer firmwares, requires newer QGC to run correctly
+        connect(frame, &Fact::vehicleUpdated, this, &APMAirframeComponentController::_factFrameChanged);
+        _factFrameChanged(frame->rawValue());
+    }
 }
 
 APMAirframeComponentController::~APMAirframeComponentController()
