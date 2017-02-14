@@ -130,7 +130,7 @@ protected:
 
 signals:
     /// Heartbeat received on link
-    void vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
+    void vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
 
     /** @brief Message received and directly copied via signal */
     void messageReceived(LinkInterface* link, mavlink_message_t message);

@@ -187,9 +187,6 @@ public:
     ///     false: Do not send first item to vehicle, sequence numbers must be adjusted
     virtual bool sendHomePositionToVehicle(void);
 
-    /// Returns the parameter that is used to identify the default component
-    virtual QString getDefaultComponentIdParam(void) const { return QString(); }
-
     /// Returns the parameter which is used to identify the version number of parameter set
     virtual QString getVersionParam(void) { return QString(); }
 
