@@ -42,6 +42,7 @@ public:
     Q_PROPERTY(QString  m4StateStr  READ    m4StateStr  NOTIFY m4StateChanged)
 
     Q_INVOKABLE void enterBindMode  ();
+    Q_INVOKABLE void initM4         ();
 
     int     m4State                 ();
     QString m4StateStr              ();
@@ -74,12 +75,16 @@ public:
     void    getControllerLocation   (ControllerLocation& location);
     int     m4State                 () { return _m4State; }
     void    enterBindMode           ();
+    void    initM4                  ();
     void    takePhoto               ();
     void    toggleVideo             ();
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  float   byteArrayToFloat(QByteArray data, int offset);
     static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
+
+public slots:
+    void    softReboot                          ();
 
 private slots:
     void    _bytesReady                         (QByteArray data);
@@ -158,4 +163,5 @@ private:
     RxBindInfo              _rxBindInfoFeedback;
     QTimer                  _timer;
     ControllerLocation      _controllerLocation;
+    bool                    _binding;
 };
