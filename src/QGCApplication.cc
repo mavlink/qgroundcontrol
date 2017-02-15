@@ -439,6 +439,9 @@ bool QGCApplication::_initForNormalAppBoot(void)
                     "Your saved settings have been reset to defaults.");
     }
 
+    // Connect links with flag AutoconnectLink
+    toolbox()->linkManager()->startAutoConnectedLinks();
+
     if (getQGCMapEngine()->wasCacheReset()) {
         showMessage("The Offline Map Cache database has been upgraded. "
                     "Your old map cache sets have been reset.");
