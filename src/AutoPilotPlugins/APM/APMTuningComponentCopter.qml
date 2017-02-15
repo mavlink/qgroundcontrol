@@ -84,7 +84,7 @@ SetupPage {
                 calcAutoTuneChannel()
             }
 
-            /// The AutoTune switch is stored in one of the RC#_FUNCTION parameters. We need to loop through those
+            /// The AutoTune switch is stored in one of the CH#_OPT parameters. We need to loop through those
             /// to find them and setup the ui accordindly.
             function calcAutoTuneChannel() {
                 _autoTuneSwitchChannelIndex = 0
