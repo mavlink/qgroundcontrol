@@ -279,7 +279,7 @@ void GeoFenceController::saveToFile(const QString& filename)
             paramNames.append(params[i].value<Fact*>()->name());
         }
         if (paramNames.count() > 0) {
-            paramMgr->saveToJson(paramMgr->defaultComponentId(), paramNames, fenceFileObject);
+            paramMgr->saveToJson(_activeVehicle->defaultComponentId(), paramNames, fenceFileObject);
         }
 
         if (breachReturnEnabled()) {

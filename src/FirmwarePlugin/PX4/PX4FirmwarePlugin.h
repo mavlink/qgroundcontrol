@@ -50,7 +50,6 @@ public:
     void                initializeVehicle               (Vehicle* vehicle) final;
     bool                sendHomePositionToVehicle       (void) final;
     void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;
-    QString             getDefaultComponentIdParam      (void) const final { return QString("SYS_AUTOSTART"); }
     QString             missionCommandOverrides         (MAV_TYPE vehicleType) const final;
     QString             getVersionParam                 (void) final { return QString("SYS_PARAM_VER"); }
     QString             internalParameterMetaDataFile   (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QString(":/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml"); }
