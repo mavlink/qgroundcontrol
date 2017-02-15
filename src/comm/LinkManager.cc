@@ -990,3 +990,14 @@ QList<LinkInterface*> LinkManager::links(void)
 
     return rawLinks;
 }
+
+void LinkManager::startAutoConnectedLinks(void)
+{
+    SharedLinkConfigurationPointer conf;
+
+    for(int i = 0; i < _sharedConfigurations.count(); i++) {
+        conf = _sharedConfigurations[i];
+        if (conf->isAutoConnect())
+            createConnectedLink(conf);
+    }
+}
