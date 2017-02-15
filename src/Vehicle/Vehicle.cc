@@ -828,6 +828,10 @@ void Vehicle::_handleHomePosition(mavlink_message_t& message)
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)
 {
+    if (message.compid != _defaultComponentId) {
+        return;
+    }
+
     _connectionActive();
 
     mavlink_heartbeat_t heartbeat;
