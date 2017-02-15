@@ -143,6 +143,8 @@ Vehicle::Vehicle(LinkInterface*             link,
 {
     _addLink(link);
 
+    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_activeJoystickChanged);
+
     _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     connect(_mavlink, &MAVLinkProtocol::messageReceived,     this, &Vehicle::_mavlinkMessageReceived);
@@ -1296,6 +1298,12 @@ QStringList Vehicle::joystickModes(void)
     list << "Normal" << "Attitude" << "Position" << "Force" << "Velocity";
 
     return list;
+}
+
+void Vehicle::_activeJoystickChanged(void)
+{
+	_loadSettings();
+	_startJoystick(true);
 }
 
 bool Vehicle::joystickEnabled(void)
