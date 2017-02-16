@@ -17,8 +17,7 @@
 #include "JsonHelper.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
-
-const double SimpleMissionItem::defaultAltitude =           50.0;
+#include "QGroundControlQmlGlobal.h"
 
 FactMetaData* SimpleMissionItem::_altitudeMetaData =        NULL;
 FactMetaData* SimpleMissionItem::_commandMetaData =         NULL;
@@ -528,7 +527,7 @@ void SimpleMissionItem::_syncFrameToAltitudeRelativeToHome(void)
 void SimpleMissionItem::setDefaultsForCommand(void)
 {
     // We set these global defaults first, then if there are param defaults they will get reset
-    _missionItem.setParam7(defaultAltitude);
+    _missionItem.setParam7(QGroundControlQmlGlobal::defaultMissionItemAltitude()->rawValue().toDouble());
 
     MAV_CMD command = (MAV_CMD)this->command();
     const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);

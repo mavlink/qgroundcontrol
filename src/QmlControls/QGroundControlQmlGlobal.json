@@ -44,5 +44,15 @@
     "units":            "%",
     "min":              0,
     "max":              100
+},
+{
+    "name":             "DefaultMissionItemAltitude",
+    "shortDescription": "Default value for altitude",
+    "longDescription":  "This value specifies the default altitude for new items added to a mission.",
+    "type":             "double",
+    "defaultValue":     50.0,
+    "min":              0.0,
+    "units":            "meters",
+    "decimalPlaces":    2
 }
 ]
