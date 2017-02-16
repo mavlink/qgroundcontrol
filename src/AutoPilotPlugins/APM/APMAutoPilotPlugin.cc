@@ -16,7 +16,6 @@
 #include "VehicleComponent.h"
 #include "APMAirframeComponent.h"
 #include "APMAirframeComponentAirframes.h"
-#include "APMAirframeComponentController.h"
 #include "APMAirframeLoader.h"
 #include "APMFlightModesComponent.h"
 #include "APMRadioComponent.h"
