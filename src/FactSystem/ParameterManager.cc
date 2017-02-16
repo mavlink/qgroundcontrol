@@ -219,7 +219,13 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         _waitingParamTimeoutTimer.start();
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Restarting _waitingParamTimeoutTimer: totalWaitingParamCount:" << totalWaitingParamCount;
     } else {
-        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Not restarting _waitingParamTimeoutTimer (all requests satisfied)";
+        if (!_mapParameterName2Variant.contains(_vehicle->defaultComponentId())) {
+            // Still waiting for parameters from default component
+            qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Restarting _waitingParamTimeoutTimer (still waiting for default component params)";
+            _waitingParamTimeoutTimer.start();
+        } else {
+            qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Not restarting _waitingParamTimeoutTimer (all requests satisfied)";
+        }
     }
 
     // Update progress bar for waiting reads
@@ -947,6 +953,11 @@ void ParameterManager::_checkInitialLoadComplete(void)
             // We are still waiting on some parameters, not done yet
             return;
         }
+    }
+
+    if (!_mapParameterName2Variant.contains(_vehicle->defaultComponentId())) {
+        // No default component params yet, not done yet
+        return;
     }
 
     // We aren't waiting for any more initial parameter updates, initial parameter loading is complete
