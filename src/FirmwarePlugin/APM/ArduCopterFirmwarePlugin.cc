@@ -67,36 +67,51 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
     setSupportedModes(supportedFlightModes);
 
     if (!_remapParamNameIntialized) {
-        FirmwarePlugin::remapParamNameMap_t& remap = _remapParamName[3][4];
+        FirmwarePlugin::remapParamNameMap_t& remapV3_4 = _remapParamName[3][4];
 
-        remap["ATC_ANG_RLL_P"] =    QStringLiteral("STB_RLL_P");
-        remap["ATC_ANG_PIT_P"] =    QStringLiteral("STB_PIT_P");
-        remap["ATC_ANG_YAW_P"] =    QStringLiteral("STB_YAW_P");
+        remapV3_4["ATC_ANG_RLL_P"] =    QStringLiteral("STB_RLL_P");
+        remapV3_4["ATC_ANG_PIT_P"] =    QStringLiteral("STB_PIT_P");
+        remapV3_4["ATC_ANG_YAW_P"] =    QStringLiteral("STB_YAW_P");
 
-        remap["ATC_RAT_RLL_P"] =    QStringLiteral("RATE_RLL_P");
-        remap["ATC_RAT_RLL_I"] =    QStringLiteral("RATE_RLL_I");
-        remap["ATC_RAT_RLL_IMAX"] = QStringLiteral("RATE_RLL_IMAX");
-        remap["ATC_RAT_RLL_D"] =    QStringLiteral("RATE_RLL_D");
-        remap["ATC_RAT_RLL_FILT"] = QStringLiteral("RATE_RLL_FILT_HZ");
+        remapV3_4["ATC_RAT_RLL_P"] =    QStringLiteral("RATE_RLL_P");
+        remapV3_4["ATC_RAT_RLL_I"] =    QStringLiteral("RATE_RLL_I");
+        remapV3_4["ATC_RAT_RLL_IMAX"] = QStringLiteral("RATE_RLL_IMAX");
+        remapV3_4["ATC_RAT_RLL_D"] =    QStringLiteral("RATE_RLL_D");
+        remapV3_4["ATC_RAT_RLL_FILT"] = QStringLiteral("RATE_RLL_FILT_HZ");
 
-        remap["ATC_RAT_PIT_P"] =    QStringLiteral("RATE_PIT_P");
-        remap["ATC_RAT_PIT_I"] =    QStringLiteral("RATE_PIT_I");
-        remap["ATC_RAT_PIT_IMAX"] = QStringLiteral("RATE_PIT_IMAX");
-        remap["ATC_RAT_PIT_D"] =    QStringLiteral("RATE_PIT_D");
-        remap["ATC_RAT_PIT_FILT"] = QStringLiteral("RATE_PIT_FILT_HZ");
+        remapV3_4["ATC_RAT_PIT_P"] =    QStringLiteral("RATE_PIT_P");
+        remapV3_4["ATC_RAT_PIT_I"] =    QStringLiteral("RATE_PIT_I");
+        remapV3_4["ATC_RAT_PIT_IMAX"] = QStringLiteral("RATE_PIT_IMAX");
+        remapV3_4["ATC_RAT_PIT_D"] =    QStringLiteral("RATE_PIT_D");
+        remapV3_4["ATC_RAT_PIT_FILT"] = QStringLiteral("RATE_PIT_FILT_HZ");
 
-        remap["ATC_RAT_YAW_P"] =    QStringLiteral("RATE_YAW_P");
-        remap["ATC_RAT_YAW_I"] =    QStringLiteral("RATE_YAW_I");
-        remap["ATC_RAT_YAW_IMAX"] = QStringLiteral("RATE_YAW_IMAX");
-        remap["ATC_RAT_YAW_D"] =    QStringLiteral("RATE_YAW_D");
-        remap["ATC_RAT_YAW_FILT"] = QStringLiteral("RATE_YAW_FILT_HZ");
+        remapV3_4["ATC_RAT_YAW_P"] =    QStringLiteral("RATE_YAW_P");
+        remapV3_4["ATC_RAT_YAW_I"] =    QStringLiteral("RATE_YAW_I");
+        remapV3_4["ATC_RAT_YAW_IMAX"] = QStringLiteral("RATE_YAW_IMAX");
+        remapV3_4["ATC_RAT_YAW_D"] =    QStringLiteral("RATE_YAW_D");
+        remapV3_4["ATC_RAT_YAW_FILT"] = QStringLiteral("RATE_YAW_FILT_HZ");
+
+        FirmwarePlugin::remapParamNameMap_t& remapV3_5 = _remapParamName[3][5];
+
+        remapV3_5["SERVO5_FUNCTION"] = QStringLiteral("RC5_FUNCTION");
+        remapV3_5["SERVO6_FUNCTION"] = QStringLiteral("RC6_FUNCTION");
+        remapV3_5["SERVO7_FUNCTION"] = QStringLiteral("RC7_FUNCTION");
+        remapV3_5["SERVO8_FUNCTION"] = QStringLiteral("RC8_FUNCTION");
+        remapV3_5["SERVO9_FUNCTION"] = QStringLiteral("RC9_FUNCTION");
+        remapV3_5["SERVO10_FUNCTION"] = QStringLiteral("RC10_FUNCTION");
+        remapV3_5["SERVO11_FUNCTION"] = QStringLiteral("RC11_FUNCTION");
+        remapV3_5["SERVO12_FUNCTION"] = QStringLiteral("RC12_FUNCTION");
+        remapV3_5["SERVO13_FUNCTION"] = QStringLiteral("RC13_FUNCTION");
+        remapV3_5["SERVO14_FUNCTION"] = QStringLiteral("RC14_FUNCTION");
+
+        _remapParamNameIntialized = true;
     }
 }
 
 int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    // Remapping supports up to 3.4
-    return majorVersionNumber == 3 ? 4: Vehicle::versionNotSetValue;
+    // Remapping supports up to 3.5
+    return majorVersionNumber == 3 ? 5 : Vehicle::versionNotSetValue;
 }
 
 bool ArduCopterFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)

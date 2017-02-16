@@ -58,6 +58,12 @@ public:
     // Overrides from FirmwarePlugin
     QString offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Plane.OfflineEditing.params"); }
     QString takeControlFlightMode(void) final;
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+
+private:
+    static bool _remapParamNameIntialized;
+    static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
 };
 
 #endif
