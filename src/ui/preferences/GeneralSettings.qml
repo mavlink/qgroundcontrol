@@ -206,6 +206,28 @@ QGCView {
                             }
                         }
                         //-----------------------------------------------------------------
+                        //-- Palette Styles
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+                            QGCLabel {
+                                anchors.baseline:   paletteCombo.baseline
+                                text:               qsTr("UI Style:")
+                                width:              _labelWidth
+                            }
+                            QGCComboBox {
+                                id:             paletteCombo
+                                width:          _editFieldWidth
+                                model:          [ qsTr("Indoor"), qsTr("Outdoor") ]
+                                currentIndex:   QGroundControl.isDarkStyle ? 0 : 1
+                                onActivated: {
+                                    if (index != -1) {
+                                        currentIndex = index
+                                        QGroundControl.isDarkStyle = index === 0 ? true : false
+                                    }
+                                }
+                            }
+                        }
+                        //-----------------------------------------------------------------
                         //-- Audio preferences
                         QGCCheckBox {
                             text:       qsTr("Mute all audio output")
@@ -295,6 +317,19 @@ QGCView {
                             visible:    QGroundControl.corePlugin.options.enableVirtualJoystick
                         }
                         //-----------------------------------------------------------------
+                        //-- Default mission item altitude
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            QGCLabel {
+                                anchors.baseline:   defaultItemAltitudeField.baseline
+                                text:               qsTr("Default mission item altitude:")
+                            }
+                            FactTextField {
+                                id:     defaultItemAltitudeField
+                                fact:   QGroundControl.defaultMissionItemAltitude
+                            }
+                        }
+                        //-----------------------------------------------------------------
                         //-- AutoLoad
                         Row {
                             spacing: ScreenTools.defaultFontPixelWidth
@@ -354,28 +389,6 @@ QGCView {
                                         currentIndex = index
                                         console.log(qsTr("New map provider: ") + model[index])
                                         QGroundControl.flightMapSettings.mapProvider = model[index]
-                                    }
-                                }
-                            }
-                        }
-                        //-----------------------------------------------------------------
-                        //-- Palette Styles
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
-                            QGCLabel {
-                                anchors.baseline:   paletteCombo.baseline
-                                text:               qsTr("UI Style:")
-                                width:              _labelWidth
-                            }
-                            QGCComboBox {
-                                id:             paletteCombo
-                                width:          _editFieldWidth
-                                model:          [ qsTr("Indoor"), qsTr("Outdoor") ]
-                                currentIndex:   QGroundControl.isDarkStyle ? 0 : 1
-                                onActivated: {
-                                    if (index != -1) {
-                                        currentIndex = index
-                                        QGroundControl.isDarkStyle = index === 0 ? true : false
                                     }
                                 }
                             }
