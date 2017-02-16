@@ -356,7 +356,7 @@ public:
     Q_INVOKABLE void emergencyStop(void);
 
     /// Command vehicle to abort landing
-    Q_INVOKABLE void abortLanding(void);
+    Q_INVOKABLE void abortLanding(double climbOutAltitude);
 
     /// Alter the current mission item on the vehicle
     Q_INVOKABLE void setCurrentMissionSequence(int seq);
