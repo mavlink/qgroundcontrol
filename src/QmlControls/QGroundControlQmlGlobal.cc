@@ -30,6 +30,7 @@ SettingsFact* QGroundControlQmlGlobal::_offlineEditingVehicleTypeFact =         
 SettingsFact* QGroundControlQmlGlobal::_offlineEditingCruiseSpeedFact =             NULL;
 SettingsFact* QGroundControlQmlGlobal::_offlineEditingHoverSpeedFact =              NULL;
 SettingsFact* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceFact =       NULL;
+SettingsFact* QGroundControlQmlGlobal::_defaultMissionItemAltitudeFact =            NULL;
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
 const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
@@ -337,6 +338,15 @@ Fact* QGroundControlQmlGlobal::batteryPercentRemainingAnnounce(void)
     }
 
     return _batteryPercentRemainingAnnounceFact;
+}
+
+Fact* QGroundControlQmlGlobal::defaultMissionItemAltitude(void)
+{
+    if (!_defaultMissionItemAltitudeFact) {
+        _defaultMissionItemAltitudeFact = _createSettingsFact(QStringLiteral("DefaultMissionItemAltitude"));
+    }
+
+    return _defaultMissionItemAltitudeFact;
 }
 
 int QGroundControlQmlGlobal::supportedFirmwareCount()

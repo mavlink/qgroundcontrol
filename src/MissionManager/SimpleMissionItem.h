@@ -75,8 +75,6 @@ public:
 
     bool relativeAltitude(void) { return _missionItem.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
 
-    static const double defaultAltitude;
-
     MissionItem& missionItem(void) { return _missionItem; }
 
     // Overrides from VisualMissionItem

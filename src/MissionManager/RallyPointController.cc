@@ -20,6 +20,7 @@
 #include "ParameterManager.h"
 #include "JsonHelper.h"
 #include "SimpleMissionItem.h"
+#include "QGroundControlQmlGlobal.h"
 
 #ifndef __mobile__
 #include "QGCFileDialog.h"
@@ -266,7 +267,7 @@ void RallyPointController::addPoint(QGeoCoordinate point)
     if (_points.count()) {
         defaultAlt = qobject_cast<RallyPoint*>(_points[_points.count() - 1])->coordinate().altitude();
     } else {
-        defaultAlt = SimpleMissionItem::defaultAltitude;
+        defaultAlt = QGroundControlQmlGlobal::defaultMissionItemAltitude()->rawValue().toDouble();
     }
     point.setAltitude(defaultAlt);
     RallyPoint* newPoint = new RallyPoint(point, this);
