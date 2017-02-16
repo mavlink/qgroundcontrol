@@ -240,7 +240,7 @@ Item {
                 //_activeVehicle.guidedModeOrbit(QGroundControl.flightMapPosition, 50.0)
                 break;
             case confirmAbort:
-                _activeVehicle.abortLanding()
+                _activeVehicle.abortLanding(50)     // hardcoded value for climbOutAltitude that is currently ignored
                 break;
             default:
                 console.warn(qsTr("Internal error: unknown confirmActionCode"), confirmActionCode)
@@ -366,7 +366,7 @@ Item {
                 QGCButton {
                     pointSize:  _guidedModeBar._fontPointSize
                     text:       qsTr("Abort")
-                    visible:    _activeVehicle && _activeVehicle.flying
+                    visible:    _activeVehicle && _activeVehicle.flying && _activeVehicle.fixedWing
                     onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmAbort)
                 }
 
