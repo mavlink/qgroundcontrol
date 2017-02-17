@@ -86,6 +86,8 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _cameraResolutionHeightFact   (0, _cameraResolutionHeightFactName,    FactMetaData::valueTypeUint32)
     , _cameraFocalLengthFact        (0, _cameraFocalLengthFactName,         FactMetaData::valueTypeDouble)
 {
+    _editorQml = "qrc:/qml/SurveyItemEditor.qml";
+
     if (_metaDataMap.isEmpty()) {
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.FactMetaData.json"), NULL /* metaDataParent */);
     }

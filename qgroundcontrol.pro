@@ -429,6 +429,7 @@ HEADERS += \
     src/LogCompressor.h \
     src/MG.h \
     src/MissionManager/ComplexMissionItem.h \
+    src/MissionManager/FixedWingLandingComplexItem.h \
     src/MissionManager/GeoFenceController.h \
     src/MissionManager/GeoFenceManager.h \
     src/MissionManager/MissionCommandList.h \
@@ -592,6 +593,7 @@ SOURCES += \
     src/JsonHelper.cc \
     src/LogCompressor.cc \
     src/MissionManager/ComplexMissionItem.cc \
+    src/MissionManager/FixedWingLandingComplexItem.cc \
     src/MissionManager/GeoFenceController.cc \
     src/MissionManager/GeoFenceManager.cc \
     src/MissionManager/MissionCommandList.cc \
