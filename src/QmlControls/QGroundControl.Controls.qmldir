@@ -4,6 +4,7 @@ AnalyzePage             1.0 AnalyzePage.qml
 AppMessages             1.0 AppMessages.qml
 ClickableColor          1.0 ClickableColor.qml
 DropButton              1.0 DropButton.qml
+DropPanel               1.0 DropPanel.qml
 ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
 FactSliderPanel         1.0 FactSliderPanel.qml
 FlightModeDropdown      1.0 FlightModeDropdown.qml
@@ -49,6 +50,7 @@ SetupPage               1.0 SetupPage.qml
 SignalStrength          1.0 SignalStrength.qml
 SliderSwitch            1.0 SliderSwitch.qml
 SubMenuButton           1.0 SubMenuButton.qml
+ToolStrip               1.0 ToolStrip.qml
 VehicleRotationCal      1.0 VehicleRotationCal.qml
 VehicleSummaryRow       1.0 VehicleSummaryRow.qml
 ViewWidget              1.0 ViewWidget.qml
