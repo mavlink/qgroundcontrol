@@ -31,6 +31,7 @@
 
 BluetoothLink::BluetoothLink(SharedLinkConfigurationPointer& config)
     : LinkInterface(config)
+    , _config(qobject_cast<BluetoothConfiguration*>(config.data()))
     , _connectState(false)
     , _targetSocket(NULL)
 #ifdef __ios__
