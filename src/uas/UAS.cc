@@ -511,6 +511,73 @@ void UAS::receiveMessage(mavlink_message_t message)
         }
             break;
 
+        case MAVLINK_MSG_ID_HIGH_LATENCY:
+        {
+            // Decode Array
+            mavlink_high_latency_t highLatency;
+            mavlink_msg_high_latency_decode(&message, &highLatency);
+
+            quint64 time = getUnixTime(highLatency.time_usec);
+
+            /*
+            <field name="throttle" type="int8_t">throttle (percentage)</field>
+            */
+            emit thrustChanged(this, (double)(highLatency.throttle)/100.0);
+
+            /*
+            <field name="roll_sp" type="int16_t">roll setpoint (centidegrees)</field>
+            <field name="pitch_sp" type="int16_t">pitch setpoint (centidegrees)</field>
+            <field name="heading_sp" type="int16_t">heading setpoint (centidegrees)</field>
+            <field name="wp_distance" type="uint16_t">distance to target (meters)</field>
+            <field name="altitude_sp" type="int16_t">Altitude setpoint relative to the home position (meters)</field>
+            <field name="airspeed_sp" type="uint8_t">airspeed setpoint (m/s)</field>
+            */
+            setDistToWaypoint(highLatency.wp_distance);
+            //emit navigationControllerErrorsChanged(this, highLatency.altitude_home - highLatency.altitude_sp, highLatency.airspeed_sp - highLatency.airspeed, 0/*???.xtrack_error*/); /* TODO, xtrack error not in message */
+            //emit NavigationControllerDataChanged(this, highLatency.roll_sp, highLatency.pitch_sp, highLatency.heading_sp, 0/* ???.bearing.target_bearing*/, highLatency.wp_distance);  /* TODO, bearing to waypoint not in message */
+
+            /*
+            <field name="airspeed" type="uint8_t">airspeed (m/s)</field>
+            <field name="groundspeed" type="uint8_t">groundspeed (m/s)</field>
+            */
+            setGroundSpeed(highLatency.groundspeed);
+            if (!qIsNaN((double)highLatency.airspeed)) {
+                setAirSpeed(highLatency.airspeed);
+            }
+
+            /*
+            <field name="gps_nsat" type="uint8_t">Number of satellites visible. If unknown, set to 255</field>
+            <field name="gps_fix_type" type="uint8_t">See the GPS_FIX_TYPE enum.</field>
+            */
+
+            // TODO: track localization state not only for gps but also for other loc. sources
+            int loc_type = highLatency.gps_fix_type;
+            if (loc_type == 1) {
+                loc_type = 0;
+            }
+            setSatelliteCount(highLatency.gps_nsat);
+
+            if (highLatency.gps_fix_type > 2) {
+                isGlobalPositionKnown = true;
+
+                latitude_gps  = highLatency.latitude/(double)1E7;
+                longitude_gps = highLatency.longitude/(double)1E7;
+                altitude_gps  = highLatency.altitude_amsl;
+
+                // If no GLOBAL_POSITION_INT messages ever received, use these raw GPS values instead.
+                if (!globalEstimatorActive) {
+                    setLatitude(latitude_gps);
+                    setLongitude(longitude_gps);
+                    emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), time);
+                    emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
+                }
+            }
+
+            // Emit this signal after the above signals. This way a trigger on gps lock signal which then asks for vehicle position
+            // gets a good position.
+            emit localizationChanged(this, loc_type);
+        }
+
         default:
             break;
         }
