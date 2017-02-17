@@ -52,15 +52,12 @@ QGCListView {
 
             QGCCompassWidget {
                 size:       _widgetHeight
-                heading:    _vehicle.heading.rawValue
                 vehicle:    _vehicle
             }
 
             QGCAttitudeWidget {
                 size:       _widgetHeight
-                active:     true
-                rollAngle:  _vehicle.roll.rawValue
-                pitchAngle: _vehicle.pitch.rawValue
+                vehicle:    _vehicle
             }
         }
 
