@@ -66,7 +66,19 @@ void MissionController::start(bool editMode)
     qCDebug(MissionControllerLog) << "start editMode" << editMode;
 
     PlanElementController::start(editMode);
+    _init();
+}
 
+void MissionController::startStaticActiveVehicle(Vehicle *vehicle)
+{
+    qCDebug(MissionControllerLog) << "startStaticActiveVehicle";
+
+    PlanElementController::startStaticActiveVehicle(vehicle);
+    _init();
+}
+
+void MissionController::_init(void)
+{
     // We start with an empty mission
     _visualItems = new QmlObjectListModel(this);
     _addPlannedHomePosition(_visualItems, false /* addToCenter */);
