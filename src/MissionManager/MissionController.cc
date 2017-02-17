@@ -16,6 +16,7 @@
 #include "QGCApplication.h"
 #include "SimpleMissionItem.h"
 #include "SurveyMissionItem.h"
+#include "FixedWingLandingComplexItem.h"
 #include "JsonHelper.h"
 #include "ParameterManager.h"
 #include "QGroundControlQmlGlobal.h"
@@ -59,7 +60,9 @@ MissionController::MissionController(QObject *parent)
     , _missionCruiseTime(0.0)
     , _missionMaxTelemetry(0.0)
 {
-
+    _surveyMissionItemName = tr("Survey");
+    _fwLandingMissionItemName = tr("Fixed Wing Landing");
+    _complexMissionItemNames << _surveyMissionItemName << _fwLandingMissionItemName;
 }
 
 MissionController::~MissionController()
@@ -218,12 +221,21 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     return newItem->sequenceNumber();
 }
 
-int MissionController::insertComplexMissionItem(QGeoCoordinate coordinate, int i)
+int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int i)
 {
+    ComplexMissionItem* newItem;
+
     int sequenceNumber = _nextSequenceNumber();
-    SurveyMissionItem* newItem = new SurveyMissionItem(_activeVehicle, _visualItems);
+    if (itemName == _surveyMissionItemName) {
+        newItem = new SurveyMissionItem(_activeVehicle, _visualItems);
+    } else if (itemName == _fwLandingMissionItemName) {
+        newItem = new FixedWingLandingComplexItem(_activeVehicle, _visualItems);
+    } else {
+        qWarning() << "Internal error: Unknown complex item:" << itemName;
+        return sequenceNumber;
+    }
     newItem->setSequenceNumber(sequenceNumber);
-    newItem->setCoordinate(coordinate);
+    newItem->setCoordinate(mapCenterCoordinate);
     _initVisualItem(newItem);
 
     _visualItems->insert(i, newItem);
