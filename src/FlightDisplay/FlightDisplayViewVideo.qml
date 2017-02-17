@@ -45,8 +45,8 @@ Item {
         QGCAttitudeHUD {
             id:                 attitudeHUD
             visible:            !_mainIsMap
-            rollAngle:          _roll
-            pitchAngle:         _pitch
+            rollAngle:          _activeVehicle ? _activeVehicle.roll.value  : 0
+            pitchAngle:         _activeVehicle ? _activeVehicle.pitch.value : 0
             width:              ScreenTools.defaultFontPixelHeight * (30)
             height:             ScreenTools.defaultFontPixelHeight * (30)
             active:             QGroundControl.multiVehicleManager.activeVehicleAvailable
