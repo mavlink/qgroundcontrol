@@ -20,6 +20,7 @@
 #include "JsonHelper.h"
 #include "ParameterManager.h"
 #include "QGroundControlQmlGlobal.h"
+#include "SettingsManager.h"
 
 #ifndef __mobile__
 #include "MainWindow.h"
@@ -431,17 +432,18 @@ bool MissionController::_loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObje
 
     // Mission Settings
     QGeoCoordinate homeCoordinate;
+    SettingsManager* settingsManager = qgcApp()->toolbox()->settingsManager();
     if (!JsonHelper::loadGeoCoordinate(json[_jsonPlannedHomePositionKey], true /* altitudeRequired */, homeCoordinate, errorString)) {
         return false;
     }
     if (json.contains(_jsonVehicleTypeKey) && vehicle->isOfflineEditingVehicle()) {
-        QGroundControlQmlGlobal::offlineEditingVehicleType()->setRawValue(json[_jsonVehicleTypeKey].toDouble());
+        settingsManager->offlineEditingVehicleType()->setRawValue(json[_jsonVehicleTypeKey].toDouble());
     }
     if (json.contains(_jsonCruiseSpeedKey)) {
-        QGroundControlQmlGlobal::offlineEditingCruiseSpeed()->setRawValue(json[_jsonCruiseSpeedKey].toDouble());
+        settingsManager->offlineEditingCruiseSpeed()->setRawValue(json[_jsonCruiseSpeedKey].toDouble());
     }
     if (json.contains(_jsonHoverSpeedKey)) {
-        QGroundControlQmlGlobal::offlineEditingHoverSpeed()->setRawValue(json[_jsonHoverSpeedKey].toDouble());
+        settingsManager->offlineEditingHoverSpeed()->setRawValue(json[_jsonHoverSpeedKey].toDouble());
     }
 
     SimpleMissionItem* homeItem = new SimpleMissionItem(vehicle, visualItems);

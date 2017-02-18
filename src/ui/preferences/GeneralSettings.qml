@@ -23,6 +23,7 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.Controllers           1.0
+import QGroundControl.SettingsManager       1.0
 
 QGCView {
     id:                 qgcView
@@ -31,7 +32,7 @@ QGCView {
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
-    property Fact _percentRemainingAnnounce:    QGroundControl.batteryPercentRemainingAnnounce
+    property Fact _percentRemainingAnnounce:    QGroundControl.settingsManager.batteryPercentRemainingAnnounce
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
 
@@ -93,7 +94,7 @@ QGCView {
                             FactComboBox {
                                 id:                 distanceUnitsCombo
                                 width:              _editFieldWidth
-                                fact:               QGroundControl.distanceUnits
+                                fact:               QGroundControl.settingsManager.distanceUnits
                                 indexModel:         false
                             }
                         }
@@ -107,7 +108,7 @@ QGCView {
                             FactComboBox {
                                 id:                 areaUnitsCombo
                                 width:              _editFieldWidth
-                                fact:               QGroundControl.areaUnits
+                                fact:               QGroundControl.settingsManager.areaUnits
                                 indexModel:         false
                             }
                         }
@@ -121,7 +122,7 @@ QGCView {
                             FactComboBox {
                                 id:                 speedUnitsCombo
                                 width:              _editFieldWidth
-                                fact:               QGroundControl.speedUnits
+                                fact:               QGroundControl.settingsManager.speedUnits
                                 indexModel:         false
                             }
                         }
@@ -326,7 +327,7 @@ QGCView {
                             }
                             FactTextField {
                                 id:     defaultItemAltitudeField
-                                fact:   QGroundControl.defaultMissionItemAltitude
+                                fact:   QGroundControl.settingsManager.defaultMissionItemAltitude
                             }
                         }
                         //-----------------------------------------------------------------

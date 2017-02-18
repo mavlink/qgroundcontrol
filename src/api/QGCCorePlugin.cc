@@ -139,3 +139,10 @@ QGCOptions* QGCCorePlugin::options()
     return _p->defaultOptions;
 }
 
+QVariant QGCCorePlugin::overrideSettingsDefault(QString name, QVariant defaultValue)
+{
+    Q_UNUSED(name);
+
+    // No overrides for base plugin
+    return defaultValue;
+}

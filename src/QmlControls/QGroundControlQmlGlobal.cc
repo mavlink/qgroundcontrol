@@ -19,19 +19,6 @@
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 
-SettingsFact* QGroundControlQmlGlobal::_distanceUnitsFact =                         NULL;
-FactMetaData* QGroundControlQmlGlobal::_distanceUnitsMetaData =                     NULL;
-SettingsFact* QGroundControlQmlGlobal::_areaUnitsFact =                             NULL;
-FactMetaData* QGroundControlQmlGlobal::_areaUnitsMetaData =                         NULL;
-SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                            NULL;
-FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                        NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeFact =            NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingVehicleTypeFact =             NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingCruiseSpeedFact =             NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingHoverSpeedFact =              NULL;
-SettingsFact* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceFact =       NULL;
-SettingsFact* QGroundControlQmlGlobal::_defaultMissionItemAltitudeFact =            NULL;
-
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
 const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
 const char* QGroundControlQmlGlobal::_missionAutoLoadDirKey     = "MissionAutoLoadDir";
@@ -48,6 +35,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _mavlinkLogManager(NULL)
     , _corePlugin(NULL)
     , _firmwarePluginManager(NULL)
+    , _settingsManager(NULL)
     , _virtualTabletJoystick(false)
     , _baseFontPointSize(0.0)
 {
@@ -67,6 +55,7 @@ QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
+
     _flightMapSettings      = toolbox->flightMapSettings();
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
@@ -77,6 +66,7 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _mavlinkLogManager      = toolbox->mavlinkLogManager();
     _corePlugin             = toolbox->corePlugin();
     _firmwarePluginManager  = toolbox->firmwarePluginManager();
+    _settingsManager        = toolbox->settingsManager();
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
@@ -224,131 +214,6 @@ void QGroundControlQmlGlobal::setBaseFontPointSize(qreal size)
     }
 }
 
-SettingsFact* QGroundControlQmlGlobal::_createSettingsFact(const QString& name)
-{
-    SettingsFact*   fact;
-    FactMetaData*   metaData = nameToMetaDataMap()[name];
-
-    fact = new SettingsFact(QString(), name, metaData->type(), metaData->rawDefaultValue());
-    fact->setMetaData(metaData);
-
-    return fact;
-}
-
-Fact* QGroundControlQmlGlobal::offlineEditingFirmwareType(void)
-{
-    if (!_offlineEditingFirmwareTypeFact) {
-        _offlineEditingFirmwareTypeFact = _createSettingsFact(QStringLiteral("OfflineEditingFirmwareType"));
-    }
-
-    return _offlineEditingFirmwareTypeFact;
-}
-
-Fact* QGroundControlQmlGlobal::offlineEditingVehicleType(void)
-{
-    if (!_offlineEditingVehicleTypeFact) {
-        _offlineEditingVehicleTypeFact = _createSettingsFact(QStringLiteral("OfflineEditingVehicleType"));
-    }
-
-    return _offlineEditingVehicleTypeFact;
-}
-
-Fact* QGroundControlQmlGlobal::offlineEditingCruiseSpeed(void)
-{
-    if (!_offlineEditingCruiseSpeedFact) {
-        _offlineEditingCruiseSpeedFact = _createSettingsFact(QStringLiteral("OfflineEditingCruiseSpeed"));
-    }
-    return _offlineEditingCruiseSpeedFact;
-}
-
-Fact* QGroundControlQmlGlobal::offlineEditingHoverSpeed(void)
-{
-    if (!_offlineEditingHoverSpeedFact) {
-        _offlineEditingHoverSpeedFact = _createSettingsFact(QStringLiteral("OfflineEditingHoverSpeed"));
-    }
-    return _offlineEditingHoverSpeedFact;
-}
-
-Fact* QGroundControlQmlGlobal::distanceUnits(void)
-{
-    if (!_distanceUnitsFact) {
-        // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
-        QStringList     enumStrings;
-        QVariantList    enumValues;
-
-        _distanceUnitsFact = new SettingsFact(QString(), "DistanceUnits", FactMetaData::valueTypeUint32, DistanceUnitsMeters);
-        _distanceUnitsMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
-
-        enumStrings << "Feet" << "Meters";
-        enumValues << QVariant::fromValue((uint32_t)DistanceUnitsFeet) << QVariant::fromValue((uint32_t)DistanceUnitsMeters);
-
-        _distanceUnitsMetaData->setEnumInfo(enumStrings, enumValues);
-        _distanceUnitsFact->setMetaData(_distanceUnitsMetaData);
-    }
-
-    return _distanceUnitsFact;
-
-}
-
-Fact* QGroundControlQmlGlobal::areaUnits(void)
-{
-    if (!_areaUnitsFact) {
-        // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
-        QStringList     enumStrings;
-        QVariantList    enumValues;
-
-        _areaUnitsFact = new SettingsFact(QString(), "AreaUnits", FactMetaData::valueTypeUint32, AreaUnitsSquareMeters);
-        _areaUnitsMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
-
-        enumStrings << "SquareFeet" << "SquareMeters" << "SquareKilometers" << "Hectares" << "Acres" << "SquareMiles";
-        enumValues << QVariant::fromValue((uint32_t)AreaUnitsSquareFeet) << QVariant::fromValue((uint32_t)AreaUnitsSquareMeters) << QVariant::fromValue((uint32_t)AreaUnitsSquareKilometers) << QVariant::fromValue((uint32_t)AreaUnitsHectares) << QVariant::fromValue((uint32_t)AreaUnitsAcres) << QVariant::fromValue((uint32_t)AreaUnitsSquareMiles);
-
-        _areaUnitsMetaData->setEnumInfo(enumStrings, enumValues);
-        _areaUnitsFact->setMetaData(_areaUnitsMetaData);
-    }
-
-    return _areaUnitsFact;
-
-}
-
-Fact* QGroundControlQmlGlobal::speedUnits(void)
-{
-    if (!_speedUnitsFact) {
-        // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
-        QStringList     enumStrings;
-        QVariantList    enumValues;
-
-        _speedUnitsFact = new SettingsFact(QString(), "SpeedUnits", FactMetaData::valueTypeUint32, SpeedUnitsMetersPerSecond);
-        _speedUnitsMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
-
-        enumStrings << "Feet/second" << "Meters/second" << "Miles/hour" << "Kilometers/hour" << "Knots";
-        enumValues << QVariant::fromValue((uint32_t)SpeedUnitsFeetPerSecond) << QVariant::fromValue((uint32_t)SpeedUnitsMetersPerSecond) << QVariant::fromValue((uint32_t)SpeedUnitsMilesPerHour) << QVariant::fromValue((uint32_t)SpeedUnitsKilometersPerHour) << QVariant::fromValue((uint32_t)SpeedUnitsKnots);
-
-        _speedUnitsMetaData->setEnumInfo(enumStrings, enumValues);
-        _speedUnitsFact->setMetaData(_speedUnitsMetaData);
-    }
-
-    return _speedUnitsFact;
-}
-
-Fact* QGroundControlQmlGlobal::batteryPercentRemainingAnnounce(void)
-{
-    if (!_batteryPercentRemainingAnnounceFact) {
-        _batteryPercentRemainingAnnounceFact = _createSettingsFact(QStringLiteral("batteryPercentRemainingAnnounce"));
-    }
-
-    return _batteryPercentRemainingAnnounceFact;
-}
-
-Fact* QGroundControlQmlGlobal::defaultMissionItemAltitude(void)
-{
-    if (!_defaultMissionItemAltitudeFact) {
-        _defaultMissionItemAltitudeFact = _createSettingsFact(QStringLiteral("DefaultMissionItemAltitude"));
-    }
-
-    return _defaultMissionItemAltitudeFact;
-}
-
 int QGroundControlQmlGlobal::supportedFirmwareCount()
 {
     return _firmwarePluginManager->knownFirmwareTypes().count();
@@ -361,16 +226,6 @@ bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPo
 
     return QLineF(line1A, line1B).intersect(QLineF(line2A, line2B), &intersectPoint) == QLineF::BoundedIntersection &&
             intersectPoint != line1A && intersectPoint != line1B;
-}
-
-QMap<QString, FactMetaData*>& QGroundControlQmlGlobal::nameToMetaDataMap(void) {
-    static QMap<QString, FactMetaData*> map;
-
-    if (map.isEmpty()) {
-        map = FactMetaData::createMapFromJsonFile(":/json/QGroundControlQmlGlobal.json", NULL);
-    }
-
-    return map;
 }
 
 QString QGroundControlQmlGlobal::missionAutoLoadDir(void)
