@@ -42,8 +42,6 @@ Rectangle {
     signal showFlyView
     signal showAnalyzeView
 
-    MainToolBarController { id: _controller }
-
     function checkSettingsButton() {
         settingsButton.checked = true
     }

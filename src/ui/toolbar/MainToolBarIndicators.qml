@@ -273,19 +273,19 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
 
                     QGCLabel { text: qsTr("Local RSSI:") }
-                    QGCLabel { text: _controller.telemetryLRSSI + " dBm" }
+                    QGCLabel { text: _activeVehicle.telemetryLRSSI + " dBm" }
                     QGCLabel { text: qsTr("Remote RSSI:") }
-                    QGCLabel { text: _controller.telemetryRRSSI + " dBm" }
+                    QGCLabel { text: _activeVehicle.telemetryRRSSI + " dBm" }
                     QGCLabel { text: qsTr("RX Errors:") }
-                    QGCLabel { text: _controller.telemetryRXErrors }
+                    QGCLabel { text: _activeVehicle.telemetryRXErrors }
                     QGCLabel { text: qsTr("Errors Fixed:") }
-                    QGCLabel { text: _controller.telemetryFixed }
+                    QGCLabel { text: _activeVehicle.telemetryFixed }
                     QGCLabel { text: qsTr("TX Buffer:") }
-                    QGCLabel { text: _controller.telemetryTXBuffer }
+                    QGCLabel { text: _activeVehicle.telemetryTXBuffer }
                     QGCLabel { text: qsTr("Local Noise:") }
-                    QGCLabel { text: _controller.telemetryLNoise }
+                    QGCLabel { text: _activeVehicle.telemetryLNoise }
                     QGCLabel { text: qsTr("Remote Noise:") }
-                    QGCLabel { text: _controller.telemetryRNoise }
+                    QGCLabel { text: _activeVehicle.telemetryRNoise }
                 }
             }
 
@@ -440,7 +440,7 @@ Item {
             source:             "/qmlimages/TelemRSSI.svg"
             fillMode:           Image.PreserveAspectFit
             color:              qgcPal.buttonText
-            visible:            _controller.telemetryLRSSI < 0
+            visible:            _activeVehicle ? (_activeVehicle.telemetryLRSSI < 0) : false
 
             MouseArea {
                 anchors.fill: parent
