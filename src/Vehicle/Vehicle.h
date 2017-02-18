@@ -37,6 +37,7 @@ class RallyPointManager;
 class ParameterManager;
 class JoystickManager;
 class UASMessage;
+class SettingsManager;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -775,6 +776,7 @@ private:
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;
     bool                _soloFirmware;
+    SettingsManager*    _settingsManager;
 
     QList<LinkInterface*> _links;
 

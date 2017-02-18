@@ -37,32 +37,6 @@ public:
     QGroundControlQmlGlobal(QGCApplication* app);
     ~QGroundControlQmlGlobal();
 
-    enum DistanceUnits {
-        DistanceUnitsFeet = 0,
-        DistanceUnitsMeters
-    };
-
-    enum AreaUnits {
-        AreaUnitsSquareFeet = 0,
-        AreaUnitsSquareMeters,
-        AreaUnitsSquareKilometers,
-        AreaUnitsHectares,
-        AreaUnitsAcres,
-        AreaUnitsSquareMiles,
-    };
-
-    enum SpeedUnits {
-        SpeedUnitsFeetPerSecond = 0,
-        SpeedUnitsMetersPerSecond,
-        SpeedUnitsMilesPerHour,
-        SpeedUnitsKilometersPerHour,
-        SpeedUnitsKnots,
-    };
-
-    Q_ENUMS(DistanceUnits)
-    Q_ENUMS(AreaUnits)
-    Q_ENUMS(SpeedUnits)
-
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
     Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
@@ -72,6 +46,9 @@ public:
     Q_PROPERTY(VideoManager*        videoManager        READ videoManager           CONSTANT)
     Q_PROPERTY(MAVLinkLogManager*   mavlinkLogManager   READ mavlinkLogManager      CONSTANT)
     Q_PROPERTY(QGCCorePlugin*       corePlugin          READ corePlugin             CONSTANT)
+    Q_PROPERTY(SettingsManager*     settingsManager     READ settingsManager        CONSTANT)
+
+    Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount             CONSTANT)
 
     Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -90,17 +67,6 @@ public:
     // MavLink Protocol
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
-
-    Q_PROPERTY(Fact*    offlineEditingFirmwareType      READ offlineEditingFirmwareType         CONSTANT)
-    Q_PROPERTY(Fact*    offlineEditingVehicleType       READ offlineEditingVehicleType          CONSTANT)
-    Q_PROPERTY(Fact*    offlineEditingCruiseSpeed       READ offlineEditingCruiseSpeed          CONSTANT)
-    Q_PROPERTY(Fact*    offlineEditingHoverSpeed        READ offlineEditingHoverSpeed           CONSTANT)
-    Q_PROPERTY(Fact*    distanceUnits                   READ distanceUnits                      CONSTANT)
-    Q_PROPERTY(Fact*    areaUnits                       READ areaUnits                          CONSTANT)
-    Q_PROPERTY(Fact*    speedUnits                      READ speedUnits                         CONSTANT)
-    Q_PROPERTY(Fact*    batteryPercentRemainingAnnounce READ batteryPercentRemainingAnnounce    CONSTANT)
-    Q_PROPERTY(Fact*    defaultMissionItemAltitude      READ defaultMissionItemAltitude         CONSTANT)
-    Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount             CONSTANT)
 
     Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
     Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
@@ -163,19 +129,20 @@ public:
 
     // Property accesors
 
-    FlightMapSettings*      flightMapSettings   ()      { return _flightMapSettings; }
-    LinkManager*            linkManager         ()      { return _linkManager; }
-    MultiVehicleManager*    multiVehicleManager ()      { return _multiVehicleManager; }
-    QGCMapEngineManager*    mapEngineManager    ()      { return _mapEngineManager; }
-    QGCPositionManager*     qgcPositionManger   ()      { return _qgcPositionManager; }
-    MissionCommandTree*     missionCommandTree  ()      { return _missionCommandTree; }
-    VideoManager*           videoManager        ()      { return _videoManager; }
-    MAVLinkLogManager*      mavlinkLogManager   ()      { return _mavlinkLogManager; }
-    QGCCorePlugin*          corePlugin          ()      { return _corePlugin; }
+    FlightMapSettings*      flightMapSettings   ()  { return _flightMapSettings; }
+    LinkManager*            linkManager         ()  { return _linkManager; }
+    MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
+    QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }
+    QGCPositionManager*     qgcPositionManger   ()  { return _qgcPositionManager; }
+    MissionCommandTree*     missionCommandTree  ()  { return _missionCommandTree; }
+    VideoManager*           videoManager        ()  { return _videoManager; }
+    MAVLinkLogManager*      mavlinkLogManager   ()  { return _mavlinkLogManager; }
+    QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
+    SettingsManager*        settingsManager     ()  { return _settingsManager; }
 
-    qreal                   zOrderTopMost       ()      { return 1000; }
-    qreal                   zOrderWidgets       ()      { return 100; }
-    qreal                   zOrderMapItems      ()      { return 50; }
+    qreal                   zOrderTopMost       ()  { return 1000; }
+    qreal                   zOrderWidgets       ()  { return 100; }
+    qreal                   zOrderMapItems      ()  { return 50; }
 
     bool    isDarkStyle             () { return _app->styleIsDark(); }
     bool    isAudioMuted            () { return _toolbox->audioOutput()->isMuted(); }
@@ -188,16 +155,6 @@ public:
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
 
     QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
-
-    static Fact* offlineEditingFirmwareType     (void);
-    static Fact* offlineEditingVehicleType      (void);
-    static Fact* offlineEditingCruiseSpeed      (void);
-    static Fact* offlineEditingHoverSpeed       (void);
-    static Fact* distanceUnits                  (void);
-    static Fact* areaUnits                      (void);
-    static Fact* speedUnits                     (void);
-    static Fact* batteryPercentRemainingAnnounce(void);
-    static Fact* defaultMissionItemAltitude     (void);
 
     int     supportedFirmwareCount      ();
 
@@ -238,9 +195,6 @@ signals:
     void missionAutoLoadDirChanged      (QString missionAutoLoadDir);
 
 private:
-    static SettingsFact* _createSettingsFact(const QString& name);
-    static QMap<QString, FactMetaData*>& nameToMetaDataMap(void);
-
     FlightMapSettings*      _flightMapSettings;
     LinkManager*            _linkManager;
     MultiVehicleManager*    _multiVehicleManager;
@@ -251,25 +205,12 @@ private:
     MAVLinkLogManager*      _mavlinkLogManager;
     QGCCorePlugin*          _corePlugin;
     FirmwarePluginManager*  _firmwarePluginManager;
+    SettingsManager*        _settingsManager;
 
     bool                    _virtualTabletJoystick;
     qreal                   _baseFontPointSize;
     QGeoCoordinate          _flightMapPosition;
     double                  _flightMapZoom;
-
-    // These are static so they are available to C++ code as well as Qml
-    static SettingsFact*    _offlineEditingFirmwareTypeFact;
-    static SettingsFact*    _offlineEditingVehicleTypeFact;
-    static SettingsFact*    _offlineEditingCruiseSpeedFact;
-    static SettingsFact*    _offlineEditingHoverSpeedFact;
-    static SettingsFact*    _distanceUnitsFact;
-    static FactMetaData*    _distanceUnitsMetaData;
-    static SettingsFact*    _areaUnitsFact;
-    static FactMetaData*    _areaUnitsMetaData;
-    static SettingsFact*    _speedUnitsFact;
-    static FactMetaData*    _speedUnitsMetaData;
-    static SettingsFact*    _batteryPercentRemainingAnnounceFact;
-    static SettingsFact*    _defaultMissionItemAltitudeFact;
 
     static const char*  _virtualTabletJoystickKey;
     static const char*  _baseFontPointSizeKey;
