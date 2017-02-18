@@ -15,12 +15,12 @@ import QtQuick.Dialogs          1.2
 import QtLocation               5.3
 import QtPositioning            5.2
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl                           1.0
+import QGroundControl.ScreenTools               1.0
+import QGroundControl.Controls                  1.0
+import QGroundControl.Palette                   1.0
+import QGroundControl.Vehicle                   1.0
+import QGroundControl.FlightMap                 1.0
 
 Item {
     id: _root
@@ -48,13 +48,29 @@ Item {
     }
 
     function _setInstrumentWidget() {
-        var useAlternateInstruments = QGroundControl.virtualTabletJoystick || ScreenTools.isTinyScreen
-        if(useAlternateInstruments) {
-            instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
-            instrumentsLoader.state  = "topMode"
+        if(QGroundControl.corePlugin.options.instrumentWidget.source.toString().length) {
+            instrumentsLoader.source = QGroundControl.corePlugin.options.instrumentWidget.source
+            switch(QGroundControl.corePlugin.options.instrumentWidget.widgetPosition) {
+            case CustomInstrumentWidget.POS_TOP_RIGHT:
+                instrumentsLoader.state  = "topMode"
+                break;
+            case CustomInstrumentWidget.POS_BOTTOM_RIGHT:
+                instrumentsLoader.state  = "bottomMode"
+                break;
+            case CustomInstrumentWidget.POS_CENTER_RIGHT:
+            default:
+                instrumentsLoader.state  = "centerMode"
+                break;
+            }
         } else {
-            instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
-            instrumentsLoader.state  = "centerMode"
+            var useAlternateInstruments = QGroundControl.virtualTabletJoystick || ScreenTools.isTinyScreen
+            if(useAlternateInstruments) {
+                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
+                instrumentsLoader.state  = "topMode"
+            } else {
+                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
+                instrumentsLoader.state  = "centerMode"
+            }
         }
     }
 
@@ -108,6 +124,7 @@ Item {
                 AnchorChanges {
                     target:                 instrumentsLoader
                     anchors.verticalCenter: undefined
+                    anchors.bottom:         undefined
                     anchors.top:            _root ? _root.top : undefined
                 }
             },
@@ -116,7 +133,17 @@ Item {
                 AnchorChanges {
                     target:                 instrumentsLoader
                     anchors.top:            undefined
+                    anchors.bottom:         undefined
                     anchors.verticalCenter: _root ? _root.verticalCenter : undefined
+                }
+            },
+            State {
+                name:   "bottomMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.top:            undefined
+                    anchors.verticalCenter: undefined
+                    anchors.bottom:         _root ? _root.bottom : undefined
                 }
             }
         ]
