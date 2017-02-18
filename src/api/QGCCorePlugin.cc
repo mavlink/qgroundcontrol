@@ -126,6 +126,11 @@ QVariantList &QGCCorePlugin::settings()
     return _p->settingsList;
 }
 
+int QGCCorePlugin::defaltSettings()
+{
+    return 0;
+}
+
 QGCOptions* QGCCorePlugin::options()
 {
     if(!_p->defaultOptions) {

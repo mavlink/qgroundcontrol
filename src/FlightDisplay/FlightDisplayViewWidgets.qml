@@ -15,37 +15,74 @@ import QtQuick.Dialogs          1.2
 import QtLocation               5.3
 import QtPositioning            5.2
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl                           1.0
+import QGroundControl.ScreenTools               1.0
+import QGroundControl.Controls                  1.0
+import QGroundControl.Palette                   1.0
+import QGroundControl.Vehicle                   1.0
+import QGroundControl.FlightMap                 1.0
 
 Item {
     id: _root
 
-    property alias  guidedModeBar:      _guidedModeBar
-    property bool   gotoEnabled:        _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
+    property alias  guidedModeBar:          _guidedModeBar
+    property bool   gotoEnabled:            _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
     property var    qgcView
     property bool   isBackgroundDark
 
-    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _isSatellite:               _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
-    property bool   _lightWidgetBorders:        _isSatellite
-    property bool   _useAlternateInstruments:   QGroundControl.virtualTabletJoystick || ScreenTools.isTinyScreen
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+    property bool   _lightWidgetBorders:    _isSatellite
 
-    readonly property real _margins:                ScreenTools.defaultFontPixelHeight / 2
+    readonly property real _margins:        ScreenTools.defaultFontPixelHeight * 0.5
 
     QGCMapPalette { id: mapPal; lightColors: isBackgroundDark }
-    QGCPalette { id: qgcPal }
+    QGCPalette    { id: qgcPal }
 
-    function getGadgetWidth() {
+    function getPreferredInstrumentWidth() {
         if(ScreenTools.isMobile) {
             return ScreenTools.isTinyScreen ? mainWindow.width * 0.2 : mainWindow.width * 0.15
         }
         var w = mainWindow.width * 0.15
         return Math.min(w, 200)
+    }
+
+    function _setInstrumentWidget() {
+        if(QGroundControl.corePlugin.options.instrumentWidget.source.toString().length) {
+            instrumentsLoader.source = QGroundControl.corePlugin.options.instrumentWidget.source
+            switch(QGroundControl.corePlugin.options.instrumentWidget.widgetPosition) {
+            case CustomInstrumentWidget.POS_TOP_RIGHT:
+                instrumentsLoader.state  = "topMode"
+                break;
+            case CustomInstrumentWidget.POS_BOTTOM_RIGHT:
+                instrumentsLoader.state  = "bottomMode"
+                break;
+            case CustomInstrumentWidget.POS_CENTER_RIGHT:
+            default:
+                instrumentsLoader.state  = "centerMode"
+                break;
+            }
+        } else {
+            var useAlternateInstruments = QGroundControl.virtualTabletJoystick || ScreenTools.isTinyScreen
+            if(useAlternateInstruments) {
+                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
+                instrumentsLoader.state  = "topMode"
+            } else {
+                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
+                instrumentsLoader.state  = "centerMode"
+            }
+        }
+    }
+
+    Connections {
+        target: QGroundControl
+        onVirtualTabletJoystickChanged: {
+            _setInstrumentWidget()
+        }
+    }
+
+    Component.onCompleted: {
+        _setInstrumentWidget()
     }
 
     //-- Map warnings
@@ -74,53 +111,43 @@ Item {
     }
 
     //-- Instrument Panel
-    QGCInstrumentWidget {
-        id:                     instrumentGadget
+    Loader {
+        id:                     instrumentsLoader
         anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
         anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        visible:                !_useAlternateInstruments
-        size:                   getGadgetWidth()
-        heading:                _heading
-        rollAngle:              _roll
-        pitchAngle:             _pitch
-        groundSpeedFact:        _groundSpeedFact
-        airSpeedFact:           _airSpeedFact
-        lightBorders:           _lightWidgetBorders
         z:                      QGroundControl.zOrderWidgets
-        qgcView:                _root.qgcView
-        maxHeight:              parent.height - (anchors.margins * 2)
+        property var  qgcView:  _root.qgcView
+        property real maxHeight:parent.height - (anchors.margins * 2)
+        states: [
+            State {
+                name:   "topMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.verticalCenter: undefined
+                    anchors.bottom:         undefined
+                    anchors.top:            _root ? _root.top : undefined
+                }
+            },
+            State {
+                name:   "centerMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.top:            undefined
+                    anchors.bottom:         undefined
+                    anchors.verticalCenter: _root ? _root.verticalCenter : undefined
+                }
+            },
+            State {
+                name:   "bottomMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.top:            undefined
+                    anchors.verticalCenter: undefined
+                    anchors.bottom:         _root ? _root.bottom : undefined
+                }
+            }
+        ]
     }
-
-    QGCInstrumentWidgetAlternate {
-        id:                     instrumentGadgetAlternate
-        anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
-        anchors.top:            parent.top
-        anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
-        visible:                _useAlternateInstruments
-        width:                  ScreenTools.isTinyScreen ? getGadgetWidth() * 1.5 : getGadgetWidth()
-        heading:                _heading
-        rollAngle:              _roll
-        pitchAngle:             _pitch
-        groundSpeedFact:        _groundSpeedFact
-        airSpeedFact:           _airSpeedFact
-        lightBorders:           _lightWidgetBorders
-        qgcView:                _root.qgcView
-        maxHeight:              parent.height - (anchors.margins * 2)
-        z:                      QGroundControl.zOrderWidgets
-    }
-
-    /*
-    ValuesWidget {
-        anchors.topMargin:          ScreenTools.defaultFontPixelHeight
-        anchors.top:                instrumentGadgetAlternate.bottom
-        anchors.horizontalCenter:   instrumentGadgetAlternate.horizontalCenter
-        width:                      getGadgetWidth()
-        qgcView:                    _root.qgcView
-        textColor:                  _isSatellite ? "white" : "black"
-        visible:                    _useAlternateInstruments
-        maxHeight:                  virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.y - y : parent.height - anchors.margins - y
-    }*/
 
     //-- Guided mode buttons
     Rectangle {
@@ -131,7 +158,7 @@ Item {
         width:                      guidedModeColumn.width  + (_margins * 2)
         height:                     guidedModeColumn.height + (_margins * 2)
         radius:                     ScreenTools.defaultFontPixelHeight * 0.25
-        color:                      _lightWidgetBorders ? Qt.rgba(qgcPal.mapWidgetBorderLight.r, qgcPal.mapWidgetBorderLight.g, qgcPal.mapWidgetBorderLight.b, 0.8) : Qt.rgba(qgcPal.mapWidgetBorderDark.r, qgcPal.mapWidgetBorderDark.g, qgcPal.mapWidgetBorderDark.b, 0.75)
+        color:                      _isSatellite ? Qt.rgba(qgcPal.mapWidgetBorderLight.r, qgcPal.mapWidgetBorderLight.g, qgcPal.mapWidgetBorderLight.b, 0.8) : Qt.rgba(qgcPal.mapWidgetBorderDark.r, qgcPal.mapWidgetBorderDark.g, qgcPal.mapWidgetBorderDark.b, 0.75)
         visible:                    _activeVehicle
         z:                          QGroundControl.zOrderWidgets
         state:                      "Shown"
@@ -303,7 +330,7 @@ Item {
 
             QGCLabel {
                 anchors.horizontalCenter: parent.horizontalCenter
-                color:      _lightWidgetBorders ? qgcPal.mapWidgetBorderDark : qgcPal.mapWidgetBorderLight
+                color:      _isSatellite ? qgcPal.mapWidgetBorderDark : qgcPal.mapWidgetBorderLight
                 text:       "Click in map to move vehicle"
                 visible:    gotoEnabled
             }

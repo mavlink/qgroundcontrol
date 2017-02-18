@@ -32,20 +32,27 @@ public:
     QGCCorePlugin(QGCApplication* app);
     ~QGCCorePlugin();
 
-    Q_PROPERTY(QVariantList settings READ settings CONSTANT)
-    Q_PROPERTY(QGCOptions*  options  READ options  CONSTANT)
+    Q_PROPERTY(QVariantList settings        READ settings       CONSTANT)
+    Q_PROPERTY(int          defaltSettings  READ defaltSettings CONSTANT)
+    Q_PROPERTY(QGCOptions*  options         READ options        CONSTANT)
 
     //! The list of settings under the Settings Menu
     /*!
         @return A list of QGCSettings
     */
-    virtual QVariantList&           settings    ();
+    virtual QVariantList&           settings        ();
+
+    //! The default settings panel to show
+    /*!
+        @return The settings index
+    */
+    virtual int                     defaltSettings  ();
 
     //! Global options
     /*!
         @return An instance of QGCOptions
     */
-    virtual QGCOptions*             options     ();
+    virtual QGCOptions*             options         ();
 
     // Override from QGCTool
     void                            setToolbox  (QGCToolbox *toolbox);
