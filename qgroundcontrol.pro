@@ -21,6 +21,7 @@ include(QGCCommon.pri)
 
 TARGET   = QGroundControl
 TEMPLATE = app
+QGCROOT  = $$PWD
 
 DebugBuild {
     DESTDIR  = $${OUT_PWD}/debug

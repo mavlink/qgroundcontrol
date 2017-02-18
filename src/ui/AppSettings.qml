@@ -35,8 +35,8 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        //-- Default to General Settings
-        __rightPanel.source = "GeneralSettings.qml"
+        //-- Default Settings
+        __rightPanel.source = QGroundControl.corePlugin.settings[QGroundControl.corePlugin.defaltSettings].url
     }
 
     QGCFlickable {

@@ -22,13 +22,6 @@
 #include "Vehicle.h"
 #include "UASMessageView.h"
 
-#define TOOL_BAR_SETTINGS_GROUP "TOOLBAR_SETTINGS_GROUP"
-#define TOOL_BAR_SHOW_BATTERY   "ShowBattery"
-#define TOOL_BAR_SHOW_GPS       "ShowGPS"
-#define TOOL_BAR_SHOW_MAV       "ShowMav"
-#define TOOL_BAR_SHOW_MESSAGES  "ShowMessages"
-#define TOOL_BAR_SHOW_RSSI      "ShowRSSI"
-
 class MainToolBarController : public QObject
 {
     Q_OBJECT
@@ -45,8 +38,6 @@ public:
     Q_PROPERTY(unsigned int telemetryLNoise     READ telemetryLNoise            NOTIFY telemetryLNoiseChanged)
     Q_PROPERTY(unsigned int telemetryRNoise     READ telemetryRNoise            NOTIFY telemetryRNoiseChanged)
 
-    void        viewStateChanged        (const QString& key, bool value);
-
     int         telemetryRRSSI          () { return _telemetryRRSSI; }
     int         telemetryLRSSI          () { return _telemetryLRSSI; }
     unsigned int telemetryRXErrors      () { return _telemetryRXErrors; }
@@ -58,7 +49,6 @@ public:
 signals:
     void telemetryRRSSIChanged          (int value);
     void telemetryLRSSIChanged          (int value);
-    void heightChanged                  (double height);
     void telemetryRXErrorsChanged       (unsigned int value);
     void telemetryFixedChanged          (unsigned int value);
     void telemetryTXBufferChanged       (unsigned int value);
@@ -81,8 +71,6 @@ private:
     uint32_t        _telemetryLNoise;
     uint32_t        _telemetryRNoise;
 
-    QStringList     _toolbarMessageQueue;
-    QMutex          _toolbarMessageQueueMutex;
 };
 
 #endif // MainToolBarController_H
