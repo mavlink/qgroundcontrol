@@ -874,6 +874,12 @@ QGCView {
                         case 6:
                             editorMap.zoomLevel -= 0.5
                             break
+                        case 5:
+                            editorMap.zoomLevel += 0.5
+                            break
+                        case 6:
+                            editorMap.zoomLevel -= 0.5
+                            break
                         }
                     }
                 }
