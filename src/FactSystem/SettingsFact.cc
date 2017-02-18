@@ -9,6 +9,8 @@
 
 
 #include "SettingsFact.h"
+#include "QGCCorePlugin.h"
+#include "QGCApplication.h"
 
 #include <QSettings>
 
@@ -18,8 +20,8 @@ SettingsFact::SettingsFact(QObject* parent)
 
 }
 
-SettingsFact::SettingsFact(QString settingGroup, QString settingName, FactMetaData::ValueType_t type, const QVariant& defaultValue, QObject* parent)
-    : Fact(0, settingName, type, parent)
+SettingsFact::SettingsFact(QString settingGroup, FactMetaData* metaData, QObject* parent)
+    : Fact(0, metaData->name(), metaData->type(), parent)
     , _settingGroup(settingGroup)
 {
     QSettings settings;
@@ -28,7 +30,10 @@ SettingsFact::SettingsFact(QString settingGroup, QString settingName, FactMetaDa
         settings.beginGroup(_settingGroup);
     }
 
-    _rawValue = settings.value(_name, defaultValue);
+    // Allow core plugin a chance to override the default value
+    metaData->setRawDefaultValue(qgcApp()->toolbox()->corePlugin()->overrideSettingsDefault(metaData->name(), metaData->rawDefaultValue()));
+    setMetaData(metaData);
+    _rawValue = settings.value(_name, metaData->rawDefaultValue());
 
     connect(this, &Fact::rawValueChanged, this, &SettingsFact::_rawValueChanged);
 }

@@ -2,12 +2,13 @@ import QtQuick          2.5
 import QtQuick.Controls 1.2
 import QtQuick.Layouts  1.2
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
+import QGroundControl                   1.0
+import QGroundControl.ScreenTools       1.0
+import QGroundControl.Vehicle           1.0
+import QGroundControl.Controls          1.0
+import QGroundControl.FactControls      1.0
+import QGroundControl.Palette           1.0
+import QGroundControl.SettingsManager   1.0
 
 // Editor for Mission Settings
 Rectangle {
@@ -121,7 +122,7 @@ Rectangle {
                             Layout.fillWidth: true
                         }
                         FactComboBox {
-                            fact:               QGroundControl.offlineEditingFirmwareType
+                            fact:               QGroundControl.settingsManager.offlineEditingFirmwareType
                             indexModel:         false
                             visible:            _showOfflineEditingCombos
                             Layout.preferredWidth:  _fieldWidth
@@ -145,7 +146,7 @@ Rectangle {
                         }
                         FactComboBox {
                             id:                 offlineVehicleCombo
-                            fact:               QGroundControl.offlineEditingVehicleType
+                            fact:               QGroundControl.settingsManager.offlineEditingVehicleType
                             indexModel:         false
                             visible:            _showOfflineEditingCombos
                             Layout.preferredWidth:  _fieldWidth
@@ -169,7 +170,7 @@ Rectangle {
                             Layout.fillWidth: true
                         }
                         FactTextField {
-                            fact:               QGroundControl.offlineEditingCruiseSpeed
+                            fact:               QGroundControl.settingsManager.offlineEditingCruiseSpeed
                             visible:            _showCruiseSpeed
                             Layout.preferredWidth:  _fieldWidth
                         }
@@ -181,7 +182,7 @@ Rectangle {
                             Layout.fillWidth: true
                         }
                         FactTextField {
-                            fact:               QGroundControl.offlineEditingHoverSpeed
+                            fact:               QGroundControl.settingsManager.offlineEditingHoverSpeed
                             visible:            _showHoverSpeed
                             Layout.preferredWidth:  _fieldWidth
                         }
@@ -195,7 +196,7 @@ Rectangle {
                         QGCLabel { text: qsTr("Hover speed:"); Layout.fillWidth: true }
                         FactTextField {
                             Layout.preferredWidth:  _fieldWidth
-                            fact:       QGroundControl.offlineEditingHoverSpeed
+                            fact:       QGroundControl.settingsManager.offlineEditingHoverSpeed
                         }
                     }
 

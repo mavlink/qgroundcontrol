@@ -17,11 +17,13 @@
 #include "QGroundControlQmlGlobal.h"
 #include "MissionCommandUIInfo.h"
 #include "MissionCommandList.h"
+#include "SettingsManager.h"
 
 #include <QQmlEngine>
 
 MissionCommandTree::MissionCommandTree(QGCApplication* app, bool unitTest)
     : QGCTool(app)
+    , _settingsManager(NULL)
     , _unitTest(unitTest)
 {
 }
@@ -29,6 +31,8 @@ MissionCommandTree::MissionCommandTree(QGCApplication* app, bool unitTest)
 void MissionCommandTree::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
+
+    _settingsManager = toolbox->settingsManager();
 
 #ifdef UNITTEST_BUILD
     if (_unitTest) {
@@ -249,7 +253,7 @@ void MissionCommandTree::_baseVehicleInfo(Vehicle* vehicle, MAV_AUTOPILOT& baseF
         baseVehicleType = _baseVehicleType(vehicle->vehicleType());
     } else {
         // No Vehicle means offline editing
-        baseFirmwareType = _baseFirmwareType((MAV_AUTOPILOT)QGroundControlQmlGlobal::offlineEditingFirmwareType()->rawValue().toInt());
-        baseVehicleType = _baseVehicleType((MAV_TYPE)QGroundControlQmlGlobal::offlineEditingVehicleType()->rawValue().toInt());
+        baseFirmwareType = _baseFirmwareType((MAV_AUTOPILOT)_settingsManager->offlineEditingFirmwareType()->rawValue().toInt());
+        baseVehicleType = _baseVehicleType((MAV_TYPE)_settingsManager->offlineEditingVehicleType()->rawValue().toInt());
     }
 }

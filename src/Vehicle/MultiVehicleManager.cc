@@ -15,6 +15,7 @@
 #include "FollowMe.h"
 #include "QGroundControlQmlGlobal.h"
 #include "ParameterManager.h"
+#include "SettingsManager.h"
 
 #if defined (__ios__) || defined(__android__)
 #include "MobileScreenMgr.h"
@@ -62,8 +63,9 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
 
-   _offlineEditingVehicle = new Vehicle(static_cast<MAV_AUTOPILOT>(QGroundControlQmlGlobal::offlineEditingFirmwareType()->rawValue().toInt()),
-                                        static_cast<MAV_TYPE>(QGroundControlQmlGlobal::offlineEditingVehicleType()->rawValue().toInt()),
+   SettingsManager* settingsManager = toolbox->settingsManager();
+   _offlineEditingVehicle = new Vehicle(static_cast<MAV_AUTOPILOT>(settingsManager->offlineEditingFirmwareType()->rawValue().toInt()),
+                                        static_cast<MAV_TYPE>(settingsManager->offlineEditingVehicleType()->rawValue().toInt()),
                                         _firmwarePluginManager,
                                         this);
 }
