@@ -64,6 +64,8 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
 {
+    _editorQml = "qrc:/qml/SimpleItemEditor.qml";
+
     _altitudeRelativeToHomeFact.setRawValue(true);
 
     _setupMetaData();

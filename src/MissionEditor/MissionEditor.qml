@@ -89,15 +89,6 @@ QGCView {
         }
     }
 
-    function addSurveyItem() {
-            var coordinate = editorMap.center
-            coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
-            coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
-            coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-            var sequenceNumber = missionController.insertComplexMissionItem(coordinate, missionController.visualItems.count)
-            setCurrentItem(sequenceNumber)
-    }
-
     MapFitFunctions {
         id:                         mapFitFunctions
         map:                        editorMap
@@ -877,8 +868,9 @@ QGCView {
                             toggle:     true
                         },
                         {
-                            name:       "Pattern",
-                            iconSource: "/qmlimages/MapDrawShape.svg"
+                            name:               "Pattern",
+                            iconSource:         "/qmlimages/MapDrawShape.svg",
+                            dropPanelComponent: patternDropPanel
                         },
                         {
                             name:                   "Sync",
@@ -899,13 +891,8 @@ QGCView {
                     ]
 
                     onClicked: {
-                        switch (index) {
-                        case 0:
+                        if (index == 0) {
                             _addWaypointOnClick = checked
-                            break
-                        case 1:
-                            addSurveyItem()
-                            break
                         }
                     }
                 }
@@ -1084,6 +1071,7 @@ QGCView {
                         checked:        QGroundControl.flightMapSettings.mapType === text
                         text:           modelData
                         exclusiveGroup: _mapTypeButtonsExclusiveGroup
+
                         onClicked: {
                             QGroundControl.flightMapSettings.mapType = text
                             dropPanel.hide()
@@ -1092,5 +1080,34 @@ QGCView {
                 }
             }
         }
+    }
+
+    Component {
+        id: patternDropPanel
+
+        ColumnLayout {
+            spacing:    ScreenTools.defaultFontPixelWidth * 0.5
+
+            QGCLabel { text: qsTr("Create complex pattern:") }
+
+            Repeater {
+                model: missionController.complexMissionItemNames
+
+                QGCButton {
+                    text:               modelData
+                    Layout.fillWidth:   true
+
+                    onClicked: {
+                        var coordinate = editorMap.center
+                        coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+                        coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
+                        coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+                        var sequenceNumber = missionController.insertComplexMissionItem(modelData, coordinate, missionController.visualItems.count)
+                        setCurrentItem(sequenceNumber)
+                        dropPanel.hide()
+                    }
+                }
+            }
+        } // Column
     }
 } // QGCVIew
