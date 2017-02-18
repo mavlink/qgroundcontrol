@@ -29,6 +29,7 @@
 #include "MAVLinkLogManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
+#include "SettingsManager.h"
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
@@ -55,7 +56,11 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     , _videoManager(NULL)
     , _mavlinkLogManager(NULL)
     , _corePlugin(NULL)
+    , _settingsManager(NULL)
 {
+    // SettingsManager must be first so settings are available to any subsequent tools
+    _settingsManager =          new SettingsManager(app);
+
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
     _audioOutput =              new GAudioOutput(app);
@@ -81,6 +86,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 
 void QGCToolbox::setChildToolboxes(void)
 {
+    // SettingsManager must be first so settings are available to any subsequent tools
+    _settingsManager->setToolbox(this);
+
     _corePlugin->setToolbox(this);
     _audioOutput->setToolbox(this);
     _factSystem->setToolbox(this);
