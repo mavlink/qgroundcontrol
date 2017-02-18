@@ -101,6 +101,13 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _globalPositionIntMessageAvailable(false)
     , _cruiseSpeed(QGroundControlQmlGlobal::offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _hoverSpeed(QGroundControlQmlGlobal::offlineEditingHoverSpeed()->rawValue().toDouble())
+    , _telemetryRRSSI(0)
+    , _telemetryLRSSI(0)
+    , _telemetryRXErrors(0)
+    , _telemetryFixed(0)
+    , _telemetryTXBuffer(0)
+    , _telemetryLNoise(0)
+    , _telemetryRNoise(0)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -148,6 +155,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     connect(_mavlink, &MAVLinkProtocol::messageReceived,     this, &Vehicle::_mavlinkMessageReceived);
+    connect(_mavlink, &MAVLinkProtocol::radioStatusChanged,  this, &Vehicle::_telemetryChanged);
 
     connect(this, &Vehicle::_sendMessageOnLinkOnThread, this, &Vehicle::_sendMessageOnLink, Qt::QueuedConnection);
     connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_handleFlightModeChanged);
@@ -408,6 +416,37 @@ void Vehicle::resetCounters()
     _heardFrom          = false;
 }
 
+void Vehicle::_telemetryChanged(LinkInterface*, unsigned rxerrors, unsigned fixed, int rssi, int remrssi, unsigned txbuf, unsigned noise, unsigned remnoise)
+{
+    if(_telemetryLRSSI != rssi) {
+        _telemetryLRSSI = rssi;
+        emit telemetryLRSSIChanged(_telemetryLRSSI);
+    }
+    if(_telemetryRRSSI != remrssi) {
+        _telemetryRRSSI = remrssi;
+        emit telemetryRRSSIChanged(_telemetryRRSSI);
+    }
+    if(_telemetryRXErrors != rxerrors) {
+        _telemetryRXErrors = rxerrors;
+        emit telemetryRXErrorsChanged(_telemetryRXErrors);
+    }
+    if(_telemetryFixed != fixed) {
+        _telemetryFixed = fixed;
+        emit telemetryFixedChanged(_telemetryFixed);
+    }
+    if(_telemetryTXBuffer != txbuf) {
+        _telemetryTXBuffer = txbuf;
+        emit telemetryTXBufferChanged(_telemetryTXBuffer);
+    }
+    if(_telemetryLNoise != noise) {
+        _telemetryLNoise = noise;
+        emit telemetryLNoiseChanged(_telemetryLNoise);
+    }
+    if(_telemetryRNoise != remnoise) {
+        _telemetryRNoise = remnoise;
+        emit telemetryRNoiseChanged(_telemetryRNoise);
+    }
+}
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
 
@@ -1306,8 +1345,8 @@ QStringList Vehicle::joystickModes(void)
 
 void Vehicle::_activeJoystickChanged(void)
 {
-	_loadSettings();
-	_startJoystick(true);
+    _loadSettings();
+    _startJoystick(true);
 }
 
 bool Vehicle::joystickEnabled(void)
