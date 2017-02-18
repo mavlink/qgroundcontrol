@@ -268,6 +268,13 @@ public:
     Q_PROPERTY(QString              vehicleImageOpaque      READ vehicleImageOpaque                                     CONSTANT)
     Q_PROPERTY(QString              vehicleImageOutline     READ vehicleImageOutline                                    CONSTANT)
     Q_PROPERTY(QString              vehicleImageCompass     READ vehicleImageCompass                                    CONSTANT)
+    Q_PROPERTY(int                  telemetryRRSSI          READ telemetryRRSSI                                         NOTIFY telemetryRRSSIChanged)
+    Q_PROPERTY(int                  telemetryLRSSI          READ telemetryLRSSI                                         NOTIFY telemetryLRSSIChanged)
+    Q_PROPERTY(unsigned int         telemetryRXErrors       READ telemetryRXErrors                                      NOTIFY telemetryRXErrorsChanged)
+    Q_PROPERTY(unsigned int         telemetryFixed          READ telemetryFixed                                         NOTIFY telemetryFixedChanged)
+    Q_PROPERTY(unsigned int         telemetryTXBuffer       READ telemetryTXBuffer                                      NOTIFY telemetryTXBufferChanged)
+    Q_PROPERTY(unsigned int         telemetryLNoise         READ telemetryLNoise                                        NOTIFY telemetryLNoiseChanged)
+    Q_PROPERTY(unsigned int         telemetryRNoise         READ telemetryRNoise                                        NOTIFY telemetryRNoiseChanged)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying      READ flying     WRITE setFlying     NOTIFY flyingChanged)
@@ -525,7 +532,14 @@ public:
     double          cruiseSpeed             () const { return _cruiseSpeed; }
     double          hoverSpeed              () const { return _hoverSpeed; }
     QString         firmwareTypeString      () const;
-    QString         vehicleTypeString      () const;
+    QString         vehicleTypeString       () const;
+    int             telemetryRRSSI          () { return _telemetryRRSSI; }
+    int             telemetryLRSSI          () { return _telemetryLRSSI; }
+    unsigned int    telemetryRXErrors       () { return _telemetryRXErrors; }
+    unsigned int    telemetryFixed          () { return _telemetryFixed; }
+    unsigned int    telemetryTXBuffer       () { return _telemetryTXBuffer; }
+    unsigned int    telemetryLNoise         () { return _telemetryLNoise; }
+    unsigned int    telemetryRNoise         () { return _telemetryRNoise; }
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -632,16 +646,23 @@ signals:
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnLinkOnThread(LinkInterface* link, mavlink_message_t message);
 
-    void messageTypeChanged     ();
-    void newMessageCountChanged ();
-    void messageCountChanged    ();
-    void formatedMessagesChanged();
-    void formatedMessageChanged ();
-    void latestErrorChanged     ();
-    void longitudeChanged       ();
-    void currentConfigChanged   ();
-    void flowImageIndexChanged  ();
-    void rcRSSIChanged          (int rcRSSI);
+    void messageTypeChanged         ();
+    void newMessageCountChanged     ();
+    void messageCountChanged        ();
+    void formatedMessagesChanged    ();
+    void formatedMessageChanged     ();
+    void latestErrorChanged         ();
+    void longitudeChanged           ();
+    void currentConfigChanged       ();
+    void flowImageIndexChanged      ();
+    void rcRSSIChanged              (int rcRSSI);
+    void telemetryRRSSIChanged      (int value);
+    void telemetryLRSSIChanged      (int value);
+    void telemetryRXErrorsChanged   (unsigned int value);
+    void telemetryFixedChanged      (unsigned int value);
+    void telemetryTXBufferChanged   (unsigned int value);
+    void telemetryLNoiseChanged     (unsigned int value);
+    void telemetryRNoiseChanged     (unsigned int value);
 
     void firmwareMajorVersionChanged(int major);
     void firmwareMinorVersionChanged(int minor);
@@ -674,6 +695,7 @@ signals:
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
+    void _telemetryChanged(LinkInterface* link, unsigned rxerrors, unsigned fixed, int rssi, int remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
     void _linkInactiveOrDeleted(LinkInterface* link);
     void _sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext(void);
@@ -789,6 +811,13 @@ private:
     bool            _globalPositionIntMessageAvailable;
     double          _cruiseSpeed;
     double          _hoverSpeed;
+    int             _telemetryRRSSI;
+    int             _telemetryLRSSI;
+    uint32_t        _telemetryRXErrors;
+    uint32_t        _telemetryFixed;
+    uint32_t        _telemetryTXBuffer;
+    uint32_t        _telemetryLNoise;
+    uint32_t        _telemetryRNoise;
 
     typedef struct {
         int     component;
