@@ -25,16 +25,17 @@ Rectangle {
     property var    showAlternateIcon
     property var    rotateImage
     property var    buttonEnabled
+    property var    buttonVisible
 
     signal clicked(int index, bool checked)
 
-    readonly property real  _radius:        ScreenTools.defaultFontPixelWidth / 2
-    readonly property real  _margin:        ScreenTools.defaultFontPixelWidth / 2
-    readonly property real  _buttonSpacing: ScreenTools.defaultFontPixelWidth
+    readonly property real  _radius:                ScreenTools.defaultFontPixelWidth / 2
+    readonly property real  _margin:                ScreenTools.defaultFontPixelWidth / 2
+    readonly property real  _buttonSpacing:         ScreenTools.defaultFontPixelWidth
+    readonly property bool  _showOptionalElements:  !ScreenTools.isShortScreen
 
-    ExclusiveGroup {
-        id: dropButtonsExclusiveGroup
-    }
+    QGCPalette { id: qgcPal }
+    ExclusiveGroup { id: dropButtonsExclusiveGroup }
 
     function uncheckAll() {
         dropButtonsExclusiveGroup.current = null
@@ -65,31 +66,34 @@ Rectangle {
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
             text:                       title
+            visible:                    _showOptionalElements
         }
 
-        Item { width: 1; height: _buttonSpacing }
+        Item { width: 1; height: _buttonSpacing; visible: _showOptionalElements }
 
         Rectangle {
             anchors.left:       parent.left
             anchors.right:      parent.right
             height:             1
             color:              qgcPal.text
+            visible:            _showOptionalElements
         }
 
         Repeater {
             id: repeater
 
             delegate: Column {
-                id:     buttonColumn
-                width:  buttonStripColumn.width
+                id:         buttonColumn
+                width:      buttonStripColumn.width
+                visible:    _root.buttonVisible ? _root.buttonVisible[index] : true
 
                 property bool checked: false
                 property ExclusiveGroup exclusiveGroup: dropButtonsExclusiveGroup
 
-                property var _iconSource: modelData.iconSource
-                property var _alternateIconSource: modelData.alternateIconSource
-                property var _source: _root.showAlternateIcon[index] ? _alternateIconSource : _iconSource
-                property bool rotateImage: _root.rotateImage[index]
+                property var    _iconSource:        modelData.iconSource
+                property var    _alternateIconSource:   modelData.alternateIconSource
+                property var    _source:                (_root.showAlternateIcon && _root.showAlternateIcon[index]) ? _alternateIconSource : _iconSource
+                property bool   rotateImage:            _root.rotateImage ? _root.rotateImage[index] : false
 
                 onExclusiveGroupChanged: {
                     if (exclusiveGroup) {
@@ -106,7 +110,11 @@ Rectangle {
                     }
                 }
 
-                Item { width: 1; height: _buttonSpacing }
+                Item {
+                    width:      1
+                    height:     _buttonSpacing
+                    visible:    index == 0 ? _showOptionalElements : true
+                }
 
                 Rectangle {
                     anchors.left:   parent.left
@@ -139,8 +147,8 @@ Rectangle {
                         anchors.left:   parent.left
                         anchors.right:  parent.right
                         anchors.top:    parent.top
-                        height:         parent.height + buttonLabel.height + buttonColumn.spacing
-                        visible:        _root.buttonEnabled[index]
+                        height:         parent.height + (_showOptionalElements? buttonLabel.height + buttonColumn.spacing : 0)
+                        visible:        _root.buttonEnabled ? _root.buttonEnabled[index] : true
 
                         onClicked: {
                             if (modelData.dropPanelComponent === undefined) {
@@ -171,6 +179,7 @@ Rectangle {
                     anchors.horizontalCenter:   parent.horizontalCenter
                     font.pointSize:             ScreenTools.smallFontPointSize
                     text:                       modelData.name
+                    visible:                    _showOptionalElements
                 }
             }
         }
