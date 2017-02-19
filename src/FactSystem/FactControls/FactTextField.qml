@@ -16,12 +16,14 @@ QGCTextField {
     showUnits:  true
     showHelp:   true
 
-    property Fact   fact:           null
+    property Fact   fact: null
+
     property string _validateString
+    property bool   _factIsString: fact ? fact.type === FactMetaData.valueTypeString : false
 
     // At this point all Facts are numeric
-    inputMethodHints: ScreenTools.isiOS ?
-                          Qt.ImhNone :                // iOS numeric keyboard has not done button, we can't use it
+    inputMethodHints: (_factIsString || ScreenTools.isiOS) ?
+                          Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
                           Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
 
     onEditingFinished: {
