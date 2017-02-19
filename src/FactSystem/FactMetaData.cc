@@ -7,12 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief Object which exposes a FactMetaData
-///
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "FactMetaData.h"
 #include "SettingsManager.h"
 #include "JsonHelper.h"
@@ -157,7 +151,7 @@ QVariant FactMetaData::rawDefaultValue(void) const
 
 void FactMetaData::setRawDefaultValue(const QVariant& rawDefaultValue)
 {
-    if (_rawMin <= rawDefaultValue && rawDefaultValue <= _rawMax) {
+    if (_type == valueTypeString || (_rawMin <= rawDefaultValue && rawDefaultValue <= _rawMax)) {
         _rawDefaultValue = rawDefaultValue;
         _defaultValueAvailable = true;
     } else {
@@ -208,6 +202,8 @@ QVariant FactMetaData::_minForType(void) const
         return QVariant(-std::numeric_limits<float>::max());
     case valueTypeDouble:
         return QVariant(-std::numeric_limits<double>::max());
+    case valueTypeString:
+        return QVariant();
     }
     
     // Make windows compiler happy, even switch is full cased
@@ -233,6 +229,8 @@ QVariant FactMetaData::_maxForType(void) const
         return QVariant(std::numeric_limits<float>::max());
     case valueTypeDouble:
         return QVariant(std::numeric_limits<double>::max());
+    case valueTypeString:
+        return QVariant();
     }
     
     // Make windows compiler happy, even switch is full cased
@@ -284,6 +282,10 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
                 errorString = QString("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
             }
         }
+        break;
+    case FactMetaData::valueTypeString:
+        convertOk = true;
+        typedValue = QVariant(rawValue.toString());
         break;
     }
     
@@ -339,6 +341,10 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
                 errorString = QString("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
             }
         }
+        break;
+    case FactMetaData::valueTypeString:
+        convertOk = true;
+        typedValue = QVariant(cookedValue.toString());
         break;
     }
 
@@ -556,7 +562,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                      << QStringLiteral("Uint32")
                      << QStringLiteral("Int32")
                      << QStringLiteral("Float")
-                     << QStringLiteral("Double");
+                     << QStringLiteral("Double")
+                     << QStringLiteral("String");
 
     knownTypes << valueTypeUint8
                << valueTypeInt8
@@ -565,7 +572,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                << valueTypeUint32
                << valueTypeInt32
                << valueTypeFloat
-               << valueTypeDouble;
+               << valueTypeDouble
+               << valueTypeString;
 
     for (int i=0; i<knownTypeStrings.count(); i++) {
         if (knownTypeStrings[i].compare(typeString, Qt::CaseInsensitive) == 0) {
@@ -599,7 +607,7 @@ size_t FactMetaData::typeToSize(ValueType_t type)
 
     default:
         qWarning() << "Unsupported fact value type" << type;
-        return 4;
+        return 0;
     }
 }
 
@@ -766,8 +774,8 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
     // Validate key types
     QStringList             keys;
     QList<QJsonValue::Type> types;
-    keys << _nameJsonKey << _decimalPlacesJsonKey << _typeJsonKey << _shortDescriptionJsonKey << _longDescriptionJsonKey << _unitsJsonKey << _defaultValueJsonKey << _minJsonKey << _maxJsonKey;
-    types << QJsonValue::String << QJsonValue::Double << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double;
+    keys << _nameJsonKey << _decimalPlacesJsonKey << _typeJsonKey << _shortDescriptionJsonKey << _longDescriptionJsonKey << _unitsJsonKey << _minJsonKey << _maxJsonKey;
+    types << QJsonValue::String << QJsonValue::Double << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::Double << QJsonValue::Double;
     if (!JsonHelper::validateKeyTypes(json, keys, types, errorString)) {
         qWarning() << errorString;
         return new FactMetaData(valueTypeUint32, metaDataParent);
@@ -811,7 +819,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
         metaData->setRawUnits(json[_unitsJsonKey].toString());
     }
     if (json.contains(_defaultValueJsonKey)) {
-        metaData->setRawDefaultValue(json[_defaultValueJsonKey].toDouble());
+        metaData->setRawDefaultValue(json[_defaultValueJsonKey]);
     }
     if (json.contains(_minJsonKey)) {
         metaData->setRawMin(json[_minJsonKey].toDouble());
