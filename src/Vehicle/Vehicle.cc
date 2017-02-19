@@ -1897,6 +1897,14 @@ void Vehicle::pauseVehicle(void)
     _firmwarePlugin->pauseVehicle(this);
 }
 
+void Vehicle::abortLanding(double climbOutAltitude)
+{
+    sendMavCommand(defaultComponentId(),
+                   MAV_CMD_DO_GO_AROUND,
+                   true,        // show error if fails
+                   climbOutAltitude);
+}
+
 bool Vehicle::guidedMode(void) const
 {
     return _firmwarePlugin->isGuidedMode(this);
