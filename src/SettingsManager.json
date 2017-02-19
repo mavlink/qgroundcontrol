@@ -54,5 +54,12 @@
     "min":              0.0,
     "units":            "meters",
     "decimalPlaces":    2
+},
+{
+    "name":             "MissionAutoLoadDir",
+    "shortDescription": "Mission auto load directory",
+    "longDescription":  "The directory from which missions will be automaticallu loaded onto a vehicle when it connects.",
+    "type":             "string",
+    "defaultValue":     ""
 }
 ]

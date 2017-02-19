@@ -54,25 +54,27 @@ public:
     Q_ENUMS(AreaUnits)
     Q_ENUMS(SpeedUnits)
 
-    Q_PROPERTY(Fact*    offlineEditingFirmwareType      READ offlineEditingFirmwareType         CONSTANT)
-    Q_PROPERTY(Fact*    offlineEditingVehicleType       READ offlineEditingVehicleType          CONSTANT)
-    Q_PROPERTY(Fact*    offlineEditingCruiseSpeed       READ offlineEditingCruiseSpeed          CONSTANT)
-    Q_PROPERTY(Fact*    offlineEditingHoverSpeed        READ offlineEditingHoverSpeed           CONSTANT)
-    Q_PROPERTY(Fact*    distanceUnits                   READ distanceUnits                      CONSTANT)
-    Q_PROPERTY(Fact*    areaUnits                       READ areaUnits                          CONSTANT)
-    Q_PROPERTY(Fact*    speedUnits                      READ speedUnits                         CONSTANT)
-    Q_PROPERTY(Fact*    batteryPercentRemainingAnnounce READ batteryPercentRemainingAnnounce    CONSTANT)
-    Q_PROPERTY(Fact*    defaultMissionItemAltitude      READ defaultMissionItemAltitude         CONSTANT)
+    Q_PROPERTY(Fact* offlineEditingFirmwareType         READ offlineEditingFirmwareType         CONSTANT)
+    Q_PROPERTY(Fact* offlineEditingVehicleType          READ offlineEditingVehicleType          CONSTANT)
+    Q_PROPERTY(Fact* offlineEditingCruiseSpeed          READ offlineEditingCruiseSpeed          CONSTANT)
+    Q_PROPERTY(Fact* offlineEditingHoverSpeed           READ offlineEditingHoverSpeed           CONSTANT)
+    Q_PROPERTY(Fact* distanceUnits                      READ distanceUnits                      CONSTANT)
+    Q_PROPERTY(Fact* areaUnits                          READ areaUnits                          CONSTANT)
+    Q_PROPERTY(Fact* speedUnits                         READ speedUnits                         CONSTANT)
+    Q_PROPERTY(Fact* batteryPercentRemainingAnnounce    READ batteryPercentRemainingAnnounce    CONSTANT)
+    Q_PROPERTY(Fact* defaultMissionItemAltitude         READ defaultMissionItemAltitude         CONSTANT)
+    Q_PROPERTY(Fact* missionAutoLoadDir                 READ missionAutoLoadDir                 CONSTANT)
 
-    Fact* offlineEditingFirmwareType     (void);
-    Fact* offlineEditingVehicleType      (void);
-    Fact* offlineEditingCruiseSpeed      (void);
-    Fact* offlineEditingHoverSpeed       (void);
-    Fact* distanceUnits                  (void);
-    Fact* areaUnits                      (void);
-    Fact* speedUnits                     (void);
-    Fact* batteryPercentRemainingAnnounce(void);
-    Fact* defaultMissionItemAltitude     (void);
+    Fact* offlineEditingFirmwareType        (void);
+    Fact* offlineEditingVehicleType         (void);
+    Fact* offlineEditingCruiseSpeed         (void);
+    Fact* offlineEditingHoverSpeed          (void);
+    Fact* distanceUnits                     (void);
+    Fact* areaUnits                         (void);
+    Fact* speedUnits                        (void);
+    Fact* batteryPercentRemainingAnnounce   (void);
+    Fact* defaultMissionItemAltitude        (void);
+    Fact* missionAutoLoadDir                (void);
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
@@ -86,13 +88,8 @@ public:
     static const char* speedUnitsSettingsName;
     static const char* batteryPercentRemainingAnnounceSettingsName;
     static const char* defaultMissionItemAltitudeSettingsName;
+    static const char* missionAutoLoadDirSettingsName;
 
-public slots:
-
-signals:
-
-private slots:
-    
 private:
     SettingsFact* _createSettingsFact(const QString& name);
 
@@ -107,6 +104,7 @@ private:
     SettingsFact* _speedUnitsFact;
     SettingsFact* _batteryPercentRemainingAnnounceFact;
     SettingsFact* _defaultMissionItemAltitudeFact;
+    SettingsFact* _missionAutoLoadDirFact;
 };
 
 #endif

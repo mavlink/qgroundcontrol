@@ -21,6 +21,7 @@ const char* SettingsManager::areaUnitsSettingsName =                        "Are
 const char* SettingsManager::speedUnitsSettingsName =                       "SpeedUnits";
 const char* SettingsManager::batteryPercentRemainingAnnounceSettingsName =  "batteryPercentRemainingAnnounce";
 const char* SettingsManager::defaultMissionItemAltitudeSettingsName =       "DefaultMissionItemAltitude";
+const char* SettingsManager::missionAutoLoadDirSettingsName =               "MissionAutoLoadDir";
 
 SettingsManager::SettingsManager(QGCApplication* app)
     : QGCTool(app)
@@ -33,6 +34,7 @@ SettingsManager::SettingsManager(QGCApplication* app)
     , _speedUnitsFact(NULL)
     , _batteryPercentRemainingAnnounceFact(NULL)
     , _defaultMissionItemAltitudeFact(NULL)
+    , _missionAutoLoadDirFact(NULL)
 {
 
 }
@@ -101,6 +103,15 @@ Fact* SettingsManager::defaultMissionItemAltitude(void)
     }
 
     return _defaultMissionItemAltitudeFact;
+}
+
+Fact* SettingsManager::missionAutoLoadDir(void)
+{
+    if (!_missionAutoLoadDirFact) {
+        _missionAutoLoadDirFact = _createSettingsFact(missionAutoLoadDirSettingsName);
+    }
+
+    return _missionAutoLoadDirFact;
 }
 
 Fact* SettingsManager::distanceUnits(void)
