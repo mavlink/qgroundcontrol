@@ -21,7 +21,6 @@ static const char* kQmlGlobalKeyName = "QGCQml";
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
 const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
-const char* QGroundControlQmlGlobal::_missionAutoLoadDirKey     = "MissionAutoLoadDir";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     : QGCTool(app)
@@ -226,16 +225,4 @@ bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPo
 
     return QLineF(line1A, line1B).intersect(QLineF(line2A, line2B), &intersectPoint) == QLineF::BoundedIntersection &&
             intersectPoint != line1A && intersectPoint != line1B;
-}
-
-QString QGroundControlQmlGlobal::missionAutoLoadDir(void)
-{
-    QSettings settings;
-    return settings.value(_missionAutoLoadDirKey).toString();
-}
-
-void QGroundControlQmlGlobal::setMissionAutoLoadDir(const QString& missionAutoLoadDir)
-{
-    QSettings settings;
-    settings.setValue(_missionAutoLoadDirKey, missionAutoLoadDir);
 }

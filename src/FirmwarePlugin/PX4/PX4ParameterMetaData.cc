@@ -39,22 +39,26 @@ QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, Fact
 
     int convertTo = QVariant::Int; // keep compiler warning happy
     switch (type) {
-        case FactMetaData::valueTypeUint8:
-        case FactMetaData::valueTypeUint16:
-        case FactMetaData::valueTypeUint32:
-            convertTo = QVariant::UInt;
-            break;
-        case FactMetaData::valueTypeInt8:
-        case FactMetaData::valueTypeInt16:
-        case FactMetaData::valueTypeInt32:
-            convertTo = QVariant::Int;
-            break;
-        case FactMetaData::valueTypeFloat:
-            convertTo = QMetaType::Float;
-            break;
-        case FactMetaData::valueTypeDouble:
-            convertTo = QVariant::Double;
-            break;
+    case FactMetaData::valueTypeUint8:
+    case FactMetaData::valueTypeUint16:
+    case FactMetaData::valueTypeUint32:
+        convertTo = QVariant::UInt;
+        break;
+    case FactMetaData::valueTypeInt8:
+    case FactMetaData::valueTypeInt16:
+    case FactMetaData::valueTypeInt32:
+        convertTo = QVariant::Int;
+        break;
+    case FactMetaData::valueTypeFloat:
+        convertTo = QMetaType::Float;
+        break;
+    case FactMetaData::valueTypeDouble:
+        convertTo = QVariant::Double;
+        break;
+    case FactMetaData::valueTypeString:
+        qWarning() << "Internal Error: No support for string parameters";
+        convertTo = QVariant::String;
+        break;
     }
     
     *convertOk = var.convert(convertTo);

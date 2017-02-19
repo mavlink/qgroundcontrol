@@ -1579,7 +1579,7 @@ void Vehicle::_parametersReady(bool parametersReady)
 {
     if (parametersReady && !_missionManagerInitialRequestSent) {
         _missionManagerInitialRequestSent = true;
-        QString missionAutoLoadDirPath = QGroundControlQmlGlobal::missionAutoLoadDir();
+        QString missionAutoLoadDirPath = _settingsManager->missionAutoLoadDir()->rawValue().toString();
         if (missionAutoLoadDirPath.isEmpty()) {
             _missionManager->requestMissionItems();
         } else {
