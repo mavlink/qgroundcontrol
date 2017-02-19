@@ -23,7 +23,6 @@ Item {
     signal          clicked()
     property real   radius:             ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.75 : ScreenTools.defaultFontPixelHeight * 1.25
     property real   viewportMargins:    0
-    property real   topMargin:          parent.height - ScreenTools.availableHeight
     property var    toolStrip
 
 
@@ -48,7 +47,7 @@ Item {
     property alias  _dropDownComponent:  dropDownLoader.sourceComponent
     property real   _viewportMaxLeft:   -x + viewportMargins
     property real   _viewportMaxRight:  parent.width  - (viewportMargins * 2) - x
-    property real   _viewportMaxTop:    -y + viewportMargins + topMargin
+    property real   _viewportMaxTop:    -y + viewportMargins
     property real   _viewportMaxBottom: parent.height - (viewportMargins * 2) - y
 
     function show(panelEdgeTopPoint, panelEdgeHeight, panelComponent) {
@@ -103,19 +102,6 @@ Item {
     } // function - _calcPositions
 
     QGCPalette { id: qgcPal }
-
-    /*
-    MouseArea {
-        x:          _viewportMaxLeft
-        y:          _viewportMaxTop
-        width:      _viewportMaxRight -_viewportMaxLeft
-        height:     _viewportMaxBottom - _viewportMaxTop
-        visible:    checked
-        onClicked:  {
-            checked = false
-            _root.clicked()
-        }
-    }*/
 
     Item {
         id: dropDownItem
