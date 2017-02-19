@@ -445,25 +445,12 @@ QGCView {
                     }
                 }
 
-                // Add the complex mission item polygon to the map
-                MapItemView {
+                // Add the complex mission item to the map
+                Repeater {
                     model: missionController.complexVisualItems
 
-                    delegate: MapPolygon {
-                        color:      'green'
-                        path:       object.polygonPath
-                        opacity:    0.5
-                    }
-                }
-
-                // Add the complex mission item grid to the map
-                MapItemView {
-                    model: missionController.complexVisualItems
-
-                    delegate: MapPolyline {
-                        line.color: "white"
-                        line.width: 2
-                        path:       object.gridPoints
+                    delegate: ComplexMissionItem {
+                        map: editorMap
                     }
                 }
 

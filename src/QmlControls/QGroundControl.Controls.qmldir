@@ -3,6 +3,7 @@ Module QGroundControl.Controls
 AnalyzePage             1.0 AnalyzePage.qml
 AppMessages             1.0 AppMessages.qml
 ClickableColor          1.0 ClickableColor.qml
+ComplexMissionItem      1.0 ComplexMissionItem.qml
 DropButton              1.0 DropButton.qml
 DropPanel               1.0 DropPanel.qml
 ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
@@ -50,6 +51,7 @@ SetupPage               1.0 SetupPage.qml
 SignalStrength          1.0 SignalStrength.qml
 SliderSwitch            1.0 SliderSwitch.qml
 SubMenuButton           1.0 SubMenuButton.qml
+SurveyComplexItem       1.0 SurveyComplexItem.qml
 ToolStrip               1.0 ToolStrip.qml
 VehicleRotationCal      1.0 VehicleRotationCal.qml
 VehicleSummaryRow       1.0 VehicleSummaryRow.qml

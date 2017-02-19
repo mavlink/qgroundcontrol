@@ -21,6 +21,7 @@ public:
 
     const ComplexMissionItem& operator=(const ComplexMissionItem& other);
 
+    Q_PROPERTY(QString  mapVisualQML        READ mapVisualQML       CONSTANT)
     Q_PROPERTY(int      lastSequenceNumber  READ lastSequenceNumber NOTIFY lastSequenceNumberChanged)
     Q_PROPERTY(double   complexDistance     READ complexDistance    NOTIFY complexDistanceChanged)
 
@@ -51,6 +52,9 @@ public:
 
     /// This mission item attribute specifies the type of the complex item.
     static const char* jsonComplexItemTypeKey;
+
+    /// @return The QML resource file which contains the control which visualizes the item on the map.
+    virtual QString mapVisualQML(void) const = 0;
 
 signals:
     void lastSequenceNumberChanged  (int lastSequenceNumber);
