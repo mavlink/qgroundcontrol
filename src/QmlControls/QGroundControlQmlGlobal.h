@@ -61,7 +61,6 @@ public:
     Q_PROPERTY(bool     isSaveLogPromptNotArmed READ isSaveLogPromptNotArmed    WRITE setIsSaveLogPromptNotArmed    NOTIFY isSaveLogPromptNotArmedChanged)
     Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
     Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
-    Q_PROPERTY(QString  missionAutoLoadDir      READ missionAutoLoadDir         WRITE setMissionAutoLoadDir         NOTIFY missionAutoLoadDirChanged STORED false)
 
     //-------------------------------------------------------------------------
     // MavLink Protocol
@@ -127,6 +126,8 @@ public:
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
+    Q_INVOKABLE QString urlToLocalFile(QUrl url) { return url.toLocalFile(); }
+
     // Property accesors
 
     FlightMapSettings*      flightMapSettings   ()  { return _flightMapSettings; }
@@ -174,9 +175,6 @@ public:
 
     QString qgcVersion(void) const { return qgcApp()->applicationVersion(); }
 
-    static QString missionAutoLoadDir(void);
-    static void setMissionAutoLoadDir(const QString& missionAutoLoadDir);
-
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
 
@@ -192,7 +190,6 @@ signals:
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
-    void missionAutoLoadDirChanged      (QString missionAutoLoadDir);
 
 private:
     FlightMapSettings*      _flightMapSettings;
@@ -214,7 +211,6 @@ private:
 
     static const char*  _virtualTabletJoystickKey;
     static const char*  _baseFontPointSizeKey;
-    static const char*  _missionAutoLoadDirKey;
 };
 
 #endif
