@@ -32,6 +32,7 @@ public:
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
     void                setCruiseSpeed      (double cruiseSpeed) final;
+    QString             mapVisualQML        (void) const final { return QString(); }
 
     // Overrides from VisualMissionItem
 
