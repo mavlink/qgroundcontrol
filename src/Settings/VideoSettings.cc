@@ -10,6 +10,7 @@
 #include "VideoSettings.h"
 
 #include <QQmlEngine>
+#include <QtQml>
 
 const char* VideoSettings::VideoSettingsGroupName = "video";
 

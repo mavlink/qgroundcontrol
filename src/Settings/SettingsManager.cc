@@ -10,6 +10,7 @@
 #include "SettingsManager.h"
 
 #include <QQmlEngine>
+#include <QtQml>
 
 SettingsManager::SettingsManager(QGCApplication* app)
     : QGCTool(app)
