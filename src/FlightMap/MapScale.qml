@@ -115,7 +115,7 @@ Item {
         var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, scale.y))
         var scaleLineMeters = Math.round(leftCoord.distanceTo(rightCoord))
 
-        if (QGroundControl.settingsManager.distanceUnits.value == QGroundControl.settingsManager.DistanceUnitsFeet) {
+        if (QGroundControl.settingsManager.unitsSettings.distanceUnits.value == UnitsSettings.DistanceUnitsFeet) {
             calculateFeetRatio(scaleLineMeters, scaleLinePixelLength)
         } else {
             calculateMetersRatio(scaleLineMeters, scaleLinePixelLength)

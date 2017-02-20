@@ -56,7 +56,7 @@ GAudioOutput::~GAudioOutput()
 
 bool GAudioOutput::say(const QString& inText)
 {
-    bool muted = qgcApp()->toolbox()->settingsManager()->audioMuted()->rawValue().toBool();
+    bool muted = qgcApp()->toolbox()->settingsManager()->appSettings()->audioMuted()->rawValue().toBool();
     muted |= qgcApp()->runningUnitTests();
     if (!muted && !qgcApp()->runningUnitTests()) {
 #if defined __android__
