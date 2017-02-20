@@ -937,10 +937,12 @@ void QwtPlotCanvas::drawBorder( QPainter *painter )
     else
     {
 #if QT_VERSION >= 0x040500
+#if !defined(_MSC_VER)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
         QStyleOptionFrameV3 opt;
 #pragma GCC diagnostic pop
+#endif
         opt.init(this);
 
         int frameShape  = frameStyle() & QFrame::Shape_Mask;
