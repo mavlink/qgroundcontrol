@@ -53,10 +53,10 @@ public:
     /// @return An instance of QGCOptions
     virtual QGCOptions*             options             ();
 
-    /// Allows the core plugin to override the default value for the specified setting
+    /// Allows the core plugin to override the visibility for a settings group
     ///     @param name - Setting group name
     /// @return true: Show settings ui, false: Hide settings ui
-    virtual bool overrideSettingsGroupVisibility(QString name);
+    virtual bool overrideSettingsGroupVisibility        (QString name);
 
     /// Allows the core plugin to override the default value for the specified setting
     ///     @param name - Setting name
