@@ -35,6 +35,7 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "MultiVehicleManager.h"
+#include "SettingsManager.h"
 
 Q_DECLARE_METATYPE(mavlink_message_t)
 
@@ -422,7 +423,8 @@ void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
         // If the signals are not connected it means we are running a unit test. In that case just delete log files
-        if ((_vehicleWasArmed || _app->promptFlightDataSaveNotArmed()) && _app->promptFlightDataSave()) {
+        SettingsManager* settingsManager = _app->toolbox()->settingsManager();
+        if ((_vehicleWasArmed || settingsManager->promptFlightTelemetrySaveNotArmed()->rawValue().toBool()) && settingsManager->promptFlightTelemetrySave()->rawValue().toBool()) {
             emit saveTempFlightDataLog(_tempLogFile.fileName());
         } else {
             QFile::remove(_tempLogFile.fileName());

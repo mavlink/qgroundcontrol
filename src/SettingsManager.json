@@ -58,8 +58,29 @@
 {
     "name":             "MissionAutoLoadDir",
     "shortDescription": "Mission auto load directory",
-    "longDescription":  "The directory from which missions will be automaticallu loaded onto a vehicle when it connects.",
+    "longDescription":  "The directory from which missions will be automatically loaded onto a vehicle when it connects. The mission file must be named AutoLoad#.mission where the # is replaced with the vehicle id.",
     "type":             "string",
     "defaultValue":     ""
+},
+{
+    "name":             "PromptFLightDataSave",
+    "shortDescription": "Prompt to save Flight Data Log after each flight",
+    "longDescription":  "If this option is enabled you will be prompted to save Flight Data Log after each flight completes.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "PromptFLightDataSaveNotArmed",
+    "shortDescription": "Prompt to save Flight Data Log even if vehicle was not armed",
+    "longDescription":  "If this option is enabled you will be prompted to save Flight Data Log even if vehicle was never armed.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "AudioMuted",
+    "shortDescription": "Mute audio output",
+    "longDescription":  "If this option is enabled all audio output will be muted.",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]

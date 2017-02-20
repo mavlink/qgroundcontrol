@@ -19,10 +19,9 @@ QGCTextField {
     property Fact   fact: null
 
     property string _validateString
-    property bool   _factIsString: fact ? fact.type === FactMetaData.valueTypeString : false
 
     // At this point all Facts are numeric
-    inputMethodHints: (_factIsString || ScreenTools.isiOS) ?
+    inputMethodHints: (fact.typeIsString || ScreenTools.isiOS) ?
                           Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
                           Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
 

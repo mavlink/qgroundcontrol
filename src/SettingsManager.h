@@ -64,6 +64,9 @@ public:
     Q_PROPERTY(Fact* batteryPercentRemainingAnnounce    READ batteryPercentRemainingAnnounce    CONSTANT)
     Q_PROPERTY(Fact* defaultMissionItemAltitude         READ defaultMissionItemAltitude         CONSTANT)
     Q_PROPERTY(Fact* missionAutoLoadDir                 READ missionAutoLoadDir                 CONSTANT)
+    Q_PROPERTY(Fact* promptFlightTelemetrySave          READ promptFlightTelemetrySave          CONSTANT)
+    Q_PROPERTY(Fact* promptFlightTelemetrySaveNotArmed  READ promptFlightTelemetrySaveNotArmed  CONSTANT)
+    Q_PROPERTY(Fact* audioMuted                         READ audioMuted                         CONSTANT)
 
     Fact* offlineEditingFirmwareType        (void);
     Fact* offlineEditingVehicleType         (void);
@@ -75,6 +78,9 @@ public:
     Fact* batteryPercentRemainingAnnounce   (void);
     Fact* defaultMissionItemAltitude        (void);
     Fact* missionAutoLoadDir                (void);
+    Fact* promptFlightTelemetrySave         (void);
+    Fact* promptFlightTelemetrySaveNotArmed (void);
+    Fact* audioMuted (void);
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
@@ -89,6 +95,9 @@ public:
     static const char* batteryPercentRemainingAnnounceSettingsName;
     static const char* defaultMissionItemAltitudeSettingsName;
     static const char* missionAutoLoadDirSettingsName;
+    static const char* promptFlightTelemetrySaveName;
+    static const char* promptFlightTelemetrySaveNotArmedName;
+    static const char* audioMutedName;
 
 private:
     SettingsFact* _createSettingsFact(const QString& name);
@@ -105,6 +114,9 @@ private:
     SettingsFact* _batteryPercentRemainingAnnounceFact;
     SettingsFact* _defaultMissionItemAltitudeFact;
     SettingsFact* _missionAutoLoadDirFact;
+    SettingsFact* _promptFlightTelemetrySave;
+    SettingsFact* _promptFlightTelemetrySaveNotArmed;
+    SettingsFact* _audioMuted;
 };
 
 #endif

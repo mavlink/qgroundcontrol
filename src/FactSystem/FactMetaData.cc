@@ -204,6 +204,8 @@ QVariant FactMetaData::_minForType(void) const
         return QVariant(-std::numeric_limits<double>::max());
     case valueTypeString:
         return QVariant();
+    case valueTypeBool:
+        return QVariant(0);
     }
     
     // Make windows compiler happy, even switch is full cased
@@ -231,6 +233,8 @@ QVariant FactMetaData::_maxForType(void) const
         return QVariant(std::numeric_limits<double>::max());
     case valueTypeString:
         return QVariant();
+    case valueTypeBool:
+        return QVariant(1);
     }
     
     // Make windows compiler happy, even switch is full cased
@@ -286,6 +290,10 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeString:
         convertOk = true;
         typedValue = QVariant(rawValue.toString());
+        break;
+    case FactMetaData::valueTypeBool:
+        convertOk = true;
+        typedValue = QVariant(rawValue.toBool());
         break;
     }
     
@@ -345,6 +353,10 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     case FactMetaData::valueTypeString:
         convertOk = true;
         typedValue = QVariant(cookedValue.toString());
+        break;
+    case FactMetaData::valueTypeBool:
+        convertOk = true;
+        typedValue = QVariant(cookedValue.toBool());
         break;
     }
 
@@ -563,7 +575,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                      << QStringLiteral("Int32")
                      << QStringLiteral("Float")
                      << QStringLiteral("Double")
-                     << QStringLiteral("String");
+                     << QStringLiteral("String")
+                     << QStringLiteral("Bool");
 
     knownTypes << valueTypeUint8
                << valueTypeInt8
@@ -573,7 +586,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                << valueTypeInt32
                << valueTypeFloat
                << valueTypeDouble
-               << valueTypeString;
+               << valueTypeString
+               << valueTypeBool;
 
     for (int i=0; i<knownTypeStrings.count(); i++) {
         if (knownTypeStrings[i].compare(typeString, Qt::CaseInsensitive) == 0) {
@@ -819,13 +833,19 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
         metaData->setRawUnits(json[_unitsJsonKey].toString());
     }
     if (json.contains(_defaultValueJsonKey)) {
-        metaData->setRawDefaultValue(json[_defaultValueJsonKey]);
+        metaData->setRawDefaultValue(json[_defaultValueJsonKey].toVariant());
     }
     if (json.contains(_minJsonKey)) {
-        metaData->setRawMin(json[_minJsonKey].toDouble());
+        QVariant typedValue;
+        QString errorString;
+        metaData->convertAndValidateRaw(json[_minJsonKey].toVariant(), true /* convertOnly */, typedValue, errorString);
+        metaData->setRawMin(typedValue);
     }
     if (json.contains(_maxJsonKey)) {
-        metaData->setRawMax(json[_maxJsonKey].toDouble());
+        QVariant typedValue;
+        QString errorString;
+        metaData->convertAndValidateRaw(json[_maxJsonKey].toVariant(), true /* convertOnly */, typedValue, errorString);
+        metaData->setRawMax(typedValue);
     }
 
     return metaData;
