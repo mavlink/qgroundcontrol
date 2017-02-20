@@ -10,6 +10,7 @@
 #include "AppSettings.h"
 
 #include <QQmlEngine>
+#include <QtQml>
 
 const char* AppSettings::appSettingsGroupName =                         "app";
 const char* AppSettings::offlineEditingFirmwareTypeSettingsName =       "OfflineEditingFirmwareType";
