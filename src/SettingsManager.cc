@@ -22,6 +22,9 @@ const char* SettingsManager::speedUnitsSettingsName =                       "Spe
 const char* SettingsManager::batteryPercentRemainingAnnounceSettingsName =  "batteryPercentRemainingAnnounce";
 const char* SettingsManager::defaultMissionItemAltitudeSettingsName =       "DefaultMissionItemAltitude";
 const char* SettingsManager::missionAutoLoadDirSettingsName =               "MissionAutoLoadDir";
+const char* SettingsManager::promptFlightTelemetrySaveName =                "PromptFLightDataSave";
+const char* SettingsManager::promptFlightTelemetrySaveNotArmedName =        "PromptFLightDataSaveNotArmed";
+const char* SettingsManager::audioMutedName =                               "AudioMuted";
 
 SettingsManager::SettingsManager(QGCApplication* app)
     : QGCTool(app)
@@ -35,6 +38,9 @@ SettingsManager::SettingsManager(QGCApplication* app)
     , _batteryPercentRemainingAnnounceFact(NULL)
     , _defaultMissionItemAltitudeFact(NULL)
     , _missionAutoLoadDirFact(NULL)
+    , _promptFlightTelemetrySave(NULL)
+    , _promptFlightTelemetrySaveNotArmed(NULL)
+    , _audioMuted(NULL)
 {
 
 }
@@ -112,6 +118,33 @@ Fact* SettingsManager::missionAutoLoadDir(void)
     }
 
     return _missionAutoLoadDirFact;
+}
+
+Fact* SettingsManager::promptFlightTelemetrySave(void)
+{
+    if (!_promptFlightTelemetrySave) {
+        _promptFlightTelemetrySave = _createSettingsFact(promptFlightTelemetrySaveName);
+    }
+
+    return _promptFlightTelemetrySave;
+}
+
+Fact* SettingsManager::promptFlightTelemetrySaveNotArmed(void)
+{
+    if (!_promptFlightTelemetrySaveNotArmed) {
+        _promptFlightTelemetrySaveNotArmed = _createSettingsFact(promptFlightTelemetrySaveNotArmedName);
+    }
+
+    return _promptFlightTelemetrySaveNotArmed;
+}
+
+Fact* SettingsManager::audioMuted(void)
+{
+    if (!_audioMuted) {
+        _audioMuted = _createSettingsFact(audioMutedName);
+    }
+
+    return _audioMuted;
 }
 
 Fact* SettingsManager::distanceUnits(void)

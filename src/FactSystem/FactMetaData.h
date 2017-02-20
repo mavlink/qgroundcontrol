@@ -38,10 +38,9 @@ public:
         valueTypeInt32,
         valueTypeFloat,
         valueTypeDouble,
-        valueTypeString
+        valueTypeString,
+        valueTypeBool
     } ValueType_t;
-
-    Q_ENUM(ValueType_t)
 
     typedef QVariant (*Translator)(const QVariant& from);
     
