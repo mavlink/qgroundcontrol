@@ -18,31 +18,25 @@
  */
 
 #include <QApplication>
-#include <QSettings>
 #include <QDebug>
 
 #include "GAudioOutput.h"
 #include "QGCApplication.h"
 #include "QGC.h"
+#include "SettingsManager.h"
 
 #if defined __android__
 #include <QtAndroidExtras/QtAndroidExtras>
 #include <QtAndroidExtras/QAndroidJniObject>
 #endif
 
-const char* GAudioOutput::_mutedKey = "AudioMuted";
-
 GAudioOutput::GAudioOutput(QGCApplication* app)
     : QGCTool(app)
-    , muted(false)
 #ifndef __android__
     , thread(new QThread())
     , worker(new QGCAudioWorker())
 #endif
 {
-    QSettings settings;
-    muted = settings.value(_mutedKey, false).toBool();
-    muted |= app->runningUnitTests();
 #ifndef __android__
     worker->moveToThread(thread);
     connect(this, &GAudioOutput::textToSpeak, worker, &QGCAudioWorker::say);
@@ -60,23 +54,10 @@ GAudioOutput::~GAudioOutput()
 }
 
 
-void GAudioOutput::mute(bool mute)
-{
-    QSettings settings;
-    muted = mute;
-    settings.setValue(_mutedKey, mute);
-#ifndef __android__
-    emit mutedChanged(mute);
-#endif
-}
-
-bool GAudioOutput::isMuted()
-{
-    return muted;
-}
-
 bool GAudioOutput::say(const QString& inText)
 {
+    bool muted = qgcApp()->toolbox()->settingsManager()->audioMuted()->rawValue().toBool();
+    muted |= qgcApp()->runningUnitTests();
     if (!muted && !qgcApp()->runningUnitTests()) {
 #if defined __android__
 #if defined QGC_SPEECH_ENABLED

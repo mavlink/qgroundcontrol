@@ -59,6 +59,10 @@ QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, Fact
         qWarning() << "Internal Error: No support for string parameters";
         convertTo = QVariant::String;
         break;
+    case FactMetaData::valueTypeBool:
+        qWarning() << "Internal Error: No support for string parameters";
+        convertTo = QVariant::Bool;
+        break;
     }
     
     *convertOk = var.convert(convertTo);

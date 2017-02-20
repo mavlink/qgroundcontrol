@@ -59,7 +59,6 @@
      <string>File</string>
     </property>
     <addaction name="separator"/>
-    <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionStatusBar"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
@@ -84,14 +83,6 @@
   <action name="actionAdd_Link">
    <property name="text">
     <string>Manage Communication Links</string>
-   </property>
-  </action>
-  <action name="actionMuteAudioOutput">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Mute Audio Output</string>
    </property>
   </action>
   <action name="actionAdvanced_Mode">

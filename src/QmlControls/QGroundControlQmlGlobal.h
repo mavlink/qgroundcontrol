@@ -56,9 +56,6 @@ public:
 
     // Various QGC settings exposed to Qml
     Q_PROPERTY(bool     isDarkStyle             READ isDarkStyle                WRITE setIsDarkStyle                NOTIFY isDarkStyleChanged)              // TODO: Should be in ScreenTools?
-    Q_PROPERTY(bool     isAudioMuted            READ isAudioMuted               WRITE setIsAudioMuted               NOTIFY isAudioMutedChanged)
-    Q_PROPERTY(bool     isSaveLogPrompt         READ isSaveLogPrompt            WRITE setIsSaveLogPrompt            NOTIFY isSaveLogPromptChanged)
-    Q_PROPERTY(bool     isSaveLogPromptNotArmed READ isSaveLogPromptNotArmed    WRITE setIsSaveLogPromptNotArmed    NOTIFY isSaveLogPromptNotArmedChanged)
     Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
     Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
 
@@ -146,9 +143,6 @@ public:
     qreal                   zOrderMapItems      ()  { return 50; }
 
     bool    isDarkStyle             () { return _app->styleIsDark(); }
-    bool    isAudioMuted            () { return _toolbox->audioOutput()->isMuted(); }
-    bool    isSaveLogPrompt         () { return _app->promptFlightDataSave(); }
-    bool    isSaveLogPromptNotArmed () { return _app->promptFlightDataSaveNotArmed(); }
     bool    virtualTabletJoystick   () { return _virtualTabletJoystick; }
     qreal   baseFontPointSize       () { return _baseFontPointSize; }
 
@@ -160,9 +154,6 @@ public:
     int     supportedFirmwareCount      ();
 
     void    setIsDarkStyle              (bool dark);
-    void    setIsAudioMuted             (bool muted);
-    void    setIsSaveLogPrompt          (bool prompt);
-    void    setIsSaveLogPromptNotArmed  (bool prompt);
     void    setVirtualTabletJoystick    (bool enabled);
     void    setBaseFontPointSize        (qreal size);
 
@@ -180,9 +171,6 @@ public:
 
 signals:
     void isDarkStyleChanged             (bool dark);
-    void isAudioMutedChanged            (bool muted);
-    void isSaveLogPromptChanged         (bool prompt);
-    void isSaveLogPromptNotArmedChanged (bool prompt);
     void virtualTabletJoystickChanged   (bool enabled);
     void baseFontPointSizeChanged       (qreal size);
     void isMultiplexingEnabledChanged   (bool enabled);

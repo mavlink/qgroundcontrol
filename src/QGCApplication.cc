@@ -115,8 +115,6 @@ const char* QGCApplication::telemetryFileExtension =     "tlog";
 
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
-const char* QGCApplication::_promptFlightDataSave           = "PromptFLightDataSave";
-const char* QGCApplication::_promptFlightDataSaveNotArmed   = "PromptFLightDataSaveNotArmed";
 const char* QGCApplication::_styleKey                       = "StyleIsDark";
 const char* QGCApplication::_lastKnownHomePositionLatKey    = "LastKnownHomePositionLat";
 const char* QGCApplication::_lastKnownHomePositionLonKey    = "LastKnownHomePositionLon";
@@ -464,32 +462,6 @@ void QGCApplication::clearDeleteAllSettingsNextBoot(void)
 {
     QSettings settings;
     settings.remove(_deleteAllSettingsKey);
-}
-
-bool QGCApplication::promptFlightDataSave(void)
-{
-    QSettings settings;
-
-    return settings.value(_promptFlightDataSave, true).toBool();
-}
-
-bool QGCApplication::promptFlightDataSaveNotArmed(void)
-{
-    QSettings settings;
-
-    return settings.value(_promptFlightDataSaveNotArmed, false).toBool();
-}
-
-void QGCApplication::setPromptFlightDataSave(bool promptForSave)
-{
-    QSettings settings;
-    settings.setValue(_promptFlightDataSave, promptForSave);
-}
-
-void QGCApplication::setPromptFlightDataSaveNotArmed(bool promptForSave)
-{
-    QSettings settings;
-    settings.setValue(_promptFlightDataSaveNotArmed, promptForSave);
 }
 
 /// @brief Returns the QGCApplication object singleton.
