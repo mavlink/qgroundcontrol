@@ -36,7 +36,7 @@ Rectangle {
 
     Component.onCompleted: {
         //-- Default Settings
-        __rightPanel.source = QGroundControl.corePlugin.settings[QGroundControl.corePlugin.defaltSettings].url
+        __rightPanel.source = QGroundControl.corePlugin.settings[QGroundControl.corePlugin.defaultSettings].url
     }
 
     QGCFlickable {
