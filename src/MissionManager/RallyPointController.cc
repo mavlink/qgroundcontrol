@@ -268,7 +268,7 @@ void RallyPointController::addPoint(QGeoCoordinate point)
     if (_points.count()) {
         defaultAlt = qobject_cast<RallyPoint*>(_points[_points.count() - 1])->coordinate().altitude();
     } else {
-        defaultAlt = qgcApp()->toolbox()->settingsManager()->defaultMissionItemAltitude()->rawValue().toDouble();
+        defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
     }
     point.setAltitude(defaultAlt);
     RallyPoint* newPoint = new RallyPoint(point, this);
