@@ -1,9 +1,13 @@
 <RCC>
     <qresource prefix="/typhoonh">
-        <file alias="logoWhite.svg">res/logoWhite.svg</file>
-        <file alias="VehicleIndicator.svg">res/VehicleIndicator.svg</file>
+        <file alias="camera.svg">res/camera.svg</file>
+        <file alias="CameraIndicator.qml">res/CameraIndicator.qml</file>
         <file alias="CompassIndicator.svg">res/CompassIndicator.svg</file>
+        <file alias="InstrumentWidget.qml">res/InstrumentWidget.qml</file>
+        <file alias="logoWhite.svg">res/logoWhite.svg</file>
         <file alias="TyphoonSettings.qml">res/TyphoonSettings.qml</file>
+        <file alias="VehicleIndicator.svg">res/VehicleIndicator.svg</file>
+        <file alias="video.svg">res/video.svg</file>
         <file alias="YuneecBrandImage.png">src/FirmwarePlugin/YuneecBrandImage.png</file>
     </qresource>
 </RCC>

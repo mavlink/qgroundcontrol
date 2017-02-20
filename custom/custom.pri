@@ -12,8 +12,6 @@ linux : android-g++ {
     DEFINES += __mobile__
 }
 
-QGCROOT = $$PWD/..
-
 DEFINES += CUSTOMHEADER=\"\\\"typhoonh.h\\\"\"
 DEFINES += CUSTOMCLASS=TyphoonHPlugin
 

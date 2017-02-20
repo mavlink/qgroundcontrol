@@ -32,9 +32,26 @@ typhoonHQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
 }
 
 //-----------------------------------------------------------------------------
+class InstrumentWidgetSrc : public CustomInstrumentWidget
+{
+public:
+    InstrumentWidgetSrc(QObject* parent = NULL);
+    QUrl        source                      ();
+    Pos         widgetPosition              () { return POS_TOP_RIGHT; }
+};
+
+//-----------------------------------------------------------------------------
+QUrl
+InstrumentWidgetSrc::source()
+{
+    return QUrl::fromUserInput("qrc:/typhoonh/InstrumentWidget.qml");
+}
+
+//-----------------------------------------------------------------------------
 class TyphoonHOptions : public QGCOptions
 {
 public:
+    TyphoonHOptions(QObject* parent = NULL);
     bool        combineSettingsAndSetup     () { return true;  }
     bool        enableVirtualJoystick       () { return false; }
     bool        enableAutoConnectOptions    () { return false; }
@@ -49,7 +66,33 @@ public:
     double      defaultFontPointSize        () { return 13.0; }
 #endif
     bool        enablePlanViewSelector      () { return false; }
+    CustomInstrumentWidget* instrumentWidget();
+private:
+    InstrumentWidgetSrc* _instrumentWidgetSrc;
 };
+
+//-----------------------------------------------------------------------------
+TyphoonHOptions::TyphoonHOptions(QObject* parent)
+    : QGCOptions(parent)
+    , _instrumentWidgetSrc(NULL)
+{
+}
+
+//-----------------------------------------------------------------------------
+InstrumentWidgetSrc::InstrumentWidgetSrc(QObject* parent)
+    : CustomInstrumentWidget(parent)
+{
+}
+
+//-----------------------------------------------------------------------------
+CustomInstrumentWidget*
+TyphoonHOptions::instrumentWidget()
+{
+    if(!_instrumentWidgetSrc) {
+        _instrumentWidgetSrc = new InstrumentWidgetSrc(this);
+    }
+    return _instrumentWidgetSrc;
+}
 
 //-----------------------------------------------------------------------------
 TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
@@ -60,7 +103,7 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
     , _pMAVLink(NULL)
     , _pHandler(NULL)
 {
-    _pOptions = new TyphoonHOptions;
+    _pOptions = new TyphoonHOptions(this);
     //-- Set our own "defaults"
     QSettings settings;
     //-- Make "Dark" style default
@@ -131,4 +174,19 @@ TyphoonHPlugin::settings()
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
     }
     return _settingsList;
+}
+
+QVariantList&
+TyphoonHPlugin::toolBarIndicators()
+{
+    if(_indicatorList.size() == 0) {
+        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")));
+        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")));
+        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")));
+        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
+        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
+        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/typhoonh/CameraIndicator.qml")));
+        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
+    }
+    return _indicatorList;
 }

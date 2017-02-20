@@ -12,6 +12,8 @@
 #include "m4def.h"
 #include "m4util.h"
 
+#include "Vehicle.h"
+
 class QGCToolbox;
 class TyphoonM4Handler;
 
@@ -36,25 +38,49 @@ public:
         M4_STATE_FACTORY_CALI   = 7
     };
 
-    Q_ENUMS(M4State)
+    enum VideoStatus {
+        VIDEO_CAPTURE_STATUS_UNDEFINED,
+        VIDEO_CAPTURE_STATUS_STOPPED,
+        VIDEO_CAPTURE_STATUS_RUNNING,
+    };
 
-    Q_PROPERTY(int      m4State     READ    m4State     NOTIFY m4StateChanged)
-    Q_PROPERTY(QString  m4StateStr  READ    m4StateStr  NOTIFY m4StateChanged)
+    enum CameraMode {
+        CAMERA_MODE_UNDEFINED,
+        CAMERA_MODE_PHOTO,
+        CAMERA_MODE_VIDEO,
+    };
+
+    Q_ENUMS(M4State)
+    Q_ENUMS(VideoStatus)
+    Q_ENUMS(CameraMode)
+
+    Q_PROPERTY(M4State      m4State     READ    m4State                             NOTIFY m4StateChanged)
+    Q_PROPERTY(QString      m4StateStr  READ    m4StateStr                          NOTIFY m4StateChanged)
+    Q_PROPERTY(VideoStatus  videoStatus READ    videoStatus                         NOTIFY videoStatusChanged)
+    Q_PROPERTY(CameraMode   cameraMode  READ    cameraMode  WRITE   setCameraMode   NOTIFY cameraModeChanged)
 
     Q_INVOKABLE void enterBindMode  ();
     Q_INVOKABLE void initM4         ();
 
-    int     m4State                 ();
-    QString m4StateStr              ();
+    M4State     m4State             ();
+    QString     m4StateStr          ();
+    VideoStatus videoStatus         ();
+    CameraMode  cameraMode          ();
+
+    void        setCameraMode       (CameraMode mode);
 
     void    init                    (TyphoonM4Handler* pHandler);
 
 signals:
-    void    m4StateChanged          (int state);
+    void    m4StateChanged          ();
+    void    videoStatusChanged      ();
+    void    cameraModeChanged       ();
 
 private slots:
-    void    _m4StateChanged         (int state);
+    void    _m4StateChanged         ();
     void    _destroyed              ();
+    void    _cameraModeChanged      ();
+    void    _videoStatusChanged     ();
 
 private:
     TyphoonM4Handler* _pHandler;
@@ -73,11 +99,14 @@ public:
     void    init                    ();
     bool    vehicleReady            ();
     void    getControllerLocation   (ControllerLocation& location);
-    int     m4State                 () { return _m4State; }
     void    enterBindMode           ();
     void    initM4                  ();
     void    takePhoto               ();
     void    toggleVideo             ();
+
+    TyphoonHQuickInterface::M4State     m4State     () { return _m4State; }
+    TyphoonHQuickInterface::VideoStatus videoStatus () { return _video_status; }
+    TyphoonHQuickInterface::CameraMode  cameraMode  () { return _camera_mode; }
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  float   byteArrayToFloat(QByteArray data, int offset);
@@ -90,6 +119,10 @@ private slots:
     void    _bytesReady                         (QByteArray data);
     void    _stateManager                       ();
     void    _initSequence                       ();
+    void    _vehicleAdded                       (Vehicle* vehicle);
+    void    _vehicleRemoved                     (Vehicle* vehicle);
+    void    _mavlinkMessageReceived             (const mavlink_message_t& message);
+    void    _videoCaptureUpdate                 ();
 
 private:
     bool    _enterRun                           ();
@@ -124,13 +157,19 @@ private:
     void    _handleMixedChannelData             (m4Packet& packet);
     void    _handControllerFeedback             (m4Packet& packet);
     void    _handleInitialState                 ();
+    void    _requestCaptureStatus               ();
+    void    _requestCameraSettings              ();
+    void    _handleCaptureStatus                (const mavlink_message_t& message);
+    void    _handleCameraSettings               (const mavlink_message_t& message);
 
 signals:
-    void    m4StateChanged                      (int state);
+    void    m4StateChanged                      ();
     void    switchStateChanged                  (int swId, int oldState, int newState);
     void    channelDataStatus                   (QByteArray channelData);
     void    controllerLocationChanged           ();
     void    destroyed                           ();
+    void    cameraModeChanged                   ();
+    void    videoStatusChanged                  ();
 
 private:
     M4SerialComm* _commPort;
@@ -155,7 +194,6 @@ private:
     int                     _state;
     int                     _responseTryCount;
     int                     _currentChannelAdd;
-    int                     _m4State;
     uint8_t                 _rxLocalIndex;
     uint8_t                 _rxchannelInfoIndex;
     uint8_t                 _channelNumIndex;
@@ -164,4 +202,14 @@ private:
     QTimer                  _timer;
     ControllerLocation      _controllerLocation;
     bool                    _binding;
+    Vehicle*                _vehicle;
+
+    QTimer                              _videoTimer;
+    TyphoonHQuickInterface::M4State     _m4State;
+    TyphoonHQuickInterface::VideoStatus _video_status;
+    int                                 _video_resolution_h;
+    int                                 _video_resolution_v;
+    float                               _video_framerate;
+    TyphoonHQuickInterface::CameraMode  _camera_mode;
+
 };
