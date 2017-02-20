@@ -101,8 +101,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _onboardControlSensorsUnhealthy(0)
     , _gpsRawIntMessageAvailable(false)
     , _globalPositionIntMessageAvailable(false)
-    , _cruiseSpeed(_settingsManager->offlineEditingCruiseSpeed()->rawValue().toDouble())
-    , _hoverSpeed(_settingsManager->offlineEditingHoverSpeed()->rawValue().toDouble())
+    , _cruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
+    , _hoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _telemetryRRSSI(0)
     , _telemetryLRSSI(0)
     , _telemetryRXErrors(0)
@@ -260,8 +260,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _onboardControlSensorsUnhealthy(0)
     , _gpsRawIntMessageAvailable(false)
     , _globalPositionIntMessageAvailable(false)
-    , _cruiseSpeed(_settingsManager->offlineEditingCruiseSpeed()->rawValue().toDouble())
-    , _hoverSpeed(_settingsManager->offlineEditingHoverSpeed()->rawValue().toDouble())
+    , _cruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
+    , _hoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -323,10 +323,10 @@ void Vehicle::_commonInit(void)
     connect(_rallyPointManager, &RallyPointManager::error, this, &Vehicle::_rallyPointManagerError);
 
     // Offline editing vehicle tracks settings changes for offline editing settings
-    connect(_settingsManager->offlineEditingFirmwareType(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
-    connect(_settingsManager->offlineEditingVehicleType(),   &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
-    connect(_settingsManager->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
-    connect(_settingsManager->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
+    connect(_settingsManager->appSettings()->offlineEditingFirmwareType(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
+    connect(_settingsManager->appSettings()->offlineEditingVehicleType(),   &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
+    connect(_settingsManager->appSettings()->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
+    connect(_settingsManager->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
 
     // Build FactGroup object model
 
@@ -791,7 +791,7 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     }
     _batteryFactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
 
-    if (sysStatus.battery_remaining > 0 && sysStatus.battery_remaining < _settingsManager->batteryPercentRemainingAnnounce()->rawValue().toInt()) {
+    if (sysStatus.battery_remaining > 0 && sysStatus.battery_remaining < _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt()) {
         if (!_lowBatteryAnnounceTimer.isValid() || _lowBatteryAnnounceTimer.elapsed() > _lowBatteryAnnounceRepeatMSecs) {
             _lowBatteryAnnounceTimer.restart();
             _say(QString("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
@@ -1579,7 +1579,7 @@ void Vehicle::_parametersReady(bool parametersReady)
 {
     if (parametersReady && !_missionManagerInitialRequestSent) {
         _missionManagerInitialRequestSent = true;
-        QString missionAutoLoadDirPath = _settingsManager->missionAutoLoadDir()->rawValue().toString();
+        QString missionAutoLoadDirPath = _settingsManager->appSettings()->missionAutoLoadDir()->rawValue().toString();
         if (missionAutoLoadDirPath.isEmpty()) {
             _missionManager->requestMissionItems();
         } else {

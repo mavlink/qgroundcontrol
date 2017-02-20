@@ -146,3 +146,11 @@ QVariant QGCCorePlugin::overrideSettingsDefault(QString name, QVariant defaultVa
     // No overrides for base plugin
     return defaultValue;
 }
+
+bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
+{
+    Q_UNUSED(name);
+
+    // Always show all
+    return true;
+}

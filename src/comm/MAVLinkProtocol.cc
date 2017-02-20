@@ -424,7 +424,7 @@ void MAVLinkProtocol::_stopLogging(void)
     if (_closeLogFile()) {
         // If the signals are not connected it means we are running a unit test. In that case just delete log files
         SettingsManager* settingsManager = _app->toolbox()->settingsManager();
-        if ((_vehicleWasArmed || settingsManager->promptFlightTelemetrySaveNotArmed()->rawValue().toBool()) && settingsManager->promptFlightTelemetrySave()->rawValue().toBool()) {
+        if ((_vehicleWasArmed || settingsManager->appSettings()->promptFlightTelemetrySaveNotArmed()->rawValue().toBool()) && settingsManager->appSettings()->promptFlightTelemetrySave()->rawValue().toBool()) {
             emit saveTempFlightDataLog(_tempLogFile.fileName());
         } else {
             QFile::remove(_tempLogFile.fileName());

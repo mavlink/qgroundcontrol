@@ -253,7 +253,7 @@ void MissionCommandTree::_baseVehicleInfo(Vehicle* vehicle, MAV_AUTOPILOT& baseF
         baseVehicleType = _baseVehicleType(vehicle->vehicleType());
     } else {
         // No Vehicle means offline editing
-        baseFirmwareType = _baseFirmwareType((MAV_AUTOPILOT)_settingsManager->offlineEditingFirmwareType()->rawValue().toInt());
-        baseVehicleType = _baseVehicleType((MAV_TYPE)_settingsManager->offlineEditingVehicleType()->rawValue().toInt());
+        baseFirmwareType = _baseFirmwareType((MAV_AUTOPILOT)_settingsManager->appSettings()->offlineEditingFirmwareType()->rawValue().toInt());
+        baseVehicleType = _baseVehicleType((MAV_TYPE)_settingsManager->appSettings()->offlineEditingVehicleType()->rawValue().toInt());
     }
 }
