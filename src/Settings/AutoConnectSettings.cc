@@ -10,6 +10,7 @@
 #include "AutoConnectSettings.h"
 
 #include <QQmlEngine>
+#include <QtQml>
 
 const char* AutoConnectSettings::autoConnectSettingsGroupName = "autoConnect";
 
