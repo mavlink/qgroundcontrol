@@ -231,34 +231,26 @@ QGCView {
                         }
                         //-----------------------------------------------------------------
                         //-- Audio preferences
-                        QGCCheckBox {
-                            text:       qsTr("Mute all audio output")
-                            checked:    QGroundControl.isAudioMuted
-                            onClicked: {
-                                QGroundControl.isAudioMuted = checked
-                            }
+                        FactCheckBox {
+                            text:   qsTr("Mute all audio output")
+                            fact:   QGroundControl.settingsManager.audioMuted
                         }
                         //-----------------------------------------------------------------
                         //-- Prompt Save Log
                         QGCCheckBox {
                             id:         promptSaveLog
                             text:       qsTr("Prompt to save Flight Data Log after each flight")
-                            checked:    QGroundControl.isSaveLogPrompt
+                            checked:    QGroundControl.settingsManager.promptFlightTelemetrySave
+                            //fact:       QGroundControl.settingsManager.promptFlightTelemetrySave
                             visible:    !ScreenTools.isMobile
-                            onClicked: {
-                                QGroundControl.isSaveLogPrompt = checked
-                            }
                         }
                         //-----------------------------------------------------------------
                         //-- Prompt Save even if not armed
-                        QGCCheckBox {
+                        FactCheckBox {
                             text:       qsTr("Prompt to save Flight Data Log even if vehicle was not armed")
-                            checked:    QGroundControl.isSaveLogPromptNotArmed
+                            fact:       QGroundControl.settingsManager.promptFlightTelemetrySaveNotArmed
                             visible:    !ScreenTools.isMobile
                             enabled:    promptSaveLog.checked
-                            onClicked: {
-                                QGroundControl.isSaveLogPromptNotArmed = checked
-                            }
                         }
                         //-----------------------------------------------------------------
                         //-- Clear settings

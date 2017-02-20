@@ -11,7 +11,11 @@ QGCCheckBox {
     property variant checkedValue: 1
     property variant uncheckedValue: 0
 
-    checkedState: fact ? (fact.value === checkedValue ? Qt.Checked : Qt.Unchecked) : Qt.Unchecked
+    checkedState: fact ?
+                      (fact.typeIsBool ?
+                           (fact.value === true ? Qt.Checked : Qt.Unchecked) :
+                           (fact.value === checkedValue ? Qt.Checked : Qt.Unchecked)) :
+                      Qt.Unchecked
 
     text: qsTr("Label")
 

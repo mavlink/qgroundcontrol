@@ -163,24 +163,6 @@ void QGroundControlQmlGlobal::setIsDarkStyle(bool dark)
     emit isDarkStyleChanged(dark);
 }
 
-void QGroundControlQmlGlobal::setIsAudioMuted(bool muted)
-{
-    qgcApp()->toolbox()->audioOutput()->mute(muted);
-    emit isAudioMutedChanged(muted);
-}
-
-void QGroundControlQmlGlobal::setIsSaveLogPrompt(bool prompt)
-{
-    qgcApp()->setPromptFlightDataSave(prompt);
-    emit isSaveLogPromptChanged(prompt);
-}
-
-void QGroundControlQmlGlobal::setIsSaveLogPromptNotArmed(bool prompt)
-{
-    qgcApp()->setPromptFlightDataSaveNotArmed(prompt);
-    emit isSaveLogPromptNotArmedChanged(prompt);
-}
-
 void QGroundControlQmlGlobal::setIsVersionCheckEnabled(bool enable)
 {
     qgcApp()->toolbox()->mavlinkProtocol()->enableVersionCheck(enable);

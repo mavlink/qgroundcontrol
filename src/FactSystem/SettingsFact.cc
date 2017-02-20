@@ -33,7 +33,11 @@ SettingsFact::SettingsFact(QString settingGroup, FactMetaData* metaData, QObject
     // Allow core plugin a chance to override the default value
     metaData->setRawDefaultValue(qgcApp()->toolbox()->corePlugin()->overrideSettingsDefault(metaData->name(), metaData->rawDefaultValue()));
     setMetaData(metaData);
-    _rawValue = settings.value(_name, metaData->rawDefaultValue());
+
+    QVariant typedValue;
+    QString errorString;
+    metaData->convertAndValidateRaw(settings.value(_name, metaData->rawDefaultValue()), true /* conertOnly */, typedValue, errorString);
+    _rawValue = typedValue;
 
     connect(this, &Fact::rawValueChanged, this, &SettingsFact::_rawValueChanged);
 }
