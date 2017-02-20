@@ -2,6 +2,14 @@
     <qresource prefix="/unittest">
         <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
     </qresource>
+    <qresource prefix="/toolbar">
+        <file alias="BatteryIndicator.qml">src/ui/toolbar/BatteryIndicator.qml</file>
+        <file alias="GPSIndicator.qml">src/ui/toolbar/GPSIndicator.qml</file>
+        <file alias="MessageIndicator.qml">src/ui/toolbar/MessageIndicator.qml</file>
+        <file alias="ModeIndicator.qml">src/ui/toolbar/ModeIndicator.qml</file>
+        <file alias="RCRSSIIndicator.qml">src/ui/toolbar/RCRSSIIndicator.qml</file>
+        <file alias="TelemetryRSSIIndicator.qml">src/ui/toolbar/TelemetryRSSIIndicator.qml</file>
+    </qresource>
     <qresource prefix="/qml">
         <file alias="AirframeComponent.qml">src/AutoPilotPlugins/PX4/AirframeComponent.qml</file>
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
