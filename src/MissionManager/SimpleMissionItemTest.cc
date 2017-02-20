@@ -141,7 +141,7 @@ void SimpleMissionItemTest::_testDefaultValues(void)
 
     item.missionItem().setCommand(MAV_CMD_NAV_WAYPOINT);
     item.missionItem().setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
-    QCOMPARE(item.missionItem().param7(), qgcApp()->toolbox()->settingsManager()->defaultMissionItemAltitude()->rawValue().toDouble());
+    QCOMPARE(item.missionItem().param7(), qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble());
 }
 
 void SimpleMissionItemTest::_testSignals(void)
@@ -226,7 +226,7 @@ void SimpleMissionItemTest::_testSignals(void)
     //      dirtyChanged
 
     // Check that changing to the same coordinate does not signal
-    simpleMissionItem.setCoordinate(QGeoCoordinate(50.1234567, 60.1234567, qgcApp()->toolbox()->settingsManager()->defaultMissionItemAltitude()->rawValue().toDouble()));
+    simpleMissionItem.setCoordinate(QGeoCoordinate(50.1234567, 60.1234567, qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble()));
     QVERIFY(multiSpy->checkNoSignals());
 
     // Check that actually changing coordinate signals correctly

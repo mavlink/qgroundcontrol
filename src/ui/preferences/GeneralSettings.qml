@@ -32,22 +32,14 @@ QGCView {
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
-    property Fact _percentRemainingAnnounce:    QGroundControl.settingsManager.batteryPercentRemainingAnnounce
-    property Fact _autoLoadDir:                 QGroundControl.settingsManager.missionAutoLoadDir
+    property Fact _percentRemainingAnnounce:    QGroundControl.settingsManager.appSettings.batteryPercentRemainingAnnounce
+    property Fact _autoLoadDir:                 QGroundControl.settingsManager.appSettings.missionAutoLoadDir
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
 
     readonly property string _requiresRestart:  qsTr("(Requires Restart)")
 
     QGCPalette { id: qgcPal }
-
-    FileDialog {
-        id: fileDialog
-        title: "Choose a location to save video files."
-        folder: shortcuts.home
-        selectFolder: true
-        onAccepted: QGroundControl.videoManager.setVideoSavePathByUrl(fileDialog.fileUrl)
-    }
 
     QGCViewPanel {
         id:             panel
@@ -65,10 +57,11 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Units
                 Item {
-                    width:              qgcView.width * 0.8
-                    height:             unitLabel.height
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    width:                      qgcView.width * 0.8
+                    height:                     unitLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.unitsSettings.visible
                     QGCLabel {
                         id:             unitLabel
                         text:           qsTr("Units (Requires Restart)")
@@ -76,11 +69,12 @@ QGCView {
                     }
                 }
                 Rectangle {
-                    height:         unitsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:          qgcView.width * 0.8
-                    color:          qgcPal.windowShade
-                    anchors.margins: ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    height:                     unitsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      qgcView.width * 0.8
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.unitsSettings.visible
                     Column {
                         id:         unitsCol
                         spacing:    ScreenTools.defaultFontPixelWidth
@@ -95,7 +89,7 @@ QGCView {
                             FactComboBox {
                                 id:                 distanceUnitsCombo
                                 width:              _editFieldWidth
-                                fact:               QGroundControl.settingsManager.distanceUnits
+                                fact:               QGroundControl.settingsManager.unitsSettings.distanceUnits
                                 indexModel:         false
                             }
                         }
@@ -109,7 +103,7 @@ QGCView {
                             FactComboBox {
                                 id:                 areaUnitsCombo
                                 width:              _editFieldWidth
-                                fact:               QGroundControl.settingsManager.areaUnits
+                                fact:               QGroundControl.settingsManager.unitsSettings.areaUnits
                                 indexModel:         false
                             }
                         }
@@ -123,7 +117,7 @@ QGCView {
                             FactComboBox {
                                 id:                 speedUnitsCombo
                                 width:              _editFieldWidth
-                                fact:               QGroundControl.settingsManager.speedUnits
+                                fact:               QGroundControl.settingsManager.unitsSettings.speedUnits
                                 indexModel:         false
                             }
                         }
@@ -132,10 +126,11 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Miscellanous
                 Item {
-                    width:              qgcView.width * 0.8
-                    height:             miscLabel.height
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    width:                      qgcView.width * 0.8
+                    height:                     miscLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.appSettings.visible
                     QGCLabel {
                         id:             miscLabel
                         text:           qsTr("Miscellaneous")
@@ -143,11 +138,12 @@ QGCView {
                     }
                 }
                 Rectangle {
-                    height:         miscCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:          qgcView.width * 0.8
-                    color:          qgcPal.windowShade
-                    anchors.margins: ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    height:                     miscCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      qgcView.width * 0.8
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.appSettings.visible
                     Column {
                         id:         miscCol
                         spacing:    ScreenTools.defaultFontPixelWidth
@@ -233,22 +229,21 @@ QGCView {
                         //-- Audio preferences
                         FactCheckBox {
                             text:   qsTr("Mute all audio output")
-                            fact:   QGroundControl.settingsManager.audioMuted
+                            fact:   QGroundControl.settingsManager.appSettings.audioMuted
                         }
                         //-----------------------------------------------------------------
                         //-- Prompt Save Log
-                        QGCCheckBox {
+                        FactCheckBox {
                             id:         promptSaveLog
                             text:       qsTr("Prompt to save Flight Data Log after each flight")
-                            checked:    QGroundControl.settingsManager.promptFlightTelemetrySave
-                            //fact:       QGroundControl.settingsManager.promptFlightTelemetrySave
+                            fact:       QGroundControl.settingsManager.appSettings.promptFlightTelemetrySave
                             visible:    !ScreenTools.isMobile
                         }
                         //-----------------------------------------------------------------
                         //-- Prompt Save even if not armed
                         FactCheckBox {
                             text:       qsTr("Prompt to save Flight Data Log even if vehicle was not armed")
-                            fact:       QGroundControl.settingsManager.promptFlightTelemetrySaveNotArmed
+                            fact:       QGroundControl.settingsManager.appSettings.promptFlightTelemetrySaveNotArmed
                             visible:    !ScreenTools.isMobile
                             enabled:    promptSaveLog.checked
                         }
@@ -320,7 +315,7 @@ QGCView {
                             }
                             FactTextField {
                                 id:     defaultItemAltitudeField
-                                fact:   QGroundControl.settingsManager.defaultMissionItemAltitude
+                                fact:   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
                             }
                         }
                         //-----------------------------------------------------------------
@@ -403,11 +398,11 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Autoconnect settings
                 Item {
-                    width:              qgcView.width * 0.8
-                    height:             autoConnectLabel.height
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    visible:            QGroundControl.corePlugin.options.enableAutoConnectOptions
+                    width:                      qgcView.width * 0.8
+                    height:                     autoConnectLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.autoConnectSettings.visible
                     QGCLabel {
                         id:             autoConnectLabel
                         text:           qsTr("AutoConnect to the following devices:")
@@ -415,12 +410,12 @@ QGCView {
                     }
                 }
                 Rectangle {
-                    height:         autoConnectCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:          qgcView.width * 0.8
-                    color:          qgcPal.windowShade
-                    visible:        QGroundControl.corePlugin.options.enableAutoConnectOptions
-                    anchors.margins: ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    height:                     autoConnectCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      qgcView.width * 0.8
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.autoConnectSettings.visible
                     Column {
                         id:         autoConnectCol
                         spacing:    ScreenTools.defaultFontPixelWidth
@@ -468,11 +463,11 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Video Source
                 Item {
-                    width:              qgcView.width * 0.8
-                    height:             videoLabel.height
-                    visible:            QGroundControl.corePlugin.options.enableVideoSourceOptions
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    width:                      qgcView.width * 0.8
+                    height:                     videoLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.videoSettings.visible
                     QGCLabel {
                         id:             videoLabel
                         text:           qsTr("Video (Requires Restart)")
@@ -480,12 +475,12 @@ QGCView {
                     }
                 }
                 Rectangle {
-                    height:         videoCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:          qgcView.width * 0.8
-                    color:          qgcPal.windowShade
-                    visible:        QGroundControl.corePlugin.options.enableVideoSourceOptions
-                    anchors.margins: ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    height:                     videoCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      qgcView.width * 0.8
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.videoSettings.visible
                     Column {
                         id:         videoCol
                         spacing:    ScreenTools.defaultFontPixelWidth
@@ -566,8 +561,17 @@ QGCView {
                                 text:               QGroundControl.videoManager.videoSavePath
                             }
                             QGCButton {
-                                text: "Browse"
-                                onClicked: fileDialog.visible = true
+                                text:       "Browse"
+                                onClicked:  videoLocationFileDialog.visible = true
+
+                                FileDialog {
+                                    id:             videoLocationFileDialog
+                                    title:          "Choose a location to save video files."
+                                    folder:         shortcuts.home
+                                    selectFolder:   true
+                                    onAccepted:     QGroundControl.videoManager.setVideoSavePathByUrl(fileDialog.fileUrl)
+                                }
+
                             }
                         }
                     }
