@@ -32,36 +32,35 @@ public:
     QGCCorePlugin(QGCApplication* app);
     ~QGCCorePlugin();
 
-    Q_PROPERTY(QVariantList settings        READ settings       CONSTANT)
-    Q_PROPERTY(int          defaltSettings  READ defaltSettings CONSTANT)
-    Q_PROPERTY(QGCOptions*  options         READ options        CONSTANT)
+    Q_PROPERTY(QVariantList settings            READ settings           CONSTANT)
+    Q_PROPERTY(int          defaultSettings     READ defaultSettings    CONSTANT)
+    Q_PROPERTY(QGCOptions*  options             READ options            CONSTANT)
+    Q_PROPERTY(QVariantList toolBarIndicators   READ toolBarIndicators  CONSTANT)
 
-    //! The list of settings under the Settings Menu
-    /*!
-        @return A list of QGCSettings
-    */
-    virtual QVariantList&           settings        ();
+    /// The list of settings under the Settings Menu
+    /// @return A list of QGCSettings
+    virtual QVariantList&           settings            ();
 
-    //! The default settings panel to show
-    /*!
-        @return The settings index
-    */
-    virtual int                     defaltSettings  ();
+    /// Allows the core plugin to override the toolbar indicators
+    /// @return A list of QUrl with the indicators (see MainToolBarIndicators.qml)
+    virtual QVariantList&           toolBarIndicators   ();
 
-    //! Global options
-    /*!
-        @return An instance of QGCOptions
-    */
-    virtual QGCOptions*             options         ();
+    /// The default settings panel to show
+    /// @return The settings index
+    virtual int                     defaultSettings     ();
+
+    /// Global options
+    /// @return An instance of QGCOptions
+    virtual QGCOptions*             options             ();
 
     /// Allows the core plugin to override the default value for the specified setting
     ///     @param name - Setting name
     ///     @param defaultValue - Standard default value for setting
     /// @return New default value for setting, if no override just return passed in defaultValue
-    virtual QVariant overrideSettingsDefault(QString name, QVariant defaultValue);
+    virtual QVariant overrideSettingsDefault            (QString name, QVariant defaultValue);
 
     // Override from QGCTool
-    void                            setToolbox  (QGCToolbox *toolbox);
+    void                            setToolbox          (QGCToolbox *toolbox);
 private:
     QGCCorePlugin_p* _p;
 };
