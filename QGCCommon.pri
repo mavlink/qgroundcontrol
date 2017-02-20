@@ -46,7 +46,7 @@ linux {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
 } else : win32 {
-    win32-msvc2010 | win32-msvc2012 | win32-msvc2013 {
+    win32-msvc2010 | win32-msvc2012 | win32-msvc2013 | win32-msvc2015 {
         message("Windows build")
         CONFIG += WindowsBuild
         DEFINES += __STDC_LIMIT_MACROS
@@ -202,8 +202,13 @@ MacBuild | LinuxBuild {
 }
 
 WindowsBuild {
+    win32-msvc2015 {
+        QMAKE_CFLAGS -= -Zc:strictStrings
+        QMAKE_CXXFLAGS -= -Zc:strictStrings
+    }
     QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
     QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
+
     QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
     QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
     QMAKE_CXXFLAGS_WARN_ON += /W3 \
