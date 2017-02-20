@@ -940,7 +940,9 @@ void QwtPlotCanvas::drawBorder( QPainter *painter )
 #if !defined(_MSC_VER)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
         QStyleOptionFrameV3 opt;
+#if !defined(_MSC_VER)
 #pragma GCC diagnostic pop
 #endif
         opt.init(this);
