@@ -10,6 +10,7 @@
 #include "UnitsSettings.h"
 
 #include <QQmlEngine>
+#include <QtQml>
 
 const char* UnitsSettings::unitsSettingsGroupName =     "units";
 const char* UnitsSettings::distanceUnitsSettingsName =  "DistanceUnits";
