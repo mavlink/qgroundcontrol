@@ -291,6 +291,7 @@ INCLUDEPATH += \
     src/QmlControls \
     src/QtLocationPlugin \
     src/QtLocationPlugin/QMLControl \
+    src/Settings \
     src/VehicleSetup \
     src/ViewWidgets \
     src/audio \
@@ -474,7 +475,12 @@ HEADERS += \
     src/QmlControls/RCChannelMonitorController.h \
     src/QmlControls/ScreenToolsController.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
-    src/SettingsManager.h \
+    src/Settings/AppSettings.h \
+    src/Settings/AutoConnectSettings.h \
+    src/Settings/SettingsGroup.h \
+    src/Settings/SettingsManager.h \
+    src/Settings/UnitsSettings.h \
+    src/Settings/VideoSettings.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/audio/QGCAudioWorker.h \
@@ -636,7 +642,12 @@ SOURCES += \
     src/QmlControls/RCChannelMonitorController.cc \
     src/QmlControls/ScreenToolsController.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
-    src/SettingsManager.cc \
+    src/Settings/AppSettings.cc \
+    src/Settings/AutoConnectSettings.cc \
+    src/Settings/SettingsGroup.cc \
+    src/Settings/SettingsManager.cc \
+    src/Settings/UnitsSettings.cc \
+    src/Settings/VideoSettings.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/audio/QGCAudioWorker.cpp \
