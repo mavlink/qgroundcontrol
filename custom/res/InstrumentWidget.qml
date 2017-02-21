@@ -27,16 +27,17 @@ import TyphoonHQuickInterface       1.0
 
 Item {
     height: mainRect.height
-    width:  getPreferredInstrumentWidth()
+    width:  getPreferredInstrumentWidth() * 0.5
 
-    property real _spacing:     ScreenTools.defaultFontPixelHeight * 0.25
+    property real _spacing:     ScreenTools.defaultFontPixelHeight * 0.5
+    property real _spacers:     ScreenTools.defaultFontPixelHeight * 0.25
 
     Rectangle {
         id:             mainRect
         width:          parent.width
         height:         instrumentColumn.height * 1.25
         radius:         4
-        color:          Qt.rgba(0.5,0.5,0.5,0.75)
+        color:          Qt.rgba(0.15,0.15,0.25,0.75)
         border.width:   1
         border.color:   "black"
         Column {
@@ -45,7 +46,7 @@ Item {
             spacing:    _spacing
             anchors.verticalCenter: parent.verticalCenter
             Item {
-                height: ScreenTools.defaultFontPixelHeight * 0.5
+                height: _spacers
                 width:  1
             }
             //-- Camera Mode
@@ -95,7 +96,7 @@ Item {
                 }
             }
             Item {
-                height: ScreenTools.defaultFontPixelHeight * 0.5
+                height: _spacers
                 width:  1
             }
             Rectangle {
@@ -113,7 +114,29 @@ Item {
                     source:             "qrc:/typhoonh/video.svg"
                     fillMode:           Image.PreserveAspectFit
                     color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO ? toolBar.colorGreen : toolBar.colorGrey
+                    visible:            TyphoonHQuickInterface.videoStatus !== TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING
                     anchors.centerIn:   parent
+                    MouseArea {
+                        anchors.fill:   parent
+                        enabled:        TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_STOPPED
+                        onClicked: {
+                            TyphoonHQuickInterface.startVideo()
+                        }
+                    }
+                }
+                Rectangle {
+                    height:             parent.height * 0.5
+                    width:              height
+                    color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO ? toolBar.colorGreen : toolBar.colorGrey
+                    visible:            TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING
+                    anchors.centerIn:   parent
+                    MouseArea {
+                        anchors.fill:   parent
+                        enabled:        TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING
+                        onClicked: {
+                            TyphoonHQuickInterface.stopVideo()
+                        }
+                    }
                 }
             }
             Rectangle {
@@ -130,12 +153,41 @@ Item {
                     sourceSize.width:   width
                     source:             "qrc:/typhoonh/camera.svg"
                     fillMode:           Image.PreserveAspectFit
-                    color:              toolBar.colorGreen
+                    color:              TyphoonHQuickInterface.cameraMode !== TyphoonHQuickInterface.CAMERA_MODE_UNDEFINED ? toolBar.colorGreen : toolBar.colorGrey
+                    anchors.centerIn:   parent
+                }
+                MouseArea {
+                    anchors.fill:   parent
+                    enabled:        TyphoonHQuickInterface.cameraMode !== TyphoonHQuickInterface.CAMERA_MODE_UNDEFINED
+                    onClicked: {
+                        TyphoonHQuickInterface.takePhoto()
+                    }
+                }
+            }
+            Item {
+                height: _spacers
+                width:  1
+            }
+            Rectangle {
+                height:             ScreenTools.defaultFontPixelHeight * 2
+                width:              height
+                radius:             width * 0.5
+                color:              Qt.rgba(0.0,0.0,0.0,0.0)
+                border.width:       1
+                border.color:       toolBar.colorWhite
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCColoredImage {
+                    height:             parent.height * 0.65
+                    width:              height
+                    sourceSize.width:   width
+                    source:             "qrc:/typhoonh/CogWheel.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    color:              TyphoonHQuickInterface.cameraMode !== TyphoonHQuickInterface.CAMERA_MODE_UNDEFINED ? toolBar.colorWhite : toolBar.colorGrey
                     anchors.centerIn:   parent
                 }
             }
             Item {
-                height: ScreenTools.defaultFontPixelHeight * 0.5
+                height: _spacers
                 width:  1
             }
         }

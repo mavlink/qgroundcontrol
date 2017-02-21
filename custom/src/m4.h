@@ -63,6 +63,10 @@ public:
 
     Q_INVOKABLE void enterBindMode  ();
     Q_INVOKABLE void initM4         ();
+    Q_INVOKABLE void startVideo     ();
+    Q_INVOKABLE void stopVideo      ();
+    Q_INVOKABLE void takePhoto      ();
+    Q_INVOKABLE void toggleMode     ();
 
     M4State     m4State             ();
     QString     m4StateStr          ();
@@ -107,8 +111,13 @@ public:
     void    getControllerLocation   (ControllerLocation& location);
     void    enterBindMode           ();
     void    initM4                  ();
+    void    toggleMode              ();
     void    takePhoto               ();
     void    toggleVideo             ();
+    void    startVideo              ();
+    void    stopVideo               ();
+    void    setVideoMode            ();
+    void    setPhotoMode            ();
     QTime   recordTime              () { return _recordTime; }
 
     TyphoonHQuickInterface::M4State     m4State     () { return _m4State; }

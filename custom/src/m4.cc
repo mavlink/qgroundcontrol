@@ -219,6 +219,44 @@ TyphoonHQuickInterface::enterBindMode()
 }
 
 //-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::startVideo()
+{
+    if(_pHandler) {
+        _pHandler->startVideo();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::stopVideo()
+{
+    if(_pHandler) {
+        _pHandler->stopVideo();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::takePhoto()
+{
+    if(_pHandler) {
+        _pHandler->takePhoto();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::toggleMode()
+{
+    if(_pHandler) {
+        _pHandler->toggleMode();
+    }
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
 #if 0
 static QString
 dump_data_packet(QByteArray data)
@@ -489,31 +527,101 @@ TyphoonM4Handler::takePhoto()
 
 //-----------------------------------------------------------------------------
 void
+TyphoonM4Handler::startVideo()
+{
+    qDebug() << "startVideo()";
+    //-- State is now undefined until we get confirmation
+    _video_status = TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
+    emit videoStatusChanged();
+    _vehicle->sendMavCommand(
+        _vehicle->defaultComponentId(), // target component
+        MAV_CMD_VIDEO_START_CAPTURE,    // command id
+        true,                           // showError
+        0,                              // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+        -1,                             // Frames per second (max)
+        -1);                            // Resolution (max)
+    _recordTime.start();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonM4Handler::stopVideo()
+{
+    qDebug() << "stopVideo()";
+    //-- State is now undefined until we get confirmation
+    _video_status = TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
+    emit videoStatusChanged();
+    _vehicle->sendMavCommand(
+        _vehicle->defaultComponentId(), // target component
+        MAV_CMD_VIDEO_STOP_CAPTURE ,    // command id
+        true,                           // showError
+        0);                             // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonM4Handler::toggleMode()
+{
+    if(_camera_mode == TyphoonHQuickInterface::CAMERA_MODE_PHOTO) {
+        setVideoMode();
+    } else if(_camera_mode == TyphoonHQuickInterface::CAMERA_MODE_VIDEO) {
+        setPhotoMode();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonM4Handler::setVideoMode()
+{
+    qDebug() << "setVideoMode()";
+    //-- State is now undefined until we get confirmation
+    _camera_mode = TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
+    emit cameraModeChanged();
+    _vehicle->sendMavCommand(
+        _vehicle->defaultComponentId(), // target component
+        MAV_CMD_SET_CAMERA_SETTINGS_2 , // command id
+        true,                           // showError
+        -1,                             // White Balance Locked
+        -1,                             // White Balance
+         1,                             // Set Video Mode
+        -1,                             // Color Mode (IQ)
+        -1,                             // Image Format
+        -1);                            // Reserved
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonM4Handler::setPhotoMode()
+{
+    qDebug() << "setPhotoMode()";
+    //-- State is now undefined until we get confirmation
+    _camera_mode = TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
+    emit cameraModeChanged();
+    _vehicle->sendMavCommand(
+        _vehicle->defaultComponentId(), // target component
+        MAV_CMD_SET_CAMERA_SETTINGS_2 , // command id
+        true,                           // showError
+        -1,                             // White Balance Locked
+        -1,                             // White Balance
+         2,                             // Set Photo Mode
+        -1,                             // Color Mode (IQ)
+        -1,                             // Image Format
+        -1);                            // Reserved
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonM4Handler::toggleVideo()
 {
-    qDebug() << "toggleVideo()";
     if(_video_status == TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED) {
         //-- We don't know what the current status is. We have to wait for it before we can do anything
         return;
     }
     if (_vehicle) {
         if(_video_status == TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_STOPPED) {
-            //-- State is now undefined until we get confirmation
-            _video_status = TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
-            _vehicle->sendMavCommand(
-                _vehicle->defaultComponentId(), // target component
-                MAV_CMD_VIDEO_START_CAPTURE,    // command id
-                true,                           // showError
-                0,                              // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
-                -1,                             // Frames per second (max)
-                -1);                            // Resolution (max)
-            _recordTime.start();
+            startVideo();
         } else {
-            _vehicle->sendMavCommand(
-                _vehicle->defaultComponentId(), // target component
-                MAV_CMD_VIDEO_STOP_CAPTURE ,    // command id
-                true,                           // showError
-                0);                             // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+            stopVideo();
         }
     }
 }

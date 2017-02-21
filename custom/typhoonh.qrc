@@ -2,6 +2,7 @@
     <qresource prefix="/typhoonh">
         <file alias="camera.svg">res/camera.svg</file>
         <file alias="CameraIndicator.qml">res/CameraIndicator.qml</file>
+        <file alias="CogWheel.svg">res/CogWheel.svg</file>
         <file alias="CompassIndicator.svg">res/CompassIndicator.svg</file>
         <file alias="InstrumentWidget.qml">res/InstrumentWidget.qml</file>
         <file alias="logoWhite.svg">res/logoWhite.svg</file>
