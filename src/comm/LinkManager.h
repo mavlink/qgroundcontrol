@@ -37,12 +37,12 @@
     #include "MockLink.h"
 #endif
 
-class UDPConfiguration;
-
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerLog)
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerVerboseLog)
 
 class QGCApplication;
+class UDPConfiguration;
+class AutoConnectSettings;
 
 /// Manage communication links
 ///
@@ -61,14 +61,7 @@ public:
     LinkManager(QGCApplication* app);
     ~LinkManager();
 
-    Q_PROPERTY(bool autoconnectUDP                      READ autoconnectUDP                     WRITE setAutoconnectUDP         NOTIFY autoconnectUDPChanged)
-    Q_PROPERTY(bool autoconnectPixhawk                  READ autoconnectPixhawk                 WRITE setAutoconnectPixhawk     NOTIFY autoconnectPixhawkChanged)
-    Q_PROPERTY(bool autoconnect3DRRadio                 READ autoconnect3DRRadio                WRITE setAutoconnect3DRRadio    NOTIFY autoconnect3DRRadioChanged)
-    Q_PROPERTY(bool autoconnectPX4Flow                  READ autoconnectPX4Flow                 WRITE setAutoconnectPX4Flow     NOTIFY autoconnectPX4FlowChanged)
-    Q_PROPERTY(bool autoconnectRTKGPS                   READ autoconnectRTKGPS                  WRITE setAutoconnectRTKGPS      NOTIFY autoconnectRTKGPSChanged)
-    Q_PROPERTY(bool autoconnectLibrePilot               READ autoconnectLibrePilot              WRITE setAutoconnectLibrePilot  NOTIFY autoconnectLibrePilotChanged)
     Q_PROPERTY(bool isBluetoothAvailable                READ isBluetoothAvailable                                               CONSTANT)
-
     Q_PROPERTY(QmlObjectListModel*  linkConfigurations  READ _qmlLinkConfigurations                                             NOTIFY linkConfigurationsChanged)
     Q_PROPERTY(QStringList          linkTypeStrings     READ linkTypeStrings                                                    CONSTANT)
     Q_PROPERTY(QStringList          serialBaudRates     READ serialBaudRates                                                    CONSTANT)
@@ -85,12 +78,6 @@ public:
 
     // Property accessors
 
-    bool autoconnectUDP             (void)  { return _autoconnectUDP; }
-    bool autoconnectPixhawk         (void)  { return _autoconnectPixhawk; }
-    bool autoconnect3DRRadio        (void)  { return _autoconnect3DRRadio; }
-    bool autoconnectPX4Flow         (void)  { return _autoconnectPX4Flow; }
-    bool autoconnectRTKGPS          (void)  { return _autoconnectRTKGPS; }
-    bool autoconnectLibrePilot      (void)  { return _autoconnectLibrePilot; }
     bool isBluetoothAvailable       (void);
 
     QList<LinkInterface*> links                 (void);
@@ -98,13 +85,6 @@ public:
     QStringList         serialBaudRates         (void);
     QStringList         serialPortStrings       (void);
     QStringList         serialPorts             (void);
-
-    void setAutoconnectUDP        (bool autoconnect);
-    void setAutoconnectPixhawk    (bool autoconnect);
-    void setAutoconnect3DRRadio   (bool autoconnect);
-    void setAutoconnectPX4Flow    (bool autoconnect);
-    void setAutoconnectRTKGPS     (bool autoconnect);
-    void setAutoconnectLibrePilot (bool autoconnect);
 
     /// Load list of link configurations from disk
     void loadLinkConfigurationList();
@@ -173,15 +153,9 @@ public:
 
     void startAutoConnectedLinks(void);
 
+    static const char*  settingsGroup;
+
 signals:
-    void autoconnectUDPChanged        (bool autoconnect);
-    void autoconnectPixhawkChanged    (bool autoconnect);
-    void autoconnect3DRRadioChanged   (bool autoconnect);
-    void autoconnectPX4FlowChanged    (bool autoconnect);
-    void autoconnectRTKGPSChanged     (bool autoconnect);
-    void autoconnectLibrePilotChanged (bool autoconnect);
-
-
     void newLink(LinkInterface* link);
 
     // Link has been deleted. You may not necessarily get a linkInactive before the link is deleted.
@@ -217,7 +191,6 @@ private:
     void _updateAutoConnectLinks(void);
     void _updateSerialPorts();
     void _fixUnnamed(LinkConfiguration* config);
-    bool _setAutoconnectWorker(bool& currentAutoconnect, bool newAutoconnect, const char* autoconnectKey);
     void _removeConfiguration(LinkConfiguration* config);
 
 #ifndef NO_SERIAL_LINK
@@ -231,8 +204,8 @@ private:
     QTimer  _portListTimer;
     uint32_t _mavlinkChannelsUsedBitMask;
 
-    MAVLinkProtocol*    _mavlinkProtocol;
-
+    AutoConnectSettings*    _autoConnectSettings;
+    MAVLinkProtocol*        _mavlinkProtocol;
 
     QList<SharedLinkInterfacePointer>       _sharedLinks;
     QList<SharedLinkConfigurationPointer>   _sharedConfigurations;
@@ -243,25 +216,12 @@ private:
     QStringList _commPortList;
     QStringList _commPortDisplayList;
 
-    bool _autoconnectUDP;
-    bool _autoconnectPixhawk;
-    bool _autoconnect3DRRadio;
-    bool _autoconnectPX4Flow;
-    bool _autoconnectRTKGPS;
-    bool _autoconnectLibrePilot;
 #ifndef NO_SERIAL_LINK
     QTimer              _activeLinkCheckTimer;                  ///< Timer which checks for a vehicle showing up on a usb direct link
     QList<SerialLink*>  _activeLinkCheckList;                   ///< List of links we are waiting for a vehicle to show up on
     static const int    _activeLinkCheckTimeoutMSecs = 15000;   ///< Amount of time to wait for a heatbeat. Keep in mind ArduPilot stack heartbeat is slow to come.
 #endif
 
-    static const char*  _settingsGroup;
-    static const char*  _autoconnectUDPKey;
-    static const char*  _autoconnectPixhawkKey;
-    static const char*  _autoconnect3DRRadioKey;
-    static const char*  _autoconnectPX4FlowKey;
-    static const char*  _autoconnectRTKGPSKey;
-    static const char*  _autoconnectLibrePilotKey;
     static const char*  _defaultUPDLinkName;
     static const int    _autoconnectUpdateTimerMSecs;
     static const int    _autoconnectConnectDelayMSecs;
