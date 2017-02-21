@@ -11,6 +11,7 @@
 
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
 
 //-- From QGC. Needs to be in sync.
 const char* kMainIsMap = "MainFlyWindowIsMap";
@@ -189,4 +190,14 @@ TyphoonHPlugin::toolBarIndicators()
         _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
     }
     return _indicatorList;
+}
+
+bool
+TyphoonHPlugin::overrideSettingsGroupVisibility(QString name)
+{
+    if (name == VideoSettings::videoSettingsGroupName || name == AutoConnectSettings::autoConnectSettingsGroupName) {
+        return false;
+    }
+
+    return true;
 }
