@@ -19,7 +19,7 @@ class VideoSettings : public SettingsGroup
 public:
     VideoSettings(QObject* parent = NULL);
 
-    static const char* VideoSettingsGroupName;
+    static const char* videoSettingsGroupName;
 
 private:
 };

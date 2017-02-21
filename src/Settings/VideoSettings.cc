@@ -12,10 +12,10 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-const char* VideoSettings::VideoSettingsGroupName = "video";
+const char* VideoSettings::videoSettingsGroupName = "video";
 
 VideoSettings::VideoSettings(QObject* parent)
-    : SettingsGroup(VideoSettingsGroupName, QString() /* root settings group */, parent)
+    : SettingsGroup(videoSettingsGroupName, QString() /* root settings group */, parent)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
