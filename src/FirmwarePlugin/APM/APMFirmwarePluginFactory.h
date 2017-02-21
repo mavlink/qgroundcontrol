@@ -24,7 +24,7 @@ class APMFirmwarePluginFactory : public FirmwarePluginFactory
 public:
     APMFirmwarePluginFactory(void);
 
-    QList<MAV_AUTOPILOT>    knownFirmwareTypes          (void) const final;
+    QList<MAV_AUTOPILOT>    supportedFirmwareTypes      (void) const final;
     FirmwarePlugin*         firmwarePluginForAutopilot  (MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) final;
 
 private:

@@ -32,17 +32,23 @@ public:
     FirmwarePluginManager(QGCApplication* app);
     ~FirmwarePluginManager();
 
-    QList<MAV_AUTOPILOT> knownFirmwareTypes(void);
+    /// Returns list of firmwares which are supported by the system
+    QList<MAV_AUTOPILOT> supportedFirmwareTypes(void);
+
+    /// Returns the list of supported vehicle types for the specified firmware
+    QList<MAV_TYPE> supportedVehicleTypes(MAV_AUTOPILOT firmwareType);
 
     /// Returns appropriate plugin for autopilot type.
-    ///     @param autopilotType Type of autopilot to return plugin for.
-    ///     @param vehicleType Vehicle type of autopilot to return plugin for.
+    ///     @param firmwareType Type of firmwware to return plugin for.
+    ///     @param vehicleType Vehicle type to return plugin for.
     /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
-    FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType);
+    FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType);
 
 private:
+    FirmwarePluginFactory* _findPluginFactory(MAV_AUTOPILOT firmwareType);
+
     FirmwarePlugin*         _genericFirmwarePlugin;
-    QList<MAV_AUTOPILOT>    _knownFirmwareTypes;
+    QList<MAV_AUTOPILOT>    _supportedFirmwareTypes;
 };
 
 #endif

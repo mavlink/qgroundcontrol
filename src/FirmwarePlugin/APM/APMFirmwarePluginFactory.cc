@@ -24,7 +24,7 @@ APMFirmwarePluginFactory::APMFirmwarePluginFactory(void)
 
 }
 
-QList<MAV_AUTOPILOT> APMFirmwarePluginFactory::knownFirmwareTypes(void) const
+QList<MAV_AUTOPILOT> APMFirmwarePluginFactory::supportedFirmwareTypes(void) const
 {
     QList<MAV_AUTOPILOT> list;
 
