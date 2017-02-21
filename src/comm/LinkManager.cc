@@ -20,6 +20,7 @@
 #include "QGCApplication.h"
 #include "UDPLink.h"
 #include "TCPLink.h"
+#include "SettingsManager.h"
 #ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
 #endif
@@ -31,13 +32,6 @@
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
 
-const char* LinkManager::_settingsGroup =            "LinkManager";
-const char* LinkManager::_autoconnectUDPKey =        "AutoconnectUDP";
-const char* LinkManager::_autoconnectPixhawkKey =    "AutoconnectPixhawk";
-const char* LinkManager::_autoconnect3DRRadioKey =   "Autoconnect3DRRadio";
-const char* LinkManager::_autoconnectPX4FlowKey =    "AutoconnectPX4Flow";
-const char* LinkManager::_autoconnectRTKGPSKey =     "AutoconnectRTKGPS";
-const char* LinkManager::_autoconnectLibrePilotKey = "AutoconnectLibrePilot";
 const char* LinkManager::_defaultUPDLinkName =       "UDP Link (AutoConnect)";
 
 const int LinkManager::_autoconnectUpdateTimerMSecs =   1000;
@@ -49,32 +43,17 @@ const int LinkManager::_autoconnectConnectDelayMSecs =  1000;
 #endif
 
 LinkManager::LinkManager(QGCApplication* app)
-    : QGCTool(app)
+    : QGCTool(app)    
     , _configUpdateSuspended(false)
     , _configurationsLoaded(false)
     , _connectionsSuspended(false)
     , _mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
+    , _autoConnectSettings(NULL)
     , _mavlinkProtocol(NULL)
-    , _autoconnectUDP(true)
-    , _autoconnectPixhawk(true)
-    , _autoconnect3DRRadio(true)
-    , _autoconnectPX4Flow(true)
-    , _autoconnectRTKGPS(true)
-    , _autoconnectLibrePilot(true)
 {
     qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
     qmlRegisterUncreatableType<LinkConfiguration>   ("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
     qmlRegisterUncreatableType<LinkInterface>       ("QGroundControl", 1, 0, "LinkInterface",       "Reference only");
-
-    QSettings settings;
-
-    settings.beginGroup(_settingsGroup);
-    _autoconnectUDP =        settings.value(_autoconnectUDPKey, true).toBool();
-    _autoconnectPixhawk =    settings.value(_autoconnectPixhawkKey, true).toBool();
-    _autoconnect3DRRadio =   settings.value(_autoconnect3DRRadioKey, true).toBool();
-    _autoconnectPX4Flow =    settings.value(_autoconnectPX4FlowKey, true).toBool();
-    _autoconnectRTKGPS =     settings.value(_autoconnectRTKGPSKey, true).toBool();
-    _autoconnectLibrePilot = settings.value(_autoconnectLibrePilotKey, true).toBool();
 
 #ifndef NO_SERIAL_LINK
     _activeLinkCheckTimer.setInterval(_activeLinkCheckTimeoutMSecs);
@@ -92,6 +71,7 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
 {
    QGCTool::setToolbox(toolbox);
 
+   _autoConnectSettings = toolbox->settingsManager()->autoConnectSettings();
    _mavlinkProtocol = _toolbox->mavlinkProtocol();
 
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
@@ -485,7 +465,7 @@ void LinkManager::_updateAutoConnectLinks(void)
             break;
         }
     }
-    if (!foundUDP && _autoconnectUDP) {
+    if (!foundUDP && _autoConnectSettings->autoConnectUDP()->rawValue().toBool()) {
         qCDebug(LinkManagerLog) << "New auto-connect UDP port added";
         UDPConfiguration* udpConfig = new UDPConfiguration(_defaultUPDLinkName);
         udpConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
@@ -549,29 +529,29 @@ void LinkManager::_updateAutoConnectLinks(void)
 
                 switch (boardType) {
                 case QGCSerialPortInfo::BoardTypePixhawk:
-                    if (_autoconnectPixhawk) {
+                    if (_autoConnectSettings->autoConnectPixhawk()->rawValue().toBool()) {
                         pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypePX4Flow:
-                    if (_autoconnectPX4Flow) {
+                    if (_autoConnectSettings->autoConnectPX4Flow()->rawValue().toBool()) {
                         pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypeSiKRadio:
-                    if (_autoconnect3DRRadio) {
+                    if (_autoConnectSettings->autoConnectSiKRadio()->rawValue().toBool()) {
                         pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
                     }
                     break;
                 case QGCSerialPortInfo::BoardTypeOpenPilot:
-                    if (_autoconnectLibrePilot) {
+                    if (_autoConnectSettings->autoConnectLibrePilot()->rawValue().toBool()) {
                         pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
                     }
                     break;
 #ifndef __mobile__
                 case QGCSerialPortInfo::BoardTypeRTKGPS:
-                    if (_autoconnectRTKGPS && !_toolbox->gpsManager()->connected()) {
+                    if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !_toolbox->gpsManager()->connected()) {
                         qCDebug(LinkManagerLog) << "RTK GPS auto-connected";
                         _toolbox->gpsManager()->connectGPS(portInfo.systemLocation());
                     }
@@ -645,62 +625,6 @@ void LinkManager::shutdown(void)
 {
     setConnectionsSuspended("Shutdown");
     disconnectAll();
-}
-
-bool LinkManager::_setAutoconnectWorker(bool& currentAutoconnect, bool newAutoconnect, const char* autoconnectKey)
-{
-    if (currentAutoconnect != newAutoconnect) {
-        QSettings settings;
-
-        settings.beginGroup(_settingsGroup);
-        settings.setValue(autoconnectKey, newAutoconnect);
-        currentAutoconnect = newAutoconnect;
-        return true;
-    }
-
-    return false;
-}
-
-void LinkManager::setAutoconnectUDP(bool autoconnect)
-{
-    if (_setAutoconnectWorker(_autoconnectUDP, autoconnect, _autoconnectUDPKey)) {
-        emit autoconnectUDPChanged(autoconnect);
-    }
-}
-
-void LinkManager::setAutoconnectPixhawk(bool autoconnect)
-{
-    if (_setAutoconnectWorker(_autoconnectPixhawk, autoconnect, _autoconnectPixhawkKey)) {
-        emit autoconnectPixhawkChanged(autoconnect);
-    }
-}
-
-void LinkManager::setAutoconnect3DRRadio(bool autoconnect)
-{
-    if (_setAutoconnectWorker(_autoconnect3DRRadio, autoconnect, _autoconnect3DRRadioKey)) {
-        emit autoconnect3DRRadioChanged(autoconnect);
-    }
-}
-
-void LinkManager::setAutoconnectPX4Flow(bool autoconnect)
-{
-    if (_setAutoconnectWorker(_autoconnectPX4Flow, autoconnect, _autoconnectPX4FlowKey)) {
-        emit autoconnectPX4FlowChanged(autoconnect);
-    }
-}
-
-void LinkManager::setAutoconnectRTKGPS(bool autoconnect)
-{
-    if (_setAutoconnectWorker(_autoconnectRTKGPS, autoconnect, _autoconnectRTKGPSKey)) {
-        emit autoconnectRTKGPSChanged(autoconnect);
-    }
-}
-
-void LinkManager::setAutoconnectLibrePilot(bool autoconnect)
-{
-    if (_setAutoconnectWorker(_autoconnectLibrePilot, autoconnect, _autoconnectLibrePilotKey)) {
-        emit autoconnectLibrePilotChanged(autoconnect);
-    }
 }
 
 QStringList LinkManager::linkTypeStrings(void) const

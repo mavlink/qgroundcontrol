@@ -424,38 +424,32 @@ QGCView {
                         //-- Autoconnect settings
                         Row {
                             spacing: ScreenTools.defaultFontPixelWidth * 2
-                            QGCCheckBox {
+                            FactCheckBox {
                                 text:       qsTr("Pixhawk")
+                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectPixhawk
                                 visible:    !ScreenTools.isiOS
-                                checked:    QGroundControl.linkManager.autoconnectPixhawk
-                                onClicked:  QGroundControl.linkManager.autoconnectPixhawk = checked
                             }
-                            QGCCheckBox {
+                            FactCheckBox {
                                 text:       qsTr("SiK Radio")
+                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectSiKRadio
                                 visible:    !ScreenTools.isiOS
-                                checked:    QGroundControl.linkManager.autoconnect3DRRadio
-                                onClicked:  QGroundControl.linkManager.autoconnect3DRRadio = checked
                             }
-                            QGCCheckBox {
+                            FactCheckBox {
                                 text:       qsTr("PX4 Flow")
+                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectPX4Flow
                                 visible:    !ScreenTools.isiOS
-                                checked:    QGroundControl.linkManager.autoconnectPX4Flow
-                                onClicked:  QGroundControl.linkManager.autoconnectPX4Flow = checked
                             }
-                            QGCCheckBox {
+                            FactCheckBox {
                                 text:       qsTr("LibrePilot")
-                                checked:    QGroundControl.linkManager.autoconnectLibrePilot
-                                onClicked:  QGroundControl.linkManager.autoconnectLibrePilot = checked
+                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectLibrePilot
                             }
-                            QGCCheckBox {
+                            FactCheckBox {
                                 text:       qsTr("UDP")
-                                checked:    QGroundControl.linkManager.autoconnectUDP
-                                onClicked:  QGroundControl.linkManager.autoconnectUDP = checked
+                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectUDP
                             }
-                            QGCCheckBox {
+                            FactCheckBox {
                                 text:       qsTr("RTK GPS")
-                                checked:    QGroundControl.linkManager.autoconnectRTKGPS
-                                onClicked:  QGroundControl.linkManager.autoconnectRTKGPS = checked
+                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
                             }
                         }
                     }
