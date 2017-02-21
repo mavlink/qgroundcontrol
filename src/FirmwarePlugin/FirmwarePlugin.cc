@@ -24,6 +24,13 @@ FirmwarePluginFactory::FirmwarePluginFactory(void)
     FirmwarePluginFactoryRegister::instance()->registerPluginFactory(this);
 }
 
+QList<MAV_TYPE> FirmwarePluginFactory::supportedVehicleTypes(void) const
+{
+    QList<MAV_TYPE> vehicleTypes;
+    vehicleTypes << MAV_TYPE_FIXED_WING << MAV_TYPE_QUADROTOR << MAV_TYPE_VTOL_QUADROTOR << MAV_TYPE_GROUND_ROVER << MAV_TYPE_SUBMARINE;
+    return vehicleTypes;
+}
+
 FirmwarePluginFactoryRegister* FirmwarePluginFactoryRegister::instance(void)
 {
     if (!_instance) {
