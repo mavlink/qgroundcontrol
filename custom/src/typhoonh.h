@@ -20,10 +20,15 @@ public:
     TyphoonHPlugin(QGCApplication* app);
     ~TyphoonHPlugin();
 
-    QGCOptions*         options             ();
-    QVariantList&       settings            ();
-    QVariantList&       toolBarIndicators   ();
-    TyphoonM4Handler*   handler             () { return _pHandler; }
+    TyphoonM4Handler*   handler                         () { return _pHandler; }
+
+    // Overrides from QGCCorePlugin
+    QGCOptions*         options                         () final;
+    QVariantList&       settings                        () final;
+    QVariantList&       toolBarIndicators               () final;
+    bool                overrideSettingsGroupVisibility (QString name) final;
+
+    // Overrides from QGCTool
     void                setToolbox          (QGCToolbox* toolbox);
 
 private:
