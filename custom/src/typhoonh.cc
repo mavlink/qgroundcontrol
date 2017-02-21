@@ -55,8 +55,6 @@ public:
     TyphoonHOptions(QObject* parent = NULL);
     bool        combineSettingsAndSetup     () { return true;  }
     bool        enableVirtualJoystick       () { return false; }
-    bool        enableAutoConnectOptions    () { return false; }
-    bool        enableVideoSourceOptions    () { return false; }
     bool        definesVideo                () { return true; }
     uint16_t    videoUDPPort                () { return 0; }
     QString     videoRSTPUrl                () { return QString("rtsp://192.168.42.1:554/live"); }
