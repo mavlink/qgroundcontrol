@@ -27,6 +27,16 @@ SetupPage {
     pageName:           qsTr("Joystick")
     pageDescription:    qsTr("Joystick Setup is used to configure a calibrate joysticks.")
 
+    Connections {
+        target: joystickManager
+        onAvailableJoysticksChanged: {
+            if( joystickManager.joysticks.length == 0 ) {
+                summaryButton.checked = true
+                setupView.showSummaryPanel()
+            }
+        }
+    }
+
     Component {
         id: pageComponent
 
@@ -359,11 +369,22 @@ SetupPage {
 
 
                             QGCCheckBox {
-                                enabled:    checked || _activeJoystick.calibrated
-                                text:       _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)")
+                                id:         enabledCheckBox
+                                enabled:    _activeJoystick ? _activeJoystick.calibrated : false
+                                text:       _activeJoystick ? _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)") : ""
                                 checked:    _activeVehicle.joystickEnabled
 
                                 onClicked:  _activeVehicle.joystickEnabled = checked
+
+                                Connections {
+                                    target: joystickManager
+
+                                    onActiveJoystickChanged: {
+                                        if(_activeJoystick) {
+                                            enabledCheckBox.checked = Qt.binding(function() { return _activeJoystick.calibrated && _activeVehicle.joystickEnabled })
+                                        }
+                                    }
+                                }
                             }
 
                             Row {
@@ -391,6 +412,16 @@ SetupPage {
                                             joystickCombo.currentIndex = index
                                         }
                                     }
+
+                                    Connections {
+                                        target: joystickManager
+                                        onAvailableJoysticksChanged: {
+                                            var index = joystickCombo.find(joystickManager.activeJoystickName)
+                                            if (index >= 0) {
+                                                joystickCombo.currentIndex = index
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
@@ -403,7 +434,7 @@ SetupPage {
                                 QGCRadioButton {
                                     exclusiveGroup: throttleModeExclusiveGroup
                                     text:           qsTr("Center stick is zero throttle")
-                                    checked:        _activeJoystick.throttleMode == 0
+                                    checked:        _activeJoystick ? _activeJoystick.throttleMode == 0 : false
 
                                     onClicked: _activeJoystick.throttleMode = 0
                                 }
@@ -412,11 +443,11 @@ SetupPage {
                                     x:          20
                                     width:      parent.width
                                     spacing:    ScreenTools.defaultFontPixelWidth
-                                    visible:    _activeJoystick.throttleMode == 0
+                                    visible:    _activeJoystick ? _activeJoystick.throttleMode == 0 : false
 
                                     QGCCheckBox {
                                         id:         accumulator
-                                        checked:    _activeJoystick.accumulator
+                                        checked:    _activeJoystick ? _activeJoystick.accumulator : false
                                         text:       qsTr("Spring loaded throttle smoothing")
 
                                         onClicked:  _activeJoystick.accumulator = checked
@@ -426,7 +457,7 @@ SetupPage {
                                 QGCRadioButton {
                                     exclusiveGroup: throttleModeExclusiveGroup
                                     text:           qsTr("Full down stick is zero throttle")
-                                    checked:        _activeJoystick.throttleMode == 1
+                                    checked:        _activeJoystick ? _activeJoystick.throttleMode == 1 : false
 
                                     onClicked: _activeJoystick.throttleMode = 1
                                 }
@@ -437,7 +468,7 @@ SetupPage {
 
                                 QGCCheckBox {
                                     id:         exponential
-                                    checked:    _activeJoystick.exponential
+                                    checked:    _activeJoystick ? _activeJoystick.exponential : false
                                     text:       qsTr("Use exponential curve on roll, pitch, yaw")
 
                                     onClicked:  _activeJoystick.exponential = checked
@@ -526,7 +557,7 @@ SetupPage {
 
                             Repeater {
                                 id:     buttonActionRepeater
-                                model:  _activeJoystick.totalButtonCount
+                                model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
@@ -536,7 +567,7 @@ SetupPage {
 
                                     QGCCheckBox {
                                         anchors.verticalCenter:     parent.verticalCenter
-                                        checked:                    _activeJoystick.buttonActions[modelData] != ""
+                                        checked:                    _activeJoystick ? _activeJoystick.buttonActions[modelData] != "" : false
 
                                         onClicked: _activeJoystick.setButtonAction(modelData, checked ? buttonActionCombo.textAt(buttonActionCombo.currentIndex) : "")
                                     }
@@ -562,7 +593,7 @@ SetupPage {
                                     QGCComboBox {
                                         id:             buttonActionCombo
                                         width:          ScreenTools.defaultFontPixelWidth * 20
-                                        model:          _activeJoystick.actions
+                                        model:          _activeJoystick ? _activeJoystick.actions : 0
 
                                         onActivated:            _activeJoystick.setButtonAction(modelData, textAt(index))
                                         Component.onCompleted:  currentIndex = find(_activeJoystick.buttonActions[modelData])
@@ -593,7 +624,7 @@ SetupPage {
 
                             Repeater {
                                 id:     jsButtonActionRepeater
-                                model:  _activeJoystick.totalButtonCount
+                                model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
@@ -719,7 +750,7 @@ SetupPage {
 
                     Repeater {
                         id:     axisMonitorRepeater
-                        model:  _activeJoystick.axisCount
+                        model:  _activeJoystick ? _activeJoystick.axisCount : 0
                         width:  parent.width
 
                         Row {
@@ -771,7 +802,7 @@ SetupPage {
 
                         Repeater {
                             id:     buttonMonitorRepeater
-                            model:  _activeJoystick.totalButtonCount
+                            model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
 
                             Rectangle {
                                 width:          ScreenTools.defaultFontPixelHeight * 1.2

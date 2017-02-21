@@ -65,6 +65,7 @@ public:
     QGCSettings* pDebug;
 #endif
     QVariantList settingsList;
+    QVariantList toolBarIndicatorList;
     QGCOptions*  defaultOptions;
 };
 
@@ -126,6 +127,11 @@ QVariantList &QGCCorePlugin::settings()
     return _p->settingsList;
 }
 
+int QGCCorePlugin::defaultSettings()
+{
+    return 0;
+}
+
 QGCOptions* QGCCorePlugin::options()
 {
     if(!_p->defaultOptions) {
@@ -134,3 +140,30 @@ QGCOptions* QGCCorePlugin::options()
     return _p->defaultOptions;
 }
 
+QVariant QGCCorePlugin::overrideSettingsDefault(QString name, QVariant defaultValue)
+{
+    Q_UNUSED(name);
+    // No overrides for base plugin
+    return defaultValue;
+}
+
+QVariantList& QGCCorePlugin::toolBarIndicators()
+{
+    if(_p->toolBarIndicatorList.size() == 0) {
+        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")));
+        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")));
+        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")));
+        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
+        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
+        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
+    }
+    return _p->toolBarIndicatorList;
+}
+
+bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
+{
+    Q_UNUSED(name);
+
+    // Always show all
+    return true;
+}

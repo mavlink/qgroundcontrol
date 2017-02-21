@@ -271,12 +271,11 @@ Rectangle {
                         height: ScreenTools.defaultFontPixelHeight * 0.5
                         width:  parent.width
                     }
-                    /*
-                    //-- Auto Connect
+                    //-- Auto Connect on Start
                     QGCCheckBox {
                         text:       "Automatically Connect on Start"
                         checked:    false
-                        enabled:    editConfig ? editConfig.autoConnectAllowed : false
+                        visible:    editConfig ? editConfig.autoConnectAllowed : false
                         onCheckedChanged: {
                             if(editConfig) {
                                 editConfig.autoConnect = checked
@@ -287,7 +286,6 @@ Rectangle {
                                 checked = editConfig.autoConnect
                         }
                     }
-                    */
                     Item {
                         height: ScreenTools.defaultFontPixelHeight
                         width:  parent.width

@@ -20,10 +20,11 @@ public:
     TyphoonHPlugin(QGCApplication* app);
     ~TyphoonHPlugin();
 
-    QGCOptions*         options     ();
-    QVariantList&       settings    ();
-    TyphoonM4Handler*   handler     () { return _pHandler; }
-    void                setToolbox  (QGCToolbox* toolbox);
+    QGCOptions*         options             ();
+    QVariantList&       settings            ();
+    QVariantList&       toolBarIndicators   ();
+    TyphoonM4Handler*   handler             () { return _pHandler; }
+    void                setToolbox          (QGCToolbox* toolbox);
 
 private:
     TyphoonHOptions*    _pOptions;
@@ -33,4 +34,5 @@ private:
     QGCSettings*        _pMAVLink;
     QVariantList        _settingsList;
     TyphoonM4Handler*   _pHandler;
+    QVariantList        _indicatorList;
 };

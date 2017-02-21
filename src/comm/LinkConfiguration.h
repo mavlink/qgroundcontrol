@@ -93,7 +93,7 @@ public:
      * Is Auto Connect allowed for this type?
      * @return True if this type can be set as an Auto Connect configuration
      */
-    virtual bool isAutoConnectAllowed() { return true; }
+    virtual bool isAutoConnectAllowed() { return false; }
 
     /*!
      * @brief Connection type

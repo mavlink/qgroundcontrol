@@ -37,7 +37,9 @@ public:
         valueTypeUint32,
         valueTypeInt32,
         valueTypeFloat,
-        valueTypeDouble
+        valueTypeDouble,
+        valueTypeString,
+        valueTypeBool
     } ValueType_t;
 
     typedef QVariant (*Translator)(const QVariant& from);

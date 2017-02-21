@@ -11,11 +11,13 @@
 
 #include <QObject>
 #include <QString>
+#include <QUrl>
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Application Options
 ///     @author Gus Grubba <mavlink@grubba.com>
 
+class CustomInstrumentWidget;
 class QGCOptions : public QObject
 {
     Q_OBJECT
@@ -32,6 +34,8 @@ public:
     Q_PROPERTY(double   toolbarHeightMultiplier     READ toolbarHeightMultiplier    CONSTANT)
     Q_PROPERTY(double   defaultFontPointSize        READ defaultFontPointSize       CONSTANT)
     Q_PROPERTY(bool     enablePlanViewSelector      READ enablePlanViewSelector     CONSTANT)
+    Q_PROPERTY(CustomInstrumentWidget*  instrumentWidget READ instrumentWidget      CONSTANT)
+
 
     //! Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /*!
@@ -83,4 +87,32 @@ public:
         @return True or false
     */
     virtual bool        enablePlanViewSelector      () { return true; }
+    //! Provides an alternate instrument widget for the Fly View
+    /*!
+        @return An alternate widget (see QGCInstrumentWidget.qml, the default widget)
+    */
+    virtual CustomInstrumentWidget* instrumentWidget();
+private:
+    CustomInstrumentWidget* _defaultInstrumentWidget;
+};
+
+//-----------------------------------------------------------------------------
+class CustomInstrumentWidget : public QObject
+{
+    Q_OBJECT
+public:
+    //-- Widget Position
+    enum Pos {
+        POS_TOP_RIGHT           = 0,
+        POS_CENTER_RIGHT        = 1,
+        POS_BOTTOM_RIGHT        = 2,
+    };
+    Q_ENUMS(Pos)
+    CustomInstrumentWidget(QObject* parent = NULL);
+    Q_PROPERTY(QUrl     source  READ source CONSTANT)
+    Q_PROPERTY(Pos      widgetPosition              READ widgetPosition             NOTIFY widgetPositionChanged)
+    virtual QUrl        source                      () { return QUrl(); }
+    virtual Pos         widgetPosition              () { return POS_CENTER_RIGHT; }
+signals:
+    void widgetPositionChanged  ();
 };
