@@ -159,3 +159,11 @@ QVariantList& QGCCorePlugin::toolBarIndicators()
     }
     return _p->toolBarIndicatorList;
 }
+
+bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
+{
+    Q_UNUSED(name);
+
+    // Always show all
+    return true;
+}
