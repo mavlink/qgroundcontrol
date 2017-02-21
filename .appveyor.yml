@@ -18,14 +18,6 @@ install:
   - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.5\msvc2013\bin;%PATH%
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
   - ps: |
-      Write-Host "Installing NSIS..." -ForegroundColor Cyan
-      $exePath = "$($env:USERPROFILE)\nsis-3.0rc1-setup.exe"
-      Write-Host "Downloading..."
-      (New-Object Net.WebClient).DownloadFile('https://storage.googleapis.com/appveyor-download-cache/nsis/nsis-3.0rc1-setup.exe', $exePath)
-      Write-Host "Installing..."
-      cmd /c start /wait $exePath /S
-      Write-Host "Installed" -ForegroundColor Green
-  - ps: |
       Write-Host "Installing GStreamer..." -ForegroundColor Cyan
       $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-x86-1.5.2.msi"
       Write-Host "Downloading..."
