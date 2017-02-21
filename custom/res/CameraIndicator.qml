@@ -38,7 +38,7 @@ Item {
             sourceSize.width:   width
             source:             "qrc:/typhoonh/camera.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              qgcPal.text
+            color:              colorGreen
             visible:            TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_PHOTO
         }
         QGCColoredImage {
@@ -48,12 +48,11 @@ Item {
             sourceSize.width:   width
             source:             "qrc:/typhoonh/video.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              qgcPal.text
+            color:              TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING ? colorRed : colorGreen
             visible:            TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO
         }
         QGCLabel {
-            text:                   "00:00:00"
-            font.pointSize:         ScreenTools.mediumFontPointSize
+            text:                   TyphoonHQuickInterface.recordTime
             anchors.verticalCenter: parent.verticalCenter
             visible:                TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING
         }

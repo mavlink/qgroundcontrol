@@ -76,6 +76,8 @@ TyphoonHQuickInterface::init(TyphoonM4Handler* pHandler)
         connect(_pHandler, &TyphoonM4Handler::destroyed,            this, &TyphoonHQuickInterface::_destroyed);
         connect(_pHandler, &TyphoonM4Handler::cameraModeChanged,    this, &TyphoonHQuickInterface::_cameraModeChanged);
         connect(_pHandler, &TyphoonM4Handler::videoStatusChanged,   this, &TyphoonHQuickInterface::_videoStatusChanged);
+        connect(&_videoRecordingTimer, &QTimer::timeout,            this, &TyphoonHQuickInterface::_videoRecordingUpdate);
+        _videoRecordingTimer.setSingleShot(false);
     }
 }
 
@@ -97,13 +99,31 @@ TyphoonHQuickInterface::_cameraModeChanged()
 void
 TyphoonHQuickInterface::_videoStatusChanged()
 {
+    //-- Recording time should come from camera. As there is no interface for
+    //   it, we do it ourselves.
+    if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
+        _videoRecordingTimer.start(1000);
+    } else {
+        _videoRecordingTimer.stop();
+    }
     emit videoStatusChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_videoRecordingUpdate()
+{
+    emit recordTimeChanged();
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_destroyed()
 {
+    disconnect(_pHandler, &TyphoonM4Handler::m4StateChanged,       this, &TyphoonHQuickInterface::_m4StateChanged);
+    disconnect(_pHandler, &TyphoonM4Handler::destroyed,            this, &TyphoonHQuickInterface::_destroyed);
+    disconnect(_pHandler, &TyphoonM4Handler::cameraModeChanged,    this, &TyphoonHQuickInterface::_cameraModeChanged);
+    disconnect(_pHandler, &TyphoonM4Handler::videoStatusChanged,   this, &TyphoonHQuickInterface::_videoStatusChanged);
     _pHandler = NULL;
 }
 
@@ -167,6 +187,17 @@ TyphoonHQuickInterface::m4StateStr()
             return QString("Unknown state...");
     }
     return QString();
+}
+
+//-----------------------------------------------------------------------------
+QString
+TyphoonHQuickInterface::recordTime()
+{
+    QString timeStr("00:00:00");
+    if(_pHandler) {
+        timeStr = _pHandler->recordTime().toString("hh:mm:ss");
+    }
+    return timeStr;
 }
 
 //-----------------------------------------------------------------------------
@@ -476,6 +507,7 @@ TyphoonM4Handler::toggleVideo()
                 0,                              // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
                 -1,                             // Frames per second (max)
                 -1);                            // Resolution (max)
+            _recordTime.start();
         } else {
             _vehicle->sendMavCommand(
                 _vehicle->defaultComponentId(), // target component
