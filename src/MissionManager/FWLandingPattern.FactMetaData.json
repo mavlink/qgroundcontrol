@@ -12,7 +12,8 @@
     "shortDescription": "Heading from land point to loiter point.",
     "type":             "double",
     "units":            "deg",
-    "decimalPlaces":    0
+    "decimalPlaces":    0,
+    "defaultValue":     0.0
 },
 {
     "name":             "Loiter altitude",
