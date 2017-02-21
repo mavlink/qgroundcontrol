@@ -204,15 +204,12 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     }
     newItem->setDefaultsForCommand();
     if ((MAV_CMD)newItem->command() == MAV_CMD_NAV_WAYPOINT) {
-        double lastValue;
-        MAV_FRAME lastFrame;
+        double      prevAltitude;
+        MAV_FRAME   prevFrame;
 
-        if (_findLastAcceptanceRadius(&lastValue)) {
-            newItem->missionItem().setParam2(lastValue);
-        }
-        if (_findLastAltitude(&lastValue, &lastFrame)) {
-            newItem->missionItem().setFrame(lastFrame);
-            newItem->missionItem().setParam7(lastValue);
+        if (_findPreviousAltitude(i, &prevAltitude, &prevFrame)) {
+            newItem->missionItem().setFrame(prevFrame);
+            newItem->missionItem().setParam7(prevAltitude);
         }
     }
     _visualItems->insert(i, newItem);
@@ -1349,61 +1346,36 @@ void MissionController::_inProgressChanged(bool inProgress)
     emit syncInProgressChanged(inProgress);
 }
 
-bool MissionController::_findLastAltitude(double* lastAltitude, MAV_FRAME* frame)
+bool MissionController::_findPreviousAltitude(int newIndex, double* prevAltitude, MAV_FRAME* prevFrame)
 {
-    bool found = false;
-    double foundAltitude;
-    MAV_FRAME foundFrame;
+    bool        found = false;
+    double      foundAltitude;
+    MAV_FRAME   foundFrame;
 
-    // Don't use home position
-    for (int i=1; i<_visualItems->count(); i++) {
+    if (newIndex > _visualItems->count()) {
+        return false;
+    }
+    newIndex--;
+
+    for (int i=newIndex; i>0; i--) {
         VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
         if (visualItem->specifiesCoordinate() && !visualItem->isStandaloneCoordinate()) {
-
             if (visualItem->isSimpleItem()) {
                 SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
-                if ((MAV_CMD)simpleItem->command() != MAV_CMD_NAV_TAKEOFF) {
+                if ((MAV_CMD)simpleItem->command() == MAV_CMD_NAV_WAYPOINT) {
                     foundAltitude = simpleItem->exitCoordinate().altitude();
                     foundFrame = simpleItem->missionItem().frame();
                     found = true;
+                    break;
                 }
             }
         }
     }
 
     if (found) {
-        *lastAltitude = foundAltitude;
-        *frame = foundFrame;
-    }
-
-    return found;
-}
-
-bool MissionController::_findLastAcceptanceRadius(double* lastAcceptanceRadius)
-{
-    bool found = false;
-    double foundAcceptanceRadius;
-
-    for (int i=0; i<_visualItems->count(); i++) {
-        VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
-
-        if (visualItem->isSimpleItem()) {
-            SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
-
-            if (simpleItem) {
-                if ((MAV_CMD)simpleItem->command() == MAV_CMD_NAV_WAYPOINT) {
-                    foundAcceptanceRadius = simpleItem->missionItem().param2();
-                    found = true;
-                }
-            } else {
-                qWarning() << "isSimpleItem == true, yet not SimpleMissionItem";
-            }
-        }
-    }
-
-    if (found) {
-        *lastAcceptanceRadius = foundAcceptanceRadius;
+        *prevAltitude = foundAltitude;
+        *prevFrame = foundFrame;
     }
 
     return found;

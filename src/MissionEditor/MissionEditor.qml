@@ -851,7 +851,7 @@ QGCView {
                     ]
 
                     onClicked: {
-                        switch (index == 0) {
+                        switch (index) {
                         case 0:
                             _addWaypointOnClick = checked
                             break
