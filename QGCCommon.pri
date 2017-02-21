@@ -77,6 +77,7 @@ linux {
     }
     message("iOS build")
     CONFIG  += iOSBuild MobileBuild app_bundle NoSerialBuild
+    CONFIG  -= bitcode
     DEFINES += __ios__
     DEFINES += QGC_NO_GOOGLE_MAPS
     DEFINES += NO_SERIAL_LINK
