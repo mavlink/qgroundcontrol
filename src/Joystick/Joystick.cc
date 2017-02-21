@@ -81,9 +81,9 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
 
 Joystick::~Joystick()
 {
-    delete _rgAxisValues;
-    delete _rgCalibration;
-    delete _rgButtonValues;
+    delete[] _rgAxisValues;
+    delete[] _rgCalibration;
+    delete[] _rgButtonValues;
 }
 
 void Joystick::_setDefaultCalibration(void) {
@@ -410,7 +410,7 @@ void Joystick::run(void)
             }
         }
 
-        if (_calibrationMode != CalibrationModeCalibrating) {
+        if (_calibrationMode != CalibrationModeCalibrating && _calibrated) {
             int     axis = _rgFunctionAxis[rollFunction];
             float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
 
@@ -530,6 +530,9 @@ void Joystick::startPolling(Vehicle* vehicle)
             vehicle->setJoystickEnabled(false);
         }
 
+        // Update qml in case of joystick transition
+        emit calibratedChanged(_calibrated);
+
         // Only connect the new vehicle if it wants joystick data
         if (vehicle->joystickEnabled()) {
             _pollingStartedForCalibration = false;
@@ -554,14 +557,15 @@ void Joystick::stopPolling(void)
 
         if (_activeVehicle && _activeVehicle->joystickEnabled()) {
             UAS* uas = _activeVehicle->uas();
-
+            // Neutral attitude controls
+            // emit manualControl(0, 0, 0, 0.5, 0, _activeVehicle->joystickMode());
             disconnect(this, &Joystick::manualControl,          uas, &UAS::setExternalControlSetpoint);
         }
         // FIXME: ****
         //disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
 
         _exitThread = true;
-        }
+    }
 }
 
 void Joystick::setCalibration(int axis, Calibration_t& calibration)

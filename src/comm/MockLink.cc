@@ -215,7 +215,6 @@ void MockLink::_loadParams(void)
         QStringList paramData = line.split("\t");
         Q_ASSERT(paramData.count() == 5);
 
-        int componentId = paramData.at(1).toInt();
         QString paramName = paramData.at(2);
         QString valStr = paramData.at(3);
         uint paramType = paramData.at(4).toUInt();
@@ -251,7 +250,7 @@ void MockLink::_loadParams(void)
 
         qCDebug(MockLinkVerboseLog) << "Loading param" << paramName << paramValue;
 
-        _mapParamName2Value[componentId][paramName] = paramValue;
+        _mapParamName2Value[_vehicleComponentId][paramName] = paramValue;
         _mapParamName2MavParamType[paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
     }
 }

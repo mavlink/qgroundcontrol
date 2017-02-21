@@ -33,7 +33,10 @@ ParameterEditorController::ParameterEditorController(void)
         _componentIds += QString("%1").arg(componentId);
     }
 
-    _currentGroup = groupMap[_currentComponentId].keys()[0];
+    // Be careful about no parameters
+    if (groupMap.contains(_currentComponentId) && groupMap[_currentComponentId].size() != 0) {
+        _currentGroup = groupMap[_currentComponentId].keys()[0];
+    }
     _updateParameters();
 
     connect(this, &ParameterEditorController::searchTextChanged, this, &ParameterEditorController::_updateParameters);

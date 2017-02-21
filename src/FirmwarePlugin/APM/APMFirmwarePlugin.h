@@ -88,7 +88,6 @@ public:
     void                initializeVehicle               (Vehicle* vehicle) final;
     bool                sendHomePositionToVehicle       (void) final;
     void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;
-    QString             getDefaultComponentIdParam      (void) const final { return QString("SYSID_SW_TYPE"); }
     QString             missionCommandOverrides         (MAV_TYPE vehicleType) const;
     QString             getVersionParam                 (void) final { return QStringLiteral("SYSID_SW_MREV"); }
     QString             internalParameterMetaDataFile   (Vehicle* vehicle) final;

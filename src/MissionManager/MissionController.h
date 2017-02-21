@@ -39,6 +39,8 @@ public:
     Q_PROPERTY(QmlObjectListModel*  complexVisualItems  READ complexVisualItems     NOTIFY complexVisualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines       READ waypointLines          NOTIFY waypointLinesChanged)
 
+    Q_PROPERTY(QStringList          complexMissionItemNames MEMBER _complexMissionItemNames CONSTANT)
+
     Q_PROPERTY(double               missionDistance         READ missionDistance        NOTIFY missionDistanceChanged)
     Q_PROPERTY(double               missionTime             READ missionTime            NOTIFY missionTimeChanged)
     Q_PROPERTY(double               missionHoverDistance    READ missionHoverDistance   NOTIFY missionHoverDistanceChanged)
@@ -55,9 +57,11 @@ public:
     Q_INVOKABLE int insertSimpleMissionItem(QGeoCoordinate coordinate, int i);
 
     /// Add a new complex mission item to the list
+    ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
+    ///     @param mapCenterCoordinate: coordinate for current center of map
     ///     @param i: index to insert at
     /// @return Sequence number for new item
-    Q_INVOKABLE int insertComplexMissionItem(QGeoCoordinate coordinate, int i);
+    Q_INVOKABLE int insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int i);
 
     /// Loads the mission items from the specified file
     ///     @param[in] vehicle Vehicle we are loading items for
@@ -144,8 +148,7 @@ private:
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
     static void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     static double _calcDistanceToHome(VisualMissionItem* currentItem, VisualMissionItem* homeItem);
-    bool _findLastAltitude(double* lastAltitude, MAV_FRAME* frame);
-    bool _findLastAcceptanceRadius(double* lastAcceptanceRadius);
+    bool _findPreviousAltitude(int newIndex, double* prevAltitude, MAV_FRAME* prevFrame);
     static double _normalizeLat(double lat);
     static double _normalizeLon(double lon);
     static void _addPlannedHomePosition(Vehicle* vehicle, QmlObjectListModel* visualItems, bool addToCenter);
@@ -180,7 +183,10 @@ private:
     double              _missionHoverTime;
     double              _missionCruiseDistance;
     double              _missionCruiseTime;
-    double              _missionMaxTelemetry;
+    double              _missionMaxTelemetry;    
+    QString             _surveyMissionItemName;
+    QString             _fwLandingMissionItemName;
+    QStringList         _complexMissionItemNames;
 
     static const char*  _settingsGroup;
     static const char*  _jsonFileTypeValue;
