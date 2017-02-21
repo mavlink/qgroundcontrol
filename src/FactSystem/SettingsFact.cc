@@ -17,7 +17,7 @@
 SettingsFact::SettingsFact(QObject* parent)
     : Fact(parent)
 {    
-
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 SettingsFact::SettingsFact(QString settingGroup, FactMetaData* metaData, QObject* parent)
