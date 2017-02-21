@@ -148,8 +148,7 @@ private:
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
     static void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     static double _calcDistanceToHome(VisualMissionItem* currentItem, VisualMissionItem* homeItem);
-    bool _findLastAltitude(double* lastAltitude, MAV_FRAME* frame);
-    bool _findLastAcceptanceRadius(double* lastAcceptanceRadius);
+    bool _findPreviousAltitude(int newIndex, double* prevAltitude, MAV_FRAME* prevFrame);
     static double _normalizeLat(double lat);
     static double _normalizeLon(double lon);
     static void _addPlannedHomePosition(Vehicle* vehicle, QmlObjectListModel* visualItems, bool addToCenter);
