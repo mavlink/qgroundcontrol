@@ -31,11 +31,25 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property real   _margin:        ScreenTools.defaultFontPixelWidth * 0.25
+    property real _margin: ScreenTools.defaultFontPixelWidth * 0.25
 
     Column {
-        id: editorColumn
+        id:                 editorColumn
+        anchors.margins:    _margin
+        anchors.left:       parent.left
+        anchors.right:      parent.right
 
-        QGCLabel { text: "WIP" }
+        QGCLabel { text: "WIP (NOT FOR REAL FLIGHT!)" }
+
+        FactTextFieldGrid {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            factList:       missionItem.textFieldFacts
+        }
+
+        FactCheckBox {
+            text:   missionItem.loiterClockwise.name
+            fact:   missionItem.loiterClockwise
+        }
     }
 }

@@ -22,7 +22,13 @@ class FixedWingLandingComplexItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    FixedWingLandingComplexItem(Vehicle* vehicle, QObject* parent = NULL);
+    FixedWingLandingComplexItem(Vehicle* vehicle, QGeoCoordinate mapClickCoordinate, QObject* parent = NULL);
+
+    Q_PROPERTY(QVariantList     textFieldFacts      MEMBER  _textFieldFacts     CONSTANT)
+    Q_PROPERTY(Fact*            loiterClockwise     READ    loiterClockwise     CONSTANT)
+    Q_PROPERTY(QGeoCoordinate   loiterCoordinate    MEMBER  _loiterCoordinate   NOTIFY loiterCoordinateChanged)
+
+    Fact* loiterClockwise(void) { return &_loiterClockwiseFact; }
 
     // Overrides from ComplexMissionItem
 
@@ -32,7 +38,7 @@ public:
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
     void                setCruiseSpeed      (double cruiseSpeed) final;
-    QString             mapVisualQML        (void) const final { return QString(); }
+    QString             mapVisualQML        (void) const final { return QStringLiteral("FWLandingPatternMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
 
@@ -60,18 +66,36 @@ public:
     static const char* jsonComplexItemTypeValue;
 
 signals:
+    void loiterCoordinateChanged(QGeoCoordinate coordinate);
 
 private slots:
+    void _recalcLoiterPosition(void);
 
 private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
+    QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
 
     int             _sequenceNumber;
     bool            _dirty;
     QGeoCoordinate  _coordinate;
     QGeoCoordinate  _exitCoordinate;
+    QGeoCoordinate  _loiterCoordinate;
+
+    Fact            _loiterToLandDistanceFact;
+    Fact            _loiterAltitudeFact;
+    Fact            _loiterRadiusFact;
+    Fact            _loiterClockwiseFact;
+    Fact            _landingHeadingFact;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
+
+    QVariantList _textFieldFacts;
+
+    static const char* _loiterToLandDistanceName;
+    static const char* _loiterAltitudeName;
+    static const char* _loiterRadiusName;
+    static const char* _loiterClockwiseName;
+    static const char* _landingHeadingName;
 };
 
 #endif
