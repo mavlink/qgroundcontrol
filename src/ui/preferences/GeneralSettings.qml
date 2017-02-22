@@ -54,6 +54,7 @@ QGCView {
                 width:              qgcView.width
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
+
                 //-----------------------------------------------------------------
                 //-- Units
                 Item {
@@ -79,50 +80,33 @@ QGCView {
                         id:         unitsCol
                         spacing:    ScreenTools.defaultFontPixelWidth
                         anchors.centerIn: parent
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            QGCLabel {
-                                width:              _labelWidth
-                                anchors.baseline:   distanceUnitsCombo.baseline
-                                text:               qsTr("Distance:")
-                            }
-                            FactComboBox {
-                                id:                 distanceUnitsCombo
-                                width:              _editFieldWidth
-                                fact:               QGroundControl.settingsManager.unitsSettings.distanceUnits
-                                indexModel:         false
-                            }
-                        }
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            QGCLabel {
-                                width:              _labelWidth
-                                anchors.baseline:   areaUnitsCombo.baseline
-                                text:               qsTr("Area:")
-                            }
-                            FactComboBox {
-                                id:                 areaUnitsCombo
-                                width:              _editFieldWidth
-                                fact:               QGroundControl.settingsManager.unitsSettings.areaUnits
-                                indexModel:         false
-                            }
-                        }
-                        Row {
-                            spacing:                ScreenTools.defaultFontPixelWidth
-                            QGCLabel {
-                                width:              _labelWidth
-                                anchors.baseline:   speedUnitsCombo.baseline
-                                text:               qsTr("Speed:")
-                            }
-                            FactComboBox {
-                                id:                 speedUnitsCombo
-                                width:              _editFieldWidth
-                                fact:               QGroundControl.settingsManager.unitsSettings.speedUnits
-                                indexModel:         false
+
+                        Repeater {
+                            id:     unitsRepeater
+                            model:  [ QGroundControl.settingsManager.unitsSettings.distanceUnits, QGroundControl.settingsManager.unitsSettings.areaUnits, QGroundControl.settingsManager.unitsSettings.speedUnits ]
+
+                            property var names: [ qsTr("Distance:"), qsTr("Area:"), qsTr("Speed:") ]
+
+                            Row {
+                                spacing:    ScreenTools.defaultFontPixelWidth
+                                visible:    modelData.visible
+
+                                QGCLabel {
+                                    width:              _labelWidth
+                                    anchors.baseline:   factCombo.baseline
+                                    text:               unitsRepeater.names[index]
+                                }
+                                FactComboBox {
+                                    id:                 factCombo
+                                    width:              _editFieldWidth
+                                    fact:               modelData
+                                    indexModel:         false
+                                }
                             }
                         }
                     }
                 }
+
                 //-----------------------------------------------------------------
                 //-- Miscellanous
                 Item {
@@ -395,6 +379,7 @@ QGCView {
                         }
                     }
                 }
+
                 //-----------------------------------------------------------------
                 //-- Autoconnect settings
                 Item {
@@ -416,44 +401,37 @@ QGCView {
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
                     visible:                    QGroundControl.settingsManager.autoConnectSettings.visible
+
                     Column {
                         id:         autoConnectCol
                         spacing:    ScreenTools.defaultFontPixelWidth
                         anchors.centerIn: parent
-                        //-----------------------------------------------------------------
-                        //-- Autoconnect settings
+
                         Row {
                             spacing: ScreenTools.defaultFontPixelWidth * 2
-                            FactCheckBox {
-                                text:       qsTr("Pixhawk")
-                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectPixhawk
-                                visible:    !ScreenTools.isiOS
-                            }
-                            FactCheckBox {
-                                text:       qsTr("SiK Radio")
-                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectSiKRadio
-                                visible:    !ScreenTools.isiOS
-                            }
-                            FactCheckBox {
-                                text:       qsTr("PX4 Flow")
-                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectPX4Flow
-                                visible:    !ScreenTools.isiOS
-                            }
-                            FactCheckBox {
-                                text:       qsTr("LibrePilot")
-                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectLibrePilot
-                            }
-                            FactCheckBox {
-                                text:       qsTr("UDP")
-                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectUDP
-                            }
-                            FactCheckBox {
-                                text:       qsTr("RTK GPS")
-                                fact:       QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
+
+                            Repeater {
+                                id:     autoConnectRepeater
+                                model:  [ QGroundControl.settingsManager.autoConnectSettings.autoConnectPixhawk,
+                                    QGroundControl.settingsManager.autoConnectSettings.autoConnectSiKRadio,
+                                    QGroundControl.settingsManager.autoConnectSettings.autoConnectPX4Flow,
+                                    QGroundControl.settingsManager.autoConnectSettings.autoConnectLibrePilot,
+                                    QGroundControl.settingsManager.autoConnectSettings.autoConnectUDP,
+                                    QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
+                                ]
+
+                                property var names: [ qsTr("Pixhawk"), qsTr("SiK Radio"), qsTr("PX4 Flow"), qsTr("LibrePilot"), qsTr("UDP"), qsTr("RTK GPS") ]
+
+                                FactCheckBox {
+                                    text:       autoConnectRepeater.names[index]
+                                    fact:       modelData
+                                    visible:    !ScreenTools.isiOS && modelData.visible
+                                }
                             }
                         }
                     }
                 }
+
                 //-----------------------------------------------------------------
                 //-- Video Source
                 Item {
