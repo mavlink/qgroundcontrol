@@ -122,9 +122,9 @@ LinuxBuild {
 
         !contains(DEFINES, __rasp_pi2__) {
             QT_LIB_LIST += \
-                libicudata.so.54 \
-                libicui18n.so.54 \
-                libicuuc.so.54
+                libicudata.so.56 \
+                libicui18n.so.56 \
+                libicuuc.so.56
         }
 
         for(QT_LIB, QT_LIB_LIST) {
