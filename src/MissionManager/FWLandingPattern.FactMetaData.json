@@ -1,2 +1,41 @@
 [
+{
+    "name":             "Landing distance",
+    "shortDescription": "Distance between landing and loiter points.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1,
+    "defaultValue":     100.0
+},
+{
+    "name":             "Landing heading",
+    "shortDescription": "Heading from land point to loiter point.",
+    "type":             "double",
+    "units":            "deg",
+    "decimalPlaces":    0,
+    "defaultValue":     0.0
+},
+{
+    "name":             "Loiter altitude",
+    "shortDescription": "Altitude to loiter prior to landing.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1,
+    "defaultValue":     40.0
+},
+{
+    "name":             "Loiter radius",
+    "shortDescription": "Loiter radius.",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "min":              0.1,
+    "units":            "m",
+    "defaultValue":     75.0
+},
+{
+    "name":             "Clockwise loiter",
+    "shortDescription": "If true, loiter will be clockwise. False, loiter will be counter-clockwise.",
+    "type":             "bool",
+    "defaultValue":     true
+}
 ]
