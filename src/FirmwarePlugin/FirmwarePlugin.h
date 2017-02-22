@@ -265,8 +265,11 @@ public:
     /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
     virtual FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) = 0;
 
-    /// @return List of autopilot types this plugin supports.
-    virtual QList<MAV_AUTOPILOT> knownFirmwareTypes(void) const = 0;
+    /// @return List of firmware types this plugin supports.
+    virtual QList<MAV_AUTOPILOT> supportedFirmwareTypes(void) const = 0;
+
+    /// @return List of vehicle types this plugin supports.
+    virtual QList<MAV_TYPE> supportedVehicleTypes(void) const;
 };
 
 class FirmwarePluginFactoryRegister : public QObject
