@@ -54,6 +54,7 @@ const char* Vehicle::_gpsFactGroupName =        "gps";
 const char* Vehicle::_batteryFactGroupName =    "battery";
 const char* Vehicle::_windFactGroupName =       "wind";
 const char* Vehicle::_vibrationFactGroupName =  "vibration";
+const char* Vehicle::_temperatureFactGroupName = "temperature";
 
 const int Vehicle::_lowBatteryAnnounceRepeatMSecs = 30 * 1000;
 
@@ -149,6 +150,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _batteryFactGroup(this)
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
+    , _temperatureFactGroup(this)
 {
     _addLink(link);
 
@@ -343,6 +345,7 @@ void Vehicle::_commonInit(void)
     _addFactGroup(&_batteryFactGroup,   _batteryFactGroupName);
     _addFactGroup(&_windFactGroup,      _windFactGroupName);
     _addFactGroup(&_vibrationFactGroup, _vibrationFactGroupName);
+    _addFactGroup(&_temperatureFactGroup, _temperatureFactGroupName);
 }
 
 Vehicle::~Vehicle()
@@ -560,6 +563,15 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_VFR_HUD:
         _handleVfrHud(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_PRESSURE:
+        _handleScaledPressure(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_PRESSURE2:
+        _handleScaledPressure2(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_PRESSURE3:
+        _handleScaledPressure3(message);
         break;
 
     // Following are ArduPilot dialect messages
@@ -988,6 +1000,24 @@ void Vehicle::_handleRCChannelsRaw(mavlink_message_t& message)
 
     emit remoteControlRSSIChanged(channels.rssi);
     emit rcChannelsChanged(channelCount, pwmValues);
+}
+
+void Vehicle::_handleScaledPressure(mavlink_message_t& message) {
+    mavlink_scaled_pressure_t pressure;
+    mavlink_msg_scaled_pressure_decode(&message, &pressure);
+    _temperatureFactGroup.temperature1()->setRawValue(pressure.temperature / 100.0);
+}
+
+void Vehicle::_handleScaledPressure2(mavlink_message_t& message) {
+    mavlink_scaled_pressure2_t pressure;
+    mavlink_msg_scaled_pressure2_decode(&message, &pressure);
+    _temperatureFactGroup.temperature2()->setRawValue(pressure.temperature / 100.0);
+}
+
+void Vehicle::_handleScaledPressure3(mavlink_message_t& message) {
+    mavlink_scaled_pressure3_t pressure;
+    mavlink_msg_scaled_pressure3_decode(&message, &pressure);
+    _temperatureFactGroup.temperature3()->setRawValue(pressure.temperature / 100.0);
 }
 
 bool Vehicle::_containsLink(LinkInterface* link)
@@ -2393,4 +2423,25 @@ VehicleVibrationFactGroup::VehicleVibrationFactGroup(QObject* parent)
     _xAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _yAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _zAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+}
+
+
+const char* VehicleTemperatureFactGroup::_temperature1FactName =      "temperature1";
+const char* VehicleTemperatureFactGroup::_temperature2FactName =      "temperature2";
+const char* VehicleTemperatureFactGroup::_temperature3FactName =      "temperature3";
+
+VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
+    : FactGroup(1000, ":/json/Vehicle/TemperatureFact.json", parent)
+    , _temperature1Fact    (0, _temperature1FactName,     FactMetaData::valueTypeDouble)
+    , _temperature2Fact    (0, _temperature2FactName,     FactMetaData::valueTypeDouble)
+    , _temperature3Fact    (0, _temperature3FactName,     FactMetaData::valueTypeDouble)
+{
+    _addFact(&_temperature1Fact,       _temperature1FactName);
+    _addFact(&_temperature2Fact,       _temperature2FactName);
+    _addFact(&_temperature3Fact,       _temperature3FactName);
+
+    // Start out as not available "--.--"
+    _temperature1Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
+    _temperature2Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
+    _temperature3Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
 }
