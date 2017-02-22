@@ -46,7 +46,7 @@ void MissionCommandTree::setToolbox(QGCToolbox* toolbox)
     } else {
 #endif
         // Load all levels of hierarchy
-        foreach (MAV_AUTOPILOT firmwareType, _toolbox->firmwarePluginManager()->knownFirmwareTypes()) {
+        foreach (MAV_AUTOPILOT firmwareType, _toolbox->firmwarePluginManager()->supportedFirmwareTypes()) {
             FirmwarePlugin* plugin = _toolbox->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
 
             QList<MAV_TYPE> vehicleTypes;
@@ -66,7 +66,7 @@ void MissionCommandTree::setToolbox(QGCToolbox* toolbox)
 
 MAV_AUTOPILOT MissionCommandTree::_baseFirmwareType(MAV_AUTOPILOT firmwareType) const
 {
-    if (qgcApp()->toolbox()->firmwarePluginManager()->knownFirmwareTypes().contains(firmwareType)) {
+    if (qgcApp()->toolbox()->firmwarePluginManager()->supportedFirmwareTypes().contains(firmwareType)) {
         return firmwareType;
     } else {
         return MAV_AUTOPILOT_GENERIC;

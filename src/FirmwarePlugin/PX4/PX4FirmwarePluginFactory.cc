@@ -21,7 +21,7 @@ PX4FirmwarePluginFactory::PX4FirmwarePluginFactory(void)
 
 }
 
-QList<MAV_AUTOPILOT> PX4FirmwarePluginFactory::knownFirmwareTypes(void) const
+QList<MAV_AUTOPILOT> PX4FirmwarePluginFactory::supportedFirmwareTypes(void) const
 {
     QList<MAV_AUTOPILOT> list;
 
