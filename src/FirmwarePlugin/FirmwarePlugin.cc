@@ -134,6 +134,11 @@ bool FirmwarePlugin::supportsRadio(void)
     return true;
 }
 
+bool FirmwarePlugin::supportsCalibratePressure(void)
+{
+    return false;
+}
+
 bool FirmwarePlugin::supportsJSButton(void)
 {
     return false;
