@@ -137,8 +137,10 @@ private slots:
     void    _initSequence                       ();
     void    _vehicleAdded                       (Vehicle* vehicle);
     void    _vehicleRemoved                     (Vehicle* vehicle);
+    void    _vehicleReady                       (bool ready);
     void    _mavlinkMessageReceived             (const mavlink_message_t& message);
     void    _videoCaptureUpdate                 ();
+    void    _requestCameraSettings              ();
 
 private:
     bool    _enterRun                           ();
@@ -176,7 +178,6 @@ private:
 
     //-- Camera Control (to be moved to Vehicle)
     void    _requestCaptureStatus               ();
-    void    _requestCameraSettings              ();
     void    _handleCaptureStatus                (const mavlink_message_t& message);
     void    _handleCameraSettings               (const mavlink_message_t& message);
 

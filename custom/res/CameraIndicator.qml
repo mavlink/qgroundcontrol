@@ -25,22 +25,13 @@ import TyphoonHQuickInterface               1.0
 Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          indicatorRow.width
+    width:          indicatorRow.width * 1.25
+    visible:        TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO
     Row {
-        id:             indicatorRow
-        anchors.top:    parent.top
-        anchors.bottom: parent.bottom
-        opacity:        (activeVehicle && activeVehicle.battery.voltage.value >= 0) ? 1 : 0.5
-        QGCColoredImage {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            width:              height
-            sourceSize.width:   width
-            source:             "qrc:/typhoonh/camera.svg"
-            fillMode:           Image.PreserveAspectFit
-            color:              colorGreen
-            visible:            TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_PHOTO
-        }
+        id:                 indicatorRow
+        spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
         QGCColoredImage {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
@@ -48,13 +39,13 @@ Item {
             sourceSize.width:   width
             source:             "qrc:/typhoonh/video.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING ? colorRed : colorGreen
-            visible:            TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO
+            color:              TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING ? toolBar.colorRed : toolBar.colorGrey
         }
         QGCLabel {
-            text:                   TyphoonHQuickInterface.recordTime
+            text:               TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING ? TyphoonHQuickInterface.recordTime : "00:00:00"
+            font.family:        ScreenTools.demiboldFontFamily
+            font.pointSize:     ScreenTools.largeFontPointSize
             anchors.verticalCenter: parent.verticalCenter
-            visible:                TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING
         }
     }
 }

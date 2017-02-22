@@ -1,4 +1,10 @@
 <RCC>
+    <qresource prefix="/qml">
+        <file alias="TyphoonHQuickInterface/Widgets/ArtificialHorizon.qml">res/ArtificialHorizon.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/AttitudeWidget.qml">res/AttitudeWidget.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/PitchIndicator.qml">res/PitchIndicator.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
+    </qresource>
     <qresource prefix="/typhoonh">
         <file alias="camera.svg">res/camera.svg</file>
         <file alias="CameraIndicator.qml">res/CameraIndicator.qml</file>
@@ -6,7 +12,9 @@
         <file alias="CompassIndicator.svg">res/CompassIndicator.svg</file>
         <file alias="InstrumentWidget.qml">res/InstrumentWidget.qml</file>
         <file alias="logoWhite.svg">res/logoWhite.svg</file>
+        <file alias="RightArrow.svg">res/RightArrow.svg</file>
         <file alias="TyphoonSettings.qml">res/TyphoonSettings.qml</file>
+        <file alias="UpArrow.svg">res/UpArrow.svg</file>
         <file alias="VehicleIndicator.svg">res/VehicleIndicator.svg</file>
         <file alias="video.svg">res/video.svg</file>
         <file alias="YuneecBrandImage.png">src/FirmwarePlugin/YuneecBrandImage.png</file>

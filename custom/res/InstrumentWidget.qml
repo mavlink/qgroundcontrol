@@ -14,7 +14,8 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.4
+import QtQuick          2.4
+import QtPositioning    5.2
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -23,19 +24,32 @@ import QGroundControl.FactSystem    1.0
 import QGroundControl.FlightMap     1.0
 import QGroundControl.Palette       1.0
 
-import TyphoonHQuickInterface       1.0
+import TyphoonHQuickInterface           1.0
+import TyphoonHQuickInterface.Widgets   1.0
 
 Item {
     height: mainRect.height
-    width:  getPreferredInstrumentWidth() * 0.65
+    width:  getPreferredInstrumentWidth() * 0.75
 
     property real _spacers:     ScreenTools.defaultFontPixelHeight * 0.5
+    property real _distance:    0.0
+
+    PositionSource {
+        id:             positionSource
+        updateInterval: 1000
+        active:         activeVehicle && activeVehicle.homePositionAvailable
+        onPositionChanged: {
+            var gcs = positionSource.position.coordinate;
+            var veh = activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate(0,0);
+            _distance = activeVehicle ? gcs.distanceTo(veh) : 0.0;
+        }
+    }
 
     Rectangle {
         id:             mainRect
         width:          parent.width
         height:         instrumentColumn.height
-        radius:         4
+        radius:         8
         color:          Qt.rgba(0.15,0.15,0.25,0.75)
         border.width:   1
         border.color:   "black"
@@ -49,7 +63,7 @@ Item {
                 width:  1
             }
             //-- Attitude Indicator
-            QGCAttitudeWidget {
+            AttitudeWidget {
                 id:             attitudeIndicator
                 size:           parent.width * 0.95
                 vehicle:        activeVehicle
@@ -82,28 +96,40 @@ Item {
             Row {
                 spacing:        ScreenTools.defaultFontPixelHeight * 0.25
                 anchors.horizontalCenter: parent.horizontalCenter
-                QGCLabel {
-                    text:           qsTr("H:")
-                    font.pointSize: ScreenTools.smallFontPointSize
+                Image {
+                    height:             ScreenTools.defaultFontPixelHeight
+                    width:              height
+                    sourceSize.width:   width
+                    source:             "qrc:/typhoonh/UpArrow.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    smooth:         true
+                    mipmap:         true
+                    antialiasing:   true
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 QGCLabel {
-                    text:           activeVehicle ? activeVehicle.altitudeAMSL.rawValue.toFixed(1) : "----"
+                    text:           activeVehicle ? (isNaN(activeVehicle.altitudeRelative.rawValue) ? 0 : activeVehicle.altitudeRelative.rawValue.toFixed(0)) : 0
                     width:          ScreenTools.defaultFontPixelWidth * 4
                     font.family:    ScreenTools.demiboldFontFamily
-                    horizontalAlignment: Text.AlignRight
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Image {
+                    height:             ScreenTools.defaultFontPixelHeight
+                    width:              height
+                    sourceSize.width:   width
+                    source:             "qrc:/typhoonh/RightArrow.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    smooth:         true
+                    mipmap:         true
+                    antialiasing:   true
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 QGCLabel {
-                    text:           qsTr("D:")
-                    font.pointSize: ScreenTools.smallFontPointSize
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-                QGCLabel {
-                    text:           activeVehicle ? activeVehicle.altitudeAMSL.rawValue.toFixed(1) : "----"
+                    text:           isNaN(_distance) ? 0.0 : _distance.toFixed(0)
                     width:          ScreenTools.defaultFontPixelWidth * 4
                     font.family:    ScreenTools.demiboldFontFamily
-                    horizontalAlignment: Text.AlignRight
+                    horizontalAlignment: Text.AlignHCenter
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -113,6 +139,7 @@ Item {
                 font.pointSize: ScreenTools.largeFontPointSize
                 anchors.horizontalCenter: parent.horizontalCenter
             }
+            //-----------------------------------------------------------------
             Rectangle {
                 height:         1
                 width:          parent.width * 0.9
@@ -125,47 +152,48 @@ Item {
             }
             //-- Camera Mode
             Rectangle {
-                width:          modeRow.width * 1.5
-                height:         ScreenTools.defaultFontPixelHeight * 1.5
-                radius:         width * 0.25
+                width:          ScreenTools.defaultFontPixelWidth  * 12
+                height:         ScreenTools.defaultFontPixelHeight * 2
+                radius:         width * 0.5
                 color:          "black"
                 anchors.horizontalCenter: parent.horizontalCenter
-                Row {
-                    id:         modeRow
-                    height:     parent.height * 0.75
-                    spacing:    ScreenTools.defaultFontPixelWidth * 3
-                    anchors.centerIn: parent
-                    Rectangle {
-                        height:             parent.height
+                Rectangle {
+                    height:             parent.height
+                    width:              parent.width * 0.5
+                    radius:             width * 0.5
+                    color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_PHOTO ? toolBar.colorGreen : "black"
+                    anchors.left:       parent.left
+                    QGCColoredImage {
+                        height:             parent.height * 0.75
                         width:              height
-                        radius:             width * 0.5
-                        color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_PHOTO ? toolBar.colorGreen : "black"
-                        anchors.verticalCenter: parent.verticalCenter
-                        QGCColoredImage {
-                            height:             parent.height
-                            width:              height
-                            sourceSize.width:   width
-                            source:             "qrc:/typhoonh/camera.svg"
-                            fillMode:           Image.PreserveAspectFit
-                            color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_PHOTO ? toolBar.colorWhite : toolBar.colorGrey
-                            anchors.centerIn:   parent
-                        }
+                        sourceSize.width:   width
+                        source:             "qrc:/typhoonh/camera.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_PHOTO ? "black" : toolBar.colorGrey
+                        anchors.centerIn:   parent
                     }
-                    Rectangle {
-                        height:             parent.height
+                }
+                Rectangle {
+                    height:             parent.height
+                    width:              parent.width * 0.5
+                    radius:             width * 0.5
+                    color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO ? toolBar.colorGreen : "black"
+                    anchors.right:      parent.right
+                    QGCColoredImage {
+                        height:             parent.height * 0.75
                         width:              height
-                        radius:             width * 0.5
-                        color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO ? toolBar.colorGreen : "black"
-                        anchors.verticalCenter: parent.verticalCenter
-                        QGCColoredImage {
-                            height:             parent.height
-                            width:              height
-                            sourceSize.width:   width
-                            source:             "qrc:/typhoonh/video.svg"
-                            fillMode:           Image.PreserveAspectFit
-                            color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO ? toolBar.colorWhite : toolBar.colorGrey
-                            anchors.centerIn:   parent
-                        }
+                        sourceSize.width:   width
+                        source:             "qrc:/typhoonh/video.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO ? "black" : toolBar.colorGrey
+                        anchors.centerIn:   parent
+                    }
+                }
+                MouseArea {
+                    anchors.fill:   parent
+                    enabled:        TyphoonHQuickInterface.videoStatus !== TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_UNDEFINED
+                    onClicked: {
+                        TyphoonHQuickInterface.toggleMode()
                     }
                 }
             }
@@ -174,7 +202,7 @@ Item {
                 width:  1
             }
             Rectangle {
-                height:             ScreenTools.defaultFontPixelHeight * 3
+                height:             ScreenTools.defaultFontPixelHeight * 4
                 width:              height
                 radius:             width * 0.5
                 color:              Qt.rgba(0.0,0.0,0.0,0.0)
@@ -201,7 +229,7 @@ Item {
                 Rectangle {
                     height:             parent.height * 0.5
                     width:              height
-                    color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO ? toolBar.colorGreen : toolBar.colorGrey
+                    color:              TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO ? toolBar.colorRed : toolBar.colorGrey
                     visible:            TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING
                     anchors.centerIn:   parent
                     MouseArea {
@@ -218,7 +246,7 @@ Item {
                 width:  1
             }
             Rectangle {
-                height:             ScreenTools.defaultFontPixelHeight * 3
+                height:             ScreenTools.defaultFontPixelHeight * 4
                 width:              height
                 radius:             width * 0.5
                 color:              Qt.rgba(0.0,0.0,0.0,0.0)
@@ -247,7 +275,7 @@ Item {
                 width:  1
             }
             Rectangle {
-                height:             ScreenTools.defaultFontPixelHeight * 2
+                height:             ScreenTools.defaultFontPixelHeight * 2.5
                 width:              height
                 radius:             width * 0.5
                 color:              Qt.rgba(0.0,0.0,0.0,0.0)
@@ -263,10 +291,33 @@ Item {
                     color:              TyphoonHQuickInterface.cameraMode !== TyphoonHQuickInterface.CAMERA_MODE_UNDEFINED ? toolBar.colorWhite : toolBar.colorGrey
                     anchors.centerIn:   parent
                 }
+                MouseArea {
+                    anchors.fill:   parent
+                    onClicked: {
+                        messageArea.visible = true
+                    }
+                }
             }
             Item {
                 height:         _spacers * 2
                 width:          1
+            }
+        }
+    }
+
+    Rectangle {
+        id:             messageArea
+        width:          _rootWindow.width
+        height:         _rootWindow.height
+        x:              mapToItem(mainWindow, 0, 0).x
+        y:              mapToItem(mainWindow, 0, 0).y
+        color:          Qt.rgba(0,0,0,0.75)
+        visible:        false;
+        MouseArea {
+            anchors.fill:   parent
+            enabled:        messageArea.visible
+            onClicked: {
+                messageArea.visible = false
             }
         }
     }
