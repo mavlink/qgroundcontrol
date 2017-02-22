@@ -50,6 +50,7 @@
         <file alias="APMParameterFactMetaData.Rover.3.0.xml">APMParameterFactMetaData.Rover.3.0.xml</file>
         <file alias="APMParameterFactMetaData.Rover.3.2.xml">APMParameterFactMetaData.Rover.3.2.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.4.xml">APMParameterFactMetaData.Sub.3.4.xml</file>
+        <file alias="APMParameterFactMetaData.Sub.3.5.xml">APMParameterFactMetaData.Sub.3.5.xml</file>
         <file alias="CopterGeoFenceEditor.qml">CopterGeoFenceEditor.qml</file>
         <file alias="PlaneGeoFenceEditor.qml">PlaneGeoFenceEditor.qml</file>
         <file alias="Copter.OfflineEditing.params">Copter3.4.OfflineEditing.params</file>
