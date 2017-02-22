@@ -24,6 +24,7 @@ class QGCApplication;
 class QGCOptions;
 class QGCSettings;
 class QGCCorePlugin_p;
+class FactMetaData;
 
 class QGCCorePlugin : public QGCTool
 {
@@ -58,11 +59,10 @@ public:
     /// @return true: Show settings ui, false: Hide settings ui
     virtual bool overrideSettingsGroupVisibility        (QString name);
 
-    /// Allows the core plugin to override the default value for the specified setting
-    ///     @param name - Setting name
-    ///     @param defaultValue - Standard default value for setting
-    /// @return New default value for setting, if no override just return passed in defaultValue
-    virtual QVariant overrideSettingsDefault            (QString name, QVariant defaultValue);
+    /// Allows the core plugin to override the setting meta data before the setting fact is created.
+    ///     @param metaData - MetaData for setting fact
+    /// @return true: Setting should be visible in ui, false: Setting should not be shown in ui
+    virtual bool adjustSettingMetaData                  (FactMetaData& metaData);
 
     // Override from QGCTool
     void                            setToolbox          (QGCToolbox *toolbox);

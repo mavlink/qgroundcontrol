@@ -10,6 +10,7 @@
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "QGCSettings.h"
+#include "FactMetaData.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -140,13 +141,6 @@ QGCOptions* QGCCorePlugin::options()
     return _p->defaultOptions;
 }
 
-QVariant QGCCorePlugin::overrideSettingsDefault(QString name, QVariant defaultValue)
-{
-    Q_UNUSED(name);
-    // No overrides for base plugin
-    return defaultValue;
-}
-
 QVariantList& QGCCorePlugin::toolBarIndicators()
 {
     if(_p->toolBarIndicatorList.size() == 0) {
@@ -163,7 +157,13 @@ QVariantList& QGCCorePlugin::toolBarIndicators()
 bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
 {
     Q_UNUSED(name);
-
+    
     // Always show all
     return true;
+}
+
+bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
+{
+    Q_UNUSED(metaData); // No mods to standard meta data
+    return true;        // Show setting in ui
 }
