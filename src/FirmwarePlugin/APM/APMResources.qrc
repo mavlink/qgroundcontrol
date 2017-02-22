@@ -25,6 +25,8 @@
         <file alias="APMSensorsComponent.qml">../../AutoPilotPlugins/APM/APMSensorsComponent.qml</file>
         <file alias="APMSensorsComponentSummary.qml">../../AutoPilotPlugins/APM/APMSensorsComponentSummary.qml</file>
         <file alias="APMTuningComponentCopter.qml">../../AutoPilotPlugins/APM/APMTuningComponentCopter.qml</file>
+        <file alias="APMVideoStreamingComponent.qml">../../AutoPilotPlugins/APM/APMVideoStreamingComponent.qml</file>
+        <file alias="APMVideoStreamingComponentSummary.qml">../../AutoPilotPlugins/APM/APMVideoStreamingComponentSummary.qml</file>
         <file alias="QGroundControl/ArduPilot/APMSensorParams.qml">APMSensorParams.qml</file>
         <file alias="QGroundControl/ArduPilot/qmldir">QGroundControl.ArduPilot.qmldir</file>
     </qresource>

@@ -24,6 +24,7 @@ class APMSensorsComponent;
 class APMPowerComponent;
 class MotorComponent;
 class APMCameraComponent;
+class APMVideoStreamingComponent;
 class APMLightsComponent;
 class APMSubFrameComponent;
 class ESP8266Component;
@@ -50,11 +51,12 @@ public:
     // Temporarily removed, waiting for new command implementation
     MotorComponent*             motorComponent      (void) const { return _motorComponent; }
 #endif
-    APMRadioComponent*          radioComponent      (void) const { return _radioComponent; }
-    APMSafetyComponent*         safetyComponent     (void) const { return _safetyComponent; }
-    APMSensorsComponent*        sensorsComponent    (void) const { return _sensorsComponent; }
-    APMTuningComponent*         tuningComponent     (void) const { return _tuningComponent; }
-    ESP8266Component*           esp8266Component    (void) const { return _esp8266Component; }
+    APMRadioComponent*          radioComponent          (void) const { return _radioComponent; }
+    APMSafetyComponent*         safetyComponent         (void) const { return _safetyComponent; }
+    APMSensorsComponent*        sensorsComponent        (void) const { return _sensorsComponent; }
+    APMTuningComponent*         tuningComponent         (void) const { return _tuningComponent; }
+    APMVideoStreamingComponent* videoStreamingComponent (void) const { return _videoStreamingComponent; }
+    ESP8266Component*           esp8266Component        (void) const { return _esp8266Component; }
 
 private:
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
@@ -75,6 +77,7 @@ private:
     APMSensorsComponent*        _sensorsComponent;
     APMTuningComponent*         _tuningComponent;
     APMAirframeLoader*          _airframeFacts;
+    APMVideoStreamingComponent* _videoStreamingComponent;
     ESP8266Component*           _esp8266Component;
 };
 

@@ -18,6 +18,7 @@
 #include "APMFlightModesComponentController.h"
 #include "APMAirframeComponentController.h"
 #include "APMSensorsComponentController.h"
+#include "APMVideoStreamingComponentController.h"
 
 #include <QTcpSocket>
 
@@ -146,6 +147,7 @@ APMFirmwarePlugin::APMFirmwarePlugin(void)
     qmlRegisterType<APMFlightModesComponentController>  ("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController");
     qmlRegisterType<APMAirframeComponentController>     ("QGroundControl.Controllers", 1, 0, "APMAirframeComponentController");
     qmlRegisterType<APMSensorsComponentController>      ("QGroundControl.Controllers", 1, 0, "APMSensorsComponentController");
+    qmlRegisterType<APMVideoStreamingComponentController>      ("QGroundControl.Controllers", 1, 0, "APMVideoStreamingComponentController");
 }
 
 AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)

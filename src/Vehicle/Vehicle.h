@@ -687,6 +687,8 @@ signals:
     void mavlinkScaledImu1(mavlink_message_t message);
     void mavlinkScaledImu2(mavlink_message_t message);
     void mavlinkScaledImu3(mavlink_message_t message);
+    void mavlinkVideoStreamTarget(mavlink_message_t message);
+    void mavlinkCameraCaptureStatus(mavlink_message_t message);
 
     // Mavlink Log Download
     void mavlinkLogData (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, QByteArray data, bool acked);
