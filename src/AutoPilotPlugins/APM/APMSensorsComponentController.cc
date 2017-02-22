@@ -30,6 +30,7 @@ APMSensorsComponentController::APMSensorsComponentController(void)
     , _accelButton(NULL)
     , _compassMotButton(NULL)
     , _levelButton(NULL)
+    , _calibratePressureButton(NULL)
     , _nextButton(NULL)
     , _cancelButton(NULL)
     , _setOrientationsButton(NULL)
@@ -101,6 +102,7 @@ void APMSensorsComponentController::_startLogCalibration(void)
     _accelButton->setEnabled(false);
     _compassMotButton->setEnabled(false);
     _levelButton->setEnabled(false);
+    _calibratePressureButton->setEnabled(false);
     _setOrientationsButton->setEnabled(false);
     if (_calTypeInProgress == CalTypeAccel || _calTypeInProgress == CalTypeCompassMot) {
         _nextButton->setEnabled(true);
@@ -114,6 +116,7 @@ void APMSensorsComponentController::_startVisualCalibration(void)
     _accelButton->setEnabled(false);
     _compassMotButton->setEnabled(false);
     _levelButton->setEnabled(false);
+    _calibratePressureButton->setEnabled(false);
     _setOrientationsButton->setEnabled(false);
     _cancelButton->setEnabled(true);
 
@@ -158,6 +161,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     _accelButton->setEnabled(true);
     _compassMotButton->setEnabled(true);
     _levelButton->setEnabled(true);
+    _calibratePressureButton->setEnabled(true);
     _setOrientationsButton->setEnabled(true);
     _nextButton->setEnabled(false);
     _cancelButton->setEnabled(false);
@@ -316,6 +320,15 @@ void APMSensorsComponentController::levelHorizon(void)
     _startLogCalibration();
     _appendStatusLog(tr("Hold the vehicle in its level flight position."));
     _uas->startCalibration(UASInterface::StartCalibrationLevel);
+}
+
+void APMSensorsComponentController::calibratePressure(void)
+{
+    _calTypeInProgress = CalTypePressure;
+    _vehicle->setConnectionLostEnabled(false);
+    _startLogCalibration();
+    _appendStatusLog(tr("Requesting pressure calibration..."));
+    _uas->startCalibration(UASInterface::StartCalibrationPressure);
 }
 
 void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
@@ -623,6 +636,24 @@ void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message
                 break;
             default:
                 _appendStatusLog(tr("Level horizon failed"));
+                _stopCalibration(StopCalibrationFailed);
+                break;
+            }
+        }
+    }
+
+    if (_calTypeInProgress == CalTypePressure) {
+        mavlink_command_ack_t commandAck;
+        mavlink_msg_command_ack_decode(&message, &commandAck);
+
+        if (commandAck.command == MAV_CMD_PREFLIGHT_CALIBRATION) {
+            switch (commandAck.result) {
+            case MAV_RESULT_ACCEPTED:
+                _appendStatusLog(tr("Pressure calibration success"));
+                _stopCalibration(StopCalibrationSuccessShowLog);
+                break;
+            default:
+                _appendStatusLog(tr("Pressure calibration fail"));
                 _stopCalibration(StopCalibrationFailed);
                 break;
             }

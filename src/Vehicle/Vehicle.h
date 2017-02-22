@@ -253,6 +253,7 @@ public:
     Q_PROPERTY(bool        supportsThrottleModeCenterZero   READ supportsThrottleModeCenterZero                         CONSTANT)
     Q_PROPERTY(bool                 supportsJSButton        READ supportsJSButton                                       CONSTANT)
     Q_PROPERTY(bool                 supportsRadio           READ supportsRadio                                          CONSTANT)
+    Q_PROPERTY(bool               supportsCalibratePressure READ supportsCalibratePressure                                  CONSTANT)
     Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                                      NOTIFY autoDisconnectChanged)
     Q_PROPERTY(QString              prearmError             READ prearmError            WRITE setPrearmError            NOTIFY prearmErrorChanged)
     Q_PROPERTY(int                  motorCount              READ motorCount                                             CONSTANT)
@@ -474,6 +475,7 @@ public:
     bool supportsThrottleModeCenterZero(void) const;
     bool supportsRadio(void) const;
     bool supportsJSButton(void) const;
+    bool supportsCalibratePressure(void) const;
 
     void setFlying(bool flying);
     void setGuidedMode(bool guidedMode);
