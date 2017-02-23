@@ -26,8 +26,6 @@ public:
 
     Q_PROPERTY(bool     combineSettingsAndSetup     READ combineSettingsAndSetup    CONSTANT)
     Q_PROPERTY(bool     enableVirtualJoystick       READ enableVirtualJoystick      CONSTANT)
-    Q_PROPERTY(bool     enableAutoConnectOptions    READ enableAutoConnectOptions   CONSTANT)
-    Q_PROPERTY(bool     enableVideoSourceOptions    READ enableVideoSourceOptions   CONSTANT)
     Q_PROPERTY(bool     definesVideo                READ definesVideo               CONSTANT)
     Q_PROPERTY(uint16_t videoUDPPort                READ videoUDPPort               CONSTANT)
     Q_PROPERTY(QString  videoRSTPUrl                READ videoRSTPUrl               CONSTANT)
@@ -47,16 +45,6 @@ public:
         @return false to disable Virtual Joysticks.
     */
     virtual bool        enableVirtualJoystick       () { return true;  }
-    //! Should QGC allow setting auto-connect options?
-    /*!
-        @return false to disable auto-connect options.
-    */
-    virtual bool        enableAutoConnectOptions    () { return true;  }
-    //! Should QGC allow setting video source options?
-    /*!
-        @return false to disable video source options.
-    */
-    virtual bool        enableVideoSourceOptions    () { return true;  }
     //! Does your plugin defines its on video source?
     /*!
         @return true to define your own video source.
