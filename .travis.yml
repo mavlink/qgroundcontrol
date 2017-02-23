@@ -29,16 +29,17 @@ matrix:
           sudo: false
         - os: osx
           osx_image: xcode8
-          env: SPEC=macx-clang CONFIG=debug
-          sudo: required
-        - os: osx
-          osx_image: xcode8
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
-        - os: osx
-          osx_image: xcode8
-          env: SPEC=macx-ios-clang CONFIG=release
-          sudo: false
+# OSX builds pared back to installer only since travis sucks so bad we can't afford more than one'
+#        - os: osx
+#          osx_image: xcode8
+#          env: SPEC=macx-clang CONFIG=debug
+#          sudo: required
+#        - os: osx
+#          osx_image: xcode8
+#          env: SPEC=macx-ios-clang CONFIG=release
+#          sudo: false
 
 android:
   components:
