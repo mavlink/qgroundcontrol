@@ -22,13 +22,20 @@ class FixedWingLandingComplexItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    FixedWingLandingComplexItem(Vehicle* vehicle, QGeoCoordinate mapClickCoordinate, QObject* parent = NULL);
+    FixedWingLandingComplexItem(Vehicle* vehicle, QObject* parent = NULL);
 
-    Q_PROPERTY(QVariantList     textFieldFacts      MEMBER  _textFieldFacts     CONSTANT)
-    Q_PROPERTY(Fact*            loiterClockwise     READ    loiterClockwise     CONSTANT)
-    Q_PROPERTY(QGeoCoordinate   loiterCoordinate    MEMBER  _loiterCoordinate   NOTIFY loiterCoordinateChanged)
+    Q_PROPERTY(QVariantList     textFieldFacts      MEMBER  _textFieldFacts                                 CONSTANT)
+    Q_PROPERTY(Fact*            loiterClockwise     READ    loiterClockwise                                 CONSTANT)
+    Q_PROPERTY(QGeoCoordinate   loiterCoordinate    READ    loiterCoordinate    WRITE setLoiterCoordinate   NOTIFY loiterCoordinateChanged)
+    Q_PROPERTY(QGeoCoordinate   landingCoordinate   READ    landingCoordinate   WRITE setLandingCoordinate  NOTIFY landingCoordinateChanged)
+    Q_PROPERTY(bool             landingCoordSet     MEMBER _landingCoordSet                                 NOTIFY landingCoordSetChanged)
 
-    Fact* loiterClockwise(void) { return &_loiterClockwiseFact; }
+    Fact*           loiterClockwise     (void) { return &_loiterClockwiseFact; }
+    QGeoCoordinate  landingCoordinate   (void) const { return _landingCoordinate; }
+    QGeoCoordinate  loiterCoordinate    (void) const { return _loiterCoordinate; }
+
+    void setLandingCoordinate   (const QGeoCoordinate& coordinate);
+    void setLoiterCoordinate    (const QGeoCoordinate& coordinate);
 
     // Overrides from ComplexMissionItem
 
@@ -49,8 +56,8 @@ public:
     QString         commandDescription      (void) const final { return "Landing Pattern"; }
     QString         commandName             (void) const final { return "Landing Pattern"; }
     QString         abbreviation            (void) const final { return "L"; }
-    QGeoCoordinate  coordinate              (void) const final { return _coordinate; }
-    QGeoCoordinate  exitCoordinate          (void) const final { return _exitCoordinate; }
+    QGeoCoordinate  coordinate              (void) const final { return _loiterCoordinate; }
+    QGeoCoordinate  exitCoordinate          (void) const final { return _landingCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
     double          flightSpeed             (void) final { return std::numeric_limits<double>::quiet_NaN(); }
 
@@ -59,27 +66,30 @@ public:
     bool exitCoordinateSameAsEntry          (void) const final { return true; }
 
     void setDirty           (bool dirty) final;
-    void setCoordinate      (const QGeoCoordinate& coordinate) final;
+    void setCoordinate      (const QGeoCoordinate& coordinate) final { setLoiterCoordinate(coordinate); }
     void setSequenceNumber  (int sequenceNumber) final;
     void save               (QJsonObject& saveObject) const final;
 
     static const char* jsonComplexItemTypeValue;
 
 signals:
-    void loiterCoordinateChanged(QGeoCoordinate coordinate);
+    void loiterCoordinateChanged    (QGeoCoordinate coordinate);
+    void landingCoordinateChanged   (QGeoCoordinate coordinate);
+    void landingCoordSetChanged     (bool landingCoordSet);
 
 private slots:
-    void _recalcLoiterPosition(void);
+    void _recalcLoiterCoordFromFacts(void);
+    void _recalcFactsFromCoords(void);
 
 private:
-    void _setExitCoordinate(const QGeoCoordinate& coordinate);
     QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
 
     int             _sequenceNumber;
     bool            _dirty;
-    QGeoCoordinate  _coordinate;
-    QGeoCoordinate  _exitCoordinate;
     QGeoCoordinate  _loiterCoordinate;
+    QGeoCoordinate  _landingCoordinate;
+    bool            _landingCoordSet;
+    bool            _ignoreRecalcSignals;
 
     Fact            _loiterToLandDistanceFact;
     Fact            _loiterAltitudeFact;

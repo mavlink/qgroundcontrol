@@ -454,42 +454,6 @@ QGCView {
                     }
                 }
 
-                // Add the complex mission item exit coordinates
-                MapItemView {
-                    model: missionController.complexVisualItems
-                    delegate:   exitCoordinateComponent
-                }
-
-                Component {
-                    id: exitCoordinateComponent
-
-                    MissionItemIndicator {
-                        coordinate:     object.exitCoordinate
-                        z:              QGroundControl.zOrderMapItems
-                        missionItem:    object
-                        sequenceNumber: object.lastSequenceNumber
-                        visible:        object.specifiesCoordinate
-
-                        // These are the non-coordinate child mission items attached to this item
-                        Row {
-                            anchors.top:    parent.top
-                            anchors.left:   parent.right
-
-                            Repeater {
-                                model: !object.isSimpleItem ? object.childItems : 0
-
-                                delegate: MissionItemIndexLabel {
-                                    label:      object.abbreviation
-                                    checked:    object.isCurrentItem
-                                    z:          2
-
-                                    onClicked: setCurrentItem(object.sequenceNumber)
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // Add the simple mission items to the map
                 MapItemView {
                     model:      missionController.visualItems
@@ -502,7 +466,7 @@ QGCView {
                     MissionItemIndicator {
                         id:             itemIndicator
                         coordinate:     object.coordinate
-                        visible:        object.specifiesCoordinate
+                        visible:        object.isSimpleItem && object.specifiesCoordinate
                         z:              QGroundControl.zOrderMapItems
                         missionItem:    object
                         sequenceNumber: object.sequenceNumber

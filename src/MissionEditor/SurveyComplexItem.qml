@@ -12,6 +12,7 @@ import QtQuick.Controls 1.2
 import QtLocation       5.3
 import QtPositioning    5.2
 
+import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
@@ -20,19 +21,28 @@ import QGroundControl.Controls      1.0
 Item {
     property var map    ///< Map control to place item in
 
+    property var _missionItem:  object
     property var _polygon
     property var _grid
+    property var _entryCoordinate
+    property var _exitCoordinate
 
     Component.onCompleted: {
         _polygon = polygonComponent.createObject(map)
         _grid = gridComponent.createObject(map)
+        _entryCoordinate = entryPointComponent.createObject(map)
+        _exitCoordinate = exitPointComponent.createObject(map)
         map.addMapItem(_polygon)
         map.addMapItem(_grid)
+        map.addMapItem(_entryCoordinate)
+        map.addMapItem(_exitCoordinate)
     }
 
     Component.onDestruction: {
         _polygon.destroy()
         _grid.destroy()
+        _entryCoordinate.destroy()
+        _exitCoordinate.destroy()
     }
 
     // Survey area polygon
@@ -42,7 +52,7 @@ Item {
         MapPolygon {
             color: "green"
             opacity:    0.5
-            path:       object.polygonPath
+            path:       _missionItem.polygonPath
         }
     }
 
@@ -53,7 +63,41 @@ Item {
         MapPolyline {
             line.color: "white"
             line.width: 2
-            path:       object.gridPoints
+            path:       _missionItem.gridPoints
+        }
+    }
+
+    // Entry point
+    Component {
+        id: entryPointComponent
+
+        MapQuickItem {
+            anchorPoint.x:  sourceItem.width  / 2
+            anchorPoint.y:  sourceItem.height / 2
+            z:              QGroundControl.zOrderMapItems
+            coordinate:     _missionItem.coordinate
+
+            sourceItem:
+                MissionItemIndexLabel {
+                label:      "S"
+            }
+        }
+    }
+
+    // Exit point
+    Component {
+        id: exitPointComponent
+
+        MapQuickItem {
+            anchorPoint.x:  sourceItem.width  / 2
+            anchorPoint.y:  sourceItem.height / 2
+            z:              QGroundControl.zOrderMapItems
+            coordinate:     _missionItem.exitCoordinate
+
+            sourceItem:
+                MissionItemIndexLabel {
+                label:      "S"
+            }
         }
     }
 }

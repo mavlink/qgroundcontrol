@@ -27,10 +27,12 @@ const char* FixedWingLandingComplexItem::_loiterClockwiseName =         "Clockwi
 
 QMap<QString, FactMetaData*> FixedWingLandingComplexItem::_metaDataMap;
 
-FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QGeoCoordinate mapClickCoordinate, QObject* parent)
+FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QObject* parent)
     : ComplexMissionItem(vehicle, parent)
     , _sequenceNumber(0)
     , _dirty(false)
+    , _landingCoordSet(false)
+    , _ignoreRecalcSignals(false)
     , _loiterToLandDistanceFact (0, _loiterToLandDistanceName,  FactMetaData::valueTypeDouble)
     , _loiterAltitudeFact       (0, _loiterAltitudeName,        FactMetaData::valueTypeDouble)
     , _loiterRadiusFact         (0, _loiterRadiusName,          FactMetaData::valueTypeDouble)
@@ -55,29 +57,18 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QGeoC
     _loiterClockwiseFact.setRawValue        (_loiterClockwiseFact.rawDefaultValue());
     _landingHeadingFact.setRawValue         (_landingHeadingFact.rawDefaultValue());
 
-    connect(&_loiterToLandDistanceFact, &Fact::valueChanged, this, &FixedWingLandingComplexItem::_recalcLoiterPosition);
-    connect(&_landingHeadingFact,       &Fact::valueChanged, this, &FixedWingLandingComplexItem::_recalcLoiterPosition);
+    connect(&_loiterToLandDistanceFact, &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts);
+    connect(&_landingHeadingFact,       &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts);
+    connect(this,                       &FixedWingLandingComplexItem::loiterCoordinateChanged,  this, &FixedWingLandingComplexItem::_recalcFactsFromCoords);
+    connect(this,                       &FixedWingLandingComplexItem::landingCoordinateChanged, this, &FixedWingLandingComplexItem::_recalcFactsFromCoords);
 
     _textFieldFacts << QVariant::fromValue(&_loiterToLandDistanceFact) << QVariant::fromValue(&_loiterAltitudeFact) << QVariant::fromValue(&_loiterRadiusFact) << QVariant::fromValue(&_landingHeadingFact);
-
-    // Exit coordinate is our land point
-    _exitCoordinate = mapClickCoordinate;
-
-    _recalcLoiterPosition();
 }
 
 int FixedWingLandingComplexItem::lastSequenceNumber(void) const
 {
     // land start, loiter, land
     return _sequenceNumber + 2;
-}
-
-void FixedWingLandingComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
-{
-    if (_coordinate != coordinate) {
-        _coordinate = coordinate;
-        emit coordinateChanged(_coordinate);
-    }
 }
 
 void FixedWingLandingComplexItem::setDirty(bool dirty)
@@ -136,14 +127,6 @@ double FixedWingLandingComplexItem::greatestDistanceTo(const QGeoCoordinate &oth
     return greatestDistance;
 }
 
-void FixedWingLandingComplexItem::_setExitCoordinate(const QGeoCoordinate& coordinate)
-{
-    if (_exitCoordinate != coordinate) {
-        _exitCoordinate = coordinate;
-        emit exitCoordinateChanged(coordinate);
-    }
-}
-
 bool FixedWingLandingComplexItem::specifiesCoordinate(void) const
 {
     return true;
@@ -184,8 +167,8 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                            MAV_CMD_NAV_LAND,
                            MAV_FRAME_GLOBAL_RELATIVE_ALT,
                            0.0, 0.0, 0.0, 0.0,                 // param 1-4
-                           _exitCoordinate.latitude(),
-                           _exitCoordinate.longitude(),
+                           _landingCoordinate.latitude(),
+                           _landingCoordinate.longitude(),
                            0.0,                                // altitude
                            true,                               // autoContinue
                            false,                              // isCurrentItem
@@ -207,22 +190,54 @@ void FixedWingLandingComplexItem::setCruiseSpeed(double cruiseSpeed)
     Q_UNUSED(cruiseSpeed);
 }
 
-void FixedWingLandingComplexItem::_recalcLoiterPosition(void)
+void FixedWingLandingComplexItem::setLandingCoordinate(const QGeoCoordinate& coordinate)
 {
-    double          north, east, down;
-    QGeoCoordinate  tangentOrigin = _exitCoordinate;
+    if (coordinate != _landingCoordinate) {
+        _landingCoordinate = coordinate;
+        if (_landingCoordSet) {
+            emit exitCoordinateChanged(coordinate);
+            emit landingCoordinateChanged(coordinate);
+        } else {
+            _ignoreRecalcSignals = true;
+            emit exitCoordinateChanged(coordinate);
+            emit landingCoordinateChanged(coordinate);
+            _ignoreRecalcSignals = false;
+            _landingCoordSet = true;
+            _recalcLoiterCoordFromFacts();
+            emit landingCoordSetChanged(true);
+        }
+    }
+}
 
-    convertGeoToNed(_exitCoordinate, tangentOrigin, &north, &east, &down);
+void FixedWingLandingComplexItem::setLoiterCoordinate(const QGeoCoordinate& coordinate)
+{
+    if (coordinate != _loiterCoordinate) {
+        _loiterCoordinate = coordinate;
+        emit coordinateChanged(coordinate);
+        emit loiterCoordinateChanged(coordinate);
+    }
+}
 
-    QPointF originPoint(east, north);
-    north += _loiterToLandDistanceFact.rawValue().toDouble();
-    QPointF loiterPoint(east, north);
-    QPointF rotatedLoiterPoint = _rotatePoint(loiterPoint, originPoint, _landingHeadingFact.rawValue().toDouble());
+void FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts(void)
+{
+    if (!_ignoreRecalcSignals && _landingCoordSet) {
+        double          north, east, down;
+        QGeoCoordinate  tangentOrigin = _landingCoordinate;
 
-    convertNedToGeo(rotatedLoiterPoint.y(), rotatedLoiterPoint.x(), down, tangentOrigin, &_loiterCoordinate);
+        convertGeoToNed(_landingCoordinate, tangentOrigin, &north, &east, &down);
 
-    emit loiterCoordinateChanged(_loiterCoordinate);
-    setCoordinate(_loiterCoordinate);
+        QPointF originPoint(east, north);
+        north += _loiterToLandDistanceFact.rawValue().toDouble();
+        QPointF loiterPoint(east, north);
+        QPointF rotatedLoiterPoint = _rotatePoint(loiterPoint, originPoint, _landingHeadingFact.rawValue().toDouble());
+
+        convertNedToGeo(rotatedLoiterPoint.y(), rotatedLoiterPoint.x(), down, tangentOrigin, &_loiterCoordinate);
+
+        _ignoreRecalcSignals = true;
+        emit loiterCoordinateChanged(_loiterCoordinate);
+        emit coordinateChanged(_loiterCoordinate);
+        _ignoreRecalcSignals = false;
+    }
 }
 
 QPointF FixedWingLandingComplexItem::_rotatePoint(const QPointF& point, const QPointF& origin, double angle)
@@ -234,4 +249,40 @@ QPointF FixedWingLandingComplexItem::_rotatePoint(const QPointF& point, const QP
     rotated.setY(((point.x() - origin.x()) * sin(radians)) + ((point.y() - origin.y()) * cos(radians)) + origin.y());
 
     return rotated;
+}
+
+void FixedWingLandingComplexItem::_recalcFactsFromCoords(void)
+{
+    if (!_ignoreRecalcSignals && _landingCoordSet) {
+
+        // Prevent signal recursion
+        _ignoreRecalcSignals = true;
+
+        // Calc new distance
+
+        double          northLand, eastLand, down;
+        double          northLoiter, eastLoiter;
+        QGeoCoordinate  tangentOrigin = _landingCoordinate;
+
+        convertGeoToNed(_landingCoordinate, tangentOrigin, &northLand, &eastLand, &down);
+        convertGeoToNed(_loiterCoordinate, tangentOrigin, &northLoiter, &eastLoiter, &down);
+
+        double newDistance = sqrt(pow(eastLoiter - eastLand, 2.0) + pow(northLoiter - northLand, 2.0));
+        _loiterToLandDistanceFact.setRawValue(newDistance);
+
+        // Calc new heading
+
+        QPointF vector(eastLoiter - eastLand, northLoiter - northLand);
+        double radians = atan2(vector.y(), vector.x());
+        double degrees = qRadiansToDegrees(radians);
+        degrees -= 90; // north up
+        if (degrees < 0.0) {
+            degrees += 360.0;
+        } else if (degrees > 360.0) {
+            degrees -= 360.0;
+        }
+        _landingHeadingFact.setRawValue(degrees);
+
+        _ignoreRecalcSignals = false;
+    }
 }
