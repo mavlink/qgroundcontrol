@@ -228,7 +228,7 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
         newItem = new SurveyMissionItem(_activeVehicle, _visualItems);
         newItem->setCoordinate(mapCenterCoordinate);
     } else if (itemName == _fwLandingMissionItemName) {
-        newItem = new FixedWingLandingComplexItem(_activeVehicle, mapCenterCoordinate, _visualItems);
+        newItem = new FixedWingLandingComplexItem(_activeVehicle, _visualItems);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
         return sequenceNumber;
