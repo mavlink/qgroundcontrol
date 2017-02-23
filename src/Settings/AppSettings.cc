@@ -12,7 +12,7 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-const char* AppSettings::appSettingsGroupName =                         "app";
+const char* AppSettings::appSettingsGroupName =                         "App";
 const char* AppSettings::offlineEditingFirmwareTypeSettingsName =       "OfflineEditingFirmwareType";
 const char* AppSettings::offlineEditingVehicleTypeSettingsName =        "OfflineEditingVehicleType";
 const char* AppSettings::offlineEditingCruiseSpeedSettingsName =        "OfflineEditingCruiseSpeed";
