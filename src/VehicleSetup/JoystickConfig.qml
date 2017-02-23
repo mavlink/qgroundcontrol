@@ -82,9 +82,11 @@ SetupPage {
 
                 Item {
                     property int axisValue: 0
+                    property int processedAxisValue: 0
                     property int deadbandValue: 0
 
                     property int            __lastAxisValue:        0
+                    property int            __lastProcessedAxisValue: 0
                     readonly property int   __axisValueMaxJitter:   100
                     property color          __barColor:             qgcPal.windowShade
 
@@ -130,6 +132,20 @@ SetupPage {
                         visible:                mapped
 
                         property real _percentAxisValue:    ((axisValue + 32768.0) / (32768.0 * 2))
+                        property real _indicatorPosition:   parent.width * _percentAxisValue
+                    }
+
+                    // Processed Indicator
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width:                  parent.height * 0.75
+                        height:                 width
+                        x:                      (reversed ? (parent.width - _indicatorPosition) : _indicatorPosition) - (width / 2)
+                        radius:                 width / 2
+                        color:                  qgcPal.text
+                        visible:                mapped
+
+                        property real _percentAxisValue:    ((processedAxisValue + 32768.0) / (32768.0 * 2))
                         property real _indicatorPosition:   parent.width * _percentAxisValue
                     }
 
@@ -208,6 +224,12 @@ SetupPage {
                             onRollAxisValueChanged: rollLoader.item.axisValue = value
 
                             onRollAxisDeadbandChanged: rollLoader.item.deadbandValue = value
+                        }
+
+                        Connections {
+                            target: _activeJoystick
+
+                            onRollaAxisValueChanged: rollLoader.item.processedAxisValue = value
                         }
                     }
 
