@@ -22,7 +22,7 @@ import QGroundControl.Palette       1.0
 // Editor for Fixed Wing Landing Pattern complex mission item
 Rectangle {
     id:         _root
-    height:     visible ? (editorColumn.height + (_margin * 2)) : 0
+    height:     visible ? ((editorColumn.visible ? editorColumn.height : editorColumnNeedLandingPoint.height) + (_margin * 2)) : 0
     width:      availableWidth
     color:      qgcPal.windowShadeDark
     radius:     _radius
@@ -31,11 +31,38 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property real   _margin:        ScreenTools.defaultFontPixelWidth * 0.25
+    property real _margin: ScreenTools.defaultFontPixelWidth * 0.25
 
     Column {
-        id: editorColumn
+        id:                 editorColumn
+        anchors.margins:    _margin
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        visible:            missionItem.landingCoordSet
 
-        QGCLabel { text: "WIP" }
+        QGCLabel { text: "WIP (NOT FOR REAL FLIGHT!)" }
+
+        FactTextFieldGrid {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            factList:       missionItem.textFieldFacts
+        }
+
+        FactCheckBox {
+            text:   missionItem.loiterClockwise.name
+            fact:   missionItem.loiterClockwise
+        }
+    }
+
+    Column {
+        id:                 editorColumnNeedLandingPoint
+        anchors.margins:    _margin
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        visible:            !missionItem.landingCoordSet
+
+        QGCLabel { text: "WIP (NOT FOR REAL FLIGHT!)" }
+
+        QGCLabel { text: qsTr("Click in map to set landing point.") }
     }
 }

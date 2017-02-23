@@ -530,5 +530,14 @@ Item {
             }
         }
     }
+
+    //-------------------------------------------------------------------------
+    //-- Loader helper for any child, no matter how deep can display an element
+    //   in the middle of the main window.
+    Loader {
+        id: rootLoader
+        anchors.centerIn: parent
+    }
+
 }
 

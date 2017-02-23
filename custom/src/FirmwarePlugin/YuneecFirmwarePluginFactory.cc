@@ -15,7 +15,7 @@ YuneecFirmwarePluginFactory::YuneecFirmwarePluginFactory(void)
 {
 }
 
-QList<MAV_AUTOPILOT> YuneecFirmwarePluginFactory::knownFirmwareTypes(void) const
+QList<MAV_AUTOPILOT> YuneecFirmwarePluginFactory::supportedFirmwareTypes(void) const
 {
     QList<MAV_AUTOPILOT> list;
     list.append(MAV_AUTOPILOT_PX4);
@@ -32,4 +32,11 @@ FirmwarePlugin* YuneecFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTO
         return _pluginInstance;
     }
     return NULL;
+}
+
+QList<MAV_TYPE> YuneecFirmwarePluginFactory::supportedVehicleTypes(void) const
+{
+    QList<MAV_TYPE> mavTypes;
+    mavTypes.append(MAV_TYPE_HEXAROTOR);
+    return mavTypes;
 }

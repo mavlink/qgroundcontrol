@@ -57,8 +57,8 @@ static const struct Modes2Name rgModes2Name[] = {
     //main_mode                         sub_mode                                name                                        canBeSet  FW      MC
     { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                      PX4FirmwarePlugin::_manualFlightMode,       true,   true,   true },
     { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                      PX4FirmwarePlugin::_stabilizedFlightMode,   true,   true,   true },
-    { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                      PX4FirmwarePlugin::_acroFlightMode,         true,   false,  true },
-    { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                      PX4FirmwarePlugin::_rattitudeFlightMode,    true,   false,  true },
+    { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                      PX4FirmwarePlugin::_acroFlightMode,         true,   true,   true },
+    { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                      PX4FirmwarePlugin::_rattitudeFlightMode,    true,   true,   true },
     { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                      PX4FirmwarePlugin::_altCtlFlightMode,       true,   true,   true },
     { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                      PX4FirmwarePlugin::_posCtlFlightMode,       true,   true,   true },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,        PX4FirmwarePlugin::_holdFlightMode,         true,   true,   true },
@@ -256,7 +256,7 @@ QString PX4FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
         return QStringLiteral(":/json/PX4/MavCmdInfoMultiRotor.json");
         break;
     case MAV_TYPE_VTOL_QUADROTOR:
-        return QStringLiteral(":/json/APM/MavCmdInfoVTOL.json");
+        return QStringLiteral(":/json/PX4/MavCmdInfoVTOL.json");
         break;
     case MAV_TYPE_SUBMARINE:
         return QStringLiteral(":/json/PX4/MavCmdInfoSub.json");
