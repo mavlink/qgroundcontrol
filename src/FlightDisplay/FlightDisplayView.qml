@@ -264,7 +264,7 @@ QGCView {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 width:              height
-                radius:             QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording ? 0 : height
+                radius:             QGroundControl.videoManager && QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording ? 0 : height
                 color:              "red"
             }
 
