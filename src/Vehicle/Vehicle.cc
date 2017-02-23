@@ -1777,6 +1777,11 @@ bool Vehicle::supportsCalibratePressure(void) const
     return _firmwarePlugin->supportsCalibratePressure();
 }
 
+bool Vehicle::supportsMotorInterference(void) const
+{
+    return _firmwarePlugin->supportsMotorInterference();
+}
+
 void Vehicle::_setCoordinateValid(bool coordinateValid)
 {
     if (coordinateValid != _coordinateValid) {
