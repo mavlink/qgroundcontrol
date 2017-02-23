@@ -28,11 +28,14 @@ public:
 
     const SettingsFact& operator=(const SettingsFact& other);
 
+    Q_PROPERTY(bool visible MEMBER _visible CONSTANT)
+
 private slots:
     void _rawValueChanged(QVariant value);
 
 private:
     QString _settingGroup;
+    bool    _visible;
 };
 
 #endif
