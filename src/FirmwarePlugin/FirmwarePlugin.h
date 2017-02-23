@@ -163,6 +163,10 @@ public:
     /// to be assigned via parameters in firmware. Default is false.
     virtual bool supportsJSButton(void);
 
+    /// Returns true if the firmware supports calibrating the pressure sensor so the altitude will read
+    /// zero at the current pressure. Default is false.
+    virtual bool supportsCalibratePressure(void);
+
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.
@@ -265,8 +269,11 @@ public:
     /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
     virtual FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) = 0;
 
-    /// @return List of autopilot types this plugin supports.
-    virtual QList<MAV_AUTOPILOT> knownFirmwareTypes(void) const = 0;
+    /// @return List of firmware types this plugin supports.
+    virtual QList<MAV_AUTOPILOT> supportedFirmwareTypes(void) const = 0;
+
+    /// @return List of vehicle types this plugin supports.
+    virtual QList<MAV_TYPE> supportedVehicleTypes(void) const;
 };
 
 class FirmwarePluginFactoryRegister : public QObject

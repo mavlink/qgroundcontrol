@@ -56,6 +56,7 @@
         <file alias="QGroundControl/Controls/FactSliderPanel.qml">src/QmlControls/FactSliderPanel.qml</file>
         <file alias="QGroundControl/Controls/FlightModeDropdown.qml">src/QmlControls/FlightModeDropdown.qml</file>
         <file alias="QGroundControl/Controls/FlightModeMenu.qml">src/QmlControls/FlightModeMenu.qml</file>
+        <file alias="QGroundControl/Controls/FWLandingPatternMapVisual.qml">src/MissionEditor/FWLandingPatternMapVisual.qml</file>
         <file alias="QGroundControl/Controls/GuidedBar.qml">src/QmlControls/GuidedBar.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
         <file alias="QGroundControl/Controls/JoystickThumbPad.qml">src/QmlControls/JoystickThumbPad.qml</file>
@@ -186,6 +187,7 @@
         <file alias="FWLandingPattern.FactMetaData.json">src/MissionManager/FWLandingPattern.FactMetaData.json</file>
         <file alias="Survey.FactMetaData.json">src/MissionManager/Survey.FactMetaData.json</file>
         <file alias="USBBoardInfo.json">src/comm/USBBoardInfo.json</file>
+        <file alias="Vehicle/TemperatureFact.json">src/Vehicle/TemperatureFact.json</file>
     </qresource>
     <qresource prefix="/MockLink">
         <file alias="APMArduCopterMockLink.params">src/comm/APMArduCopterMockLink.params</file>
