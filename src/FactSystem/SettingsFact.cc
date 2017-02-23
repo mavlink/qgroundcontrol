@@ -23,6 +23,7 @@ SettingsFact::SettingsFact(QObject* parent)
 SettingsFact::SettingsFact(QString settingGroup, FactMetaData* metaData, QObject* parent)
     : Fact(0, metaData->name(), metaData->type(), parent)
     , _settingGroup(settingGroup)
+    , _visible(true)
 {
     QSettings settings;
 
@@ -31,7 +32,7 @@ SettingsFact::SettingsFact(QString settingGroup, FactMetaData* metaData, QObject
     }
 
     // Allow core plugin a chance to override the default value
-    metaData->setRawDefaultValue(qgcApp()->toolbox()->corePlugin()->overrideSettingsDefault(metaData->name(), metaData->rawDefaultValue()));
+    _visible = qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(*metaData);
     setMetaData(metaData);
 
     QVariant typedValue;
