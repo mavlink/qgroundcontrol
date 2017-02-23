@@ -453,84 +453,68 @@ QGCView {
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
                     visible:                    QGroundControl.settingsManager.videoSettings.visible
+
                     Column {
                         id:         videoCol
                         spacing:    ScreenTools.defaultFontPixelWidth
                         anchors.centerIn: parent
+
+
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.settingsManager.videoSettings.videoSource.visible
                             QGCLabel {
                                 anchors.baseline:   videoSource.baseline
                                 text:               qsTr("Video Source:")
                                 width:              _labelWidth
                             }
-                            QGCComboBox {
-                                id:                 videoSource
-                                width:              _editFieldWidth
-                                model:              QGroundControl.videoManager.videoSourceList
-                                Component.onCompleted: {
-                                    var index = videoSource.find(QGroundControl.videoManager.videoSource)
-                                    if (index >= 0) {
-                                        videoSource.currentIndex = index
-                                    }
-                                }
-                                onActivated: {
-                                    if (index != -1) {
-                                        currentIndex = index
-                                        QGroundControl.videoManager.videoSource = model[index]
-                                    }
-                                }
+                            FactComboBox {
+                                id:         videoSource
+                                width:      _editFieldWidth
+                                indexModel: false
+                                fact:       QGroundControl.settingsManager.videoSettings.videoSource
                             }
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 0
+                            visible:    QGroundControl.settingsManager.videoSettings.udpPort.visible && QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 0
                             QGCLabel {
                                 anchors.baseline:   udpField.baseline
                                 text:               qsTr("UDP Port:")
                                 width:              _labelWidth
                             }
-                            QGCTextField {
+                            FactTextField {
                                 id:                 udpField
                                 width:              _editFieldWidth
-                                text:               QGroundControl.videoManager.udpPort
-                                validator:          IntValidator {bottom: 1024; top: 65535;}
-                                inputMethodHints:   Qt.ImhDigitsOnly
-                                onEditingFinished: {
-                                    QGroundControl.videoManager.udpPort = parseInt(text)
-                                }
+                                fact:               QGroundControl.settingsManager.videoSettings.udpPort
                             }
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 1
+                            visible:    QGroundControl.settingsManager.videoSettings.rtspUrl.visible && QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 1
                             QGCLabel {
                                 anchors.baseline:   rtspField.baseline
                                 text:               qsTr("RTSP URL:")
                                 width:              _labelWidth
                             }
-                            QGCTextField {
+                            FactTextField {
                                 id:                 rtspField
                                 width:              _editFieldWidth
-                                text:               QGroundControl.videoManager.rtspURL
-                                onEditingFinished: {
-                                    QGroundControl.videoManager.rtspURL = text
-                                }
+                                fact:               QGroundControl.settingsManager.videoSettings.rtspUrl
                             }
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer && QGroundControl.videoManager.recordingEnabled
+                            visible:    QGroundControl.settingsManager.videoSettings.videoSavePath.visible && QGroundControl.videoManager.isGStreamer && QGroundControl.videoManager.recordingEnabled
                             QGCLabel {
                                 anchors.baseline:   pathField.baseline
                                 text:               qsTr("Save Path:")
                                 width:              _labelWidth
                             }
-                            QGCTextField {
+                            FactTextField {
                                 id:                 pathField
                                 width:              _editFieldWidth
-                                readOnly:           true
-                                text:               QGroundControl.videoManager.videoSavePath
+                                fact:               QGroundControl.settingsManager.videoSettings.videoSavePath
                             }
                             QGCButton {
                                 text:       "Browse"
@@ -541,13 +525,12 @@ QGCView {
                                     title:          "Choose a location to save video files."
                                     folder:         shortcuts.home
                                     selectFolder:   true
-                                    onAccepted:     QGroundControl.videoManager.setVideoSavePathByUrl(fileDialog.fileUrl)
+                                    onAccepted:     QGroundControl.settingsManager.videoSettings.videoSavePath.value = QGroundControl.urlToLocalFile(videoLocationFileDialog.fileUrl)
                                 }
-
                             }
                         }
                     }
-                }
+                } // Video Source - Rectangle
 
                 QGCLabel {
                     anchors.horizontalCenter:   parent.horizontalCenter
