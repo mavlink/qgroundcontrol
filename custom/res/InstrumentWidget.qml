@@ -28,6 +28,7 @@ import TyphoonHQuickInterface           1.0
 import TyphoonHQuickInterface.Widgets   1.0
 
 Item {
+    id:     instrumentWidget
     height: mainRect.height
     width:  getPreferredInstrumentWidth() * 0.75
 
@@ -294,7 +295,7 @@ Item {
                 MouseArea {
                     anchors.fill:   parent
                     onClicked: {
-                        messageArea.visible = true
+                        rootLoader.sourceComponent = messageArea
                     }
                 }
             }
@@ -305,20 +306,47 @@ Item {
         }
     }
 
-    Rectangle {
-        id:             messageArea
-        width:          _rootWindow.width
-        height:         _rootWindow.height
-        x:              mapToItem(mainWindow, 0, 0).x
-        y:              mapToItem(mainWindow, 0, 0).y
-        color:          Qt.rgba(0,0,0,0.75)
-        visible:        false;
-        MouseArea {
-            anchors.fill:   parent
-            enabled:        messageArea.visible
-            onClicked: {
-                messageArea.visible = false
+    Component {
+        id: messageArea
+        Rectangle {
+            id:     messageRect
+            width:  mainWindow.width  * 0.65
+            height: mainWindow.height * 0.65
+            radius: ScreenTools.defaultFontPixelWidth
+            anchors.centerIn: parent
+            color:          Qt.rgba(0,0,0,0.75)
+            QGCLabel {
+                text:               "Camera Settings"
+                font.family:        ScreenTools.demiboldFontFamily
+                font.pointSize:     ScreenTools.mediumFontPointSize
+                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
+                anchors.top:        parent.top
+                anchors.left:       parent.left
+            }
+            //-- Dismiss Window
+            Image {
+                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
+                anchors.top:        parent.top
+                anchors.right:      parent.right
+                width:              ScreenTools.defaultFontPixelHeight * 1.5
+                height:             width
+                sourceSize.height:  width
+                source:             "/res/XDelete.svg"
+                fillMode:           Image.PreserveAspectFit
+                mipmap:             true
+                smooth:             true
+                MouseArea {
+                    anchors.fill:   parent
+                    onClicked: {
+                        rootLoader.sourceComponent = null
+                    }
+                }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = messageRect.width
+                rootLoader.height = messageRect.height
             }
         }
     }
+
 }
