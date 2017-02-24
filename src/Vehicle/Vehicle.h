@@ -645,8 +645,11 @@ public:
     QString vehicleImageCompass () const;
 
 public slots:
-    void setLatitude(double latitude);
-    void setLongitude(double longitude);
+    /// Sets the firmware plugin instance data associated with this Vehicle. This object will be parented to the Vehicle
+    /// and destroyed when the vehicle goes away.
+    void setLatitude    (double latitude);
+    void setLongitude   (double longitude);
+    void setAltitude    (double altitude);
 
 signals:
     void allLinksInactive(Vehicle* vehicle);
