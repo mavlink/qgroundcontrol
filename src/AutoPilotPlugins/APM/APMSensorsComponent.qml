@@ -532,6 +532,10 @@ SetupPage {
                     id:         motorInterferenceButton
                     width:      parent.buttonWidth
                     text:       qsTr("CompassMot")
+                    visible:    _activeVehicle ? _activeVehicle.supportsMotorInterference : false
+
+                    property var  _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
                     onClicked:  showDialog(compassMotDialogComponent, qsTr("CompassMot - Compass Motor Interference Calibration"), qgcView.showDialogFullWidth, StandardButton.Cancel | StandardButton.Ok)
                 }
 

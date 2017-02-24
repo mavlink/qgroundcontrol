@@ -42,6 +42,7 @@ SetupPage {
             property Fact _rc12Function:        controller.getParameterFact(-1, "r.SERVO12_FUNCTION")
             property Fact _rc13Function:        controller.getParameterFact(-1, "r.SERVO13_FUNCTION")
             property Fact _rc14Function:        controller.getParameterFact(-1, "r.SERVO14_FUNCTION")
+            property Fact _stepSize:            controller.getParameterFact(-1, "JS_LIGHTS_STEP")
 
             readonly property real  _margins:                       ScreenTools.defaultFontPixelHeight
             readonly property int   _rcFunctionDisabled:            0
@@ -52,6 +53,7 @@ SetupPage {
 
             Component.onCompleted: {
                 calcLightOutValues()
+                calcCurrentStep()
             }
 
             /// Light output channels are stored in SERVO#_FUNCTION parameters. We need to loop through those
@@ -83,6 +85,25 @@ SetupPage {
                     var functionFact = controller.getParameterFact(-1, "r.SERVO" + channel + "_FUNCTION")
                     functionFact.value = rcFunction
                 }
+            }
+
+            function calcCurrentStep() {
+                var i = 1
+                for(i; i <= 10; i++) {
+                    var stepSize = (1900-1100)/i
+                    if(_stepSize.value >= stepSize) {
+                        _stepSize.value = stepSize;
+                        break;
+                    }
+                }
+                if (_stepSize.value < 80) {
+                    _stepSize.value = 80;
+                }
+                lightsLoader.lightsSteps = i
+            }
+
+            function calcStepSize(steps) {
+                _stepSize.value = (1900-1100)/steps
             }
 
             // Whenever any SERVO#_FUNCTION parameters chagnes we need to go looking for light output channels again
@@ -129,14 +150,14 @@ SetupPage {
                         id:                 rectangle
                         anchors.topMargin:  _margins / 2
                         anchors.top:        settingsLabel.bottom
-                        width:              lights1Combo.x + lights1Combo.width + _margins
-                        height:             lights2Combo.y + lights2Combo.height + _margins
+                        width:              lights1Combo.x + lights1Combo.width + lightsStepCombo.width + _margins
+                        height:             lights2Combo.y + lights2Combo.height + lightsStepCombo.height + 2*_margins
                         color:              palette.windowShade
 
                         QGCLabel {
                             id:                 lights1Label
                             anchors.margins:    _margins
-                            anchors.left:       parent.left
+                            anchors.right:      lights1Combo.left
                             anchors.baseline:   lights1Combo.baseline
                             text:               qsTr("Lights 1:")
                         }
@@ -145,7 +166,7 @@ SetupPage {
                             id:                 lights1Combo
                             anchors.margins:    _margins
                             anchors.top:        parent.top
-                            anchors.left:       lights1Label.right
+                            anchors.left:       lightsStepLabel.right
                             width:              ScreenTools.defaultFontPixelWidth * 15
                             model:              lightsOutModel
                             currentIndex:       lights1OutIndex
@@ -156,7 +177,7 @@ SetupPage {
                         QGCLabel {
                             id:                 lights2Label
                             anchors.margins:    _margins
-                            anchors.left:       parent.left
+                            anchors.right:      lights2Combo.left
                             anchors.baseline:   lights2Combo.baseline
                             text:               qsTr("Lights 2:")
                         }
@@ -165,12 +186,32 @@ SetupPage {
                             id:                 lights2Combo
                             anchors.margins:    _margins
                             anchors.top:        lights1Combo.bottom
-                            anchors.left:       lights2Label.right
+                            anchors.left:       lightsStepLabel.right
                             width:              lights1Combo.width
                             model:              lightsOutModel
                             currentIndex:       lights2OutIndex
 
                             onActivated: setRCFunction(lightsOutModel.get(index).value, lights2Function)
+                        }
+
+                        QGCLabel {
+                            id:                 lightsStepLabel
+                            anchors.margins:    _margins
+                            anchors.left:       parent.left
+                            anchors.baseline:   lightsStepCombo.baseline
+                            text:               qsTr("Brightness Steps:")
+                        }
+
+                        QGCComboBox {
+                            id:                 lightsStepCombo
+                            anchors.margins:    _margins
+                            anchors.top:        lights2Combo.bottom
+                            anchors.left:       lightsStepLabel.right
+                            width:              lights2Combo.width
+                            model:              [1,2,3,4,5,6,7,8,9,10]
+                            currentIndex:       lightsSteps-1
+
+                            onActivated: calcStepSize(index+1)
                         }
                     } // Rectangle
                 } // Item
@@ -184,6 +225,7 @@ SetupPage {
                 property int    lights2OutIndex:         0
                 property int    lights1Function:         _rcFunctionRCIN9
                 property int    lights2Function:         _rcFunctionRCIN10
+                property int    lightsSteps:             1
             }
         } // Column
     } // Component

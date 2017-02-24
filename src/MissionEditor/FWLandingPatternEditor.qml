@@ -31,7 +31,8 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property real _margin: ScreenTools.defaultFontPixelWidth * 0.25
+    property real _margin: ScreenTools.defaultFontPixelWidth / 4
+    property real _spacer: ScreenTools.defaultFontPixelWidth / 2
 
     Column {
         id:                 editorColumn
@@ -40,17 +41,78 @@ Rectangle {
         anchors.right:      parent.right
         visible:            missionItem.landingCoordSet
 
-        QGCLabel { text: "WIP (NOT FOR REAL FLIGHT!)" }
+        QGCLabel {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            wrapMode:       Text.WordWrap
+            font.pointSize: ScreenTools.smallFontPointSize
+            text:           "WIP (NOT FOR REAL FLIGHT!)"
+        }
+
+        Item { width: 1; height: _margin }
+
+        QGCLabel { text: qsTr("Loiter point") }
+
+        Rectangle {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            height:         1
+            color:          qgcPal.text
+        }
+
+        Item { width: 1; height: _spacer }
 
         FactTextFieldGrid {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            factList:       missionItem.textFieldFacts
+            factList:       [ missionItem.loiterAltitude, missionItem.loiterRadius ]
         }
 
-        FactCheckBox {
-            text:   missionItem.loiterClockwise.name
-            fact:   missionItem.loiterClockwise
+        Item { width: 1; height: _spacer }
+
+        QGCCheckBox {
+            id:             loiterAltRelative
+            anchors.right:  parent.right
+            text:           qsTr("Altitude relative to home")
+            checked:        missionItem.loiterAltitudeRelative
+            onClicked:      missionItem.loiterAltitudeRelative = checked
+        }
+
+        Item { width: 1; height: _spacer }
+
+        QGCCheckBox {
+            anchors.left:   loiterAltRelative.left
+            text:           qsTr("Loiter clockwise")
+            checked:        missionItem.loiterClockwise
+            onClicked:      missionItem.loiterClockwise = checked
+        }
+
+        Item { width: 1; height: ScreenTools.defaultFontPixelHeight / 2 }
+
+        QGCLabel { text: qsTr("Landing point") }
+
+        Rectangle {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            height:         1
+            color:          qgcPal.text
+        }
+
+        Item { width: 1; height: _spacer }
+
+        FactTextFieldGrid {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            factList:       [ missionItem.landingAltitude, missionItem.landingDistance, missionItem.landingHeading ]
+        }
+
+        Item { width: 1; height: _spacer }
+
+        QGCCheckBox {
+            anchors.right:  parent.right
+            text:           qsTr("Altitude relative to home")
+            checked:        missionItem.landingAltitudeRelative
+            onClicked:      missionItem.landingAltitudeRelative = checked
         }
     }
 

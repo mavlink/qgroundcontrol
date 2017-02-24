@@ -101,3 +101,8 @@ bool ArduSubFirmwarePlugin::supportsCalibratePressure(void)
 {
     return true;
 }
+
+bool ArduSubFirmwarePlugin::supportsMotorInterference(void)
+{
+    return false;
+}

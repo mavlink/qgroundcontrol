@@ -179,10 +179,10 @@
         <file alias="Vehicle/GPSFact.json">src/Vehicle/GPSFact.json</file>
         <file alias="Vehicle/WindFact.json">src/Vehicle/WindFact.json</file>
         <file alias="Vehicle/VibrationFact.json">src/Vehicle/VibrationFact.json</file>
-        <file alias="SettingsGroup.app.json">src/Settings/SettingsGroup.app.json</file>
-        <file alias="SettingsGroup.autoConnect.json">src/Settings/SettingsGroup.autoConnect.json</file>
-        <file alias="SettingsGroup.units.json">src/Settings/SettingsGroup.units.json</file>
-        <file alias="SettingsGroup.video.json">src/Settings/SettingsGroup.video.json</file>
+        <file alias="App.SettingsGroup.json">src/Settings/App.SettingsGroup.json</file>
+        <file alias="AutoConnect.SettingsGroup.json">src/Settings/AutoConnect.SettingsGroup.json</file>
+        <file alias="Units.SettingsGroup.json">src/Settings/Units.SettingsGroup.json</file>
+        <file alias="Video.SettingsGroup.json">src/Settings/Video.SettingsGroup.json</file>
         <file alias="RallyPoint.FactMetaData.json">src/MissionManager/RallyPoint.FactMetaData.json</file>
         <file alias="FWLandingPattern.FactMetaData.json">src/MissionManager/FWLandingPattern.FactMetaData.json</file>
         <file alias="Survey.FactMetaData.json">src/MissionManager/Survey.FactMetaData.json</file>
