@@ -9,6 +9,8 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QSoundEffect>
+
 #include "m4def.h"
 #include "m4util.h"
 
@@ -60,6 +62,10 @@ public:
     Q_PROPERTY(VideoStatus  videoStatus READ    videoStatus                         NOTIFY videoStatusChanged)
     Q_PROPERTY(CameraMode   cameraMode  READ    cameraMode  WRITE   setCameraMode   NOTIFY cameraModeChanged)
     Q_PROPERTY(QString      recordTime  READ    recordTime                          NOTIFY recordTimeChanged)
+    Q_PROPERTY(bool         hardwareGPS READ    hardwareGPS                         CONSTANT)
+    Q_PROPERTY(double       latitude    READ    latitude                            NOTIFY controllerLocationChanged)
+    Q_PROPERTY(double       longitude   READ    longitude                           NOTIFY controllerLocationChanged)
+    Q_PROPERTY(double       altitude    READ    altitude                            NOTIFY controllerLocationChanged)
 
     Q_INVOKABLE void enterBindMode  ();
     Q_INVOKABLE void initM4         ();
@@ -74,22 +80,34 @@ public:
     CameraMode  cameraMode          ();
     QString     recordTime          ();
 
+#if defined(__androidx86__)
+    bool        hardwareGPS         () { return true; }
+#else
+    bool        hardwareGPS         () { return false; }
+#endif
+
+    double      latitude            ();
+    double      longitude           ();
+    double      altitude            ();
+
     void        setCameraMode       (CameraMode mode);
 
     void    init                    (TyphoonM4Handler* pHandler);
 
 signals:
-    void    m4StateChanged          ();
-    void    videoStatusChanged      ();
-    void    cameraModeChanged       ();
-    void    recordTimeChanged       ();
+    void    m4StateChanged              ();
+    void    videoStatusChanged          ();
+    void    cameraModeChanged           ();
+    void    recordTimeChanged           ();
+    void    controllerLocationChanged   ();
 
 private slots:
-    void    _m4StateChanged         ();
-    void    _destroyed              ();
-    void    _cameraModeChanged      ();
-    void    _videoStatusChanged     ();
-    void    _videoRecordingUpdate   ();
+    void    _m4StateChanged             ();
+    void    _destroyed                  ();
+    void    _cameraModeChanged          ();
+    void    _videoStatusChanged         ();
+    void    _videoRecordingUpdate       ();
+    void    _controllerLocationChanged  ();
 
 private:
     TyphoonM4Handler* _pHandler;
@@ -120,9 +138,10 @@ public:
     void    setPhotoMode            ();
     QTime   recordTime              () { return _recordTime; }
 
-    TyphoonHQuickInterface::M4State     m4State     () { return _m4State; }
-    TyphoonHQuickInterface::VideoStatus videoStatus () { return _video_status; }
-    TyphoonHQuickInterface::CameraMode  cameraMode  () { return _camera_mode; }
+    TyphoonHQuickInterface::M4State     m4State             () { return _m4State; }
+    TyphoonHQuickInterface::VideoStatus videoStatus         () { return _video_status; }
+    TyphoonHQuickInterface::CameraMode  cameraMode          () { return _camera_mode; }
+    const ControllerLocation&           controllerLocation  () { return _controllerLocation; }
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  float   byteArrayToFloat(QByteArray data, int offset);
@@ -224,6 +243,7 @@ private:
     ControllerLocation      _controllerLocation;
     bool                    _binding;
     Vehicle*                _vehicle;
+    QSoundEffect            _soundEffect;
 
     TyphoonHQuickInterface::M4State     _m4State;
     TyphoonHQuickInterface::VideoStatus _video_status;
