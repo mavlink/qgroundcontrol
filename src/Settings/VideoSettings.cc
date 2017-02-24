@@ -12,7 +12,10 @@
 #include <QQmlEngine>
 #include <QtQml>
 #include <QVariantList>
+
+#ifndef QGC_DISABLE_UVC
 #include <QCameraInfo>
+#endif
 
 const char* VideoSettings::videoSettingsGroupName = "Video";
 
