@@ -81,6 +81,7 @@ public:
     static const char* _landingFlightMode;
     static const char* _rtgsFlightMode;
     static const char* _followMeFlightMode;
+    static const char* _simpleFlightMode;
 
 private:
     void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);
