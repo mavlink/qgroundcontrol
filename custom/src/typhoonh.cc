@@ -55,9 +55,6 @@ public:
     TyphoonHOptions(QObject* parent = NULL);
     bool        combineSettingsAndSetup     () { return true;  }
     bool        enableVirtualJoystick       () { return false; }
-    bool        definesVideo                () { return true; }
-    uint16_t    videoUDPPort                () { return 0; }
-    QString     videoRSTPUrl                () { return QString("rtsp://192.168.42.1:554/live"); }
     double      toolbarHeightMultiplier     () { return 1.25; }
 #if !defined(__macos__)
     double      defaultFontPointSize        () { return 14.0; }
@@ -194,6 +191,19 @@ bool
 TyphoonHPlugin::overrideSettingsGroupVisibility(QString name)
 {
     if (name == VideoSettings::videoSettingsGroupName || name == AutoConnectSettings::autoConnectSettingsGroupName) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
+{
+    if (metaData.name() == VideoSettings::videoSourceName) {
+        metaData.setRawDefaultValue(VideoSettings::videoSourceRTSP);
+        return false;
+    } else if (metaData.name() == VideoSettings::rtspUrlName) {
+        metaData.setRawDefaultValue(QStringLiteral("rtsp://192.168.42.1:554/live"));
         return false;
     }
 
