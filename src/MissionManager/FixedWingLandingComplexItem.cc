@@ -23,7 +23,7 @@ const char* FixedWingLandingComplexItem::_loiterToLandDistanceName =    "Landing
 const char* FixedWingLandingComplexItem::_landingHeadingName =          "Landing heading";
 const char* FixedWingLandingComplexItem::_loiterAltitudeName =          "Loiter altitude";
 const char* FixedWingLandingComplexItem::_loiterRadiusName =            "Loiter radius";
-const char* FixedWingLandingComplexItem::_loiterClockwiseName =         "Clockwise loiter";
+const char* FixedWingLandingComplexItem::_landingAltitudeName =         "Landing altitude";
 
 QMap<QString, FactMetaData*> FixedWingLandingComplexItem::_metaDataMap;
 
@@ -36,8 +36,11 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QObje
     , _loiterToLandDistanceFact (0, _loiterToLandDistanceName,  FactMetaData::valueTypeDouble)
     , _loiterAltitudeFact       (0, _loiterAltitudeName,        FactMetaData::valueTypeDouble)
     , _loiterRadiusFact         (0, _loiterRadiusName,          FactMetaData::valueTypeDouble)
-    , _loiterClockwiseFact      (0, _loiterClockwiseName,       FactMetaData::valueTypeBool)
     , _landingHeadingFact       (0, _landingHeadingName,        FactMetaData::valueTypeDouble)
+    , _landingAltitudeFact      (0, _landingAltitudeName,       FactMetaData::valueTypeDouble)
+    , _loiterClockwise(true)
+    , _loiterAltitudeRelative(true)
+    , _landingAltitudeRelative(true)
 {
     _editorQml = "qrc:/qml/FWLandingPatternEditor.qml";
 
@@ -48,21 +51,19 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QObje
     _loiterToLandDistanceFact.setMetaData   (_metaDataMap[_loiterToLandDistanceName]);
     _loiterAltitudeFact.setMetaData         (_metaDataMap[_loiterAltitudeName]);
     _loiterRadiusFact.setMetaData           (_metaDataMap[_loiterRadiusName]);
-    _loiterClockwiseFact.setMetaData        (_metaDataMap[_loiterClockwiseName]);
     _landingHeadingFact.setMetaData         (_metaDataMap[_landingHeadingName]);
+    _landingAltitudeFact.setMetaData        (_metaDataMap[_landingAltitudeName]);
 
     _loiterToLandDistanceFact.setRawValue   (_loiterToLandDistanceFact.rawDefaultValue());
     _loiterAltitudeFact.setRawValue         (_loiterAltitudeFact.rawDefaultValue());
     _loiterRadiusFact.setRawValue           (_loiterRadiusFact.rawDefaultValue());
-    _loiterClockwiseFact.setRawValue        (_loiterClockwiseFact.rawDefaultValue());
     _landingHeadingFact.setRawValue         (_landingHeadingFact.rawDefaultValue());
+    _landingAltitudeFact.setRawValue        (_landingAltitudeFact.rawDefaultValue());
 
     connect(&_loiterToLandDistanceFact, &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts);
     connect(&_landingHeadingFact,       &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts);
     connect(this,                       &FixedWingLandingComplexItem::loiterCoordinateChanged,  this, &FixedWingLandingComplexItem::_recalcFactsFromCoords);
     connect(this,                       &FixedWingLandingComplexItem::landingCoordinateChanged, this, &FixedWingLandingComplexItem::_recalcFactsFromCoords);
-
-    _textFieldFacts << QVariant::fromValue(&_loiterToLandDistanceFact) << QVariant::fromValue(&_loiterAltitudeFact) << QVariant::fromValue(&_loiterRadiusFact) << QVariant::fromValue(&_landingHeadingFact);
 }
 
 int FixedWingLandingComplexItem::lastSequenceNumber(void) const
@@ -147,10 +148,10 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                                         pMissionItems);                     // parent - allow delete on pMissionItems to delete everthing
     pMissionItems->append(item);
 
-    float loiterRadius = _loiterRadiusFact.rawValue().toDouble() * (_loiterClockwiseFact.rawValue().toBool() ? 1.0 : -1.0);
+    float loiterRadius = _loiterRadiusFact.rawValue().toDouble() * (_loiterClockwise ? 1.0 : -1.0);
     item = new MissionItem(seqNum++,
                            MAV_CMD_NAV_LOITER_TO_ALT,
-                           MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                           _loiterAltitudeRelative ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
                            1.0,                             // Heading required = true
                            loiterRadius,                    // Loiter radius
                            0.0,                             // param 3 - unused
@@ -165,7 +166,7 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
 
     item = new MissionItem(seqNum++,
                            MAV_CMD_NAV_LAND,
-                           MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                           _landingAltitudeRelative ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
                            0.0, 0.0, 0.0, 0.0,                 // param 1-4
                            _landingCoordinate.latitude(),
                            _landingCoordinate.longitude(),
