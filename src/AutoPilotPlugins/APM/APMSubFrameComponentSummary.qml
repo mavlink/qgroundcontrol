@@ -53,5 +53,10 @@ FactPanel {
             labelText: qsTr("Firmware Version:")
             valueText: activeVehicle.firmwareMajorVersion == -1 ? qsTr("Unknown") : activeVehicle.firmwareMajorVersion + "." + activeVehicle.firmwareMinorVersion + "." + activeVehicle.firmwarePatchVersion + "-" + activeVehicle.firmwareVersionTypeString
         }
+
+        VehicleSummaryRow {
+            labelText: qsTr("Git Revision:")
+            valueText: activeVehicle.gitHash == -1 ? qsTr("Unknown") : activeVehicle.gitHash
+        }
     }
 }
