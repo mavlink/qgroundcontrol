@@ -27,6 +27,7 @@ public:
     QVariantList&       settings                        () final;
     QVariantList&       toolBarIndicators               () final;
     bool                overrideSettingsGroupVisibility (QString name) final;
+    bool                adjustSettingMetaData           (FactMetaData& metaData) final;
 
     // Overrides from QGCTool
     void                setToolbox          (QGCToolbox* toolbox);
