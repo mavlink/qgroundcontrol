@@ -82,11 +82,12 @@ SetupPage {
 
                 Item {
                     property int axisValue: 0
-                    property int processedAxisValue: 0
+                    property real outputAxisValue: 0
                     property int deadbandValue: 0
 
+                    //These next three properties don't appear to be used
                     property int            __lastAxisValue:        0
-                    property int            __lastProcessedAxisValue: 0
+                    property int            __lastOutputAxisValue: 0
                     readonly property int   __axisValueMaxJitter:   100
                     property color          __barColor:             qgcPal.windowShade
 
@@ -121,7 +122,7 @@ SetupPage {
                         color:                      qgcPal.window
                     }
 
-                    // Indicator
+                    // Input Indicator
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         width:                  parent.height * 0.75
@@ -135,18 +136,20 @@ SetupPage {
                         property real _indicatorPosition:   parent.width * _percentAxisValue
                     }
 
-                    // Processed Indicator
+                    // Output Indicator
                     Rectangle {
+                        id:                     outputIndicator
                         anchors.verticalCenter: parent.verticalCenter
                         width:                  parent.height * 0.75
                         height:                 width
                         x:                      (reversed ? (parent.width - _indicatorPosition) : _indicatorPosition) - (width / 2)
                         radius:                 width / 2
-                        color:                  qgcPal.text
-                        visible:                mapped
+                        color:                  "#4a7056"
+                        visible:                mapped&outputIndicatorVisible
 
-                        property real _percentAxisValue:    ((processedAxisValue + 32768.0) / (32768.0 * 2))
+                        property real _percentAxisValue:    ((outputAxisValue + 1.0) / (2.0))
                         property real _indicatorPosition:   parent.width * _percentAxisValue
+
                     }
 
                     QGCLabel {
@@ -229,7 +232,7 @@ SetupPage {
                         Connections {
                             target: _activeJoystick
 
-                            onRollaAxisValueChanged: rollLoader.item.processedAxisValue = value
+                            onManualControl: rollLoader.item.outputAxisValue = roll
                         }
                     }
 
@@ -264,6 +267,11 @@ SetupPage {
                             onPitchAxisDeadbandChanged: pitchLoader.item.deadbandValue = value
 
                         }
+                        Connections {
+                            target: _activeJoystick
+
+                            onManualControl: pitchLoader.item.outputAxisValue = pitch
+                        }
                     }
 
                     Item {
@@ -296,6 +304,11 @@ SetupPage {
 
                             onYawAxisDeadbandChanged: yawLoader.item.deadbandValue = value
                         }
+                        Connections {
+                            target: _activeJoystick
+
+                            onManualControl: yawLoader.item.outputAxisValue = yaw
+                        }
                     }
 
                     Item {
@@ -327,6 +340,11 @@ SetupPage {
                             onThrottleAxisValueChanged: throttleLoader.item.axisValue = value
 
                             onThrottleAxisDeadbandChanged: throttleLoader.item.deadbandValue = value
+                        }
+                        Connections {
+                            target: _activeJoystick
+
+                            onManualControl: throttleLoader.item.outputAxisValue = -throttle
                         }
                     }
                 } // Column - Attitude Control labels
@@ -796,6 +814,13 @@ SetupPage {
                                 property real defaultTextWidth:     ScreenTools.defaultFontPixelWidth
                                 property bool mapped:               true
                                 readonly property bool reversed:    false
+                                property bool outputIndicatorVisible: false
+                                Binding{
+                                    target: theLoader.sourceComponent.item
+                                    property: "outputIndicatorVisible"
+                                    value: false
+                                }
+
                             }
                         }
                     }
