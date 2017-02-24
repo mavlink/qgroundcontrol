@@ -17,7 +17,7 @@ SettingsGroup::SettingsGroup(const QString& name, const QString& settingsGroup, 
     , _settingsGroup(settingsGroup)
     , _visible(qgcApp()->toolbox()->corePlugin()->overrideSettingsGroupVisibility(name))
 {
-    QString jsonNameFormat(":/json/SettingsGroup.%1.json");
+    QString jsonNameFormat(":/json/%1.SettingsGroup.json");
 
     _nameToMetaDataMap = FactMetaData::createMapFromJsonFile(jsonNameFormat.arg(name), this);
 }
