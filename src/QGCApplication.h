@@ -152,6 +152,12 @@ public:
 
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
 
+public:
+    // Although public, these methods are internal and should only be called by UnitTest code
+
+    /// Shutdown the application object
+    void _shutdown(void);
+
 private slots:
     void _missingParamsDisplay(void);
 

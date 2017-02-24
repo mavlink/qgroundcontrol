@@ -334,8 +334,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     _toolbox->setChildToolboxes();
 }
 
-QGCApplication::~QGCApplication()
+void QGCApplication::_shutdown(void)
 {
+    // This code is specifically not in the destructor since the application object may not be available in the destructor.
+    // This cause problems for deleting object like settings which are in the toolbox which may have qml references. By
+    // moving them here and having main.cc call this prior to deleting the app object we make sure app object is still
+    // around while these things are shutting down.
 #ifndef __mobile__
     MainWindow* mainWindow = MainWindow::instance();
     if (mainWindow) {
@@ -344,6 +348,11 @@ QGCApplication::~QGCApplication()
 #endif
     shutdownVideoStreaming();
     delete _toolbox;
+}
+
+QGCApplication::~QGCApplication()
+{
+    // Place shutdown code in _shutdown
 }
 
 void QGCApplication::_initCommon(void)
