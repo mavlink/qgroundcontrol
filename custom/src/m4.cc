@@ -72,11 +72,12 @@ TyphoonHQuickInterface::init(TyphoonM4Handler* pHandler)
 {
     _pHandler = pHandler;
     if(_pHandler) {
-        connect(_pHandler, &TyphoonM4Handler::m4StateChanged,       this, &TyphoonHQuickInterface::_m4StateChanged);
-        connect(_pHandler, &TyphoonM4Handler::destroyed,            this, &TyphoonHQuickInterface::_destroyed);
-        connect(_pHandler, &TyphoonM4Handler::cameraModeChanged,    this, &TyphoonHQuickInterface::_cameraModeChanged);
-        connect(_pHandler, &TyphoonM4Handler::videoStatusChanged,   this, &TyphoonHQuickInterface::_videoStatusChanged);
-        connect(&_videoRecordingTimer, &QTimer::timeout,            this, &TyphoonHQuickInterface::_videoRecordingUpdate);
+        connect(_pHandler, &TyphoonM4Handler::m4StateChanged,               this, &TyphoonHQuickInterface::_m4StateChanged);
+        connect(_pHandler, &TyphoonM4Handler::destroyed,                    this, &TyphoonHQuickInterface::_destroyed);
+        connect(_pHandler, &TyphoonM4Handler::cameraModeChanged,            this, &TyphoonHQuickInterface::_cameraModeChanged);
+        connect(_pHandler, &TyphoonM4Handler::videoStatusChanged,           this, &TyphoonHQuickInterface::_videoStatusChanged);
+        connect(_pHandler, &TyphoonM4Handler::controllerLocationChanged,    this, &TyphoonHQuickInterface::_controllerLocationChanged);
+        connect(&_videoRecordingTimer, &QTimer::timeout,                    this, &TyphoonHQuickInterface::_videoRecordingUpdate);
         _videoRecordingTimer.setSingleShot(false);
     }
 }
@@ -99,7 +100,6 @@ TyphoonHQuickInterface::_cameraModeChanged()
 void
 TyphoonHQuickInterface::_videoStatusChanged()
 {
-    qDebug() << "_videoStatusChanged()" << videoStatus();
     //-- Recording time should come from camera. As there is no interface for
     //   it, we do it ourselves.
     if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
@@ -117,6 +117,13 @@ void
 TyphoonHQuickInterface::_videoRecordingUpdate()
 {
     emit recordTimeChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_controllerLocationChanged()
+{
+    emit controllerLocationChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -144,7 +151,7 @@ TyphoonHQuickInterface::VideoStatus
 TyphoonHQuickInterface::videoStatus()
 {
     if(_pHandler) {
-        qDebug() << "videoStatus()" << _pHandler->videoStatus();
+        //qDebug() << "videoStatus()" << _pHandler->videoStatus();
         return _pHandler->videoStatus();
     }
     return TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
@@ -157,6 +164,36 @@ TyphoonHQuickInterface::cameraMode()
         return _pHandler->cameraMode();
     }
     return TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
+}
+
+//-----------------------------------------------------------------------------
+double
+TyphoonHQuickInterface::latitude()
+{
+    if(_pHandler) {
+        return _pHandler->controllerLocation().latitude;
+    }
+    return 0.0;
+}
+
+//-----------------------------------------------------------------------------
+double
+TyphoonHQuickInterface::longitude()
+{
+    if(_pHandler) {
+        return _pHandler->controllerLocation().longitude;
+    }
+    return 0.0;
+}
+
+//-----------------------------------------------------------------------------
+double
+TyphoonHQuickInterface::altitude()
+{
+    if(_pHandler) {
+        return _pHandler->controllerLocation().altitude;
+    }
+    return 0.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -296,8 +333,8 @@ TyphoonM4Handler::TyphoonM4Handler(QObject* parent)
     _rxchannelInfoIndex = 2;
     _channelNumIndex    = 6;
     _commPort = new M4SerialComm(this);
-    connect(&_timer, &QTimer::timeout, this, &TyphoonM4Handler::_stateManager);
-    connect(&_videoTimer, &QTimer::timeout, this, &TyphoonM4Handler::_videoCaptureUpdate);
+    connect(&_timer,        &QTimer::timeout, this, &TyphoonM4Handler::_stateManager);
+    connect(&_videoTimer,   &QTimer::timeout, this, &TyphoonM4Handler::_videoCaptureUpdate);
     _timer.setSingleShot(true);
     _videoTimer.setSingleShot(false);
 }
@@ -345,6 +382,9 @@ TyphoonM4Handler::init()
         qWarning() << "Could not start serial communication with M4";
         return;
     }
+    _soundEffect.setSource(QUrl::fromUserInput("qrc:/typhoonh/camera.wav"));
+    _soundEffect.setLoopCount(1);
+    _soundEffect.setVolume(1.0);
     _sendRxInfoEnd = false;
     connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonM4Handler::_bytesReady);
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &TyphoonM4Handler::_vehicleAdded);
@@ -532,6 +572,7 @@ TyphoonM4Handler::takePhoto()
             0,                                  // Duration between two consecutive pictures (in seconds)
             1,                                  // Number of images to capture total - 0 for unlimited capture
             -1);                                // Resolution in megapixels (max)
+        _soundEffect.play();
     }
 }
 
@@ -1781,13 +1822,14 @@ void
 TyphoonM4Handler::_handControllerFeedback(m4Packet& packet)
 {
     QByteArray commandValues = packet.commandValues();
-    _controllerLocation.latitude     = byteArrayToInt(commandValues, 0) / 1e7;
-    _controllerLocation.longitude    = byteArrayToInt(commandValues, 4) / 1e7;
+    _controllerLocation.latitude     = byteArrayToFloat(commandValues, 0) / 1e7;
+    _controllerLocation.longitude    = byteArrayToFloat(commandValues, 4) / 1e7;
     _controllerLocation.altitude     = byteArrayToFloat(commandValues, 8);
     _controllerLocation.accuracy     = byteArrayToShort(commandValues, 12);
     _controllerLocation.speed        = byteArrayToShort(commandValues, 14);
     _controllerLocation.angle        = byteArrayToShort(commandValues, 16);
     _controllerLocation.satelliteCount = commandValues[18] & 0x1f;
+    qDebug() << "Coordinates:" << _controllerLocation.latitude << _controllerLocation.longitude << _controllerLocation.accuracy << _controllerLocation.satelliteCount;
     emit controllerLocationChanged();
 }
 

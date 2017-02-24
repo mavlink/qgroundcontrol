@@ -35,14 +35,33 @@ Item {
     property real _spacers:     ScreenTools.defaultFontPixelHeight * 0.5
     property real _distance:    0.0
 
+    //-- Position from System GPS
     PositionSource {
         id:             positionSource
         updateInterval: 1000
-        active:         activeVehicle && activeVehicle.homePositionAvailable
+        active:         !TyphoonHQuickInterface.hardwareGPS && activeVehicle && activeVehicle.homePositionAvailable
         onPositionChanged: {
             var gcs = positionSource.position.coordinate;
             var veh = activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate(0,0);
             _distance = activeVehicle ? gcs.distanceTo(veh) : 0.0;
+            console.log("Qt PositionSource: " + gcs + veh + _distance)
+        }
+    }
+
+    //-- Position from Controller GPS (M4)
+    Connections {
+        target: TyphoonHQuickInterface
+        onControllerLocationChanged: {
+            if(activeVehicle) {
+                if(TyphoonHQuickInterface.latitude == 0.0 && TyphoonHQuickInterface.longitude == 0.0) {
+                    _distance = 0.0
+                } else {
+                    var gcs = QtPositioning.coordinate(TyphoonHQuickInterface.latitude, TyphoonHQuickInterface.longitude, TyphoonHQuickInterface.altitude)
+                    var veh = activeVehicle.coordinate;
+                    _distance = gcs.distanceTo(veh);
+                    console.log("M4 PositionSource: " + gcs + veh + _distance)
+                }
+            }
         }
     }
 

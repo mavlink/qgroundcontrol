@@ -51,6 +51,9 @@ ReleaseBuild {
     CONFIG  += qtquickcompiler
 }
 
+QT += \
+    multimedia
+
 #-------------------------------------------------------------------------------------
 # Firmware Plugin
 
