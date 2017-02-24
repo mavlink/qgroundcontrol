@@ -12,7 +12,7 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-const char* UnitsSettings::unitsSettingsGroupName =     "units";
+const char* UnitsSettings::unitsSettingsGroupName =     "Units";
 const char* UnitsSettings::distanceUnitsSettingsName =  "DistanceUnits";
 const char* UnitsSettings::areaUnitsSettingsName =      "AreaUnits";
 const char* UnitsSettings::speedUnitsSettingsName =     "SpeedUnits";

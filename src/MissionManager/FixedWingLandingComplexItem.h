@@ -24,13 +24,23 @@ class FixedWingLandingComplexItem : public ComplexMissionItem
 public:
     FixedWingLandingComplexItem(Vehicle* vehicle, QObject* parent = NULL);
 
-    Q_PROPERTY(QVariantList     textFieldFacts      MEMBER  _textFieldFacts                                 CONSTANT)
-    Q_PROPERTY(Fact*            loiterClockwise     READ    loiterClockwise                                 CONSTANT)
-    Q_PROPERTY(QGeoCoordinate   loiterCoordinate    READ    loiterCoordinate    WRITE setLoiterCoordinate   NOTIFY loiterCoordinateChanged)
-    Q_PROPERTY(QGeoCoordinate   landingCoordinate   READ    landingCoordinate   WRITE setLandingCoordinate  NOTIFY landingCoordinateChanged)
-    Q_PROPERTY(bool             landingCoordSet     MEMBER _landingCoordSet                                 NOTIFY landingCoordSetChanged)
+    Q_PROPERTY(Fact*            loiterAltitude          READ    loiterAltitude                                  CONSTANT)
+    Q_PROPERTY(Fact*            loiterRadius            READ    loiterRadius                                    CONSTANT)
+    Q_PROPERTY(Fact*            landingAltitude         READ    landingAltitude                                 CONSTANT)
+    Q_PROPERTY(Fact*            landingDistance         READ    landingDistance                                 CONSTANT)
+    Q_PROPERTY(Fact*            landingHeading          READ    landingHeading                                  CONSTANT)
+    Q_PROPERTY(bool             loiterClockwise         MEMBER  _loiterClockwise                                NOTIFY loiterClockwiseChanged)
+    Q_PROPERTY(bool             loiterAltitudeRelative  MEMBER  _loiterAltitudeRelative                         NOTIFY loiterAltitudeRelativeChanged)
+    Q_PROPERTY(bool             landingAltitudeRelative MEMBER  _landingAltitudeRelative                        NOTIFY landingAltitudeRelativeChanged)
+    Q_PROPERTY(QGeoCoordinate   loiterCoordinate        READ    loiterCoordinate    WRITE setLoiterCoordinate   NOTIFY loiterCoordinateChanged)
+    Q_PROPERTY(QGeoCoordinate   landingCoordinate       READ    landingCoordinate   WRITE setLandingCoordinate  NOTIFY landingCoordinateChanged)
+    Q_PROPERTY(bool             landingCoordSet         MEMBER _landingCoordSet                                 NOTIFY landingCoordSetChanged)
 
-    Fact*           loiterClockwise     (void) { return &_loiterClockwiseFact; }
+    Fact*           loiterAltitude      (void) { return &_loiterAltitudeFact; }
+    Fact*           loiterRadius        (void) { return &_loiterRadiusFact; }
+    Fact*           landingAltitude     (void) { return &_landingAltitudeFact; }
+    Fact*           landingDistance     (void) { return &_loiterToLandDistanceFact; }
+    Fact*           landingHeading      (void) { return &_landingHeadingFact; }
     QGeoCoordinate  landingCoordinate   (void) const { return _landingCoordinate; }
     QGeoCoordinate  loiterCoordinate    (void) const { return _loiterCoordinate; }
 
@@ -73,9 +83,12 @@ public:
     static const char* jsonComplexItemTypeValue;
 
 signals:
-    void loiterCoordinateChanged    (QGeoCoordinate coordinate);
-    void landingCoordinateChanged   (QGeoCoordinate coordinate);
-    void landingCoordSetChanged     (bool landingCoordSet);
+    void loiterCoordinateChanged        (QGeoCoordinate coordinate);
+    void landingCoordinateChanged       (QGeoCoordinate coordinate);
+    void landingCoordSetChanged         (bool landingCoordSet);
+    void loiterClockwiseChanged         (bool loiterClockwise);
+    void loiterAltitudeRelativeChanged  (bool loiterAltitudeRelative);
+    void landingAltitudeRelativeChanged (bool loiterAltitudeRelative);
 
 private slots:
     void _recalcLoiterCoordFromFacts(void);
@@ -94,18 +107,20 @@ private:
     Fact            _loiterToLandDistanceFact;
     Fact            _loiterAltitudeFact;
     Fact            _loiterRadiusFact;
-    Fact            _loiterClockwiseFact;
     Fact            _landingHeadingFact;
+    Fact            _landingAltitudeFact;
+
+    bool            _loiterClockwise;
+    bool            _loiterAltitudeRelative;
+    bool            _landingAltitudeRelative;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
-
-    QVariantList _textFieldFacts;
 
     static const char* _loiterToLandDistanceName;
     static const char* _loiterAltitudeName;
     static const char* _loiterRadiusName;
-    static const char* _loiterClockwiseName;
     static const char* _landingHeadingName;
+    static const char* _landingAltitudeName;
 };
 
 #endif
