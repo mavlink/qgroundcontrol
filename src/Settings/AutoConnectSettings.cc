@@ -22,7 +22,7 @@ const char* AutoConnectSettings:: autoConnectPX4FlowSettingsName =      "Autocon
 const char* AutoConnectSettings:: autoConnectRTKGPSSettingsName =       "AutoconnectRTKGPS";
 const char* AutoConnectSettings:: autoConnectLibrePilotSettingsName =   "AutoconnectLibrePilot";
 
-const char* AutoConnectSettings::autoConnectSettingsGroupName = "autoConnect";
+const char* AutoConnectSettings::autoConnectSettingsGroupName = "AutoConnect";
 
 AutoConnectSettings::AutoConnectSettings(QObject* parent)
     : SettingsGroup(autoConnectSettingsGroupName, _settingsGroup, parent)

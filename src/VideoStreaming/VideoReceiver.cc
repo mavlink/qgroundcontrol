@@ -15,6 +15,9 @@
  */
 
 #include "VideoReceiver.h"
+#include "SettingsManager.h"
+#include "QGCApplication.h"
+
 #include <QDebug>
 #include <QUrl>
 #include <QDir>
@@ -348,16 +351,6 @@ void VideoReceiver::setUri(const QString & uri)
     _uri = uri;
 }
 
-void VideoReceiver::setVideoSavePath(const QString& path)
-{
-#if defined(QGC_ENABLE_VIDEORECORDING)
-    _path = path;
-    qCDebug(VideoReceiverLog) << "New Path:" << _path;
-#else
-    Q_UNUSED(path);
-#endif
-}
-
 #if defined(QGC_GST_STREAMING)
 void VideoReceiver::_shutdownPipeline() {
     if(!_pipeline) {
@@ -467,8 +460,9 @@ void VideoReceiver::startRecording(void)
         return;
     }
 
-    if(_path.isEmpty()) {
-        qWarning() << "VideoReceiver::startRecording Empty Path!";
+    QString savePath = qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSavePath()->rawValue().toString();
+    if(savePath.isEmpty()) {
+        qgcApp()->showMessage("Unabled to record video. Video save path must be specified in Settings.");
         return;
     }
 
@@ -485,7 +479,7 @@ void VideoReceiver::startRecording(void)
     }
 
     QString videoFile;
-    videoFile = _path + "/QGC-" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + ".mkv";
+    videoFile = savePath + "/QGC-" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + ".mkv";
 
     g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(videoFile), NULL);
     qCDebug(VideoReceiverLog) << "New video file:" << videoFile;

@@ -25,19 +25,7 @@
 #include "QGCToolbox.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
-
-static const char* kVideoSourceKey  = "VideoSource";
-static const char* kVideoUDPPortKey = "VideoUDPPort";
-static const char* kVideoRTSPUrlKey = "VideoRTSPUrl";
-static const char* kNoVideo         = "No Video Available";
-
-#if defined(QGC_GST_STREAMING)
-#if defined(QGC_ENABLE_VIDEORECORDING)
-static const char* kVideoSavePathKey= "VideoSavePath";
-#endif
-static const char* kUDPStream       = "UDP Video Stream";
-static const char* kRTSPStream      = "RTSP Video Stream";
-#endif
+#include "Settings/SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
@@ -47,8 +35,8 @@ VideoManager::VideoManager(QGCApplication* app)
     , _videoSurface(NULL)
     , _videoReceiver(NULL)
     , _videoRunning(false)
-    , _udpPort(5600) //-- Defalut Port 5600 == Solo UDP Port
     , _init(false)
+    , _videoSettings(NULL)
 {
 }
 
@@ -65,31 +53,36 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    QGCTool::setToolbox(toolbox);
    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
    qmlRegisterUncreatableType<VideoManager>("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
-   //-- Get saved settings
+
+   _videoSettings = toolbox->settingsManager()->videoSettings();
+   QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+
 #if defined(QGC_GST_STREAMING)
-   QSettings settings;
-#if defined(NO_UDP_VIDEO)
-   setVideoSource(settings.value(kVideoSourceKey, kRTSPStream).toString());
-#else
-   setVideoSource(settings.value(kVideoSourceKey, kUDPStream).toString());
+#ifndef QGC_DISABLE_UVC
+   // If we are using a UVC camera setup the device name
+    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
+    foreach (const QCameraInfo &cameraInfo, cameras) {
+        if(cameraInfo.description() == videoSource) {
+            _videoSourceID = cameraInfo.deviceName();
+            emit videoSourceIDChanged();
+            qCDebug(VideoManagerLog) << "Found USB source:" << _videoSourceID << " Name:" << videoSource;
+            break;
+        }
+    }
 #endif
-   //-- Check if core plugin defines its own video requirements
-   if(qgcApp()->toolbox()->corePlugin()->options()->definesVideo()) {
-       if(qgcApp()->toolbox()->corePlugin()->options()->videoUDPPort()) {
-           setUdpPort(qgcApp()->toolbox()->corePlugin()->options()->videoUDPPort());
-           setVideoSource(kUDPStream);
-       } else {
-           setVideoSource(kRTSPStream);
-           setRtspURL(qgcApp()->toolbox()->corePlugin()->options()->videoRSTPUrl());
-       }
-   } else {
-       setUdpPort(settings.value(kVideoUDPPortKey, 5600).toUInt());
-       setRtspURL(settings.value(kVideoRTSPUrlKey, "rtsp://192.168.42.1:554/live").toString()); //-- Example RTSP URL
-   }
-#if defined(QGC_ENABLE_VIDEORECORDING)
-   setVideoSavePath(settings.value(kVideoSavePathKey, QDir::homePath()).toString());
+
+    emit isGStreamerChanged();
+    qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
+
+    if(_videoReceiver) {
+        if(isGStreamer()) {
+            _videoReceiver->start();
+        } else {
+            _videoReceiver->stop();
+        }
+    }
 #endif
-#endif
+
    _init = true;
 #if defined(QGC_GST_STREAMING)
    _updateVideo();
@@ -105,7 +98,8 @@ VideoManager::hasVideo()
 #if defined(QGC_GST_STREAMING)
     return true;
 #endif
-    return !_videoSource.isEmpty();
+    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+    return !videoSource.isEmpty() && videoSource != VideoSettings::videoSourceNoVideo;
 }
 
 //-----------------------------------------------------------------------------
@@ -113,7 +107,8 @@ bool
 VideoManager::isGStreamer()
 {
 #if defined(QGC_GST_STREAMING)
-    return _videoSource == kUDPStream || _videoSource == kRTSPStream;
+    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+    return videoSource == VideoSettings::videoSourceUDP || videoSource == VideoSettings::videoSourceRTSP;
 #else
     return false;
 #endif
@@ -127,118 +122,6 @@ VideoManager::uvcEnabled()
     return QCameraInfo::availableCameras().count() > 0;
 }
 #endif
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::setVideoSource(QString vSource)
-{
-    if(vSource == kNoVideo)
-        return;
-    _videoSource = vSource;
-    QSettings settings;
-    settings.setValue(kVideoSourceKey, vSource);
-    emit videoSourceChanged();
-#ifndef QGC_DISABLE_UVC
-    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    foreach (const QCameraInfo &cameraInfo, cameras) {
-        if(cameraInfo.description() == vSource) {
-            _videoSourceID = cameraInfo.deviceName();
-            emit videoSourceIDChanged();
-            qCDebug(VideoManagerLog) << "Found USB source:" << _videoSourceID << " Name:" << _videoSource;
-            break;
-        }
-    }
-#endif
-    emit isGStreamerChanged();
-    qCDebug(VideoManagerLog) << "New Video Source:" << vSource;
-    /*
-     * Not working. Requires restart for now. (Undef KRTSP/kUDP above when enabling this)
-    if(isGStreamer())
-        _updateVideo();
-    */
-    if(_videoReceiver) {
-        if(isGStreamer()) {
-            _videoReceiver->start();
-        } else {
-            _videoReceiver->stop();
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::setUdpPort(quint16 port)
-{
-    _udpPort = port;
-    QSettings settings;
-    settings.setValue(kVideoUDPPortKey, port);
-    emit udpPortChanged();
-    /*
-     * Not working. Requires restart for now. (Undef KRTSP/kUDP above when enabling this)
-    if(_videoSource == kUDPStream)
-        _updateVideo();
-    */
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::setRtspURL(QString url)
-{
-    _rtspURL = url;
-    QSettings settings;
-    settings.setValue(kVideoRTSPUrlKey, url);
-    emit rtspURLChanged();
-    /*
-     * Not working. Requires restart for now. (Undef KRTSP/kUDP above when enabling this)
-    if(_videoSource == kRTSPStream)
-        _updateVideo();
-    */
-}
-
-void
-VideoManager::setVideoSavePathByUrl(QUrl url) {
-#if defined(QGC_ENABLE_VIDEORECORDING)
-    setVideoSavePath(url.toLocalFile());
-#else
-    Q_UNUSED(url);
-#endif
-}
-
-void
-VideoManager::setVideoSavePath(QString path)
-{
-#if defined(QGC_ENABLE_VIDEORECORDING)
-    _videoSavePath = path;
-    QSettings settings;
-    settings.setValue(kVideoSavePathKey, path);
-    if(_videoReceiver)
-        _videoReceiver->setVideoSavePath(_videoSavePath);
-    emit videoSavePathChanged();
-#else
-    Q_UNUSED(path);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-QStringList
-VideoManager::videoSourceList()
-{
-    _videoSourceList.clear();
-#if defined(QGC_GST_STREAMING)
-    _videoSourceList.append(kUDPStream);
-    _videoSourceList.append(kRTSPStream);
-#endif
-#ifndef QGC_DISABLE_UVC
-    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    foreach (const QCameraInfo &cameraInfo, cameras) {
-        qCDebug(VideoManagerLog) << "UVC Video source ID:" << cameraInfo.deviceName() << " Name:" << cameraInfo.description();
-        _videoSourceList.append(cameraInfo.description());
-    }
-#endif
-    if(_videoSourceList.count() == 0)
-        _videoSourceList.append(kNoVideo);
-    return _videoSourceList;
-}
 
 //-----------------------------------------------------------------------------
 void VideoManager::_updateTimer()
@@ -292,13 +175,11 @@ void VideoManager::_updateVideo()
         _videoReceiver = new VideoReceiver(this);
 #if defined(QGC_GST_STREAMING)
         _videoReceiver->setVideoSink(_videoSurface->videoSink());
-        if(_videoSource == kUDPStream)
-            _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_udpPort));
+        QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+        if (_videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceUDP)
+            _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
         else
-            _videoReceiver->setUri(_rtspURL);
-#if defined(QGC_ENABLE_VIDEORECORDING)
-        _videoReceiver->setVideoSavePath(_videoSavePath);
-#endif
+            _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
 #endif
         _videoReceiver->start();
     }
