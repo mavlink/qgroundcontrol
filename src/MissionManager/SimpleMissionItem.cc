@@ -65,7 +65,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
 {
-    _editorQml = "qrc:/qml/SimpleItemEditor.qml";
+    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
 
     _altitudeRelativeToHomeFact.setRawValue(true);
 
@@ -97,6 +97,8 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missio
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
 {
+    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
+
     _altitudeRelativeToHomeFact.setRawValue(true);
 
     _setupMetaData();
@@ -122,6 +124,8 @@ SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* pa
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
 {
+    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
+
     _setupMetaData();
     _connectSignals();
 

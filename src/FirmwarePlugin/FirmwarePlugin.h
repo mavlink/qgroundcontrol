@@ -167,6 +167,10 @@ public:
     /// zero at the current pressure. Default is false.
     virtual bool supportsCalibratePressure(void);
 
+    /// Returns true if the firmware supports calibrating motor interference offsets for the compass
+    /// (CompassMot). Default is true.
+    virtual bool supportsMotorInterference(void);
+
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.

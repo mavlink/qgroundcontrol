@@ -62,7 +62,6 @@ public slots:
     void start              ();
     void stop               ();
     void setUri             (const QString& uri);
-    void setVideoSavePath   (const QString& path);
     void stopRecording      ();
     void startRecording     ();
 
@@ -105,7 +104,6 @@ private:
 #endif
 
     QString     _uri;
-    QString     _path;
 
 #if defined(QGC_GST_STREAMING)
     GstElement*         _pipeline;
