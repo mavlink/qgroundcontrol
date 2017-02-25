@@ -28,40 +28,40 @@ public:
 
     // Overrides from FirmwarePlugin
 
-    QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) final;
-    QList<MAV_CMD> supportedMissionCommands(void) final;
+    QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) override;
+    QList<MAV_CMD> supportedMissionCommands(void) override;
 
-    AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) final;
-    bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
-    QStringList         flightModes                     (Vehicle* vehicle) final;
-    QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const final;
-    bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
-    void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) final;
-    void                pauseVehicle                    (Vehicle* vehicle) final;
-    void                guidedModeRTL                   (Vehicle* vehicle) final;
-    void                guidedModeLand                  (Vehicle* vehicle) final;
-    void                guidedModeTakeoff               (Vehicle* vehicle, double altitudeRel) final;
-    void                guidedModeOrbit                 (Vehicle* vehicle, const QGeoCoordinate& centerCoord = QGeoCoordinate(), double radius = NAN, double velocity = NAN, double altitude = NAN) final;
-    void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
-    void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeRel) final;
-    bool                isGuidedMode                    (const Vehicle* vehicle) const;
-    int                 manualControlReservedButtonCount(void) final;
-    bool                supportsManualControl           (void) final;
-    void                initializeVehicle               (Vehicle* vehicle) final;
-    bool                sendHomePositionToVehicle       (void) final;
-    void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;
-    QString             missionCommandOverrides         (MAV_TYPE vehicleType) const final;
-    QString             getVersionParam                 (void) final { return QString("SYS_PARAM_VER"); }
-    QString             internalParameterMetaDataFile   (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QString(":/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml"); }
-    void                getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) final { PX4ParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
-    QObject*            loadParameterMetaData           (const QString& metaDataFile);
-    bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message);
-    GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) { return new PX4GeoFenceManager(vehicle); }
-    QString             offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/PX4/PX4.OfflineEditing.params"); }
-    QString             brandImage                      (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
-    QString             missionFlightMode               (void) final;
-    QString             rtlFlightMode                   (void) final;
-    QString             takeControlFlightMode           (void) final;
+    AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) override;
+    bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) override;
+    QStringList         flightModes                     (Vehicle* vehicle) override;
+    QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const override;
+    bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) override;
+    void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) override;
+    void                pauseVehicle                    (Vehicle* vehicle) override;
+    void                guidedModeRTL                   (Vehicle* vehicle) override;
+    void                guidedModeLand                  (Vehicle* vehicle) override;
+    void                guidedModeTakeoff               (Vehicle* vehicle, double altitudeRel) override;
+    void                guidedModeOrbit                 (Vehicle* vehicle, const QGeoCoordinate& centerCoord = QGeoCoordinate(), double radius = NAN, double velocity = NAN, double altitude = NAN) override;
+    void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) override;
+    void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeRel) override;
+    bool                isGuidedMode                    (const Vehicle* vehicle) const override;
+    int                 manualControlReservedButtonCount(void) override;
+    bool                supportsManualControl           (void) override;
+    void                initializeVehicle               (Vehicle* vehicle) override;
+    bool                sendHomePositionToVehicle       (void) override;
+    void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) override;
+    QString             missionCommandOverrides         (MAV_TYPE vehicleType) const override;
+    QString             getVersionParam                 (void) override { return QString("SYS_PARAM_VER"); }
+    QString             internalParameterMetaDataFile   (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QString(":/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml"); }
+    void                getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) override { PX4ParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
+    QObject*            loadParameterMetaData           (const QString& metaDataFile) final;
+    bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message) override;
+    GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) override { return new PX4GeoFenceManager(vehicle); }
+    QString             offlineEditingParamFile(Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/PX4/PX4.OfflineEditing.params"); }
+    QString             brandImage                      (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
+    QString             missionFlightMode               (void) override;
+    QString             rtlFlightMode                   (void) override;
+    QString             takeControlFlightMode           (void) override;
 
     // NOTE: For internal use only. Do not use in mainline QGC code.
     // Use these constants to set flight modes using setFlightMode method. Don't use hardcoded string names since the
