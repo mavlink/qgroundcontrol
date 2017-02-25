@@ -217,7 +217,7 @@ private:
     
     void _setHelpImage(const char* imageFile);
     
-    void _signalAllAttiudeValueChanges(void);
+    void _signalAllAttitudeValueChanges(void);
     
     // Member variables
 
