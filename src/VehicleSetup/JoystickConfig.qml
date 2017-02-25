@@ -205,9 +205,12 @@ SetupPage {
                         Connections {
                             target: controller
 
-                            onRollAxisValueChanged: rollLoader.item.axisValue = value
-
                             onRollAxisDeadbandChanged: rollLoader.item.deadbandValue = value
+                        }
+                        Connections {
+                            target: _activeJoystick
+
+                            onManualControl: rollLoader.item.axisValue = roll*32768.0
                         }
                     }
 
@@ -237,10 +240,13 @@ SetupPage {
                         Connections {
                             target: controller
 
-                            onPitchAxisValueChanged: pitchLoader.item.axisValue = value
-
                             onPitchAxisDeadbandChanged: pitchLoader.item.deadbandValue = value
 
+                        }
+                        Connections {
+                            target: _activeJoystick
+
+                            onManualControl: pitchLoader.item.axisValue = pitch*32768.0
                         }
                     }
 
@@ -270,9 +276,12 @@ SetupPage {
                         Connections {
                             target: controller
 
-                            onYawAxisValueChanged: yawLoader.item.axisValue = value
-
                             onYawAxisDeadbandChanged: yawLoader.item.deadbandValue = value
+                        }
+                        Connections {
+                            target: _activeJoystick
+
+                            onManualControl: yawLoader.item.axisValue = yaw*32768.0
                         }
                     }
 
@@ -302,9 +311,12 @@ SetupPage {
                         Connections {
                             target: controller
 
-                            onThrottleAxisValueChanged: throttleLoader.item.axisValue = value
-
                             onThrottleAxisDeadbandChanged: throttleLoader.item.deadbandValue = value
+                        }
+                        Connections {
+                            target: _activeJoystick
+
+                            onManualControl: throttleLoader.item.axisValue = (-2*throttle+1)*32768.0
                         }
                     }
                 } // Column - Attitude Control labels
