@@ -59,7 +59,7 @@ Item {
                     var gcs = QtPositioning.coordinate(TyphoonHQuickInterface.latitude, TyphoonHQuickInterface.longitude, TyphoonHQuickInterface.altitude)
                     var veh = activeVehicle.coordinate;
                     _distance = gcs.distanceTo(veh);
-                    //console.log("M4 PositionSource: " + gcs + veh + _distance)
+                    //console.log("M4 PositionSource: GCS:" + gcs + " VEH:" + veh + " D:" + _distance)
                 }
             }
         }
