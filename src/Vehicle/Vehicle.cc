@@ -290,6 +290,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _firmwareMajorVersion(versionNotSetValue)
     , _firmwareMinorVersion(versionNotSetValue)
     , _firmwarePatchVersion(versionNotSetValue)
+    , _gitHash(versionNotSetValue)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -670,6 +671,12 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
         patchVersion = (autopilotVersion.flight_sw_version >> (8*1)) & 0xFF;
         versionType = (FIRMWARE_VERSION_TYPE)((autopilotVersion.flight_sw_version >> (8*0)) & 0xFF);
         setFirmwareVersion(majorVersion, minorVersion, patchVersion, versionType);
+    }
+
+    // Git hash
+    if (autopilotVersion.flight_custom_version[0] != 0) {
+        _gitHash = QString::fromUtf8((char*)autopilotVersion.flight_custom_version, 8);
+        emit gitHashChanged(_gitHash);
     }
 }
 
