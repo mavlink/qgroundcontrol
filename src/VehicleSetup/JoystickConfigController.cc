@@ -81,7 +81,7 @@ JoystickConfigController::~JoystickConfigController()
 /// @brief Returns the state machine entry for the specified state.
 const JoystickConfigController::stateMachineEntry* JoystickConfigController::_getStateMachineEntry(int step)
 {
-    static const char* msgBegin =           "Allow all sticks to center as shown in diagram.\n\nClick Next to continue";
+    static const char* msgBegin =           "Allow all sticks to center as shown in diagram.\nIf using deadband, move all axes through extent of deadzone before proceeding.\nClick Next to continue";
     static const char* msgThrottleUp =      "Move the Throttle stick all the way up and hold it there...";
     static const char* msgThrottleDown =    "Move the Throttle stick all the way down and hold it there...";
     static const char* msgYawLeft =         "Move the Yaw stick all the way to the left and hold it there...";
