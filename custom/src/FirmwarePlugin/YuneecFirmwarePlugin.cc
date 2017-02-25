@@ -7,9 +7,24 @@
 
 #include "YuneecFirmwarePlugin.h"
 
+const char* YuneecFirmwarePlugin::_simpleFlightMode =   "Smart";
+const char* YuneecFirmwarePlugin::_posCtlFlightMode =   "Angle";
+
 YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
 {
+    //  The following flight modes are renamed:
+    //      Simple -> Smart
+    //      POSCTL -> Angle
 
+    for (int i=0; i<_flightModeInfoList.count(); i++) {
+        FlightModeInfo_t& info = _flightModeInfoList[i];
+
+        if (info.name == PX4FirmwarePlugin::_simpleFlightMode) {
+            info.name = YuneecFirmwarePlugin::_simpleFlightMode;
+        } else if (info.name == PX4FirmwarePlugin::_posCtlFlightMode) {
+            info.name = YuneecFirmwarePlugin::_posCtlFlightMode;
+        }
+    }
 }
 
 QString
