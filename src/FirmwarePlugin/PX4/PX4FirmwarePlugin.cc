@@ -50,6 +50,7 @@ const char* PX4FirmwarePlugin::_rattitudeFlightMode =   "Rattitude";
 const char* PX4FirmwarePlugin::_followMeFlightMode =    "Follow Me";
 const char* PX4FirmwarePlugin::_rtgsFlightMode =        "Return to Groundstation";
 const char* PX4FirmwarePlugin::_readyFlightMode =       "Ready";
+const char* PX4FirmwarePlugin::_simpleFlightMode =      "Simple";
 
 /// Tranlates from PX4 custom modes to flight mode names
 
@@ -61,6 +62,7 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                      PX4FirmwarePlugin::_rattitudeFlightMode,    true,   true,   true },
     { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                      PX4FirmwarePlugin::_altCtlFlightMode,       true,   true,   true },
     { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                      PX4FirmwarePlugin::_posCtlFlightMode,       true,   true,   true },
+    { PX4_CUSTOM_MAIN_MODE_SIMPLE,      0,                                      PX4FirmwarePlugin::_simpleFlightMode,       true,   false,  true },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,        PX4FirmwarePlugin::_holdFlightMode,         true,   true,   true },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,       PX4FirmwarePlugin::_missionFlightMode,      true,   true,   true },
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,           PX4FirmwarePlugin::_rtlFlightMode,          true,   true,   true },
