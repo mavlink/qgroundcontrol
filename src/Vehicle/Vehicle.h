@@ -347,6 +347,7 @@ public:
     Q_PROPERTY(int firmwarePatchVersion READ firmwarePatchVersion NOTIFY firmwarePatchVersionChanged)
     Q_PROPERTY(int firmwareVersionType READ firmwareVersionType NOTIFY firmwareVersionTypeChanged)
     Q_PROPERTY(QString firmwareVersionTypeString READ firmwareVersionTypeString NOTIFY firmwareVersionTypeChanged)
+    Q_PROPERTY(QString gitHash READ gitHash NOTIFY gitHashChanged)
 
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
@@ -618,6 +619,8 @@ public:
     void setFirmwareVersion(int majorVersion, int minorVersion, int patchVersion, FIRMWARE_VERSION_TYPE versionType = FIRMWARE_VERSION_TYPE_OFFICIAL);
     static const int versionNotSetValue = -1;
 
+    QString gitHash(void) const { return _gitHash; }
+
     bool soloFirmware(void) const { return _soloFirmware; }
     void setSoloFirmware(bool soloFirmware);
 
@@ -710,6 +713,8 @@ signals:
     void firmwareMinorVersionChanged(int minor);
     void firmwarePatchVersionChanged(int patch);
     void firmwareVersionTypeChanged(int type);
+
+    void gitHashChanged(QString hash);
 
     /// New RC channel values
     ///     @param channelCount Number of available channels, cMaxRcChannels max
@@ -942,6 +947,8 @@ private:
     int _firmwareMinorVersion;
     int _firmwarePatchVersion;
     FIRMWARE_VERSION_TYPE _firmwareVersionType;
+
+    QString _gitHash;
 
     static const int    _lowBatteryAnnounceRepeatMSecs; // Amount of time in between each low battery announcement
     QElapsedTimer       _lowBatteryAnnounceTimer;
