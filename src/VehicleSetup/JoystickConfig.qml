@@ -203,11 +203,6 @@ SetupPage {
                         }
 
                         Connections {
-                            target: controller
-
-                            onRollAxisDeadbandChanged: rollLoader.item.deadbandValue = value
-                        }
-                        Connections {
                             target: _activeJoystick
 
                             onManualControl: rollLoader.item.axisValue = roll*32768.0
@@ -237,12 +232,6 @@ SetupPage {
                             property bool reversed:         controller.pitchAxisReversed
                         }
 
-                        Connections {
-                            target: controller
-
-                            onPitchAxisDeadbandChanged: pitchLoader.item.deadbandValue = value
-
-                        }
                         Connections {
                             target: _activeJoystick
 
@@ -274,11 +263,6 @@ SetupPage {
                         }
 
                         Connections {
-                            target: controller
-
-                            onYawAxisDeadbandChanged: yawLoader.item.deadbandValue = value
-                        }
-                        Connections {
                             target: _activeJoystick
 
                             onManualControl: yawLoader.item.axisValue = yaw*32768.0
@@ -308,11 +292,6 @@ SetupPage {
                             property bool reversed:         controller.throttleAxisReversed
                         }
 
-                        Connections {
-                            target: controller
-
-                            onThrottleAxisDeadbandChanged: throttleLoader.item.deadbandValue = value
-                        }
                         Connections {
                             target: _activeJoystick
 
@@ -756,6 +735,12 @@ SetupPage {
                         onAxisValueChanged: {
                             if (axisMonitorRepeater.itemAt(axis)) {
                                 axisMonitorRepeater.itemAt(axis).loader.item.axisValue = value
+                            }
+                        }
+
+                        onAxisDeadbandChanged: {
+                            if (axisMonitorRepeater.itemAt(axis)) {
+                                axisMonitorRepeater.itemAt(axis).loader.item.deadbandValue = value
                             }
                         }
                     }

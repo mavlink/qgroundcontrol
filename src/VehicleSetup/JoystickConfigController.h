@@ -110,6 +110,7 @@ public:
     
 signals:
     void axisValueChanged(int axis, int value);
+    void axisDeadbandChanged(int axis, int value);
 
     void rollAxisMappedChanged(bool mapped);
     void pitchAxisMappedChanged(bool mapped);

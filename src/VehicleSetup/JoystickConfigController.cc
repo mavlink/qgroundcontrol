@@ -247,7 +247,7 @@ void JoystickConfigController::_axisDeadbandChanged(int axis, int value)
     value = abs(value)<_calValidMaxValue?abs(value):_calValidMaxValue;
 
     _rgAxisInfo[axis].deadband = value;
-
+    emit axisDeadbandChanged(axis,value);
     qCDebug(JoystickConfigControllerLog) << "Axis:" << axis << "Deadband:" << _rgAxisInfo[axis].deadband;
 }
 
