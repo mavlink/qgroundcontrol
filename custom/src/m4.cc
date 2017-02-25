@@ -1747,7 +1747,7 @@ TyphoonM4Handler::_handleChannel(m4Packet& packet)
             //-- We don't yet use this
             break;
         case 0x82:
-            //-- Not sure what this is
+            //-- COMMAND_M4_SEND_COMPRESS_TRIM_TO_PAD
             break;
         default:
             qDebug() << "Received Unknown TYPE_CHN:" << packet.data.toHex();
@@ -1883,24 +1883,20 @@ TyphoonM4Handler::_handleMixedChannelData(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-TyphoonM4Handler::getControllerLocation(ControllerLocation& location)
-{
-    location = _controllerLocation;
-}
-
-//-----------------------------------------------------------------------------
-void
 TyphoonM4Handler::_handControllerFeedback(m4Packet& packet)
 {
     QByteArray commandValues = packet.commandValues();
-    _controllerLocation.latitude     = byteArrayToFloat(commandValues, 0) / 1e7;
-    _controllerLocation.longitude    = byteArrayToFloat(commandValues, 4) / 1e7;
-    _controllerLocation.altitude     = byteArrayToFloat(commandValues, 8);
+    int ilat = byteArrayToInt(commandValues, 0);
+    int ilon = byteArrayToInt(commandValues, 4);
+    int ialt = byteArrayToInt(commandValues, 8);
+    _controllerLocation.latitude     = (double)ilat / 1e7;
+    _controllerLocation.longitude    = (double)ilon / 1e7;
+    _controllerLocation.altitude     = (double)ialt / 1e7;
     _controllerLocation.accuracy     = byteArrayToShort(commandValues, 12);
     _controllerLocation.speed        = byteArrayToShort(commandValues, 14);
     _controllerLocation.angle        = byteArrayToShort(commandValues, 16);
     _controllerLocation.satelliteCount = commandValues[18] & 0x1f;
-    qDebug() << "Coordinates:" << _controllerLocation.latitude << _controllerLocation.longitude << _controllerLocation.accuracy << _controllerLocation.satelliteCount;
+    //qDebug() << "Coordinates:" << ilat << _controllerLocation.latitude << ilon << _controllerLocation.longitude << _controllerLocation.accuracy << _controllerLocation.satelliteCount << ialt << _controllerLocation.altitude;
     emit controllerLocationChanged();
 }
 
@@ -1929,14 +1925,6 @@ TyphoonM4Handler::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
     }
     iRetVal = (iHigh << 24) | ((iMid & 0xFF) << 16) | ((iLow & 0xFF) << 8) | (0xFF & iLowest);
     return iRetVal;
-}
-
-//-----------------------------------------------------------------------------
-float
-TyphoonM4Handler::byteArrayToFloat(QByteArray data, int offset)
-{
-    uint32_t val = (uint32_t)byteArrayToInt(data, offset);
-    return (float)val;
 }
 
 //-----------------------------------------------------------------------------

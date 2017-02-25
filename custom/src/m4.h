@@ -127,7 +127,6 @@ public:
 
     void    init                    ();
     bool    vehicleReady            ();
-    void    getControllerLocation   (ControllerLocation& location);
     void    enterBindMode           ();
     void    initM4                  ();
     void    toggleMode              ();
@@ -145,7 +144,6 @@ public:
     const ControllerLocation&           controllerLocation  () { return _controllerLocation; }
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
-    static  float   byteArrayToFloat(QByteArray data, int offset);
     static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
 
 public slots:
