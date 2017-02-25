@@ -223,7 +223,7 @@ bool JoystickConfigController::getDeadbandToggle() {
 void JoystickConfigController::setDeadbandToggle(bool deadband) {
     _activeJoystick->setDeadband(deadband);
 
-    _signalAllAttiudeValueChanges();
+    _signalAllAttitudeValueChanges();
 
     emit deadbandToggled(deadband);
 }
@@ -353,7 +353,7 @@ void JoystickConfigController::_inputStickDetect(Joystick::AxisFunction_t functi
             
             qCDebug(JoystickConfigControllerLog) << "_inputStickDetect saving values, function:axis:value:reversed:_axisValueSave" << function << axis << value << info->reversed << _axisValueSave[axis];
             
-            _signalAllAttiudeValueChanges();
+            _signalAllAttitudeValueChanges();
             
             _advanceState();
         }
@@ -461,7 +461,7 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
         _rgFunctionAxisMapping[i] = _axisNoAxis;
     }
     
-    _signalAllAttiudeValueChanges();
+    _signalAllAttitudeValueChanges();
 }
 
 /// @brief Sets internal calibration values from the stored settings
@@ -505,7 +505,7 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
 
     _transmitterMode = joystick->getTXMode();
     
-    _signalAllAttiudeValueChanges();
+    _signalAllAttitudeValueChanges();
 }
 
 /// @brief Validates the current settings against the calibration rules resetting values as necessary.
@@ -825,7 +825,7 @@ void JoystickConfigController::setTransmitterMode(int mode)
     }
 }
 
-void JoystickConfigController::_signalAllAttiudeValueChanges(void)
+void JoystickConfigController::_signalAllAttitudeValueChanges(void)
 {
     emit rollAxisMappedChanged(rollAxisMapped());
     emit pitchAxisMappedChanged(pitchAxisMapped());
