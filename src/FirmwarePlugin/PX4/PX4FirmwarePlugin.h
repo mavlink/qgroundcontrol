@@ -83,6 +83,18 @@ public:
     static const char* _followMeFlightMode;
     static const char* _simpleFlightMode;
 
+protected:
+    typedef struct {
+        uint8_t     main_mode;
+        uint8_t     sub_mode;
+        QString     name;       ///< Name for flight mode
+        bool        canBeSet;   ///< true: Vehicle can be set to this flight mode
+        bool        fixedWing;  /// fixed wing compatible
+        bool        multiRotor;  /// multi rotor compatible
+    } FlightModeInfo_t;
+
+    QList<FlightModeInfo_t> _flightModeInfoList;
+
 private:
     void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);
 
