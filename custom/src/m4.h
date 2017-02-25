@@ -10,6 +10,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QSoundEffect>
+#include <QNetworkAccessManager>
 
 #include "m4def.h"
 #include "m4util.h"
@@ -160,6 +161,8 @@ private slots:
     void    _mavlinkMessageReceived             (const mavlink_message_t& message);
     void    _videoCaptureUpdate                 ();
     void    _requestCameraSettings              ();
+    void    _mavCommandResult                   (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+    void    _httpFinished                       ();
 
 private:
     bool    _enterRun                           ();
@@ -194,6 +197,7 @@ private:
     void    _handleMixedChannelData             (m4Packet& packet);
     void    _handControllerFeedback             (m4Packet& packet);
     void    _handleInitialState                 ();
+    void    _initStreaming                      ();
 
     //-- Camera Control (to be moved to Vehicle)
     void    _requestCaptureStatus               ();
@@ -244,6 +248,7 @@ private:
     bool                    _binding;
     Vehicle*                _vehicle;
     QSoundEffect            _soundEffect;
+    QNetworkAccessManager*  _networkManager;
 
     TyphoonHQuickInterface::M4State     _m4State;
     TyphoonHQuickInterface::VideoStatus _video_status;
@@ -252,6 +257,14 @@ private:
     float                               _video_framerate;
     TyphoonHQuickInterface::CameraMode  _camera_mode;
     QTimer                              _videoTimer;
+
+    enum {
+        CAMERA_SUPPORT_UNDEFINED,
+        CAMERA_SUPPORT_YES,
+        CAMERA_SUPPORT_NO
+    };
+
+    int                     _cameraSupported;
 
     //-- This should come from the camera. In the mean time, we keep track of it here.
     QTime                               _recordTime;

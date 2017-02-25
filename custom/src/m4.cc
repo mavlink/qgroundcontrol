@@ -23,6 +23,8 @@
 #include "m4serial.h"
 #include <QDebug>
 #include <QSettings>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 #include <math.h>
 
 static const char* kUartName        = "/dev/ttyMFD0";
@@ -323,12 +325,14 @@ TyphoonM4Handler::TyphoonM4Handler(QObject* parent)
     , _sendRxInfoEnd(false)
     , _binding(false)
     , _vehicle(NULL)
+    , _networkManager(NULL)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
     , _video_status(TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED)
     , _video_resolution_h(0)
     , _video_resolution_v(0)
     , _video_framerate(0.0f)
     , _camera_mode(TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED)
+    , _cameraSupported(CAMERA_SUPPORT_UNDEFINED)
 {
     _rxchannelInfoIndex = 2;
     _channelNumIndex    = 6;
@@ -345,6 +349,9 @@ TyphoonM4Handler::~TyphoonM4Handler()
     emit destroyed();
     if(_commPort) {
         delete _commPort;
+    }
+    if(_networkManager) {
+        delete _networkManager;
     }
 }
 
@@ -397,10 +404,15 @@ void
 TyphoonM4Handler::_vehicleReady(bool ready)
 {
     if(ready && _vehicle) {
+        _video_status       = TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
+        _camera_mode        = TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
+        _cameraSupported    = CAMERA_SUPPORT_UNDEFINED;
+        emit cameraModeChanged();
+        emit videoStatusChanged();
         connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonM4Handler::_mavlinkMessageReceived);
-        _videoTimer.start(1000);
-        setVideoMode();
-        QTimer::singleShot(1250, this, &TyphoonM4Handler::_requestCameraSettings);
+        connect(_vehicle, &Vehicle::mavCommandResult,       this, &TyphoonM4Handler::_mavCommandResult);
+        //-- Send one single MAV_CMD_REQUEST_CAMERA_SETTINGS command to the camera and see what we get back
+        QTimer::singleShot(1000, this, &TyphoonM4Handler::_requestCameraSettings);
     }
 }
 
@@ -410,6 +422,7 @@ TyphoonM4Handler::_vehicleAdded(Vehicle* vehicle)
 {
     if(!_vehicle) {
         _vehicle = vehicle;
+        _initStreaming();
     }
 }
 
@@ -418,9 +431,66 @@ void
 TyphoonM4Handler::_vehicleRemoved(Vehicle* vehicle)
 {
     if(_vehicle == vehicle) {
+        _video_status       = TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
+        _camera_mode        = TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
+        _cameraSupported    = CAMERA_SUPPORT_UNDEFINED;
+        emit cameraModeChanged();
+        emit videoStatusChanged();
         disconnect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonM4Handler::_mavlinkMessageReceived);
         _videoTimer.stop();
         _vehicle = NULL;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonM4Handler::_mavCommandResult(int /*vehicleId*/, int /*component*/, int command, int /*result*/, bool noReponseFromVehicle)
+{
+    //-- Do we already know if the firmware supports cameras or not?
+    if(_cameraSupported == CAMERA_SUPPORT_UNDEFINED) {
+        //-- Is this the response we are waiting?
+        if(command == MAV_CMD_REQUEST_CAMERA_SETTINGS) {
+            if(noReponseFromVehicle) {
+                //-- We got no answer so we assume no camera support
+                _cameraSupported = CAMERA_SUPPORT_NO;
+            } else {
+                //-- We have an answer. Start the show.
+                _cameraSupported = CAMERA_SUPPORT_YES;
+                //-- The firmware does not know the current mode so it will be undefined until we set one.
+                setVideoMode();
+                //-- Until the firmware starts sending us messages automatically, we keep asking for it.
+                _videoTimer.start(1000);
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonM4Handler::_initStreaming()
+{
+    if(!_networkManager) {
+        _networkManager = new QNetworkAccessManager(this);
+    }
+    //-- Set RTSP resolution to 480P
+    QNetworkRequest request(QString("http://192.168.42.1/cgi-bin/cgi?CMD=SET_RTSP_VID&Reslution=480P"));
+    QNetworkReply* reply = _networkManager->get(request);
+    connect(reply, &QNetworkReply::finished,  this, &TyphoonM4Handler::_httpFinished);
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonM4Handler::_httpFinished()
+{
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
+    if(reply) {
+#ifdef QT_DEBUG
+        const int http_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        qDebug() << "HTTP Result:" << http_code;
+        QByteArray data = reply->readAll();
+        qDebug() << data;
+#endif
+        reply->deleteLater();
     }
 }
 
@@ -442,6 +512,7 @@ TyphoonM4Handler::_mavlinkMessageReceived(const mavlink_message_t& message)
 void
 TyphoonM4Handler::_handleCaptureStatus(const mavlink_message_t &message)
 {
+    //-- This is a response to MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS
     mavlink_camera_capture_status_t cap;
     mavlink_msg_camera_capture_status_decode(&message, &cap);
     TyphoonHQuickInterface::VideoStatus oldStatus = _video_status;
@@ -489,7 +560,7 @@ TyphoonM4Handler::_requestCameraSettings()
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                     // target component
             MAV_CMD_REQUEST_CAMERA_SETTINGS,        // command id
-            true,                                   // showError
+            false,                                  // showError
             1,
             0);
     }
