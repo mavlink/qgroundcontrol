@@ -505,6 +505,20 @@ QGCView {
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.videoManager.isGStreamer && QGroundControl.videoManager.isGStreamer && videoSource.currentIndex < 2
+                            QGCLabel {
+                                anchors.baseline:   aspectField.baseline
+                                text:               qsTr("Aspect Ratio:")
+                                width:              _labelWidth
+                            }
+                            FactTextField {
+                                id:                 aspectField
+                                width:              _editFieldWidth
+                                fact:               QGroundControl.settingsManager.videoSettings.aspectRatio
+                            }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
                             visible:    QGroundControl.settingsManager.videoSettings.videoSavePath.visible && QGroundControl.videoManager.isGStreamer && QGroundControl.videoManager.recordingEnabled
                             QGCLabel {
                                 anchors.baseline:   pathField.baseline

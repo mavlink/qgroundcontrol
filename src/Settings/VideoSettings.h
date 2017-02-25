@@ -15,7 +15,7 @@
 class VideoSettings : public SettingsGroup
 {
     Q_OBJECT
-    
+
 public:
     VideoSettings(QObject* parent = NULL);
 
@@ -23,11 +23,13 @@ public:
     Q_PROPERTY(Fact* udpPort        READ udpPort        CONSTANT)
     Q_PROPERTY(Fact* rtspUrl        READ rtspUrl        CONSTANT)
     Q_PROPERTY(Fact* videoSavePath  READ videoSavePath  CONSTANT)
+    Q_PROPERTY(Fact* aspectRatio    READ aspectRatio    CONSTANT)
 
     Fact* videoSource   (void);
     Fact* udpPort       (void);
     Fact* rtspUrl       (void);
     Fact* videoSavePath (void);
+    Fact* aspectRatio   (void);
 
     static const char* videoSettingsGroupName;
 
@@ -35,6 +37,7 @@ public:
     static const char* udpPortName;
     static const char* rtspUrlName;
     static const char* videoSavePathName;
+    static const char* videoAspectRatioName;
 
     static const char* videoSourceNoVideo;
     static const char* videoSourceUDP;
@@ -45,6 +48,7 @@ private:
     SettingsFact* _udpPortFact;
     SettingsFact* _rtspUrlFact;
     SettingsFact* _videoSavePathFact;
+    SettingsFact* _videoAspectRatioFact;
 };
 
 #endif
