@@ -389,9 +389,11 @@ TyphoonM4Handler::init()
         qWarning() << "Could not start serial communication with M4";
         return;
     }
-    _soundEffect.setSource(QUrl::fromUserInput("qrc:/typhoonh/camera.wav"));
-    _soundEffect.setLoopCount(1);
-    _soundEffect.setVolume(1.0);
+    _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/camera.wav"));
+    _cameraSound.setLoopCount(1);
+    _cameraSound.setVolume(0.9);
+    _videoSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/beep.wav"));
+    _videoSound.setVolume(0.9);
     _sendRxInfoEnd = false;
     connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonM4Handler::_bytesReady);
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &TyphoonM4Handler::_vehicleAdded);
@@ -643,7 +645,7 @@ TyphoonM4Handler::takePhoto()
             0,                                  // Duration between two consecutive pictures (in seconds)
             1,                                  // Number of images to capture total - 0 for unlimited capture
             -1);                                // Resolution in megapixels (max)
-        _soundEffect.play();
+        _cameraSound.play();
     }
 }
 
@@ -663,6 +665,8 @@ TyphoonM4Handler::startVideo()
         -1,                             // Frames per second (max)
         -1);                            // Resolution (max)
     _recordTime.start();
+    _videoSound.setLoopCount(1);
+    _videoSound.play();
 }
 
 //-----------------------------------------------------------------------------
@@ -678,6 +682,8 @@ TyphoonM4Handler::stopVideo()
         MAV_CMD_VIDEO_STOP_CAPTURE ,    // command id
         true,                           // showError
         0);                             // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+    _videoSound.setLoopCount(2);
+    _videoSound.play();
 }
 
 //-----------------------------------------------------------------------------

@@ -18,6 +18,8 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     private static TextToSpeech  m_tts;
     private static PowerManager.WakeLock m_wl;
 
+    // WiFi: https://stackoverflow.com/questions/36098871/how-to-search-and-connect-to-a-specific-wifi-network-in-android-programmatically/36099552#36099552
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //
     //  Constructor.  Only used once to create the initial instance for the static functions.

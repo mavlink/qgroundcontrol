@@ -245,7 +245,8 @@ private:
     ControllerLocation      _controllerLocation;
     bool                    _binding;
     Vehicle*                _vehicle;
-    QSoundEffect            _soundEffect;
+    QSoundEffect            _cameraSound;
+    QSoundEffect            _videoSound;
     QNetworkAccessManager*  _networkManager;
 
     TyphoonHQuickInterface::M4State     _m4State;
