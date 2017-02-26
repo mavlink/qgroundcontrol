@@ -144,26 +144,6 @@ void JoystickConfigController::_axisValueChanged(int axis, int value)
         // We always update raw values
         _axisRawValue[axis] = value;
         emit axisValueChanged(axis, _axisRawValue[axis]);
-        
-        // Signal attitude axis values to Qml if mapped
-        if (_rgAxisInfo[axis].function != Joystick::maxFunction) {
-            switch (_rgAxisInfo[axis].function) {
-                case Joystick::rollFunction:
-                    emit rollAxisValueChanged(_axisRawValue[axis]);
-                    break;
-                case Joystick::pitchFunction:
-                    emit pitchAxisValueChanged(_axisRawValue[axis]);
-                    break;
-                case Joystick::yawFunction:
-                    emit yawAxisValueChanged(_axisRawValue[axis]);
-                    break;
-                case Joystick::throttleFunction:
-                    emit throttleAxisValueChanged(_axisRawValue[axis]);
-                    break;
-                default:
-                    break;
-            }
-        }
             
         //qCDebug(JoystickConfigControllerLog) << "Raw value" << axis << value;
         
@@ -685,77 +665,7 @@ int JoystickConfigController::axisCount(void)
     return _axisCount;
 }
 
-int JoystickConfigController::rollAxisValue(void)
-{    
-    if (_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) {
-        return _axisRawValue[Joystick::rollFunction];
-    } else {
-        return 1500;
-    }
-}
 
-int JoystickConfigController::pitchAxisValue(void)
-{
-    if (_rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis) {
-        return _axisRawValue[Joystick::pitchFunction];
-    } else {
-        return 1500;
-    }
-}
-
-int JoystickConfigController::yawAxisValue(void)
-{
-    if (_rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis) {
-        return _axisRawValue[Joystick::yawFunction];
-    } else {
-        return 1500;
-    }
-}
-
-int JoystickConfigController::throttleAxisValue(void)
-{
-    if (_rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis) {
-        return _axisRawValue[Joystick::throttleFunction];
-    } else {
-        return 1500;
-    }
-}
-
-int JoystickConfigController::rollAxisDeadband(void)
-{
-    if ((_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
-        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::rollFunction]].deadband;
-    } else {
-        return 0;
-    }
-}
-
-int JoystickConfigController::pitchAxisDeadband(void)
-{
-    if ((_rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
-        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::pitchFunction]].deadband;
-    } else {
-        return 0;
-    }
-}
-
-int JoystickConfigController::yawAxisDeadband(void)
-{
-    if ((_rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
-        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::yawFunction]].deadband;
-    } else {
-        return 0;
-    }
-}
-
-int JoystickConfigController::throttleAxisDeadband(void)
-{
-    if ((_rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis) && (_activeJoystick->deadband())) {
-        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::throttleFunction]].deadband;
-    } else {
-        return 0;
-    }
-}
 
 bool JoystickConfigController::rollAxisMapped(void)
 {
@@ -838,11 +748,6 @@ void JoystickConfigController::_signalAllAttitudeValueChanges(void)
     emit pitchAxisReversedChanged(pitchAxisReversed());
     emit yawAxisReversedChanged(yawAxisReversed());
     emit throttleAxisReversedChanged(throttleAxisReversed());
-
-    emit rollAxisDeadbandChanged(rollAxisDeadband());
-    emit pitchAxisDeadbandChanged(pitchAxisDeadband());
-    emit yawAxisDeadbandChanged(yawAxisDeadband());
-    emit throttleAxisDeadbandChanged(throttleAxisDeadband());
 
     emit transmitterModeChanged(_transmitterMode);
 }

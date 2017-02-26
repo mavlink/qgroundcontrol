@@ -84,8 +84,6 @@ SetupPage {
                     property int axisValue: 0
                     property int deadbandValue: 0
 
-                    property int            __lastAxisValue:        0
-                    readonly property int   __axisValueMaxJitter:   100
                     property color          __barColor:             qgcPal.windowShade
 
                     // Bar
