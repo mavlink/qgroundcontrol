@@ -22,40 +22,36 @@ Item {
     property var map    ///< Map control to place item in
 
     property var _missionItem:  object
+    property var _itemVisuals: [ ]
     property var _mouseArea
-    property var _dragLoiter
-    property var _dragLand
-    property var _loiterPoint
-    property var _landPoint
-    property var _flightPath
+    property var _dragAreas: [ ]
+
+    readonly property int _flightPathIndex:     0
+    readonly property int _loiterPointIndex:    1
+    readonly property int _loiterRadiusIndex:   2
+    readonly property int _landPointIndex:      3
 
     function hideItemVisuals() {
-        if (_flightPath) {
-            _flightPath.destroy()
-            _flightPath = undefined
+        for (var i=0; i<_itemVisuals.length; i++) {
+            _itemVisuals[i].destroy()
         }
-        if (_loiterPoint) {
-            _loiterPoint.destroy()
-            _loiterPoint = undefined
-        }
-        if (_landPoint) {
-            _landPoint.destroy()
-            _landPoint = undefined
-        }
+        _itemVisuals = [ ]
     }
 
     function showItemVisuals() {
-        if (!_flightPath) {
-            _flightPath = flightPathComponent.createObject(map)
-            map.addMapItem(_flightPath)
-        }
-        if (!_loiterPoint) {
-            _loiterPoint = loiterPointComponent.createObject(map)
-            map.addMapItem(_loiterPoint)
-        }
-        if (!_landPoint) {
-            _landPoint = landPointComponent.createObject(map)
-            map.addMapItem(_landPoint)
+        if (_itemVisuals.length === 0) {
+            var itemVisual = flightPathComponent.createObject(map)
+            map.addMapItem(itemVisual)
+            _itemVisuals[_flightPathIndex] =itemVisual
+            itemVisual = loiterPointComponent.createObject(map)
+            map.addMapItem(itemVisual)
+            _itemVisuals[_loiterPointIndex] = itemVisual
+            itemVisual = loiterRadiusComponent.createObject(map)
+            map.addMapItem(itemVisual)
+            _itemVisuals[_loiterRadiusIndex] = itemVisual
+            itemVisual = landPointComponent.createObject(map)
+            map.addMapItem(itemVisual)
+            _itemVisuals[_landPointIndex] = itemVisual
         }
     }
 
@@ -74,24 +70,16 @@ Item {
     }
 
     function hideDragAreas() {
-        console.log("hideDragAreas")
-        if (_dragLoiter) {
-            _dragLoiter.destroy()
-            _dragLoiter = undefined
+        for (var i=0; i<_dragAreas.length; i++) {
+            _dragAreas[i].destroy()
         }
-        if (_dragLand) {
-            _dragLand.destroy()
-            _dragLand = undefined
-        }
+        _dragAreas = [ ]
     }
 
     function showDragAreas() {
-        console.log("showDragAreas")
-        if (!_dragLoiter) {
-            _dragLoiter = dragAreaComponent.createObject(map, { "dragLoiter": true })
-        }
-        if (!_dragLand) {
-            _dragLand = dragAreaComponent.createObject(map, { "dragLoiter": false })
+        if (_dragAreas.length === 0) {
+            _dragAreas.push(dragAreaComponent.createObject(map, { "dragLoiter": true }))
+            _dragAreas.push(dragAreaComponent.createObject(map, { "dragLoiter": false }))
         }
     }
 
@@ -116,7 +104,6 @@ Item {
         target: _missionItem
 
         onIsCurrentItemChanged: {
-            console.log("onIsCurrentItemChanged", _missionItem.isCurrentItem)
             if (_missionItem.isCurrentItem) {
                 if (_missionItem.landingCoordSet) {
                     showDragAreas()
@@ -172,7 +159,7 @@ Item {
             z:              QGroundControl.zOrderMapItems + 1    // Above item icons
 
             property bool   dragLoiter
-            property var    mapQuickItem:                   dragLoiter ? _loiterPoint : _landPoint
+            property var    mapQuickItem:                   dragLoiter ? _itemVisuals[_loiterPointIndex] : _itemVisuals[_landPointIndex]
             property bool   _preventCoordinateBindingLoop:  false
 
             onXChanged: liveDrag()
@@ -216,7 +203,7 @@ Item {
 
         MapPolyline {
             z:          QGroundControl.zOrderMapItems - 1   // Under item indicators
-            line.color: "white"
+            line.color: "#be781c"
             line.width: 2
             path:       _missionItem.landingCoordSet ? [ _missionItem.loiterCoordinate, _missionItem.landingCoordinate ] : undefined
         }
@@ -234,8 +221,22 @@ Item {
 
             sourceItem:
                 MissionItemIndexLabel {
-                label:      "P"
+                label:      "L"
             }
+        }
+    }
+
+    // Loiter radius visual
+    Component {
+        id: loiterRadiusComponent
+
+        MapCircle {
+            z:              QGroundControl.zOrderMapItems
+            center:         _missionItem.loiterCoordinate
+            radius:         _missionItem.loiterRadius.value
+            border.width:   2
+            border.color:   "green"
+            color:          "transparent"
         }
     }
 
@@ -252,6 +253,7 @@ Item {
             sourceItem:
                 MissionItemIndexLabel {
                 label:      "L"
+                checked:    _missionItem.isCurrentItem
             }
         }
     }
