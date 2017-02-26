@@ -8,8 +8,6 @@
  ****************************************************************************/
 
 #include "MixersComponent.h"
-#include "APMAutoPilotPlugin.h"
-#include "APMAirframeComponent.h"
 #include "ParameterManager.h"
 
 MixersComponent::MixersComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
