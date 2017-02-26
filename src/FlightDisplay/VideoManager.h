@@ -67,11 +67,13 @@ signals:
     void isGStreamerChanged     ();
     void videoSourceIDChanged   ();
 
+private slots:
+    void _videoSourceChanged(void);
+
 private:
     void _updateTimer           ();
     void _updateVideo           ();
 
-private:
     VideoSurface*   _videoSurface;
     VideoReceiver*  _videoReceiver;
     bool            _videoRunning;
