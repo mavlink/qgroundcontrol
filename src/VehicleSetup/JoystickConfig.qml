@@ -744,18 +744,6 @@ SetupPage {
                                 axisMonitorRepeater.itemAt(axis).loader.item.deadbandValue = value
                             }
                         }
-                        onDeadbandToggled: {
-                            if (value) {
-                                for (var i=0;i<_activeJoystick.axisCount;i++) {
-                                    axisMonitorRepeater.itemAt(i).loader.item.deadbandBarVisible = true
-                                }
-                            }
-                            else {
-                                for (var i=0;i<_activeJoystick.axisCount;i++) {
-                                    axisMonitorRepeater.itemAt(i).loader.item.deadbandBarVisible = false
-                                }
-                            }
-                        }
                     }
 
                     Repeater {
