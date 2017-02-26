@@ -39,6 +39,7 @@
         <file alias="MavlinkSettings.qml">src/ui/preferences/MavlinkSettings.qml</file>
         <file alias="MissionEditor.qml">src/MissionEditor/MissionEditor.qml</file>
         <file alias="MissionSettingsEditor.qml">src/MissionEditor/MissionSettingsEditor.qml</file>
+        <file alias="MixersComponent.qml">src/AutoPilotPlugins/Common/MixersComponent.qml</file>
         <file alias="MockLink.qml">src/ui/preferences/MockLink.qml</file>
         <file alias="MockLinkSettings.qml">src/ui/preferences/MockLinkSettings.qml</file>
         <file alias="MultiVehicleView.qml">src/MultiVehicle/MultiVehicleView.qml</file>
