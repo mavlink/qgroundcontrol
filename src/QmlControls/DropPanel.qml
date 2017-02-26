@@ -44,11 +44,9 @@ Item {
 
     property var    _dropEdgeTopPoint
     property real   _dropEdgeHeight
-    property alias  _dropDownComponent:  dropDownLoader.sourceComponent
-    property real   _viewportMaxLeft:   -x + viewportMargins
-    property real   _viewportMaxRight:  parent.width  - (viewportMargins * 2) - x
-    property real   _viewportMaxTop:    -y + viewportMargins
-    property real   _viewportMaxBottom: parent.height - (viewportMargins * 2) - y
+    property alias  _dropDownComponent: dropDownLoader.sourceComponent
+    property real   _viewportMaxTop:    0
+    property real   _viewportMaxBottom: parent.parent.height - parent.y
 
     function show(panelEdgeTopPoint, panelEdgeHeight, panelComponent) {
         _dropEdgeTopPoint = panelEdgeTopPoint
@@ -88,8 +86,8 @@ Item {
         dropItemHolderRect.x = _arrowPointHeight
 
         // Validate that dropdown is within viewport
-        dropDownItem.y = Math.max(dropDownItem.y, _viewportMaxTop)
         dropDownItem.y = Math.min(dropDownItem.y + dropDownItem.height, _viewportMaxBottom) - dropDownItem.height
+        dropDownItem.y = Math.max(dropDownItem.y, _viewportMaxTop)
 
         // Arrow points
         arrowCanvas.arrowPoint.y = (_dropEdgeTopPoint.y + radius) - dropDownItem.y
