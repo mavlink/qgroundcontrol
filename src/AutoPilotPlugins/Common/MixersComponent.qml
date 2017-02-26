@@ -32,7 +32,27 @@ SetupPage {
 
             QGCPalette { id: palette; colorGroupEnabled: true }
 
-            QGCLabel { text: qsTr("Lot of Qml code goes here...") }
+            QGCLabel { text: qsTr("Group") }
+
+            QGCTextField {
+                id:                 groupText
+                text:               "0"
+            }
+
+            QGCLabel { text: qsTr("Mixer") }
+
+            QGCTextField {
+                id:                 mixerText
+                text:               "0"
+            }
+
+
+            QGCButton { text: qsTr("Request mixer count")}
+            QGCButton { text: qsTr("Request submixer count")}
+            QGCButton { text: qsTr("Request mixer type")}
+            QGCButton { text: qsTr("Request parameter")}
+            QGCButton { text: qsTr("Request all")}
+            QGCButton { text: qsTr("Set parameter")}
         } // Column
     } // Component
 } // SetupView

@@ -38,6 +38,7 @@ class ParameterManager;
 class JoystickManager;
 class UASMessage;
 class SettingsManager;
+class MixersManager;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -480,6 +481,7 @@ public:
     int manualControlReservedButtonCount(void);
 
     MissionManager*     missionManager(void)    { return _missionManager; }
+    MixersManager*      mixersManager(void)    { return _mixersManager; }
     GeoFenceManager*    geoFenceManager(void)   { return _geoFenceManager; }
     RallyPointManager*  rallyPointManager(void) { return _rallyPointManager; }
 
@@ -895,6 +897,9 @@ private:
 
     MissionManager*     _missionManager;
     bool                _missionManagerInitialRequestSent;
+
+    MixersManager*      _mixersManager;
+    bool                _mixersManagerInitialRequestSent;
 
     GeoFenceManager*    _geoFenceManager;
     bool                _geoFenceManagerInitialRequestSent;
