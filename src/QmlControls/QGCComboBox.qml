@@ -19,7 +19,7 @@ ComboBox {
 
         background: Item {
             implicitWidth:      Math.round(ScreenTools.defaultFontPixelWidth * 4.5)
-            implicitHeight:     ScreenTools.isMobile ? Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 2)) : Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
+            implicitHeight:     Math.round(ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 2 : 1.2))
 
             Rectangle {
                 anchors.fill:   parent
