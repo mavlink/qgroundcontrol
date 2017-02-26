@@ -505,7 +505,7 @@ QGCView {
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer && QGroundControl.videoManager.isGStreamer && videoSource.currentIndex < 2
+                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex < 2 && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
                             QGCLabel {
                                 anchors.baseline:   aspectField.baseline
                                 text:               qsTr("Aspect Ratio:")
