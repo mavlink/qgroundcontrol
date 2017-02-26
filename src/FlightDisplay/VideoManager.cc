@@ -56,6 +56,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 
    _videoSettings = toolbox->settingsManager()->videoSettings();
    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+   connect(_videoSettings->videoSource(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
 
 #if defined(QGC_GST_STREAMING)
 #ifndef QGC_DISABLE_UVC
@@ -89,6 +90,12 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    connect(&_frameTimer, &QTimer::timeout, this, &VideoManager::_updateTimer);
    _frameTimer.start(1000);
 #endif
+}
+
+void VideoManager::_videoSourceChanged(void)
+{
+    emit hasVideoChanged();
+    emit isGStreamerChanged();
 }
 
 //-----------------------------------------------------------------------------
