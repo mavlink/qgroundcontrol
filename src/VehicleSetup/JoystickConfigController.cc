@@ -257,7 +257,7 @@ void JoystickConfigController::_inputCenterWaitBegin(Joystick::AxisFunction_t fu
     Q_UNUSED(function);
 
     //sensing deadband
-    if (abs(value)*1.1f>_rgAxisInfo[axis].deadband) {   //add 10% on top of existing deadband
+    if ((abs(value)*1.1f>_rgAxisInfo[axis].deadband)&&(_activeJoystick->deadband())) {   //add 10% on top of existing deadband
         _axisDeadbandChanged(axis,abs(value)*1.1f);
     }
 
@@ -451,6 +451,7 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
         info->function = Joystick::maxFunction;
         info->reversed = false;
         info->deadband = 0;
+        emit axisDeadbandChanged(i,info->deadband);
         info->axisMin = JoystickConfigController::_calCenterPoint;
         info->axisMax = JoystickConfigController::_calCenterPoint;
         info->axisTrim = JoystickConfigController::_calCenterPoint;
@@ -489,6 +490,7 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
         info->axisMax = calibration.max;
         info->reversed = calibration.reversed;
         info->deadband = calibration.deadband;
+        emit axisDeadbandChanged(axis,info->deadband);
 
         qCDebug(JoystickConfigControllerLog) << "Read settings name:axis:min:max:trim:reversed" << joystick->name() << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
     }
