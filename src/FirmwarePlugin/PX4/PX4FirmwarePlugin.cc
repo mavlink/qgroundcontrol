@@ -26,15 +26,6 @@
 
 #include "px4_custom_mode.h"
 
-struct Modes2Name {
-    uint8_t     main_mode;
-    uint8_t     sub_mode;
-    const char* name;       ///< Name for flight mode
-    bool        canBeSet;   ///< true: Vehicle can be set to this flight mode
-    bool        fixedWing;  /// fixed wing compatible
-    bool        multiRotor;  /// multi rotor compatible
-};
-
 const char* PX4FirmwarePlugin::_manualFlightMode =      "Manual";
 const char* PX4FirmwarePlugin::_altCtlFlightMode =      "Altitude";
 const char* PX4FirmwarePlugin::_posCtlFlightMode =      "Position";
@@ -52,29 +43,6 @@ const char* PX4FirmwarePlugin::_rtgsFlightMode =        "Return to Groundstation
 const char* PX4FirmwarePlugin::_readyFlightMode =       "Ready";
 const char* PX4FirmwarePlugin::_simpleFlightMode =      "Simple";
 
-/// Tranlates from PX4 custom modes to flight mode names
-
-static const struct Modes2Name rgModes2Name[] = {
-    //main_mode                         sub_mode                                name                                        canBeSet  FW      MC
-    { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                      PX4FirmwarePlugin::_manualFlightMode,       true,   true,   true },
-    { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                      PX4FirmwarePlugin::_stabilizedFlightMode,   true,   true,   true },
-    { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                      PX4FirmwarePlugin::_acroFlightMode,         true,   true,   true },
-    { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                      PX4FirmwarePlugin::_rattitudeFlightMode,    true,   true,   true },
-    { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                      PX4FirmwarePlugin::_altCtlFlightMode,       true,   true,   true },
-    { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                      PX4FirmwarePlugin::_posCtlFlightMode,       true,   true,   true },
-    { PX4_CUSTOM_MAIN_MODE_SIMPLE,      0,                                      PX4FirmwarePlugin::_simpleFlightMode,       true,   false,  true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,        PX4FirmwarePlugin::_holdFlightMode,         true,   true,   true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,       PX4FirmwarePlugin::_missionFlightMode,      true,   true,   true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,           PX4FirmwarePlugin::_rtlFlightMode,          true,   true,   true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET, PX4FirmwarePlugin::_followMeFlightMode,     true,   false,  true },
-    { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                      PX4FirmwarePlugin::_offboardFlightMode,     true,   false,  true },
-    // modes that can't be directly set by the user
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,          PX4FirmwarePlugin::_landingFlightMode,      false,  true,   true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,         PX4FirmwarePlugin::_readyFlightMode,        false,  true,   true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,          PX4FirmwarePlugin::_rtgsFlightMode,         false,  true,   true },
-    { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,       PX4FirmwarePlugin::_takeoffFlightMode,      false,  true,   true },
-};
-
 PX4FirmwarePlugin::PX4FirmwarePlugin(void)
     : _versionNotified(false)
 {
@@ -84,6 +52,52 @@ PX4FirmwarePlugin::PX4FirmwarePlugin(void)
     qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
     qmlRegisterType<PowerComponentController>           ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
     qmlRegisterType<RadioComponentController>           ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
+
+    struct Modes2Name {
+        uint8_t     main_mode;
+        uint8_t     sub_mode;
+        const char* name;       ///< Name for flight mode
+        bool        canBeSet;   ///< true: Vehicle can be set to this flight mode
+        bool        fixedWing;  /// fixed wing compatible
+        bool        multiRotor;  /// multi rotor compatible
+    };
+
+    static const struct Modes2Name rgModes2Name[] = {
+        //main_mode                         sub_mode                                name                                        canBeSet  FW      MC
+        { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                      PX4FirmwarePlugin::_manualFlightMode,       true,   true,   true },
+        { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                      PX4FirmwarePlugin::_stabilizedFlightMode,   true,   true,   true },
+        { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                      PX4FirmwarePlugin::_acroFlightMode,         true,   true,   true },
+        { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                      PX4FirmwarePlugin::_rattitudeFlightMode,    true,   true,   true },
+        { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                      PX4FirmwarePlugin::_altCtlFlightMode,       true,   true,   true },
+        { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                      PX4FirmwarePlugin::_posCtlFlightMode,       true,   true,   true },
+        { PX4_CUSTOM_MAIN_MODE_SIMPLE,      0,                                      PX4FirmwarePlugin::_simpleFlightMode,       true,   false,  true },
+        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,        PX4FirmwarePlugin::_holdFlightMode,         true,   true,   true },
+        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,       PX4FirmwarePlugin::_missionFlightMode,      true,   true,   true },
+        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,           PX4FirmwarePlugin::_rtlFlightMode,          true,   true,   true },
+        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET, PX4FirmwarePlugin::_followMeFlightMode,     true,   false,  true },
+        { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                      PX4FirmwarePlugin::_offboardFlightMode,     true,   false,  true },
+        // modes that can't be directly set by the user
+        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,          PX4FirmwarePlugin::_landingFlightMode,      false,  true,   true },
+        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,         PX4FirmwarePlugin::_readyFlightMode,        false,  true,   true },
+        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,          PX4FirmwarePlugin::_rtgsFlightMode,         false,  true,   true },
+        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,       PX4FirmwarePlugin::_takeoffFlightMode,      false,  true,   true },
+    };
+
+    // Convert static information to dynamic list. This allows for plugin override class to manipulate list.
+    for (size_t i=0; i<sizeof(rgModes2Name)/sizeof(rgModes2Name[0]); i++) {
+        const struct Modes2Name* pModes2Name = &rgModes2Name[i];
+
+        FlightModeInfo_t info;
+
+        info.main_mode =    pModes2Name->main_mode;
+        info.sub_mode =     pModes2Name->sub_mode;
+        info.name =         pModes2Name->name;
+        info.canBeSet =     pModes2Name->canBeSet;
+        info.fixedWing =    pModes2Name->fixedWing;
+        info.multiRotor =   pModes2Name->multiRotor;
+
+        _flightModeInfoList.append(info);
+    }
 }
 
 AutoPilotPlugin* PX4FirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
@@ -102,18 +116,16 @@ QStringList PX4FirmwarePlugin::flightModes(Vehicle* vehicle)
 {
     QStringList flightModes;
 
-    for (size_t i=0; i<sizeof(rgModes2Name)/sizeof(rgModes2Name[0]); i++) {
-        const struct Modes2Name* pModes2Name = &rgModes2Name[i];
-
-        if (pModes2Name->canBeSet) {
-            bool fw = (vehicle->fixedWing() && pModes2Name->fixedWing);
-            bool mc = (vehicle->multiRotor() && pModes2Name->multiRotor);
+    foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
+        if (info.canBeSet) {
+            bool fw = (vehicle->fixedWing() && info.fixedWing);
+            bool mc = (vehicle->multiRotor() && info.multiRotor);
 
             // show all modes for generic, vtol, etc
             bool other = !vehicle->fixedWing() && !vehicle->multiRotor();
 
             if (fw || mc || other) {
-                flightModes += pModes2Name->name;
+                flightModes += info.name;
             }
         }
     }
@@ -130,11 +142,9 @@ QString PX4FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) c
         px4_mode.data = custom_mode;
 
         bool found = false;
-        for (size_t i=0; i<sizeof(rgModes2Name)/sizeof(rgModes2Name[0]); i++) {
-            const struct Modes2Name* pModes2Name = &rgModes2Name[i];
-
-            if (pModes2Name->main_mode == px4_mode.main_mode && pModes2Name->sub_mode == px4_mode.sub_mode) {
-                flightMode = pModes2Name->name;
+        foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
+            if (info.main_mode == px4_mode.main_mode && info.sub_mode == px4_mode.sub_mode) {
+                flightMode = info.name;
                 found = true;
                 break;
             }
@@ -156,15 +166,13 @@ bool PX4FirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_m
     *custom_mode = 0;
 
     bool found = false;
-    for (size_t i=0; i<sizeof(rgModes2Name)/sizeof(rgModes2Name[0]); i++) {
-        const struct Modes2Name* pModes2Name = &rgModes2Name[i];
-
-        if (flightMode.compare(pModes2Name->name, Qt::CaseInsensitive) == 0) {
+    foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
+        if (flightMode.compare(info.name, Qt::CaseInsensitive) == 0) {
             union px4_custom_mode px4_mode;
 
             px4_mode.data = 0;
-            px4_mode.main_mode = pModes2Name->main_mode;
-            px4_mode.sub_mode = pModes2Name->sub_mode;
+            px4_mode.main_mode = info.main_mode;
+            px4_mode.sub_mode = info.sub_mode;
 
             *base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
             *custom_mode = px4_mode.data;
