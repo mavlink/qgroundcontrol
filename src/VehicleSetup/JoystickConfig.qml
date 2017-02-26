@@ -105,6 +105,7 @@ SetupPage {
                         width:                  _deadbandWidth
                         height:                 parent.height / 2
                         color:                  "#8c161a"
+                        visible:                controller.deadbandToggle
 
                         property real _percentDeadband:    ((2 * deadbandValue) / (32768.0 * 2))
                         property real _deadbandWidth:   parent.width * _percentDeadband
@@ -741,6 +742,18 @@ SetupPage {
                         onAxisDeadbandChanged: {
                             if (axisMonitorRepeater.itemAt(axis)) {
                                 axisMonitorRepeater.itemAt(axis).loader.item.deadbandValue = value
+                            }
+                        }
+                        onDeadbandToggled: {
+                            if (value) {
+                                for (var i=0;i<_activeJoystick.axisCount;i++) {
+                                    axisMonitorRepeater.itemAt(i).loader.item.deadbandBarVisible = true
+                                }
+                            }
+                            else {
+                                for (var i=0;i<_activeJoystick.axisCount;i++) {
+                                    axisMonitorRepeater.itemAt(i).loader.item.deadbandBarVisible = false
+                                }
                             }
                         }
                     }
