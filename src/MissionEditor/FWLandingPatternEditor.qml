@@ -46,7 +46,7 @@ Rectangle {
             anchors.right:  parent.right
             wrapMode:       Text.WordWrap
             font.pointSize: ScreenTools.smallFontPointSize
-            text:           "WIP (NOT FOR REAL FLIGHT!)"
+            text:           qsTr("WIP (NOT FOR REAL FLIGHT!)")
         }
 
         Item { width: 1; height: _margin }
@@ -122,9 +122,21 @@ Rectangle {
         anchors.left:       parent.left
         anchors.right:      parent.right
         visible:            !missionItem.landingCoordSet
+        spacing:            ScreenTools.defaultFontPixelHeight
 
-        QGCLabel { text: "WIP (NOT FOR REAL FLIGHT!)" }
+        QGCLabel {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            wrapMode:       Text.WordWrap
+            font.pointSize: ScreenTools.smallFontPointSize
+            text:           qsTr("WIP (NOT FOR REAL FLIGHT!)")
+        }
 
-        QGCLabel { text: qsTr("Click in map to set landing point.") }
+        QGCLabel {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            wrapMode:       Text.WordWrap
+            text:           qsTr("Click in map to set landing point.")
+        }
     }
 }
