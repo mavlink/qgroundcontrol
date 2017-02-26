@@ -31,6 +31,8 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _safetyComponent(NULL)
     , _powerComponent(NULL)
     , _motorComponent(NULL)
+    , _tuningComponent(NULL)
+    , _mixersComponent(NULL)
     , _incorrectParameterVersion(false)
 {
     Q_ASSERT(vehicle);
@@ -88,6 +90,10 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _tuningComponent = new PX4TuningComponent(_vehicle, this);
             _tuningComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
+
+            _mixersComponent = new MixersComponent(_vehicle, this);
+            _mixersComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_mixersComponent));
 
             //-- Is there support for cameras?
             if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "TRIG_MODE")) {
