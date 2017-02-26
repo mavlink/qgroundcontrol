@@ -13,10 +13,19 @@
 class YuneecFirmwarePlugin : public PX4FirmwarePlugin
 {
     Q_OBJECT
+
 public:
     YuneecFirmwarePlugin(void);
-    QString     brandImage          (const Vehicle* vehicle) const;
-    QString     vehicleImageOpaque  (const Vehicle* vehicle) const;
-    QString     vehicleImageOutline (const Vehicle* vehicle) const;
-    QString     vehicleImageCompass (const Vehicle* vehicle) const;
+
+    // FirmwarePlugin overrides
+
+    QString     brandImage          (const Vehicle* vehicle) const final;
+    QString     vehicleImageOpaque  (const Vehicle* vehicle) const final;
+    QString     vehicleImageOutline (const Vehicle* vehicle) const final;
+    QString     vehicleImageCompass (const Vehicle* vehicle) const final;
+
+private:
+    static const char* _simpleFlightMode;
+    static const char* _posCtlFlightMode;
+
 };

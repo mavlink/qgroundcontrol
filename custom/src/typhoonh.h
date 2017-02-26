@@ -38,6 +38,9 @@ private:
     QGCSettings*        _pGeneral;
     QGCSettings*        _pOfflineMaps;
     QGCSettings*        _pMAVLink;
+#ifdef QT_DEBUG
+    QGCSettings*        _pMockLink;
+#endif
     QVariantList        _settingsList;
     TyphoonM4Handler*   _pHandler;
     QVariantList        _indicatorList;
