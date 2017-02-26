@@ -8,145 +8,133 @@
  ****************************************************************************/
 
 
-import QtQuick          2.5
+
+import QtQuick          2.2
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
 import QtQuick.Layouts  1.2
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
 
-QGCView {
-    id:         qgcView
-    viewPanel:  panel
+SetupPage {
+    id:             syslinkPage
+    pageComponent:  pageComponent
 
-    QGCPalette { id: palette; colorGroupEnabled: panel.enabled }
+    Component {
+        id: pageComponent
 
-    property real _margins:         ScreenTools.defaultFontPixelHeight
-    property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 16
-    property real _labelWidth:      ScreenTools.defaultFontPixelWidth * 18
+        Column {
+            id:         innerColumn
+            width:      availableWidth
+            spacing:    ScreenTools.defaultFontPixelHeight * 0.5
 
-    SyslinkComponentController {
-        id:             controller
-        factPanel:      panel
-    }
+            property int textEditWidth:    ScreenTools.defaultFontPixelWidth * 12
 
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
 
-        Flickable {
-            clip:                                       true
-            anchors.fill:                               parent
-            contentHeight:                              mainCol.height
-            flickableDirection:                         Flickable.VerticalFlick
-            Column {
-                id:                                     mainCol
-                spacing:                                _margins
-                anchors.horizontalCenter:               parent.horizontalCenter
-                Item { width: 1; height: _margins * 0.5; }
+            SyslinkComponentController {
+                id:         controller
+                factPanel:  syslinkPage.viewPanel
+            }
 
-                Rectangle {
-                    color:                              palette.windowShade
-                    height:                             settingsRow.height  + _margins * 2
-                    Row {
-                        id:                             settingsRow
-                        spacing:                        _margins * 4
-                        anchors.centerIn:               parent
-                        Column {
-                            spacing:                        _margins * 0.5
-                            anchors.verticalCenter:         parent.verticalCenter
-                            Row {
-                                QGCLabel {
-                                    text:                               qsTr("NRF Radio Settings")
-                                    font.family:                        ScreenTools.demiboldFontFamily
-                                }
-                            }
-                            Row {
-                                QGCLabel {
-                                    text:                   qsTr("Channel")
-                                    width:                  _labelWidth
-                                    anchors.baseline:       channelField.baseline
-                                }
-                                QGCTextField {
-                                    id:                     channelField
-                                    width:                  _editFieldWidth
-                                    text:                   controller.radioChannel
-                                    validator:              IntValidator {bottom: 0; top: 125;}
-                                    inputMethodHints:       Qt.ImhDigitsOnly
-                                    onEditingFinished: {
-                                        controller.radioChannel = text
-                                    }
-                                }
-                            }
-                            Row {
-                                anchors.right:   parent.right
-                                QGCLabel {
-                                    wrapMode:       Text.WordWrap
-                                    text:           qsTr("Channel can be between 0 and 125")
-                                }
+            QGCLabel {
+                text: qsTr("Radio Settings")
+                font.family: ScreenTools.demiboldFontFamily
+            }
 
-                            }
-                            Row {
-                                QGCLabel {
-                                    text:                   qsTr("Address")
-                                    width:                  _labelWidth
-                                    anchors.baseline:       addressField.baseline
-                                }
-                                QGCTextField {
-                                    id:                     addressField
-                                    width:                  _editFieldWidth
-                                    text:                   controller.radioAddress
-                                    maximumLength:          10
-                                    validator:              RegExpValidator { regExp: /^[0-9A-Fa-f]*$/ }
-                                    onEditingFinished: {
-                                        controller.radioAddress = text
-                                    }
-                                }
-                            }
-                            Row {
-                                anchors.right:  parent.right
-                                QGCLabel {
-                                    wrapMode:       Text.WordWrap
-                                    text:           qsTr("Address in hex. Default E7E7E7E7E7")
-                                }
+            Rectangle {
+                width:  parent.width
+                height: radioGrid.height + ScreenTools.defaultFontPixelHeight
+                color:  qgcPal.windowShade
 
-                            }
-                            Row {
-                                QGCLabel {
-                                    text:                   qsTr("Data Rate")
-                                    width:                  _labelWidth
-                                    anchors.baseline:       rateField.baseline
-                                }
-                                QGCComboBox {
-                                    id:                     rateField
-                                    width:                  _editFieldWidth
-                                    model:                  controller.radioRates
-                                    currentIndex:           controller.radioRate
-                                    onActivated: {
-                                        controller.radioRate = index
-                                    }
-                                }
-                            }
-                            Row {
-                                spacing:                            _margins
-                                anchors.horizontalCenter:           parent.horizontalCenter
-                                QGCButton {
-                                    text:                           qsTr("Restore Defaults")
-                                    width:                          _editFieldWidth
-                                    onClicked: {
-                                        controller.resetDefaults()
-                                    }
-                                }
-                            }
+                GridLayout {
+                    id:                 radioGrid
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    columns:            2
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
+
+                    QGCLabel {
+                        text:               qsTr("Channel")
+                    }
+
+                    QGCTextField {
+                        id:                     channelField
+                        width:                  textEditWidth
+                        text:                   controller.radioChannel
+                        validator:              IntValidator {bottom: 0; top: 125;}
+                        inputMethodHints:       Qt.ImhDigitsOnly
+                        onEditingFinished: {
+                            controller.radioChannel = text
                         }
                     }
-                }
 
-            }
+                    QGCLabel {
+                        id:                 channelHelp
+                        Layout.columnSpan:  radioGrid.columns
+                        Layout.fillWidth:   true
+                        font.pointSize:     ScreenTools.smallFontPointSize
+                        wrapMode:           Text.WordWrap
+                        text:               "Channel can be between 0 and 125"
+                    }
+
+                    QGCLabel {
+                        id:                 addressLabel
+                        text:               qsTr("Address")
+                    }
+
+                    QGCTextField {
+                        id:                     addressField
+                        width:                  textEditWidth
+                        text:                   controller.radioAddress
+                        maximumLength:          10
+                        validator:              RegExpValidator { regExp: /^[0-9A-Fa-f]*$/ }
+                        onEditingFinished: {
+                            controller.radioAddress = text
+                        }
+                    }
+
+                    QGCLabel {
+                        id:                 addressHelp
+                        Layout.columnSpan:  radioGrid.columns
+                        Layout.fillWidth:   true
+                        font.pointSize:     ScreenTools.smallFontPointSize
+                        wrapMode:           Text.WordWrap
+                        text:               "Address in hex. Default is E7E7E7E7E7."
+                    }
+
+
+                    QGCLabel {
+                        id:                 rateLabel
+                        text:               qsTr("Data Rate")
+                    }
+
+                    QGCComboBox {
+                        id:                     rateField
+                        Layout.fillWidth:       true
+                        model:                  controller.radioRates
+                        currentIndex:           controller.radioRate
+                        onActivated: {
+                            controller.radioRate = index
+                        }
+                    }
+
+                    QGCButton {
+                        text:                           "Restore Defaults"
+                        width:                          textEditWidth
+                        onClicked: {
+                            controller.resetDefaults()
+                        }
+                    }
+
+                } // Grid
+            } // Rectangle - Radio Settings
+
+
         }
     }
 }

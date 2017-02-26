@@ -526,12 +526,6 @@ void LinkManager::_updateAutoConnectLinks(void)
                         pSerialConfig->setUsbDirect(true);
                     }
                     break;
-                case QGCSerialPortInfo::BoardTypeCrazyflie2:
-                    if (_autoconnectPixhawk) {
-                        pSerialConfig = new SerialConfiguration(QString("Crazyflie on %1").arg(portInfo.portName().trimmed()));
-                        pSerialConfig->setUsbDirect(true);
-                    }
-                    break;
                 case QGCSerialPortInfo::BoardTypePX4Flow:
                     if (_autoConnectSettings->autoConnectPX4Flow()->rawValue().toBool()) {
                         pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
