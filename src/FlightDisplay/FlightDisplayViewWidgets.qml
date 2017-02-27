@@ -63,7 +63,7 @@ Item {
                 break;
             }
         } else {
-            var useAlternateInstruments = QGroundControl.virtualTabletJoystick || ScreenTools.isTinyScreen
+            var useAlternateInstruments = QGroundControl.settingsManager.appSettings.virtualJoystick.value || ScreenTools.isTinyScreen
             if(useAlternateInstruments) {
                 instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
                 instrumentsLoader.state  = "topMode"
@@ -75,10 +75,8 @@ Item {
     }
 
     Connections {
-        target: QGroundControl
-        onVirtualTabletJoystickChanged: {
-            _setInstrumentWidget()
-        }
+        target:         QGroundControl.settingsManager.appSettings.virtualJoystick
+        onValueChanged: _setInstrumentWidget()
     }
 
     Component.onCompleted: {

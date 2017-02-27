@@ -1,5 +1,6 @@
 #include "ChartPlot.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
 
 const QColor ChartPlot::baseColors[numColors] = {
     QColor(242, 255, 128),
@@ -44,7 +45,7 @@ ChartPlot::ChartPlot(QWidget* parent):
         _colors.append(baseColors[i]);
     }
     // Now that all objects have been initialized, color everything.
-    styleChanged(qgcApp()->styleIsDark());
+    styleChanged(qgcApp()->toolbox()->settingsManager()->appSettings()->indoorPalette()->rawValue().toBool());
 }
 
 ChartPlot::~ChartPlot()
