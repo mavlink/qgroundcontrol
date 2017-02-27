@@ -10,11 +10,14 @@
 import QtQuick              2.5
 import QtQuick.Controls     1.4
 
+import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controllers   1.0
+
 
 // Mixer Tuning setup page
 SetupPage {
