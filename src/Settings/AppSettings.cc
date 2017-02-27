@@ -8,6 +8,8 @@
  ****************************************************************************/
 
 #include "AppSettings.h"
+#include "QGCPalette.h"
+#include "QGCApplication.h"
 
 #include <QQmlEngine>
 #include <QtQml>
@@ -23,6 +25,9 @@ const char* AppSettings::missionAutoLoadDirSettingsName =               "Mission
 const char* AppSettings::promptFlightTelemetrySaveName =                "PromptFLightDataSave";
 const char* AppSettings::promptFlightTelemetrySaveNotArmedName =        "PromptFLightDataSaveNotArmed";
 const char* AppSettings::audioMutedName =                               "AudioMuted";
+const char* AppSettings::virtualJoystickName =                          "VirtualTabletJoystick";
+const char* AppSettings::appFontPointSizeName =                         "BaseDeviceFontPointSize";
+const char* AppSettings::indoorPaletteName =                            "StyleIsDark";
 
 AppSettings::AppSettings(QObject* parent)
     : SettingsGroup(appSettingsGroupName, QString() /* root settings group */, parent)
@@ -33,12 +38,24 @@ AppSettings::AppSettings(QObject* parent)
     , _batteryPercentRemainingAnnounceFact(NULL)
     , _defaultMissionItemAltitudeFact(NULL)
     , _missionAutoLoadDirFact(NULL)
-    , _promptFlightTelemetrySave(NULL)
-    , _promptFlightTelemetrySaveNotArmed(NULL)
-    , _audioMuted(NULL)
+    , _promptFlightTelemetrySaveFact(NULL)
+    , _promptFlightTelemetrySaveNotArmedFact(NULL)
+    , _audioMutedFact(NULL)
+    , _virtualJoystickFact(NULL)
+    , _appFontPointSizeFact(NULL)
+    , _indoorPaletteFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
+
+    // Set up correct default for palette setting
+    QVariant outdoorPalette;
+#if defined (__mobile__)
+    outdoorPalette = 0;
+#else
+    outdoorPalette = 1;
+#endif
+    _nameToMetaDataMap[indoorPaletteName]->setRawDefaultValue(outdoorPalette);
 }
 
 Fact* AppSettings::offlineEditingFirmwareType(void)
@@ -104,27 +121,61 @@ Fact* AppSettings::missionAutoLoadDir(void)
 
 Fact* AppSettings::promptFlightTelemetrySave(void)
 {
-    if (!_promptFlightTelemetrySave) {
-        _promptFlightTelemetrySave = _createSettingsFact(promptFlightTelemetrySaveName);
+    if (!_promptFlightTelemetrySaveFact) {
+        _promptFlightTelemetrySaveFact = _createSettingsFact(promptFlightTelemetrySaveName);
     }
 
-    return _promptFlightTelemetrySave;
+    return _promptFlightTelemetrySaveFact;
 }
 
 Fact* AppSettings::promptFlightTelemetrySaveNotArmed(void)
 {
-    if (!_promptFlightTelemetrySaveNotArmed) {
-        _promptFlightTelemetrySaveNotArmed = _createSettingsFact(promptFlightTelemetrySaveNotArmedName);
+    if (!_promptFlightTelemetrySaveNotArmedFact) {
+        _promptFlightTelemetrySaveNotArmedFact = _createSettingsFact(promptFlightTelemetrySaveNotArmedName);
     }
 
-    return _promptFlightTelemetrySaveNotArmed;
+    return _promptFlightTelemetrySaveNotArmedFact;
 }
 
 Fact* AppSettings::audioMuted(void)
 {
-    if (!_audioMuted) {
-        _audioMuted = _createSettingsFact(audioMutedName);
+    if (!_audioMutedFact) {
+        _audioMutedFact = _createSettingsFact(audioMutedName);
     }
 
-    return _audioMuted;
+    return _audioMutedFact;
+}
+
+Fact* AppSettings::appFontPointSize(void)
+{
+    if (!_appFontPointSizeFact) {
+        _appFontPointSizeFact = _createSettingsFact(appFontPointSizeName);
+    }
+
+    return _appFontPointSizeFact;
+}
+
+Fact* AppSettings::virtualJoystick(void)
+{
+    if (!_virtualJoystickFact) {
+        _virtualJoystickFact = _createSettingsFact(virtualJoystickName);
+    }
+
+    return _virtualJoystickFact;
+}
+
+Fact* AppSettings::indoorPalette(void)
+{
+    if (!_indoorPaletteFact) {
+        _indoorPaletteFact = _createSettingsFact(indoorPaletteName);
+        connect(_indoorPaletteFact, &Fact::rawValueChanged, this, &AppSettings::_indoorPaletteChanged);
+    }
+
+    return _indoorPaletteFact;
+}
+
+void AppSettings::_indoorPaletteChanged(void)
+{
+    qgcApp()->_loadCurrentStyleSheet();
+    QGCPalette::setGlobalTheme(_indoorPaletteFact->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 }

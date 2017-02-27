@@ -34,6 +34,7 @@ QGCView {
 
     property Fact _percentRemainingAnnounce:    QGroundControl.settingsManager.appSettings.batteryPercentRemainingAnnounce
     property Fact _autoLoadDir:                 QGroundControl.settingsManager.appSettings.missionAutoLoadDir
+    property Fact _appFontPointSize:            QGroundControl.settingsManager.appSettings.appFontPointSize
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
 
@@ -135,11 +136,11 @@ QGCView {
                         //-----------------------------------------------------------------
                         //-- Base UI Font Point Size
                         Row {
-                            visible: QGroundControl.corePlugin.options.defaultFontPointSize < 1.0
+                            visible: _appFontPointSize.visible
                             spacing: ScreenTools.defaultFontPixelWidth
                             QGCLabel {
                                 id:     baseFontLabel
-                                text:   qsTr("Base UI font size:")
+                                text:   qsTr("Font size:")
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             Row {
@@ -152,32 +153,23 @@ QGCView {
                                     height: baseFontEdit.height
                                     text:   "-"
                                     onClicked: {
-                                        if(ScreenTools.defaultFontPointSize > 6) {
-                                            QGroundControl.baseFontPointSize = QGroundControl.baseFontPointSize - 1
+                                        if (_appFontPointSize.value > _appFontPointSize.min) {
+                                            _appFontPointSize.value = _appFontPointSize.value - 1
                                         }
                                     }
                                 }
-                                QGCTextField {
-                                    id:             baseFontEdit
-                                    width:          _editFieldWidth - (decrementButton.width * 2) - (baseFontRow.spacing * 2)
-                                    text:           QGroundControl.baseFontPointSize
-                                    showUnits:      true
-                                    unitsLabel:     "pt"
-                                    maximumLength:  6
-                                    validator:      DoubleValidator {bottom: 6.0; top: 48.0; decimals: 2;}
-                                    onEditingFinished: {
-                                        var point = parseFloat(text)
-                                        if(point >= 6.0 && point <= 48.0)
-                                            QGroundControl.baseFontPointSize = point;
-                                    }
+                                FactTextField {
+                                    id:     baseFontEdit
+                                    width:  _editFieldWidth - (decrementButton.width * 2) - (baseFontRow.spacing * 2)
+                                    fact:   QGroundControl.settingsManager.appSettings.appFontPointSize
                                 }
                                 QGCButton {
                                     width:  height
                                     height: baseFontEdit.height
                                     text:   "+"
                                     onClicked: {
-                                        if(ScreenTools.defaultFontPointSize < 49) {
-                                            QGroundControl.baseFontPointSize = QGroundControl.baseFontPointSize + 1
+                                        if (_appFontPointSize.value < _appFontPointSize.max) {
+                                            _appFontPointSize.value = _appFontPointSize.value + 1
                                         }
                                     }
                                 }
@@ -191,45 +183,47 @@ QGCView {
                         //-- Palette Styles
                         Row {
                             spacing: ScreenTools.defaultFontPixelWidth
+                            visible: QGroundControl.settingsManager.appSettings.indoorPalette.visible
                             QGCLabel {
                                 anchors.baseline:   paletteCombo.baseline
-                                text:               qsTr("UI Style:")
+                                text:               qsTr("Color scheme:")
                                 width:              _labelWidth
                             }
-                            QGCComboBox {
-                                id:             paletteCombo
-                                width:          _editFieldWidth
-                                model:          [ qsTr("Indoor"), qsTr("Outdoor") ]
-                                currentIndex:   QGroundControl.isDarkStyle ? 0 : 1
-                                onActivated: {
-                                    if (index != -1) {
-                                        currentIndex = index
-                                        QGroundControl.isDarkStyle = index === 0 ? true : false
-                                    }
-                                }
+                            FactComboBox {
+                                id:         paletteCombo
+                                width:      _editFieldWidth
+                                fact:       QGroundControl.settingsManager.appSettings.indoorPalette
+                                indexModel: false
                             }
                         }
                         //-----------------------------------------------------------------
                         //-- Audio preferences
                         FactCheckBox {
-                            text:   qsTr("Mute all audio output")
-                            fact:   QGroundControl.settingsManager.appSettings.audioMuted
+                            text:       qsTr("Mute all audio output")
+                            fact:       _audioMuted
+                            visible:    _audioMuted.visible
+
+                            property Fact _audioMuted: QGroundControl.settingsManager.appSettings.audioMuted
                         }
                         //-----------------------------------------------------------------
                         //-- Prompt Save Log
                         FactCheckBox {
                             id:         promptSaveLog
                             text:       qsTr("Prompt to save Flight Data Log after each flight")
-                            fact:       QGroundControl.settingsManager.appSettings.promptFlightTelemetrySave
-                            visible:    !ScreenTools.isMobile
+                            fact:       _promptFlightTelemetrySave
+                            visible:    !ScreenTools.isMobile && _promptFlightTelemetrySave.visible
+
+                            property Fact _promptFlightTelemetrySave: QGroundControl.settingsManager.appSettings.promptFlightTelemetrySave
                         }
                         //-----------------------------------------------------------------
                         //-- Prompt Save even if not armed
                         FactCheckBox {
                             text:       qsTr("Prompt to save Flight Data Log even if vehicle was not armed")
-                            fact:       QGroundControl.settingsManager.appSettings.promptFlightTelemetrySaveNotArmed
-                            visible:    !ScreenTools.isMobile
+                            fact:       _promptFlightTelemetrySaveNotArmed
+                            visible:    !ScreenTools.isMobile && _promptFlightTelemetrySaveNotArmed.visible
                             enabled:    promptSaveLog.checked
+
+                            property Fact _promptFlightTelemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.promptFlightTelemetrySaveNotArmed
                         }
                         //-----------------------------------------------------------------
                         //-- Clear settings
@@ -283,11 +277,12 @@ QGCView {
                         }
                         //-----------------------------------------------------------------
                         //-- Virtual joystick settings
-                        QGCCheckBox {
+                        FactCheckBox {
                             text:       qsTr("Virtual Joystick")
-                            checked:    QGroundControl.virtualTabletJoystick
-                            onClicked:  QGroundControl.virtualTabletJoystick = checked
-                            visible:    QGroundControl.corePlugin.options.enableVirtualJoystick
+                            visible:    _virtualJoystick.visible
+                            fact:       _virtualJoystick
+
+                            property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
                         }
                         //-----------------------------------------------------------------
                         //-- Default mission item altitude
