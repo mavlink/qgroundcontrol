@@ -13,6 +13,7 @@
 ///     @author Don Gagne <don@thegagnes.com
 
 #include "MixersComponentController.h"
+#include "MixersManager.h"
 #include "QGCApplication.h"
 
 #include <QSettings>
@@ -45,7 +46,7 @@ MixersComponentController::~MixersComponentController()
 
 void MixersComponentController::getMixersCountButtonClicked(void)
 {
-
+    _vehicle->mixersManager()->requestMixerCount(0);
 }
 
 

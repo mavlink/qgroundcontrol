@@ -35,6 +35,8 @@ public:
     
     bool inProgress(void);
 
+    bool requestMixerCount(unsigned int Group);
+
     // These values are public so the unit test can set appropriate signal wait times
     static const int _ackTimeoutMilliseconds = 1000;
     static const int _maxRetryCount = 5;
@@ -49,10 +51,11 @@ private slots:
 private:
     typedef enum {
         AckNone,            ///< State machine is idle
-        AckMissionCount,    ///< MISSION_COUNT message expected
-        AckMissionItem,     ///< MISSION_ITEM expected
-        AckMissionRequest,  ///< MISSION_REQUEST is expected, or MISSION_ACK to end sequence
-        AckGuidedItem,      ///< MISSION_ACK expected in response to ArduPilot guided mode single item send
+        AckMixersCount,     ///< MIXER_DATA mixers count message expected
+        AckSubmixersCount,  ///< MIXER_DATA submixers count message expected
+        AckMixerType,       ///< MIXER_DATA mixer type value message expected
+        AckGetParameter,    ///< MIXER_DATA parameter value message expected
+        AckSetParameter,    ///< MIXER_DATA parameter value message expected
     } AckType_t;
     
 
@@ -63,7 +66,12 @@ private:
     QTimer*             _ackTimeoutTimer;
     AckType_t           _expectedAck;
     int                 _retryCount;
-    
+
+    void _startAckTimeout(AckType_t ack);
+//    bool _checkForExpectedAck(AckType_t receivedAck);
+
+//    void _handleMissionAck(const mavlink_message_t& message);
+
 //    bool        _readTransactionInProgress;
 //    bool        _writeTransactionInProgress;
 //    QList<int>  _itemIndicesToRead;     ///< List of mission items which still need to be requested from vehicle

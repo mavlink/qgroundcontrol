@@ -44,11 +44,33 @@ void MixersManager::_ackTimeout(void)
 {
 }
 
-//void MissionManager::_startAckTimeout(AckType_t ack)
-//{
-//    _expectedAck = ack;
-//    _ackTimeoutTimer->start();
-//}
+bool MixersManager::requestMixerCount(unsigned int Group){
+    mavlink_message_t       messageOut;
+    mavlink_command_long_t  command;
+
+    command.command = 4100; //MAV_CMD_REQUEST_MIXER_DATA;
+    command.param1 = Group; //Group
+    command.param2 = 0; //Mixer
+    command.param3 = 0; //SubMixer
+    command.param4 = 0; //Parameter
+    command.param5 = MIXER_DATA_TYPE_MIXER_COUNT; //Type
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_command_long_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &command);
+
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    return true;
+}
+
+void MixersManager::_startAckTimeout(AckType_t ack)
+{
+    _expectedAck = ack;
+    _ackTimeoutTimer->start();
+}
 
 ///// Checks the received ack against the expected ack. If they match the ack timeout timer will be stopped.
 ///// @return true: received ack matches expected ack
@@ -100,8 +122,30 @@ void MixersManager::_ackTimeout(void)
 void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
     switch (message.msgid) {
-        case MAVLINK_MSG_ID_MISSION_COUNT:
+        case MAVLINK_MSG_ID_MIXER_DATA: {
+            qCDebug(MixersManagerLog) << "Received mixer data";
+            mavlink_mixer_data_t mixerData;
+
+//            if (!_checkForExpectedAck(AckMissionCount)) {
+//                return;
+//            }
+
+            _retryCount = 0;
+
+            mavlink_msg_mixer_data_decode(&message, &mixerData);
+
+            switch(mixerData.data_type){
+            case MIXER_DATA_TYPE_MIXER_COUNT:
+                qCDebug(MixersManagerLog) << "Received mixer count";
+                break;
+            default:
+                break;
             break;
+           }
+        }
+        default:
+            break;
+    }
 
 //        case MAVLINK_MSG_ID_MISSION_ITEM:
 //            _handleMissionItem(message);
@@ -122,5 +166,5 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 //        case MAVLINK_MSG_ID_MISSION_CURRENT:
 //            _handleMissionCurrent(message);
 //            break;
-    }
+
 }
