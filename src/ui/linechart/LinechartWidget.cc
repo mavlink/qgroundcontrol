@@ -40,6 +40,7 @@
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
 
 LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent),
     sysid(systemid),
@@ -116,7 +117,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     createLayout();
 
     // And make sure we're listening for future style changes
-    connect(qgcApp(), &QGCApplication::styleChanged, this, &LinechartWidget::recolor);
+    connect(qgcApp()->toolbox()->settingsManager()->appSettings()->indoorPalette(), &Fact::rawValueChanged, this, &LinechartWidget::recolor);
 
     updateTimer->setInterval(updateInterval);
     connect(updateTimer, &QTimer::timeout, this, &LinechartWidget::refresh);
@@ -637,7 +638,7 @@ void LinechartWidget::removeCurve(QString curve)
 
 void LinechartWidget::recolor()
 {
-    activePlot->styleChanged(qgcApp()->styleIsDark());
+    activePlot->styleChanged(qgcApp()->toolbox()->settingsManager()->appSettings()->indoorPalette()->rawValue().toBool());
     foreach (const QString &key, colorIcons.keys())
     {
         QWidget* colorIcon = colorIcons.value(key, 0);

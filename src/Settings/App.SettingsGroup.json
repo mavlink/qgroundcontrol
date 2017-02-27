@@ -82,5 +82,30 @@
     "longDescription":  "If this option is enabled all audio output will be muted.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "VirtualTabletJoystick",
+    "shortDescription": "Show virtual joystick",
+    "longDescription":  "If this option is enabled the virtual joystick will be shown on the Fly view.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "BaseDeviceFontPointSize",
+    "shortDescription": "QGroundControl font size",
+    "longDescription":  "The point size for the default font used in QGroundControl.",
+    "type":             "uint32",
+    "units":            "pt",
+    "min":              6,
+    "max":              48,
+    "defaultValue":     0
+},
+{
+    "name":             "StyleIsDark",
+    "shortDescription": "QGroundControl color scheme",
+    "longDescription":  "The color scheme for the QGroundControl user interface.",
+    "type":             "uint32",
+    "enumStrings":      "Indoor,Outdoor",
+    "enumValues":       "1,0"
 }
 ]
