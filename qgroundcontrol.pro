@@ -287,7 +287,7 @@ INCLUDEPATH += \
     src/Joystick \
     src/MissionEditor \
     src/MissionManager \
-    src/MixerManager \
+    src/MixersManager \
     src/PositionManager \
     src/QmlControls \
     src/QtLocationPlugin \

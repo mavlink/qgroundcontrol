@@ -62,7 +62,7 @@
 #include "JoystickManager.h"
 #include "QmlObjectListModel.h"
 #include "MissionManager.h"
-#include "MixersManager/MixersManager.h"
+#include "MixersManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "FlightMapSettings.h"
 #include "CoordinateVector.h"
