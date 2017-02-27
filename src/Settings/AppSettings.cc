@@ -46,16 +46,8 @@ AppSettings::AppSettings(QObject* parent)
     , _indoorPaletteFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
-
-    // Set up correct default for palette setting
-    QVariant outdoorPalette;
-#if defined (__mobile__)
-    outdoorPalette = 0;
-#else
-    outdoorPalette = 1;
-#endif
-    _nameToMetaDataMap[indoorPaletteName]->setRawDefaultValue(outdoorPalette);
+    qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");        
+    QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 }
 
 Fact* AppSettings::offlineEditingFirmwareType(void)
@@ -177,5 +169,5 @@ Fact* AppSettings::indoorPalette(void)
 void AppSettings::_indoorPaletteChanged(void)
 {
     qgcApp()->_loadCurrentStyleSheet();
-    QGCPalette::setGlobalTheme(_indoorPaletteFact->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
+    QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 }

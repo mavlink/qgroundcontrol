@@ -11,6 +11,7 @@
 #include "QGCOptions.h"
 #include "QGCSettings.h"
 #include "FactMetaData.h"
+#include "SettingsManager.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -164,6 +165,16 @@ bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
 
 bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
 {
-    Q_UNUSED(metaData); // No mods to standard meta data
+    if (metaData.name() == AppSettings::indoorPaletteName) {
+        // Set up correct default for palette setting
+        QVariant outdoorPalette;
+#if defined (__mobile__)
+        outdoorPalette = 0;
+#else
+        outdoorPalette = 1;
+#endif
+        metaData.setRawDefaultValue(outdoorPalette);
+    }
+
     return true;        // Show setting in ui
 }
