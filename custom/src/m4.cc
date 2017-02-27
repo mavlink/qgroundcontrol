@@ -17,6 +17,7 @@
 //-- I don't like having to include these two. There should be more abstraction so we
 //   we don't need this deep knowledge.
 #include "QGCApplication.h"
+#include "SettingsManager.h"
 
 #include "typhoonh.h"
 #include "m4.h"
@@ -96,6 +97,13 @@ void
 TyphoonHQuickInterface::_cameraModeChanged()
 {
     emit cameraModeChanged();
+    if(_pHandler) {
+        if(_pHandler->cameraMode() == TyphoonHQuickInterface::CAMERA_MODE_PHOTO) {
+            qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(1.333333);
+        } else if(_pHandler->cameraMode() == TyphoonHQuickInterface::CAMERA_MODE_VIDEO) {
+            qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(1.777777);
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------

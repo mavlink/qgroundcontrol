@@ -205,6 +205,9 @@ bool TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == VideoSettings::rtspUrlName) {
         metaData.setRawDefaultValue(QStringLiteral("rtsp://192.168.42.1:554/live"));
         return false;
+    } else if (metaData.name() == VideoSettings::videoAspectRatioName) {
+        metaData.setRawDefaultValue(1.777777);
+        return false;
     }
 
     return true;
