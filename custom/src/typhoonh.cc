@@ -97,6 +97,7 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
     , _pGeneral(NULL)
     , _pOfflineMaps(NULL)
     , _pMAVLink(NULL)
+    , _pMockLink(NULL)
     , _pHandler(NULL)
 {
     _pOptions = new TyphoonHOptions(this);
@@ -127,6 +128,8 @@ TyphoonHPlugin::~TyphoonHPlugin()
         delete _pOfflineMaps;
     if(_pMAVLink)
         delete _pMAVLink;
+    if(_pMockLink)
+        delete _pMockLink;
     if(_pHandler)
         delete _pHandler;
 }
@@ -168,6 +171,12 @@ TyphoonHPlugin::settings()
             QUrl::fromUserInput("qrc:/qml/MavlinkSettings.qml"),
             QUrl::fromUserInput("qrc:/res/waves.svg"));
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
+#ifdef QT_DEBUG
+        _pMockLink = new QGCSettings(tr("MockLink"),
+            QUrl::fromUserInput("qrc:/qml/MockLink.qml"),
+            QUrl::fromUserInput("qrc:/res/gear-white.svg"));
+        _settingsList.append(QVariant::fromValue((QGCSettings*)_pMockLink));
+#endif
     }
     return _settingsList;
 }
