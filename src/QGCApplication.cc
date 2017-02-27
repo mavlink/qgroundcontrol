@@ -79,6 +79,7 @@
 #include "MissionCommandTree.h"
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
+#include "SettingsManager.h"
 
 #ifndef NO_SERIAL_LINK
     #include "SerialLink.h"
@@ -115,7 +116,6 @@ const char* QGCApplication::telemetryFileExtension =     "tlog";
 
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
-const char* QGCApplication::_styleKey                       = "StyleIsDark";
 const char* QGCApplication::_lastKnownHomePositionLatKey    = "LastKnownHomePositionLat";
 const char* QGCApplication::_lastKnownHomePositionLonKey    = "LastKnownHomePositionLon";
 const char* QGCApplication::_lastKnownHomePositionAltKey    = "LastKnownHomePositionAlt";
@@ -166,11 +166,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     : QApplication(argc, argv)
 #endif
     , _runningUnitTests(unitTesting)
-#if defined (__mobile__)
-    , _styleIsDark(false)
-#else
-    , _styleIsDark(true)
-#endif
     , _fakeMobile(false)
     , _settingsUpgraded(false)
 #ifdef QT_DEBUG
@@ -400,8 +395,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
 {
     QSettings settings;
 
-    _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
-    _loadCurrentStyle();
+    _loadCurrentStyleSheet();
 
     // Exit main application when last window is closed
     connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
@@ -527,17 +521,7 @@ void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
 }
 #endif
 
-void QGCApplication::setStyle(bool styleIsDark)
-{
-    QSettings settings;
-
-    settings.setValue(_styleKey, styleIsDark);
-    _styleIsDark = styleIsDark;
-    _loadCurrentStyle();
-    emit styleChanged(_styleIsDark);
-}
-
-void QGCApplication::_loadCurrentStyle()
+void QGCApplication::_loadCurrentStyleSheet(void)
 {
 #ifndef __mobile__
     bool success = true;
@@ -553,7 +537,7 @@ void QGCApplication::_loadCurrentStyle()
         success = false;
     }
 
-    if (success && !_styleIsDark) {
+    if (success && !_toolbox->settingsManager()->appSettings()->indoorPalette()->rawValue().toBool()) {
         // Load the slave light stylesheet.
         QFile styleSheet(_lightStyleFile);
         if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -571,8 +555,6 @@ void QGCApplication::_loadCurrentStyle()
         setStyle("plastique");
     }
 #endif
-
-    QGCPalette::setGlobalTheme(_styleIsDark ? QGCPalette::Dark : QGCPalette::Light);
 }
 
 void QGCApplication::reportMissingParameter(int componentId, const QString& name)
