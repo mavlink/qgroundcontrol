@@ -67,10 +67,10 @@ Item {
        I've disabled (in release builds) until I figure out why. Changes require a restart for now.
     */
     Connections {
-        target: QGroundControl
-        onBaseFontPointSizeChanged: {
+        target: QGroundControl.settingsManager.appSettings.appFontPointSize
+        onValueChanged: {
             if(ScreenToolsController.isDebug)
-                _setBasePointSize(QGroundControl.baseFontPointSize)
+                _setBasePointSize(QGroundControl.settingsManager.appSettings.appFontPointSize.value)
         }
     }
 
@@ -108,12 +108,10 @@ Item {
         property real   fontWidth:    contentWidth
         property real   fontHeight:   contentHeight
         Component.onCompleted: {
-            var baseSize = QGroundControl.corePlugin.options.defaultFontPointSize
-            if(baseSize == 0.0) {
-                baseSize = QGroundControl.baseFontPointSize;
-            }
+            var _appFontPointSizeFact = QGroundControl.settingsManager.appSettings.appFontPointSize
+            var baseSize = _appFontPointSizeFact.value
             //-- If this is the first time (not saved in settings)
-            if(baseSize < 6 || baseSize > 48) {
+            if(baseSize < _appFontPointSizeFact.min || baseSize > _appFontPointSizeFact.max) {
                 //-- Init base size base on the platform
                 if(ScreenToolsController.isMobile) {
                     //-- Check iOS really tiny screens (iPhone 4s/5/5s)
@@ -142,7 +140,7 @@ Item {
                     else
                         baseSize = _defaultFont.font.pointSize;
                 }
-                QGroundControl.baseFontPointSize = baseSize
+                _appFontPointSizeFact.value = baseSize
                 //-- Release build doesn't get signal
                 if(!ScreenToolsController.isDebug)
                     _screenTools._setBasePointSize(baseSize);

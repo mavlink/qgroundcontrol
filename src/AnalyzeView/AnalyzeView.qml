@@ -58,8 +58,8 @@ Rectangle {
 
             // I don't know why this does not work
             Connections {
-                target: QGroundControl
-                onBaseFontPointSizeChanged: buttonColumn.reflowWidths()
+                target:         QGroundControl.settingsManager.appSettings.appFontPointSize
+                onValueChanged: buttonColumn.reflowWidths()
             }
 
             function reflowWidths() {

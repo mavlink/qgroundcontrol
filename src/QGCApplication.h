@@ -78,12 +78,6 @@ public:
     /// @brief Returns truee if unit test are being run
     bool runningUnitTests(void) { return _runningUnitTests; }
 
-    /// @return true: dark ui style, false: light ui style
-    bool styleIsDark(void) { return _styleIsDark; }
-
-    /// Set the current UI style
-    void setStyle(bool styleIsDark);
-
     /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
     /// multiple times.
     void reportMissingParameter(int componentId, const QString& name);
@@ -127,10 +121,6 @@ public slots:
 #endif
 
 signals:
-    /// Signals that the style has changed
-    ///     @param darkStyle true: dark style, false: light style
-    void styleChanged(bool darkStyle);
-
     /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
     /// on the MAVLinkProtocol thread;
     void checkForLostLogFiles(void);
@@ -150,6 +140,8 @@ public:
     ///         unit tests. Although public should only be called by main.
     bool _initForUnitTests(void);
 
+    void _loadCurrentStyleSheet(void);
+
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
 
 public:
@@ -162,8 +154,7 @@ private slots:
     void _missingParamsDisplay(void);
 
 private:
-    void        _loadCurrentStyle   ();
-    QObject*    _rootQmlObject      ();
+    QObject* _rootQmlObject(void);
 
 #ifdef __mobile__
     QQmlApplicationEngine* _qmlAppEngine;
@@ -173,7 +164,6 @@ private:
 
     static const char*  _darkStyleFile;
     static const char*  _lightStyleFile;
-    bool                _styleIsDark;                                       ///< true: dark style, false: light style
     static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
     QTimer              _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
     QStringList         _missingParams;                                     ///< List of missing facts to be displayed
@@ -192,7 +182,6 @@ private:
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
-    static const char* _styleKey;                       ///< Settings key for UI style
     static const char* _lastKnownHomePositionLatKey;
     static const char* _lastKnownHomePositionLonKey;
     static const char* _lastKnownHomePositionAltKey;
