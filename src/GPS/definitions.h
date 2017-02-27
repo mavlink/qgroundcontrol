@@ -80,10 +80,14 @@ static inline gps_abstime gps_absolute_time() {
 
 //timespec is UNIX-specific
 #ifdef _WIN32
+#if _MSC_VER < 1900
 struct timespec
 {
     time_t tv_sec;
     long tv_nsec;
 };
+#else
+#include <time.h>
+#endif
 #endif
 
