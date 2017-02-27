@@ -230,7 +230,7 @@ void FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts(void)
         QPointF originPoint(east, north);
         north += _loiterToLandDistanceFact.rawValue().toDouble();
         QPointF loiterPoint(east, north);
-        QPointF rotatedLoiterPoint = _rotatePoint(loiterPoint, originPoint, _landingHeadingFact.rawValue().toDouble());
+        QPointF rotatedLoiterPoint = _rotatePoint(loiterPoint, originPoint, -_landingHeadingFact.rawValue().toDouble());
 
         convertNedToGeo(rotatedLoiterPoint.y(), rotatedLoiterPoint.x(), down, tangentOrigin, &_loiterCoordinate);
 
@@ -276,7 +276,11 @@ void FixedWingLandingComplexItem::_recalcFactsFromCoords(void)
         QPointF vector(eastLoiter - eastLand, northLoiter - northLand);
         double radians = atan2(vector.y(), vector.x());
         double degrees = qRadiansToDegrees(radians);
-        degrees -= 90; // north up
+        // Change angle to north up = 0 degrees
+        degrees -= 90;
+        // Reverse the angle direction to go from mathematic angle (counter-clockwise) to compass heading (clockwise)
+        degrees *= -1.0;
+        // Bring with 0-360 range
         if (degrees < 0.0) {
             degrees += 360.0;
         } else if (degrees > 360.0) {

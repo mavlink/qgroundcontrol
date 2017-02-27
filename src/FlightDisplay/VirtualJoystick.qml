@@ -21,7 +21,7 @@ Item {
 
     Timer {
         interval:   40  // 25Hz, same as real joystick rate
-        running:    QGroundControl.virtualTabletJoystick && _activeVehicle
+        running:    QGroundControl.settingsManager.appSettings.virtualJoystick.value && _activeVehicle
         repeat:     true
         onTriggered: {
             if (_activeVehicle) {
