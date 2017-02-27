@@ -53,10 +53,7 @@ Rectangle {
                     anchors.top:    parent.top
                     spacing:        _margin
 
-                    QGCLabel {
-                        text: qsTr("Planned Home Position")
-                        color: qgcPal.buttonHighlight
-                    }
+                    QGCLabel { text: qsTr("Planned Home Position") }
 
                     Rectangle {
                         anchors.left:   parent.left
@@ -96,7 +93,6 @@ Rectangle {
 
                     QGCLabel {
                         text:           qsTr("Vehicle Info")
-                        color:          qgcPal.buttonHighlight
                         visible:        _multipleFirmware
                     }
 
