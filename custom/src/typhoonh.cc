@@ -54,13 +54,7 @@ class TyphoonHOptions : public QGCOptions
 public:
     TyphoonHOptions(QObject* parent = NULL);
     bool        combineSettingsAndSetup     () { return true;  }
-    bool        enableVirtualJoystick       () { return false; }
     double      toolbarHeightMultiplier     () { return 1.25; }
-#if !defined(__macos__)
-    double      defaultFontPointSize        () { return 14.0; }
-#else
-    double      defaultFontPointSize        () { return 13.0; }
-#endif
     bool        enablePlanViewSelector      () { return false; }
     CustomInstrumentWidget* instrumentWidget();
 private:
@@ -220,6 +214,21 @@ bool TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         return false;
     } else if (metaData.name() == VideoSettings::videoAspectRatioName) {
         metaData.setRawDefaultValue(1.777777);
+        return false;
+    } else if (metaData.name() == AppSettings::virtualJoystickName) {
+        metaData.setRawDefaultValue(false);
+        return false;
+    } else if (metaData.name() == AppSettings::indoorPaletteName) {
+        metaData.setRawDefaultValue(0);
+        return false;
+    } else if (metaData.name() == AppSettings::appFontPointSizeName) {
+        int defaultFontPointSize;
+#if !defined(__macos__)
+        defaultFontPointSize = 14.0;
+#else
+        defaultFontPointSize = 13.0;
+#endif
+        metaData.setRawDefaultValue(defaultFontPointSize);
         return false;
     }
 
