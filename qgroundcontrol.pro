@@ -287,6 +287,7 @@ INCLUDEPATH += \
     src/Joystick \
     src/MissionEditor \
     src/MissionManager \
+    src/MixerManager \
     src/PositionManager \
     src/QmlControls \
     src/QtLocationPlugin \
@@ -340,13 +341,11 @@ HEADERS += \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
     src/api/QGCSettings.h \
-    src/MixersManager/MixersManager.h
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
-    src/MixersManager/MixersManager.cc
 
 #
 # Unit Test specific configuration goes here (requires full debug build with all plugins)
@@ -450,6 +449,7 @@ HEADERS += \
     src/MissionManager/SimpleMissionItem.h \
     src/MissionManager/SurveyMissionItem.h \
     src/MissionManager/VisualMissionItem.h \
+    src/MixersManager/MixersManager.h \
     src/PositionManager/PositionManager.h \
     src/PositionManager/SimulatedPosition.h \
     src/QGC.h \
@@ -619,6 +619,7 @@ SOURCES += \
     src/MissionManager/SimpleMissionItem.cc \
     src/MissionManager/SurveyMissionItem.cc \
     src/MissionManager/VisualMissionItem.cc \
+    src/MixersManager/MixersManager.cc \
     src/PositionManager/PositionManager.cpp \
     src/PositionManager/SimulatedPosition.cc \
     src/QGC.cc \
@@ -753,6 +754,7 @@ HEADERS+= \
     src/AutoPilotPlugins/Common/ESP8266Component.h \
     src/AutoPilotPlugins/Common/ESP8266ComponentController.h \
     src/AutoPilotPlugins/Common/MixersComponent.h \
+    src/AutoPilotPlugins/Common/MixersComponentController.h \
     src/AutoPilotPlugins/Common/MotorComponent.h \
     src/AutoPilotPlugins/Common/RadioComponentController.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
@@ -775,6 +777,7 @@ SOURCES += \
     src/AutoPilotPlugins/Common/ESP8266Component.cc \
     src/AutoPilotPlugins/Common/ESP8266ComponentController.cc \
     src/AutoPilotPlugins/Common/MixersComponent.cc \
+    src/AutoPilotPlugins/Common/MixersComponentController.cc \
     src/AutoPilotPlugins/Common/MotorComponent.cc \
     src/AutoPilotPlugins/Common/RadioComponentController.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \

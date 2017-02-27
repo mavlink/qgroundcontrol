@@ -46,6 +46,7 @@
 #include "QGCLoggingCategory.h"
 #include "ViewWidgetController.h"
 #include "ParameterEditorController.h"
+#include "MixersComponentController.h"
 #include "CustomCommandWidgetController.h"
 #include "ESP8266ComponentController.h"
 #include "ScreenToolsController.h"
@@ -61,6 +62,7 @@
 #include "JoystickManager.h"
 #include "QmlObjectListModel.h"
 #include "MissionManager.h"
+#include "MixersManager/MixersManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "FlightMapSettings.h"
 #include "CoordinateVector.h"
@@ -382,6 +384,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<QGCMapPolygon>       ("QGroundControl.FlightMap",            1, 0, "QGCMapPolygon",          "Reference only");
 
     qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    qmlRegisterType<MixersComponentController>          ("QGroundControl.Controllers", 1, 0, "MixersComponentController");
     qmlRegisterType<ESP8266ComponentController>         ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     qmlRegisterType<MissionController>                  ("QGroundControl.Controllers", 1, 0, "MissionController");
