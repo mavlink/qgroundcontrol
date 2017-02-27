@@ -23,35 +23,31 @@ import QGroundControl.Controllers   1.0
 
 Item {
     id: root
+    property double _ar: QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
         color:          Qt.rgba(0,0,0,0.75)
         visible:        !QGroundControl.videoManager.videoRunning
         QGCLabel {
-            text:               qsTr("NO VIDEO")
+            text:               qsTr("WAITING FOR VIDEO")
             font.family:        ScreenTools.demiboldFontFamily
             color:              "white"
             font.pointSize:     _mainIsMap ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
             anchors.centerIn:   parent
         }
     }
-    QGCVideoBackground {
+    Rectangle {
         anchors.fill:   parent
-        display:        QGroundControl.videoManager.videoSurface
-        receiver:       QGroundControl.videoManager.videoReceiver
+        color:          "black"
         visible:        QGroundControl.videoManager.videoRunning
-        /* TODO: Come up with a way to make this an option
-        QGCAttitudeHUD {
-            id:                 attitudeHUD
-            visible:            !_mainIsMap
-            rollAngle:          _activeVehicle ? _activeVehicle.roll.value  : 0
-            pitchAngle:         _activeVehicle ? _activeVehicle.pitch.value : 0
-            width:              ScreenTools.defaultFontPixelHeight * (30)
-            height:             ScreenTools.defaultFontPixelHeight * (30)
-            active:             QGroundControl.multiVehicleManager.activeVehicleAvailable
-            z:                  QGroundControl.zOrderWidgets
+        QGCVideoBackground {
+            height:         parent.height
+            width:          _ar != 0.0 ? height * _ar : parent.width
+            anchors.centerIn: parent
+            display:        QGroundControl.videoManager.videoSurface
+            receiver:       QGroundControl.videoManager.videoReceiver
+            visible:        QGroundControl.videoManager.videoRunning
         }
-        */
     }
 }

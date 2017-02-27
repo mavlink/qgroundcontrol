@@ -27,5 +27,13 @@
     "longDescription":  "Directory to save videos to.",
     "type":             "string",
     "defaultValue":     ""
+},
+{
+    "name":             "VideoAspectRatio",
+    "shortDescription": "Video Aspect Ratio",
+    "longDescription":  "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
+    "type":             "float",
+    "decimalPlaces":    6,
+    "defaultValue":     1.777777
 }
 ]
