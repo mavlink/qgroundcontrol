@@ -29,6 +29,9 @@ public:
     Q_PROPERTY(Fact* promptFlightTelemetrySave          READ promptFlightTelemetrySave          CONSTANT)
     Q_PROPERTY(Fact* promptFlightTelemetrySaveNotArmed  READ promptFlightTelemetrySaveNotArmed  CONSTANT)
     Q_PROPERTY(Fact* audioMuted                         READ audioMuted                         CONSTANT)
+    Q_PROPERTY(Fact* virtualJoystick                    READ virtualJoystick                    CONSTANT)
+    Q_PROPERTY(Fact* appFontPointSize                   READ appFontPointSize                   CONSTANT)
+    Q_PROPERTY(Fact* indoorPalette                      READ indoorPalette                      CONSTANT)
 
     Fact* offlineEditingFirmwareType        (void);
     Fact* offlineEditingVehicleType         (void);
@@ -39,7 +42,10 @@ public:
     Fact* missionAutoLoadDir                (void);
     Fact* promptFlightTelemetrySave         (void);
     Fact* promptFlightTelemetrySaveNotArmed (void);
-    Fact* audioMuted (void);
+    Fact* audioMuted                        (void);
+    Fact* virtualJoystick                   (void);
+    Fact* appFontPointSize                  (void);
+    Fact* indoorPalette                     (void);
 
     static const char* appSettingsGroupName;
 
@@ -53,6 +59,12 @@ public:
     static const char* promptFlightTelemetrySaveName;
     static const char* promptFlightTelemetrySaveNotArmedName;
     static const char* audioMutedName;
+    static const char* virtualJoystickName;
+    static const char* appFontPointSizeName;
+    static const char* indoorPaletteName;
+
+private slots:
+    void _indoorPaletteChanged(void);
 
 private:
     SettingsFact* _offlineEditingFirmwareTypeFact;
@@ -62,9 +74,12 @@ private:
     SettingsFact* _batteryPercentRemainingAnnounceFact;
     SettingsFact* _defaultMissionItemAltitudeFact;
     SettingsFact* _missionAutoLoadDirFact;
-    SettingsFact* _promptFlightTelemetrySave;
-    SettingsFact* _promptFlightTelemetrySaveNotArmed;
-    SettingsFact* _audioMuted;
+    SettingsFact* _promptFlightTelemetrySaveFact;
+    SettingsFact* _promptFlightTelemetrySaveNotArmedFact;
+    SettingsFact* _audioMutedFact;
+    SettingsFact* _virtualJoystickFact;
+    SettingsFact* _appFontPointSizeFact;
+    SettingsFact* _indoorPaletteFact;
 };
 
 #endif

@@ -54,11 +54,6 @@ public:
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
     Q_PROPERTY(qreal                zOrderMapItems      READ zOrderMapItems         CONSTANT) ///< z order value for map items, for example: mission item indicators
 
-    // Various QGC settings exposed to Qml
-    Q_PROPERTY(bool     isDarkStyle             READ isDarkStyle                WRITE setIsDarkStyle                NOTIFY isDarkStyleChanged)              // TODO: Should be in ScreenTools?
-    Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
-    Q_PROPERTY(qreal    baseFontPointSize       READ baseFontPointSize          WRITE setBaseFontPointSize          NOTIFY baseFontPointSizeChanged)
-
     //-------------------------------------------------------------------------
     // MavLink Protocol
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
@@ -142,20 +137,12 @@ public:
     qreal                   zOrderWidgets       ()  { return 100; }
     qreal                   zOrderMapItems      ()  { return 50; }
 
-    bool    isDarkStyle             () { return _app->styleIsDark(); }
-    bool    virtualTabletJoystick   () { return _virtualTabletJoystick; }
-    qreal   baseFontPointSize       () { return _baseFontPointSize; }
-
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
 
     QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
 
     int     supportedFirmwareCount      ();
-
-    void    setIsDarkStyle              (bool dark);
-    void    setVirtualTabletJoystick    (bool enabled);
-    void    setBaseFontPointSize        (qreal size);
 
     void    setIsVersionCheckEnabled    (bool enable);
     void    setMavlinkSystemID          (int  id);
@@ -170,9 +157,6 @@ public:
     virtual void setToolbox(QGCToolbox* toolbox);
 
 signals:
-    void isDarkStyleChanged             (bool dark);
-    void virtualTabletJoystickChanged   (bool enabled);
-    void baseFontPointSizeChanged       (qreal size);
     void isMultiplexingEnabledChanged   (bool enabled);
     void isVersionCheckEnabledChanged   (bool enabled);
     void mavlinkSystemIDChanged         (int id);
@@ -192,13 +176,8 @@ private:
     FirmwarePluginManager*  _firmwarePluginManager;
     SettingsManager*        _settingsManager;
 
-    bool                    _virtualTabletJoystick;
-    qreal                   _baseFontPointSize;
     QGeoCoordinate          _flightMapPosition;
     double                  _flightMapZoom;
-
-    static const char*  _virtualTabletJoystickKey;
-    static const char*  _baseFontPointSizeKey;
 };
 
 #endif
