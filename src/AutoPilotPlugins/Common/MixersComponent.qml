@@ -35,7 +35,7 @@ SetupPage {
 
             MixersComponentController {
                 id:         mixers
-                factPanel:  panel
+                factPanel:  tuningPage.viewPanel
             }
 
             QGCPalette { id: palette; colorGroupEnabled: true }
@@ -57,7 +57,11 @@ SetupPage {
 //id:getMixersCountButton
             QGCButton {
                 id:getMixersCountButton
-                text: qsTr("Request mixer count")}
+                text: qsTr("Request mixer count")
+                onClicked: {
+                    mixers.getMixersCountButtonClicked()
+                }
+            }
             QGCButton { text: qsTr("Request submixer count")}
             QGCButton { text: qsTr("Request mixer type")}
             QGCButton { text: qsTr("Request parameter")}
