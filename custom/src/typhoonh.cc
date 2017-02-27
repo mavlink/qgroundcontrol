@@ -97,7 +97,9 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
     , _pGeneral(NULL)
     , _pOfflineMaps(NULL)
     , _pMAVLink(NULL)
+#if defined (QT_DEBUG)
     , _pMockLink(NULL)
+#endif
     , _pHandler(NULL)
 {
     _pOptions = new TyphoonHOptions(this);
@@ -128,8 +130,10 @@ TyphoonHPlugin::~TyphoonHPlugin()
         delete _pOfflineMaps;
     if(_pMAVLink)
         delete _pMAVLink;
+#if defined (QT_DEBUG)
     if(_pMockLink)
         delete _pMockLink;
+#endif
     if(_pHandler)
         delete _pHandler;
 }
