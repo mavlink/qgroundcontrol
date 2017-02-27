@@ -48,12 +48,13 @@ Rectangle {
     }
 
     MouseArea {
-        x:          -_root.x
-        y:          -_root.y
-        width:      _root.parent.width
-        height:     _root.parent.height
-        visible:    dropPanel.visible
-        onClicked:  dropPanel.hide()
+        x:                  -_root.x
+        y:                  -_root.y
+        width:              _root.parent.width
+        height:             _root.parent.height
+        visible:            dropPanel.visible
+        onClicked:          dropPanel.hide()
+        preventStealing:    true
     }
 
     Column {
@@ -144,11 +145,15 @@ Rectangle {
                     }
 
                     MouseArea {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        anchors.top:    parent.top
-                        height:         parent.height + (_showOptionalElements? buttonLabel.height + buttonColumn.spacing : 0)
-                        visible:        _root.buttonEnabled ? _root.buttonEnabled[index] : true
+                        // Size of mouse area is expanded to make touch easier
+                        anchors.leftMargin:     buttonStripColumn.margins
+                        anchors.rightMargin:    buttonStripColumn.margins
+                        anchors.left:           parent.left
+                        anchors.right:          parent.right
+                        anchors.top:            parent.top
+                        height:                 parent.height + (_showOptionalElements? buttonLabel.height + buttonColumn.spacing : 0)
+                        visible:                _root.buttonEnabled ? _root.buttonEnabled[index] : true
+                        preventStealing:        true
 
                         onClicked: {
                             if (modelData.dropPanelComponent === undefined) {
