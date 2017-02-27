@@ -286,7 +286,7 @@ Rectangle {
             }
         }
 
-        QGCLabel { text: qsTr("Camera"); color: qgcPal.buttonHighlight; visible: gridTypeCombo.currentIndex !== _gridTypeManual}
+        QGCLabel { text: qsTr("Camera"); visible: gridTypeCombo.currentIndex !== _gridTypeManual}
 
         Rectangle {
             anchors.left:   parent.left
@@ -420,7 +420,7 @@ Rectangle {
                 }
             }
 
-            QGCLabel { text: qsTr("Grid"); color: qgcPal.buttonHighlight;}
+            QGCLabel { text: qsTr("Grid") }
 
             Rectangle {
                 anchors.left:   parent.left
@@ -523,7 +523,7 @@ Rectangle {
             spacing:        _margin
             visible:        gridTypeCombo.currentIndex == _gridTypeManual
 
-            QGCLabel { text: qsTr("Grid"); color: qgcPal.buttonHighlight;}
+            QGCLabel { text: qsTr("Grid") }
 
             Rectangle {
                 anchors.left:   parent.left
@@ -547,7 +547,7 @@ Rectangle {
                 onClicked:      missionItem.gridAltitudeRelative = checked
             }
 
-            QGCLabel { text: qsTr("Camera"); color: qgcPal.buttonHighlight;}
+            QGCLabel { text: qsTr("Camera") }
 
             Rectangle {
                 anchors.left:   parent.left
@@ -578,7 +578,7 @@ Rectangle {
             }
         }
 
-        QGCLabel { text: qsTr("Polygon"); color: qgcPal.buttonHighlight;}
+        QGCLabel { text: qsTr("Polygon") }
 
         Rectangle {
             anchors.left:   parent.left
@@ -621,7 +621,7 @@ Rectangle {
             }
         }
 
-        QGCLabel { text: qsTr("Statistics"); color: qgcPal.buttonHighlight;}
+        QGCLabel { text: qsTr("Statistics") }
 
         Rectangle {
             anchors.left:   parent.left
