@@ -16,7 +16,7 @@
 #include "UAS.h"
 #include "JoystickManager.h"
 #include "MissionManager.h"
-#include "MixersManager/MixersManager.h"
+#include "MixersManager.h"
 #include "MissionController.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
