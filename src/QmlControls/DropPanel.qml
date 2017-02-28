@@ -47,6 +47,7 @@ Item {
     property alias  _dropDownComponent: dropDownLoader.sourceComponent
     property real   _viewportMaxTop:    0
     property real   _viewportMaxBottom: parent.parent.height - parent.y
+    property var    _dropPanelCancel
 
     function show(panelEdgeTopPoint, panelEdgeHeight, panelComponent) {
         _dropEdgeTopPoint = panelEdgeTopPoint
@@ -54,9 +55,13 @@ Item {
         _dropDownComponent = panelComponent
         _calcPositions()
         visible = true
+        _dropPanelCancel = dropPanelCancelComponent.createObject(toolStrip.parent)
     }
 
     function hide() {
+        if (_dropPanelCancel) {
+            _dropPanelCancel.destroy()
+        }
         if (visible) {
             visible = false
             _dropDownComponent = undefined
@@ -100,6 +105,17 @@ Item {
     } // function - _calcPositions
 
     QGCPalette { id: qgcPal }
+
+    Component {
+        // Overlay which is used to cancel the panel when the user clicks away
+        id: dropPanelCancelComponent
+
+        MouseArea {
+            anchors.fill:   parent
+            z:              toolStrip.z - 1
+            onClicked:      dropPanel.hide()
+        }
+    }
 
     Item {
         id: dropDownItem
