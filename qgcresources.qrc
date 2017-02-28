@@ -161,7 +161,6 @@
         <file alias="APM/BrandImage">src/FirmwarePlugin/APM/APMBrandImage.png</file>
         <file alias="APM/BrandImageSub">src/FirmwarePlugin/APM/APMBrandImageSub.png</file>
         <file alias="PX4/BrandImage">src/FirmwarePlugin/PX4/PX4BrandImage.png</file>
-        <file alias="PX4/BrandImage">src/FirmwarePlugin/PX4/PX4BrandImage.png</file>
     </qresource>
     <qresource prefix="/res">
         <file alias="AntennaRC">resources/Antenna_RC.svg</file>
