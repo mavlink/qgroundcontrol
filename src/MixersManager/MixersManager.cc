@@ -48,7 +48,7 @@ bool MixersManager::requestMixerCount(unsigned int Group){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
-    command.command = 4100; //MAV_CMD_REQUEST_MIXER_DATA;
+    command.command = MAV_CMD_REQUEST_MIXER_DATA; //4100; //;
     command.param1 = Group; //Group
     command.param2 = 0; //Mixer
     command.param3 = 0; //SubMixer
