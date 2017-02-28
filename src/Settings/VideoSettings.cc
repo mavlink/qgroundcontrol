@@ -24,6 +24,7 @@ const char* VideoSettings::udpPortName =            "VideoUDPPort";
 const char* VideoSettings::rtspUrlName =            "VideoRTSPUrl";
 const char* VideoSettings::videoSavePathName =      "VideoSavePath";
 const char* VideoSettings::videoAspectRatioName =   "VideoAspectRatio";
+const char* VideoSettings::videoGridLinesName =     "VideoGridLines";
 
 const char* VideoSettings::videoSourceNoVideo = "No Video Available";
 const char* VideoSettings::videoSourceUDP =     "UDP Video Stream";
@@ -36,6 +37,7 @@ VideoSettings::VideoSettings(QObject* parent)
     , _rtspUrlFact(NULL)
     , _videoSavePathFact(NULL)
     , _videoAspectRatioFact(NULL)
+    , _gridLinesFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
@@ -114,4 +116,13 @@ Fact* VideoSettings::aspectRatio(void)
     }
 
     return _videoAspectRatioFact;
+}
+
+Fact* VideoSettings::gridLines(void)
+{
+    if (!_gridLinesFact) {
+        _gridLinesFact = _createSettingsFact(videoGridLinesName);
+    }
+
+    return _gridLinesFact;
 }
