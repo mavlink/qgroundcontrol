@@ -31,6 +31,7 @@ QGCCheckBox             1.0 QGCCheckBox.qml
 QGCColoredImage         1.0 QGCColoredImage.qml
 QGCComboBox             1.0 QGCComboBox.qml
 QGCFlickable            1.0 QGCFlickable.qml
+QGCGroupBox             1.0 QGCGroupBox.qml
 QGCLabel                1.0 QGCLabel.qml
 QGCListView             1.0 QGCListView.qml
 QGCMapLabel             1.0 QGCMapLabel.qml
