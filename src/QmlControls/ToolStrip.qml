@@ -47,16 +47,6 @@ Rectangle {
         }
     }
 
-    MouseArea {
-        x:                  -_root.x
-        y:                  -_root.y
-        width:              _root.parent.width
-        height:             _root.parent.height
-        visible:            dropPanel.visible
-        onClicked:          dropPanel.hide()
-        preventStealing:    true
-    }
-
     Column {
         id:                 buttonStripColumn
         anchors.margins:    ScreenTools.defaultFontPixelWidth  / 2

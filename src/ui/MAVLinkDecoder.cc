@@ -60,14 +60,18 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
 {
     Q_UNUSED(link);
 
-    msgDict[message.msgid] = message;
-
     uint32_t msgid = message.msgid;
     const mavlink_message_info_t* msgInfo = mavlink_get_message_info(&message);
+    if(!msgInfo) {
+        qWarning() << "Invalid MAVLink message received. ID:" << msgid;
+        return;
+    }
+
+    msgDict[message.msgid] = message;
 
     // Store an arrival time for this message. This value ends up being calculated later.
     quint64 time = 0;
-    
+
     // The SYSTEM_TIME message is special, in that it's handled here for synchronizing the QGC time with the remote time.
     if (message.msgid == MAVLINK_MSG_ID_SYSTEM_TIME)
     {

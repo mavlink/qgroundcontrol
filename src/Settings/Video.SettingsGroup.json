@@ -35,5 +35,14 @@
     "type":             "float",
     "decimalPlaces":    6,
     "defaultValue":     1.777777
+},
+{
+    "name":             "VideoGridLines",
+    "shortDescription": "Video Grid Lines",
+    "longDescription":  "Displays a grid overlayed over the video view.",
+    "type":             "uint32",
+    "enumStrings":      "Hide,Show",
+    "enumValues":       "1,0",
+    "defaultValue":     0
 }
 ]

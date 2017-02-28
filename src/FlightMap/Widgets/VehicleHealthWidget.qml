@@ -34,6 +34,11 @@ QGCFlickable {
         }
     }
 
+    MouseArea {
+        anchors.fill:   parent
+        onClicked:      showNextPage()
+    }
+
     Column {
         id:     healthColumn
         width:  parent.width
