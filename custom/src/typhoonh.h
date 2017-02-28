@@ -40,6 +40,7 @@ private:
     QGCSettings*        _pMAVLink;
 #ifdef QT_DEBUG
     QGCSettings*        _pMockLink;
+    QGCSettings*        _pConsole;
 #endif
     QVariantList        _settingsList;
     TyphoonM4Handler*   _pHandler;
