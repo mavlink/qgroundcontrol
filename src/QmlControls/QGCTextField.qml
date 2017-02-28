@@ -27,7 +27,7 @@ TextField {
 
     textColor:          qgcPal.textFieldText
 
-    implicitHeight: Math.round(ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 2 : 1.2))
+    implicitHeight: ScreenTools.implicitTextFieldHeight
 
     QGCLabel {
         id:             unitsLabelWidthGenerator

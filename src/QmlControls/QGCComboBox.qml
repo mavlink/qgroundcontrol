@@ -18,13 +18,12 @@ ComboBox {
                     control._qgcPal.buttonText
 
         background: Item {
-            implicitWidth:      Math.round(ScreenTools.defaultFontPixelWidth * 4.5)
-            implicitHeight:     Math.round(ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 2 : 1.2))
+            implicitWidth:  ScreenTools.implicitComboBoxWidth
+            implicitHeight: ScreenTools.implicitComboBoxHeight
 
             Rectangle {
                 anchors.fill:   parent
                 color:          _showHighlight ? control._qgcPal.buttonHighlight : control._qgcPal.button
-                //radius:       3
                 border.width:   _showBorder ? 1: 0
                 border.color:  control._qgcPal.buttonText
             }
