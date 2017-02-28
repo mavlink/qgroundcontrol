@@ -2241,6 +2241,15 @@ void Vehicle::setOfflineEditingDefaultComponentId(int defaultComponentId)
     }
 }
 
+void Vehicle::triggerCamera(void)
+{
+    sendMavCommand(FactSystem::defaultComponentId,
+                   MAV_CMD_DO_DIGICAM_CONTROL,
+                   true,                            // show errors
+                   0.0, 0.0, 0.0, 0.0,              // param 1-4 unused
+                   1.0);                            // trigger camera
+}
+
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
 const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
