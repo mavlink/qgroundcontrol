@@ -174,6 +174,10 @@ TyphoonHPlugin::settings()
             QUrl::fromUserInput("qrc:/qml/MockLink.qml"),
             QUrl::fromUserInput("qrc:/res/gear-white.svg"));
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pMockLink));
+        _pConsole = new QGCSettings(tr("Console"),
+            QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/AppMessages.qml"),
+            QUrl::fromUserInput("qrc:/res/gear-white.svg"));
+        _settingsList.append(QVariant::fromValue((QGCSettings*)_pConsole));
 #endif
     }
     return _settingsList;
@@ -221,7 +225,7 @@ bool TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == AppSettings::appFontPointSizeName) {
         int defaultFontPointSize;
 #if !defined(__macos__)
-        defaultFontPointSize = 14.0;
+        defaultFontPointSize = 16.0;
 #else
         defaultFontPointSize = 13.0;
 #endif
