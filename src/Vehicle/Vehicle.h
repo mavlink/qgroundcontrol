@@ -409,6 +409,8 @@ public:
     /// Clear Messages
     Q_INVOKABLE void clearMessages();
 
+    Q_INVOKABLE void triggerCamera(void);
+
 #if 0
     // Temporarily removed, waiting for new command implementation
     /// Test motor

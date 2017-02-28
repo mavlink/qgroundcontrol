@@ -39,6 +39,11 @@ QGCFlickable {
 
     QGCPalette { id:qgcPal; colorGroupEnabled: true }
 
+    MouseArea {
+        anchors.fill:   parent
+        onClicked:      showNextPage()
+    }
+
     Item {
         id:     innerItem
         width:  parent.width
