@@ -514,6 +514,20 @@ QGCView {
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex < 2 && QGroundControl.settingsManager.videoSettings.gridLines.visible
+                            QGCLabel {
+                                anchors.baseline:   gridField.baseline
+                                text:               qsTr("Grid Lines:")
+                                width:              _labelWidth
+                            }
+                            FactComboBox {
+                                id:                 gridField
+                                width:              _editFieldWidth
+                                fact:               QGroundControl.settingsManager.videoSettings.gridLines
+                            }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
                             visible:    QGroundControl.settingsManager.videoSettings.videoSavePath.visible && QGroundControl.videoManager.isGStreamer && QGroundControl.videoManager.recordingEnabled
                             QGCLabel {
                                 anchors.baseline:   pathField.baseline

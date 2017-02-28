@@ -23,7 +23,9 @@ import QGroundControl.Controllers   1.0
 
 Item {
     id: root
-    property double _ar: QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
+    property double _ar:        QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
+    property bool _showGrid:    QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
+
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
@@ -48,6 +50,34 @@ Item {
             display:        QGroundControl.videoManager.videoSurface
             receiver:       QGroundControl.videoManager.videoReceiver
             visible:        QGroundControl.videoManager.videoRunning
+            Rectangle {
+                color:  Qt.rgba(1,1,1,0.5)
+                height: parent.height
+                width:  1
+                x:      parent.width * 0.33
+                visible: _showGrid
+            }
+            Rectangle {
+                color:  Qt.rgba(1,1,1,0.5)
+                height: parent.height
+                width:  1
+                x:      parent.width * 0.66
+                visible: _showGrid
+            }
+            Rectangle {
+                color:  Qt.rgba(1,1,1,0.5)
+                width:  parent.width
+                height: 1
+                y:      parent.height * 0.33
+                visible: _showGrid
+            }
+            Rectangle {
+                color:  Qt.rgba(1,1,1,0.5)
+                width:  parent.width
+                height: 1
+                y:      parent.height * 0.66
+                visible: _showGrid
+            }
         }
     }
 }

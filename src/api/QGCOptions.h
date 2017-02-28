@@ -25,9 +25,7 @@ public:
     QGCOptions(QObject* parent = NULL);
 
     Q_PROPERTY(bool     combineSettingsAndSetup     READ combineSettingsAndSetup    CONSTANT)
-    Q_PROPERTY(bool     enableVirtualJoystick       READ enableVirtualJoystick      CONSTANT)
     Q_PROPERTY(double   toolbarHeightMultiplier     READ toolbarHeightMultiplier    CONSTANT)
-    Q_PROPERTY(double   defaultFontPointSize        READ defaultFontPointSize       CONSTANT)
     Q_PROPERTY(bool     enablePlanViewSelector      READ enablePlanViewSelector     CONSTANT)
     Q_PROPERTY(CustomInstrumentWidget*  instrumentWidget READ instrumentWidget      CONSTANT)
 
@@ -36,17 +34,9 @@ public:
     /// @return true if QGC should consolidate both menus into one.
     virtual bool        combineSettingsAndSetup     () { return false; }
 
-    /// Should QGC use virtual Joysticks?
-    /// @return false to disable Virtual Joysticks.
-    virtual bool        enableVirtualJoystick       () { return true;  }
-
     /// Main ToolBar Multiplier.
     /// @return Factor to use when computing toolbar height
     virtual double      toolbarHeightMultiplier     () { return 1.0; }
-
-    /// Application wide default font point size
-    /// @return Font size or 0.0 to use computed size.
-    virtual double      defaultFontPointSize        () { return 0.0; }
 
     /// Enable Plan View Selector (Mission, Fence or Rally)
     /// @return True or false
