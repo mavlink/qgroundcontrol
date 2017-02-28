@@ -1,0 +1,43 @@
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
+
+import QtQuick          2.5
+import QtQuick.Controls 1.2
+import QtQuick.Layouts  1.2
+
+import QGroundControl                       1.0
+import QGroundControl.Controls              1.0
+import QGroundControl.MultiVehicleManager   1.0
+import QGroundControl.ScreenTools           1.0
+import QGroundControl.Palette               1.0
+
+// Joystick Indicator
+Item {
+    width:          joystickRow.width * 1.1
+    anchors.top:    parent.top
+    anchors.bottom: parent.bottom
+
+    Row {
+        id:             joystickRow
+        anchors.top:    parent.top
+        anchors.bottom: parent.bottom
+        spacing:        ScreenTools.defaultFontPixelWidth
+
+        QGCColoredImage {
+            width:              height
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            sourceSize.height:  height
+            source:             "/qmlimages/Joystick.png"
+            fillMode:           Image.PreserveAspectFit
+            color:              activeVehicle && activeVehicle.joystickEnabled && joystickManager.activeJoystick ? qgcPal.buttonText : "red"
+        }
+    }
+}

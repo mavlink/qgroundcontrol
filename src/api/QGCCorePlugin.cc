@@ -151,6 +151,7 @@ QVariantList& QGCCorePlugin::toolBarIndicators()
         _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
         _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
         _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
+        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/JoystickIndicator.qml")));
     }
     return _p->toolBarIndicatorList;
 }
