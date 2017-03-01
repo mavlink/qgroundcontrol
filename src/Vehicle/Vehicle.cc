@@ -493,6 +493,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     }
 
+
+    // Mark this vehicle as active
+    _connectionActive();
+
     // Give the plugin a change to adjust the message contents
     if (!_firmwarePlugin->adjustIncomingMavlinkMessage(this, &message)) {
         return;
@@ -899,8 +903,6 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
     if (message.compid != _defaultComponentId) {
         return;
     }
-
-    _connectionActive();
 
     mavlink_heartbeat_t heartbeat;
 
