@@ -141,7 +141,7 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
 
     MissionItem* item = new MissionItem(seqNum++,                           // sequence number
                                         MAV_CMD_DO_LAND_START,              // MAV_CMD
-                                        MAV_FRAME_GLOBAL_RELATIVE_ALT,      // MAV_FRAME
+                                        MAV_FRAME_MISSION,                  // MAV_FRAME
                                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  // param 1-7
                                         true,                               // autoContinue
                                         false,                              // isCurrentItem
