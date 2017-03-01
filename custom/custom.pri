@@ -30,12 +30,14 @@ RESOURCES += \
     $$PWD/typhoonh.qrc \
 
 SOURCES += \
+    $$PWD/src/camera.cc \
     $$PWD/src/m4.cc \
     $$PWD/src/m4serial.cc \
     $$PWD/src/m4util.cc \
     $$PWD/src/typhoonh.cc \
 
 HEADERS += \
+    $$PWD/src/camera.h \
     $$PWD/src/m4.h \
     $$PWD/src/m4channeldata.h \
     $$PWD/src/m4def.h \
