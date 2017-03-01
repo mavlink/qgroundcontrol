@@ -22,17 +22,55 @@ Rectangle {
 
     property string title:              "Title"
     property alias  model:              repeater.model
-    property var    showAlternateIcon
-    property var    rotateImage
-    property var    buttonEnabled
-    property var    buttonVisible
+    property var    showAlternateIcon                   ///< List of bool values, one for each button in strip - true: show alternate icon, false: show normal icon
+    property var    rotateImage                         ///< List of bool values, one for each button in strip - true: animation rotation, false: static image
+    property var    buttonEnabled                       ///< List of bool values, one for each button in strip - true: button enabled, false: button disabled
+    property var    buttonVisible                       ///< List of bool values, one for each button in strip - true: button visible, false: button invisible
+    property real   maxHeight                           ///< Maximum height for control, determines whether text is hidden to make control shorter
 
     signal clicked(int index, bool checked)
 
     readonly property real  _radius:                ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _margin:                ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _buttonSpacing:         ScreenTools.defaultFontPixelWidth
-    readonly property bool  _showOptionalElements:  !ScreenTools.isShortScreen
+
+    // All of the following values, connections and function are to support the ability to determine
+    // whether to show or hide the optional elements on the fly.
+
+    property bool _showOptionalElements:    true
+    property bool _needRecalc:              true
+
+    Component.onCompleted: recalcShowOptionalElements()
+
+    onMaxHeightChanged: recalcShowOptionalElements()
+
+    Connections {
+        target: ScreenTools
+
+        onDefaultFontPixelWidthChanged:     recalcShowOptionalElements()
+        onDefaultFontPixelHeightChanged:    recalcShowOptionalElements()
+    }
+
+    onHeightChanged: {
+        if (_needRecalc) {
+            _needRecalc = false
+            if (maxHeight && height > maxHeight) {
+                _showOptionalElements = false
+            }
+        }
+    }
+
+    function recalcShowOptionalElements() {
+        if (_showOptionalElements) {
+            if (maxHeight && height > maxHeight) {
+                _showOptionalElements = false
+            }
+        } else {
+            _needRecalc = true
+            _showOptionalElements = true
+        }
+
+    }
 
     QGCPalette { id: qgcPal }
     ExclusiveGroup { id: dropButtonsExclusiveGroup }
