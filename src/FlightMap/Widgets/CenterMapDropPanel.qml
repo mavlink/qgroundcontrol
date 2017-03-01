@@ -97,7 +97,7 @@ ColumnLayout {
 
         onClicked:  {
             dropPanel.hide()
-            _root.followVehicle = checked
+            root.followVehicle = checked
         }
     }
 } // Column
