@@ -21,7 +21,7 @@ import QGroundControl.Palette               1.0
 //-------------------------------------------------------------------------
 //-- RC RSSI Indicator
 Item {
-    width:          rssiRow.width * 1.1
+    width:          visible * rssiRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     visible:        activeVehicle ? activeVehicle.supportsRadio : true
