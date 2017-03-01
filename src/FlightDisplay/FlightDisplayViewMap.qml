@@ -139,8 +139,12 @@ FlightMap {
         id: centerMapDropPanel
 
         CenterMapDropPanel {
-            map:            _flightMap
-            fitFunctions:   mapFitFunctions
+            map:                _flightMap
+            fitFunctions:       mapFitFunctions
+            showFollowVehicle:  true
+            followVehicle:      _followVehicle
+
+            onFollowVehicleChanged: _followVehicle = followVehicle
         }
     }
 
