@@ -26,6 +26,10 @@ QGCTextField {
                           Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
 
     onEditingFinished: {
+        if (ScreenTools.isMobile) {
+            // Toss focus on mobile after Done on virtual keyboard. Prevent strange interactions.
+            focus = false
+        }
         if (typeof qgcView !== 'undefined' && qgcView) {
             var errorString = fact.validate(text, false /* convertOnly */)
             if (errorString == "") {
