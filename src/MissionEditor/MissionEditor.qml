@@ -777,6 +777,7 @@ QGCView {
                     rotateImage:        [ false, false, _syncDropDownController.syncInProgress, false, false, false, false ]
                     buttonEnabled:      [ true, true, !_syncDropDownController.syncInProgress, true, true, true, true ]
                     buttonVisible:      [ true, true, true, true, true, _showZoom, _showZoom ]
+                    maxHeight:          mapScale.y - toolStrip.y
 
                     property bool _showZoom: !ScreenTools.isShortScreen
 
@@ -839,6 +840,7 @@ QGCView {
                 }
 
                 MapScale {
+                    id:                 mapScale
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * (0.66)
                     anchors.bottom:     waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
                     anchors.left:       parent.left

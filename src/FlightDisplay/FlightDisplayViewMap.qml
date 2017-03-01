@@ -85,6 +85,7 @@ FlightMap {
         title:              qsTr("Fly")
         z:                  QGroundControl.zOrderWidgets
         buttonVisible:      [ true, true, _showZoom, _showZoom ]
+        maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y   // Massive reach across hack
 
         property bool _showZoom: !ScreenTools.isShortScreen
 
