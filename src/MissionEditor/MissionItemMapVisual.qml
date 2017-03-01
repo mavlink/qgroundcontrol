@@ -23,7 +23,7 @@ Item {
 
     property var map    ///< Map control to place item in
 
-    property var _complexItem
+    property var _visualItem
 
     Component.onCompleted: {
         if (object.mapVisualQML) {
@@ -31,13 +31,13 @@ Item {
             if (component.status === Component.Error) {
                 console.log("Error loading Qml: ", object.mapVisualQML, component.errorString())
             }
-            _complexItem = component.createObject(map, { "map": _root.map })
+            _visualItem = component.createObject(map, { "map": _root.map })
         }
     }
 
     Component.onDestruction: {
-        if (_complexItem) {
-            _complexItem.destroy()
+        if (_visualItem) {
+            _visualItem.destroy()
         }
     }
 }

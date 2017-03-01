@@ -448,19 +448,13 @@ QGCView {
                     }
                 }
 
-                // Add the complex mission item to the map
+                // Add the mission item visuals to the map
                 Repeater {
-                    model: missionController.complexVisualItems
+                    model: missionController.visualItems
 
-                    delegate: ComplexMissionItem {
+                    delegate: MissionItemMapVisual {
                         map: editorMap
                     }
-                }
-
-                // Add the simple mission items to the map
-                MapItemView {
-                    model:      missionController.visualItems
-                    delegate:   missionItemComponent
                 }
 
                 Component {

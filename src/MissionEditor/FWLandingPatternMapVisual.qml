@@ -151,10 +151,10 @@ Item {
 
         Rectangle {
             id:             itemDragger
-            x:              mapQuickItem ? (mapQuickItem.x + mapQuickItem.anchorPoint.x - (itemDragger.width / 2)) : 100
-            y:              mapQuickItem ? (mapQuickItem.y + mapQuickItem.anchorPoint.y - (itemDragger.height / 2)) : 100
-            width:          ScreenTools.defaultFontPixelHeight * 2
-            height:         ScreenTools.defaultFontPixelHeight * 2
+            x:              mapQuickItem.x
+            y:              mapQuickItem.y
+            width:          mapQuickItem.width
+            height:         mapQuickItem.height
             color:          "transparent"
             z:              QGroundControl.zOrderMapItems + 1    // Above item icons
 
@@ -167,7 +167,7 @@ Item {
 
             function liveDrag() {
                 if (!itemDragger._preventCoordinateBindingLoop && Drag.active) {
-                    var point = Qt.point(itemDragger.x + (itemDragger.width  / 2), itemDragger.y + (itemDragger.height / 2))
+                    var point = Qt.point(itemDragger.x + mapQuickItem.anchorPoint.x, itemDragger.y + mapQuickItem.anchorPoint.y)
                     var coordinate = map.toCoordinate(point)
                     itemDragger._preventCoordinateBindingLoop = true
                     if (dragLoiter) {
@@ -182,8 +182,8 @@ Item {
             }
 
             Drag.active:    itemDrag.drag.active
-            Drag.hotSpot.x: width  / 2
-            Drag.hotSpot.y: height / 2
+            Drag.hotSpot.x: mapQuickItem.anchorPoint.x
+            Drag.hotSpot.y: mapQuickItem.anchorPoint.y
 
             MouseArea {
                 id:             itemDrag
