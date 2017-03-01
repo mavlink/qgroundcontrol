@@ -23,6 +23,7 @@ Item {
     width:          joystickRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
+    visible:        activeVehicle ? activeVehicle.sub : false
 
 
     Component {
