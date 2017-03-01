@@ -246,13 +246,14 @@ Item {
                 border.color:       toolBar.colorWhite
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCColoredImage {
+                    id:                 startVideoButton
                     height:             parent.height * 0.5
                     width:              height
                     sourceSize.width:   width
                     source:             "qrc:/typhoonh/video.svg"
                     fillMode:           Image.PreserveAspectFit
                     color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorGreen : toolBar.colorGrey
-                    visible:            TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                    visible:            TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                     anchors.centerIn:   parent
                     MouseArea {
                         anchors.fill:   parent
@@ -263,10 +264,11 @@ Item {
                     }
                 }
                 Rectangle {
+                    id:                 stopVideoButton
                     height:             parent.height * 0.5
                     width:              height
                     color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorRed : toolBar.colorGrey
-                    visible:            TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                    visible:            TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                     anchors.centerIn:   parent
                     MouseArea {
                         anchors.fill:   parent
@@ -276,7 +278,25 @@ Item {
                         }
                     }
                 }
+                QGCColoredImage {
+                    height:             parent.height * 0.5
+                    width:              height
+                    sourceSize.width:   width
+                    source:             "qrc:/typhoonh/camera.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    color:              TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED ? toolBar.colorGreen : toolBar.colorGrey
+                    visible:            !startVideoButton.visible && !stopVideoButton.visible
+                    anchors.centerIn:   parent
+                    MouseArea {
+                        anchors.fill:   parent
+                        enabled:        TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
+                        onClicked: {
+                            TyphoonHQuickInterface.cameraControl.takePhoto()
+                        }
+                    }
+                }
             }
+            /* Disabled for now
             Item {
                 height: _spacers
                 width:  1
@@ -306,6 +326,7 @@ Item {
                     }
                 }
             }
+            */
             Item {
                 height: _spacers * 2
                 width:  1
