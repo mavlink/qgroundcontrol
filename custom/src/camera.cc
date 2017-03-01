@@ -99,6 +99,8 @@ CameraControl::CameraControl(QObject* parent)
     _cameraSound.setVolume(0.9);
     _videoSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/beep.wav"));
     _videoSound.setVolume(0.9);
+    _errorSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/boop.wav"));
+    _errorSound.setVolume(0.9);
 }
 
 //-----------------------------------------------------------------------------
@@ -313,7 +315,7 @@ void
 CameraControl::startVideo()
 {
     qDebug() << "startVideo()";
-    if(_vehicle && _cameraStatus.data_ready) {
+    if(_vehicle && _cameraStatus.data_ready && _cameraSettings.mode_id == CAMERA_MODE_VIDEO) {
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_VIDEO_START_CAPTURE,                // Command id
@@ -328,6 +330,9 @@ CameraControl::startVideo()
         _videoSound.setLoopCount(1);
         _videoSound.play();
         QTimer::singleShot(250, this, &CameraControl::_requestCaptureStatus);
+    } else {
+        _errorSound.setLoopCount(1);
+        _errorSound.play();
     }
 }
 
@@ -414,9 +419,9 @@ CameraControl::_setSettings_1(float p1, float p2, float p3, float p4, float p5, 
             p5 >= 0 ? p5 : _cameraSettings.shutter_speed_locked,    // Shutter Speed Locked
             p6 >= 0 ? p6 : _cameraSettings.iso_sensitivity,         // ISO
             p7 >= 0 ? p7 : _cameraSettings.iso_sensitivity_locked); // ISO Locked
-        //-- This is not right. Mode switch takes a while. We do this now because the
-        //   mode is stored in camera_repeater. Once we get status from the actual camera,
-        //   we need to receive it periodically and automatically
+        //-- There is no reply other than "accepted" or not. There is no
+        //   guarantee that these settings took. Let's request an updated
+        //   set of camera settings.
         QTimer::singleShot(500, this, &CameraControl::_requestCameraSettings);
     }
 }
@@ -438,10 +443,12 @@ CameraControl::_setSettings_2(float p1, float p2, float p3, float p4, float p5, 
             p5 >= 0 ? p5 : _cameraSettings.color_mode_id,           // Color Mode (IQ)
             p6 >= 0 ? p6 : _cameraSettings.image_format_id,         // Image Format
             0);                                                     // Reserved
-        //-- This is not right. Mode switch takes a while. We do this now because the
-        //   mode is stored in camera_repeater. Once we get status from the actual camera,
-        //   we need to receive it periodically and automatically
-        QTimer::singleShot(2000, this, &CameraControl::_requestCameraSettings);
+        //-- There is no reply other than "accepted" or not. There is no
+        //   guarantee that these settings took. Let's request an updated
+        //   set of camera settings. If changing camera modes, it can be
+        //   quite a while before we can send another command, so we wait
+        //   an extra amount of time if that's the case.
+        QTimer::singleShot(p5 < 0 ? 500 : 2000, this, &CameraControl::_requestCameraSettings);
     }
 }
 
@@ -528,11 +535,8 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
     _cameraStatus.image_resolution_h    = cap.image_resolution_h;
     _cameraStatus.image_resolution_v    = cap.image_resolution_h;
     _cameraStatus.image_status          = cap.image_status;
-
     _updateVideoRes(cap.video_resolution_h, cap.video_resolution_v, cap.video_framerate);
-
     qDebug() << "_handleCaptureStatus:" << cap.video_status << cap.recording_time_ms << cap.available_capacity;
-
     if(!wasReady || _cameraStatus.video_status != cap.video_status) {
         _cameraStatus.video_status = cap.video_status;
         emit videoStatusChanged();
@@ -551,23 +555,17 @@ CameraControl::_handleCameraSettings(const mavlink_message_t &message)
 {
     mavlink_camera_settings_t settings;
     mavlink_msg_camera_settings_decode(&message, &settings);
-
     qDebug() << "_handleCameraSettings. Mode:" << settings.mode_id;
-
     _cameraSettings.data_ready = true;
     _cameraSettings.aperture                = settings.aperture;
     _cameraSettings.aperture_locked         = settings.aperture_locked;
     _cameraSettings.color_mode_id           = settings.color_mode_id;
     _cameraSettings.image_format_id         = settings.image_format_id;
-
     _updateIso(settings.iso_sensitivity, settings.iso_sensitivity_locked);
-
     _cameraSettings.shutter_speed           = settings.shutter_speed;
     _cameraSettings.shutter_speed_locked    = settings.shutter_speed_locked;
-
     _cameraSettings.white_balance           = settings.white_balance;
     _cameraSettings.white_balance_locked    = settings.white_balance_locked;
-
     _cameraSettings.mode_id = settings.mode_id;
     emit cameraModeChanged();
     _updateAspectRatio();
@@ -580,7 +578,6 @@ CameraControl::_updateIso(int iso, int locked)
     if(_cameraSettings.iso_sensitivity != iso || _cameraSettings.iso_sensitivity_locked != locked) {
         _cameraSettings.iso_sensitivity = iso;
         _cameraSettings.iso_sensitivity_locked  = locked;
-        //-- Locked here means "Auto". If ISO is Auto, so must be Shutter Speed
         if(locked == 0) {
             _currentIso = NUM_ISO_VALUES - 1;
         } else {
@@ -597,11 +594,10 @@ CameraControl::_updateShutter(int speed, int locked)
     if(_cameraSettings.shutter_speed != speed || _cameraSettings.shutter_speed_locked != locked) {
         _cameraSettings.shutter_speed = speed;
         _cameraSettings.shutter_speed_locked  = locked;
-        //-- Locked here means "Auto". If Shutter is Auto, so must be ISO
         if(locked == 0) {
-            _currentIso = NUM_SHUTTER_VALUES - 1;
+            _currentShutter = NUM_SHUTTER_VALUES - 1;
         } else {
-            _currentIso = speed;
+            _currentShutter = speed;
         }
         emit currentShutterChanged();
     }

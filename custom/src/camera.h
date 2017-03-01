@@ -192,6 +192,7 @@ private:
     QStringList             _shutterList;
     QSoundEffect            _cameraSound;
     QSoundEffect            _videoSound;
+    QSoundEffect            _errorSound;
     camera_capture_status_t _cameraStatus;
     camera_settings_t       _cameraSettings;
 

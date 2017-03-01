@@ -8,6 +8,7 @@
     </qresource>
     <qresource prefix="/typhoonh">
         <file alias="beep.wav">res/beep.wav</file>
+        <file alias="boop.wav">res/boop.wav</file>
         <file alias="camera.svg">res/camera.svg</file>
         <file alias="camera.wav">res/camera.wav</file>
         <file alias="CameraIndicator.qml">res/CameraIndicator.qml</file>

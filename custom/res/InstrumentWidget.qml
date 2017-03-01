@@ -68,6 +68,7 @@ Item {
         }
     }
 
+    /*
     Connections {
         target: TyphoonHQuickInterface.cameraControl
         onCameraModeChanged: {
@@ -80,6 +81,7 @@ Item {
             console.log('QML: Video Status: ' + TyphoonHQuickInterface.cameraControl.videoStatus + ' ' + CameraControl.VIDEO_CAPTURE_STATUS_STOPPED)
         }
     }
+    */
 
     Rectangle {
         id:             mainRect
@@ -491,6 +493,8 @@ Item {
                     QGCComboBox {
                         width:       _editFieldWidth
                         model:       TyphoonHQuickInterface.cameraControl.colorModeList
+                        //-- Not Yet
+                        enabled:    false
                         Layout.preferredWidth:  _editFieldWidth
                     }
                     Rectangle {
@@ -507,6 +511,8 @@ Item {
                     QGCComboBox {
                         width:       _editFieldWidth
                         model:       ["Raw", "Jpeg", "Raw+Jpeg"]
+                        //-- Not Yet
+                        enabled:    false
                         Layout.preferredWidth:  _editFieldWidth
                     }
                     Rectangle {
