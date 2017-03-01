@@ -17,6 +17,7 @@ import QGroundControl.Controls              1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
+import QGroundControl.CameraControl         1.0
 
 import TyphoonHQuickInterface               1.0
 
@@ -26,7 +27,7 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     width:          indicatorRow.width * 1.25
-    visible:        TyphoonHQuickInterface.cameraMode === TyphoonHQuickInterface.CAMERA_MODE_VIDEO
+    visible:        TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO
     Row {
         id:                 indicatorRow
         spacing:            ScreenTools.defaultFontPixelHeight * 0.5
@@ -39,10 +40,10 @@ Item {
             sourceSize.width:   width
             source:             "qrc:/typhoonh/video.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING ? toolBar.colorRed : toolBar.colorGrey
+            color:              TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING ? toolBar.colorRed : toolBar.colorGrey
         }
         QGCLabel {
-            text:               TyphoonHQuickInterface.videoStatus === TyphoonHQuickInterface.VIDEO_CAPTURE_STATUS_RUNNING ? TyphoonHQuickInterface.recordTime : "00:00:00"
+            text:               TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING ? TyphoonHQuickInterface.cameraControl.recordTimeStr : "00:00:00"
             font.family:        ScreenTools.demiboldFontFamily
             font.pointSize:     ScreenTools.largeFontPointSize
             anchors.verticalCenter: parent.verticalCenter

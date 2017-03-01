@@ -14,14 +14,12 @@
  *   The functions themselves have been completely rewriten from scratch.
  */
 
-//-- I don't like having to include these two. There should be more abstraction so we
-//   we don't need this deep knowledge.
 #include "QGCApplication.h"
-#include "SettingsManager.h"
 
 #include "typhoonh.h"
 #include "m4.h"
 #include "m4serial.h"
+
 #include <QDebug>
 #include <QSettings>
 #include <QNetworkRequest>
@@ -29,7 +27,6 @@
 #include <math.h>
 
 static const char* kUartName        = "/dev/ttyMFD0";
-
 static const char* kRxInfoGroup     = "YuneecM4RxInfo";
 static const char* kmode            = "mode";
 static const char* kpanId           = "panId";
@@ -45,7 +42,6 @@ static const char* kmonitBit        = "monitBit";
 static const char* kextraNum        = "extraNum";
 static const char* kextraBit        = "extraBit";
 static const char* ktxAddr          = "txAddr";
-
 static const char* kacName          = "acName";
 static const char* ktrName          = "trName";
 static const char* kswName          = "swName";
@@ -77,12 +73,18 @@ TyphoonHQuickInterface::init(TyphoonM4Handler* pHandler)
     if(_pHandler) {
         connect(_pHandler, &TyphoonM4Handler::m4StateChanged,               this, &TyphoonHQuickInterface::_m4StateChanged);
         connect(_pHandler, &TyphoonM4Handler::destroyed,                    this, &TyphoonHQuickInterface::_destroyed);
-        connect(_pHandler, &TyphoonM4Handler::cameraModeChanged,            this, &TyphoonHQuickInterface::_cameraModeChanged);
-        connect(_pHandler, &TyphoonM4Handler::videoStatusChanged,           this, &TyphoonHQuickInterface::_videoStatusChanged);
         connect(_pHandler, &TyphoonM4Handler::controllerLocationChanged,    this, &TyphoonHQuickInterface::_controllerLocationChanged);
-        connect(&_videoRecordingTimer, &QTimer::timeout,                    this, &TyphoonHQuickInterface::_videoRecordingUpdate);
-        _videoRecordingTimer.setSingleShot(false);
     }
+}
+
+//-----------------------------------------------------------------------------
+CameraControl*
+TyphoonHQuickInterface::cameraControl()
+{
+    if(_pHandler) {
+        return _pHandler->cameraControl();
+    }
+    return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -90,43 +92,6 @@ void
 TyphoonHQuickInterface::_m4StateChanged()
 {
     emit m4StateChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::_cameraModeChanged()
-{
-    emit cameraModeChanged();
-    if(_pHandler) {
-        if(_pHandler->cameraMode() == TyphoonHQuickInterface::CAMERA_MODE_PHOTO) {
-            qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(1.333333);
-        } else if(_pHandler->cameraMode() == TyphoonHQuickInterface::CAMERA_MODE_VIDEO) {
-            qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(1.777777);
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::_videoStatusChanged()
-{
-    //-- Recording time should come from camera. As there is no interface for
-    //   it, we do it ourselves.
-    if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-        qDebug() << "Started Recording";
-        _videoRecordingTimer.start(1000);
-    } else {
-        qDebug() << "Stopped Recording";
-        _videoRecordingTimer.stop();
-    }
-    emit videoStatusChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::_videoRecordingUpdate()
-{
-    emit recordTimeChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -142,8 +107,6 @@ TyphoonHQuickInterface::_destroyed()
 {
     disconnect(_pHandler, &TyphoonM4Handler::m4StateChanged,       this, &TyphoonHQuickInterface::_m4StateChanged);
     disconnect(_pHandler, &TyphoonM4Handler::destroyed,            this, &TyphoonHQuickInterface::_destroyed);
-    disconnect(_pHandler, &TyphoonM4Handler::cameraModeChanged,    this, &TyphoonHQuickInterface::_cameraModeChanged);
-    disconnect(_pHandler, &TyphoonM4Handler::videoStatusChanged,   this, &TyphoonHQuickInterface::_videoStatusChanged);
     _pHandler = NULL;
 }
 
@@ -155,25 +118,6 @@ TyphoonHQuickInterface::m4State()
         return _pHandler->m4State();
     }
     return TyphoonHQuickInterface::M4_STATE_NONE;
-}
-
-TyphoonHQuickInterface::VideoStatus
-TyphoonHQuickInterface::videoStatus()
-{
-    if(_pHandler) {
-        //qDebug() << "videoStatus()" << _pHandler->videoStatus();
-        return _pHandler->videoStatus();
-    }
-    return TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
-}
-
-TyphoonHQuickInterface::CameraMode
-TyphoonHQuickInterface::cameraMode()
-{
-    if(_pHandler) {
-        return _pHandler->cameraMode();
-    }
-    return TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
 }
 
 //-----------------------------------------------------------------------------
@@ -207,13 +151,6 @@ TyphoonHQuickInterface::altitude()
 }
 
 //-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::setCameraMode(TyphoonHQuickInterface::CameraMode mode)
-{
-    Q_UNUSED(mode);
-}
-
-//-----------------------------------------------------------------------------
 QString
 TyphoonHQuickInterface::m4StateStr()
 {
@@ -241,17 +178,6 @@ TyphoonHQuickInterface::m4StateStr()
 }
 
 //-----------------------------------------------------------------------------
-QString
-TyphoonHQuickInterface::recordTime()
-{
-    QString timeStr("00:00:00");
-    if(_pHandler) {
-        timeStr = QTime(0, 0).addMSecs(_pHandler->recordTime().elapsed()).toString("hh:mm:ss");
-    }
-    return timeStr;
-}
-
-//-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::initM4()
 {
@@ -266,42 +192,6 @@ TyphoonHQuickInterface::enterBindMode()
 {
     if(_pHandler) {
         _pHandler->enterBindMode();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::startVideo()
-{
-    if(_pHandler) {
-        _pHandler->startVideo();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::stopVideo()
-{
-    if(_pHandler) {
-        _pHandler->stopVideo();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::takePhoto()
-{
-    if(_pHandler) {
-        _pHandler->takePhoto();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::toggleMode()
-{
-    if(_pHandler) {
-        _pHandler->toggleMode();
     }
 }
 
@@ -334,21 +224,15 @@ TyphoonM4Handler::TyphoonM4Handler(QObject* parent)
     , _binding(false)
     , _vehicle(NULL)
     , _networkManager(NULL)
+    , _cameraControl(NULL)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
-    , _video_status(TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED)
-    , _video_resolution_h(0)
-    , _video_resolution_v(0)
-    , _video_framerate(0.0f)
-    , _camera_mode(TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED)
-    , _cameraSupported(CAMERA_SUPPORT_UNDEFINED)
 {
+    _cameraControl = new CameraControl(this);
     _rxchannelInfoIndex = 2;
     _channelNumIndex    = 6;
     _commPort = new M4SerialComm(this);
-    connect(&_timer,        &QTimer::timeout, this, &TyphoonM4Handler::_stateManager);
-    connect(&_videoTimer,   &QTimer::timeout, this, &TyphoonM4Handler::_videoCaptureUpdate);
     _timer.setSingleShot(true);
-    _videoTimer.setSingleShot(false);
+    connect(&_timer, &QTimer::timeout, this, &TyphoonM4Handler::_stateManager);
 }
 
 //-----------------------------------------------------------------------------
@@ -360,6 +244,9 @@ TyphoonM4Handler::~TyphoonM4Handler()
     }
     if(_networkManager) {
         delete _networkManager;
+    }
+    if(_cameraControl) {
+        delete _cameraControl;
     }
 }
 
@@ -397,11 +284,6 @@ TyphoonM4Handler::init()
         qWarning() << "Could not start serial communication with M4";
         return;
     }
-    _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/camera.wav"));
-    _cameraSound.setLoopCount(1);
-    _cameraSound.setVolume(0.9);
-    _videoSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/beep.wav"));
-    _videoSound.setVolume(0.9);
     _sendRxInfoEnd = false;
     connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonM4Handler::_bytesReady);
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &TyphoonM4Handler::_vehicleAdded);
@@ -414,15 +296,7 @@ void
 TyphoonM4Handler::_vehicleReady(bool ready)
 {
     if(ready && _vehicle) {
-        _video_status       = TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
-        _camera_mode        = TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
-        _cameraSupported    = CAMERA_SUPPORT_UNDEFINED;
-        emit cameraModeChanged();
-        emit videoStatusChanged();
-        connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonM4Handler::_mavlinkMessageReceived);
-        connect(_vehicle, &Vehicle::mavCommandResult,       this, &TyphoonM4Handler::_mavCommandResult);
-        //-- Send one single MAV_CMD_REQUEST_CAMERA_SETTINGS command to the camera and see what we get back
-        QTimer::singleShot(1000, this, &TyphoonM4Handler::_requestCameraSettings);
+        _cameraControl->setVehicle(_vehicle);
     }
 }
 
@@ -441,37 +315,8 @@ void
 TyphoonM4Handler::_vehicleRemoved(Vehicle* vehicle)
 {
     if(_vehicle == vehicle) {
-        _video_status       = TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
-        _camera_mode        = TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
-        _cameraSupported    = CAMERA_SUPPORT_UNDEFINED;
-        emit cameraModeChanged();
-        emit videoStatusChanged();
-        disconnect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonM4Handler::_mavlinkMessageReceived);
-        _videoTimer.stop();
+        _cameraControl->setVehicle(NULL);
         _vehicle = NULL;
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::_mavCommandResult(int /*vehicleId*/, int /*component*/, int command, int /*result*/, bool noReponseFromVehicle)
-{
-    //-- Do we already know if the firmware supports cameras or not?
-    if(_cameraSupported == CAMERA_SUPPORT_UNDEFINED) {
-        //-- Is this the response we are waiting?
-        if(command == MAV_CMD_REQUEST_CAMERA_SETTINGS) {
-            if(noReponseFromVehicle) {
-                //-- We got no answer so we assume no camera support
-                _cameraSupported = CAMERA_SUPPORT_NO;
-            } else {
-                //-- We have an answer. Start the show.
-                _cameraSupported = CAMERA_SUPPORT_YES;
-                //-- The firmware does not know the current mode so it will be undefined until we set one.
-                setVideoMode();
-                //-- Until the firmware starts sending us messages automatically, we keep asking for it.
-                _videoTimer.start(1000);
-            }
-        }
     }
 }
 
@@ -494,99 +339,13 @@ TyphoonM4Handler::_httpFinished()
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
     if(reply) {
-#ifdef QT_DEBUG
+#if 0
         const int http_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         qDebug() << "HTTP Result:" << http_code;
         QByteArray data = reply->readAll();
         qDebug() << data;
 #endif
         reply->deleteLater();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::_mavlinkMessageReceived(const mavlink_message_t& message)
-{
-    switch (message.msgid) {
-        case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
-            _handleCaptureStatus(message);
-            break;
-        case MAVLINK_MSG_ID_CAMERA_SETTINGS:
-            _handleCameraSettings(message);
-            break;
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::_handleCaptureStatus(const mavlink_message_t &message)
-{
-    //-- This is a response to MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS
-    mavlink_camera_capture_status_t cap;
-    mavlink_msg_camera_capture_status_decode(&message, &cap);
-    TyphoonHQuickInterface::VideoStatus oldStatus = _video_status;
-    _video_status       = cap.video_status == 0 ? TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_STOPPED : TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_RUNNING;
-    _video_resolution_h = cap.video_resolution_h;
-    _video_resolution_v = cap.video_resolution_v;
-    _video_framerate    = cap.video_framerate;
-    if(oldStatus != _video_status) {
-        emit videoStatusChanged();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::_handleCameraSettings(const mavlink_message_t &message)
-{
-    mavlink_camera_settings_t settings;
-    mavlink_msg_camera_settings_decode(&message, &settings);
-    switch(settings.mode_id) {
-    case 2:
-        _camera_mode = TyphoonHQuickInterface::CAMERA_MODE_PHOTO;
-        break;
-    case 1:
-        _camera_mode = TyphoonHQuickInterface::CAMERA_MODE_VIDEO;
-        break;
-    default:
-        _camera_mode = TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
-        break;
-    }
-    emit cameraModeChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::_videoCaptureUpdate()
-{
-    _requestCaptureStatus();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::_requestCameraSettings()
-{
-    if(_vehicle) {
-        _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                     // target component
-            MAV_CMD_REQUEST_CAMERA_SETTINGS,        // command id
-            false,                                  // showError
-            1,
-            0);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::_requestCaptureStatus()
-{
-    if(_vehicle) {
-        _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                     // target component
-            MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
-            true,                                   // showError
-            1,
-            0);
     }
 }
 
@@ -637,139 +396,6 @@ TyphoonM4Handler::softReboot()
     QThread::msleep(SEND_INTERVAL);
     _commPort = new M4SerialComm(this);
     init();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::takePhoto()
-{
-    qDebug() << "takePhoto()";
-    //-- Send MAVLink command telling vehicle to take photo
-    if(_vehicle) {
-        _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                 // target component
-            MAV_CMD_IMAGE_START_CAPTURE,        // command id
-            true,                               // showError
-            0,                                  // Duration between two consecutive pictures (in seconds)
-            1,                                  // Number of images to capture total - 0 for unlimited capture
-            -1);                                // Resolution in megapixels (max)
-        _cameraSound.play();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::startVideo()
-{
-    qDebug() << "startVideo()";
-    //-- State is now undefined until we get confirmation
-    _video_status = TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
-    emit videoStatusChanged();
-    _vehicle->sendMavCommand(
-        MAV_COMP_ID_CAMERA,             // target component
-        MAV_CMD_VIDEO_START_CAPTURE,    // command id
-        true,                           // showError
-        0,                              // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
-        -1,                             // Frames per second (max)
-        -1);                            // Resolution (max)
-    _recordTime.start();
-    _videoSound.setLoopCount(1);
-    _videoSound.play();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::stopVideo()
-{
-    qDebug() << "stopVideo()";
-    //-- State is now undefined until we get confirmation
-    _video_status = TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED;
-    emit videoStatusChanged();
-    _vehicle->sendMavCommand(
-        MAV_COMP_ID_CAMERA,             // target component
-        MAV_CMD_VIDEO_STOP_CAPTURE ,    // command id
-        true,                           // showError
-        0);                             // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
-    _videoSound.setLoopCount(2);
-    _videoSound.play();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::toggleMode()
-{
-    if(_camera_mode == TyphoonHQuickInterface::CAMERA_MODE_PHOTO) {
-        setVideoMode();
-    } else if(_camera_mode == TyphoonHQuickInterface::CAMERA_MODE_VIDEO) {
-        setPhotoMode();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::setVideoMode()
-{
-    qDebug() << "setVideoMode()";
-    //-- State is now undefined until we get confirmation
-    _camera_mode = TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
-    emit cameraModeChanged();
-    _vehicle->sendMavCommand(
-        MAV_COMP_ID_CAMERA,             // target component
-        MAV_CMD_SET_CAMERA_SETTINGS_2 , // command id
-        true,                           // showError
-        0,                              // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
-        0,                              // White Balance Locked (0 = auto)
-        0,                              // White Balance (ignored)
-        1,                              // Set Video Mode
-        0,                              // Color Mode (IQ) (ignored)
-        0,                              // Image Format (ignored)
-        0);                             // Reserved
-    //-- This is not right. Mode switch takes a while. We do this now because the
-    //   mode is stored in camera_repeater. Once we get status from the actual camera,
-    //   we need to receive it periodically and automatically
-    QTimer::singleShot(100, this, &TyphoonM4Handler::_requestCameraSettings);
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::setPhotoMode()
-{
-    qDebug() << "setPhotoMode()";
-    //-- State is now undefined until we get confirmation
-    _camera_mode = TyphoonHQuickInterface::CAMERA_MODE_UNDEFINED;
-    emit cameraModeChanged();
-    _vehicle->sendMavCommand(
-        MAV_COMP_ID_CAMERA,             // target component
-        MAV_CMD_SET_CAMERA_SETTINGS_2 , // command id
-        true,                           // showError
-        0,                              // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
-        0,                              // White Balance Locked (0 = auto)
-        0,                              // White Balance (ignored)
-        2,                              // Set Photo Mode
-        0,                              // Color Mode (IQ) (ignored)
-        0,                              // Image Format (ignored)
-        0);                             // Reserved
-    //-- This is not right. Mode switch takes a while. We do this now because the
-    //   mode is stored in camera_repeater. Once we get status from the actual camera,
-    //   we need to receive it periodically and automatically
-    QTimer::singleShot(100, this, &TyphoonM4Handler::_requestCameraSettings);
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonM4Handler::toggleVideo()
-{
-    if(_video_status == TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_UNDEFINED) {
-        //-- We don't know what the current status is. We have to wait for it before we can do anything
-        return;
-    }
-    if (_vehicle) {
-        if(_video_status == TyphoonHQuickInterface::VIDEO_CAPTURE_STATUS_STOPPED) {
-            startVideo();
-        } else {
-            stopVideo();
-        }
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1840,10 +1466,10 @@ TyphoonM4Handler::_switchChanged(m4Packet& packet)
     if(switchChanged.newState == 1) {
         switch(switchChanged.hwId) {
             case 53: // Camera Shutter
-                takePhoto();
+                _cameraControl->takePhoto();
                 break;
             case 54: // Video Button
-                toggleVideo();
+                _cameraControl->toggleVideo();
                 break;
             default:
                 break;
@@ -1910,7 +1536,6 @@ TyphoonM4Handler::_handControllerFeedback(m4Packet& packet)
     _controllerLocation.speed        = byteArrayToShort(commandValues, 14);
     _controllerLocation.angle        = byteArrayToShort(commandValues, 16);
     _controllerLocation.satelliteCount = commandValues[18] & 0x1f;
-    //qDebug() << "Coordinates:" << ilat << _controllerLocation.latitude << ilon << _controllerLocation.longitude << _controllerLocation.accuracy << _controllerLocation.satelliteCount << ialt << _controllerLocation.altitude;
     emit controllerLocationChanged();
 }
 

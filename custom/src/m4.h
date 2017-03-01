@@ -9,16 +9,17 @@
 
 #include <QObject>
 #include <QTimer>
-#include <QSoundEffect>
 #include <QNetworkAccessManager>
 
 #include "m4def.h"
 #include "m4util.h"
+#include "camera.h"
 
 #include "Vehicle.h"
 
 class QGCToolbox;
 class TyphoonM4Handler;
+class CameraControl;
 
 //-----------------------------------------------------------------------------
 // QtQuick Interface (UI)
@@ -41,45 +42,23 @@ public:
         M4_STATE_FACTORY_CALI   = 7
     };
 
-    //-- Camera Control (to be moved to Vehicle)
-    enum VideoStatus {
-        VIDEO_CAPTURE_STATUS_UNDEFINED,
-        VIDEO_CAPTURE_STATUS_STOPPED,
-        VIDEO_CAPTURE_STATUS_RUNNING,
-    };
-
-    enum CameraMode {
-        CAMERA_MODE_UNDEFINED,
-        CAMERA_MODE_PHOTO,
-        CAMERA_MODE_VIDEO,
-    };
-
     Q_ENUMS(M4State)
-    Q_ENUMS(VideoStatus)
-    Q_ENUMS(CameraMode)
 
-    Q_PROPERTY(M4State      m4State     READ    m4State                             NOTIFY m4StateChanged)
-    Q_PROPERTY(QString      m4StateStr  READ    m4StateStr                          NOTIFY m4StateChanged)
-    Q_PROPERTY(VideoStatus  videoStatus READ    videoStatus                         NOTIFY videoStatusChanged)
-    Q_PROPERTY(CameraMode   cameraMode  READ    cameraMode  WRITE   setCameraMode   NOTIFY cameraModeChanged)
-    Q_PROPERTY(QString      recordTime  READ    recordTime                          NOTIFY recordTimeChanged)
-    Q_PROPERTY(bool         hardwareGPS READ    hardwareGPS                         CONSTANT)
-    Q_PROPERTY(double       latitude    READ    latitude                            NOTIFY controllerLocationChanged)
-    Q_PROPERTY(double       longitude   READ    longitude                           NOTIFY controllerLocationChanged)
-    Q_PROPERTY(double       altitude    READ    altitude                            NOTIFY controllerLocationChanged)
+    Q_PROPERTY(M4State          m4State         READ    m4State                             NOTIFY m4StateChanged)
+    Q_PROPERTY(QString          m4StateStr      READ    m4StateStr                          NOTIFY m4StateChanged)
+    Q_PROPERTY(bool             hardwareGPS     READ    hardwareGPS                         CONSTANT)
+    Q_PROPERTY(double           latitude        READ    latitude                            NOTIFY controllerLocationChanged)
+    Q_PROPERTY(double           longitude       READ    longitude                           NOTIFY controllerLocationChanged)
+    Q_PROPERTY(double           altitude        READ    altitude                            NOTIFY controllerLocationChanged)
+    Q_PROPERTY(CameraControl*   cameraControl   READ    cameraControl                       CONSTANT)
 
     Q_INVOKABLE void enterBindMode  ();
     Q_INVOKABLE void initM4         ();
-    Q_INVOKABLE void startVideo     ();
-    Q_INVOKABLE void stopVideo      ();
-    Q_INVOKABLE void takePhoto      ();
-    Q_INVOKABLE void toggleMode     ();
 
     M4State     m4State             ();
     QString     m4StateStr          ();
-    VideoStatus videoStatus         ();
-    CameraMode  cameraMode          ();
-    QString     recordTime          ();
+
+    CameraControl* cameraControl    ();
 
 #if defined(__androidx86__)
     bool        hardwareGPS         () { return true; }
@@ -91,29 +70,19 @@ public:
     double      longitude           ();
     double      altitude            ();
 
-    void        setCameraMode       (CameraMode mode);
-
     void    init                    (TyphoonM4Handler* pHandler);
 
 signals:
     void    m4StateChanged              ();
-    void    videoStatusChanged          ();
-    void    cameraModeChanged           ();
-    void    recordTimeChanged           ();
     void    controllerLocationChanged   ();
 
 private slots:
     void    _m4StateChanged             ();
     void    _destroyed                  ();
-    void    _cameraModeChanged          ();
-    void    _videoStatusChanged         ();
-    void    _videoRecordingUpdate       ();
     void    _controllerLocationChanged  ();
 
 private:
-    TyphoonM4Handler* _pHandler;
-    QTimer            _videoRecordingTimer;
-
+    TyphoonM4Handler*   _pHandler;
 };
 
 //-----------------------------------------------------------------------------
@@ -129,18 +98,10 @@ public:
     bool    vehicleReady            ();
     void    enterBindMode           ();
     void    initM4                  ();
-    void    toggleMode              ();
-    void    takePhoto               ();
-    void    toggleVideo             ();
-    void    startVideo              ();
-    void    stopVideo               ();
-    void    setVideoMode            ();
-    void    setPhotoMode            ();
-    QTime   recordTime              () { return _recordTime; }
+
+    CameraControl* cameraControl    () { return _cameraControl; }
 
     TyphoonHQuickInterface::M4State     m4State             () { return _m4State; }
-    TyphoonHQuickInterface::VideoStatus videoStatus         () { return _video_status; }
-    TyphoonHQuickInterface::CameraMode  cameraMode          () { return _camera_mode; }
     const ControllerLocation&           controllerLocation  () { return _controllerLocation; }
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
@@ -156,10 +117,6 @@ private slots:
     void    _vehicleAdded                       (Vehicle* vehicle);
     void    _vehicleRemoved                     (Vehicle* vehicle);
     void    _vehicleReady                       (bool ready);
-    void    _mavlinkMessageReceived             (const mavlink_message_t& message);
-    void    _videoCaptureUpdate                 ();
-    void    _requestCameraSettings              ();
-    void    _mavCommandResult                   (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void    _httpFinished                       ();
 
 private:
@@ -197,21 +154,12 @@ private:
     void    _handleInitialState                 ();
     void    _initStreaming                      ();
 
-    //-- Camera Control (to be moved to Vehicle)
-    void    _requestCaptureStatus               ();
-    void    _handleCaptureStatus                (const mavlink_message_t& message);
-    void    _handleCameraSettings               (const mavlink_message_t& message);
-
 signals:
     void    m4StateChanged                      ();
     void    switchStateChanged                  (int swId, int oldState, int newState);
     void    channelDataStatus                   (QByteArray channelData);
     void    controllerLocationChanged           ();
     void    destroyed                           ();
-
-    //-- Camera Control (to be moved to Vehicle)
-    void    cameraModeChanged                   ();
-    void    videoStatusChanged                  ();
 
 private:
     M4SerialComm* _commPort;
@@ -245,27 +193,7 @@ private:
     ControllerLocation      _controllerLocation;
     bool                    _binding;
     Vehicle*                _vehicle;
-    QSoundEffect            _cameraSound;
-    QSoundEffect            _videoSound;
     QNetworkAccessManager*  _networkManager;
-
+    CameraControl*          _cameraControl;
     TyphoonHQuickInterface::M4State     _m4State;
-    TyphoonHQuickInterface::VideoStatus _video_status;
-    int                                 _video_resolution_h;
-    int                                 _video_resolution_v;
-    float                               _video_framerate;
-    TyphoonHQuickInterface::CameraMode  _camera_mode;
-    QTimer                              _videoTimer;
-
-    enum {
-        CAMERA_SUPPORT_UNDEFINED,
-        CAMERA_SUPPORT_YES,
-        CAMERA_SUPPORT_NO
-    };
-
-    int                     _cameraSupported;
-
-    //-- This should come from the camera. In the mean time, we keep track of it here.
-    QTime                               _recordTime;
-
 };
