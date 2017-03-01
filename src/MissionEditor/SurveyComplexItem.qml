@@ -72,14 +72,17 @@ Item {
         id: entryPointComponent
 
         MapQuickItem {
-            anchorPoint.x:  sourceItem.width  / 2
-            anchorPoint.y:  sourceItem.height / 2
+            anchorPoint.x:  sourceItem.anchorPointX
+            anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.coordinate
 
             sourceItem:
                 MissionItemIndexLabel {
-                label:      "S"
+                label:      "Entry"
+                checked:    _missionItem.isCurrentItem
+
+                onClicked: setCurrentItem(_missionItem.sequenceNumber)
             }
         }
     }
@@ -89,14 +92,17 @@ Item {
         id: exitPointComponent
 
         MapQuickItem {
-            anchorPoint.x:  sourceItem.width  / 2
-            anchorPoint.y:  sourceItem.height / 2
+            anchorPoint.x:  sourceItem.anchorPointX
+            anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.exitCoordinate
 
             sourceItem:
                 MissionItemIndexLabel {
-                label:      "S"
+                label:      "Exit"
+                checked:    _missionItem.isCurrentItem
+
+                onClicked: setCurrentItem(_missionItem.sequenceNumber)
             }
         }
     }

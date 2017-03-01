@@ -214,14 +214,17 @@ Item {
         id: loiterPointComponent
 
         MapQuickItem {
-            anchorPoint.x:  sourceItem.width  / 2
-            anchorPoint.y:  sourceItem.height / 2
+            anchorPoint.x:  sourceItem.anchorPointX
+            anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.loiterCoordinate
 
             sourceItem:
                 MissionItemIndexLabel {
-                label:      "L"
+                label:      "Loiter"
+                checked:    _missionItem.isCurrentItem
+
+                onClicked: setCurrentItem(_missionItem.sequenceNumber)
             }
         }
     }
@@ -245,15 +248,17 @@ Item {
         id: landPointComponent
 
         MapQuickItem {
-            anchorPoint.x:  sourceItem.width  / 2
-            anchorPoint.y:  sourceItem.height / 2
+            anchorPoint.x:  sourceItem.anchorPointX
+            anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.landingCoordinate
 
             sourceItem:
                 MissionItemIndexLabel {
-                label:      "L"
+                label:      "Land"
                 checked:    _missionItem.isCurrentItem
+
+                onClicked: setCurrentItem(_missionItem.sequenceNumber)
             }
         }
     }
