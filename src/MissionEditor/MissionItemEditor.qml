@@ -42,7 +42,6 @@ Rectangle {
 
     MouseArea {
         anchors.fill:   parent
-        visible:        !missionItem.isCurrentItem
         onClicked:      _root.clicked()
     }
 

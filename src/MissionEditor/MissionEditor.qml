@@ -253,16 +253,19 @@ QGCView {
     }
 
     function setCurrentItem(sequenceNumber) {
-        editorMap.polygonDraw.cancelPolygonEdit()
-        _currentMissionItem = undefined
-        for (var i=0; i<_visualItems.count; i++) {
-            var visualItem = _visualItems.get(i)
-            if (visualItem.sequenceNumber == sequenceNumber) {
-                _currentMissionItem = visualItem
-                _currentMissionItem.isCurrentItem = true
-                _currentMissionIndex = i
-            } else {
-                visualItem.isCurrentItem = false
+        if (sequenceNumber !== _currentMissionIndex) {
+            editorMap.polygonDraw.cancelPolygonEdit()
+            _currentMissionItem = undefined
+            _currentMissionIndex = -1
+            for (var i=0; i<_visualItems.count; i++) {
+                var visualItem = _visualItems.get(i)
+                if (visualItem.sequenceNumber == sequenceNumber) {
+                    _currentMissionItem = visualItem
+                    _currentMissionItem.isCurrentItem = true
+                    _currentMissionIndex = i
+                } else {
+                    visualItem.isCurrentItem = false
+                }
             }
         }
     }
