@@ -129,8 +129,8 @@ Map {
 
     /// Ground Station location
     MapQuickItem {
-        anchorPoint.x:  sourceItem.width  / 2
-        anchorPoint.y:  sourceItem.height / 2
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
         visible:        mainWindow.gcsPosition.isValid
         coordinate:     mainWindow.gcsPosition
         sourceItem:     MissionItemIndexLabel {

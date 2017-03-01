@@ -400,8 +400,8 @@ QGCView {
                     id:             itemDragger
                     x:              mapCoordinateIndicator ? (mapCoordinateIndicator.x + mapCoordinateIndicator.anchorPoint.x - (itemDragger.width / 2)) : 100
                     y:              mapCoordinateIndicator ? (mapCoordinateIndicator.y + mapCoordinateIndicator.anchorPoint.y - (itemDragger.height / 2)) : 100
-                    width:          ScreenTools.defaultFontPixelHeight * 2
-                    height:         ScreenTools.defaultFontPixelHeight * 2
+                    width:          ScreenTools.defaultFontPixelHeight * 3
+                    height:         ScreenTools.defaultFontPixelHeight * 3
                     color:          "transparent"
                     visible:        false
                     z:              QGroundControl.zOrderMapItems + 1    // Above item icons
@@ -501,9 +501,10 @@ QGCView {
                                 model: object.isSimpleItem ? object.childItems : 0
 
                                 delegate: MissionItemIndexLabel {
-                                    label:      object.abbreviation
-                                    checked:    object.isCurrentItem
-                                    z:          2
+                                    label:                  object.abbreviation
+                                    checked:                object.isCurrentItem
+                                    z:                      2
+                                    specifiesCoordinate:    false
 
                                     onClicked: setCurrentItem(object.sequenceNumber)
                                 }
@@ -686,7 +687,8 @@ QGCView {
 
                 // GeoFence breach return point
                 MapQuickItem {
-                    anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+                    anchorPoint.x:  sourceItem.anchorPointX
+                    anchorPoint.y:  sourceItem.anchorPointY
                     coordinate:     geoFenceController.breachReturnPoint
                     visible:        geoFenceController.breachReturnEnabled
                     sourceItem:     MissionItemIndexLabel { label: "F" }
@@ -727,7 +729,8 @@ QGCView {
 
                     delegate: MapQuickItem {
                         id:             itemIndicator
-                        anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+                        anchorPoint.x:  sourceItem.anchorPointX
+                        anchorPoint.y:  sourceItem.anchorPointY
                         coordinate:     object.coordinate
                         z:              QGroundControl.zOrderMapItems
 
