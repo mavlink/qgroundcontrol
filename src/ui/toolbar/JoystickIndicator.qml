@@ -24,6 +24,59 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
+
+    Component {
+        id: joystickInfo
+
+        Rectangle {
+            width:  joystickCol.width   + ScreenTools.defaultFontPixelWidth  * 3
+            height: joystickCol.height  + ScreenTools.defaultFontPixelHeight * 2
+            radius: ScreenTools.defaultFontPixelHeight * 0.5
+            color:  qgcPal.window
+            border.color:   qgcPal.text
+
+            Column {
+                id:                 joystickCol
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                width:              Math.max(joystickGrid.width, joystickLabel.width)
+                anchors.margins:    ScreenTools.defaultFontPixelHeight
+                anchors.centerIn:   parent
+
+                QGCLabel {
+                    id:             joystickLabel
+                    text:           qsTr("Joystick Status")
+                    font.family:    ScreenTools.demiboldFontFamily
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                GridLayout {
+                    id:                 joystickGrid
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
+                    columns:            2
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    QGCLabel { text: qsTr("Connected:") }
+                    QGCLabel {
+                        text:  joystickManager.activeJoystick ? "Yes" : "No"
+                        color: joystickManager.activeJoystick ? qgcPal.buttonText : "red"
+                    }
+                    QGCLabel { text: qsTr("Enabled:") }
+                    QGCLabel {
+                        text:  activeVehicle && activeVehicle.joystickEnabled ? "Yes" : "No"
+                        color: activeVehicle && activeVehicle.joystickEnabled ? qgcPal.buttonText : "red"
+                    }
+                }
+            }
+
+            Component.onCompleted: {
+                var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
+                x = pos.x
+                y = pos.y + ScreenTools.defaultFontPixelHeight
+            }
+        }
+    }
+
     Row {
         id:             joystickRow
         anchors.top:    parent.top
@@ -39,5 +92,10 @@ Item {
             fillMode:           Image.PreserveAspectFit
             color:              activeVehicle && activeVehicle.joystickEnabled && joystickManager.activeJoystick ? qgcPal.buttonText : "red"
         }
+    }
+
+    MouseArea {
+        anchors.fill:   parent
+        onClicked:      mainWindow.showPopUp(joystickInfo, mapToItem(toolBar, x, y).x + (width / 2))
     }
 }
