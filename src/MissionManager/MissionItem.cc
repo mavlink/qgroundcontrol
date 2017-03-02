@@ -15,22 +15,25 @@
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
 #include "JsonHelper.h"
+#include "VisualMissionItem.h"
 
-const char*  MissionItem::_itemType =               "missionItem";
-const char*  MissionItem::_jsonTypeKey =            "type";
-const char*  MissionItem::_jsonIdKey =              "id";
 const char*  MissionItem::_jsonFrameKey =           "frame";
 const char*  MissionItem::_jsonCommandKey =         "command";
+const char*  MissionItem::_jsonAutoContinueKey =    "autoContinue";
+const char*  MissionItem::_jsonCoordinateKey =      "coordinate";
+const char*  MissionItem::_jsonParamsKey =          "params";
+const char*  MissionItem::_jsonDoJumpIdKey =        "doJumpId";
+
+// Deprecated V1 format keys
 const char*  MissionItem::_jsonParam1Key =          "param1";
 const char*  MissionItem::_jsonParam2Key =          "param2";
 const char*  MissionItem::_jsonParam3Key =          "param3";
 const char*  MissionItem::_jsonParam4Key =          "param4";
-const char*  MissionItem::_jsonAutoContinueKey =    "autoContinue";
-const char*  MissionItem::_jsonCoordinateKey =      "coordinate";
 
 MissionItem::MissionItem(QObject* parent)
     : QObject(parent)
     , _sequenceNumber(0)
+    , _doJumpId(-1)
     , _isCurrentItem(false)
     , _autoContinueFact             (0, "AutoContinue",                 FactMetaData::valueTypeUint32)
     , _commandFact                  (0, "",                             FactMetaData::valueTypeUint32)
@@ -48,6 +51,8 @@ MissionItem::MissionItem(QObject* parent)
     _frameFact.setRawValue(MAV_FRAME_GLOBAL_RELATIVE_ALT);
 
     setAutoContinue(true);
+
+    connect(&_param2Fact, &Fact::rawValueChanged, this, &MissionItem::_param2Changed);
 }
 
 MissionItem::MissionItem(int             sequenceNumber,
@@ -65,6 +70,7 @@ MissionItem::MissionItem(int             sequenceNumber,
                          QObject*        parent)
     : QObject(parent)
     , _sequenceNumber(sequenceNumber)
+    , _doJumpId(-1)
     , _isCurrentItem(isCurrentItem)
     , _commandFact                  (0, "",                             FactMetaData::valueTypeUint32)
     , _frameFact                    (0, "",                             FactMetaData::valueTypeUint32)
@@ -91,11 +97,14 @@ MissionItem::MissionItem(int             sequenceNumber,
     _param5Fact.setRawValue(param5);
     _param6Fact.setRawValue(param6);
     _param7Fact.setRawValue(param7);
+
+    connect(&_param2Fact, &Fact::rawValueChanged, this, &MissionItem::_param2Changed);
 }
 
 MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     : QObject(parent)
     , _sequenceNumber(0)
+    , _doJumpId(-1)
     , _isCurrentItem(false)
     , _commandFact                  (0, "",                             FactMetaData::valueTypeUint32)
     , _frameFact                    (0, "",                             FactMetaData::valueTypeUint32)
@@ -112,10 +121,14 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     _frameFact.setRawValue(MAV_FRAME_GLOBAL_RELATIVE_ALT);
 
     *this = other;
+
+    connect(&_param2Fact, &Fact::rawValueChanged, this, &MissionItem::_param2Changed);
 }
 
 const MissionItem& MissionItem::operator=(const MissionItem& other)
 {
+    _doJumpId = other._doJumpId;
+
     setCommand(other.command());
     setFrame(other.frame());
     setSequenceNumber(other._sequenceNumber);
@@ -132,25 +145,26 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
 
     return *this;
 }
+
 MissionItem::~MissionItem()
 {    
+
 }
 
 void MissionItem::save(QJsonObject& json) const
 {
-    json[_jsonTypeKey] = _itemType;
-    json[_jsonIdKey] = sequenceNumber();
+    json[VisualMissionItem::jsonTypeKey] = VisualMissionItem::jsonTypeSimpleItemValue;
     json[_jsonFrameKey] = frame();
     json[_jsonCommandKey] = command();
-    json[_jsonParam1Key] = param1();
-    json[_jsonParam2Key] = param2();
-    json[_jsonParam3Key] = param3();
-    json[_jsonParam4Key] = param4();
     json[_jsonAutoContinueKey] = autoContinue();
+    json[_jsonDoJumpIdKey] = _sequenceNumber;
 
-    QJsonArray coordinateArray;
-    coordinateArray << param5() << param6() << param7();
-    json[_jsonCoordinateKey] = coordinateArray;
+    QJsonArray rgParams =  { param1(), param2(), param3(), param4() };
+    json[_jsonParamsKey] = rgParams;
+
+    QJsonValue coordinateValue;
+    JsonHelper::saveGeoCoordinate(QGeoCoordinate(param5(), param6(), param7()), true /* writeAltitude */, coordinateValue);
+    json[_jsonCoordinateKey] = coordinateValue;
 }
 
 bool MissionItem::load(QTextStream &loadStream)
@@ -175,41 +189,98 @@ bool MissionItem::load(QTextStream &loadStream)
     return false;
 }
 
-bool MissionItem::load(const QJsonObject& json, QString& errorString)
+bool MissionItem::_convertJsonV1ToV2(const QJsonObject& json, QJsonObject& v2Json, QString& errorString)
 {
-    QStringList requiredKeys;
+    // V1 format type = "missionItem", V2 format type = "MissionItem"
+    // V1 format has params in separate param[1-n] keys
+    // V2 format has params in params array
+    v2Json = json;
 
-    requiredKeys << _jsonTypeKey << _jsonIdKey << _jsonFrameKey << _jsonCommandKey <<
-                    _jsonParam1Key << _jsonParam2Key << _jsonParam3Key << _jsonParam4Key <<
-                    _jsonAutoContinueKey << _jsonCoordinateKey;
-    if (!JsonHelper::validateRequiredKeys(json, requiredKeys, errorString)) {
+    if (json.contains(_jsonParamsKey)) {
+        // Already V2 format
+        return true;
+    }        
+
+    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+        { VisualMissionItem::jsonTypeKey,   QJsonValue::String, true },
+        { _jsonParam1Key,                   QJsonValue::Double, true },
+        { _jsonParam2Key,                   QJsonValue::Double, true },
+        { _jsonParam3Key,                   QJsonValue::Double, true },
+        { _jsonParam4Key,                   QJsonValue::Double, true },
+    };
+    if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         return false;
     }
 
-    if (json[_jsonTypeKey] != _itemType) {
-        errorString = QString("type found: %1 must be: %2").arg(json[_jsonTypeKey].toString()).arg(_itemType);
+    if (v2Json[VisualMissionItem::jsonTypeKey].toString() == QStringLiteral("missionItem")) {
+        v2Json[VisualMissionItem::jsonTypeKey] = VisualMissionItem::jsonTypeSimpleItemValue;
+    }
+
+    QJsonArray rgParams =  { json[_jsonParam1Key].toDouble(),  json[_jsonParam2Key].toDouble(), json[_jsonParam3Key].toDouble(), json[_jsonParam4Key].toDouble() };
+    v2Json[_jsonParamsKey] = rgParams;
+    v2Json.remove(_jsonParam1Key);
+    v2Json.remove(_jsonParam2Key);
+    v2Json.remove(_jsonParam3Key);
+    v2Json.remove(_jsonParam4Key);
+
+    return true;
+}
+
+bool MissionItem::load(const QJsonObject& json, int sequenceNumber, QString& errorString)
+{
+    QJsonObject v2Json;
+    if (!_convertJsonV1ToV2(json, v2Json, errorString)) {
+        return false;
+    }
+
+    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+        { VisualMissionItem::jsonTypeKey,   QJsonValue::String, true },
+        { _jsonFrameKey,                    QJsonValue::Double, true },
+        { _jsonCommandKey,                  QJsonValue::Double, true },
+        { _jsonParamsKey,                   QJsonValue::Array,  true },
+        { _jsonAutoContinueKey,             QJsonValue::Bool,   true },
+        { _jsonCoordinateKey,               QJsonValue::Array,  true },
+        { _jsonDoJumpIdKey,                 QJsonValue::Double, false },
+    };
+    if (!JsonHelper::validateKeys(v2Json, keyInfoList, errorString)) {
+        return false;
+    }
+
+    if (v2Json[VisualMissionItem::jsonTypeKey] != VisualMissionItem::jsonTypeSimpleItemValue) {
+        errorString = tr("Type found: %1 must be: %2").arg(v2Json[VisualMissionItem::jsonTypeKey].toString()).arg(VisualMissionItem::jsonTypeSimpleItemValue);
+        return false;
+    }
+
+    QJsonArray rgParams = v2Json[_jsonParamsKey].toArray();
+    if (rgParams.count() != 4) {
+        errorString = tr("%1 key must contains 4 values").arg(_jsonParamsKey);
         return false;
     }
 
     // Make sure to set these first since they can signal other changes
-    setFrame((MAV_FRAME)json[_jsonFrameKey].toInt());
-    setCommand((MAV_CMD)json[_jsonCommandKey].toInt());
+    setFrame((MAV_FRAME)v2Json[_jsonFrameKey].toInt());
+    setCommand((MAV_CMD)v2Json[_jsonCommandKey].toInt());
 
     QGeoCoordinate coordinate;
-    if (!JsonHelper::loadGeoCoordinate(json[_jsonCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
+    if (!JsonHelper::loadGeoCoordinate(v2Json[_jsonCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
         return false;
     }
     setParam5(coordinate.latitude());
     setParam6(coordinate.longitude());
     setParam7(coordinate.altitude());
 
+    _doJumpId = -1;
+    if (v2Json.contains(_jsonDoJumpIdKey)) {
+        _doJumpId = v2Json[_jsonDoJumpIdKey].toInt();
+    }
     setIsCurrentItem(false);
-    setSequenceNumber(json[_jsonIdKey].toInt());
-    setParam1(json[_jsonParam1Key].toDouble());
-    setParam2(json[_jsonParam2Key].toDouble());
-    setParam3(json[_jsonParam3Key].toDouble());
-    setParam4(json[_jsonParam4Key].toDouble());
-    setAutoContinue(json[_jsonAutoContinueKey].toBool());
+    setSequenceNumber(sequenceNumber);
+    setAutoContinue(v2Json[_jsonAutoContinueKey].toBool());
+
+    setParam1(rgParams[0].toDouble());
+    setParam2(rgParams[1].toDouble());
+    setParam3(rgParams[2].toDouble());
+    setParam4(rgParams[3].toDouble());
 
     return true;
 }
@@ -311,4 +382,22 @@ void MissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 QGeoCoordinate MissionItem::coordinate(void) const
 {
     return QGeoCoordinate(param5(), param6(), param7());
+}
+
+double MissionItem::flightSpeed(void) const
+{
+    double flightSpeed = std::numeric_limits<double>::quiet_NaN();
+
+    if (_commandFact.rawValue().toInt() == MAV_CMD_DO_CHANGE_SPEED && _param2Fact.rawValue().toDouble() > 0) {
+        flightSpeed = _param2Fact.rawValue().toDouble();
+    }
+
+    return flightSpeed;
+}
+
+void MissionItem::_param2Changed(QVariant value)
+{
+    if (_commandFact.rawValue().toInt() == MAV_CMD_DO_CHANGE_SPEED && _param2Fact.rawValue().toDouble() > 0) {
+        emit flightSpeedChanged(value.toDouble());
+    }
 }

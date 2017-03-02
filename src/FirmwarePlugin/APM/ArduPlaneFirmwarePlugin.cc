@@ -7,11 +7,10 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Pritam Ghanghas <pritam.ghanghas@gmail.com>
-
 #include "ArduPlaneFirmwarePlugin.h"
+
+bool ArduPlaneFirmwarePlugin::_remapParamNameIntialized = false;
+FirmwarePlugin::remapParamNameMajorVersionMap_t ArduPlaneFirmwarePlugin::_remapParamName;
 
 APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable)
     : APMCustomMode(mode, settable)
@@ -63,4 +62,32 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
     supportedFlightModes << APMPlaneMode(APMPlaneMode::QLAND           ,true);
     supportedFlightModes << APMPlaneMode(APMPlaneMode::QRTL            ,true);
     setSupportedModes(supportedFlightModes);
+
+    if (!_remapParamNameIntialized) {
+        FirmwarePlugin::remapParamNameMap_t& remapV3_8 = _remapParamName[3][8];
+
+        remapV3_8["SERVO5_FUNCTION"] = QStringLiteral("RC5_FUNCTION");
+        remapV3_8["SERVO6_FUNCTION"] = QStringLiteral("RC6_FUNCTION");
+        remapV3_8["SERVO7_FUNCTION"] = QStringLiteral("RC7_FUNCTION");
+        remapV3_8["SERVO8_FUNCTION"] = QStringLiteral("RC8_FUNCTION");
+        remapV3_8["SERVO9_FUNCTION"] = QStringLiteral("RC9_FUNCTION");
+        remapV3_8["SERVO10_FUNCTION"] = QStringLiteral("RC10_FUNCTION");
+        remapV3_8["SERVO11_FUNCTION"] = QStringLiteral("RC11_FUNCTION");
+        remapV3_8["SERVO12_FUNCTION"] = QStringLiteral("RC12_FUNCTION");
+        remapV3_8["SERVO13_FUNCTION"] = QStringLiteral("RC13_FUNCTION");
+        remapV3_8["SERVO14_FUNCTION"] = QStringLiteral("RC14_FUNCTION");
+
+        _remapParamNameIntialized = true;
+    }
+}
+
+int ArduPlaneFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
+{
+    // Remapping supports up to 3.8
+    return majorVersionNumber == 3 ? 8 : Vehicle::versionNotSetValue;
+}
+
+QString ArduPlaneFirmwarePlugin::takeControlFlightMode(void)
+{
+    return QStringLiteral("Manual");
 }

@@ -12,7 +12,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "ParameterEditorController.h"
-#include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
@@ -34,7 +33,10 @@ ParameterEditorController::ParameterEditorController(void)
         _componentIds += QString("%1").arg(componentId);
     }
 
-    _currentGroup = groupMap[_currentComponentId].keys()[0];
+    // Be careful about no parameters
+    if (groupMap.contains(_currentComponentId) && groupMap[_currentComponentId].size() != 0) {
+        _currentGroup = groupMap[_currentComponentId].keys()[0];
+    }
     _updateParameters();
 
     connect(this, &ParameterEditorController::searchTextChanged, this, &ParameterEditorController::_updateParameters);
@@ -113,7 +115,7 @@ void ParameterEditorController::saveToFile(const QString& filename)
 void ParameterEditorController::saveToFilePicker(void)
 {
 #ifndef __mobile__
-    QString fileName = QGCFileDialog::getSaveFileName(NULL,
+    QString fileName = QGCFileDialog::getSaveFileName(MainWindow::instance(),
                                                       "Save Parameters",
                                                       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
                                                       "Parameter Files (*.params)",
@@ -153,7 +155,7 @@ void ParameterEditorController::loadFromFile(const QString& filename)
 void ParameterEditorController::loadFromFilePicker(void)
 {
 #ifndef __mobile__
-    QString fileName = QGCFileDialog::getOpenFileName(NULL,
+    QString fileName = QGCFileDialog::getOpenFileName(MainWindow::instance(),
                                                       "Load Parameters",
                                                       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
                                                       "Parameter Files (*.params);;All Files (*)");

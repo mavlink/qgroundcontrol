@@ -38,7 +38,6 @@ linux {
         equals(ANDROID_TARGET_ARCH, x86)  {
             CONFIG += Androidx86Build
             DEFINES += __androidx86__
-            DEFINES += QGC_DISABLE_UVC
             message("Android x86 build")
         } else {
             message("Android Arm build")
@@ -47,7 +46,7 @@ linux {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
 } else : win32 {
-    win32-msvc2010 | win32-msvc2012 | win32-msvc2013 {
+    win32-msvc2010 | win32-msvc2012 | win32-msvc2013 | win32-msvc2015 {
         message("Windows build")
         CONFIG += WindowsBuild
         DEFINES += __STDC_LIMIT_MACROS
@@ -77,9 +76,11 @@ linux {
         error("Unsupported Qt version, 5.5.x or greater is required for iOS")
     }
     message("iOS build")
-    CONFIG += iOSBuild MobileBuild app_bundle
+    CONFIG  += iOSBuild MobileBuild app_bundle NoSerialBuild
+    CONFIG  -= bitcode
     DEFINES += __ios__
     DEFINES += QGC_NO_GOOGLE_MAPS
+    DEFINES += NO_SERIAL_LINK
     QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
     QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie
@@ -202,8 +203,13 @@ MacBuild | LinuxBuild {
 }
 
 WindowsBuild {
+    win32-msvc2015 {
+        QMAKE_CFLAGS -= -Zc:strictStrings
+        QMAKE_CXXFLAGS -= -Zc:strictStrings
+    }
     QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
     QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
+
     QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
     QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
     QMAKE_CXXFLAGS_WARN_ON += /W3 \
@@ -221,7 +227,7 @@ WindowsBuild {
 #
 
 ReleaseBuild {
-    DEFINES += QT_NO_DEBUG
+    DEFINES += QT_NO_DEBUG QT_MESSAGELOGCONTEXT
     CONFIG += force_debug_info  # Enable debugging symbols on release builds
     !iOSBuild {
         CONFIG += ltcg              # Turn on link time code generation
@@ -238,12 +244,4 @@ ReleaseBuild {
         QMAKE_LFLAGS_RELEASE += /OPT:ICF
         QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO += /OPT:ICF
     }
-}
-
-#
-# Unit Test specific configuration goes here
-#
-
-DebugBuild {
-    DEFINES += UNITTEST_BUILD
 }

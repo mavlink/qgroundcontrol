@@ -93,20 +93,15 @@ QGCCacheWorker::enqueueTask(QGCMapTask* task)
         task->deleteLater();
         return false;
     }
-    if(!_taskQueue.contains(task))
-    {
-        _mutex.lock();
-        _taskQueue.enqueue(task);
-        _mutex.unlock();
-        if(this->isRunning()) {
-            _waitc.wakeAll();
-        } else {
-            this->start(QThread::NormalPriority);
-        }
-        return true;
+    _mutex.lock();
+    _taskQueue.enqueue(task);
+    _mutex.unlock();
+    if(this->isRunning()) {
+        _waitc.wakeAll();
+    } else {
+        this->start(QThread::HighPriority);
     }
-    //-- Should never happen
-    return false;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -157,6 +152,9 @@ QGCCacheWorker::run()
                     break;
                 case QGCMapTask::taskReset:
                     _resetCacheDatabase(task);
+                    break;
+                case QGCMapTask::taskTestInternet:
+                    _testInternet();
                     break;
             }
             task->deleteLater();
@@ -454,6 +452,7 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
             task->tileSet()->setId(setID);
             //-- Prepare Download List
             quint64 tileCount = 0;
+            _db->transaction();
             for(int z = task->tileSet()->minZoom(); z <= task->tileSet()->maxZoom(); z++) {
                 QGCTileSet set = QGCMapEngine::getTileCount(z,
                     task->tileSet()->topleftLon(), task->tileSet()->topleftLat(),
@@ -493,6 +492,7 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
                     }
                 }
             }
+            _db->commit();
             //-- Done
             _updateSetTotals(task->tileSet());
             task->setTileSetSaved();
@@ -660,6 +660,7 @@ QGCCacheWorker::_init()
         qCritical() << "Could not find suitable cache directory.";
         _failed = true;
     }
+    _testInternet();
     return _failed;
 }
 
@@ -746,4 +747,18 @@ QGCCacheWorker::_createDB()
         file.remove();
     }
     _failed = !_valid;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_testInternet()
+{
+    QTcpSocket socket;
+    socket.connectToHost("8.8.8.8", 53);
+    if (socket.waitForConnected(2500)) {
+        emit internetStatus(true);
+        return;
+    }
+    qWarning() << "No Internet Access";
+    emit internetStatus(false);
 }

@@ -29,6 +29,7 @@ FlightMap {
 
     property alias  missionController: missionController
     property var    flightWidgets
+    property var    rightPanelWidth
 
     property bool   _followVehicle:                 true
     property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
@@ -36,6 +37,7 @@ FlightMap {
     property var    activeVehicleCoordinate:        _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property var    _gotoHereCoordinate:            QtPositioning.coordinate()
     property int    _retaskSequence:                0
+    property real   _toolButtonTopMargin:           parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
 
     Component.onCompleted: {
         QGroundControl.flightMapPosition = center
@@ -52,6 +54,7 @@ FlightMap {
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
+    QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }
 
     MissionController {
         id: missionController
@@ -66,6 +69,111 @@ FlightMap {
     RallyPointController {
         id: rallyPointController
         Component.onCompleted: start(false /* editMode */)
+    }
+
+    ExclusiveGroup {
+        id: _mapTypeButtonsExclusiveGroup
+    }
+
+    ToolStrip {
+        id:                 toolStrip
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+        anchors.left:       parent.left
+        anchors.topMargin:  _toolButtonTopMargin
+        anchors.top:        parent.top
+        color:              qgcPal.window
+        title:              qsTr("Fly")
+        z:                  QGroundControl.zOrderWidgets
+        buttonVisible:      [ true, true, _showZoom, _showZoom ]
+        maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y   // Massive reach across hack
+
+        property bool _showZoom: !ScreenTools.isShortScreen
+
+        model: [
+            {
+                name:               "Center",
+                iconSource:         "/qmlimages/MapCenter.svg",
+                dropPanelComponent: centerMapDropPanel
+            },
+            {
+                name:               "Map",
+                iconSource:         "/qmlimages/MapType.svg",
+                dropPanelComponent: mapTypeDropPanel
+            },
+            {
+                name:               "In",
+                iconSource:         "/qmlimages/ZoomPlus.svg"
+            },
+            {
+                name:               "Out",
+                iconSource:         "/qmlimages/ZoomMinus.svg"
+            }
+        ]
+
+        onClicked: {
+            switch (index) {
+            case 2:
+                _flightMap.zoomLevel += 0.5
+                break
+            case 3:
+                _flightMap.zoomLevel -= 0.5
+                break
+            }
+        }
+    }
+
+    // Toolstrip drop panel compomnents
+
+    MapFitFunctions {
+        id:                         mapFitFunctions
+        map:                        _flightMap
+        mapFitViewport:             Qt.rect(leftToolWidth, _toolButtonTopMargin, flightMap.width - leftToolWidth - rightPanelWidth, flightMap.height - _toolButtonTopMargin)
+        usePlannedHomePosition:     false
+        mapMissionController:      missionController
+        mapGeoFenceController:     geoFenceController
+        mapRallyPointController:   rallyPointController
+
+        property real leftToolWidth:    toolStrip.x + toolStrip.width
+    }
+
+    Component {
+        id: centerMapDropPanel
+
+        CenterMapDropPanel {
+            map:                _flightMap
+            fitFunctions:       mapFitFunctions
+            showFollowVehicle:  true
+            followVehicle:      _followVehicle
+
+            onFollowVehicleChanged: _followVehicle = followVehicle
+        }
+    }
+
+    Component {
+        id: mapTypeDropPanel
+
+        Column {
+            spacing: ScreenTools.defaultFontPixelHeight / 2
+
+            QGCLabel { text: qsTr("Map type:") }
+            Row {
+                spacing: ScreenTools.defaultFontPixelWidth
+                Repeater {
+                    model: QGroundControl.flightMapSettings.mapTypes
+
+                    QGCButton {
+                        checkable:      true
+                        checked:        QGroundControl.flightMapSettings.mapType === text
+                        text:           modelData
+                        exclusiveGroup: _mapTypeButtonsExclusiveGroup
+                        onClicked: {
+                            QGroundControl.flightMapSettings.mapType = text
+                            dropPanel.hide()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // Add trajectory points to the map
@@ -110,7 +218,8 @@ FlightMap {
     MapPolygon {
         border.color:   "#80FF0000"
         border.width:   3
-        path:           geoFenceController.polygonSupported ? geoFenceController.polygon.path : undefined
+        path:           geoFenceController.polygon.path
+        visible:        geoFenceController.polygonEnabled
     }
 
     // GeoFence circle
@@ -118,15 +227,17 @@ FlightMap {
         border.color:   "#80FF0000"
         border.width:   3
         center:         missionController.plannedHomePosition
-        radius:         geoFenceController.circleSupported ? geoFenceController.circleRadius : 0
+        radius:         geoFenceController.circleRadius
         z:              QGroundControl.zOrderMapItems
+        visible:        geoFenceController.circleEnabled
     }
 
     // GeoFence breach return point
     MapQuickItem {
-        anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
         coordinate:     geoFenceController.breachReturnPoint
-        visible:        geoFenceController.breachReturnSupported
+        visible:        geoFenceController.breachReturnEnabled
         sourceItem:     MissionItemIndexLabel { label: "F" }
         z:              QGroundControl.zOrderMapItems
     }
@@ -137,7 +248,8 @@ FlightMap {
 
         delegate: MapQuickItem {
             id:             itemIndicator
-            anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+            anchorPoint.x:  sourceItem.anchorPointX
+            anchorPoint.y:  sourceItem.anchorPointY
             coordinate:     object.coordinate
             z:              QGroundControl.zOrderMapItems
 
@@ -153,8 +265,8 @@ FlightMap {
         coordinate:     _gotoHereCoordinate
         visible:        _activeVehicle && _activeVehicle.guidedMode && _gotoHereCoordinate.isValid
         z:              QGroundControl.zOrderMapItems
-        anchorPoint.x:  sourceItem.width  / 2
-        anchorPoint.y:  sourceItem.height / 2
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
 
         sourceItem: MissionItemIndexLabel {
             checked: true
@@ -167,7 +279,6 @@ FlightMap {
         anchors.rightMargin:    ScreenTools.defaultFontPixelHeight * (0.33)
         anchors.bottom:         parent.bottom
         anchors.right:          parent.right
-        z:                      QGroundControl.zOrderWidgets
         mapControl:             flightMap
         visible:                !ScreenTools.isTinyScreen
     }

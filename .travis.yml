@@ -29,16 +29,17 @@ matrix:
           sudo: false
         - os: osx
           osx_image: xcode8
-          env: SPEC=macx-clang CONFIG=debug
-          sudo: required
-        - os: osx
-          osx_image: xcode8
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
-        - os: osx
-          osx_image: xcode8
-          env: SPEC=macx-ios-clang CONFIG=release
-          sudo: false
+# OSX builds pared back to installer only since travis sucks so bad we can't afford more than one'
+#        - os: osx
+#          osx_image: xcode8
+#          env: SPEC=macx-clang CONFIG=debug
+#          sudo: required
+#        - os: osx
+#          osx_image: xcode8
+#          env: SPEC=macx-ios-clang CONFIG=release
+#          sudo: false
 
 android:
   components:
@@ -88,9 +89,9 @@ before_install:
 install:
   # linux dependencies: qt
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux-min.tar.bz2 &&
-        tar jxf Qt5.5.1-linux-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt/5.5/gcc_64/bin:$PATH &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.8.0-linux-min.tar.bz2 &&
+        tar jxf Qt5.8.0-linux-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/Qt5.8-linux/5.8/gcc_64/bin:$PATH &&
         export DISPLAY=:99.0 &&
         sh -e /etc/init.d/xvfb start
         ;
@@ -98,8 +99,8 @@ install:
 
   # android dependencies: qt, gstreamer, android-ndk
   - if [ "${SPEC}" = "android-g++" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux-min.tar.bz2 &&
-        tar jxf Qt5.5.1-linux-min.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.8.0-android-min.tar.bz2 &&
+        tar jxf Qt5.8.0-android-min.tar.bz2 -C /tmp &&
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 &&
         mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
         tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
@@ -108,35 +109,34 @@ install:
         ./android-ndk-r10e-linux-x86_64.bin > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r10e &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
-        export PATH=/tmp/Qt/5.5/android_armv7/bin:`pwd`/android-ndk-r10e:$PATH
+        export PATH=/tmp/Qt5.8-android/5.8/android_armv7/bin:`pwd`/android-ndk-r10e:$PATH && echo $PATH
         ;
     fi
 
   # osx dependencies: qt, gstreamer, gstreamer-devel
   - if [ "${SPEC}" = "macx-clang" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-mac-clang-min.tar.bz2 &&
-        tar jxf Qt5.5.1-mac-clang-min.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.8.0-mac-clang-min.tar.bz2 &&
+        tar jxf Qt5.8.0-mac-clang-min.tar.bz2 -C /tmp &&
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target / &&
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target / &&
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
         sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
-        export QT_DIR=Qt5.5-mac-clang/5.5/clang_64 &&
+        export QT_DIR=Qt5.8-mac-clang/5.8/clang_64 &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
         export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml &&
-        export PATH=/tmp/$QT_DIR/bin:$PATH &&
-        tools/patch_qt_for_xcode8.sh
+        export PATH=/tmp/$QT_DIR/bin:$PATH
         ;
     fi
 
   # ios dependencies: qt, TODO: add gstreamer
   - if [ "${SPEC}" = "macx-ios-clang" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-ios-min.tar.bz2 &&
-        tar jxf Qt5.5.1-ios-min.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.8.0-ios-min.tar.bz2 &&
+        tar jxf Qt5.8.0-ios-min.tar.bz2 -C /tmp &&
         export IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang` &&
         export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++` &&
-        export PATH=/tmp/ios/bin:$PATH &&
+        export PATH=/tmp/Qt5.8-ios/5.8/ios/bin:$PATH &&
         tools/patch_qt_for_xcode8.sh
         ;
     fi
@@ -174,12 +174,14 @@ script:
   #- ccache -s
 
   # unit tests linux/osx
-  - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
-        mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
-        ./debug/QGroundControl --unittest;
-    elif [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
-        mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/ &&
-        ./debug/qgroundcontrol.app/Contents/MacOS/QGroundControl --unittest;
+  - if [ "${TRAVIS_BRANCH}" != "master" ]; then
+        if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
+            mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
+            ./debug/QGroundControl --unittest;
+        elif [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
+            mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/ &&
+            ./debug/qgroundcontrol.app/Contents/MacOS/QGroundControl --unittest;
+        fi
     fi
 
 after_success:

@@ -51,7 +51,7 @@ QGCViewDialog {
         onActivated: categorySelected(textAt(index))
     }
 
-    ListView {
+    QGCListView {
         id:                 commandList
         anchors.margins:    ScreenTools.defaultFontPixelHeight
         anchors.left:       parent.left
@@ -101,5 +101,5 @@ QGCViewDialog {
                 }
             }
         }
-    } // ListView
+    } // QGCListView
 } // QGCViewDialog

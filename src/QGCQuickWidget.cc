@@ -9,7 +9,6 @@
 
 
 #include "QGCQuickWidget.h"
-#include "AutoPilotPluginManager.h"
 #include "MultiVehicleManager.h"
 #include "JoystickManager.h"
 #include "QGCApplication.h"

@@ -13,7 +13,6 @@
 
 #include <QObject>
 
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 #include "FactPanelController.h"
 
@@ -37,7 +36,7 @@ private slots:
     void _activeVehicleChanged  (Vehicle* activeVehicle);
 
 private:
-	UASInterface*       _uas;
+    Vehicle*            _vehicle;
     QString             _customQmlFile;
     static const char*  _settingsKey;
 };

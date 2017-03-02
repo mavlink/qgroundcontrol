@@ -47,6 +47,7 @@ Item {
     property real largeFontPointSize:       10
 
     property real availableHeight:          0
+    property real toolbarHeight:            0
 
     readonly property real smallFontPointRatio:      0.75
     readonly property real mediumFontPointRatio:     1.25
@@ -59,6 +60,14 @@ Item {
     property bool isTinyScreen:     (Screen.width / Screen.pixelDensity) < 120 // 120mm
     property bool isShortScreen:    ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6) // Nexus 7 for example
 
+    // The implicit heights/widths for our custom control set
+    property real implicitButtonWidth:      Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
+    property real implicitButtonHeight:     Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
+    property real implicitCheckBoxWidth:    Math.round(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0))
+    property real implicitTextFieldHeight:  Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
+    property real implicitComboBoxHeight:   Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
+    property real implicitComboBoxWidth:    Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
+
     readonly property string normalFontFamily:      "opensans"
     readonly property string demiboldFontFamily:    "opensans-demibold"
 
@@ -66,10 +75,10 @@ Item {
        I've disabled (in release builds) until I figure out why. Changes require a restart for now.
     */
     Connections {
-        target: QGroundControl
-        onBaseFontPointSizeChanged: {
+        target: QGroundControl.settingsManager.appSettings.appFontPointSize
+        onValueChanged: {
             if(ScreenToolsController.isDebug)
-                _setBasePointSize(QGroundControl.baseFontPointSize)
+                _setBasePointSize(QGroundControl.settingsManager.appSettings.appFontPointSize.value)
         }
     }
 
@@ -87,11 +96,12 @@ Item {
     function _setBasePointSize(pointSize) {
         _textMeasure.font.pointSize = pointSize
         defaultFontPointSize    = pointSize
-        defaultFontPixelHeight  = _textMeasure.fontHeight
-        defaultFontPixelWidth   = _textMeasure.fontWidth
+        defaultFontPixelHeight  = Math.round(_textMeasure.fontHeight/2.0)*2
+        defaultFontPixelWidth   = Math.round(_textMeasure.fontWidth/2.0)*2
         smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
         mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
         largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
+        toolbarHeight           = defaultFontPixelHeight * 3 * QGroundControl.corePlugin.options.toolbarHeightMultiplier
     }
 
     Text {
@@ -106,9 +116,10 @@ Item {
         property real   fontWidth:    contentWidth
         property real   fontHeight:   contentHeight
         Component.onCompleted: {
-            var baseSize = QGroundControl.baseFontPointSize;
+            var _appFontPointSizeFact = QGroundControl.settingsManager.appSettings.appFontPointSize
+            var baseSize = _appFontPointSizeFact.value
             //-- If this is the first time (not saved in settings)
-            if(baseSize < 6 || baseSize > 48) {
+            if(baseSize < _appFontPointSizeFact.min || baseSize > _appFontPointSizeFact.max) {
                 //-- Init base size base on the platform
                 if(ScreenToolsController.isMobile) {
                     //-- Check iOS really tiny screens (iPhone 4s/5/5s)
@@ -137,7 +148,7 @@ Item {
                     else
                         baseSize = _defaultFont.font.pointSize;
                 }
-                QGroundControl.baseFontPointSize = baseSize
+                _appFontPointSizeFact.value = baseSize
                 //-- Release build doesn't get signal
                 if(!ScreenToolsController.isDebug)
                     _screenTools._setBasePointSize(baseSize);

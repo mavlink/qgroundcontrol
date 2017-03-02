@@ -26,27 +26,15 @@ import QGroundControl.Palette       1.0
 Item {
     id:     instrumentPanel
     height: instrumentColumn.y + instrumentColumn.height + _topBottomMargin
-    width:  size
+    width:  getPreferredInstrumentWidth()
 
-    property alias  heading:        compass.heading
-    property alias  rollAngle:      attitudeWidget.rollAngle
-    property alias  pitchAngle:     attitudeWidget.pitchAngle
-    property real   size:           _defaultSize
-    property bool   lightBorders:   true
-    property bool   active:         false
-    property var    qgcView
-    property real   maxHeight
-
-    property Fact   _emptyFact:         Fact { }
-    property Fact   groundSpeedFact:    _emptyFact
-    property Fact   airSpeedFact:       _emptyFact
-
-    property real   _defaultSize:   ScreenTools.defaultFontPixelHeight * (9)
-
+    property var    _qgcView:           qgcView
+    property real   _maxHeight:         maxHeight
+    property real   _defaultSize:       ScreenTools.defaultFontPixelHeight * (9)
     property color  _backgroundColor:   qgcPal.window
     property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
-    property real   _topBottomMargin:   (size * 0.05) / 2
-    property real   _availableValueHeight: maxHeight - (attitudeWidget.height + _spacer1.height + _spacer2.height + (_spacing * 4)) - (_showCompass ? compass.height : 0)
+    property real   _topBottomMargin:   (width * 0.05) / 2
+    property real   _availableValueHeight: _maxHeight - (attitudeWidget.height + _spacer1.height + _spacer2.height + (_spacing * 4)) - (_showCompass ? compass.height : 0)
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
     readonly property bool _showCompass:    true // !ScreenTools.isShortScreen
@@ -57,10 +45,10 @@ Item {
         anchors.left:   parent.left
         anchors.right:  parent.right
         height:         (_showCompass ? instrumentColumn.height : attitudeWidget.height) + (_topBottomMargin * 2)
-        radius:         size / 2
+        radius:         width / 2
         color:          _backgroundColor
         border.width:   1
-        border.color:   lightBorders ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
+        border.color:   _isSatellite ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
     }
 
     MouseArea {
@@ -83,7 +71,7 @@ Item {
             QGCAttitudeWidget {
                 id:             attitudeWidget
                 size:           parent.width * 0.95
-                active:         instrumentPanel.active
+                vehicle:        _activeVehicle
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 
@@ -128,8 +116,10 @@ Item {
 
             InstrumentSwipeView {
                 id:                 _valuesWidget
-                width:              parent.width
-                qgcView:            instrumentPanel.qgcView
+                anchors.margins:    1
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                qgcView:            instrumentPanel._qgcView
                 textColor:          qgcPal.text
                 backgroundColor:    _backgroundColor
                 maxHeight:          _availableValueHeight
@@ -148,8 +138,8 @@ Item {
         QGCCompassWidget {
             id:                 compass
             size:               parent.width * 0.95
-            active:             instrumentPanel.active
             visible:            _showCompass
+            vehicle:            _activeVehicle
             anchors.horizontalCenter: parent.horizontalCenter
         }
     }

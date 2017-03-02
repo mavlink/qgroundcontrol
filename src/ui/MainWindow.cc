@@ -37,13 +37,11 @@
 #include "MAVLinkDecoder.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
-#include "HomePositionManager.h"
 #include "LogCompressor.h"
 #include "UAS.h"
 #include "QGCImageProvider.h"
 
 #ifndef __mobile__
-#include "QGCDataPlot2D.h"
 #include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
 #include "UASQuickView.h"
@@ -54,7 +52,7 @@
 #include "AppMessages.h"
 #endif
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 
@@ -276,6 +274,11 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
+    // Enforce thread-safe shutdown of the mavlink decoder
+    mavlinkDecoder->finish();
+    mavlinkDecoder->wait(1000);
+    mavlinkDecoder->deleteLater();
+
     // This needs to happen before we get into the QWidget dtor
     // otherwise  the QML engine reads freed data and tries to
     // destroy MainWindow a second time.
@@ -292,8 +295,7 @@ QString MainWindow::_getWindowGeometryKey()
 void MainWindow::_buildCommonWidgets(void)
 {
     // Add generic MAVLink decoder
-    // TODO: This is never deleted
-    mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol(), this);
+    mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol());
     connect(mavlinkDecoder.data(), &MAVLinkDecoder::valueChanged, this, &MainWindow::valueChanged);
 
     // Log player
@@ -301,12 +303,17 @@ void MainWindow::_buildCommonWidgets(void)
     logPlayer = new QGCMAVLinkLogPlayer(statusBar());
     statusBar()->addPermanentWidget(logPlayer);
 
+    // Populate widget menu
     for (int i = 0, end = ARRAY_SIZE(rgDockWidgetNames); i < end; i++) {
+        if (i == ONBOARD_FILES) {
+            // Temporarily removed until twe can fix all the problems with it
+            continue;
+        }
 
         const char* pDockWidgetName = rgDockWidgetNames[i];
 
         // Add to menu
-        QAction* action = new QAction(tr(pDockWidgetName), this);
+        QAction* action = new QAction(pDockWidgetName, this);
         action->setCheckable(true);
         action->setData(i);
         connect(action, &QAction::triggered, this, &MainWindow::_showDockWidgetAction);
@@ -318,6 +325,11 @@ void MainWindow::_buildCommonWidgets(void)
 /// Shows or hides the specified dock widget, creating if necessary
 void MainWindow::_showDockWidget(const QString& name, bool show)
 {
+    if (name == rgDockWidgetNames[ONBOARD_FILES]) {
+        // Temporarily disabled due to bugs
+        return;
+    }
+
     // Create the inner widget if we need to
     if (!_mapName2DockWidget.contains(name)) {
         if(!_createInnerDockWidget(name)) {
@@ -442,28 +454,7 @@ void MainWindow::storeSettings()
 
 void MainWindow::configureWindowName()
 {
-    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
-    QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
-
-    // XXX we do have UDP MAVLink heartbeat broadcast now in SITL and will have it on the
-    // WIFI radio, so people should not be in need any more of knowing their IP.
-    // this can go once we are certain its not needed any more.
-    #if 0
-    bool prevAddr = false;
-    windowname.append(" (" + QHostInfo::localHostName() + ": ");
-    for (int i = 0; i < hostAddresses.size(); i++)
-    {
-        // Exclude loopback IPv4 and all IPv6 addresses
-        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
-        {
-            if(prevAddr) windowname.append("/");
-            windowname.append(hostAddresses.at(i).toString());
-            prevAddr = true;
-        }
-    }
-    windowname.append(")");
-    #endif
-    setWindowTitle(windowname);
+    setWindowTitle(qApp->applicationName() + " " + qApp->applicationVersion());
 }
 
 /**
@@ -472,11 +463,6 @@ void MainWindow::configureWindowName()
 **/
 void MainWindow::connectCommonActions()
 {
-    // Audio output
-    _ui.actionMuteAudioOutput->setChecked(qgcApp()->toolbox()->audioOutput()->isMuted());
-    connect(qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mutedChanged, _ui.actionMuteAudioOutput, &QAction::setChecked);
-    connect(_ui.actionMuteAudioOutput, &QAction::triggered, qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mute);
-
     // Connect internal actions
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
 }

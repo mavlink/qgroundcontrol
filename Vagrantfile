@@ -25,7 +25,7 @@ Vagrant.configure(2) do |config|
      sudo apt-get update -y
      sudo apt-get dist-upgrade -y
      sudo apt-get install -y git build-essential
-     sudo apt-get install -y espeak libespeak-dev libudev-dev libsdl1.2-dev
+     sudo apt-get install -y espeak libespeak-dev libudev-dev libsdl2-dev
      sudo apt-get install -y doxygen
      sudo apt-get install -y gstreamer1.0* libgstreamer1.0*
 

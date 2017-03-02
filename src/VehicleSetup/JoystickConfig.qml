@@ -27,6 +27,16 @@ SetupPage {
     pageName:           qsTr("Joystick")
     pageDescription:    qsTr("Joystick Setup is used to configure a calibrate joysticks.")
 
+    Connections {
+        target: joystickManager
+        onAvailableJoysticksChanged: {
+            if( joystickManager.joysticks.length == 0 ) {
+                summaryButton.checked = true
+                setupView.showSummaryPanel()
+            }
+        }
+    }
+
     Component {
         id: pageComponent
 
@@ -72,7 +82,7 @@ SetupPage {
 
                 Item {
                     property int axisValue: 0
-
+                    property int deadbandValue: 0
 
                     property int            __lastAxisValue:        0
                     readonly property int   __axisValueMaxJitter:   100
@@ -85,6 +95,20 @@ SetupPage {
                         width:                  parent.width
                         height:                 parent.height / 2
                         color:                  __barColor
+                    }
+
+                    // Deadband
+                    Rectangle {
+                        id:                     deadbandBar
+                        anchors.verticalCenter: parent.verticalCenter
+                        x:                      _deadbandPosition
+                        width:                  _deadbandWidth
+                        height:                 parent.height / 2
+                        color:                  "#8c161a"
+
+                        property real _percentDeadband:    ((2 * deadbandValue) / (32768.0 * 2))
+                        property real _deadbandWidth:   parent.width * _percentDeadband
+                        property real _deadbandPosition:   (parent.width - _deadbandWidth) / 2
                     }
 
                     // Center point
@@ -126,13 +150,15 @@ SetupPage {
                         duration:   1500
                     }
 
-                    /*
+
                     // Axis value debugger
+                    /*
                     QGCLabel {
                         anchors.fill: parent
                         text: axisValue
                     }
                     */
+
                 }
             } // Component - axisMonitorDisplayComponent
 
@@ -160,7 +186,7 @@ SetupPage {
                         QGCLabel {
                             id:     rollLabel
                             width:  defaultTextWidth * 10
-                            text:   qsTr("Roll")
+                            text:   _activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
                         }
 
                         Loader {
@@ -180,6 +206,8 @@ SetupPage {
                             target: controller
 
                             onRollAxisValueChanged: rollLoader.item.axisValue = value
+
+                            onRollAxisDeadbandChanged: rollLoader.item.deadbandValue = value
                         }
                     }
 
@@ -190,7 +218,7 @@ SetupPage {
                         QGCLabel {
                             id:     pitchLabel
                             width:  defaultTextWidth * 10
-                            text:   qsTr("Pitch")
+                            text:   _activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
                         }
 
                         Loader {
@@ -210,6 +238,9 @@ SetupPage {
                             target: controller
 
                             onPitchAxisValueChanged: pitchLoader.item.axisValue = value
+
+                            onPitchAxisDeadbandChanged: pitchLoader.item.deadbandValue = value
+
                         }
                     }
 
@@ -240,6 +271,8 @@ SetupPage {
                             target: controller
 
                             onYawAxisValueChanged: yawLoader.item.axisValue = value
+
+                            onYawAxisDeadbandChanged: yawLoader.item.deadbandValue = value
                         }
                     }
 
@@ -270,6 +303,8 @@ SetupPage {
                             target: controller
 
                             onThrottleAxisValueChanged: throttleLoader.item.axisValue = value
+
+                            onThrottleAxisDeadbandChanged: throttleLoader.item.deadbandValue = value
                         }
                     }
                 } // Column - Attitude Control labels
@@ -277,6 +312,7 @@ SetupPage {
                 // Command Buttons
                 Row {
                     spacing: 10
+                    visible: _activeJoystick.requiresCalibration
 
                     QGCButton {
                         id:     skipButton
@@ -333,11 +369,22 @@ SetupPage {
 
 
                             QGCCheckBox {
-                                enabled:    checked || _activeJoystick.calibrated
-                                text:       _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)")
+                                id:         enabledCheckBox
+                                enabled:    _activeJoystick ? _activeJoystick.calibrated : false
+                                text:       _activeJoystick ? _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)") : ""
                                 checked:    _activeVehicle.joystickEnabled
 
                                 onClicked:  _activeVehicle.joystickEnabled = checked
+
+                                Connections {
+                                    target: joystickManager
+
+                                    onActiveJoystickChanged: {
+                                        if(_activeJoystick) {
+                                            enabledCheckBox.checked = Qt.binding(function() { return _activeJoystick.calibrated && _activeVehicle.joystickEnabled })
+                                        }
+                                    }
+                                }
                             }
 
                             Row {
@@ -365,6 +412,16 @@ SetupPage {
                                             joystickCombo.currentIndex = index
                                         }
                                     }
+
+                                    Connections {
+                                        target: joystickManager
+                                        onAvailableJoysticksChanged: {
+                                            var index = joystickCombo.find(joystickManager.activeJoystickName)
+                                            if (index >= 0) {
+                                                joystickCombo.currentIndex = index
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
@@ -377,15 +434,30 @@ SetupPage {
                                 QGCRadioButton {
                                     exclusiveGroup: throttleModeExclusiveGroup
                                     text:           qsTr("Center stick is zero throttle")
-                                    checked:        _activeJoystick.throttleMode == 0
+                                    checked:        _activeJoystick ? _activeJoystick.throttleMode == 0 : false
 
                                     onClicked: _activeJoystick.throttleMode = 0
+                                }
+
+                                Row {
+                                    x:          20
+                                    width:      parent.width
+                                    spacing:    ScreenTools.defaultFontPixelWidth
+                                    visible:    _activeJoystick ? _activeJoystick.throttleMode == 0 : false
+
+                                    QGCCheckBox {
+                                        id:         accumulator
+                                        checked:    _activeJoystick ? _activeJoystick.accumulator : false
+                                        text:       qsTr("Spring loaded throttle smoothing")
+
+                                        onClicked:  _activeJoystick.accumulator = checked
+                                    }
                                 }
 
                                 QGCRadioButton {
                                     exclusiveGroup: throttleModeExclusiveGroup
                                     text:           qsTr("Full down stick is zero throttle")
-                                    checked:        _activeJoystick.throttleMode == 1
+                                    checked:        _activeJoystick ? _activeJoystick.throttleMode == 1 : false
 
                                     onClicked: _activeJoystick.throttleMode = 1
                                 }
@@ -396,7 +468,7 @@ SetupPage {
 
                                 QGCCheckBox {
                                     id:         exponential
-                                    checked:    _activeJoystick.exponential
+                                    checked:    _activeJoystick ? _activeJoystick.exponential : false
                                     text:       qsTr("Use exponential curve on roll, pitch, yaw")
 
                                     onClicked:  _activeJoystick.exponential = checked
@@ -435,6 +507,20 @@ SetupPage {
                                     onActivated: _activeVehicle.joystickMode = index
                                 }
                             }
+
+                            Row {
+                                width:      parent.width
+                                spacing:    ScreenTools.defaultFontPixelWidth
+                                visible:    advancedSettings.checked
+
+                                QGCCheckBox {
+                                    id:         deadband
+                                    checked:    controller.deadbandToggle
+                                    text:       qsTr("Deadbands")
+
+                                    onClicked:  controller.deadbandToggle = checked
+                                }
+                            }
                         }
                     } // Column - left column
 
@@ -471,7 +557,7 @@ SetupPage {
 
                             Repeater {
                                 id:     buttonActionRepeater
-                                model:  _activeJoystick.totalButtonCount
+                                model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
@@ -481,7 +567,7 @@ SetupPage {
 
                                     QGCCheckBox {
                                         anchors.verticalCenter:     parent.verticalCenter
-                                        checked:                    _activeJoystick.buttonActions[modelData] != ""
+                                        checked:                    _activeJoystick ? _activeJoystick.buttonActions[modelData] != "" : false
 
                                         onClicked: _activeJoystick.setButtonAction(modelData, checked ? buttonActionCombo.textAt(buttonActionCombo.currentIndex) : "")
                                     }
@@ -507,7 +593,7 @@ SetupPage {
                                     QGCComboBox {
                                         id:             buttonActionCombo
                                         width:          ScreenTools.defaultFontPixelWidth * 20
-                                        model:          _activeJoystick.actions
+                                        model:          _activeJoystick ? _activeJoystick.actions : 0
 
                                         onActivated:            _activeJoystick.setButtonAction(modelData, textAt(index))
                                         Component.onCompleted:  currentIndex = find(_activeJoystick.buttonActions[modelData])
@@ -538,7 +624,7 @@ SetupPage {
 
                             Repeater {
                                 id:     jsButtonActionRepeater
-                                model:  _activeJoystick.totalButtonCount
+                                model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
@@ -589,12 +675,57 @@ SetupPage {
                 id:             rightColumn
                 anchors.top:    parent.top
                 anchors.right:  parent.right
-                width:          defaultTextWidth * 35
-                spacing:        10
+                width:          Math.min(joystickPage.defaultTextWidth * 35, availableWidth * 0.4)
+                spacing:        ScreenTools.defaultFontPixelHeight / 2
+
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth
+
+                    ExclusiveGroup { id: modeGroup }
+
+                    QGCLabel {
+                        text: "TX Mode:"
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "1"
+                        checked:        controller.transmitterMode == 1
+                        enabled:        !controller.calibrating
+
+                        onClicked: controller.transmitterMode = 1
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "2"
+                        checked:        controller.transmitterMode == 2
+                        enabled:        !controller.calibrating
+
+                        onClicked: controller.transmitterMode = 2
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "3"
+                        checked:        controller.transmitterMode == 3
+                        enabled:        !controller.calibrating
+
+                        onClicked: controller.transmitterMode = 3
+                    }
+
+                    QGCRadioButton {
+                        exclusiveGroup: modeGroup
+                        text:           "4"
+                        checked:        controller.transmitterMode == 4
+                        enabled:        !controller.calibrating
+
+                        onClicked: controller.transmitterMode = 4
+                    }
+                }
 
                 Image {
-                    //width:      parent.width
-                    height:     defaultTextHeight * 15
+                    width:      parent.width
                     fillMode:   Image.PreserveAspectFit
                     smooth:     true
                     source:     controller.imageHelp
@@ -619,7 +750,7 @@ SetupPage {
 
                     Repeater {
                         id:     axisMonitorRepeater
-                        model:  _activeJoystick.axisCount
+                        model:  _activeJoystick ? _activeJoystick.axisCount : 0
                         width:  parent.width
 
                         Row {
@@ -671,7 +802,7 @@ SetupPage {
 
                         Repeater {
                             id:     buttonMonitorRepeater
-                            model:  _activeJoystick.totalButtonCount
+                            model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
 
                             Rectangle {
                                 width:          ScreenTools.defaultFontPixelHeight * 1.2
@@ -697,3 +828,5 @@ SetupPage {
         } // Item
     } // Component - pageComponent
 } // SetupPage
+
+

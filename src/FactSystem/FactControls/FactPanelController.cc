@@ -127,8 +127,9 @@ Fact* FactPanelController::getParameterFact(int componentId, const QString& name
         QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
         return fact;
     } else {
-        if(reportMissing)
+        if (reportMissing) {
             _reportMissingParameter(componentId, name);
+        }
         return NULL;
     }
 }

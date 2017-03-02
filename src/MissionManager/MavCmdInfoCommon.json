@@ -5,7 +5,7 @@
 
     "mavCmdInfo": [
         {
-            "comment":              "MAV_CMD_NAV_LAST: Used for fake home position waypoint",
+            "comment":              "MAV_CMD_NAV_LAST: Used for mission settings / planned home position waypoint",
             "id":                   95,
             "rawName":              "HomeRaw",
             "friendlyName":         "Home Position",
@@ -308,8 +308,8 @@
         {
             "id":                   84,
             "rawName":              "MAV_CMD_NAV_VTOL_TAKEOFF",
-            "friendlyName":         "VTOL takeoff",
-            "description":          "Takeoff from ground using VTOL mode.",
+            "friendlyName":         "VTOL takeoff and transition",
+            "description":          "Takeoff in VTOL mode, transition to forward flight and fly to the specified location.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "VTOL",
@@ -323,8 +323,8 @@
         {
             "id":                   85,
             "rawName":              "MAV_CMD_NAV_VTOL_LAND",
-            "friendlyName":         "VTOL land",
-            "description":          "Land using VTOL mode.",
+            "friendlyName":         "VTOL transition and land",
+            "description":          "Transition to VTOL mode and land.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "VTOL",
@@ -503,23 +503,23 @@
                 "label":            "Type:",
                 "enumStrings":      "Airspeed,Ground Speed",
                 "enumValues":       "0,1",
-                "default":          1
+                "default":          0
             },
             "param2": {
                 "label":            "Speed:",
                 "units":            "m/s",
-                "default":          -1
+                "default":          0
             },
             "param3": {
                 "label":            "Throttle:",
                 "units":            "%",
-                "default":          -1
+                "default":          0
             },
             "param4": {
                 "label":            "Offset:",
                 "enumStrings":      "Relative,Absolute",
                 "enumValues":       "1,0",
-                "default":          1
+                "default":          0
             }
         },
         {
@@ -975,7 +975,7 @@
             "id": 3000,
             "rawName":      "MAV_CMD_DO_VTOL_TRANSITION",
             "friendlyName": "VTOL Transition",
-            "description":  "Perform flight mode transition",
+            "description":  "Perform flight mode transition.",
             "category":     "VTOL",
             "param1": {
                 "label":            "Mode:",

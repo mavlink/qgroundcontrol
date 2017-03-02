@@ -29,24 +29,21 @@
 #include "BluetoothLink.h"
 #include "QGC.h"
 
-BluetoothLink::BluetoothLink(BluetoothConfiguration* config)
-    : _connectState(false)
+BluetoothLink::BluetoothLink(SharedLinkConfigurationPointer& config)
+    : LinkInterface(config)
+    , _config(qobject_cast<BluetoothConfiguration*>(config.data()))
+    , _connectState(false)
     , _targetSocket(NULL)
 #ifdef __ios__
     , _discoveryAgent(NULL)
 #endif
     , _shutDown(false)
 {
-    Q_ASSERT(config != NULL);
-    _config = config;
-    _config->setLink(this);
-    //moveToThread(this);
+
 }
 
 BluetoothLink::~BluetoothLink()
 {
-    // Disconnect link from configuration
-    _config->setLink(NULL);
     _disconnect();
 #ifdef __ios__
     if(_discoveryAgent) {
@@ -150,7 +147,7 @@ bool BluetoothLink::_hardwareConnect()
     _discoveryAgent->start();
 #else
     _createSocket();
-    _targetSocket->connectToService(QBluetoothAddress(_config->device().address), QBluetoothUuid(QBluetoothUuid::Rfcomm));
+    _targetSocket->connectToService(QBluetoothAddress(_config->device().address), QBluetoothUuid(QBluetoothUuid::SerialPort));
 #endif
     return true;
 }
@@ -352,9 +349,17 @@ void BluetoothConfiguration::startScan()
 
 void BluetoothConfiguration::deviceDiscovered(QBluetoothDeviceInfo info)
 {
-    //print_device_info(info);
     if(!info.name().isEmpty() && info.isValid())
     {
+#if 0
+        qDebug() << "Name:           " << info.name();
+        qDebug() << "Address:        " << info.address().toString();
+        qDebug() << "Service Classes:" << info.serviceClasses();
+        QList<QBluetoothUuid> uuids = info.serviceUuids();
+        foreach (QBluetoothUuid uuid, uuids) {
+            qDebug() << "Service UUID:   " << uuid.toString();
+        }
+#endif
         BluetoothData data;
         data.name    = info.name();
 #ifdef __ios__

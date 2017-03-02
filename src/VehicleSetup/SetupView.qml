@@ -233,8 +233,8 @@ Rectangle {
 
             // I don't know why this does not work
             Connections {
-                target: QGroundControl
-                onBaseFontPointSizeChanged: buttonColumn.reflowWidths()
+                target:         QGroundControl.settingsManager.appSettings.appFontPointSize
+                onValueChanged: buttonColumn.reflowWidths()
             }
 
             function reflowWidths() {
@@ -254,6 +254,19 @@ Rectangle {
                 wrapMode:               Text.WordWrap
                 horizontalAlignment:    Text.AlignHCenter
                 visible:                !ScreenTools.isShortScreen
+            }
+
+            Repeater {
+                model:              QGroundControl.corePlugin.settings
+                visible:            QGroundControl.corePlugin.options.combineSettingsAndSetup
+                SubMenuButton {
+                    imageResource:  modelData.icon
+                    setupIndicator: false
+                    exclusiveGroup: setupButtonGroup
+                    text:           modelData.title
+                    visible:        QGroundControl.corePlugin.options.combineSettingsAndSetup
+                    onClicked:      panelLoader.setSource(modelData.url)
+                }
             }
 
             SubMenuButton {

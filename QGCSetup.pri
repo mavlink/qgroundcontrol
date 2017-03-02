@@ -63,7 +63,6 @@ WindowsBuild {
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
         $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll \
-        $$BASEDIR\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll \
         $$BASEDIR\\deploy\\libeay32.dll
 
     for(COPY_FILE, COPY_FILE_LIST) {
@@ -84,6 +83,10 @@ WindowsBuild {
         else:win32-msvc2013 {
             QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp120.dll\"  \"$$DESTDIR_WIN\"
             QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr120.dll\"  \"$$DESTDIR_WIN\"
+        }
+        else:win32-msvc2015 {
+            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp140.dll\"  \"$$DESTDIR_WIN\"
+            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\vcruntime140.dll\"  \"$$DESTDIR_WIN\"
         }
         else {
             error("Visual studio version not supported, installation cannot be completed.")
@@ -123,9 +126,9 @@ LinuxBuild {
 
         !contains(DEFINES, __rasp_pi2__) {
             QT_LIB_LIST += \
-                libicudata.so.54 \
-                libicui18n.so.54 \
-                libicuuc.so.54
+                libicudata.so.56 \
+                libicui18n.so.56 \
+                libicuuc.so.56
         }
 
         for(QT_LIB, QT_LIB_LIST) {

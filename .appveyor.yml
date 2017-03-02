@@ -14,17 +14,9 @@ environment:
 
 install:
   - git submodule update --init --recursive
-  - call "%ProgramFiles(x86)%\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x86
-  - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.5\msvc2013\bin;%PATH%
+  - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+  - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.8\msvc2015\bin;%PATH%
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
-  - ps: |
-      Write-Host "Installing NSIS..." -ForegroundColor Cyan
-      $exePath = "$($env:USERPROFILE)\nsis-3.0rc1-setup.exe"
-      Write-Host "Downloading..."
-      (New-Object Net.WebClient).DownloadFile('https://storage.googleapis.com/appveyor-download-cache/nsis/nsis-3.0rc1-setup.exe', $exePath)
-      Write-Host "Installing..."
-      cmd /c start /wait $exePath /S
-      Write-Host "Installed" -ForegroundColor Green
   - ps: |
       Write-Host "Installing GStreamer..." -ForegroundColor Cyan
       $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-x86-1.5.2.msi"
@@ -43,7 +35,7 @@ install:
       Write-Host "Installed" -ForegroundColor Green
 
 build_script:
-  - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && C:\Qt\5.5\msvc2013\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
+  - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && C:\Qt\5.8\msvc2015\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
   - cd %SHADOW_BUILD_DIR% && jom
   - if "%CONFIG%" EQU "installer" ( copy %SHADOW_BUILD_DIR%\release\QGroundControl-installer.exe %APPVEYOR_BUILD_FOLDER%\QGroundControl-installer.exe )
 # Generate the source server information to embed in the PDB

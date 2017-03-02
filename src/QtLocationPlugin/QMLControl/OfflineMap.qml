@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 import QtQuick                  2.5
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
@@ -38,6 +37,7 @@ QGCView {
     property string savedMapType:       ""
     property bool   _showPreview:       true
     property bool   _defaultSet:        offlineMapView && offlineMapView._currentSelection && offlineMapView._currentSelection.defaultSet
+    property real   _margins:           ScreenTools.defaultFontPixelWidth /2
 
     property bool   _saveRealEstate:          ScreenTools.isTinyScreen || ScreenTools.isShortScreen
     property real   _adjustableFontPointSize: _saveRealEstate ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
@@ -327,6 +327,17 @@ QGCView {
                 anchors.fill: parent
             }
 
+            CenterMapDropButton {
+                anchors.margins:    _margins
+                anchors.left:       parent.left
+                anchors.top:        parent.top
+                map:                _map
+                z:                  QGroundControl.zOrderTopMost
+                showMission:        false
+                showAllItems:       false
+                visible:            addNewSetView.visible
+            }
+
             MapScale {
                 anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
                 anchors.bottomMargin:   anchors.leftMargin
@@ -475,97 +486,95 @@ QGCView {
                 anchors.fill:   parent
                 visible:        false
 
-                Map {
-                    id:                 minZoomPreview
-                    anchors.leftMargin: ScreenTools.defaultFontPixelWidth /2
-                    anchors.topMargin:  anchors.leftMargin
-                    anchors.top:        parent.top
-                    anchors.left:       parent.left
-                    width:              parent.width / 4
-                    height:             parent.height / 4
-                    center:             _map.center
-                    activeMapType:      _map.activeMapType
-                    zoomLevel:          sliderMinZoom.value
-                    gesture.enabled:    false
-                    visible:            _showPreview
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.leftMargin:     _margins
+                    anchors.left:           parent.left
+                    spacing:                _margins
 
-                    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
-
-                    plugin: Plugin { name: "QGroundControl" }
-
-                    MapScale {
-                        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
-                        anchors.bottomMargin:   anchors.leftMargin
-                        anchors.left:           parent.left
-                        anchors.bottom:         parent.bottom
-                        mapControl:             parent
+                    QGCButton {
+                        text:       "Show zoom previews"
+                        visible:    !_showPreview
+                        onClicked:  _showPreview = !_showPreview
                     }
-                }
 
-                Map {
-                    id:                 maxZoomPreview
-                    anchors.topMargin:  minZoomPreview.anchors.topMargin
-                    anchors.left:       minZoomPreview.left
-                    anchors.top:        minZoomPreview.bottom
-                    width:              minZoomPreview.width
-                    height:             minZoomPreview.height
-                    center:             _map.center
-                    activeMapType:      _map.activeMapType
-                    zoomLevel:          sliderMaxZoom.value
-                    gesture.enabled:    false
-                    visible:            _showPreview
+                    Map {
+                        id:                 minZoomPreview
+                        width:              addNewSetView.width / 4
+                        height:             addNewSetView.height / 4
+                        center:             _map.center
+                        activeMapType:      _map.activeMapType
+                        zoomLevel:          sliderMinZoom.value
+                        gesture.enabled:    false
+                        visible:            _showPreview
 
-                    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+                        property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
 
-                    plugin: Plugin { name: "QGroundControl" }
+                        plugin: Plugin { name: "QGroundControl" }
 
-                    MapScale {
-                        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
-                        anchors.bottomMargin:   anchors.leftMargin
-                        anchors.left:           parent.left
-                        anchors.bottom:         parent.bottom
-                        mapControl:             parent
-                    }
-                }
+                        MapScale {
+                            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
+                            anchors.bottomMargin:   anchors.leftMargin
+                            anchors.left:           parent.left
+                            anchors.bottom:         parent.bottom
+                            mapControl:             parent
+                        }
 
-                Rectangle {
-                    anchors.fill:   minZoomPreview
-                    border.color:   _mapAdjustedColor
-                    color:          "transparent"
-                    visible:        _showPreview
-                    QGCLabel {
-                        anchors.centerIn:   parent
-                        color:      _mapAdjustedColor
-                        text:       qsTr("Min Zoom: %1").arg(sliderMinZoom.value)
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked:  _showPreview = false
-                    }
-                }
+                        Rectangle {
+                            anchors.fill:   parent
+                            border.color:   _mapAdjustedColor
+                            color:          "transparent"
 
-                Rectangle {
-                    anchors.fill:   maxZoomPreview
-                    border.color:   _mapAdjustedColor
-                    color:          "transparent"
-                    visible:        _showPreview
-                    QGCLabel {
-                        anchors.centerIn: parent
-                        color:      _mapAdjustedColor
-                        text:       qsTr("Max Zoom: %1").arg(sliderMaxZoom.value)
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked:  _showPreview = false
-                    }
-                }
+                            QGCMapLabel {
+                                anchors.centerIn:   parent
+                                map:                minZoomPreview
+                                text:               qsTr("Min Zoom: %1").arg(sliderMinZoom.value)
+                            }
+                            MouseArea {
+                                anchors.fill:   parent
+                                onClicked:      _showPreview = false
+                            }
+                        }
+                    } // Map
 
-                QGCButton {
-                    anchors.left:   minZoomPreview.left
-                    anchors.top:    minZoomPreview.top
-                    text:           "Show zoom previews"
-                    visible:        !_showPreview
-                    onClicked:      _showPreview = !_showPreview
+                    Map {
+                        id:                 maxZoomPreview
+                        width:              minZoomPreview.width
+                        height:             minZoomPreview.height
+                        center:             _map.center
+                        activeMapType:      _map.activeMapType
+                        zoomLevel:          sliderMaxZoom.value
+                        gesture.enabled:    false
+                        visible:            _showPreview
+
+                        property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+
+                        plugin: Plugin { name: "QGroundControl" }
+
+                        MapScale {
+                            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
+                            anchors.bottomMargin:   anchors.leftMargin
+                            anchors.left:           parent.left
+                            anchors.bottom:         parent.bottom
+                            mapControl:             parent
+                        }
+
+                        Rectangle {
+                            anchors.fill:   parent
+                            border.color:   _mapAdjustedColor
+                            color:          "transparent"
+
+                            QGCMapLabel {
+                                anchors.centerIn:   parent
+                                map:                maxZoomPreview
+                                text:               qsTr("Max Zoom: %1").arg(sliderMaxZoom.value)
+                            }
+                            MouseArea {
+                                anchors.fill:   parent
+                                onClicked:      _showPreview = false
+                            }
+                        }
+                    } // Map
                 }
 
                 //-- Add new set dialog
@@ -574,7 +583,7 @@ QGCView {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right:      parent.right
                     width:              ScreenTools.defaultFontPixelWidth * 24
-                    height:             Math.min(parent.height - (anchors.margins * 2), addNewSetFlickable.y + addNewSetColumn.height + ScreenTools.defaultFontPixelHeight)
+                    height:             Math.min(parent.height - (anchors.margins * 2), addNewSetFlickable.y + addNewSetColumn.height + addNewSetLabel.anchors.margins)
                     color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
                     radius:             ScreenTools.defaultFontPixelWidth * 0.5
 

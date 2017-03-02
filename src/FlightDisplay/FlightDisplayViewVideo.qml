@@ -23,35 +23,61 @@ import QGroundControl.Controllers   1.0
 
 Item {
     id: root
+    property double _ar:        QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
+    property bool _showGrid:    QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
+
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
         color:          Qt.rgba(0,0,0,0.75)
         visible:        !QGroundControl.videoManager.videoRunning
         QGCLabel {
-            text:               qsTr("NO VIDEO")
+            text:               qsTr("WAITING FOR VIDEO")
             font.family:        ScreenTools.demiboldFontFamily
             color:              "white"
             font.pointSize:     _mainIsMap ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
             anchors.centerIn:   parent
         }
     }
-    QGCVideoBackground {
+    Rectangle {
         anchors.fill:   parent
-        display:        QGroundControl.videoManager.videoSurface
-        receiver:       QGroundControl.videoManager.videoReceiver
+        color:          "black"
         visible:        QGroundControl.videoManager.videoRunning
-        /* TODO: Come up with a way to make this an option
-        QGCAttitudeHUD {
-            id:                 attitudeHUD
-            visible:            !_mainIsMap
-            rollAngle:          _roll
-            pitchAngle:         _pitch
-            width:              ScreenTools.defaultFontPixelHeight * (30)
-            height:             ScreenTools.defaultFontPixelHeight * (30)
-            active:             QGroundControl.multiVehicleManager.activeVehicleAvailable
-            z:                  QGroundControl.zOrderWidgets
+        QGCVideoBackground {
+            height:         parent.height
+            width:          _ar != 0.0 ? height * _ar : parent.width
+            anchors.centerIn: parent
+            display:        QGroundControl.videoManager.videoSurface
+            receiver:       QGroundControl.videoManager.videoReceiver
+            visible:        QGroundControl.videoManager.videoRunning
+            Rectangle {
+                color:  Qt.rgba(1,1,1,0.5)
+                height: parent.height
+                width:  1
+                x:      parent.width * 0.33
+                visible: _showGrid
+            }
+            Rectangle {
+                color:  Qt.rgba(1,1,1,0.5)
+                height: parent.height
+                width:  1
+                x:      parent.width * 0.66
+                visible: _showGrid
+            }
+            Rectangle {
+                color:  Qt.rgba(1,1,1,0.5)
+                width:  parent.width
+                height: 1
+                y:      parent.height * 0.33
+                visible: _showGrid
+            }
+            Rectangle {
+                color:  Qt.rgba(1,1,1,0.5)
+                width:  parent.width
+                height: 1
+                y:      parent.height * 0.66
+                visible: _showGrid
+            }
         }
-        */
     }
 }

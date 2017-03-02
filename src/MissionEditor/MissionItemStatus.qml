@@ -10,6 +10,7 @@
 
 import QtQuick          2.5
 import QtQuick.Controls 1.3
+import QtQuick.Layouts  1.2
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
@@ -19,20 +20,6 @@ import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 
 Rectangle {
-    readonly property var       _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-
-    property Fact   _offlineEditingVehicleType:     QGroundControl.offlineEditingVehicleType
-    property Fact   _offlineEditingCruiseSpeed:     QGroundControl.offlineEditingCruiseSpeed
-    property Fact   _offlineEditingHoverSpeed:      QGroundControl.offlineEditingHoverSpeed
-
-    property var    currentMissionItem          ///< Mission item to display status for
-    property var    missionItems                ///< List of all available mission items
-    property real   expandedWidth               ///< Width of control when expanded
-    property real   missionDistance
-    property real   missionMaxTelemetry
-    property real   cruiseDistance
-    property real   hoverDistance
-
     width:      _expanded ? expandedWidth : _collapsedWidth
     height:     Math.max(valueGrid.height, valueMissionGrid.height) + (_margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth * 0.5
@@ -40,42 +27,35 @@ Rectangle {
     opacity:    0.80
     clip:       true
 
-    readonly property real margins: ScreenTools.defaultFontPixelWidth
+    property var    currentMissionItem          ///< Mission item to display status for
+    property var    missionItems                ///< List of all available mission items
+    property real   expandedWidth               ///< Width of control when expanded
+    property real   missionDistance             ///< Total mission distance
+    property real   missionTime                 ///< Total mission time
+    property real   missionMaxTelemetry
 
-    property real   _collapsedWidth:    valueGrid.width + (margins * 2)
-    property bool   _expanded:          true
+    property real   _collapsedWidth:            valueGrid.width + (_margins * 2)
+    property bool   _expanded:                  true
 
-    property real   _distance:          _statusValid ? _currentMissionItem.distance : 0
-    property real   _altDifference:     _statusValid ? _currentMissionItem.altDifference : 0
-    property real   _gradient:          _statusValid && _currentMissionItem.distance > 0 ? Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) : 0
-    property real   _gradientPercent:   isNaN(_gradient) ? 0 : _gradient * 100
-    property real   _azimuth:           _statusValid ? _currentMissionItem.azimuth : -1
-    property real   _missionDistance:   _missionValid ? missionDistance : 0
-    property real   _missionMaxTelemetry: _missionValid ? missionMaxTelemetry : 0
-    property real   _missionTime:       _missionValid && _missionSpeed > 0 ?  (_isVTOL ? _hoverTime + _cruiseTime : _missionDistance / _missionSpeed) : 0
-    property real   _hoverDistance:    _missionValid ? hoverDistance : 0
-    property real   _cruiseDistance:    _missionValid ? cruiseDistance : 0
-    property real   _hoverTime:         _missionValid && _offlineEditingHoverSpeed.value > 0 ? _hoverDistance / _offlineEditingHoverSpeed.value : 0
-    property real   _cruiseTime:        _missionValid && _offlineEditingCruiseSpeed.value > 0 ? _cruiseDistance / _offlineEditingCruiseSpeed.value : 0
+    property bool   _statusValid:               currentMissionItem != undefined
+    property bool   _missionValid:              missionItems != undefined
 
-    property bool   _statusValid:       currentMissionItem != undefined
-    property bool   _vehicleValid:      _activeVehicle != undefined
-    property bool   _missionValid:      missionItems != undefined
-    property bool   _currentSurvey:     _statusValid ? _currentMissionItem.commandName == "Survey" : false
-    property bool   _isVTOL:            _vehicleValid ? _activeVehicle.vtol : _offlineEditingVehicleType.enumStringValue == "VTOL" //hardcoded
-    property real   _missionSpeed:      _offlineEditingVehicleType.enumStringValue == "Fixedwing" ? _offlineEditingCruiseSpeed.value : _offlineEditingHoverSpeed.value
+    property real   _distance:                  _statusValid ? _currentMissionItem.distance : NaN
+    property real   _altDifference:             _statusValid ? _currentMissionItem.altDifference : NaN
+    property real   _gradient:                  _statusValid && _currentMissionItem.distance > 0 ? Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) : NaN
+    property real   _gradientPercent:           isNaN(_gradient) ? NaN : _gradient * 100
+    property real   _azimuth:                   _statusValid ? _currentMissionItem.azimuth : NaN
+    property real   _missionDistance:           _missionValid ? missionDistance : NaN
+    property real   _missionMaxTelemetry:       _missionValid ? missionMaxTelemetry : NaN
+    property real   _missionTime:               _missionValid ? missionTime : NaN
 
-    property string _distanceText:      _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
-    property string _altText:           _statusValid ? QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
-    property string _gradientText:      _statusValid ? _gradientPercent.toFixed(0) + "%" : " "
-    property string _azimuthText:       _statusValid ? Math.round(_azimuth) : " "
-    property string _missionDistanceText: _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_missionDistance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
-    property string _missionTimeText:     _missionValid ? _missionTime.toFixed(0) + "s" : " "
-    property string _missionMaxTelemetryText:  _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
-    property string _hoverDistanceText: _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_hoverDistance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
-    property string _cruiseDistanceText: _missionValid ? QGroundControl.metersToAppSettingsDistanceUnits(_cruiseDistance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString : " "
-    property string _hoverTimeText:     _missionValid ? _hoverTime.toFixed(0) + "s" : " "
-    property string _cruiseTimeText:    _missionValid ? _cruiseTime.toFixed(0) + "s" : " "
+    property string _distanceText:              isNaN(_distance) ? "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString
+    property string _altDifferenceText:         isNaN(_altDifference) ? "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString
+    property string _gradientText:              isNaN(_gradient) ? "-.-" : _gradientPercent.toFixed(0) + "%"
+    property string _azimuthText:               isNaN(_azimuth) ? "-.-" : Math.round(_azimuth)
+    property string _missionDistanceText:       isNaN(_missionDistance) ? "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionDistance).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString
+    property string _missionTimeText:           isNaN(_missionTime) ? "-.-" : Number(_missionTime / 60).toFixed(1) + " min"
+    property string _missionMaxTelemetryText:   isNaN(_missionMaxTelemetry) ? "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(2) + " " + QGroundControl.appSettingsDistanceUnitsString
 
     readonly property real _margins:    ScreenTools.defaultFontPixelWidth
 
@@ -89,20 +69,20 @@ Rectangle {
         anchors.margins:    _margins
         spacing:            _margins
 
-        Grid {
-            id:                 valueGrid
-            columns:            2
-            columnSpacing:      _margins
+        GridLayout {
+            id:                     valueGrid
+            columns:                2
+            rowSpacing:             0
+            columnSpacing:          _margins
             anchors.verticalCenter: parent.verticalCenter
 
-            QGCLabel { text: qsTr("Selected waypoint") }
-            QGCLabel { text: qsTr(" ") }
+            QGCLabel { text: qsTr("Selected waypoint"); Layout.columnSpan: 2 }
 
             QGCLabel { text: qsTr("Distance:") }
             QGCLabel { text: _distanceText }
 
             QGCLabel { text: qsTr("Alt diff:") }
-            QGCLabel { text: _altText }
+            QGCLabel { text: _altDifferenceText }
 
             QGCLabel { text: qsTr("Gradient:") }
             QGCLabel { text: _gradientText }
@@ -111,7 +91,7 @@ Rectangle {
             QGCLabel { text: _azimuthText }
         }
 
-        ListView {
+        QGCListView {
             id:                     statusListView
             model:                  missionItems
             highlightMoveDuration:  250
@@ -165,42 +145,6 @@ Rectangle {
 
             QGCLabel { text: qsTr("Max telem dist:") }
             QGCLabel { text: _missionMaxTelemetryText }
-
-            QGCLabel {
-                text: qsTr("Hover distance:")
-                visible: _isVTOL
-            }
-            QGCLabel {
-                text: _hoverDistanceText
-                visible: _isVTOL
-            }
-
-            QGCLabel {
-                text: qsTr("Cruise distance:")
-                visible: _isVTOL
-            }
-            QGCLabel {
-                text: _cruiseDistanceText
-                visible: _isVTOL
-            }
-
-            QGCLabel {
-                text: qsTr("Hover time:")
-                visible: _isVTOL
-            }
-            QGCLabel {
-                text: _hoverTimeText
-                visible: _isVTOL
-            }
-
-            QGCLabel {
-                text: qsTr("Cruise time:")
-                visible: _isVTOL
-            }
-            QGCLabel {
-                text: _cruiseTimeText
-                visible: _isVTOL
-            }
         }
     }
 }

@@ -12,91 +12,82 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FirmwarePluginManager.h"
-#include "APM/ArduCopterFirmwarePlugin.h"
-#include "APM/ArduPlaneFirmwarePlugin.h"
-#include "APM/ArduRoverFirmwarePlugin.h"
-#include "APM/ArduSubFirmwarePlugin.h"
-#include "PX4/PX4FirmwarePlugin.h"
+#include "FirmwarePlugin.h"
 
 FirmwarePluginManager::FirmwarePluginManager(QGCApplication* app)
     : QGCTool(app)
-    , _arduCopterFirmwarePlugin(NULL)
-    , _arduPlaneFirmwarePlugin(NULL)
-    , _arduRoverFirmwarePlugin(NULL)
-    , _arduSubFirmwarePlugin(NULL)
     , _genericFirmwarePlugin(NULL)
-    , _px4FirmwarePlugin(NULL)
 {
 
 }
 
 FirmwarePluginManager::~FirmwarePluginManager()
 {
-    delete _arduCopterFirmwarePlugin;
-    delete _arduPlaneFirmwarePlugin;
-    delete _arduRoverFirmwarePlugin;
-    delete _arduSubFirmwarePlugin;
     delete _genericFirmwarePlugin;
-    delete _px4FirmwarePlugin;
 }
 
-QList<MAV_AUTOPILOT> FirmwarePluginManager::knownFirmwareTypes(void) const
+QList<MAV_AUTOPILOT> FirmwarePluginManager::supportedFirmwareTypes(void)
 {
-    QList<MAV_AUTOPILOT> list;
-    list << MAV_AUTOPILOT_GENERIC << MAV_AUTOPILOT_PX4 << MAV_AUTOPILOT_ARDUPILOTMEGA;
-    return list;
+    if (_supportedFirmwareTypes.isEmpty()) {
+        QList<FirmwarePluginFactory*> factoryList = FirmwarePluginFactoryRegister::instance()->pluginFactories();
+        for (int i = 0; i < factoryList.count(); i++) {
+            _supportedFirmwareTypes.append(factoryList[i]->supportedFirmwareTypes());
+        }
+        _supportedFirmwareTypes.append(MAV_AUTOPILOT_GENERIC);
+    }
+    return _supportedFirmwareTypes;
 }
 
-FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType)
+QList<MAV_TYPE> FirmwarePluginManager::supportedVehicleTypes(MAV_AUTOPILOT firmwareType)
 {
-    switch (autopilotType) {
-    case MAV_AUTOPILOT_ARDUPILOTMEGA:
-        switch (vehicleType) {
-        case MAV_TYPE_QUADROTOR:
-        case MAV_TYPE_HEXAROTOR:
-        case MAV_TYPE_OCTOROTOR:
-        case MAV_TYPE_TRICOPTER:
-        case MAV_TYPE_COAXIAL:
-        case MAV_TYPE_HELICOPTER:
-            if (!_arduCopterFirmwarePlugin) {
-                _arduCopterFirmwarePlugin = new ArduCopterFirmwarePlugin;
-            }
-            return _arduCopterFirmwarePlugin;
-        case MAV_TYPE_FIXED_WING:
-            if (!_arduPlaneFirmwarePlugin) {
-                _arduPlaneFirmwarePlugin = new ArduPlaneFirmwarePlugin;
-            }
-            return _arduPlaneFirmwarePlugin;
-        case MAV_TYPE_GROUND_ROVER:
-        case MAV_TYPE_SURFACE_BOAT:
-            if (!_arduRoverFirmwarePlugin) {
-                _arduRoverFirmwarePlugin = new ArduRoverFirmwarePlugin;
-            }
-            return _arduRoverFirmwarePlugin;
-        case MAV_TYPE_SUBMARINE:
-            if (!_arduSubFirmwarePlugin) {
-                _arduSubFirmwarePlugin = new ArduSubFirmwarePlugin;
-            }
-            return _arduSubFirmwarePlugin;
-        default:
-            break;
-        }
-    case MAV_AUTOPILOT_PX4:
-        if (!_px4FirmwarePlugin) {
-            _px4FirmwarePlugin = new PX4FirmwarePlugin;
-        }
-        return _px4FirmwarePlugin;
-    default:
-        break;
+    QList<MAV_TYPE> vehicleTypes;
+
+    FirmwarePluginFactory* factory = _findPluginFactory(firmwareType);
+
+    if (factory) {
+        vehicleTypes = factory->supportedVehicleTypes();
+    } else if (firmwareType == MAV_AUTOPILOT_GENERIC) {
+        vehicleTypes << MAV_TYPE_FIXED_WING << MAV_TYPE_QUADROTOR << MAV_TYPE_VTOL_QUADROTOR << MAV_TYPE_GROUND_ROVER << MAV_TYPE_SUBMARINE;
+    } else {
+        qWarning() << "Request for unknown firmware plugin factory" << firmwareType;
     }
 
-    if (!_genericFirmwarePlugin) {
-        _genericFirmwarePlugin = new FirmwarePlugin;
-    }
-    return _genericFirmwarePlugin;
+    return vehicleTypes;
 }
 
-void FirmwarePluginManager::clearSettings(void)
+FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType)
 {
-    // FIXME: NYI
+    FirmwarePluginFactory*  factory = _findPluginFactory(firmwareType);
+    FirmwarePlugin*         plugin = NULL;
+
+    if (factory) {
+        plugin = factory->firmwarePluginForAutopilot(firmwareType, vehicleType);
+    } else if (firmwareType != MAV_AUTOPILOT_GENERIC) {
+        qWarning() << "Request for unknown firmware plugin factory" << firmwareType;
+    }
+
+    if (!plugin) {
+        // Default plugin fallback
+        if (!_genericFirmwarePlugin) {
+            _genericFirmwarePlugin = new FirmwarePlugin;
+        }
+        plugin = _genericFirmwarePlugin;
+    }
+
+    return plugin;
+}
+
+FirmwarePluginFactory* FirmwarePluginManager::_findPluginFactory(MAV_AUTOPILOT firmwareType)
+{
+    QList<FirmwarePluginFactory*> factoryList = FirmwarePluginFactoryRegister::instance()->pluginFactories();
+
+    // Find the plugin which supports this vehicle
+    for (int i=0; i<factoryList.count(); i++) {
+        FirmwarePluginFactory* factory = factoryList[i];
+        if (factory->supportedFirmwareTypes().contains(firmwareType)) {
+            return factory;
+        }
+    }
+
+    return NULL;
 }
