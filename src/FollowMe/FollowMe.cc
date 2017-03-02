@@ -11,7 +11,7 @@
 #include <cmath>
 
 #include "MultiVehicleManager.h"
-#include "PX4FirmwarePlugin.h"
+#include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
 #include "FollowMe.h"
 #include "Vehicle.h"
@@ -38,7 +38,7 @@ void FollowMe::followMeHandleManager(const QString&)
 
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
-        if (vehicle->px4Firmware() && vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
+        if (vehicle->px4Firmware() && vehicle->flightMode().compare(FirmwarePlugin::px4FollowMeFlightMode, Qt::CaseInsensitive) == 0) {
             _enable();
             return;
         }
@@ -138,7 +138,7 @@ void FollowMe::_sendGCSMotionReport(void)
 
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
-        if(vehicle->flightMode().compare(PX4FirmwarePlugin::followMeFlightMode, Qt::CaseInsensitive) == 0) {
+        if(vehicle->flightMode().compare(FirmwarePlugin::px4FollowMeFlightMode, Qt::CaseInsensitive) == 0) {
             mavlink_message_t message;
             mavlink_msg_follow_target_encode_chan(mavlinkProtocol->getSystemId(),
                                                   mavlinkProtocol->getComponentId(),

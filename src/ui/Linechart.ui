@@ -29,7 +29,16 @@
    <string notr="true"/>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
-   <property name="margin">
+   <property name="leftMargin">
+    <number>6</number>
+   </property>
+   <property name="topMargin">
+    <number>6</number>
+   </property>
+   <property name="rightMargin">
+    <number>6</number>
+   </property>
+   <property name="bottomMargin">
     <number>6</number>
    </property>
    <item>
@@ -103,8 +112,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>884</width>
-            <height>491</height>
+            <width>879</width>
+            <height>462</height>
            </rect>
           </property>
          </widget>
@@ -113,7 +122,7 @@
        <item row="3" column="0">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="spacing">
-          <number>2</number>
+          <number>4</number>
          </property>
          <item>
           <widget class="QLineEdit" name="plotFilterLineEdit">
@@ -139,7 +148,7 @@
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_3">
              <property name="spacing">
-              <number>0</number>
+              <number>6</number>
              </property>
              <item>
               <widget class="QCheckBox" name="shortNameCheckBox">
@@ -172,7 +181,7 @@
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_4">
              <property name="spacing">
-              <number>0</number>
+              <number>6</number>
              </property>
              <property name="sizeConstraint">
               <enum>QLayout::SetMinimumSize</enum>

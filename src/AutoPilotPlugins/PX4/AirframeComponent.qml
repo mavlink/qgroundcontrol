@@ -104,8 +104,9 @@ SetupPage {
                     QGCLabel {
                         anchors.fill:   parent
                         wrapMode:       Text.WordWrap
-                        text:           qsTr("Clicking “Apply” will save the changes you have made to your airframe configuration. ") +
-                                        qsTr("Your vehicle will also be restarted in order to complete the process.")
+                        text:           qsTr("Clicking “Apply” will save the changes you have made to your airframe configuration.<br><br>\
+All vehicle parameters other than Radio Calibration will be reset.<br><br>\
+Your vehicle will also be restarted in order to complete the process.")
                     }
                 }
             }
@@ -207,6 +208,7 @@ SetupPage {
 
                                 onCheckedChanged: {
                                     if (checked && combo.currentIndex != -1) {
+                                        console.log("check box change", combo.currentIndex)
                                         controller.autostartId = modelData.airframes[combo.currentIndex].autostartId
                                     }
                                 }
@@ -229,8 +231,9 @@ SetupPage {
 
                                 onActivated: {
                                     applyButton.primary = true
-                                    controller.autostartId = modelData.airframes[index].autostartId
                                     airframeCheckBox.checked = true;
+                                    console.log("combo change", index)
+                                    controller.autostartId = modelData.airframes[index].autostartId
                                 }
                             }
                         }

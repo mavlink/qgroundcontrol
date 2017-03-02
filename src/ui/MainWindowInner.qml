@@ -29,11 +29,6 @@ Item {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    property real   tbHeight:           ScreenTools.isMobile ? (ScreenTools.isTinyScreen ? (mainWindow.width * 0.0666) : (mainWindow.width * 0.05)) : ScreenTools.defaultFontPixelHeight * 3
-    property int    tbCellHeight:       tbHeight * 0.75
-    property real   tbSpacing:          ScreenTools.isMobile ? width * 0.00824 : 9.54
-    property real   tbButtonWidth:      tbCellHeight * 1.35
-    property real   menuButtonWidth:    (tbButtonWidth * 2) + (tbSpacing * 4) + 1
     property var    gcsPosition:        QtPositioning.coordinate()  // Starts as invalid coordinate
     property var    currentPopUp:       null
     property real   currentCenterX:     0
@@ -66,10 +61,10 @@ Item {
         }
         //-- In settings view, the full height is available. Set to 0 so it is ignored.
         ScreenTools.availableHeight = 0
+        hideAllViews()
         if (settingsViewLoader.source != _settingsViewSource) {
             settingsViewLoader.source  = _settingsViewSource
         }
-        hideAllViews()
         settingsViewLoader.visible  = true
         toolBar.checkSettingsButton()
     }
@@ -80,10 +75,10 @@ Item {
         }
         //-- In setup view, the full height is available. Set to 0 so it is ignored.
         ScreenTools.availableHeight = 0
+        hideAllViews()
         if (setupViewLoader.source  != _setupViewSource) {
             setupViewLoader.source  = _setupViewSource
         }
-        hideAllViews()
         setupViewLoader.visible  = true
         toolBar.checkSetupButton()
     }
@@ -260,21 +255,19 @@ Item {
 
     MainToolBar {
         id:                 toolBar
-        height:             tbHeight
+        height:             ScreenTools.toolbarHeight
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        parent.top
-        mainWindow:         mainWindow
         isBackgroundDark:   flightView.isBackgroundDark
         z:                  QGroundControl.zOrderTopMost
-        onShowSettingsView: mainWindow.showSettingsView()
-        onShowSetupView:    mainWindow.showSetupView()
-        onShowPlanView:     mainWindow.showPlanView()
-        onShowFlyView:      mainWindow.showFlyView()
-        onShowAnalyzeView:  mainWindow.showAnalyzeView()
-        Component.onCompleted: {
-            ScreenTools.availableHeight = parent.height - toolBar.height
-        }
+
+        Component.onCompleted:  ScreenTools.availableHeight = parent.height - toolBar.height
+        onShowSettingsView:     mainWindow.showSettingsView()
+        onShowSetupView:        mainWindow.showSetupView()
+        onShowPlanView:         mainWindow.showPlanView()
+        onShowFlyView:          mainWindow.showFlyView()
+        onShowAnalyzeView:      mainWindow.showAnalyzeView()
     }
 
     Loader {
@@ -284,13 +277,13 @@ Item {
         anchors.top:        toolBar.bottom
         anchors.bottom:     parent.bottom
         visible:            false
-
+/*
         onVisibleChanged: {
             if (!visible) {
                 // Free up the memory for this when not shown. No need to persist.
                 source = ""
             }
-        }
+        }*/
     }
 
     Loader {
@@ -364,7 +357,7 @@ Item {
         border.width:       2
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.top:                parent.top
-        anchors.topMargin:          tbHeight + ScreenTools.defaultFontPixelHeight
+        anchors.topMargin:          toolBar.height + ScreenTools.defaultFontPixelHeight
         MouseArea {
             // This MouseArea prevents the Map below it from getting Mouse events. Without this
             // things like mousewheel will scroll the Flickable and then scroll the map as well.
@@ -442,7 +435,7 @@ Item {
         radius:                     ScreenTools.defaultFontPixelHeight * 0.5
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.top:                parent.top
-        anchors.topMargin:          tbHeight + ScreenTools.defaultFontPixelHeight / 2
+        anchors.topMargin:          toolBar.height + ScreenTools.defaultFontPixelHeight / 2
         border.color:               "#808080"
         border.width:               2
 
@@ -537,5 +530,14 @@ Item {
             }
         }
     }
+
+    //-------------------------------------------------------------------------
+    //-- Loader helper for any child, no matter how deep can display an element
+    //   in the middle of the main window.
+    Loader {
+        id: rootLoader
+        anchors.centerIn: parent
+    }
+
 }
 

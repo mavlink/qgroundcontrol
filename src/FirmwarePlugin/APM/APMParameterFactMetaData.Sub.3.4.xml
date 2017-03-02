@@ -16,6 +16,7 @@
 <value code="4">AntennaTracker</value>
 <value code="10">Copter</value>
 <value code="20">Rover</value>
+<value code="40">ArduSub</value>
 </values>
 </param>
 <param humanName="MAVLink system ID of this vehicle" name="ArduSub:SYSID_THISMAV" documentation="Allows setting an individual MAVLink system id for this vehicle to distinguish it from others on the same network" user="Advanced">
@@ -38,29 +39,6 @@
 <field name="Increment">.5</field>
 <field name="Units">Hz</field>
 </param>
-<param humanName="Pilot takeoff altitude" name="ArduSub:PILOT_TKOFF_ALT" documentation="Altitude that altitude control modes will climb to when a takeoff is triggered with the throttle stick." user="Standard">
-<field name="Range">0.0 1000.0</field>
-<field name="Increment">10</field>
-<field name="Units">Centimeters</field>
-</param>
-<param humanName="Takeoff trigger deadzone" name="ArduSub:PILOT_TKOFF_DZ" documentation="Offset from mid stick at which takeoff is triggered" user="Standard">
-<field name="Range">0.0 500.0</field>
-<field name="Increment">10</field>
-</param>
-<param humanName="Throttle stick behavior" name="ArduSub:PILOT_THR_BHV" documentation="Bitmask containing various throttle stick options. Add up the values for options that you want." user="Standard">
-<field name="Bitmask">0:Feedback from mid stick,1:High throttle cancels landing,2:Disarm on land detection</field>
-<values>
-<value code="0">None</value>
-<value code="1">Feedback from mid stick</value>
-<value code="2">High throttle cancels landing</value>
-<value code="4">Disarm on land detection</value>
-</values>
-</param>
-<param humanName="Telemetry startup delay" name="ArduSub:TELEM_DELAY" documentation="The amount of time (in seconds) to delay radio telemetry to prevent an Xbee bricking on power up" user="Advanced">
-<field name="Range">0 10</field>
-<field name="Increment">1</field>
-<field name="Units">seconds</field>
-</param>
 <param humanName="GCS PID tuning mask" name="ArduSub:GCS_PID_MASK" documentation="bitmask of PIDs to send MAVLink PID_TUNING messages for" user="Advanced">
 <field name="Bitmask">0:Roll,1:Pitch,2:Yaw</field>
 <values>
@@ -69,25 +47,6 @@
 <value code="2">Pitch</value>
 <value code="4">Yaw</value>
 </values>
-</param>
-<param humanName="RTL Altitude" name="ArduSub:RTL_ALT" documentation="The minimum relative altitude the model will move to before Returning to Launch.  Set to zero to return at current altitude." user="Standard">
-<field name="Range">0 8000</field>
-<field name="Increment">1</field>
-<field name="Units">Centimeters</field>
-</param>
-<param humanName="RTL cone slope" name="ArduSub:RTL_CONE_SLOPE" documentation="Defines a cone above home which determines maximum climb" user="Standard">
-<field name="Range">0.5 10.0</field>
-<values>
-<value code="0">Disabled</value>
-<value code="1">Shallow</value>
-<value code="3">Steep</value>
-</values>
-<field name="Increment">.1</field>
-</param>
-<param humanName="RTL speed" name="ArduSub:RTL_SPEED" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain horizontally while flying home. If this is set to zero, WPNAV_SPEED will be used instead." user="Standard">
-<field name="Range">0 2000</field>
-<field name="Increment">50</field>
-<field name="Units">cm/s</field>
 </param>
 <param humanName="Rangefinder gain" name="ArduSub:RNGFND_GAIN" documentation="Used to adjust the speed with which the target altitude is changed when objects are sensed below the copter" user="Standard">
 <field name="Range">0.01 2.0</field>
@@ -108,12 +67,49 @@
 <field name="Increment">50</field>
 <field name="Units">mAh</field>
 </param>
-<param humanName="Ground Station Failsafe Enable" name="ArduSub:FS_GCS_ENABLE" documentation="Controls whether failsafe will be invoked (and what action to take) when connection with Ground station is lost for at least 5 seconds. NB. The GCS Failsafe is only active when RC_OVERRIDE is being used to control the vehicle." user="Standard">
+<param humanName="Ground Station Failsafe Enable" name="ArduSub:FS_GCS_ENABLE" documentation="Controls what action to take when GCS heartbeat is lost." user="Standard">
 <values>
 <value code="0">Disabled</value>
-<value code="1">Enabled always RTL</value>
-<value code="2">Enabled Continue with Mission in Auto Mode</value>
+<value code="1">Warn only</value>
+<value code="2">Disarm</value>
+<value code="3">Enter depth hold mode</value>
+<value code="4">Enter surface mode</value>
 </values>
+</param>
+<param humanName="Leak Failsafe Enable" name="ArduSub:FS_LEAK_ENABLE" documentation="Controls what action to take if a leak is detected." user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Warn only</value>
+<value code="2">Enter surface mode</value>
+</values>
+</param>
+<param humanName="Internal Pressure Failsafe Enable" name="ArduSub:FS_PRESS_ENABLE" documentation="Controls what action to take if internal pressure exceeds FS_PRESS_MAX parameter." user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Warn only</value>
+</values>
+</param>
+<param humanName="Internal Temperature Failsafe Enable" name="ArduSub:FS_TEMP_ENABLE" documentation="Controls what action to take if internal temperature exceeds FS_TEMP_MAX parameter." user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Warn only</value>
+</values>
+</param>
+<param humanName="Internal Pressure Failsafe Threshold" name="ArduSub:FS_PRESS_MAX" documentation="The maximum internal pressure allowed before triggering failsafe. Failsafe action is determined by FS_PRESS_ENABLE parameter" user="Standard">
+<field name="Units">Pascal</field>
+</param>
+<param humanName="Internal Temperature Failsafe Threshold" name="ArduSub:FS_TEMP_MAX" documentation="The maximum internal temperature allowed before triggering failsafe. Failsafe action is determined by FS_TEMP_ENABLE parameter." user="Standard">
+<field name="Units">Degrees Centigrade</field>
+</param>
+<param humanName="Terrain Failsafe Enable" name="ArduSub:FS_TERRAIN_ENAB" documentation="Controls what action to take if terrain information is lost during AUTO mode" user="Standard">
+<values>
+<value code="0">Disarm</value>
+<value code=" 1">Hold Position</value>
+<value code=" 2">Surface</value>
+</values>
+</param>
+<param humanName="Crosstrack correction angle limit" name="ArduSub:XTRACK_ANG_LIM" documentation="Maximum allowed angle (in degrees) between current track and desired heading during waypoint navigation" user="Standard">
+<field name="Range">10 90</field>
 </param>
 <param humanName="GPS Hdop Good" name="ArduSub:GPS_HDOP_GOOD" documentation="GPS Hdop value at or below this value represent a good position.  Used for pre-arm checks" user="Advanced">
 <field name="Range">100 900</field>
@@ -124,84 +120,6 @@
 <value code="1">Enabled</value>
 </values>
 </param>
-<param humanName="Super Simple Mode" name="ArduSub:SUPER_SIMPLE" documentation="Bitmask to enable Super Simple mode for some flight modes. Setting this to Disabled(0) will disable Super Simple Mode" user="Standard">
-<values>
-<value code="0">Disabled</value>
-<value code="1">Mode1</value>
-<value code="2">Mode2</value>
-<value code="3">Mode1+2</value>
-<value code="4">Mode3</value>
-<value code="5">Mode1+3</value>
-<value code="6">Mode2+3</value>
-<value code="7">Mode1+2+3</value>
-<value code="8">Mode4</value>
-<value code="9">Mode1+4</value>
-<value code="10">Mode2+4</value>
-<value code="11">Mode1+2+4</value>
-<value code="12">Mode3+4</value>
-<value code="13">Mode1+3+4</value>
-<value code="14">Mode2+3+4</value>
-<value code="15">Mode1+2+3+4</value>
-<value code="16">Mode5</value>
-<value code="17">Mode1+5</value>
-<value code="18">Mode2+5</value>
-<value code="19">Mode1+2+5</value>
-<value code="20">Mode3+5</value>
-<value code="21">Mode1+3+5</value>
-<value code="22">Mode2+3+5</value>
-<value code="23">Mode1+2+3+5</value>
-<value code="24">Mode4+5</value>
-<value code="25">Mode1+4+5</value>
-<value code="26">Mode2+4+5</value>
-<value code="27">Mode1+2+4+5</value>
-<value code="28">Mode3+4+5</value>
-<value code="29">Mode1+3+4+5</value>
-<value code="30">Mode2+3+4+5</value>
-<value code="31">Mode1+2+3+4+5</value>
-<value code="32">Mode6</value>
-<value code="33">Mode1+6</value>
-<value code="34">Mode2+6</value>
-<value code="35">Mode1+2+6</value>
-<value code="36">Mode3+6</value>
-<value code="37">Mode1+3+6</value>
-<value code="38">Mode2+3+6</value>
-<value code="39">Mode1+2+3+6</value>
-<value code="40">Mode4+6</value>
-<value code="41">Mode1+4+6</value>
-<value code="42">Mode2+4+6</value>
-<value code="43">Mode1+2+4+6</value>
-<value code="44">Mode3+4+6</value>
-<value code="45">Mode1+3+4+6</value>
-<value code="46">Mode2+3+4+6</value>
-<value code="47">Mode1+2+3+4+6</value>
-<value code="48">Mode5+6</value>
-<value code="49">Mode1+5+6</value>
-<value code="50">Mode2+5+6</value>
-<value code="51">Mode1+2+5+6</value>
-<value code="52">Mode3+5+6</value>
-<value code="53">Mode1+3+5+6</value>
-<value code="54">Mode2+3+5+6</value>
-<value code="55">Mode1+2+3+5+6</value>
-<value code="56">Mode4+5+6</value>
-<value code="57">Mode1+4+5+6</value>
-<value code="58">Mode2+4+5+6</value>
-<value code="59">Mode1+2+4+5+6</value>
-<value code="60">Mode3+4+5+6</value>
-<value code="61">Mode1+3+4+5+6</value>
-<value code="62">Mode2+3+4+5+6</value>
-<value code="63">Mode1+2+3+4+5+6</value>
-</values>
-</param>
-<param humanName="RTL Final Altitude" name="ArduSub:RTL_ALT_FINAL" documentation="This is the altitude the vehicle will move to as the final stage of Returning to Launch or after completing a mission.  Set to zero to land." user="Standard">
-<field name="Range">-1 1000</field>
-<field name="Increment">1</field>
-<field name="Units">Centimeters</field>
-</param>
-<param humanName="RTL minimum climb" name="ArduSub:RTL_CLIMB_MIN" documentation="The vehicle will climb this many cm during the initial climb portion of the RTL" user="Standard">
-<field name="Range">0 3000</field>
-<field name="Increment">10</field>
-<field name="Units">Centimeters</field>
-</param>
 <param humanName="Yaw behaviour during missions" name="ArduSub:WP_YAW_BEHAVIOR" documentation="Determines how the autopilot controls the yaw during missions and RTL" user="Standard">
 <values>
 <value code="0">Never change yaw</value>
@@ -209,21 +127,6 @@
 <value code=" 2">Face next waypoint except RTL</value>
 <value code=" 3">Face along GPS course</value>
 </values>
-</param>
-<param humanName="RTL loiter time" name="ArduSub:RTL_LOIT_TIME" documentation="Time (in milliseconds) to loiter above home before beginning final descent" user="Standard">
-<field name="Range">0 60000</field>
-<field name="Increment">1000</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="Land speed" name="ArduSub:LAND_SPEED" documentation="The descent speed for the final stage of landing in cm/s" user="Standard">
-<field name="Range">30 200</field>
-<field name="Increment">10</field>
-<field name="Units">cm/s</field>
-</param>
-<param humanName="Land speed high" name="ArduSub:LAND_SPEED_HIGH" documentation="The descent speed for the first stage of landing in cm/s. If this is zero then WPNAV_SPEED_DN is used" user="Standard">
-<field name="Range">0 500</field>
-<field name="Increment">10</field>
-<field name="Units">cm/s</field>
 </param>
 <param humanName="Pilot maximum vertical speed" name="ArduSub:PILOT_VELZ_MAX" documentation="The maximum vertical velocity the pilot may request in cm/s" user="Standard">
 <field name="Range">50 500</field>
@@ -234,19 +137,6 @@
 <field name="Range">50 500</field>
 <field name="Increment">10</field>
 <field name="Units">cm/s/s</field>
-</param>
-<param humanName="Throttle Failsafe Enable" name="ArduSub:FS_THR_ENABLE" documentation="The throttle failsafe allows you to configure a software failsafe activated by a setting on the throttle input channel" user="Standard">
-<values>
-<value code="0">Disabled</value>
-<value code="1">Enabled always RTL</value>
-<value code="2">Enabled Continue with Mission in Auto Mode</value>
-<value code="3">Enabled always LAND</value>
-</values>
-</param>
-<param humanName="Throttle Failsafe Value" name="ArduSub:FS_THR_VALUE" documentation="The PWM level on channel 3 below which throttle sailsafe triggers" user="Standard">
-<field name="Range">925 1100</field>
-<field name="Increment">1</field>
-<field name="Units">pwm</field>
 </param>
 <param humanName="Throttle deadzone" name="ArduSub:THR_DZ" documentation="The deadzone above and below mid throttle.  Used in AltHold, Loiter, PosHold flight modes" user="Standard">
 <field name="Range">0 300</field>
@@ -294,8 +184,6 @@
 <value code="2">DepthHold</value>
 <value code="19">Manual</value>
 </values>
-</param>
-<param humanName="Simple mode bitmask" name="ArduSub:SIMPLE" documentation="Bitmask which holds which flight modes use simple heading mode (eg bit 0 = 1 means Flight Mode 0 uses simple mode)" user="Advanced">
 </param>
 <param humanName="Log bitmask" name="ArduSub:LOG_BITMASK" documentation="4 byte bitmap of log types to enable" user="Standard">
 <field name="Bitmask">0:ATTITUDE_FAST,1:ATTITUDE_MED,2:GPS,3:PM,4:CTUN,5:NTUN,6:RCIN,7:IMU,8:CMD,9:CURRENT,10:RCOUT,11:OPTFLOW,12:PID,13:COMPASS,14:INAV,15:CAMERA,17:MOTBATT,18:IMU_FAST,19:IMU_RAW</field>
@@ -368,17 +256,6 @@
 <param humanName="Tuning maximum" name="ArduSub:TUNE_HIGH" documentation="The maximum value that will be applied to the parameter currently being tuned with the transmitter's channel 6 knob" user="Standard">
 <field name="Range">0 32767</field>
 </param>
-<param humanName="Frame Orientation (+, X or V)" name="ArduSub:FRAME" documentation="Controls motor mixing for multicopters.  Not used for Tri or Traditional Helicopters." user="Standard">
-<values>
-<value code="0">Plus</value>
-<value code=" 1">X</value>
-<value code=" 2">V</value>
-<value code=" 3">H</value>
-<value code=" 4">V-Tail</value>
-<value code=" 5">A-Tail</value>
-<value code=" 10">Y6B (New)</value>
-</values>
-</param>
 <param humanName="Channel 7 option" name="ArduSub:CH7_OPT" documentation="Select which function if performed when CH7 is above 1800 pwm" user="Standard">
 <values>
 <value code="0">Do Nothing</value>
@@ -396,7 +273,7 @@
 <value code=" 16">Auto</value>
 <value code=" 17">AutoTune</value>
 <value code=" 18">Land</value>
-<value code=" 19">EPM</value>
+<value code=" 19">Gripper</value>
 <value code=" 21">Parachute Enable</value>
 <value code=" 22">Parachute Release</value>
 <value code=" 23">Parachute 3pos</value>
@@ -433,7 +310,7 @@
 <value code=" 16">Auto</value>
 <value code=" 17">AutoTune</value>
 <value code=" 18">Land</value>
-<value code=" 19">EPM</value>
+<value code=" 19">Gripper</value>
 <value code=" 21">Parachute Enable</value>
 <value code=" 22">Parachute Release</value>
 <value code=" 23">Parachute 3pos</value>
@@ -470,7 +347,7 @@
 <value code=" 16">Auto</value>
 <value code=" 17">AutoTune</value>
 <value code=" 18">Land</value>
-<value code=" 19">EPM</value>
+<value code=" 19">Gripper</value>
 <value code=" 21">Parachute Enable</value>
 <value code=" 22">Parachute Release</value>
 <value code=" 23">Parachute 3pos</value>
@@ -507,7 +384,7 @@
 <value code=" 16">Auto</value>
 <value code=" 17">AutoTune</value>
 <value code=" 18">Land</value>
-<value code=" 19">EPM</value>
+<value code=" 19">Gripper</value>
 <value code=" 21">Parachute Enable</value>
 <value code=" 22">Parachute Release</value>
 <value code=" 23">Parachute 3pos</value>
@@ -544,7 +421,7 @@
 <value code=" 16">Auto</value>
 <value code=" 17">AutoTune</value>
 <value code=" 18">Land</value>
-<value code=" 19">EPM</value>
+<value code=" 19">Gripper</value>
 <value code=" 21">Parachute Enable</value>
 <value code=" 22">Parachute Release</value>
 <value code=" 23">Parachute 3pos</value>
@@ -581,7 +458,7 @@
 <value code=" 16">Auto</value>
 <value code=" 17">AutoTune</value>
 <value code=" 18">Land</value>
-<value code=" 19">EPM</value>
+<value code=" 19">Gripper</value>
 <value code=" 21">Parachute Enable</value>
 <value code=" 22">Parachute Release</value>
 <value code=" 23">Parachute 3pos</value>
@@ -634,20 +511,6 @@
 </values>
 <field name="Increment">10</field>
 </param>
-<param humanName="PosHold braking rate" name="ArduSub:PHLD_BRAKE_RATE" documentation="PosHold flight mode's rotation rate during braking in deg/sec" user="Advanced">
-<field name="Range">4 12</field>
-<field name="Units">deg/sec</field>
-</param>
-<param humanName="PosHold braking angle max" name="ArduSub:PHLD_BRAKE_ANGLE" documentation="PosHold flight mode's max lean angle during braking in centi-degrees" user="Advanced">
-<field name="Range">2000 4500</field>
-<field name="Units">Centi-degrees</field>
-</param>
-<param humanName="Land repositioning" name="ArduSub:LAND_REPOSITION" documentation="Enables user input during LAND mode, the landing phase of RTL, and auto mode landings." user="Advanced">
-<values>
-<value code="0">No repositioning</value>
-<value code=" 1">Repositioning</value>
-</values>
-</param>
 <param humanName="EKF Failsafe Action" name="ArduSub:FS_EKF_ACTION" documentation="Controls the action that will be taken when an EKF failsafe is invoked" user="Advanced">
 <values>
 <value code="1">Land</value>
@@ -663,6 +526,30 @@
 <value code="0">Disabled</value>
 <value code=" 1">Enabled</value>
 </values>
+</param>
+<param humanName="Default gain at boot" name="ArduSub:JS_GAIN_DEFAULT" documentation="Default gain at boot, must be in range [JS_GAIN_MIN , JS_GAIN_MAX]" user="Standard">
+<field name="Range">0.1 1.0</field>
+</param>
+<param humanName="Maximum joystick gain" name="ArduSub:JS_GAIN_MAX" documentation="Maximum joystick gain" user="Standard">
+<field name="Range">0.2 1.0</field>
+</param>
+<param humanName="Minimum joystick gain" name="ArduSub:JS_GAIN_MIN" documentation="Minimum joystick gain" user="Standard">
+<field name="Range">0.1 0.8</field>
+</param>
+<param humanName="Gain steps" name="ArduSub:JS_GAIN_STEPS" documentation="Controls the number of steps between minimum and maximum joystick gain when the gain is adjusted using buttons. Set to 1 to always use JS_GAIN_DEFAULT." user="Standard">
+<field name="Range">1 10</field>
+</param>
+<param humanName="Camera tilt step size" name="ArduSub:JS_CAM_TILT_STEP" documentation="Size of PWM increment on camera tilt servo" user="Standard">
+<field name="Range">30 400</field>
+</param>
+<param humanName="Lights step size" name="ArduSub:JS_LIGHTS_STEP" documentation="Size of PWM increment on lights servo" user="Standard">
+<field name="Range">30 400</field>
+</param>
+<param humanName="Throttle gain scalar" name="ArduSub:JS_THR_GAIN" documentation="Scalar for gain on the throttle channel" user="Standard">
+<field name="Range">0.5 4.0</field>
+</param>
+<param humanName="Camera tilt mount center" name="ArduSub:CAM_CENTER" documentation="Servo PWM at camera center position" user="Standard">
+<field name="Range">1000 2000</field>
 </param>
 <param humanName="ESC Update Speed" name="ArduSub:RC_SPEED" documentation="This is the speed in Hertz that your ESCs will receive updates" user="Advanced">
 <field name="Range">50 490</field>
@@ -713,6 +600,11 @@
 <field name="Increment">10</field>
 <field name="Units">cm/s/s</field>
 </param>
+<param humanName="Velocity (horizontal) integrator maximum" name="ArduSub:VEL_XY_FILT_HZ" documentation="Velocity (horizontal) integrator maximum.  Constrains the target acceleration that the I gain will output" user="Advanced">
+<field name="Range">0 4500</field>
+<field name="Increment">10</field>
+<field name="Units">cm/s/s</field>
+</param>
 <param humanName="Velocity (vertical) P gain" name="ArduSub:VEL_Z_P" documentation="Velocity (vertical) P gain.  Converts the difference between desired vertical speed and actual speed into a desired acceleration that is passed to the throttle acceleration controller" user="Standard">
 <field name="Range">1.000 8.000</field>
 </param>
@@ -730,7 +622,7 @@
 <param humanName="Throttle acceleration controller D gain" name="ArduSub:ACCEL_Z_D" documentation="Throttle acceleration controller D gain.  Compensates for short-term change in desired vertical acceleration vs actual acceleration" user="Standard">
 <field name="Range">0.000 0.400</field>
 </param>
-<param humanName="Throttle acceleration filter" name="ArduSub:ACCEL_Z_FILT_HZ" documentation="Filter applied to acceleration to reduce noise.  Lower values reduce noise but add delay." user="Standard">
+<param humanName="Throttle acceleration filter" name="ArduSub:ACCEL_Z_FILT" documentation="Filter applied to acceleration to reduce noise.  Lower values reduce noise but add delay." user="Standard">
 <field name="Range">1.000 100.000</field>
 <field name="Units">Hz</field>
 </param>
@@ -758,17 +650,14 @@
 <param humanName="AutoTune minimum D" name="ArduSub:AUTOTUNE_MIN_D" documentation="Defines the minimum D gain" user="Standard">
 <field name="Range">0.001 0.006</field>
 </param>
-<param humanName="Start motors before throwing is detected" name="ArduSub:THROW_MOT_START" documentation="Used by THROW mode. Controls whether motors will run at the speed set by THR_MIN or will be stopped when armed and waiting for the throw." user="Standard">
-<values>
-<value code="0">Stopped</value>
-<value code="1">Running</value>
-</values>
-</param>
 <param humanName="Terrain Following use control" name="ArduSub:TERRAIN_FOLLOW" documentation="This enables terrain following for RTL and LAND flight modes. To use this option TERRAIN_ENABLE must be 1 and the GCS must  support sending terrain data to the aircraft.  In RTL the RTL_ALT will be considered a height above the terrain.  In LAND mode the vehicle will slow to LAND_SPEED 10m above terrain (instead of 10m above home).  This parameter does not affect AUTO and Guided which use a per-command flag to determine if the height is above-home, absolute or above-terrain." user="Standard">
 <values>
 <value code="0">Do Not Use in RTL and Land</value>
 <value code="1">Use in RTL and Land</value>
 </values>
+</param>
+<param humanName="Minimum navigation altitude" name="ArduSub:WP_NAVALT_MIN" documentation="This is the altitude in meters above which for navigation can begin. This applies in auto takeoff and auto landing." user="Standard">
+<field name="Range">0 5</field>
 </param>
 </parameters>
 </vehicles><libraries><parameters name="SERIAL">
@@ -797,14 +686,18 @@
 <param humanName="Telem1 protocol selection" name="SERIAL1_PROTOCOL" documentation="Control what protocol to use on the Telem1 port. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
 <values>
 <value code="-1">None</value>
-<value code=" 1">MAVlink1</value>
+<value code=" 1">MAVLink1</value>
 <value code=" 2">MAVLink2</value>
-<value code=" 3">Frsky D-PORT</value>
-<value code=" 4">Frsky S-PORT</value>
+<value code=" 3">Frsky D</value>
+<value code=" 4">Frsky SPort</value>
 <value code=" 5">GPS</value>
 <value code=" 7">Alexmos Gimbal Serial</value>
 <value code=" 8">SToRM32 Gimbal Serial</value>
 <value code=" 9">Lidar</value>
+<value code=" 10">FrSky SPort Passthrough (OpenTX)</value>
+<value code=" 11">Lidar360</value>
+<value code=" 12">Aerotenna uLanding</value>
+<value code=" 13">Pozyx Beacon</value>
 </values>
 </param>
 <param humanName="Telem1 Baud Rate" name="SERIAL1_BAUD" documentation="The baud rate used on the Telem1 port. The APM2 can support all baudrates up to 115, and also can support 500. The PX4 can support rates of up to 1500. If you setup a rate you cannot support on APM2 and then can't connect to your board you should load a firmware from a different vehicle type. That will reset all your parameters to defaults." user="Standard">
@@ -826,14 +719,18 @@
 <param humanName="Telemetry 2 protocol selection" name="SERIAL2_PROTOCOL" documentation="Control what protocol to use on the Telem2 port. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
 <values>
 <value code="-1">None</value>
-<value code=" 1">MAVlink1</value>
+<value code=" 1">MAVLink1</value>
 <value code=" 2">MAVLink2</value>
-<value code=" 3">Frsky D-PORT</value>
-<value code=" 4">Frsky S-PORT</value>
+<value code=" 3">Frsky D</value>
+<value code=" 4">Frsky SPort</value>
 <value code=" 5">GPS</value>
 <value code=" 7">Alexmos Gimbal Serial</value>
 <value code=" 8">SToRM32 Gimbal Serial</value>
 <value code=" 9">Lidar</value>
+<value code=" 10">FrSky SPort Passthrough (OpenTX)</value>
+<value code=" 11">Lidar360</value>
+<value code=" 12">Aerotenna uLanding</value>
+<value code=" 13">Pozyx Beacon</value>
 </values>
 </param>
 <param humanName="Telemetry 2 Baud Rate" name="SERIAL2_BAUD" documentation="The baud rate of the Telem2 port. The APM2 can support all baudrates up to 115, and also can support 500. The PX4 can support rates of up to 1500. If you setup a rate you cannot support on APM2 and then can't connect to your board you should load a firmware from a different vehicle type. That will reset all your parameters to defaults." user="Standard">
@@ -855,14 +752,18 @@
 <param humanName="Serial 3 (GPS) protocol selection" name="SERIAL3_PROTOCOL" documentation="Control what protocol Serial 3 (GPS) should be used for. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
 <values>
 <value code="-1">None</value>
-<value code=" 1">MAVlink1</value>
+<value code=" 1">MAVLink1</value>
 <value code=" 2">MAVLink2</value>
-<value code=" 3">Frsky D-PORT</value>
-<value code=" 4">Frsky S-PORT</value>
+<value code=" 3">Frsky D</value>
+<value code=" 4">Frsky SPort</value>
 <value code=" 5">GPS</value>
 <value code=" 7">Alexmos Gimbal Serial</value>
 <value code=" 8">SToRM32 Gimbal Serial</value>
 <value code=" 9">Lidar</value>
+<value code=" 10">FrSky SPort Passthrough (OpenTX)</value>
+<value code=" 11">Lidar360</value>
+<value code=" 12">Aerotenna uLanding</value>
+<value code=" 13">Pozyx Beacon</value>
 </values>
 </param>
 <param humanName="Serial 3 (GPS) Baud Rate" name="SERIAL3_BAUD" documentation="The baud rate used for the Serial 3 (GPS). The APM2 can support all baudrates up to 115, and also can support 500. The PX4 can support rates of up to 1500. If you setup a rate you cannot support on APM2 and then can't connect to your board you should load a firmware from a different vehicle type. That will reset all your parameters to defaults." user="Standard">
@@ -884,14 +785,18 @@
 <param humanName="Serial4 protocol selection" name="SERIAL4_PROTOCOL" documentation="Control what protocol Serial4 port should be used for. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
 <values>
 <value code="-1">None</value>
-<value code=" 1">MAVlink1</value>
+<value code=" 1">MAVLink1</value>
 <value code=" 2">MAVLink2</value>
-<value code=" 3">Frsky D-PORT</value>
-<value code=" 4">Frsky S-PORT</value>
+<value code=" 3">Frsky D</value>
+<value code=" 4">Frsky SPort</value>
 <value code=" 5">GPS</value>
 <value code=" 7">Alexmos Gimbal Serial</value>
 <value code=" 8">SToRM32 Gimbal Serial</value>
 <value code=" 9">Lidar</value>
+<value code=" 10">FrSky SPort Passthrough (OpenTX)</value>
+<value code=" 11">Lidar360</value>
+<value code=" 12">Aerotenna uLanding</value>
+<value code=" 13">Pozyx Beacon</value>
 </values>
 </param>
 <param humanName="Serial 4 Baud Rate" name="SERIAL4_BAUD" documentation="The baud rate used for Serial4. The APM2 can support all baudrates up to 115, and also can support 500. The PX4 can support rates of up to 1500. If you setup a rate you cannot support on APM2 and then can't connect to your board you should load a firmware from a different vehicle type. That will reset all your parameters to defaults." user="Standard">
@@ -913,14 +818,18 @@
 <param humanName="Serial5 protocol selection" name="SERIAL5_PROTOCOL" documentation="Control what protocol Serial5 port should be used for. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
 <values>
 <value code="-1">None</value>
-<value code=" 1">MAVlink1</value>
+<value code=" 1">MAVLink1</value>
 <value code=" 2">MAVLink2</value>
-<value code=" 3">Frsky D-PORT</value>
-<value code=" 4">Frsky S-PORT</value>
+<value code=" 3">Frsky D</value>
+<value code=" 4">Frsky SPort</value>
 <value code=" 5">GPS</value>
 <value code=" 7">Alexmos Gimbal Serial</value>
 <value code=" 8">SToRM32 Gimbal Serial</value>
 <value code=" 9">Lidar</value>
+<value code=" 10">FrSky SPort Passthrough (OpenTX)</value>
+<value code=" 11">Lidar360</value>
+<value code=" 12">Aerotenna uLanding</value>
+<value code=" 13">Pozyx Beacon</value>
 </values>
 </param>
 <param humanName="Serial 5 Baud Rate" name="SERIAL5_BAUD" documentation="The baud rate used for Serial5. The APM2 can support all baudrates up to 115, and also can support 500. The PX4 can support rates of up to 1500. If you setup a rate you cannot support on APM2 and then can't connect to your board you should load a firmware from a different vehicle type. That will reset all your parameters to defaults." user="Standard">
@@ -1101,7 +1010,7 @@
 <value code="25">Flaperon2</value>
 <value code="26">GroundSteering</value>
 <value code="27">Parachute</value>
-<value code="28">EPM</value>
+<value code="28">Gripper</value>
 <value code="29">LandingGear</value>
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
@@ -1130,6 +1039,10 @@
 <value code="64">RCIN14</value>
 <value code="65">RCIN15</value>
 <value code="66">RCIN16</value>
+<value code="67">Ignition</value>
+<value code="68">Choke</value>
+<value code="69">Starter</value>
+<value code="70">Throttle</value>
 </values>
 </param>
 </parameters>
@@ -1186,7 +1099,7 @@
 <value code="25">Flaperon2</value>
 <value code="26">GroundSteering</value>
 <value code="27">Parachute</value>
-<value code="28">EPM</value>
+<value code="28">Gripper</value>
 <value code="29">LandingGear</value>
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
@@ -1215,6 +1128,10 @@
 <value code="64">RCIN14</value>
 <value code="65">RCIN15</value>
 <value code="66">RCIN16</value>
+<value code="67">Ignition</value>
+<value code="68">Choke</value>
+<value code="69">Starter</value>
+<value code="70">Throttle</value>
 </values>
 </param>
 </parameters>
@@ -1271,7 +1188,7 @@
 <value code="25">Flaperon2</value>
 <value code="26">GroundSteering</value>
 <value code="27">Parachute</value>
-<value code="28">EPM</value>
+<value code="28">Gripper</value>
 <value code="29">LandingGear</value>
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
@@ -1300,6 +1217,10 @@
 <value code="64">RCIN14</value>
 <value code="65">RCIN15</value>
 <value code="66">RCIN16</value>
+<value code="67">Ignition</value>
+<value code="68">Choke</value>
+<value code="69">Starter</value>
+<value code="70">Throttle</value>
 </values>
 </param>
 </parameters>
@@ -1356,7 +1277,7 @@
 <value code="25">Flaperon2</value>
 <value code="26">GroundSteering</value>
 <value code="27">Parachute</value>
-<value code="28">EPM</value>
+<value code="28">Gripper</value>
 <value code="29">LandingGear</value>
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
@@ -1385,6 +1306,10 @@
 <value code="64">RCIN14</value>
 <value code="65">RCIN15</value>
 <value code="66">RCIN16</value>
+<value code="67">Ignition</value>
+<value code="68">Choke</value>
+<value code="69">Starter</value>
+<value code="70">Throttle</value>
 </values>
 </param>
 </parameters>
@@ -1441,7 +1366,7 @@
 <value code="25">Flaperon2</value>
 <value code="26">GroundSteering</value>
 <value code="27">Parachute</value>
-<value code="28">EPM</value>
+<value code="28">Gripper</value>
 <value code="29">LandingGear</value>
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
@@ -1470,6 +1395,10 @@
 <value code="64">RCIN14</value>
 <value code="65">RCIN15</value>
 <value code="66">RCIN16</value>
+<value code="67">Ignition</value>
+<value code="68">Choke</value>
+<value code="69">Starter</value>
+<value code="70">Throttle</value>
 </values>
 </param>
 </parameters>
@@ -1526,7 +1455,7 @@
 <value code="25">Flaperon2</value>
 <value code="26">GroundSteering</value>
 <value code="27">Parachute</value>
-<value code="28">EPM</value>
+<value code="28">Gripper</value>
 <value code="29">LandingGear</value>
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
@@ -1555,6 +1484,10 @@
 <value code="64">RCIN14</value>
 <value code="65">RCIN15</value>
 <value code="66">RCIN16</value>
+<value code="67">Ignition</value>
+<value code="68">Choke</value>
+<value code="69">Starter</value>
+<value code="70">Throttle</value>
 </values>
 </param>
 </parameters>
@@ -1611,7 +1544,7 @@
 <value code="25">Flaperon2</value>
 <value code="26">GroundSteering</value>
 <value code="27">Parachute</value>
-<value code="28">EPM</value>
+<value code="28">Gripper</value>
 <value code="29">LandingGear</value>
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
@@ -1640,6 +1573,10 @@
 <value code="64">RCIN14</value>
 <value code="65">RCIN15</value>
 <value code="66">RCIN16</value>
+<value code="67">Ignition</value>
+<value code="68">Choke</value>
+<value code="69">Starter</value>
+<value code="70">Throttle</value>
 </values>
 </param>
 </parameters>
@@ -1696,7 +1633,7 @@
 <value code="25">Flaperon2</value>
 <value code="26">GroundSteering</value>
 <value code="27">Parachute</value>
-<value code="28">EPM</value>
+<value code="28">Gripper</value>
 <value code="29">LandingGear</value>
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
@@ -1725,6 +1662,10 @@
 <value code="64">RCIN14</value>
 <value code="65">RCIN15</value>
 <value code="66">RCIN16</value>
+<value code="67">Ignition</value>
+<value code="68">Choke</value>
+<value code="69">Starter</value>
+<value code="70">Throttle</value>
 </values>
 </param>
 </parameters>
@@ -1781,7 +1722,7 @@
 <value code="25">Flaperon2</value>
 <value code="26">GroundSteering</value>
 <value code="27">Parachute</value>
-<value code="28">EPM</value>
+<value code="28">Gripper</value>
 <value code="29">LandingGear</value>
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
@@ -1810,6 +1751,10 @@
 <value code="64">RCIN14</value>
 <value code="65">RCIN15</value>
 <value code="66">RCIN16</value>
+<value code="67">Ignition</value>
+<value code="68">Choke</value>
+<value code="69">Starter</value>
+<value code="70">Throttle</value>
 </values>
 </param>
 </parameters>
@@ -1866,7 +1811,7 @@
 <value code="25">Flaperon2</value>
 <value code="26">GroundSteering</value>
 <value code="27">Parachute</value>
-<value code="28">EPM</value>
+<value code="28">Gripper</value>
 <value code="29">LandingGear</value>
 <value code="30">EngineRunEnable</value>
 <value code="31">HeliRSC</value>
@@ -1895,6 +1840,10 @@
 <value code="64">RCIN14</value>
 <value code="65">RCIN15</value>
 <value code="66">RCIN16</value>
+<value code="67">Ignition</value>
+<value code="68">Choke</value>
+<value code="69">Starter</value>
+<value code="70">Throttle</value>
 </values>
 </param>
 </parameters>
@@ -1918,6 +1867,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1932,6 +1883,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN0_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -1953,6 +1916,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -1967,6 +1932,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -1990,6 +1967,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2004,6 +1983,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN1_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2025,6 +2016,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2039,6 +2032,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2062,6 +2067,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2076,6 +2083,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN2_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2097,6 +2116,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2111,6 +2132,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2134,6 +2167,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2148,6 +2183,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN3_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2169,6 +2216,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2183,6 +2232,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2206,6 +2267,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2220,6 +2283,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN4_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2241,6 +2316,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2255,6 +2332,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2278,6 +2367,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2292,6 +2383,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN5_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2313,6 +2416,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2327,6 +2432,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2350,6 +2467,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2364,6 +2483,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN6_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2385,6 +2516,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2399,6 +2532,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2422,6 +2567,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2436,6 +2583,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN7_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2457,6 +2616,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2471,6 +2632,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2494,6 +2667,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2508,6 +2683,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN8_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2529,6 +2716,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2543,6 +2732,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2566,6 +2767,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2580,6 +2783,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN9_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2601,6 +2816,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2615,6 +2832,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2638,6 +2867,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2652,6 +2883,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN10_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2673,6 +2916,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2687,6 +2932,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2710,6 +2967,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2724,6 +2983,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN11_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2745,6 +3016,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2759,6 +3032,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2782,6 +3067,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2796,6 +3083,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN12_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2817,6 +3116,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2831,6 +3132,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2854,6 +3167,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2868,6 +3183,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN13_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2889,6 +3216,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2903,6 +3232,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2926,6 +3267,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2940,6 +3283,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN14_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -2961,6 +3316,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -2975,6 +3332,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -2998,6 +3367,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -3012,6 +3383,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 <param humanName="Function for button when the shift mode is toggled on" name="BTN15_SFUNCTION" documentation="Set to 0 to disable or choose a function" user="Standard">
@@ -3033,6 +3416,8 @@
 <value code="23">mount_tilt_down</value>
 <value code="24">camera_trigger</value>
 <value code="25">camera_source_toggle</value>
+<value code="26">mount_pan_right</value>
+<value code="27">mount_pan_left</value>
 <value code="31">lights1_cycle</value>
 <value code="32">lights1_brighter</value>
 <value code="33">lights1_dimmer</value>
@@ -3047,6 +3432,18 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="51">relay_1_on</value>
+<value code="52">relay_1_off</value>
+<value code="53">relay_1_toggle</value>
+<value code="52">relay_2_on</value>
+<value code="53">relay_2_off</value>
+<value code="54">relay_2_toggle</value>
+<value code="91">custom_1</value>
+<value code="92">custom_2</value>
+<value code="93">custom_3</value>
+<value code="94">custom_4</value>
+<value code="95">custom_5</value>
+<value code="96">custom_6</value>
 </values>
 </param>
 </parameters>
@@ -3190,92 +3587,18 @@
 </values>
 </param>
 </parameters>
-<parameters name="EPM_">
-<param humanName="EPM Enable/Disable" name="EPM_ENABLE" documentation="EPM enable/disable" user="Standard">
-<values>
-<value code="0">Disabled</value>
-<value code=" 1">Enabled</value>
-</values>
-</param>
-<param humanName="EPM Grab PWM" name="EPM_GRAB" documentation="PWM value sent to EPM to initiate grabbing the cargo" user="Advanced">
-<field name="Range">1000 2000</field>
-</param>
-<param humanName="EPM Release PWM" name="EPM_RELEASE" documentation="PWM value sent to EPM to release the cargo" user="Advanced">
-<field name="Range">1000 2000</field>
-</param>
-<param humanName="EPM Neutral PWM" name="EPM_NEUTRAL" documentation="PWM value sent to EPM when not grabbing or releasing" user="Advanced">
-<field name="Range">1000 2000</field>
-</param>
-<param humanName="EPM Regrab interval" name="EPM_REGRAB" documentation="Time in seconds that gripper will regrab the cargo to ensure grip has not weakend" user="Advanced">
-<values>
-<value code="0">Never</value>
-<value code=" 15">every 15 seconds</value>
-<value code=" 30">every 30 seconds</value>
-<value code=" 60">once per minute</value>
-</values>
-</param>
-</parameters>
-<parameters name="CHUTE_">
-<param humanName="Parachute release enabled or disabled" name="CHUTE_ENABLED" documentation="Parachute release enabled or disabled" user="Standard">
-<values>
-<value code="0">Disabled</value>
-<value code="1">Enabled</value>
-</values>
-</param>
-<param humanName="Parachute release mechanism type (relay or servo)" name="CHUTE_TYPE" documentation="Parachute release mechanism type (relay or servo)" user="Standard">
-<values>
-<value code="0">First Relay</value>
-<value code="1">Second Relay</value>
-<value code="2">Third Relay</value>
-<value code="3">Fourth Relay</value>
-<value code="10">Servo</value>
-</values>
-</param>
-<param humanName="Parachute Servo ON PWM value" name="CHUTE_SERVO_ON" documentation="Parachute Servo PWM value when parachute is released" user="Standard">
-<field name="Range">1000 2000</field>
-<field name="Increment">1</field>
-<field name="Units">pwm</field>
-</param>
-<param humanName="Servo OFF PWM value" name="CHUTE_SERVO_OFF" documentation="Parachute Servo PWM value when parachute is not released" user="Standard">
-<field name="Range">1000 2000</field>
-<field name="Increment">1</field>
-<field name="Units">pwm</field>
-</param>
-<param humanName="Parachute min altitude in meters above home" name="CHUTE_ALT_MIN" documentation="Parachute min altitude above home.  Parachute will not be released below this altitude.  0 to disable alt check." user="Standard">
-<field name="Range">0 32000</field>
-<field name="Increment">1</field>
-<field name="Units">Meters</field>
-</param>
-<param humanName="Parachute release delay" name="CHUTE_DELAY_MS" documentation="Delay in millseconds between motor stop and chute release" user="Standard">
-<field name="Range">0 5000</field>
-<field name="Increment">1</field>
-<field name="Units">Milliseconds</field>
-</param>
-</parameters>
-<parameters name="LGR_">
-<param humanName="Landing Gear Servo Retracted PWM Value" name="LGR_SERVO_RTRACT" documentation="Servo PWM value when landing gear is retracted" user="Standard">
-<field name="Range">1000 2000</field>
-<field name="Increment">1</field>
-<field name="Units">pwm</field>
-</param>
-<param humanName="Landing Gear Servo Deployed PWM Value" name="LGR_SERVO_DEPLOY" documentation="Servo PWM value when landing gear is deployed" user="Standard">
-<field name="Range">1000 2000</field>
-<field name="Increment">1</field>
-<field name="Units">pwm</field>
-</param>
-</parameters>
 <parameters name="COMPASS_">
-<param humanName="Compass offsets in milligauss on the X axis" name="COMPASS_OFS_X" documentation="Offset to be added to the compass x-axis values to compensate for metal in the frame">
+<param humanName="Compass offsets in milligauss on the X axis" name="COMPASS_OFS_X" documentation="Offset to be added to the compass x-axis values to compensate for metal in the frame" user="Advanced">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 <field name="Units">milligauss</field>
 </param>
-<param humanName="Compass offsets in milligauss on the Y axis" name="COMPASS_OFS_Y" documentation="Offset to be added to the compass y-axis values to compensate for metal in the frame">
+<param humanName="Compass offsets in milligauss on the Y axis" name="COMPASS_OFS_Y" documentation="Offset to be added to the compass y-axis values to compensate for metal in the frame" user="Advanced">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 <field name="Units">milligauss</field>
 </param>
-<param humanName="Compass offsets in milligauss on the Z axis" name="COMPASS_OFS_Z" documentation="Offset to be added to the compass z-axis values to compensate for metal in the frame">
+<param humanName="Compass offsets in milligauss on the Z axis" name="COMPASS_OFS_Z" documentation="Offset to be added to the compass z-axis values to compensate for metal in the frame" user="Advanced">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 <field name="Units">milligauss</field>
@@ -3311,17 +3634,17 @@
 <value code="2">Use Current</value>
 </values>
 </param>
-<param humanName="Motor interference compensation for body frame X axis" name="COMPASS_MOT_X" documentation="Multiplied by the current throttle and added to the compass's x-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation for body frame X axis" name="COMPASS_MOT_X" documentation="Multiplied by the current throttle and added to the compass's x-axis values to compensate for motor interference" user="Advanced">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
 </param>
-<param humanName="Motor interference compensation for body frame Y axis" name="COMPASS_MOT_Y" documentation="Multiplied by the current throttle and added to the compass's y-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation for body frame Y axis" name="COMPASS_MOT_Y" documentation="Multiplied by the current throttle and added to the compass's y-axis values to compensate for motor interference" user="Advanced">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
 </param>
-<param humanName="Motor interference compensation for body frame Z axis" name="COMPASS_MOT_Z" documentation="Multiplied by the current throttle and added to the compass's z-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation for body frame Z axis" name="COMPASS_MOT_Z" documentation="Multiplied by the current throttle and added to the compass's z-axis values to compensate for motor interference" user="Advanced">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
@@ -3376,32 +3699,32 @@
 <value code="2">ForcedExternal</value>
 </values>
 </param>
-<param humanName="Compass2 offsets in milligauss on the X axis" name="COMPASS_OFS2_X" documentation="Offset to be added to compass2's x-axis values to compensate for metal in the frame">
+<param humanName="Compass2 offsets in milligauss on the X axis" name="COMPASS_OFS2_X" documentation="Offset to be added to compass2's x-axis values to compensate for metal in the frame" user="Advanced">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 <field name="Units">milligauss</field>
 </param>
-<param humanName="Compass2 offsets in milligauss on the Y axis" name="COMPASS_OFS2_Y" documentation="Offset to be added to compass2's y-axis values to compensate for metal in the frame">
+<param humanName="Compass2 offsets in milligauss on the Y axis" name="COMPASS_OFS2_Y" documentation="Offset to be added to compass2's y-axis values to compensate for metal in the frame" user="Advanced">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 <field name="Units">milligauss</field>
 </param>
-<param humanName="Compass2 offsets in milligauss on the Z axis" name="COMPASS_OFS2_Z" documentation="Offset to be added to compass2's z-axis values to compensate for metal in the frame">
+<param humanName="Compass2 offsets in milligauss on the Z axis" name="COMPASS_OFS2_Z" documentation="Offset to be added to compass2's z-axis values to compensate for metal in the frame" user="Advanced">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 <field name="Units">milligauss</field>
 </param>
-<param humanName="Motor interference compensation to compass2 for body frame X axis" name="COMPASS_MOT2_X" documentation="Multiplied by the current throttle and added to compass2's x-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation to compass2 for body frame X axis" name="COMPASS_MOT2_X" documentation="Multiplied by the current throttle and added to compass2's x-axis values to compensate for motor interference" user="Advanced">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
 </param>
-<param humanName="Motor interference compensation to compass2 for body frame Y axis" name="COMPASS_MOT2_Y" documentation="Multiplied by the current throttle and added to compass2's y-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation to compass2 for body frame Y axis" name="COMPASS_MOT2_Y" documentation="Multiplied by the current throttle and added to compass2's y-axis values to compensate for motor interference" user="Advanced">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
 </param>
-<param humanName="Motor interference compensation to compass2 for body frame Z axis" name="COMPASS_MOT2_Z" documentation="Multiplied by the current throttle and added to compass2's z-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation to compass2 for body frame Z axis" name="COMPASS_MOT2_Z" documentation="Multiplied by the current throttle and added to compass2's z-axis values to compensate for motor interference" user="Advanced">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
@@ -3413,41 +3736,41 @@
 <value code="2">ThirdCompass</value>
 </values>
 </param>
-<param humanName="Compass3 offsets in milligauss on the X axis" name="COMPASS_OFS3_X" documentation="Offset to be added to compass3's x-axis values to compensate for metal in the frame">
+<param humanName="Compass3 offsets in milligauss on the X axis" name="COMPASS_OFS3_X" documentation="Offset to be added to compass3's x-axis values to compensate for metal in the frame" user="Advanced">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 <field name="Units">milligauss</field>
 </param>
-<param humanName="Compass3 offsets in milligauss on the Y axis" name="COMPASS_OFS3_Y" documentation="Offset to be added to compass3's y-axis values to compensate for metal in the frame">
+<param humanName="Compass3 offsets in milligauss on the Y axis" name="COMPASS_OFS3_Y" documentation="Offset to be added to compass3's y-axis values to compensate for metal in the frame" user="Advanced">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 <field name="Units">milligauss</field>
 </param>
-<param humanName="Compass3 offsets in milligauss on the Z axis" name="COMPASS_OFS3_Z" documentation="Offset to be added to compass3's z-axis values to compensate for metal in the frame">
+<param humanName="Compass3 offsets in milligauss on the Z axis" name="COMPASS_OFS3_Z" documentation="Offset to be added to compass3's z-axis values to compensate for metal in the frame" user="Advanced">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 <field name="Units">milligauss</field>
 </param>
-<param humanName="Motor interference compensation to compass3 for body frame X axis" name="COMPASS_MOT3_X" documentation="Multiplied by the current throttle and added to compass3's x-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation to compass3 for body frame X axis" name="COMPASS_MOT3_X" documentation="Multiplied by the current throttle and added to compass3's x-axis values to compensate for motor interference" user="Advanced">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
 </param>
-<param humanName="Motor interference compensation to compass3 for body frame Y axis" name="COMPASS_MOT3_Y" documentation="Multiplied by the current throttle and added to compass3's y-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation to compass3 for body frame Y axis" name="COMPASS_MOT3_Y" documentation="Multiplied by the current throttle and added to compass3's y-axis values to compensate for motor interference" user="Advanced">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
 </param>
-<param humanName="Motor interference compensation to compass3 for body frame Z axis" name="COMPASS_MOT3_Z" documentation="Multiplied by the current throttle and added to compass3's z-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation to compass3 for body frame Z axis" name="COMPASS_MOT3_Z" documentation="Multiplied by the current throttle and added to compass3's z-axis values to compensate for motor interference" user="Advanced">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
 </param>
-<param humanName="Compass device id" name="COMPASS_DEV_ID" documentation="Compass device id.  Automatically detected, do not set manually">
+<param humanName="Compass device id" name="COMPASS_DEV_ID" documentation="Compass device id.  Automatically detected, do not set manually" user="Advanced">
 </param>
-<param humanName="Compass2 device id" name="COMPASS_DEV_ID2" documentation="Second compass's device id.  Automatically detected, do not set manually">
+<param humanName="Compass2 device id" name="COMPASS_DEV_ID2" documentation="Second compass's device id.  Automatically detected, do not set manually" user="Advanced">
 </param>
-<param humanName="Compass3 device id" name="COMPASS_DEV_ID3" documentation="Third compass's device id.  Automatically detected, do not set manually">
+<param humanName="Compass3 device id" name="COMPASS_DEV_ID3" documentation="Third compass's device id.  Automatically detected, do not set manually" user="Advanced">
 </param>
 <param humanName="Compass2 used for yaw" name="COMPASS_USE2" documentation="Enable or disable the second compass for determining heading." user="Advanced">
 <values>
@@ -3561,60 +3884,55 @@
 <value code="2">ForcedExternal</value>
 </values>
 </param>
-<param humanName="Compass soft-iron diagonal X component" name="COMPASS_DIA_X" documentation="DIA_X in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass soft-iron diagonal X component" name="COMPASS_DIA_X" documentation="DIA_X in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass soft-iron diagonal Y component" name="COMPASS_DIA_Y" documentation="DIA_Y in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass soft-iron diagonal Y component" name="COMPASS_DIA_Y" documentation="DIA_Y in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass soft-iron diagonal Z component" name="COMPASS_DIA_Z" documentation="DIA_Z in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass soft-iron diagonal Z component" name="COMPASS_DIA_Z" documentation="DIA_Z in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass soft-iron off-diagonal X component" name="COMPASS_ODI_X" documentation="ODI_X in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass soft-iron off-diagonal X component" name="COMPASS_ODI_X" documentation="ODI_X in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass soft-iron off-diagonal Y component" name="COMPASS_ODI_Y" documentation="ODI_Y in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass soft-iron off-diagonal Y component" name="COMPASS_ODI_Y" documentation="ODI_Y in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass soft-iron off-diagonal Z component" name="COMPASS_ODI_Z" documentation="ODI_Z in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass soft-iron off-diagonal Z component" name="COMPASS_ODI_Z" documentation="ODI_Z in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass2 soft-iron diagonal X component" name="COMPASS_DIA2_X" documentation="DIA_X in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass2 soft-iron diagonal X component" name="COMPASS_DIA2_X" documentation="DIA_X in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass2 soft-iron diagonal Y component" name="COMPASS_DIA2_Y" documentation="DIA_Y in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass2 soft-iron diagonal Y component" name="COMPASS_DIA2_Y" documentation="DIA_Y in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass2 soft-iron diagonal Z component" name="COMPASS_DIA2_Z" documentation="DIA_Z in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass2 soft-iron diagonal Z component" name="COMPASS_DIA2_Z" documentation="DIA_Z in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass2 soft-iron off-diagonal X component" name="COMPASS_ODI2_X" documentation="ODI_X in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass2 soft-iron off-diagonal X component" name="COMPASS_ODI2_X" documentation="ODI_X in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass2 soft-iron off-diagonal Y component" name="COMPASS_ODI2_Y" documentation="ODI_Y in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass2 soft-iron off-diagonal Y component" name="COMPASS_ODI2_Y" documentation="ODI_Y in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass2 soft-iron off-diagonal Z component" name="COMPASS_ODI2_Z" documentation="ODI_Z in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass2 soft-iron off-diagonal Z component" name="COMPASS_ODI2_Z" documentation="ODI_Z in the compass2 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass3 soft-iron diagonal X component" name="COMPASS_DIA3_X" documentation="DIA_X in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass3 soft-iron diagonal X component" name="COMPASS_DIA3_X" documentation="DIA_X in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass3 soft-iron diagonal Y component" name="COMPASS_DIA3_Y" documentation="DIA_Y in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass3 soft-iron diagonal Y component" name="COMPASS_DIA3_Y" documentation="DIA_Y in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass3 soft-iron diagonal Z component" name="COMPASS_DIA3_Z" documentation="DIA_Z in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass3 soft-iron diagonal Z component" name="COMPASS_DIA3_Z" documentation="DIA_Z in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass3 soft-iron off-diagonal X component" name="COMPASS_ODI3_X" documentation="ODI_X in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass3 soft-iron off-diagonal X component" name="COMPASS_ODI3_X" documentation="ODI_X in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass3 soft-iron off-diagonal Y component" name="COMPASS_ODI3_Y" documentation="ODI_Y in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass3 soft-iron off-diagonal Y component" name="COMPASS_ODI3_Y" documentation="ODI_Y in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
-<param humanName="Compass3 soft-iron off-diagonal Z component" name="COMPASS_ODI3_Z" documentation="ODI_Z in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]">
+<param humanName="Compass3 soft-iron off-diagonal Z component" name="COMPASS_ODI3_Z" documentation="ODI_Z in the compass3 soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y, ODI_Z, DIA_Z]]" user="Advanced">
 </param>
 <param humanName="Compass calibration fitness" name="COMPASS_CAL_FIT" documentation="This controls the fitness level required for a successful compass calibration. A lower value makes for a stricter fit (less likely to pass). This is the value used for the primary magnetometer. Other magnetometers get double the value." user="Advanced">
-<field name="Range">4 20</field>
+<field name="Range">4 32</field>
+<values>
+<value code="4">Very Strict</value>
+<value code="8">Default</value>
+<value code="16">Relaxed</value>
+<value code="32">Very Relaxed</value>
+</values>
 <field name="Increment">0.1</field>
 </param>
 </parameters>
 <parameters name="INS_">
-<param humanName="IMU Product ID" name="INS_PRODUCT_ID" documentation="Which type of IMU is installed (read-only)." user="Advanced">
-<values>
-<value code="0">Unknown</value>
-<value code="1">unused</value>
-<value code="2">unused</value>
-<value code="88">unused</value>
-<value code="3">SITL</value>
-<value code="4">PX4v1</value>
-<value code="5">PX4v2</value>
-<value code="256">unused</value>
-<value code="257">Linux</value>
-</values>
+<param humanName="IMU Product ID" name="INS_PRODUCT_ID" documentation="unused" user="Advanced">
 </param>
 <param humanName="Gyro offsets of X axis" name="INS_GYROFFS_X" documentation="Gyro sensor offsets of X axis. This is setup on each boot during gyro calibrations" user="Advanced">
 <field name="Units">rad/s</field>
@@ -3755,6 +4073,53 @@
 <value code="3">IMU 3</value>
 </values>
 </param>
+<param humanName="IMU accelerometer X position" name="INS_POS1_X" documentation="X position of the first IMU Accelerometer in body frame. Positive X is forward of the origin. Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU can be used as the body frame origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="IMU accelerometer Y position" name="INS_POS1_Y" documentation="Y position of the first IMU accelerometer in body frame. Positive Y is to the right of the origin. Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU can be used as the body frame origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="IMU accelerometer Z position" name="INS_POS1_Z" documentation="Z position of the first IMU accelerometer in body frame. Positive Z is down from the origin. Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU can be used as the body frame origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="IMU accelerometer X position" name="INS_POS2_X" documentation="X position of the second IMU accelerometer in body frame. Positive X is forward of the origin. Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU can be used as the body frame origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="IMU accelerometer Y position" name="INS_POS2_Y" documentation="Y position of the second IMU accelerometer in body frame. Positive Y is to the right of the origin. Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU can be used as the body frame origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="IMU accelerometer Z position" name="INS_POS2_Z" documentation="Z position of the second IMU accelerometer in body frame. Positive Z is down from the origin. Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU can be used as the body frame origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="IMU accelerometer X position" name="INS_POS3_X" documentation="X position of the third IMU accelerometer in body frame. Positive X is forward of the origin. Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU can be used as the body frame origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="IMU accelerometer Y position" name="INS_POS3_Y" documentation="Y position of the third IMU accelerometer in body frame. Positive Y is to the right of the origin. Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU can be used as the body frame origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="IMU accelerometer Z position" name="INS_POS3_Z" documentation="Z position of the third IMU accelerometer in body frame. Positive Z is down from the origin. Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU can be used as the body frame origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Gyro ID" name="INS_GYR_ID" documentation="Gyro sensor ID, taking into account its type, bus and instance" user="Advanced">
+<field name="ReadOnly">True</field>
+</param>
+<param humanName="Gyro2 ID" name="INS_GYR2_ID" documentation="Gyro2 sensor ID, taking into account its type, bus and instance" user="Advanced">
+<field name="ReadOnly">True</field>
+</param>
+<param humanName="Gyro3 ID" name="INS_GYR3_ID" documentation="Gyro3 sensor ID, taking into account its type, bus and instance" user="Advanced">
+<field name="ReadOnly">True</field>
+</param>
+<param humanName="Accelerometer ID" name="INS_ACC_ID" documentation="Accelerometer sensor ID, taking into account its type, bus and instance" user="Advanced">
+<field name="ReadOnly">True</field>
+</param>
+<param humanName="Accelerometer2 ID" name="INS_ACC2_ID" documentation="Accelerometer2 sensor ID, taking into account its type, bus and instance" user="Advanced">
+<field name="ReadOnly">True</field>
+</param>
+<param humanName="Accelerometer3 ID" name="INS_ACC3_ID" documentation="Accelerometer3 sensor ID, taking into account its type, bus and instance" user="Advanced">
+<field name="ReadOnly">True</field>
+</param>
+<param humanName="Fast sampling mask" name="INS_FAST_SAMPLE" documentation="Mask of IMUs to enable fast sampling on, if available" user="Advanced">
+</param>
 </parameters>
 <parameters name="WPNAV_">
 <param humanName="Waypoint Horizontal Speed Target" name="WPNAV_SPEED" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain horizontally during a WP mission" user="Standard">
@@ -3803,9 +4168,15 @@
 <field name="Units">cm/s/s</field>
 </param>
 <param humanName="Loiter minimum acceleration" name="WPNAV_LOIT_MINA" documentation="Loiter minimum acceleration in cm/s/s. Higher values stop the copter more quickly when the stick is centered, but cause a larger jerk when the copter stops." user="Advanced">
-<field name="Range">100 981</field>
+<field name="Range">25 250</field>
 <field name="Increment">1</field>
 <field name="Units">cm/s/s</field>
+</param>
+<param humanName="Use rangefinder for terrain following" name="WPNAV_RFND_USE" documentation="This controls the use of a rangefinder for terrain following" user="Advanced">
+<values>
+<value code="0">Disable</value>
+<value code="1">Enable</value>
+</values>
 </param>
 </parameters>
 <parameters name="CIRCLE_">
@@ -3825,6 +4196,17 @@
 <field name="Range">500 18000</field>
 <field name="Increment">100</field>
 <field name="Units">Centi-Degrees/Sec</field>
+</param>
+<param humanName="Acceleration Max for Yaw" name="ATC_ACCEL_Y_MAX" documentation="Maximum acceleration in yaw axis" user="Advanced">
+<field name="Range">0 72000</field>
+<values>
+<value code="0">Disabled</value>
+<value code=" 18000">Slow</value>
+<value code=" 36000">Medium</value>
+<value code=" 54000">Fast</value>
+</values>
+<field name="Increment">1000</field>
+<field name="Units">Centi-Degrees/Sec/Sec</field>
 </param>
 <param humanName="Acceleration Max for Yaw" name="ATC_ACCEL_Y_MAX" documentation="Maximum acceleration in yaw axis" user="Advanced">
 <field name="Range">0 72000</field>
@@ -3900,7 +4282,7 @@
 <field name="Range">0.0 0.02</field>
 <field name="Increment">0.001</field>
 </param>
-<param humanName="Roll axis rate conroller input frequency in Hz" name="ATC_RAT_RLL_FILT" documentation="Roll axis rate conroller input frequency in Hz">
+<param humanName="Roll axis rate conroller input frequency in Hz" name="ATC_RAT_RLL_FILT" documentation="Roll axis rate conroller input frequency in Hz" user="Standard">
 <field name="Range">1 100</field>
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
@@ -3922,7 +4304,7 @@
 <field name="Range">0.0 0.02</field>
 <field name="Increment">0.001</field>
 </param>
-<param humanName="Pitch axis rate conroller input frequency in Hz" name="ATC_RAT_PIT_FILT" documentation="Pitch axis rate conroller input frequency in Hz">
+<param humanName="Pitch axis rate conroller input frequency in Hz" name="ATC_RAT_PIT_FILT" documentation="Pitch axis rate conroller input frequency in Hz" user="Standard">
 <field name="Range">1 100</field>
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
@@ -3944,7 +4326,7 @@
 <field name="Range">0.000 0.02</field>
 <field name="Increment">0.001</field>
 </param>
-<param humanName="Yaw axis rate conroller input frequency in Hz" name="ATC_RAT_YAW_FILT" documentation="Yaw axis rate conroller input frequency in Hz">
+<param humanName="Yaw axis rate conroller input frequency in Hz" name="ATC_RAT_YAW_FILT" documentation="Yaw axis rate conroller input frequency in Hz" user="Standard">
 <field name="Range">1 100</field>
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
@@ -3956,8 +4338,8 @@
 <field name="Range">0.5 0.9</field>
 </param>
 </parameters>
-<parameters name="POSCON_">
-<param humanName="XY Acceleration filter cutoff frequency" name="POSCON__ACC_XY_FILT" documentation="Lower values will slow the response of the navigation controller and reduce twitchiness" user="Advanced">
+<parameters name="PSC">
+<param humanName="XY Acceleration filter cutoff frequency" name="PSC_ACC_XY_FILT" documentation="Lower values will slow the response of the navigation controller and reduce twitchiness" user="Advanced">
 <field name="Range">0.5 5</field>
 <field name="Increment">0.1</field>
 <field name="Units">Hz</field>
@@ -4009,11 +4391,6 @@
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
-<param humanName="ADSB stream rate to ground station" name="SR0_ADSB" documentation="ADSB stream rate to ground station" user="Advanced">
-<field name="Range">0 50</field>
-<field name="Increment">1</field>
-<field name="Units">Hz</field>
-</param>
 </parameters>
 <parameters name="SR1_">
 <param humanName="Raw sensor stream rate" name="SR1_RAW_SENS" documentation="Stream rate of RAW_IMU, SCALED_IMU2, SCALED_PRESSURE, and SENSOR_OFFSETS to ground station" user="Advanced">
@@ -4058,11 +4435,6 @@
 </param>
 <param humanName="Parameter stream rate to ground station" name="SR1_PARAMS" documentation="Stream rate of PARAM_VALUE to ground station" user="Advanced">
 <field name="Range">0 10</field>
-<field name="Increment">1</field>
-<field name="Units">Hz</field>
-</param>
-<param humanName="ADSB stream rate to ground station" name="SR1_ADSB" documentation="ADSB stream rate to ground station" user="Advanced">
-<field name="Range">0 50</field>
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
@@ -4113,11 +4485,6 @@
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
-<param humanName="ADSB stream rate to ground station" name="SR2_ADSB" documentation="ADSB stream rate to ground station" user="Advanced">
-<field name="Range">0 50</field>
-<field name="Increment">1</field>
-<field name="Units">Hz</field>
-</param>
 </parameters>
 <parameters name="SR3_">
 <param humanName="Raw sensor stream rate" name="SR3_RAW_SENS" documentation="Stream rate of RAW_IMU, SCALED_IMU2, SCALED_PRESSURE, and SENSOR_OFFSETS to ground station" user="Advanced">
@@ -4165,14 +4532,9 @@
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
-<param humanName="ADSB stream rate to ground station" name="SR3_ADSB" documentation="ADSB stream rate to ground station" user="Advanced">
-<field name="Range">0 50</field>
-<field name="Increment">1</field>
-<field name="Units">Hz</field>
-</param>
 </parameters>
 <parameters name="AHRS_">
-<param humanName="AHRS GPS gain" name="AHRS_GPS_GAIN" documentation="This controls how how much to use the GPS to correct the attitude. This should never be set to zero for a plane as it would result in the plane losing control in turns. For a plane please use the default value of 1.0.">
+<param humanName="AHRS GPS gain" name="AHRS_GPS_GAIN" documentation="This controls how how much to use the GPS to correct the attitude. This should never be set to zero for a plane as it would result in the plane losing control in turns. For a plane please use the default value of 1.0." user="Advanced">
 <field name="Range">0.0 1.0</field>
 <field name="Increment">.01</field>
 </param>
@@ -4182,25 +4544,25 @@
 <value code="1">Enabled</value>
 </values>
 </param>
-<param humanName="Yaw P" name="AHRS_YAW_P" documentation="This controls the weight the compass or GPS has on the heading. A higher value means the heading will track the yaw source (GPS or compass) more rapidly.">
+<param humanName="Yaw P" name="AHRS_YAW_P" documentation="This controls the weight the compass or GPS has on the heading. A higher value means the heading will track the yaw source (GPS or compass) more rapidly." user="Advanced">
 <field name="Range">0.1 0.4</field>
 <field name="Increment">.01</field>
 </param>
-<param humanName="AHRS RP_P" name="AHRS_RP_P" documentation="This controls how fast the accelerometers correct the attitude">
+<param humanName="AHRS RP_P" name="AHRS_RP_P" documentation="This controls how fast the accelerometers correct the attitude" user="Advanced">
 <field name="Range">0.1 0.4</field>
 <field name="Increment">.01</field>
 </param>
-<param humanName="Maximum wind" name="AHRS_WIND_MAX" documentation="This sets the maximum allowable difference between ground speed and airspeed. This allows the plane to cope with a failing airspeed sensor. A value of zero means to use the airspeed as is.">
+<param humanName="Maximum wind" name="AHRS_WIND_MAX" documentation="This sets the maximum allowable difference between ground speed and airspeed. This allows the plane to cope with a failing airspeed sensor. A value of zero means to use the airspeed as is." user="Advanced">
 <field name="Range">0 127</field>
 <field name="Increment">1</field>
 <field name="Units">m/s</field>
 </param>
-<param humanName="AHRS Trim Roll" name="AHRS_TRIM_X" documentation="Compensates for the roll angle difference between the control board and the frame. Positive values make the vehicle roll right." user="User">
+<param humanName="AHRS Trim Roll" name="AHRS_TRIM_X" documentation="Compensates for the roll angle difference between the control board and the frame. Positive values make the vehicle roll right." user="Standard">
 <field name="Range">-0.1745 +0.1745</field>
 <field name="Increment">0.01</field>
 <field name="Units">Radians</field>
 </param>
-<param humanName="AHRS Trim Pitch" name="AHRS_TRIM_Y" documentation="Compensates for the pitch angle difference between the control board and the frame. Positive values make the vehicle pitch up/back." user="User">
+<param humanName="AHRS Trim Pitch" name="AHRS_TRIM_Y" documentation="Compensates for the pitch angle difference between the control board and the frame. Positive values make the vehicle pitch up/back." user="Standard">
 <field name="Range">-0.1745 +0.1745</field>
 <field name="Increment">0.01</field>
 <field name="Units">Radians</field>
@@ -4590,6 +4952,12 @@
 <value code="1">Enabled</value>
 </values>
 </param>
+<param humanName="Stop logging to current file on disarm" name="LOG_FILE_DSRMROT" documentation="When set, the current log file is closed when the vehicle is disarmed.  If LOG_DISARMED is set then a fresh log will be opened." user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
 </parameters>
 <parameters name="BATT">
 <param humanName="Battery monitoring" name="BATT_MONITOR" documentation="Controls enabling monitoring of the battery's voltage and current" user="Standard">
@@ -4684,7 +5052,7 @@
 </param>
 </parameters>
 <parameters name="BRD_">
-<param humanName="Auxiliary pin config" name="BRD_PWM_COUNT" documentation="Control assigning of FMU pins to PWM output, timer capture and GPIO. All unassigned pins can be used for GPIO">
+<param humanName="Auxiliary pin config" name="BRD_PWM_COUNT" documentation="Control assigning of FMU pins to PWM output, timer capture and GPIO. All unassigned pins can be used for GPIO" user="Advanced">
 <values>
 <value code="0">No PWMs</value>
 <value code="2">Two PWMs</value>
@@ -4694,7 +5062,7 @@
 </values>
 <field name="RebootRequired">True</field>
 </param>
-<param humanName="Serial 1 flow control" name="BRD_SER1_RTSCTS" documentation="Enable flow control on serial 1 (telemetry 1) on Pixhawk. You must have the RTS and CTS pins connected to your radio. The standard DF13 6 pin connector for a 3DR radio does have those pins connected. If this is set to 2 then flow control will be auto-detected by checking for the output buffer filling on startup. Note that the PX4v1 does not have hardware flow control pins on this port, so you should leave this disabled.">
+<param humanName="Serial 1 flow control" name="BRD_SER1_RTSCTS" documentation="Enable flow control on serial 1 (telemetry 1) on Pixhawk. You must have the RTS and CTS pins connected to your radio. The standard DF13 6 pin connector for a 3DR radio does have those pins connected. If this is set to 2 then flow control will be auto-detected by checking for the output buffer filling on startup. Note that the PX4v1 does not have hardware flow control pins on this port, so you should leave this disabled." user="Advanced">
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
@@ -4702,7 +5070,7 @@
 </values>
 <field name="RebootRequired">True</field>
 </param>
-<param humanName="Serial 2 flow control" name="BRD_SER2_RTSCTS" documentation="Enable flow control on serial 2 (telemetry 2) on Pixhawk and PX4. You must have the RTS and CTS pins connected to your radio. The standard DF13 6 pin connector for a 3DR radio does have those pins connected. If this is set to 2 then flow control will be auto-detected by checking for the output buffer filling on startup.">
+<param humanName="Serial 2 flow control" name="BRD_SER2_RTSCTS" documentation="Enable flow control on serial 2 (telemetry 2) on Pixhawk and PX4. You must have the RTS and CTS pins connected to your radio. The standard DF13 6 pin connector for a 3DR radio does have those pins connected. If this is set to 2 then flow control will be auto-detected by checking for the output buffer filling on startup." user="Advanced">
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
@@ -4710,14 +5078,14 @@
 </values>
 <field name="RebootRequired">True</field>
 </param>
-<param humanName="Enable use of safety arming switch" name="BRD_SAFETYENABLE" documentation="This controls the default state of the safety switch at startup. When set to 1 the safety switch will start in the safe state (flashing) at boot. When set to zero the safety switch will start in the unsafe state (solid) at startup. Note that if a safety switch is fitted the user can still control the safety state after startup using the switch. The safety state can also be controlled in software using a MAVLink message.">
+<param humanName="Enable use of safety arming switch" name="BRD_SAFETYENABLE" documentation="This controls the default state of the safety switch at startup. When set to 1 the safety switch will start in the safe state (flashing) at boot. When set to zero the safety switch will start in the unsafe state (solid) at startup. Note that if a safety switch is fitted the user can still control the safety state after startup using the switch. The safety state can also be controlled in software using a MAVLink message." user="Standard">
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
 </values>
 <field name="RebootRequired">True</field>
 </param>
-<param humanName=" SBUS output rate" name="BRD_SBUS_OUT" documentation="This sets the SBUS output frame rate in Hz">
+<param humanName=" SBUS output rate" name="BRD_SBUS_OUT" documentation="This sets the SBUS output frame rate in Hz" user="Advanced">
 <values>
 <value code="0">Disabled</value>
 <value code="1">50Hz</value>
@@ -4733,71 +5101,72 @@
 <param humanName="User-defined serial number" name="BRD_SERIAL_NUM" documentation="User-defined serial number of this vehicle, it can be any arbitrary number you want and has no effect on the autopilot" user="Standard">
 <field name="Range">-32767 32768</field>
 </param>
-<param humanName=" Enable use of UAVCAN devices" name="BRD_CAN_ENABLE" documentation="Enabling this option on a Pixhawk enables UAVCAN devices. Note that this uses about 25k of memory">
+<param humanName=" Enable use of UAVCAN devices" name="BRD_CAN_ENABLE" documentation="Enabling this option on a Pixhawk enables UAVCAN devices. Note that this uses about 25k of memory" user="Advanced">
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
+<value code="2">Dynamic ID/Update</value>
 </values>
 </param>
-<param humanName="Channels to which ignore the safety switch state" name="BRD_SAFETY_MASK" documentation="A bitmask which controls what channels can move while the safety switch has not been pressed">
-<field name="Bitmask">0:Ch1,1:Ch2,2:Ch3,3:Ch4,4:Ch5,5:Ch6,6:Ch7,7:Ch8</field>
+<param humanName="Channels to which ignore the safety switch state" name="BRD_SAFETY_MASK" documentation="A bitmask which controls what channels can move while the safety switch has not been pressed" user="Advanced">
+<field name="Bitmask">0:Ch1,1:Ch2,2:Ch3,3:Ch4,4:Ch5,5:Ch6,6:Ch7,7:Ch8,8:Ch9,9:Ch10,10:Ch11,11:Ch12,12:Ch13,13:Ch14</field>
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
 </values>
 <field name="RebootRequired">True</field>
 </param>
-<param humanName="Target IMU temperature" name="BRD_IMU_TARGTEMP" documentation="This sets the target IMU temperature for boards with controllable IMU heating units. A value of -1 disables heating.">
-<field name="Units">degreesC</field>
+<param humanName="Target IMU temperature" name="BRD_IMU_TARGTEMP" documentation="This sets the target IMU temperature for boards with controllable IMU heating units. A value of -1 disables heating." user="Advanced">
 <field name="Range">-1 80</field>
+<field name="Units">degreesC</field>
 </param>
-</parameters>
-<parameters name="SPRAY_">
-<param humanName="Sprayer enable/disable" name="SPRAY_ENABLE" documentation="Allows you to enable (1) or disable (0) the sprayer" user="Standard">
+<param humanName="Board type" name="BRD_TYPE" documentation="This allows selection of a PX4 or VRBRAIN board type. If set to zero then the board type is auto-detected (PX4)" user="Advanced">
 <values>
-<value code="0">Disabled</value>
-<value code="1">Enabled</value>
+<value code="0">AUTO</value>
+<value code="1">PX4V1</value>
+<value code="2">Pixhawk</value>
+<value code="3">Pixhawk2</value>
+<value code="4">Pixracer</value>
+<value code="5">PixhawkMini</value>
+<value code="6">Pixhawk2Slim</value>
+<value code="7">VRBrain 5.1</value>
+<value code="8">VRBrain 5.2</value>
+<value code="9">VR Micro Brain 5.1</value>
+<value code="10">VR Micro Brain 5.2</value>
+<value code="11">VRBrain Core 1.0</value>
+<value code="12">VRBrain 5.4</value>
 </values>
-</param>
-<param humanName="Pump speed" name="SPRAY_PUMP_RATE" documentation="Desired pump speed when travelling 1m/s expressed as a percentage" user="Standard">
-<field name="Range">0 100</field>
-<field name="Units">percentage</field>
-</param>
-<param humanName="Spinner rotation speed" name="SPRAY_SPINNER" documentation="Spinner's rotation speed in PWM (a higher rate will disperse the spray over a wider area horizontally)" user="Standard">
-<field name="Range">1000 2000</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="Speed minimum" name="SPRAY_SPEED_MIN" documentation="Speed minimum at which we will begin spraying" user="Standard">
-<field name="Range">0 1000</field>
-<field name="Units">cm/s</field>
-</param>
-<param humanName="Pump speed minimum" name="SPRAY_PUMP_MIN" documentation="Minimum pump speed expressed as a percentage" user="Standard">
-<field name="Range">0 100</field>
-<field name="Units">percentage</field>
+<field name="RebootRequired">True</field>
 </param>
 </parameters>
 <parameters name="GND_">
-<param humanName="Absolute Pressure" name="GND_ABS_PRESS" documentation="calibrated ground pressure in Pascals">
+<param humanName="Absolute Pressure" name="GND_ABS_PRESS" documentation="calibrated ground pressure in Pascals" user="Advanced">
 <field name="ReadOnly">True</field>
 <field name="Volatile">True</field>
 <field name="Increment">1</field>
 <field name="Units">pascals</field>
 </param>
-<param humanName="ground temperature" name="GND_TEMP" documentation="calibrated ground temperature in degrees Celsius">
+<param humanName="ground temperature" name="GND_TEMP" documentation="calibrated ground temperature in degrees Celsius" user="Advanced">
 <field name="ReadOnly">True</field>
 <field name="Volatile">True</field>
 <field name="Increment">1</field>
 <field name="Units">degrees celsius</field>
 </param>
-<param humanName="altitude offset" name="GND_ALT_OFFSET" documentation="altitude offset in meters added to barometric altitude. This is used to allow for automatic adjustment of the base barometric altitude by a ground station equipped with a barometer. The value is added to the barometric altitude read by the aircraft. It is automatically reset to 0 when the barometer is calibrated on each reboot or when a preflight calibration is performed.">
-<field name="Units">meters</field>
+<param humanName="altitude offset" name="GND_ALT_OFFSET" documentation="altitude offset in meters added to barometric altitude. This is used to allow for automatic adjustment of the base barometric altitude by a ground station equipped with a barometer. The value is added to the barometric altitude read by the aircraft. It is automatically reset to 0 when the barometer is calibrated on each reboot or when a preflight calibration is performed." user="Advanced">
 <field name="Increment">0.1</field>
+<field name="Units">meters</field>
 </param>
-<param humanName="Primary barometer" name="GND_PRIMARY" documentation="This selects which barometer will be the primary if multiple barometers are found">
+<param humanName="Primary barometer" name="GND_PRIMARY" documentation="This selects which barometer will be the primary if multiple barometers are found" user="Advanced">
 <values>
 <value code="0">FirstBaro</value>
 <value code="1">2ndBaro</value>
 <value code="2">3rdBaro</value>
+</values>
+</param>
+<param humanName="External baro bus" name="GND_EXT_BUS" documentation="This selects the bus number for looking for an I2C barometer" user="Advanced">
+<values>
+<value code="-1">Disabled</value>
+<value code="0">Bus0</value>
 </values>
 </param>
 <param humanName="Specific Gravity (For water depth measurement)" name="GND_SPEC_GRAV" documentation="This sets the specific gravity of the fluid when flying an underwater ROV. Set to 1.0 for freshwater or 1.024 for saltwater">
@@ -4815,7 +5184,28 @@
 </param>
 </parameters>
 <parameters name="GPS_">
-<param humanName="GPS type" name="GPS_TYPE" documentation="GPS type">
+<param humanName="GPS type" name="GPS_TYPE" documentation="GPS type" user="Advanced">
+<values>
+<value code="0">None</value>
+<value code="1">AUTO</value>
+<value code="2">uBlox</value>
+<value code="3">MTK</value>
+<value code="4">MTK19</value>
+<value code="5">NMEA</value>
+<value code="6">SiRF</value>
+<value code="7">HIL</value>
+<value code="8">SwiftNav</value>
+<value code="9">PX4-UAVCAN</value>
+<value code="10">SBF</value>
+<value code="11">GSOF</value>
+<value code="12">QURT</value>
+<value code="13">ERB</value>
+<value code="14">MAV</value>
+<value code="15">NOVA</value>
+</values>
+<field name="RebootRequired">True</field>
+</param>
+<param humanName="2nd GPS type" name="GPS_TYPE2" documentation="GPS type of 2nd GPS" user="Advanced">
 <values>
 <value code="0">None</value>
 <value code="1">AUTO</value>
@@ -4832,24 +5222,7 @@
 </values>
 <field name="RebootRequired">True</field>
 </param>
-<param humanName="2nd GPS type" name="GPS_TYPE2" documentation="GPS type of 2nd GPS">
-<values>
-<value code="0">None</value>
-<value code="1">AUTO</value>
-<value code="2">uBlox</value>
-<value code="3">MTK</value>
-<value code="4">MTK19</value>
-<value code="5">NMEA</value>
-<value code="6">SiRF</value>
-<value code="7">HIL</value>
-<value code="8">SwiftNav</value>
-<value code="9">PX4-UAVCAN</value>
-<value code="10">SBF</value>
-<value code="11">GSOF</value>
-</values>
-<field name="RebootRequired">True</field>
-</param>
-<param humanName="Navigation filter setting" name="GPS_NAVFILTER" documentation="Navigation filter engine setting">
+<param humanName="Navigation filter setting" name="GPS_NAVFILTER" documentation="Navigation filter engine setting" user="Advanced">
 <values>
 <value code="0">Portable</value>
 <value code="2">Stationary</value>
@@ -4886,7 +5259,7 @@
 <field name="Range">-100 90</field>
 <field name="Units">Degrees</field>
 </param>
-<param humanName="Destination for GPS_INJECT_DATA MAVLink packets" name="GPS_INJECT_TO" documentation="The GGS can send raw serial packets to inject data to multiple GPSes.">
+<param humanName="Destination for GPS_INJECT_DATA MAVLink packets" name="GPS_INJECT_TO" documentation="The GGS can send raw serial packets to inject data to multiple GPSes." user="Advanced">
 <values>
 <value code="0">send to first GPS</value>
 <value code="1">send to 2nd GPS</value>
@@ -4900,7 +5273,7 @@
 <value code=" 0xFF00">External only</value>
 </values>
 </param>
-<param humanName="Raw data logging" name="GPS_RAW_DATA" documentation="Enable logging of RXM raw data from uBlox which includes carrier phase and pseudo range information. This allows for post processing of dataflash logs for more precise positioning. Note that this requires a raw capable uBlox such as the 6P or 6T.">
+<param humanName="Raw data logging" name="GPS_RAW_DATA" documentation="Enable logging of RXM raw data from uBlox which includes carrier phase and pseudo range information. This allows for post processing of dataflash logs for more precise positioning. Note that this requires a raw capable uBlox such as the 6P or 6T." user="Advanced">
 <values>
 <value code="0">Disabled</value>
 <value code="1">log every sample</value>
@@ -4949,6 +5322,100 @@
 <values>
 <value code="0">Disables automatic configuration</value>
 <value code="1">Enable automatic configuration</value>
+</values>
+</param>
+<param humanName="GPS update rate in milliseconds" name="GPS_RATE_MS" documentation="Controls how often the GPS should provide a position update. Lowering below 5Hz is not allowed" user="Advanced">
+<values>
+<value code="100">10Hz</value>
+<value code="125">8Hz</value>
+<value code="200">5Hz</value>
+</values>
+</param>
+<param humanName="GPS 2 update rate in milliseconds" name="GPS_RATE_MS2" documentation="Controls how often the GPS should provide a position update. Lowering below 5Hz is not allowed" user="Advanced">
+<values>
+<value code="100">10Hz</value>
+<value code="125">8Hz</value>
+<value code="200">5Hz</value>
+</values>
+</param>
+<param humanName="Antenna X position offset" name="GPS_POS1_X" documentation="X position of the first GPS antenna in body frame. Positive X is forward of the origin. Use antenna phase centroid location if provided by the manufacturer." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Antenna Y position offset" name="GPS_POS1_Y" documentation="Y position of the first GPS antenna in body frame. Positive Y is to the right of the origin. Use antenna phase centroid location if provided by the manufacturer." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Antenna Z position offset" name="GPS_POS1_Z" documentation="Z position of the first GPS antenna in body frame. Positive Z is down from the origin. Use antenna phase centroid location if provided by the manufacturer." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Antenna X position offset" name="GPS_POS2_X" documentation="X position of the second GPS antenna in body frame. Positive X is forward of the origin. Use antenna phase centroid location if provided by the manufacturer." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Antenna Y position offset" name="GPS_POS2_Y" documentation="Y position of the second GPS antenna in body frame. Positive Y is to the right of the origin. Use antenna phase centroid location if provided by the manufacturer." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Antenna Z position offset" name="GPS_POS2_Z" documentation="Z position of the second GPS antenna in body frame. Positive Z is down from the origin. Use antenna phase centroid location if provided by the manufacturer." user="Advanced">
+<field name="Units">m</field>
+</param>
+</parameters>
+<parameters name="LEAK">
+<param humanName="Pin that leak detector is connected to" name="LEAK1_PIN" documentation="Pin that the leak detector is connected to" user="Standard">
+<values>
+<value code="-1">Disabled</value>
+<value code="50">Pixhawk Aux1</value>
+<value code="51">Pixhawk Aux2</value>
+<value code="52">Pixhawk Aux3</value>
+<value code="53">Pixhawk Aux4</value>
+<value code="54">Pixhawk Aux5</value>
+<value code="55">Pixhawk Aux6</value>
+<value code="13">Pixhawk 3.3ADC1</value>
+<value code="14">Pixhawk 3.3ADC2</value>
+<value code="15">Pixhawk 6.6ADC</value>
+</values>
+</param>
+<param humanName="Default reading of leak detector when dry" name="LEAK1_LOGIC" documentation="Default reading of leak detector when dry" user="Standard">
+<values>
+<value code="0">Low</value>
+<value code="1">High</value>
+</values>
+</param>
+<param humanName="Pin that leak detector is connected to" name="LEAK2_PIN" documentation="Pin that the leak detector is connected to" user="Standard">
+<values>
+<value code="-1">Disabled</value>
+<value code="50">Pixhawk Aux1</value>
+<value code="51">Pixhawk Aux2</value>
+<value code="52">Pixhawk Aux3</value>
+<value code="53">Pixhawk Aux4</value>
+<value code="54">Pixhawk Aux5</value>
+<value code="55">Pixhawk Aux6</value>
+<value code="13">Pixhawk 3.3ADC1</value>
+<value code="14">Pixhawk 3.3ADC2</value>
+<value code="15">Pixhawk 6.6ADC</value>
+</values>
+</param>
+<param humanName="Default reading of leak detector when dry" name="LEAK2_LOGIC" documentation="Default reading of leak detector when dry" user="Standard">
+<values>
+<value code="0">Low</value>
+<value code="1">High</value>
+</values>
+</param>
+<param humanName="Pin that leak detector is connected to" name="LEAK3_PIN" documentation="Pin that the leak detector is connected to" user="Standard">
+<values>
+<value code="-1">Disabled</value>
+<value code="50">Pixhawk Aux1</value>
+<value code="51">Pixhawk Aux2</value>
+<value code="52">Pixhawk Aux3</value>
+<value code="53">Pixhawk Aux4</value>
+<value code="54">Pixhawk Aux5</value>
+<value code="55">Pixhawk Aux6</value>
+<value code="13">Pixhawk 3.3ADC1</value>
+<value code="14">Pixhawk 3.3ADC2</value>
+<value code="15">Pixhawk 6.6ADC</value>
+</values>
+</param>
+<param humanName="Default reading of leak detector when dry" name="LEAK3_LOGIC" documentation="Default reading of leak detector when dry" user="Standard">
+<values>
+<value code="0">Low</value>
+<value code="1">High</value>
 </values>
 </param>
 </parameters>
@@ -5022,9 +5489,12 @@
 </parameters>
 <parameters name="AVOID_">
 <param humanName="Avoidance control enable/disable" name="AVOID_ENABLE" documentation="Enabled/disable stopping at fence" user="Standard">
+<field name="Bitmask">0:StopAtFence,1:UseProximitySensor</field>
 <values>
 <value code="0">None</value>
 <value code="1">StopAtFence</value>
+<value code="2">UseProximitySensor</value>
+<value code="3">All</value>
 </values>
 </param>
 </parameters>
@@ -5095,17 +5565,68 @@
 <field name="Range">0.0 1.5</field>
 <field name="Increment">0.1</field>
 </param>
-<param humanName="Maximum allowed motor gain" name="MOT_GAIN_MAX" documentation="Maximum allowed motor gain for scaling power output" user="Standard">
-<field name="Range">0.1 1.0</field>
-<field name="Increment">0.01</field>
+<param humanName="Matrix Yaw Min" name="MOT_YAW_HEADROOM" documentation="Yaw control is given at least this pwm range" user="Advanced">
+<field name="Range">0 500</field>
+<field name="Units">pwm</field>
 </param>
-<param humanName="Minimum allowed motor gain" name="MOT_GAIN_MIN" documentation="Minimum allowed motor gain for scaling power output" user="Standard">
-<field name="Range">0.1 1.0</field>
-<field name="Increment">0.01</field>
+<param humanName="Thrust Curve Expo" name="MOT_THST_EXPO" documentation="Motor thrust curve exponent (from 0 for linear to 1.0 for second order curve)" user="Advanced">
+<field name="Range">0.25 0.8</field>
 </param>
-<param humanName="Number of gain levels between min and max" name="MOT_GAIN_STEPS" documentation="Number of gain levels between min and max" user="Standard">
-<field name="Range">1 10</field>
-<field name="Increment">1</field>
+<param humanName="Motor Spin maximum" name="MOT_SPIN_MAX" documentation="Point at which the thrust saturates expressed as a number from 0 to 1 in the entire output range" user="Advanced">
+<field name="Values">0.9:Low, 0.95:Default, 1.0:High</field>
+</param>
+<param humanName="Battery voltage compensation maximum voltage" name="MOT_BAT_VOLT_MAX" documentation="Battery voltage compensation maximum voltage (voltage above this will have no additional scaling effect on thrust).  Recommend 4.4 * cell count, 0 = Disabled" user="Advanced">
+<field name="Range">6 35</field>
+<field name="Units">Volts</field>
+</param>
+<param humanName="Battery voltage compensation minimum voltage" name="MOT_BAT_VOLT_MIN" documentation="Battery voltage compensation minimum voltage (voltage below this will have no additional scaling effect on thrust).  Recommend 3.5 * cell count, 0 = Disabled" user="Advanced">
+<field name="Range">6 35</field>
+<field name="Units">Volts</field>
+</param>
+<param humanName="Motor Current Max" name="MOT_BAT_CURR_MAX" documentation="Maximum current over which maximum throttle is limited (0 = Disabled)" user="Advanced">
+<field name="Range">0 200</field>
+<field name="Units">Amps</field>
+</param>
+<param humanName="Output PWM type" name="MOT_PWM_TYPE" documentation="This selects the output PWM type, allowing for normal PWM continuous output, OneShot or brushed motor output" user="Advanced">
+<values>
+<value code="0">Normal</value>
+<value code="1">OneShot</value>
+<value code="2">OneShot125</value>
+<value code="3">Brushed16kHz</value>
+</values>
+<field name="RebootRequired">True</field>
+</param>
+<param humanName="PWM output miniumum" name="MOT_PWM_MIN" documentation="This sets the min PWM output value that will ever be output to the motors, 0 = use input RC3_MIN" user="Advanced">
+<field name="Range">0 2000</field>
+</param>
+<param humanName="PWM output maximum" name="MOT_PWM_MAX" documentation="This sets the max PWM value that will ever be output to the motors, 0 = use input RC3_MAX" user="Advanced">
+<field name="Range">0 2000</field>
+</param>
+<param humanName="Motor Spin minimum" name="MOT_SPIN_MIN" documentation="Point at which the thrust starts expressed as a number from 0 to 1 in the entire output range.  Should be higher than MOT_SPIN_ARM." user="Advanced">
+<field name="Values">0.0:Low, 0.15:Default, 0.3:High</field>
+</param>
+<param humanName="Motor Spin armed" name="MOT_SPIN_ARM" documentation="Point at which the motors start to spin expressed as a number from 0 to 1 in the entire output range.  Should be lower than MOT_SPIN_MIN." user="Advanced">
+<field name="Values">0.0:Low, 0.1:Default, 0.2:High</field>
+</param>
+<param humanName="Motor Current Max Time Constant" name="MOT_BAT_CURR_TC" documentation="Time constant used to limit the maximum current" user="Advanced">
+<field name="Range">0 10</field>
+<field name="Units">Seconds</field>
+</param>
+<param humanName="Thrust Hover Value" name="MOT_THST_HOVER" documentation="Motor thrust needed to hover expressed as a number from 0 to 1" user="Advanced">
+<field name="Range">0.2 0.8</field>
+</param>
+<param humanName="Hover Value Learning" name="MOT_HOVER_LEARN" documentation="Enable/Disable automatic learning of hover throttle" user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code=" 1">Learn</value>
+<value code=" 2">LearnAndSave</value>
+</values>
+</param>
+<param humanName="Motor PWM output disabled when disarmed" name="MOT_SAFE_DISARM" documentation="Disables motor PWM output when disarmed" user="Advanced">
+<values>
+<value code="0">PWM enabled while disarmed</value>
+<value code=" 1">PWM disabled while disarmed</value>
+</values>
 </param>
 </parameters>
 <parameters name="RCMAP_">
@@ -5312,12 +5833,12 @@
 <value code=" 1">Enabled</value>
 </values>
 </param>
-<param humanName="GPS mode control" name="EK2_GPS_TYPE" documentation="This controls use of GPS measurements : 0 = use 3D velocity &amp; 2D position, 1 = use 2D velocity and 2D position, 2 = use 2D position, 3 = use no GPS (optical flow will be used if available)" user="Advanced">
+<param humanName="GPS mode control" name="EK2_GPS_TYPE" documentation="This controls use of GPS measurements : 0 = use 3D velocity &amp; 2D position, 1 = use 2D velocity and 2D position, 2 = use 2D position, 3 = Inhibit GPS use - this can be useful when flying with an optical flow sensor in an environment where GPS quality is poor and subject to large multipath errors." user="Advanced">
 <values>
 <value code="0">GPS 3D Vel and 2D Pos</value>
 <value code=" 1">GPS 2D vel and 2D pos</value>
 <value code=" 2">GPS 2D pos</value>
-<value code=" 3">No GPS use optical flow</value>
+<value code=" 3">No GPS</value>
 </values>
 </param>
 <param humanName="GPS horizontal velocity measurement noise (m/s)" name="EK2_VELNE_M_NSE" documentation="This sets a lower limit on the speed accuracy reported by the GPS receiver that is used to set horizontal velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then the parameter value will be used. Increasing it reduces the weighting of the GPS horizontal velocity measurements." user="Advanced">
@@ -5353,11 +5874,12 @@
 <field name="Increment">10</field>
 <field name="Units">msec</field>
 </param>
-<param humanName="Primary height source" name="EK2_ALT_SOURCE" documentation="This parameter controls which height sensor is used by the EKF. If the selected optionn cannot be used, it will default to Baro as the primary height source. Setting 0 will use the baro altitude at all times. Setting 1 uses the range finder and is only available in combination with optical flow navigation (EK2_GPS_TYPE = 3). Setting 2 uses GPS." user="Advanced">
+<param humanName="Primary height source" name="EK2_ALT_SOURCE" documentation="This parameter controls the primary height sensor used by the EKF. If the selected option cannot be used, it will default to Baro as the primary height source. Setting 0 will use the baro altitude at all times. Setting 1 uses the range finder and is only available in combination with optical flow navigation (EK2_GPS_TYPE = 3). Setting 2 uses GPS. Setting 3 uses the range beacon data. NOTE - the EK2_RNG_USE_HGT parameter can be used to switch to range-finder when close to the ground." user="Advanced">
 <values>
 <value code="0">Use Baro</value>
 <value code=" 1">Use Range Finder</value>
 <value code=" 2">Use GPS</value>
+<value code=" 3">Use Range Beacon</value>
 </values>
 </param>
 <param humanName="Altitude measurement noise (m)" name="EK2_ALT_M_NSE" documentation="This is the RMS value of noise in the altitude measurement. Increasing it reduces the weighting of the baro measurement and will make the filter respond more slowly to baro measurement errors, but will make it more sensitive to GPS and accelerometer errors." user="Advanced">
@@ -5491,9 +6013,9 @@
 <field name="Range">100 1000</field>
 <field name="Increment">25</field>
 </param>
-<param humanName="Output complementary filter time constant (centi-sec)" name="EK2_TAU_OUTPUT" documentation="Sets the time constant of the output complementary filter/predictor in centi-seconds. Set to a negative number to use a computationally cheaper and less accurate method with an automatically calculated time constant." user="Advanced">
-<field name="Range">-1 100</field>
-<field name="Increment">10</field>
+<param humanName="Output complementary filter time constant (centi-sec)" name="EK2_TAU_OUTPUT" documentation="Sets the time constant of the output complementary filter/predictor in centi-seconds." user="Advanced">
+<field name="Range">10 50</field>
+<field name="Increment">5</field>
 </param>
 <param humanName="Earth magnetic field process noise (gauss/s)" name="EK2_MAGE_P_NSE" documentation="This state process noise controls the growth of earth magnetic field state error estimates. Increasing it makes earth magnetic field estimation faster and noisier." user="Advanced">
 <field name="Range">0.00001 0.01</field>
@@ -5503,59 +6025,40 @@
 <field name="Range">0.00001 0.01</field>
 <field name="Units">gauss/s</field>
 </param>
+<param humanName="Range finder switch height percentage" name="EK2_RNG_USE_HGT" documentation="The range finder will be used as the primary height source when below a specified percentage of the sensor maximum as set by the RNGFND_MAX_CM parameter. Set to -1 to prevent range finder use." user="Advanced">
+<field name="Range">-1 70</field>
+<field name="Increment">1</field>
+<field name="Units">%</field>
+</param>
+<param humanName="Maximum terrain gradient" name="EK2_TERR_GRAD" documentation="Specifies the maxium gradient of the terrain below the vehicle when it is using range finder as a height reference" user="Advanced">
+<field name="Range">0 0.2</field>
+<field name="Increment">0.01</field>
+</param>
+<param humanName="Range beacon measurement noise (m)" name="EK2_BCN_M_NSE" documentation="This is the RMS value of noise in the range beacon measurement. Increasing it reduces the weighting on this measurement." user="Advanced">
+<field name="Range">0.1 10.0</field>
+<field name="Increment">0.1</field>
+<field name="Units">m</field>
+</param>
+<param humanName="Range beacon measurement gate size" name="EK2_BCN_I_GTE" documentation="This sets the percentage number of standard deviations applied to the range beacon measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<field name="Range">100 1000</field>
+<field name="Increment">25</field>
+</param>
+<param humanName="Range beacon measurement delay (msec)" name="EK2_BCN_DELAY" documentation="This is the number of msec that the range beacon measurements lag behind the inertial measurements. It is the time from the end of the optical flow averaging period and does not include the time delay due to the 100msec of averaging within the flow sensor." user="Advanced">
+<field name="Range">0 250</field>
+<field name="Increment">10</field>
+<field name="Units">msec</field>
+</param>
 </parameters>
 <parameters name="MIS_">
 <param humanName="Total mission commands" name="MIS_TOTAL" documentation="The number of mission mission items that has been loaded by the ground station. Do not change this manually." user="Advanced">
 <field name="Range">0 32766</field>
 <field name="Increment">1</field>
 </param>
-<param humanName="Mission Restart when entering Auto mode" name="MIS_RESTART" documentation="Controls mission starting point when entering Auto mode (either restart from beginning of mission or resume from last command run)">
+<param humanName="Mission Restart when entering Auto mode" name="MIS_RESTART" documentation="Controls mission starting point when entering Auto mode (either restart from beginning of mission or resume from last command run)" user="Advanced">
 <values>
 <value code="0">Resume Mission</value>
 <value code=" 1">Restart Mission</value>
 </values>
-</param>
-</parameters>
-<parameters name="RSSI_">
-<param humanName="RSSI Type" name="RSSI_TYPE" documentation="Radio Receiver RSSI type. If your radio receiver supports RSSI of some kind, set it here, then set its associated RSSI_XXXXX parameters, if any." user="Standard">
-<values>
-<value code="0">Disabled</value>
-<value code="1">AnalogPin</value>
-<value code="2">RCChannelPwmValue</value>
-</values>
-</param>
-<param humanName="Receiver RSSI analog sensing pin" name="RSSI_ANA_PIN" documentation="This selects an analog pin where the receiver RSSI voltage will be read." user="Standard">
-<values>
-<value code="0">APM2 A0</value>
-<value code="1">APM2 A1</value>
-<value code="13">APM2 A13</value>
-<value code="11">Pixracer</value>
-<value code="13">Pixhawk ADC4</value>
-<value code="14">Pixhawk ADC3</value>
-<value code="15"> Pixhawk ADC6</value>
-<value code="103">Pixhawk SBUS</value>
-</values>
-</param>
-<param humanName="Receiver RSSI voltage low" name="RSSI_PIN_LOW" documentation="This is the voltage value that the radio receiver will put on the RSSI_ANA_PIN when the signal strength is the weakest. Since some radio receivers put out inverted values from what you might otherwise expect, this isn't necessarily a lower value than RSSI_PIN_HIGH. " user="Standard">
-<field name="Range">0 5.0</field>
-<field name="Increment">0.01</field>
-<field name="Units">Volt</field>
-</param>
-<param humanName="Receiver RSSI voltage high" name="RSSI_PIN_HIGH" documentation="This is the voltage value that the radio receiver will put on the RSSI_ANA_PIN when the signal strength is the strongest. Since some radio receivers put out inverted values from what you might otherwise expect, this isn't necessarily a higher value than RSSI_PIN_LOW. " user="Standard">
-<field name="Range">0 5.0</field>
-<field name="Increment">0.01</field>
-<field name="Units">Volt</field>
-</param>
-<param humanName="Receiver RSSI channel number" name="RSSI_CHANNEL" documentation="The channel number where RSSI will be output by the radio receiver (5 and above)." user="Standard">
-<field name="Units"></field>
-</param>
-<param humanName="Receiver RSSI PWM low value" name="RSSI_CHAN_LOW" documentation="This is the PWM value that the radio receiver will put on the RSSI_CHANNEL when the signal strength is the weakest. Since some radio receivers put out inverted values from what you might otherwise expect, this isn't necessarily a lower value than RSSI_CHAN_HIGH. " user="Standard">
-<field name="Range">0 2000</field>
-<field name="Units">Microseconds</field>
-</param>
-<param humanName="Receiver RSSI PWM high value" name="RSSI_CHAN_HIGH" documentation="This is the PWM value that the radio receiver will put on the RSSI_CHANNEL when the signal strength is the strongest. Since some radio receivers put out inverted values from what you might otherwise expect, this isn't necessarily a higher value than RSSI_CHAN_LOW. " user="Standard">
-<field name="Range">0 2000</field>
-<field name="Units">Microseconds</field>
 </param>
 </parameters>
 <parameters name="RNGFND">
@@ -5563,8 +6066,8 @@
 <values>
 <value code="0">None</value>
 <value code="1">Analog</value>
-<value code="2">APM2-MaxbotixI2C</value>
-<value code="3">APM2-PulsedLightI2C</value>
+<value code="2">MaxbotixI2C</value>
+<value code="3">PulsedLightI2C</value>
 <value code="4">PX4-I2C</value>
 <value code="5">PX4-PWM</value>
 <value code="6">BBB-PRU</value>
@@ -5572,6 +6075,9 @@
 <value code="8">LightWareSerial</value>
 <value code="9">Bebop</value>
 <value code="10">MAVLink</value>
+<value code="11">uLanding</value>
+<value code="12">LeddarOne</value>
+<value code="13">MaxbotixSerial</value>
 </values>
 </param>
 <param humanName="Rangefinder pin" name="RNGFND_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port." user="Standard">
@@ -5651,12 +6157,25 @@
 <field name="Increment">1</field>
 <field name="Units">centimeters</field>
 </param>
+<param humanName="Bus address of sensor" name="RNGFND_ADDR" documentation="This sets the bus address of the sensor, where applicable. Used for the LightWare I2C sensor to allow for multiple sensors on different addresses. A value of 0 disables the sensor." user="Standard">
+<field name="Range">0 127</field>
+<field name="Increment">1</field>
+</param>
+<param humanName=" X position offset" name="RNGFND_POS_X" documentation="X position of the first rangefinder in body frame. Positive X is forward of the origin. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Y position offset" name="RNGFND_POS_Y" documentation="Y position of the first rangefinder in body frame. Positive Y is to the right of the origin. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Z position offset" name="RNGFND_POS_Z" documentation="Z position of the first rangefinder in body frame. Positive Z is down from the origin. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
+</param>
 <param humanName="Second Rangefinder type" name="RNGFND2_TYPE" documentation="What type of rangefinder device that is connected" user="Advanced">
 <values>
 <value code="0">None</value>
 <value code="1">Analog</value>
-<value code="2">APM2-MaxbotixI2C</value>
-<value code="3">APM2-PulsedLightI2C</value>
+<value code="2">MaxbotixI2C</value>
+<value code="3">PulsedLightI2C</value>
 <value code="4">PX4-I2C</value>
 <value code="5">PX4-PWM</value>
 <value code="6">BBB-PRU</value>
@@ -5664,6 +6183,9 @@
 <value code="8">LightWareSerial</value>
 <value code="9">Bebop</value>
 <value code="10">MAVLink</value>
+<value code="11">uLanding</value>
+<value code="12">LeddarOne</value>
+<value code="13">MaxbotixSerial</value>
 </values>
 </param>
 <param humanName="Rangefinder pin" name="RNGFND2_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port." user="Advanced">
@@ -5739,15 +6261,20 @@
 <field name="Increment">1</field>
 <field name="Units">centimeters</field>
 </param>
-<param humanName="Bus address of sensor" name="RNGFND_ADDR" documentation="This sets the bus address of the sensor, where applicable. Used for the LightWare I2C sensor to allow for multiple sensors on different addresses. A value of 0 disables the sensor." user="Standard">
+<param humanName="Bus address of second rangefinder" name="RNGFND2_ADDR" documentation="This sets the bus address of the sensor, where applicable. Used for the LightWare I2C sensor to allow for multiple sensors on different addresses. A value of 0 disables the sensor." user="Advanced">
 <field name="Range">0 127</field>
 <field name="Increment">1</field>
 </param>
-<param humanName="Bus address of 2nd rangefinder" name="RNGFND2_ADDR" documentation="This sets the bus address of the sensor, where applicable. Used for the LightWare I2C sensor to allow for multiple sensors on different addresses. A value of 0 disables the sensor." user="Advanced">
-<field name="Range">0 127</field>
-<field name="Increment">1</field>
+<param humanName=" X position offset" name="RNGFND2_POS_X" documentation="X position of the second rangefinder in body frame. Positive X is forward of the origin. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
 </param>
-<param humanName="Second Rangefinder type" name="RNGFND3_TYPE" documentation="What type of rangefinder device that is connected">
+<param humanName="Y position offset" name="RNGFND2_POS_Y" documentation="Y position of the second rangefinder in body frame. Positive Y is to the right of the origin. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Z position offset" name="RNGFND2_POS_Z" documentation="Z position of the second rangefinder in body frame. Positive Z is down from the origin. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Third Rangefinder type" name="RNGFND3_TYPE" documentation="What type of rangefinder device that is connected" user="Advanced">
 <values>
 <value code="0">None</value>
 <value code="1">Analog</value>
@@ -5760,9 +6287,12 @@
 <value code="8">LightWareSerial</value>
 <value code="9">Bebop</value>
 <value code="10">MAVLink</value>
+<value code="11">uLanding</value>
+<value code="12">LeddarOne</value>
+<value code="13">MaxbotixSerial</value>
 </values>
 </param>
-<param humanName="Rangefinder pin" name="RNGFND3_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port.">
+<param humanName="Rangefinder pin" name="RNGFND3_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port." user="Advanced">
 <values>
 <value code="-1">Not Used</value>
 <value code=" 0">APM2-A0</value>
@@ -5780,30 +6310,30 @@
 <value code=" 64">APM1-airspeed port</value>
 </values>
 </param>
-<param humanName="Rangefinder scaling" name="RNGFND3_SCALING" documentation="Scaling factor between rangefinder reading and distance. For the linear and inverted functions this is in meters per volt. For the hyperbolic function the units are meterVolts.">
+<param humanName="Rangefinder scaling" name="RNGFND3_SCALING" documentation="Scaling factor between rangefinder reading and distance. For the linear and inverted functions this is in meters per volt. For the hyperbolic function the units are meterVolts." user="Advanced">
+<field name="Increment">0.001</field>
 <field name="Units">meters/Volt</field>
-<field name="Increment">0.001</field>
 </param>
-<param humanName="rangefinder offset" name="RNGFND3_OFFSET" documentation="Offset in volts for zero distance">
+<param humanName="rangefinder offset" name="RNGFND3_OFFSET" documentation="Offset in volts for zero distance" user="Advanced">
+<field name="Increment">0.001</field>
 <field name="Units">Volts</field>
-<field name="Increment">0.001</field>
 </param>
-<param humanName="Rangefinder function" name="RNGFND3_FUNCTION" documentation="Control over what function is used to calculate distance. For a linear function, the distance is (voltage-offset)*scaling. For a inverted function the distance is (offset-voltage)*scaling. For a hyperbolic function the distance is scaling/(voltage-offset). The functions return the distance in meters.">
+<param humanName="Rangefinder function" name="RNGFND3_FUNCTION" documentation="Control over what function is used to calculate distance. For a linear function, the distance is (voltage-offset)*scaling. For a inverted function the distance is (offset-voltage)*scaling. For a hyperbolic function the distance is scaling/(voltage-offset). The functions return the distance in meters." user="Advanced">
 <values>
 <value code="0">Linear</value>
 <value code="1">Inverted</value>
 <value code="2">Hyperbolic</value>
 </values>
 </param>
-<param humanName="Rangefinder minimum distance" name="RNGFND3_MIN_CM" documentation="Minimum distance in centimeters that rangefinder can reliably read">
-<field name="Units">centimeters</field>
+<param humanName="Rangefinder minimum distance" name="RNGFND3_MIN_CM" documentation="Minimum distance in centimeters that rangefinder can reliably read" user="Advanced">
 <field name="Increment">1</field>
-</param>
-<param humanName="Rangefinder maximum distance" name="RNGFND3_MAX_CM" documentation="Maximum distance in centimeters that rangefinder can reliably read">
 <field name="Units">centimeters</field>
-<field name="Increment">1</field>
 </param>
-<param humanName="Rangefinder stop pin" name="RNGFND3_STOP_PIN" documentation="Digital pin that enables/disables rangefinder measurement for an analog rangefinder. A value of -1 means no pin. If this is set, then the pin is set to 1 to enable the rangefinder and set to 0 to disable it. This can be used to ensure that multiple sonar rangefinders don't interfere with each other.">
+<param humanName="Rangefinder maximum distance" name="RNGFND3_MAX_CM" documentation="Maximum distance in centimeters that rangefinder can reliably read" user="Advanced">
+<field name="Increment">1</field>
+<field name="Units">centimeters</field>
+</param>
+<param humanName="Rangefinder stop pin" name="RNGFND3_STOP_PIN" documentation="Digital pin that enables/disables rangefinder measurement for an analog rangefinder. A value of -1 means no pin. If this is set, then the pin is set to 1 to enable the rangefinder and set to 0 to disable it. This can be used to ensure that multiple sonar rangefinders don't interfere with each other." user="Advanced">
 <values>
 <value code="-1">Not Used</value>
 <value code="50">Pixhawk AUXOUT1</value>
@@ -5820,26 +6350,35 @@
 <value code="116">PX4IO ACC2</value>
 </values>
 </param>
-<param humanName="Sonar settle time" name="RNGFND3_SETTLE" documentation="The time in milliseconds that the rangefinder reading takes to settle. This is only used when a STOP_PIN is specified. It determines how long we have to wait for the rangefinder to give a reading after we set the STOP_PIN high. For a sonar rangefinder with a range of around 7m this would need to be around 50 milliseconds to allow for the sonar pulse to travel to the target and back again.">
-<field name="Units">milliseconds</field>
+<param humanName="Sonar settle time" name="RNGFND3_SETTLE" documentation="The time in milliseconds that the rangefinder reading takes to settle. This is only used when a STOP_PIN is specified. It determines how long we have to wait for the rangefinder to give a reading after we set the STOP_PIN high. For a sonar rangefinder with a range of around 7m this would need to be around 50 milliseconds to allow for the sonar pulse to travel to the target and back again." user="Advanced">
 <field name="Increment">1</field>
+<field name="Units">milliseconds</field>
 </param>
-<param humanName="Ratiometric" name="RNGFND3_RMETRIC" documentation="This parameter sets whether an analog rangefinder is ratiometric. Most analog rangefinders are ratiometric, meaning that their output voltage is influenced by the supply voltage. Some analog rangefinders (such as the SF/02) have their own internal voltage regulators so they are not ratiometric.">
+<param humanName="Ratiometric" name="RNGFND3_RMETRIC" documentation="This parameter sets whether an analog rangefinder is ratiometric. Most analog rangefinders are ratiometric, meaning that their output voltage is influenced by the supply voltage. Some analog rangefinders (such as the SF/02) have their own internal voltage regulators so they are not ratiometric." user="Advanced">
 <values>
 <value code="0">No</value>
 <value code="1">Yes</value>
 </values>
 </param>
-<param humanName="Distance (in cm) from the second range finder to the ground" name="RNGFND3_GNDCLEAR" documentation="This parameter sets the expected range measurement(in cm) that the second range finder should return when the vehicle is on the ground." user="Advanced">
+<param humanName="Distance (in cm) from the third range finder to the ground" name="RNGFND3_GNDCLEAR" documentation="This parameter sets the expected range measurement(in cm) that the third range finder should return when the vehicle is on the ground." user="Advanced">
 <field name="Range">0 127</field>
 <field name="Increment">1</field>
 <field name="Units">centimeters</field>
 </param>
-<param humanName="Bus address of 2nd rangefinder" name="RNGFND3_ADDR" documentation="This sets the bus address of the sensor, where applicable. Used for the LightWare I2C sensor to allow for multiple sensors on different addresses. A value of 0 disables the sensor." user="Advanced">
+<param humanName="Bus address of third rangefinder" name="RNGFND3_ADDR" documentation="This sets the bus address of the sensor, where applicable. Used for the LightWare I2C sensor to allow for multiple sensors on different addresses. A value of 0 disables the sensor." user="Advanced">
 <field name="Range">0 127</field>
 <field name="Increment">1</field>
 </param>
-<param humanName="Second Rangefinder type" name="RNGFND4_TYPE" documentation="What type of rangefinder device that is connected">
+<param humanName=" X position offset" name="RNGFND3_POS_X" documentation="X position of the third rangefinder in body frame. Positive X is forward of the origin. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Y position offset" name="RNGFND3_POS_Y" documentation="Y position of the third rangefinder in body frame. Positive Y is to the right of the origin. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Z position offset" name="RNGFND3_POS_Z" documentation="Z position of the third rangefinder in body frame. Positive Z is down from the origin. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Fourth Rangefinder type" name="RNGFND4_TYPE" documentation="What type of rangefinder device that is connected" user="Advanced">
 <values>
 <value code="0">None</value>
 <value code="1">Analog</value>
@@ -5852,9 +6391,12 @@
 <value code="8">LightWareSerial</value>
 <value code="9">Bebop</value>
 <value code="10">MAVLink</value>
+<value code="11">uLanding</value>
+<value code="12">LeddarOne</value>
+<value code="13">MaxbotixSerial</value>
 </values>
 </param>
-<param humanName="Rangefinder pin" name="RNGFND4_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port.">
+<param humanName="Rangefinder pin" name="RNGFND4_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port." user="Advanced">
 <values>
 <value code="-1">Not Used</value>
 <value code=" 0">APM2-A0</value>
@@ -5872,30 +6414,30 @@
 <value code=" 64">APM1-airspeed port</value>
 </values>
 </param>
-<param humanName="Rangefinder scaling" name="RNGFND4_SCALING" documentation="Scaling factor between rangefinder reading and distance. For the linear and inverted functions this is in meters per volt. For the hyperbolic function the units are meterVolts.">
+<param humanName="Rangefinder scaling" name="RNGFND4_SCALING" documentation="Scaling factor between rangefinder reading and distance. For the linear and inverted functions this is in meters per volt. For the hyperbolic function the units are meterVolts." user="Advanced">
+<field name="Increment">0.001</field>
 <field name="Units">meters/Volt</field>
-<field name="Increment">0.001</field>
 </param>
-<param humanName="rangefinder offset" name="RNGFND4_OFFSET" documentation="Offset in volts for zero distance">
+<param humanName="rangefinder offset" name="RNGFND4_OFFSET" documentation="Offset in volts for zero distance" user="Advanced">
+<field name="Increment">0.001</field>
 <field name="Units">Volts</field>
-<field name="Increment">0.001</field>
 </param>
-<param humanName="Rangefinder function" name="RNGFND4_FUNCTION" documentation="Control over what function is used to calculate distance. For a linear function, the distance is (voltage-offset)*scaling. For a inverted function the distance is (offset-voltage)*scaling. For a hyperbolic function the distance is scaling/(voltage-offset). The functions return the distance in meters.">
+<param humanName="Rangefinder function" name="RNGFND4_FUNCTION" documentation="Control over what function is used to calculate distance. For a linear function, the distance is (voltage-offset)*scaling. For a inverted function the distance is (offset-voltage)*scaling. For a hyperbolic function the distance is scaling/(voltage-offset). The functions return the distance in meters." user="Advanced">
 <values>
 <value code="0">Linear</value>
 <value code="1">Inverted</value>
 <value code="2">Hyperbolic</value>
 </values>
 </param>
-<param humanName="Rangefinder minimum distance" name="RNGFND4_MIN_CM" documentation="Minimum distance in centimeters that rangefinder can reliably read">
-<field name="Units">centimeters</field>
+<param humanName="Rangefinder minimum distance" name="RNGFND4_MIN_CM" documentation="Minimum distance in centimeters that rangefinder can reliably read" user="Advanced">
 <field name="Increment">1</field>
-</param>
-<param humanName="Rangefinder maximum distance" name="RNGFND4_MAX_CM" documentation="Maximum distance in centimeters that rangefinder can reliably read">
 <field name="Units">centimeters</field>
-<field name="Increment">1</field>
 </param>
-<param humanName="Rangefinder stop pin" name="RNGFND4_STOP_PIN" documentation="Digital pin that enables/disables rangefinder measurement for an analog rangefinder. A value of -1 means no pin. If this is set, then the pin is set to 1 to enable the rangefinder and set to 0 to disable it. This can be used to ensure that multiple sonar rangefinders don't interfere with each other.">
+<param humanName="Rangefinder maximum distance" name="RNGFND4_MAX_CM" documentation="Maximum distance in centimeters that rangefinder can reliably read" user="Advanced">
+<field name="Increment">1</field>
+<field name="Units">centimeters</field>
+</param>
+<param humanName="Rangefinder stop pin" name="RNGFND4_STOP_PIN" documentation="Digital pin that enables/disables rangefinder measurement for an analog rangefinder. A value of -1 means no pin. If this is set, then the pin is set to 1 to enable the rangefinder and set to 0 to disable it. This can be used to ensure that multiple sonar rangefinders don't interfere with each other." user="Advanced">
 <values>
 <value code="-1">Not Used</value>
 <value code="50">Pixhawk AUXOUT1</value>
@@ -5912,36 +6454,45 @@
 <value code="116">PX4IO ACC2</value>
 </values>
 </param>
-<param humanName="Sonar settle time" name="RNGFND4_SETTLE" documentation="The time in milliseconds that the rangefinder reading takes to settle. This is only used when a STOP_PIN is specified. It determines how long we have to wait for the rangefinder to give a reading after we set the STOP_PIN high. For a sonar rangefinder with a range of around 7m this would need to be around 50 milliseconds to allow for the sonar pulse to travel to the target and back again.">
-<field name="Units">milliseconds</field>
+<param humanName="Sonar settle time" name="RNGFND4_SETTLE" documentation="The time in milliseconds that the rangefinder reading takes to settle. This is only used when a STOP_PIN is specified. It determines how long we have to wait for the rangefinder to give a reading after we set the STOP_PIN high. For a sonar rangefinder with a range of around 7m this would need to be around 50 milliseconds to allow for the sonar pulse to travel to the target and back again." user="Advanced">
 <field name="Increment">1</field>
+<field name="Units">milliseconds</field>
 </param>
-<param humanName="Ratiometric" name="RNGFND4_RMETRIC" documentation="This parameter sets whether an analog rangefinder is ratiometric. Most analog rangefinders are ratiometric, meaning that their output voltage is influenced by the supply voltage. Some analog rangefinders (such as the SF/02) have their own internal voltage regulators so they are not ratiometric.">
+<param humanName="Ratiometric" name="RNGFND4_RMETRIC" documentation="This parameter sets whether an analog rangefinder is ratiometric. Most analog rangefinders are ratiometric, meaning that their output voltage is influenced by the supply voltage. Some analog rangefinders (such as the SF/02) have their own internal voltage regulators so they are not ratiometric." user="Advanced">
 <values>
 <value code="0">No</value>
 <value code="1">Yes</value>
 </values>
 </param>
-<param humanName="Distance (in cm) from the second range finder to the ground" name="RNGFND4_GNDCLEAR" documentation="This parameter sets the expected range measurement(in cm) that the second range finder should return when the vehicle is on the ground." user="Advanced">
+<param humanName="Distance (in cm) from the fourth range finder to the ground" name="RNGFND4_GNDCLEAR" documentation="This parameter sets the expected range measurement(in cm) that the fourth range finder should return when the vehicle is on the ground." user="Advanced">
 <field name="Range">0 127</field>
 <field name="Increment">1</field>
 <field name="Units">centimeters</field>
 </param>
-<param humanName="Bus address of 2nd rangefinder" name="RNGFND4_ADDR" documentation="This sets the bus address of the sensor, where applicable. Used for the LightWare I2C sensor to allow for multiple sensors on different addresses. A value of 0 disables the sensor." user="Advanced">
+<param humanName="Bus address of fourth rangefinder" name="RNGFND4_ADDR" documentation="This sets the bus address of the sensor, where applicable. Used for the LightWare I2C sensor to allow for multiple sensors on different addresses. A value of 0 disables the sensor." user="Advanced">
 <field name="Range">0 127</field>
 <field name="Increment">1</field>
+</param>
+<param humanName=" X position offset" name="RNGFND4_POS_X" documentation="X position of the fourth rangefinder in body frame. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Y position offset" name="RNGFND4_POS_Y" documentation="Y position of the fourth rangefinder in body frame. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Z position offset" name="RNGFND4_POS_Z" documentation="Z position of the fourth rangefinder in body frame. Use the zero range datum point if supplied." user="Advanced">
+<field name="Units">m</field>
 </param>
 </parameters>
 <parameters name="TERRAIN_">
-<param humanName="Terrain data enable" name="TERRAIN_ENABLE" documentation="enable terrain data. This enables the vehicle storing a database of terrain data on the SD card. The terrain data is requested from the ground station as needed, and stored for later use on the SD card. To be useful the ground station must support TERRAIN_REQUEST messages and have access to a terrain database, such as the SRTM database.">
+<param humanName="Terrain data enable" name="TERRAIN_ENABLE" documentation="enable terrain data. This enables the vehicle storing a database of terrain data on the SD card. The terrain data is requested from the ground station as needed, and stored for later use on the SD card. To be useful the ground station must support TERRAIN_REQUEST messages and have access to a terrain database, such as the SRTM database." user="Advanced">
 <values>
 <value code="0">Disable</value>
 <value code="1">Enable</value>
 </values>
 </param>
-<param humanName="Terrain grid spacing" name="TERRAIN_SPACING" documentation="Distance between terrain grid points in meters. This controls the horizontal resolution of the terrain data that is stored on te SD card and requested from the ground station. If your GCS is using the worldwide SRTM database then a resolution of 100 meters is appropriate. Some parts of the world may have higher resolution data available, such as 30 meter data available in the SRTM database in the USA. The grid spacing also controls how much data is kept in memory during flight. A larger grid spacing will allow for a larger amount of data in memory. A grid spacing of 100 meters results in the vehicle keeping 12 grid squares in memory with each grid square having a size of 2.7 kilometers by 3.2 kilometers. Any additional grid squares are stored on the SD once they are fetched from the GCS and will be demand loaded as needed.">
-<field name="Units">meters</field>
+<param humanName="Terrain grid spacing" name="TERRAIN_SPACING" documentation="Distance between terrain grid points in meters. This controls the horizontal resolution of the terrain data that is stored on te SD card and requested from the ground station. If your GCS is using the worldwide SRTM database then a resolution of 100 meters is appropriate. Some parts of the world may have higher resolution data available, such as 30 meter data available in the SRTM database in the USA. The grid spacing also controls how much data is kept in memory during flight. A larger grid spacing will allow for a larger amount of data in memory. A grid spacing of 100 meters results in the vehicle keeping 12 grid squares in memory with each grid square having a size of 2.7 kilometers by 3.2 kilometers. Any additional grid squares are stored on the SD once they are fetched from the GCS and will be demand loaded as needed." user="Advanced">
 <field name="Increment">1</field>
+<field name="Units">meters</field>
 </param>
 </parameters>
 <parameters name="FLOW">
@@ -5963,68 +6514,46 @@
 <field name="Range">-18000 +18000</field>
 <field name="Increment">1</field>
 </param>
-</parameters>
-<parameters name="PLND_">
-<param humanName="Precision Land enabled/disabled and behaviour" name="PLND_ENABLED" documentation="Precision Land enabled/disabled and behaviour" user="Advanced">
-<values>
-<value code="0">Disabled</value>
-<value code=" 1">Enabled Always Land</value>
-<value code=" 2">Enabled Strict</value>
-</values>
+<param humanName=" X position offset" name="FLOW_POS_X" documentation="X position of the optical flow sensor focal point in body frame. Positive X is forward of the origin." user="Advanced">
+<field name="Units">m</field>
 </param>
-<param humanName="Precision Land Type" name="PLND_TYPE" documentation="Precision Land Type" user="Advanced">
-<values>
-<value code="0">None</value>
-<value code=" 1">CompanionComputer</value>
-<value code=" 2">IRLock</value>
-</values>
+<param humanName="Y position offset" name="FLOW_POS_Y" documentation="Y position of the optical flow sensor focal point in body frame. Positive Y is to the right of the origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="Z position offset" name="FLOW_POS_Z" documentation="Z position of the optical flow sensor focal point in body frame. Positive Z is down from the origin." user="Advanced">
+<field name="Units">m</field>
+</param>
+<param humanName="ID on the bus" name="FLOW_BUS_ID" documentation="This is used to select between multiple possible bus IDs for some sensor types. For PX4Flow you can choose 0 to 7 for the 8 possible addresses on the I2C bus." user="Advanced">
+<field name="Range">0 255</field>
 </param>
 </parameters>
 <parameters name="RPM">
-<param humanName="RPM type" name="RPM_TYPE" documentation="What type of RPM sensor is connected">
+<param humanName="RPM type" name="RPM_TYPE" documentation="What type of RPM sensor is connected" user="Standard">
 <values>
 <value code="0">None</value>
 <value code="1">PX4-PWM</value>
 </values>
 </param>
-<param humanName="RPM scaling" name="RPM_SCALING" documentation="Scaling factor between sensor reading and RPM.">
+<param humanName="RPM scaling" name="RPM_SCALING" documentation="Scaling factor between sensor reading and RPM." user="Standard">
 <field name="Increment">0.001</field>
 </param>
-<param humanName="Maximum RPM" name="RPM_MAX" documentation="Maximum RPM to report">
+<param humanName="Maximum RPM" name="RPM_MAX" documentation="Maximum RPM to report" user="Standard">
 <field name="Increment">1</field>
 </param>
-<param humanName="Minimum RPM" name="RPM_MIN" documentation="Minimum RPM to report">
+<param humanName="Minimum RPM" name="RPM_MIN" documentation="Minimum RPM to report" user="Standard">
 <field name="Increment">1</field>
 </param>
-<param humanName="Minimum Quality" name="RPM_MIN_QUAL" documentation="Minimum data quality to be used">
+<param humanName="Minimum Quality" name="RPM_MIN_QUAL" documentation="Minimum data quality to be used" user="Advanced">
 <field name="Increment">0.1</field>
 </param>
-<param humanName="Second RPM type" name="RPM2_TYPE" documentation="What type of RPM sensor is connected">
+<param humanName="Second RPM type" name="RPM2_TYPE" documentation="What type of RPM sensor is connected" user="Advanced">
 <values>
 <value code="0">None</value>
 <value code="1">PX4-PWM</value>
 </values>
 </param>
-<param humanName="RPM scaling" name="RPM2_SCALING" documentation="Scaling factor between sensor reading and RPM.">
+<param humanName="RPM scaling" name="RPM2_SCALING" documentation="Scaling factor between sensor reading and RPM." user="Advanced">
 <field name="Increment">0.001</field>
-</param>
-</parameters>
-<parameters name="ADSB_">
-<param humanName="Enable ADSB" name="ADSB_ENABLE" documentation="Enable ADS-B" user="Standard">
-<values>
-<value code="0">Disabled</value>
-<value code="1">Enabled</value>
-</values>
-</param>
-<param humanName="ADSB based Collision Avoidance Behavior" name="ADSB_BEHAVIOR" documentation="ADSB based Collision Avoidance Behavior selector" user="Advanced">
-<values>
-<value code="0">None</value>
-<value code="1">Loiter</value>
-<value code="2">LoiterAndDescend</value>
-</values>
-</param>
-<param humanName="ADSB vehicle list size" name="ADSB_LIST_MAX" documentation="ADSB list size of nearest vehicles. Longer lists take longer to refresh with lower SRx_ADSB values." user="Advanced">
-<field name="Range">1 100</field>
 </param>
 </parameters>
 <parameters name="NTF_">
@@ -6041,6 +6570,111 @@
 <value code="0">Disable</value>
 <value code="1">Enable</value>
 </values>
+</param>
+<param humanName="Setup for MAVLink LED override" name="NTF_LED_OVERRIDE" documentation="This sets up the board RGB LED for override by MAVLink. Normal notify LED control is disabled" user="Advanced">
+<values>
+<value code="0">Disable</value>
+<value code="1">Enable</value>
+</values>
+</param>
+</parameters>
+<parameters name="PRX">
+<param humanName="Proximity type" name="PRX_TYPE" documentation="What type of proximity sensor is connected" user="Standard">
+<values>
+<value code="0">None</value>
+<value code="1">LightWareSF40C</value>
+</values>
+</param>
+<param humanName="Proximity sensor orientation" name="PRX_ORIENT" documentation="Proximity sensor orientation" user="Standard">
+<values>
+<value code="0">Default</value>
+<value code="1">Upside Down</value>
+</values>
+</param>
+<param humanName="Proximity sensor yaw correction" name="PRX_YAW_CORR" documentation="Proximity sensor yaw correction" user="Standard">
+<field name="Range">-180 180</field>
+</param>
+<param humanName="Proximity sensor ignore angle 1" name="PRX_IGN_ANG1" documentation="Proximity sensor ignore angle 1" user="Standard">
+<field name="Range">0 360</field>
+</param>
+<param humanName="Proximity sensor ignore width 1" name="PRX_IGN_WID1" documentation="Proximity sensor ignore width 1" user="Standard">
+<field name="Range">0 45</field>
+</param>
+<param humanName="Proximity sensor ignore angle 2" name="PRX_IGN_ANG2" documentation="Proximity sensor ignore angle 2" user="Standard">
+<field name="Range">0 360</field>
+</param>
+<param humanName="Proximity sensor ignore width 2" name="PRX_IGN_WID1" documentation="Proximity sensor ignore width 2" user="Standard">
+<field name="Range">0 45</field>
+</param>
+<param humanName="Proximity sensor ignore angle 3" name="PRX_IGN_ANG3" documentation="Proximity sensor ignore angle 3" user="Standard">
+<field name="Range">0 360</field>
+</param>
+<param humanName="Proximity sensor ignore width 3" name="PRX_IGN_WID3" documentation="Proximity sensor ignore width 3" user="Standard">
+<field name="Range">0 45</field>
+</param>
+<param humanName="Proximity sensor ignore angle 4" name="PRX_IGN_ANG4" documentation="Proximity sensor ignore angle 4" user="Standard">
+<field name="Range">0 360</field>
+</param>
+<param humanName="Proximity sensor ignore width 4" name="PRX_IGN_WID4" documentation="Proximity sensor ignore width 4" user="Standard">
+<field name="Range">0 45</field>
+</param>
+<param humanName="Proximity sensor ignore angle 5" name="PRX_IGN_ANG5" documentation="Proximity sensor ignore angle 5" user="Standard">
+<field name="Range">0 360</field>
+</param>
+<param humanName="Proximity sensor ignore width 5" name="PRX_IGN_WID5" documentation="Proximity sensor ignore width 5" user="Standard">
+<field name="Range">0 45</field>
+</param>
+<param humanName="Proximity sensor ignore angle 6" name="PRX_IGN_ANG6" documentation="Proximity sensor ignore angle 6" user="Standard">
+<field name="Range">0 360</field>
+</param>
+<param humanName="Proximity sensor ignore width 6" name="PRX_IGN_WID6" documentation="Proximity sensor ignore width 6" user="Standard">
+<field name="Range">0 45</field>
+</param>
+<param humanName="Second Proximity type" name="PRX2_TYPE" documentation="What type of proximity sensor is connected" user="Advanced">
+<values>
+<value code="0">None</value>
+<value code="1">LightWareSF40C</value>
+</values>
+</param>
+<param humanName="Second Proximity sensor orientation" name="PRX_ORIENT" documentation="Second Proximity sensor orientation" user="Standard">
+<values>
+<value code="0">Default</value>
+<value code="1">Upside Down</value>
+</values>
+</param>
+<param humanName="Second Proximity sensor yaw correction" name="PRX_YAW_CORR" documentation="Second Proximity sensor yaw correction" user="Standard">
+<field name="Range">-180 180</field>
+</param>
+</parameters>
+<parameters name="GRIP_">
+<param humanName="Gripper Enable/Disable" name="GRIP_ENABLE" documentation="Gripper enable/disable" user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code=" 1">Enabled</value>
+</values>
+</param>
+<param humanName="Gripper Type" name="GRIP_TYPE" documentation="Gripper enable/disable" user="Standard">
+<values>
+<value code="0">None</value>
+<value code="1">Servo</value>
+<value code="2">EPM</value>
+</values>
+</param>
+<param humanName="Gripper Grab PWM" name="GRIP_GRAB" documentation="PWM value sent to Gripper to initiate grabbing the cargo" user="Advanced">
+<field name="Range">1000 2000</field>
+</param>
+<param humanName="Gripper Release PWM" name="GRIP_RELEASE" documentation="PWM value sent to Gripper to release the cargo" user="Advanced">
+<field name="Range">1000 2000</field>
+</param>
+<param humanName="Neutral PWM" name="GRIP_NEUTRAL" documentation="PWM value sent to grabber when not grabbing or releasing" user="Advanced">
+<field name="Range">1000 2000</field>
+</param>
+<param humanName="Gripper Regrab interval" name="GRIP_REGRAB" documentation="Time in seconds that gripper will regrab the cargo to ensure grip has not weakened; 0 to disable" user="Advanced">
+<field name="Values">0 255</field>
+<field name="Units">seconds</field>
+</param>
+<param humanName="EPM UAVCAN Hardpoint ID" name="GRIP_UAVCAN_ID" documentation="Refer to https://docs.zubax.com/opengrab_epm_v3#UAVCAN_interface" user="Standard">
+<field name="Range">0 255</field>
 </param>
 </parameters>
 </libraries></paramfile>

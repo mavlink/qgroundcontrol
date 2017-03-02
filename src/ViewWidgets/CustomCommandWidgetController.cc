@@ -21,10 +21,10 @@
 const char* CustomCommandWidgetController::_settingsKey = "CustomCommand.QmlFile";
 
 CustomCommandWidgetController::CustomCommandWidgetController(void) :
-	_uas(NULL)
+    _vehicle(NULL)
 {
     if(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
-        _uas = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->uas();
+        _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     }
     QSettings settings;
     _customQmlFile = settings.value(_settingsKey).toString();
@@ -33,15 +33,21 @@ CustomCommandWidgetController::CustomCommandWidgetController(void) :
 
 void CustomCommandWidgetController::sendCommand(int commandId, QVariant componentId, QVariant confirm, QVariant param1, QVariant param2, QVariant param3, QVariant param4, QVariant param5, QVariant param6, QVariant param7)
 {
-    if(_uas) {
-        _uas->executeCommand((MAV_CMD)commandId, confirm.toInt(), param1.toFloat(), param2.toFloat(), param3.toFloat(), param4.toFloat(), param5.toFloat(), param6.toFloat(), param7.toFloat(), componentId.toInt());
+    Q_UNUSED(confirm);
+
+    if(_vehicle) {
+        _vehicle->sendMavCommand(componentId.toInt(),
+                                 (MAV_CMD)commandId,
+                                 true,  // show error if fails
+                                 param1.toFloat(), param2.toFloat(), param3.toFloat(), param4.toFloat(), param5.toFloat(), param6.toFloat(), param7.toFloat());
     }
 }
 
 void CustomCommandWidgetController::_activeVehicleChanged(Vehicle* activeVehicle)
 {
-    if(activeVehicle)
-        _uas = activeVehicle->uas();
+    if (activeVehicle) {
+        _vehicle = activeVehicle;
+    }
 }
 
 void CustomCommandWidgetController::selectQmlFile(void)

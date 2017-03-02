@@ -31,7 +31,7 @@ APMRallyPointManager::~APMRallyPointManager()
 
 void APMRallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
 {
-    if (_vehicle->isOfflineEditingVehicle()) {
+    if (_vehicle->isOfflineEditingVehicle() || !rallyPointsSupported()) {
         return;
     }
 
@@ -53,7 +53,7 @@ void APMRallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
 
 void APMRallyPointManager::loadFromVehicle(void)
 {
-    if (_vehicle->isOfflineEditingVehicle() || _readTransactionInProgress) {
+    if (_vehicle->isOfflineEditingVehicle() || !rallyPointsSupported() || _readTransactionInProgress) {
         return;
     }
 
@@ -90,7 +90,7 @@ void APMRallyPointManager::_mavlinkMessageReceived(const mavlink_message_t& mess
 
         QGeoCoordinate point((float)rallyPoint.lat / 1e7, (float)rallyPoint.lng / 1e7, rallyPoint.alt);
         _rgPoints.append(point);
-        if (rallyPoint.idx < _cReadRallyPoints - 2) {
+        if (rallyPoint.idx < _cReadRallyPoints - 1) {
             // Still more points to request
             _requestRallyPoint(++_currentRallyPoint);
         } else {
@@ -143,4 +143,9 @@ void APMRallyPointManager::_sendRallyPoint(uint8_t pointIndex)
 bool APMRallyPointManager::inProgress(void) const
 {
     return _readTransactionInProgress || _writeTransactionInProgress;
+}
+
+bool APMRallyPointManager::rallyPointsSupported(void) const
+{
+    return _vehicle->parameterManager()->parameterExists(_vehicle->defaultComponentId(), _rallyTotalParam);
 }

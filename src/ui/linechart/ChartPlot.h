@@ -31,14 +31,15 @@ public slots:
 protected:
     const static int numColors = 20;
     const static QColor baseColors[numColors];
-    QList<QColor> colors;  ///< Colormap for curves
-    int nextColorIndex;         ///< Next index in color map
-    QMap<QString, QwtPlotCurve* > curves;  ///< Plot curves
-    QwtPlotGrid* grid;     ///< Plot grid
 
-    float symbolWidth; ///< Width of curve symbols in pixels
-    float curveWidth; ///< Width of curve lines in pixels
-    float gridWidth; ///< Width of gridlines in pixels
+    QList<QColor>                   _colors;         ///< Colormap for curves
+    int                             _nextColorIndex; ///< Next index in color map
+    QMap<QString, QwtPlotCurve* >   _curves;         ///< Plot curves
+    QwtPlotGrid*                    _grid;           ///< Plot grid
+
+    float _symbolWidth;  ///< Width of curve symbols in pixels
+    float _curveWidth;   ///< Width of curve lines in pixels
+    float _gridWidth;    ///< Width of gridlines in pixels
 };
 
 #endif // CHARTPLOT_H

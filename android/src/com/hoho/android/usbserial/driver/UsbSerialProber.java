@@ -18,6 +18,10 @@
  * Project home page: http://code.google.com/p/usb-serial-for-android/
  */
 
+// IMPORTANT NOTE:
+//  This source has been modified from the original such that testIfSupported only tests for a vendor id
+//  match. If that matches it allows all product ids through. This provides for better match on unknown boards.
+
 package com.hoho.android.usbserial.driver;
 
 import android.hardware.usb.UsbDevice;
@@ -230,21 +234,7 @@ public enum UsbSerialProber {
      * @param supportedDevices map of vendor IDs to product ID(s)
      * @return {@code true} if supported
      */
-    private static boolean testIfSupported(final UsbDevice usbDevice,
-            final Map<Integer, int[]> supportedDevices) {
-        final int[] supportedProducts = supportedDevices.get(
-                Integer.valueOf(usbDevice.getVendorId()));
-        if (supportedProducts == null) {
-            return false;
-        }
-
-        final int productId = usbDevice.getProductId();
-        for (int supportedProductId : supportedProducts) {
-            if (productId == supportedProductId) {
-                return true;
-            }
-        }
-        return false;
+    private static boolean testIfSupported(final UsbDevice usbDevice, final Map<Integer, int[]> supportedDevices) {
+        return supportedDevices.containsKey(usbDevice.getVendorId());
     }
-
 }

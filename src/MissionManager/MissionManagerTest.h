@@ -33,13 +33,13 @@ private slots:
     void _testReadFailureHandlingAPM(void);
 
 private:
-    void _roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode);
-    void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode);
+    void _roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode, bool shouldFail);
+    void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, bool shouldFail);
     void _testWriteFailureHandlingWorker(void);
     void _testReadFailureHandlingWorker(void);
     
-    static const MissionControllerManagerTest::TestCase_t   _rgTestCases[];
-    static const size_t                                     _cTestCases;
+    static const TestCase_t _rgTestCases[];
+    static const size_t     _cTestCases;
 };
 
 #endif

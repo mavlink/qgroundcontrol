@@ -54,7 +54,7 @@ QGCFlickable {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked:      showPicker()
+        onClicked:      showNextPage()
     }
 
     Column {

@@ -26,7 +26,15 @@ TextField {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     textColor:          qgcPal.textFieldText
-    height:             Math.round(Math.max(25, ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 2.5 : 1.2)))
+
+    implicitHeight: ScreenTools.implicitTextFieldHeight
+
+    onEditingFinished: {
+        if (ScreenTools.isMobile) {
+            // Toss focus on mobile after Done on virtual keyboard. Prevent strange interactions.
+            focus = false
+        }
+    }
 
     QGCLabel {
         id:             unitsLabelWidthGenerator
@@ -97,9 +105,10 @@ TextField {
             }
 
             MouseArea {
-                anchors.fill:   unitsHelpLayout
-                enabled:        control.activeFocus
-                onClicked:      root.helpClicked()
+                anchors.margins:    ScreenTools.isMobile ? -(ScreenTools.defaultFontPixelWidth * 0.66) : 0 // Larger touch area for mobile
+                anchors.fill:       unitsHelpLayout
+                enabled:            control.activeFocus
+                onClicked:          root.helpClicked()
             }
         }
 

@@ -1,0 +1,111 @@
+[
+{
+    "name":             "OfflineEditingFirmwareType",
+    "shortDescription": "Offline editing firmware type",
+    "type":             "uint32",
+    "enumStrings":      "ArduPilot,PX4 Pro,Mavlink Generic",
+    "enumValues":       "3,12,0",
+    "defaultValue":     3
+},
+{
+    "name":             "OfflineEditingVehicleType",
+    "shortDescription": "Offline editing vehicle type",
+    "type":             "uint32",
+    "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
+    "enumValues":       "1,2,19,10,12",
+    "defaultValue":     1
+},
+{
+    "name":             "OfflineEditingCruiseSpeed",
+    "shortDescription": "Offline editing cruise speed",
+    "longDescription":  "This value defines the cruising speed for forward flight vehicles for use in calculating mission duration when not connected to a vehicle.",
+    "type":             "double",
+    "defaultValue":     16.0,
+    "min":              1.0,
+    "units":            "m/s",
+    "decimalPlaces":    2
+},
+{
+    "name":             "OfflineEditingHoverSpeed",
+    "shortDescription": "Offline editing hover speed",
+    "longDescription":  "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration when not connected to a vehicle.",
+    "type":             "double",
+    "defaultValue":     4.0,
+    "min":              1.0,
+    "units":            "m/s",
+    "decimalPlaces":    2
+},
+{
+    "name":             "batteryPercentRemainingAnnounce",
+    "shortDescription": "Announce battery remaining percent",
+    "longDescription":  "QGroundControl will announce the remaining battery percent when it falls below the specified percentage.",
+    "type":             "uint32",
+    "defaultValue":     30,
+    "units":            "%",
+    "min":              0,
+    "max":              100
+},
+{
+    "name":             "DefaultMissionItemAltitude",
+    "shortDescription": "Default value for altitude",
+    "longDescription":  "This value specifies the default altitude for new items added to a mission.",
+    "type":             "double",
+    "defaultValue":     50.0,
+    "min":              0.0,
+    "units":            "meters",
+    "decimalPlaces":    2
+},
+{
+    "name":             "MissionAutoLoadDir",
+    "shortDescription": "Mission auto load directory",
+    "longDescription":  "The directory from which missions will be automatically loaded onto a vehicle when it connects. The mission file must be named AutoLoad#.mission where the # is replaced with the vehicle id.",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "PromptFLightDataSave",
+    "shortDescription": "Prompt to save Flight Data Log after each flight",
+    "longDescription":  "If this option is enabled you will be prompted to save Flight Data Log after each flight completes.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "PromptFLightDataSaveNotArmed",
+    "shortDescription": "Prompt to save Flight Data Log even if vehicle was not armed",
+    "longDescription":  "If this option is enabled you will be prompted to save Flight Data Log even if vehicle was never armed.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "AudioMuted",
+    "shortDescription": "Mute audio output",
+    "longDescription":  "If this option is enabled all audio output will be muted.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "VirtualTabletJoystick",
+    "shortDescription": "Show virtual joystick",
+    "longDescription":  "If this option is enabled the virtual joystick will be shown on the Fly view.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "BaseDeviceFontPointSize",
+    "shortDescription": "QGroundControl font size",
+    "longDescription":  "The point size for the default font used in QGroundControl.",
+    "type":             "uint32",
+    "units":            "pt",
+    "min":              6,
+    "max":              48,
+    "defaultValue":     0
+},
+{
+    "name":             "StyleIsDark",
+    "shortDescription": "QGroundControl color scheme",
+    "longDescription":  "The color scheme for the QGroundControl user interface.",
+    "type":             "uint32",
+    "enumStrings":      "Indoor,Outdoor",
+    "enumValues":       "1,0"
+}
+]

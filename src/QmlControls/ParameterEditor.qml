@@ -56,6 +56,17 @@ QGCView {
             anchors.right:  parent.right
             spacing:        ScreenTools.defaultFontPixelWidth
 
+            Timer {
+                id:         clearTimer
+                interval:   100;
+                running:    false;
+                repeat:     false
+                onTriggered: {
+                    searchText.text = ""
+                    controller.searchText = ""
+                }
+            }
+
             QGCLabel {
                 anchors.baseline:   clearButton.baseline
                 text:               qsTr("Search:")
@@ -71,7 +82,12 @@ QGCView {
             QGCButton {
                 id:         clearButton
                 text:       qsTr("Clear")
-                onClicked:  searchText.text = ""
+                onClicked: {
+                    if(ScreenTools.isMobile) {
+                        Qt.inputMethod.hide();
+                    }
+                    clearTimer.start()
+                }
             }
         } // Row - Header
 
@@ -96,7 +112,7 @@ QGCView {
                     text:           qsTr("Load from file...")
                     onTriggered: {
                         if (ScreenTools.isMobile) {
-                            qgcView.showDialog(mobileFilePicker, qsTr("Select Parameter File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                            qgcView.showDialog(mobileFilePicker, qsTr("Select Parameter File"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
                         } else {
                             controller.loadFromFilePicker()
                         }
@@ -117,6 +133,11 @@ QGCView {
                     text:           qsTr("Clear RC to Param")
                     onTriggered:	controller.clearRCToParam()
                     visible:        _showRCToParam
+                }
+                MenuSeparator { }
+                MenuItem {
+                    text:           qsTr("Reboot Vehicle")
+                    onTriggered:    showDialog(rebootVehicleConfirmComponent, qsTr("Reboot Vehicle"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                 }
             }
         }
@@ -180,7 +201,7 @@ QGCView {
         }
 
         /// Parameter list
-        ListView {
+        QGCListView {
             id:                 editorListView
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth
             anchors.left:       _searchFilter ? parent.left : groupScroll.right
@@ -263,7 +284,7 @@ QGCView {
     Component {
         id: mobileFilePicker
 
-        QGCMobileFileDialog {
+        QGCMobileFileOpenDialog {
             fileExtension:      QGroundControl.parameterFileExtension
             onFilenameReturned: controller.loadFromFile(filename)
         }
@@ -272,8 +293,7 @@ QGCView {
     Component {
         id: mobileFileSaver
 
-        QGCMobileFileDialog {
-            openDialog:         false
+        QGCMobileFileSaveDialog {
             fileExtension:      QGroundControl.parameterFileExtension
             onFilenameReturned: controller.saveToFile(filename)
         }
@@ -292,6 +312,23 @@ QGCView {
                 width:              parent.width
                 wrapMode:           Text.WordWrap
                 text:               qsTr("Select Reset to reset all parameters to their defaults.")
+            }
+        }
+    }
+
+    Component {
+        id: rebootVehicleConfirmComponent
+
+        QGCViewDialog {
+            function accept() {
+                QGroundControl.multiVehicleManager.activeVehicle.rebootVehicle()
+                hideDialog()
+            }
+
+            QGCLabel {
+                width:              parent.width
+                wrapMode:           Text.WordWrap
+                text:               qsTr("Select Ok to reboot vehicle.")
             }
         }
     }

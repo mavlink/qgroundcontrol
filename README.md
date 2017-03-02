@@ -33,7 +33,7 @@ https://donlakeflyer.gitbooks.io/qgroundcontrol-user-guide/content/
 
 #### Native Builds
 QGroundControl builds are supported for OSX, Linux, Windows, iOS and Android. QGroundControl uses [Qt](http://www.qt.io) as its cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as its default build environment.
-* OSX: OSX 10.7 or higher, 64 bit, clang compiler (IMPORTANT: XCode 8 not supported due to Qt bug. Currently only workaround is to use XCode 7.3.1)
+* OSX: OSX 10.7 or higher, 64 bit, clang compiler (IMPORTANT: XCode 8 requires a workaround described below)
 * Ubuntu: 64 bit, gcc compiler
 * Windows: Vista or higher, 32 bit, [Visual Studio 2013 compiler](http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop)
 * iOS: 8.0 and higher
@@ -43,7 +43,8 @@ QGroundControl builds are supported for OSX, Linux, Windows, iOS and Android. QG
 ###### Install QT
 You need to install Qt as described below instead of using pre-built packages from say, a Linux distribution because QGroundControl needs access to private Qt headers.
 * Download the [Qt installer](http://www.qt.io/download-open-source)
-    * Make sure to install Qt version **5.5.1** NOT 5.4.x, 5.6.x, 5.7.x, etc.  
+    * Make sure to install Qt version **5.5.1** NOT 5.4.x, 5.6.x, 5.7.x, etc. 
+    * If you don't install the full Qt 5.5 make sure you install Qt Location and Qt Quick Controls.
     * Ubuntu: Set the downloaded file to executable using:`chmod +x`. Install to default location for use with ./qgroundcontrol-start.sh. If you install Qt to a non-default location you will need to modify qgroundcontrol-start.sh in order to run downloaded builds.
     * Windows: Default installer not quite correct, use [this](http://download.qt.io/official_releases/qt/5.5/5.5.1/qt-opensource-windows-x86-msvc2013-5.5.1.exe) instead
 

@@ -49,6 +49,14 @@ class ArduRoverFirmwarePlugin : public APMFirmwarePlugin
     
 public:
     ArduRoverFirmwarePlugin(void);
+
+    // Overrides from FirmwarePlugin
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+
+private:
+    static bool _remapParamNameIntialized;
+    static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
 };
 
 #endif

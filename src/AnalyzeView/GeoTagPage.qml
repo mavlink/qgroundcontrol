@@ -11,7 +11,10 @@ import QtQuick          2.5
 import QtQuick.Controls 1.4
 import QtQuick.Dialogs  1.2
 
+import QGroundControl               1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
@@ -19,17 +22,17 @@ import QGroundControl.Controllers   1.0
 AnalyzePage {
     id:                 geoTagPage
     pageComponent:      pageComponent
-    pageName:           qsTr("GeoTag Images (WIP)")
-    pageDescription:    qsTr("GetTag Images is used to tag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.")
+    pageName:           qsTr("GeoTag Images")
+    pageDescription:    qsTr("GeoTag Images is used to tag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.")
 
-    property real _margin: ScreenTools.defaultFontPixelWidth
+    property real _margin: ScreenTools.defaultFontPixelWidth * 2
 
     GeoTagController {
         id: controller
     }
 
     Component {
-        id: pageComponent
+        id:                 pageComponent
 
         Column {
             id:         mainColumn
@@ -37,66 +40,103 @@ AnalyzePage {
             spacing:    _margin
 
             Row {
+                spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                ProgressBar {
+                    id:             progressBar
+                    width:          qgcView.width -_margin * 5
+                    maximumValue:   100
+                    value:          controller.progress
+                }
+
+                BusyIndicator {
+                    running:        controller.progress > 0 && controller.progress < 100 && controller.errorMessage === ""
+                    width:          progressBar.height
+                    height:         progressBar.height
+                }
+            }
+
+            QGCLabel {
+                text:           controller.errorMessage
+                font.bold:      true
+                font.pointSize: ScreenTools.largeFontPointSize
+                color:          "red"
+            }
+
+            // Horizontal spacer line
+            Rectangle {
+              height:                     1
+              width:                      qgcView.width * 1.0
+              color:                      qgcPal.windowShadeDark
+              anchors.horizontalCenter:   parent.horizontalCenter
+            }
+
+            Row {
                 spacing: _margin
 
-                QGCLabel {
-                    text: "Log file:"
+                QGCButton {
+                    text:       qsTr("Select log file")
+                    width:      ScreenTools.defaultFontPixelWidth * 30
+                    onClicked:  controller.pickLogFile()
+                    anchors.verticalCenter:   parent.verticalCenter
                 }
 
                 QGCLabel {
                     text: controller.logFile
-                }
-
-                QGCButton {
-                    text:       qsTr("Select log file")
-                    onClicked:  controller.pickLogFile()
+                    anchors.verticalCenter:   parent.verticalCenter
                 }
             }
 
             Row {
                 spacing: _margin
 
-                QGCLabel {
-                    text: "Image directory:"
+                QGCButton {
+                    text:       qsTr("Select image directory")
+                    width:      ScreenTools.defaultFontPixelWidth * 30
+                    onClicked:  controller.pickImageDirectory()
+                    anchors.verticalCenter:   parent.verticalCenter
                 }
 
                 QGCLabel {
                     text: controller.imageDirectory
-                }
-
-                QGCButton {
-                    text:       qsTr("Select image directory")
-                    onClicked:  controller.pickImageDirectory()
+                    anchors.verticalCenter:   parent.verticalCenter
                 }
             }
 
-            QGCLabel { text: "NYI - Simulated only" }
+            Row {
+                spacing: _margin
+
+                QGCButton {
+                    text:       qsTr("(Optionally) Select save directory")
+                    width:      ScreenTools.defaultFontPixelWidth * 30
+                    onClicked:  controller.pickSaveDirectory()
+                    anchors.verticalCenter:   parent.verticalCenter
+                }
+
+                QGCLabel {
+                    text: controller.saveDirectory != "" ? controller.saveDirectory : "/TAGGED folder in your image folder"
+                    anchors.verticalCenter:   parent.verticalCenter
+                }
+            }
+
+            // Horizontal spacer line
+            Rectangle {
+              height:                     1
+              width:                      qgcView.width * 1.0
+              color:                      qgcPal.windowShadeDark
+              anchors.horizontalCenter:   parent.horizontalCenter
+            }
 
             QGCButton {
                 text: controller.inProgress ? qsTr("Cancel Tagging") : qsTr("Start Tagging")
-
+                width:      ScreenTools.defaultFontPixelWidth * 30
                 onClicked: {
                     if (controller.inProgress) {
                         controller.cancelTagging()
                     } else {
-                        if (controller.logFile == "" || controller.imageDirectory == "") {
-                            geoTagPage.showMessage(qsTr("Error"), qsTr("You must select a log file and image directory before you can start tagging."), StandardButton.Ok)
-                            return
-                        }
                         controller.startTagging()
                     }
                 }
-            }
-
-            QGCLabel {
-                text: controller.errorMessage
-            }
-
-            ProgressBar {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                maximumValue:   100
-                value:          controller.progress
             }
         } // Column
     } // Component

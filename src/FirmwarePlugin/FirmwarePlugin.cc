@@ -7,13 +7,43 @@
  *
  ****************************************************************************/
 
-
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
+#include "Generic/GenericAutoPilotPlugin.h"
 
 #include <QDebug>
 
+static FirmwarePluginFactoryRegister* _instance = NULL;
+
 const char* guided_mode_not_supported_by_vehicle = "Guided mode not supported by Vehicle.";
+
+const char* FirmwarePlugin::px4FollowMeFlightMode = "Follow Me";
+
+FirmwarePluginFactory::FirmwarePluginFactory(void)
+{
+    FirmwarePluginFactoryRegister::instance()->registerPluginFactory(this);
+}
+
+QList<MAV_TYPE> FirmwarePluginFactory::supportedVehicleTypes(void) const
+{
+    QList<MAV_TYPE> vehicleTypes;
+    vehicleTypes << MAV_TYPE_FIXED_WING << MAV_TYPE_QUADROTOR << MAV_TYPE_VTOL_QUADROTOR << MAV_TYPE_GROUND_ROVER << MAV_TYPE_SUBMARINE;
+    return vehicleTypes;
+}
+
+FirmwarePluginFactoryRegister* FirmwarePluginFactoryRegister::instance(void)
+{
+    if (!_instance) {
+        _instance = new FirmwarePluginFactoryRegister;
+    }
+
+    return _instance;
+}
+
+AutoPilotPlugin* FirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
+{
+    return new GenericAutoPilotPlugin(vehicle, vehicle);
+}
 
 bool FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
@@ -83,6 +113,11 @@ int FirmwarePlugin::manualControlReservedButtonCount(void)
     return -1;
 }
 
+int FirmwarePlugin::defaultJoystickTXMode(void)
+{
+    return 2;
+}
+
 bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
 {
     // By default, this is supported
@@ -95,6 +130,16 @@ bool FirmwarePlugin::supportsManualControl(void)
 }
 
 bool FirmwarePlugin::supportsRadio(void)
+{
+    return true;
+}
+
+bool FirmwarePlugin::supportsCalibratePressure(void)
+{
+    return false;
+}
+
+bool FirmwarePlugin::supportsMotorInterference(void)
 {
     return true;
 }
@@ -258,4 +303,37 @@ int FirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumbe
 {
     Q_UNUSED(majorVersionNumber);
     return 0;
+}
+
+QString FirmwarePlugin::missionFlightMode(void)
+{
+    return QString();
+}
+
+QString FirmwarePlugin::rtlFlightMode(void)
+{
+    return QString();
+}
+
+QString FirmwarePlugin::takeControlFlightMode(void)
+{
+    return QString();
+}
+
+QString FirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
+{
+    Q_UNUSED(vehicle);
+    return QStringLiteral("/qmlimages/vehicleArrowOpaque.svg");
+}
+
+QString FirmwarePlugin::vehicleImageOutline(const Vehicle* vehicle) const
+{
+    Q_UNUSED(vehicle);
+    return QStringLiteral("/qmlimages/vehicleArrowOutline.svg");
+}
+
+QString FirmwarePlugin::vehicleImageCompass(const Vehicle* vehicle) const
+{
+    Q_UNUSED(vehicle);
+    return QStringLiteral("/qmlimages/compassInstrumentArrow.svg");
 }

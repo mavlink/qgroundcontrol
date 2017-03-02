@@ -1,0 +1,44 @@
+[
+{
+    "name":             "AutoconnectUDP",
+    "shortDescription": "Automatically open a connection over UDP",
+    "longDescription":  "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "AutoconnectPixhawk",
+    "shortDescription": "Automatically connect to a Pixhawk board",
+    "longDescription":  "If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "Autoconnect3DRRadio",
+    "shortDescription": "Automatically connect to a SiK Radio",
+    "longDescription":  "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "AutoconnectPX4Flow",
+    "shortDescription": "Automatically connect to a P4 Flow",
+    "longDescription":  "If this option is enabled GroundControl will automatically connect to a PX4 Flow board which is connected via USB.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "AutoconnectRTKGPS",
+    "shortDescription": "Automatically connect to an RTK GPS",
+    "longDescription":  "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "AutoconnectLibrePilot",
+    "shortDescription": "Automatically connect to a LibrePilot",
+    "longDescription":  "If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.",
+    "type":             "bool",
+    "defaultValue":     true
+}
+]
