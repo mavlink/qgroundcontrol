@@ -244,10 +244,11 @@ Map {
                             "import QtQuick                     2.5; " +
                             "import QtLocation                  5.3; " +
                             "import QGroundControl.ScreenTools  1.0; " +
+                            "" +
                             "Rectangle {" +
                             "   id:     vertexDrag; " +
-                            "   width:  _sideLength; " +
-                            "   height: _sideLength; " +
+                            "   width:  _sideLength + _expandMargin; " +
+                            "   height: _sideLength + _expandMargin; " +
                             "   color:  'red'; " +
                             "" +
                             "   property var coordinate; " +
@@ -256,27 +257,27 @@ Map {
                             "   readonly property real _sideLength:     ScreenTools.defaultFontPixelWidth * 2; " +
                             "   readonly property real _halfSideLength: _sideLength / 2; " +
                             "" +
+                            "   property real _expandMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth : 0;" +
+                            "" +
                             "   Drag.active:    dragMouseArea.drag.active; " +
-                            "   Drag.hotSpot.x: _halfSideLength; " +
-                            "   Drag.hotSpot.y: _halfSideLength; " +
                             "" +
                             "   onXChanged: updateCoordinate(); " +
                             "   onYChanged: updateCoordinate(); " +
                             "" +
                             "   function updateCoordinate() { " +
-                            "       vertexDrag.coordinate = _map.toCoordinate(Qt.point(vertexDrag.x + _halfSideLength, vertexDrag.y + _halfSideLength), false); " +
+                            "       vertexDrag.coordinate = _map.toCoordinate(Qt.point(vertexDrag.x + _expandMargin + _halfSideLength, vertexDrag.y + _expandMargin + _halfSideLength), false); " +
                             "       polygonDrawer._callbackObject.polygonAdjustVertex(vertexDrag.index, vertexDrag.coordinate); " +
                             "   } " +
                             "" +
                             "   function updatePosition() { " +
                             "       var vertexPoint = _map.fromCoordinate(coordinate, false); " +
-                            "       vertexDrag.x = vertexPoint.x - _halfSideLength; " +
-                            "       vertexDrag.y = vertexPoint.y - _halfSideLength; " +
+                            "       vertexDrag.x = vertexPoint.x - _expandMargin - _halfSideLength; " +
+                            "       vertexDrag.y = vertexPoint.y - _expandMargin - _halfSideLength; " +
                             "   } " +
                             "" +
                             "   Connections { " +
-                            "       target: _map; " +
-                            "       onCenterChanged: updatePosition(); " +
+                            "       target:             _map; " +
+                            "       onCenterChanged:    updatePosition(); " +
                             "       onZoomLevelChanged: updatePosition(); " +
                             "   } " +
                             "" +
