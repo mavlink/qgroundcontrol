@@ -82,22 +82,23 @@ Item {
 
         Rectangle {
             id:             itemDragger
-            x:              _itemVisual.x
-            y:              _itemVisual.y
-            width:          _itemVisual.width
-            height:         _itemVisual.height
+            x:              _itemVisual.x - _expandMargin
+            y:              _itemVisual.y - _expandMargin
+            width:          _itemVisual.width + (_expandMargin * 2)
+            height:         _itemVisual.height + (_expandMargin * 2)
             color:          "transparent"
             z:              QGroundControl.zOrderMapItems + 1    // Above item icons
 
             property bool   dragLoiter
             property bool   _preventCoordinateBindingLoop:  false
+            property real   _expandMargin:                  ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth : 0
 
             onXChanged: liveDrag()
             onYChanged: liveDrag()
 
             function liveDrag() {
                 if (!itemDragger._preventCoordinateBindingLoop && Drag.active) {
-                    var point = Qt.point(itemDragger.x + _itemVisual.anchorPoint.x, itemDragger.y + _itemVisual.anchorPoint.y)
+                    var point = Qt.point(itemDragger.x + _expandMargin + _itemVisual.anchorPoint.x, itemDragger.y + _expandMargin + _itemVisual.anchorPoint.y)
                     var coordinate = map.toCoordinate(point)
                     itemDragger._preventCoordinateBindingLoop = true
                     coordinate.altitude = _missionItem.coordinate.altitude
@@ -106,9 +107,7 @@ Item {
                 }
             }
 
-            Drag.active:    itemDrag.drag.active
-            Drag.hotSpot.x: _itemVisual.anchorPoint.x
-            Drag.hotSpot.y: _itemVisual.anchorPoint.y
+            Drag.active: itemDrag.drag.active
 
             MouseArea {
                 id:             itemDrag

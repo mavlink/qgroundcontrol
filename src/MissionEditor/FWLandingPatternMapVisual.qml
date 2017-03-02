@@ -181,9 +181,7 @@ Item {
                 }
             }
 
-            Drag.active:    itemDrag.drag.active
-            Drag.hotSpot.x: mapQuickItem.anchorPoint.x
-            Drag.hotSpot.y: mapQuickItem.anchorPoint.y
+            Drag.active: itemDrag.drag.active
 
             MouseArea {
                 id:             itemDrag
