@@ -253,16 +253,19 @@ QGCView {
     }
 
     function setCurrentItem(sequenceNumber) {
-        editorMap.polygonDraw.cancelPolygonEdit()
-        _currentMissionItem = undefined
-        for (var i=0; i<_visualItems.count; i++) {
-            var visualItem = _visualItems.get(i)
-            if (visualItem.sequenceNumber == sequenceNumber) {
-                _currentMissionItem = visualItem
-                _currentMissionItem.isCurrentItem = true
-                _currentMissionIndex = i
-            } else {
-                visualItem.isCurrentItem = false
+        if (sequenceNumber !== _currentMissionIndex) {
+            editorMap.polygonDraw.cancelPolygonEdit()
+            _currentMissionItem = undefined
+            _currentMissionIndex = -1
+            for (var i=0; i<_visualItems.count; i++) {
+                var visualItem = _visualItems.get(i)
+                if (visualItem.sequenceNumber == sequenceNumber) {
+                    _currentMissionItem = visualItem
+                    _currentMissionItem.isCurrentItem = true
+                    _currentMissionIndex = i
+                } else {
+                    visualItem.isCurrentItem = false
+                }
             }
         }
     }
@@ -400,8 +403,8 @@ QGCView {
                     id:             itemDragger
                     x:              mapCoordinateIndicator ? (mapCoordinateIndicator.x + mapCoordinateIndicator.anchorPoint.x - (itemDragger.width / 2)) : 100
                     y:              mapCoordinateIndicator ? (mapCoordinateIndicator.y + mapCoordinateIndicator.anchorPoint.y - (itemDragger.height / 2)) : 100
-                    width:          ScreenTools.defaultFontPixelHeight * 2
-                    height:         ScreenTools.defaultFontPixelHeight * 2
+                    width:          ScreenTools.defaultFontPixelHeight * 3
+                    height:         ScreenTools.defaultFontPixelHeight * 3
                     color:          "transparent"
                     visible:        false
                     z:              QGroundControl.zOrderMapItems + 1    // Above item icons
@@ -445,19 +448,13 @@ QGCView {
                     }
                 }
 
-                // Add the complex mission item to the map
+                // Add the mission item visuals to the map
                 Repeater {
-                    model: missionController.complexVisualItems
+                    model: missionController.visualItems
 
-                    delegate: ComplexMissionItem {
+                    delegate: MissionItemMapVisual {
                         map: editorMap
                     }
-                }
-
-                // Add the simple mission items to the map
-                MapItemView {
-                    model:      missionController.visualItems
-                    delegate:   missionItemComponent
                 }
 
                 Component {
@@ -501,9 +498,10 @@ QGCView {
                                 model: object.isSimpleItem ? object.childItems : 0
 
                                 delegate: MissionItemIndexLabel {
-                                    label:      object.abbreviation
-                                    checked:    object.isCurrentItem
-                                    z:          2
+                                    label:                  object.abbreviation
+                                    checked:                object.isCurrentItem
+                                    z:                      2
+                                    specifiesCoordinate:    false
 
                                     onClicked: setCurrentItem(object.sequenceNumber)
                                 }
@@ -686,7 +684,8 @@ QGCView {
 
                 // GeoFence breach return point
                 MapQuickItem {
-                    anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+                    anchorPoint.x:  sourceItem.anchorPointX
+                    anchorPoint.y:  sourceItem.anchorPointY
                     coordinate:     geoFenceController.breachReturnPoint
                     visible:        geoFenceController.breachReturnEnabled
                     sourceItem:     MissionItemIndexLabel { label: "F" }
@@ -727,7 +726,8 @@ QGCView {
 
                     delegate: MapQuickItem {
                         id:             itemIndicator
-                        anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+                        anchorPoint.x:  sourceItem.anchorPointX
+                        anchorPoint.y:  sourceItem.anchorPointY
                         coordinate:     object.coordinate
                         z:              QGroundControl.zOrderMapItems
 
@@ -774,6 +774,7 @@ QGCView {
                     rotateImage:        [ false, false, _syncDropDownController.syncInProgress, false, false, false, false ]
                     buttonEnabled:      [ true, true, !_syncDropDownController.syncInProgress, true, true, true, true ]
                     buttonVisible:      [ true, true, true, true, true, _showZoom, _showZoom ]
+                    maxHeight:          mapScale.y - toolStrip.y
 
                     property bool _showZoom: !ScreenTools.isShortScreen
 
@@ -836,6 +837,7 @@ QGCView {
                 }
 
                 MapScale {
+                    id:                 mapScale
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * (0.66)
                     anchors.bottom:     waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
                     anchors.left:       parent.left

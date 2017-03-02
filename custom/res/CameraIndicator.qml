@@ -26,8 +26,7 @@ import TyphoonHQuickInterface               1.0
 Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          indicatorRow.width * 1.25
-    visible:        TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO
+    width:          indicatorRow.width
     Row {
         id:                 indicatorRow
         spacing:            ScreenTools.defaultFontPixelHeight * 0.5

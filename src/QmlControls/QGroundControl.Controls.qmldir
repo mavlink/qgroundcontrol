@@ -3,7 +3,6 @@ Module QGroundControl.Controls
 AnalyzePage             1.0 AnalyzePage.qml
 AppMessages             1.0 AppMessages.qml
 ClickableColor          1.0 ClickableColor.qml
-ComplexMissionItem      1.0 ComplexMissionItem.qml
 DropButton              1.0 DropButton.qml
 DropPanel               1.0 DropPanel.qml
 ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
@@ -18,6 +17,7 @@ MainToolBarIndicators   1.0 MainToolBarIndicators.qml
 MissionCommandDialog    1.0 MissionCommandDialog.qml
 MissionItemEditor       1.0 MissionItemEditor.qml
 MissionItemIndexLabel   1.0 MissionItemIndexLabel.qml
+MissionItemMapVisual    1.0 MissionItemMapVisual.qml
 MissionItemStatus       1.0 MissionItemStatus.qml
 ModeSwitchDisplay       1.0 ModeSwitchDisplay.qml
 MultiRotorMotorDisplay  1.0 MultiRotorMotorDisplay.qml
@@ -50,9 +50,10 @@ QGCViewPanel            1.0 QGCViewPanel.qml
 RoundButton             1.0 RoundButton.qml
 SetupPage               1.0 SetupPage.qml
 SignalStrength          1.0 SignalStrength.qml
+SimpleItemMapVisuals    1.0 SimpleItemMapVisuals.qml
 SliderSwitch            1.0 SliderSwitch.qml
 SubMenuButton           1.0 SubMenuButton.qml
-SurveyComplexItem       1.0 SurveyComplexItem.qml
+SurveyMapVisuals        1.0 SurveyMapVisuals.qml
 ToolStrip               1.0 ToolStrip.qml
 VehicleRotationCal      1.0 VehicleRotationCal.qml
 VehicleSummaryRow       1.0 VehicleSummaryRow.qml
