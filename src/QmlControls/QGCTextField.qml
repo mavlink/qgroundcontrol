@@ -29,6 +29,13 @@ TextField {
 
     implicitHeight: ScreenTools.implicitTextFieldHeight
 
+    onEditingFinished: {
+        if (ScreenTools.isMobile) {
+            // Toss focus on mobile after Done on virtual keyboard. Prevent strange interactions.
+            focus = false
+        }
+    }
+
     QGCLabel {
         id:             unitsLabelWidthGenerator
         text:           unitsLabel

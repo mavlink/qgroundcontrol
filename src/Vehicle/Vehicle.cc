@@ -493,6 +493,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     }
 
+
+    // Mark this vehicle as active
+    _connectionActive();
+
     // Give the plugin a change to adjust the message contents
     if (!_firmwarePlugin->adjustIncomingMavlinkMessage(this, &message)) {
         return;
@@ -675,7 +679,17 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
 
     // Git hash
     if (autopilotVersion.flight_custom_version[0] != 0) {
-        _gitHash = QString::fromUtf8((char*)autopilotVersion.flight_custom_version, 8);
+        // PX4 Firmware stores the first 16 characters of the git hash as binary, with the individual bytes in reverse order
+        if (px4Firmware()) {
+            _gitHash = "";
+            QByteArray array((char*)autopilotVersion.flight_custom_version, 8);
+            for (int i = 7; i >= 0; i--) {
+                _gitHash.append(QString("%1").arg(autopilotVersion.flight_custom_version[i], 2, 16, QChar('0')));
+            }
+        } else {
+            // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
+            _gitHash = QString::fromUtf8((char*)autopilotVersion.flight_custom_version, 8);
+        }
         emit gitHashChanged(_gitHash);
     }
 }
@@ -899,8 +913,6 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
     if (message.compid != _defaultComponentId) {
         return;
     }
-
-    _connectionActive();
 
     mavlink_heartbeat_t heartbeat;
 

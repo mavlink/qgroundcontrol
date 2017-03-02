@@ -843,6 +843,17 @@ void ParameterManager::writeParametersToStream(QTextStream &stream)
 {
     stream << "# Onboard parameters for Vehicle " << _vehicle->id() << "\n";
     stream << "#\n";
+
+    stream << "# Stack: " << _vehicle->firmwareTypeString() << "\n";
+    stream << "# Vehicle: " << _vehicle->vehicleTypeString() << "\n";
+    stream << "# Version: "
+           << _vehicle->firmwareMajorVersion() << "."
+           << _vehicle->firmwareMinorVersion() << "."
+           << _vehicle->firmwarePatchVersion() << " "
+           << _vehicle->firmwareVersionTypeString() << "\n";
+    stream << "# Git Revision: " << _vehicle->gitHash() << "\n";
+
+    stream << "#\n";
     stream << "# Vehicle-Id Component-Id Name Value Type\n";
 
     foreach (int componentId, _mapParameterName2Variant.keys()) {

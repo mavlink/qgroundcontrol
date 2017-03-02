@@ -85,6 +85,7 @@ FlightMap {
         title:              qsTr("Fly")
         z:                  QGroundControl.zOrderWidgets
         buttonVisible:      [ true, true, _showZoom, _showZoom ]
+        maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y   // Massive reach across hack
 
         property bool _showZoom: !ScreenTools.isShortScreen
 
@@ -233,7 +234,8 @@ FlightMap {
 
     // GeoFence breach return point
     MapQuickItem {
-        anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
         coordinate:     geoFenceController.breachReturnPoint
         visible:        geoFenceController.breachReturnEnabled
         sourceItem:     MissionItemIndexLabel { label: "F" }
@@ -246,7 +248,8 @@ FlightMap {
 
         delegate: MapQuickItem {
             id:             itemIndicator
-            anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+            anchorPoint.x:  sourceItem.anchorPointX
+            anchorPoint.y:  sourceItem.anchorPointY
             coordinate:     object.coordinate
             z:              QGroundControl.zOrderMapItems
 
@@ -262,8 +265,8 @@ FlightMap {
         coordinate:     _gotoHereCoordinate
         visible:        _activeVehicle && _activeVehicle.guidedMode && _gotoHereCoordinate.isValid
         z:              QGroundControl.zOrderMapItems
-        anchorPoint.x:  sourceItem.width  / 2
-        anchorPoint.y:  sourceItem.height / 2
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
 
         sourceItem: MissionItemIndexLabel {
             checked: true

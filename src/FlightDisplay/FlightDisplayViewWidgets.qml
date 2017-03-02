@@ -200,7 +200,7 @@ Item {
             interval:       7000
             running:        true
             onTriggered: {
-                if (ScreenTools.isShortScreen) {
+                if (ScreenTools.isTinyScreen) {
                     _guidedModeBar.state = "Hidden"
                 }
             }
