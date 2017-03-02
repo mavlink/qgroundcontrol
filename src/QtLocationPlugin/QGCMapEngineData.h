@@ -110,6 +110,7 @@ public:
 
     enum TaskType {
         taskInit,
+        taskTestInternet,
         taskCacheTile,
         taskFetchTile,
         taskFetchTileSets,
@@ -129,7 +130,7 @@ public:
 
     virtual TaskType    type            () { return _type; }
 
-    void setError(QString errorString)
+    void setError(QString errorString = QString())
     {
         emit error(_type, errorString);
     }
@@ -139,6 +140,16 @@ signals:
 
 private:
     TaskType    _type;
+};
+
+//-----------------------------------------------------------------------------
+class QGCTestInternetTask : public QGCMapTask
+{
+    Q_OBJECT
+public:
+    QGCTestInternetTask()
+        : QGCMapTask(QGCMapTask::taskTestInternet)
+    {}
 };
 
 //-----------------------------------------------------------------------------

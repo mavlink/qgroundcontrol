@@ -20,11 +20,8 @@
 #include "MainWindow.h"
 #include "QGCApplication.h"
 
-#ifdef QT_DEBUG
-#ifndef __mobile__
-#include "UnitTest.h"
-#endif
-
+#ifdef UNITTEST_BUILD
+    #include "UnitTest.h"
 #endif
 
 /// @file
@@ -99,12 +96,10 @@ private:
 
         qDebug() << "QGCMessageBox (unit testing)" << title << text;
 
-#ifdef QT_DEBUG
-#ifndef __mobile__
+#ifdef UNITTEST_BUILD
         if (qgcApp()->runningUnitTests()) {
             return UnitTest::_messageBox(icon, title, text, buttons, defaultButton);
         } else
-#endif
 #endif
         {
 #ifdef __macos__

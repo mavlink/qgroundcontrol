@@ -39,22 +39,30 @@ QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string,
 
     int convertTo = QVariant::Int; // keep compiler warning happy
     switch (type) {
-        case FactMetaData::valueTypeUint8:
-        case FactMetaData::valueTypeUint16:
-        case FactMetaData::valueTypeUint32:
-            convertTo = QVariant::UInt;
-            break;
-        case FactMetaData::valueTypeInt8:
-        case FactMetaData::valueTypeInt16:
-        case FactMetaData::valueTypeInt32:
-            convertTo = QVariant::Int;
-            break;
-        case FactMetaData::valueTypeFloat:
-            convertTo = QMetaType::Float;
-            break;
-        case FactMetaData::valueTypeDouble:
-            convertTo = QVariant::Double;
-            break;
+    case FactMetaData::valueTypeUint8:
+    case FactMetaData::valueTypeUint16:
+    case FactMetaData::valueTypeUint32:
+        convertTo = QVariant::UInt;
+        break;
+    case FactMetaData::valueTypeInt8:
+    case FactMetaData::valueTypeInt16:
+    case FactMetaData::valueTypeInt32:
+        convertTo = QVariant::Int;
+        break;
+    case FactMetaData::valueTypeFloat:
+        convertTo = QMetaType::Float;
+        break;
+    case FactMetaData::valueTypeDouble:
+        convertTo = QVariant::Double;
+        break;
+    case FactMetaData::valueTypeString:
+        qWarning() << "Internal Error: No support for string parameters";
+        convertTo = QVariant::String;
+        break;
+    case FactMetaData::valueTypeBool:
+        qWarning() << "Internal Error: No support for string parameters";
+        convertTo = QVariant::Bool;
+        break;
     }
 
     *convertOk = var.convert(convertTo);
@@ -566,6 +574,15 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
         } else {
             qCDebug(APMParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << rawMetaData->incrementSize;
         }
+    }
+
+    // ArduPilot does not yet support decimal places meta data. So for P/I/D parameters we force to 6 places
+    if ((fact->name().endsWith(QStringLiteral("_P")) ||
+         fact->name().endsWith(QStringLiteral("_I")) ||
+         fact->name().endsWith(QStringLiteral("_D"))) &&
+            (fact->type() == FactMetaData::valueTypeFloat ||
+             fact->type() == FactMetaData::valueTypeDouble)) {
+        metaData->setDecimalPlaces(6);
     }
 
     fact->setMetaData(metaData);

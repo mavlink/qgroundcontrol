@@ -71,9 +71,12 @@ private slots:
 private:
     void _loadParametersFromDownloadFile(const QString& downloadedParamFile);
 
-    static bool _typesRegistered;
     APMAirframeType *_currentAirframeType;
     QmlObjectListModel *_airframeTypesModel;
+
+    static bool _typesRegistered;
+    static const char* _oldFrameParam;
+    static const char* _newFrameParam;
 };
 
 class APMAirframe : public QObject

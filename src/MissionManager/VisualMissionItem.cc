@@ -16,6 +16,10 @@
 #include "QGCApplication.h"
 #include "JsonHelper.h"
 
+const char* VisualMissionItem::jsonTypeKey =                "type";
+const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
+const char* VisualMissionItem::jsonTypeComplexItemValue =   "ComplexItem";
+
 VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
     : QObject(parent)
     , _vehicle(vehicle)

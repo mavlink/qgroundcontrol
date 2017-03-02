@@ -41,6 +41,8 @@ Var StartMenuFolder
 
 InstallDir $PROGRAMFILES\qgroundcontrol
 
+SetCompressor /SOLID /FINAL lzma
+
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP "installheader.bmp";
 

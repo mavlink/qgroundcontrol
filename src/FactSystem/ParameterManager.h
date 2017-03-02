@@ -28,7 +28,8 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerboseLog)
+Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)
+Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose2Log)
 
 /// Connects to Parameter Manager to load/update Facts
 class ParameterManager : public QObject
@@ -47,6 +48,9 @@ public:
     /// true: Parameters are missing from firmware response, false: all parameters received from firmware
     Q_PROPERTY(bool missingParameters READ missingParameters NOTIFY missingParametersChanged)
     bool missingParameters(void) { return _missingParameters; }
+
+    Q_PROPERTY(double loadProgress READ loadProgress NOTIFY loadProgressChanged)
+    double loadProgress(void) const { return _loadProgress; }
 
     /// @return Directory of parameter caches
     static QDir parameterCacheDir();
@@ -95,12 +99,10 @@ public:
     ///     @param[out] majorVersion Major version for found meta data
     ///     @param[out] minorVersion Minor version for found meta data
     /// @return Meta data file name of best match, emptyString is none found
-    static QString parameterMetaDataFile(MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion);
+    static QString parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion);
 
     /// If this file is newer than anything in the cache, cache it as the latest version
     static void cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPILOT firmwareType);
-
-    int defaultComponentId(void) { return _defaultComponentId; }
 
     /// Saves the specified param set to the json object.
     ///     @param componentId Component id which contains params, MAV_COMP_ID_ALL to save all components
@@ -120,12 +122,7 @@ public:
 signals:
     void parametersReadyChanged(bool parametersReady);
     void missingParametersChanged(bool missingParameters);
-
-    /// Signalled to update progress of full parameter list request
-    void parameterListProgress(float value);
-
-    /// Signalled to ourselves in order to get call on our own thread
-    void restartWaitingParamTimer(void);
+    void loadProgressChanged(float value);
     
 protected:
     Vehicle*            _vehicle;
@@ -133,7 +130,6 @@ protected:
     
     void _parameterUpdate(int vehicleId, int componentId, QString parameterName, int parameterCount, int parameterId, int mavType, QVariant value);
     void _valueUpdated(const QVariant& value);
-    void _restartWaitingParamTimer(void);
     void _waitingParamTimeout(void);
     void _tryCacheLookup(void);
     void _initialRequestTimeout(void);
@@ -141,7 +137,6 @@ protected:
 private:
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
     int _actualComponentId(int componentId);
-    void _determineDefaultComponentId(void);
     void _setupGroupMap(void);
     void _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
     void _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
@@ -150,11 +145,13 @@ private:
     void _addMetaDataToDefaultComponent(void);
     QString _remapParamNameToVersion(const QString& paramName);
     void _loadOfflineEditingParams(void);
+    QString _logVehiclePrefix(int componentId = -1);
+    void _setLoadProgress(double loadProgress);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
     void _saveToEEPROM(void);
-    void _checkInitialLoadComplete(bool failIfNoDefaultComponent);
+    void _checkInitialLoadComplete(void);
 
     /// First mapping is by component id
     /// Second mapping is parameter name, to Fact* in QVariant
@@ -166,13 +163,12 @@ private:
     /// Second mapping is group name, to Fact
     QMap<int, QMap<QString, QStringList> > _mapGroup2ParameterName;
     
+    double      _loadProgress;                  ///< Parameter load progess, [0.0,1.0]
     bool        _parametersReady;               ///< true: parameter load complete
     bool        _missingParameters;             ///< true: parameter missing from initial load
     bool        _initialLoadComplete;           ///< true: Initial load of all parameters complete, whether successful or not
     bool        _waitingForDefaultComponent;    ///< true: last chance wait for default component params
     bool        _saveRequired;                  ///< true: _saveToEEPROM should be called
-    int         _defaultComponentId;
-    QString     _defaultComponentIdParam;       ///< Parameter which identifies default component
     QString     _versionParam;                  ///< Parameter which contains parameter set version
     int         _parameterSetMajorVersion;      ///< Version for parameter set, -1 if not known
     QObject*    _parameterMetaData;             ///< Opaque data from FirmwarePlugin::loadParameterMetaDataCall
@@ -183,10 +179,11 @@ private:
     int         _prevWaitingWriteParamNameCount;
 
 
-    static const int _maxInitialRequestListRetry = 4;       ///< Maximum retries for request list
-    int              _initialRequestRetryCount;             ///< Current retry count for request list
-    static const int _maxInitialLoadRetrySingleParam = 10;  ///< Maximum retries for initial index based load of a single param
-    static const int _maxReadWriteRetry = 5;                ///< Maximum retries read/write
+    static const int    _maxInitialRequestListRetry = 4;        ///< Maximum retries for request list
+    int                 _initialRequestRetryCount;              ///< Current retry count for request list
+    static const int    _maxInitialLoadRetrySingleParam = 5;    ///< Maximum retries for initial index based load of a single param
+    static const int    _maxReadWriteRetry = 5;                 ///< Maximum retries read/write
+    bool                _disableAllRetries;                     ///< true: Don't retry any requests (used for testing)
 
     QMap<int, int>                  _paramCountMap;             ///< Key: Component id, Value: count of parameters in this component
     QMap<int, QMap<int, int> >      _waitingReadParamIndexMap;  ///< Key: Component id, Value: Map { Key: parameter index still waiting for, Value: retry count }

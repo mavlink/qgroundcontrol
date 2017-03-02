@@ -17,8 +17,7 @@
 #include "TCPLoopBackServer.h"
 
 TCPLinkTest::TCPLinkTest(void)
-    : _config(NULL)
-    , _link(NULL)
+    : _link(NULL)
     , _multiSpy(NULL)
 {
 
@@ -31,13 +30,12 @@ void TCPLinkTest::init(void)
     
     Q_ASSERT(_link == nullptr);
     Q_ASSERT(_multiSpy == nullptr);
-    Q_ASSERT(_config == nullptr);
 
-    _config = new TCPConfiguration("MockTCP");
-    _config->setAddress(QHostAddress::LocalHost);
-    _config->setPort(5760);
-    _link = new TCPLink(_config);
-    Q_ASSERT(_link != NULL);
+    TCPConfiguration* tcpConfig = new TCPConfiguration("MockTCP");
+    tcpConfig->setAddress(QHostAddress::LocalHost);
+    tcpConfig->setPort(5760);
+    _sharedConfig = SharedLinkConfigurationPointer(tcpConfig);
+    _link = new TCPLink(_sharedConfig);
 
     _rgSignals[bytesReceivedSignalIndex] = SIGNAL(bytesReceived(LinkInterface*, QByteArray));
     _rgSignals[connectedSignalIndex] = SIGNAL(connected(void));
@@ -55,7 +53,6 @@ void TCPLinkTest::cleanup(void)
 {
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_link);
-    Q_ASSERT(_config);
 
     delete _multiSpy;
     _multiSpy = nullptr;
@@ -63,15 +60,13 @@ void TCPLinkTest::cleanup(void)
     delete _link;
     _link = nullptr;
 
-    delete _config;
-    _config = nullptr;
+    _sharedConfig.clear();
 
     UnitTest::cleanup();
 }
 
 void TCPLinkTest::_connectFail_test(void)
 {
-    Q_ASSERT(_config);
     Q_ASSERT(_link);
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
@@ -110,7 +105,8 @@ void TCPLinkTest::_connectSucceed_test(void)
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
 
     // Start the server side
-    TCPLoopBackServer* server = new TCPLoopBackServer(_config->address(), _config->port());
+    TCPConfiguration* tcpConfig = qobject_cast<TCPConfiguration*>(_sharedConfig.data());
+    TCPLoopBackServer* server = new TCPLoopBackServer(tcpConfig->address(), tcpConfig->port());
     Q_CHECK_PTR(server);
     
     // Connect to the server

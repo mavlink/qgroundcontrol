@@ -17,15 +17,15 @@
 #include "JsonHelper.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
+#include "QGroundControlQmlGlobal.h"
+#include "SettingsManager.h"
 
-const double SimpleMissionItem::defaultAltitude =             50.0;
-
-FactMetaData* SimpleMissionItem::_altitudeMetaData =          NULL;
-FactMetaData* SimpleMissionItem::_commandMetaData =           NULL;
-FactMetaData* SimpleMissionItem::_defaultParamMetaData =      NULL;
-FactMetaData* SimpleMissionItem::_frameMetaData =             NULL;
-FactMetaData* SimpleMissionItem::_latitudeMetaData =          NULL;
-FactMetaData* SimpleMissionItem::_longitudeMetaData =         NULL;
+FactMetaData* SimpleMissionItem::_altitudeMetaData =        NULL;
+FactMetaData* SimpleMissionItem::_commandMetaData =         NULL;
+FactMetaData* SimpleMissionItem::_defaultParamMetaData =    NULL;
+FactMetaData* SimpleMissionItem::_frameMetaData =           NULL;
+FactMetaData* SimpleMissionItem::_latitudeMetaData =        NULL;
+FactMetaData* SimpleMissionItem::_longitudeMetaData =       NULL;
 
 struct EnumInfo_s {
     const char *    label;
@@ -65,12 +65,16 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
 {
+    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
+
     _altitudeRelativeToHomeFact.setRawValue(true);
 
     _setupMetaData();
     _connectSignals();
 
     setDefaultsForCommand();
+
+    connect(&_missionItem, &MissionItem::flightSpeedChanged, this, &SimpleMissionItem::flightSpeedChanged);
 }
 
 SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missionItem, QObject* parent)
@@ -93,6 +97,8 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missio
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
 {
+    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
+
     _altitudeRelativeToHomeFact.setRawValue(true);
 
     _setupMetaData();
@@ -118,6 +124,8 @@ SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* pa
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
 {
+    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
+
     _setupMetaData();
     _connectSignals();
 
@@ -248,9 +256,9 @@ bool SimpleMissionItem::load(QTextStream &loadStream)
     return _missionItem.load(loadStream);
 }
 
-bool SimpleMissionItem::load(const QJsonObject& json, QString& errorString)
+bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QString& errorString)
 {
-    return _missionItem.load(json, errorString);
+    return _missionItem.load(json, sequenceNumber, errorString);
 }
 
 bool SimpleMissionItem::isStandaloneCoordinate(void) const
@@ -526,7 +534,7 @@ void SimpleMissionItem::_syncFrameToAltitudeRelativeToHome(void)
 void SimpleMissionItem::setDefaultsForCommand(void)
 {
     // We set these global defaults first, then if there are param defaults they will get reset
-    _missionItem.setParam7(defaultAltitude);
+    _missionItem.setParam7(qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble());
 
     MAV_CMD command = (MAV_CMD)this->command();
     const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
@@ -606,4 +614,9 @@ void SimpleMissionItem::setSequenceNumber(int sequenceNumber)
         // This is too likely to ignore
         emit abbreviationChanged();
     }
+}
+
+double SimpleMissionItem::flightSpeed(void)
+{
+    return missionItem().flightSpeed();
 }

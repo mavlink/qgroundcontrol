@@ -45,10 +45,10 @@ UrlFactory::UrlFactory()
 
 #ifndef QGC_NO_GOOGLE_MAPS
     // Google version strings
-    _versionGoogleMap            = "m@338000000";
-    _versionGoogleSatellite      = "198";
+    _versionGoogleMap            = "m@354000000";
+    _versionGoogleSatellite      = "692";
     _versionGoogleLabels         = "h@336";
-    _versionGoogleTerrain        = "t@132,r@338000000";
+    _versionGoogleTerrain        = "t@354,r@354000000";
     _secGoogleWord               = "Galileo";
 #endif
     // BingMaps

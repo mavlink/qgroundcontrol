@@ -65,27 +65,22 @@ static QString get_ip_address(const QString& address)
     return QString("");
 }
 
-UDPLink::UDPLink(UDPConfiguration* config)
-    : _socket(NULL)
-    , _connectState(false)
-    #if defined(QGC_ZEROCONF_ENABLED)
+UDPLink::UDPLink(SharedLinkConfigurationPointer& config)
+    : LinkInterface(config)
+#if defined(QGC_ZEROCONF_ENABLED)
     , _dnssServiceRef(NULL)
-    #endif
+#endif
     , _running(false)
+    , _socket(NULL)
+    , _udpConfig(qobject_cast<UDPConfiguration*>(config.data()))
+    , _connectState(false)
 {
-    Q_ASSERT(config != NULL);
-    _config = config;
-    _config->setLink(this);
-
-    // We're doing it wrong - because the Qt folks got the API wrong:
-    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    Q_ASSERT(_udpConfig);
     moveToThread(this);
 }
 
 UDPLink::~UDPLink()
 {
-    // Disconnect link from configuration
-    _config->setLink(NULL);
     _disconnect();
     // Tell the thread to exit
     _running = false;
@@ -121,17 +116,17 @@ void UDPLink::_restartConnection()
 
 QString UDPLink::getName() const
 {
-    return _config->name();
+    return _udpConfig->name();
 }
 
 void UDPLink::addHost(const QString& host)
 {
-    _config->addHost(host);
+    _udpConfig->addHost(host);
 }
 
 void UDPLink::removeHost(const QString& host)
 {
-    _config->removeHost(host);
+    _udpConfig->removeHost(host);
 }
 
 void UDPLink::_writeBytes(const QByteArray data)
@@ -143,7 +138,7 @@ void UDPLink::_writeBytes(const QByteArray data)
     // Send to all connected systems
     QString host;
     int port;
-    if(_config->firstHost(host, port)) {
+    if(_udpConfig->firstHost(host, port)) {
         do {
             QHostAddress currentHost(host);
             if(_socket->writeDatagram(data, currentHost, (quint16)port) < 0) {
@@ -162,10 +157,10 @@ void UDPLink::_writeBytes(const QByteArray data)
                 // unit sent by UDP.
                 _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
             }
-        } while (_config->nextHost(host, port));
+        } while (_udpConfig->nextHost(host, port));
         //-- Remove hosts that are no longer there
         foreach (const QString& ghost, goneHosts) {
-            _config->removeHost(ghost);
+            _udpConfig->removeHost(ghost);
         }
     }
 }
@@ -194,7 +189,7 @@ void UDPLink::readBytes()
         // added to the list and will start receiving datagrams from here. Even a port scanner
         // would trigger this.
         // Add host to broadcast list if not yet present, or update its port
-        _config->addHost(sender.toString(), (int)senderPort);
+        _udpConfig->addHost(sender.toString(), (int)senderPort);
     }
     //-- Send whatever is left
     if(databuffer.size()) {
@@ -248,8 +243,9 @@ bool UDPLink::_hardwareConnect()
     QHostAddress host = QHostAddress::AnyIPv4;
     _socket = new QUdpSocket();
     _socket->setProxy(QNetworkProxy::NoProxy);
-    _connectState = _socket->bind(host, _config->localPort(), QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
+    _connectState = _socket->bind(host, _udpConfig->localPort(), QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
     if (_connectState) {
+        _socket->joinMulticastGroup(QHostAddress("224.0.0.1"));
         //-- Make sure we have a large enough IO buffers
 #ifdef __mobile__
         _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
@@ -258,11 +254,11 @@ bool UDPLink::_hardwareConnect()
         _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    256 * 1024);
         _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);
 #endif
-        _registerZeroconf(_config->localPort(), kZeroconfRegistration);
+        _registerZeroconf(_udpConfig->localPort(), kZeroconfRegistration);
         QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
         emit connected();
     } else {
-        emit communicationError("UDP Link Error", "Error binding UDP port");
+        emit communicationError(tr("UDP Link Error"), tr("Error binding UDP port: %1").arg(_socket->errorString()));
     }
     return _connectState;
 }

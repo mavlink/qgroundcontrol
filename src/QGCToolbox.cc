@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 
-#include "AutoPilotPluginManager.h"
 #include "FactSystem.h"
 #include "FirmwarePluginManager.h"
 #include "FlightMapSettings.h"
@@ -16,7 +15,6 @@
 #ifndef __mobile__
 #include "GPSManager.h"
 #endif
-#include "HomePositionManager.h"
 #include "JoystickManager.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
@@ -28,17 +26,23 @@
 #include "FollowMe.h"
 #include "PositionManager.h"
 #include "VideoManager.h"
+#include "MAVLinkLogManager.h"
+#include "QGCCorePlugin.h"
+#include "QGCOptions.h"
+#include "SettingsManager.h"
+
+#if defined(QGC_CUSTOM_BUILD)
+#include CUSTOMHEADER
+#endif
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
     : _audioOutput(NULL)
-    , _autopilotPluginManager(NULL)
     , _factSystem(NULL)
     , _firmwarePluginManager(NULL)
     , _flightMapSettings(NULL)
 #ifndef __mobile__
     , _gpsManager(NULL)
 #endif
-    , _homePositionManager(NULL)
     , _imageProvider(NULL)
     , _joystickManager(NULL)
     , _linkManager(NULL)
@@ -50,16 +54,22 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     , _followMe(NULL)
     , _qgcPositionManager(NULL)
     , _videoManager(NULL)
+    , _mavlinkLogManager(NULL)
+    , _corePlugin(NULL)
+    , _settingsManager(NULL)
 {
+    // SettingsManager must be first so settings are available to any subsequent tools
+    _settingsManager =          new SettingsManager(app);
+
+    //-- Scan and load plugins
+    _scanAndLoadPlugins(app);
     _audioOutput =              new GAudioOutput(app);
-    _autopilotPluginManager =   new AutoPilotPluginManager(app);
     _factSystem =               new FactSystem(app);
     _firmwarePluginManager =    new FirmwarePluginManager(app);
     _flightMapSettings =        new FlightMapSettings(app);
 #ifndef __mobile__
     _gpsManager =               new GPSManager(app);
 #endif
-    _homePositionManager =      new HomePositionManager(app);
     _imageProvider =            new QGCImageProvider(app);
     _joystickManager =          new JoystickManager(app);
     _linkManager =              new LinkManager(app);
@@ -71,19 +81,22 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _qgcPositionManager =       new QGCPositionManager(app);
     _followMe =                 new FollowMe(app);
     _videoManager =             new VideoManager(app);
+    _mavlinkLogManager =        new MAVLinkLogManager(app);
 }
 
 void QGCToolbox::setChildToolboxes(void)
 {
+    // SettingsManager must be first so settings are available to any subsequent tools
+    _settingsManager->setToolbox(this);
+
+    _corePlugin->setToolbox(this);
     _audioOutput->setToolbox(this);
-    _autopilotPluginManager->setToolbox(this);
     _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
     _flightMapSettings->setToolbox(this);
 #ifndef __mobile__
     _gpsManager->setToolbox(this);
 #endif
-    _homePositionManager->setToolbox(this);
     _imageProvider->setToolbox(this);
     _joystickManager->setToolbox(this);
     _linkManager->setToolbox(this);
@@ -95,17 +108,17 @@ void QGCToolbox::setChildToolboxes(void)
     _followMe->setToolbox(this);
     _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
+    _mavlinkLogManager->setToolbox(this);
 }
 
 QGCToolbox::~QGCToolbox()
 {
     delete _videoManager;
+    delete _mavlinkLogManager;
     delete _audioOutput;
-    delete _autopilotPluginManager;
     delete _factSystem;
     delete _firmwarePluginManager;
     delete _flightMapSettings;
-    delete _homePositionManager;
     delete _joystickManager;
     delete _linkManager;
     delete _mavlinkProtocol;
@@ -115,6 +128,20 @@ QGCToolbox::~QGCToolbox()
     delete _uasMessageHandler;
     delete _followMe;
     delete _qgcPositionManager;
+    delete _corePlugin;
+}
+
+void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)
+{
+#if defined (QGC_CUSTOM_BUILD)
+    //-- Create custom plugin (Static)
+    _corePlugin = (QGCCorePlugin*) new CUSTOMCLASS(app);
+    if(_corePlugin) {
+        return;
+    }
+#endif
+    //-- No plugins found, use default instance
+    _corePlugin = new QGCCorePlugin(app);
 }
 
 QGCTool::QGCTool(QGCApplication* app)
@@ -122,7 +149,6 @@ QGCTool::QGCTool(QGCApplication* app)
     , _app(app)
     , _toolbox(NULL)
 {
-
 }
 
 void QGCTool::setToolbox(QGCToolbox* toolbox)

@@ -138,7 +138,6 @@ protected:
 
     QAction* addNewCurve;                 ///< Add curve candidate to the active curves
 
-    QMenu* curveMenu;
     QComboBox *timeScaleCmb;
 
     QToolButton* scalingLogButton;

@@ -15,31 +15,31 @@ import QtQuick.Dialogs          1.2
 import QtLocation               5.3
 import QtPositioning            5.2
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl                           1.0
+import QGroundControl.ScreenTools               1.0
+import QGroundControl.Controls                  1.0
+import QGroundControl.Palette                   1.0
+import QGroundControl.Vehicle                   1.0
+import QGroundControl.FlightMap                 1.0
 
 Item {
     id: _root
 
-    property alias  guidedModeBar:  _guidedModeBar
-    property bool   gotoEnabled:    _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
+    property alias  guidedModeBar:          _guidedModeBar
+    property bool   gotoEnabled:            _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
+    property var    qgcView
+    property bool   isBackgroundDark
 
-    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _isSatellite:               _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
-    property bool   _lightWidgetBorders:        _isSatellite
-    property bool   _useAlternateInstruments:   QGroundControl.virtualTabletJoystick || ScreenTools.isTinyScreen
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+    property bool   _lightWidgetBorders:    _isSatellite
 
-    readonly property real _margins:                ScreenTools.defaultFontPixelHeight / 2
-    readonly property real _toolButtonTopMargin:    parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
+    readonly property real _margins:        ScreenTools.defaultFontPixelHeight * 0.5
 
     QGCMapPalette { id: mapPal; lightColors: isBackgroundDark }
-    QGCPalette { id: qgcPal }
+    QGCPalette    { id: qgcPal }
 
-    function getGadgetWidth() {
+    function getPreferredInstrumentWidth() {
         if(ScreenTools.isMobile) {
             return ScreenTools.isTinyScreen ? mainWindow.width * 0.2 : mainWindow.width * 0.15
         }
@@ -47,12 +47,40 @@ Item {
         return Math.min(w, 200)
     }
 
-    ExclusiveGroup {
-        id: _dropButtonsExclusiveGroup
+    function _setInstrumentWidget() {
+        if(QGroundControl.corePlugin.options.instrumentWidget.source.toString().length) {
+            instrumentsLoader.source = QGroundControl.corePlugin.options.instrumentWidget.source
+            switch(QGroundControl.corePlugin.options.instrumentWidget.widgetPosition) {
+            case CustomInstrumentWidget.POS_TOP_RIGHT:
+                instrumentsLoader.state  = "topMode"
+                break;
+            case CustomInstrumentWidget.POS_BOTTOM_RIGHT:
+                instrumentsLoader.state  = "bottomMode"
+                break;
+            case CustomInstrumentWidget.POS_CENTER_RIGHT:
+            default:
+                instrumentsLoader.state  = "centerMode"
+                break;
+            }
+        } else {
+            var useAlternateInstruments = QGroundControl.settingsManager.appSettings.virtualJoystick.value || ScreenTools.isTinyScreen
+            if(useAlternateInstruments) {
+                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
+                instrumentsLoader.state  = "topMode"
+            } else {
+                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
+                instrumentsLoader.state  = "centerMode"
+            }
+        }
     }
 
-    ExclusiveGroup {
-        id: _mapTypeButtonsExclusiveGroup
+    Connections {
+        target:         QGroundControl.settingsManager.appSettings.virtualJoystick
+        onValueChanged: _setInstrumentWidget()
+    }
+
+    Component.onCompleted: {
+        _setInstrumentWidget()
     }
 
     //-- Map warnings
@@ -80,206 +108,43 @@ Item {
         }
     }
 
-    //-- Dismiss Drop Down (if any)
-    MouseArea {
-        anchors.fill:   parent
-        enabled:        _dropButtonsExclusiveGroup.current != null
-        onClicked: {
-            if(_dropButtonsExclusiveGroup.current)
-                _dropButtonsExclusiveGroup.current.checked = false
-            _dropButtonsExclusiveGroup.current = null
-        }
-    }
-
     //-- Instrument Panel
-    QGCInstrumentWidget {
-        id:                     instrumentGadget
+    Loader {
+        id:                     instrumentsLoader
         anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
         anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        visible:                !_useAlternateInstruments
-        size:                   getGadgetWidth()
-        active:                 _activeVehicle != null
-        heading:                _heading
-        rollAngle:              _roll
-        pitchAngle:             _pitch
-        groundSpeedFact:        _groundSpeedFact
-        airSpeedFact:           _airSpeedFact
-        lightBorders:           _lightWidgetBorders
         z:                      QGroundControl.zOrderWidgets
-        qgcView:                parent.parent.qgcView
-        maxHeight:              parent.height - (anchors.margins * 2)
-    }
-
-    QGCInstrumentWidgetAlternate {
-        id:                     instrumentGadgetAlternate
-        anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
-        anchors.top:            parent.top
-        anchors.right:          altitudeSlider.visible ? altitudeSlider.left : parent.right
-        visible:                _useAlternateInstruments
-        width:                  ScreenTools.isTinyScreen ? getGadgetWidth() * 1.5 : getGadgetWidth()
-        active:                 _activeVehicle != null
-        heading:                _heading
-        rollAngle:              _roll
-        pitchAngle:             _pitch
-        groundSpeedFact:        _groundSpeedFact
-        airSpeedFact:           _airSpeedFact
-        isSatellite:            _isSatellite
-        z:                      QGroundControl.zOrderWidgets
-    }
-
-    ValuesWidget {
-        anchors.topMargin:          ScreenTools.defaultFontPixelHeight
-        anchors.top:                instrumentGadgetAlternate.bottom
-        anchors.horizontalCenter:   instrumentGadgetAlternate.horizontalCenter
-        width:                      getGadgetWidth()
-        qgcView:                    parent.parent.qgcView
-        textColor:                  _isSatellite ? "white" : "black"
-        visible:                    _useAlternateInstruments
-        maxHeight:                  virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.y - y : parent.height - anchors.margins - y
-    }
-
-    QGCLabel {
-        id:         flyLabel
-        text:       qsTr("Fly")
-        color:      mapPal.text
-        visible:    !ScreenTools.isShortScreen
-        anchors.topMargin:          _toolButtonTopMargin
-        anchors.horizontalCenter:   toolColumn.horizontalCenter
-        anchors.top:                parent.top
-    }
-
-    //-- Vertical Tool Buttons
-    Column {
-        id:                 toolColumn
-        anchors.topMargin:  ScreenTools.isShortScreen ? _toolButtonTopMargin : ScreenTools.defaultFontPixelHeight / 2
-        anchors.leftMargin: ScreenTools.defaultFontPixelHeight
-        anchors.left:       parent.left
-        anchors.top:        ScreenTools.isShortScreen ? parent.top : flyLabel.bottom
-        spacing:            ScreenTools.defaultFontPixelHeight
-        visible:            _mainIsMap
-
-        //-- Map Center Control
-        DropButton {
-            id:                 centerMapDropButton
-            dropDirection:      dropRight
-            buttonImage:        "/qmlimages/MapCenter.svg"
-            viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-            exclusiveGroup:     _dropButtonsExclusiveGroup
-            z:                  QGroundControl.zOrderWidgets
-            lightBorders:       _lightWidgetBorders
-
-            dropDownComponent: Component {
-                Row {
-                    spacing: ScreenTools.defaultFontPixelWidth
-
-                    QGCCheckBox {
-                        id:         followVehicleCheckBox
-                        text:       qsTr("Follow Vehicle")
-                        checked:    _flightMap ? _flightMap._followVehicle : false
-                        anchors.verticalCenter: parent.verticalCenter
-                        //anchors.baseline:   centerMapButton.baseline - This doesn't work correctly on mobile for some strange reason, so we center instead
-
-                        onClicked: {
-                            _dropButtonsExclusiveGroup.current = null
-                            _flightMap._followVehicle = !_flightMap._followVehicle
-                        }
-                    }
-
-                    QGCButton {
-                        id:         centerMapButton
-                        text:       qsTr("Center map on Vehicle")
-                        enabled:    _activeVehicle && !followVehicleCheckBox.checked
-
-                        property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
-                        onClicked: {
-                            _dropButtonsExclusiveGroup.current = null
-                            _flightMap.center = activeVehicle.coordinate
-                        }
-                    }
+        property var  qgcView:  _root.qgcView
+        property real maxHeight:parent.height - (anchors.margins * 2)
+        states: [
+            State {
+                name:   "topMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.verticalCenter: undefined
+                    anchors.bottom:         undefined
+                    anchors.top:            _root ? _root.top : undefined
+                }
+            },
+            State {
+                name:   "centerMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.top:            undefined
+                    anchors.bottom:         undefined
+                    anchors.verticalCenter: _root ? _root.verticalCenter : undefined
+                }
+            },
+            State {
+                name:   "bottomMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.top:            undefined
+                    anchors.verticalCenter: undefined
+                    anchors.bottom:         _root ? _root.bottom : undefined
                 }
             }
-        }
-
-        //-- Map Type Control
-        DropButton {
-            id:                 mapTypeButton
-            dropDirection:      dropRight
-            buttonImage:        "/qmlimages/MapType.svg"
-            viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-            exclusiveGroup:     _dropButtonsExclusiveGroup
-            z:                  QGroundControl.zOrderWidgets
-            lightBorders:       _lightWidgetBorders
-
-            dropDownComponent: Component {
-                Column {
-                    spacing: ScreenTools.defaultFontPixelWidth
-
-                    Row {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
-                        Repeater {
-                            model: QGroundControl.flightMapSettings.mapTypes
-
-                            QGCButton {
-                                checkable:      true
-                                checked:        QGroundControl.flightMapSettings.mapType === text
-                                text:           modelData
-                                width:          clearButton.width
-                                exclusiveGroup: _mapTypeButtonsExclusiveGroup
-
-                                onClicked: {
-                                    QGroundControl.flightMapSettings.mapType = text
-                                    checked = true
-                                    _dropButtonsExclusiveGroup.current = null
-                                }
-                            }
-                        }
-                    }
-
-                    QGCButton {
-                        id:         clearButton
-                        text:       qsTr("Clear Flight Trails")
-                        enabled:    QGroundControl.multiVehicleManager.activeVehicle
-                        onClicked: {
-                            QGroundControl.multiVehicleManager.activeVehicle.clearTrajectoryPoints()
-                            _dropButtonsExclusiveGroup.current = null
-                        }
-                    }
-                }
-            }
-        }
-
-        //-- Zoom Map In
-        RoundButton {
-            id:                 mapZoomPlus
-            visible:            !ScreenTools.isTinyScreen && _mainIsMap
-            buttonImage:        "/qmlimages/ZoomPlus.svg"
-            exclusiveGroup:     _dropButtonsExclusiveGroup
-            z:                  QGroundControl.zOrderWidgets
-            lightBorders:       _lightWidgetBorders
-            onClicked: {
-                if(_flightMap)
-                    _flightMap.zoomLevel += 0.5
-                checked = false
-            }
-        }
-
-        //-- Zoom Map Out
-        RoundButton {
-            id:                 mapZoomMinus
-            visible:            !ScreenTools.isTinyScreen && _mainIsMap
-            buttonImage:        "/qmlimages/ZoomMinus.svg"
-            exclusiveGroup:     _dropButtonsExclusiveGroup
-            z:                  QGroundControl.zOrderWidgets
-            lightBorders:       _lightWidgetBorders
-            onClicked: {
-                if(_flightMap)
-                    _flightMap.zoomLevel -= 0.5
-                checked = false
-            }
-        }
+        ]
     }
 
     //-- Guided mode buttons
@@ -291,7 +156,7 @@ Item {
         width:                      guidedModeColumn.width  + (_margins * 2)
         height:                     guidedModeColumn.height + (_margins * 2)
         radius:                     ScreenTools.defaultFontPixelHeight * 0.25
-        color:                      _lightWidgetBorders ? Qt.rgba(qgcPal.mapWidgetBorderLight.r, qgcPal.mapWidgetBorderLight.g, qgcPal.mapWidgetBorderLight.b, 0.8) : Qt.rgba(qgcPal.mapWidgetBorderDark.r, qgcPal.mapWidgetBorderDark.g, qgcPal.mapWidgetBorderDark.b, 0.75)
+        color:                      _isSatellite ? Qt.rgba(qgcPal.mapWidgetBorderLight.r, qgcPal.mapWidgetBorderLight.g, qgcPal.mapWidgetBorderLight.b, 0.8) : Qt.rgba(qgcPal.mapWidgetBorderDark.r, qgcPal.mapWidgetBorderDark.g, qgcPal.mapWidgetBorderDark.b, 0.75)
         visible:                    _activeVehicle
         z:                          QGroundControl.zOrderWidgets
         state:                      "Shown"
@@ -335,7 +200,7 @@ Item {
             interval:       7000
             running:        true
             onTriggered: {
-                if (ScreenTools.isShortScreen) {
+                if (ScreenTools.isTinyScreen) {
                     _guidedModeBar.state = "Hidden"
                 }
             }
@@ -351,6 +216,7 @@ Item {
         readonly property int confirmGoTo:          8
         readonly property int confirmRetask:        9
         readonly property int confirmOrbit:         10
+        readonly property int confirmAbort:         11
 
         property int    confirmActionCode
         property real   _showMargin:    _margins
@@ -398,6 +264,9 @@ Item {
                 //-- Center on current flight map position and orbit with a 50m radius (velocity/direction controlled by the RC)
                 //_activeVehicle.guidedModeOrbit(QGroundControl.flightMapPosition, 50.0)
                 break;
+            case confirmAbort:
+                _activeVehicle.abortLanding(50)     // hardcoded value for climbOutAltitude that is currently ignored
+                break;
             default:
                 console.warn(qsTr("Internal error: unknown confirmActionCode"), confirmActionCode)
             }
@@ -426,7 +295,7 @@ Item {
                 break;
             case confirmTakeoff:
                 altitudeSlider.visible = true
-                altitudeSlider.setInitialValueMeters(2)
+                altitudeSlider.setInitialValueMeters(3)
                 guidedModeConfirm.confirmText = qsTr("takeoff")
                 break;
             case confirmLand:
@@ -437,7 +306,7 @@ Item {
                 break;
             case confirmChangeAlt:
                 altitudeSlider.visible = true
-                altitudeSlider.setInitialValueAppSettingsDistanceUnits(_activeVehicle.altitudeAMSL.value)
+                altitudeSlider.setInitialValueAppSettingsDistanceUnits(_activeVehicle.altitudeRelative.value)
                 guidedModeConfirm.confirmText = qsTr("change altitude")
                 break;
             case confirmGoTo:
@@ -448,6 +317,9 @@ Item {
                 break;
             case confirmOrbit:
                 guidedModeConfirm.confirmText = qsTr("enter orbit mode")
+                break;
+            case confirmAbort:
+                guidedModeConfirm.confirmText = qsTr("abort landing")
                 break;
             }
             _guidedModeBar.visible = false
@@ -463,7 +335,7 @@ Item {
 
             QGCLabel {
                 anchors.horizontalCenter: parent.horizontalCenter
-                color:      _lightWidgetBorders ? qgcPal.mapWidgetBorderDark : qgcPal.mapWidgetBorderLight
+                color:      _isSatellite ? qgcPal.mapWidgetBorderDark : qgcPal.mapWidgetBorderLight
                 text:       "Click in map to move vehicle"
                 visible:    gotoEnabled
             }
@@ -514,6 +386,13 @@ Item {
                     text:       qsTr("Orbit")
                     visible:    (_activeVehicle && _activeVehicle.flying) && _activeVehicle.orbitModeSupported && _activeVehicle.armed
                     onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmOrbit)
+                }
+
+                QGCButton {
+                    pointSize:  _guidedModeBar._fontPointSize
+                    text:       qsTr("Abort")
+                    visible:    _activeVehicle && _activeVehicle.flying && _activeVehicle.fixedWing
+                    onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmAbort)
                 }
 
             } // Row
@@ -610,8 +489,8 @@ Item {
             anchors.left:       parent.left
             anchors.right:      parent.right
             orientation:        Qt.Vertical
-            minimumValue:       QGroundControl.metersToAppSettingsDistanceUnits(2)
-            maximumValue:       QGroundControl.metersToAppSettingsDistanceUnits((_activeVehicle && _activeVehicle.flying) ? 100 : 10)
+            minimumValue:       QGroundControl.metersToAppSettingsDistanceUnits(0)
+            maximumValue:       QGroundControl.metersToAppSettingsDistanceUnits((_activeVehicle && _activeVehicle.flying) ? Math.round((_activeVehicle.altitudeRelative.value + 100) / 100) * 100 : 10)
         }
     }
 }

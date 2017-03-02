@@ -65,12 +65,5 @@ QUrl APMLightsComponent::summaryQmlSource(void) const
 
 QString APMLightsComponent::prerequisiteSetup(void) const
 {
-    APMAutoPilotPlugin* plugin = dynamic_cast<APMAutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    }
-
     return QString();
 }

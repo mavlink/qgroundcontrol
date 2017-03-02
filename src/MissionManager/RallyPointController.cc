@@ -20,6 +20,8 @@
 #include "ParameterManager.h"
 #include "JsonHelper.h"
 #include "SimpleMissionItem.h"
+#include "QGroundControlQmlGlobal.h"
+#include "SettingsManager.h"
 
 #ifndef __mobile__
 #include "QGCFileDialog.h"
@@ -46,13 +48,6 @@ RallyPointController::~RallyPointController()
 
 }
 
-void RallyPointController::start(bool editMode)
-{
-    qCDebug(RallyPointControllerLog) << "start editMode" << editMode;
-
-    PlanElementController::start(editMode);
-}
-
 void RallyPointController::_activeVehicleBeingRemoved(void)
 {
     _activeVehicle->rallyPointManager()->disconnect(this);
@@ -75,8 +70,13 @@ bool RallyPointController::_loadJsonFile(QJsonDocument& jsonDoc, QString& errorS
 {
     QJsonObject json = jsonDoc.object();
 
-    int fileMajorVersion, fileMinorVersion;
-    if (!JsonHelper::validateQGCJsonFile(json, _jsonFileTypeValue, 1 /* supportedMajorVersion */, 0 /* supportedMinorVersion */, fileMajorVersion, fileMinorVersion, errorString)) {
+    int fileVersion;
+    if (!JsonHelper::validateQGCJsonFile(json,
+                                         _jsonFileTypeValue,    // expected file type
+                                         1,                     // minimum supported version
+                                         1,                     // maximum supported version
+                                         fileVersion,
+                                         errorString)) {
         return false;
     }
 
@@ -113,7 +113,7 @@ void RallyPointController::loadFromFile(const QString& filename)
     QFile file(filename);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        errorString = file.errorString();
+        errorString = file.errorString() + QStringLiteral(" ") + filename;
     } else {
         QJsonDocument   jsonDoc;
         QByteArray      bytes = file.readAll();
@@ -166,7 +166,7 @@ void RallyPointController::saveToFile(const QString& filename)
         QJsonObject jsonObject;
 
         jsonObject[JsonHelper::jsonFileTypeKey] =       _jsonFileTypeValue;
-        jsonObject[JsonHelper::jsonVersionKey] =        QStringLiteral("1.0");
+        jsonObject[JsonHelper::jsonVersionKey] =        1;
         jsonObject[JsonHelper::jsonGroundStationKey] =  JsonHelper::jsonGroundStationValue;
 
         QJsonArray rgPoints;
@@ -254,6 +254,7 @@ void RallyPointController::_loadComplete(const QList<QGeoCoordinate> rgPoints)
     _points.swapObjectList(pointList);
     setDirty(false);
     _setFirstPointCurrent();
+    emit loadComplete();
 }
 
 QString RallyPointController::fileExtension(void) const
@@ -267,7 +268,7 @@ void RallyPointController::addPoint(QGeoCoordinate point)
     if (_points.count()) {
         defaultAlt = qobject_cast<RallyPoint*>(_points[_points.count() - 1])->coordinate().altitude();
     } else {
-        defaultAlt = SimpleMissionItem::defaultAltitude;
+        defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
     }
     point.setAltitude(defaultAlt);
     RallyPoint* newPoint = new RallyPoint(point, this);
