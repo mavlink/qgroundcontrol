@@ -25,34 +25,6 @@ FactPanel {
 
     property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 
-    property string _failsafeGCSEnableText
-
-    Component.onCompleted: {
-        setFailsafeGCSEnableText()
-    }
-
-    Connections {
-        target: _failsafeGCSEnable
-
-        onValueChanged: setFailsafeGCSEnableText()
-    }
-
-    function setFailsafeGCSEnableText() {
-        switch (_failsafeGCSEnable.value) {
-        case 0:
-            _failsafeGCSEnableText = qsTr("Disabled")
-            break
-        case 1:
-            _failsafeGCSEnableText = qsTr("Always RTL")
-            break
-        case 2:
-            _failsafeGCSEnableText = qsTr("Continue with Mission in Auto Mode")
-            break
-        default:
-            _failsafeGCSEnableText = qsTr("Unknown")
-        }
-    }
-
     Column {
         anchors.fill:       parent
 
@@ -63,17 +35,17 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: qsTr("GCS failsafe:")
-            valueText: _failsafeGCSEnableText
+            valueText: _failsafeGCSEnable.enumOrValueString
         }
 
         VehicleSummaryRow {
             labelText: qsTr("Leak failsafe:")
-            valueText:  _failsafeLeakEnable.value ? qsTr("Enabled") : qsTr("Disabled")
+            valueText:  _failsafeLeakEnable.enumOrValueString
         }
 
         VehicleSummaryRow {
             labelText: qsTr("Leak detector:")
-            valueText: _leakPin.value > 0 ? qsTr("Enabled") : qsTr("Disabled")
+            valueText: _leakPin.enumOrValueString
         }
 
         VehicleSummaryRow {

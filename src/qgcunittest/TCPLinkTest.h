@@ -60,11 +60,11 @@ private:
         //deleteLinkSignalMask =          1 << deleteLinkSignalIndex,
     };
     
-    TCPConfiguration*   _config;
-    TCPLink*            _link;
-    MultiSignalSpy*     _multiSpy;
-    static const size_t _cSignals = maxSignalIndex;
-    const char*         _rgSignals[_cSignals];
+    SharedLinkConfigurationPointer  _sharedConfig;
+    TCPLink*                        _link;
+    MultiSignalSpy*                 _multiSpy;
+    static const size_t             _cSignals = maxSignalIndex;
+    const char*                     _rgSignals[_cSignals];
 };
 
 #endif

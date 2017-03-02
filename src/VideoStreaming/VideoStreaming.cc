@@ -131,7 +131,7 @@ void initializeVideoStreaming(int &argc, char* argv[])
         // Our own plugin
         GST_PLUGIN_STATIC_REGISTER(QGC_VIDEOSINK_PLUGIN);
         // The static plugins we use
-    #if defined(__mobile__)
+    #if defined(__mobile__) && !defined(__macos__)
         GST_PLUGIN_STATIC_REGISTER(coreelements);
         GST_PLUGIN_STATIC_REGISTER(libav);
         GST_PLUGIN_STATIC_REGISTER(rtp);

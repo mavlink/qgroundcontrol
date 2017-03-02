@@ -33,6 +33,7 @@ QStringList QGCMobileFileDialogController::getFiles(const QString& fileExtension
 
 QString QGCMobileFileDialogController::fullPath(const QString& filename, const QString& fileExtension)
 {
+    qDebug() << "QGCMobileFileDialogController::fullPath" << filename << fileExtension;
     QString saveLocation(_getSaveLocation());
     if (saveLocation.isEmpty()) {
         return filename;
@@ -52,6 +53,7 @@ QString QGCMobileFileDialogController::fullPath(const QString& filename, const Q
 bool QGCMobileFileDialogController::fileExists(const QString& filename, const QString& fileExtension)
 {
     QFile file(fullPath(filename, fileExtension));
+    qDebug() << "QGCMobileFileDialogController::fileExists" << file.fileName();
     return file.exists();
 }
 
@@ -59,10 +61,15 @@ QString QGCMobileFileDialogController::_getSaveLocation(void)
 {
     QStringList docDirs = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
     if (docDirs.count() <= 0) {
-        qCWarning(QGCMobileFileDialogControllerLog) << "No Documents location";
+        qCWarning(QGCMobileFileDialogControllerLog) << "No save location";
         return QString();
     }
-    qCDebug(QGCMobileFileDialogControllerLog) << "Save directory" << docDirs.at(0);
+
+    QString saveDirectory = docDirs[0];
+    if (!QDir(saveDirectory).exists()) {
+        QDir().mkdir(saveDirectory);
+    }
+    qCDebug(QGCMobileFileDialogControllerLog) << "Save directory" << saveDirectory;
     
-    return docDirs.at(0);
+    return saveDirectory;
 }

@@ -23,9 +23,9 @@
 {
     "name":             "current",
     "shortDescription": "Current",
-    "type":             "int32",
-    "decimalPlaces":    0,
-    "units":            "mA"
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "A"
 },
 {
     "name":             "temperature",

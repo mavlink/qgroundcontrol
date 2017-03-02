@@ -38,11 +38,9 @@ public:
     /// Send the current settings to the vehicle
     virtual void sendToVehicle(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
 
-    // Support flags
-    virtual bool fenceSupported         (void) const { return false; }
-    virtual bool circleSupported        (void) const { return false; }
-    virtual bool polygonSupported       (void) const { return false; }
-    virtual bool breachReturnSupported  (void) const { return false; }
+    virtual bool circleEnabled          (void) const { return false; }
+    virtual bool polygonEnabled         (void) const { return false; }
+    virtual bool breachReturnEnabled    (void) const { return false; }
 
     virtual float           circleRadius        (void) const { return 0.0; }
     QList<QGeoCoordinate>   polygon             (void) const { return _polygon; }
@@ -51,7 +49,7 @@ public:
     virtual QVariantList    params      (void) const { return QVariantList(); }
     virtual QStringList     paramLabels (void) const { return QStringList(); }
 
-    virtual QString editorQml(void) const { return QStringLiteral("qrc:/FirmwarePlugin/GeoFenceEditor.qml"); }
+    virtual QString editorQml(void) const { return QStringLiteral("qrc:/FirmwarePlugin/NoGeoFenceEditor.qml"); }
 
     /// Error codes returned in error signal
     typedef enum {
@@ -62,16 +60,15 @@ public:
     } ErrorCode_t;
     
 signals:
-    void loadComplete                   (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
-    void fenceSupportedChanged          (bool fenceSupported);
-    void circleSupportedChanged         (bool circleSupported);
-    void polygonSupportedChanged        (bool polygonSupported);
-    void breachReturnSupportedChanged   (bool fenceSupported);
-    void circleRadiusChanged            (float circleRadius);
-    void inProgressChanged              (bool inProgress);
-    void error                          (int errorCode, const QString& errorMsg);
-    void paramsChanged                  (QVariantList params);
-    void paramLabelsChanged             (QStringList paramLabels);
+    void loadComplete               (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
+    void circleEnabledChanged       (bool circleEnabled);
+    void polygonEnabledChanged      (bool polygonEnabled);
+    void breachReturnEnabledChanged (bool fenceEnabled);
+    void circleRadiusChanged        (float circleRadius);
+    void inProgressChanged          (bool inProgress);
+    void error                      (int errorCode, const QString& errorMsg);
+    void paramsChanged              (QVariantList params);
+    void paramLabelsChanged         (QStringList paramLabels);
     
 protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);

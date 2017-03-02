@@ -67,36 +67,51 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
     setSupportedModes(supportedFlightModes);
 
     if (!_remapParamNameIntialized) {
-        FirmwarePlugin::remapParamNameMap_t& remap = _remapParamName[3][4];
+        FirmwarePlugin::remapParamNameMap_t& remapV3_4 = _remapParamName[3][4];
 
-        remap["ATC_ANG_RLL_P"] =    QStringLiteral("STB_RLL_P");
-        remap["ATC_ANG_PIT_P"] =    QStringLiteral("STB_PIT_P");
-        remap["ATC_ANG_YAW_P"] =    QStringLiteral("STB_YAW_P");
+        remapV3_4["ATC_ANG_RLL_P"] =    QStringLiteral("STB_RLL_P");
+        remapV3_4["ATC_ANG_PIT_P"] =    QStringLiteral("STB_PIT_P");
+        remapV3_4["ATC_ANG_YAW_P"] =    QStringLiteral("STB_YAW_P");
 
-        remap["ATC_RAT_RLL_P"] =    QStringLiteral("RATE_RLL_P");
-        remap["ATC_RAT_RLL_I"] =    QStringLiteral("RATE_RLL_I");
-        remap["ATC_RAT_RLL_IMAX"] = QStringLiteral("RATE_RLL_IMAX");
-        remap["ATC_RAT_RLL_D"] =    QStringLiteral("RATE_RLL_D");
-        remap["ATC_RAT_RLL_FILT"] = QStringLiteral("RATE_RLL_FILT_HZ");
+        remapV3_4["ATC_RAT_RLL_P"] =    QStringLiteral("RATE_RLL_P");
+        remapV3_4["ATC_RAT_RLL_I"] =    QStringLiteral("RATE_RLL_I");
+        remapV3_4["ATC_RAT_RLL_IMAX"] = QStringLiteral("RATE_RLL_IMAX");
+        remapV3_4["ATC_RAT_RLL_D"] =    QStringLiteral("RATE_RLL_D");
+        remapV3_4["ATC_RAT_RLL_FILT"] = QStringLiteral("RATE_RLL_FILT_HZ");
 
-        remap["ATC_RAT_PIT_P"] =    QStringLiteral("RATE_PIT_P");
-        remap["ATC_RAT_PIT_I"] =    QStringLiteral("RATE_PIT_I");
-        remap["ATC_RAT_PIT_IMAX"] = QStringLiteral("RATE_PIT_IMAX");
-        remap["ATC_RAT_PIT_D"] =    QStringLiteral("RATE_PIT_D");
-        remap["ATC_RAT_PIT_FILT"] = QStringLiteral("RATE_PIT_FILT_HZ");
+        remapV3_4["ATC_RAT_PIT_P"] =    QStringLiteral("RATE_PIT_P");
+        remapV3_4["ATC_RAT_PIT_I"] =    QStringLiteral("RATE_PIT_I");
+        remapV3_4["ATC_RAT_PIT_IMAX"] = QStringLiteral("RATE_PIT_IMAX");
+        remapV3_4["ATC_RAT_PIT_D"] =    QStringLiteral("RATE_PIT_D");
+        remapV3_4["ATC_RAT_PIT_FILT"] = QStringLiteral("RATE_PIT_FILT_HZ");
 
-        remap["ATC_RAT_YAW_P"] =    QStringLiteral("RATE_YAW_P");
-        remap["ATC_RAT_YAW_I"] =    QStringLiteral("RATE_YAW_I");
-        remap["ATC_RAT_YAW_IMAX"] = QStringLiteral("RATE_YAW_IMAX");
-        remap["ATC_RAT_YAW_D"] =    QStringLiteral("RATE_YAW_D");
-        remap["ATC_RAT_YAW_FILT"] = QStringLiteral("RATE_YAW_FILT_HZ");
+        remapV3_4["ATC_RAT_YAW_P"] =    QStringLiteral("RATE_YAW_P");
+        remapV3_4["ATC_RAT_YAW_I"] =    QStringLiteral("RATE_YAW_I");
+        remapV3_4["ATC_RAT_YAW_IMAX"] = QStringLiteral("RATE_YAW_IMAX");
+        remapV3_4["ATC_RAT_YAW_D"] =    QStringLiteral("RATE_YAW_D");
+        remapV3_4["ATC_RAT_YAW_FILT"] = QStringLiteral("RATE_YAW_FILT_HZ");
+
+        FirmwarePlugin::remapParamNameMap_t& remapV3_5 = _remapParamName[3][5];
+
+        remapV3_5["SERVO5_FUNCTION"] = QStringLiteral("RC5_FUNCTION");
+        remapV3_5["SERVO6_FUNCTION"] = QStringLiteral("RC6_FUNCTION");
+        remapV3_5["SERVO7_FUNCTION"] = QStringLiteral("RC7_FUNCTION");
+        remapV3_5["SERVO8_FUNCTION"] = QStringLiteral("RC8_FUNCTION");
+        remapV3_5["SERVO9_FUNCTION"] = QStringLiteral("RC9_FUNCTION");
+        remapV3_5["SERVO10_FUNCTION"] = QStringLiteral("RC10_FUNCTION");
+        remapV3_5["SERVO11_FUNCTION"] = QStringLiteral("RC11_FUNCTION");
+        remapV3_5["SERVO12_FUNCTION"] = QStringLiteral("RC12_FUNCTION");
+        remapV3_5["SERVO13_FUNCTION"] = QStringLiteral("RC13_FUNCTION");
+        remapV3_5["SERVO14_FUNCTION"] = QStringLiteral("RC14_FUNCTION");
+
+        _remapParamNameIntialized = true;
     }
 }
 
 int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    // Remapping supports up to 3.4
-    return majorVersionNumber == 3 ? 4: Vehicle::versionNotSetValue;
+    // Remapping supports up to 3.5
+    return majorVersionNumber == 3 ? 5 : Vehicle::versionNotSetValue;
 }
 
 bool ArduCopterFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
@@ -120,34 +135,11 @@ void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)
 
 void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 {
-    if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
-        qgcApp()->showMessage(QStringLiteral("Unable to takeoff, vehicle position not known."));
-        return;
-    }
-
-    mavlink_message_t msg;
-    mavlink_command_long_t cmd;
-
-    cmd.command = (uint16_t)MAV_CMD_NAV_TAKEOFF;
-    cmd.confirmation = 0;
-    cmd.param1 = 0.0f;
-    cmd.param2 = 0.0f;
-    cmd.param3 = 0.0f;
-    cmd.param4 = 0.0f;
-    cmd.param5 = 0.0f;
-    cmd.param6 = 0.0f;
-    cmd.param7 = vehicle->altitudeAMSL()->rawValue().toFloat() +  altitudeRel; // AMSL meters
-    cmd.target_system = vehicle->id();
-    cmd.target_component = vehicle->defaultComponentId();
-
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_command_long_encode_chan(mavlink->getSystemId(),
-                                         mavlink->getComponentId(),
-                                         vehicle->priorityLink()->mavlinkChannel(),
-                                         &msg,
-                                         &cmd);
-
-    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
+    vehicle->sendMavCommand(vehicle->defaultComponentId(),
+                            MAV_CMD_NAV_TAKEOFF,
+                            true, // show error
+                            0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                            altitudeRel);
 }
 
 void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
@@ -226,4 +218,9 @@ QString ArduCopterFirmwarePlugin::geoFenceRadiusParam(Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
     return QStringLiteral("FENCE_RADIUS");
+}
+
+QString ArduCopterFirmwarePlugin::takeControlFlightMode(void)
+{
+    return QStringLiteral("Stabilize");
 }

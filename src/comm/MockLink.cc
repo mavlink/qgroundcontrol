@@ -11,8 +11,9 @@
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
-#ifndef __mobile__
-#include "UnitTest.h"
+
+#ifdef UNITTEST_BUILD
+    #include "UnitTest.h"
 #endif
 
 #include <QTimer>
@@ -21,7 +22,8 @@
 
 #include <string.h>
 
-#include "px4_custom_mode.h"
+// FIXME: Hack to work around clean headers
+#include "FirmwarePlugin/PX4/px4_custom_mode.h"
 
 QGC_LOGGING_CATEGORY(MockLinkLog, "MockLinkLog")
 QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "MockLinkVerboseLog")
@@ -42,8 +44,9 @@ const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
 const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
 const char* MockConfiguration::_failureModeKey =    "FailureMode";
 
-MockLink::MockLink(MockConfiguration* config)
-    : _missionItemHandler(this, qgcApp()->toolbox()->mavlinkProtocol())
+MockLink::MockLink(SharedLinkConfigurationPointer& config)
+    : LinkInterface(config)
+    , _missionItemHandler(this, qgcApp()->toolbox()->mavlinkProtocol())
     , _name("MockLink")
     , _connected(false)
     , _vehicleSystemId(_nextVehicleSystemId++)
@@ -65,14 +68,11 @@ MockLink::MockLink(MockConfiguration* config)
     , _logDownloadCurrentOffset(0)
     , _logDownloadBytesRemaining(0)
 {
-    _config = config;
-    if (_config) {
-        _firmwareType = config->firmwareType();
-        _vehicleType = config->vehicleType();
-        _sendStatusText = config->sendStatusText();
-        _failureMode = config->failureMode();
-        _config->setLink(this);
-    }
+    MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.data());
+    _firmwareType = mockConfig->firmwareType();
+    _vehicleType = mockConfig->vehicleType();
+    _sendStatusText = mockConfig->sendStatusText();
+    _failureMode = mockConfig->failureMode();
 
     union px4_custom_mode   px4_cm;
 
@@ -188,14 +188,14 @@ void MockLink::_loadParams(void)
 
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         if (_vehicleType == MAV_TYPE_FIXED_WING) {
-            paramFile.setFileName(":/unittest/APMArduPlaneMockLink.params");
+            paramFile.setFileName(":/MockLink/APMArduPlaneMockLink.params");
         } else if (_vehicleType == MAV_TYPE_SUBMARINE ) {
-            paramFile.setFileName(":/unittest/APMArduSubMockLink.params");
+            paramFile.setFileName(":/MockLink/APMArduSubMockLink.params");
         } else {
-            paramFile.setFileName(":/unittest/APMArduCopterMockLink.params");
+            paramFile.setFileName(":/MockLink/APMArduCopterMockLink.params");
         }
     } else {
-        paramFile.setFileName(":/unittest/PX4MockLink.params");
+        paramFile.setFileName(":/MockLink/PX4MockLink.params");
     }
 
 
@@ -215,7 +215,6 @@ void MockLink::_loadParams(void)
         QStringList paramData = line.split("\t");
         Q_ASSERT(paramData.count() == 5);
 
-        int componentId = paramData.at(1).toInt();
         QString paramName = paramData.at(2);
         QString valStr = paramData.at(3);
         uint paramType = paramData.at(4).toUInt();
@@ -251,7 +250,7 @@ void MockLink::_loadParams(void)
 
         qCDebug(MockLinkVerboseLog) << "Loading param" << paramName << paramValue;
 
-        _mapParamName2Value[componentId][paramName] = paramValue;
+        _mapParamName2Value[_vehicleComponentId][paramName] = paramValue;
         _mapParamName2MavParamType[paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
     }
 }
@@ -780,6 +779,9 @@ void MockLink::_handleFTP(const mavlink_message_t& msg)
 
 void MockLink::_handleCommandLong(const mavlink_message_t& msg)
 {
+    static bool firstCmdUser3 = true;
+    static bool firstCmdUser4 = true;
+
     mavlink_command_long_t request;
     uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
 
@@ -804,6 +806,38 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
     case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
         commandResult = MAV_RESULT_ACCEPTED;
         _respondWithAutopilotVersion();
+        break;
+    case MAV_CMD_USER_1:
+        // Test command which always returns MAV_RESULT_ACCEPTED
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    case MAV_CMD_USER_2:
+        // Test command which always returns MAV_RESULT_FAILED
+        commandResult = MAV_RESULT_FAILED;
+        break;
+    case MAV_CMD_USER_3:
+        // Test command which returns MAV_RESULT_ACCEPTED on second attempt
+        if (firstCmdUser3) {
+           firstCmdUser3 = false;
+           return;
+        } else {
+            firstCmdUser3 = true;
+            commandResult = MAV_RESULT_ACCEPTED;
+        }
+        break;
+    case MAV_CMD_USER_4:
+        // Test command which returns MAV_RESULT_FAILED on second attempt
+        if (firstCmdUser4) {
+           firstCmdUser4 = false;
+           return;
+        } else {
+            firstCmdUser4 = true;
+            commandResult = MAV_RESULT_FAILED;
+        }
+        break;
+    case MAV_CMD_USER_5:
+        // No response
+        return;
         break;
     }
 
@@ -1005,12 +1039,12 @@ void MockConfiguration::updateSettings()
 
 MockLink*  MockLink::_startMockLink(MockConfiguration* mockConfig)
 {
-    LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
+    LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
 
     mockConfig->setDynamic(true);
-    linkManager->linkConfigurations()->append(mockConfig);
+    SharedLinkConfigurationPointer config = linkMgr->addConfiguration(mockConfig);
 
-    return qobject_cast<MockLink*>(linkManager->createConnectedLink(mockConfig));
+    return qobject_cast<MockLink*>(linkMgr->createConnectedLink(config));
 }
 
 MockLink*  MockLink::startPX4MockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
@@ -1159,7 +1193,7 @@ void MockLink::_handleLogRequestData(const mavlink_message_t& msg)
     mavlink_msg_log_request_data_decode(&msg, &request);
 
     if (_logDownloadFilename.isEmpty()) {
-        #ifndef __mobile__
+        #ifdef UNITTEST_BUILD
         _logDownloadFilename = UnitTest::createRandomFile(_logDownloadFileSize);
         #endif
     }

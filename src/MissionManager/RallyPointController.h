@@ -37,7 +37,6 @@ public:
     Q_INVOKABLE void addPoint(QGeoCoordinate point);
     Q_INVOKABLE void removePoint(QObject* rallyPoint);
 
-    void start              (bool editMode) final;
     void loadFromVehicle    (void) final;
     void sendToVehicle      (void) final;
     void loadFromFilePicker (void) final;
@@ -61,6 +60,7 @@ public:
 signals:
     void rallyPointsSupportedChanged(bool rallyPointsSupported);
     void currentRallyPointChanged(QObject* rallyPoint);
+    void loadComplete(void);
 
 private slots:
     void _loadComplete(const QList<QGeoCoordinate> rgPoints);

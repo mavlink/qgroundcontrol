@@ -11,6 +11,8 @@
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QSettings>
+#include <QUrl>
+#include <QDir>
 
 #ifndef QGC_DISABLE_UVC
 #include <QCameraInfo>
@@ -20,15 +22,10 @@
 
 #include "ScreenToolsController.h"
 #include "VideoManager.h"
-
-static const char* kVideoSourceKey  = "VideoSource";
-static const char* kVideoUDPPortKey = "VideoUDPPort";
-static const char* kVideoRTSPUrlKey = "VideoRTSPUrl";
-static const char* kUDPStream       = "UDP Video Stream";
-#if defined(QGC_GST_STREAMING)
-static const char* kRTSPStream      = "RTSP Video Stream";
-#endif
-static const char* kNoVideo         = "No Video Available";
+#include "QGCToolbox.h"
+#include "QGCCorePlugin.h"
+#include "QGCOptions.h"
+#include "Settings/SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
@@ -38,20 +35,9 @@ VideoManager::VideoManager(QGCApplication* app)
     , _videoSurface(NULL)
     , _videoReceiver(NULL)
     , _videoRunning(false)
-    , _udpPort(5600) //-- Defalut Port 5600 == Solo UDP Port
     , _init(false)
+    , _videoSettings(NULL)
 {
-    //-- Get saved settings
-    QSettings settings;
-    setVideoSource(settings.value(kVideoSourceKey, kUDPStream).toString());
-    setUdpPort(settings.value(kVideoUDPPortKey, 5600).toUInt());
-    setRtspURL(settings.value(kVideoRTSPUrlKey, "rtsp://192.168.42.1:554/live").toString()); //-- Example RTSP URL
-    _init = true;
-#if defined(QGC_GST_STREAMING)
-    _updateVideo();
-    connect(&_frameTimer, &QTimer::timeout, this, &VideoManager::_updateTimer);
-    _frameTimer.start(1000);
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -67,6 +53,49 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    QGCTool::setToolbox(toolbox);
    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
    qmlRegisterUncreatableType<VideoManager>("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
+
+   _videoSettings = toolbox->settingsManager()->videoSettings();
+   QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+   connect(_videoSettings->videoSource(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+
+#if defined(QGC_GST_STREAMING)
+#ifndef QGC_DISABLE_UVC
+   // If we are using a UVC camera setup the device name
+    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
+    foreach (const QCameraInfo &cameraInfo, cameras) {
+        if(cameraInfo.description() == videoSource) {
+            _videoSourceID = cameraInfo.deviceName();
+            emit videoSourceIDChanged();
+            qCDebug(VideoManagerLog) << "Found USB source:" << _videoSourceID << " Name:" << videoSource;
+            break;
+        }
+    }
+#endif
+
+    emit isGStreamerChanged();
+    qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
+
+    if(_videoReceiver) {
+        if(isGStreamer()) {
+            _videoReceiver->start();
+        } else {
+            _videoReceiver->stop();
+        }
+    }
+#endif
+
+   _init = true;
+#if defined(QGC_GST_STREAMING)
+   _updateVideo();
+   connect(&_frameTimer, &QTimer::timeout, this, &VideoManager::_updateTimer);
+   _frameTimer.start(1000);
+#endif
+}
+
+void VideoManager::_videoSourceChanged(void)
+{
+    emit hasVideoChanged();
+    emit isGStreamerChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -76,7 +105,8 @@ VideoManager::hasVideo()
 #if defined(QGC_GST_STREAMING)
     return true;
 #endif
-    return !_videoSource.isEmpty();
+    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+    return !videoSource.isEmpty() && videoSource != VideoSettings::videoSourceNoVideo;
 }
 
 //-----------------------------------------------------------------------------
@@ -84,7 +114,8 @@ bool
 VideoManager::isGStreamer()
 {
 #if defined(QGC_GST_STREAMING)
-    return _videoSource == kUDPStream || _videoSource == kRTSPStream;
+    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+    return videoSource == VideoSettings::videoSourceUDP || videoSource == VideoSettings::videoSourceRTSP;
 #else
     return false;
 #endif
@@ -100,118 +131,39 @@ VideoManager::uvcEnabled()
 #endif
 
 //-----------------------------------------------------------------------------
-void
-VideoManager::setVideoSource(QString vSource)
-{
-    if(vSource == kNoVideo)
-        return;
-    _videoSource = vSource;
-    QSettings settings;
-    settings.setValue(kVideoSourceKey, vSource);
-    emit videoSourceChanged();
-#ifndef QGC_DISABLE_UVC
-    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    foreach (const QCameraInfo &cameraInfo, cameras) {
-        if(cameraInfo.description() == vSource) {
-            _videoSourceID = cameraInfo.deviceName();
-            emit videoSourceIDChanged();
-            qCDebug(VideoManagerLog) << "Found USB source:" << _videoSourceID << " Name:" << _videoSource;
-            break;
-        }
-    }
-#endif
-    emit isGStreamerChanged();
-    qCDebug(VideoManagerLog) << "New Video Source:" << vSource;
-    /*
-     * Not working. Requires restart for now. (Undef KRTSP/kUDP above when enabling this)
-    if(isGStreamer())
-        _updateVideo();
-    */
-    if(_videoReceiver) {
-        if(isGStreamer()) {
-            _videoReceiver->start();
-        } else {
-            _videoReceiver->stop();
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::setUdpPort(quint16 port)
-{
-    _udpPort = port;
-    QSettings settings;
-    settings.setValue(kVideoUDPPortKey, port);
-    emit udpPortChanged();
-    /*
-     * Not working. Requires restart for now. (Undef KRTSP/kUDP above when enabling this)
-    if(_videoSource == kUDPStream)
-        _updateVideo();
-    */
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::setRtspURL(QString url)
-{
-    _rtspURL = url;
-    QSettings settings;
-    settings.setValue(kVideoRTSPUrlKey, url);
-    emit rtspURLChanged();
-    /*
-     * Not working. Requires restart for now. (Undef KRTSP/kUDP above when enabling this)
-    if(_videoSource == kRTSPStream)
-        _updateVideo();
-    */
-}
-
-//-----------------------------------------------------------------------------
-QStringList
-VideoManager::videoSourceList()
-{
-    _videoSourceList.clear();
-#if defined(QGC_GST_STREAMING)
-    _videoSourceList.append(kUDPStream);
-    _videoSourceList.append(kRTSPStream);
-#endif
-#ifndef QGC_DISABLE_UVC
-    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    foreach (const QCameraInfo &cameraInfo, cameras) {
-        qCDebug(VideoManagerLog) << "UVC Video source ID:" << cameraInfo.deviceName() << " Name:" << cameraInfo.description();
-        _videoSourceList.append(cameraInfo.description());
-    }
-#endif
-    if(_videoSourceList.count() == 0)
-        _videoSourceList.append(kNoVideo);
-    return _videoSourceList;
-}
-
-//-----------------------------------------------------------------------------
 void VideoManager::_updateTimer()
 {
 #if defined(QGC_GST_STREAMING)
-    if(_videoRunning)
-    {
-        time_t elapsed = 0;
-        if(_videoSurface)
-        {
-            elapsed = time(0) - _videoSurface->lastFrame();
+    if(_videoReceiver && _videoSurface) {
+        if(_videoReceiver->stopping() || _videoReceiver->starting()) {
+            return;
         }
-        if(elapsed > 2 && _videoSurface)
-        {
-            _videoRunning = false;
-            _videoSurface->setLastFrame(0);
-            emit videoRunningChanged();
-        }
-    }
-    else
-    {
-        if(_videoSurface && _videoSurface->lastFrame()) {
-            if(!_videoRunning)
-            {
+
+        if(_videoReceiver->streaming()) {
+            if(!_videoRunning) {
+                _videoSurface->setLastFrame(0);
                 _videoRunning = true;
                 emit videoRunningChanged();
+            }
+        } else {
+            if(_videoRunning) {
+                _videoRunning = false;
+                emit videoRunningChanged();
+            }
+        }
+
+        if(_videoRunning) {
+            time_t elapsed = 0;
+            time_t lastFrame = _videoSurface->lastFrame();
+            if(lastFrame != 0) {
+                elapsed = time(0) - _videoSurface->lastFrame();
+            }
+            if(elapsed > 2 && _videoSurface) {
+                _videoReceiver->stop();
+            }
+        } else {
+            if(!_videoReceiver->running()) {
+                _videoReceiver->start();
             }
         }
     }
@@ -228,13 +180,14 @@ void VideoManager::_updateVideo()
             delete _videoSurface;
         _videoSurface  = new VideoSurface;
         _videoReceiver = new VideoReceiver(this);
-        #if defined(QGC_GST_STREAMING)
+#if defined(QGC_GST_STREAMING)
         _videoReceiver->setVideoSink(_videoSurface->videoSink());
-        if(_videoSource == kUDPStream)
-            _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_udpPort));
+        QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+        if (_videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceUDP)
+            _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
         else
-            _videoReceiver->setUri(_rtspURL);
-        #endif
+            _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
+#endif
         _videoReceiver->start();
     }
 }

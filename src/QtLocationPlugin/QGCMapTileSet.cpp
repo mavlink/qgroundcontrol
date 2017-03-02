@@ -232,11 +232,20 @@ void QGCCachedTileSet::_prepareDownload()
             _tilesToDownload.removeFirst();
             QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(tile->type(), tile->x(), tile->y(), tile->z(), _networkManager);
             request.setAttribute(QNetworkRequest::User, tile->hash());
+#if !defined(__mobile__)
+            QNetworkProxy proxy = _networkManager->proxy();
+            QNetworkProxy tProxy;
+            tProxy.setType(QNetworkProxy::DefaultProxy);
+            _networkManager->setProxy(tProxy);
+#endif
             QNetworkReply* reply = _networkManager->get(request);
             reply->setParent(0);
             connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
             connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &QGCCachedTileSet::_networkReplyError);
             _replies.insert(tile->hash(), reply);
+#if !defined(__mobile__)
+            _networkManager->setProxy(proxy);
+#endif
             delete tile;
             //-- Refill queue if running low
             if(!_batchRequested && !_noMoreTiles && _tilesToDownload.count() < (QGCMapEngine::concurrentDownloads(_type) * 10)) {
@@ -309,7 +318,7 @@ QGCCachedTileSet::_networkReplyError(QNetworkReply::NetworkError error)
     if (!reply) {
         return;
     }
-    //-- Upodate error count
+    //-- Update error count
     _errorCount++;
     emit errorCountChanged();
     //-- Get tile hash

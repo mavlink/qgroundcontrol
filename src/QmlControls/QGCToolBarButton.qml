@@ -17,6 +17,7 @@ import QGroundControl.ScreenTools   1.0
 
 Item {
     id:     _root
+    width:  height
     state:  "HelpShown"
     clip:   true
 

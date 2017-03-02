@@ -23,16 +23,19 @@ class SettingsFact : public Fact
     
 public:
     SettingsFact(QObject* parent = NULL);
-    SettingsFact(QString settingGroup, QString settingName, FactMetaData::ValueType_t type, const QVariant& defaultValue, QObject* parent = NULL);
+    SettingsFact(QString settingGroup, FactMetaData* metaData, QObject* parent = NULL);
     SettingsFact(const SettingsFact& other, QObject* parent = NULL);
 
     const SettingsFact& operator=(const SettingsFact& other);
+
+    Q_PROPERTY(bool visible MEMBER _visible CONSTANT)
 
 private slots:
     void _rawValueChanged(QVariant value);
 
 private:
     QString _settingGroup;
+    bool    _visible;
 };
 
 #endif

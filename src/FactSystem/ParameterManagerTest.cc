@@ -34,7 +34,7 @@ void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t fai
     QVERIFY(vehicle);
 
     // We should get progress bar updates during load
-    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(parameterListProgress(float)));
+    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(loadProgressChanged(float)));
     QCOMPARE(spyProgress.wait(2000), true);
     arguments = spyProgress.takeFirst();
     QCOMPARE(arguments.count(), 1);
@@ -67,6 +67,9 @@ void ParameterManagerTest::_requestListMissingParamSuccess(void)
 // Test no response to param_request_list
 void ParameterManagerTest::_requestListNoResponse(void)
 {
+    // Will pop error about request failure
+    setExpectedMessageBox(QMessageBox::Ok);
+
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
 
@@ -85,14 +88,14 @@ void ParameterManagerTest::_requestListNoResponse(void)
     QVERIFY(vehicle);
 
     QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(parameterListProgress(float)));
+    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(loadProgressChanged(float)));
 
     // We should not get any progress bar updates, nor a parameter ready signal
     QCOMPARE(spyProgress.wait(500), false);
     QCOMPARE(spyParamsReady.wait(40000), false);
 
     // User should have been notified
-    checkMultipleExpectedMessageBox(5);
+    checkExpectedMessageBox();
 }
 
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
@@ -120,7 +123,7 @@ void ParameterManagerTest::_requestListMissingParamFail(void)
     QVERIFY(vehicle);
 
     QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(parameterListProgress(float)));
+    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(loadProgressChanged(float)));
 
     // We will get progress bar updates, since it will fail after getting partially through the request
     QCOMPARE(spyProgress.wait(2000), true);

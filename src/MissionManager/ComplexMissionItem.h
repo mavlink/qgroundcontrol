@@ -21,6 +21,7 @@ public:
 
     const ComplexMissionItem& operator=(const ComplexMissionItem& other);
 
+    Q_PROPERTY(QString  mapVisualQML        READ mapVisualQML       CONSTANT)
     Q_PROPERTY(int      lastSequenceNumber  READ lastSequenceNumber NOTIFY lastSequenceNumberChanged)
     Q_PROPERTY(double   complexDistance     READ complexDistance    NOTIFY complexDistanceChanged)
 
@@ -36,14 +37,24 @@ public:
 
     /// Load the complex mission item from Json
     ///     @param complexObject Complex mission item json object
+    ///     @param sequenceNumber Sequence number for first MISSION_ITEM in survey
     ///     @param[out] errorString Error if load fails
     /// @return true: load success, false: load failed, errorString set
-    virtual bool load(const QJsonObject& complexObject, QString& errorString) = 0;
+    virtual bool load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString) = 0;
 
     /// Get the point of complex mission item furthest away from a coordinate
     ///     @param other QGeoCoordinate to which distance is calculated
     /// @return the greatest distance from any point of the complex item to some coordinate
     virtual double greatestDistanceTo(const QGeoCoordinate &other) const = 0;
+
+    /// Informs the complex item of the cruise speed it will fly at
+    virtual void setCruiseSpeed(double cruiseSpeed) = 0;
+
+    /// This mission item attribute specifies the type of the complex item.
+    static const char* jsonComplexItemTypeKey;
+
+    /// @return The QML resource file which contains the control which visualizes the item on the map.
+    virtual QString mapVisualQML(void) const = 0;
 
 signals:
     void lastSequenceNumberChanged  (int lastSequenceNumber);

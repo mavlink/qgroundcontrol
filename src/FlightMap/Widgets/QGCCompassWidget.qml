@@ -17,19 +17,20 @@
 import QtQuick 2.4
 import QtGraphicalEffects 1.0
 
-import QGroundControl.Controls 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Vehicle       1.0
 
 Item {
     id:                     root
 
-    property bool active:   false  ///< true: actively connected to data provider, false: show inactive control
-    property real heading:  0
     property real size:     _defaultSize
+    property var  vehicle:  null
 
     property real _defaultSize: ScreenTools.defaultFontPixelHeight * (10)
     property real _sizeRatio:   ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
     property int  _fontSize:    ScreenTools.defaultFontPointSize * _sizeRatio
+    property real _heading:     vehicle ? vehicle.heading.rawValue : 0
 
     width:                  size
     height:                 size
@@ -48,7 +49,7 @@ Item {
 
         Image {
             id:                 pointer
-            source:             "/qmlimages/compassInstrumentAirplane.svg"
+            source:             vehicle ? vehicle.vehicleImageCompass : ""
             mipmap:             true
             width:              size * 0.75
             sourceSize.width:   width
@@ -57,7 +58,7 @@ Item {
             transform: Rotation {
                 origin.x:       pointer.width  / 2
                 origin.y:       pointer.height / 2
-                angle:          heading
+                angle:          _heading
             }
         }
 
@@ -78,8 +79,8 @@ Item {
             color:              Qt.rgba(0,0,0,0.65)
 
             QGCLabel {
-                text:           active ? heading.toFixed(0) : qsTr("OFF")
-                font.family:    active ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
+                text:           vehicle ? _heading.toFixed(0) : qsTr("OFF")
+                font.family:    vehicle ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
                 font.pointSize: _fontSize < 8 ? 8 : _fontSize;
                 color:          "white"
                 anchors.centerIn: parent

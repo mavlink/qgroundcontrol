@@ -145,7 +145,10 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
                     sensorId = 6.0f;
                 }
                 if (sensorId != 0.0f) {
-                    _vehicle->doCommandLong(_vehicle->defaultComponentId(), MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS, sensorId, -sphere_x[cur_mag], -sphere_y[cur_mag], -sphere_z[cur_mag]);
+                    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),
+                                             MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS,
+                                             true, /* showErrors */
+                                             sensorId, -sphere_x[cur_mag], -sphere_y[cur_mag], -sphere_z[cur_mag]);
                 }
             }
         }

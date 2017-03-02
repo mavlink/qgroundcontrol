@@ -58,8 +58,8 @@ Rectangle {
 
             // I don't know why this does not work
             Connections {
-                target: QGroundControl
-                onBaseFontPointSizeChanged: buttonColumn.reflowWidths()
+                target:         QGroundControl.settingsManager.appSettings.appFontPointSize
+                onValueChanged: buttonColumn.reflowWidths()
             }
 
             function reflowWidths() {
@@ -86,25 +86,25 @@ Rectangle {
 
                 model: ListModel {
                     ListElement {
-                        buttonImage:    "/qmlimages/LogDownloadIcon"
-                        buttonText:     qsTr("Log Download")
-                        pageSource:     "LogDownloadPage.qml"
+                        buttonImage:        "/qmlimages/LogDownloadIcon"
+                        buttonText:         qsTr("Log Download")
+                        pageSource:         "LogDownloadPage.qml"
                     }
                     ListElement {
-                        buttonImage:    "/qmlimages/GeoTagIcon"
-                        buttonText:     qsTr("GeoTag Images")
-                        pageSource:     "GeoTagPage.qml"
+                        buttonImage:        "/qmlimages/GeoTagIcon"
+                        buttonText:         qsTr("GeoTag Images")
+                        pageSource:         "GeoTagPage.qml"
                     }
                 }
 
                 Component.onCompleted: itemAt(0).checked = true
 
                 SubMenuButton {
-                    imageResource:  buttonImage
-                    setupIndicator: false
-                    exclusiveGroup: setupButtonGroup
-                    text:           buttonText
-                    onClicked:      panelLoader.source = pageSource
+                    imageResource:      buttonImage
+                    setupIndicator:     false
+                    exclusiveGroup:     setupButtonGroup
+                    text:               buttonText
+                    onClicked:          panelLoader.source = pageSource
                 }
             }
         }

@@ -41,7 +41,7 @@ bool UASMessage::severityIsError()
 
 UASMessageHandler::UASMessageHandler(QGCApplication* app)
     : QGCTool(app)
-    , _activeUAS(NULL)
+    , _activeVehicle(NULL)
     , _activeComponent(-1)
     , _multiComp(false)
     , _errorCount(0)
@@ -87,27 +87,28 @@ void UASMessageHandler::clearMessages()
 void UASMessageHandler::_activeVehicleChanged(Vehicle* vehicle)
 {
     // If we were already attached to an autopilot, disconnect it.
-    if (_activeUAS)
-    {
-        disconnect(_activeUAS, &UASInterface::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
-        _activeUAS = NULL;
+    if (_activeVehicle) {
+        disconnect(_activeVehicle->uas(), &UASInterface::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
+        _activeVehicle = NULL;
         clearMessages();
         emit textMessageReceived(NULL);
     }
-    // And now if there's an autopilot to follow, set up the UI.
-    if (vehicle)
-    {
-        UAS* uas = vehicle->uas();
 
+    // And now if there's an autopilot to follow, set up the UI.
+    if (vehicle) {
         // Connect to the new UAS.
         clearMessages();
-        _activeUAS = uas;
-        connect(uas, &UASInterface::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
+        _activeVehicle = vehicle;
+        connect(_activeVehicle->uas(), &UASInterface::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
     }
 }
 
 void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString text)
 {
+    // Hack to prevent calibration messages from cluttering things up
+    if (_activeVehicle->px4Firmware() && text.startsWith(QStringLiteral("[cal] "))) {
+        return;
+    }
 
     // Color the output depending on the message severity. We have 3 distinct cases:
     // 1: If we have an ERROR or worse, make it bigger, bolder, and highlight it red.

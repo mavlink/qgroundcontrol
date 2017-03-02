@@ -21,6 +21,9 @@ MockLinkMissionItemHandler::MockLinkMissionItemHandler(MockLink* mockLink, MAVLi
     , _failureMode(FailNone)
     , _sendHomePositionOnEmptyList(false)
     , _mavlinkProtocol(mavlinkProtocol)
+    , _failReadRequestListFirstResponse(true)
+    , _failReadRequest1FirstResponse(true)
+    , _failWriteMissionCountFirstResponse(true)
 {
     Q_ASSERT(mockLink);
 }
@@ -82,9 +85,17 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
 {
     qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequestList read sequence";
     
-    if (_failureMode != FailReadRequestListNoResponse) {
+    _failReadRequest1FirstResponse = true;
+
+    if (_failureMode == FailReadRequestListNoResponse) {
+        qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequestList not responding due to failure mode FailReadRequestListNoResponse";
+    } else if (_failureMode == FailReadRequestListFirstResponse && _failReadRequestListFirstResponse) {
+        _failReadRequestListFirstResponse = false;
+        qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequestList not responding due to failure mode FailReadRequestListFirstResponse";
+    } else {
         mavlink_mission_request_list_t request;
         
+        _failReadRequestListFirstResponse = true;
         mavlink_msg_mission_request_list_decode(&msg, &request);
         
         Q_ASSERT(request.target_system == _mockLink->vehicleId());
@@ -104,8 +115,6 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
                                             msg.compid,              // Target is original sender
                                             itemCount);              // Number of mission items
         _mockLink->respondWithMavlinkMessage(responseMsg);
-    } else {
-        qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequestList not responding due to failure mode";
     }
 }
 
@@ -120,9 +129,13 @@ void MockLinkMissionItemHandler::_handleMissionRequest(const mavlink_message_t& 
     Q_ASSERT(request.target_system == _mockLink->vehicleId());
     Q_ASSERT(request.seq < _missionItems.count());
     
-    if ((_failureMode == FailReadRequest0NoResponse && request.seq == 0) ||
-        (_failureMode == FailReadRequest1NoResponse && request.seq == 1)) {
-        qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequest not responding due to failure mode";
+    if (_failureMode == FailReadRequest0NoResponse && request.seq == 0) {
+        qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequest not responding due to failure mode FailReadRequest0NoResponse";
+    } else if (_failureMode == FailReadRequest1NoResponse && request.seq == 1) {
+        qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequest not responding due to failure mode FailReadRequest1NoResponse";
+    } else if (_failureMode == FailReadRequest1FirstResponse && request.seq == 1 && _failReadRequest1FirstResponse) {
+        _failReadRequest1FirstResponse = false;
+        qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequest not responding due to failure mode FailReadRequest1FirstResponse";
     } else {
         // FIXME: Track whether all items are requested, or requested in sequence
         
@@ -185,6 +198,16 @@ void MockLinkMissionItemHandler::_handleMissionCount(const mavlink_message_t& ms
     if (_writeSequenceCount == 0) {
         _sendAck(MAV_MISSION_ACCEPTED);
     } else {
+        if (_failureMode == FailWriteMissionCountNoResponse) {
+            qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionCount not responding due to failure mode FailWriteMissionCountNoResponse";
+            return;
+        }
+        if (_failureMode == FailWriteMissionCountFirstResponse && _failWriteMissionCountFirstResponse) {
+            _failWriteMissionCountFirstResponse = false;
+            qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionCount not responding due to failure mode FailWriteMissionCountNoResponse";
+            return;
+        }
+        _failWriteMissionCountFirstResponse = true;
         _writeSequenceIndex = 0;
         _requestNextMissionItem(_writeSequenceIndex);
     }
@@ -194,9 +217,8 @@ void MockLinkMissionItemHandler::_requestNextMissionItem(int sequenceNumber)
 {
     qCDebug(MockLinkMissionItemHandlerLog) << "_requestNextMissionItem write sequence sequenceNumber:" << sequenceNumber << "_failureMode:" << _failureMode;
     
-    if ((_failureMode == FailWriteRequest0NoResponse && sequenceNumber == 0) ||
-        (_failureMode == FailWriteRequest1NoResponse && sequenceNumber == 1)) {
-        qCDebug(MockLinkMissionItemHandlerLog) << "_requestNextMissionItem not responding due to failure mode";
+    if (_failureMode == FailWriteRequest1NoResponse && sequenceNumber == 1) {
+        qCDebug(MockLinkMissionItemHandlerLog) << "_requestNextMissionItem not responding due to failure mode FailWriteRequest1NoResponse";
     } else {
         if (sequenceNumber >= _writeSequenceCount) {
             qCWarning(MockLinkMissionItemHandlerLog) << "_requestNextMissionItem requested seqeuence number > write count sequenceNumber::_writeSequenceCount" << sequenceNumber << _writeSequenceCount;

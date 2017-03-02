@@ -7,14 +7,7 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Represents one unmanned aerial vehicle
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
+// THIS CLASS IS DEPRECATED. ALL NEW FUNCTIONALITY SHOULD GO INTO Vehicle class
 
 #include <QList>
 #include <QTimer>
@@ -30,13 +23,12 @@
 
 #include "UAS.h"
 #include "LinkInterface.h"
-#include "HomePositionManager.h"
 #include "QGC.h"
 #include "GAudioOutput.h"
 #include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 #include "FirmwarePluginManager.h"
@@ -47,13 +39,7 @@
 
 QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 
-/**
-* Gets the settings from the previous UAS (name, airframe, autopilot, battery specs)
-* by calling readSettings. This means the new UAS will have the same settings
-* as the previous one created unless one calls deleteSettings in the code after
-* creating the UAS.
-*/
-
+// THIS CLASS IS DEPRECATED. ALL NEW FUNCTIONALITY SHOULD GO INTO Vehicle class
 UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager) : UASInterface(),
     lipoFull(4.2f),
     lipoEmpty(3.5f),
@@ -77,30 +63,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     manualYawAngle(0),
     manualThrust(0),
 
-    isGlobalPositionKnown(false),
-
-    latitude(0.0),
-    longitude(0.0),
-    altitudeAMSL(0.0),
-    altitudeAMSLFT(0.0),
-    altitudeRelative(0.0),
-
-    satRawHDOP(1e10f),
-    satRawVDOP(1e10f),
-    satRawCOG(0.0),
-
-    globalEstimatorActive(false),
-
-    latitude_gps(0.0),
-    longitude_gps(0.0),
-    altitude_gps(0.0),
-
-    speedX(0.0),
-    speedY(0.0),
-    speedZ(0.0),
-
-    airSpeed(std::numeric_limits<double>::quiet_NaN()),
-    groundSpeed(std::numeric_limits<double>::quiet_NaN()),
 #ifndef __mobile__
     fileManager(this, vehicle),
 #endif
@@ -283,14 +245,6 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit valueChanged(uasId, name.arg("custom_mode"), "bits", state.custom_mode, time);
             emit valueChanged(uasId, name.arg("system_status"), "-", state.system_status, time);
 
-            if ((state.system_status != this->status) && state.system_status != MAV_STATE_UNINIT)
-            {
-                this->status = state.system_status;
-                getStatusForCode((int)state.system_status, uasState, stateDescription);
-                emit statusChanged(this, uasState, stateDescription);
-                emit statusChanged(this->status);
-            }
-
             // We got the mode
             receivedMode = true;
         }
@@ -318,25 +272,7 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit valueChanged(uasId, name.arg("errors_count4"), "-", state.errors_count4, time);
 
             // Process CPU load.
-            emit loadChanged(this,state.load/10.0f);
             emit valueChanged(uasId, name.arg("load"), "%", state.load/10.0f, time);
-
-            // control_sensors_enabled:
-            // relevant bits: 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control
-            emit attitudeControlEnabled(state.onboard_control_sensors_enabled & (1 << 11));
-            emit positionYawControlEnabled(state.onboard_control_sensors_enabled & (1 << 12));
-            emit positionZControlEnabled(state.onboard_control_sensors_enabled & (1 << 13));
-            emit positionXYControlEnabled(state.onboard_control_sensors_enabled & (1 << 14));
-
-            // Trigger drop rate updates as needed. Here we convert the incoming
-            // drop_rate_comm value from 1/100 of a percent in a uint16 to a true
-            // percentage as a float. We also cap the incoming value at 100% as defined
-            // by the MAVLink specifications.
-            if (state.drop_rate_comm > 10000)
-            {
-                state.drop_rate_comm = 10000;
-            }
-            emit dropRateChanged(this->getUASID(), state.drop_rate_comm/100.0f);
             emit valueChanged(uasId, name.arg("drop_rate_comm"), "%", state.drop_rate_comm/100.0f, time);
         }
             break;
@@ -357,7 +293,6 @@ void UAS::receiveMessage(mavlink_message_t message)
 
                 attitudeKnown = true;
                 emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
-                emit attitudeRotationRatesChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
             }
         }
             break;
@@ -418,7 +353,6 @@ void UAS::receiveMessage(mavlink_message_t message)
 
                 attitudeKnown = true;
                 emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
-                emit attitudeRotationRatesChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
             }
         }
             break;
@@ -434,40 +368,11 @@ void UAS::receiveMessage(mavlink_message_t message)
             mavlink_vfr_hud_t hud;
             mavlink_msg_vfr_hud_decode(&message, &hud);
             quint64 time = getUnixTime();
-            // Display updated values
-            emit thrustChanged(this, hud.throttle/100.0);
 
             if (!attitudeKnown)
             {
                 setYaw(QGC::limitAngleToPMPId((((double)hud.heading)/180.0)*M_PI));
                 emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
-            }
-
-            setAltitudeAMSL(hud.alt);
-            setGroundSpeed(hud.groundspeed);
-            if (!qIsNaN(hud.airspeed))
-                setAirSpeed(hud.airspeed);
-            speedZ = -hud.climb;
-            emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
-            emit speedChanged(this, groundSpeed, airSpeed, time);
-        }
-            break;
-        case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
-            //std::cerr << std::endl;
-            //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
-        {
-            mavlink_local_position_ned_t pos;
-            mavlink_msg_local_position_ned_decode(&message, &pos);
-            quint64 time = getUnixTime(pos.time_boot_ms);
-
-            if (!wrongComponent)
-            {
-                speedX = pos.vx;
-                speedY = pos.vy;
-                speedZ = pos.vz;
-
-                // Emit
-                emit velocityChanged_NED(this, speedX, speedY, speedZ, time);
             }
         }
             break;
@@ -477,114 +382,6 @@ void UAS::receiveMessage(mavlink_message_t message)
             mavlink_msg_global_vision_position_estimate_decode(&message, &pos);
             quint64 time = getUnixTime(pos.usec);
             emit attitudeChanged(this, message.compid, pos.roll, pos.pitch, pos.yaw, time);
-        }
-            break;
-        case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
-            //std::cerr << std::endl;
-            //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
-        {
-            mavlink_global_position_int_t pos;
-            mavlink_msg_global_position_int_decode(&message, &pos);
-
-            quint64 time = getUnixTime();
-
-            setLatitude(pos.lat/(double)1E7);
-            setLongitude(pos.lon/(double)1E7);
-            setAltitudeRelative(pos.relative_alt/1000.0);
-
-            globalEstimatorActive = true;
-
-            speedX = pos.vx/100.0;
-            speedY = pos.vy/100.0;
-            speedZ = pos.vz/100.0;
-
-            emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), time);
-            emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
-            // We had some frame mess here, global and local axes were mixed.
-            emit velocityChanged_NED(this, speedX, speedY, speedZ, time);
-
-            setGroundSpeed(qSqrt(speedX*speedX+speedY*speedY));
-            emit speedChanged(this, groundSpeed, airSpeed, time);
-
-            isGlobalPositionKnown = true;
-        }
-            break;
-        case MAVLINK_MSG_ID_GPS_RAW_INT:
-        {
-            mavlink_gps_raw_int_t pos;
-            mavlink_msg_gps_raw_int_decode(&message, &pos);
-
-            quint64 time = getUnixTime(pos.time_usec);
-
-            // TODO: track localization state not only for gps but also for other loc. sources
-            int loc_type = pos.fix_type;
-            if (loc_type == 1)
-            {
-                loc_type = 0;
-            }
-            setSatelliteCount(pos.satellites_visible);
-
-            if (pos.fix_type > 2)
-            {
-                isGlobalPositionKnown = true;
-
-                latitude_gps  = pos.lat/(double)1E7;
-                longitude_gps = pos.lon/(double)1E7;
-                altitude_gps  = pos.alt/1000.0;
-
-                // If no GLOBAL_POSITION_INT messages ever received, use these raw GPS values instead.
-                if (!globalEstimatorActive) {
-                    setLatitude(latitude_gps);
-                    setLongitude(longitude_gps);
-                    emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), time);
-                    emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
-
-                    float vel = pos.vel/100.0f;
-                    // Smaller than threshold and not NaN
-                    if ((vel < 1000000) && !qIsNaN(vel) && !qIsInf(vel)) {
-                        setGroundSpeed(vel);
-                        emit speedChanged(this, groundSpeed, airSpeed, time);
-                    } else {
-                        emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_NOTICE, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
-                    }
-                }
-            }
-
-            double dtmp;
-            //-- Raw GPS data
-            dtmp = pos.eph == 0xFFFF ? 1e10f : pos.eph / 100.0;
-            if(dtmp != satRawHDOP)
-            {
-                satRawHDOP = dtmp;
-                emit satRawHDOPChanged(satRawHDOP);
-            }
-            dtmp = pos.epv == 0xFFFF ? 1e10f : pos.epv / 100.0;
-            if(dtmp != satRawVDOP)
-            {
-                satRawVDOP = dtmp;
-                emit satRawVDOPChanged(satRawVDOP);
-            }
-            dtmp = pos.cog == 0xFFFF ? 0.0 : pos.cog / 100.0;
-            if(dtmp != satRawCOG)
-            {
-                satRawCOG = dtmp;
-                emit satRawCOGChanged(satRawCOG);
-            }
-
-            // Emit this signal after the above signals. This way a trigger on gps lock signal which then asks for vehicle position
-            // gets a good position.
-            emit localizationChanged(this, loc_type);
-        }
-            break;
-        case MAVLINK_MSG_ID_GPS_STATUS:
-        {
-            mavlink_gps_status_t pos;
-            mavlink_msg_gps_status_decode(&message, &pos);
-            for(int i = 0; i < (int)pos.satellites_visible; i++)
-            {
-                emit gpsSatelliteStatusChanged(uasId, (unsigned char)pos.satellite_prn[i], (unsigned char)pos.satellite_elevation[i], (unsigned char)pos.satellite_azimuth[i], (unsigned char)pos.satellite_snr[i], static_cast<bool>(pos.satellite_used[i]));
-            }
-            setSatelliteCount(pos.satellites_visible);
         }
             break;
 
@@ -610,7 +407,6 @@ void UAS::receiveMessage(mavlink_message_t message)
             float roll, pitch, yaw;
             mavlink_quaternion_to_euler(out.q, &roll, &pitch, &yaw);
             quint64 time = getUnixTimeFromMs(out.time_boot_ms);
-            emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, out.thrust, time);
 
             // For plotting emit roll sp, pitch sp and yaw sp values
             emit valueChanged(uasId, "roll sp", "rad", roll, time);
@@ -619,25 +415,6 @@ void UAS::receiveMessage(mavlink_message_t message)
         }
             break;
 
-        case MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED:
-        {
-            if (multiComponentSourceDetected && wrongComponent)
-            {
-                break;
-            }
-            mavlink_position_target_local_ned_t p;
-            mavlink_msg_position_target_local_ned_decode(&message, &p);
-            quint64 time = getUnixTimeFromMs(p.time_boot_ms);
-            emit positionSetPointsChanged(uasId, p.x, p.y, p.z, 0/* XXX remove yaw and move it to attitude */, time);
-        }
-            break;
-        case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
-        {
-            mavlink_set_position_target_local_ned_t p;
-            mavlink_msg_set_position_target_local_ned_decode(&message, &p);
-            emit userPositionSetPointsChanged(uasId, p.x, p.y, p.z, 0/* XXX remove yaw and move it to attitude */);
-        }
-            break;
         case MAVLINK_MSG_ID_STATUSTEXT:
         {
             QByteArray b;
@@ -718,17 +495,6 @@ void UAS::receiveMessage(mavlink_message_t message)
         }
             break;
 
-        case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
-        {
-            mavlink_nav_controller_output_t p;
-            mavlink_msg_nav_controller_output_decode(&message,&p);
-            setDistToWaypoint(p.wp_dist);
-            setBearingToWaypoint(p.nav_bearing);
-            emit navigationControllerErrorsChanged(this, p.alt_error, p.aspd_error, p.xtrack_error);
-            emit NavigationControllerDataChanged(this, p.nav_roll, p.nav_pitch, p.nav_bearing, p.target_bearing, p.wp_dist);
-        }
-            break;
-
         case MAVLINK_MSG_ID_LOG_ENTRY:
         {
             mavlink_log_entry_t log;
@@ -762,6 +528,7 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
     int airspeedCal = 0;
     int radioCal = 0;
     int accelCal = 0;
+    int pressureCal = 0;
     int escCal = 0;
 
     switch (calType) {
@@ -786,6 +553,9 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
     case StartCalibrationLevel:
         accelCal = 2;
         break;
+    case StartCalibrationPressure:
+        pressureCal = 1;
+        break;
     case StartCalibrationEsc:
         escCal = 1;
         break;
@@ -797,6 +567,8 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
         break;
     }
 
+    // We can't use sendMavCommand here since we have no idea how long it will be before the command returns a result. This in turn
+    // causes the retry logic to break down.
     mavlink_message_t msg;
     mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
                                        mavlink->getComponentId(),
@@ -808,7 +580,7 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
                                        0,                                // 0=first transmission of command
                                        gyroCal,                          // gyro cal
                                        magCal,                           // mag cal
-                                       0,                                // ground pressure
+                                       pressureCal,                      // ground pressure
                                        radioCal,                         // radio cal
                                        accelCal,                         // accel cal
                                        airspeedCal,                      // PX4: airspeed cal, ArduPilot: compass mot
@@ -822,23 +594,16 @@ void UAS::stopCalibration(void)
         return;
     }
 
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       uasId,
-                                       _vehicle->defaultComponentId(),   // target component
-                                       MAV_CMD_PREFLIGHT_CALIBRATION,    // command id
-                                       0,                                // 0=first transmission of command
-                                       0,                                // gyro cal
-                                       0,                                // mag cal
-                                       0,                                // ground pressure
-                                       0,                                // radio cal
-                                       0,                                // accel cal
-                                       0,                                // airspeed cal
-                                       0);                               // unused
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
+                             MAV_CMD_PREFLIGHT_CALIBRATION,     // command id
+                             true,                              // showError
+                             0,                                 // gyro cal
+                             0,                                 // mag cal
+                             0,                                 // ground pressure
+                             0,                                 // radio cal
+                             0,                                 // accel cal
+                             0,                                 // airspeed cal
+                             0);                                // unused
 }
 
 void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
@@ -858,23 +623,10 @@ void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
         break;
     }
 
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       uasId,
-                                       _vehicle->defaultComponentId(),   // target component
-                                       MAV_CMD_PREFLIGHT_UAVCAN,         // command id
-                                       0,                                // 0=first transmission of command
-                                       actuatorCal,                      // actuators
-                                       0,
-                                       0,
-                                       0,
-                                       0,
-                                       0,
-                                       0);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
+                             MAV_CMD_PREFLIGHT_UAVCAN,          // command id
+                             true,                              // showError
+                             actuatorCal);                      // actuators
 }
 
 void UAS::stopBusConfig(void)
@@ -883,23 +635,10 @@ void UAS::stopBusConfig(void)
         return;
     }
 
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       uasId,
-                                       _vehicle->defaultComponentId(),   // target component
-                                       MAV_CMD_PREFLIGHT_UAVCAN,         // command id
-                                       0,                                // 0=first transmission of command
-                                       0,
-                                       0,
-                                       0,
-                                       0,
-                                       0,
-                                       0,
-                                       0);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
+                             MAV_CMD_PREFLIGHT_UAVCAN,          // command id
+                             true,                              // showError
+                             0);                                // cancel
 }
 
 /**
@@ -1233,33 +972,6 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
     emit parameterUpdate(uasId, compId, paramName, rawValue.param_count, rawValue.param_index, rawValue.param_type, paramValue);
 }
 
-void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component)
-{
-    if (!_vehicle) {
-        return;
-    }
-
-    mavlink_message_t msg;
-    mavlink_command_long_t cmd;
-    cmd.command = (uint16_t)command;
-    cmd.confirmation = confirmation;
-    cmd.param1 = param1;
-    cmd.param2 = param2;
-    cmd.param3 = param3;
-    cmd.param4 = param4;
-    cmd.param5 = param5;
-    cmd.param6 = param6;
-    cmd.param7 = param7;
-    cmd.target_system = uasId;
-    cmd.target_component = component;
-    mavlink_msg_command_long_encode_chan(mavlink->getSystemId(),
-                                         mavlink->getComponentId(),
-                                         _vehicle->priorityLink()->mavlinkChannel(),
-                                         &msg,
-                                         &cmd);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-}
-
 /**
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
@@ -1267,6 +979,10 @@ void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float 
 void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode)
 {
     if (!_vehicle) {
+        return;
+    }
+
+    if (!_vehicle->priorityLink()) {
         return;
     }
 
@@ -1446,8 +1162,6 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
         }
 
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
-        // Emit an update in control values to other UI elements, like the HSI display
-        emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
     }
 }
 
@@ -1486,8 +1200,6 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
                                                             MAV_FRAME_LOCAL_NED, position_mask, x, y, z, 0, 0, 0, 0, 0, 0, yaw, yawrate);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
         qDebug() << __FILE__ << __LINE__ << ": SENT 6DOF CONTROL MESSAGES: x" << x << " y: " << y << " z: " << z << " roll: " << roll << " pitch: " << pitch << " yaw: " << yaw;
-
-        //emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
     }
     else
     {
@@ -1501,20 +1213,47 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
 */
 void UAS::pairRX(int rxType, int rxSubType)
 {
-    if (!_vehicle) {
-        return;
+    if (_vehicle) {
+        _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
+                                 MAV_CMD_START_RX_PAIR,             // command id
+                                 true,                              // showError
+                                 rxType,
+                                 rxSubType);
     }
+}
 
-    mavlink_message_t msg;
+/**
+* Order the robot to take a picture (Testing -- Incomplete API)
+*/
+void UAS::takePhoto()
+{
+    if (_vehicle) {
+        _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
+                                 MAV_CMD_IMAGE_START_CAPTURE,       // command id
+                                 true,                              // showError
+                                 0,                                 // Duration between two consecutive pictures (in seconds)
+                                 1,                                 // Number of images to capture total - 0 for unlimited capture
+                                 0,                                 // Resolution in megapixels (0.3 for 640x480, 1.3 for 1280x720, etc), set to 0 if param 4/5 are used
+                                 1920,                              // Resolution horizontal in pixels
+                                 1080);                             // Resolution horizontal in pixels
+    }
+}
 
-    mavlink_msg_command_long_pack_chan(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       uasId,
-                                       _vehicle->defaultComponentId(),
-                                       MAV_CMD_START_RX_PAIR, 0, rxType, rxSubType, 0, 0, 0, 0, 0);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/**
+* Order the robot to toggle video recording (Testing -- Incomplete API)
+*/
+void UAS::toggleVideo()
+{
+    if (_vehicle) {
+        _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
+                                 MAV_CMD_VIDEO_START_CAPTURE,       // command id
+                                 true,                              // showError
+                                 0,                                 // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+                                 60,                                // Frames per second
+                                 0,                                 // Resolution in megapixels (0.3 for 640x480, 1.3 for 1280x720, etc), set to 0 if param 4/5 are used
+                                 1920,                              // Resolution horizontal in pixels
+                                 1080);                             // Resolution horizontal in pixels
+    }
 }
 
 /**

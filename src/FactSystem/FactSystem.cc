@@ -30,6 +30,7 @@ void FactSystem::setToolbox(QGCToolbox *toolbox)
     QGCTool::setToolbox(toolbox);
 
     qmlRegisterType<Fact>               (_factSystemQmlUri, 1, 0, "Fact");
+    qmlRegisterType<FactMetaData>       (_factSystemQmlUri, 1, 0, "FactMetaData");
     qmlRegisterType<FactPanelController>(_factSystemQmlUri, 1, 0, "FactPanelController");
 
     qmlRegisterUncreatableType<FactGroup>(_factSystemQmlUri, 1, 0, "FactGroup", "ReferenceOnly");

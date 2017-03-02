@@ -29,55 +29,65 @@ public:
     GeoFenceController(QObject* parent = NULL);
     ~GeoFenceController();
     
+    Q_PROPERTY(bool             circleEnabled       READ circleEnabled                                      NOTIFY circleEnabledChanged)
+    Q_PROPERTY(float            circleRadius        READ circleRadius                                       NOTIFY circleRadiusChanged)
+
+    Q_PROPERTY(bool             polygonEnabled      READ polygonEnabled                                     NOTIFY polygonEnabledChanged)
+    Q_PROPERTY(QGCMapPolygon*   polygon             READ polygon                                            CONSTANT)
+
+    Q_PROPERTY(bool             breachReturnEnabled READ breachReturnEnabled                                NOTIFY breachReturnEnabledChanged)
+    Q_PROPERTY(QGeoCoordinate   breachReturnPoint   READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
+
+    Q_PROPERTY(QVariantList     params              READ params                                             NOTIFY paramsChanged)
+    Q_PROPERTY(QStringList      paramLabels         READ paramLabels                                        NOTIFY paramLabelsChanged)
+    Q_PROPERTY(QString          editorQml           READ editorQml                                          NOTIFY editorQmlChanged)
+
+#if 0
     Q_PROPERTY(bool                 fenceSupported          READ fenceSupported                                     NOTIFY fenceSupportedChanged)
+    Q_PROPERTY(bool                 fenceEnabled            READ fenceEnabled                                       NOTIFY fenceEnabledChanged)
     Q_PROPERTY(bool                 circleSupported         READ circleSupported                                    NOTIFY circleSupportedChanged)
     Q_PROPERTY(bool                 polygonSupported        READ polygonSupported                                   NOTIFY polygonSupportedChanged)
     Q_PROPERTY(bool                 breachReturnSupported   READ breachReturnSupported                              NOTIFY breachReturnSupportedChanged)
-    Q_PROPERTY(float                circleRadius            READ circleRadius                                       NOTIFY circleRadiusChanged)
-    Q_PROPERTY(QGCMapPolygon*       polygon                 READ polygon                                            CONSTANT)
-    Q_PROPERTY(QGeoCoordinate       breachReturnPoint       READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
-    Q_PROPERTY(QVariantList         params                  READ params                                             NOTIFY paramsChanged)
-    Q_PROPERTY(QStringList          paramLabels             READ paramLabels                                        NOTIFY paramLabelsChanged)
-    Q_PROPERTY(QString              editorQml               READ editorQml                                          NOTIFY editorQmlChanged)
+#endif
 
-    void start              (bool editMode) final;
-    void loadFromVehicle    (void) final;
-    void sendToVehicle      (void) final;
-    void loadFromFilePicker (void) final;
-    void loadFromFile       (const QString& filename) final;
-    void saveToFilePicker   (void) final;
-    void saveToFile         (const QString& filename) final;
-    void removeAll          (void) final;
-    bool syncInProgress     (void) const final;
-    bool dirty              (void) const final;
-    void setDirty           (bool dirty) final;
+    void start                      (bool editMode) final;
+    void startStaticActiveVehicle   (Vehicle* vehicle) final;
+    void loadFromVehicle            (void) final;
+    void sendToVehicle              (void) final;
+    void loadFromFilePicker         (void) final;
+    void loadFromFile               (const QString& filename) final;
+    void saveToFilePicker           (void) final;
+    void saveToFile                 (const QString& filename) final;
+    void removeAll                  (void) final;
+    bool syncInProgress             (void) const final;
+    bool dirty                      (void) const final;
+    void setDirty                   (bool dirty) final;
 
     QString fileExtension(void) const final;
 
-    bool                fenceSupported          (void) const;
-    bool                circleSupported         (void) const;
-    bool                polygonSupported        (void) const;
-    bool                breachReturnSupported   (void) const;
-    float               circleRadius            (void) const;
-    QGCMapPolygon*      polygon                 (void) { return &_polygon; }
-    QGeoCoordinate      breachReturnPoint       (void) const { return _breachReturnPoint; }
-    QVariantList        params                  (void) const;
-    QStringList         paramLabels             (void) const;
-    QString             editorQml               (void) const;
+    bool                circleEnabled       (void) const;
+    bool                polygonEnabled      (void) const;
+    bool                breachReturnEnabled (void) const;
+    float               circleRadius        (void) const;
+    QGCMapPolygon*      polygon             (void) { return &_polygon; }
+    QGeoCoordinate      breachReturnPoint   (void) const { return _breachReturnPoint; }
+    QVariantList        params              (void) const;
+    QStringList         paramLabels         (void) const;
+    QString             editorQml           (void) const;
 
     void setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint);
 
 signals:
-    void fenceSupportedChanged          (bool fenceSupported);
-    void circleSupportedChanged         (bool circleSupported);
-    void polygonSupportedChanged        (bool polygonSupported);
-    void breachReturnSupportedChanged   (bool breachReturnSupported);
-    void circleRadiusChanged            (float circleRadius);
-    void polygonPathChanged             (const QVariantList& polygonPath);
-    void breachReturnPointChanged       (QGeoCoordinate breachReturnPoint);
-    void paramsChanged                  (QVariantList params);
-    void paramLabelsChanged             (QStringList paramLabels);
-    void editorQmlChanged               (QString editorQml);
+    void circleEnabledChanged       (bool circleEnabled);
+    void polygonEnabledChanged      (bool polygonEnabled);
+    void breachReturnEnabledChanged (bool breachReturnEnabled);
+    void circleRadiusChanged        (float circleRadius);
+    void polygonPathChanged         (const QVariantList& polygonPath);
+    void breachReturnPointChanged   (QGeoCoordinate breachReturnPoint);
+    void paramsChanged              (QVariantList params);
+    void paramLabelsChanged         (QStringList paramLabels);
+    void editorQmlChanged           (QString editorQml);
+    void loadComplete               (void);
 
 private slots:
     void _polygonDirtyChanged(bool dirty);
@@ -87,6 +97,7 @@ private slots:
     void _loadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
 
 private:
+    void _init(void);
     void _signalAll(void);
     bool _loadJsonFile(QJsonDocument& jsonDoc, QString& errorString);
 

@@ -23,12 +23,11 @@ public:
     ~PX4GeoFenceManager();
 
     // Overrides from GeoFenceManager
-    bool            fenceSupported          (void) const final { return true; }
-    bool            circleSupported         (void) const final;
-    float           circleRadius            (void) const final;
-    QVariantList    params                  (void) const final { return _params; }
-    QStringList     paramLabels             (void) const final { return _paramLabels; }
-    QString         editorQml               (void) const final { return QStringLiteral("qrc:/FirmwarePlugin/PX4/PX4GeoFenceEditor.qml"); }
+    bool            circleEnabled   (void) const final { return _circleEnabled; }
+    float           circleRadius    (void) const final;
+    QVariantList    params          (void) const final { return _params; }
+    QStringList     paramLabels     (void) const final { return _paramLabels; }
+    QString         editorQml       (void) const final { return QStringLiteral("qrc:/FirmwarePlugin/PX4/PX4GeoFenceEditor.qml"); }
 
 private slots:
     void _circleRadiusRawValueChanged(QVariant value);
@@ -39,6 +38,7 @@ private:
 
     QVariantList    _params;
     QStringList     _paramLabels;
+    bool            _circleEnabled;
 
     Fact* _circleRadiusFact;
 };
