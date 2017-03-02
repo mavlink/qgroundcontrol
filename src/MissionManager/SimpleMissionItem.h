@@ -90,6 +90,7 @@ public:
     QGeoCoordinate  exitCoordinate          (void) const final { return coordinate(); }
     int             sequenceNumber          (void) const final { return _missionItem.sequenceNumber(); }
     double          flightSpeed             (void) final;
+    QString         mapVisualQML            (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
 
     bool coordinateHasRelativeAltitude      (void) const final { return _missionItem.relativeAltitude(); }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return coordinateHasRelativeAltitude(); }
