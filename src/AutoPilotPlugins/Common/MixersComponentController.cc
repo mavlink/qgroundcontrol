@@ -50,6 +50,12 @@ void MixersComponentController::getMixersCountButtonClicked(void)
 }
 
 
+void MixersComponentController::requestAllButtonClicked(void)
+{
+    _vehicle->mixersManager()->requestMixerAll(0);
+}
+
+
 //void RadioComponentController::_loadSettings(void)
 //{
 //    QSettings settings;

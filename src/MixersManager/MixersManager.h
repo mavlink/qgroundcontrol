@@ -36,6 +36,7 @@ public:
     bool inProgress(void);
 
     bool requestMixerCount(unsigned int Group);
+    bool requestMixerAll(unsigned int Group);
 
     // These values are public so the unit test can set appropriate signal wait times
     static const int _ackTimeoutMilliseconds = 1000;
@@ -56,18 +57,28 @@ private:
         AckMixerType,       ///< MIXER_DATA mixer type value message expected
         AckGetParameter,    ///< MIXER_DATA parameter value message expected
         AckSetParameter,    ///< MIXER_DATA parameter value message expected
+        AckAll,             ///< ALL mixer data expected
     } AckType_t;
     
 
 private:
     Vehicle*            _vehicle;
     LinkInterface*      _dedicatedLink;
-    
+
+    QList<mavlink_mixer_data_t*> _mixerDataMessages;
     QTimer*             _ackTimeoutTimer;
     AckType_t           _expectedAck;
     int                 _retryCount;
 
     void _startAckTimeout(AckType_t ack);
+
+    //* Return index of matching message,group,mixer,submixer and parameter etc..*/
+    int _getMessageOfKind(const mavlink_mixer_data_t* data);
+
+    //* collect mixer data into a list.  Only one list entry per group, data_type, mixer, submixer etc...*/
+    bool _collectMixerData(const mavlink_mixer_data_t* data);
+
+
 //    bool _checkForExpectedAck(AckType_t receivedAck);
 
 //    void _handleMissionAck(const mavlink_message_t& message);

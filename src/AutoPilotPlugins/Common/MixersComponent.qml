@@ -65,7 +65,15 @@ SetupPage {
             QGCButton { text: qsTr("Request submixer count")}
             QGCButton { text: qsTr("Request mixer type")}
             QGCButton { text: qsTr("Request parameter")}
-            QGCButton { text: qsTr("Request all")}
+
+            QGCButton {
+                id:requestAllButton
+                text: qsTr("Request all")
+                onClicked: {
+                    mixers.requestAllButtonClicked()
+                }
+            }
+
             QGCButton { text: qsTr("Set parameter")}
         } // Column
     } // Component

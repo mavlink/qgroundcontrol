@@ -38,7 +38,8 @@ public:
     MixersComponentController(void);
     ~MixersComponentController();
 
-      Q_PROPERTY(QQuickItem* getMixersCountButton MEMBER _getMixersCountButton    NOTIFY getMixersCountButtonChanged)
+    Q_PROPERTY(QQuickItem* getMixersCountButton MEMBER _getMixersCountButton    NOTIFY getMixersCountButtonChanged)
+    Q_PROPERTY(QQuickItem* requestAllButton MEMBER _requestAllButton    NOTIFY requestAllButtonChanged)
 //    Q_PROPERTY(QQuickItem* statusText   MEMBER _statusText      NOTIFY statusTextChanged)
 //    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton    NOTIFY cancelButtonChanged)
 //    Q_PROPERTY(QQuickItem* nextButton   MEMBER _nextButton      NOTIFY nextButtonChanged)
@@ -57,7 +58,8 @@ public:
 //    };
     
     Q_INVOKABLE void getMixersCountButtonClicked(void);
-    
+    Q_INVOKABLE void requestAllButtonClicked(void);
+
     unsigned int groupValue(void);
     unsigned int mixerIndexValue(void);
     unsigned int submixerIndexValue(void);
@@ -66,6 +68,7 @@ public:
     
 signals:
     void getMixersCountButtonChanged(void);
+    void requestAllButtonChanged(void);
 //    void statusTextChanged(void);
 //    void nextButtonChanged(void);
 //    void skipButtonChanged(void);
@@ -111,6 +114,7 @@ private:
 //    static const struct FunctionInfo _rgFunctionInfoPX4[rcCalFunctionMax]; ///< Information associated with each function, APM firmware
     
     QQuickItem* _getMixersCountButton;
+    QQuickItem* _requestAllButton;
 //    QQuickItem* _statusText;
 //    QQuickItem* _nextButton;
 //    QQuickItem* _skipButton;
