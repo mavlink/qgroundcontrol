@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 
-import QtQuick          2.4
-import QtQuick.Controls 1.3
+import QtQuick          2.7
+import QtQuick.Controls 1.4
 import QtQuick.Dialogs  1.2
-import QtLocation       5.3
-import QtPositioning    5.3
-import QtQuick.Layouts  1.2
+import QtLocation       5.6
+import QtPositioning    5.5
+import QtQuick.Layouts  1.3
 
 import QGroundControl               1.0
 import QGroundControl.FlightMap     1.0
