@@ -14,7 +14,7 @@ import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
 import QtLocation               5.6
 import QtPositioning            5.5
-import QtMultimedia             5.5
+import QtMultimedia             5.8
 
 import QGroundControl               1.0
 import QGroundControl.FlightDisplay 1.0
