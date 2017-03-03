@@ -75,7 +75,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     connect(&_initialRequestTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_initialRequestTimeout);
 
     _waitingParamTimeoutTimer.setSingleShot(true);
-    _waitingParamTimeoutTimer.setInterval(3000);
+    _waitingParamTimeoutTimer.setInterval(30000);
     connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_waitingParamTimeout);
 
     connect(_vehicle->uas(), &UASInterface::parameterUpdate, this, &ParameterManager::_parameterUpdate);
@@ -106,6 +106,13 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
                                             "mavType:" << mavType <<
                                             "value:" << value <<
                                             ")";
+
+    // ArduPilot has this strange behavior of streaming parameters that we didn't ask for. This even happens before it responds to the
+    // PARAM_REQUEST_LIST. We disregard any of this until the initial request is responded to.
+    if (parameterId == 65535 && _initialRequestTimeoutTimer.isActive()) {
+        qCDebug(ParameterManagerVerbose1Log) << "Disregarding unrequested param prior to intial list response" << parameterName;
+        return;
+    }
 
     _initialRequestTimeoutTimer.stop();
 
