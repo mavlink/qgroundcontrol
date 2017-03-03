@@ -8,9 +8,9 @@
  ****************************************************************************/
 
 
-import QtQuick          2.7
-import QtQuick.Controls 1.4
-import QtQuick.Layouts  1.3
+import QtQuick          2.5
+import QtQuick.Controls 1.2
+import QtQuick.Layouts  1.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -18,48 +18,55 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
-//-------------------------------------------------------------------------
-//-- RC RSSI Indicator
+// Joystick Indicator
 Item {
-    width:          visible * rssiRow.width * 1.1
+    width:          joystickRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    visible:        activeVehicle ? activeVehicle.supportsRadio : true
+    visible:        activeVehicle ? activeVehicle.sub : false
+
 
     Component {
-        id: rcRSSIInfo
+        id: joystickInfo
 
         Rectangle {
-            width:  rcrssiCol.width   + ScreenTools.defaultFontPixelWidth  * 3
-            height: rcrssiCol.height  + ScreenTools.defaultFontPixelHeight * 2
+            width:  joystickCol.width   + ScreenTools.defaultFontPixelWidth  * 3
+            height: joystickCol.height  + ScreenTools.defaultFontPixelHeight * 2
             radius: ScreenTools.defaultFontPixelHeight * 0.5
             color:  qgcPal.window
             border.color:   qgcPal.text
 
             Column {
-                id:                 rcrssiCol
+                id:                 joystickCol
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                width:              Math.max(rcrssiGrid.width, rssiLabel.width)
+                width:              Math.max(joystickGrid.width, joystickLabel.width)
                 anchors.margins:    ScreenTools.defaultFontPixelHeight
                 anchors.centerIn:   parent
 
                 QGCLabel {
-                    id:             rssiLabel
-                    text:           activeVehicle ? (activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data available")
+                    id:             joystickLabel
+                    text:           qsTr("Joystick Status")
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 GridLayout {
-                    id:                 rcrssiGrid
-                    visible:            activeVehicle && activeVehicle.rcRSSI != 255
+                    id:                 joystickGrid
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    QGCLabel { text: qsTr("RSSI:") }
-                    QGCLabel { text: activeVehicle ? (activeVehicle.rcRSSI + "%") : 0 }
+                    QGCLabel { text: qsTr("Connected:") }
+                    QGCLabel {
+                        text:  joystickManager.activeJoystick ? "Yes" : "No"
+                        color: joystickManager.activeJoystick ? qgcPal.buttonText : "red"
+                    }
+                    QGCLabel { text: qsTr("Enabled:") }
+                    QGCLabel {
+                        text:  activeVehicle && activeVehicle.joystickEnabled ? "Yes" : "No"
+                        color: activeVehicle && activeVehicle.joystickEnabled ? qgcPal.buttonText : "red"
+                    }
                 }
             }
 
@@ -72,7 +79,7 @@ Item {
     }
 
     Row {
-        id:             rssiRow
+        id:             joystickRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
         spacing:        ScreenTools.defaultFontPixelWidth
@@ -82,24 +89,14 @@ Item {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             sourceSize.height:  height
-            source:             "/qmlimages/RC.svg"
+            source:             "/qmlimages/Joystick.png"
             fillMode:           Image.PreserveAspectFit
-            opacity:            activeVehicle ? (((activeVehicle.rcRSSI < 0) || (activeVehicle.rcRSSI > 100)) ? 0.5 : 1) : 0.5
-            color:              qgcPal.buttonText
-        }
-
-        SignalStrength {
-            anchors.verticalCenter: parent.verticalCenter
-            size:                   parent.height * 0.5
-            percent:                activeVehicle ? ((activeVehicle.rcRSSI > 100) ? 0 : activeVehicle.rcRSSI) : 0
+            color:              activeVehicle && activeVehicle.joystickEnabled && joystickManager.activeJoystick ? qgcPal.buttonText : "red"
         }
     }
 
     MouseArea {
         anchors.fill:   parent
-        onClicked: {
-            var centerX = mapToItem(toolBar, x, y).x + (width / 2)
-            mainWindow.showPopUp(rcRSSIInfo, centerX)
-        }
+        onClicked:      mainWindow.showPopUp(joystickInfo, mapToItem(toolBar, x, y).x + (width / 2))
     }
 }
