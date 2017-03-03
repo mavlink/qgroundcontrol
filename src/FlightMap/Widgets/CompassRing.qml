@@ -7,13 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief QGC Compass Widget
- *   @author Gus Grubba <mavlink@grubba.com>
- */
-
 import QtQuick              2.7
 import QtGraphicalEffects   1.0
 
@@ -22,8 +15,6 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 
 Item {
-    id:                     root
-
     property real size:     _defaultSize
     property var  vehicle:  null
 
@@ -48,47 +39,32 @@ Item {
         visible:        false
 
         Image {
-            id:                 pointer
-            source:             vehicle ? vehicle.vehicleImageCompass : ""
-            mipmap:             true
-            width:              size * 0.75
-            sourceSize.width:   width
-            fillMode:           Image.PreserveAspectFit
-            anchors.centerIn:   parent
+            id:                     pointer
+            source:                 "/qmlimages/attitudePointer.svg"
+            mipmap:                 true
+            fillMode:               Image.PreserveAspectFit
+            anchors.leftMargin:     _pointerMargin
+            anchors.rightMargin:    _pointerMargin
+            anchors.topMargin:      _pointerMargin
+            anchors.bottomMargin:   _pointerMargin
+            anchors.fill:           parent
+            sourceSize.height:      parent.height
+
             transform: Rotation {
                 origin.x:       pointer.width  / 2
                 origin.y:       pointer.height / 2
                 angle:          _heading
             }
+
+            readonly property real _pointerMargin: -10
         }
 
         Image {
-            id:                 compassDial
             source:             "/qmlimages/compassInstrumentDial.svg"
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             anchors.fill:       parent
             sourceSize.height:  parent.height
-        }
-
-        Rectangle {
-            anchors.centerIn:   parent
-            width:              size * 0.35
-            height:             size * 0.2
-            border.color:       Qt.rgba(1,1,1,0.15)
-            color:              Qt.rgba(0,0,0,0.65)
-
-            QGCLabel {
-                text:           _headingString3
-                font.family:    vehicle ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
-                font.pointSize: _fontSize < 8 ? 8 : _fontSize;
-                color:          "white"
-                anchors.centerIn: parent
-
-                property string _headingString: vehicle ? _heading.toFixed(0) : "OFF"
-                property string _headingString2: _headingString.length === 1 ? "0" + _headingString : _headingString
-                property string _headingString3: _headingString2.length === 2 ? "0" + _headingString2 : _headingString2
-            }
         }
     }
 
