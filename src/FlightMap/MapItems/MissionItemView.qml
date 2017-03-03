@@ -12,7 +12,7 @@ import QtQuick          2.7
 import QtQuick.Controls 2.1
 import QtQuick.Dialogs  1.2
 import QtLocation       5.6
-import QtPositioning    5.3
+import QtPositioning    5.5
 
 import QGroundControl               1.0
 import QGroundControl.FlightMap     1.0
