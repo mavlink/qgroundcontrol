@@ -258,16 +258,6 @@ void MissionController::removeMissionItem(int index)
     item->deleteLater();
 
     _recalcAll();
-
-    // Set the new current item
-
-    if (index >= _visualItems->count()) {
-        index--;
-    }
-    for (int i=0; i<_visualItems->count(); i++) {
-        VisualMissionItem* item =  qobject_cast<VisualMissionItem*>(_visualItems->get(i));
-        item->setIsCurrentItem(i == index);
-    }
     _visualItems->setDirty(true);
 }
 
