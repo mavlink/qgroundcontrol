@@ -80,44 +80,11 @@ Item {
     Component {
         id: dragAreaComponent
 
-        Rectangle {
-            id:             itemDragger
-            x:              _itemVisual.x - _expandMargin
-            y:              _itemVisual.y - _expandMargin
-            width:          _itemVisual.width + (_expandMargin * 2)
-            height:         _itemVisual.height + (_expandMargin * 2)
-            color:          "transparent"
-            z:              QGroundControl.zOrderMapItems + 1    // Above item icons
+        MissionItemIndicatorDrag {
+                itemIndicator:  _itemVisual
+                itemCoordinate: _missionItem.coordinate
 
-            property bool   dragLoiter
-            property bool   _preventCoordinateBindingLoop:  false
-            property real   _expandMargin:                  ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth : 0
-
-            onXChanged: liveDrag()
-            onYChanged: liveDrag()
-
-            function liveDrag() {
-                if (!itemDragger._preventCoordinateBindingLoop && Drag.active) {
-                    var point = Qt.point(itemDragger.x + _expandMargin + _itemVisual.anchorPoint.x, itemDragger.y + _expandMargin + _itemVisual.anchorPoint.y)
-                    var coordinate = map.toCoordinate(point)
-                    itemDragger._preventCoordinateBindingLoop = true
-                    coordinate.altitude = _missionItem.coordinate.altitude
-                    _missionItem.coordinate = coordinate
-                    itemDragger._preventCoordinateBindingLoop = false
-                }
-            }
-
-            Drag.active: itemDrag.drag.active
-
-            MouseArea {
-                id:             itemDrag
-                anchors.fill:   parent
-                drag.target:    parent
-                drag.minimumX:  0
-                drag.minimumY:  0
-                drag.maximumX:  itemDragger.parent.width - parent.width
-                drag.maximumY:  itemDragger.parent.height - parent.height
-            }
+                onItemCoordinateChanged: _missionItem.coordinate = itemCoordinate
         }
     }
 

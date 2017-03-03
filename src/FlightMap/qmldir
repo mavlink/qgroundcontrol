@@ -22,10 +22,12 @@ VehicleHealthWidget     1.0 VehicleHealthWidget.qml
 VibrationWidget         1.0 VibrationWidget.qml
 
 # Map items
-MissionItemIndicator    1.0 MissionItemIndicator.qml
-MissionItemView         1.0 MissionItemView.qml
-MissionLineView         1.0 MissionLineView.qml
-VehicleMapItem          1.0 VehicleMapItem.qml
+MissionItemIndicator        1.0 MissionItemIndicator.qml
+MissionItemIndicatorDrag    1.0 MissionItemIndicatorDrag.qml
+MissionItemView             1.0 MissionItemView.qml
+MissionLineView             1.0 MissionLineView.qml
+PolygonEditor               1.0 PolygonEditor.qml
+VehicleMapItem              1.0 VehicleMapItem.qml
 
 # Editor controls
 QGCMapPolygonControls  1.0 QGCMapPolygonControls.qml

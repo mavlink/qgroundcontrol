@@ -254,7 +254,7 @@ QGCView {
 
     function setCurrentItem(sequenceNumber) {
         if (sequenceNumber !== _currentMissionIndex) {
-            editorMap.polygonDraw.cancelPolygonEdit()
+            //editorMap.polygonDraw.cancelPolygonEdit()
             _currentMissionItem = undefined
             _currentMissionIndex = -1
             for (var i=0; i<_visualItems.count; i++) {
