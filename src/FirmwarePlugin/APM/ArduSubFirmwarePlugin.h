@@ -86,6 +86,7 @@ public:
     QString brandImage(const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+    QVariantList& toolBarIndicators(const Vehicle* vehicle) final;
 
 private:
     static bool _remapParamNameIntialized;
