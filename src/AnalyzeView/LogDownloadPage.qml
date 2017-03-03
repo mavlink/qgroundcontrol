@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick              2.5
-import QtQuick.Controls     1.2
+import QtQuick              2.7
+import QtQuick.Controls     2.1
 import QtQuick.Dialogs      1.2
 import QtQuick.Layouts      1.2
 
