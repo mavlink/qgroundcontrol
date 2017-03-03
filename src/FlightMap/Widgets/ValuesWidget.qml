@@ -10,7 +10,7 @@
 
 import QtQuick          2.7
 import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick.Layouts  1.3
 
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
