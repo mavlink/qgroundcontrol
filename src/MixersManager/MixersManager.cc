@@ -26,6 +26,8 @@ MixersManager::MixersManager(Vehicle* vehicle)
     , _mixerDataMessages()
     , _ackTimeoutTimer(NULL)
     , _expectedAck(AckNone)
+    , _getMissing(false)
+    , _requestGroup(0)
 {
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &MixersManager::_mavlinkMessageReceived);
     
@@ -51,6 +53,7 @@ void MixersManager::_ackTimeout(void)
     switch(_expectedAck){
     case AckAll:
         qCDebug(MixersManagerLog) << "Mixer request all data - timeout.  Received " << _mixerDataMessages.length() << " messages";
+        _requestMissingData(0);
         break;
     default:
         break;
@@ -65,12 +68,12 @@ void MixersManager::_startAckTimeout(AckType_t ack)
     _ackTimeoutTimer->start();
 }
 
-bool MixersManager::requestMixerCount(unsigned int Group){
+bool MixersManager::requestMixerCount(unsigned int group){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
     command.command = MAV_CMD_REQUEST_MIXER_DATA;
-    command.param1 = Group; //Group
+    command.param1 = group; //Group
     command.param2 = 0; //Mixer
     command.param3 = 0; //SubMixer
     command.param4 = 0; //Parameter
@@ -84,15 +87,67 @@ bool MixersManager::requestMixerCount(unsigned int Group){
                                          &command);
 
     _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _startAckTimeout(AckMixersCount);
     return true;
 }
 
-bool MixersManager::requestMixerAll(unsigned int Group){
+bool MixersManager::requestSubmixerCount(unsigned int group, unsigned int mixer){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
+    command.command = MAV_CMD_REQUEST_MIXER_DATA;
+    command.param1 = group; //Group
+    command.param2 = mixer; //Mixer
+    command.param3 = 0; //SubMixer
+    command.param4 = 0; //Parameter
+    command.param5 = MIXER_DATA_TYPE_SUBMIXER_COUNT; //Type
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_command_long_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &command);
+
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _startAckTimeout(AckSubmixersCount);
+    return true;
+}
+
+
+bool MixersManager::requestMixerType(unsigned int group, unsigned int mixer, unsigned int submixer){
+    mavlink_message_t       messageOut;
+    mavlink_command_long_t  command;
+
+    command.command = MAV_CMD_REQUEST_MIXER_DATA;
+    command.param1 = group; //Group
+    command.param2 = mixer; //Mixer
+    command.param3 = submixer; //SubMixer
+    command.param4 = 0; //Parameter
+    command.param5 = MIXER_DATA_TYPE_MIXTYPE; //Type
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_command_long_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &command);
+
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _startAckTimeout(AckSubmixersCount);
+    return true;
+}
+
+
+
+bool MixersManager::requestMixerAll(unsigned int group){
+    mavlink_message_t       messageOut;
+    mavlink_command_long_t  command;
+
+    _requestGroup = group;
+
     command.command = MAV_CMD_REQUEST_MIXER_SEND_ALL;
-    command.param1 = Group; //Group
+    command.param1 = group; //Group
     command.param2 = 0; //Mixer
     command.param3 = 0; //SubMixer
     command.param4 = 0; //Parameter
@@ -110,7 +165,56 @@ bool MixersManager::requestMixerAll(unsigned int Group){
     return true;
 }
 
+bool MixersManager::requestMissingData(unsigned int group){
+    _requestGroup = group;
+    _requestMissingData(group);
+    return true;
+}
 
+//* Request a missing messages. true if there is missing data */
+bool MixersManager::_requestMissingData(unsigned int group){
+    mavlink_mixer_data_t chk;
+    _getMissing = true;
+
+    int found_index;
+    int mixer_count;
+    int submixer_count;
+    int mixer_type;
+    chk.connection_group = group;
+
+    chk.data_type = MIXER_DATA_TYPE_MIXER_COUNT;
+    found_index = _getMessageOfKind(&chk);
+    if(found_index == -1){
+        requestMixerCount(group);
+        return true;
+    } else {
+        mixer_count = _mixerDataMessages[found_index]->data_value;
+    }
+
+    for(chk.mixer_index=0; chk.mixer_index<mixer_count; chk.mixer_index++){
+        chk.data_type = MIXER_DATA_TYPE_SUBMIXER_COUNT;
+        found_index = _getMessageOfKind(&chk);
+        if(found_index == -1){
+            requestSubmixerCount(group, chk.mixer_index);
+            return true;
+        } else {
+            submixer_count = _mixerDataMessages[found_index]->data_value;
+        }
+        for(chk.mixer_sub_index=0; chk.mixer_sub_index<=submixer_count; chk.mixer_sub_index++){
+            chk.data_type = MIXER_DATA_TYPE_MIXTYPE;
+            found_index = _getMessageOfKind(&chk);
+            if(found_index == -1){
+                requestMixerType(group, chk.mixer_index, chk.mixer_sub_index);
+                return true;
+            } else {
+                mixer_type = _mixerDataMessages[found_index]->data_value;
+            }
+        }
+
+    }
+    _getMissing = false;
+    return false;
+}
 
 ///// Checks the received ack against the expected ack. If they match the ack timeout timer will be stopped.
 ///// @return true: received ack matches expected ack
@@ -249,6 +353,10 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
         default:
             break;
     }
+
+    if(_getMissing)
+        _requestMissingData(_requestGroup);
+
 
 //        case MAVLINK_MSG_ID_MISSION_ITEM:
 //            _handleMissionItem(message);

@@ -35,8 +35,11 @@ public:
     
     bool inProgress(void);
 
-    bool requestMixerCount(unsigned int Group);
-    bool requestMixerAll(unsigned int Group);
+    bool requestMixerCount(unsigned int group);
+    bool requestSubmixerCount(unsigned int group, unsigned int mixer);
+    bool requestMixerType(unsigned int group, unsigned int mixer, unsigned int submixer);
+    bool requestMixerAll(unsigned int group);
+    bool requestMissingData(unsigned int group);
 
     // These values are public so the unit test can set appropriate signal wait times
     static const int _ackTimeoutMilliseconds = 1000;
@@ -59,7 +62,7 @@ private:
         AckSetParameter,    ///< MIXER_DATA parameter value message expected
         AckAll,             ///< ALL mixer data expected
     } AckType_t;
-    
+
 
 private:
     Vehicle*            _vehicle;
@@ -69,6 +72,8 @@ private:
     QTimer*             _ackTimeoutTimer;
     AckType_t           _expectedAck;
     int                 _retryCount;
+    bool                _getMissing;
+    unsigned int        _requestGroup;
 
     void _startAckTimeout(AckType_t ack);
 
@@ -77,6 +82,9 @@ private:
 
     //* collect mixer data into a list.  Only one list entry per group, data_type, mixer, submixer etc...*/
     bool _collectMixerData(const mavlink_mixer_data_t* data);
+
+    //* Request a missing messages. true if there is missing data */
+    bool _requestMissingData(unsigned int group);
 
 
 //    bool _checkForExpectedAck(AckType_t receivedAck);

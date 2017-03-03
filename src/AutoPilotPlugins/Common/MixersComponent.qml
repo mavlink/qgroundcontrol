@@ -74,6 +74,14 @@ SetupPage {
                 }
             }
 
+            QGCButton {
+                id:requestMissing
+                text: qsTr("Request missing")
+                onClicked: {
+                    mixers.requestMissingButtonClicked()
+                }
+            }
+
             QGCButton { text: qsTr("Set parameter")}
         } // Column
     } // Component

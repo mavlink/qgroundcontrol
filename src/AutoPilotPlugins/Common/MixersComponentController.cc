@@ -55,6 +55,11 @@ void MixersComponentController::requestAllButtonClicked(void)
     _vehicle->mixersManager()->requestMixerAll(0);
 }
 
+void MixersComponentController::requestMissingButtonClicked(void)
+{
+    _vehicle->mixersManager()->requestMissingData(0);
+}
+
 
 //void RadioComponentController::_loadSettings(void)
 //{
