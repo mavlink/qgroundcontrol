@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-import QtQuick      2.4
+import QtQuick      2.7
 import QtLocation   5.3
 
 import QGroundControl               1.0
@@ -69,7 +69,7 @@ Item {
         adjustingPolygon = true
         for (var i=0; i<vertexCoordinates.length; i++) {
             var dragItem = Qt.createQmlObject(
-                        "import QtQuick                     2.5; " +
+                        "import QtQuick                     2.7; " +
                         "import QtLocation                  5.3; " +
                         "import QGroundControl.ScreenTools  1.0; " +
                         "" +

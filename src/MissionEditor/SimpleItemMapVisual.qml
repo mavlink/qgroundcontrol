@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.2
-import QtQuick.Controls 1.2
+import QtQuick          2.7
+import QtQuick.Controls 2.1
 import QtLocation       5.3
 import QtPositioning    5.2
 

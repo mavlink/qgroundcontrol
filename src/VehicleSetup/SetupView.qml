@@ -12,8 +12,8 @@
 ///     @brief Setup View
 ///     @author Don Gagne <don@thegagnes.com>
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
+import QtQuick          2.7
+import QtQuick.Controls 2.1
 
 import QGroundControl                       1.0
 import QGroundControl.AutoPilotPlugin       1.0

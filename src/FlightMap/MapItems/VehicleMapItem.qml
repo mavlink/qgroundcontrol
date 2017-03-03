@@ -11,7 +11,7 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-import QtQuick          2.4
+import QtQuick          2.7
 import QtLocation       5.3
 import QtPositioning    5.3
 

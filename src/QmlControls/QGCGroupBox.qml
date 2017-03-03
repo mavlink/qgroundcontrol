@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.2
-import QtQuick.Controls         2.0
+import QtQuick                  2.7
+import QtQuick.Controls         2.1
 
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools 1.0
