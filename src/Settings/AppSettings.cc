@@ -28,6 +28,7 @@ const char* AppSettings::audioMutedName =                               "AudioMu
 const char* AppSettings::virtualJoystickName =                          "VirtualTabletJoystick";
 const char* AppSettings::appFontPointSizeName =                         "BaseDeviceFontPointSize";
 const char* AppSettings::indoorPaletteName =                            "StyleIsDark";
+const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
 
 AppSettings::AppSettings(QObject* parent)
     : SettingsGroup(appSettingsGroupName, QString() /* root settings group */, parent)
@@ -44,6 +45,7 @@ AppSettings::AppSettings(QObject* parent)
     , _virtualJoystickFact(NULL)
     , _appFontPointSizeFact(NULL)
     , _indoorPaletteFact(NULL)
+    , _showLargeCompassFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");        
@@ -171,3 +173,13 @@ void AppSettings::_indoorPaletteChanged(void)
     qgcApp()->_loadCurrentStyleSheet();
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 }
+
+Fact* AppSettings::showLargeCompass(void)
+{
+    if (!_showLargeCompassFact) {
+        _showLargeCompassFact = _createSettingsFact(showLargeCompassName);
+    }
+
+    return _showLargeCompassFact;
+}
+
