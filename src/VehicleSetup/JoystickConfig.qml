@@ -84,8 +84,6 @@ SetupPage {
                     property int axisValue: 0
                     property int deadbandValue: 0
 
-                    property int            __lastAxisValue:        0
-                    readonly property int   __axisValueMaxJitter:   100
                     property color          __barColor:             qgcPal.windowShade
 
                     // Bar
@@ -105,6 +103,7 @@ SetupPage {
                         width:                  _deadbandWidth
                         height:                 parent.height / 2
                         color:                  "#8c161a"
+                        visible:                controller.deadbandToggle
 
                         property real _percentDeadband:    ((2 * deadbandValue) / (32768.0 * 2))
                         property real _deadbandWidth:   parent.width * _percentDeadband
@@ -203,11 +202,9 @@ SetupPage {
                         }
 
                         Connections {
-                            target: controller
+                            target: _activeJoystick
 
-                            onRollAxisValueChanged: rollLoader.item.axisValue = value
-
-                            onRollAxisDeadbandChanged: rollLoader.item.deadbandValue = value
+                            onManualControl: rollLoader.item.axisValue = roll*32768.0
                         }
                     }
 
@@ -235,12 +232,9 @@ SetupPage {
                         }
 
                         Connections {
-                            target: controller
+                            target: _activeJoystick
 
-                            onPitchAxisValueChanged: pitchLoader.item.axisValue = value
-
-                            onPitchAxisDeadbandChanged: pitchLoader.item.deadbandValue = value
-
+                            onManualControl: pitchLoader.item.axisValue = pitch*32768.0
                         }
                     }
 
@@ -268,11 +262,9 @@ SetupPage {
                         }
 
                         Connections {
-                            target: controller
+                            target: _activeJoystick
 
-                            onYawAxisValueChanged: yawLoader.item.axisValue = value
-
-                            onYawAxisDeadbandChanged: yawLoader.item.deadbandValue = value
+                            onManualControl: yawLoader.item.axisValue = yaw*32768.0
                         }
                     }
 
@@ -300,11 +292,9 @@ SetupPage {
                         }
 
                         Connections {
-                            target: controller
+                            target: _activeJoystick
 
-                            onThrottleAxisValueChanged: throttleLoader.item.axisValue = value
-
-                            onThrottleAxisDeadbandChanged: throttleLoader.item.deadbandValue = value
+                            onManualControl: throttleLoader.item.axisValue = (-2*throttle+1)*32768.0
                         }
                     }
                 } // Column - Attitude Control labels
@@ -744,6 +734,12 @@ SetupPage {
                         onAxisValueChanged: {
                             if (axisMonitorRepeater.itemAt(axis)) {
                                 axisMonitorRepeater.itemAt(axis).loader.item.axisValue = value
+                            }
+                        }
+
+                        onAxisDeadbandChanged: {
+                            if (axisMonitorRepeater.itemAt(axis)) {
+                                axisMonitorRepeater.itemAt(axis).loader.item.deadbandValue = value
                             }
                         }
                     }
