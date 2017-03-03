@@ -128,6 +128,7 @@
         <file alias="QGroundControl/FlightDisplay/qmldir">src/FlightDisplay/qmldir</file>
         <file alias="QGroundControl/FlightMap/CenterMapDropButton.qml">src/FlightMap/Widgets/CenterMapDropButton.qml</file>
         <file alias="QGroundControl/FlightMap/CenterMapDropPanel.qml">src/FlightMap/Widgets/CenterMapDropPanel.qml</file>
+        <file alias="QGroundControl/FlightMap/CompassRing.qml">src/FlightMap/Widgets/CompassRing.qml</file>
         <file alias="QGroundControl/FlightMap/MapFitFunctions.qml">src/FlightMap/Widgets/MapFitFunctions.qml</file>
         <file alias="QGroundControl/FlightMap/FlightMap.qml">src/FlightMap/FlightMap.qml</file>
         <file alias="QGroundControl/FlightMap/InstrumentSwipeView.qml">src/FlightMap/Widgets/InstrumentSwipeView.qml</file>

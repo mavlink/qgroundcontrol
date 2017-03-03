@@ -15,6 +15,7 @@ import QtQuick.Layouts  1.3
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.Palette       1.0
 import QGroundControl               1.0
@@ -147,21 +148,42 @@ QGCFlickable {
                 flickableDirection: Flickable.VerticalFlick
                 clip:               true
 
-                QGCLabel {
-                    id:     _label
-                    text:   qsTr("Select the values you want to display:")
-                }
+                Column {
+                    id:             column
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    spacing:        _margins
 
-                Loader {
-                    id:                 _loader
-                    anchors.left:       parent.left
-                    anchors.right:      parent.right
-                    anchors.topMargin:  _margins
-                    anchors.top:        _label.bottom
-                    sourceComponent:    factGroupList
+                    FactCheckBox {
+                        text:       qsTr("Show large compass")
+                        fact:       _showLargeCompass
+                        visible:    _showLargeCompass.visible
 
-                    property var factGroup:     _activeVehicle
-                    property var factGroupName: "Vehicle"
+                        property Fact _showLargeCompass: QGroundControl.settingsManager.appSettings.showLargeCompass
+                    }
+
+                    Item {
+                        width:  1
+                        height: _margins
+                    }
+
+                    QGCLabel {
+                        id:     _label
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:   qsTr("Select the values you want to display:")
+                    }
+
+                    Loader {
+                        id:                 _loader
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        sourceComponent:    factGroupList
+
+                        property var factGroup:     _activeVehicle
+                        property var factGroupName: "Vehicle"
+                    }
                 }
             }
         }

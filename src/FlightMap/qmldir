@@ -8,6 +8,7 @@ QGCVideoBackground  1.0 QGCVideoBackground.qml
 CameraWidget            1.0 CameraWidget.qml
 CenterMapDropButton     1.0 CenterMapDropButton.qml
 CenterMapDropPanel      1.0 CenterMapDropPanel.qml
+CompassRing             1.0 CompassRing.qml
 InstrumentSwipeView     1.0 InstrumentSwipeView.qml
 MapFitFunctions         1.0 MapFitFunctions.qml
 MapScale                1.0 MapScale.qml
