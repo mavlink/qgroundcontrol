@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 import QtQuick      2.7
-import QtLocation   5.3
+import QtLocation   5.6
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0

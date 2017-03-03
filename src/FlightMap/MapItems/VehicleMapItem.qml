@@ -12,7 +12,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 import QtQuick          2.7
-import QtLocation       5.3
+import QtLocation       5.6
 import QtPositioning    5.3
 
 import QGroundControl.ScreenTools   1.0

@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 import QtQuick      2.7
-import QtLocation   5.3
+import QtLocation   5.6
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -70,7 +70,7 @@ Item {
         for (var i=0; i<vertexCoordinates.length; i++) {
             var dragItem = Qt.createQmlObject(
                         "import QtQuick                     2.7; " +
-                        "import QtLocation                  5.3; " +
+                        "import QtLocation                  5.6; " +
                         "import QGroundControl.ScreenTools  1.0; " +
                         "" +
                         "Rectangle {" +
