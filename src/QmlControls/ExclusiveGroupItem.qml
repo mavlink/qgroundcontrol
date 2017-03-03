@@ -1,5 +1,5 @@
 import QtQuick                  2.7
-import QtQuick.Controls         2.1
+import QtQuick.Controls         1.4
 
 
 /// The ExclusiveGroupItem control can be used as a base class for a control which
