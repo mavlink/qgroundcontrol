@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 
-import QtQuick              2.5
-import QtQuick.Controls     1.2
+import QtQuick              2.7
+import QtQuick.Controls     1.4
 import QtGraphicalEffects   1.0
 
 import QGroundControl.FactSystem    1.0
