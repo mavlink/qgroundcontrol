@@ -9,6 +9,7 @@ import QGroundControl.Vehicle       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.FlightMap     1.0
 
 // Editor for Survery mission items
 Rectangle {
@@ -593,29 +594,29 @@ Rectangle {
 
             QGCButton {
                 width:      _root.width * 0.45
-                text:       editorMap.polygonDraw.drawingPolygon ? qsTr("Finish Draw") : qsTr("Draw")
-                visible:    !editorMap.polygonDraw.adjustingPolygon
-                enabled:    ((editorMap.polygonDraw.drawingPolygon && editorMap.polygonDraw.polygonReady) || !editorMap.polygonDraw.drawingPolygon)
+                text:       polygonEditor.drawingPolygon ? qsTr("Finish Draw") : qsTr("Draw")
+                visible:    !polygonEditor .adjustingPolygon
+                enabled:    ((polygonEditor.drawingPolygon && polygonEditor.polygonReady) || !polygonEditor.drawingPolygon)
 
                 onClicked: {
-                    if (editorMap.polygonDraw.drawingPolygon) {
-                        editorMap.polygonDraw.finishCapturePolygon()
+                    if (polygonEditor.drawingPolygon) {
+                        polygonEditor.finishCapturePolygon()
                     } else {
-                        editorMap.polygonDraw.startCapturePolygon(_root)
+                        polygonEditor.startCapturePolygon()
                     }
                 }
             }
 
             QGCButton {
                 width:      _root.width * 0.4
-                text:       editorMap.polygonDraw.adjustingPolygon ? qsTr("Finish Adjust") : qsTr("Adjust")
-                visible:    missionItem.polygonPath.length > 0 && !editorMap.polygonDraw.drawingPolygon
+                text:       polygonEditor.adjustingPolygon ? qsTr("Finish Adjust") : qsTr("Adjust")
+                visible:    missionItem.polygonPath.length > 0 && !polygonEditor.drawingPolygon
 
                 onClicked: {
-                    if (editorMap.polygonDraw.adjustingPolygon) {
-                        editorMap.polygonDraw.finishAdjustPolygon()
+                    if (polygonEditor.adjustingPolygon) {
+                        polygonEditor.finishAdjustPolygon()
                     } else {
-                        editorMap.polygonDraw.startAdjustPolygon(_root, missionItem.polygonPath)
+                        polygonEditor.startAdjustPolygon(missionItem.polygonPath)
                     }
                 }
             }
@@ -651,5 +652,11 @@ Rectangle {
                 }
             }
         }
+    }
+
+    PolygonEditor {
+        id:             polygonEditor
+        map:            editorMap
+        callbackObject: parent
     }
 }
