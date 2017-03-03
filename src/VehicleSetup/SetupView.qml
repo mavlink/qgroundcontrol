@@ -13,7 +13,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 import QtQuick          2.7
-import QtQuick.Controls 2.1
+import QtQuick.Controls 1.4
 
 import QGroundControl                       1.0
 import QGroundControl.AutoPilotPlugin       1.0

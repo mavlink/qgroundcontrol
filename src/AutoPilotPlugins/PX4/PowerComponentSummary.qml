@@ -13,7 +13,7 @@
 ///     @author Gus Grubba <mavlink@grubba.com>
 
 import QtQuick 2.7
-import QtQuick.Controls 2.1
+import QtQuick.Controls 1.4
 
 import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
