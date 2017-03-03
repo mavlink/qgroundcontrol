@@ -16,7 +16,7 @@
 
 import QtQuick          2.7
 import QtQuick.Controls 2.1
-import QtLocation       5.3
+import QtLocation       5.6
 import QtPositioning    5.3
 
 import QGroundControl                       1.0
