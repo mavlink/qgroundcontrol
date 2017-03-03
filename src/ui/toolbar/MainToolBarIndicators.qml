@@ -31,7 +31,7 @@ Item {
         spacing:        ScreenTools.defaultFontPixelWidth * 1.5
         visible:        !communicationLost
         Repeater {
-            model:  QGroundControl.corePlugin.toolBarIndicators
+            model:      activeVehicle ? activeVehicle.toolBarIndicators : []
             Loader {
                 anchors.top:    parent.top
                 anchors.bottom: parent.bottom

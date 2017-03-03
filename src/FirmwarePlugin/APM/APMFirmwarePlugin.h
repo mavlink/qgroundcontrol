@@ -104,7 +104,7 @@ protected:
     APMFirmwarePlugin(void);
     void setSupportedModes(QList<APMCustomMode> supportedModes);
 
-    bool _coaxialMotors;
+    bool                _coaxialMotors;
 
 private slots:
     void _artooSocketError(QAbstractSocket::SocketError socketError);
@@ -125,8 +125,8 @@ private:
     QList<APMCustomMode>    _supportedModes;
     QMap<QString, QTime>    _noisyPrearmMap;
 
-    static const char*  _artooIP;
-    static const int    _artooVideoHandshakePort;
+    static const char*      _artooIP;
+    static const int        _artooVideoHandshakePort;
 
 };
 
