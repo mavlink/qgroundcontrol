@@ -13,7 +13,7 @@
 
 import QtQuick          2.7
 import QtLocation       5.6
-import QtPositioning    5.3
+import QtPositioning    5.5
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0

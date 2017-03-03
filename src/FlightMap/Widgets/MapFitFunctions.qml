@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 import QtQuick          2.7
-import QtPositioning    5.3
+import QtPositioning    5.5
 
 import QGroundControl 1.0
 
