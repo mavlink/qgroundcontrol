@@ -158,7 +158,7 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                            0.0,                             // Exit crosstrack - center of waypoint
                            _loiterCoordinate.latitude(),
                            _loiterCoordinate.longitude(),
-                           _loiterCoordinate.altitude(),
+                           _loiterAltitudeFact.rawValue().toDouble(),
                            true,                            // autoContinue
                            false,                           // isCurrentItem
                            pMissionItems);                  // parent - allow delete on pMissionItems to delete everthing
