@@ -155,7 +155,7 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                            1.0,                             // Heading required = true
                            loiterRadius,                    // Loiter radius
                            0.0,                             // param 3 - unused
-                           0.0,                             // Exit crosstrack - center of waypoint
+                           1.0,                             // Exit crosstrack - tangent of loiter to land point
                            _loiterCoordinate.latitude(),
                            _loiterCoordinate.longitude(),
                            _loiterAltitudeFact.rawValue().toDouble(),
