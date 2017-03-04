@@ -1,5 +1,5 @@
-import QtQuick                  2.5
-import QtQuick.Controls         2.0
+import QtQuick                  2.7
+import QtQuick.Controls         1.4
 import QtQuick.Layouts          1.3
 
 import QGroundControl.Palette       1.0

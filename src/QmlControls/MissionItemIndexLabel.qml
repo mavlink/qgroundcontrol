@@ -1,6 +1,6 @@
-import QtQuick                  2.5
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.2
+import QtQuick                  2.7
+import QtQuick.Controls         1.4
+import QtQuick.Controls.Styles  1.4
 
 import QGroundControl.ScreenTools 1.0
 import QGroundControl.Palette     1.0
@@ -22,6 +22,7 @@ Canvas {
 
     property real _width:       small ? ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio * 1.25 : ScreenTools.defaultFontPixelHeight * 1.25
     property bool _singleChar:  _label.text.length <= 1
+
 
     onColorChanged: requestPaint()
 
@@ -73,7 +74,13 @@ Canvas {
     }
 
     MouseArea {
-        anchors.fill: parent
-        onClicked: parent.clicked()
+        anchors.leftMargin:     -_expandMargin
+        anchors.rightMargin:    _expandMargin
+        anchors.topMargin:      -_expandMargin
+        anchors.bottomMargin:   _expandMargin
+        anchors.fill:           parent
+        onClicked:              parent.clicked()
+
+        property real _expandMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth : 0
     }
 }

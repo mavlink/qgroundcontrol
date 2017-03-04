@@ -8,9 +8,9 @@
  ****************************************************************************/
 
 
-import QtQuick          2.5
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick          2.7
+import QtQuick.Controls 1.4
+import QtQuick.Layouts  1.3
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -31,7 +31,7 @@ Item {
         spacing:        ScreenTools.defaultFontPixelWidth * 1.5
         visible:        !communicationLost
         Repeater {
-            model:  QGroundControl.corePlugin.toolBarIndicators
+            model:      activeVehicle ? activeVehicle.toolBarIndicators : []
             Loader {
                 anchors.top:    parent.top
                 anchors.bottom: parent.bottom

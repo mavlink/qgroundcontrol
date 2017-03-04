@@ -106,3 +106,17 @@ bool ArduSubFirmwarePlugin::supportsMotorInterference(void)
 {
     return false;
 }
+
+QVariantList& ArduSubFirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    //-- Sub specific list of indicators (Enter your modified list here)
+    if(_toolBarIndicatorList.size() == 0) {
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
+    }
+    return _toolBarIndicatorList;
+}

@@ -158,7 +158,7 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                            0.0,                             // Exit crosstrack - center of waypoint
                            _loiterCoordinate.latitude(),
                            _loiterCoordinate.longitude(),
-                           _loiterCoordinate.altitude(),
+                           _loiterAltitudeFact.rawValue().toDouble(),
                            true,                            // autoContinue
                            false,                           // isCurrentItem
                            pMissionItems);                  // parent - allow delete on pMissionItems to delete everthing
@@ -230,7 +230,7 @@ void FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts(void)
         QPointF originPoint(east, north);
         north += _loiterToLandDistanceFact.rawValue().toDouble();
         QPointF loiterPoint(east, north);
-        QPointF rotatedLoiterPoint = _rotatePoint(loiterPoint, originPoint, -_landingHeadingFact.rawValue().toDouble());
+        QPointF rotatedLoiterPoint = _rotatePoint(loiterPoint, originPoint, _landingHeadingFact.rawValue().toDouble());
 
         convertNedToGeo(rotatedLoiterPoint.y(), rotatedLoiterPoint.x(), down, tangentOrigin, &_loiterCoordinate);
 
@@ -273,7 +273,7 @@ void FixedWingLandingComplexItem::_recalcFactsFromCoords(void)
 
         // Calc new heading
 
-        QPointF vector(eastLoiter - eastLand, northLoiter - northLand);
+        QPointF vector(eastLand - eastLoiter, northLand - northLoiter);
         double radians = atan2(vector.y(), vector.x());
         double degrees = qRadiansToDegrees(radians);
         // Change angle to north up = 0 degrees
