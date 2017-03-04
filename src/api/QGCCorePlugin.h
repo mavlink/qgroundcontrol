@@ -36,15 +36,10 @@ public:
     Q_PROPERTY(QVariantList settings            READ settings           CONSTANT)
     Q_PROPERTY(int          defaultSettings     READ defaultSettings    CONSTANT)
     Q_PROPERTY(QGCOptions*  options             READ options            CONSTANT)
-    Q_PROPERTY(QVariantList toolBarIndicators   READ toolBarIndicators  CONSTANT)
 
     /// The list of settings under the Settings Menu
     /// @return A list of QGCSettings
     virtual QVariantList&           settings            ();
-
-    /// Allows the core plugin to override the toolbar indicators
-    /// @return A list of QUrl with the indicators (see MainToolBarIndicators.qml)
-    virtual QVariantList&           toolBarIndicators   ();
 
     /// The default settings panel to show
     /// @return The settings index
