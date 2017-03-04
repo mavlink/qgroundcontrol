@@ -53,10 +53,21 @@ void MixersManager::_ackTimeout(void)
     switch(_expectedAck){
     case AckAll:
         qCDebug(MixersManagerLog) << "Mixer request all data - timeout.  Received " << _mixerDataMessages.length() << " messages";
-        _requestMissingData(0);
+        _retryCount = 0;
+        _requestMissingData(_requestGroup);
         break;
     default:
         break;
+    }
+
+    if(_getMissing) {
+        _retryCount++;
+        if(_retryCount > _maxRetryCount) {
+            _getMissing = false;
+            _expectedAck = AckNone;
+        } else {
+            _requestMissingData(_requestGroup);
+        }
     }
 
     _expectedAck = AckNone;
@@ -139,12 +150,108 @@ bool MixersManager::requestMixerType(unsigned int group, unsigned int mixer, uns
 }
 
 
+bool MixersManager::requestParameterCount(unsigned int group, unsigned int mixer, unsigned int submixer){
+    mavlink_message_t       messageOut;
+    mavlink_command_long_t  command;
+
+    command.command = MAV_CMD_REQUEST_MIXER_DATA;
+    command.param1 = group; //Group
+    command.param2 = mixer; //Mixer
+    command.param3 = submixer; //SubMixer
+    command.param4 = 0; //Parameter
+    command.param5 = MIXER_DATA_TYPE_PARAMETER_COUNT; //Type
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_command_long_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &command);
+
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _startAckTimeout(AckParameterCount);
+    return true;
+}
+
+bool MixersManager::requestParameter(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int parameter){
+    mavlink_message_t       messageOut;
+    mavlink_command_long_t  command;
+
+    command.command = MAV_CMD_REQUEST_MIXER_DATA;
+    command.param1 = group; //Group
+    command.param2 = mixer; //Mixer
+    command.param3 = submixer; //SubMixer
+    command.param4 = parameter; //Parameter
+    command.param5 = MIXER_DATA_TYPE_PARAMETER; //Type
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_command_long_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &command);
+
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _startAckTimeout(AckGetParameter);
+    return true;
+}
+
+bool MixersManager::requestConnectionCount(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType){
+    mavlink_message_t       messageOut;
+    mavlink_command_long_t  command;
+
+    command.command = MAV_CMD_REQUEST_MIXER_DATA;
+    command.param1 = group; //Group
+    command.param2 = mixer; //Mixer
+    command.param3 = submixer; //SubMixer
+    command.param4 = 0;         //Parameter / Connection index
+    command.param5 = MIXER_DATA_TYPE_CONNECTION_COUNT; //Type
+    command.param6 = connType;  //Connection type
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_command_long_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &command);
+
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _startAckTimeout(AckGetParameter);
+    return true;
+}
+
+bool MixersManager::requestConnection(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType, unsigned conn){
+    mavlink_message_t       messageOut;
+    mavlink_command_long_t  command;
+
+    command.command = MAV_CMD_REQUEST_MIXER_CONN;
+    command.param1 = group; //Group
+    command.param2 = mixer; //Mixer
+    command.param3 = submixer; //SubMixer
+    command.param4 = connType; //Connection type
+    command.param5 = conn; //Connection index
+    command.param6 = 0;
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_command_long_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &command);
+
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _startAckTimeout(AckGetParameter);
+    return true;
+}
+
+
 
 bool MixersManager::requestMixerAll(unsigned int group){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
     _requestGroup = group;
+    _retryCount = 0;
 
     command.command = MAV_CMD_REQUEST_MIXER_SEND_ALL;
     command.param1 = group; //Group
@@ -166,6 +273,7 @@ bool MixersManager::requestMixerAll(unsigned int group){
 }
 
 bool MixersManager::requestMissingData(unsigned int group){
+    _retryCount = 0;
     _requestGroup = group;
     _requestMissingData(group);
     return true;
@@ -175,11 +283,15 @@ bool MixersManager::requestMissingData(unsigned int group){
 bool MixersManager::_requestMissingData(unsigned int group){
     mavlink_mixer_data_t chk;
     _getMissing = true;
+    _retryCount = 0;
 
     int found_index;
     int mixer_count;
     int submixer_count;
+    int parameter_count;
     int mixer_type;
+    int mixer_input_conn_count;
+    int mixer_output_conn_count;
     chk.connection_group = group;
 
     chk.data_type = MIXER_DATA_TYPE_MIXER_COUNT;
@@ -201,6 +313,8 @@ bool MixersManager::_requestMissingData(unsigned int group){
             submixer_count = _mixerDataMessages[found_index]->data_value;
         }
         for(chk.mixer_sub_index=0; chk.mixer_sub_index<=submixer_count; chk.mixer_sub_index++){
+
+            //Check for mixer type
             chk.data_type = MIXER_DATA_TYPE_MIXTYPE;
             found_index = _getMessageOfKind(&chk);
             if(found_index == -1){
@@ -209,8 +323,73 @@ bool MixersManager::_requestMissingData(unsigned int group){
             } else {
                 mixer_type = _mixerDataMessages[found_index]->data_value;
             }
-        }
 
+            //Check for mixer parameter count
+            chk.data_type = MIXER_DATA_TYPE_PARAMETER_COUNT;
+            found_index = _getMessageOfKind(&chk);
+            if(found_index == -1){
+                requestParameterCount(group, chk.mixer_index, chk.mixer_sub_index);
+                return true;
+            } else {
+                parameter_count = _mixerDataMessages[found_index]->data_value;
+            }
+
+            //Check for parameters
+            for(chk.parameter_index=0; chk.parameter_index<parameter_count; chk.parameter_index++){
+                chk.data_type = MIXER_DATA_TYPE_PARAMETER;
+                found_index = _getMessageOfKind(&chk);
+                if(found_index == -1){
+                    requestParameter(group, chk.mixer_index, chk.mixer_sub_index, chk.parameter_index);
+                    return true;
+                }
+            }
+
+            //Check for mixer input connection count
+            chk.parameter_index=0;
+            chk.connection_type=1;
+            chk.data_type = MIXER_DATA_TYPE_CONNECTION_COUNT;
+            found_index = _getMessageOfKind(&chk);
+            if(found_index == -1){
+                requestConnectionCount(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type);
+                return true;
+            } else {
+                mixer_input_conn_count = _mixerDataMessages[found_index]->data_value;
+            }
+
+            //Check for input connections
+            chk.connection_type=1;
+            for(chk.parameter_index=0; chk.parameter_index<mixer_input_conn_count; chk.parameter_index++){
+                chk.data_type = MIXER_DATA_TYPE_CONNECTION;
+                found_index = _getMessageOfKind(&chk);
+                if(found_index == -1){
+                    requestConnection(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type, chk.parameter_index);
+                    return true;
+                }
+            }
+
+            //Check for mixer output connection count
+            chk.parameter_index=0;
+            chk.connection_type=0;
+            chk.data_type = MIXER_DATA_TYPE_CONNECTION_COUNT;
+            found_index = _getMessageOfKind(&chk);
+            if(found_index == -1){
+                requestConnectionCount(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type);
+                return true;
+            } else {
+                mixer_output_conn_count = _mixerDataMessages[found_index]->data_value;
+            }
+
+            //Check for output connections
+            chk.connection_type=0;
+            for(chk.parameter_index=0; chk.parameter_index<mixer_output_conn_count; chk.parameter_index++){
+                chk.data_type = MIXER_DATA_TYPE_CONNECTION;
+                found_index = _getMessageOfKind(&chk);
+                if(found_index == -1){
+                    requestConnection(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type, chk.parameter_index);
+                    return true;
+                }
+            }
+        }
     }
     _getMissing = false;
     return false;
@@ -325,37 +504,118 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
     switch (message.msgid) {
         case MAVLINK_MSG_ID_MIXER_DATA: {
-        if(_expectedAck == AckAll)
-            _ackTimeoutTimer->start();
-        else {
-            _ackTimeoutTimer->stop();
-            _expectedAck = AckNone;
-        }
+            if(_expectedAck == AckAll)
+                _ackTimeoutTimer->start();
+            else {
+                _ackTimeoutTimer->stop();
+                _expectedAck = AckNone;
+            }
 
-        qCDebug(MixersManagerLog) << "Received mixer data";
+            qCDebug(MixersManagerLog) << "Received mixer data";
             mavlink_mixer_data_t mixerData;
             mavlink_msg_mixer_data_decode(&message, &mixerData);
 
             _collectMixerData(&mixerData);
 
+            if(_getMissing) {
+                _requestMissingData(_requestGroup);
+            }
+
             switch(mixerData.data_type){
-            case MIXER_DATA_TYPE_MIXER_COUNT:
-                qCDebug(MixersManagerLog) << "Received mixer count from group:"
+            case MIXER_DATA_TYPE_MIXER_COUNT: {
+                qDebug() << "Received mixer count from group:"
                                           << mixerData.mixer_group
                                           << " count:"
                                           << mixerData.data_value;
+//                qCDebug(MixersManagerLog) << "Received mixer count from group:"
+//                                          << mixerData.mixer_group
+//                                          << " count:"
+//                                          << mixerData.data_value;
                 break;
+            }
+            case MIXER_DATA_TYPE_SUBMIXER_COUNT: {
+                qDebug() << "Received submixer count from group:"
+                          << mixerData.mixer_group
+                          << " mixer:"
+                          << mixerData.mixer_index
+                          << " count:"
+                          << mixerData.data_value;
+                break;
+            }
+            case MIXER_DATA_TYPE_MIXTYPE: {
+                qDebug() << "Received mixer type from group:"
+                          << mixerData.mixer_group
+                          << " mixer:"
+                          << mixerData.mixer_index
+                          << " submixer:"
+                          << mixerData.mixer_sub_index
+                          << " type:"
+                          << mixerData.data_value;
+                break;
+            }
+            case MIXER_DATA_TYPE_PARAMETER_COUNT: {
+                qDebug() << "Received parameter count from group:"
+                          << mixerData.mixer_group
+                          << " mixer:"
+                          << mixerData.mixer_index
+                          << " submixer:"
+                          << mixerData.mixer_sub_index
+                          << " param_count:"
+                          << mixerData.data_value;
+                break;
+            }
+            case MIXER_DATA_TYPE_PARAMETER: {
+                qDebug() << "Received parameter from group:"
+                          << mixerData.mixer_group
+                          << " mixer:"
+                          << mixerData.mixer_index
+                          << " submixer:"
+                          << mixerData.mixer_sub_index
+                          << " param_index:"
+                          << mixerData.parameter_index
+                          << " param:"
+                          << mixerData.param_value;
+                break;
+            }
+            case MIXER_DATA_TYPE_CONNECTION_COUNT: {
+                qDebug() << "Received connection count from group:"
+                          << mixerData.mixer_group
+                          << " mixer:"
+                          << mixerData.mixer_index
+                          << " submixer:"
+                          << mixerData.mixer_sub_index
+                          << " conn_type:"
+                          << mixerData.connection_type
+                          << " conn_count:"
+                          << mixerData.data_value;
+                break;
+            }
+            case MIXER_DATA_TYPE_CONNECTION: {
+                qDebug() << "Received connection from group:"
+                          << mixerData.mixer_group
+                          << " mixer:"
+                          << mixerData.mixer_index
+                          << " submixer:"
+                          << mixerData.mixer_sub_index
+                          << " conn_type:"
+                          << mixerData.connection_type
+                          << " conn_index:"
+                          << mixerData.parameter_index
+                        << " conn_group:"
+                        << mixerData.connection_group
+                        << " conn_channel:"
+                        << mixerData.data_value;
+                break;
+            }
             default:
                 break;
-            break;
+           break;
            }
         }
         default:
             break;
-    }
 
-    if(_getMissing)
-        _requestMissingData(_requestGroup);
+    }
 
 
 //        case MAVLINK_MSG_ID_MISSION_ITEM:

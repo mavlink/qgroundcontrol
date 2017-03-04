@@ -41,6 +41,7 @@ public:
     Q_PROPERTY(QQuickItem* getMixersCountButton MEMBER _getMixersCountButton    NOTIFY getMixersCountButtonChanged)
     Q_PROPERTY(QQuickItem* requestAllButton MEMBER _requestAllButton    NOTIFY requestAllButtonChanged)
     Q_PROPERTY(QQuickItem* requestMissingButton MEMBER _requestMissingButton    NOTIFY requestMissingButtonChanged)
+    Q_PROPERTY(QQuickItem* requestSubmixerCountButton MEMBER _requestSubmixerCountButton   NOTIFY requestSubmixerCountButtonChanged)
 //    Q_PROPERTY(QQuickItem* statusText   MEMBER _statusText      NOTIFY statusTextChanged)
 //    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton    NOTIFY cancelButtonChanged)
 //    Q_PROPERTY(QQuickItem* nextButton   MEMBER _nextButton      NOTIFY nextButtonChanged)
@@ -61,6 +62,7 @@ public:
     Q_INVOKABLE void getMixersCountButtonClicked(void);
     Q_INVOKABLE void requestAllButtonClicked(void);
     Q_INVOKABLE void requestMissingButtonClicked(void);
+    Q_INVOKABLE void requestSubmixerCountButtonClicked(void);
 
     unsigned int groupValue(void);
     unsigned int mixerIndexValue(void);
@@ -72,6 +74,8 @@ signals:
     void getMixersCountButtonChanged(void);
     void requestAllButtonChanged(void);
     void requestMissingButtonChanged(void);
+    void requestSubmixerCountButtonChanged(void);
+
 //    void statusTextChanged(void);
 //    void nextButtonChanged(void);
 //    void skipButtonChanged(void);
@@ -119,6 +123,8 @@ private:
     QQuickItem* _getMixersCountButton;
     QQuickItem* _requestAllButton;
     QQuickItem* _requestMissingButton;
+    QQuickItem* _requestSubmixerCountButton;
+
 
 //    QQuickItem* _statusText;
 //    QQuickItem* _nextButton;

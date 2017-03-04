@@ -38,8 +38,12 @@ public:
     bool requestMixerCount(unsigned int group);
     bool requestSubmixerCount(unsigned int group, unsigned int mixer);
     bool requestMixerType(unsigned int group, unsigned int mixer, unsigned int submixer);
+    bool requestParameterCount(unsigned int group, unsigned int mixer, unsigned int submixer);
+    bool requestParameter(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int parameter);
     bool requestMixerAll(unsigned int group);
     bool requestMissingData(unsigned int group);
+    bool requestConnectionCount(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType);
+    bool requestConnection(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType, unsigned conn);
 
     // These values are public so the unit test can set appropriate signal wait times
     static const int _ackTimeoutMilliseconds = 1000;
@@ -58,6 +62,7 @@ private:
         AckMixersCount,     ///< MIXER_DATA mixers count message expected
         AckSubmixersCount,  ///< MIXER_DATA submixers count message expected
         AckMixerType,       ///< MIXER_DATA mixer type value message expected
+        AckParameterCount,  ///< MIXER_DATA parameter value message expected
         AckGetParameter,    ///< MIXER_DATA parameter value message expected
         AckSetParameter,    ///< MIXER_DATA parameter value message expected
         AckAll,             ///< ALL mixer data expected

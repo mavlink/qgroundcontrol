@@ -60,6 +60,11 @@ void MixersComponentController::requestMissingButtonClicked(void)
     _vehicle->mixersManager()->requestMissingData(0);
 }
 
+void MixersComponentController::requestSubmixerCountButtonClicked(void)
+{
+    _vehicle->mixersManager()->requestSubmixerCount(0, 0);
+}
+
 
 //void RadioComponentController::_loadSettings(void)
 //{

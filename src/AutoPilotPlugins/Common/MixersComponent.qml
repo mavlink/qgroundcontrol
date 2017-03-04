@@ -62,7 +62,14 @@ SetupPage {
                     mixers.getMixersCountButtonClicked()
                 }
             }
-            QGCButton { text: qsTr("Request submixer count")}
+            QGCButton {
+                id:requestSubmixerCountButton
+                text: qsTr("Request submixer count")
+                onClicked: {
+                    mixers.requestSubmixerCountButtonClicked()
+                }
+            }
+
             QGCButton { text: qsTr("Request mixer type")}
             QGCButton { text: qsTr("Request parameter")}
 
