@@ -65,6 +65,7 @@ JoystickAndroid::~JoystickAndroid() {
     QtAndroidPrivate::unregisterKeyEventListener(this);
 }
 
+
 QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVehicleManager) {
     bool joystickFound = false;
     static QMap<QString, Joystick*> ret;

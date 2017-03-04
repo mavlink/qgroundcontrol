@@ -95,12 +95,12 @@ public:
     QVariantList buttonActions(void);
 
     QString name(void) { return _name; }
-    
+/*
     // Joystick index used by sdl library
     // Settable because sdl library remaps indicies after certain events
     virtual int index(void) = 0;
     virtual void setIndex(int index) = 0;
-
+*/
 	virtual bool requiresCalibration(void) { return true; }
 
     int throttleMode(void);
