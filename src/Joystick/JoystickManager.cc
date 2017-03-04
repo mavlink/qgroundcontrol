@@ -52,8 +52,7 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-void JoystickManager::init()
-{
+void JoystickManager::init() {
 #ifdef __sdljoystick__
     if (JoystickSDL::init()) {
         _setActiveJoystickFromSettings();
@@ -181,6 +180,9 @@ void JoystickManager::setActiveJoystickName(const QString& name)
     setActiveJoystick(_name2JoystickMap[name]);
 }
 
+/*
+ * TODO: move this to the right place: JoystickSDL.cc and JoystickAndroid.cc respectively and call through Joystick.cc
+ */
 void JoystickManager::_updateAvailableJoysticks(void)
 {
 #ifdef __sdljoystick__
