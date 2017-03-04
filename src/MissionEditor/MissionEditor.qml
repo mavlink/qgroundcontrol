@@ -250,7 +250,6 @@ QGCView {
 
     function setCurrentItem(sequenceNumber) {
         if (sequenceNumber !== _currentMissionIndex) {
-            console.log("setCurrentItem", sequenceNumber)
             _currentMissionItem = undefined
             _currentMissionIndex = -1
             for (var i=0; i<_visualItems.count; i++) {
@@ -712,7 +711,7 @@ QGCView {
                     buttonVisible:      [ true, true, true, true, true, _showZoom, _showZoom ]
                     maxHeight:          mapScale.y - toolStrip.y
 
-                    property bool _showZoom: !ScreenTools.isShortScreen
+                    property bool _showZoom: !ScreenTools.isMobile
 
                     model: [
                         {

@@ -214,6 +214,12 @@ Rectangle {
                 recalcFromCameraValues()
             }
         }
+
+        onIsCurrentItemChanged: {
+            if (!missionItem.isCurrentItem) {
+                polygonEditor.cancelPolygonEdit()
+            }
+        }
     }
 
     Connections {
