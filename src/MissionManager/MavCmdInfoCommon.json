@@ -92,8 +92,8 @@
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Next waypoint start:",
-                "enumStrings":      "Center,On Loiter",
+                "label":            "Exit loiter from:",
+                "enumStrings":      "Center,Tangent",
                 "enumValues":       "0,1",
                 "default":          1,
                 "decimalPlaces":    0
@@ -120,8 +120,8 @@
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Next waypoint start:",
-                "enumStrings":      "Center,On Loiter",
+                "label":            "Exit loiter from:",
+                "enumStrings":      "Center,Tangent",
                 "enumValues":       "0,1",
                 "default":          1,
                 "decimalPlaces":    0
@@ -224,8 +224,8 @@
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Next waypoint start:",
-                "enumStrings":      "Center,On Loiter",
+                "label":            "Exit loiter from:",
+                "enumStrings":      "Center,Tangent",
                 "enumValues":       "0,1",
                 "default":          1,
                 "decimalPlaces":    0

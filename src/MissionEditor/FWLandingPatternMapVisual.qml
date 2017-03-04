@@ -26,6 +26,8 @@ Item {
     property var _itemVisuals: [ ]
     property var _mouseArea
     property var _dragAreas: [ ]
+    property var _loiterTangentCoordinate
+    property var _flightPath
 
     readonly property int _flightPathIndex:     0
     readonly property int _loiterPointIndex:    1
@@ -84,6 +86,49 @@ Item {
         }
     }
 
+    function radiansToDegrees(radians) {
+        return radians * (180.0 / Math.PI)
+    }
+
+    function calcPointTangentToCircleWithCenter() {
+        if (_missionItem.landingCoordSet) {
+            console.log("recalc")
+            var radius = _missionItem.loiterRadius.value
+            var loiterPointPixels = map.fromCoordinate(_missionItem.loiterCoordinate, false /* clipToViewport */)
+            var landPointPixels = map.fromCoordinate(_missionItem.landingCoordinate, false /* clipToViewport */)
+
+            var dxHypotenuse = loiterPointPixels.x - landPointPixels.x
+            var dyHypotenuse = loiterPointPixels.y - landPointPixels.y
+            var oppositeLength = radius
+            var hypotenuseLength = _missionItem.landingCoordinate.distanceTo(_missionItem.loiterCoordinate)
+            var adjacentLength = Math.sqrt(Math.pow(hypotenuseLength, 2) - Math.pow(oppositeLength, 2))
+            var angleToCenterRadians = -Math.atan2(dyHypotenuse, dxHypotenuse)
+            var angleCenterToTangentRadians = Math.asin(oppositeLength / hypotenuseLength)
+            var angleToTangentRadians
+            if (_missionItem.loiterClockwise) {
+                angleToTangentRadians = angleToCenterRadians - angleCenterToTangentRadians
+            } else {
+                angleToTangentRadians = angleToCenterRadians + angleCenterToTangentRadians
+            }
+            var angleToTangentDegrees = (radiansToDegrees(angleToTangentRadians) - 90) * -1
+            /*
+              Keep in for debugging for now
+            console.log("dxHypotenuse", dxHypotenuse)
+            console.log("dyHypotenuse", dyHypotenuse)
+            console.log("oppositeLength", oppositeLength)
+            console.log("hypotenuseLength", hypotenuseLength)
+            console.log("adjacentLength", adjacentLength)
+            console.log("angleCenterToTangentRadians", angleCenterToTangentRadians, radiansToDegrees(angleCenterToTangentRadians))
+            console.log("angleToCenterRadians", angleToCenterRadians, radiansToDegrees(angleToCenterRadians))
+            console.log("angleToTangentDegrees", angleToTangentDegrees)
+            */
+            _loiterTangentCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(adjacentLength, angleToTangentDegrees)
+            _flightPath = [ _loiterTangentCoordinate, _missionItem.landingCoordinate ]
+        } else {
+            _flightPath = undefined
+        }
+    }
+
     Component.onCompleted: {
         if (_missionItem.landingCoordSet) {
             showItemVisuals()
@@ -93,6 +138,7 @@ Item {
         } else if (_missionItem.isCurrentItem) {
             showMouseArea()
         }
+        calcPointTangentToCircleWithCenter()
     }
 
     Component.onDestruction: {
@@ -126,7 +172,12 @@ Item {
                 hideDragAreas()
                 showMouseArea()
             }
+            calcPointTangentToCircleWithCenter()
         }
+
+        onLandingCoordinateChanged: calcPointTangentToCircleWithCenter()
+        onLoiterCoordinateChanged:  calcPointTangentToCircleWithCenter()
+        onLoiterClockwiseChanged:   calcPointTangentToCircleWithCenter()
     }
 
     // Mouse area to capture landing point coordindate
@@ -151,10 +202,10 @@ Item {
         id: loiterDragAreaComponent
 
         MissionItemIndicatorDrag {
-                itemIndicator:  _itemVisuals[_loiterPointIndex]
-                itemCoordinate: _missionItem.loiterCoordinate
+            itemIndicator:  _itemVisuals[_loiterPointIndex]
+            itemCoordinate: _missionItem.loiterCoordinate
 
-                onItemCoordinateChanged: _missionItem.loiterCoordinate = itemCoordinate
+            onItemCoordinateChanged: _missionItem.loiterCoordinate = itemCoordinate
         }
     }
 
@@ -163,10 +214,10 @@ Item {
         id: landDragAreaComponent
 
         MissionItemIndicatorDrag {
-                itemIndicator:  _itemVisuals[_landPointIndex]
-                itemCoordinate: _missionItem.landingCoordinate
+            itemIndicator:  _itemVisuals[_landPointIndex]
+            itemCoordinate: _missionItem.landingCoordinate
 
-                onItemCoordinateChanged: _missionItem.landingCoordinate = itemCoordinate
+            onItemCoordinateChanged: _missionItem.landingCoordinate = itemCoordinate
         }
     }
 
@@ -178,7 +229,7 @@ Item {
             z:          QGroundControl.zOrderMapItems - 1   // Under item indicators
             line.color: "#be781c"
             line.width: 2
-            path:       _missionItem.landingCoordSet ? [ _missionItem.loiterCoordinate, _missionItem.landingCoordinate ] : undefined
+            path:       _flightPath
         }
     }
 
