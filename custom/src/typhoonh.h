@@ -25,7 +25,6 @@ public:
     // Overrides from QGCCorePlugin
     QGCOptions*         options                         () final;
     QVariantList&       settings                        () final;
-    QVariantList&       toolBarIndicators               () final;
     bool                overrideSettingsGroupVisibility (QString name) final;
     bool                adjustSettingMetaData           (FactMetaData& metaData) final;
 
@@ -44,5 +43,4 @@ private:
 #endif
     QVariantList        _settingsList;
     TyphoonM4Handler*   _pHandler;
-    QVariantList        _indicatorList;
 };

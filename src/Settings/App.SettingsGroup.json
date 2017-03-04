@@ -107,5 +107,12 @@
     "type":             "uint32",
     "enumStrings":      "Indoor,Outdoor",
     "enumValues":       "1,0"
+},
+{
+    "name":             "ShowLargeCompass",
+    "shortDescription": "Show large compass",
+    "longDescription":  "Show large compass on instrument panel",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]

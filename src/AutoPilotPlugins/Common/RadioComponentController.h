@@ -230,7 +230,7 @@ private:
     void _loadSettings(void);
     void _storeSettings(void);
     
-    void _signalAllAttiudeValueChanges(void);
+    void _signalAllAttitudeValueChanges(void);
 
     int _chanMax(void) const;
 

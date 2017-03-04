@@ -184,21 +184,6 @@ TyphoonHPlugin::settings()
     return _settingsList;
 }
 
-QVariantList&
-TyphoonHPlugin::toolBarIndicators()
-{
-    if(_indicatorList.size() == 0) {
-        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")));
-        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")));
-        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")));
-        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
-        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
-        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/typhoonh/CameraIndicator.qml")));
-        _indicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
-    }
-    return _indicatorList;
-}
-
 bool
 TyphoonHPlugin::overrideSettingsGroupVisibility(QString name)
 {

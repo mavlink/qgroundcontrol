@@ -8,6 +8,7 @@ QGCVideoBackground  1.0 QGCVideoBackground.qml
 CameraWidget            1.0 CameraWidget.qml
 CenterMapDropButton     1.0 CenterMapDropButton.qml
 CenterMapDropPanel      1.0 CenterMapDropPanel.qml
+CompassRing             1.0 CompassRing.qml
 InstrumentSwipeView     1.0 InstrumentSwipeView.qml
 MapFitFunctions         1.0 MapFitFunctions.qml
 MapScale                1.0 MapScale.qml
@@ -22,10 +23,12 @@ VehicleHealthWidget     1.0 VehicleHealthWidget.qml
 VibrationWidget         1.0 VibrationWidget.qml
 
 # Map items
-MissionItemIndicator    1.0 MissionItemIndicator.qml
-MissionItemView         1.0 MissionItemView.qml
-MissionLineView         1.0 MissionLineView.qml
-VehicleMapItem          1.0 VehicleMapItem.qml
+MissionItemIndicator        1.0 MissionItemIndicator.qml
+MissionItemIndicatorDrag    1.0 MissionItemIndicatorDrag.qml
+MissionItemView             1.0 MissionItemView.qml
+MissionLineView             1.0 MissionLineView.qml
+PolygonEditor               1.0 PolygonEditor.qml
+VehicleMapItem              1.0 VehicleMapItem.qml
 
 # Editor controls
 QGCMapPolygonControls  1.0 QGCMapPolygonControls.qml

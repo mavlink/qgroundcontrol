@@ -32,6 +32,7 @@ public:
     Q_PROPERTY(Fact* virtualJoystick                    READ virtualJoystick                    CONSTANT)
     Q_PROPERTY(Fact* appFontPointSize                   READ appFontPointSize                   CONSTANT)
     Q_PROPERTY(Fact* indoorPalette                      READ indoorPalette                      CONSTANT)
+    Q_PROPERTY(Fact* showLargeCompass                   READ showLargeCompass                   CONSTANT)
 
     Fact* offlineEditingFirmwareType        (void);
     Fact* offlineEditingVehicleType         (void);
@@ -46,6 +47,7 @@ public:
     Fact* virtualJoystick                   (void);
     Fact* appFontPointSize                  (void);
     Fact* indoorPalette                     (void);
+    Fact* showLargeCompass                  (void);
 
     static const char* appSettingsGroupName;
 
@@ -62,6 +64,7 @@ public:
     static const char* virtualJoystickName;
     static const char* appFontPointSizeName;
     static const char* indoorPaletteName;
+    static const char* showLargeCompassName;
 
 private slots:
     void _indoorPaletteChanged(void);
@@ -80,6 +83,7 @@ private:
     SettingsFact* _virtualJoystickFact;
     SettingsFact* _appFontPointSizeFact;
     SettingsFact* _indoorPaletteFact;
+    SettingsFact* _showLargeCompassFact;
 };
 
 #endif

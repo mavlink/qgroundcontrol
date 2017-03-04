@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.2
-import QtQuick.Controls 1.2
-import QtLocation       5.3
-import QtPositioning    5.2
+import QtQuick          2.7
+import QtQuick.Controls 1.4
+import QtLocation       5.6
+import QtPositioning    5.5
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -80,45 +80,11 @@ Item {
     Component {
         id: dragAreaComponent
 
-        Rectangle {
-            id:             itemDragger
-            x:              _itemVisual.x
-            y:              _itemVisual.y
-            width:          _itemVisual.width
-            height:         _itemVisual.height
-            color:          "transparent"
-            z:              QGroundControl.zOrderMapItems + 1    // Above item icons
+        MissionItemIndicatorDrag {
+                itemIndicator:  _itemVisual
+                itemCoordinate: _missionItem.coordinate
 
-            property bool   dragLoiter
-            property bool   _preventCoordinateBindingLoop:  false
-
-            onXChanged: liveDrag()
-            onYChanged: liveDrag()
-
-            function liveDrag() {
-                if (!itemDragger._preventCoordinateBindingLoop && Drag.active) {
-                    var point = Qt.point(itemDragger.x + _itemVisual.anchorPoint.x, itemDragger.y + _itemVisual.anchorPoint.y)
-                    var coordinate = map.toCoordinate(point)
-                    itemDragger._preventCoordinateBindingLoop = true
-                    coordinate.altitude = _missionItem.coordinate.altitude
-                    _missionItem.coordinate = coordinate
-                    itemDragger._preventCoordinateBindingLoop = false
-                }
-            }
-
-            Drag.active:    itemDrag.drag.active
-            Drag.hotSpot.x: _itemVisual.anchorPoint.x
-            Drag.hotSpot.y: _itemVisual.anchorPoint.y
-
-            MouseArea {
-                id:             itemDrag
-                anchors.fill:   parent
-                drag.target:    parent
-                drag.minimumX:  0
-                drag.minimumY:  0
-                drag.maximumX:  itemDragger.parent.width - parent.width
-                drag.maximumY:  itemDragger.parent.height - parent.height
-            }
+                onItemCoordinateChanged: _missionItem.coordinate = itemCoordinate
         }
     }
 
