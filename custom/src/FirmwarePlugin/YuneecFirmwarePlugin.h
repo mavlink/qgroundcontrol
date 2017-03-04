@@ -19,10 +19,11 @@ public:
 
     // FirmwarePlugin overrides
 
-    QString     brandImage          (const Vehicle* vehicle) const final;
-    QString     vehicleImageOpaque  (const Vehicle* vehicle) const final;
-    QString     vehicleImageOutline (const Vehicle* vehicle) const final;
-    QString     vehicleImageCompass (const Vehicle* vehicle) const final;
+    QString         brandImage          (const Vehicle* vehicle) const final;
+    QString         vehicleImageOpaque  (const Vehicle* vehicle) const final;
+    QString         vehicleImageOutline (const Vehicle* vehicle) const final;
+    QString         vehicleImageCompass (const Vehicle* vehicle) const final;
+    QVariantList&   toolBarIndicators   (const Vehicle* vehicle) final;
 
 private:
     static const char* _simpleFlightMode;
