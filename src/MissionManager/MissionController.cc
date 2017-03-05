@@ -488,6 +488,16 @@ bool MissionController::_loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObje
                 qCDebug(MissionControllerLog) << "Survey load complete: nextSequenceNumber" << nextSequenceNumber;
                 visualItems->append(surveyItem);
                 complexItems->append(surveyItem);
+            } else if (complexItemType == FixedWingLandingComplexItem::jsonComplexItemTypeValue) {
+                    qCDebug(MissionControllerLog) << "Loading Fixed Wing Landing Pattern: nextSequenceNumber" << nextSequenceNumber;
+                    FixedWingLandingComplexItem* landingItem = new FixedWingLandingComplexItem(vehicle, visualItems);
+                    if (!landingItem->load(itemObject, nextSequenceNumber++, errorString)) {
+                        return false;
+                    }
+                    nextSequenceNumber = landingItem->lastSequenceNumber() + 1;
+                    qCDebug(MissionControllerLog) << "FW Landing Pattern load complete: nextSequenceNumber" << nextSequenceNumber;
+                    visualItems->append(landingItem);
+                    complexItems->append(landingItem);
             } else {
                 errorString = tr("Unsupported complex item type: %1").arg(complexItemType);
             }
@@ -1392,26 +1402,28 @@ void MissionController::_addPlannedHomePosition(Vehicle* vehicle, QmlObjectListM
     visualItems->insert(0, homeItem);
 
     if (visualItems->count() > 1  && addToCenter) {
-        double north, south, east, west;
+        double north = 0.0;
+        double south = 0.0;
+        double east  = 0.0;
+        double west  = 0.0;
         bool firstCoordSet = false;
 
         for (int i=1; i<visualItems->count(); i++) {
             VisualMissionItem* item = qobject_cast<VisualMissionItem*>(visualItems->get(i));
-
             if (item->specifiesCoordinate()) {
                 if (firstCoordSet) {
                     double lat = _normalizeLat(item->coordinate().latitude());
                     double lon = _normalizeLon(item->coordinate().longitude());
                     north = fmax(north, lat);
                     south = fmin(south, lat);
-                    east = fmax(east, lon);
-                    west = fmin(west, lon);
+                    east  = fmax(east, lon);
+                    west  = fmin(west, lon);
                 } else {
                     firstCoordSet = true;
                     north = _normalizeLat(item->coordinate().latitude());
                     south = north;
-                    east = _normalizeLon(item->coordinate().longitude());
-                    west = east;
+                    east  = _normalizeLon(item->coordinate().longitude());
+                    west  = east;
                 }
             }
         }

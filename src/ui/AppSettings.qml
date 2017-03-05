@@ -8,9 +8,9 @@
  ****************************************************************************/
 
 
-import QtQuick          2.7
-import QtQuick.Controls 1.4
-import QtPositioning    5.5
+import QtQuick          2.3
+import QtQuick.Controls 1.2
+import QtPositioning    5.3
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0

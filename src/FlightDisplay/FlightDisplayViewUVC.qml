@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.7
-import QtMultimedia             5.8
+import QtQuick                  2.3
+import QtMultimedia             5.5
 
 import QGroundControl           1.0
 
