@@ -92,7 +92,6 @@ Item {
 
     function calcPointTangentToCircleWithCenter() {
         if (_missionItem.landingCoordSet) {
-            console.log("recalc")
             var radius = _missionItem.loiterRadius.value
             var loiterPointPixels = map.fromCoordinate(_missionItem.loiterCoordinate, false /* clipToViewport */)
             var landPointPixels = map.fromCoordinate(_missionItem.landingCoordinate, false /* clipToViewport */)
