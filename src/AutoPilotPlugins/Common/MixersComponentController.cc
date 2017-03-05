@@ -9,8 +9,8 @@
 
 
 /// @file
-///     @brief Radio Config Qml Controller
-///     @author Don Gagne <don@thegagnes.com
+///     @brief Mixers Config Qml Controller
+///     @author Matthew Coleman <uavflightdirector@gmail.com>
 
 #include "MixersComponentController.h"
 #include "MixersManager.h"

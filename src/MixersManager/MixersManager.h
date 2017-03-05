@@ -16,10 +16,12 @@
 #include <QThread>
 #include <QMutex>
 #include <QTimer>
+#include <FactMetaData.h>
 
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
 #include "LinkInterface.h"
+#include "MixerFacts.h"
 
 class Vehicle;
 
@@ -73,6 +75,9 @@ private:
     Vehicle*            _vehicle;
     LinkInterface*      _dedicatedLink;
 
+    MixerGroups         _mixerGroupsData;
+    FactMetaData        _mixerParamDefaultMetaData;
+
     QList<mavlink_mixer_data_t*> _mixerDataMessages;
     QTimer*             _ackTimeoutTimer;
     AckType_t           _expectedAck;
@@ -88,9 +93,11 @@ private:
     //* collect mixer data into a list.  Only one list entry per group, data_type, mixer, submixer etc...*/
     bool _collectMixerData(const mavlink_mixer_data_t* data);
 
-    //* Request a missing messages. true if there is missing data */
+    //* Request a missing message. true if there is missing data */
     bool _requestMissingData(unsigned int group);
 
+    //* Build mixer Fact database from the messages collected*/
+    bool _buildFactsFromMessages(unsigned int group);
 
 //    bool _checkForExpectedAck(AckType_t receivedAck);
 

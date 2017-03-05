@@ -9,7 +9,7 @@
 
 
 /// @file
-///     @author Don Gagne <don@thegagnes.com>
+///     @author Matthew Coleman <uavflightdirector@gmail.com>
 
 #include "MixersManager.h"
 #include "Vehicle.h"
@@ -23,6 +23,8 @@ QGC_LOGGING_CATEGORY(MixersManagerLog, "MixersManagerLog")
 MixersManager::MixersManager(Vehicle* vehicle)
     : _vehicle(vehicle)
     , _dedicatedLink(NULL)
+    , _mixerGroupsData()
+    , _mixerParamDefaultMetaData(FactMetaData::valueTypeFloat)
     , _mixerDataMessages()
     , _ackTimeoutTimer(NULL)
     , _expectedAck(AckNone)
@@ -275,8 +277,10 @@ bool MixersManager::requestMixerAll(unsigned int group){
 bool MixersManager::requestMissingData(unsigned int group){
     _retryCount = 0;
     _requestGroup = group;
-    _requestMissingData(group);
-    return true;
+    if(!_requestMissingData(group)){
+        return _buildFactsFromMessages(group);
+    }
+    return false;
 }
 
 //* Request a missing messages. true if there is missing data */
@@ -292,7 +296,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
     int mixer_type;
     int mixer_input_conn_count;
     int mixer_output_conn_count;
-    chk.connection_group = group;
+    chk.mixer_group = group;
 
     chk.data_type = MIXER_DATA_TYPE_MIXER_COUNT;
     found_index = _getMessageOfKind(&chk);
@@ -395,6 +399,103 @@ bool MixersManager::_requestMissingData(unsigned int group){
     return false;
 }
 
+bool MixersManager::_buildFactsFromMessages(unsigned int group){
+    mavlink_mixer_data_t msg;
+
+    int found_index, mix_count, submixer_count, parameter_count, mixer_type, submixer_type;
+
+    Mixer *mixer;
+    Mixer *submixer;
+    Fact *fact;
+
+    _mixerGroupsData.deleteGroup(group);
+    MixerGroup *mixer_group = new MixerGroup();
+    _mixerGroupsData.addGroup(group, mixer_group);
+
+    msg.mixer_group = group;
+    msg.data_type = MIXER_DATA_TYPE_MIXER_COUNT;
+    found_index = _getMessageOfKind(&msg);
+    if(found_index == -1){
+        return false;
+    }
+
+    mix_count = _mixerDataMessages[found_index]->data_value;
+
+    for(msg.mixer_index=0; msg.mixer_index<mix_count; msg.mixer_index++) {
+
+        //Get type of main mixer
+        msg.mixer_sub_index=0;
+        msg.data_type = MIXER_DATA_TYPE_MIXTYPE;
+        found_index = _getMessageOfKind(&msg);
+        if(found_index == -1){
+            return false;
+        }
+        mixer_type = _mixerDataMessages[found_index]->data_value;
+
+        msg.data_type = MIXER_DATA_TYPE_SUBMIXER_COUNT;
+        found_index = _getMessageOfKind(&msg);
+        if(found_index == -1){
+            return false;
+        }
+        submixer_count = _mixerDataMessages[found_index]->data_value;
+
+        for(msg.mixer_sub_index=0; msg.mixer_sub_index<=submixer_count; msg.mixer_sub_index++){
+
+            //mixer type
+            msg.data_type = MIXER_DATA_TYPE_MIXTYPE;
+            found_index = _getMessageOfKind(&msg);
+            if(found_index == -1){
+                return false;
+            }
+            mixer_type = _mixerDataMessages[found_index]->data_value;
+
+            //Mixer or submixer
+            if(msg.mixer_sub_index == 0){
+                //Add mixer to the group
+                mixer = new Mixer(mixer_type);
+                mixer_group->addMixer(msg.mixer_index, mixer);
+
+            } else {
+                submixer = new Mixer(mixer_type);
+                mixer->addSubmixer(msg.mixer_sub_index, submixer);
+            }
+
+            //parameter count
+            msg.data_type = MIXER_DATA_TYPE_PARAMETER_COUNT;
+            found_index = _getMessageOfKind(&msg);
+            if(found_index == -1){
+                return false;
+            }
+            parameter_count = _mixerDataMessages[found_index]->data_value;
+
+            //Parameters
+            for(msg.parameter_index=0; msg.parameter_index<parameter_count; msg.parameter_index++){
+                msg.data_type = MIXER_DATA_TYPE_PARAMETER;
+                found_index = _getMessageOfKind(&msg);
+                if(found_index == -1){
+                    return false;
+                }
+
+                //Mixer or submixer
+                if(msg.mixer_sub_index == 0){
+                    fact = new Fact(0, QString("MIX_PARAM"), FactMetaData::valueTypeFloat, mixer_group);
+                    mixer->addMixerParamFact(msg.parameter_index, fact);
+                } else {
+                    fact = new Fact(0, QString("SUBMIX_PARAM"), FactMetaData::valueTypeFloat, mixer);
+                    submixer->addMixerParamFact(msg.parameter_index, fact);
+                }
+                float param_value = _mixerDataMessages[found_index]->param_value;
+                fact->setRawValue(QVariant(param_value));
+
+            }
+        }
+    }
+
+    return true;
+}
+
+
+
 ///// Checks the received ack against the expected ack. If they match the ack timeout timer will be stopped.
 ///// @return true: received ack matches expected ack
 //bool MixersManager::_checkForExpectedAck(AckType_t receivedAck)
@@ -457,7 +558,6 @@ int MixersManager::_getMessageOfKind(const mavlink_mixer_data_t* data){
                         return index;
                     break;
                 case MIXER_DATA_TYPE_MIXTYPE:
-                case MIXER_DATA_TYPE_CONNECTION_COUNT:
                 case MIXER_DATA_TYPE_PARAMETER_COUNT:
                     if( (scandata->mixer_index == data->mixer_index) &&
                         (scandata->mixer_sub_index == data->mixer_sub_index) )
@@ -467,6 +567,12 @@ int MixersManager::_getMessageOfKind(const mavlink_mixer_data_t* data){
                     if( (scandata->mixer_index == data->mixer_index) &&
                         (scandata->mixer_sub_index == data->mixer_sub_index) &&
                         (scandata->parameter_index == data->parameter_index) )
+                        return index;
+                    break;
+                case MIXER_DATA_TYPE_CONNECTION_COUNT:
+                    if( (scandata->mixer_index == data->mixer_index) &&
+                        (scandata->mixer_sub_index == data->mixer_sub_index) &&
+                        (scandata->connection_type == data->connection_type) )
                         return index;
                     break;
                 case MIXER_DATA_TYPE_CONNECTION:
@@ -616,26 +722,4 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             break;
 
     }
-
-
-//        case MAVLINK_MSG_ID_MISSION_ITEM:
-//            _handleMissionItem(message);
-//            break;
-            
-//        case MAVLINK_MSG_ID_MISSION_REQUEST:
-//            _handleMissionRequest(message);
-//            break;
-            
-//        case MAVLINK_MSG_ID_MISSION_ACK:
-//            _handleMissionAck(message);
-//            break;
-            
-//        case MAVLINK_MSG_ID_MISSION_ITEM_REACHED:
-//            // FIXME: NYI
-//            break;
-            
-//        case MAVLINK_MSG_ID_MISSION_CURRENT:
-//            _handleMissionCurrent(message);
-//            break;
-
 }
