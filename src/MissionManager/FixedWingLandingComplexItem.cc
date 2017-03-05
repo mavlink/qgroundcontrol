@@ -227,10 +227,15 @@ void FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts(void)
 
         convertGeoToNed(_landingCoordinate, tangentOrigin, &north, &east, &down);
 
+        // Heading is from loiter to land, so we need to rotate angle 180 degrees and go the opposite direction
+        double heading = _landingHeadingFact.rawValue().toDouble();
+        heading += 180.0;
+        heading *= -1.0;
+
         QPointF originPoint(east, north);
         north += _loiterToLandDistanceFact.rawValue().toDouble();
         QPointF loiterPoint(east, north);
-        QPointF rotatedLoiterPoint = _rotatePoint(loiterPoint, originPoint, _landingHeadingFact.rawValue().toDouble());
+        QPointF rotatedLoiterPoint = _rotatePoint(loiterPoint, originPoint, heading);
 
         convertNedToGeo(rotatedLoiterPoint.y(), rotatedLoiterPoint.x(), down, tangentOrigin, &_loiterCoordinate);
 
