@@ -76,7 +76,6 @@ private:
     LinkInterface*      _dedicatedLink;
 
     MixerGroups         _mixerGroupsData;
-    FactMetaData        _mixerParamDefaultMetaData;
 
     QList<mavlink_mixer_data_t*> _mixerDataMessages;
     QTimer*             _ackTimeoutTimer;

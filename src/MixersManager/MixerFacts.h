@@ -36,9 +36,8 @@ public:
     ~MixerConnection();
 
 private:
-    unsigned _connGroup;
-    unsigned _connChannel;
-    FactMetaData _connMetaData;
+    Fact    _connGroup;
+    Fact    _connChannel;
 };
 
 
@@ -51,8 +50,8 @@ public:
     Mixer(unsigned int typeID);
     ~Mixer();
     void addSubmixer(unsigned int mixerID, Mixer *submixer);
-
     void addMixerParamFact(unsigned int paramID, Fact* paramFact);
+    void addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel);
 
 private:
     unsigned _mixerTypeID;

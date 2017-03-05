@@ -26,9 +26,11 @@
 
 
 MixerConnection::MixerConnection(unsigned int connGroup, unsigned int connChannel)
-    :_connGroup()
-    ,_connChannel()
+    :_connGroup(-1, QString("CONN_GROUP"), FactMetaData::valueTypeInt16, this)
+    ,_connChannel(-1, QString("CONN_CHANNEL"), FactMetaData::valueTypeInt16, this)
 {
+    _connGroup.setRawValue(connGroup);
+    _connChannel.setRawValue(connChannel);
 }
 
 MixerConnection::~MixerConnection(){
@@ -68,6 +70,12 @@ void Mixer::addMixerParamFact(unsigned int paramID, Fact* paramFact){
     _mixerParamFacts[paramID] = paramFact;
 }
 
+void Mixer::addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel){
+    if(_mixerConnections.contains(connType))
+        if(_mixerConnections[connType].contains(connID))
+        delete _mixerConnections[connType][connID];
+    _mixerConnections[connType][connID] = new MixerConnection(connGroup , connChannel);
+}
 
 MixerGroup::MixerGroup()
     :_mixers()

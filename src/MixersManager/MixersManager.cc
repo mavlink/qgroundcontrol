@@ -24,7 +24,6 @@ MixersManager::MixersManager(Vehicle* vehicle)
     : _vehicle(vehicle)
     , _dedicatedLink(NULL)
     , _mixerGroupsData()
-    , _mixerParamDefaultMetaData(FactMetaData::valueTypeFloat)
     , _mixerDataMessages()
     , _ackTimeoutTimer(NULL)
     , _expectedAck(AckNone)
@@ -67,6 +66,7 @@ void MixersManager::_ackTimeout(void)
         if(_retryCount > _maxRetryCount) {
             _getMissing = false;
             _expectedAck = AckNone;
+            qDebug("Retry count exceeded while requesting missing data");
         } else {
             _requestMissingData(_requestGroup);
         }
@@ -402,11 +402,13 @@ bool MixersManager::_requestMissingData(unsigned int group){
 bool MixersManager::_buildFactsFromMessages(unsigned int group){
     mavlink_mixer_data_t msg;
 
-    int found_index, mix_count, submixer_count, parameter_count, mixer_type, submixer_type;
+    int found_index, mix_count, submixer_count, parameter_count, mixer_type;
+    int mixer_conn_count;
 
     Mixer *mixer;
     Mixer *submixer;
     Fact *fact;
+    MixerConnection *mixConn;
 
     _mixerGroupsData.deleteGroup(group);
     MixerGroup *mixer_group = new MixerGroup();
@@ -469,8 +471,8 @@ bool MixersManager::_buildFactsFromMessages(unsigned int group){
             parameter_count = _mixerDataMessages[found_index]->data_value;
 
             //Parameters
+            msg.data_type = MIXER_DATA_TYPE_PARAMETER;
             for(msg.parameter_index=0; msg.parameter_index<parameter_count; msg.parameter_index++){
-                msg.data_type = MIXER_DATA_TYPE_PARAMETER;
                 found_index = _getMessageOfKind(&msg);
                 if(found_index == -1){
                     return false;
@@ -478,15 +480,80 @@ bool MixersManager::_buildFactsFromMessages(unsigned int group){
 
                 //Mixer or submixer
                 if(msg.mixer_sub_index == 0){
-                    fact = new Fact(0, QString("MIX_PARAM"), FactMetaData::valueTypeFloat, mixer_group);
+                    fact = new Fact(-1, QString("MIX_PARAM"), FactMetaData::valueTypeFloat, mixer_group);
                     mixer->addMixerParamFact(msg.parameter_index, fact);
                 } else {
-                    fact = new Fact(0, QString("SUBMIX_PARAM"), FactMetaData::valueTypeFloat, mixer);
+                    fact = new Fact(-1, QString("SUBMIX_PARAM"), FactMetaData::valueTypeFloat, mixer);
                     submixer->addMixerParamFact(msg.parameter_index, fact);
                 }
                 float param_value = _mixerDataMessages[found_index]->param_value;
                 fact->setRawValue(QVariant(param_value));
+            }
 
+            //Input connection count
+            msg.parameter_index=0;
+            msg.connection_type=1;
+            msg.data_type = MIXER_DATA_TYPE_CONNECTION_COUNT;
+            found_index = _getMessageOfKind(&msg);
+            if(found_index == -1){
+                return false;
+            }
+            mixer_conn_count = _mixerDataMessages[found_index]->data_value;
+
+            //Input connections
+            msg.connection_type=1;
+            msg.data_type = MIXER_DATA_TYPE_CONNECTION;
+            for(msg.parameter_index=0; msg.parameter_index<mixer_conn_count; msg.parameter_index++){
+                found_index = _getMessageOfKind(&msg);
+                if(found_index == -1){
+                    return false;
+                }
+
+                //Mixer or submixer
+                if(msg.mixer_sub_index == 0){
+                    mixer->addConnection(_mixerDataMessages[found_index]->connection_type,
+                                         _mixerDataMessages[found_index]->parameter_index,
+                                         _mixerDataMessages[found_index]->connection_group,
+                                         _mixerDataMessages[found_index]->data_value );
+                } else {
+                    submixer->addConnection(_mixerDataMessages[found_index]->connection_type,
+                                         _mixerDataMessages[found_index]->parameter_index,
+                                         _mixerDataMessages[found_index]->connection_group,
+                                         _mixerDataMessages[found_index]->data_value );
+                }
+            }
+
+            //Output connection count
+            msg.parameter_index=0;
+            msg.connection_type=0;
+            msg.data_type = MIXER_DATA_TYPE_CONNECTION_COUNT;
+            found_index = _getMessageOfKind(&msg);
+            if(found_index == -1){
+                return false;
+            }
+            mixer_conn_count = _mixerDataMessages[found_index]->data_value;
+
+            //Output connections
+            msg.connection_type=0;
+            msg.data_type = MIXER_DATA_TYPE_CONNECTION;
+            for(msg.parameter_index=0; msg.parameter_index<mixer_conn_count; msg.parameter_index++){
+                found_index = _getMessageOfKind(&msg);
+                if(found_index == -1){
+                    return false;
+                }
+
+                //Mixer or submixer
+                if(msg.mixer_sub_index == 0){
+                    mixer->addConnection(_mixerDataMessages[found_index]->connection_type,
+                                         _mixerDataMessages[found_index]->parameter_index,
+                                         _mixerDataMessages[found_index]->connection_group,
+                                         _mixerDataMessages[found_index]->data_value );
+                } else {
+                    submixer->addConnection(_mixerDataMessages[found_index]->connection_type,
+                                         _mixerDataMessages[found_index]->parameter_index,
+                                         _mixerDataMessages[found_index]->connection_group,
+                                         _mixerDataMessages[found_index]->data_value );
+                }
             }
         }
     }
