@@ -488,6 +488,16 @@ bool MissionController::_loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObje
                 qCDebug(MissionControllerLog) << "Survey load complete: nextSequenceNumber" << nextSequenceNumber;
                 visualItems->append(surveyItem);
                 complexItems->append(surveyItem);
+            } else if (complexItemType == FixedWingLandingComplexItem::jsonComplexItemTypeValue) {
+                    qCDebug(MissionControllerLog) << "Loading Fixed Wing Landing Pattern: nextSequenceNumber" << nextSequenceNumber;
+                    FixedWingLandingComplexItem* landingItem = new FixedWingLandingComplexItem(vehicle, visualItems);
+                    if (!landingItem->load(itemObject, nextSequenceNumber++, errorString)) {
+                        return false;
+                    }
+                    nextSequenceNumber = landingItem->lastSequenceNumber() + 1;
+                    qCDebug(MissionControllerLog) << "FW Landing Pattern load complete: nextSequenceNumber" << nextSequenceNumber;
+                    visualItems->append(landingItem);
+                    complexItems->append(landingItem);
             } else {
                 errorString = tr("Unsupported complex item type: %1").arg(complexItemType);
             }
