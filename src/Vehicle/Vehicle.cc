@@ -2384,6 +2384,16 @@ QVariantList& Vehicle::toolBarIndicators()
     return emptyList;
 }
 
+const QVariantList& Vehicle::cameraList(void) const
+{
+    if (_firmwarePlugin) {
+        return _firmwarePlugin->cameraList(this);
+    }
+    static QVariantList emptyList;
+    return emptyList;
+}
+
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
