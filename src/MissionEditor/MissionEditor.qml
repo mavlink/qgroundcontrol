@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 
-import QtQuick          2.7
-import QtQuick.Controls 1.4
+import QtQuick          2.3
+import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
-import QtLocation       5.6
-import QtPositioning    5.5
-import QtQuick.Layouts  1.3
+import QtLocation       5.3
+import QtPositioning    5.3
+import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
 import QGroundControl.FlightMap     1.0
@@ -250,7 +250,6 @@ QGCView {
 
     function setCurrentItem(sequenceNumber) {
         if (sequenceNumber !== _currentMissionIndex) {
-            console.log("setCurrentItem", sequenceNumber)
             _currentMissionItem = undefined
             _currentMissionIndex = -1
             for (var i=0; i<_visualItems.count; i++) {
@@ -712,7 +711,7 @@ QGCView {
                     buttonVisible:      [ true, true, true, true, true, _showZoom, _showZoom ]
                     maxHeight:          mapScale.y - toolStrip.y
 
-                    property bool _showZoom: !ScreenTools.isShortScreen
+                    property bool _showZoom: !ScreenTools.isMobile
 
                     model: [
                         {

@@ -12,8 +12,8 @@
 ///     @brief Battery, propeller and magnetometer summary
 ///     @author Gus Grubba <mavlink@grubba.com>
 
-import QtQuick 2.7
-import QtQuick.Controls 1.4
+import QtQuick 2.3
+import QtQuick.Controls 1.2
 
 import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0

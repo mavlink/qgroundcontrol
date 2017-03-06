@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.7
-import QtQuick.Controls 1.4
+import QtQuick          2.3
+import QtQuick.Controls 1.2
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
@@ -79,8 +79,8 @@ Rectangle {
         dropButtonsExclusiveGroup.current = null
         // Signal all toggles as off
         for (var i=0; i<model.length; i++) {
-            if (model[i].toggleButton === true) {
-                clicked(index, false)
+            if (model[i].toggle === true) {
+                _root.clicked(i, false)
             }
         }
     }
@@ -198,6 +198,7 @@ Rectangle {
                                     dropPanel.hide()    // hide affects checked, so this needs to be duplicated inside not outside if
                                 } else {
                                     dropPanel.hide()    // hide affects checked, so this needs to be duplicated inside not outside if
+                                    uncheckAll()
                                     checked = true
                                     var panelEdgeTopPoint = mapToItem(_root, width, 0)
                                     dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)

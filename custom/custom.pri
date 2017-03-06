@@ -48,9 +48,14 @@ HEADERS += \
 INCLUDEPATH += \
     $$PWD/src \
 
-ReleaseBuild {
-    QT      += qml-private
-    CONFIG  += qtquickcompiler
+equals(QT_MAJOR_VERSION, 5) {
+    greaterThan(QT_MINOR_VERSION, 5) {
+        ReleaseBuild {
+            QT      += qml-private
+            CONFIG  += qtquickcompiler
+            message("Using Qt Quick Compiler")
+        }
+    }
 }
 
 QT += \

@@ -93,6 +93,8 @@ signals:
 private slots:
     void _recalcLoiterCoordFromFacts(void);
     void _recalcFactsFromCoords(void);
+    void _updateLoiterCoodinateAltitudeFromFact(void);
+    void _updateLandingCoodinateAltitudeFromFact(void);
 
 private:
     QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
@@ -121,6 +123,13 @@ private:
     static const char* _loiterRadiusName;
     static const char* _landingHeadingName;
     static const char* _landingAltitudeName;
+
+    static const char* _jsonLoiterCoordinateKey;
+    static const char* _jsonLoiterRadiusKey;
+    static const char* _jsonLoiterClockwiseKey;
+    static const char* _jsonLoiterAltitudeRelativeKey;
+    static const char* _jsonLandingCoordinateKey;
+    static const char* _jsonLandingAltitudeRelativeKey;
 };
 
 #endif
