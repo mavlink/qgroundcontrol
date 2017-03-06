@@ -18,6 +18,7 @@
 #include <QMutex>
 #include <QDir>
 #include <QJsonObject>
+#include <QElapsedTimer>
 
 #include "FactSystem.h"
 #include "MAVLinkProtocol.h"
@@ -196,6 +197,9 @@ private:
     QTimer _initialRequestTimeoutTimer;
     QTimer _waitingParamTimeoutTimer;
     
+    QElapsedTimer _intervalUpdateTimer;        ///< measures the time since refreshAllParameters() was called
+    static constexpr int _maxBatchSize = 10;   ///< maximum number of parameters retry requests at once
+
     QMutex _dataMutex;
     
     static Fact _defaultFact;   ///< Used to return default fact, when parameter not found
