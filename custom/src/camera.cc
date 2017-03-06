@@ -476,12 +476,17 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                 //-- We got no answer so we assume no camera support
                 _cameraSupported = CAMERA_SUPPORT_NO;
             } else {
-                //-- We have an answer. Start the show.
-                _cameraSupported = CAMERA_SUPPORT_YES;
-                _requestCaptureStatus();
+                if(result == MAV_RESULT_ACCEPTED) {
+                    //-- We have an answer. Start the show.
+                    _cameraSupported = CAMERA_SUPPORT_YES;
+                    _requestCaptureStatus();
+                } else {
+                    //-- We got an answer but not a good one
+                    _cameraSupported = CAMERA_SUPPORT_NO;
+                }
             }
         }
-    } else {
+    } else if(_cameraSupported == CAMERA_SUPPORT_YES) {
         if(command == MAV_CMD_REQUEST_CAMERA_SETTINGS) {
             if(noReponseFromVehicle) {
                 qDebug() << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
