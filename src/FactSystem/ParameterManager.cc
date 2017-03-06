@@ -543,10 +543,6 @@ void ParameterManager::_waitingParamTimeout(void)
         }
 
         foreach(int paramIndex, _waitingReadParamIndexMap[componentId].keys()) {            
-            if (++batchCount > _maxBatchSize) {
-                goto Out;
-            }
-
             _waitingReadParamIndexMap[componentId][paramIndex]++;   // Bump retry count
             if (_disableAllRetries || _waitingReadParamIndexMap[componentId][paramIndex] > _maxInitialLoadRetrySingleParam) {
                 // Give up on this index
@@ -558,6 +554,9 @@ void ParameterManager::_waitingParamTimeout(void)
                 paramsRequested = true;
                 _readParameterRaw(componentId, "", paramIndex);
                 qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Read re-request for (paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
+                if (++batchCount > _maxBatchSize) {
+                    goto Out;
+                }
             }
         }
     }
