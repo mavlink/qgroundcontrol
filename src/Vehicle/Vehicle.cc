@@ -2375,7 +2375,7 @@ QString Vehicle::vehicleImageCompass() const
         return QString();
 }
 
-QVariantList& Vehicle::toolBarIndicators()
+const QVariantList& Vehicle::toolBarIndicators()
 {
     if(_firmwarePlugin) {
         return _firmwarePlugin->toolBarIndicators(this);
@@ -2383,6 +2383,16 @@ QVariantList& Vehicle::toolBarIndicators()
     static QVariantList emptyList;
     return emptyList;
 }
+
+const QVariantList& Vehicle::cameraList(void) const
+{
+    if (_firmwarePlugin) {
+        return _firmwarePlugin->cameraList(this);
+    }
+    static QVariantList emptyList;
+    return emptyList;
+}
+
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
