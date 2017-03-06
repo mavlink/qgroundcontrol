@@ -63,8 +63,6 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
 {
     _versionParam = vehicle->firmwarePlugin()->getVersionParam();
 
-    _intervalUpdateTimer.invalidate();
-
     if (_vehicle->isOfflineEditingVehicle()) {
         _loadOfflineEditingParams();
         return;
@@ -140,6 +138,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         return;
     }
 
+    _initialRequestTimeoutTimer.stop();
     _waitingParamTimeoutTimer.stop();
 
     _dataMutex.lock();
@@ -222,21 +221,6 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
 
     int readWaitingParamCount = waitingReadParamIndexCount + waitingReadParamNameCount;
     int totalWaitingParamCount = readWaitingParamCount + waitingWriteParamNameCount;
-
-    // dynamically adjust the retry timeout according to the measured incoming parameter rate
-    if (_intervalUpdateTimer.isValid()) {
-        int numParamRead = _totalParamCount - readWaitingParamCount;
-        if (numParamRead > 10) {
-            const int multiplier = 5; // increase the timeout by this factor to account for jitter
-            const int timeout_ms = qMin(3000, (int)(_intervalUpdateTimer.nsecsElapsed() * _maxBatchSize * multiplier / numParamRead / 1000000));
-            qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Setting _waitingParamTimeoutTimer interval:" << timeout_ms;
-            _waitingParamTimeoutTimer.setInterval(timeout_ms);
-        }
-        if (totalWaitingParamCount == 0) {
-            _intervalUpdateTimer.invalidate(); // all params loaded, so don't update the interval anymore
-        }
-    }
-
     if (totalWaitingParamCount) {
         // More params to wait for, restart timer
         _waitingParamTimeoutTimer.start();
@@ -405,8 +389,6 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
 
     _dataMutex.unlock();
 
-    _intervalUpdateTimer.start();
-
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     Q_ASSERT(mavlink);
 
@@ -528,9 +510,8 @@ const QMap<int, QMap<QString, QStringList> >& ParameterManager::getGroupMap(void
 void ParameterManager::_waitingParamTimeout(void)
 {
     bool paramsRequested = false;
+    const int maxBatchSize = 10;
     int batchCount = 0;
-
-    _intervalUpdateTimer.invalidate(); // don't update the interval anymore
 
     qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_waitingParamTimeout";
 
@@ -543,7 +524,7 @@ void ParameterManager::_waitingParamTimeout(void)
         }
 
         foreach(int paramIndex, _waitingReadParamIndexMap[componentId].keys()) {            
-            if (++batchCount > _maxBatchSize) {
+            if (++batchCount > maxBatchSize) {
                 goto Out;
             }
 
@@ -582,7 +563,7 @@ void ParameterManager::_waitingParamTimeout(void)
                 if (_waitingWriteParamNameMap[componentId][paramName] <= _maxReadWriteRetry) {
                     _writeParameterRaw(componentId, paramName, getParameter(componentId, paramName)->rawValue());
                     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Write resend for (paramName:" << paramName << "retryCount:" << _waitingWriteParamNameMap[componentId][paramName] << ")";
-                    if (++batchCount > _maxBatchSize) {
+                    if (++batchCount > maxBatchSize) {
                         goto Out;
                     }
                 } else {
@@ -604,7 +585,7 @@ void ParameterManager::_waitingParamTimeout(void)
                 if (_waitingReadParamNameMap[componentId][paramName] <= _maxReadWriteRetry) {
                     _readParameterRaw(componentId, paramName, -1);
                     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Read re-request for (paramName:" << paramName << "retryCount:" << _waitingReadParamNameMap[componentId][paramName] << ")";
-                    if (++batchCount > _maxBatchSize) {
+                    if (++batchCount > maxBatchSize) {
                         goto Out;
                     }
                 } else {
@@ -800,8 +781,6 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         });
 
         ani->start(QAbstractAnimation::DeleteWhenStopped);
-
-        _intervalUpdateTimer.invalidate(); // don't change the interval since we loaded the params from cache
     }
 }
 
