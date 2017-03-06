@@ -115,6 +115,12 @@ public:
 
     bool supportsMotorInterference(void);
 
+    /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
+    virtual QString vehicleImageOpaque(const Vehicle* vehicle) const override;
+
+    /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
+    virtual QString vehicleImageOutline(const Vehicle* vehicle) const override;
+
     QString brandImageIndoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
     QString brandImageOutdoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
