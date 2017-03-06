@@ -10,12 +10,15 @@
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
 #include "Generic/GenericAutoPilotPlugin.h"
+#include "CameraMetaData.h"
 
 #include <QDebug>
 
 static FirmwarePluginFactoryRegister* _instance = NULL;
 
 const char* guided_mode_not_supported_by_vehicle = "Guided mode not supported by Vehicle.";
+
+QVariantList FirmwarePlugin::_cameraList;
 
 const char* FirmwarePlugin::px4FollowMeFlightMode = "Follow Me";
 
@@ -351,4 +354,68 @@ QVariantList& FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
     }
     return _toolBarIndicatorList;
+}
+
+const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+
+    if (_cameraList.size() == 0) {
+        CameraMetaData* metaData;
+
+        metaData = new CameraMetaData(tr("Typhoon H CGO3+"),   // Camera name
+                                      6.264,                   // sensorWidth
+                                      4.698,                   // sensorHeight
+                                      4000,                    // imageWidth
+                                      3000,                    // imageHeight
+                                      14,                      // focalLength
+                                      this);                   // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Sony ILCE-QX1"),   //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
+                                      23.2,                  //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
+                                      15.4,
+                                      5456,
+                                      3632,
+                                      16,
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Canon S100 PowerShot"),
+                                      7.6,
+                                      5.7,
+                                      4000,
+                                      3000,
+                                      5.2,
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Canon SX260 HS PowerShot"),
+                                      6.17,
+                                      4.55,
+                                      4000,
+                                      3000,
+                                      4.5,
+                                      this);
+
+        metaData = new CameraMetaData(tr("Canon EOS-M 22mm"),
+                                      22.3,
+                                      14.9,
+                                      5184,
+                                      3456,
+                                      22,
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Sony a6000 16mm"),    //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-6000-body-kit#product_details_default
+                                      23.5,
+                                      15.6,
+                                      6000,
+                                      4000,
+                                      16,
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+    }
+
+    return _cameraList;
 }

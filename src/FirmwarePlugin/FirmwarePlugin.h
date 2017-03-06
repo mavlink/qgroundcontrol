@@ -261,11 +261,17 @@ public:
     /// @return A list of QUrl with the indicators (see MainToolBarIndicators.qml)
     virtual QVariantList& toolBarIndicators(const Vehicle* vehicle);
 
+    /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
+    virtual const QVariantList& cameraList(const Vehicle* vehicle);
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
 
 protected:
     QVariantList _toolBarIndicatorList;
+
+private:
+    static QVariantList _cameraList;    ///< Standard QGC camera list
 
 };
 
