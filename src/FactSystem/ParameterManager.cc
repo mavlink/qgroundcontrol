@@ -140,7 +140,6 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         return;
     }
 
-    _initialRequestTimeoutTimer.stop();
     _waitingParamTimeoutTimer.stop();
 
     _dataMutex.lock();
