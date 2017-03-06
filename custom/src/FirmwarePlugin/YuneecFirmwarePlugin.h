@@ -24,9 +24,13 @@ public:
     QString             vehicleImageOutline (const Vehicle* vehicle) const final;
     QString             vehicleImageCompass (const Vehicle* vehicle) const final;
     const QVariantList& toolBarIndicators   (const Vehicle* vehicle) final;
+    const QVariantList& cameraList          (const Vehicle* vehicle) final;
+    bool                isGuidedMode        (const Vehicle* vehicle) const final;
 
 private:
     QVariantList        _toolBarIndicators;
+
     static const char*  _simpleFlightMode;
     static const char*  _posCtlFlightMode;
+    static QVariantList _cameraList;        ///< Yuneec camera list
 };
