@@ -23,78 +23,32 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property real   _margin:        ScreenTools.defaultFontPixelWidth * 0.25
-    property int    _cameraIndex:   1
-    property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 10.5
+    property real   _margin:            ScreenTools.defaultFontPixelWidth * 0.25
+    property int    _cameraIndex:       1
+    property real   _fieldWidth:        ScreenTools.defaultFontPixelWidth * 10.5
+    property var    _cameraList:        [ qsTr("Manual Grid (no camera specs)"), qsTr("Custom Camera Grid") ]
+    property var    _vehicle:           QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property var    _vehicleCameraList: _vehicle.cameraList
 
     readonly property int _gridTypeManual:          0
     readonly property int _gridTypeCustomCamera:    1
     readonly property int _gridTypeCamera:          2
 
-    ListModel {
-        id: cameraModelList
-
-        Component.onCompleted: {
-            cameraModelList.setProperty(_gridTypeCustomCamera, "sensorWidth",   missionItem.cameraSensorWidth.rawValue)
-            cameraModelList.setProperty(_gridTypeCustomCamera, "sensorHeight",  missionItem.cameraSensorHeight.rawValue)
-            cameraModelList.setProperty(_gridTypeCustomCamera, "imageWidth",    missionItem.cameraResolutionWidth.rawValue)
-            cameraModelList.setProperty(_gridTypeCustomCamera, "imageHeight",   missionItem.cameraResolutionHeight.rawValue)
-            cameraModelList.setProperty(_gridTypeCustomCamera, "focalLength",   missionItem.cameraFocalLength.rawValue)
+    Component.onCompleted: {
+        for (var i=0; i<_vehicle.cameraList.length; i++) {
+            _cameraList.push(_vehicle.cameraList[i].name)
         }
-
-        ListElement {
-            text:           qsTr("Manual Grid (no camera specs)")
-        }
-        ListElement {
-            text:           qsTr("Custom Camera Grid")
-        }
-        ListElement {
-            text:           qsTr("Typhoon H CGO3+")
-            sensorWidth:    6.264
-            sensorHeight:   4.698
-            imageWidth:     4000
-            imageHeight:    3000
-            focalLength:    14
-        }
-        ListElement {
-            text:           qsTr("Sony ILCE-QX1") //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
-            sensorWidth:    23.2                  //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
-            sensorHeight:   15.4
-            imageWidth:     5456
-            imageHeight:    3632
-            focalLength:    16
-        }
-        ListElement {
-            text:           qsTr("Canon S100 PowerShot")
-            sensorWidth:    7.6
-            sensorHeight:   5.7
-            imageWidth:     4000
-            imageHeight:    3000
-            focalLength:    5.2
-        }
-        ListElement {
-            text:           qsTr("Canon SX260 HS PowerShot")
-            sensorWidth:    6.17
-            sensorHeight:   4.55
-            imageWidth:     4000
-            imageHeight:    3000
-            focalLength:    4.5
-        }
-        ListElement {
-            text:           qsTr("Canon EOS-M 22mm")
-            sensorWidth:    22.3
-            sensorHeight:   14.9
-            imageWidth:     5184
-            imageHeight:    3456
-            focalLength:    22
-        }
-        ListElement {
-            text:           qsTr("Sony a6000 16mm") //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-6000-body-kit#product_details_default
-            sensorWidth:    23.5
-            sensorHeight:   15.6
-            imageWidth:     6000
-            imageHeight:    4000
-            focalLength:    16
+        gridTypeCombo.model = _cameraList
+        if (missionItem.manualGrid) {
+            gridTypeCombo.currentIndex = _gridTypeManual
+        } else {
+            var index = gridTypeCombo.find(missionItem.camera)
+            if (index == -1) {
+                console.log("Couldn't find camera", missionItem.camera)
+                gridTypeCombo.currentIndex = _gridTypeManual
+            } else {
+                gridTypeCombo.currentIndex = index
+            }
         }
     }
 
@@ -258,35 +212,25 @@ Rectangle {
             id:             gridTypeCombo
             anchors.left:   parent.left
             anchors.right:  parent.right
-            model:          cameraModelList
+            model:          _cameraList
             currentIndex:   -1
-
-            Component.onCompleted: {
-                if (missionItem.manualGrid) {
-                    gridTypeCombo.currentIndex = _gridTypeManual
-                } else {
-                    var index = gridTypeCombo.find(missionItem.camera)
-                    if (index == -1) {
-                        console.log("Couldn't find camera", missionItem.camera)
-                        gridTypeCombo.currentIndex = _gridTypeManual
-                    } else {
-                        gridTypeCombo.currentIndex = index
-                    }
-                }
-            }
 
             onActivated: {
                 if (index == _gridTypeManual) {
                     missionItem.manualGrid = true
+                } else if (index == _gridTypeCustomCamera) {
+                    missionItem.manualGrid = false
+                    missionItem.camera = gridTypeCombo.textAt(index)
                 } else {
                     missionItem.manualGrid = false
                     missionItem.camera = gridTypeCombo.textAt(index)
                     _noCameraValueRecalc = true
-                    missionItem.cameraSensorWidth.rawValue      = cameraModelList.get(index).sensorWidth
-                    missionItem.cameraSensorHeight.rawValue     = cameraModelList.get(index).sensorHeight
-                    missionItem.cameraResolutionWidth.rawValue  = cameraModelList.get(index).imageWidth
-                    missionItem.cameraResolutionHeight.rawValue = cameraModelList.get(index).imageHeight
-                    missionItem.cameraFocalLength.rawValue      = cameraModelList.get(index).focalLength
+                    var listIndex = index - _gridTypeCamera
+                    missionItem.cameraSensorWidth.rawValue      = _vehicleCameraList[listIndex].sensorWidth
+                    missionItem.cameraSensorHeight.rawValue     = _vehicleCameraList[listIndex].sensorHeight
+                    missionItem.cameraResolutionWidth.rawValue  = _vehicleCameraList[listIndex].imageWidth
+                    missionItem.cameraResolutionHeight.rawValue = _vehicleCameraList[listIndex].imageHeight
+                    missionItem.cameraFocalLength.rawValue      = _vehicleCameraList[listIndex].focalLength
                     _noCameraValueRecalc = false
                     recalcFromCameraValues()
                 }
