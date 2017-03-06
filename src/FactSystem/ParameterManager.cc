@@ -59,11 +59,10 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     , _prevWaitingWriteParamNameCount(0)
     , _initialRequestRetryCount(0)
     , _disableAllRetries(false)
+    , _indexBatchQueueActive(false)
     , _totalParamCount(0)
 {
     _versionParam = vehicle->firmwarePlugin()->getVersionParam();
-
-    _intervalUpdateTimer.invalidate();
 
     if (_vehicle->isOfflineEditingVehicle()) {
         _loadOfflineEditingParams();
@@ -77,7 +76,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     connect(&_initialRequestTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_initialRequestTimeout);
 
     _waitingParamTimeoutTimer.setSingleShot(true);
-    _waitingParamTimeoutTimer.setInterval(30000);
+    _waitingParamTimeoutTimer.setInterval(3000);
     connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_waitingParamTimeout);
 
     connect(_vehicle->uas(), &UASInterface::parameterUpdate, this, &ParameterManager::_parameterUpdate);
@@ -119,11 +118,13 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     _initialRequestTimeoutTimer.stop();
 
 #if 0
-    // Handy for testing retry logic
-    static int counter = 0;
-    if (counter++ & 0x8) {
-        qCDebug(ParameterManagerLog) << "Artificial discard" << counter;
-        return;
+    if (!_initialLoadComplete && !_indexBatchQueueActive) {
+        // Handy for testing retry logic
+        static int counter = 0;
+        if (counter++ & 0x8) {
+            qCDebug(ParameterManagerLog) << "Artificial discard" << counter;
+            return;
+        }
     }
 #endif
 
@@ -140,6 +141,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         return;
     }
 
+    _initialRequestTimeoutTimer.stop();
     _waitingParamTimeoutTimer.stop();
 
     _dataMutex.lock();
@@ -180,7 +182,11 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     }
 
     // Remove this parameter from the waiting lists
-    _waitingReadParamIndexMap[componentId].remove(parameterId);
+    if (_waitingReadParamIndexMap[componentId].contains(parameterId)) {
+        _waitingReadParamIndexMap[componentId].remove(parameterId);
+        _indexBatchQueue.removeOne(parameterId);
+        _fillIndexBatchQueue(false /* waitingParamTimeout */);
+    }
     _waitingReadParamNameMap[componentId].remove(parameterName);
     _waitingWriteParamNameMap[componentId].remove(parameterName);
     if (_waitingReadParamIndexMap[componentId].count()) {
@@ -222,21 +228,6 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
 
     int readWaitingParamCount = waitingReadParamIndexCount + waitingReadParamNameCount;
     int totalWaitingParamCount = readWaitingParamCount + waitingWriteParamNameCount;
-
-    // dynamically adjust the retry timeout according to the measured incoming parameter rate
-    if (_intervalUpdateTimer.isValid()) {
-        int numParamRead = _totalParamCount - readWaitingParamCount;
-        if (numParamRead > 10) {
-            const int multiplier = 5; // increase the timeout by this factor to account for jitter
-            const int timeout_ms = qMin(3000, (int)(_intervalUpdateTimer.nsecsElapsed() * _maxBatchSize * multiplier / numParamRead / 1000000));
-            qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Setting _waitingParamTimeoutTimer interval:" << timeout_ms;
-            _waitingParamTimeoutTimer.setInterval(timeout_ms);
-        }
-        if (totalWaitingParamCount == 0) {
-            _intervalUpdateTimer.invalidate(); // all params loaded, so don't update the interval anymore
-        }
-    }
-
     if (totalWaitingParamCount) {
         // More params to wait for, restart timer
         _waitingParamTimeoutTimer.start();
@@ -405,8 +396,6 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
 
     _dataMutex.unlock();
 
-    _intervalUpdateTimer.start();
-
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     Q_ASSERT(mavlink);
 
@@ -525,26 +514,39 @@ const QMap<int, QMap<QString, QStringList> >& ParameterManager::getGroupMap(void
     return _mapGroup2ParameterName;
 }
 
-void ParameterManager::_waitingParamTimeout(void)
+/// Requests missing index based parameters from the vehicle.
+///     @param waitingParamTimeout: true: being called due to timeout, false: being called to re-fill the batch queue
+/// return true: Parameters were requested, false: No more requests needed
+bool ParameterManager::_fillIndexBatchQueue(bool waitingParamTimeout)
 {
-    bool paramsRequested = false;
-    int batchCount = 0;
+    if (!_indexBatchQueueActive) {
+        return false;
+    }
 
-    _intervalUpdateTimer.invalidate(); // don't update the interval anymore
+    const int maxBatchSize = 10;
 
-    qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_waitingParamTimeout";
+    if (waitingParamTimeout) {
+        // We timed out, clear the queue and try again
+        qCDebug(ParameterManagerLog) << "Refilling index based batch queue due to timeout";
+        _indexBatchQueue.clear();
+    } else {
+        qCDebug(ParameterManagerLog) << "Refilling index based batch queue due to received parameter";
+    }
 
-    // First check for any missing parameters from the initial index based load
-
-    batchCount = 0;
     foreach(int componentId, _waitingReadParamIndexMap.keys()) {
         if (_waitingReadParamIndexMap[componentId].count()) {
-            qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_waitingReadParamIndexMap" << _waitingReadParamIndexMap[componentId];
+            qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_waitingReadParamIndexMap count" << _waitingReadParamIndexMap[componentId].count();
+            qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "_waitingReadParamIndexMap" << _waitingReadParamIndexMap[componentId];
         }
 
-        foreach(int paramIndex, _waitingReadParamIndexMap[componentId].keys()) {            
-            if (++batchCount > _maxBatchSize) {
-                goto Out;
+        foreach(int paramIndex, _waitingReadParamIndexMap[componentId].keys()) {
+            if (_indexBatchQueue.contains(paramIndex)) {
+                // Don't add more than once
+                continue;
+            }
+
+            if (_indexBatchQueue.count() > maxBatchSize) {
+                break;
             }
 
             _waitingReadParamIndexMap[componentId][paramIndex]++;   // Bump retry count
@@ -555,12 +557,29 @@ void ParameterManager::_waitingParamTimeout(void)
                 _waitingReadParamIndexMap[componentId].remove(paramIndex);
             } else {
                 // Retry again
-                paramsRequested = true;
+                _indexBatchQueue.append(paramIndex);
                 _readParameterRaw(componentId, "", paramIndex);
                 qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Read re-request for (paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
             }
         }
     }
+
+    return _indexBatchQueue.count() != 0;
+}
+
+void ParameterManager::_waitingParamTimeout(void)
+{
+    bool paramsRequested = false;
+    const int maxBatchSize = 10;
+    int batchCount = 0;
+
+    qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_waitingParamTimeout";
+
+    // Now that we have timed out for possibly the first time we can activate the index batch queue
+    _indexBatchQueueActive = true;
+
+    // First check for any missing parameters from the initial index based load
+    paramsRequested = _fillIndexBatchQueue(true /* waitingParamTimeout */);
 
     if (!paramsRequested && !_waitingForDefaultComponent && !_mapParameterName2Variant.contains(_vehicle->defaultComponentId())) {
         // Initial load is complete but we still don't have any default component params. Wait one more cycle to see if the
@@ -582,7 +601,7 @@ void ParameterManager::_waitingParamTimeout(void)
                 if (_waitingWriteParamNameMap[componentId][paramName] <= _maxReadWriteRetry) {
                     _writeParameterRaw(componentId, paramName, getParameter(componentId, paramName)->rawValue());
                     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Write resend for (paramName:" << paramName << "retryCount:" << _waitingWriteParamNameMap[componentId][paramName] << ")";
-                    if (++batchCount > _maxBatchSize) {
+                    if (++batchCount > maxBatchSize) {
                         goto Out;
                     }
                 } else {
@@ -604,7 +623,7 @@ void ParameterManager::_waitingParamTimeout(void)
                 if (_waitingReadParamNameMap[componentId][paramName] <= _maxReadWriteRetry) {
                     _readParameterRaw(componentId, paramName, -1);
                     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Read re-request for (paramName:" << paramName << "retryCount:" << _waitingReadParamNameMap[componentId][paramName] << ")";
-                    if (++batchCount > _maxBatchSize) {
+                    if (++batchCount > maxBatchSize) {
                         goto Out;
                     }
                 } else {
@@ -800,8 +819,6 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         });
 
         ani->start(QAbstractAnimation::DeleteWhenStopped);
-
-        _intervalUpdateTimer.invalidate(); // don't change the interval since we loaded the params from cache
     }
 }
 
