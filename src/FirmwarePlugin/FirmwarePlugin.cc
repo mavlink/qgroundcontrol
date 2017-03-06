@@ -341,7 +341,7 @@ QString FirmwarePlugin::vehicleImageCompass(const Vehicle* vehicle) const
     return QStringLiteral("/qmlimages/compassInstrumentArrow.svg");
 }
 
-QVariantList& FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
+const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
     //-- Default list of indicators for all vehicles.

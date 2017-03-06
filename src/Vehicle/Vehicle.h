@@ -653,8 +653,8 @@ public:
     QString vehicleImageOutline () const;
     QString vehicleImageCompass () const;
 
-    QVariantList& toolBarIndicators();
-    const QVariantList& cameraList(void) const;
+    const QVariantList& toolBarIndicators   ();
+    const QVariantList& cameraList          (void) const;
 
 
 public slots:
