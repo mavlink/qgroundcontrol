@@ -95,6 +95,10 @@ Item {
     }
 
     function fitMapViewportToMissionItems() {
+        if (!mapMissionController.visualItems) {
+            // Being called prior to controller.start
+            return
+        }
         var coordList = [ ]
         addMissionItemCoordsForFit(coordList)
         fitMapViewportToAllCoordinates(coordList)
@@ -135,6 +139,10 @@ Item {
     }
 
     function fitMapViewportToAllItems() {
+        if (!mapMissionController.visualItems) {
+            // Being called prior to controller.start
+            return
+        }
         var coordList = [ ]
         addMissionItemCoordsForFit(coordList)
         addFenceItemCoordsForFit(coordList)
