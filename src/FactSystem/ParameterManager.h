@@ -18,7 +18,6 @@
 #include <QMutex>
 #include <QDir>
 #include <QJsonObject>
-#include <QElapsedTimer>
 
 #include "FactSystem.h"
 #include "MAVLinkProtocol.h"
@@ -148,6 +147,7 @@ private:
     void _loadOfflineEditingParams(void);
     QString _logVehiclePrefix(int componentId = -1);
     void _setLoadProgress(double loadProgress);
+    bool _fillIndexBatchQueue(bool waitingParamTimeout);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
@@ -179,12 +179,14 @@ private:
     int         _prevWaitingReadParamNameCount;
     int         _prevWaitingWriteParamNameCount;
 
-
     static const int    _maxInitialRequestListRetry = 4;        ///< Maximum retries for request list
     int                 _initialRequestRetryCount;              ///< Current retry count for request list
     static const int    _maxInitialLoadRetrySingleParam = 5;    ///< Maximum retries for initial index based load of a single param
     static const int    _maxReadWriteRetry = 5;                 ///< Maximum retries read/write
     bool                _disableAllRetries;                     ///< true: Don't retry any requests (used for testing)
+
+    bool        _indexBatchQueueActive; ///< true: we are actively batching re-requests for missing index base params, false: index based re-request has not yet started
+    QList<int>  _indexBatchQueue;       ///< The current queue of index re-requests
 
     QMap<int, int>                  _paramCountMap;             ///< Key: Component id, Value: count of parameters in this component
     QMap<int, QMap<int, int> >      _waitingReadParamIndexMap;  ///< Key: Component id, Value: Map { Key: parameter index still waiting for, Value: retry count }
@@ -197,9 +199,6 @@ private:
     QTimer _initialRequestTimeoutTimer;
     QTimer _waitingParamTimeoutTimer;
     
-    QElapsedTimer _intervalUpdateTimer;        ///< measures the time since refreshAllParameters() was called
-    static constexpr int _maxBatchSize = 10;   ///< maximum number of parameters retry requests at once
-
     QMutex _dataMutex;
     
     static Fact _defaultFact;   ///< Used to return default fact, when parameter not found
