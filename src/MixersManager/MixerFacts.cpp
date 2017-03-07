@@ -98,7 +98,6 @@ void MixerGroup::addMixer(unsigned int mixerID, Mixer *mixer){
 MixerGroups::MixerGroups()
     :_mixerGroups()
 {
-
 }
 
 MixerGroups::~MixerGroups()
@@ -120,5 +119,11 @@ void MixerGroups::deleteGroup(unsigned int groupID){
         delete pgroup;
         _mixerGroups.remove(groupID);
     }
+}
 
+MixerGroup* MixerGroups::getGroup(unsigned int groupID){
+    if(_mixerGroups.contains(groupID))
+        return _mixerGroups[groupID];
+    else
+        return nullptr;
 }

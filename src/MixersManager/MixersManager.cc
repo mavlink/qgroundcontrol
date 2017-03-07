@@ -30,6 +30,8 @@ MixersManager::MixersManager(Vehicle* vehicle)
     , _expectedAck(AckNone)
     , _getMissing(false)
     , _requestGroup(0)
+    , _mixerDataReady(false)
+    , _missingMixerData(true)
 {
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &MixersManager::_mavlinkMessageReceived);
     
@@ -43,6 +45,14 @@ MixersManager::MixersManager(Vehicle* vehicle)
 MixersManager::~MixersManager()
 {
     _ackTimeoutTimer->stop();
+}
+
+MixerGroup* MixersManager::getMixerGroup(unsigned int groupID){
+    return _mixerGroupsData.getGroup(groupID);
+}
+
+void MixersManager::_paramValueUpdated(const QVariant& value){
+
 }
 
 
@@ -272,6 +282,8 @@ bool MixersManager::requestMixerAll(unsigned int group){
 
     _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
     _startAckTimeout(AckAll);
+    _mixerDataReady = false;
+    emit mixerDataReadyChanged(false);
     return true;
 }
 
@@ -281,6 +293,7 @@ bool MixersManager::requestMissingData(unsigned int group){
     if(!_requestMissingData(group)){
         return _buildFactsFromMessages(group);
     }
+    emit mixerDataReadyChanged(false);
     return false;
 }
 
@@ -496,6 +509,8 @@ bool MixersManager::_buildFactsFromMessages(unsigned int group){
                         fact->setMetaData(paramMetaData);
                 }
                 fact->setRawValue(QVariant(param_value));
+
+                connect(fact, &Fact::_containerRawValueChanged, this, &MixersManager::_paramValueUpdated);
             }
 
             //Input connection count
@@ -566,6 +581,8 @@ bool MixersManager::_buildFactsFromMessages(unsigned int group){
         }
     }
 
+    _mixerDataReady = true;
+    emit mixerDataReadyChanged(true);
     return true;
 }
 

@@ -40,6 +40,8 @@ public:
     void addSubmixer(unsigned int mixerID, Mixer *submixer);
     void addMixerParamFact(unsigned int paramID, Fact* paramFact);
     void addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel);
+    unsigned getMixerTypeID() {return _mixerTypeID;};
+    QMap<int, Mixer*>* getSubmixers() {return &_subMixers;};
 
 private:
     unsigned _mixerTypeID;
@@ -62,6 +64,8 @@ public:
     MixerGroup();
     ~MixerGroup();
     void addMixer(unsigned int mixerID, Mixer *mixer);
+    QMap<int, Mixer*>* getMixers() {return &_mixers;};
+
 private:
     QMap<int, Mixer*> _mixers ;
 };
@@ -75,6 +79,7 @@ public:
     ~MixerGroups();
     void deleteGroup(unsigned int groupID);
     void addGroup(unsigned int groupID, MixerGroup *group);
+    MixerGroup* getGroup(unsigned int groupID);
 
 private:
     QMap<int, MixerGroup*> _mixerGroups;

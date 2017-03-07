@@ -42,23 +42,8 @@ public:
     Q_PROPERTY(QQuickItem* requestAllButton MEMBER _requestAllButton    NOTIFY requestAllButtonChanged)
     Q_PROPERTY(QQuickItem* requestMissingButton MEMBER _requestMissingButton    NOTIFY requestMissingButtonChanged)
     Q_PROPERTY(QQuickItem* requestSubmixerCountButton MEMBER _requestSubmixerCountButton   NOTIFY requestSubmixerCountButtonChanged)
-//    Q_PROPERTY(QQuickItem* statusText   MEMBER _statusText      NOTIFY statusTextChanged)
-//    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton    NOTIFY cancelButtonChanged)
-//    Q_PROPERTY(QQuickItem* nextButton   MEMBER _nextButton      NOTIFY nextButtonChanged)
-//    Q_PROPERTY(QQuickItem* skipButton   MEMBER _skipButton      NOTIFY skipButtonChanged)
-    
-//    Q_PROPERTY(int rollChannelRCValue READ rollChannelRCValue NOTIFY rollChannelRCValueChanged)
-//    Q_PROPERTY(int pitchChannelRCValue READ pitchChannelRCValue NOTIFY pitchChannelRCValueChanged)
-//    Q_PROPERTY(int yawChannelRCValue READ yawChannelRCValue NOTIFY yawChannelRCValueChanged)
-//    Q_PROPERTY(int throttleChannelRCValue READ throttleChannelRCValue NOTIFY throttleChannelRCValueChanged)
-        
-//    Q_ENUMS(BindModes)
-//    enum BindModes {
-//        DSM2,
-//        DSMX7,
-//        DSMX8
-//    };
-    
+    Q_PROPERTY(QmlObjectListModel*  mixers          MEMBER _mixers          CONSTANT)
+
     Q_INVOKABLE void getMixersCountButtonClicked(void);
     Q_INVOKABLE void requestAllButtonClicked(void);
     Q_INVOKABLE void requestMissingButtonClicked(void);
@@ -81,8 +66,6 @@ signals:
 //    void skipButtonChanged(void);
         
     void groupValueChanged(unsigned int groupValue);
-    void mixerIndexValueChanged(unsigned int mixerValue);
-    void submixerIndexValueChanged(unsigned int submixerValue);
     void parameterValueChanged(float paramValue);
         
 //    /// Signalled to QML to indicate reboot is required
@@ -90,41 +73,18 @@ signals:
 
 private slots:
 //    void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
+    void _updateMixers(void);
 
 private:
-//    /// @brief A set of information associated with a mixer.
-//    struct MixerInfo {
-//        unsigned int        mixerType;   ///< Function mapped to this channel, rcCalFunctionMax for none
-//    };
 
-//    void _switchDetect(enum rcCalFunctions function, int channel, int value, bool moveToNextStep);
-    
-//    void _saveAllTrims(void);
-//    bool _stickSettleComplete(int value);
-//    void _validateCalibration(void);
-//    void _writeParameters(void);
-//    void _rcCalSaveCurrentValues(void);
-
-//    void _setHelpImage(const char* imageFile);
-    
-//    void _loadSettings(void);
-//    void _storeSettings(void);
-    
-    // Member variables
-
-//    static const char* _imageFileMode1Dir;
-//    static const char* _imageFileMode2Dir;
     
     static const int _updateInterval;   ///< Interval for ui update timer
 
-//    static const struct FunctionInfo _rgFunctionInfoAPM[rcCalFunctionMax]; ///< Information associated with each function, PX4 firmware
-//    static const struct FunctionInfo _rgFunctionInfoPX4[rcCalFunctionMax]; ///< Information associated with each function, APM firmware
-    
     QQuickItem* _getMixersCountButton;
     QQuickItem* _requestAllButton;
     QQuickItem* _requestMissingButton;
     QQuickItem* _requestSubmixerCountButton;
-
+    QmlObjectListModel* _mixers;
 
 //    QQuickItem* _statusText;
 //    QQuickItem* _nextButton;

@@ -35,6 +35,11 @@ class MixersManager : public QObject
 public:
     MixersManager(Vehicle* vehicle);
     ~MixersManager();
+
+    /// true: Parameters are ready for use
+    Q_PROPERTY(bool mixerDataReady READ mixerDataReady NOTIFY mixerDataReadyChanged)
+    bool mixerDataReady(void) { return _mixerDataReady; }
+
     
     bool inProgress(void);
 
@@ -48,12 +53,19 @@ public:
     bool requestConnectionCount(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType);
     bool requestConnection(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType, unsigned conn);
 
+    MixerGroup* getMixerGroup(unsigned int groupID);
+    MixerMetaData* getMixerMetaData() {return &_mixerMetaData;}
+
     // These values are public so the unit test can set appropriate signal wait times
     static const int _ackTimeoutMilliseconds = 1000;
     static const int _maxRetryCount = 5;
     
 signals:
-    void newMixerItemsAvailable(void);
+    void mixerDataReadyChanged(bool mixerDataReady);
+    void missingMixerDataChanged(bool missingMixerData);
+
+protected:
+    void _paramValueUpdated(const QVariant& value);
     
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
@@ -85,6 +97,9 @@ private:
     int                 _retryCount;
     bool                _getMissing;
     unsigned int        _requestGroup;
+
+    bool                _mixerDataReady;               ///< true: mixer data load complete
+    bool                _missingMixerData;             ///< true: mixer data missing from load
 
     void _startAckTimeout(AckType_t ack);
 
