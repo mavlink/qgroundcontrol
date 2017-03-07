@@ -85,6 +85,7 @@ shutter_speeds_t shutterSpeeds[] = {
 CameraControl::CameraControl(QObject* parent)
     : QObject(parent)
     , _vehicle(NULL)
+    , _waitingShutter(false)
     , _cameraSupported(CAMERA_SUPPORT_UNDEFINED)
     , _currentVideoRes(0)
     , _currentWb(0)
@@ -360,14 +361,19 @@ CameraControl::takePhoto()
     qDebug() << "takePhoto()";
     //-- Send MAVLink command telling vehicle to take photo
     if(_vehicle && _cameraStatus.data_ready) {
-        _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                         // Target component
-            MAV_CMD_IMAGE_START_CAPTURE,                // Command id
-            true,                                       // ShowError
-            0,                                          // Duration between two consecutive pictures (in seconds)
-            1,                                          // Number of images to capture total - 0 for unlimited capture
-            -1);                                        // Resolution in megapixels (max)
-        _cameraSound.play();
+        if(_waitingShutter) {
+            _errorSound.setLoopCount(1);
+            _errorSound.play();
+        } else {
+            _waitingShutter = true;
+            _vehicle->sendMavCommand(
+                MAV_COMP_ID_CAMERA,                     // Target component
+                MAV_CMD_IMAGE_START_CAPTURE,            // Command id
+                true,                                   // ShowError
+                0,                                      // Duration between two consecutive pictures (in seconds)
+                1,                                      // Number of images to capture total - 0 for unlimited capture
+                -1);                                    // Resolution in megapixels (max)
+        }
     }
 }
 
@@ -487,27 +493,40 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
             }
         }
     } else if(_cameraSupported == CAMERA_SUPPORT_YES) {
-        if(command == MAV_CMD_REQUEST_CAMERA_SETTINGS) {
-            if(noReponseFromVehicle) {
-                qDebug() << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
-                _requestCameraSettings();
-            } else {
-                if(result != MAV_RESULT_ACCEPTED) {
-                    qDebug() << "Bad response from MAV_CMD_REQUEST_CAMERA_SETTINGS" << result << "Retrying...";
+        switch(command) {
+            case MAV_CMD_IMAGE_START_CAPTURE:
+                if(result == MAV_RESULT_ACCEPTED) {
+                    _cameraSound.play();
+                    _waitingShutter = false;
+                } else {
+                    _errorSound.setLoopCount(2);
+                    _errorSound.play();
+                }
+                break;
+            case MAV_CMD_REQUEST_CAMERA_SETTINGS:
+                if(noReponseFromVehicle) {
+                    qDebug() << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
                     _requestCameraSettings();
+                } else {
+                    if(result != MAV_RESULT_ACCEPTED) {
+                        qDebug() << "Bad response from MAV_CMD_REQUEST_CAMERA_SETTINGS" << result << "Retrying...";
+                        _requestCameraSettings();
+                    }
                 }
-            }
-        }
-        if(command == MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS) {
-            if(noReponseFromVehicle) {
-                qDebug() << "Retry MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS";
-                _requestCaptureStatus();
-            } else {
-                if(result != MAV_RESULT_ACCEPTED) {
-                    qDebug() << "Bad response from MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS" << result << "Retrying...";
+                break;
+            case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
+                if(noReponseFromVehicle) {
+                    qDebug() << "Retry MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS";
                     _requestCaptureStatus();
+                } else {
+                    if(result != MAV_RESULT_ACCEPTED) {
+                        qDebug() << "Bad response from MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS" << result << "Retrying...";
+                        _requestCaptureStatus();
+                    }
                 }
-            }
+                break;
+            default:
+                break;
         }
     }
 }
