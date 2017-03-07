@@ -29,24 +29,23 @@ SetupPage {
             width:  Math.max(availableWidth, innerColumn.width)
             height: innerColumn.height
 
+            property int textEditWidth:    ScreenTools.defaultFontPixelWidth * 8
+
+            property Fact battNumCells:         controller.getParameterFact(-1, "BAT_N_CELLS")
+            property Fact battHighVolt:         controller.getParameterFact(-1, "BAT_V_CHARGED")
+            property Fact battLowVolt:          controller.getParameterFact(-1, "BAT_V_EMPTY")
+            property Fact battVoltLoadDrop:     controller.getParameterFact(-1, "BAT_V_LOAD_DROP")
+            property Fact battVoltageDivider:   controller.getParameterFact(-1, "BAT_V_DIV")
+            property Fact battAmpsPerVolt:      controller.getParameterFact(-1, "BAT_A_PER_V")
+            property Fact uavcanEnable:         controller.getParameterFact(-1, "UAVCAN_ENABLE", false)
+
+            readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
+            readonly property string highlightSuffix:   "</font>"
+
             ColumnLayout {
                 id:                         innerColumn
                 anchors.horizontalCenter:   parent.horizontalCenter
                 spacing:                    ScreenTools.defaultFontPixelHeight
-
-                property int textEditWidth:    ScreenTools.defaultFontPixelWidth * 8
-
-                property Fact battNumCells:         controller.getParameterFact(-1, "BAT_N_CELLS")
-                property Fact battHighVolt:         controller.getParameterFact(-1, "BAT_V_CHARGED")
-                property Fact battLowVolt:          controller.getParameterFact(-1, "BAT_V_EMPTY")
-                property Fact battVoltLoadDrop:     controller.getParameterFact(-1, "BAT_V_LOAD_DROP")
-                property Fact battVoltageDivider:   controller.getParameterFact(-1, "BAT_V_DIV")
-                property Fact battAmpsPerVolt:      controller.getParameterFact(-1, "BAT_A_PER_V")
-                property Fact uavcanEnable:         controller.getParameterFact(-1, "UAVCAN_ENABLE", false)
-
-                readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
-                readonly property string highlightSuffix:   "</font>"
-
 
                 function getBatteryImage()
                 {
