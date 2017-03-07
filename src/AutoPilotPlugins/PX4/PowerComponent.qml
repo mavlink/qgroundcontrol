@@ -289,7 +289,7 @@ SetupPage {
                         QGCLabel {
                             text:   (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
                         }
-/*
+
                         QGCLabel {
                             text: qsTr("Battery Capacity:")
                         }
@@ -300,7 +300,9 @@ SetupPage {
                             fact:       battCap
                             showUnits:  true
                         }
-*/
+
+                        Item { width: 1; height: 1; Layout.columnSpan: 3 }
+
                         QGCLabel {
                             text:               qsTr("Voltage divider")
                         }
