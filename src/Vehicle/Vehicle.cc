@@ -3290,13 +3290,10 @@ void Vehicle::setSoloFirmware(bool soloFirmware)
     }
 }
 
-#if 0
-// Temporarily removed, waiting for new command implementation
 void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
 {
-    doCommandLongUnverified(_defaultComponentId, MAV_CMD_DO_MOTOR_TEST, motor, MOTOR_TEST_THROTTLE_PERCENT, percent, timeoutSecs);
+    sendMavCommand(_defaultComponentId, MAV_CMD_DO_MOTOR_TEST, motor, MOTOR_TEST_THROTTLE_PERCENT, percent, timeoutSecs);
 }
-#endif
 
 QString Vehicle::brandImageIndoor(void) const
 {
