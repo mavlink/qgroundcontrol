@@ -202,6 +202,7 @@ private:
         CAMERA_SUPPORT_NO
     };
 
+    bool                    _waitingShutter;
     int                     _cameraSupported;
     quint32                 _currentVideoRes;
     quint32                 _currentWb;
