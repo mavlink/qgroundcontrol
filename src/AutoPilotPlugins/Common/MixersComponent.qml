@@ -80,10 +80,10 @@ SetupPage {
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth
                 anchors.left:       parent.left
                 anchors.right:      parent.right
-                anchors.top:        parent.verticalCenter
+//                anchors.top:        parent.requestMissing.bottom
                 anchors.bottom:     parent.bottom
                 orientation:        ListView.Vertical
-                model:              controller.mixers
+                model:              mixers.mixers
                 cacheBuffer:        height > 0 ? height * 2 : 0
                 clip:               true
 
