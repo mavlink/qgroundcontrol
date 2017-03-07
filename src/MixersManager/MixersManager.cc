@@ -24,6 +24,7 @@ MixersManager::MixersManager(Vehicle* vehicle)
     : _vehicle(vehicle)
     , _dedicatedLink(NULL)
     , _mixerGroupsData()
+    , _mixerMetaData()
     , _mixerDataMessages()
     , _ackTimeoutTimer(NULL)
     , _expectedAck(AckNone)
@@ -413,6 +414,7 @@ bool MixersManager::_buildFactsFromMessages(unsigned int group){
     _mixerGroupsData.deleteGroup(group);
     MixerGroup *mixer_group = new MixerGroup();
     _mixerGroupsData.addGroup(group, mixer_group);
+    FactMetaData *paramMetaData;
 
     msg.mixer_group = group;
     msg.data_type = MIXER_DATA_TYPE_MIXER_COUNT;
@@ -487,6 +489,12 @@ bool MixersManager::_buildFactsFromMessages(unsigned int group){
                     submixer->addMixerParamFact(msg.parameter_index, fact);
                 }
                 float param_value = _mixerDataMessages[found_index]->param_value;
+
+                //Set the parameter Fact meta data and value
+                paramMetaData = _mixerMetaData.GetMixerParameterMetaData(mixer_type, msg.parameter_index);
+                if(paramMetaData != nullptr){
+                        fact->setMetaData(paramMetaData);
+                }
                 fact->setRawValue(QVariant(param_value));
             }
 

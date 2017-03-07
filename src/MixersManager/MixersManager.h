@@ -22,6 +22,7 @@
 #include "QGCLoggingCategory.h"
 #include "LinkInterface.h"
 #include "MixerFacts.h"
+#include "MixerMetaData.h"
 
 class Vehicle;
 
@@ -76,6 +77,7 @@ private:
     LinkInterface*      _dedicatedLink;
 
     MixerGroups         _mixerGroupsData;
+    MixerMetaData       _mixerMetaData;
 
     QList<mavlink_mixer_data_t*> _mixerDataMessages;
     QTimer*             _ackTimeoutTimer;

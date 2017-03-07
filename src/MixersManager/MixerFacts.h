@@ -15,18 +15,6 @@
 #include <FactMetaData.h>
 #include <QMap>
 
-//class MixerFacts : public QObject
-//{
-//    Q_OBJECT
-//public:
-//    explicit MixerFacts(QObject *parent = 0);
-
-//signals:
-
-//public slots:
-//};
-
-
 class MixerConnection : public QObject
 {
     Q_OBJECT
@@ -91,55 +79,6 @@ public:
 private:
     QMap<int, MixerGroup*> _mixerGroups;
 };
-
-
-//class MixerParameterMetaData : public FactMetaData
-//{
-//    Q_OBJECT
-
-//public:
-//    MixerTypeMetaData();
-//    ~MixerTypeMetaData();
-
-//private:
-//};
-
-//class MixerTypeMetaData : public FactMetaData
-//{
-//    Q_OBJECT
-
-//public:
-//    MixerTypeMetaData();
-//    ~MixerTypeMetaData();
-
-//private:
-//    QVector<MixerParameterMetaData> _mixerParams;
-//};
-
-//class MixerConnectionsMetaData : public QObject
-//{
-//    Q_OBJECT
-
-//public:
-//    MixerTypeMetaData();
-//    ~MixerTypeMetaData();
-
-//private:
-//    QString _mixerName;
-//};
-
-
-//class MixerTypesMetaData : public QObject
-//{
-//    Q_OBJECT
-
-//public:
-//    MixerTypesMetaData();
-//    ~MixerTypesMetaData();
-
-//private:
-//    QMap<int, MixerTypeMetaData>        _mixerTypeMetaData;
-//};
 
 
 #endif // MIXERFACTS_H
