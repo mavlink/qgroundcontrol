@@ -38,6 +38,7 @@ SetupPage {
             property Fact battVoltageDivider:   controller.getParameterFact(-1, "BAT_V_DIV")
             property Fact battAmpsPerVolt:      controller.getParameterFact(-1, "BAT_A_PER_V")
             property Fact uavcanEnable:         controller.getParameterFact(-1, "UAVCAN_ENABLE", false)
+            property Fact battCap:              controller.getParameterFact(-1, "BAT_CAPACITY")
 
             readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
             readonly property string highlightSuffix:   "</font>"
@@ -288,7 +289,18 @@ SetupPage {
                         QGCLabel {
                             text:   (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
                         }
+/*
+                        QGCLabel {
+                            text: qsTr("Battery Capacity:")
+                        }
 
+                        FactTextField {
+                            id:         battCapField
+                            width:      textEditWidth
+                            fact:       battCap
+                            showUnits:  true
+                        }
+*/
                         QGCLabel {
                             text:               qsTr("Voltage divider")
                         }
