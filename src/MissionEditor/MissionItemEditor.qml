@@ -68,15 +68,21 @@ Rectangle {
 
     }
 
-    MouseArea {
+    QGCMouseArea {
         // The MouseArea for the hamburger is larger than the hamburger image itself in order to provide a larger
         // touch area on mobile
-        anchors.top:        parent.top
-        anchors.bottom:     editorLoader.top
-        anchors.leftMargin: -hamburger.anchors.rightMargin
-        anchors.left:       hamburger.left
-        anchors.right:      parent.right
-        onClicked:          hamburgerMenu.popup()
+        anchors.leftMargin:     -_touchMarginHorizontal
+        anchors.rightMargin:    -_touchMarginHorizontal
+        anchors.topMargin:      -_touchMarginVertical
+        anchors.bottomMargin:   -_touchMarginVertical
+        anchors.fill:           hamburger
+        visible:                hamburger.visible
+        onClicked:              hamburgerMenu.popup()
+
+        property real _touchWidth:              Math.max(hamburger.width, ScreenTools.minTouchPixels)
+        property real _touchHeight:             Math.max(hamburger.height, ScreenTools.minTouchPixels)
+        property real _touchMarginHorizontal:   ScreenTools.isMobile ? (_touchWidth - hamburger.width) / 2 : 0
+        property real _touchMarginVertical:     ScreenTools.isMobile ? (_touchHeight - hamburger.height) / 2 : 0
 
         Menu {
             id: hamburgerMenu

@@ -17,30 +17,31 @@ import QGroundControl.Controls      1.0
 /// Use the drag a MissionItemIndicator
 Rectangle {
     id:             itemDragger
-    x:              itemIndicator.x - _expandMargin
-    y:              itemIndicator.y - _expandMargin
-    width:          itemIndicator.width + (_expandMargin * 2)
-    height:         itemIndicator.height + (_expandMargin * 2)
+    x:              itemIndicator.x - _touchMarginHorizontal
+    y:              itemIndicator.y - _touchMarginVertical
+    width:          itemIndicator.width + (_touchMarginHorizontal * 2)
+    height:         itemIndicator.height + (_touchMarginVertical * 2)
     color:          "transparent"
     z:              QGroundControl.zOrderMapItems + 1    // Above item icons
-
-    // These are handy for debugging so left in for now
-    //border.width:   1
-    //border.color:   "white"
 
     // Properties which must be specific by consumer
     property var itemIndicator  ///< The mission item indicator to drag around
     property var itemCoordinate ///< Coordinate we are updating during drag
 
     property bool   _preventCoordinateBindingLoop:  false
-    property real   _expandMargin:                  ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth : 0
+
+    property bool _mobile:                  true//ScreenTools.isMobile
+    property real _touchWidth:              Math.max(itemIndicator.width, ScreenTools.minTouchPixels)
+    property real _touchHeight:             Math.max(itemIndicator.height, ScreenTools.minTouchPixels)
+    property real _touchMarginHorizontal:   _mobile ? (_touchWidth - itemIndicator.width) / 2 : 0
+    property real _touchMarginVertical:     _mobile ? (_touchHeight - itemIndicator.height) / 2 : 0
 
     onXChanged: liveDrag()
     onYChanged: liveDrag()
 
     function liveDrag() {
         if (!itemDragger._preventCoordinateBindingLoop && Drag.active) {
-            var point = Qt.point(itemDragger.x + _expandMargin + itemIndicator.anchorPoint.x, itemDragger.y + _expandMargin + itemIndicator.anchorPoint.y)
+            var point = Qt.point(itemDragger.x + _touchMarginHorizontal + itemIndicator.anchorPoint.x, itemDragger.y + _touchMarginVertical + itemIndicator.anchorPoint.y)
             var coordinate = map.toCoordinate(point)
             itemDragger._preventCoordinateBindingLoop = true
             coordinate.altitude = itemCoordinate.altitude
@@ -51,13 +52,14 @@ Rectangle {
 
     Drag.active: itemDrag.drag.active
 
-    MouseArea {
-        id:             itemDrag
-        anchors.fill:   parent
-        drag.target:    parent
-        drag.minimumX:  0
-        drag.minimumY:  0
-        drag.maximumX:  itemDragger.parent.width - parent.width
-        drag.maximumY:  itemDragger.parent.height - parent.height
+    QGCMouseArea {
+        id:                 itemDrag
+        anchors.fill:       parent
+        drag.target:        parent
+        drag.minimumX:      0
+        drag.minimumY:      0
+        drag.maximumX:      itemDragger.parent.width - parent.width
+        drag.maximumY:      itemDragger.parent.height - parent.height
+        preventStealing:    true
     }
 }
