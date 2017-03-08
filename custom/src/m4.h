@@ -7,10 +7,7 @@
 
 #pragma once
 
-#include <QObject>
-#include <QTimer>
-#include <QNetworkAccessManager>
-
+#include "m4common.h"
 #include "m4def.h"
 #include "m4util.h"
 #include "camera.h"

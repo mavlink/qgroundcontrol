@@ -21,7 +21,7 @@ const char* kStyleKey  = "StyleIsDark";
 static QObject*
 typhoonHQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
 {
-    qDebug() << "Creating TyphoonHQuickInterface instance";
+    qCDebug(YuneecLog) << "Creating TyphoonHQuickInterface instance";
     TyphoonHQuickInterface* pIFace = new TyphoonHQuickInterface();
     TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
     if(pPlug) {

@@ -11,7 +11,7 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 
-#include <QDebug>
+QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
 
 //-----------------------------------------------------------------------------
 // Video Resolution Options
@@ -132,7 +132,7 @@ void
 CameraControl::setCurrentVideoRes(quint32 index)
 {
     if(index < NUM_VIDEO_RES) {
-        qDebug() << "setCurrentVideoRes:" << videoResOptions[index].description;
+        qCDebug(YuneecCameraLog) << "setCurrentVideoRes:" << videoResOptions[index].description;
         _currentVideoRes = index;
         emit currentVideoResChanged();
     }
@@ -143,7 +143,7 @@ void
 CameraControl::setCurrentWb(quint32 index)
 {
     if(index < NUM_WB_VALUES) {
-        qDebug() << "setCurrentWb:" << wbValues[index].description;
+        qCDebug(YuneecCameraLog) << "setCurrentWb:" << wbValues[index].description;
         _currentWb = index;
         emit currentWbChanged();
         float lock = 1.0f;
@@ -211,7 +211,7 @@ CameraControl::CameraMode
 CameraControl::cameraMode()
 {
     if(_cameraSettings.data_ready) {
-        qDebug() << "Get cameraMode:" << _cameraSettings.mode_id;
+        qCDebug(YuneecCameraLog) << "Get cameraMode:" << _cameraSettings.mode_id;
         return (CameraMode)_cameraSettings.mode_id;
     }
     return CAMERA_MODE_UNDEFINED;
@@ -315,7 +315,7 @@ CameraControl::recordTimeStr()
 void
 CameraControl::startVideo()
 {
-    qDebug() << "startVideo()";
+    qCDebug(YuneecCameraLog) << "startVideo()";
     if(_vehicle && _cameraStatus.data_ready && _cameraSettings.mode_id == CAMERA_MODE_VIDEO) {
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
@@ -341,7 +341,7 @@ CameraControl::startVideo()
 void
 CameraControl::stopVideo()
 {
-    qDebug() << "stopVideo()";
+    qCDebug(YuneecCameraLog) << "stopVideo()";
     if(_vehicle && _cameraStatus.data_ready) {
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
@@ -358,7 +358,7 @@ CameraControl::stopVideo()
 void
 CameraControl::takePhoto()
 {
-    qDebug() << "takePhoto()";
+    qCDebug(YuneecCameraLog) << "takePhoto()";
     //-- Send MAVLink command telling vehicle to take photo
     if(_vehicle && _cameraStatus.data_ready) {
         if(_waitingShutter) {
@@ -392,7 +392,7 @@ CameraControl::toggleMode()
 void
 CameraControl::setVideoMode()
 {
-    qDebug() << "setVideoMode()";
+    qCDebug(YuneecCameraLog) << "setVideoMode()";
     _setSettings_2(DEFAULT_VALUE, DEFAULT_VALUE, DEFAULT_VALUE, CAMERA_MODE_VIDEO);
     _cameraSettings.mode_id = CAMERA_MODE_VIDEO;
     emit cameraModeChanged();
@@ -402,7 +402,7 @@ CameraControl::setVideoMode()
 void
 CameraControl::setPhotoMode()
 {
-    qDebug() << "setPhotoMode()";
+    qCDebug(YuneecCameraLog) << "setPhotoMode()";
     _setSettings_2(DEFAULT_VALUE, DEFAULT_VALUE, DEFAULT_VALUE, CAMERA_MODE_PHOTO);
     _cameraSettings.mode_id = CAMERA_MODE_PHOTO;
     emit cameraModeChanged();
@@ -413,7 +413,7 @@ void
 CameraControl::_setSettings_1(float p1, float p2, float p3, float p4, float p5, float p6, float p7)
 {
     if (_vehicle && _cameraStatus.data_ready) {
-        qDebug() << "_setSettings_1()" << p1 << p2 << p3 << p4 << p5 << p6 << p7;
+        qCDebug(YuneecCameraLog) << "_setSettings_1()" << p1 << p2 << p3 << p4 << p5 << p6 << p7;
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                                     // Target component
             MAV_CMD_SET_CAMERA_SETTINGS_1,                          // Command id
@@ -437,7 +437,7 @@ void
 CameraControl::_setSettings_2(float p1, float p2, float p3, float p4, float p5, float p6)
 {
     if (_vehicle && _cameraStatus.data_ready) {
-        qDebug() << "_setSettings_2()" << p1 << p2 << p3 << p4 << p5 << p6;
+        qCDebug(YuneecCameraLog) << "_setSettings_2()" << p1 << p2 << p3 << p4 << p5 << p6;
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                                     // Target component
             MAV_CMD_SET_CAMERA_SETTINGS_2,                          // Command id
@@ -478,7 +478,7 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
         //-- Is this the response we are waiting?
         if(command == MAV_CMD_REQUEST_CAMERA_SETTINGS) {
             if(noReponseFromVehicle) {
-                qDebug() << "No response for MAV_CMD_REQUEST_CAMERA_SETTINGS";
+                qCDebug(YuneecCameraLog) << "No response for MAV_CMD_REQUEST_CAMERA_SETTINGS";
                 //-- We got no answer so we assume no camera support
                 _cameraSupported = CAMERA_SUPPORT_NO;
             } else {
@@ -505,22 +505,22 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                 break;
             case MAV_CMD_REQUEST_CAMERA_SETTINGS:
                 if(noReponseFromVehicle) {
-                    qDebug() << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
+                    qCDebug(YuneecCameraLog) << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
                     _requestCameraSettings();
                 } else {
                     if(result != MAV_RESULT_ACCEPTED) {
-                        qDebug() << "Bad response from MAV_CMD_REQUEST_CAMERA_SETTINGS" << result << "Retrying...";
+                        qCDebug(YuneecCameraLog) << "Bad response from MAV_CMD_REQUEST_CAMERA_SETTINGS" << result << "Retrying...";
                         _requestCameraSettings();
                     }
                 }
                 break;
             case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
                 if(noReponseFromVehicle) {
-                    qDebug() << "Retry MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS";
+                    qCDebug(YuneecCameraLog) << "Retry MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS";
                     _requestCaptureStatus();
                 } else {
                     if(result != MAV_RESULT_ACCEPTED) {
-                        qDebug() << "Bad response from MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS" << result << "Retrying...";
+                        qCDebug(YuneecCameraLog) << "Bad response from MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS" << result << "Retrying...";
                         _requestCaptureStatus();
                     }
                 }
@@ -560,7 +560,7 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
     _cameraStatus.image_resolution_v    = cap.image_resolution_h;
     _cameraStatus.image_status          = cap.image_status;
     _updateVideoRes(cap.video_resolution_h, cap.video_resolution_v, cap.video_framerate);
-    qDebug() << "_handleCaptureStatus:" << cap.video_status << cap.recording_time_ms << cap.available_capacity;
+    qCDebug(YuneecCameraLog) << "_handleCaptureStatus:" << cap.video_status << cap.recording_time_ms << cap.available_capacity;
     if(!wasReady || _cameraStatus.video_status != cap.video_status) {
         _cameraStatus.video_status = cap.video_status;
         emit videoStatusChanged();
@@ -579,7 +579,7 @@ CameraControl::_handleCameraSettings(const mavlink_message_t &message)
 {
     mavlink_camera_settings_t settings;
     mavlink_msg_camera_settings_decode(&message, &settings);
-    qDebug() << "_handleCameraSettings. Mode:" << settings.mode_id;
+    qCDebug(YuneecCameraLog) << "_handleCameraSettings. Mode:" << settings.mode_id;
     _cameraSettings.data_ready = true;
     _cameraSettings.aperture                = settings.aperture;
     _cameraSettings.aperture_locked         = settings.aperture_locked;
@@ -662,15 +662,15 @@ CameraControl::_findVideoRes(int w, int h, float f)
 void
 CameraControl::_updateAspectRatio()
 {
-    qDebug() << "_updateAspectRatio() Mode:" << _cameraSettings.mode_id;
+    qCDebug(YuneecCameraLog) << "_updateAspectRatio() Mode:" << _cameraSettings.mode_id;
     if(_cameraSettings.data_ready) {
         //-- Photo Mode
         if(_cameraSettings.mode_id == CAMERA_MODE_PHOTO) {
-            qDebug() << "Set 4:3 Aspect Ratio";
+            qCDebug(YuneecCameraLog) << "Set 4:3 Aspect Ratio";
             qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(1.333333);
         //-- Video Mode
         } else if(_cameraSettings.mode_id == CAMERA_MODE_VIDEO && _currentVideoRes < (int)NUM_VIDEO_RES) {
-            qDebug() << "Set Video Aspect Ratio" << videoResOptions[_currentVideoRes].aspectRatio;
+            qCDebug(YuneecCameraLog) << "Set Video Aspect Ratio" << videoResOptions[_currentVideoRes].aspectRatio;
             qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(videoResOptions[_currentVideoRes].aspectRatio);
         }
     }
@@ -681,7 +681,7 @@ void
 CameraControl::_requestCameraSettings()
 {
     if(_vehicle) {
-        qDebug() << "_requestCameraSettings";
+        qCDebug(YuneecCameraLog) << "_requestCameraSettings";
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                     // target component
             MAV_CMD_REQUEST_CAMERA_SETTINGS,        // command id

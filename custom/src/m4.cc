@@ -20,11 +20,9 @@
 #include "m4.h"
 #include "m4serial.h"
 
-#include <QDebug>
-#include <QSettings>
-#include <QNetworkRequest>
-#include <QNetworkReply>
 #include <math.h>
+
+QGC_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
 
 #if defined __android__
 #include <jni.h>
@@ -60,7 +58,6 @@ static const char* kextraName       = "extraName";
 #define COMMAND_WAIT_INTERVAL       250
 #define DEBUG_DATA_DUMP             false
 
-
 #if defined(__android__)
 //-----------------------------------------------------------------------------
 static void
@@ -74,7 +71,7 @@ jniNewWifiItem(JNIEnv *envA, jobject thizA, jstring jSsid)
         envA->ReleaseStringUTFChars(jSsid, stringL);
         if(envA->ExceptionCheck())
             envA->ExceptionClear();
-        qDebug() << ssid;
+        qCDebug(YuneecLog) << ssid;
         emit pPlug->handler()->newWifiSSID(ssid);
     }
 }
@@ -92,11 +89,11 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/)
     }
     jclass javaClass = env->FindClass(jniClassName);
     if(!javaClass) {
-        qWarning() << "Couldn't find class:" << jniClassName;
+        qCWarning(YuneecLog) << "Couldn't find class:" << jniClassName;
         return JNI_ERR;
     }
     if (env->RegisterNatives(javaClass, javaMethods,  sizeof(javaMethods) / sizeof(javaMethods[0])) < 0) {
-        qWarning() << "Couldn't register native methods";
+        qCWarning(YuneecLog) << "Couldn't register native methods";
         return JNI_ERR;
     }
     return JNI_VERSION_1_6;
@@ -424,9 +421,9 @@ TyphoonM4Handler::init()
         _rxBindInfoFeedback.txAddr      = settings.value(ktxAddr,       0).toInt();
     }
     settings.endGroup();
-    qDebug() << "Init M4 Handler";
+    qCDebug(YuneecLog) << "Init M4 Handler";
     if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
-        qWarning() << "Could not start serial communication with M4";
+        qCWarning(YuneecLog) << "Could not start serial communication with M4";
     }
     _sendRxInfoEnd = false;
     connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonM4Handler::_bytesReady);
@@ -485,9 +482,9 @@ TyphoonM4Handler::_httpFinished()
     if(reply) {
 #if 0
         const int http_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        qDebug() << "HTTP Result:" << http_code;
+        qCDebug(YuneecLog) << "HTTP Result:" << http_code;
         QByteArray data = reply->readAll();
-        qDebug() << data;
+        qCDebug(YuneecLog) << data;
 #endif
         reply->deleteLater();
     }
@@ -497,10 +494,10 @@ TyphoonM4Handler::_httpFinished()
 void
 TyphoonM4Handler::enterBindMode()
 {
-    qDebug() << "enterBindMode()";
+    qCDebug(YuneecLog) << "enterBindMode()";
     //-- Send MAVLink command telling vehicle to enter bind mode
     if(_vehicle) {
-        qDebug() << "pairRX()";
+        qCDebug(YuneecLog) << "pairRX()";
         _binding = true;
         _vehicle->sendMavCommand(
             _vehicle->defaultComponentId(),         // target component
@@ -523,7 +520,7 @@ TyphoonM4Handler::enterBindMode()
 void
 TyphoonM4Handler::softReboot()
 {
-    qDebug() << "softReboot()";
+    qCDebug(YuneecLog) << "softReboot()";
     _timer.stop();
     if(_commPort) {
         disconnect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonM4Handler::_bytesReady);
@@ -554,7 +551,7 @@ TyphoonM4Handler::_initSequence()
     _responseTryCount = 0;
     //-- Check and see if we have binding info
     if(_rxBindInfoFeedback.nodeId) {
-        qDebug() << "Previously bound with:" << _rxBindInfoFeedback.nodeId << "(" << _rxBindInfoFeedback.aNum << "Analog Channels ) (" << _rxBindInfoFeedback.swNum << "Switches )";
+        qCDebug(YuneecLog) << "Previously bound with:" << _rxBindInfoFeedback.nodeId << "(" << _rxBindInfoFeedback.aNum << "Analog Channels ) (" << _rxBindInfoFeedback.swNum << "Switches )";
         //-- Initialize M4
         _state = STATE_RECV_BOTH_CH;
         _sendRecvBothCh();
@@ -579,9 +576,9 @@ TyphoonM4Handler::_stateManager()
 {
     switch(_state) {
         case STATE_EXIT_RUN:
-            qDebug() << "STATE_EXIT_RUN Timeout";
+            qCDebug(YuneecLog) << "STATE_EXIT_RUN Timeout";
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_EXIT_RUN Timeouts. Switching to initial run.";
+                qCWarning(YuneecLog) << "Too many STATE_EXIT_RUN Timeouts. Switching to initial run.";
                 _initSequence();
             } else {
                 _exitRun();
@@ -590,9 +587,9 @@ TyphoonM4Handler::_stateManager()
             }
             break;
         case STATE_ENTER_BIND:
-            qDebug() << "STATE_ENTER_BIND Timeout";
+            qCDebug(YuneecLog) << "STATE_ENTER_BIND Timeout";
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_ENTER_BIND Timeouts.";
+                qCWarning(YuneecLog) << "Too many STATE_ENTER_BIND Timeouts.";
                 if(_rxBindInfoFeedback.nodeId) {
                     _responseTryCount = 0;
                     _state = STATE_SEND_RX_INFO;
@@ -610,9 +607,9 @@ TyphoonM4Handler::_stateManager()
             }
             break;
         case STATE_START_BIND:
-            qDebug() << "STATE_START_BIND Timeout";
+            qCDebug(YuneecLog) << "STATE_START_BIND Timeout";
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_START_BIND Timeouts. Giving up...";
+                qCWarning(YuneecLog) << "Too many STATE_START_BIND Timeouts. Giving up...";
                 _state = STATE_EXIT_BIND;
                 _exitBind();
                 _timer.start(COMMAND_WAIT_INTERVAL);
@@ -625,9 +622,9 @@ TyphoonM4Handler::_stateManager()
             }
             break;
         case STATE_UNBIND:
-            qDebug() << "STATE_UNBIND Timeout";
+            qCDebug(YuneecLog) << "STATE_UNBIND Timeout";
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_UNBIND Timeouts. Go straight to bind.";
+                qCWarning(YuneecLog) << "Too many STATE_UNBIND Timeouts. Go straight to bind.";
                 _responseTryCount = 0;
                 _state = STATE_BIND;
                 _bind(_rxBindInfoFeedback.nodeId);
@@ -639,47 +636,47 @@ TyphoonM4Handler::_stateManager()
             }
             break;
         case STATE_BIND:
-            qDebug() << "STATE_BIND Timeout";
+            qCDebug(YuneecLog) << "STATE_BIND Timeout";
             _bind(_rxBindInfoFeedback.nodeId);
             _timer.start(COMMAND_WAIT_INTERVAL);
             //-- TODO: This can't wait for ever...
             break;
         case STATE_QUERY_BIND:
-            qDebug() << "STATE_QUERY_BIND Timeout";
+            qCDebug(YuneecLog) << "STATE_QUERY_BIND Timeout";
             _queryBindState();
             _timer.start(COMMAND_WAIT_INTERVAL);
             //-- TODO: This can't wait for ever...
             break;
         case STATE_EXIT_BIND:
-            qDebug() << "STATE_EXIT_BIND Timeout";
+            qCDebug(YuneecLog) << "STATE_EXIT_BIND Timeout";
             _exitBind();
             _timer.start(COMMAND_WAIT_INTERVAL);
             //-- TODO: This can't wait for ever...
             break;
         case STATE_RECV_BOTH_CH:
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_RECV_BOTH_CH Timeouts. Giving up...";
+                qCWarning(YuneecLog) << "Too many STATE_RECV_BOTH_CH Timeouts. Giving up...";
             } else {
-                qDebug() << "STATE_RECV_BOTH_CH Timeout";
+                qCDebug(YuneecLog) << "STATE_RECV_BOTH_CH Timeout";
                 _sendRecvBothCh();
                 _timer.start(COMMAND_WAIT_INTERVAL);
                 _responseTryCount++;
             }
             break;
         case STATE_SET_CHANNEL_SETTINGS:
-            qDebug() << "STATE_SET_CHANNEL_SETTINGS Timeout";
+            qCDebug(YuneecLog) << "STATE_SET_CHANNEL_SETTINGS Timeout";
             _setChannelSetting();
             _timer.start(COMMAND_WAIT_INTERVAL);
             //-- TODO: This can't wait for ever...
             break;
         case STATE_MIX_CHANNEL_DELETE:
-            qDebug() << "STATE_MIX_CHANNEL_DELETE Timeout";
+            qCDebug(YuneecLog) << "STATE_MIX_CHANNEL_DELETE Timeout";
             _syncMixingDataDeleteAll();
             _timer.start(COMMAND_WAIT_INTERVAL);
             //-- TODO: This can't wait for ever...
             break;
         case STATE_MIX_CHANNEL_ADD:
-            qDebug() << "STATE_MIX_CHANNEL_ADD Timeout";
+            qCDebug(YuneecLog) << "STATE_MIX_CHANNEL_ADD Timeout";
             //-- We need to delete and send again
             _state = STATE_MIX_CHANNEL_DELETE;
             _syncMixingDataDeleteAll();
@@ -688,9 +685,9 @@ TyphoonM4Handler::_stateManager()
             break;
         case STATE_SEND_RX_INFO:
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_SEND_RX_INFO Timeouts. Giving up...";
+                qCWarning(YuneecLog) << "Too many STATE_SEND_RX_INFO Timeouts. Giving up...";
             } else {
-                qDebug() << "STATE_SEND_RX_INFO Timeout";
+                qCDebug(YuneecLog) << "STATE_SEND_RX_INFO Timeout";
                 _sendRxResInfo();
                 _timer.start(COMMAND_WAIT_INTERVAL);
                 _responseTryCount++;
@@ -698,16 +695,16 @@ TyphoonM4Handler::_stateManager()
             break;
         case STATE_ENTER_RUN:
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qWarning() << "Too many STATE_ENTER_RUN Timeouts. Giving up...";
+                qCWarning(YuneecLog) << "Too many STATE_ENTER_RUN Timeouts. Giving up...";
             } else {
-                qDebug() << "STATE_ENTER_RUN Timeout";
+                qCDebug(YuneecLog) << "STATE_ENTER_RUN Timeout";
                 _enterRun();
                 _timer.start(COMMAND_WAIT_INTERVAL);
                 _responseTryCount++;
             }
             break;
         default:
-            qDebug() << "Timeout:" << _state;
+            qCDebug(YuneecLog) << "Timeout:" << _state;
             break;
     }
 }
@@ -721,7 +718,7 @@ TyphoonM4Handler::_stateManager()
 bool
 TyphoonM4Handler::_enterRun()
 {
-    qDebug() << "Sending: CMD_ENTER_RUN";
+    qCDebug(YuneecLog) << "Sending: CMD_ENTER_RUN";
     m4Command enterRunCmd(Yuneec::CMD_ENTER_RUN);
     QByteArray cmd = enterRunCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
@@ -734,7 +731,7 @@ TyphoonM4Handler::_enterRun()
 bool
 TyphoonM4Handler::_exitRun()
 {
-    qDebug() << "Sending: CMD_EXIT_RUN";
+    qCDebug(YuneecLog) << "Sending: CMD_EXIT_RUN";
     m4Command exitRunCmd(Yuneec::CMD_EXIT_RUN);
     QByteArray cmd = exitRunCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
@@ -749,7 +746,7 @@ TyphoonM4Handler::_exitRun()
 bool
 TyphoonM4Handler::_enterBind()
 {
-    qDebug() << "Sending: CMD_ENTER_BIND";
+    qCDebug(YuneecLog) << "Sending: CMD_ENTER_BIND";
     m4Command enterBindCmd(Yuneec::CMD_ENTER_BIND);
     QByteArray cmd = enterBindCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
@@ -763,7 +760,7 @@ TyphoonM4Handler::_enterBind()
 bool
 TyphoonM4Handler::_sendRecvBothCh()
 {
-    qDebug() << "Sending: CMD_RECV_BOTH_CH";
+    qCDebug(YuneecLog) << "Sending: CMD_RECV_BOTH_CH";
     m4Command enterRecvCmd(Yuneec::CMD_RECV_BOTH_CH);
     QByteArray cmd = enterRecvCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
@@ -776,7 +773,7 @@ TyphoonM4Handler::_sendRecvBothCh()
 bool
 TyphoonM4Handler::_exitBind()
 {
-    qDebug() << "Sending: CMD_EXIT_BIND";
+    qCDebug(YuneecLog) << "Sending: CMD_EXIT_BIND";
     m4Command exitBindCmd(Yuneec::CMD_EXIT_BIND);
     QByteArray cmd = exitBindCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
@@ -790,7 +787,7 @@ TyphoonM4Handler::_exitBind()
 bool
 TyphoonM4Handler::_startBind()
 {
-    qDebug() << "Sending: CMD_START_BIND";
+    qCDebug(YuneecLog) << "Sending: CMD_START_BIND";
     m4Message startBindMsg(Yuneec::CMD_START_BIND, Yuneec::TYPE_BIND);
     QByteArray msg = startBindMsg.pack();
     return _commPort->write(msg, DEBUG_DATA_DUMP);
@@ -807,7 +804,7 @@ TyphoonM4Handler::_startBind()
 bool
 TyphoonM4Handler::_bind(int rxAddr)
 {
-    qDebug() << "Sending: CMD_BIND";
+    qCDebug(YuneecLog) << "Sending: CMD_BIND";
     m4Message bindMsg(Yuneec::CMD_BIND, Yuneec::TYPE_BIND);
     bindMsg.data[4] = (uint8_t)(rxAddr & 0xff);
     bindMsg.data[5] = (uint8_t)((rxAddr & 0xff00) >> 8);
@@ -828,7 +825,7 @@ TyphoonM4Handler::_bind(int rxAddr)
 bool
 TyphoonM4Handler::_setChannelSetting()
 {
-    qDebug() << "Sending: CMD_SET_CHANNEL_SETTING";
+    qCDebug(YuneecLog) << "Sending: CMD_SET_CHANNEL_SETTING";
     m4Command setChannelSettingCmd(Yuneec::CMD_SET_CHANNEL_SETTING);
     QByteArray payload;
     payload.fill(0, 2);
@@ -848,7 +845,7 @@ TyphoonM4Handler::_setChannelSetting()
 bool
 TyphoonM4Handler::_setPowerKey(int function)
 {
-    qDebug() << "Sending: CMD_SET_BINDKEY_FUNCTION";
+    qCDebug(YuneecLog) << "Sending: CMD_SET_BINDKEY_FUNCTION";
     m4Command setPowerKeyCmd(Yuneec::CMD_SET_BINDKEY_FUNCTION);
     QByteArray payload;
     payload.resize(1);
@@ -865,7 +862,7 @@ TyphoonM4Handler::_setPowerKey(int function)
 bool
 TyphoonM4Handler::_unbind()
 {
-    qDebug() << "Sending: CMD_UNBIND";
+    qCDebug(YuneecLog) << "Sending: CMD_UNBIND";
     m4Command unbindCmd(Yuneec::CMD_UNBIND);
     QByteArray cmd = unbindCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
@@ -880,7 +877,7 @@ TyphoonM4Handler::_unbind()
 bool
 TyphoonM4Handler::_queryBindState()
 {
-    qDebug() << "Sending: CMD_QUERY_BIND_STATE";
+    qCDebug(YuneecLog) << "Sending: CMD_QUERY_BIND_STATE";
     m4Command queryBindStateCmd(Yuneec::CMD_QUERY_BIND_STATE);
     QByteArray cmd = queryBindStateCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
@@ -894,7 +891,7 @@ TyphoonM4Handler::_queryBindState()
 bool
 TyphoonM4Handler::_syncMixingDataDeleteAll()
 {
-    qDebug() << "Sending: CMD_SYNC_MIXING_DATA_DELETE_ALL";
+    qCDebug(YuneecLog) << "Sending: CMD_SYNC_MIXING_DATA_DELETE_ALL";
     m4Command syncMixingDataDeleteAllCmd(Yuneec::CMD_SYNC_MIXING_DATA_DELETE_ALL);
     QByteArray cmd = syncMixingDataDeleteAllCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
@@ -918,7 +915,7 @@ TyphoonM4Handler::_syncMixingDataAdd()
      *  I have not seen a way to identify an error other than getting no response once
      *  the command is sent. There doesn't appear to be a "NAK" type response.
      */
-    qDebug() << "Sending: CMD_SYNC_MIXING_DATA_ADD";
+    qCDebug(YuneecLog) << "Sending: CMD_SYNC_MIXING_DATA_ADD";
     m4Command syncMixingDataAddCmd(Yuneec::CMD_SYNC_MIXING_DATA_ADD);
     QByteArray payload((const char*)&channel_data[_currentChannelAdd], CHANNEL_LENGTH);
     QByteArray cmd = syncMixingDataAddCmd.pack(payload);
@@ -977,7 +974,7 @@ TyphoonM4Handler::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
     payload[9]  = (uint8_t)(localInfo.txAddr   & 0xff);
     payload[10] = (uint8_t)((localInfo.txAddr  & 0xff00) >> 8);
     QByteArray cmd = sendRxResInfoCmd.pack(payload);
-    //qDebug() << "_sendTableDeviceLocalInfo" <<dump_data_packet(cmd);
+    //qCDebug(YuneecLog) << "_sendTableDeviceLocalInfo" <<dump_data_packet(cmd);
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -1013,7 +1010,7 @@ TyphoonM4Handler::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelIn
     payload[17] = channelInfo.requestChannelType;
     payload[18] = channelInfo.extraType;
     QByteArray cmd = sendRxResInfoCmd.pack(payload);
-    //qDebug() << "_sendTableDeviceChannelInfo" <<dump_data_packet(cmd);
+    //qCDebug(YuneecLog) << "_sendTableDeviceChannelInfo" <<dump_data_packet(cmd);
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -1109,7 +1106,7 @@ TyphoonM4Handler::_sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumTpye
             payload[i + 1] = channelNumInfo.channelMap[i];
         }
         QByteArray cmd = sendRxResInfoCmd.pack(payload);
-        //qDebug() << channelNumTpye <<dump_data_packet(cmd);
+        //qCDebug(YuneecLog) << channelNumTpye <<dump_data_packet(cmd);
         return _commPort->write(cmd, DEBUG_DATA_DUMP);
     }
     return true;
@@ -1221,7 +1218,7 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     break;
                 default:
                     _timer.stop();
-                    qDebug() << "Received: TYPE_BIND Unknown:" << data.toHex();
+                    qCDebug(YuneecLog) << "Received: TYPE_BIND Unknown:" << data.toHex();
                     break;
             }
             break;
@@ -1239,7 +1236,7 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_EXIT_RUN:
                     //-- Response from _exitRun()
-                    qDebug() << "Received TYPE_RSP: CMD_EXIT_RUN";
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_EXIT_RUN";
                     if(_state == STATE_EXIT_RUN) {
                         //-- Now we start initsequence
                         _initSequence();
@@ -1247,7 +1244,7 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_ENTER_BIND:
                     //-- Response from _enterBind()
-                    qDebug() << "Received TYPE_RSP: CMD_ENTER_BIND";
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_ENTER_BIND";
                     if(_state == STATE_ENTER_BIND) {
                         //-- Now we start scanning
                         _responseTryCount = 0;
@@ -1257,7 +1254,7 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     }
                     break;
                 case Yuneec::CMD_UNBIND:
-                    qDebug() << "Received TYPE_RSP: CMD_UNBIND";
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_UNBIND";
                     if(_state == STATE_UNBIND) {
                         _state = STATE_BIND;
                         _bind(_rxBindInfoFeedback.nodeId);
@@ -1266,7 +1263,7 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_EXIT_BIND:
                     //-- Response from _exitBind()
-                    qDebug() << "Received TYPE_RSP: CMD_EXIT_BIND";
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_EXIT_BIND";
                     if(_state == STATE_EXIT_BIND) {
                         _responseTryCount = 0;
                         _state = STATE_RECV_BOTH_CH;
@@ -1276,7 +1273,7 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_RECV_BOTH_CH:
                     //-- Response from _sendRecvBothCh()
-                    qDebug() << "Received TYPE_RSP: CMD_RECV_BOTH_CH";
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_RECV_BOTH_CH";
                     if(_state == STATE_RECV_BOTH_CH) {
                         _state = STATE_SET_CHANNEL_SETTINGS;
                         _setChannelSetting();
@@ -1285,7 +1282,7 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_SET_CHANNEL_SETTING:
                     //-- Response from _setChannelSetting()
-                    qDebug() << "Received TYPE_RSP: CMD_SET_CHANNEL_SETTING";
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_SET_CHANNEL_SETTING";
                     if(_state == STATE_SET_CHANNEL_SETTINGS) {
                         _state = STATE_MIX_CHANNEL_DELETE;
                         _syncMixingDataDeleteAll();
@@ -1294,7 +1291,7 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_SYNC_MIXING_DATA_DELETE_ALL:
                     //-- Response from _syncMixingDataDeleteAll()
-                    qDebug() << "Received TYPE_RSP: CMD_SYNC_MIXING_DATA_DELETE_ALL";
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_SYNC_MIXING_DATA_DELETE_ALL";
                     if(_state == STATE_MIX_CHANNEL_DELETE) {
                         _state = STATE_MIX_CHANNEL_ADD;
                         _currentChannelAdd = 0;
@@ -1304,7 +1301,7 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_SYNC_MIXING_DATA_ADD:
                     //-- Response from _syncMixingDataAdd()
-                    qDebug() << "Received TYPE_RSP: CMD_SYNC_MIXING_DATA_ADD" << _currentChannelAdd;
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_SYNC_MIXING_DATA_ADD" << _currentChannelAdd;
                     if(_state == STATE_MIX_CHANNEL_ADD) {
                         _currentChannelAdd++;
                         if(_currentChannelAdd < NUM_CHANNELS) {
@@ -1321,7 +1318,7 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                 case Yuneec::CMD_SEND_RX_RESINFO:
                     //-- Response from _sendRxResInfo()
                     if(_state == STATE_SEND_RX_INFO && _sendRxInfoEnd) {
-                        qDebug() << "Received TYPE_RSP: CMD_SEND_RX_RESINFO";
+                        qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_SEND_RX_RESINFO";
                         _state = STATE_ENTER_RUN;
                         _responseTryCount = 0;
                         _enterRun();
@@ -1330,32 +1327,32 @@ TyphoonM4Handler::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_ENTER_RUN:
                     //-- Response from _enterRun()
-                    qDebug() << "Received TYPE_RSP: CMD_ENTER_RUN";
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_ENTER_RUN";
                     if(_state == STATE_ENTER_RUN) {
                         _state = STATE_RUNNING;
                         _timer.stop();
                         if(_binding) {
                             _binding = false;
-                            qDebug() << "Soft reboot...";
+                            qCDebug(YuneecLog) << "Soft reboot...";
                             QTimer::singleShot(1000, this, &TyphoonM4Handler::softReboot);
                         } else {
-                            qDebug() << "M4 ready, in run state.";
+                            qCDebug(YuneecLog) << "M4 ready, in run state.";
                         }
                     }
                     break;
                 case Yuneec::CMD_SET_BINDKEY_FUNCTION:
-                    qDebug() << "Received TYPE_RSP: CMD_SET_BINDKEY_FUNCTION";
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_SET_BINDKEY_FUNCTION";
                     break;
                 default:
-                    qDebug() << "Received TYPE_RSP: ???" << packet.commandID() << data.toHex();
+                    qCDebug(YuneecLog) << "Received TYPE_RSP: ???" << packet.commandID() << data.toHex();
                     break;
             }
             break;
         case Yuneec::TYPE_MISSION:
-            qDebug() << "Received TYPE_MISSION (?)";
+            qCDebug(YuneecLog) << "Received TYPE_MISSION (?)";
             break;
         default:
-            qDebug() << "Received: Unknown Packet" << type << data.toHex();
+            qCDebug(YuneecLog) << "Received: Unknown Packet" << type << data.toHex();
             break;
     }
 }
@@ -1365,11 +1362,11 @@ void
 TyphoonM4Handler::_handleQueryBindResponse(QByteArray data)
 {
     int nodeID = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
-    qDebug() << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID;
+    qCDebug(YuneecLog) << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID;
     if(_state == STATE_QUERY_BIND) {
         if(nodeID == _rxBindInfoFeedback.nodeId) {
             _timer.stop();
-            qDebug() << "Switched to BOUND state with:" << _rxBindInfoFeedback.getName();
+            qCDebug(YuneecLog) << "Switched to BOUND state with:" << _rxBindInfoFeedback.getName();
             _state = STATE_EXIT_BIND;
             _exitBind();
             //-- Store RX Info
@@ -1397,7 +1394,7 @@ TyphoonM4Handler::_handleQueryBindResponse(QByteArray data)
             settings.endGroup();
             _timer.start(COMMAND_WAIT_INTERVAL);
         } else {
-            qWarning() << "Response CMD_QUERY_BIND_STATE from unkown origin:" << nodeID;
+            qCWarning(YuneecLog) << "Response CMD_QUERY_BIND_STATE from unkown origin:" << nodeID;
         }
     }
 }
@@ -1419,7 +1416,7 @@ TyphoonM4Handler::_handleNonTypePacket(m4Packet& packet)
 void
 TyphoonM4Handler::_handleBindResponse()
 {
-    qDebug() << "Received TYPE_BIND: BIND Response";
+    qCDebug(YuneecLog) << "Received TYPE_BIND: BIND Response";
     if(_state == STATE_BIND) {
         _timer.stop();
         _state = STATE_QUERY_BIND;
@@ -1456,9 +1453,9 @@ TyphoonM4Handler::_handleRxBindInfo(m4Packet& packet)
         }
      *
      */
-    qDebug() << "Received: TYPE_BIND with rxBindInfoFeedback";
+    qCDebug(YuneecLog) << "Received: TYPE_BIND with rxBindInfoFeedback";
     if(_state == STATE_START_BIND) {
-        //qDebug() << dump_data_packet(packet.data);
+        //qCDebug(YuneecLog) << dump_data_packet(packet.data);
         _timer.stop();
         _rxBindInfoFeedback.mode     = ((uint8_t)packet.data[6]  & 0xff) | ((uint8_t)packet.data[7]  << 8 & 0xff00);
         _rxBindInfoFeedback.panId    = ((uint8_t)packet.data[8]  & 0xff) | ((uint8_t)packet.data[9]  << 8 & 0xff00);
@@ -1496,12 +1493,12 @@ TyphoonM4Handler::_handleRxBindInfo(m4Packet& packet)
         }
         int p = packet.data.length() - 2;
         _rxBindInfoFeedback.txAddr = ((uint8_t)packet.data[p] & 0xff) | ((uint8_t)packet.data[p + 1] << 8 & 0xff00);
-        qDebug() << "RxBindInfo:" << _rxBindInfoFeedback.getName() << _rxBindInfoFeedback.nodeId;
+        qCDebug(YuneecLog) << "RxBindInfo:" << _rxBindInfoFeedback.getName() << _rxBindInfoFeedback.nodeId;
         _state = STATE_UNBIND;
         _unbind();
         _timer.start(COMMAND_WAIT_INTERVAL);
     } else {
-        qDebug() << "RxBindInfo discarded (out of sequence)";
+        qCDebug(YuneecLog) << "RxBindInfo discarded (out of sequence)";
     }
 }
 
@@ -1512,7 +1509,7 @@ TyphoonM4Handler::_handleChannel(m4Packet& packet)
     Q_UNUSED(packet);
     switch(packet.commandID()) {
         case Yuneec::CMD_RX_FEEDBACK_DATA:
-            qDebug() << "Received TYPE_CHN: CMD_RX_FEEDBACK_DATA";
+            qCDebug(YuneecLog) << "Received TYPE_CHN: CMD_RX_FEEDBACK_DATA";
             /* From original Java code
              *
              * We're not going to ever receive this unless the Typhoon is running
@@ -1534,7 +1531,7 @@ TyphoonM4Handler::_handleChannel(m4Packet& packet)
             //-- COMMAND_M4_SEND_COMPRESS_TRIM_TO_PAD
             break;
         default:
-            qDebug() << "Received Unknown TYPE_CHN:" << packet.data.toHex();
+            qCDebug(YuneecLog) << "Received Unknown TYPE_CHN:" << packet.data.toHex();
             break;
     }
 }
@@ -1543,7 +1540,7 @@ TyphoonM4Handler::_handleChannel(m4Packet& packet)
 void
 TyphoonM4Handler::_handleInitialState()
 {
-    qDebug() << "Initial state:" << _m4State;
+    qCDebug(YuneecLog) << "Initial state:" << _m4State;
     if(_m4State == TyphoonHQuickInterface::M4_STATE_BIND) {
         //-- TX is not bound. Not much we can do.
         _exitBind();
@@ -1560,7 +1557,7 @@ TyphoonM4Handler::_handleInitialState()
         _initSequence();
     } else {
         //-- Anyting else we don't have much to do
-        qDebug() << "Idle state";
+        qCDebug(YuneecLog) << "Idle state";
     }
 }
 
@@ -1580,7 +1577,7 @@ TyphoonM4Handler::_handleCommand(m4Packet& packet)
                         _handleInitialState();
                     }
                     emit m4StateChanged();
-                    qDebug() << "New State:" << _m4State;
+                    qCDebug(YuneecLog) << "New State:" << _m4State;
                 }
             }
             break;
@@ -1588,7 +1585,7 @@ TyphoonM4Handler::_handleCommand(m4Packet& packet)
             _switchChanged(packet);
             return true;
         default:
-            qDebug() << "Received Unknown TYPE_CMD:" << packet.commandID() << packet.data.toHex();
+            qCDebug(YuneecLog) << "Received Unknown TYPE_CMD:" << packet.commandID() << packet.data.toHex();
             break;
     }
     return false;
@@ -1605,7 +1602,7 @@ TyphoonM4Handler::_switchChanged(m4Packet& packet)
     switchChanged.oldState  = (int)commandValues[1];
     switchChanged.newState  = (int)commandValues[2];
     emit switchStateChanged(switchChanged.hwId, switchChanged.oldState, switchChanged.newState);
-    qDebug() << "Switches:" << switchChanged.hwId << switchChanged.oldState << switchChanged.newState;
+    qCDebug(YuneecLog) << "Switches:" << switchChanged.hwId << switchChanged.oldState << switchChanged.newState;
     //-- On Button Down
     if(switchChanged.newState == 1) {
         switch(switchChanged.hwId) {

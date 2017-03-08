@@ -7,9 +7,7 @@
 
 #pragma once
 
-#include <QByteArray>
-#include <QString>
-#include <qsettings.h>
+#include "m4common.h"
 #include "m4def.h"
 
 extern uint8_t crc8(uint8_t* buffer, int len);

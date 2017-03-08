@@ -6,10 +6,7 @@
 
 #pragma once
 
-#include <QString>
-#include <QThread>
-#include <QMutex>
-#include <QByteArray>
+#include "m4common.h"
 #include <termios.h>
 
 class M4SerialComm : public QThread

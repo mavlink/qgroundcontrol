@@ -40,6 +40,7 @@ HEADERS += \
     $$PWD/src/camera.h \
     $$PWD/src/m4.h \
     $$PWD/src/m4channeldata.h \
+    $$PWD/src/m4common.h \
     $$PWD/src/m4def.h \
     $$PWD/src/m4serial.h \
     $$PWD/src/m4util.h \
