@@ -153,23 +153,24 @@ TyphoonHPlugin::options()
 QVariantList&
 TyphoonHPlugin::settings()
 {
-    if(!_pTyphoonSettings) {
+    if(_settingsList.size() == 0) {
         //-- If this is the first time, build our own setting
-        _pTyphoonSettings = new QGCSettings(tr("Typhoon H"),
-           QUrl::fromUserInput("qrc:/typhoonh/TyphoonSettings.qml"),
-           QUrl::fromUserInput("qrc:/typhoonh/logoWhite.svg"));
-        _settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
         _pGeneral = new QGCSettings(tr("General"),
             QUrl::fromUserInput("qrc:/qml/GeneralSettings.qml"),
             QUrl::fromUserInput("qrc:/res/gear-white.svg"));
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pGeneral));
         _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
-            QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"));
+            QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
+        QUrl::fromUserInput("qrc:/typhoonh/mapIcon.svg"));
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
         _pMAVLink = new QGCSettings(tr("MAVLink"),
             QUrl::fromUserInput("qrc:/qml/MavlinkSettings.qml"),
             QUrl::fromUserInput("qrc:/res/waves.svg"));
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
+        _pTyphoonSettings = new QGCSettings(tr("Typhoon H"),
+           QUrl::fromUserInput("qrc:/typhoonh/TyphoonSettings.qml"),
+           QUrl::fromUserInput("qrc:/typhoonh/logoWhite.svg"));
+        _settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
 #ifdef QT_DEBUG
         _pMockLink = new QGCSettings(tr("MockLink"),
             QUrl::fromUserInput("qrc:/qml/MockLink.qml"),

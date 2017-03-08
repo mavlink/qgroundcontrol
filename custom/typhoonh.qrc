@@ -16,6 +16,7 @@
         <file alias="CompassIndicator.svg">res/CompassIndicator.svg</file>
         <file alias="InstrumentWidget.qml">res/InstrumentWidget.qml</file>
         <file alias="logoWhite.svg">res/logoWhite.svg</file>
+        <file alias="mapIcon.svg">res/mapIcon.svg</file>
         <file alias="RightArrow.svg">res/RightArrow.svg</file>
         <file alias="TyphoonSettings.qml">res/TyphoonSettings.qml</file>
         <file alias="UpArrow.svg">res/UpArrow.svg</file>

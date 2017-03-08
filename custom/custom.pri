@@ -1,8 +1,8 @@
 message("Adding Yuneec Typhoon H plugin")
 
 linux : android-g++ {
+    CONFIG += DISABLE_BUILTIN_ANDROID
     equals(ANDROID_TARGET_ARCH, x86)  {
-        CONFIG  += DISABLE_BUILTIN_ANDROID
         message("Using Typhoon specific Android interfaces")
     } else {
         message("Unsuported Android toolchain, limited functionality for development only")
@@ -78,7 +78,7 @@ SOURCES += \
 #-------------------------------------------------------------------------------------
 # Android
 
-Androidx86Build {
+AndroidBuild {
     ANDROID_EXTRA_LIBS += $${PLUGIN_SOURCE}
     include($$PWD/AndroidTyphoonH.pri)
 }

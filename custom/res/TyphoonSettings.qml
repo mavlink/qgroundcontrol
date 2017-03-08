@@ -28,8 +28,10 @@ QGCView {
 
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
+    property var  _selectedSSID:                ""
 
-    QGCPalette { id: qgcPal }
+    ExclusiveGroup  { id: ssidGroup }
+    QGCPalette      { id: qgcPal }
 
     QGCViewPanel {
         id:             panel
@@ -48,49 +50,127 @@ QGCView {
                 //-- Bind
                 Item {
                     width:              qgcView.width * 0.8
-                    height:             unitLabel.height
+                    height:             rcBindLabel.height
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
-                        id:             unitLabel
-                        text:           qsTr("Status")
+                        id:             rcBindLabel
+                        text:           qsTr("RC Binding")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
                 }
                 Rectangle {
-                    height:         unitsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    height:         rcBindRow.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:          qgcView.width * 0.8
+                    color:          qgcPal.windowShade
+                    anchors.margins: ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Row {
+                        id:         rcBindRow
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                        Item {
+                            width:              ScreenTools.defaultFontPixelWidth
+                            height:             1
+                        }
+                        QGCButton {
+                            text:       "Bind"
+                            width:      _labelWidth
+                            enabled:    QGroundControl.multiVehicleManager.activeVehicle
+                            onClicked:  TyphoonHQuickInterface.enterBindMode()
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Item {
+                            width:              ScreenTools.defaultFontPixelWidth * 2
+                            height:             1
+                        }
+                        QGCLabel {
+                            width:      _editFieldWidth
+                            text:       TyphoonHQuickInterface.m4StateStr
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                //-- Bind
+                Item {
+                    width:              qgcView.width * 0.8
+                    height:             wifiBindLabel.height
+                    anchors.margins:    ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QGCLabel {
+                        id:             wifiBindLabel
+                        text:           qsTr("Telemetry/Video Binding")
+                        font.family:    ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:         scanCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:          qgcView.width * 0.8
                     color:          qgcPal.windowShade
                     anchors.margins: ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     Column {
-                        id:         unitsCol
-                        spacing:    ScreenTools.defaultFontPixelWidth
-                        anchors.centerIn: parent
+                        id:         scanCol
+                        spacing:    ScreenTools.defaultFontPixelHeight * 0.25
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Item {
+                            width:  1
+                            height: ScreenTools.defaultFontPixelHeight
+                        }
                         Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            QGCButton {
+                                text:       "Start Scan"
+                                width:      _labelWidth
+                                onClicked:  TyphoonHQuickInterface.startScan()
+                                enabled:    !TyphoonHQuickInterface.scanningWiFi
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QGCButton {
+                                text:       "Stop Scan"
+                                width:      _labelWidth
+                                onClicked:  TyphoonHQuickInterface.stopScan()
+                                enabled:    TyphoonHQuickInterface.scanningWiFi
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
                             QGCButton {
                                 text:       "Bind"
                                 width:      _labelWidth
-                                enabled:    QGroundControl.multiVehicleManager.activeVehicle
-                                onClicked:  TyphoonHQuickInterface.enterBindMode()
+                                enabled:    _selectedSSID !== ""
+                                primary:    _selectedSSID !== ""
+                                onClicked:  TyphoonHQuickInterface.bindWIFI(_selectedSSID)
                                 anchors.verticalCenter: parent.verticalCenter
                             }
-                            QGCLabel {
-                                text:       qsTr("Current State:")
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            QGCLabel {
-                                width:      _editFieldWidth
-                                text:       TyphoonHQuickInterface.m4StateStr
-                                anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Item {
+                            width:      1
+                            height:     TyphoonHQuickInterface.ssidList.length > 0 ? ScreenTools.defaultFontPixelHeight : 0
+                        }
+                        Repeater {
+                            model:          TyphoonHQuickInterface.ssidList
+                            delegate:
+                            QGCButton {
+                                width:      ScreenTools.defaultFontPixelWidth * 36
+                                text:       modelData
+                                exclusiveGroup: ssidGroup
+                                onClicked:  {
+                                    if(_selectedSSID === modelData) {
+                                        _selectedSSID = ""
+                                        checked = false
+                                    } else {
+                                        _selectedSSID = modelData
+                                        checked = true
+                                    }
+                                }
+                                anchors.horizontalCenter: parent.horizontalCenter
                             }
                         }
                     }
                 }
                 QGCLabel {
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    text:                       qsTr("QGroundControl Version: " + QGroundControl.qgcVersion)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: qsTr("QGroundControl Version: " + QGroundControl.qgcVersion)
                 }
             }
         }

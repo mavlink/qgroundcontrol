@@ -51,9 +51,15 @@ public:
     Q_PROPERTY(double           longitude       READ    longitude                           NOTIFY controllerLocationChanged)
     Q_PROPERTY(double           altitude        READ    altitude                            NOTIFY controllerLocationChanged)
     Q_PROPERTY(CameraControl*   cameraControl   READ    cameraControl                       CONSTANT)
+    Q_PROPERTY(QStringList      ssidList        READ    ssidList                            NOTIFY ssidListChanged)
+    Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi                        NOTIFY scanningWiFiChanged)
 
     Q_INVOKABLE void enterBindMode  ();
     Q_INVOKABLE void initM4         ();
+    Q_INVOKABLE void startScan      ();
+    Q_INVOKABLE void stopScan       ();
+    Q_INVOKABLE void bindWIFI       (QString ssid);
+    Q_INVOKABLE bool isWIFIConnected();
 
     M4State     m4State             ();
     QString     m4StateStr          ();
@@ -69,20 +75,27 @@ public:
     double      latitude            ();
     double      longitude           ();
     double      altitude            ();
+    QStringList ssidList            () { return _ssidList; }
+    bool        scanningWiFi        () { return _scanningWiFi; }
 
     void    init                    (TyphoonM4Handler* pHandler);
 
 signals:
     void    m4StateChanged              ();
     void    controllerLocationChanged   ();
+    void    ssidListChanged             ();
+    void    scanningWiFiChanged         ();
 
 private slots:
     void    _m4StateChanged             ();
     void    _destroyed                  ();
     void    _controllerLocationChanged  ();
+    void    _newSSID                    (QString ssid);
 
 private:
     TyphoonM4Handler*   _pHandler;
+    QStringList         _ssidList;
+    bool                _scanningWiFi;
 };
 
 //-----------------------------------------------------------------------------
@@ -160,6 +173,7 @@ signals:
     void    channelDataStatus                   (QByteArray channelData);
     void    controllerLocationChanged           ();
     void    destroyed                           ();
+    void    newWifiSSID                         (QString ssid);
 
 private:
     M4SerialComm* _commPort;
