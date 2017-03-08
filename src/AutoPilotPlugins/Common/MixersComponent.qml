@@ -24,6 +24,8 @@ SetupPage {
     id:             tuningPage
     pageComponent:  tuningPageComponent
 
+    QGCPalette { id: __qgcPal; colorGroupEnabled: true }
+
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10      // Dynamic adjusted at runtime
 
@@ -41,36 +43,38 @@ SetupPage {
                 factPanel:  tuningPage.viewPanel
             }
 
-            QGCPalette { id: palette; colorGroupEnabled: true }
+            Row {
+                QGCPalette { id: palette; colorGroupEnabled: true }
 
-            QGCLabel { text: qsTr("Group") }
+                QGCLabel { text: qsTr("Group") }
 
-            QGCTextField {
-                id:                 groupText
-                text:               "0"
-            }
-
-            QGCButton {
-                id:getMixersCountButton
-                text: qsTr("Request mixer count")
-                onClicked: {
-                    mixers.getMixersCountButtonClicked()
+                QGCTextField {
+                    id:                 groupText
+                    text:               "0"
                 }
-            }
 
-            QGCButton {
-                id:requestAllButton
-                text: qsTr("Request all")
-                onClicked: {
-                    mixers.requestAllButtonClicked()
+                QGCButton {
+                    id:getMixersCountButton
+                    text: qsTr("Request mixer count")
+                    onClicked: {
+                        mixers.getMixersCountButtonClicked()
+                    }
                 }
-            }
 
-            QGCButton {
-                id:requestMissing
-                text: qsTr("Request missing")
-                onClicked: {
-                    mixers.requestMissingButtonClicked()
+                QGCButton {
+                    id:requestAllButton
+                    text: qsTr("Request all")
+                    onClicked: {
+                        mixers.requestAllButtonClicked()
+                    }
+                }
+
+                QGCButton {
+                    id:requestMissing
+                    text: qsTr("Request missing")
+                    onClicked: {
+                        mixers.requestMissingButtonClicked()
+                    }
                 }
             }
 
@@ -80,7 +84,7 @@ SetupPage {
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth
                 anchors.left:       parent.left
                 anchors.right:      parent.right
-//                anchors.top:        parent.requestMissing.bottom
+                anchors.top:        parent.verticalCenter
                 anchors.bottom:     parent.bottom
                 orientation:        ListView.Vertical
                 model:              mixers.mixers
@@ -100,32 +104,19 @@ SetupPage {
                         property Fact modelFact: object
 
                         QGCLabel {
-                            id:     mixerInputLabel
-                            width:  ScreenTools.defaultFontPixelWidth  * 20
-                            text:   "Mixer Input Label"
-                            clip:   true
-                        }
-
-                        QGCLabel {
-                            id:     mixerNameLabel
-                            width:  ScreenTools.defaultFontPixelWidth  * 20
-                            text:   "Mixer Name Label"
-                            clip:   true
-                        }
-
-                        QGCLabel {
                             id:     mixerIDLabel
-                            width:  ScreenTools.defaultFontPixelWidth  * 10
-                            text:   "Mixer ID"
+                            width:  ScreenTools.defaultFontPixelWidth  * 20
+                            text:   factRow.modelFact.name
                             clip:   true
                         }
 
                         QGCLabel {
-                            id:     mixerOutputLabel
+                            id:     mixerTypeLabel
                             width:  ScreenTools.defaultFontPixelWidth  * 20
-                            text:   "Mixer Output Label"
+                            text:   factRow.modelFact.valueString
                             clip:   true
                         }
+
 
 //                        QGCLabel {
 //                            id:     mixerInputLabel
@@ -158,11 +149,11 @@ SetupPage {
 //                            clip:   true
 //                        }
 
-//                        Component.onCompleted: {
-//                            if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
-//                                _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
-//                            }
-//                        }
+                        Component.onCompleted: {
+                            if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
+                                _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
+                            }
+                        }
                     }
 
                     Rectangle {
@@ -174,14 +165,14 @@ SetupPage {
                         anchors.left:   parent.left
                     }
 
-                    MouseArea {
-                        anchors.fill:       parent
-                        acceptedButtons:    Qt.LeftButton
-                        onClicked: {
-                            _editorDialogFact = factRow.modelFact
-//                            showDialog(editorDialogComponent, qsTr("Mixer Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
-                        }
-                    }
+//                    MouseArea {
+//                        anchors.fill:       parent
+//                        acceptedButtons:    Qt.LeftButton
+//                        onClicked: {
+//                            _editorDialogFact = factRow.modelFact
+////                            showDialog(editorDialogComponent, qsTr("Mixer Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
+//                        }
+//                    }
                 }
             }
         } // Column

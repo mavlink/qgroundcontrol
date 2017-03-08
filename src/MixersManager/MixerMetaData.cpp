@@ -54,8 +54,11 @@ void MixerMetaData::mixerTypesFromHeaders(){
     Fact *mixerType;
 
     for(int typeID=0; typeID<MIXER_TYPES_COUNT; typeID++){
-        mixerType = new Fact(-1, MIXER_TYPE_ID[typeID], FactMetaData::valueTypeString, this);
+        QString typeIDStr;
+        typeIDStr = QString("MIXER_TYPE_%1") .arg(typeID);
+        mixerType = new Fact(-1, typeIDStr, FactMetaData::valueTypeString, this);
         mixerType->setMetaData(&_mixerTypeMetaData);
+        mixerType->setRawValue(MIXER_TYPE_ID[typeID]);
         _mixerTypeMap[typeID] = mixerType;
     }
 }
