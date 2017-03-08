@@ -306,7 +306,9 @@ CameraControl::recordTimeStr()
 {
     QString timeStr("00:00:00");
     if(_cameraStatus.data_ready) {
-        timeStr = QTime(0, 0).addMSecs(_cameraStatus.recording_time_ms).toString("hh:mm:ss");
+      // Until we get the time from the firmware, we keep our own count
+      //timeStr = QTime(0, 0).addMSecs(_cameraStatus.recording_time_ms).toString("hh:mm:ss");
+        timeStr = QTime(0, 0).addMSecs(_recordTime.elapsed()).toString("hh:mm:ss");
     }
     return timeStr;
 }
@@ -327,7 +329,11 @@ CameraControl::startVideo()
             videoResOptions[_currentVideoRes].with,     // Horizontal Resolution
             videoResOptions[_currentVideoRes].height,   // Vertical Resolution
             1.0);                                       // Frequency CAMERA_CAPTURE_STATUS messages should be sent while recording (0 for no messages, otherwise time in Hz)
+
+        //-- Keeping track of time here until firmware sends us the running time
         _recordTime.start();
+        QTimer::singleShot(1500, this, &CameraControl::_updateRecordingTime);
+
         _videoSound.setLoopCount(1);
         _videoSound.play();
         QTimer::singleShot(250, this, &CameraControl::_requestCaptureStatus);
@@ -567,9 +573,19 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
     }
     _cameraStatus.recording_time_ms = cap.recording_time_ms;
     if(_cameraStatus.video_status == VIDEO_CAPTURE_STATUS_RUNNING) {
-        emit recordTimeChanged();
+        //emit recordTimeChanged();
         //-- TODO: While the firmware doesn't send us these automatically, we ask for it
         QTimer::singleShot(1000, this, &CameraControl::_requestCaptureStatus);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::_updateRecordingTime()
+{
+    emit recordTimeChanged();
+    if(_cameraStatus.video_status == VIDEO_CAPTURE_STATUS_RUNNING) {
+        QTimer::singleShot(500, this, &CameraControl::_updateRecordingTime);
     }
 }
 

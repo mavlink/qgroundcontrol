@@ -163,6 +163,7 @@ private slots:
     void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void    _requestCameraSettings  ();
     void    _requestCaptureStatus   ();
+    void    _updateRecordingTime    ();
 
 signals:
     void    videoStatusChanged      ();
