@@ -7,7 +7,6 @@
 #include "m4serial.h"
 #include "m4util.h"
 
-#include <QDebug>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -49,7 +48,7 @@ M4SerialComm::open()
     _fd = _openPort(_uart_name.toLatin1().data());
     if(_fd < 0) {
         perror("SERIAL");
-        qDebug() << "SERIAL: Could not open port" << _uart_name;
+        qCDebug(YuneecLog) << "SERIAL: Could not open port" << _uart_name;
         return false;
     }
     tcgetattr(_fd , &_savedtio);
@@ -75,7 +74,7 @@ M4SerialComm::close()
         _fd = -1;
     }
     if(!wait(500)) {
-        qDebug() << "SERIAL: Timeout waiting for thread to end";
+        qCDebug(YuneecLog) << "SERIAL: Timeout waiting for thread to end";
     }
 #endif
 }
@@ -84,7 +83,7 @@ M4SerialComm::close()
 bool M4SerialComm::write(QByteArray data, bool debug)
 {
     if(debug) {
-        qDebug() << data.toHex();
+        qCDebug(YuneecLog) << data.toHex();
     }
     return _writePort(data.data(), data.size()) == data.length();
 }
@@ -122,7 +121,7 @@ M4SerialComm::run()
             }
         }
     }
-    qDebug() << "SERIAL: Exiting thread";
+    qCDebug(YuneecLog) << "SERIAL: Exiting thread";
 }
 
 //-----------------------------------------------------------------------------
@@ -141,7 +140,7 @@ M4SerialComm::_readPacket(uint8_t length)
                     QByteArray data((const char*)buffer, length);
                     emit bytesReady(data);
                 } else {
-                    qDebug() << "Bad CRC" << length << iCRC << oCRC;
+                    qCDebug(YuneecLog) << "Bad CRC" << length << iCRC << oCRC;
                 }
             }
         }
@@ -195,12 +194,12 @@ M4SerialComm::_setupPort(int baud)
             break;
     }
     if(baudError) {
-        qWarning() << "SERIAL: Could not set baud rate of" << baud;
+        qCWarning(YuneecLog) << "SERIAL: Could not set baud rate of" << baud;
         return false;
     }
     tcflush(_fd, TCIFLUSH);
     if(tcsetattr(_fd, TCSANOW, &config) < 0) {
-        qWarning() << "SERIAL: Could not set serial configuration";
+        qCWarning(YuneecLog) << "SERIAL: Could not set serial configuration";
         return false;
     }
     return true;
@@ -213,7 +212,7 @@ M4SerialComm::_writePort(void* buffer, int len)
 #if defined(__android__)
     int written = ::write(_fd, buffer, len);
     if(written != len && written >= 0) {
-        qWarning() << QString("SERIAL: Wrote only %1 bytes out of %2 bytes").arg(written).arg(len);
+        qCWarning(YuneecLog) << QString("SERIAL: Wrote only %1 bytes out of %2 bytes").arg(written).arg(len);
     }
     return written;
 #else

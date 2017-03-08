@@ -13,6 +13,8 @@
 
 #include "Vehicle.h"
 
+Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
+
 //-----------------------------------------------------------------------------
 // Video Resolution Options
 typedef struct {
