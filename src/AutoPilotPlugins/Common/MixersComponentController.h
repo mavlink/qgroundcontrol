@@ -22,6 +22,7 @@
 #include "UASInterface.h"
 #include "QGCLoggingCategory.h"
 #include "AutoPilotPlugin.h"
+#include <FactMetaData.h>
 
 Q_DECLARE_LOGGING_CATEGORY(MixersComponentControllerLog)
 Q_DECLARE_LOGGING_CATEGORY(MixersComponentControllerVerboseLog)
@@ -85,6 +86,8 @@ private:
     QQuickItem* _requestMissingButton;
     QQuickItem* _requestSubmixerCountButton;
     QmlObjectListModel* _mixers;
+
+    FactMetaData _mockMetaData;
 
 //    QQuickItem* _statusText;
 //    QQuickItem* _nextButton;
