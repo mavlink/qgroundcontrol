@@ -26,6 +26,13 @@
 #include <QNetworkReply>
 #include <math.h>
 
+#if defined __android__
+#include <jni.h>
+#include <QtAndroidExtras/QtAndroidExtras>
+#include <QtAndroidExtras/QAndroidJniObject>
+static const char* jniClassName     = "org/qgroundcontrol/qgchelper/UsbDeviceJNI";
+#endif
+
 static const char* kUartName        = "/dev/ttyMFD0";
 static const char* kRxInfoGroup     = "YuneecM4RxInfo";
 static const char* kmode            = "mode";
@@ -53,6 +60,49 @@ static const char* kextraName       = "extraName";
 #define COMMAND_WAIT_INTERVAL       250
 #define DEBUG_DATA_DUMP             false
 
+
+#if defined(__android__)
+//-----------------------------------------------------------------------------
+static void
+jniNewWifiItem(JNIEnv *envA, jobject thizA, jstring jSsid)
+{
+    Q_UNUSED(thizA);
+    TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
+    if(pPlug) {
+        const char *stringL = envA->GetStringUTFChars(jSsid, NULL);
+        QString ssid = QString::fromUtf8(stringL);
+        envA->ReleaseStringUTFChars(jSsid, stringL);
+        if(envA->ExceptionCheck())
+            envA->ExceptionClear();
+        qDebug() << ssid;
+        emit pPlug->handler()->newWifiSSID(ssid);
+    }
+}
+
+//-----------------------------------------------------------------------------
+JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/)
+{
+    //-- Register C++ functions exposed to Android
+    static JNINativeMethod javaMethods[] {
+        {"nativeNewWifiItem", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniNewWifiItem)}
+    };
+    JNIEnv* env;
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        return JNI_ERR;
+    }
+    jclass javaClass = env->FindClass(jniClassName);
+    if(!javaClass) {
+        qWarning() << "Couldn't find class:" << jniClassName;
+        return JNI_ERR;
+    }
+    if (env->RegisterNatives(javaClass, javaMethods,  sizeof(javaMethods) / sizeof(javaMethods[0])) < 0) {
+        qWarning() << "Couldn't register native methods";
+        return JNI_ERR;
+    }
+    return JNI_VERSION_1_6;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // RC Channel data provided by Yuneec
 #include "m4channeldata.h"
@@ -61,6 +111,7 @@ static const char* kextraName       = "extraName";
 TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     : QObject(parent)
     , _pHandler(NULL)
+    , _scanningWiFi(false)
 {
 
 }
@@ -74,6 +125,7 @@ TyphoonHQuickInterface::init(TyphoonM4Handler* pHandler)
         connect(_pHandler, &TyphoonM4Handler::m4StateChanged,               this, &TyphoonHQuickInterface::_m4StateChanged);
         connect(_pHandler, &TyphoonM4Handler::destroyed,                    this, &TyphoonHQuickInterface::_destroyed);
         connect(_pHandler, &TyphoonM4Handler::controllerLocationChanged,    this, &TyphoonHQuickInterface::_controllerLocationChanged);
+        connect(_pHandler, &TyphoonM4Handler::newWifiSSID,                  this, &TyphoonHQuickInterface::_newSSID);
     }
 }
 
@@ -196,6 +248,99 @@ TyphoonHQuickInterface::enterBindMode()
 }
 
 //-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::startScan()
+{
+    _ssidList.clear();
+    _scanningWiFi = true;
+    emit scanningWiFiChanged();
+    emit ssidListChanged();
+#if defined __android__
+    QAndroidJniEnvironment env;
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "startWifiScan", "()V");
+#else
+    _newSSID(QString("Some SSID"));
+    _newSSID(QString("Another SSID"));
+    _newSSID(QString("Yet Another SSID"));
+    _newSSID(QString("More SSID"));
+    _newSSID(QString("CIA Headquarters"));
+    _newSSID(QString("Trump Putin Direct"));
+    _newSSID(QString("Short"));
+    _newSSID(QString("A Whole Lot Longer and Useless"));
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::stopScan()
+{
+    _scanningWiFi = false;
+    emit scanningWiFiChanged();
+#if defined __android__
+    QAndroidJniEnvironment env;
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "stopWifiScan", "()V");
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::bindWIFI(QString ssid)
+{
+    if(_scanningWiFi) {
+        stopScan();
+    }
+    _ssidList.clear();
+    emit ssidListChanged();
+#if defined __android__
+    QAndroidJniEnvironment env;
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    QAndroidJniObject javaMessage = QAndroidJniObject::fromString(ssid);
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "bindSSID", "(Ljava/lang/String;)V", javaMessage.object<jstring>());
+#else
+    Q_UNUSED(ssid);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::isWIFIConnected()
+{
+    bool res = false;
+#if defined __android__
+    QAndroidJniEnvironment env;
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    res = (bool)QAndroidJniObject::callStaticMethod<jboolean>(jniClassName, "isWIFIConnected", "()B");
+#endif
+    return res;
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_newSSID(QString ssid)
+{
+    if(ssid.startsWith("CGO3P")) {
+        if(!_ssidList.contains(ssid)) {
+            _ssidList << ssid;
+            emit ssidListChanged();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 #if 0
@@ -282,7 +427,6 @@ TyphoonM4Handler::init()
     qDebug() << "Init M4 Handler";
     if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
         qWarning() << "Could not start serial communication with M4";
-        return;
     }
     _sendRxInfoEnd = false;
     connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonM4Handler::_bytesReady);
