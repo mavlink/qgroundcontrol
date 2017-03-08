@@ -283,28 +283,27 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     if (fClearSettingsOptions) {
         // User requested settings to be cleared on command line
-
         settings.clear();
-        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
 
         // Clear parameter cache
         QDir paramDir(ParameterManager::parameterCacheDir());
         paramDir.removeRecursively();
         paramDir.mkpath(paramDir.absolutePath());
     } else {
-        // Determine if upgrade message for settings version bump is required. Check must happen before toolbox is started since
+        // Determine if upgrade message for settings version bump is required. Check and clear must happen before toolbox is started since
         // that will write some settings.
         if (settings.contains(_settingsVersionKey)) {
             if (settings.value(_settingsVersionKey).toInt() != QGC_SETTINGS_VERSION) {
+                settings.clear();
                 _settingsUpgraded = true;
             }
         } else if (settings.allKeys().count()) {
             // Settings version key is missing and there are settings. This is an upgrade scenario.
+            settings.clear();
             _settingsUpgraded = true;
-        } else {
-            settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
         }
     }
+    settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
 
     // Set up our logging filters
     QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
@@ -432,8 +431,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
     toolbox()->joystickManager()->init();
 
     if (_settingsUpgraded) {
-        settings.clear();
-        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
         showMessage("The format for QGroundControl saved settings has been modified. "
                     "Your saved settings have been reset to defaults.");
     }
