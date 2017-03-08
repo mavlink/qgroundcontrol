@@ -91,6 +91,12 @@ Item {
         color:          Qt.rgba(0.15,0.15,0.25,0.75)
         border.width:   1
         border.color:   "black"
+        MouseArea {
+            anchors.fill:   parent
+            onWheel:        { wheel.accepted = true; }
+            onPressed:      { mouse.accepted = true; }
+            onReleased:     { mouse.accepted = true; }
+        }
         Column {
             id:         instrumentColumn
             width:      parent.width
@@ -374,6 +380,12 @@ Item {
             radius: ScreenTools.defaultFontPixelWidth
             color:  Qt.rgba(0,0,0,0.75)
             anchors.centerIn: parent
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
             QGCLabel {
                 id:                 cameraSettingsLabel
                 text:               "Camera Settings"
