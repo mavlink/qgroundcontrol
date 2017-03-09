@@ -29,6 +29,13 @@ SetupPage {
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10      // Dynamic adjusted at runtime
 
+    ListModel {
+        id: mockList
+      ListElement { name: "1.jpg"; value: "flower" }
+      ListElement { name: "2.jpg"; value: "house" }
+      ListElement { name: "3.jpg"; value: "water" }
+    }
+
     Component {
         id: tuningPageComponent
 
@@ -44,6 +51,8 @@ SetupPage {
             }
 
             Row {
+                id: row
+                spacing: ScreenTools.defaultFontPixelWidth * 2
                 QGCPalette { id: palette; colorGroupEnabled: true }
 
                 QGCLabel { text: qsTr("Group") }
@@ -95,7 +104,9 @@ SetupPage {
 //                anchors.top:        parent.verticalCenter
 //                anchors.bottom:     parent.bottom
                 orientation:        ListView.Vertical
-                model:              mixers.mixersList
+//                model:              mixers.mixersList
+                model:              mockList
+
                 cacheBuffer:        height > 0 ? height * 2 : 0
                 clip:               true
 
@@ -109,23 +120,23 @@ SetupPage {
                         spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
                         anchors.verticalCenter: parent.verticalCenter
 
-                        property Fact modelFact: object
+//                        property Fact modelFact: object
 
                         QGCLabel {
                             id:     mixerIDLabel
                             width:  ScreenTools.defaultFontPixelWidth  * 20
-                            text:   factRow.modelFact.name
+                            text:   name
+//                            text:   factRow.modelFact.name
                             clip:   true
                         }
 
                         QGCLabel {
                             id:     mixerTypeLabel
                             width:  ScreenTools.defaultFontPixelWidth  * 20
-                            text:   factRow.modelFact.valueString
+                            text:   value
+//                            text:   factRow.modelFact.valueString
                             clip:   true
                         }
-
-
 
                         Component.onCompleted: {
                             if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
