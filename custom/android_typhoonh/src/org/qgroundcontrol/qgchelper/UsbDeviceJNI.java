@@ -15,6 +15,7 @@ import android.content.BroadcastReceiver;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiConfiguration;
 
@@ -23,16 +24,27 @@ import org.qtproject.qt5.android.bindings.QtApplication;
 
 public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListener {
 
+    public enum ReceiverMode {
+        DISABLED,
+        SCANNING,
+        BINDING
+    }
+
     private static UsbDeviceJNI m_instance;
     private static final String TAG = "QGroundControl_JNI";
     private static TextToSpeech  m_tts;
     private static PowerManager.WakeLock m_wl;
     private static WifiManager mainWifi;
     private static WifiReceiver receiverWifi;
+    private static ReceiverMode receiverMode = ReceiverMode.DISABLED;
+    private static String currentConnection;
 
     // WiFi: https://stackoverflow.com/questions/36098871/how-to-search-and-connect-to-a-specific-wifi-network-in-android-programmatically/36099552#36099552
 
-    private static native void nativeNewWifiItem(String messageA);
+    private static native void nativeNewWifiItem(String ssid);
+    private static native void nativeScanComplete();
+    private static native void nativeAuthError();
+    private static native void nativeWifiConnected();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -70,13 +82,23 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
         if(mainWifi.isWifiEnabled() == false) {
             mainWifi.setWifiEnabled(true);
         }
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+        filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+        filter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
+        registerReceiver(receiverWifi, filter);
     }
 
     @Override
     protected void onDestroy() {
-        if(m_wl != null) {
-            m_wl.release();
-            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK released.");
+        try {
+            unregisterReceiver(receiverWifi);
+            if(m_wl != null) {
+                m_wl.release();
+                Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK released.");
+            }
+        } catch(Exception e) {
+           Log.e(TAG, "Exception onDestroy()");
         }
         super.onDestroy();
         m_tts.shutdown();
@@ -96,39 +118,45 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     public static void restoreScreenOn() {
     }
 
-    public static void bindSSID(String ssid) {
-        Log.i(TAG, "Bind: " + ssid);
-        List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
-        //-- Disable everything else
-        mainWifi.disconnect();
-        for( WifiConfiguration i : list ) {
-            if(i.SSID != null && !i.SSID.equals("\"" + ssid + "\"")) {
-                mainWifi.disableNetwork(i.networkId);
+    public static void bindSSID(String ssid, String passphrase) {
+        Log.i(TAG, "Bind: " + ssid + " " + passphrase);
+        try {
+            List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
+            //-- Disable everything else
+            mainWifi.disconnect();
+            for( WifiConfiguration i : list ) {
+                if(i.SSID != null && !i.SSID.equals("\"" + ssid + "\"")) {
+                    mainWifi.disableNetwork(i.networkId);
+                }
             }
-        }
-        mainWifi.saveConfiguration();
-        //-- If already set, just make sure it's enabled
-        list = mainWifi.getConfiguredNetworks();
-        for( WifiConfiguration i : list ) {
-            if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
-                mainWifi.enableNetwork(i.networkId, true);
-                mainWifi.reconnect();
-                return;
+            mainWifi.saveConfiguration();
+            receiverMode = ReceiverMode.BINDING;
+            //-- If already set, just make sure it's enabled
+            list = mainWifi.getConfiguredNetworks();
+            for( WifiConfiguration i : list ) {
+                if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
+                    mainWifi.enableNetwork(i.networkId, true);
+                    mainWifi.reconnect();
+                    mainWifi.saveConfiguration();
+                    return;
+                }
             }
-        }
-        //-- Add new configuration
-        WifiConfiguration conf = new WifiConfiguration();
-        conf.SSID = "\"" + ssid + "\"";
-        conf.preSharedKey = "\"1234567890\"";
-        mainWifi.addNetwork(conf);
-        mainWifi.saveConfiguration();
-        list = mainWifi.getConfiguredNetworks();
-        for( WifiConfiguration i : list ) {
-            if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
-                mainWifi.enableNetwork(i.networkId, true);
-                mainWifi.reconnect();
-                return;
+            //-- Add new configuration
+            WifiConfiguration conf = new WifiConfiguration();
+            conf.SSID = "\"" + ssid + "\"";
+            conf.preSharedKey = "\"" + passphrase + "\"";
+            mainWifi.addNetwork(conf);
+            mainWifi.saveConfiguration();
+            list = mainWifi.getConfiguredNetworks();
+            for( WifiConfiguration i : list ) {
+                if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
+                    mainWifi.enableNetwork(i.networkId, true);
+                    mainWifi.reconnect();
+                    return;
+                }
             }
+        } catch(Exception e) {
+           Log.e(TAG, "Exception bindSSID()");
         }
     }
 
@@ -140,21 +168,57 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
 
     public static void startWifiScan() {
         Log.i(TAG, "Start WiFi Scan");
-        m_instance.registerReceiver(receiverWifi, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        receiverMode = ReceiverMode.SCANNING;
         mainWifi.startScan();
     }
 
-    public static void stopWifiScan() {
-        Log.i(TAG, "Stop WiFi Scan");
-        m_instance.unregisterReceiver(receiverWifi);
+    public static String connectedSSID() {
+        return currentConnection;
     }
 
     class WifiReceiver extends BroadcastReceiver {
         public void onReceive(Context c, Intent intent) {
-            List<ScanResult> wifiList = mainWifi.getScanResults();
-            for(int i = 0; i < wifiList.size(); i++) {
-                Log.i(TAG, "SSID: " + wifiList.get(i).SSID + " | " + wifiList.get(i).capabilities + " | " + wifiList.get(i).frequency + " | " + wifiList.get(i).level);
-                nativeNewWifiItem(wifiList.get(i).SSID);
+            try {
+                if(intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
+                    if(receiverMode == ReceiverMode.SCANNING) {
+                        List<ScanResult> wifiList = mainWifi.getScanResults();
+                        for(int i = 0; i < wifiList.size(); i++) {
+                            Log.i(TAG, "SSID: " + wifiList.get(i).SSID + " | " + wifiList.get(i).capabilities + " | " + wifiList.get(i).frequency + " | " + wifiList.get(i).level);
+                            nativeNewWifiItem(wifiList.get(i).SSID);
+                        }
+                        receiverMode = ReceiverMode.DISABLED;
+                        nativeScanComplete();
+                    }
+                } else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+                    NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+                    if (info != null) {
+                        NetworkInfo.DetailedState state = info.getDetailedState();
+                        if (info.isConnectedOrConnecting() && info.isConnected()) {
+                            if (state.compareTo(NetworkInfo.DetailedState.CONNECTED) == 0) {
+                                WifiInfo wifiInfo = intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
+                                if (wifiInfo != null) {
+                                    Log.i(TAG, "Connected: " + wifiInfo);
+                                    currentConnection = wifiInfo.getSSID();
+                                    if(receiverMode == ReceiverMode.BINDING) {
+                                        receiverMode = ReceiverMode.DISABLED;
+                                        nativeWifiConnected();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (intent.getAction().equals(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION)) {
+                    if(receiverMode == ReceiverMode.BINDING) {
+                        int error = intent.getIntExtra(WifiManager.EXTRA_SUPPLICANT_ERROR, 0);
+                        if (error == WifiManager.ERROR_AUTHENTICATING) {
+                            Log.e(TAG, "Authentication Error");
+                            receiverMode = ReceiverMode.DISABLED;
+                            currentConnection = "";
+                            nativeAuthError();
+                        }
+                    }
+                }
+            } catch(Exception e) {
             }
         }
     }

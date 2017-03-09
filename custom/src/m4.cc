@@ -31,6 +31,8 @@ QGC_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
 static const char* jniClassName     = "org/qgroundcontrol/qgchelper/UsbDeviceJNI";
 #endif
 
+TyphoonM4Handler* TyphoonM4Handler::pTyphoonHandler = NULL;
+
 static const char* kUartName        = "/dev/ttyMFD0";
 static const char* kRxInfoGroup     = "YuneecM4RxInfo";
 static const char* kmode            = "mode";
@@ -60,19 +62,54 @@ static const char* kextraName       = "extraName";
 
 #if defined(__android__)
 //-----------------------------------------------------------------------------
+void
+jniSetup(JNIEnv *envA, jobject thizA)
+{
+    Q_UNUSED(thizA);
+    if(envA->ExceptionCheck())
+        envA->ExceptionClear();
+}
+
+//-----------------------------------------------------------------------------
 static void
 jniNewWifiItem(JNIEnv *envA, jobject thizA, jstring jSsid)
 {
-    Q_UNUSED(thizA);
-    TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
-    if(pPlug) {
+    jniSetup(envA, thizA);
+    if(TyphoonM4Handler::pTyphoonHandler) {
         const char *stringL = envA->GetStringUTFChars(jSsid, NULL);
         QString ssid = QString::fromUtf8(stringL);
         envA->ReleaseStringUTFChars(jSsid, stringL);
-        if(envA->ExceptionCheck())
-            envA->ExceptionClear();
-        qCDebug(YuneecLog) << ssid;
-        emit pPlug->handler()->newWifiSSID(ssid);
+        emit TyphoonM4Handler::pTyphoonHandler->newWifiSSID(ssid);
+    }
+}
+
+//-----------------------------------------------------------------------------
+static void
+jniScanComplete(JNIEnv *envA, jobject thizA)
+{
+    jniSetup(envA, thizA);
+    if(TyphoonM4Handler::pTyphoonHandler) {
+        emit TyphoonM4Handler::pTyphoonHandler->scanComplete();
+    }
+}
+
+//-----------------------------------------------------------------------------
+static void
+jniAuthError(JNIEnv *envA, jobject thizA)
+{
+    jniSetup(envA, thizA);
+    if(TyphoonM4Handler::pTyphoonHandler) {
+        emit TyphoonM4Handler::pTyphoonHandler->authenticationError();
+    }
+}
+
+//-----------------------------------------------------------------------------
+static void
+jniWifiConnected(JNIEnv *envA, jobject thizA)
+{
+    jniSetup(envA, thizA);
+    if(TyphoonM4Handler::pTyphoonHandler) {
+        emit TyphoonM4Handler::pTyphoonHandler->wifiConnected();
     }
 }
 
@@ -81,7 +118,10 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/)
 {
     //-- Register C++ functions exposed to Android
     static JNINativeMethod javaMethods[] {
-        {"nativeNewWifiItem", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniNewWifiItem)}
+        {"nativeNewWifiItem",  "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniNewWifiItem)},
+        {"nativeScanComplete", "()V", reinterpret_cast<void *>(jniScanComplete)},
+        {"nativeAuthError",    "()V", reinterpret_cast<void *>(jniAuthError)},
+        {"nativeWifiConnected","()V", reinterpret_cast<void *>(jniWifiConnected)}
     };
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
@@ -109,6 +149,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     : QObject(parent)
     , _pHandler(NULL)
     , _scanningWiFi(false)
+    , _bindingWiFi(false)
 {
 
 }
@@ -123,6 +164,9 @@ TyphoonHQuickInterface::init(TyphoonM4Handler* pHandler)
         connect(_pHandler, &TyphoonM4Handler::destroyed,                    this, &TyphoonHQuickInterface::_destroyed);
         connect(_pHandler, &TyphoonM4Handler::controllerLocationChanged,    this, &TyphoonHQuickInterface::_controllerLocationChanged);
         connect(_pHandler, &TyphoonM4Handler::newWifiSSID,                  this, &TyphoonHQuickInterface::_newSSID);
+        connect(_pHandler, &TyphoonM4Handler::scanComplete,                 this, &TyphoonHQuickInterface::_scanComplete);
+        connect(_pHandler, &TyphoonM4Handler::authenticationError,          this, &TyphoonHQuickInterface::_authenticationError);
+        connect(_pHandler, &TyphoonM4Handler::wifiConnected,                this, &TyphoonHQuickInterface::_wifiConnected);
     }
 }
 
@@ -273,39 +317,24 @@ TyphoonHQuickInterface::startScan()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::stopScan()
+TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
 {
-    _scanningWiFi = false;
-    emit scanningWiFiChanged();
-#if defined __android__
-    QAndroidJniEnvironment env;
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-    }
-    QAndroidJniObject::callStaticMethod<void>(jniClassName, "stopWifiScan", "()V");
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::bindWIFI(QString ssid)
-{
-    if(_scanningWiFi) {
-        stopScan();
-    }
     _ssidList.clear();
     emit ssidListChanged();
+    _bindingWiFi = true;
+    emit bindingWiFiChanged();
 #if defined __android__
     QAndroidJniEnvironment env;
     if (env->ExceptionCheck()) {
         env->ExceptionDescribe();
         env->ExceptionClear();
     }
-    QAndroidJniObject javaMessage = QAndroidJniObject::fromString(ssid);
-    QAndroidJniObject::callStaticMethod<void>(jniClassName, "bindSSID", "(Ljava/lang/String;)V", javaMessage.object<jstring>());
+    QAndroidJniObject javaSSID = QAndroidJniObject::fromString(ssid);
+    QAndroidJniObject javaPassword = QAndroidJniObject::fromString(password);
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "bindSSID", "(Ljava/lang/String;Ljava/lang/String;)V", javaSSID.object<jstring>(), javaPassword.object<jstring>());
 #else
     Q_UNUSED(ssid);
+    Q_UNUSED(password);
 #endif
 }
 
@@ -326,15 +355,69 @@ TyphoonHQuickInterface::isWIFIConnected()
 }
 
 //-----------------------------------------------------------------------------
+QString
+TyphoonHQuickInterface::connectedSSID()
+{
+    QString ssid;
+#if defined __android__
+    QAndroidJniEnvironment env;
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    QAndroidJniObject str = QAndroidJniObject::callStaticObjectMethod(jniClassName, "connectedSSID", "()Ljava/lang/String;");
+    ssid = str.toString();
+    if(ssid.startsWith("\"")) ssid.remove(0,1);
+    if(ssid.endsWith("\""))   ssid.remove(ssid.size()-1,1);
+#endif
+    return ssid;
+}
+
+//-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_newSSID(QString ssid)
 {
+#if defined(QT_DEBUG)
+    if(!_ssidList.contains(ssid)) {
+        _ssidList << ssid;
+        emit ssidListChanged();
+    }
+#else
     if(ssid.startsWith("CGO3P")) {
         if(!_ssidList.contains(ssid)) {
             _ssidList << ssid;
             emit ssidListChanged();
         }
     }
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_scanComplete()
+{
+    _scanningWiFi = false;
+    emit scanningWiFiChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_authenticationError()
+{
+    _bindingWiFi = false;
+    emit bindingWiFiChanged();
+    emit connectedSSIDChanged();
+    emit authenticationError();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_wifiConnected()
+{
+    _bindingWiFi = false;
+    emit bindingWiFiChanged();
+    emit connectedSSIDChanged();
+    emit wifiConnected();
 }
 
 //-----------------------------------------------------------------------------
@@ -369,6 +452,8 @@ TyphoonM4Handler::TyphoonM4Handler(QObject* parent)
     , _cameraControl(NULL)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
 {
+    Q_ASSERT(pTyphoonHandler == NULL);
+    pTyphoonHandler = this;
     _cameraControl = new CameraControl(this);
     _rxchannelInfoIndex = 2;
     _channelNumIndex    = 6;
@@ -390,6 +475,7 @@ TyphoonM4Handler::~TyphoonM4Handler()
     if(_cameraControl) {
         delete _cameraControl;
     }
+    pTyphoonHandler = NULL;
 }
 
 //-----------------------------------------------------------------------------

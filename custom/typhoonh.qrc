@@ -22,6 +22,7 @@
         <file alias="UpArrow.svg">res/UpArrow.svg</file>
         <file alias="VehicleIndicator.svg">res/VehicleIndicator.svg</file>
         <file alias="video.svg">res/video.svg</file>
+        <file alias="YGPSIndicator.qml">res/YGPSIndicator.qml</file>
         <file alias="YuneecBrandImage.png">src/FirmwarePlugin/YuneecBrandImage.png</file>
     </qresource>
 </RCC>
