@@ -67,6 +67,28 @@ Rectangle {
         flyButton.checked = true
     }
 
+    // Easter egg mechanism
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            console.log("easter egg click", ++_clickCount)
+            eggTimer.restart()
+            if (_clickCount == 5) {
+                QGroundControl.showAdvancedUI = true
+            } else if (_clickCount == 7) {
+                QGroundControl.showTouchAreas = true
+            }
+        }
+
+        property int _clickCount: 0
+
+        Timer {
+            id:             eggTimer
+            interval:       1000
+            onTriggered:    parent._clickCount = 0
+        }
+    }
+
     /// Bottom single pixel divider
     Rectangle {
         anchors.left:   parent.left

@@ -117,6 +117,7 @@ Item {
                     anchors.fill:   parent
                     enabled:        attitudeIndicator.visible
                     onClicked: {
+                        rootLoader.sourceComponent = null
                         attitudeIndicator.visible = false
                         compass.visible = true
                     }
@@ -132,6 +133,7 @@ Item {
                     anchors.fill:   parent
                     enabled:        compass.visible
                     onClicked: {
+                        rootLoader.sourceComponent = null
                         compass.visible = false
                         attitudeIndicator.visible = true
                     }
@@ -237,6 +239,7 @@ Item {
                     anchors.fill:   parent
                     enabled:        TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_UNDEFINED
                     onClicked: {
+                        rootLoader.sourceComponent = null
                         TyphoonHQuickInterface.cameraControl.toggleMode()
                     }
                 }
@@ -267,6 +270,7 @@ Item {
                         anchors.fill:   parent
                         enabled:        TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_STOPPED
                         onClicked: {
+                            rootLoader.sourceComponent = null
                             TyphoonHQuickInterface.cameraControl.startVideo()
                         }
                     }
@@ -282,6 +286,7 @@ Item {
                         anchors.fill:   parent
                         enabled:        TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                         onClicked: {
+                            rootLoader.sourceComponent = null
                             TyphoonHQuickInterface.cameraControl.stopVideo()
                         }
                     }
@@ -299,6 +304,7 @@ Item {
                         anchors.fill:   parent
                         enabled:        TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
                         onClicked: {
+                            rootLoader.sourceComponent = null
                             TyphoonHQuickInterface.cameraControl.takePhoto()
                         }
                     }
@@ -360,13 +366,17 @@ Item {
                     anchors.fill:       parent
                     enabled:            TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
                     onClicked: {
-                        rootLoader.sourceComponent = cameraSettingsComponent
+                        if(rootLoader.sourceComponent === null) {
+                            rootLoader.sourceComponent = cameraSettingsComponent
+                        } else {
+                            rootLoader.sourceComponent = null
+                        }
                     }
                 }
             }
             Item {
-                height:         _spacers * 2
-                width:          1
+                height: _spacers * 2
+                width:  1
             }
         }
     }
@@ -397,14 +407,14 @@ Item {
             }
             Column {
                 id:                 cameraSettingsCol
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.15
                 width:              cameraGrid.width
                 anchors.margins:    ScreenTools.defaultFontPixelHeight
                 anchors.centerIn:   parent
                 GridLayout {
                     id:             cameraGrid
                     columnSpacing:  ScreenTools.defaultFontPixelWidth
-                    rowSpacing:     columnSpacing
+                    rowSpacing:     columnSpacing * 0.5
                     columns:        2
                     anchors.horizontalCenter: parent.horizontalCenter
                     Rectangle {
