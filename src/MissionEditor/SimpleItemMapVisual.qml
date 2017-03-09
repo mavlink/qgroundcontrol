@@ -51,7 +51,7 @@ Item {
     }
 
     function showDragArea() {
-        if (!_dragAreaShowing) {
+        if (!_dragAreaShowing && _missionItem.specifiesCoordinate) {
             _dragArea = dragAreaComponent.createObject(map)
             _dragAreaShowing = true
         }

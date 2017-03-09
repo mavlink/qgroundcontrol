@@ -73,14 +73,8 @@ Canvas {
         onWidthChanged: requestPaint()
     }
 
-    MouseArea {
-        anchors.leftMargin:     -_expandMargin
-        anchors.rightMargin:    _expandMargin
-        anchors.topMargin:      -_expandMargin
-        anchors.bottomMargin:   _expandMargin
-        anchors.fill:           parent
-        onClicked:              parent.clicked()
-
-        property real _expandMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth : 0
+    QGCMouseArea {
+        fillItem:   parent
+        onClicked:  parent.clicked()
     }
 }
