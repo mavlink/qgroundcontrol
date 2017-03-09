@@ -32,6 +32,8 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _corePlugin(NULL)
     , _firmwarePluginManager(NULL)
     , _settingsManager(NULL)
+    , _showTouchAreas(false)
+    , _showAdvancedUI(false)
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     setParent(NULL);
