@@ -37,53 +37,6 @@ SetupPage {
       ListElement { name: "3.jpg"; value: "water" }
     }
 
-//    Component {
-//        id: upperControls
-//        Row {
-//            id: row
-//            spacing: ScreenTools.defaultFontPixelWidth * 2
-//            QGCPalette { id: palette; colorGroupEnabled: true }
-
-//            QGCLabel { text: qsTr("Group") }
-
-//            QGCTextField {
-//                id:                 groupText
-//                text:               "0"
-//            }
-
-//            QGCButton {
-//                id:getMixersCountButton
-//                text: qsTr("Request mixer count")
-//                onClicked: {
-//                    mixers.getMixersCountButtonClicked()
-//                }
-//            }
-
-//            QGCButton {
-//                id:requestAllButton
-//                text: qsTr("Request all")
-//                onClicked: {
-//                    mixers.requestAllButtonClicked()
-//                }
-//            }
-
-//            QGCButton {
-//                id:requestMissing
-//                text: qsTr("Request missing")
-//                onClicked: {
-//                    mixers.requestGUIButtonClicked()
-//                }
-//            }
-
-//            QGCButton {
-//                id:refreshGUI
-//                text: qsTr("REFRESH GUI")
-//                onClicked: {
-//                    mixers.refreshGUIButtonClicked()
-//                }
-//            }
-//        } // Row
-//    }
 
     Component {
         id: tuningPageComponent
@@ -109,7 +62,7 @@ SetupPage {
                     id:                 mixerListView
                     anchors.top:        parent.top
                     anchors.bottom:     parent.bottom
-                    width:              ScreenTools.defaultFontPixelWidth  * 30
+                    width:              ScreenTools.defaultFontPixelWidth  * 50
                     orientation:        ListView.Vertical
                     model:              mixers.mixersList
 //                    model:              mockList
@@ -120,8 +73,13 @@ SetupPage {
                         anchors.left:   parent.left
                         anchors.right:  parent.right
                         height:         30
-                        color:          "red"
-                        border.color:   "white"
+                        color:          "black"
+                        border.color:   "dark grey"
+//                        focus: true
+//                        highlight: Rectangle {
+//                            color: "lightblue"
+//                            width: parent.width
+//                        }
 
     //                    height: _rowHeight
     //                    width:  _rowWidth
@@ -139,7 +97,10 @@ SetupPage {
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
 //                               text:   name
                                 text:   factRow.modelFact.name
+                                horizontalAlignment:    Text.AlignHCenter
+                                verticalAlignment:      Text.AlignVCenter
                                 clip:   true
+                                color:  "white"
                             }
 
                             QGCLabel {
@@ -147,7 +108,10 @@ SetupPage {
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
 //                                text:   value
                                 text:   factRow.modelFact.valueString
+                                horizontalAlignment:    Text.AlignHCenter
+                                verticalAlignment:      Text.AlignVCenter
                                 clip:   true
+                                color:  "white"
                             }
 
 //                            Component.onCompleted: {
@@ -214,7 +178,7 @@ SetupPage {
                             id:requestMissing
                             text: qsTr("Request missing")
                             onClicked: {
-                                mixers.requestGUIButtonClicked()
+                                mixers.requestMissingButtonClicked()
                             }
                         }
 
