@@ -31,12 +31,14 @@ const int MixersComponentController::_updateInterval = 150;              ///< In
 MixersComponentController::MixersComponentController(void)
     : _mixers(new QmlObjectListModel(this))
     , _mockMetaData(FactMetaData::valueTypeString, this)
+    , _mockFactList()
 {
 //    _getMixersCountButton = NULL;
 //#ifdef UNITTEST_BUILD
 //    // Nasty hack to expose controller to unit test code
 //    _unitTestController = this;
 //#endif
+
     _mockMetaData.setName("MOCK_METADATA");
     _mockMetaData.setGroup("MIXER_COMP_CONTROLLER");
     _mockMetaData.setRawDefaultValue("MOCK_STRING");
@@ -46,15 +48,17 @@ MixersComponentController::MixersComponentController(void)
     fact = new Fact(-1, "Mock Fact 1", FactMetaData::valueTypeString, this);
     fact->setMetaData(&_mockMetaData);
     fact->setRawValue("1");
-    _mixers->append(fact);
+    _mockFactList.append(fact);
 
     fact = new Fact(-1, "Mock Fact 2", FactMetaData::valueTypeString, this);
     fact->setMetaData(&_mockMetaData);
     fact->setRawValue("2");
-    _mixers->append(fact);
+    _mockFactList.append(fact);
 
     connect(_vehicle->mixersManager(), &MixersManager::mixerDataReadyChanged, this, &MixersComponentController::_updateMixers);
 }
+
+
 
 MixersComponentController::~MixersComponentController()
 {
@@ -81,6 +85,17 @@ void MixersComponentController::requestMissingButtonClicked(void)
 void MixersComponentController::requestSubmixerCountButtonClicked(void)
 {
     _vehicle->mixersManager()->requestSubmixerCount(0, 0);
+}
+
+void MixersComponentController::refreshGUIButtonClicked(void){
+    QObjectList newMixerList;
+    Fact* fact;
+
+    foreach(fact, _mockFactList){
+        newMixerList.append(fact);
+    }
+
+    _mixers->swapObjectList(newMixerList);
 }
 
 

@@ -73,7 +73,15 @@ SetupPage {
                     id:requestMissing
                     text: qsTr("Request missing")
                     onClicked: {
-                        mixers.requestMissingButtonClicked()
+                        mixers.requestGUIButtonClicked()
+                    }
+                }
+
+                QGCButton {
+                    id:refreshGUI
+                    text: qsTr("REFRESH GUI")
+                    onClicked: {
+                        mixers.refreshGUIButtonClicked()
                     }
                 }
             }
@@ -84,10 +92,10 @@ SetupPage {
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth
                 anchors.left:       parent.left
                 anchors.right:      parent.right
-                anchors.top:        parent.verticalCenter
-                anchors.bottom:     parent.bottom
+//                anchors.top:        parent.verticalCenter
+//                anchors.bottom:     parent.bottom
                 orientation:        ListView.Vertical
-                model:              mixers.mixers
+                model:              mixers.mixersList
                 cacheBuffer:        height > 0 ? height * 2 : 0
                 clip:               true
 
@@ -118,36 +126,6 @@ SetupPage {
                         }
 
 
-//                        QGCLabel {
-//                            id:     mixerInputLabel
-//                            width:  ScreenTools.defaultFontPixelWidth  * 20
-//                            text:   factRow.modelFact.name
-//                            clip:   true
-//                        }
-
-//                        QGCLabel {
-//                            id:     mixerNameLabel
-//                            width:  ScreenTools.defaultFontPixelWidth  * 20
-//                            color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText) : __qgcPal.text
-//                            text:   factRow.modelFact.valueString + " " + factRow.modelFact.units
-//                            clip:   true
-//                        }
-
-//                        QGCLabel {
-//                            id:     mixerIDLabel
-//                            width:  ScreenTools.defaultFontPixelWidth  * 20
-//                            color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText) : __qgcPal.text
-//                            text:   factRow.modelFact.valueString + " " + factRow.modelFact.units
-//                            clip:   true
-//                        }
-
-//                        QGCLabel {
-//                            id:     mixerOutputLabel
-//                            width:  ScreenTools.defaultFontPixelWidth  * 20
-//                            color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText) : __qgcPal.text
-//                            text:   factRow.modelFact.valueString + " " + factRow.modelFact.units
-//                            clip:   true
-//                        }
 
                         Component.onCompleted: {
                             if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
@@ -156,14 +134,14 @@ SetupPage {
                         }
                     }
 
-                    Rectangle {
-                        width:  _rowWidth
-                        height: 1
-                        color:  __qgcPal.text
-                        opacity: 0.15
-                        anchors.bottom: parent.bottom
-                        anchors.left:   parent.left
-                    }
+//                    Rectangle {
+//                        width:  _rowWidth
+//                        height: 1
+//                        color:  __qgcPal.text
+//                        opacity: 0.15
+//                        anchors.bottom: parent.bottom
+//                        anchors.left:   parent.left
+//                    }
 
 //                    MouseArea {
 //                        anchors.fill:       parent

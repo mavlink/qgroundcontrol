@@ -43,12 +43,15 @@ public:
     Q_PROPERTY(QQuickItem* requestAllButton MEMBER _requestAllButton    NOTIFY requestAllButtonChanged)
     Q_PROPERTY(QQuickItem* requestMissingButton MEMBER _requestMissingButton    NOTIFY requestMissingButtonChanged)
     Q_PROPERTY(QQuickItem* requestSubmixerCountButton MEMBER _requestSubmixerCountButton   NOTIFY requestSubmixerCountButtonChanged)
-    Q_PROPERTY(QmlObjectListModel*  mixers          MEMBER _mixers          CONSTANT)
+    Q_PROPERTY(QQuickItem* refreshGUIButton MEMBER _refreshGUIButton   NOTIFY refreshGUIButtonChanged)
+
+    Q_PROPERTY(QmlObjectListModel*  mixersList          MEMBER _mixers          CONSTANT)
 
     Q_INVOKABLE void getMixersCountButtonClicked(void);
     Q_INVOKABLE void requestAllButtonClicked(void);
     Q_INVOKABLE void requestMissingButtonClicked(void);
     Q_INVOKABLE void requestSubmixerCountButtonClicked(void);
+    Q_INVOKABLE void refreshGUIButtonClicked(void);
 
     unsigned int groupValue(void);
     unsigned int mixerIndexValue(void);
@@ -61,6 +64,7 @@ signals:
     void requestAllButtonChanged(void);
     void requestMissingButtonChanged(void);
     void requestSubmixerCountButtonChanged(void);
+    void refreshGUIButtonChanged(void);
 
 //    void statusTextChanged(void);
 //    void nextButtonChanged(void);
@@ -85,9 +89,11 @@ private:
     QQuickItem* _requestAllButton;
     QQuickItem* _requestMissingButton;
     QQuickItem* _requestSubmixerCountButton;
+    QQuickItem* _refreshGUIButton;
     QmlObjectListModel* _mixers;
 
     FactMetaData _mockMetaData;
+    QList<Fact*> _mockFactList;
 
 //    QQuickItem* _statusText;
 //    QQuickItem* _nextButton;
