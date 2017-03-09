@@ -9,6 +9,7 @@
 
 import QtQuick              2.5
 import QtQuick.Controls     1.4
+import QtQuick.Layouts      1.2
 
 import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
@@ -36,12 +37,60 @@ SetupPage {
       ListElement { name: "3.jpg"; value: "water" }
     }
 
+//    Component {
+//        id: upperControls
+//        Row {
+//            id: row
+//            spacing: ScreenTools.defaultFontPixelWidth * 2
+//            QGCPalette { id: palette; colorGroupEnabled: true }
+
+//            QGCLabel { text: qsTr("Group") }
+
+//            QGCTextField {
+//                id:                 groupText
+//                text:               "0"
+//            }
+
+//            QGCButton {
+//                id:getMixersCountButton
+//                text: qsTr("Request mixer count")
+//                onClicked: {
+//                    mixers.getMixersCountButtonClicked()
+//                }
+//            }
+
+//            QGCButton {
+//                id:requestAllButton
+//                text: qsTr("Request all")
+//                onClicked: {
+//                    mixers.requestAllButtonClicked()
+//                }
+//            }
+
+//            QGCButton {
+//                id:requestMissing
+//                text: qsTr("Request missing")
+//                onClicked: {
+//                    mixers.requestGUIButtonClicked()
+//                }
+//            }
+
+//            QGCButton {
+//                id:refreshGUI
+//                text: qsTr("REFRESH GUI")
+//                onClicked: {
+//                    mixers.refreshGUIButtonClicked()
+//                }
+//            }
+//        } // Row
+//    }
+
     Component {
         id: tuningPageComponent
 
-        Column {
+        Item {
             width:      availableWidth
-            spacing:    _margins
+            height:     availableHeight
 
             FactPanelController { id: controller; factPanel: tuningPage.viewPanel }
 
@@ -50,120 +99,145 @@ SetupPage {
                 factPanel:  tuningPage.viewPanel
             }
 
-            Row {
-                id: row
-                spacing: ScreenTools.defaultFontPixelWidth * 2
-                QGCPalette { id: palette; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-                QGCLabel { text: qsTr("Group") }
+            RowLayout {
+                anchors.fill: parent
 
-                QGCTextField {
-                    id:                 groupText
-                    text:               "0"
-                }
+                /// Parameter list
+                QGCListView {
+                    id:                 mixerListView
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
+                    width:              ScreenTools.defaultFontPixelWidth  * 30
+                    orientation:        ListView.Vertical
+                    model:              mixers.mixersList
+//                    model:              mockList
+                    cacheBuffer:        height > 0 ? height * 2 : 0
+                    clip:               true
 
-                QGCButton {
-                    id:getMixersCountButton
-                    text: qsTr("Request mixer count")
-                    onClicked: {
-                        mixers.getMixersCountButtonClicked()
-                    }
-                }
+                    delegate: Rectangle {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        height:         30
+                        color:          "red"
+                        border.color:   "white"
 
-                QGCButton {
-                    id:requestAllButton
-                    text: qsTr("Request all")
-                    onClicked: {
-                        mixers.requestAllButtonClicked()
-                    }
-                }
+    //                    height: _rowHeight
+    //                    width:  _rowWidth
+    //                    color:  Qt.rgba(0,0,0,0)
 
-                QGCButton {
-                    id:requestMissing
-                    text: qsTr("Request missing")
-                    onClicked: {
-                        mixers.requestGUIButtonClicked()
-                    }
-                }
+                        Row {
+                            id:     factRow
+                            spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
+                            anchors.verticalCenter: parent.verticalCenter
 
-                QGCButton {
-                    id:refreshGUI
-                    text: qsTr("REFRESH GUI")
-                    onClicked: {
-                        mixers.refreshGUIButtonClicked()
-                    }
-                }
-            }
+                            property Fact modelFact: object
 
-            /// Parameter list
-            QGCListView {
-                id:                 mixerListView
-                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-//                anchors.top:        parent.verticalCenter
-//                anchors.bottom:     parent.bottom
-                orientation:        ListView.Vertical
-//                model:              mixers.mixersList
-                model:              mockList
+                            QGCLabel {
+                                id:     mixerIDLabel
+                                width:  ScreenTools.defaultFontPixelWidth  * 10
+//                               text:   name
+                                text:   factRow.modelFact.name
+                                clip:   true
+                            }
 
-                cacheBuffer:        height > 0 ? height * 2 : 0
-                clip:               true
+                            QGCLabel {
+                                id:     mixerTypeLabel
+                                width:  ScreenTools.defaultFontPixelWidth  * 10
+//                                text:   value
+                                text:   factRow.modelFact.valueString
+                                clip:   true
+                            }
 
-                delegate: Rectangle {
-                    height: _rowHeight
-                    width:  _rowWidth
-                    color:  Qt.rgba(0,0,0,0)
+//                            Component.onCompleted: {
+//                                if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
+//                                    _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
+//                                }
+//                            }
+                        }
+
+    //                    Rectangle {
+    //                        width:  _rowWidth
+    //                        height: 1
+    //                        color:  __qgcPal.text
+    //                        opacity: 0.15
+    //                        anchors.bottom: parent.bottom
+    //                        anchors.left:   parent.left
+    //                    }
+
+    //                    MouseArea {
+    //                        anchors.fill:       parent
+    //                        acceptedButtons:    Qt.LeftButton
+    //                        onClicked: {
+    //                            _editorDialogFact = factRow.modelFact
+    ////                            showDialog(editorDialogComponent, qsTr("Mixer Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
+    //                        }
+    //                    }
+                    } //Row
+                } //QGCListView
+
+                ColumnLayout {
+                    Layout.fillWidth:   true
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
 
                     Row {
-                        id:     factRow
-                        spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
-                        anchors.verticalCenter: parent.verticalCenter
+                        id: controlsRow
+                        spacing: ScreenTools.defaultFontPixelWidth * 2
+                        QGCPalette { id: palette; colorGroupEnabled: true }
 
-//                        property Fact modelFact: object
+                        QGCLabel { text: qsTr("Group") }
 
-                        QGCLabel {
-                            id:     mixerIDLabel
-                            width:  ScreenTools.defaultFontPixelWidth  * 20
-                            text:   name
-//                            text:   factRow.modelFact.name
-                            clip:   true
+                        QGCTextField {
+                            id:                 groupText
+                            text:               "0"
                         }
 
-                        QGCLabel {
-                            id:     mixerTypeLabel
-                            width:  ScreenTools.defaultFontPixelWidth  * 20
-                            text:   value
-//                            text:   factRow.modelFact.valueString
-                            clip:   true
-                        }
-
-                        Component.onCompleted: {
-                            if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
-                                _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
+                        QGCButton {
+                            id:getMixersCountButton
+                            text: qsTr("Request mixer count")
+                            onClicked: {
+                                mixers.getMixersCountButtonClicked()
                             }
                         }
-                    }
 
-//                    Rectangle {
-//                        width:  _rowWidth
-//                        height: 1
-//                        color:  __qgcPal.text
-//                        opacity: 0.15
-//                        anchors.bottom: parent.bottom
-//                        anchors.left:   parent.left
-//                    }
+                        QGCButton {
+                            id:requestAllButton
+                            text: qsTr("Request all")
+                            onClicked: {
+                                mixers.requestAllButtonClicked()
+                            }
+                        }
 
-//                    MouseArea {
-//                        anchors.fill:       parent
-//                        acceptedButtons:    Qt.LeftButton
-//                        onClicked: {
-//                            _editorDialogFact = factRow.modelFact
-////                            showDialog(editorDialogComponent, qsTr("Mixer Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
-//                        }
-//                    }
-                }
-            }
-        } // Column
+                        QGCButton {
+                            id:requestMissing
+                            text: qsTr("Request missing")
+                            onClicked: {
+                                mixers.requestGUIButtonClicked()
+                            }
+                        }
+
+                        QGCButton {
+                            id:refreshGUI
+                            text: qsTr("REFRESH GUI")
+                            onClicked: {
+                                mixers.refreshGUIButtonClicked()
+                            }
+                        }
+                    } // Row
+
+                    Rectangle {
+                        Layout.fillWidth:   true
+                        anchors.top:        controlsRow.bottom
+                        anchors.bottom:     parent.bottom
+                        color:              qgcPal.windowShade
+                   }
+                } //ColumnLayout
+
+            } //RowLayout
+        } // Item
     } // Component
 } // SetupView
+
+
