@@ -16,7 +16,7 @@ import QGroundControl.Palette       1.0
 Rectangle {
     id:         _root
     color:      qgcPal.window
-    width:      ScreenTools.defaultFontPixelWidth * 6
+    width:      ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 6
     height:     buttonStripColumn.height + (buttonStripColumn.anchors.margins * 2)
     radius:     _radius
 
@@ -172,10 +172,10 @@ Rectangle {
 
                     }
 
-                    MouseArea {
+                    QGCMouseArea {
                         // Size of mouse area is expanded to make touch easier
-                        anchors.leftMargin:     buttonStripColumn.margins
-                        anchors.rightMargin:    buttonStripColumn.margins
+                        anchors.leftMargin:     -buttonStripColumn.anchors.margins
+                        anchors.rightMargin:    -buttonStripColumn.anchors.margins
                         anchors.left:           parent.left
                         anchors.right:          parent.right
                         anchors.top:            parent.top

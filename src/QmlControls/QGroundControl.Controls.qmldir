@@ -37,6 +37,7 @@ QGCListView             1.0 QGCListView.qml
 QGCMapLabel             1.0 QGCMapLabel.qml
 QGCMobileFileOpenDialog 1.0 QGCMobileFileOpenDialog.qml
 QGCMobileFileSaveDialog 1.0 QGCMobileFileSaveDialog.qml
+QGCMouseArea            1.0 QGCMouseArea.qml
 QGCMovableItem          1.0 QGCMovableItem.qml
 QGCPipable              1.0 QGCPipable.qml
 QGCRadioButton          1.0 QGCRadioButton.qml

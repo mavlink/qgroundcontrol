@@ -85,6 +85,7 @@
         <file alias="QGroundControl/Controls/QGCMapLabel.qml">src/QmlControls/QGCMapLabel.qml</file>
         <file alias="QGroundControl/Controls/QGCMobileFileOpenDialog.qml">src/QmlControls/QGCMobileFileOpenDialog.qml</file>
         <file alias="QGroundControl/Controls/QGCMobileFileSaveDialog.qml">src/QmlControls/QGCMobileFileSaveDialog.qml</file>
+        <file alias="QGroundControl/Controls/QGCMouseArea.qml">src/QmlControls/QGCMouseArea.qml</file>
         <file alias="QGroundControl/Controls/QGCMovableItem.qml">src/QmlControls/QGCMovableItem.qml</file>
         <file alias="QGroundControl/Controls/QGCPipable.qml">src/QmlControls/QGCPipable.qml</file>
         <file alias="QGroundControl/Controls/QGCRadioButton.qml">src/QmlControls/QGCRadioButton.qml</file>
