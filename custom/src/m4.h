@@ -50,16 +50,18 @@ public:
     Q_PROPERTY(CameraControl*   cameraControl   READ    cameraControl                       CONSTANT)
     Q_PROPERTY(QStringList      ssidList        READ    ssidList                            NOTIFY ssidListChanged)
     Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi                        NOTIFY scanningWiFiChanged)
+    Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi                         NOTIFY bindingWiFiChanged)
+    Q_PROPERTY(QString          connectedSSID   READ    connectedSSID                       NOTIFY connectedSSIDChanged)
 
     Q_INVOKABLE void enterBindMode  ();
     Q_INVOKABLE void initM4         ();
     Q_INVOKABLE void startScan      ();
-    Q_INVOKABLE void stopScan       ();
-    Q_INVOKABLE void bindWIFI       (QString ssid);
+    Q_INVOKABLE void bindWIFI       (QString ssid, QString password);
     Q_INVOKABLE bool isWIFIConnected();
 
     M4State     m4State             ();
     QString     m4StateStr          ();
+    QString     connectedSSID       ();
 
     CameraControl* cameraControl    ();
 
@@ -74,6 +76,7 @@ public:
     double      altitude            ();
     QStringList ssidList            () { return _ssidList; }
     bool        scanningWiFi        () { return _scanningWiFi; }
+    bool        bindingWiFi         () { return _bindingWiFi; }
 
     void    init                    (TyphoonM4Handler* pHandler);
 
@@ -82,17 +85,25 @@ signals:
     void    controllerLocationChanged   ();
     void    ssidListChanged             ();
     void    scanningWiFiChanged         ();
+    void    authenticationError         ();
+    void    wifiConnected               ();
+    void    connectedSSIDChanged        ();
+    void    bindingWiFiChanged          ();
 
 private slots:
     void    _m4StateChanged             ();
     void    _destroyed                  ();
     void    _controllerLocationChanged  ();
     void    _newSSID                    (QString ssid);
+    void    _scanComplete               ();
+    void    _authenticationError        ();
+    void    _wifiConnected              ();
 
 private:
     TyphoonM4Handler*   _pHandler;
     QStringList         _ssidList;
     bool                _scanningWiFi;
+    bool                _bindingWiFi;
 };
 
 //-----------------------------------------------------------------------------
@@ -116,6 +127,8 @@ public:
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
+
+    static TyphoonM4Handler* pTyphoonHandler;
 
 public slots:
     void    softReboot                          ();
@@ -170,7 +183,11 @@ signals:
     void    channelDataStatus                   (QByteArray channelData);
     void    controllerLocationChanged           ();
     void    destroyed                           ();
+    //-- WIFI
     void    newWifiSSID                         (QString ssid);
+    void    scanComplete                        ();
+    void    authenticationError                 ();
+    void    wifiConnected                       ();
 
 private:
     M4SerialComm* _commPort;
@@ -207,4 +224,5 @@ private:
     QNetworkAccessManager*  _networkManager;
     CameraControl*          _cameraControl;
     TyphoonHQuickInterface::M4State     _m4State;
+    QString                 _currentConnection;
 };

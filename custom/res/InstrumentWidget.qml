@@ -38,6 +38,14 @@ Item {
     property real _distance:        0.0
     property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 30
 
+    function getGearColor() {
+        if(TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED) {
+            return qgcPal.text
+        } else {
+            return toolBar.colorGrey;
+        }
+    }
+
     //-- Position from System GPS
     PositionSource {
         id:             positionSource
@@ -88,9 +96,9 @@ Item {
         width:          parent.width
         height:         instrumentColumn.height
         radius:         8
-        color:          Qt.rgba(0.15,0.15,0.25,0.75)
+        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0.85,0.85,1,0.75) : Qt.rgba(0.15,0.15,0.25,0.75)
         border.width:   1
-        border.color:   "black"
+        border.color:   qgcPal.globalTheme === QGCPalette.Light ? "white" : "black"
         MouseArea {
             anchors.fill:   parent
             onWheel:        { wheel.accepted = true; }
@@ -142,15 +150,12 @@ Item {
             Row {
                 spacing:        ScreenTools.defaultFontPixelHeight * 0.25
                 anchors.horizontalCenter: parent.horizontalCenter
-                Image {
+                QGCColoredImage {
                     height:             ScreenTools.defaultFontPixelHeight
                     width:              height
                     sourceSize.width:   width
                     source:             "qrc:/typhoonh/UpArrow.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    smooth:         true
-                    mipmap:         true
-                    antialiasing:   true
+                    color:              qgcPal.text
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 QGCLabel {
@@ -160,19 +165,16 @@ Item {
                     horizontalAlignment: Text.AlignHCenter
                     anchors.verticalCenter: parent.verticalCenter
                 }
-                Image {
+                QGCColoredImage {
                     height:             ScreenTools.defaultFontPixelHeight
                     width:              height
                     sourceSize.width:   width
                     source:             "qrc:/typhoonh/RightArrow.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    smooth:         true
-                    mipmap:         true
-                    antialiasing:   true
+                    color:              qgcPal.text
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 QGCLabel {
-                    text:           isNaN(_distance) ? 0.0 : _distance.toFixed(0)
+                    text:           isNaN(_distance) ? 0 : _distance.toFixed(0)
                     width:          ScreenTools.defaultFontPixelWidth * 4
                     font.family:    ScreenTools.demiboldFontFamily
                     horizontalAlignment: Text.AlignHCenter
@@ -189,7 +191,7 @@ Item {
             Rectangle {
                 height:         1
                 width:          parent.width * 0.9
-                color:          Qt.rgba(1,1,1,0.5)
+                color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Item {
@@ -254,7 +256,7 @@ Item {
                 radius:             width * 0.5
                 color:              Qt.rgba(0.0,0.0,0.0,0.0)
                 border.width:       1
-                border.color:       toolBar.colorWhite
+                border.color:       qgcPal.globalTheme === QGCPalette.Light ? "black" : "white"
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCColoredImage {
                     id:                 startVideoButton
@@ -351,7 +353,7 @@ Item {
                 radius:             width * 0.5
                 color:              Qt.rgba(0.0,0.0,0.0,0.0)
                 border.width:       1
-                border.color:       toolBar.colorWhite
+                border.color:       qgcPal.globalTheme === QGCPalette.Light ? "black" : "white"
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCColoredImage {
                     height:             parent.height * 0.65
@@ -359,7 +361,7 @@ Item {
                     sourceSize.width:   width
                     source:             "qrc:/typhoonh/CogWheel.svg"
                     fillMode:           Image.PreserveAspectFit
-                    color:              TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED ? toolBar.colorWhite : toolBar.colorGrey
+                    color:              getGearColor()
                     anchors.centerIn:   parent
                 }
                 MouseArea {
@@ -388,7 +390,7 @@ Item {
             width:  mainWindow.width  * 0.45
             height: mainWindow.height * 0.75
             radius: ScreenTools.defaultFontPixelWidth
-            color:  Qt.rgba(0,0,0,0.75)
+            color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
             anchors.centerIn: parent
             MouseArea {
                 anchors.fill:   parent
@@ -619,6 +621,9 @@ Item {
             Component.onCompleted: {
                 rootLoader.width  = cameraSettingsRect.width
                 rootLoader.height = cameraSettingsRect.height
+            }
+            Keys.onBackPressed: {
+                rootLoader.sourceComponent = null
             }
         }
     }

@@ -7,7 +7,7 @@
 import QtQuick                  2.5
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
-import QtQuick.Dialogs          1.1
+import QtQuick.Dialogs          1.2
 
 import QGroundControl                       1.0
 import QGroundControl.FactSystem            1.0
@@ -29,9 +29,30 @@ QGCView {
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
     property var  _selectedSSID:                ""
+    property var  _telemetryText:               qsTr("Telemetry/Video Connection")
 
     ExclusiveGroup  { id: ssidGroup }
     QGCPalette      { id: qgcPal }
+
+    Connections {
+        target: TyphoonHQuickInterface
+        onAuthenticationError: {
+            authErrorDialog.visible = true
+        }
+    }
+
+    function getWiFiStatus() {
+        if(TyphoonHQuickInterface.bindingWiFi) {
+            return qsTr("Connecting...")
+        }
+        if(TyphoonHQuickInterface.scanningWiFi) {
+            return qsTr("Scanning...")
+        }
+        if(TyphoonHQuickInterface.connectedSSID != "") {
+            return qsTr("Connected to ") + TyphoonHQuickInterface.connectedSSID
+        }
+        return ""
+    }
 
     QGCViewPanel {
         id:             panel
@@ -47,7 +68,7 @@ QGCView {
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 //-----------------------------------------------------------------
-                //-- Bind
+                //-- RX/TX Bind
                 Item {
                     width:              qgcView.width * 0.8
                     height:             rcBindLabel.height
@@ -74,7 +95,7 @@ QGCView {
                             height:             1
                         }
                         QGCButton {
-                            text:       "Bind"
+                            text:       qsTr("Bind")
                             width:      _labelWidth
                             enabled:    QGroundControl.multiVehicleManager.activeVehicle
                             onClicked:  TyphoonHQuickInterface.enterBindMode()
@@ -92,7 +113,7 @@ QGCView {
                     }
                 }
                 //-----------------------------------------------------------------
-                //-- Bind
+                //-- WIFI Bind
                 Item {
                     width:              qgcView.width * 0.8
                     height:             wifiBindLabel.height
@@ -100,7 +121,7 @@ QGCView {
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
                         id:             wifiBindLabel
-                        text:           qsTr("Telemetry/Video Binding")
+                        text:           _telemetryText
                         font.family:    ScreenTools.demiboldFontFamily
                     }
                 }
@@ -120,32 +141,39 @@ QGCView {
                         }
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
                             QGCButton {
-                                text:       "Start Scan"
+                                text:       qsTr("Refresh")
                                 width:      _labelWidth
                                 onClicked:  TyphoonHQuickInterface.startScan()
                                 enabled:    !TyphoonHQuickInterface.scanningWiFi
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QGCButton {
-                                text:       "Stop Scan"
+                                text:       qsTr("Bind")
                                 width:      _labelWidth
-                                onClicked:  TyphoonHQuickInterface.stopScan()
-                                enabled:    TyphoonHQuickInterface.scanningWiFi
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            QGCButton {
-                                text:       "Bind"
-                                width:      _labelWidth
-                                enabled:    _selectedSSID !== ""
-                                primary:    _selectedSSID !== ""
-                                onClicked:  TyphoonHQuickInterface.bindWIFI(_selectedSSID)
+                                enabled:    _selectedSSID !== "" && _selectedSSID != TyphoonHQuickInterface.connectedSSID
+                                primary:    _selectedSSID !== "" && _selectedSSID != TyphoonHQuickInterface.connectedSSID
+                                onClicked: {
+                                    passwordDialog.visible = true
+                                }
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
                         Item {
                             width:      1
                             height:     TyphoonHQuickInterface.ssidList.length > 0 ? ScreenTools.defaultFontPixelHeight : 0
+                        }
+                        Item {
+                            width:      wifiStatusLabel.width
+                            height:     wifiStatusLabel.height * 2
+                            visible:    wifiStatusLabel.text !== ""
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            QGCLabel {
+                                id:             wifiStatusLabel
+                                text:           getWiFiStatus()
+                                anchors.centerIn: parent
+                            }
                         }
                         Repeater {
                             model:          TyphoonHQuickInterface.ssidList
@@ -175,4 +203,91 @@ QGCView {
             }
         }
     }
+
+    Rectangle {
+        id:         authErrorDialog
+        width:      badPpwdCol.width  * 1.5
+        height:     badPpwdCol.height * 1.5
+        radius:     ScreenTools.defaultFontPixelWidth * 0.5
+        color:      qgcPal.window
+        visible:    false
+        border.color: qgcPal.text
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        Keys.onBackPressed: {
+            authErrorDialog.visible = false
+        }
+        Column {
+            id:         badPpwdCol
+            spacing:    ScreenTools.defaultFontPixelHeight
+            anchors.centerIn: parent
+            QGCLabel {
+                text:   qsTr("Invalid ") + _telemetryText + qsTr(" Password")
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCButton {
+                text:       qsTr("Close")
+                width:      _labelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked:  {
+                    authErrorDialog.visible = false
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id:         passwordDialog
+        width:      pwdCol.width  * 1.25
+        height:     pwdCol.height * 1.25
+        radius:     ScreenTools.defaultFontPixelWidth * 0.5
+        color:      qgcPal.window
+        visible:    false
+        border.color: qgcPal.text
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        Keys.onBackPressed: {
+            passwordDialog.visible = false
+        }
+        Column {
+            id:         pwdCol
+            spacing:    ScreenTools.defaultFontPixelHeight
+            anchors.centerIn: parent
+            QGCLabel {
+                text:   qsTr("Please enter password for ") + _selectedSSID
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCTextField {
+                id:         passwordField
+                echoMode:   TextInput.Password
+                width:      ScreenTools.defaultFontPixelWidth * 20
+                focus:      true
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth * 4
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCButton {
+                    text:       qsTr("Ok")
+                    width:      _labelWidth
+                    enabled:    passwordField.text.length > 7
+                    onClicked:  {
+                        Qt.inputMethod.hide();
+                        TyphoonHQuickInterface.bindWIFI(_selectedSSID, passwordField.text)
+                        _selectedSSID = ""
+                        passwordDialog.visible = false
+                    }
+                }
+                QGCButton {
+                    text:       qsTr("Cancel")
+                    width:      _labelWidth
+                    onClicked:  {
+                        Qt.inputMethod.hide();
+                        passwordDialog.visible = false
+                    }
+                }
+            }
+        }
+    }
+
 }
