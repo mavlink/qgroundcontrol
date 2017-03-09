@@ -189,11 +189,11 @@
         <file alias="Vehicle/VibrationFact.json">src/Vehicle/VibrationFact.json</file>
         <file alias="App.SettingsGroup.json">src/Settings/App.SettingsGroup.json</file>
         <file alias="AutoConnect.SettingsGroup.json">src/Settings/AutoConnect.SettingsGroup.json</file>
+        <file alias="Survey.SettingsGroup.json">src/MissionManager/Survey.SettingsGroup.json</file>
         <file alias="Units.SettingsGroup.json">src/Settings/Units.SettingsGroup.json</file>
         <file alias="Video.SettingsGroup.json">src/Settings/Video.SettingsGroup.json</file>
         <file alias="RallyPoint.FactMetaData.json">src/MissionManager/RallyPoint.FactMetaData.json</file>
         <file alias="FWLandingPattern.FactMetaData.json">src/MissionManager/FWLandingPattern.FactMetaData.json</file>
-        <file alias="Survey.FactMetaData.json">src/MissionManager/Survey.FactMetaData.json</file>
         <file alias="USBBoardInfo.json">src/comm/USBBoardInfo.json</file>
         <file alias="Vehicle/TemperatureFact.json">src/Vehicle/TemperatureFact.json</file>
     </qresource>

@@ -39,12 +39,16 @@ Rectangle {
             _cameraList.push(_vehicle.cameraList[i].name)
         }
         gridTypeCombo.model = _cameraList
-        if (missionItem.manualGrid) {
+        if (missionItem.manualGrid.value) {
             gridTypeCombo.currentIndex = _gridTypeManual
         } else {
-            var index = gridTypeCombo.find(missionItem.camera)
+            var index = -1
+            for (index=0; index<_cameraList.length; index++) {
+                if (_cameraList[index] == missionItem.camera.value) {
+                    break;
+                }
+            }
             if (index == -1) {
-                console.log("Couldn't find camera", missionItem.camera)
                 gridTypeCombo.currentIndex = _gridTypeManual
             } else {
                 gridTypeCombo.currentIndex = index
@@ -73,13 +77,13 @@ Rectangle {
         var gridSpacing
         var cameraTriggerDistance
 
-        if (missionItem.fixedValueIsAltitude) {
+        if (missionItem.fixedValueIsAltitude.value) {
             groundResolution = (altitude * sensorWidth * 100) / (imageWidth * focalLength)
         } else {
             altitude = (imageWidth * groundResolution * focalLength) / (sensorWidth * 100)
         }
 
-        if (cameraOrientationLandscape.checked) {
+        if (missionItem.cameraOrientationLandscape.value) {
             imageSizeSideGround  = (imageWidth  * groundResolution) / 100
             imageSizeFrontGround = (imageHeight * groundResolution) / 100
         } else {
@@ -90,7 +94,7 @@ Rectangle {
         gridSpacing = imageSizeSideGround * ( (100-sideOverlap) / 100 )
         cameraTriggerDistance = imageSizeFrontGround * ( (100-frontalOverlap) / 100 )
 
-        if (missionItem.fixedValueIsAltitude) {
+        if (missionItem.fixedValueIsAltitude.value) {
             missionItem.groundResolution.rawValue = groundResolution
         } else {
             missionItem.gridAltitude.rawValue = altitude
@@ -98,48 +102,6 @@ Rectangle {
         missionItem.gridSpacing.rawValue = gridSpacing
         missionItem.cameraTriggerDistance.rawValue = cameraTriggerDistance
     }
-
-    /*
-    function recalcFromMissionValues() {
-        var focalLength = missionItem.cameraFocalLength.rawValue
-        var sensorWidth = missionItem.cameraSensorWidth.rawValue
-        var sensorHeight = missionItem.cameraSensorHeight.rawValue
-        var imageWidth = missionItem.cameraResolutionWidth.rawValue
-        var imageHeight = missionItem.cameraResolutionHeight.rawValue
-
-        var altitude = missionItem.gridAltitude.rawValue
-        var gridSpacing = missionItem.gridSpacing.rawValue
-        var cameraTriggerDistance = missionItem.cameraTriggerDistance.rawValue
-
-        if (focalLength <= 0.0 || sensorWidth <= 0.0 || sensorHeight <= 0.0 || imageWidth < 0 || imageHeight < 0 || altitude < 0.0 || gridSpacing < 0.0 || cameraTriggerDistance < 0.0) {
-            missionItem.groundResolution.rawValue = 0
-            missionItem.sideOverlap = 0
-            missionItem.frontalOverlap = 0
-            return
-        }
-
-        var groundResolution
-        var imageSizeSideGround     //size in side (non flying) direction of the image on the ground
-        var imageSizeFrontGround    //size in front (flying) direction of the image on the ground
-
-        groundResolution = (altitude * sensorWidth * 100) / (imageWidth * focalLength)
-
-        if (cameraOrientationLandscape.checked) {
-            imageSizeSideGround = (imageWidth * gsd) / 100
-            imageSizeFrontGround = (imageHeight * gsd) / 100
-        } else {
-            imageSizeSideGround = (imageHeight * gsd) / 100
-            imageSizeFrontGround = (imageWidth * gsd) / 100
-        }
-
-        var sideOverlap = (imageSizeSideGround == 0 ? 0 : 100 - (gridSpacing*100 / imageSizeSideGround))
-        var frontOverlap = (imageSizeFrontGround == 0 ? 0 : 100 - (cameraTriggerDistance*100 / imageSizeFrontGround))
-
-        missionItem.groundResolution.rawValue = groundResolution
-        missionItem.sideOverlap.rawValue = sideOverlap
-        missionItem.frontalOverlap.rawValue = frontOverlap
-    }
-    */
 
     function polygonCaptureStarted() {
         missionItem.clearPolygon()
@@ -163,12 +125,6 @@ Rectangle {
     Connections {
         target: missionItem
 
-        onCameraValueChanged: {
-            if (gridTypeCombo.currentIndex >= _gridTypeCustomCamera && !_noCameraValueRecalc) {
-                recalcFromCameraValues()
-            }
-        }
-
         onIsCurrentItemChanged: {
             if (!missionItem.isCurrentItem) {
                 polygonEditor.cancelPolygonEdit()
@@ -177,10 +133,20 @@ Rectangle {
     }
 
     Connections {
+        target: missionItem.camera
+
+        onValueChanged: {
+            if (gridTypeCombo.currentIndex >= _gridTypeCustomCamera && !_noCameraValueRecalc) {
+                recalcFromCameraValues()
+            }
+        }
+    }
+
+    Connections {
         target: missionItem.gridAltitude
 
         onValueChanged: {
-            if (gridTypeCombo.currentIndex >= _gridTypeCustomCamera && missionItem.fixedValueIsAltitude && !_noCameraValueRecalc) {
+            if (gridTypeCombo.currentIndex >= _gridTypeCustomCamera && missionItem.fixedValueIsAltitude.value && !_noCameraValueRecalc) {
                 recalcFromCameraValues()
             }
         }
@@ -217,13 +183,13 @@ Rectangle {
 
             onActivated: {
                 if (index == _gridTypeManual) {
-                    missionItem.manualGrid = true
+                    missionItem.manualGrid.value = true
                 } else if (index == _gridTypeCustomCamera) {
-                    missionItem.manualGrid = false
-                    missionItem.camera = gridTypeCombo.textAt(index)
+                    missionItem.manualGrid.value = false
+                    missionItem.camera.value = gridTypeCombo.textAt(index)
                 } else {
-                    missionItem.manualGrid = false
-                    missionItem.camera = gridTypeCombo.textAt(index)
+                    missionItem.manualGrid.value = false
+                    missionItem.camera.value = gridTypeCombo.textAt(index)
                     _noCameraValueRecalc = true
                     var listIndex = index - _gridTypeCamera
                     missionItem.cameraSensorWidth.rawValue      = _vehicleCameraList[listIndex].sensorWidth
@@ -259,17 +225,19 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 QGCRadioButton {
-                    id:             cameraOrientationLandscape
                     width:          _editFieldWidth
                     text:           "Landscape"
-                    checked:        true
+                    checked:        missionItem.cameraOrientationLandscape.value == 1
                     exclusiveGroup: cameraOrientationGroup
+                    onClicked:      missionItem.cameraOrientationLandscape.value = 1
                 }
 
                 QGCRadioButton {
                     id:             cameraOrientationPortrait
                     text:           "Portrait"
+                    checked:        missionItem.cameraOrientationLandscape.value == 0
                     exclusiveGroup: cameraOrientationGroup
+                    onClicked:      missionItem.cameraOrientationLandscape.value = 0
                 }
             }
 
@@ -428,9 +396,9 @@ Rectangle {
                 QGCRadioButton {
                     id:                     fixedAltitudeRadio
                     text:                   qsTr("Altitude:")
-                    checked:                missionItem.fixedValueIsAltitude
+                    checked:                missionItem.fixedValueIsAltitude.value
                     exclusiveGroup:         fixedValueGroup
-                    onClicked:              missionItem.fixedValueIsAltitude = true
+                    onClicked:              missionItem.fixedValueIsAltitude.value = 1
                     Layout.fillWidth:       true
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -451,9 +419,9 @@ Rectangle {
                 QGCRadioButton {
                     id:                     fixedGroundResolutionRadio
                     text:                   qsTr("Ground res:")
-                    checked:                !missionItem.fixedValueIsAltitude
+                    checked:                !missionItem.fixedValueIsAltitude.value
                     exclusiveGroup:         fixedValueGroup
-                    onClicked:              missionItem.fixedValueIsAltitude = false
+                    onClicked:              missionItem.fixedValueIsAltitude.value = 0
                     Layout.fillWidth:       true
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -491,11 +459,10 @@ Rectangle {
                 factList:       [ missionItem.gridAngle, missionItem.gridSpacing, missionItem.gridAltitude, missionItem.turnaroundDist ]
             }
 
-            QGCCheckBox {
+            FactCheckBox {
                 anchors.left:   parent.left
                 text:           qsTr("Relative altitude")
-                checked:        missionItem.gridAltitudeRelative
-                onClicked:      missionItem.gridAltitudeRelative = checked
+                fact:           missionItem.gridAltitudeRelative
             }
 
             QGCLabel { text: qsTr("Camera") }
@@ -512,19 +479,17 @@ Rectangle {
                 anchors.right:  parent.right
                 spacing:        _margin
 
-                QGCCheckBox {
-                    id:                 cameraTrigger
+                FactCheckBox {
                     anchors.baseline:   cameraTriggerDistanceField.baseline
                     text:               qsTr("Trigger Distance:")
-                    checked:            missionItem.cameraTrigger
-                    onClicked:          missionItem.cameraTrigger = checked
+                    fact:               missionItem.cameraTrigger
                 }
 
                 FactTextField {
                     id:                 cameraTriggerDistanceField
                     Layout.fillWidth:   true
                     fact:               missionItem.cameraTriggerDistance
-                    enabled:            missionItem.cameraTrigger
+                    enabled:            missionItem.cameraTrigger.value
                 }
             }
         }
