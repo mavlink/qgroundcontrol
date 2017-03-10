@@ -73,9 +73,6 @@ public:
 
     Q_PROPERTY(QString qgcVersion READ qgcVersion CONSTANT)
 
-    Q_PROPERTY(bool showTouchAreas MEMBER _showTouchAreas NOTIFY showTouchAreasChanged)
-    Q_PROPERTY(bool showAdvancedUI MEMBER _showAdvancedUI NOTIFY showAdvancedUIChanged)
-
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
@@ -156,9 +153,6 @@ public:
 
     QString qgcVersion(void) const { return qgcApp()->applicationVersion(); }
 
-    bool showTouchAreas(void) const { return _showTouchAreas; } ///< Show visible extents of touch areas
-    bool showAdvancedUI(void) const { return _showAdvancedUI; } ///< Show hidden advanced UI
-
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
 
@@ -168,8 +162,6 @@ signals:
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
-    void showTouchAreasChanged          (bool showTouchAreas);
-    void showAdvancedUIChanged          (bool showAdvancedUI);
 
 private:
     FlightMapSettings*      _flightMapSettings;
@@ -186,9 +178,6 @@ private:
 
     QGeoCoordinate          _flightMapPosition;
     double                  _flightMapZoom;
-
-    bool                    _showTouchAreas;
-    bool                    _showAdvancedUI;
 };
 
 #endif
