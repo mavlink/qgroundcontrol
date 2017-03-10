@@ -14,7 +14,6 @@ OSXDIR=/tmp/$QT_DIR
 XCODEVER=`xcodebuild -version 2>&1 | (head -n1) | awk  '{print $2}'`
 echo "Testing Xcode version: $XCODEVER"
 MAJVER=${XCODEVER:0:1}
-echo "Major version is: $MAJVER"
 if [ X"$TRAVIS_BUILD_DIR" == "X" ]; then
     echo "Missing TRAVIS_BUILD_DIR configuration variable"
     exit 1
