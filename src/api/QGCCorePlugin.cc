@@ -36,6 +36,7 @@ public:
         , defaultOptions(NULL)
     {
     }
+
     ~QGCCorePlugin_p()
     {
         if(pGeneral)
@@ -57,6 +58,7 @@ public:
         if(defaultOptions)
             delete defaultOptions;
     }
+
     QGCSettings* pGeneral;
     QGCSettings* pCommLinks;
     QGCSettings* pOfflineMaps;
@@ -79,6 +81,8 @@ QGCCorePlugin::~QGCCorePlugin()
 
 QGCCorePlugin::QGCCorePlugin(QGCApplication *app)
     : QGCTool(app)
+    , _showTouchAreas(false)
+    , _showAdvancedUI(false)
 {
     _p = new QGCCorePlugin_p;
 }
@@ -91,7 +95,7 @@ void QGCCorePlugin::setToolbox(QGCToolbox *toolbox)
    qmlRegisterUncreatableType<QGCOptions>("QGroundControl.QGCOptions",       1, 0, "QGCOptions",    "Reference only");
 }
 
-QVariantList &QGCCorePlugin::settings()
+QVariantList &QGCCorePlugin::settingsPages()
 {
     //-- If this hasn't been overridden, create default set of settings
     if(!_p->pGeneral) {
