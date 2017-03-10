@@ -74,9 +74,9 @@ Rectangle {
             console.log("easter egg click", ++_clickCount)
             eggTimer.restart()
             if (_clickCount == 5) {
-                QGroundControl.showAdvancedUI = true
+                QGroundControl.corePlugin.showAdvancedUI = true
             } else if (_clickCount == 7) {
-                QGroundControl.showTouchAreas = true
+                QGroundControl.corePlugin.showTouchAreas = true
             }
         }
 

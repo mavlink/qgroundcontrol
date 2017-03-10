@@ -7,13 +7,9 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief Setup View
-///     @author Don Gagne <don@thegagnes.com>
-
 import QtQuick          2.3
 import QtQuick.Controls 1.2
+import QtQuick.Layouts  1.2
 
 import QGroundControl                       1.0
 import QGroundControl.AutoPilotPlugin       1.0
@@ -217,35 +213,9 @@ Rectangle {
         flickableDirection: Flickable.VerticalFlick
         clip:               true
 
-        Column {
+        ColumnLayout {
             id:         buttonColumn
-            width:      _maxButtonWidth
             spacing:    _defaultTextHeight / 2
-
-            property real _maxButtonWidth: 0
-
-            Component.onCompleted: reflowWidths()
-
-            Connections {
-                target: componentRepeater
-                onModelChanged: buttonColumn.reflowWidths()
-            }
-
-            // I don't know why this does not work
-            Connections {
-                target:         QGroundControl.settingsManager.appSettings.appFontPointSize
-                onValueChanged: buttonColumn.reflowWidths()
-            }
-
-            function reflowWidths() {
-                buttonColumn._maxButtonWidth = 0
-                for (var i = 0; i < children.length; i++) {
-                    buttonColumn._maxButtonWidth = Math.max(buttonColumn._maxButtonWidth, children[i].width)
-                }
-                for (var j = 0; j < children.length; j++) {
-                    children[j].width = buttonColumn._maxButtonWidth
-                }
-            }
 
             QGCLabel {
                 anchors.left:           parent.left
@@ -257,56 +227,62 @@ Rectangle {
             }
 
             Repeater {
-                model:              QGroundControl.corePlugin.settings
+                model:              QGroundControl.corePlugin.settingsPages
                 visible:            QGroundControl.corePlugin.options.combineSettingsAndSetup
                 SubMenuButton {
-                    imageResource:  modelData.icon
-                    setupIndicator: false
-                    exclusiveGroup: setupButtonGroup
-                    text:           modelData.title
-                    visible:        QGroundControl.corePlugin.options.combineSettingsAndSetup
-                    onClicked:      panelLoader.setSource(modelData.url)
+                    imageResource:      modelData.icon
+                    setupIndicator:     false
+                    exclusiveGroup:     setupButtonGroup
+                    text:               modelData.title
+                    visible:            QGroundControl.corePlugin.options.combineSettingsAndSetup
+                    onClicked:          panelLoader.setSource(modelData.url)
+                    Layout.fillWidth:   true
                 }
             }
 
             SubMenuButton {
-                id:             summaryButton
-                imageResource: "/qmlimages/VehicleSummaryIcon.png"
-                setupIndicator: false
-                checked:        true
-                exclusiveGroup: setupButtonGroup
-                text:           "Summary"
+                id:                 summaryButton
+                imageResource:      "/qmlimages/VehicleSummaryIcon.png"
+                setupIndicator:     false
+                checked:            true
+                exclusiveGroup:     setupButtonGroup
+                text:               "Summary"
+                Layout.fillWidth:   true
 
                 onClicked: showSummaryPanel()
             }
 
             SubMenuButton {
-                id:             firmwareButton
-                imageResource:  "/qmlimages/FirmwareUpgradeIcon.png"
-                setupIndicator: false
-                exclusiveGroup: setupButtonGroup
-                visible:        !ScreenTools.isMobile
-                text:           "Firmware"
+                id:                 firmwareButton
+                imageResource:      "/qmlimages/FirmwareUpgradeIcon.png"
+                setupIndicator:     false
+                exclusiveGroup:     setupButtonGroup
+                visible:            !ScreenTools.isMobile
+                text:               "Firmware"
+                Layout.fillWidth:   true
 
                 onClicked: showFirmwarePanel()
             }
 
             SubMenuButton {
-                id:             px4FlowButton
-                exclusiveGroup: setupButtonGroup
-                visible:        QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.genericFirmware : false
-                setupIndicator: false
-                text:           "PX4Flow"
+                id:                 px4FlowButton
+                exclusiveGroup:     setupButtonGroup
+                visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.genericFirmware : false
+                setupIndicator:     false
+                text:               "PX4Flow"
+                Layout.fillWidth:   true
+
                 onClicked:      showPX4FlowPanel()
             }
 
             SubMenuButton {
-                id:             joystickButton
-                setupIndicator: true
-                setupComplete:  joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
-                exclusiveGroup: setupButtonGroup
-                visible:        _fullParameterVehicleAvailable && joystickManager.joysticks.length != 0
-                text:           "Joystick"
+                id:                 joystickButton
+                setupIndicator:     true
+                setupComplete:      joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
+                exclusiveGroup:     setupButtonGroup
+                visible:            _fullParameterVehicleAvailable && joystickManager.joysticks.length != 0
+                text:               "Joystick"
+                Layout.fillWidth:   true
 
                 onClicked: showJoystickPanel()
             }
@@ -316,22 +292,24 @@ Rectangle {
                 model:  _fullParameterVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
 
                 SubMenuButton {
-                    imageResource:  modelData.iconResource
-                    setupIndicator: modelData.requiresSetup
-                    setupComplete:  modelData.setupComplete
-                    exclusiveGroup: setupButtonGroup
-                    text:           modelData.name
-                    visible:        modelData.setupSource.toString() != ""
+                    imageResource:      modelData.iconResource
+                    setupIndicator:     modelData.requiresSetup
+                    setupComplete:      modelData.setupComplete
+                    exclusiveGroup:     setupButtonGroup
+                    text:               modelData.name
+                    visible:            modelData.setupSource.toString() != ""
+                    Layout.fillWidth:   true
 
                     onClicked: showVehicleComponentPanel(modelData)
                 }
             }
 
             SubMenuButton {
-                setupIndicator: false
-                exclusiveGroup: setupButtonGroup
-                visible:        QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable
-                text:           "Parameters"
+                setupIndicator:     false
+                exclusiveGroup:     setupButtonGroup
+                visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable
+                text:               "Parameters"
+                Layout.fillWidth:   true
 
                 onClicked: showParametersPanel()
             }
