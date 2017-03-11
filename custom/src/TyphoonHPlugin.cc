@@ -114,6 +114,7 @@ TyphoonHOptions::instrumentWidget()
 //-----------------------------------------------------------------------------
 TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
     : QGCCorePlugin(app)
+    , _pOptions(NULL)
     , _pTyphoonSettings(NULL)
     , _pGeneral(NULL)
     , _pOfflineMaps(NULL)
@@ -121,10 +122,12 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
 #if defined (QT_DEBUG)
     , _pMockLink(NULL)
 #endif
+    , _pConsole(NULL)
     , _pHandler(NULL)
 {
     _pOptions = new TyphoonHOptions(this);
     _pHandler = new TyphoonHM4Interface();
+    connect(this, &QGCCorePlugin::showAdvancedUIChanged, this, &TyphoonHPlugin::_showAdvancedPages);
 }
 
 //-----------------------------------------------------------------------------
@@ -144,6 +147,8 @@ TyphoonHPlugin::~TyphoonHPlugin()
     if(_pMockLink)
         delete _pMockLink;
 #endif
+    if(_pConsole)
+        delete _pConsole;
     if(_pHandler)
         delete _pHandler;
 }
@@ -170,35 +175,58 @@ TyphoonHPlugin::options()
 
 //-----------------------------------------------------------------------------
 QVariantList&
-TyphoonHPlugin::settings()
+TyphoonHPlugin::settingsPages()
 {
     if(_settingsList.size() == 0) {
         //-- If this is the first time, build our own setting
-        _pGeneral = new QGCSettings(tr("General"),
-            QUrl::fromUserInput("qrc:/qml/GeneralSettings.qml"),
-            QUrl::fromUserInput("qrc:/res/gear-white.svg"));
+        if(!_pGeneral) {
+            _pGeneral = new QGCSettings(tr("General"),
+                QUrl::fromUserInput("qrc:/qml/GeneralSettings.qml"),
+                QUrl::fromUserInput("qrc:/res/gear-white.svg"));
+        }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pGeneral));
-        _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
-            QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
-        QUrl::fromUserInput("qrc:/typhoonh/mapIcon.svg"));
+        if(!_pOfflineMaps) {
+            _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
+                QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
+                QUrl::fromUserInput("qrc:/typhoonh/mapIcon.svg"));
+        }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
-        _pMAVLink = new QGCSettings(tr("MAVLink"),
-            QUrl::fromUserInput("qrc:/qml/MavlinkSettings.qml"),
-            QUrl::fromUserInput("qrc:/res/waves.svg"));
-        _settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
-        _pTyphoonSettings = new QGCSettings(tr("Typhoon H"),
-           QUrl::fromUserInput("qrc:/typhoonh/TyphoonSettings.qml"),
-           QUrl::fromUserInput("qrc:/typhoonh/logoWhite.svg"));
+        if (_showAdvancedUI) {
+            if(!_pMAVLink) {
+                _pMAVLink = new QGCSettings(tr("MAVLink"),
+                    QUrl::fromUserInput("qrc:/qml/MavlinkSettings.qml"),
+                    QUrl::fromUserInput("qrc:/res/waves.svg"));
+            }
+            _settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
+        }
+        if(!_pTyphoonSettings) {
+            _pTyphoonSettings = new QGCSettings(tr("Typhoon H"),
+                QUrl::fromUserInput("qrc:/typhoonh/TyphoonSettings.qml"),
+                QUrl::fromUserInput("qrc:/typhoonh/logoWhite.svg"));
+        }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
 #ifdef QT_DEBUG
-        _pMockLink = new QGCSettings(tr("MockLink"),
-            QUrl::fromUserInput("qrc:/qml/MockLink.qml"),
-            QUrl::fromUserInput("qrc:/res/gear-white.svg"));
+        if(!_pMockLink) {
+            _pMockLink = new QGCSettings(tr("MockLink"),
+                QUrl::fromUserInput("qrc:/qml/MockLink.qml"),
+                QUrl::fromUserInput("qrc:/res/gear-white.svg"));
+        }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pMockLink));
-        _pConsole = new QGCSettings(tr("Console"),
-            QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/AppMessages.qml"),
-            QUrl::fromUserInput("qrc:/res/gear-white.svg"));
+        if(!_pConsole) {
+            _pConsole = new QGCSettings(tr("Console"),
+                QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/AppMessages.qml"),
+                QUrl::fromUserInput("qrc:/res/gear-white.svg"));
+        }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pConsole));
+#else
+        if (_showAdvancedUI) {
+            if(!_pConsole) {
+                _pConsole = new QGCSettings(tr("Console"),
+                    QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/AppMessages.qml"),
+                    QUrl::fromUserInput("qrc:/res/gear-white.svg"));
+            }
+            _settingsList.append(QVariant::fromValue((QGCSettings*)_pConsole));
+        }
 #endif
     }
     return _settingsList;
@@ -210,11 +238,18 @@ TyphoonHPlugin::overrideSettingsGroupVisibility(QString name)
     if (name == VideoSettings::videoSettingsGroupName || name == AutoConnectSettings::autoConnectSettingsGroupName) {
         return false;
     }
-
     return true;
 }
 
-bool TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
+void
+TyphoonHPlugin::_showAdvancedPages(void)
+{
+    _settingsList.clear();
+    emit settingsPagesChanged();
+}
+
+bool
+TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
 {
     if (metaData.name() == VideoSettings::videoSourceName) {
         metaData.setRawDefaultValue(VideoSettings::videoSourceRTSP);
@@ -238,6 +273,5 @@ bool TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(defaultFontPointSize);
         return false;
     }
-
     return true;
 }

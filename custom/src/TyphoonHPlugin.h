@@ -20,16 +20,19 @@ public:
     TyphoonHPlugin(QGCApplication* app);
     ~TyphoonHPlugin();
 
-    TyphoonHM4Interface*   handler                         () { return _pHandler; }
+    TyphoonHM4Interface*   handler                      () { return _pHandler; }
 
     // Overrides from QGCCorePlugin
     QGCOptions*         options                         () final;
-    QVariantList&       settings                        () final;
+    QVariantList&       settingsPages                   () final;
     bool                overrideSettingsGroupVisibility (QString name) final;
     bool                adjustSettingMetaData           (FactMetaData& metaData) final;
 
     // Overrides from QGCTool
-    void                setToolbox          (QGCToolbox* toolbox);
+    void                setToolbox                      (QGCToolbox* toolbox);
+
+private slots:
+    void                _showAdvancedPages              ();
 
 private:
     TyphoonHOptions*    _pOptions;
@@ -39,8 +42,8 @@ private:
     QGCSettings*        _pMAVLink;
 #ifdef QT_DEBUG
     QGCSettings*        _pMockLink;
-    QGCSettings*        _pConsole;
 #endif
+    QGCSettings*        _pConsole;
     QVariantList        _settingsList;
-    TyphoonHM4Interface*   _pHandler;
+    TyphoonHM4Interface*_pHandler;
 };
