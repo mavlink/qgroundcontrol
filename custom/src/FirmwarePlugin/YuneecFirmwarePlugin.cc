@@ -11,6 +11,7 @@
 
 const char* YuneecFirmwarePlugin::_simpleFlightMode =   "Smart";
 const char* YuneecFirmwarePlugin::_posCtlFlightMode =   "Angle";
+const char* YuneecFirmwarePlugin::_rtlFlightMode =      "RTL";
 
 QVariantList YuneecFirmwarePlugin::_cameraList;
 
@@ -18,16 +19,14 @@ YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
 {
     //  The following flight modes are renamed:
     //      Simple -> Smart
-    //      POSCTL -> Angle
+    //      Position -> Angle
+    //      Return -> RTL
 
     // Only the following flight modes are user selectable:
-    //      Manual
-    //      Stablized
     //      Simple
-    //      Angle
+    //      Position
+    //      Return
     //      Mission
-
-    // FIXME: Need clarification between Manual and Stabilized
 
     for (int i=0; i<_flightModeInfoList.count(); i++) {
         FlightModeInfo_t& info = _flightModeInfoList[i];
@@ -35,10 +34,10 @@ YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
             info.name = YuneecFirmwarePlugin::_simpleFlightMode;
         } else if (info.name == PX4FirmwarePlugin::_posCtlFlightMode) {
             info.name = YuneecFirmwarePlugin::_posCtlFlightMode;
-        } else if (info.name != PX4FirmwarePlugin::_manualFlightMode &&
-                   info.name != PX4FirmwarePlugin::_stabilizedFlightMode &&
-                   info.name != PX4FirmwarePlugin::_missionFlightMode) {
-            // Not a user selectable flight mode
+        } else if (info.name == PX4FirmwarePlugin::_rtlFlightMode) {
+            info.name = YuneecFirmwarePlugin::_rtlFlightMode;
+        } else if (info.name != PX4FirmwarePlugin::_missionFlightMode) {
+            // No other flight modes can be set
             info.canBeSet = false;
         }
     }
