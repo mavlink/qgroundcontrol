@@ -125,6 +125,7 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
     , _pConsole(NULL)
     , _pHandler(NULL)
 {
+    _showAdvanced = false;
     _pOptions = new TyphoonHOptions(this);
     _pHandler = new TyphoonHM4Interface();
     connect(this, &QGCCorePlugin::showAdvancedUIChanged, this, &TyphoonHPlugin::_showAdvancedPages);
