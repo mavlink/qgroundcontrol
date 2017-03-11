@@ -63,16 +63,21 @@ QT += \
     multimedia
 
 #-------------------------------------------------------------------------------------
-# Firmware Plugin
+# Firmware/AutoPilot Plugin
 
 INCLUDEPATH += \
-    $$PWD/src/FirmwarePlugin
+    $$PWD/src/FirmwarePlugin \
+    $$PWD/src/AutoPilotPlugin
 
 HEADERS+= \
+    $$PWD/src/AutoPilotPlugin/YuneecAutoPilotPlugin.h \
+    $$PWD/src/AutoPilotPlugin/YuneecSafetyComponent.h \
+    $$PWD/src/AutoPilotPlugin/YuneecSensorsComponent.h \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h
 
 SOURCES += \
+    $$PWD/src/AutoPilotPlugin/YuneecAutoPilotPlugin.cc \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.cc \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc
 
