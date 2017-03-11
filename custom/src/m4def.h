@@ -288,7 +288,10 @@ enum {
         COMMAND_M4_SEND_GPS_DATA_TO_PA  = 0xB6,
         ACTION_TYPE_RESPONSE            = 1,
         ACTION_TYPE_FEEDBACK            = 3,
-        ACTION_TYPE_ONEKEY_TAKEOFF      = 6
+        ACTION_TYPE_ONEKEY_TAKEOFF      = 6,
+
+        BUTTON_CAMERA_SHUTTER           = 53,
+        BUTTON_VIDEO_SHUTTER            = 54,
 
 };
 

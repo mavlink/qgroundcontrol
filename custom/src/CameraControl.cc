@@ -5,9 +5,9 @@
  *
  */
 
-#include "typhoonh.h"
-#include "m4.h"
-#include "camera.h"
+#include "TyphoonHPlugin.h"
+#include "TyphoonHM4Interface.h"
+#include "CameraControl.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 

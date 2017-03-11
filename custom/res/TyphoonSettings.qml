@@ -29,7 +29,7 @@ QGCView {
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
     property var  _selectedSSID:                ""
-    property var  _telemetryText:               qsTr("Telemetry/Video Connection")
+    property var  _telemetryText:               qsTr("Binding")
 
     ExclusiveGroup  { id: ssidGroup }
     QGCPalette      { id: qgcPal }
@@ -69,6 +69,7 @@ QGCView {
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 //-----------------------------------------------------------------
                 //-- RX/TX Bind
+                /* We are binding automatically now. Leaving it here for the time being.
                 Item {
                     width:              qgcView.width * 0.8
                     height:             rcBindLabel.height
@@ -112,6 +113,7 @@ QGCView {
                         }
                     }
                 }
+                */
                 //-----------------------------------------------------------------
                 //-- WIFI Bind
                 Item {

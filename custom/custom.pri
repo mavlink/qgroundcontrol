@@ -12,7 +12,7 @@ linux : android-g++ {
     DEFINES += __mobile__
 }
 
-DEFINES += CUSTOMHEADER=\"\\\"typhoonh.h\\\"\"
+DEFINES += CUSTOMHEADER=\"\\\"TyphoonHPlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=TyphoonHPlugin
 
 CONFIG  += NoSerialBuild
@@ -30,21 +30,28 @@ RESOURCES += \
     $$PWD/typhoonh.qrc \
 
 SOURCES += \
-    $$PWD/src/camera.cc \
-    $$PWD/src/m4.cc \
+    $$PWD/src/CameraControl.cc \
     $$PWD/src/m4serial.cc \
     $$PWD/src/m4util.cc \
-    $$PWD/src/typhoonh.cc \
+    $$PWD/src/TyphoonHM4Interface.cc \
+    $$PWD/src/TyphoonHPlugin.cc \
+    $$PWD/src/TyphoonHQuickInterface.cc \
+
+AndroidBuild {
+    SOURCES += \
+        $$PWD/src/TyphoonHJNI.cc \
+}
 
 HEADERS += \
-    $$PWD/src/camera.h \
-    $$PWD/src/m4.h \
+    $$PWD/src/CameraControl.h \
     $$PWD/src/m4channeldata.h \
-    $$PWD/src/m4common.h \
     $$PWD/src/m4def.h \
     $$PWD/src/m4serial.h \
     $$PWD/src/m4util.h \
-    $$PWD/src/typhoonh.h \
+    $$PWD/src/TyphoonHCommon.h \
+    $$PWD/src/TyphoonHM4Interface.h \
+    $$PWD/src/TyphoonHPlugin.h \
+    $$PWD/src/TyphoonHQuickInterface.h \
 
 INCLUDEPATH += \
     $$PWD/src \
