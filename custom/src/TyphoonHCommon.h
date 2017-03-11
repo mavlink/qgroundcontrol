@@ -1,5 +1,5 @@
 /*!
- *   @brief Typhoon H Plugin Declaration
+ *   @brief Common Qt Headers
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
@@ -7,6 +7,7 @@
 
 #include "QGCLoggingCategory.h"
 
+#include <QtGlobal>
 #include <QByteArray>
 #include <QDebug>
 #include <QMutex>
@@ -20,4 +21,5 @@
 #include <QNetworkReply>
 
 Q_DECLARE_LOGGING_CATEGORY(YuneecLog)
+Q_DECLARE_LOGGING_CATEGORY(YuneecLogVerbose)
 

@@ -126,7 +126,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
             mainWifi.disconnect();
             for( WifiConfiguration i : list ) {
                 if(i.SSID != null && !i.SSID.equals("\"" + ssid + "\"")) {
-                    mainWifi.disableNetwork(i.networkId);
+                    mainWifi.removeNetwork(i.networkId);
                 }
             }
             mainWifi.saveConfiguration();

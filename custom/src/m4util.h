@@ -1,13 +1,13 @@
 /*!
  * @file
- *   @brief ST16 Controller
+ *   @brief ST16 Controller Utilities
  *   @author Gus Grubba <mavlink@grubba.com>
  *
  */
 
 #pragma once
 
-#include "m4common.h"
+#include "TyphoonHCommon.h"
 #include "m4def.h"
 
 extern uint8_t crc8(uint8_t* buffer, int len);

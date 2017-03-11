@@ -1,10 +1,10 @@
 /*!
- *   @brief Typhoon H Plugin Implementation
+ *   @brief Typhoon H QGCCorePlugin Implementation
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#include "typhoonh.h"
-#include "m4.h"
+#include "TyphoonHPlugin.h"
+#include "TyphoonHM4Interface.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -13,9 +13,36 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 
-//-- From QGC. Needs to be in sync.
-const char* kMainIsMap = "MainFlyWindowIsMap";
-const char* kStyleKey  = "StyleIsDark";
+#if defined( __android__) && defined (QT_DEBUG)
+#include <android/log.h>
+//-----------------------------------------------------------------------------
+void
+myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    int prio = ANDROID_LOG_VERBOSE;
+    switch (type) {
+    case QtDebugMsg:
+        prio = ANDROID_LOG_DEBUG;
+        break;
+    case QtInfoMsg:
+        prio = ANDROID_LOG_INFO;
+        break;
+    case QtWarningMsg:
+        prio = ANDROID_LOG_WARN;
+        break;
+    case QtCriticalMsg:
+        prio = ANDROID_LOG_ERROR;
+        break;
+    case QtFatalMsg:
+        prio = ANDROID_LOG_FATAL;
+        break;
+    }
+    QString message;
+  //message.sprintf("(%s:%u, %s) %s", context.file, context.line, context.function, msg.toLatin1().data());
+    message.sprintf("(%u) %s", context.line, msg.toLatin1().data());
+    __android_log_write(prio, "QGCLog", message.toLatin1().data());
+}
+#endif
 
 //-----------------------------------------------------------------------------
 static QObject*
@@ -97,18 +124,7 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
     , _pHandler(NULL)
 {
     _pOptions = new TyphoonHOptions(this);
-    //-- Set our own "defaults"
-    QSettings settings;
-    //-- Make "Dark" style default
-    if(!settings.contains(kStyleKey)) {
-        settings.setValue(kStyleKey, true);
-    }
-    //-- Make sure Main View Is Video
-    settings.beginGroup("QGCQml");
-    if(!settings.contains(kMainIsMap)) {
-        settings.setValue(kMainIsMap, false);
-    }
-    _pHandler = new TyphoonM4Handler();
+    _pHandler = new TyphoonHM4Interface();
 }
 
 //-----------------------------------------------------------------------------
@@ -136,6 +152,9 @@ TyphoonHPlugin::~TyphoonHPlugin()
 void
 TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
 {
+#if defined( __android__) && defined (QT_DEBUG)
+    qInstallMessageHandler(myMessageOutput);
+#endif
     QGCCorePlugin::setToolbox(toolbox);
     qmlRegisterSingletonType<TyphoonHQuickInterface>("TyphoonHQuickInterface", 1, 0, "TyphoonHQuickInterface", typhoonHQuickInterfaceSingletonFactory);
     qmlRegisterUncreatableType<CameraControl>("QGroundControl.CameraControl", 1, 0, "CameraControl", "Reference only");

@@ -1,5 +1,5 @@
 /*!
- *   @brief Typhoon H Plugin Declaration
+ *   @brief Typhoon H QGCCorePlugin Declaration
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
@@ -9,7 +9,7 @@
 #include "QGCOptions.h"
 #include "QGCSettings.h"
 
-class TyphoonM4Handler;
+class TyphoonHM4Interface;
 class TyphoonHOptions;
 class TyphoonHSettings;
 
@@ -20,7 +20,7 @@ public:
     TyphoonHPlugin(QGCApplication* app);
     ~TyphoonHPlugin();
 
-    TyphoonM4Handler*   handler                         () { return _pHandler; }
+    TyphoonHM4Interface*   handler                         () { return _pHandler; }
 
     // Overrides from QGCCorePlugin
     QGCOptions*         options                         () final;
@@ -42,5 +42,5 @@ private:
     QGCSettings*        _pConsole;
 #endif
     QVariantList        _settingsList;
-    TyphoonM4Handler*   _pHandler;
+    TyphoonHM4Interface*   _pHandler;
 };

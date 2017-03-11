@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "m4common.h"
+#include "TyphoonHCommon.h"
 #include <termios.h>
 
 class M4SerialComm : public QThread
