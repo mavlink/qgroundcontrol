@@ -26,5 +26,5 @@ public:
     // Virtuals from VehicleComponent
 
     // No pre-reqs for Yuneec
-    virtual QString prerequisiteSetup(void) const final { return QString(); }
+    QString prerequisiteSetup(void) const final { return QString(); }
 };

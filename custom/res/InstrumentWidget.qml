@@ -95,7 +95,7 @@ Item {
         id:             mainRect
         width:          parent.width
         height:         instrumentColumn.height
-        radius:         8
+        radius:         _mainIsMap ? width * 0.5 : 8
         color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0.85,0.85,1,0.75) : Qt.rgba(0.15,0.15,0.25,0.75)
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? "white" : "black"
@@ -111,8 +111,15 @@ Item {
             spacing:    ScreenTools.defaultFontPixelHeight * 0.25
             anchors.verticalCenter: parent.verticalCenter
             Item {
-                height: _spacers
-                width:  1
+                height:     _spacers
+                width:      1
+                visible:    !_mainIsMap
+                onVisibleChanged: {
+                    if(!visible) {
+                        attitudeIndicator.visible = true
+                        compass.visible = false
+                    }
+                }
             }
             //-- Attitude Indicator
             AttitudeWidget {
@@ -123,7 +130,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 MouseArea {
                     anchors.fill:   parent
-                    enabled:        attitudeIndicator.visible
+                    enabled:        attitudeIndicator.visible && !_mainIsMap
                     onClicked: {
                         rootLoader.sourceComponent = null
                         attitudeIndicator.visible = false
@@ -192,11 +199,13 @@ Item {
                 height:         1
                 width:          parent.width * 0.9
                 color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
+                visible:        !_mainIsMap
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Item {
                 height: _spacers * 2
                 width:  1
+                visible:        !_mainIsMap
             }
             //-- Camera Mode
             Rectangle {
@@ -204,6 +213,7 @@ Item {
                 height:         ScreenTools.defaultFontPixelHeight * 2
                 radius:         width * 0.5
                 color:          "black"
+                visible:        !_mainIsMap
                 anchors.horizontalCenter: parent.horizontalCenter
                 Rectangle {
                     height:             parent.height
@@ -249,12 +259,14 @@ Item {
             Item {
                 height: _spacers * 2
                 width:  1
+                visible:        !_mainIsMap
             }
             Rectangle {
                 height:             ScreenTools.defaultFontPixelHeight * 4
                 width:              height
                 radius:             width * 0.5
                 color:              Qt.rgba(0.0,0.0,0.0,0.0)
+                visible:            !_mainIsMap
                 border.width:       1
                 border.color:       qgcPal.globalTheme === QGCPalette.Light ? "black" : "white"
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -344,14 +356,16 @@ Item {
             }
             */
             Item {
-                height: _spacers * 2
-                width:  1
+                height:     _spacers * 2
+                width:      1
+                visible:    !_mainIsMap
             }
             Rectangle {
                 height:             ScreenTools.defaultFontPixelHeight * 2.5
                 width:              height
                 radius:             width * 0.5
                 color:              Qt.rgba(0.0,0.0,0.0,0.0)
+                visible:            !_mainIsMap
                 border.width:       1
                 border.color:       qgcPal.globalTheme === QGCPalette.Light ? "black" : "white"
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -377,8 +391,15 @@ Item {
                 }
             }
             Item {
-                height: _spacers * 2
-                width:  1
+                height:     _spacers * 2
+                width:      1
+                visible:    !_mainIsMap
+            }
+            QGCCompassWidget {
+                size:           parent.width * 0.95
+                vehicle:        activeVehicle
+                visible:        _mainIsMap
+                anchors.horizontalCenter: parent.horizontalCenter
             }
         }
     }
