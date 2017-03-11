@@ -77,15 +77,3 @@ QUrl APMTuningComponent::summaryQmlSource(void) const
 {
     return QUrl();
 }
-
-QString APMTuningComponent::prerequisiteSetup(void) const
-{
-    APMAutoPilotPlugin* plugin = dynamic_cast<APMAutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    }
-
-    return QString();
-}

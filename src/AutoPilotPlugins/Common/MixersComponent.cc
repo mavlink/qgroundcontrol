@@ -55,8 +55,3 @@ QUrl MixersComponent::summaryQmlSource(void) const
 {
     return QUrl();
 }
-
-QString MixersComponent::prerequisiteSetup(void) const
-{
-    return QString();
-}

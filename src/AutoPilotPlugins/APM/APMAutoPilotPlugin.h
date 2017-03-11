@@ -40,28 +40,10 @@ public:
 
     // Overrides from AutoPilotPlugin
     const QVariantList& vehicleComponents(void) final;
+    QString prerequisiteSetup(VehicleComponent* component) const override;
 
-    APMAirframeComponent*       airframeComponent   (void) const { return _airframeComponent; }
-    APMCameraComponent*         cameraComponent     (void) const { return _cameraComponent; }
-    APMLightsComponent*         lightsComponent     (void) const { return _lightsComponent; }
-    APMSubFrameComponent*       subFrameComponent   (void) const { return _subFrameComponent; }
-    APMFlightModesComponent*    flightModesComponent(void) const { return _flightModesComponent; }
-    APMPowerComponent*          powerComponent      (void) const { return _powerComponent; }
-#if 0
-    // Temporarily removed, waiting for new command implementation
-    MotorComponent*             motorComponent      (void) const { return _motorComponent; }
-#endif
-    APMRadioComponent*          radioComponent      (void) const { return _radioComponent; }
-    APMSafetyComponent*         safetyComponent     (void) const { return _safetyComponent; }
-    APMSensorsComponent*        sensorsComponent    (void) const { return _sensorsComponent; }
-    APMTuningComponent*         tuningComponent     (void) const { return _tuningComponent; }
-    ESP8266Component*           esp8266Component    (void) const { return _esp8266Component; }
-    MixersComponent*            mixersComponent     (void)       { return _mixersComponent; }
-
-private:
-    bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
-    QVariantList            _components;
-
+protected:
+    bool                        _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
     APMAirframeComponent*       _airframeComponent;
     APMCameraComponent*         _cameraComponent;
     APMLightsComponent*         _lightsComponent;
@@ -79,6 +61,9 @@ private:
     APMAirframeLoader*          _airframeFacts;
     ESP8266Component*           _esp8266Component;
     MixersComponent*            _mixersComponent;
+
+private:
+    QVariantList                _components;
 };
 
 #endif

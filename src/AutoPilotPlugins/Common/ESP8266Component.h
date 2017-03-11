@@ -30,7 +30,6 @@ public:
     bool    setupComplete       () const;
     QUrl    setupSource         () const;
     QUrl    summaryQmlSource    () const;
-    QString prerequisiteSetup   () const;
     
 private:
     const QString   _name;

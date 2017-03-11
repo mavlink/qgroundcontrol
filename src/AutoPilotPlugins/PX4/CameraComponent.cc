@@ -61,8 +61,3 @@ QUrl CameraComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/CameraComponentSummary.qml");
 }
-
-QString CameraComponent::prerequisiteSetup(void) const
-{
-    return QString();
-}

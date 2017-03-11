@@ -403,6 +403,10 @@ bool MAVLinkProtocol::_closeLogFile(void)
 
 void MAVLinkProtocol::_startLogging(void)
 {
+    if (qgcApp()->runningUnitTests()) {
+        return;
+    }
+
     if (!_tempLogFile.isOpen()) {
         if (!_logSuspendReplay) {
             if (!_tempLogFile.open()) {
@@ -424,7 +428,6 @@ void MAVLinkProtocol::_startLogging(void)
 void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
-        // If the signals are not connected it means we are running a unit test. In that case just delete log files
         SettingsManager* settingsManager = _app->toolbox()->settingsManager();
         if ((_vehicleWasArmed || settingsManager->appSettings()->telemetrySaveNotArmed()->rawValue().toBool()) && settingsManager->appSettings()->telemetrySave()->rawValue().toBool()) {
             emit saveTelemetryLog(_tempLogFile.fileName());

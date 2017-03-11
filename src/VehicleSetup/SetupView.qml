@@ -90,8 +90,10 @@ Rectangle {
             _messagePanelText = _armedVehicleText
             panelLoader.setSourceComponent(messagePanelComponent)
         } else {
-            if (vehicleComponent.prerequisiteSetup != "") {
-                _messagePanelText = vehicleComponent.prerequisiteSetup + " setup must be completed prior to " + vehicleComponent.name + " setup."
+            var autopilotPlugin = QGroundControl.multiVehicleManager.activeVehicle.autopilot
+            var prereq = autopilotPlugin.prerequisiteSetup(vehicleComponent)
+            if (prereq != "") {
+                _messagePanelText = prereq + " setup must be completed prior to " + vehicleComponent.name + " setup."
                 panelLoader.setSourceComponent(messagePanelComponent)
             } else {
                 panelLoader.setSource(vehicleComponent.setupSource, vehicleComponent)

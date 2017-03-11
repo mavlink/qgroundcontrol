@@ -58,19 +58,3 @@ QUrl APMFlightModesComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMFlightModesComponentSummary.qml"));
 }
-
-QString APMFlightModesComponent::prerequisiteSetup(void) const
-{
-    APMAutoPilotPlugin* plugin = dynamic_cast<APMAutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    } else if (plugin->radioComponent() != NULL) {
-        if (!plugin->radioComponent()->setupComplete()) {
-            return plugin->radioComponent()->name();
-        }
-    }
-    
-    return QString();
-}
