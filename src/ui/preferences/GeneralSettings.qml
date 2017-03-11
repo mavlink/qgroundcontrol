@@ -37,6 +37,8 @@ QGCView {
     property Fact _appFontPointSize:            QGroundControl.settingsManager.appSettings.appFontPointSize
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
+    property Fact _telemPath:                   QGroundControl.settingsManager.appSettings.telemetrySavePath
+    property Fact _videoPath:                   QGroundControl.settingsManager.videoSettings.videoSavePath
 
     readonly property string _requiresRestart:  qsTr("(Requires Restart)")
 
@@ -205,26 +207,61 @@ QGCView {
 
                             property Fact _audioMuted: QGroundControl.settingsManager.appSettings.audioMuted
                         }
+
                         //-----------------------------------------------------------------
-                        //-- Prompt Save Log
+                        //-- Save telemetry log
                         FactCheckBox {
                             id:         promptSaveLog
-                            text:       qsTr("Prompt to save Flight Data Log after each flight")
-                            fact:       _promptFlightTelemetrySave
-                            visible:    !ScreenTools.isMobile && _promptFlightTelemetrySave.visible
+                            text:       qsTr("Save telemetry log after each flight")
+                            fact:       _telemetrySave
+                            visible:    !ScreenTools.isMobile && _telemetrySave.visible
 
-                            property Fact _promptFlightTelemetrySave: QGroundControl.settingsManager.appSettings.promptFlightTelemetrySave
+                            property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
                         }
+
                         //-----------------------------------------------------------------
-                        //-- Prompt Save even if not armed
+                        //-- Save even if not armed
                         FactCheckBox {
-                            text:       qsTr("Prompt to save Flight Data Log even if vehicle was not armed")
-                            fact:       _promptFlightTelemetrySaveNotArmed
-                            visible:    !ScreenTools.isMobile && _promptFlightTelemetrySaveNotArmed.visible
+                            text:       qsTr("Save telemetry log even if vehicle was not armed")
+                            fact:       _telemetrySaveNotArmed
+                            visible:    !ScreenTools.isMobile && _telemetrySaveNotArmed.visible
                             enabled:    promptSaveLog.checked
 
-                            property Fact _promptFlightTelemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.promptFlightTelemetrySaveNotArmed
+                            property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
                         }
+
+                        //-----------------------------------------------------------------
+                        //-- Telemetry save path
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.settingsManager.appSettings.telemetrySavePath.visible
+
+                            QGCLabel {
+                                anchors.baseline:   telemBrowse.baseline
+                                text:               qsTr("Telemetry save path:")
+                                enabled:            promptSaveLog.checked
+                            }
+                            QGCLabel {
+                                anchors.baseline:   telemBrowse.baseline
+                                text:               _telemPath.value == "" ? qsTr("<not set>") : _telemPath.value
+                                enabled:            promptSaveLog.checked
+                            }
+                            QGCButton {
+                                id:         telemBrowse
+                                text:       "Browse"
+                                enabled:    promptSaveLog.checked
+                                onClicked:  telemDialog.visible = true
+
+                                FileDialog {
+                                    id:             telemDialog
+                                    title:          "Choose a location to save telemetry files."
+                                    folder:         "file://" + _telemPath.value
+                                    selectFolder:   true
+                                    onAccepted:     _telemPath.value = QGroundControl.urlToLocalFile(telemDialog.fileUrl)
+                                }
+                            }
+                        }
+
                         //-----------------------------------------------------------------
                         //-- Clear settings
                         QGCCheckBox {
@@ -329,7 +366,7 @@ QGCView {
                                 FileDialog {
                                     id:             autoloadDirPicker
                                     title:          qsTr("Choose the location of mission file.")
-                                    folder:         shortcuts.home
+                                    folder:         "file://" + _autoLoadDir.value
                                     selectFolder:   true
                                     onAccepted:     _autoLoadDir.rawValue = QGroundControl.urlToLocalFile(autoloadDirPicker.fileUrl)
                                 }
@@ -529,26 +566,27 @@ QGCView {
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
                             visible:    QGroundControl.settingsManager.videoSettings.videoSavePath.visible && QGroundControl.videoManager.isGStreamer && QGroundControl.videoManager.recordingEnabled
+
                             QGCLabel {
-                                anchors.baseline:   pathField.baseline
-                                text:               qsTr("Save Path:")
-                                width:              _labelWidth
+                                anchors.baseline:   videoBrowse.baseline
+                                text:               qsTr("Save path:")
+                                enabled:            promptSaveLog.checked
                             }
-                            FactTextField {
-                                id:                 pathField
-                                width:              _editFieldWidth
-                                fact:               QGroundControl.settingsManager.videoSettings.videoSavePath
+                            QGCLabel {
+                                anchors.baseline:   videoBrowse.baseline
+                                text:               _videoPath.value == "" ? qsTr("<not set>") : _videoPath.value
                             }
                             QGCButton {
+                                id:         videoBrowse
                                 text:       "Browse"
-                                onClicked:  videoLocationFileDialog.visible = true
+                                onClicked:  videoDialog.visible = true
 
                                 FileDialog {
-                                    id:             videoLocationFileDialog
+                                    id:             videoDialog
                                     title:          "Choose a location to save video files."
-                                    folder:         shortcuts.home
+                                    folder:         "file://" + _videoPath.value
                                     selectFolder:   true
-                                    onAccepted:     QGroundControl.settingsManager.videoSettings.videoSavePath.value = QGroundControl.urlToLocalFile(videoLocationFileDialog.fileUrl)
+                                    onAccepted:     _videoPath.value = QGroundControl.urlToLocalFile(videoDialog.fileUrl)
                                 }
                             }
                         }

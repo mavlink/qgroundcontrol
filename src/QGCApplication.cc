@@ -1,4 +1,4 @@
- /****************************************************************************
+/****************************************************************************
  *
  *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
@@ -82,19 +82,19 @@
 #include "SettingsManager.h"
 
 #ifndef NO_SERIAL_LINK
-    #include "SerialLink.h"
+#include "SerialLink.h"
 #endif
 
 #ifndef __mobile__
-    #include "QGCFileDialog.h"
-    #include "QGCMessageBox.h"
-    #include "FirmwareUpgradeController.h"
-    #include "MainWindow.h"
-    #include "GeoTagController.h"
+#include "QGCFileDialog.h"
+#include "QGCMessageBox.h"
+#include "FirmwareUpgradeController.h"
+#include "MainWindow.h"
+#include "GeoTagController.h"
 #endif
 
 #ifdef QGC_RTLAB_ENABLED
-    #include "OpalLink.h"
+#include "OpalLink.h"
 #endif
 
 #ifdef Q_OS_LINUX
@@ -162,15 +162,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
     : QGuiApplication(argc, argv)
     , _qmlAppEngine(NULL)
-#else
+    #else
     : QApplication(argc, argv)
-#endif
+    #endif
     , _runningUnitTests(unitTesting)
     , _fakeMobile(false)
     , _settingsUpgraded(false)
-#ifdef QT_DEBUG
+    #ifdef QT_DEBUG
     , _testHighDPI(false)
-#endif
+    #endif
     , _toolbox(NULL)
     , _bluetoothAvailable(false)
     , _lastKnownHomePosition(37.803784, -122.462276, 0.0)
@@ -237,9 +237,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         { "--clear-settings",   &fClearSettingsOptions, NULL },
         { "--logging",          &logging,               &loggingOptions },
         { "--fake-mobile",      &_fakeMobile,           NULL },
-#ifdef QT_DEBUG
+    #ifdef QT_DEBUG
         { "--test-high-dpi",    &_testHighDPI,          NULL },
-#endif
+    #endif
         // Add additional command line option flags here
     };
 
@@ -498,32 +498,66 @@ void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const 
 }
 
 #ifndef __mobile__
-void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
+void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
 {
-    bool saveError;
-    do{
-        saveError = false;
-        QString saveFilename = QGCFileDialog::getSaveFileName(
-            MainWindow::instance(),
-            tr("Save Flight Data Log"),
-            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-            tr("Flight Data Log Files (*.mavlink)"),
-            "mavlink");
+    // The vehicle is gone now and we are shutting down so we need to use a message box for errors to hold shutdown and show the error
+    if (_checkTelemetrySavePath(true /* useMessageBox */)) {
 
-        if (!saveFilename.isEmpty()) {
-            // if file exsits already, try to remove it first to overwrite it
-            if(QFile::exists(saveFilename) && !QFile::remove(saveFilename)){
-                // if the file cannot be removed, prompt user and ask new path
-                saveError = true;
-                QGCMessageBox::warning("File Error","Could not overwrite existing file.\nPlease provide a different file name to save to.");
-            } else if(!QFile::copy(tempLogfile, saveFilename)) {
-                // if file could not be copied, prompt user and ask new path
-                saveError = true;
-                QGCMessageBox::warning("File Error","Could not create file.\nPlease provide a different file name to save to.");
-            }
+        QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath()->rawValue().toString();
+        QDir saveDir(saveDirPath);
+
+        QString nameFormat("%1%2.mavlink");
+        QString dtFormat("yyyy-MMM-dd hh-mm-ss");
+
+        int tryIndex = 1;
+        QString saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat)).arg("");
+        while (saveDir.exists(saveFileName)) {
+            saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat)).arg(QStringLiteral(".%1").arg(tryIndex++));
         }
-    } while(saveError); // if the file could not be overwritten, ask for new file
+        QString saveFilePath = saveDir.absoluteFilePath(saveFileName);
+
+        QFile tempFile(tempLogfile);
+        if (!tempFile.copy(saveFilePath)) {
+            QGCMessageBox::warning(tr("Telemetry save error"), tr("Unable to save telemetry log. Error copying telemetry to '%1': '%2'.").arg(saveFilePath).arg(tempFile.errorString()));
+        }
+    }
+
     QFile::remove(tempLogfile);
+}
+
+void QGCApplication::checkTelemetrySavePathOnMainThread(void)
+{
+    // This is called with an active vehicle so don't pop message boxes which holds ui thread
+    _checkTelemetrySavePath(false /* useMessageBox */);
+}
+
+bool QGCApplication::_checkTelemetrySavePath(bool useMessageBox)
+{
+    QString errorTitle = tr("Telemetry save error");
+
+    QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath()->rawValue().toString();
+    if (saveDirPath.isEmpty()) {
+        QString error = tr("Unable to save telemetry log. Telemetry save directory is not set.");
+        if (useMessageBox) {
+            QGCMessageBox::warning(errorTitle, error);
+        } else {
+            showMessage(error);
+        }
+        return false;
+    }
+
+    QDir saveDir(saveDirPath);
+    if (!saveDir.exists()) {
+        QString error = tr("Unable to save telemetry log. Telemetry save directory \"%1\" does not exist.").arg(saveDirPath);
+        if (useMessageBox) {
+            QGCMessageBox::warning(errorTitle, error);
+        } else {
+            showMessage(error);
+        }
+        return false;
+    }
+
+    return true;
 }
 #endif
 

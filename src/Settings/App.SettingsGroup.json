@@ -64,15 +64,15 @@
 },
 {
     "name":             "PromptFLightDataSave",
-    "shortDescription": "Prompt to save Flight Data Log after each flight",
-    "longDescription":  "If this option is enabled you will be prompted to save Flight Data Log after each flight completes.",
+    "shortDescription": "Save telemetry Log after each flight",
+    "longDescription":  "If this option is enabled a telemetry will be saved after each flight completes.",
     "type":             "bool",
     "defaultValue":     true
 },
 {
     "name":             "PromptFLightDataSaveNotArmed",
-    "shortDescription": "Prompt to save Flight Data Log even if vehicle was not armed",
-    "longDescription":  "If this option is enabled you will be prompted to save Flight Data Log even if vehicle was never armed.",
+    "shortDescription": "Save telemetry log even if vehicle was not armed",
+    "longDescription":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
     "type":             "bool",
     "defaultValue":     false
 },
@@ -114,5 +114,12 @@
     "longDescription":  "Show large compass on instrument panel",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "TelemetrySavePath",
+    "shortDescription": "Telemetry log save directory",
+    "longDescription":  "The directory to which telemetry logs are automatically saved to.",
+    "type":             "string",
+    "defaultValue":     ""
 }
 ]
