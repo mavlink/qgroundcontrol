@@ -16,6 +16,12 @@
 #include "FirmwarePlugin/PX4/PX4ParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/PX4/PX4FirmwarePlugin.h"  // FIXME: Hack
 #include "QGCApplication.h"
+#include "FlightModesComponent.h"
+#include "PX4RadioComponent.h"
+#include "PX4TuningComponent.h"
+#include "PowerComponent.h"
+#include "SafetyComponent.h"
+#include "SensorsComponent.h"
 
 /// @file
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
@@ -130,4 +136,44 @@ void PX4AutoPilotPlugin::parametersReadyPreChecks(void)
         qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
                               "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
     }
+}
+
+QString PX4AutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
+{
+    bool requiresAirframeCheck = false;
+
+    if (qobject_cast<const FlightModesComponent*>(component)) {
+        if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
+            // No RC input
+            return QString();
+        } else {
+            if (_airframeComponent && !_airframeComponent->setupComplete()) {
+                return _airframeComponent->name();
+            } else if (_radioComponent && !_radioComponent->setupComplete()) {
+                return _radioComponent->name();
+            } else if (_sensorsComponent && !_vehicle->hilMode() && !_sensorsComponent->setupComplete()) {
+                return _sensorsComponent->name();
+            }
+        }
+    } else if (qobject_cast<const PX4RadioComponent*>(component)) {
+        if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
+            requiresAirframeCheck = true;
+        }
+    } else if (qobject_cast<const PX4TuningComponent*>(component)) {
+        requiresAirframeCheck = true;
+    } else if (qobject_cast<const PowerComponent*>(component)) {
+        requiresAirframeCheck = true;
+    } else if (qobject_cast<const SafetyComponent*>(component)) {
+        requiresAirframeCheck = true;
+    } else if (qobject_cast<const SensorsComponent*>(component)) {
+        requiresAirframeCheck = true;
+    }
+
+    if (requiresAirframeCheck) {
+        if (_airframeComponent && !_airframeComponent->setupComplete()) {
+            return _airframeComponent->name();
+        }
+    }
+
+    return QString();
 }

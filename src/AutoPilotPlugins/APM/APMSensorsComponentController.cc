@@ -24,7 +24,8 @@ QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "APMSensorsCompone
 const char* APMSensorsComponentController::_compassCalFitnessParam = "COMPASS_CAL_FIT";
 
 APMSensorsComponentController::APMSensorsComponentController(void)
-    : _statusLog(NULL)
+    : _sensorsComponent(NULL)
+    , _statusLog(NULL)
     , _progressBar(NULL)
     , _compassButton(NULL)
     , _accelButton(NULL)
@@ -68,8 +69,19 @@ APMSensorsComponentController::APMSensorsComponentController(void)
 
     APMAutoPilotPlugin * apmPlugin = qobject_cast<APMAutoPilotPlugin*>(_vehicle->autopilotPlugin());
 
-    _sensorsComponent = apmPlugin->sensorsComponent();
-    connect(_sensorsComponent, &VehicleComponent::setupCompleteChanged, this, &APMSensorsComponentController::setupNeededChanged);
+    // Find the sensors component
+    foreach (const QVariant& varVehicleComponent, apmPlugin->vehicleComponents()) {
+        _sensorsComponent = qobject_cast<APMSensorsComponent*>(varVehicleComponent.value<VehicleComponent*>());
+        if (_sensorsComponent) {
+            break;
+        }
+    }
+
+    if (_sensorsComponent) {
+        connect(_sensorsComponent, &VehicleComponent::setupCompleteChanged, this, &APMSensorsComponentController::setupNeededChanged);
+    } else {
+        qWarning() << "Sensors component is missing";
+    }
 
     connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }

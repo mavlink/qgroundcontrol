@@ -15,6 +15,7 @@
 #include "PX4/PX4AutoPilotPlugin.h"
 #include "APM/APMAutoPilotPlugin.h"
 #include "APM/APMRadioComponent.h"
+#include "PX4RadioComponent.h"
 
 /// @file
 ///     @brief QRadioComponentController Widget unit test
@@ -203,12 +204,26 @@ void RadioConfigTest::_init(MAV_AUTOPILOT firmwareType)
     _calWidget->resize(600, 600);
     Q_CHECK_PTR(_calWidget);
     _calWidget->setAutoPilot(_autopilot);
-    QObject* vehicleComponent;
-    if (firmwareType == MAV_AUTOPILOT_PX4) {
-        vehicleComponent = dynamic_cast<QObject*>(dynamic_cast<PX4AutoPilotPlugin*>(_autopilot)->radioComponent());
-    } else {
-        vehicleComponent = dynamic_cast<QObject*>(dynamic_cast<APMAutoPilotPlugin*>(_autopilot)->radioComponent());
+
+    // Find the radio component
+    QObject* vehicleComponent = NULL;
+    foreach (const QVariant& varVehicleComponent, _autopilot->vehicleComponents()) {
+        if (firmwareType == MAV_AUTOPILOT_PX4) {
+            PX4RadioComponent* radioComponent = qobject_cast<PX4RadioComponent*>(varVehicleComponent.value<VehicleComponent*>());
+            if (radioComponent) {
+                vehicleComponent = radioComponent;
+                break;
+            }
+        } else {
+            APMRadioComponent* radioComponent = qobject_cast<APMRadioComponent*>(varVehicleComponent.value<VehicleComponent*>());
+            if (radioComponent) {
+                vehicleComponent = radioComponent;
+                break;
+            }
+        }
     }
+    Q_CHECK_PTR(vehicleComponent);
+
     _calWidget->setContextPropertyObject("vehicleComponent", vehicleComponent);
     _calWidget->setSource(QUrl::fromUserInput("qrc:/qml/RadioComponent.qml"));
     
