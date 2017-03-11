@@ -325,6 +325,7 @@ QGCView {
                         //-- Default mission item altitude
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude.visible
                             QGCLabel {
                                 anchors.baseline:   defaultItemAltitudeField.baseline
                                 text:               qsTr("Default mission item altitude:")
