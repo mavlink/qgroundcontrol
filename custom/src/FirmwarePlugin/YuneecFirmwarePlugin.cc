@@ -6,6 +6,7 @@
  */
 
 #include "YuneecFirmwarePlugin.h"
+#include "YuneecAutoPilotPlugin.h"
 #include "CameraMetaData.h"
 
 const char* YuneecFirmwarePlugin::_simpleFlightMode =   "Smart";
@@ -41,6 +42,11 @@ YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
             info.canBeSet = false;
         }
     }
+}
+
+AutoPilotPlugin* YuneecFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
+{
+    return new YuneecAutoPilotPlugin(vehicle, vehicle);
 }
 
 QString
