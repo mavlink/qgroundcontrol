@@ -25,17 +25,17 @@ public:
     SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from VehicleComponent
-    virtual QStringList setupCompleteChangedTriggerList(void) const;
+    QStringList setupCompleteChangedTriggerList(void) const override;
     
     // Virtuals from VehicleComponent
-    virtual QString name(void) const;
-    virtual QString description(void) const;
-    virtual QString iconResource(void) const;
-    virtual bool requiresSetup(void) const;
-    virtual bool setupComplete(void) const;
-    virtual QUrl setupSource(void) const;
-    virtual QUrl summaryQmlSource(void) const;
-    virtual QString prerequisiteSetup(void) const;
+    virtual QString name(void) const override;
+    virtual QString description(void) const override;
+    virtual QString iconResource(void) const override;
+    virtual bool requiresSetup(void) const override;
+    virtual bool setupComplete(void) const override;
+    virtual QUrl setupSource(void) const override;
+    virtual QUrl summaryQmlSource(void) const override;
+    virtual QString prerequisiteSetup(void) const override;
     
 private:
     const QString   _name;

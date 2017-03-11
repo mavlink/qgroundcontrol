@@ -82,7 +82,7 @@ QGCCorePlugin::~QGCCorePlugin()
 QGCCorePlugin::QGCCorePlugin(QGCApplication *app)
     : QGCTool(app)
     , _showTouchAreas(false)
-    , _showAdvancedUI(false)
+    , _showAdvancedUI(true)
 {
     _p = new QGCCorePlugin_p;
 }
