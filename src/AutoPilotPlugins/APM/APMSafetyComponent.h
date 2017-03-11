@@ -31,7 +31,6 @@ public:
     bool setupComplete(void) const final;
     QUrl setupSource(void) const final;
     QUrl summaryQmlSource(void) const final;
-    QString prerequisiteSetup(void) const final;
     bool allowSetupWhileArmed(void) const final { return true; }
 
 private:

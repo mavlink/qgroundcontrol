@@ -9,7 +9,7 @@ import QGroundControl.Palette       1.0
 Rectangle {
     id:     _root
     width:  label.contentWidth + (_diameter * 2.5) + (_border * 4)
-    height: label.height * 2.5
+    height: Math.max(ScreenTools.isMobile ? ScreenTools.minTouchPixels : 0, label.height * 2.5)
     radius: height /2
     color:  qgcPal.window
 
@@ -49,31 +49,37 @@ Rectangle {
             fillMode:               Image.PreserveAspectFit
             smooth:                 false
             mipmap:                 false
-
-
             color:                  qgcPal.text
             cache:                  false
             source:                 "/res/ArrowRight.svg"
         }
 
-        MouseArea {
-            id:             sliderDragArea
-            anchors.fill:   parent
-            drag.target:    slider
-            drag.axis:      Drag.XAxis
-            drag.minimumX:  _border
-            drag.maximumX:  _maxXDrag
+    }
 
-            property real _maxXDrag:    _root.width - (_diameter + _border)
-            property bool dragActive:   drag.active
+    MouseArea {
+        id:                 sliderDragArea
+        anchors.leftMargin: -ScreenTools.defaultFontPixelWidth * 15
+        anchors.fill:       slider
+        drag.target:        slider
+        drag.axis:          Drag.XAxis
+        drag.minimumX:      _border
+        drag.maximumX:      _maxXDrag
+        preventStealing:    true
 
-            onDragActiveChanged: {
-                if (!sliderDragArea.drag.active) {
-                    if (slider.x > _maxXDrag - _border) {
-                        _root.accept()
-                    }
-                    slider.x = _border
+        property real _maxXDrag:    _root.width - (_diameter + _border)
+        property bool dragActive:   drag.active
+        property real _dragOffset:  1
+
+        onPressed: {
+            mouse.x
+        }
+
+        onDragActiveChanged: {
+            if (!sliderDragArea.drag.active) {
+                if (slider.x > _maxXDrag - _border) {
+                    _root.accept()
                 }
+                slider.x = _border
             }
         }
     }
