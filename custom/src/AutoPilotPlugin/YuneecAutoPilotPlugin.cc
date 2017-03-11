@@ -11,8 +11,6 @@
 
 YuneecAutoPilotPlugin::YuneecAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : PX4AutoPilotPlugin(vehicle, parent)
-    , _sensorsComponent(NULL)
-    , _safetyComponent(NULL)
 {
 
 }
@@ -21,11 +19,11 @@ const QVariantList& YuneecAutoPilotPlugin::vehicleComponents(void)
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         if (_vehicle->parameterManager()->parametersReady()) {
-            _sensorsComponent = new YuneecSensorsComponent(_vehicle, this);
+            _sensorsComponent = new SensorsComponent(_vehicle, this);
             _sensorsComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
 
-            _safetyComponent = new YuneecSafetyComponent(_vehicle, this);
+            _safetyComponent = new SafetyComponent(_vehicle, this);
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
         } else {

@@ -78,8 +78,6 @@ INCLUDEPATH += \
 
 HEADERS+= \
     $$PWD/src/AutoPilotPlugin/YuneecAutoPilotPlugin.h \
-    $$PWD/src/AutoPilotPlugin/YuneecSafetyComponent.h \
-    $$PWD/src/AutoPilotPlugin/YuneecSensorsComponent.h \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h
 
