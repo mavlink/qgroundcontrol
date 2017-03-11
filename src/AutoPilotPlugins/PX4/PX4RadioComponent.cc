@@ -73,17 +73,3 @@ QUrl PX4RadioComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/PX4RadioComponentSummary.qml");
 }
-
-QString PX4RadioComponent::prerequisiteSetup(void) const
-{
-    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
-        PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
-        
-        if (!plugin->airframeComponent()->setupComplete()) {
-            return plugin->airframeComponent()->name();
-
-        }
-    }
-    
-    return QString();
-}
