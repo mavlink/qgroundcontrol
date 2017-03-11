@@ -103,9 +103,10 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
        }
    }
 
-   connect(this, &MAVLinkProtocol::protocolStatusMessage, _app, &QGCApplication::criticalMessageBoxOnMainThread);
+   connect(this, &MAVLinkProtocol::protocolStatusMessage,   _app, &QGCApplication::criticalMessageBoxOnMainThread);
 #ifndef __mobile__
-   connect(this, &MAVLinkProtocol::saveTempFlightDataLog, _app, &QGCApplication::saveTempFlightDataLogOnMainThread);
+   connect(this, &MAVLinkProtocol::saveTelemetryLog,        _app, &QGCApplication::saveTelemetryLogOnMainThread);
+   connect(this, &MAVLinkProtocol::checkTelemetrySavePath,  _app, &QGCApplication::checkTelemetrySavePathOnMainThread);
 #endif
 
    connect(_multiVehicleManager->vehicles(), &QmlObjectListModel::countChanged, this, &MAVLinkProtocol::_vehicleCountChanged);
@@ -413,6 +414,7 @@ void MAVLinkProtocol::_startLogging(void)
             }
 
             qDebug() << "Temp log" << _tempLogFile.fileName();
+            emit checkTelemetrySavePath();
 
             _logSuspendError = false;
         }
@@ -424,8 +426,8 @@ void MAVLinkProtocol::_stopLogging(void)
     if (_closeLogFile()) {
         // If the signals are not connected it means we are running a unit test. In that case just delete log files
         SettingsManager* settingsManager = _app->toolbox()->settingsManager();
-        if ((_vehicleWasArmed || settingsManager->appSettings()->promptFlightTelemetrySaveNotArmed()->rawValue().toBool()) && settingsManager->appSettings()->promptFlightTelemetrySave()->rawValue().toBool()) {
-            emit saveTempFlightDataLog(_tempLogFile.fileName());
+        if ((_vehicleWasArmed || settingsManager->appSettings()->telemetrySaveNotArmed()->rawValue().toBool()) && settingsManager->appSettings()->telemetrySave()->rawValue().toBool()) {
+            emit saveTelemetryLog(_tempLogFile.fileName());
         } else {
             QFile::remove(_tempLogFile.fileName());
         }
@@ -452,12 +454,7 @@ void MAVLinkProtocol::checkForLostLogFiles(void)
             continue;
         }
 
-        // Give the user a chance to save the orphaned log file
-        emit protocolStatusMessage(tr("Found unsaved Flight Data"),
-                                   tr("This can happen if QGroundControl crashes during Flight Data collection. "
-                                      "If you want to save the unsaved Flight Data, select the file you want to save it to. "
-                                      "If you do not want to keep the Flight Data, select 'Cancel' on the next dialog."));
-        emit saveTempFlightDataLog(fileInfo.filePath());
+        emit saveTelemetryLog(fileInfo.filePath());
     }
 }
 

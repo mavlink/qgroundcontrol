@@ -22,13 +22,14 @@ const char* AppSettings::offlineEditingHoverSpeedSettingsName =         "Offline
 const char* AppSettings::batteryPercentRemainingAnnounceSettingsName =  "batteryPercentRemainingAnnounce";
 const char* AppSettings::defaultMissionItemAltitudeSettingsName =       "DefaultMissionItemAltitude";
 const char* AppSettings::missionAutoLoadDirSettingsName =               "MissionAutoLoadDir";
-const char* AppSettings::promptFlightTelemetrySaveName =                "PromptFLightDataSave";
-const char* AppSettings::promptFlightTelemetrySaveNotArmedName =        "PromptFLightDataSaveNotArmed";
+const char* AppSettings::telemetrySaveName =                            "PromptFLightDataSave";
+const char* AppSettings::telemetrySaveNotArmedName =                    "PromptFLightDataSaveNotArmed";
 const char* AppSettings::audioMutedName =                               "AudioMuted";
 const char* AppSettings::virtualJoystickName =                          "VirtualTabletJoystick";
 const char* AppSettings::appFontPointSizeName =                         "BaseDeviceFontPointSize";
 const char* AppSettings::indoorPaletteName =                            "StyleIsDark";
 const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
+const char* AppSettings::telemetrySavePathName =                        "TelemetrySavePath";
 
 AppSettings::AppSettings(QObject* parent)
     : SettingsGroup(appSettingsGroupName, QString() /* root settings group */, parent)
@@ -39,13 +40,14 @@ AppSettings::AppSettings(QObject* parent)
     , _batteryPercentRemainingAnnounceFact(NULL)
     , _defaultMissionItemAltitudeFact(NULL)
     , _missionAutoLoadDirFact(NULL)
-    , _promptFlightTelemetrySaveFact(NULL)
-    , _promptFlightTelemetrySaveNotArmedFact(NULL)
+    , _telemetrySaveFact(NULL)
+    , _telemetrySaveNotArmedFact(NULL)
     , _audioMutedFact(NULL)
     , _virtualJoystickFact(NULL)
     , _appFontPointSizeFact(NULL)
     , _indoorPaletteFact(NULL)
     , _showLargeCompassFact(NULL)
+    , _telemetrySavePathFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");        
@@ -113,22 +115,22 @@ Fact* AppSettings::missionAutoLoadDir(void)
     return _missionAutoLoadDirFact;
 }
 
-Fact* AppSettings::promptFlightTelemetrySave(void)
+Fact* AppSettings::telemetrySave(void)
 {
-    if (!_promptFlightTelemetrySaveFact) {
-        _promptFlightTelemetrySaveFact = _createSettingsFact(promptFlightTelemetrySaveName);
+    if (!_telemetrySaveFact) {
+        _telemetrySaveFact = _createSettingsFact(telemetrySaveName);
     }
 
-    return _promptFlightTelemetrySaveFact;
+    return _telemetrySaveFact;
 }
 
-Fact* AppSettings::promptFlightTelemetrySaveNotArmed(void)
+Fact* AppSettings::telemetrySaveNotArmed(void)
 {
-    if (!_promptFlightTelemetrySaveNotArmedFact) {
-        _promptFlightTelemetrySaveNotArmedFact = _createSettingsFact(promptFlightTelemetrySaveNotArmedName);
+    if (!_telemetrySaveNotArmedFact) {
+        _telemetrySaveNotArmedFact = _createSettingsFact(telemetrySaveNotArmedName);
     }
 
-    return _promptFlightTelemetrySaveNotArmedFact;
+    return _telemetrySaveNotArmedFact;
 }
 
 Fact* AppSettings::audioMuted(void)
@@ -181,5 +183,14 @@ Fact* AppSettings::showLargeCompass(void)
     }
 
     return _showLargeCompassFact;
+}
+
+Fact* AppSettings::telemetrySavePath(void)
+{
+    if (!_telemetrySavePathFact) {
+        _telemetrySavePathFact = _createSettingsFact(telemetrySavePathName);
+    }
+
+    return _telemetrySavePathFact;
 }
 

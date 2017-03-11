@@ -158,8 +158,11 @@ signals:
     void radioStatusChanged(LinkInterface* link, unsigned rxerrors, unsigned fixed, int rssi, int remrssi,
     unsigned txbuf, unsigned noise, unsigned remnoise);
     
-    /// @brief Emitted when a temporary log file is ready for saving
-    void saveTempFlightDataLog(QString tempLogfile);
+    /// Emitted when a temporary telemetry log file is ready for saving
+    void saveTelemetryLog(QString tempLogfile);
+
+    /// Emitted when a telemetry log is started to save.
+    void checkTelemetrySavePath(void);
 
 private slots:
     void _vehicleCountChanged(int count);
