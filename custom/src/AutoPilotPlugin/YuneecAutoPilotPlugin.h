@@ -10,8 +10,6 @@
 #pragma once
 
 #include "PX4AutoPilotPlugin.h"
-#include "YuneecSensorsComponent.h"
-#include "YuneecSafetyComponent.h"
 #include "Vehicle.h"
 
 /// Yuneec overrides from standard PX4AutoPilotPlugin implementation
@@ -27,6 +25,4 @@ public:
 
 private:
     QVariantList            _components;
-    YuneecSensorsComponent* _sensorsComponent;
-    YuneecSafetyComponent*  _safetyComponent;
 };
