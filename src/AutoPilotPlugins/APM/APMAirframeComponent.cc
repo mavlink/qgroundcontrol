@@ -98,8 +98,3 @@ QUrl APMAirframeComponent::summaryQmlSource(void) const
         return QUrl();
     }
 }
-
-QString APMAirframeComponent::prerequisiteSetup(void) const
-{
-    return QString();
-}

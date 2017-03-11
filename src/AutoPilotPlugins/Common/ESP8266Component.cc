@@ -57,8 +57,3 @@ QUrl ESP8266Component::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/ESP8266ComponentSummary.qml");
 }
-
-QString ESP8266Component::prerequisiteSetup(void) const
-{
-    return QString();
-}
