@@ -116,8 +116,11 @@ public slots:
     void qmlAttemptWindowClose(void);
 
 #ifndef __mobile__
-    /// Save the specified Flight Data Log
-    void saveTempFlightDataLogOnMainThread(QString tempLogfile);
+    /// Save the specified telemetry Log
+    void saveTelemetryLogOnMainThread(QString tempLogfile);
+
+    /// Check that the telemetry save path is set correctly
+    void checkTelemetrySavePathOnMainThread(void);
 #endif
 
 signals:
@@ -149,6 +152,8 @@ public:
 
     /// Shutdown the application object
     void _shutdown(void);
+
+    bool _checkTelemetrySavePath(bool useMessageBox);
 
 private slots:
     void _missingParamsDisplay(void);
