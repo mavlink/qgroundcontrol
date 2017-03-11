@@ -41,8 +41,8 @@ public:
     ~PX4AutoPilotPlugin();
 
     // Overrides from AutoPilotPlugin
-    const QVariantList& vehicleComponents(void) final;
-    void parametersReadyPreChecks(void) final;
+    const QVariantList& vehicleComponents(void) override;
+    void parametersReadyPreChecks(void) override;
 
     // These methods should only be used by objects within the plugin
     AirframeComponent*      airframeComponent(void)     { return _airframeComponent; }
@@ -56,6 +56,9 @@ public:
     MotorComponent*         motorComponent(void)        { return _motorComponent; }
     PX4TuningComponent*     tuningComponent(void)       { return _tuningComponent; }
     MixersComponent*        mixersComponent(void)       { return _mixersComponent; }
+
+protected:
+    bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
 
 private:
     PX4AirframeLoader*      _airframeFacts;
@@ -71,7 +74,6 @@ private:
     MotorComponent*         _motorComponent;
     PX4TuningComponent*     _tuningComponent;
     MixersComponent*        _mixersComponent;
-    bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
 };
 
 #endif
