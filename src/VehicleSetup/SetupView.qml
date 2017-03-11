@@ -307,7 +307,7 @@ Rectangle {
             SubMenuButton {
                 setupIndicator:     false
                 exclusiveGroup:     setupButtonGroup
-                visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable
+                visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && QGroundControl.corePlugin.showAdvancedUI
                 text:               "Parameters"
                 Layout.fillWidth:   true
 

@@ -23,6 +23,7 @@
 
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
+    , _incorrectParameterVersion(false)
     , _airframeComponent(NULL)
     , _radioComponent(NULL)
     , _esp8266Component(NULL)
@@ -33,7 +34,6 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _motorComponent(NULL)
     , _tuningComponent(NULL)
     , _mixersComponent(NULL)
-    , _incorrectParameterVersion(false)
 {
     Q_ASSERT(vehicle);
 
