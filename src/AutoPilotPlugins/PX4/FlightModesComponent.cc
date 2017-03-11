@@ -78,24 +78,3 @@ QUrl FlightModesComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/FlightModesComponentSummary.qml");
 }
-
-QString FlightModesComponent::prerequisiteSetup(void) const
-{
-    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
-        // No RC input
-        return QString();
-    } else {
-        PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
-        Q_ASSERT(plugin);
-
-        if (!plugin->airframeComponent()->setupComplete()) {
-            return plugin->airframeComponent()->name();
-        } else if (!plugin->radioComponent()->setupComplete()) {
-            return plugin->radioComponent()->name();
-        } else if (!_vehicle->hilMode() && !plugin->sensorsComponent()->setupComplete()) {
-            return plugin->sensorsComponent()->name();
-        }
-    }
-
-    return QString();
-}

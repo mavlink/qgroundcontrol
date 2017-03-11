@@ -96,17 +96,6 @@ QUrl APMRadioComponent::summaryQmlSource(void) const
     return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMRadioComponentSummary.qml"));
 }
 
-QString APMRadioComponent::prerequisiteSetup(void) const
-{
-    APMAutoPilotPlugin* plugin = dynamic_cast<APMAutoPilotPlugin*>(_autopilot);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    }
-    
-    return QString();
-}
-
 void APMRadioComponent::_connectSetupTriggers(void)
 {
     // Disconnect previous triggers

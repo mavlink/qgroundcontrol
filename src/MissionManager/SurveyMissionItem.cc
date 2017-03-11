@@ -95,7 +95,8 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
 {
     _editorQml = "qrc:/qml/SurveyItemEditor.qml";
 
-    if (_vehicle->multiRotor()) {
+    // NULL check since object creation during unit testing passes NULL for vehicle
+    if (_vehicle && _vehicle->multiRotor()) {
         _turnaroundDistFact.setRawValue(0);
     }
 

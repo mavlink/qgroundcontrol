@@ -64,8 +64,3 @@ QUrl APMSubFrameComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMSubFrameComponentSummary.qml"));
 }
-
-QString APMSubFrameComponent::prerequisiteSetup(void) const
-{
-    return QString();
-}

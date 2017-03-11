@@ -35,7 +35,6 @@ public:
     virtual bool setupComplete(void) const override;
     virtual QUrl setupSource(void) const override;
     virtual QUrl summaryQmlSource(void) const override;
-    virtual QString prerequisiteSetup(void) const override;
     
 private:
     const QString   _name;
