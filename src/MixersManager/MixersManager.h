@@ -103,21 +103,48 @@ private:
 
     void _startAckTimeout(AckType_t ack);
 
+    void mixerDataDownloadComplete(unsigned int group);
+
     //* Return index of matching message,group,mixer,submixer and parameter etc..*/
     int _getMessageOfKind(const mavlink_mixer_data_t* data);
 
-    //* collect mixer data into a list.  Only one list entry per group, data_type, mixer, submixer etc...*/
+    ///* Collect mixer data into a list.  Only one list entry per group, data_type, mixer, submixer etc...
+    /// The test against data is dependent on the mixer data type*/
     bool _collectMixerData(const mavlink_mixer_data_t* data);
 
-    //* Request a missing message. true if there is missing data */
+    ///* Request a missing message. true if there is missing data */
     bool _requestMissingData(unsigned int group);
 
-    //* Build mixer Fact database from the messages collected*/
-    bool _buildFactsFromMessages(unsigned int group);
+//    ///* Build mixer Fact database from the messages collected*/
+//    bool _buildFactsFromMessages(unsigned int group);
+
+    ///* Build all mixer data structure and content from whatever source is available
+    /// return true if successfull*/
+    bool _buildAll(unsigned int group);
+
+
+    ///* Build mixer structure from messages.  This only includes mixers and submixers with types
+    /// return true if successfull*/
+    bool _buildStructureFromMessages(unsigned int group);
+
+    ///* Build parameters from included headers.  TODO: DEPRECIATE AND CHANGE TO FILE INSTEAD OF HEADERS
+    ///  return true if successfull*/
+    bool _buildParametersFromHeaders(unsigned int group);
+
+    ///* Build connections from included headers.  TODO: DEPRECIATE AND CHANGE TO FILE INSTEAD OF HEADERS
+    /// return true if successfull*/
+    bool _buildConnectionsFromHeaders(unsigned int group);
+
+    ///* Set parameter values from mixer data messages
+    /// return true if successfull*/
+    bool _parameterValuesFromMessages(unsigned int group);
+
+    ///* Set connection points from mixer data messages
+    /// return true if successfull*/
+    bool _connectionsFromMessages(unsigned int group);
+
 
 //    bool _checkForExpectedAck(AckType_t receivedAck);
-
-//    void _handleMissionAck(const mavlink_message_t& message);
 
 //    bool        _readTransactionInProgress;
 //    bool        _writeTransactionInProgress;

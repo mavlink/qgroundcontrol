@@ -12,21 +12,10 @@
 
 #include "MixerFacts.h"
 
-//MixerFacts::MixerFacts(QObject *parent) : QObject(parent)
-//{
 
-////    Fact* fact = new Fact(componentId, parameterName, factType, this);
-
-////    _mapParameterName2Variant[componentId][parameterName] = QVariant::fromValue(fact);
-
-////    // We need to know when the fact changes from QML so that we can send the new value to the parameter manager
-////    connect(fact, &Fact::_containerRawValueChanged, this, &ParameterManager::_valueUpdated);
-//}
-
-
-
-MixerConnection::MixerConnection(unsigned int connGroup, unsigned int connChannel)
-    :_connGroup(-1, QString("CONN_GROUP"), FactMetaData::valueTypeInt16, this)
+MixerConnection::MixerConnection(int connGroup, int connChannel, QObject* parent)
+    : QObject(parent)
+    ,_connGroup(-1, QString("CONN_GROUP"), FactMetaData::valueTypeInt16, this)
     ,_connChannel(-1, QString("CONN_CHANNEL"), FactMetaData::valueTypeInt16, this)
 {
     _connGroup.setRawValue(connGroup);
@@ -36,61 +25,114 @@ MixerConnection::MixerConnection(unsigned int connGroup, unsigned int connChanne
 MixerConnection::~MixerConnection(){
 }
 
+////    connect(fact, &Fact::_containerRawValueChanged, this, &ParameterManager::_valueUpdated);
 
 
-Mixer::Mixer(unsigned int typeID)
-    : _mixerTypeID(typeID)
-    , _subMixers()
-    , _mixerParamFacts()
-    , _mixerConnections()
+
+Mixer::Mixer(QObject* parent)
+    : QObject(parent)
+    , _parameters()
+    , _submixers()
+    , _inputConnections()
+    , _outputConnections()
+    , _mixer()
 {
 }
 
+
+
 Mixer::~Mixer(){
-    qDeleteAll( _subMixers );  //  deletes all the values stored in "map"
-    _subMixers.clear();        //  removes all items from the map
+//    int index;
+//    for(index=0; index<_submixers.count(); index++){
 
-    qDeleteAll( _mixerParamFacts );  //  deletes all the values stored in "map"
-    _mixerParamFacts.clear();        //  removes all items from the map
+//    }
+    //Delete and remove all submixers
+    foreach(QVariant mixvar, _submixers){
+        delete qobject_cast<Mixer *>(qvariant_cast<QObject *>(mixvar));
+    }
+    _submixers.clear();
 
-    qDeleteAll( _mixerParamFacts );  //  deletes all the values stored in "map"
-    _mixerParamFacts.clear();        //  removes all items from the map
+    //Delete and remove all parameters
+    foreach(QVariant paramvar, _parameters){
+        delete qobject_cast<Fact *>(qvariant_cast<QObject *>(paramvar));
+    }
+    _parameters.clear();
+
+    //Delete and remove all connetions
+    foreach(QVariant connvar, _inputConnections){
+        delete qobject_cast<MixerConnection *>(qvariant_cast<QObject *>(connvar));
+    }
+    _inputConnections.clear();
+    foreach(QVariant connvar, _outputConnections){
+        delete qobject_cast<MixerConnection *>(qvariant_cast<QObject *>(connvar));
+    }
+    _outputConnections.clear();
 }
 
 
+Mixer* Mixer::getSubmixer(unsigned int mixerID){
+    if(!_submixers.contains(mixerID))
+        return nullptr;
+    QObject * obj = qvariant_cast<QObject *>(_submixers.value(mixerID));
+    return qobject_cast<Mixer *>(obj);
+}
+
 void Mixer::addSubmixer(unsigned int mixerID, Mixer *submixer){
-    if(_subMixers.contains(mixerID))
-        delete _subMixers.value(mixerID);
-    _subMixers[mixerID] = submixer;
+    QVariant var;
+    if(_submixers.contains(mixerID))
+        var = _submixers.value(mixerID);
+        QObject * obj = qvariant_cast<QObject *>(var);
+        Mixer * del = qobject_cast<Mixer *>(obj);
+        delete del;
+    var.fromValue(submixer);
+    _submixers[mixerID] = var;
+    submixer->setParent(this);
 }
 
 void Mixer::addMixerParamFact(unsigned int paramID, Fact* paramFact){
-    if(_mixerParamFacts.contains(paramID))
-        delete _mixerParamFacts.value(paramID);
-    _mixerParamFacts[paramID] = paramFact;
+//    if(_parameters.contains(paramID))
+//        delete _parameters.value(paramID);
+//    _parameters[paramID] = paramFact;
 }
 
-void Mixer::addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel){
-    if(_mixerConnections.contains(connType))
-        if(_mixerConnections[connType].contains(connID))
-        delete _mixerConnections[connType][connID];
-    _mixerConnections[connType][connID] = new MixerConnection(connGroup , connChannel);
-}
+//void Mixer::addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel){
+//    if(_mixerConnections.contains(connType))
+//        if(_mixerConnections[connType].contains(connID))
+//        delete _mixerConnections[connType][connID];
+//    _mixerConnections[connType][connID] = new MixerConnection(connGroup , connChannel);
+//}
 
-MixerGroup::MixerGroup()
-    :_mixers()
+MixerGroup::MixerGroup(QObject* parent)
+    : QObject(parent)
+    ,_mixers()
 {
 };
 
 MixerGroup::~MixerGroup(){
-    qDeleteAll( _mixers );
+    //Delete and remove all parameters
+    foreach(QVariant mixvar, _mixers){
+        delete qobject_cast<Fact *>(qvariant_cast<QObject *>(mixvar));
+    }
     _mixers.clear();
 };
 
+Mixer* MixerGroup::getMixer(unsigned int mixerID){
+    if(!_mixers.contains(mixerID))
+        return nullptr;
+    QObject * obj = qvariant_cast<QObject *>(_mixers.value(mixerID));
+    return qobject_cast<Mixer *>(obj);
+}
+
 void MixerGroup::addMixer(unsigned int mixerID, Mixer *mixer){
+    QVariant var;
     if(_mixers.contains(mixerID))
-        delete _mixers.value(mixerID);
-    _mixers[mixerID] = mixer;
+        var = _mixers.value(mixerID);
+        QObject * obj = qvariant_cast<QObject *>(var);
+        Mixer * del = qobject_cast<Mixer *>(obj);
+        delete del;
+    var.fromValue(mixer);
+    _mixers[mixerID] = var;
+    mixer->setParent(this);
 }
 
 
