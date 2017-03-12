@@ -58,6 +58,13 @@ Mixer* Mixer::getSubmixer(unsigned int mixerID){
     return qobject_cast<Mixer *>(_submixers[mixerID-1]);
 }
 
+Fact* Mixer::getParameter(unsigned int paramIndex){
+    if(paramIndex >= _parameters.count())
+        return nullptr;
+    return qobject_cast<Fact *>(_parameters[paramIndex]);
+}
+
+
 void Mixer::appendSubmixer(unsigned int mixerID, Mixer *submixer){
     submixer->setParent(this);
     _submixers.append(submixer);

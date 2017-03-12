@@ -70,7 +70,8 @@ public:
     // Main mixer Fact describing mixer type
     Fact *mixer                         (void) const { return _mixer; }
 
-    Mixer* getSubmixer(unsigned int mixerID);
+    Mixer*  getSubmixer(unsigned int mixerID);
+    Fact*   getParameter(unsigned int paramIndex);
     void appendSubmixer(unsigned int mixerID, Mixer *submixer);
     void appendParamFact(Fact* paramFact);
 //    void addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel);

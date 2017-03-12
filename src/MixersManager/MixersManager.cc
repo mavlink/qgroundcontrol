@@ -311,8 +311,8 @@ bool MixersManager::_buildAll(unsigned int group){
         return false;
 //    if(!_buildConnectionsFromHeaders(group))
 //        return false;
-//    if(!_parameterValuesFromMessages(group))
-//        return false;
+    if(!_parameterValuesFromMessages(group))
+        return false;
 //    if(!_connectionsFromMessages(group))
 //        return false;
     return true;
@@ -711,12 +711,12 @@ bool MixersManager::_buildParametersFromHeaders(unsigned int group){
         for(int paramIndex=0; paramIndex<paramCount; paramIndex++){
             metaData = _mixerMetaData.GetMixerParameterMetaData(mixType, paramIndex);
             Q_CHECK_PTR(metaData);
-            param = new Fact(-1, metaData->name(), FactMetaData::valueTypeFloat, nullptr);
+            param = new Fact(-1, metaData->name(), FactMetaData::valueTypeFloat, mixer->parameters());
             param->setMetaData(metaData);
             mixer->appendParamFact(param);
         }
 
-        //Submixers at indexed from 1
+        //Submixers indexed from 1
         subCount = mixer->submixers()->count();
         for(subIndex=1; subIndex<=subCount; subIndex++){
             submixer = mixer->getSubmixer(subIndex);
@@ -728,7 +728,7 @@ bool MixersManager::_buildParametersFromHeaders(unsigned int group){
             for(int paramIndex=0; paramIndex<paramCount; paramIndex++){
                 metaData = _mixerMetaData.GetMixerParameterMetaData(subType, paramIndex);
                 Q_CHECK_PTR(metaData);
-                param = new Fact(-1, metaData->name(), FactMetaData::valueTypeFloat, nullptr);
+                param = new Fact(-1, metaData->name(), FactMetaData::valueTypeFloat, submixer->parameters());
                 param->setMetaData(metaData);
                 submixer->appendParamFact(param);
             }
@@ -746,7 +746,61 @@ bool MixersManager::_buildConnectionsFromHeaders(unsigned int group){
 ///* Set parameter values from mixer data messages
 /// return true if successfull*/
 bool MixersManager::_parameterValuesFromMessages(unsigned int group){
-    return false;
+    Mixer *mixer;
+    Mixer *submixer;
+    Fact *parameter;
+    int mixIndex, subIndex, paramCount, subCount, msgIndex, paramIndex;
+
+    mavlink_mixer_data_t msg;
+    msg.mixer_group = group;
+    msg.data_type = MIXER_DATA_TYPE_PARAMETER;
+
+    MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
+    if(mixer_group == nullptr)
+        return false;
+
+    QObjectList mixers = mixer_group->mixers();
+
+    for(mixIndex = 0; mixIndex<mixers.count(); mixIndex++){
+        mixer = mixer_group->getMixer(mixIndex);
+        msg.mixer_index = mixIndex;
+        msg.mixer_sub_index = 0;
+
+        paramCount = mixer->parameters()->count();
+        for(paramIndex=0; paramIndex<paramCount; paramIndex++){
+            msg.parameter_index = paramIndex;
+            parameter = mixer->getParameter(paramIndex);
+            Q_CHECK_PTR(parameter);
+
+            msgIndex = _getMessageOfKind(&msg);
+            if(msgIndex == -1)
+                return false;
+
+            parameter->setRawValue(_mixerDataMessages[msgIndex]->param_value);
+        }
+
+        //Submixers indexed from 1
+        subCount = mixer->submixers()->count();
+        for(subIndex=1; subIndex<=subCount; subIndex++){
+            submixer = mixer->getSubmixer(subIndex);
+            Q_CHECK_PTR(submixer);
+
+            msg.mixer_sub_index = subIndex;
+
+            paramCount = submixer->parameters()->count();
+            for(paramIndex=0; paramIndex<paramCount; paramIndex++){
+                msg.parameter_index = paramIndex;
+                parameter = submixer->getParameter(paramIndex);
+                Q_CHECK_PTR(parameter);
+
+                msgIndex = _getMessageOfKind(&msg);
+                if(msgIndex == -1)
+                    return false;
+                parameter->setRawValue(_mixerDataMessages[msgIndex]->param_value);
+            }
+        }
+    }
+    return true;
 }
 
 ///* Set connection points from mixer data messages
