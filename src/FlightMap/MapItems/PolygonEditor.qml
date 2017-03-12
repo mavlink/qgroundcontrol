@@ -28,12 +28,15 @@ Item {
     property bool   adjustingPolygon:   false
     property bool   polygonReady:       _currentPolygon ? _currentPolygon.path.length > 2 : false   ///< true: enough points have been captured to create a closed polygon
 
-    property var _helpLabel             ///< Dynamically added help label component
-    property var _newPolygon            ///< Dynamically added polygon which represents all polygon points including the one currently being drawn
-    property var _currentPolygon        ///< Dynamically added polygon which represents the currently completed polygon
-    property var _nextPointLine         ///< Dynamically added line which goes from last polygon point to the new one being drawn
-    property var _mouseArea             ///< Dynamically added MouseArea which handles all clicking and mouse movement
-    property var _vertexDragList: [ ]   ///< Dynamically added vertex drag points
+    property var    _helpLabel                                  ///< Dynamically added help label component
+    property var    _newPolygon                                 ///< Dynamically added polygon which represents all polygon points including the one currently being drawn
+    property var    _currentPolygon                             ///< Dynamically added polygon which represents the currently completed polygon
+    property var    _nextPointLine                              ///< Dynamically added line which goes from last polygon point to the new one being drawn
+    property var    _mobileSegment                              ///< Dynamically added line between first and second polygon point for mobile
+    property var    _mobilePoint                                ///< Dynamically added point showing first polygon point on mobile
+    property var    _mouseArea                                  ///< Dynamically added MouseArea which handles all clicking and mouse movement
+    property var    _vertexDragList:    [ ]                     ///< Dynamically added vertex drag points
+    property bool   _mobile:            ScreenTools.isMobile
 
     /// Begin capturing a new polygon
     ///     polygonCaptureStarted will be signalled through callbackObject
@@ -42,11 +45,15 @@ Item {
         _newPolygon =       newPolygonComponent.createObject    (map)
         _currentPolygon =   currentPolygonComponent.createObject(map)
         _nextPointLine =    nextPointComponent.createObject     (map)
+        _mobileSegment =    mobileSegmentComponent.createObject (map)
+        _mobilePoint =      mobilePointComponent.createObject   (map)
         _mouseArea =        mouseAreaComponent.createObject     (map)
 
         map.addMapItem(_newPolygon)
         map.addMapItem(_currentPolygon)
         map.addMapItem(_nextPointLine)
+        map.addMapItem(_mobileSegment)
+        map.addMapItem(_mobilePoint)
 
         drawingPolygon = true
         callbackObject.polygonCaptureStarted()
@@ -244,6 +251,19 @@ Item {
                     }
                     _currentPolygon.path = polygonPath
                     _newPolygon.path = polygonPath
+
+                    if (_mobile && _currentPolygon.path.length == 1) {
+                        _mobilePoint.coordinate = _currentPolygon.path[0]
+                        _mobilePoint.visible = true
+                    } else if (_mobile && _currentPolygon.path.length == 2) {
+                        // Show initial line segment on mobile
+                        _mobileSegment.path = [ _currentPolygon.path[0], _currentPolygon.path[1] ]
+                        _mobileSegment.visible = true
+                        _mobilePoint.visible = false
+                    } else {
+                        _mobileSegment.visible = false
+                        _mobilePoint.visible = false
+                    }
                 } else if (polygonReady) {
                     finishCapturePolygon()
                 }
@@ -292,6 +312,35 @@ Item {
             color:      'green'
             opacity:    0.5
             visible:    polygonReady
+        }
+    }
+
+    /// First line segment to show on mobile
+    Component {
+        id: mobileSegmentComponent
+
+        MapPolyline {
+            line.color: "green"
+            line.width: 3
+            visible:    false
+        }
+    }
+
+    /// First line segment to show on mobile
+    Component {
+        id: mobilePointComponent
+
+        MapQuickItem {
+            anchorPoint.x:  rect.width / 2
+            anchorPoint.y:  rect.height / 2
+            visible:        false
+
+            sourceItem: Rectangle {
+                id:     rect
+                width:  ScreenTools.defaultFontPixelHeight
+                height: width
+                color:  "green"
+            }
         }
     }
 
