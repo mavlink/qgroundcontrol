@@ -53,21 +53,21 @@ Mixer::~Mixer(){
 Mixer* Mixer::getSubmixer(unsigned int mixerID){
     if(mixerID > _submixers.count())
         return nullptr;
-//    QObject * obj = qvariant_cast<QObject *>(_submixers[mixerID-1]);
+    if(mixerID == 0)
+        return nullptr;
     return qobject_cast<Mixer *>(_submixers[mixerID-1]);
 }
 
 void Mixer::appendSubmixer(unsigned int mixerID, Mixer *submixer){
     submixer->setParent(this);
-
     _submixers.append(submixer);
+    Q_ASSERT(mixerID == _submixers.count());
 }
 
-//void Mixer::addMixerParamFact(unsigned int paramID, Fact* paramFact){
-//    if(_parameters.contains(paramID))
-//        delete _parameters.value(paramID);
-//    _parameters[paramID] = paramFact;
-//}
+void Mixer::appendParamFact(Fact* paramFact){
+    paramFact->setParent(this);
+    _parameters.append(paramFact);
+}
 
 //void Mixer::addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel){
 //    if(_mixerConnections.contains(connType))
@@ -99,6 +99,7 @@ Mixer* MixerGroup::getMixer(unsigned int mixerID){
 void MixerGroup::appendMixer(unsigned int mixerID, Mixer *mixer){
     mixer->setParent(this);
     _mixers.append(mixer);
+    Q_ASSERT(mixerID == _mixers.count()-1);
 }
 
 

@@ -72,7 +72,7 @@ public:
 
     Mixer* getSubmixer(unsigned int mixerID);
     void appendSubmixer(unsigned int mixerID, Mixer *submixer);
-    void addMixerParamFact(unsigned int paramID, Fact* paramFact);
+    void appendParamFact(Fact* paramFact);
 //    void addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel);
 
 protected:

@@ -307,8 +307,8 @@ void MixersManager::mixerDataDownloadComplete(unsigned int group){
 bool MixersManager::_buildAll(unsigned int group){
     if(!_buildStructureFromMessages(group))
         return false;
-//    if(!_buildParametersFromHeaders(group))
-//        return false;
+    if(!_buildParametersFromHeaders(group))
+        return false;
 //    if(!_buildConnectionsFromHeaders(group))
 //        return false;
 //    if(!_parameterValuesFromMessages(group))
@@ -689,7 +689,52 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
 ///* Build parameters from included headers.  TODO: DEPRECIATE AND CHANGE TO FILE INSTEAD OF HEADERS
 ///  return true if successfull*/
 bool MixersManager::_buildParametersFromHeaders(unsigned int group){
-    return false;
+    Mixer *mixer;
+    Mixer *submixer;
+    Fact  *param;
+    int mixType, subType, mixIndex, subIndex, paramCount, subCount;
+    bool convOK;
+    FactMetaData *metaData;
+
+    MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
+    if(mixer_group == nullptr)
+        return false;
+
+    QObjectList mixers = mixer_group->mixers();
+
+    for(mixIndex = 0; mixIndex<mixers.count(); mixIndex++){
+        mixer = mixer_group->getMixer(mixIndex);
+        mixType = mixer->mixer()->rawValue().toInt(&convOK);
+        Q_ASSERT(convOK==true);
+
+        paramCount = _mixerMetaData.GetMixerParameterCount(mixType);
+        for(int paramIndex=0; paramIndex<paramCount; paramIndex++){
+            metaData = _mixerMetaData.GetMixerParameterMetaData(mixType, paramIndex);
+            Q_CHECK_PTR(metaData);
+            param = new Fact(-1, metaData->name(), FactMetaData::valueTypeFloat, nullptr);
+            param->setMetaData(metaData);
+            mixer->appendParamFact(param);
+        }
+
+        //Submixers at indexed from 1
+        subCount = mixer->submixers()->count();
+        for(subIndex=1; subIndex<=subCount; subIndex++){
+            submixer = mixer->getSubmixer(subIndex);
+            Q_CHECK_PTR(submixer);
+            subType = submixer->mixer()->rawValue().toInt(&convOK);
+            Q_ASSERT(convOK==true);
+
+            paramCount = _mixerMetaData.GetMixerParameterCount(mixType);
+            for(int paramIndex=0; paramIndex<paramCount; paramIndex++){
+                metaData = _mixerMetaData.GetMixerParameterMetaData(subType, paramIndex);
+                Q_CHECK_PTR(metaData);
+                param = new Fact(-1, metaData->name(), FactMetaData::valueTypeFloat, nullptr);
+                param->setMetaData(metaData);
+                submixer->appendParamFact(param);
+            }
+        }
+    }
+    return true;
 }
 
 ///* Build connections from included headers.  TODO: DEPRECIATE AND CHANGE TO FILE INSTEAD OF HEADERS

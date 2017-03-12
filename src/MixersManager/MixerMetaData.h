@@ -26,6 +26,7 @@ public:
 
     Fact* GetMixerType(int typeID) {return _mixerTypeMap[typeID];};
     FactMetaData* GetMixerParameterMetaData(int typeID, int parameterID);
+    int GetMixerParameterCount(int typeID);
 
     //    QMap<QString, FactMetaData*> *GetMap() {return &_metaDataMap;};
     void mixerTypesFromHeaders();

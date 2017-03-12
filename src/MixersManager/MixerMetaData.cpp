@@ -23,13 +23,15 @@ static const unsigned mixer_input_counts[MIXER_PARAMETERS_MIXER_TYPE_COUNT] = MI
 static const unsigned mixer_output_counts[MIXER_PARAMETERS_MIXER_TYPE_COUNT] = MIXER_OUTPUT_COUNTS;
 
 MixerMetaData::MixerMetaData()
-    : _mixerTypeMetaData(FactMetaData::valueTypeString, this)
+    : _mixerTypeMetaData(FactMetaData::valueTypeInt32, this)
     , _mixerTypeMap()
     , _mixerParameterMetaDataMap()
 {
     _mixerTypeMetaData.setName("MIXER_TYPE");
     _mixerTypeMetaData.setGroup("MIXER_TYPES");
-    _mixerTypeMetaData.setRawDefaultValue("MIXER_TYPE_UNKNOWN");
+    _mixerTypeMetaData.setRawDefaultValue(-1);
+    _mixerTypeMetaData.setRawMax(MIXER_TYPES_COUNT);
+    _mixerTypeMetaData.setRawMin(0);
 
     mixerTypesFromHeaders();
     mixerParameterMetaDataFromHeaders();
@@ -55,10 +57,10 @@ void MixerMetaData::mixerTypesFromHeaders(){
 
     for(int typeID=0; typeID<MIXER_TYPES_COUNT; typeID++){
         QString typeIDStr;
-        typeIDStr = QString("MIXER_TYPE_%1") .arg(typeID);
-        mixerType = new Fact(-1, typeIDStr, FactMetaData::valueTypeString, this);
+        typeIDStr = QString(MIXER_TYPE_ID[typeID]);
+        mixerType = new Fact(-1, MIXER_TYPE_ID[typeID], FactMetaData::valueTypeInt32, this);
         mixerType->setMetaData(&_mixerTypeMetaData);
-        mixerType->setRawValue(MIXER_TYPE_ID[typeID]);
+        mixerType->setRawValue(typeID);
         mixerType->setParent(this);
         _mixerTypeMap[typeID] = mixerType;
     }
@@ -78,3 +80,7 @@ void MixerMetaData::mixerParameterMetaDataFromHeaders(){
     }
 }
 
+int MixerMetaData::GetMixerParameterCount(int typeID){
+    if(typeID >= MIXER_TYPES_COUNT) return 0;
+    return mixer_parameter_count[typeID];
+}

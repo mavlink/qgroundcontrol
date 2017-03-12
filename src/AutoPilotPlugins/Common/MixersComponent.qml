@@ -122,16 +122,24 @@ SetupPage {
 //                                model: mockList
                                 model: factRow.modelFact.submixers
 
-                                delegate: QGCLabel{
-                                    id:     mockNameLabel
-                                    width:  ScreenTools.defaultFontPixelWidth  * 10
-                                    color:  "white"
-
+                                delegate: Column {
+                                    id: subColumn
                                     property Mixer modelFact2: object
 
-//                                    text:   name
-                                    text:   mockNameLabel.modelFact2.mixer.name
-                                } //delegate: QGCLabel
+                                    QGCLabel{
+                                        id:     subNameLabel
+                                        width:  ScreenTools.defaultFontPixelWidth  * 20
+                                        color:  "white"
+                                        text:   subColumn.modelFact2.mixer.name
+                                    } //delegate: QGCLabel
+
+                                    QGCLabel{
+                                        id:     subIDLabel
+                                        width:  ScreenTools.defaultFontPixelWidth  * 20
+                                        color:  "white"
+                                        text:   subColumn.modelFact2.mixer.valueString
+                                    } //delegate: QGCLabel
+                                } //Column
                             } //Repeater
 
 //                            /// SubMixer sub list
