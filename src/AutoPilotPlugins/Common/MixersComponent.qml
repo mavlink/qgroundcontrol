@@ -65,7 +65,7 @@ SetupPage {
                     id:                 mixerListView
                     anchors.top:        parent.top
                     anchors.bottom:     parent.bottom
-                    width:              ScreenTools.defaultFontPixelWidth  * 50
+                    width:              ScreenTools.defaultFontPixelWidth  * 100
                     orientation:        ListView.Vertical
                     model:              mixers.mixersList
 //                    model:              mockList
@@ -117,65 +117,75 @@ SetupPage {
                                 color:  "white"
                             }
 
-                            /// SubMixer sub list
-                            QGCListView {
-                                id:                 submixerListView
-                                anchors.top:        mixerTypeLabel.bottom
-                                anchors.bottom:     parent.bottom
-                                width:              ScreenTools.defaultFontPixelWidth  * 50
-                                orientation:        ListView.Vertical
-                                model:              mockList
-//                                model:              factRow.modelFact.submixers
-                                cacheBuffer:        height > 0 ? height * 2 : 0
-                                clip:               true
+                            Repeater {
+                                id: submixerRepeater
+//                                model: mockList
+                                model: factRow.modelFact.submixers
 
-                                delegate: Rectangle {
-                                    anchors.left:   parent.left
-                                    anchors.right:  parent.right
-                                    height:         30
-                                    color:          "black"
-                                    border.color:   "dark grey"
+                                delegate: QGCLabel{
+                                    id:     mockNameLabel
+                                    width:  ScreenTools.defaultFontPixelWidth  * 10
+                                    color:  "white"
 
+                                    property Mixer modelFact2: object
 
-                                    Row {
-                                        id:     factSubRow
-                                        spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
-                                        anchors.verticalCenter: parent.verticalCenter
+//                                    text:   name
+                                    text:   mockNameLabel.modelFact2.mixer.name
+                                } //delegate: QGCLabel
+                            } //Repeater
 
-                                        property Mixer modelFact2: object
+//                            /// SubMixer sub list
+//                            QGCListView {
+//                                id:                 submixerListView
+//                                anchors.top:        mixerTypeLabel.bottom
+//                                anchors.bottom:     parent.bottom
+//                                width:              ScreenTools.defaultFontPixelWidth  * 50
+//                                orientation:        ListView.Vertical
+//                                model:              mockList
+////                                model:              factRow.modelFact.submixers
+//                                cacheBuffer:        height > 0 ? height * 2 : 0
+//                                clip:               true
 
-                                        QGCLabel {
-                                            id:     submixerIDLabel
-                                            width:  ScreenTools.defaultFontPixelWidth  * 10
-                                            text:   name
-//                                            text:   factSubRow.modelFact2.mixer.name
-                                            horizontalAlignment:    Text.AlignHCenter
-                                            verticalAlignment:      Text.AlignVCenter
-                                            clip:   true
-                                            color:  "white"
-                                        }
-
-                                        QGCLabel {
-                                            id:     submixerTypeLabel
-                                            width:  ScreenTools.defaultFontPixelWidth  * 10
-                                            text:   value
-//                                            text:   factSubRow.modelFact2.mixer.valueString
-                                            horizontalAlignment:    Text.AlignHCenter
-                                            verticalAlignment:      Text.AlignVCenter
-                                            clip:   true
-                                            color:  "white"
-                                        }
-
-                                    } //Row
-                                } //Rectangle
-                            } //QGCListView
+//                                delegate: Rectangle {
+//                                    anchors.left:   parent.left
+//                                    anchors.right:  parent.right
+//                                    height:         30
+//                                    color:          "black"
+//                                    border.color:   "dark grey"
 
 
+//                                    Row {
+//                                        id:     factSubRow
+//                                        spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
+//                                        anchors.verticalCenter: parent.verticalCenter
 
+//                                        property Mixer modelFact2: object
 
+//                                        QGCLabel {
+//                                            id:     submixerIDLabel
+//                                            width:  ScreenTools.defaultFontPixelWidth  * 10
+//                                            text:   name
+////                                            text:   factSubRow.modelFact2.mixer.name
+//                                            horizontalAlignment:    Text.AlignHCenter
+//                                            verticalAlignment:      Text.AlignVCenter
+//                                            clip:   true
+//                                            color:  "white"
+//                                        }
 
+//                                        QGCLabel {
+//                                            id:     submixerTypeLabel
+//                                            width:  ScreenTools.defaultFontPixelWidth  * 10
+//                                            text:   value
+////                                            text:   factSubRow.modelFact2.mixer.valueString
+//                                            horizontalAlignment:    Text.AlignHCenter
+//                                            verticalAlignment:      Text.AlignVCenter
+//                                            clip:   true
+//                                            color:  "white"
+//                                        }
 
-
+//                                    } //Row
+//                                } //Rectangle
+//                            } //QGCListView
 
 
 
