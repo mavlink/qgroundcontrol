@@ -138,7 +138,9 @@ QGCView {
         }
 
         onNewItemsFromVehicle: {
-            mapFitFunctions.fitMapViewportToMissionItems()
+            if (_visualItems && _visualItems.count != 1) {
+                mapFitFunctions.fitMapViewportToMissionItems()
+            }
             setCurrentItem(0)
             _firstMissionLoadComplete = true
             checkFirstLoadComplete()
