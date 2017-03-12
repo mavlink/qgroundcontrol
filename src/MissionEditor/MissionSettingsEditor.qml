@@ -40,6 +40,7 @@ Rectangle {
                 property bool   _showHoverSpeed:            _missionVehicle.multiRotor || missionController.vehicle.vtol
                 property bool   _multipleFirmware:          QGroundControl.supportedFirmwareCount > 2
                 property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 16
+                property bool   _mobile:                    ScreenTools.isMobile
 
                 readonly property string _firmwareLabel:    qsTr("Firmware:")
                 readonly property string _vehicleLabel:     qsTr("Vehicle:")
@@ -68,6 +69,8 @@ Rectangle {
                             anchors.left:   parent.left
                             anchors.right:  parent.right
                             spacing:        _margin
+                            visible:        _mobile ? index == 2 : true // Cheating here since we known we only have Lat/Lon/Alt
+
                             QGCLabel { text: object.name; Layout.fillWidth: true }
                             FactTextField {
                                 Layout.preferredWidth:  _fieldWidth
@@ -84,11 +87,17 @@ Rectangle {
                     }
 
                     QGCLabel {
-                        width:          parent.width
-                        wrapMode:       Text.WordWrap
-                        font.pointSize: ScreenTools.smallFontPointSize
-                        text:           qsTr("Actual position set by vehicle at flight time.")
-                        horizontalAlignment: Text.AlignHCenter
+                        width:                  parent.width
+                        wrapMode:               Text.WordWrap
+                        font.pointSize:         ScreenTools.smallFontPointSize
+                        text:                   qsTr("Actual position set by vehicle at flight time.")
+                        horizontalAlignment:    Text.AlignHCenter
+                    }
+
+                    QGCButton {
+                        text:                       qsTr("Set Home To Map Center")
+                        onClicked:                  editorRoot.moveHomeToMapCenter()
+                        anchors.horizontalCenter:   parent.horizontalCenter
                     }
 
                     QGCLabel {
@@ -125,17 +134,6 @@ Rectangle {
                         }
 
                         QGCLabel {
-                            text:       _firmwareLabel
-                            visible:    !_showOfflineEditingCombos
-                            Layout.fillWidth: true
-                        }
-                        QGCLabel {
-                            text:       _missionVehicle.firmwareTypeString
-                            visible:    !_showOfflineEditingCombos
-                            Layout.preferredWidth:  _fieldWidth
-                        }
-
-                        QGCLabel {
                             text:       _vehicleLabel
                             visible:    _showOfflineEditingCombos
                             Layout.fillWidth: true
@@ -145,17 +143,6 @@ Rectangle {
                             fact:               QGroundControl.settingsManager.appSettings.offlineEditingVehicleType
                             indexModel:         false
                             visible:            _showOfflineEditingCombos
-                            Layout.preferredWidth:  _fieldWidth
-                        }
-
-                        QGCLabel {
-                            text:       _vehicleLabel
-                            visible:    !_showOfflineEditingCombos
-                            Layout.fillWidth: true
-                        }
-                        QGCLabel {
-                            text:       _missionVehicle.vehicleTypeString
-                            visible:    !_showOfflineEditingCombos
                             Layout.preferredWidth:  _fieldWidth
                         }
 
@@ -201,21 +188,6 @@ Rectangle {
                         text:           qsTr("Speeds are only used for time calculations. Actual vehicle speed will not be affected.")
                         horizontalAlignment: Text.AlignHCenter
                     }
-
-                    Rectangle {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        height:         1
-                        color:          qgcPal.text
-                    }
-
-                    QGCButton {
-                        width:      parent.width * 0.9
-                        text:       qsTr("Set Home To Map Center")
-                        onClicked:  editorRoot.moveHomeToMapCenter()
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-
                 } // Column
             } // Item
         } // Component
