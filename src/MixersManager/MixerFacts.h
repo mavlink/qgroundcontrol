@@ -14,7 +14,7 @@
 #include <Fact.h>
 #include <FactMetaData.h>
 #include <QMap>
-#include <QVariantList>
+#include <QmlObjectListModel.h>
 #include <QMetaType>
 
 class MixerConnection : public QObject
@@ -48,23 +48,24 @@ public:
     Mixer(Fact *mixerFact = NULL, QObject* parent = NULL);
     ~Mixer();
 
-    Q_PROPERTY(QVariantList parameters           MEMBER _parameters         CONSTANT)
-    Q_PROPERTY(QVariantList submixers            MEMBER _submixers          CONSTANT)
-    Q_PROPERTY(QVariantList inputConnections     MEMBER _inputConnections   CONSTANT)
-    Q_PROPERTY(QVariantList outputConnections    MEMBER _outputConnections  CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  parameters          READ parameters             CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  submixers           READ submixers              CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  inputConnections    READ inputConnections       CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  outputConnections   READ outputConnections      CONSTANT)
+
     Q_PROPERTY(Fact*        mixer                READ mixer              CONSTANT)
 
-//    // Parameters (Mixer private constants or variables as Fact object)
-//    QVariantList parameters             (void) const { return _parameters; }
+    // Parameters (Mixer private constants or variables as Fact object)
+    QmlObjectListModel* parameters             (void) { return &_parameters; }
 
-//    // Submixers of object type MixerFact
-//    QVariantList submixers              (void) const { return _submixers; }
+    // Submixers of object type MixerFact
+    QmlObjectListModel* submixers              (void) { return &_submixers; }
 
-//    // Input connections
-//    QVariantList inputConnections       (void) const { return _inputConnections; }
+    // Input connections
+    QmlObjectListModel* inputConnections       (void) { return &_inputConnections; }
 
-//    // Output connections
-//    QVariantList outputConnections      (void) const { return _outputConnections; }
+    // Output connections
+    QmlObjectListModel* outputConnections      (void) { return &_outputConnections; }
 
     // Main mixer Fact describing mixer type
     Fact *mixer                         (void) const { return _mixer; }
@@ -75,10 +76,10 @@ public:
 //    void addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel);
 
 protected:
-    QVariantList    _parameters;
-    QVariantList    _submixers;
-    QVariantList    _inputConnections;
-    QVariantList    _outputConnections;
+    QmlObjectListModel    _parameters;
+    QmlObjectListModel    _submixers;
+    QmlObjectListModel    _inputConnections;
+    QmlObjectListModel    _outputConnections;
     Fact*           _mixer;
 };
 

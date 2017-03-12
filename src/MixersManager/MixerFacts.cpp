@@ -31,10 +31,10 @@ MixerConnection::~MixerConnection(){
 
 Mixer::Mixer(Fact *mixerFact, QObject* parent)
     : QObject(parent)
-    , _parameters()
-    , _submixers()
-    , _inputConnections()
-    , _outputConnections()
+    , _parameters(this)
+    , _submixers(this)
+    , _inputConnections(this)
+    , _outputConnections(this)
     , _mixer(mixerFact)
 {
 }
@@ -42,41 +42,25 @@ Mixer::Mixer(Fact *mixerFact, QObject* parent)
 
 
 Mixer::~Mixer(){
-    //Delete and remove all submixers
-    foreach(QVariant mixvar, _submixers){
-        delete qobject_cast<Mixer *>(qvariant_cast<QObject *>(mixvar));
-    }
-    _submixers.clear();
-
-    //Delete and remove all parameters
-    foreach(QVariant paramvar, _parameters){
-        delete qobject_cast<Fact *>(qvariant_cast<QObject *>(paramvar));
-    }
-    _parameters.clear();
-
-    //Delete and remove all connetions
-    foreach(QVariant connvar, _inputConnections){
-        delete qobject_cast<MixerConnection *>(qvariant_cast<QObject *>(connvar));
-    }
-    _inputConnections.clear();
-    foreach(QVariant connvar, _outputConnections){
-        delete qobject_cast<MixerConnection *>(qvariant_cast<QObject *>(connvar));
-    }
-    _outputConnections.clear();
+    //Delete and remove all content
+    _submixers.clearAndDeleteContents();
+    _parameters.clearAndDeleteContents();
+    _inputConnections.clearAndDeleteContents();
+    _outputConnections.clearAndDeleteContents();
 }
 
 
 Mixer* Mixer::getSubmixer(unsigned int mixerID){
-    if(!_submixers.contains(mixerID))
+    if(mixerID > _submixers.count())
         return nullptr;
-    QObject * obj = qvariant_cast<QObject *>(_submixers.value(mixerID));
-    return qobject_cast<Mixer *>(obj);
+//    QObject * obj = qvariant_cast<QObject *>(_submixers[mixerID-1]);
+    return qobject_cast<Mixer *>(_submixers[mixerID-1]);
 }
 
 void Mixer::appendSubmixer(unsigned int mixerID, Mixer *submixer){
     submixer->setParent(this);
 
-    _submixers.append(QVariant::fromValue(submixer));
+    _submixers.append(submixer);
 }
 
 //void Mixer::addMixerParamFact(unsigned int paramID, Fact* paramFact){

@@ -60,7 +60,7 @@ SetupPage {
             RowLayout {
                 anchors.fill: parent
 
-                /// Parameter list
+                /// Mixer list
                 QGCListView {
                     id:                 mixerListView
                     anchors.top:        parent.top
@@ -117,16 +117,15 @@ SetupPage {
                                 color:  "white"
                             }
 
-
-
-                            /// Parameter list
+                            /// SubMixer sub list
                             QGCListView {
                                 id:                 submixerListView
                                 anchors.top:        mixerTypeLabel.bottom
                                 anchors.bottom:     parent.bottom
                                 width:              ScreenTools.defaultFontPixelWidth  * 50
                                 orientation:        ListView.Vertical
-                                model:              factRow.modelFact.submixers
+                                model:              mockList
+//                                model:              factRow.modelFact.submixers
                                 cacheBuffer:        height > 0 ? height * 2 : 0
                                 clip:               true
 
@@ -143,14 +142,13 @@ SetupPage {
                                         spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
                                         anchors.verticalCenter: parent.verticalCenter
 
-//                                        property Mixer submix: object
-//                                        property Mixer modelFact2: object
+                                        property Mixer modelFact2: object
 
                                         QGCLabel {
                                             id:     submixerIDLabel
                                             width:  ScreenTools.defaultFontPixelWidth  * 10
-            //                               text:   name
-                                            text:   modelData.mixer.name
+                                            text:   name
+//                                            text:   factSubRow.modelFact2.mixer.name
                                             horizontalAlignment:    Text.AlignHCenter
                                             verticalAlignment:      Text.AlignVCenter
                                             clip:   true
@@ -160,8 +158,8 @@ SetupPage {
                                         QGCLabel {
                                             id:     submixerTypeLabel
                                             width:  ScreenTools.defaultFontPixelWidth  * 10
-            //                                text:   value
-                                            text:   modelData.mixer.valueString
+                                            text:   value
+//                                            text:   factSubRow.modelFact2.mixer.valueString
                                             horizontalAlignment:    Text.AlignHCenter
                                             verticalAlignment:      Text.AlignVCenter
                                             clip:   true
