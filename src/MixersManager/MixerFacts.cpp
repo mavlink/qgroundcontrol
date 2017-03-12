@@ -29,23 +29,19 @@ MixerConnection::~MixerConnection(){
 
 
 
-Mixer::Mixer(QObject* parent)
+Mixer::Mixer(Fact *mixerFact, QObject* parent)
     : QObject(parent)
     , _parameters()
     , _submixers()
     , _inputConnections()
     , _outputConnections()
-    , _mixer()
+    , _mixer(mixerFact)
 {
 }
 
 
 
 Mixer::~Mixer(){
-//    int index;
-//    for(index=0; index<_submixers.count(); index++){
-
-//    }
     //Delete and remove all submixers
     foreach(QVariant mixvar, _submixers){
         delete qobject_cast<Mixer *>(qvariant_cast<QObject *>(mixvar));
@@ -77,23 +73,19 @@ Mixer* Mixer::getSubmixer(unsigned int mixerID){
     return qobject_cast<Mixer *>(obj);
 }
 
-void Mixer::addSubmixer(unsigned int mixerID, Mixer *submixer){
+void Mixer::appendSubmixer(unsigned int mixerID, Mixer *submixer){
     QVariant var;
-    if(_submixers.contains(mixerID))
-        var = _submixers.value(mixerID);
-        QObject * obj = qvariant_cast<QObject *>(var);
-        Mixer * del = qobject_cast<Mixer *>(obj);
-        delete del;
-    var.fromValue(submixer);
-    _submixers[mixerID] = var;
+
     submixer->setParent(this);
+    var.fromValue(submixer);
+    _submixers.append(var);
 }
 
-void Mixer::addMixerParamFact(unsigned int paramID, Fact* paramFact){
+//void Mixer::addMixerParamFact(unsigned int paramID, Fact* paramFact){
 //    if(_parameters.contains(paramID))
 //        delete _parameters.value(paramID);
 //    _parameters[paramID] = paramFact;
-}
+//}
 
 //void Mixer::addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel){
 //    if(_mixerConnections.contains(connType))
@@ -110,35 +102,28 @@ MixerGroup::MixerGroup(QObject* parent)
 
 MixerGroup::~MixerGroup(){
     //Delete and remove all parameters
-    foreach(QVariant mixvar, _mixers){
-        delete qobject_cast<Fact *>(qvariant_cast<QObject *>(mixvar));
+    foreach(QObject *mixobj, _mixers){
+        delete qobject_cast<Fact *>(mixobj);
     }
     _mixers.clear();
 };
 
 Mixer* MixerGroup::getMixer(unsigned int mixerID){
-    if(!_mixers.contains(mixerID))
+    if(mixerID >= _mixers.count())
         return nullptr;
-    QObject * obj = qvariant_cast<QObject *>(_mixers.value(mixerID));
-    return qobject_cast<Mixer *>(obj);
+    return qobject_cast<Mixer *>(_mixers[mixerID]);
 }
 
-void MixerGroup::addMixer(unsigned int mixerID, Mixer *mixer){
-    QVariant var;
-    if(_mixers.contains(mixerID))
-        var = _mixers.value(mixerID);
-        QObject * obj = qvariant_cast<QObject *>(var);
-        Mixer * del = qobject_cast<Mixer *>(obj);
-        delete del;
-    var.fromValue(mixer);
-    _mixers[mixerID] = var;
+void MixerGroup::appendMixer(unsigned int mixerID, Mixer *mixer){
     mixer->setParent(this);
+    _mixers.append(mixer);
 }
 
 
 
-MixerGroups::MixerGroups()
-    :_mixerGroups()
+MixerGroups::MixerGroups(QObject* parent)
+    : QObject(parent)
+    ,_mixerGroups()
 {
 }
 

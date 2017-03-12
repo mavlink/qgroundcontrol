@@ -63,6 +63,8 @@
 #include "QmlObjectListModel.h"
 #include "MissionManager.h"
 #include "MixersManager.h"
+#include "MixerFacts.h"
+#include "MixerMetaData.h"
 #include "QGroundControlQmlGlobal.h"
 #include "FlightMapSettings.h"
 #include "CoordinateVector.h"
@@ -383,7 +385,12 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<QGCPositionManager>  ("QGroundControl.QGCPositionManager",   1, 0, "QGCPositionManager",     "Reference only");
     qmlRegisterUncreatableType<QGCMapPolygon>       ("QGroundControl.FlightMap",            1, 0, "QGCMapPolygon",          "Reference only");
 
-    qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers",          1, 0, "ParameterEditorController");
+
+    //TOO Move these to ToolBox?
+    qmlRegisterType<Mixer>                          ("QGroundControl.Controllers",          1, 0, "Mixer");
+    qmlRegisterType<MixerConnection>                ("QGroundControl.Controllers",          1, 0, "MixerConnection");
+
     qmlRegisterType<MixersComponentController>          ("QGroundControl.Controllers", 1, 0, "MixersComponentController");
     qmlRegisterType<ESP8266ComponentController>         ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");

@@ -45,14 +45,14 @@ class Mixer : public QObject
     Q_DISABLE_COPY(Mixer)
 
 public:
-    Mixer(QObject* parent = NULL);
+    Mixer(Fact *mixerFact = NULL, QObject* parent = NULL);
     ~Mixer();
 
     Q_PROPERTY(QVariantList parameters           READ parameters         CONSTANT)
     Q_PROPERTY(QVariantList submixers            READ submixers          CONSTANT)
     Q_PROPERTY(QVariantList inputConnections     READ inputConnections   CONSTANT)
     Q_PROPERTY(QVariantList outputConnections    READ outputConnections  CONSTANT)
-    Q_PROPERTY(Fact mixer                        READ mixer              CONSTANT)
+    Q_PROPERTY(Fact*        mixer                READ mixer              CONSTANT)
 
     // Parameters (Mixer private constants or variables as Fact object)
     QVariantList parameters             (void) const { return _parameters; }
@@ -67,10 +67,10 @@ public:
     QVariantList outputConnections      (void) const { return _outputConnections; }
 
     // Output connections
-    Fact mixer                          (void) const { return _mixer; }
+    Fact *mixer                         (void) const { return _mixer; }
 
     Mixer* getSubmixer(unsigned int mixerID);
-    void addSubmixer(unsigned int mixerID, Mixer *submixer);
+    void appendSubmixer(unsigned int mixerID, Mixer *submixer);
     void addMixerParamFact(unsigned int paramID, Fact* paramFact);
 //    void addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel);
 
@@ -79,7 +79,7 @@ protected:
     QVariantList    _submixers;
     QVariantList    _inputConnections;
     QVariantList    _outputConnections;
-    Fact            _mixer;
+    Fact*           _mixer;
 };
 
 
@@ -95,27 +95,24 @@ public:
     MixerGroup(QObject* parent = NULL);
     ~MixerGroup();
 
-    Q_PROPERTY(QVariantList mixers    READ mixers  CONSTANT)
-
     // Parameters (Mixer private constants or variables)
-    QVariantList mixers              (void) const { return _mixers; }
+    QObjectList mixers              (void) const { return _mixers; }
 
     Mixer* getMixer(unsigned int mixerID);
-    void addMixer(unsigned int mixerID, Mixer *mixer);
+    void appendMixer(unsigned int mixerID, Mixer *mixer);
 
 private:
-    QVariantList _mixers ;
+    QObjectList _mixers ;
 };
-
-Q_DECLARE_METATYPE(MixerGroup*)
 
 
 class MixerGroups : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY(MixerGroups)
 
 public:
-    MixerGroups();
+    MixerGroups(QObject* parent = NULL);
     ~MixerGroups();
     void deleteGroup(unsigned int groupID);
     void addGroup(unsigned int groupID, MixerGroup *group);

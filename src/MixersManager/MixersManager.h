@@ -123,7 +123,7 @@ private:
     bool _buildAll(unsigned int group);
 
 
-    ///* Build mixer structure from messages.  This only includes mixers and submixers with types
+    ///* Build mixer structure from messages.  This only includes mixers and submixers with type facts
     /// return true if successfull*/
     bool _buildStructureFromMessages(unsigned int group);
 

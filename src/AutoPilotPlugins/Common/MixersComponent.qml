@@ -19,6 +19,9 @@ import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
 
+//TODO Look at QGroundControl.Mixer module again
+//import QGroundControl.Mixer         1.0
+
 
 // Mixer Tuning setup page
 SetupPage {
@@ -90,13 +93,13 @@ SetupPage {
                             spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
                             anchors.verticalCenter: parent.verticalCenter
 
-                            property Fact modelFact: object
+                            property Mixer modelFact: object
 
                             QGCLabel {
                                 id:     mixerIDLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
 //                               text:   name
-                                text:   factRow.modelFact.name
+                                text:   factRow.modelFact.mixer.name
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
@@ -107,7 +110,7 @@ SetupPage {
                                 id:     mixerTypeLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
 //                                text:   value
-                                text:   factRow.modelFact.valueString
+                                text:   factRow.modelFact.mixer.valueString
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true

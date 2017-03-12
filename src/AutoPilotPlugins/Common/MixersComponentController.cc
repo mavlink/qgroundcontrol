@@ -133,38 +133,18 @@ float MixersComponentController::parameterValue(void)
 }
 
 void MixersComponentController::_updateMixers(void){
-//    QObjectList newMixerList;
 
-//    Fact* fact;
-//    unsigned typeID;
-//    QMap<int, Mixer*> *subMixers;
+    MixerGroup *mixerGroup = _vehicle->mixersManager()->getMixerGroup(0);
+    if(mixerGroup != nullptr){
+        _mixers->swapObjectList(mixerGroup->mixers());
+    } else {
+        QObjectList newMixerList;
+        Fact* fact;
 
-//    MixerMetaData *mixerMetaData = _vehicle->mixersManager()->getMixerMetaData();
-
-//    MixerGroup *mixerGroup = _vehicle->mixersManager()->getMixerGroup(0);
-//    if(mixerGroup == nullptr) return;
-
-//    QMap<int, Mixer*> *mixers = mixerGroup->getMixers();
-//    Mixer *mixer;
-//    Mixer *submixer;
-
-//    //Add each mixer type and submixer type to the list
-//    foreach(int mixer_index, mixers->keys()) {
-//        mixer = mixers->value(mixer_index);
-//        typeID = mixer->getMixerTypeID();
-//        fact = mixerMetaData->GetMixerType(typeID);
-//        if(fact != nullptr)
-//            newMixerList.append(fact);
-
-//        subMixers = mixer->getSubmixers();
-//        foreach(int submixer_index, subMixers->keys()) {
-//            submixer = subMixers->value(submixer_index);
-//            typeID = submixer->getMixerTypeID();
-//            fact = mixerMetaData->GetMixerType(typeID);
-//            if(fact != nullptr)
-//                newMixerList.append(fact);
-//        }
-//    }
-//    _mixers->swapObjectList(newMixerList);
+        foreach(fact, _mockFactList){
+            newMixerList.append(fact);
+        }
+    _mixers->swapObjectList(newMixerList);
+    }
 }
 

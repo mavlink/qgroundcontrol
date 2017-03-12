@@ -59,6 +59,7 @@ void MixerMetaData::mixerTypesFromHeaders(){
         mixerType = new Fact(-1, typeIDStr, FactMetaData::valueTypeString, this);
         mixerType->setMetaData(&_mixerTypeMetaData);
         mixerType->setRawValue(MIXER_TYPE_ID[typeID]);
+        mixerType->setParent(this);
         _mixerTypeMap[typeID] = mixerType;
     }
 }
