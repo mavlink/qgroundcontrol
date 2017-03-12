@@ -37,6 +37,7 @@ Item {
     property real _spacers:         ScreenTools.defaultFontPixelHeight * 0.5
     property real _distance:        0.0
     property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 30
+    property bool _hideCamera:      false
 
     function getGearColor() {
         if(TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED) {
@@ -94,9 +95,10 @@ Item {
     Rectangle {
         id:             mainRect
         width:          parent.width
-        height:         instrumentColumn.height
-        radius:         _mainIsMap ? width * 0.5 : 8
+        height:         mainCol.height + (compassAttitudeCombo.height * 0.5)
+        radius:         ScreenTools.defaultFontPixelWidth * 2
         color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0.85,0.85,1,0.75) : Qt.rgba(0.15,0.15,0.25,0.75)
+        anchors.top:parent.top
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? "white" : "black"
         MouseArea {
@@ -106,53 +108,22 @@ Item {
             onReleased:     { mouse.accepted = true; }
         }
         Column {
-            id:         instrumentColumn
+            id:         mainCol
             width:      parent.width
             spacing:    ScreenTools.defaultFontPixelHeight * 0.25
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.top:parent.top
             Item {
                 height:     _spacers
                 width:      1
-                visible:    !_mainIsMap
-                onVisibleChanged: {
-                    if(!visible) {
-                        attitudeIndicator.visible = true
-                        compass.visible = false
-                    }
-                }
             }
-            //-- Attitude Indicator
-            AttitudeWidget {
-                id:             attitudeIndicator
-                size:           parent.width * 0.95
-                vehicle:        activeVehicle
-                visible:        true
+            QGCLabel {
+                text:           QGroundControl.settingsManager.unitsSettings.distanceUnits.enumStringValue.toLowerCase();
+                font.pointSize: ScreenTools.smallFontPointSize
                 anchors.horizontalCenter: parent.horizontalCenter
-                MouseArea {
-                    anchors.fill:   parent
-                    enabled:        attitudeIndicator.visible && !_mainIsMap
-                    onClicked: {
-                        rootLoader.sourceComponent = null
-                        attitudeIndicator.visible = false
-                        compass.visible = true
-                    }
-                }
             }
-            QGCCompassWidget {
-                id:             compass
-                size:           parent.width * 0.95
-                vehicle:        activeVehicle
-                visible:        false
-                anchors.horizontalCenter: parent.horizontalCenter
-                MouseArea {
-                    anchors.fill:   parent
-                    enabled:        compass.visible
-                    onClicked: {
-                        rootLoader.sourceComponent = null
-                        compass.visible = false
-                        attitudeIndicator.visible = true
-                    }
-                }
+            Item {
+                height:     _spacers * 0.25
+                width:      1
             }
             Row {
                 spacing:        ScreenTools.defaultFontPixelHeight * 0.25
@@ -194,212 +165,208 @@ Item {
                 font.pointSize: ScreenTools.largeFontPointSize
                 anchors.horizontalCenter: parent.horizontalCenter
             }
-            //-----------------------------------------------------------------
-            Rectangle {
-                height:         1
-                width:          parent.width * 0.9
-                color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
-                visible:        !_mainIsMap
+            QGCLabel {
+                text:           QGroundControl.settingsManager.unitsSettings.speedUnits.enumStringValue.toLowerCase();
+                font.pointSize: ScreenTools.smallFontPointSize
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Item {
-                height: _spacers * 2
-                width:  1
-                visible:        !_mainIsMap
+                height:     _spacers
+                width:      1
             }
-            //-- Camera Mode
-            Rectangle {
-                width:          ScreenTools.defaultFontPixelWidth  * 12
-                height:         ScreenTools.defaultFontPixelHeight * 2
-                radius:         width * 0.5
-                color:          "black"
-                visible:        !_mainIsMap
-                anchors.horizontalCenter: parent.horizontalCenter
+            Column {
+                width:          parent.width
+                spacing:        ScreenTools.defaultFontPixelHeight * 0.25
+                visible:        !_hideCamera
+                //-----------------------------------------------------------------
                 Rectangle {
-                    height:             parent.height
-                    width:              parent.width * 0.5
-                    radius:             width * 0.5
-                    color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_PHOTO ? toolBar.colorGreen : "black"
-                    anchors.left:       parent.left
-                    QGCColoredImage {
-                        height:             parent.height * 0.75
-                        width:              height
-                        sourceSize.width:   width
-                        source:             "qrc:/typhoonh/camera.svg"
-                        fillMode:           Image.PreserveAspectFit
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_PHOTO ? "black" : toolBar.colorGrey
-                        anchors.centerIn:   parent
+                    height:         1
+                    width:          parent.width * 0.9
+                    color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Item {
+                    height: _spacers
+                    width:  1
+                }
+                //-- Camera Mode
+                Rectangle {
+                    width:          ScreenTools.defaultFontPixelWidth  * 12
+                    height:         ScreenTools.defaultFontPixelHeight * 2
+                    radius:         width * 0.5
+                    color:          "black"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Rectangle {
+                        height:             parent.height
+                        width:              parent.width * 0.5
+                        radius:             width * 0.5
+                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_PHOTO ? toolBar.colorGreen : "black"
+                        anchors.left:       parent.left
+                        QGCColoredImage {
+                            height:             parent.height * 0.75
+                            width:              height
+                            sourceSize.width:   width
+                            source:             "qrc:/typhoonh/camera.svg"
+                            fillMode:           Image.PreserveAspectFit
+                            color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_PHOTO ? "black" : toolBar.colorGrey
+                            anchors.centerIn:   parent
+                        }
+                    }
+                    Rectangle {
+                        height:             parent.height
+                        width:              parent.width * 0.5
+                        radius:             width * 0.5
+                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorGreen : "black"
+                        anchors.right:      parent.right
+                        QGCColoredImage {
+                            height:             parent.height * 0.75
+                            width:              height
+                            sourceSize.width:   width
+                            source:             "qrc:/typhoonh/video.svg"
+                            fillMode:           Image.PreserveAspectFit
+                            color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? "black" : toolBar.colorGrey
+                            anchors.centerIn:   parent
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill:   parent
+                        enabled:        TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_UNDEFINED
+                        onClicked: {
+                            rootLoader.sourceComponent = null
+                            TyphoonHQuickInterface.cameraControl.toggleMode()
+                        }
                     }
                 }
+                Item {
+                    height: _spacers * 2
+                    width:  1
+                }
                 Rectangle {
-                    height:             parent.height
-                    width:              parent.width * 0.5
+                    height:             ScreenTools.defaultFontPixelHeight * 4
+                    width:              height
                     radius:             width * 0.5
-                    color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorGreen : "black"
-                    anchors.right:      parent.right
+                    color:              Qt.rgba(0.0,0.0,0.0,0.0)
+                    border.width:       1
+                    border.color:       qgcPal.globalTheme === QGCPalette.Light ? "black" : "white"
+                    anchors.horizontalCenter: parent.horizontalCenter
                     QGCColoredImage {
-                        height:             parent.height * 0.75
+                        id:                 startVideoButton
+                        height:             parent.height * 0.5
                         width:              height
                         sourceSize.width:   width
                         source:             "qrc:/typhoonh/video.svg"
                         fillMode:           Image.PreserveAspectFit
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? "black" : toolBar.colorGrey
+                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorGreen : toolBar.colorGrey
+                        visible:            TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                         anchors.centerIn:   parent
-                    }
-                }
-                MouseArea {
-                    anchors.fill:   parent
-                    enabled:        TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_UNDEFINED
-                    onClicked: {
-                        rootLoader.sourceComponent = null
-                        TyphoonHQuickInterface.cameraControl.toggleMode()
-                    }
-                }
-            }
-            Item {
-                height: _spacers * 2
-                width:  1
-                visible:        !_mainIsMap
-            }
-            Rectangle {
-                height:             ScreenTools.defaultFontPixelHeight * 4
-                width:              height
-                radius:             width * 0.5
-                color:              Qt.rgba(0.0,0.0,0.0,0.0)
-                visible:            !_mainIsMap
-                border.width:       1
-                border.color:       qgcPal.globalTheme === QGCPalette.Light ? "black" : "white"
-                anchors.horizontalCenter: parent.horizontalCenter
-                QGCColoredImage {
-                    id:                 startVideoButton
-                    height:             parent.height * 0.5
-                    width:              height
-                    sourceSize.width:   width
-                    source:             "qrc:/typhoonh/video.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorGreen : toolBar.colorGrey
-                    visible:            TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
-                    anchors.centerIn:   parent
-                    MouseArea {
-                        anchors.fill:   parent
-                        enabled:        TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_STOPPED
-                        onClicked: {
-                            rootLoader.sourceComponent = null
-                            TyphoonHQuickInterface.cameraControl.startVideo()
+                        MouseArea {
+                            anchors.fill:   parent
+                            enabled:        TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_STOPPED
+                            onClicked: {
+                                rootLoader.sourceComponent = null
+                                TyphoonHQuickInterface.cameraControl.startVideo()
+                            }
                         }
                     }
+                    Rectangle {
+                        id:                 stopVideoButton
+                        height:             parent.height * 0.5
+                        width:              height
+                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorRed : toolBar.colorGrey
+                        visible:            TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                        anchors.centerIn:   parent
+                        MouseArea {
+                            anchors.fill:   parent
+                            enabled:        TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                            onClicked: {
+                                rootLoader.sourceComponent = null
+                                TyphoonHQuickInterface.cameraControl.stopVideo()
+                            }
+                        }
+                    }
+                    QGCColoredImage {
+                        height:             parent.height * 0.5
+                        width:              height
+                        sourceSize.width:   width
+                        source:             "qrc:/typhoonh/camera.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        color:              TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED ? toolBar.colorGreen : toolBar.colorGrey
+                        visible:            !startVideoButton.visible && !stopVideoButton.visible
+                        anchors.centerIn:   parent
+                        MouseArea {
+                            anchors.fill:   parent
+                            enabled:        TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
+                            onClicked: {
+                                rootLoader.sourceComponent = null
+                                TyphoonHQuickInterface.cameraControl.takePhoto()
+                            }
+                        }
+                    }
+                }
+                Item {
+                    height:     _spacers * 2
+                    width:      1
                 }
                 Rectangle {
-                    id:                 stopVideoButton
-                    height:             parent.height * 0.5
+                    height:             ScreenTools.defaultFontPixelHeight * 2.5
                     width:              height
-                    color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorRed : toolBar.colorGrey
-                    visible:            TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
-                    anchors.centerIn:   parent
+                    radius:             width * 0.5
+                    color:              Qt.rgba(0.0,0.0,0.0,0.0)
+                    border.width:       1
+                    border.color:       qgcPal.globalTheme === QGCPalette.Light ? "black" : "white"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QGCColoredImage {
+                        height:             parent.height * 0.65
+                        width:              height
+                        sourceSize.width:   width
+                        source:             "qrc:/typhoonh/CogWheel.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        color:              getGearColor()
+                        anchors.centerIn:   parent
+                    }
                     MouseArea {
-                        anchors.fill:   parent
-                        enabled:        TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                        anchors.fill:       parent
+                        enabled:            TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
                         onClicked: {
-                            rootLoader.sourceComponent = null
-                            TyphoonHQuickInterface.cameraControl.stopVideo()
+                            if(rootLoader.sourceComponent === null) {
+                                rootLoader.sourceComponent = cameraSettingsComponent
+                            } else {
+                                rootLoader.sourceComponent = null
+                            }
                         }
                     }
                 }
-                QGCColoredImage {
-                    height:             parent.height * 0.5
-                    width:              height
-                    sourceSize.width:   width
-                    source:             "qrc:/typhoonh/camera.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    color:              TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED ? toolBar.colorGreen : toolBar.colorGrey
-                    visible:            !startVideoButton.visible && !stopVideoButton.visible
-                    anchors.centerIn:   parent
-                    MouseArea {
-                        anchors.fill:   parent
-                        enabled:        TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
-                        onClicked: {
-                            rootLoader.sourceComponent = null
-                            TyphoonHQuickInterface.cameraControl.takePhoto()
-                        }
-                    }
+                Item {
+                    height:     _spacers * 2
+                    width:      1
                 }
             }
-            /* Disabled for now
-            Item {
-                height: _spacers
-                width:  1
-            }
-            Rectangle {
-                height:             ScreenTools.defaultFontPixelHeight * 4
-                width:              height
-                radius:             width * 0.5
-                color:              Qt.rgba(0.0,0.0,0.0,0.0)
-                border.width:       1
-                border.color:       toolBar.colorWhite
+        }
+        Item {
+            id:     compassAttitudeCombo
+            width:  parent.width
+            height: outerCompass.height
+            anchors.top: mainCol.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            CompassRing {
+                id:                 outerCompass
+                size:               parent.width * 1.05
+                vehicle:            _activeVehicle
                 anchors.horizontalCenter: parent.horizontalCenter
-                QGCColoredImage {
-                    height:             parent.height * 0.5
-                    width:              height
-                    sourceSize.width:   width
-                    source:             "qrc:/typhoonh/camera.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    color:              TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED ? toolBar.colorGreen : toolBar.colorGrey
-                    anchors.centerIn:   parent
-                }
-                MouseArea {
-                    anchors.fill:   parent
-                    enabled:        TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
-                    onClicked: {
-                        TyphoonHQuickInterface.cameraControl.takePhoto()
-                    }
-                }
             }
-            */
-            Item {
-                height:     _spacers * 2
-                width:      1
-                visible:    !_mainIsMap
+            QGCAttitudeWidget {
+                id:                 attitudeWidget
+                size:               parent.width * 0.85
+                vehicle:            _activeVehicle
+                anchors.centerIn:   outerCompass
+                showHeading:        true
             }
-            Rectangle {
-                height:             ScreenTools.defaultFontPixelHeight * 2.5
-                width:              height
-                radius:             width * 0.5
-                color:              Qt.rgba(0.0,0.0,0.0,0.0)
-                visible:            !_mainIsMap
-                border.width:       1
-                border.color:       qgcPal.globalTheme === QGCPalette.Light ? "black" : "white"
-                anchors.horizontalCenter: parent.horizontalCenter
-                QGCColoredImage {
-                    height:             parent.height * 0.65
-                    width:              height
-                    sourceSize.width:   width
-                    source:             "qrc:/typhoonh/CogWheel.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    color:              getGearColor()
-                    anchors.centerIn:   parent
+            MouseArea {
+                anchors.fill:   parent
+                onClicked: {
+                    _hideCamera = !_hideCamera
+                    rootLoader.sourceComponent = null
                 }
-                MouseArea {
-                    anchors.fill:       parent
-                    enabled:            TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
-                    onClicked: {
-                        if(rootLoader.sourceComponent === null) {
-                            rootLoader.sourceComponent = cameraSettingsComponent
-                        } else {
-                            rootLoader.sourceComponent = null
-                        }
-                    }
-                }
-            }
-            Item {
-                height:     _spacers * 2
-                width:      1
-                visible:    !_mainIsMap
-            }
-            QGCCompassWidget {
-                size:           parent.width * 0.95
-                vehicle:        activeVehicle
-                visible:        _mainIsMap
-                anchors.horizontalCenter: parent.horizontalCenter
             }
         }
     }
