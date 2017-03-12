@@ -1,6 +1,3 @@
 Module TyphoonHQuickInterface.Widgets
 
-ArtificialHorizon           1.0     ArtificialHorizon.qml
-AttitudeWidget              1.0     AttitudeWidget.qml
-PitchIndicator              1.0     PitchIndicator.qml
 OnOffSwitch                 1.0     OnOffSwitch.qml

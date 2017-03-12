@@ -1,9 +1,6 @@
 <RCC>
     <qresource prefix="/qml">
-        <file alias="TyphoonHQuickInterface/Widgets/ArtificialHorizon.qml">res/ArtificialHorizon.qml</file>
-        <file alias="TyphoonHQuickInterface/Widgets/AttitudeWidget.qml">res/AttitudeWidget.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/OnOffSwitch.qml">res/OnOffSwitch.qml</file>
-        <file alias="TyphoonHQuickInterface/Widgets/PitchIndicator.qml">res/PitchIndicator.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
     </qresource>
     <qresource prefix="/typhoonh">
