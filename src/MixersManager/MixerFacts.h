@@ -48,25 +48,25 @@ public:
     Mixer(Fact *mixerFact = NULL, QObject* parent = NULL);
     ~Mixer();
 
-    Q_PROPERTY(QVariantList parameters           READ parameters         CONSTANT)
-    Q_PROPERTY(QVariantList submixers            READ submixers          CONSTANT)
-    Q_PROPERTY(QVariantList inputConnections     READ inputConnections   CONSTANT)
-    Q_PROPERTY(QVariantList outputConnections    READ outputConnections  CONSTANT)
+    Q_PROPERTY(QVariantList parameters           MEMBER _parameters         CONSTANT)
+    Q_PROPERTY(QVariantList submixers            MEMBER _submixers          CONSTANT)
+    Q_PROPERTY(QVariantList inputConnections     MEMBER _inputConnections   CONSTANT)
+    Q_PROPERTY(QVariantList outputConnections    MEMBER _outputConnections  CONSTANT)
     Q_PROPERTY(Fact*        mixer                READ mixer              CONSTANT)
 
-    // Parameters (Mixer private constants or variables as Fact object)
-    QVariantList parameters             (void) const { return _parameters; }
+//    // Parameters (Mixer private constants or variables as Fact object)
+//    QVariantList parameters             (void) const { return _parameters; }
 
-    // Submixers of object type MixerFact
-    QVariantList submixers              (void) const { return _submixers; }
+//    // Submixers of object type MixerFact
+//    QVariantList submixers              (void) const { return _submixers; }
 
-    // Input connections
-    QVariantList inputConnections       (void) const { return _inputConnections; }
+//    // Input connections
+//    QVariantList inputConnections       (void) const { return _inputConnections; }
 
-    // Output connections
-    QVariantList outputConnections      (void) const { return _outputConnections; }
+//    // Output connections
+//    QVariantList outputConnections      (void) const { return _outputConnections; }
 
-    // Output connections
+    // Main mixer Fact describing mixer type
     Fact *mixer                         (void) const { return _mixer; }
 
     Mixer* getSubmixer(unsigned int mixerID);

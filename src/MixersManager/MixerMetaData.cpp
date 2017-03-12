@@ -28,7 +28,7 @@ MixerMetaData::MixerMetaData()
     , _mixerParameterMetaDataMap()
 {
     _mixerTypeMetaData.setName("MIXER_TYPE");
-    _mixerTypeMetaData.setGroup("MIXER_META_DATA");
+    _mixerTypeMetaData.setGroup("MIXER_TYPES");
     _mixerTypeMetaData.setRawDefaultValue("MIXER_TYPE_UNKNOWN");
 
     mixerTypesFromHeaders();

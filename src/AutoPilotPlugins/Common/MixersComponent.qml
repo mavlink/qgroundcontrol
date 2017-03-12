@@ -117,12 +117,78 @@ SetupPage {
                                 color:  "white"
                             }
 
+
+
+                            /// Parameter list
+                            QGCListView {
+                                id:                 submixerListView
+                                anchors.top:        mixerTypeLabel.bottom
+                                anchors.bottom:     parent.bottom
+                                width:              ScreenTools.defaultFontPixelWidth  * 50
+                                orientation:        ListView.Vertical
+                                model:              factRow.modelFact.submixers
+                                cacheBuffer:        height > 0 ? height * 2 : 0
+                                clip:               true
+
+                                delegate: Rectangle {
+                                    anchors.left:   parent.left
+                                    anchors.right:  parent.right
+                                    height:         30
+                                    color:          "black"
+                                    border.color:   "dark grey"
+
+
+                                    Row {
+                                        id:     factSubRow
+                                        spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
+                                        anchors.verticalCenter: parent.verticalCenter
+
+//                                        property Mixer submix: object
+//                                        property Mixer modelFact2: object
+
+                                        QGCLabel {
+                                            id:     submixerIDLabel
+                                            width:  ScreenTools.defaultFontPixelWidth  * 10
+            //                               text:   name
+                                            text:   modelData.mixer.name
+                                            horizontalAlignment:    Text.AlignHCenter
+                                            verticalAlignment:      Text.AlignVCenter
+                                            clip:   true
+                                            color:  "white"
+                                        }
+
+                                        QGCLabel {
+                                            id:     submixerTypeLabel
+                                            width:  ScreenTools.defaultFontPixelWidth  * 10
+            //                                text:   value
+                                            text:   modelData.mixer.valueString
+                                            horizontalAlignment:    Text.AlignHCenter
+                                            verticalAlignment:      Text.AlignVCenter
+                                            clip:   true
+                                            color:  "white"
+                                        }
+
+                                    } //Row
+                                } //Rectangle
+                            } //QGCListView
+
+
+
+
+
+
+
+
+
+
+
+
 //                            Component.onCompleted: {
 //                                if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
 //                                    _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
 //                                }
 //                            }
-                        }
+                        } // Row
 
     //                    Rectangle {
     //                        width:  _rowWidth
@@ -141,7 +207,7 @@ SetupPage {
     ////                            showDialog(editorDialogComponent, qsTr("Mixer Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
     //                        }
     //                    }
-                    } //Row
+                    } //Rectangle
                 } //QGCListView
 
                 ColumnLayout {

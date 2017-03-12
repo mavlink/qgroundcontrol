@@ -74,11 +74,9 @@ Mixer* Mixer::getSubmixer(unsigned int mixerID){
 }
 
 void Mixer::appendSubmixer(unsigned int mixerID, Mixer *submixer){
-    QVariant var;
-
     submixer->setParent(this);
-    var.fromValue(submixer);
-    _submixers.append(var);
+
+    _submixers.append(QVariant::fromValue(submixer));
 }
 
 //void Mixer::addMixerParamFact(unsigned int paramID, Fact* paramFact){
