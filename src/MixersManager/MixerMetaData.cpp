@@ -40,9 +40,6 @@ MixerMetaData::MixerMetaData()
 MixerMetaData::~MixerMetaData(){
     qDeleteAll(_mixerTypeMap);
     _mixerTypeMap.clear();
-
-//    qDeleteAll(_mixerParameterMetaDataMap);
-//    _mixerParameterMetaDataMap.clear();
 }
 
 FactMetaData* MixerMetaData::GetMixerParameterMetaData(int typeID, int parameterID) {
@@ -71,7 +68,6 @@ void MixerMetaData::mixerParameterMetaDataFromHeaders(){
 
     int paramID;
     for(int typeID=0; typeID<MIXER_TYPES_COUNT; typeID++){
-//        qDebug("Mixer Type:%u parameter count:%u", typeID,  mixer_parameter_count[typeID]);
         for(paramID=0; paramID<mixer_parameter_count[typeID]; paramID++){
             paramMetaData = new FactMetaData(FactMetaData::valueTypeFloat, this);
             paramMetaData->setName(mixer_parameter_table[typeID][paramID]);

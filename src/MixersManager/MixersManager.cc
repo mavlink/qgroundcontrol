@@ -438,102 +438,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
 //bool MixersManager::_buildFactsFromMessages(unsigned int group){
 //    mavlink_mixer_data_t msg;
 
-//    int found_index, mix_count, submixer_count, parameter_count, mixer_type;
-//    int mixer_conn_count;
-
-//    Mixer *mixer;
-//    Mixer *submixer;
-//    Fact *fact;
-//    MixerConnection *mixConn;
-
-//    _mixerGroupsData.deleteGroup(group);
-//    MixerGroup *mixer_group = new MixerGroup();
-//    _mixerGroupsData.addGroup(group, mixer_group);
-//    FactMetaData *paramMetaData;
-
-//    msg.mixer_group = group;
-//    msg.data_type = MIXER_DATA_TYPE_MIXER_COUNT;
-//    found_index = _getMessageOfKind(&msg);
-//    if(found_index == -1){
-//        return false;
-//    }
-
-//    mix_count = _mixerDataMessages[found_index]->data_value;
-
-//    for(msg.mixer_index=0; msg.mixer_index<mix_count; msg.mixer_index++) {
-
-//        //Get type of main mixer
-//        msg.mixer_sub_index=0;
-//        msg.data_type = MIXER_DATA_TYPE_MIXTYPE;
-//        found_index = _getMessageOfKind(&msg);
-//        if(found_index == -1){
-//            return false;
-//        }
-//        mixer_type = _mixerDataMessages[found_index]->data_value;
-
-//        msg.data_type = MIXER_DATA_TYPE_SUBMIXER_COUNT;
-//        found_index = _getMessageOfKind(&msg);
-//        if(found_index == -1){
-//            return false;
-//        }
-//        submixer_count = _mixerDataMessages[found_index]->data_value;
-
-//        for(msg.mixer_sub_index=0; msg.mixer_sub_index<=submixer_count; msg.mixer_sub_index++){
-
-//            //mixer type
-//            msg.data_type = MIXER_DATA_TYPE_MIXTYPE;
-//            found_index = _getMessageOfKind(&msg);
-//            if(found_index == -1){
-//                return false;
-//            }
-//            mixer_type = _mixerDataMessages[found_index]->data_value;
-
-//            //Mixer or submixer
-//            if(msg.mixer_sub_index == 0){
-//                //Add mixer to the group
-//                mixer = new Mixer(mixer_type);
-//                mixer_group->addMixer(msg.mixer_index, mixer);
-
-//            } else {
-//                submixer = new Mixer(mixer_type);
-//                mixer->addSubmixer(msg.mixer_sub_index, submixer);
-//            }
-
-//            //parameter count
-//            msg.data_type = MIXER_DATA_TYPE_PARAMETER_COUNT;
-//            found_index = _getMessageOfKind(&msg);
-//            if(found_index == -1){
-//                return false;
-//            }
-//            parameter_count = _mixerDataMessages[found_index]->data_value;
-
-//            //Parameters
-//            msg.data_type = MIXER_DATA_TYPE_PARAMETER;
-//            for(msg.parameter_index=0; msg.parameter_index<parameter_count; msg.parameter_index++){
-//                found_index = _getMessageOfKind(&msg);
-//                if(found_index == -1){
-//                    return false;
-//                }
-
-//                //Mixer or submixer
-//                if(msg.mixer_sub_index == 0){
-//                    fact = new Fact(-1, QString("MIX_PARAM"), FactMetaData::valueTypeFloat, mixer_group);
-//                    mixer->addMixerParamFact(msg.parameter_index, fact);
-//                } else {
-//                    fact = new Fact(-1, QString("SUBMIX_PARAM"), FactMetaData::valueTypeFloat, mixer);
-//                    submixer->addMixerParamFact(msg.parameter_index, fact);
-//                }
-//                float param_value = _mixerDataMessages[found_index]->param_value;
-
-//                //Set the parameter Fact meta data and value
-//                paramMetaData = _mixerMetaData.GetMixerParameterMetaData(mixer_type, msg.parameter_index);
-//                if(paramMetaData != nullptr){
-//                        fact->setMetaData(paramMetaData);
-//                }
-//                fact->setRawValue(QVariant(param_value));
-
-//                connect(fact, &Fact::_containerRawValueChanged, this, &MixersManager::_paramValueUpdated);
-//            }
+// HAVE CUT OUT BITS IMPLEMENTED ELSEWHERE SO FAR
 
 //            //Input connection count
 //            msg.parameter_index=0;
@@ -954,7 +859,7 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
                 break;
             }
             case MIXER_DATA_TYPE_SUBMIXER_COUNT: {
-                qDebug() << "Received submixer count from group:"
+                qCDebug(MixersManagerLog) << "Received submixer count from group:"
                           << mixerData.mixer_group
                           << " mixer:"
                           << mixerData.mixer_index
@@ -963,7 +868,7 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
                 break;
             }
             case MIXER_DATA_TYPE_MIXTYPE: {
-                qDebug() << "Received mixer type from group:"
+                qCDebug(MixersManagerLog) << "Received mixer type from group:"
                           << mixerData.mixer_group
                           << " mixer:"
                           << mixerData.mixer_index
@@ -974,7 +879,7 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
                 break;
             }
             case MIXER_DATA_TYPE_PARAMETER_COUNT: {
-                qDebug() << "Received parameter count from group:"
+                qCDebug(MixersManagerLog) << "Received parameter count from group:"
                           << mixerData.mixer_group
                           << " mixer:"
                           << mixerData.mixer_index
@@ -985,7 +890,7 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
                 break;
             }
             case MIXER_DATA_TYPE_PARAMETER: {
-                qDebug() << "Received parameter from group:"
+                qCDebug(MixersManagerLog) << "Received parameter from group:"
                           << mixerData.mixer_group
                           << " mixer:"
                           << mixerData.mixer_index
@@ -998,7 +903,7 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
                 break;
             }
             case MIXER_DATA_TYPE_CONNECTION_COUNT: {
-                qDebug() << "Received connection count from group:"
+                qCDebug(MixersManagerLog) << "Received connection count from group:"
                           << mixerData.mixer_group
                           << " mixer:"
                           << mixerData.mixer_index
@@ -1011,7 +916,7 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
                 break;
             }
             case MIXER_DATA_TYPE_CONNECTION: {
-                qDebug() << "Received connection from group:"
+                qCDebug(MixersManagerLog) << "Received connection from group:"
                           << mixerData.mixer_group
                           << " mixer:"
                           << mixerData.mixer_index
