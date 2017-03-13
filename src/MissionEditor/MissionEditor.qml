@@ -467,7 +467,7 @@ QGCView {
                         vehicle:        object
                         coordinate:     object.coordinate
                         isSatellite:    editorMap.isSatelliteMap
-                        size:           ScreenTools.defaultFontPixelHeight * 5
+                        size:           ScreenTools.defaultFontPixelHeight * 3
                         z:              QGroundControl.zOrderMapItems - 1
                     }
                 }
