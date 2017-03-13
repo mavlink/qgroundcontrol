@@ -24,14 +24,18 @@ public:
                    double           imageWidth,
                    double           imageHeight,
                    double           focalLength,
+                   bool             landscape,
+                   bool             fixedOrientation,
                    QObject*         parent = NULL);
 
-    Q_PROPERTY(QString  name            MEMBER _name            CONSTANT)   ///< Camera name
-    Q_PROPERTY(double   sensorWidth     MEMBER _sensorWidth     CONSTANT)   ///< Sensor size in millimeters
-    Q_PROPERTY(double   sensorHeight    MEMBER _sensorHeight    CONSTANT)   ///< Sensor size in millimeters
-    Q_PROPERTY(double   imageWidth      MEMBER _imageWidth      CONSTANT)   ///< Image size in pixels
-    Q_PROPERTY(double   imageHeight     MEMBER _imageHeight     CONSTANT)   ///< Image size in pixels
-    Q_PROPERTY(double   focalLength     MEMBER _focalLength     CONSTANT)   ///< Focal length in millimeters
+    Q_PROPERTY(QString  name                MEMBER _name                CONSTANT)   ///< Camera name
+    Q_PROPERTY(double   sensorWidth         MEMBER _sensorWidth         CONSTANT)   ///< Sensor size in millimeters
+    Q_PROPERTY(double   sensorHeight        MEMBER _sensorHeight        CONSTANT)   ///< Sensor size in millimeters
+    Q_PROPERTY(double   imageWidth          MEMBER _imageWidth          CONSTANT)   ///< Image size in pixels
+    Q_PROPERTY(double   imageHeight         MEMBER _imageHeight         CONSTANT)   ///< Image size in pixels
+    Q_PROPERTY(double   focalLength         MEMBER _focalLength         CONSTANT)   ///< Focal length in millimeters
+    Q_PROPERTY(bool     landscape           MEMBER _landscape           CONSTANT)   ///< true: camera is in landscape orientation
+    Q_PROPERTY(bool     fixedOrientation    MEMBER _fixedOrientation    CONSTANT)   ///< true: camera is in fixed orientation
 
 private:
     QString _name;
@@ -40,6 +44,8 @@ private:
     double  _imageWidth;
     double  _imageHeight;
     double  _focalLength;
+    bool    _landscape;
+    bool    _fixedOrientation;
 };
 
 #endif

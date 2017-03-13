@@ -343,25 +343,25 @@ QmlObjectListModel* SimpleMissionItem::textFieldFacts(void)
     QmlObjectListModel* model = new QmlObjectListModel(this);
     
     if (rawEdit()) {
-        _missionItem._param1Fact._setName("Param1:");
+        _missionItem._param1Fact._setName("Param1");
         _missionItem._param1Fact.setMetaData(_defaultParamMetaData);
         model->append(&_missionItem._param1Fact);
-        _missionItem._param2Fact._setName("Param2:");
+        _missionItem._param2Fact._setName("Param2");
         _missionItem._param2Fact.setMetaData(_defaultParamMetaData);
         model->append(&_missionItem._param2Fact);
-        _missionItem._param3Fact._setName("Param3:");
+        _missionItem._param3Fact._setName("Param3");
         _missionItem._param3Fact.setMetaData(_defaultParamMetaData);
         model->append(&_missionItem._param3Fact);
-        _missionItem._param4Fact._setName("Param4:");
+        _missionItem._param4Fact._setName("Param4");
         _missionItem._param4Fact.setMetaData(_defaultParamMetaData);
         model->append(&_missionItem._param4Fact);
-        _missionItem._param5Fact._setName("Lat/X:");
+        _missionItem._param5Fact._setName("Lat/X");
         _missionItem._param5Fact.setMetaData(_defaultParamMetaData);
         model->append(&_missionItem._param5Fact);
-        _missionItem._param6Fact._setName("Lon/Y:");
+        _missionItem._param6Fact._setName("Lon/Y");
         _missionItem._param6Fact.setMetaData(_defaultParamMetaData);
         model->append(&_missionItem._param6Fact);
-        _missionItem._param7Fact._setName("Alt/Z:");
+        _missionItem._param7Fact._setName("Alt/Z");
         _missionItem._param7Fact.setMetaData(_defaultParamMetaData);
         model->append(&_missionItem._param7Fact);
     } else {
@@ -399,7 +399,7 @@ QmlObjectListModel* SimpleMissionItem::textFieldFacts(void)
         }
 
         if (specifiesCoordinate() && !altitudeAdded) {
-            _missionItem._param7Fact._setName("Altitude:");
+            _missionItem._param7Fact._setName("Altitude");
             _missionItem._param7Fact.setMetaData(_altitudeMetaData);
             model->append(&_missionItem._param7Fact);
         }
