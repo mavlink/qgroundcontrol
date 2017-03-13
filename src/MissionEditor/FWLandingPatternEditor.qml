@@ -31,7 +31,7 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property real _margin: ScreenTools.defaultFontPixelWidth / 4
+    property real _margin: ScreenTools.defaultFontPixelWidth / 2
     property real _spacer: ScreenTools.defaultFontPixelWidth / 2
 
     Column {
@@ -51,14 +51,7 @@ Rectangle {
 
         Item { width: 1; height: _margin }
 
-        QGCLabel { text: qsTr("Loiter point") }
-
-        Rectangle {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            height:         1
-            color:          qgcPal.text
-        }
+        SectionHeader { text: qsTr("Loiter point") }
 
         Item { width: 1; height: _spacer }
 
@@ -89,14 +82,7 @@ Rectangle {
 
         Item { width: 1; height: ScreenTools.defaultFontPixelHeight / 2 }
 
-        QGCLabel { text: qsTr("Landing point") }
-
-        Rectangle {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            height:         1
-            color:          qgcPal.text
-        }
+        SectionHeader { text: qsTr("Landing point") }
 
         Item { width: 1; height: _spacer }
 
