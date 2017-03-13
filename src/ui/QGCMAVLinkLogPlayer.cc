@@ -73,7 +73,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
         this,
         tr("Load MAVLink Log File"),
         QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-        tr("MAVLink Log Files (*.mavlink);;All Files (*)"));
+        tr("MAVLink Log Files (*.tlog);;All Files (*)"));
 
     if (logFilename.isEmpty()) {
         return;
