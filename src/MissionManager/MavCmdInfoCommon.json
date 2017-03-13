@@ -14,12 +14,12 @@
             "friendlyEdit":         true,
             "category":             "Basic",
             "param5": {
-                "label":            "Latitude:",
+                "label":            "Latitude",
                 "default":          37.803784,
                 "decimalPlaces":    7
             },
             "param6": {
-                "label":            "Longitude:",
+                "label":            "Longitude",
                 "default":          -122.462276,
                 "decimalPlaces":    7
             }
@@ -33,25 +33,25 @@
             "friendlyEdit":         true,
             "category":             "Basic",
             "param1": {
-                "label":            "Hold:",
+                "label":            "Hold",
                 "units":            "secs",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Acceptance:",
+                "label":            "Acceptance",
                 "units":            "m",
                 "default":          3,
                 "decimalPlaces":    2
             },
             "param3": {
-                "label":            "PassThru:",
+                "label":            "PassThru",
                 "units":            "m",
                 "default":          0,
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Heading:",
+                "label":            "Heading",
                 "units":            "radians",
                 "default":          0.0,
                 "decimalPlaces":    2
@@ -66,7 +66,7 @@
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param3": {
-                "label":            "Radius:",
+                "label":            "Radius",
                 "units":            "m",
                 "default":          50.0,
                 "decimalPlaces":    2
@@ -81,18 +81,18 @@
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
-                "label":            "Turns:",
+                "label":            "Turns",
                 "default":          1,
                 "decimalPlaces":    0
             },
             "param3": {
-                "label":            "Radius:",
+                "label":            "Radius",
                 "units":            "m",
                 "default":          50.0,
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Exit loiter from:",
+                "label":            "Exit loiter from",
                 "enumStrings":      "Center,Tangent",
                 "enumValues":       "0,1",
                 "default":          1,
@@ -108,19 +108,19 @@
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
-                "label":            "Hold:",
+                "label":            "Hold",
                 "units":            "secs",
                 "default":          30,
                 "decimalPlaces":    0
             },
             "param3": {
-                "label":            "Radius:",
+                "label":            "Radius",
                 "units":            "m",
                 "default":          50.0,
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Exit loiter from:",
+                "label":            "Exit loiter from",
                 "enumStrings":      "Center,Tangent",
                 "enumValues":       "0,1",
                 "default":          1,
@@ -144,13 +144,13 @@
             "friendlyEdit":         true,
             "category":             "Basic",
             "param1": {
-                "label":            "Abort Alt:",
+                "label":            "Abort Alt",
                 "units":            "m",
                 "default":          25.0,
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Heading:",
+                "label":            "Heading",
                 "units":            "radians",
                 "default":          0.0,
                 "decimalPlaces":    2
@@ -165,13 +165,13 @@
             "friendlyEdit":         true,
             "category":             "Basic",
             "param1": {
-                "label":            "Pitch:",
+                "label":            "Pitch",
                 "units":            "deg",
                 "default":          15,
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Heading:",
+                "label":            "Heading",
                 "units":            "radians",
                 "default":          0.0,
                 "decimalPlaces":    2
@@ -189,14 +189,14 @@
             "friendlyEdit":         true,
             "category":             "Flight control",
             "param1": {
-                "label":            "Mode:",
+                "label":            "Mode",
                 "enumStrings":      "Climb,Neutral,Descend",
                 "enumValues":       "1,0,2",
                 "default":          1,
                 "decimalPlaces":    0
             },
             "param7": {
-                "label":            "Altitude:",
+                "label":            "Altitude",
                 "units":            "m",
                 "default":          55,
                 "decimalPlaces":    2
@@ -211,20 +211,20 @@
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
-                "label":            "Heading wait:",
+                "label":            "Heading wait",
                 "enumStrings":      "False,True",
                 "enumValues":       "0,1",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Radius:",
+                "label":            "Radius",
                 "units":            "m",
                 "default":          50.0,
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Exit loiter from:",
+                "label":            "Exit loiter from",
                 "enumStrings":      "Center,Tangent",
                 "enumValues":       "0,1",
                 "default":          1,
@@ -243,19 +243,19 @@
             "friendlyEdit":         true,
             "category":             "Camera",
             "param1": {
-                "label":            "Mode:",
+                "label":            "Mode",
                 "enumStrings":      "None,Next waypoint,Mission item,Location,ROI item",
                 "enumValues":       "0,1,2,3,4",
                 "default":          3,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Mission Index:",
+                "label":            "Mission Index",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param3": {
-                "label":            "ROI Index:",
+                "label":            "ROI Index",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -269,21 +269,21 @@
             "friendlyEdit":         true,
             "category":             "Advanced",
             "param1": {
-                "label":            "Local planning:",
+                "label":            "Local planning",
                 "enumStrings":      "Disable,Enable,Enable+reset",
                 "enumValues":       "0,1,2",
                 "default":          1,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Full planning:",
+                "label":            "Full planning",
                 "enumStrings":      "Disable,Enable,Enable+reset,Enable+reset route only",
                 "enumValues":       "0,1,2,3",
                 "default":          1,
                 "decimalPlaces":    0
             },
             "param4": {
-                "label":            "Heading goal:",
+                "label":            "Heading goal",
                 "default":          0,
                 "units":            "deg",
                 "decimalPlaces":    2
@@ -298,7 +298,7 @@
             "friendlyEdit":         true,
             "category":             "Basic",
             "param1": {
-                "label":            "Hold:",
+                "label":            "Hold",
                 "units":            "secs",
                 "default":          0,
                 "decimalPlaces":    0
@@ -314,7 +314,7 @@
             "friendlyEdit":         true,
             "category":             "VTOL",
             "param4": {
-                "label":            "Heading:",
+                "label":            "Heading",
                 "units":            "deg",
                 "default":          0.0,
                 "decimalPlaces":    2
@@ -329,7 +329,7 @@
             "friendlyEdit":         true,
             "category":             "VTOL",
             "param4": {
-                "label":            "Heading:",
+                "label":            "Heading",
                 "units":            "deg",
                 "default":          0.0,
                 "decimalPlaces":    2
@@ -354,23 +354,23 @@
             "friendlyName": "Delay until",
             "description":  "Delay unti the specified time is reached.",
             "param1": {
-                "label":            "Hold:",
+                "label":            "Hold",
                 "units":            "secs",
                 "default":          30,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Hour (utc):",
+                "label":            "Hour (utc)",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param3": {
-                "label":            "Min (utc):",
+                "label":            "Min (utc)",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param4": {
-                "label":            "Sec (utc):",
+                "label":            "Sec (utc)",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -383,7 +383,7 @@
             "friendlyEdit": true,
             "category":     "Basic",
             "param1": {
-                "label":            "Hold:",
+                "label":            "Hold",
                 "units":            "secs",
                 "default":          30,
                 "decimalPlaces":    0
@@ -396,13 +396,13 @@
             "friendlyName": "Wait for altitude",
             "category":     "Conditionals",
             "param1": {
-                "label":            "Rate:",
+                "label":            "Rate",
                 "units":            "m/s",
                 "default":          5,
                 "decimalPlaces":    2
             },
             "param7": {
-                "label":            "Altitude:",
+                "label":            "Altitude",
                 "units":            "m",
                 "default":          55,
                 "decimalPlaces":    2
@@ -415,7 +415,7 @@
             "friendlyName": "Wait for distance",
             "category":     "Conditionals",
             "param1": {
-                "label":            "Distance:",
+                "label":            "Distance",
                 "units":            "m",
                 "default":          10,
                 "decimalPlaces":    2
@@ -428,25 +428,25 @@
             "description":  "Delay the mission until the specified heading is reached.",
             "category":     "Conditionals",
             "param1": {
-                "label":            "Heading:",
+                "label":            "Heading",
                 "units":            "deg",
                 "default":          0,
                 "decimalPlaces":    1
             },
             "param2": {
-                "label":            "Rate:",
+                "label":            "Rate",
                 "units":            "degrees/s",
                 "default":          5,
                 "decimalPlaces":    1
             },
             "param3": {
-                "label":            "Direction:",
+                "label":            "Direction",
                 "enumStrings":      "Clockwise,Counter-Clockwise",
                 "enumValues":       "1,-1",
                 "default":          1
             },
             "param4": {
-                "label":            "Offset:",
+                "label":            "Offset",
                 "enumStrings":      "Relative,Absolute",
                 "enumValues":       "1,0",
                 "default":          1
@@ -460,17 +460,17 @@
             "description":  "Set flight mode.",
             "category":     "Advanced",
             "param1": {
-                "label":            "Mode:",
+                "label":            "Mode",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Custom Mode:",
+                "label":            "Custom Mode",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param3": {
-                "label":            "Sub Mode:",
+                "label":            "Sub Mode",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -483,12 +483,12 @@
             "friendlyEdit": true,
             "category":     "Advanced",
             "param1": {
-                "label":            "Item #:",
+                "label":            "Item #",
                 "default":          1,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Repeat:",
+                "label":            "Repeat",
                 "default":          10,
                 "decimalPlaces":    0
             }
@@ -500,23 +500,23 @@
             "description":  "Change speed and/or throttle set points.",
             "category":     "Flight control",
             "param1": {
-                "label":            "Type:",
+                "label":            "Type",
                 "enumStrings":      "Airspeed,Ground Speed",
                 "enumValues":       "0,1",
                 "default":          0
             },
             "param2": {
-                "label":            "Speed:",
+                "label":            "Speed",
                 "units":            "m/s",
                 "default":          0
             },
             "param3": {
-                "label":            "Throttle:",
+                "label":            "Throttle",
                 "units":            "%",
                 "default":          0
             },
             "param4": {
-                "label":            "Offset:",
+                "label":            "Offset",
                 "enumStrings":      "Relative,Absolute",
                 "enumValues":       "1,0",
                 "default":          0
@@ -532,7 +532,7 @@
             "friendlyEdit":         true,
             "category":             "Advanced",
             "param1": {
-                "label":            "Mode:",
+                "label":            "Mode",
                 "enumStrings":      "Vehicle position,Specified position",
                 "enumValues":       "1,0",
                 "default":          0
@@ -545,12 +545,12 @@
             "friendlyName": "Set relay",
             "description":  "Set relay to a condition.",
             "param1": {
-                "label":            "Relay #:",
+                "label":            "Relay #",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Value:",
+                "label":            "Value",
                 "default":          0
             }
         },
@@ -560,18 +560,18 @@
             "friendlyName": "Cycle relay",
             "description":  "Cycle relay on/off for desired cycles/time.",
             "param1": {
-                "label":            "Relay #:",
+                "label":            "Relay #",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Cycles:",
+                "label":            "Cycles",
                 "default":          1,
                 "units":            "count",
                 "decimalPlaces":    0
             },
             "param3": {
-                "label":            "Time:",
+                "label":            "Time",
                 "default":          10,
                 "units":            "secs",
                 "decimalPlaces":    0
@@ -584,12 +584,12 @@
             "description":  "Set servo to specified PWM value.",
             "friendlyEdit": true,
             "param1": {
-                "label":            "Servo:",
+                "label":            "Servo",
                 "default":          1,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "PWM:",
+                "label":            "PWM",
                 "default":          1500,
                 "decimalPlaces":    0
             }
@@ -600,23 +600,23 @@
             "friendlyName": "Cycle servo",
             "description":  "Set servo to specified PWM value.",
             "param1": {
-                "label":            "Servo:",
+                "label":            "Servo",
                 "default":          1,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "PWM:",
+                "label":            "PWM",
                 "default":          1000,
                 "decimalPlaces":    0
             },
             "param3": {
-                "label":            "Cycles:",
+                "label":            "Cycles",
                 "default":          1,
                 "units":            "count",
                 "decimalPlaces":    0
             },
             "param4": {
-                "label":            "Time:",
+                "label":            "Time",
                 "default":          10,
                 "units":            "secs",
                 "decimalPlaces":    0
@@ -643,7 +643,7 @@
             "friendlyEdit":         true,
             "category":             "Advanced",
             "param1": {
-                "label":            "Direction:",
+                "label":            "Direction",
                 "enumStrings":      "Forward,Reverse",
                 "enumValues":       "0,1",
                 "default":          0
@@ -660,19 +660,19 @@
             "friendlyEdit":         true,
             "category":             "Camera",
             "param1": {
-                "label":            "Mode:",
+                "label":            "Mode",
                 "enumStrings":      "None,Next waypoint,Mission item,Location,ROI item",
                 "enumValues":       "0,1,2,3,4",
                 "default":          3,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Mission Index:",
+                "label":            "Mission Index",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param3": {
-                "label":            "ROI Index:",
+                "label":            "ROI Index",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -684,39 +684,39 @@
             "description":  "Configure onboard camera controller.",
             "category":     "Camera",
             "param1": {
-                "label":            "Mode:",
+                "label":            "Mode",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Shutter spd:",
+                "label":            "Shutter spd",
                 "default":          60,
                 "units":            "1/secs",
                 "decimalPlaces":    0
             },
             "param3": {
-                "label":            "Aperture:",
+                "label":            "Aperture",
                 "default":          4,
                 "units":            "F stop",
                 "decimalPlaces":    1
             },
             "param4": {
-                "label":            "ISO:",
+                "label":            "ISO",
                 "default":          200,
                 "decimalPlaces":    0
             },
             "param5": {
-                "label":            "Exposure:",
+                "label":            "Exposure",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param6": {
-                "label":            "Command:",
+                "label":            "Command",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param7": {
-                "label":            "Cut off:",
+                "label":            "Cut off",
                 "default":          0,
                 "decimalPlaces":    2
             }
@@ -728,32 +728,32 @@
             "description":  "Control onboard camera.",
             "category":     "Camera",
             "param1": {
-                "label":            "Session:",
+                "label":            "Session",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Zoom:",
+                "label":            "Zoom",
                 "default":          0,
                 "decimalPlaces":    3
             },
             "param3": {
-                "label":            "Step:",
+                "label":            "Step",
                 "default":          0,
                 "decimalPlaces":    3
             },
             "param4": {
-                "label":            "Focus lock:",
+                "label":            "Focus lock",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param5": {
-                "label":            "Command:",
+                "label":            "Command",
                 "default":          0,
                 "decimalPlaces":    0
             },
             "param6": {
-                "label":            "Id:",
+                "label":            "Id",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -765,28 +765,28 @@
             "description":  "Configure the vehicle mount (e.g. gimbal).",
             "category":     "Advanced",
             "param1": {
-                "label":            "Mode:",
+                "label":            "Mode",
                 "default":          0,
                 "decimalPlaces":    0,
                 "enumStrings":      "Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point",
                 "enumValues":       "0,1,2,3,4"
             },
             "param2": {
-                "label":            "Stabilize Roll:",
+                "label":            "Stabilize Roll",
                 "default":          0,
                 "decimalPlaces":    0,
                 "enumStrings":      "No,Yes",
                 "enumValues":       "0,1"
             },
             "param3": {
-                "label":            "Stabilize Pitch:",
+                "label":            "Stabilize Pitch",
                 "default":          0,
                 "decimalPlaces":    0,
                 "enumStrings":      "No,Yes",
                 "enumValues":       "0,1"
             },
             "param4": {
-                "label":            "Stabilize Yaw:",
+                "label":            "Stabilize Yaw",
                 "default":          0,
                 "decimalPlaces":    0,
                 "enumStrings":      "No,Yes",
@@ -800,24 +800,24 @@
             "description":  "Control the vehicle mount (e.g. gimbal).",
             "category":     "Advanced",
             "param1": {
-                "label":            "Lat/Pitch:",
+                "label":            "Lat/Pitch",
                 "default":          0,
                 "units":            "deg",
                 "decimalPlaces":    7
             },
             "param2": {
-                "label":            "Lon/Roll:",
+                "label":            "Lon/Roll",
                 "default":          0,
                 "units":            "deg",
                 "decimalPlaces":    7
             },
             "param3": {
-                "label":            "Alt/Yaw:",
+                "label":            "Alt/Yaw",
                 "default":          0,
                 "decimalPlaces":    7
             },
             "param7": {
-                "label":            "Mode:",
+                "label":            "Mode",
                 "default":          0,
                 "decimalPlaces":    0,
                 "enumStrings":      "Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point",
@@ -831,7 +831,7 @@
             "description":  "Set camera trigger distance.",
             "category":     "Camera",
             "param1": {
-                "label":            "Distance:",
+                "label":            "Distance",
                 "default":          25,
                 "units":            "m",
                 "decimalPlaces":    2
@@ -846,7 +846,7 @@
             "friendlyEdit":         true,
             "category":             "Safety",
             "param1": {
-                "label":            "Enable:",
+                "label":            "Enable",
                 "enumStrings":      "Disable,Disable floor only,Enable",
                 "enumValues":       "0,2,1",
                 "default":          1,
@@ -862,7 +862,7 @@
             "friendlyEdit":         true,
             "category":             "Safety",
             "param1": {
-                "label":            "Trigger:",
+                "label":            "Trigger",
                 "enumStrings":      "Disable,Enable,Release",
                 "enumValues":       "0,1,2",
                 "default":          1,
@@ -879,7 +879,7 @@
             "friendlyEdit":         true,
             "category":             "Flight control",
             "param1": {
-                "label":            "Inverted:",
+                "label":            "Inverted",
                 "enumStrings":      "Normal,Inverted",
                 "enumValues":       "0,1",
                 "default":          0
@@ -894,12 +894,12 @@
             "friendlyEdit":         true,
             "category":             "Advanced",
             "param1": {
-                "label":            "Gripper id:",
+                "label":            "Gripper id",
                 "default":          1,
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Action:",
+                "label":            "Action",
                 "enumStrings":      "Release,Grab",
                 "enumValues":       "0,1",
                 "default":          0
@@ -914,7 +914,7 @@
             "friendlyEdit":         true,
             "category":             "Advanced",
             "param2": {
-                "label":            "Enable:",
+                "label":            "Enable",
                 "enumStrings":      "Enable,Disable",
                 "enumValues":       "1,0",
                 "default":          1
@@ -928,25 +928,25 @@
             "friendlyName": "Guided limits",
             "description":  "Set limits for external control",
             "param1": {
-                "label":            "Timeout:",
+                "label":            "Timeout",
                 "default":          0,
                 "units":            "secs",
                 "decimalPlaces":    0
             },
             "param2": {
-                "label":            "Min Alt:",
+                "label":            "Min Alt",
                 "default":          25,
                 "units":            "m",
                 "decimalPlaces":    2
             },
             "param3": {
-                "label":            "Max Alt:",
+                "label":            "Max Alt",
                 "units":            "m",
                 "default":          100,
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "H Limit:",
+                "label":            "H Limit",
                 "default":          25,
                 "units":            "m",
                 "decimalPlaces":    2
@@ -978,7 +978,7 @@
             "description":  "Perform flight mode transition.",
             "category":     "VTOL",
             "param1": {
-                "label":            "Mode:",
+                "label":            "Mode",
                 "default":          3,
                 "enumStrings":      "Hover Mode,Plane Mode",
                 "enumValues":       "3,4"

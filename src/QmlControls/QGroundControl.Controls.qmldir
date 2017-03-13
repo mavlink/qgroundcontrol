@@ -49,6 +49,7 @@ QGCViewDialog           1.0 QGCViewDialog.qml
 QGCViewMessage          1.0 QGCViewMessage.qml
 QGCViewPanel            1.0 QGCViewPanel.qml
 RoundButton             1.0 RoundButton.qml
+SectionHeader           1.0 SectionHeader.qml
 SetupPage               1.0 SetupPage.qml
 SignalStrength          1.0 SignalStrength.qml
 SimpleItemMapVisuals    1.0 SimpleItemMapVisuals.qml
