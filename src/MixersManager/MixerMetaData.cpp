@@ -33,8 +33,8 @@ MixerMetaData::MixerMetaData()
     _mixerTypeMetaData.setRawMax(MIXER_TYPES_COUNT);
     _mixerTypeMetaData.setRawMin(0);
 
-    mixerTypesFromHeaders();
-    mixerParameterMetaDataFromHeaders();
+    _mixerTypesFromHeaders();
+    _mixerParameterMetaDataFromHeaders();
 }
 
 MixerMetaData::~MixerMetaData(){
@@ -47,9 +47,27 @@ FactMetaData* MixerMetaData::GetMixerParameterMetaData(int typeID, int parameter
         if( _mixerParameterMetaDataMap[typeID].contains(parameterID))
             return _mixerParameterMetaDataMap[typeID][parameterID];
     return nullptr;
-};
+}
 
-void MixerMetaData::mixerTypesFromHeaders(){
+int MixerMetaData::GetMixerParameterCount(int mixerTypeID){
+    if(mixerTypeID >= MIXER_TYPES_COUNT) return 0;
+    return mixer_parameter_count[mixerTypeID];
+}
+
+int MixerMetaData::GetMixerConnCount(int mixerTypeID, int connType){
+    if(connType >= MIXER_TYPES_COUNT) return 0;
+    switch(connType){
+    case 0:
+        return mixer_output_counts[mixerTypeID];
+    case 1:
+        return mixer_input_counts[mixerTypeID];
+    default:
+        return 0;
+    }
+}
+
+
+void MixerMetaData::_mixerTypesFromHeaders(){
     Fact *mixerType;
 
     for(int typeID=0; typeID<MIXER_TYPES_COUNT; typeID++){
@@ -63,7 +81,7 @@ void MixerMetaData::mixerTypesFromHeaders(){
     }
 }
 
-void MixerMetaData::mixerParameterMetaDataFromHeaders(){
+void MixerMetaData::_mixerParameterMetaDataFromHeaders(){
     FactMetaData *paramMetaData;
 
     int paramID;
@@ -74,9 +92,4 @@ void MixerMetaData::mixerParameterMetaDataFromHeaders(){
             _mixerParameterMetaDataMap[typeID][paramID] = paramMetaData;
         }
     }
-}
-
-int MixerMetaData::GetMixerParameterCount(int typeID){
-    if(typeID >= MIXER_TYPES_COUNT) return 0;
-    return mixer_parameter_count[typeID];
 }

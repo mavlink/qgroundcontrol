@@ -15,11 +15,9 @@
 
 MixerConnection::MixerConnection(int connGroup, int connChannel, QObject* parent)
     : QObject(parent)
-    ,_connGroup(-1, QString("CONN_GROUP"), FactMetaData::valueTypeInt16, this)
-    ,_connChannel(-1, QString("CONN_CHANNEL"), FactMetaData::valueTypeInt16, this)
+    ,_connGroup(connGroup)
+    ,_connChannel(connChannel)
 {
-    _connGroup.setRawValue(connGroup);
-    _connChannel.setRawValue(connChannel);
 }
 
 MixerConnection::~MixerConnection(){
@@ -66,15 +64,32 @@ Fact* Mixer::getParameter(unsigned int paramIndex){
 
 
 void Mixer::appendSubmixer(unsigned int mixerID, Mixer *submixer){
+    Q_CHECK_PTR(submixer);
     submixer->setParent(this);
     _submixers.append(submixer);
     Q_ASSERT(mixerID == _submixers.count());
 }
 
 void Mixer::appendParamFact(Fact* paramFact){
+    Q_CHECK_PTR(paramFact);
     paramFact->setParent(this);
     _parameters.append(paramFact);
 }
+
+void Mixer::appendInputConnection(MixerConnection *inputConn)
+{
+    Q_CHECK_PTR(inputConn);
+    inputConn->setParent(this);
+    _inputConnections.append(inputConn);
+}
+
+void Mixer::appendOutputConnection(MixerConnection *outputConn)
+{
+    Q_CHECK_PTR(outputConn);
+    outputConn->setParent(this);
+    _outputConnections.append(outputConn);
+}
+
 
 //void Mixer::addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel){
 //    if(_mixerConnections.contains(connType))

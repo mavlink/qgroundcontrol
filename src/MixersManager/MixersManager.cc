@@ -309,8 +309,8 @@ bool MixersManager::_buildAll(unsigned int group){
         return false;
     if(!_buildParametersFromHeaders(group))
         return false;
-//    if(!_buildConnectionsFromHeaders(group))
-//        return false;
+    if(!_buildConnections(group))
+        return false;
     if(!_parameterValuesFromMessages(group))
         return false;
 //    if(!_connectionsFromMessages(group))
@@ -591,8 +591,6 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
 }
 
 
-///* Build parameters from included headers.  TODO: DEPRECIATE AND CHANGE TO FILE INSTEAD OF HEADERS
-///  return true if successfull*/
 bool MixersManager::_buildParametersFromHeaders(unsigned int group){
     Mixer *mixer;
     Mixer *submixer;
@@ -642,23 +640,50 @@ bool MixersManager::_buildParametersFromHeaders(unsigned int group){
     return true;
 }
 
-///* Build connections from included headers.  TODO: DEPRECIATE AND CHANGE TO FILE INSTEAD OF HEADERS
-/// return true if successfull*/
-bool MixersManager::_buildConnectionsFromHeaders(unsigned int group){
-    return false;
+int MixersManager::_getMixerConnCountFromVehicle(int mixerType, int connType)
+{
+    return _mixerMetaData.GetMixerConnCount(mixerType, connType);
 }
 
-///* Set parameter values from mixer data messages
-/// return true if successfull*/
-bool MixersManager::_parameterValuesFromMessages(unsigned int group){
+void MixersManager::_setMixerConnectionFromVehicle(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int connType, unsigned int connIndex, MixerConnection* conn )
+{
+    _setMixerConnectionFromMessage(group, mixer, submixer, connType, connIndex, conn);
+}
+
+void MixersManager::_setMixerConnectionFromMessage(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int connType, unsigned int connIndex, MixerConnection* conn )
+{
+    mavlink_mixer_data_t msg;
+    int msgIndex;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.mixer_group = group;
+    msg.mixer_index = mixer;
+    msg.mixer_sub_index = submixer;
+    msg.connection_type = connType;
+    msg.parameter_index = connIndex;
+    msg.data_type = MIXER_DATA_TYPE_CONNECTION;
+
+    msgIndex = _getMessageOfKind(&msg);
+    if(msgIndex == -1) {
+        conn->setGroup(-1);
+        conn->setChannel(-1);
+    }
+    else {
+        conn->setGroup(_mixerDataMessages[msgIndex]->connection_group);
+        conn->setChannel(_mixerDataMessages[msgIndex]->data_value);
+    }
+}
+
+
+
+
+bool MixersManager::_buildConnections(unsigned int group){
     Mixer *mixer;
     Mixer *submixer;
-    Fact *parameter;
-    int mixIndex, subIndex, paramCount, subCount, msgIndex, paramIndex;
-
-    mavlink_mixer_data_t msg;
-    msg.mixer_group = group;
-    msg.data_type = MIXER_DATA_TYPE_PARAMETER;
+    MixerConnection  *conn;
+    int mixType, subType, mixIndex, subIndex, connCount, subCount;
+    bool convOK;
+    FactMetaData *metaData;
 
     MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
     if(mixer_group == nullptr)
@@ -668,20 +693,106 @@ bool MixersManager::_parameterValuesFromMessages(unsigned int group){
 
     for(mixIndex = 0; mixIndex<mixers.count(); mixIndex++){
         mixer = mixer_group->getMixer(mixIndex);
-        msg.mixer_index = mixIndex;
-        msg.mixer_sub_index = 0;
+        mixType = mixer->mixer()->rawValue().toInt(&convOK);
+        Q_ASSERT(convOK==true);
+
+        //Output connections
+        connCount = _getMixerConnCountFromVehicle(mixType, 0);
+        for(int connIndex=0; connIndex<connCount; connIndex++){
+            Q_CHECK_PTR(metaData);
+            conn = new MixerConnection();
+            _setMixerConnectionFromVehicle(group, mixIndex, 0, 0, connIndex, conn);
+            mixer->appendOutputConnection(conn);
+        }
+
+        //Input connections
+        connCount = _getMixerConnCountFromVehicle(mixType, 1);
+        for(int connIndex=0; connIndex<connCount; connIndex++){
+            Q_CHECK_PTR(metaData);
+            conn = new MixerConnection();
+            _setMixerConnectionFromVehicle(group, mixIndex, 0, 1, connIndex, conn);
+            mixer->appendInputConnection(conn);
+        }
+
+        //Submixers indexed from 1
+        subCount = mixer->submixers()->count();
+        for(subIndex=1; subIndex<=subCount; subIndex++){
+            submixer = mixer->getSubmixer(subIndex);
+            Q_CHECK_PTR(submixer);
+            subType = submixer->mixer()->rawValue().toInt(&convOK);
+            Q_ASSERT(convOK==true);
+
+            //Output connections
+            connCount = _getMixerConnCountFromVehicle(subType, 0);
+            for(int connIndex=0; connIndex<connCount; connIndex++){
+                Q_CHECK_PTR(metaData);
+                conn = new MixerConnection();
+                _setMixerConnectionFromVehicle(group, mixIndex, subIndex, 0, connIndex, conn);
+                submixer->appendOutputConnection(conn);
+            }
+
+            //Input connections
+            connCount = _getMixerConnCountFromVehicle(subType, 1);
+            for(int connIndex=0; connIndex<connCount; connIndex++){
+                Q_CHECK_PTR(metaData);
+                conn = new MixerConnection();
+                _setMixerConnectionFromVehicle(group, mixIndex, subIndex, 1, connIndex, conn);
+                submixer->appendInputConnection(conn);
+            }
+        }
+    }
+    return false;
+}
+
+
+void MixersManager::_setParameterFactFromVehicle(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int param, Fact* paramFact )
+{
+    _setParameterFactFromMessage(group, mixer, submixer, param, paramFact);
+}
+
+
+void MixersManager::_setParameterFactFromMessage(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int param, Fact* paramFact  )
+{
+    mavlink_mixer_data_t msg;
+    int msgIndex;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.mixer_group = group;
+    msg.mixer_index = mixer;
+    msg.mixer_sub_index = submixer;
+    msg.parameter_index = param;
+    msg.data_type = MIXER_DATA_TYPE_PARAMETER;
+
+    msgIndex = _getMessageOfKind(&msg);
+    if(msgIndex == -1)
+        paramFact->setRawValue(0.0);
+    else
+        paramFact->setRawValue(_mixerDataMessages[msgIndex]->param_value);
+}
+
+
+///* Set parameter values from mixer data messages
+/// return true if successfull*/
+bool MixersManager::_parameterValuesFromMessages(unsigned int group){
+    Mixer *mixer;
+    Mixer *submixer;
+    Fact *parameter;
+    int mixIndex, subIndex, paramCount, subCount, msgIndex, paramIndex;
+
+    MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
+    if(mixer_group == nullptr)
+        return false;
+
+    QObjectList mixers = mixer_group->mixers();
+
+    for(mixIndex = 0; mixIndex<mixers.count(); mixIndex++){
+        mixer = mixer_group->getMixer(mixIndex);
 
         paramCount = mixer->parameters()->count();
         for(paramIndex=0; paramIndex<paramCount; paramIndex++){
-            msg.parameter_index = paramIndex;
             parameter = mixer->getParameter(paramIndex);
             Q_CHECK_PTR(parameter);
-
-            msgIndex = _getMessageOfKind(&msg);
-            if(msgIndex == -1)
-                return false;
-
-            parameter->setRawValue(_mixerDataMessages[msgIndex]->param_value);
+            _setParameterFactFromVehicle(group, mixIndex, 0, paramIndex, parameter);
         }
 
         //Submixers indexed from 1
@@ -690,18 +801,11 @@ bool MixersManager::_parameterValuesFromMessages(unsigned int group){
             submixer = mixer->getSubmixer(subIndex);
             Q_CHECK_PTR(submixer);
 
-            msg.mixer_sub_index = subIndex;
-
             paramCount = submixer->parameters()->count();
             for(paramIndex=0; paramIndex<paramCount; paramIndex++){
-                msg.parameter_index = paramIndex;
                 parameter = submixer->getParameter(paramIndex);
                 Q_CHECK_PTR(parameter);
-
-                msgIndex = _getMessageOfKind(&msg);
-                if(msgIndex == -1)
-                    return false;
-                parameter->setRawValue(_mixerDataMessages[msgIndex]->param_value);
+                _setParameterFactFromVehicle(group, mixIndex, subIndex, paramIndex, parameter);
             }
         }
     }

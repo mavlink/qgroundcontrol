@@ -22,19 +22,22 @@ class MixerConnection : public QObject
     Q_OBJECT
     Q_DISABLE_COPY(MixerConnection)
 
-    Q_PROPERTY(Fact group       READ group         CONSTANT)
-    Q_PROPERTY(Fact channel     READ channel       CONSTANT)
+    Q_PROPERTY(int group       READ group         CONSTANT)
+    Q_PROPERTY(int channel     READ channel       CONSTANT)
 
 public:
     MixerConnection(int connGroup = -1, int connChannel = -1, QObject* parent = NULL);
     ~MixerConnection();
 
-    Fact group              (void) const { return _connGroup; }
-    Fact channel            (void) const { return _connChannel; }
+    int group              (void) const { return _connGroup; }
+    int channel            (void) const { return _connChannel; }
+
+    void setGroup(int group) {_connGroup = group;}
+    void setChannel(int channel) {_connChannel = channel;}
 
 protected:
-    Fact    _connGroup;
-    Fact    _connChannel;
+    int     _connGroup;
+    int     _connChannel;
 };
 
 Q_DECLARE_METATYPE(MixerConnection*)
@@ -74,6 +77,8 @@ public:
     Fact*   getParameter(unsigned int paramIndex);
     void appendSubmixer(unsigned int mixerID, Mixer *submixer);
     void appendParamFact(Fact* paramFact);
+    void appendInputConnection(MixerConnection *inputConn);
+    void appendOutputConnection(MixerConnection *outputConn);
 //    void addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel);
 
 protected:

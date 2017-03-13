@@ -131,9 +131,9 @@ private:
     ///  return true if successfull*/
     bool _buildParametersFromHeaders(unsigned int group);
 
-    ///* Build connections from included headers.  TODO: DEPRECIATE AND CHANGE TO FILE INSTEAD OF HEADERS
+    ///* Build connections
     /// return true if successfull*/
-    bool _buildConnectionsFromHeaders(unsigned int group);
+    bool _buildConnections(unsigned int group);
 
     ///* Set parameter values from mixer data messages
     /// return true if successfull*/
@@ -142,6 +142,21 @@ private:
     ///* Set connection points from mixer data messages
     /// return true if successfull*/
     bool _connectionsFromMessages(unsigned int group);
+
+    ///* Get mixer connection count from whatever vehicle data source is available*/
+    int _getMixerConnCountFromVehicle(int mixerType, int connType);
+
+    ///* Set parameter Fact value from whatever vehicle data source is available*/
+    void _setParameterFactFromVehicle(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int param, Fact* paramFact);
+
+    ///* Set parameter Fact value from downloaded message*/
+    void _setParameterFactFromMessage(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int param, Fact* paramFact);
+
+    ///* Set connection values from whatever vehicle data source is available*/
+    void _setMixerConnectionFromVehicle(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int connType, unsigned int connIndex, MixerConnection* conn );
+
+    ///* Set connection values from downloaded message*/
+    void _setMixerConnectionFromMessage(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int connType, unsigned int connIndex, MixerConnection* conn );
 
 
 //    bool _checkForExpectedAck(AckType_t receivedAck);
