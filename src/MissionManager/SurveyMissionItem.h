@@ -45,6 +45,8 @@ public:
     Q_PROPERTY(Fact*                manualGrid                  READ manualGrid                     CONSTANT)
     Q_PROPERTY(Fact*                camera                      READ camera                         CONSTANT)
 
+    Q_PROPERTY(bool                 cameraOrientationFixed      MEMBER _cameraOrientationFixed      NOTIFY cameraOrientationFixedChanged)
+
     Q_PROPERTY(double               timeBetweenShots            READ timeBetweenShots               NOTIFY timeBetweenShotsChanged)
     Q_PROPERTY(QVariantList         polygonPath                 READ polygonPath                    NOTIFY polygonPathChanged)
     Q_PROPERTY(QVariantList         gridPoints                  READ gridPoints                     NOTIFY gridPointsChanged)
@@ -141,13 +143,14 @@ public:
     static const char* cameraName;
 
 signals:
-    void polygonPathChanged         (void);
-    void gridPointsChanged          (void);
-    void cameraShotsChanged         (int cameraShots);
-    void coveredAreaChanged         (double coveredArea);
-    void cameraValueChanged         (void);
-    void gridTypeChanged            (QString gridType);
-    void timeBetweenShotsChanged    (void);
+    void polygonPathChanged             (void);
+    void gridPointsChanged              (void);
+    void cameraShotsChanged             (int cameraShots);
+    void coveredAreaChanged             (double coveredArea);
+    void cameraValueChanged             (void);
+    void gridTypeChanged                (QString gridType);
+    void timeBetweenShotsChanged        (void);
+    void cameraOrientationFixedChanged  (bool cameraOrientationFixed);
 
 private slots:
     void _cameraTriggerChanged(void);
@@ -174,7 +177,7 @@ private:
     QVariantList    _gridPoints;
     QGeoCoordinate  _coordinate;
     QGeoCoordinate  _exitCoordinate;
-    double          _altitude;
+    bool            _cameraOrientationFixed;
 
     double          _surveyDistance;
     int             _cameraShots;

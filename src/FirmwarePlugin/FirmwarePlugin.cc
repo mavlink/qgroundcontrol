@@ -363,21 +363,25 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
     if (_cameraList.size() == 0) {
         CameraMetaData* metaData;
 
-        metaData = new CameraMetaData(tr("Typhoon H CGO3+"),   // Camera name
-                                      6.264,                   // sensorWidth
-                                      4.698,                   // sensorHeight
-                                      4000,                    // imageWidth
-                                      3000,                    // imageHeight
-                                      14,                      // focalLength
-                                      this);                   // parent
+        metaData = new CameraMetaData(tr("Typhoon H CGO3+"),    // Camera name
+                                      6.264,                    // sensorWidth
+                                      4.698,                    // sensorHeight
+                                      4000,                     // imageWidth
+                                      3000,                     // imageHeight
+                                      14,                       // focalLength
+                                      true,                     // landscape orientation
+                                      true,                     // camera orientation is fixed
+                                      this);                    // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Sony ILCE-QX1"),   //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
-                                      23.2,                  //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
+        metaData = new CameraMetaData(tr("Sony ILCE-QX1"),  //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
+                                      23.2,                 //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
                                       15.4,
                                       5456,
                                       3632,
                                       16,
+                                      true,
+                                      false,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
 
@@ -387,6 +391,8 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       4000,
                                       3000,
                                       5.2,
+                                      true,
+                                      false,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
 
@@ -396,6 +402,8 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       4000,
                                       3000,
                                       4.5,
+                                      true,
+                                      false,
                                       this);
 
         metaData = new CameraMetaData(tr("Canon EOS-M 22mm"),
@@ -404,6 +412,8 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       5184,
                                       3456,
                                       22,
+                                      true,
+                                      false,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
 
@@ -413,6 +423,8 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       6000,
                                       4000,
                                       16,
+                                      true,
+                                      false,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
     }
