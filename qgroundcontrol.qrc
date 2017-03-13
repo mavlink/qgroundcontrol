@@ -101,6 +101,7 @@
         <file alias="QGroundControl/Controls/RallyPointItemEditor.qml">src/MissionEditor/RallyPointItemEditor.qml</file>
         <file alias="QGroundControl/Controls/RCChannelMonitor.qml">src/QmlControls/RCChannelMonitor.qml</file>
         <file alias="QGroundControl/Controls/RoundButton.qml">src/QmlControls/RoundButton.qml</file>
+        <file alias="QGroundControl/Controls/SectionHeader.qml">src/MissionEditor/SectionHeader.qml</file>
         <file alias="QGroundControl/Controls/SetupPage.qml">src/AutoPilotPlugins/Common/SetupPage.qml</file>
         <file alias="QGroundControl/Controls/SignalStrength.qml">src/ui/toolbar/SignalStrength.qml</file>
         <file alias="QGroundControl/Controls/SimpleItemMapVisual.qml">src/MissionEditor/SimpleItemMapVisual.qml</file>

@@ -38,7 +38,7 @@
             "id":           181,
             "comment":      "MAV_CMD_DO_SET_RELAY",
             "param2": {
-                "label":            "Setting:",
+                "label":            "Setting",
                 "enumStrings":      "On,Off",
                 "enumValues":       "1,0",
                 "default":          1
@@ -54,19 +54,19 @@
             "comment":      "MAV_CMD_DO_MOUNT_CONTROL",
             "paramRemove":  "7",
             "param1": {
-                "label":            "Pitch:",
+                "label":            "Pitch",
                 "default":          0,
                 "units":            "deg",
                 "decimalPlaces":    2
             },
             "param2": {
-                "label":            "Roll:",
+                "label":            "Roll",
                 "default":          0,
                 "units":            "deg",
                 "decimalPlaces":    2
             },
             "param3": {
-                "label":            "Yaw:",
+                "label":            "Yaw",
                 "default":          0,
                 "units":            "deg",
                 "decimalPlaces":    2
@@ -76,7 +76,7 @@
             "id":                   207,
             "comment":              "MAV_CMD_DO_FENCE_ENABLE",
             "param1": {
-                "label":            "Enable:",
+                "label":            "Enable",
                 "enumStrings":      "Enable,Disable",
                 "enumValues":       "1,0",
                 "default":          1

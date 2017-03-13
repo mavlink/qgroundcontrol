@@ -9,7 +9,7 @@
             "comment":      "MAV_CMD_NAV_LAND",
             "paramRemove":  "1,4",
             "param7": {
-                "label":            "Altitude:",
+                "label":            "Altitude",
                 "units":            "m",
                 "default":          0,
                 "decimalPlaces":    1
