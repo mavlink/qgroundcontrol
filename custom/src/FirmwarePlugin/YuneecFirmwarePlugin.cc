@@ -95,13 +95,15 @@ const QVariantList& YuneecFirmwarePlugin::cameraList(const Vehicle* vehicle)
     if (_cameraList.size() == 0) {
         CameraMetaData* metaData;
 
-        metaData = new CameraMetaData(tr("Typhoon H CGO3+"),   // Camera name
-                                      6.264,                   // sensorWidth
-                                      4.698,                   // sensorHeight
-                                      4000,                    // imageWidth
-                                      3000,                    // imageHeight
-                                      14,                      // focalLength
-                                      this);                   // parent
+        metaData = new CameraMetaData(tr("Typhoon H CGO3+"),    // Camera name
+                                      6.264,                    // sensorWidth
+                                      4.698,                    // sensorHeight
+                                      4000,                     // imageWidth
+                                      3000,                     // imageHeight
+                                      14,                       // focalLength
+                                      true,                     // true: landscape orientation
+                                      true,                     // true: camera is fixed orientation
+                                      this);                    // parent
         _cameraList.append(QVariant::fromValue(metaData));
     }
 
