@@ -51,7 +51,7 @@ Item {
             id:                 pointer
             source:             vehicle ? vehicle.vehicleImageCompass : ""
             mipmap:             true
-            width:              size * 0.75
+            width:              size * 0.65
             sourceSize.width:   width
             fillMode:           Image.PreserveAspectFit
             anchors.centerIn:   parent
