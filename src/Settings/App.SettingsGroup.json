@@ -64,15 +64,15 @@
 },
 {
     "name":             "PromptFLightDataSave",
-    "shortDescription": "Prompt to save Flight Data Log after each flight",
-    "longDescription":  "If this option is enabled you will be prompted to save Flight Data Log after each flight completes.",
+    "shortDescription": "Save telemetry Log after each flight",
+    "longDescription":  "If this option is enabled a telemetry will be saved after each flight completes.",
     "type":             "bool",
     "defaultValue":     true
 },
 {
     "name":             "PromptFLightDataSaveNotArmed",
-    "shortDescription": "Prompt to save Flight Data Log even if vehicle was not armed",
-    "longDescription":  "If this option is enabled you will be prompted to save Flight Data Log even if vehicle was never armed.",
+    "shortDescription": "Save telemetry log even if vehicle was not armed",
+    "longDescription":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
     "type":             "bool",
     "defaultValue":     false
 },
@@ -82,5 +82,44 @@
     "longDescription":  "If this option is enabled all audio output will be muted.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "VirtualTabletJoystick",
+    "shortDescription": "Show virtual joystick",
+    "longDescription":  "If this option is enabled the virtual joystick will be shown on the Fly view.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "BaseDeviceFontPointSize",
+    "shortDescription": "QGroundControl font size",
+    "longDescription":  "The point size for the default font used in QGroundControl.",
+    "type":             "uint32",
+    "units":            "pt",
+    "min":              6,
+    "max":              48,
+    "defaultValue":     0
+},
+{
+    "name":             "StyleIsDark",
+    "shortDescription": "QGroundControl color scheme",
+    "longDescription":  "The color scheme for the QGroundControl user interface.",
+    "type":             "uint32",
+    "enumStrings":      "Indoor,Outdoor",
+    "enumValues":       "1,0"
+},
+{
+    "name":             "ShowLargeCompass",
+    "shortDescription": "Show large compass",
+    "longDescription":  "Show large compass on instrument panel",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "TelemetrySavePath",
+    "shortDescription": "Telemetry log save directory",
+    "longDescription":  "The directory to which telemetry logs are automatically saved to.",
+    "type":             "string",
+    "defaultValue":     ""
 }
 ]

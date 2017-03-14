@@ -471,6 +471,7 @@ HEADERS += \
     src/QGCMapPalette.h \
     src/QGCMobileFileDialogController.h \
     src/QGCPalette.h \
+    src/QGCQGeoCoordinate.h \
     src/QGCQmlWidgetHolder.h \
     src/QGCQuickWidget.h \
     src/QGCTemporaryFile.h \
@@ -640,6 +641,7 @@ SOURCES += \
     src/QGCMapPalette.cc \
     src/QGCMobileFileDialogController.cc \
     src/QGCPalette.cc \
+    src/QGCQGeoCoordinate.cc \
     src/QGCQmlWidgetHolder.cpp \
     src/QGCQuickWidget.cc \
     src/QGCTemporaryFile.cc \
@@ -766,6 +768,7 @@ HEADERS+= \
     src/AutoPilotPlugins/Common/MotorComponent.h \
     src/AutoPilotPlugins/Common/RadioComponentController.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
+    src/FirmwarePlugin/CameraMetaData.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
     src/Vehicle/MultiVehicleManager.h \
@@ -789,6 +792,7 @@ SOURCES += \
     src/AutoPilotPlugins/Common/MotorComponent.cc \
     src/AutoPilotPlugins/Common/RadioComponentController.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
+    src/FirmwarePlugin/CameraMetaData.cc \
     src/FirmwarePlugin/FirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/Vehicle/MultiVehicleManager.cc \

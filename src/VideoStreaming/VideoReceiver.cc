@@ -208,7 +208,7 @@ void VideoReceiver::start()
             }
             g_object_set(G_OBJECT(dataSource), "uri", qPrintable(_uri), "caps", caps, NULL);
         } else {
-            g_object_set(G_OBJECT(dataSource), "location", qPrintable(_uri), "latency", 0, "udp-reconnect", 1, "timeout", 5000000, NULL);
+            g_object_set(G_OBJECT(dataSource), "location", qPrintable(_uri), "latency", 17, "udp-reconnect", 1, "timeout", static_cast<guint64>(5000000), NULL);
         }
 
         if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == NULL) {

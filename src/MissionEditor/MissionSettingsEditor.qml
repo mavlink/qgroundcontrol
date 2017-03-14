@@ -1,4 +1,4 @@
-import QtQuick          2.5
+import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Layouts  1.2
 
@@ -40,9 +40,10 @@ Rectangle {
                 property bool   _showHoverSpeed:            _missionVehicle.multiRotor || missionController.vehicle.vtol
                 property bool   _multipleFirmware:          QGroundControl.supportedFirmwareCount > 2
                 property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 16
+                property bool   _mobile:                    ScreenTools.isMobile
 
-                readonly property string _firmwareLabel:    qsTr("Firmware:")
-                readonly property string _vehicleLabel:     qsTr("Vehicle:")
+                readonly property string _firmwareLabel:    qsTr("Firmware")
+                readonly property string _vehicleLabel:     qsTr("Vehicle")
 
                 QGCPalette { id: qgcPal }
 
@@ -53,17 +54,7 @@ Rectangle {
                     anchors.top:    parent.top
                     spacing:        _margin
 
-                    QGCLabel {
-                        text: qsTr("Planned Home Position")
-                        color: qgcPal.buttonHighlight
-                    }
-
-                    Rectangle {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        height:         1
-                        color:          qgcPal.text
-                    }
+                    SectionHeader { text: qsTr("Planned Home Position") }
 
                     Repeater {
                         model: missionItem.textFieldFacts
@@ -71,6 +62,8 @@ Rectangle {
                             anchors.left:   parent.left
                             anchors.right:  parent.right
                             spacing:        _margin
+                            visible:        _mobile ? index == 2 : true // Cheating here since we known we only have Lat/Lon/Alt
+
                             QGCLabel { text: object.name; Layout.fillWidth: true }
                             FactTextField {
                                 Layout.preferredWidth:  _fieldWidth
@@ -87,24 +80,27 @@ Rectangle {
                     }
 
                     QGCLabel {
-                        width:          parent.width
-                        wrapMode:       Text.WordWrap
-                        font.pointSize: ScreenTools.smallFontPointSize
-                        text:           qsTr("Actual position set by vehicle at flight time.")
-                        horizontalAlignment: Text.AlignHCenter
+                        width:                  parent.width
+                        wrapMode:               Text.WordWrap
+                        font.pointSize:         ScreenTools.smallFontPointSize
+                        text:                   qsTr("Actual position set by vehicle at flight time.")
+                        horizontalAlignment:    Text.AlignHCenter
                     }
 
-                    QGCLabel {
+                    QGCButton {
+                        text:                       qsTr("Set Home To Map Center")
+                        onClicked:                  editorRoot.moveHomeToMapCenter()
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                    }
+
+                    Item {
+                        height:     _sectionSpacer
+                        width:      1
+                        visible:    !ScreenTools.isTinyScreen
+                    }
+
+                    SectionHeader {
                         text:           qsTr("Vehicle Info")
-                        color:          qgcPal.buttonHighlight
-                        visible:        _multipleFirmware
-                    }
-
-                    Rectangle {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        height:         1
-                        color:          qgcPal.text
                         visible:        _multipleFirmware
                     }
 
@@ -129,17 +125,6 @@ Rectangle {
                         }
 
                         QGCLabel {
-                            text:       _firmwareLabel
-                            visible:    !_showOfflineEditingCombos
-                            Layout.fillWidth: true
-                        }
-                        QGCLabel {
-                            text:       _missionVehicle.firmwareTypeString
-                            visible:    !_showOfflineEditingCombos
-                            Layout.preferredWidth:  _fieldWidth
-                        }
-
-                        QGCLabel {
                             text:       _vehicleLabel
                             visible:    _showOfflineEditingCombos
                             Layout.fillWidth: true
@@ -153,19 +138,7 @@ Rectangle {
                         }
 
                         QGCLabel {
-                            text:       _vehicleLabel
-                            visible:    !_showOfflineEditingCombos
-                            Layout.fillWidth: true
-                        }
-                        QGCLabel {
-                            text:       _missionVehicle.vehicleTypeString
-                            visible:    !_showOfflineEditingCombos
-                            Layout.preferredWidth:  _fieldWidth
-                        }
-
-                        QGCLabel {
-                            Layout.row: 2
-                            text:       qsTr("Cruise speed:")
+                            text:       qsTr("Cruise speed")
                             visible:    _showCruiseSpeed
                             Layout.fillWidth: true
                         }
@@ -176,8 +149,7 @@ Rectangle {
                         }
 
                         QGCLabel {
-                            Layout.row: 3
-                            text:       qsTr("Hover speed:")
+                            text:       qsTr("Hover speed")
                             visible:    _showHoverSpeed
                             Layout.fillWidth: true
                         }
@@ -193,7 +165,7 @@ Rectangle {
                         anchors.right:  parent.right
                         spacing:        _margin
                         visible:        !_multipleFirmware
-                        QGCLabel { text: qsTr("Hover speed:"); Layout.fillWidth: true }
+                        QGCLabel { text: qsTr("Hover speed"); Layout.fillWidth: true }
                         FactTextField {
                             Layout.preferredWidth:  _fieldWidth
                             fact:       QGroundControl.settingsManager.appSettings.offlineEditingHoverSpeed
@@ -207,21 +179,6 @@ Rectangle {
                         text:           qsTr("Speeds are only used for time calculations. Actual vehicle speed will not be affected.")
                         horizontalAlignment: Text.AlignHCenter
                     }
-
-                    Rectangle {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        height:         1
-                        color:          qgcPal.text
-                    }
-
-                    QGCButton {
-                        width:      parent.width * 0.9
-                        text:       qsTr("Set Home To Map Center")
-                        onClicked:  editorRoot.moveHomeToMapCenter()
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-
                 } // Column
             } // Item
         } // Component

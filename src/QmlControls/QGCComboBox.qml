@@ -1,7 +1,6 @@
-import QtQuick 2.2
+import QtQuick 2.3
 import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.2
-import QtQuick.Controls.Private 1.0
+import QtQuick.Controls.Styles 1.4
 
 import QGroundControl.Palette 1.0
 import QGroundControl.ScreenTools 1.0
@@ -18,13 +17,12 @@ ComboBox {
                     control._qgcPal.buttonText
 
         background: Item {
-            implicitWidth:      Math.round(ScreenTools.defaultFontPixelWidth * 4.5)
-            implicitHeight:     ScreenTools.isMobile ? Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 2)) : Math.max(25, Math.round(ScreenTools.defaultFontPixelHeight * 1.2))
+            implicitWidth:  ScreenTools.implicitComboBoxWidth
+            implicitHeight: ScreenTools.implicitComboBoxHeight
 
             Rectangle {
                 anchors.fill:   parent
                 color:          _showHighlight ? control._qgcPal.buttonHighlight : control._qgcPal.button
-                //radius:       3
                 border.width:   _showBorder ? 1: 0
                 border.color:  control._qgcPal.buttonText
             }

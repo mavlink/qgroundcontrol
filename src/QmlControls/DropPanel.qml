@@ -7,9 +7,9 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.4
+import QtQuick                  2.3
 import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.2
+import QtQuick.Controls.Styles  1.4
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -44,11 +44,10 @@ Item {
 
     property var    _dropEdgeTopPoint
     property real   _dropEdgeHeight
-    property alias  _dropDownComponent:  dropDownLoader.sourceComponent
-    property real   _viewportMaxLeft:   -x + viewportMargins
-    property real   _viewportMaxRight:  parent.width  - (viewportMargins * 2) - x
-    property real   _viewportMaxTop:    -y + viewportMargins
-    property real   _viewportMaxBottom: parent.height - (viewportMargins * 2) - y
+    property alias  _dropDownComponent: dropDownLoader.sourceComponent
+    property real   _viewportMaxTop:    0
+    property real   _viewportMaxBottom: parent.parent.height - parent.y
+    property var    _dropPanelCancel
 
     function show(panelEdgeTopPoint, panelEdgeHeight, panelComponent) {
         _dropEdgeTopPoint = panelEdgeTopPoint
@@ -56,9 +55,13 @@ Item {
         _dropDownComponent = panelComponent
         _calcPositions()
         visible = true
+        _dropPanelCancel = dropPanelCancelComponent.createObject(toolStrip.parent)
     }
 
     function hide() {
+        if (_dropPanelCancel) {
+            _dropPanelCancel.destroy()
+        }
         if (visible) {
             visible = false
             _dropDownComponent = undefined
@@ -88,8 +91,8 @@ Item {
         dropItemHolderRect.x = _arrowPointHeight
 
         // Validate that dropdown is within viewport
-        dropDownItem.y = Math.max(dropDownItem.y, _viewportMaxTop)
         dropDownItem.y = Math.min(dropDownItem.y + dropDownItem.height, _viewportMaxBottom) - dropDownItem.height
+        dropDownItem.y = Math.max(dropDownItem.y, _viewportMaxTop)
 
         // Arrow points
         arrowCanvas.arrowPoint.y = (_dropEdgeTopPoint.y + radius) - dropDownItem.y
@@ -102,6 +105,17 @@ Item {
     } // function - _calcPositions
 
     QGCPalette { id: qgcPal }
+
+    Component {
+        // Overlay which is used to cancel the panel when the user clicks away
+        id: dropPanelCancelComponent
+
+        MouseArea {
+            anchors.fill:   parent
+            z:              toolStrip.z - 1
+            onClicked:      dropPanel.hide()
+        }
+    }
 
     Item {
         id: dropDownItem

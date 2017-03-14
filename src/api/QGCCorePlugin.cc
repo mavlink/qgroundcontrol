@@ -11,6 +11,7 @@
 #include "QGCOptions.h"
 #include "QGCSettings.h"
 #include "FactMetaData.h"
+#include "SettingsManager.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -35,6 +36,7 @@ public:
         , defaultOptions(NULL)
     {
     }
+
     ~QGCCorePlugin_p()
     {
         if(pGeneral)
@@ -56,6 +58,7 @@ public:
         if(defaultOptions)
             delete defaultOptions;
     }
+
     QGCSettings* pGeneral;
     QGCSettings* pCommLinks;
     QGCSettings* pOfflineMaps;
@@ -66,7 +69,6 @@ public:
     QGCSettings* pDebug;
 #endif
     QVariantList settingsList;
-    QVariantList toolBarIndicatorList;
     QGCOptions*  defaultOptions;
 };
 
@@ -79,6 +81,8 @@ QGCCorePlugin::~QGCCorePlugin()
 
 QGCCorePlugin::QGCCorePlugin(QGCApplication *app)
     : QGCTool(app)
+    , _showTouchAreas(false)
+    , _showAdvancedUI(true)
 {
     _p = new QGCCorePlugin_p;
 }
@@ -91,7 +95,7 @@ void QGCCorePlugin::setToolbox(QGCToolbox *toolbox)
    qmlRegisterUncreatableType<QGCOptions>("QGroundControl.QGCOptions",       1, 0, "QGCOptions",    "Reference only");
 }
 
-QVariantList &QGCCorePlugin::settings()
+QVariantList &QGCCorePlugin::settingsPages()
 {
     //-- If this hasn't been overridden, create default set of settings
     if(!_p->pGeneral) {
@@ -141,29 +145,26 @@ QGCOptions* QGCCorePlugin::options()
     return _p->defaultOptions;
 }
 
-QVariantList& QGCCorePlugin::toolBarIndicators()
-{
-    if(_p->toolBarIndicatorList.size() == 0) {
-        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")));
-        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")));
-        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")));
-        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
-        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
-        _p->toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
-    }
-    return _p->toolBarIndicatorList;
-}
-
 bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
 {
     Q_UNUSED(name);
-    
+
     // Always show all
     return true;
 }
 
 bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
 {
-    Q_UNUSED(metaData); // No mods to standard meta data
+    if (metaData.name() == AppSettings::indoorPaletteName) {
+        // Set up correct default for palette setting
+        QVariant outdoorPalette;
+#if defined (__mobile__)
+        outdoorPalette = 0;
+#else
+        outdoorPalette = 1;
+#endif
+        metaData.setRawDefaultValue(outdoorPalette);
+    }
+
     return true;        // Show setting in ui
 }

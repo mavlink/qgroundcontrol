@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-import QtQuick 2.2
+import QtQuick 2.3
 
 import QGroundControl.FactSystem 1.0
 

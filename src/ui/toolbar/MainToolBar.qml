@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-import QtQuick              2.5
+import QtQuick              2.3
 import QtQuick.Layouts      1.2
 import QtQuick.Controls     1.2
 
@@ -65,6 +65,28 @@ Rectangle {
     Component.onCompleted: {
         //-- TODO: Get this from the actual state
         flyButton.checked = true
+    }
+
+    // Easter egg mechanism
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            console.log("easter egg click", ++_clickCount)
+            eggTimer.restart()
+            if (_clickCount == 5) {
+                QGroundControl.corePlugin.showAdvancedUI = true
+            } else if (_clickCount == 7) {
+                QGroundControl.corePlugin.showTouchAreas = true
+            }
+        }
+
+        property int _clickCount: 0
+
+        Timer {
+            id:             eggTimer
+            interval:       1000
+            onTriggered:    parent._clickCount = 0
+        }
     }
 
     /// Bottom single pixel divider

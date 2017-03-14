@@ -45,7 +45,7 @@ public:
     // Property accesors
     
     QString         category            (void) const;
-    MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_missionItem._commandFact.cookedValue().toInt(); };
+    MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_missionItem._commandFact.cookedValue().toInt(); }
     bool            friendlyEditAllowed (void) const;
     bool            homePosition        (void) const    { return _homePositionSpecialCase; }
     bool            rawEdit             (void) const;
@@ -90,6 +90,7 @@ public:
     QGeoCoordinate  exitCoordinate          (void) const final { return coordinate(); }
     int             sequenceNumber          (void) const final { return _missionItem.sequenceNumber(); }
     double          flightSpeed             (void) final;
+    QString         mapVisualQML            (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
 
     bool coordinateHasRelativeAltitude      (void) const final { return _missionItem.relativeAltitude(); }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return coordinateHasRelativeAltitude(); }

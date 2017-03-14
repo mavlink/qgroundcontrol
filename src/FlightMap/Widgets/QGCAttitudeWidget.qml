@@ -14,11 +14,12 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.4
-import QtGraphicalEffects 1.0
+import QtQuick              2.3
+import QtGraphicalEffects   1.0
 
-import QGroundControl          1.0
-import QGroundControl.Controls 1.0
+import QGroundControl               1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
 
 Item {
     id: root
@@ -26,6 +27,7 @@ Item {
     property bool showPitch:    true
     property var  vehicle:      null
     property real size
+    property bool showHeading:  false
 
     property real _rollAngle:   vehicle ? vehicle.roll.rawValue  : 0
     property real _pitchAngle:  vehicle ? vehicle.pitch.rawValue : 0
@@ -117,4 +119,16 @@ Item {
         border.width:   2
     }
 
+    QGCLabel {
+        anchors.bottomMargin:       Math.round(ScreenTools.defaultFontPixelHeight * .75)
+        anchors.bottom:             parent.bottom
+        anchors.horizontalCenter:   parent.horizontalCenter
+        text:                       _headingString3
+        color:                      "white"
+        visible:                    showHeading
+
+        property string _headingString: vehicle ? vehicle.heading.rawValue.toFixed(0) : "OFF"
+        property string _headingString2: _headingString.length === 1 ? "0" + _headingString : _headingString
+        property string _headingString3: _headingString2.length === 2 ? "0" + _headingString2 : _headingString2
+    }
 }

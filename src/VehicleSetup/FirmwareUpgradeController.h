@@ -63,6 +63,7 @@ public:
             CopterFirmware,
             PlaneFirmware,
             RoverFirmware,
+            SubFirmware,
             DefaultVehicleFirmware
         } FirmwareVehicleType_t;
 

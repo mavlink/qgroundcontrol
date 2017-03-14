@@ -41,25 +41,13 @@ public:
     ~PX4AutoPilotPlugin();
 
     // Overrides from AutoPilotPlugin
-    const QVariantList& vehicleComponents(void) final;
-    void parametersReadyPreChecks(void) final;
+    const QVariantList& vehicleComponents(void) override;
+    void parametersReadyPreChecks(void) override;
+    QString prerequisiteSetup(VehicleComponent* component) const override;
 
-    // These methods should only be used by objects within the plugin
-    AirframeComponent*      airframeComponent(void)     { return _airframeComponent; }
-    PX4RadioComponent*      radioComponent(void)        { return _radioComponent; }
-    ESP8266Component*       esp8266Component(void)      { return _esp8266Component; }
-    FlightModesComponent*   flightModesComponent(void)  { return _flightModesComponent; }
-    SensorsComponent*       sensorsComponent(void)      { return _sensorsComponent; }
-    SafetyComponent*        safetyComponent(void)       { return _safetyComponent; }
-    CameraComponent*        cameraComponent(void)       { return _cameraComponent; }
-    PowerComponent*         powerComponent(void)        { return _powerComponent; }
-    MotorComponent*         motorComponent(void)        { return _motorComponent; }
-    PX4TuningComponent*     tuningComponent(void)       { return _tuningComponent; }
-    MixersComponent*        mixersComponent(void)       { return _mixersComponent; }
-
-private:
+protected:
+    bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
     PX4AirframeLoader*      _airframeFacts;
-    QVariantList            _components;
     AirframeComponent*      _airframeComponent;
     PX4RadioComponent*      _radioComponent;
     ESP8266Component*       _esp8266Component;
@@ -71,7 +59,9 @@ private:
     MotorComponent*         _motorComponent;
     PX4TuningComponent*     _tuningComponent;
     MixersComponent*        _mixersComponent;
-    bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
+
+private:
+    QVariantList            _components;
 };
 
 #endif

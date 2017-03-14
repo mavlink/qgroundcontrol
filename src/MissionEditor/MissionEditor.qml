@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 
-import QtQuick          2.4
-import QtQuick.Controls 1.3
+import QtQuick          2.3
+import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
 import QtLocation       5.3
 import QtPositioning    5.3
@@ -92,15 +92,11 @@ QGCView {
     MapFitFunctions {
         id:                         mapFitFunctions
         map:                        editorMap
-        mapFitViewport:             Qt.rect(leftToolWidth, toolbarHeight, editorMap.width - leftToolWidth - rightPanelWidth, editorMap.height - toolbarHeight)
+        mapFitViewport:             editorMap.centerViewport
         usePlannedHomePosition:     true
         mapGeoFenceController:      geoFenceController
         mapMissionController:       missionController
         mapRallyPointController:    rallyPointController
-
-        property real toolbarHeight:    qgcView.height - ScreenTools.availableHeight
-        property real rightPanelWidth:  _rightPanelWidth
-        property real leftToolWidth:    toolStrip.x + toolStrip.width
     }
 
     MissionController {
@@ -138,7 +134,9 @@ QGCView {
         }
 
         onNewItemsFromVehicle: {
-            mapFitFunctions.fitMapViewportToMissionItems()
+            if (_visualItems && _visualItems.count != 1) {
+                mapFitFunctions.fitMapViewportToMissionItems()
+            }
             setCurrentItem(0)
             _firstMissionLoadComplete = true
             checkFirstLoadComplete()
@@ -248,21 +246,19 @@ QGCView {
         id: _mapTypeButtonsExclusiveGroup
     }
 
-    ExclusiveGroup {
-        id: _dropButtonsExclusiveGroup
-    }
-
     function setCurrentItem(sequenceNumber) {
-        editorMap.polygonDraw.cancelPolygonEdit()
-        _currentMissionItem = undefined
-        for (var i=0; i<_visualItems.count; i++) {
-            var visualItem = _visualItems.get(i)
-            if (visualItem.sequenceNumber == sequenceNumber) {
-                _currentMissionItem = visualItem
-                _currentMissionItem.isCurrentItem = true
-                _currentMissionIndex = i
-            } else {
-                visualItem.isCurrentItem = false
+        if (sequenceNumber !== _currentMissionIndex) {
+            _currentMissionItem = undefined
+            _currentMissionIndex = -1
+            for (var i=0; i<_visualItems.count; i++) {
+                var visualItem = _visualItems.get(i)
+                if (visualItem.sequenceNumber == sequenceNumber) {
+                    _currentMissionItem = visualItem
+                    _currentMissionItem.isCurrentItem = true
+                    _currentMissionIndex = i
+                } else {
+                    visualItem.isCurrentItem = false
+                }
             }
         }
     }
@@ -343,6 +339,13 @@ QGCView {
                 anchors.right:  parent.right
                 mapName:        "MissionEditor"
 
+                // This is the center rectangle of the map which is not obscured by tools
+                property rect centerViewport: Qt.rect(_leftToolWidth, _toolbarHeight, editorMap.width - _leftToolWidth - _rightPanelWidth, editorMap.height - _statusHeight - _toolbarHeight)
+
+                property real _toolbarHeight:   qgcView.height - ScreenTools.availableHeight
+                property real _leftToolWidth:   toolStrip.x + toolStrip.width
+                property real _statusHeight:    waypointValuesDisplay.visible ? editorMap.height - waypointValuesDisplay.y : 0
+
                 readonly property real animationDuration: 500
 
                 // Initial map position duplicates Fly view position
@@ -400,8 +403,8 @@ QGCView {
                     id:             itemDragger
                     x:              mapCoordinateIndicator ? (mapCoordinateIndicator.x + mapCoordinateIndicator.anchorPoint.x - (itemDragger.width / 2)) : 100
                     y:              mapCoordinateIndicator ? (mapCoordinateIndicator.y + mapCoordinateIndicator.anchorPoint.y - (itemDragger.height / 2)) : 100
-                    width:          ScreenTools.defaultFontPixelHeight * 2
-                    height:         ScreenTools.defaultFontPixelHeight * 2
+                    width:          ScreenTools.defaultFontPixelHeight * 3
+                    height:         ScreenTools.defaultFontPixelHeight * 3
                     color:          "transparent"
                     visible:        false
                     z:              QGroundControl.zOrderMapItems + 1    // Above item icons
@@ -445,70 +448,12 @@ QGCView {
                     }
                 }
 
-                // Add the complex mission item to the map
+                // Add the mission item visuals to the map
                 Repeater {
-                    model: missionController.complexVisualItems
+                    model: missionController.visualItems
 
-                    delegate: ComplexMissionItem {
+                    delegate: MissionItemMapVisual {
                         map: editorMap
-                    }
-                }
-
-                // Add the simple mission items to the map
-                MapItemView {
-                    model:      missionController.visualItems
-                    delegate:   missionItemComponent
-                }
-
-                Component {
-                    id: missionItemComponent
-
-                    MissionItemIndicator {
-                        id:             itemIndicator
-                        coordinate:     object.coordinate
-                        visible:        object.isSimpleItem && object.specifiesCoordinate
-                        z:              QGroundControl.zOrderMapItems
-                        missionItem:    object
-                        sequenceNumber: object.sequenceNumber
-
-                        //-- If you don't want to allow selecting items beneath the
-                        //   toolbar, the code below has to check and see if mouse.y
-                        //   is greater than (map.height - ScreenTools.availableHeight)
-                        onClicked: setCurrentItem(object.sequenceNumber)
-
-                        function updateItemIndicator() {
-                            if (object.isCurrentItem && itemIndicator.visible && object.specifiesCoordinate && object.isSimpleItem) {
-                                // Setup our drag item
-                                itemDragger.visible = true
-                                itemDragger.coordinateItem = Qt.binding(function() { return object })
-                                itemDragger.mapCoordinateIndicator = Qt.binding(function() { return itemIndicator })
-                            }
-                        }
-
-                        Connections {
-                            target: object
-
-                            onIsCurrentItemChanged:         updateItemIndicator()
-                            onSpecifiesCoordinateChanged:   updateItemIndicator()
-                        }
-
-                        // These are the non-coordinate child mission items attached to this item
-                        Row {
-                            anchors.top:    parent.top
-                            anchors.left:   parent.right
-
-                            Repeater {
-                                model: object.isSimpleItem ? object.childItems : 0
-
-                                delegate: MissionItemIndexLabel {
-                                    label:      object.abbreviation
-                                    checked:    object.isCurrentItem
-                                    z:          2
-
-                                    onClicked: setCurrentItem(object.sequenceNumber)
-                                }
-                            }
-                        }
                     }
                 }
 
@@ -525,7 +470,7 @@ QGCView {
                         vehicle:        object
                         coordinate:     object.coordinate
                         isSatellite:    editorMap.isSatelliteMap
-                        size:           ScreenTools.defaultFontPixelHeight * 5
+                        size:           ScreenTools.defaultFontPixelHeight * 3
                         z:              QGroundControl.zOrderMapItems - 1
                     }
                 }
@@ -637,9 +582,13 @@ QGCView {
                             onClicked:  setCurrentItem(object.sequenceNumber)
 
                             onRemove: {
+                                var removeIndex = index
                                 itemDragger.clearItem()
-                                missionController.removeMissionItem(index)
-                                editorMap.polygonDraw.cancelPolygonEdit()
+                                missionController.removeMissionItem(removeIndex)
+                                if (removeIndex >= missionController.visualItems.count) {
+                                    removeIndex--
+                                }
+                                setCurrentItem(removeIndex)
                             }
 
                             onInsert: {
@@ -686,7 +635,8 @@ QGCView {
 
                 // GeoFence breach return point
                 MapQuickItem {
-                    anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+                    anchorPoint.x:  sourceItem.anchorPointX
+                    anchorPoint.y:  sourceItem.anchorPointY
                     coordinate:     geoFenceController.breachReturnPoint
                     visible:        geoFenceController.breachReturnEnabled
                     sourceItem:     MissionItemIndexLabel { label: "F" }
@@ -727,7 +677,8 @@ QGCView {
 
                     delegate: MapQuickItem {
                         id:             itemIndicator
-                        anchorPoint:    Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+                        anchorPoint.x:  sourceItem.anchorPointX
+                        anchorPoint.y:  sourceItem.anchorPointY
                         coordinate:     object.coordinate
                         z:              QGroundControl.zOrderMapItems
 
@@ -750,17 +701,6 @@ QGCView {
                     }
                 }
 
-                //-- Dismiss Drop Down (if any)
-                MouseArea {
-                    anchors.fill:   parent
-                    enabled:        _dropButtonsExclusiveGroup.current != null
-                    onClicked: {
-                        if(_dropButtonsExclusiveGroup.current)
-                            _dropButtonsExclusiveGroup.current.checked = false
-                        _dropButtonsExclusiveGroup.current = null
-                    }
-                }
-
                 ToolStrip {
                     id:                 toolStrip
                     anchors.leftMargin: ScreenTools.defaultFontPixelWidth
@@ -774,8 +714,9 @@ QGCView {
                     rotateImage:        [ false, false, _syncDropDownController.syncInProgress, false, false, false, false ]
                     buttonEnabled:      [ true, true, !_syncDropDownController.syncInProgress, true, true, true, true ]
                     buttonVisible:      [ true, true, true, true, true, _showZoom, _showZoom ]
+                    maxHeight:          mapScale.y - toolStrip.y
 
-                    property bool _showZoom: !ScreenTools.isShortScreen
+                    property bool _showZoom: !ScreenTools.isMobile
 
                     model: [
                         {
@@ -836,6 +777,7 @@ QGCView {
                 }
 
                 MapScale {
+                    id:                 mapScale
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * (0.66)
                     anchors.bottom:     waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
                     anchors.left:       parent.left

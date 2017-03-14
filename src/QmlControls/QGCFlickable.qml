@@ -1,4 +1,4 @@
-import QtQuick 2.5
+import QtQuick 2.3
 
 import QGroundControl.Palette 1.0
 

@@ -1,6 +1,6 @@
-import QtQuick                  2.2
+import QtQuick                  2.3
 import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.2
+import QtQuick.Controls.Styles  1.4
 import QtQuick.Layouts          1.2
 
 import QGroundControl.Palette       1.0
@@ -26,7 +26,15 @@ TextField {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     textColor:          qgcPal.textFieldText
-    height:             Math.round(Math.max(25, ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 2.5 : 1.2)))
+
+    implicitHeight: ScreenTools.implicitTextFieldHeight
+
+    onEditingFinished: {
+        if (ScreenTools.isMobile) {
+            // Toss focus on mobile after Done on virtual keyboard. Prevent strange interactions.
+            focus = false
+        }
+    }
 
     QGCLabel {
         id:             unitsLabelWidthGenerator

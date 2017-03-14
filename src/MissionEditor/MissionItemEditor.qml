@@ -1,6 +1,6 @@
-import QtQuick                  2.2
+import QtQuick                  2.3
 import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.2
+import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
 
 import QGroundControl.ScreenTools   1.0
@@ -29,6 +29,7 @@ Rectangle {
     property bool   _currentItem:           missionItem.isCurrentItem
     property color  _outerTextColor:        _currentItem ? "black" : qgcPal.text
     property bool   _noMissionItemsAdded:   ListView.view.model.count == 1
+    property real   _sectionSpacer:         ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
 
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 12)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
@@ -42,7 +43,6 @@ Rectangle {
 
     MouseArea {
         anchors.fill:   parent
-        visible:        !missionItem.isCurrentItem
         onClicked:      _root.clicked()
     }
 
@@ -67,50 +67,52 @@ Rectangle {
         visible:                missionItem.isCurrentItem && missionItem.sequenceNumber != 0
         color:                  qgcPal.windowShade
 
-        MouseArea {
-            anchors.fill:   parent
-            onClicked:      hamburgerMenu.popup()
+    }
 
-            Menu {
-                id: hamburgerMenu
+    QGCMouseArea {
+        fillItem:   hamburger
+        visible:    hamburger.visible
+        onClicked:  hamburgerMenu.popup()
 
-                MenuItem {
-                    text:           qsTr("Insert")
-                    onTriggered:    insert()
-                }
+        Menu {
+            id: hamburgerMenu
 
-                MenuItem {
-                    text:           qsTr("Delete")
-                    onTriggered:    remove()
-                }
+            MenuItem {
+                text:           qsTr("Insert")
+                onTriggered:    insert()
+            }
 
-                MenuItem {
-                    text:           "Change command..."
-                    onTriggered:    commandPicker.clicked()
-                }
+            MenuItem {
+                text:           qsTr("Delete")
+                onTriggered:    remove()
+            }
 
-                MenuSeparator {
-                    visible: missionItem.isSimpleItem
-                }
+            MenuItem {
+                text:           "Change command..."
+                onTriggered:    commandPicker.clicked()
+            }
 
-                MenuItem {
-                    text:       qsTr("Show all values")
-                    checkable:  true
-                    checked:    missionItem.isSimpleItem ? missionItem.rawEdit : false
-                    visible:    missionItem.isSimpleItem
+            MenuSeparator {
+                visible: missionItem.isSimpleItem
+            }
 
-                    onTriggered:    {
-                        if (missionItem.rawEdit) {
-                            if (missionItem.friendlyEditAllowed) {
-                                missionItem.rawEdit = false
-                            } else {
-                                qgcView.showMessage(qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"), StandardButton.Ok)
-                            }
+            MenuItem {
+                text:       qsTr("Show all values")
+                checkable:  true
+                checked:    missionItem.isSimpleItem ? missionItem.rawEdit : false
+                visible:    missionItem.isSimpleItem
+
+                onTriggered:    {
+                    if (missionItem.rawEdit) {
+                        if (missionItem.friendlyEditAllowed) {
+                            missionItem.rawEdit = false
                         } else {
-                            missionItem.rawEdit = true
+                            qgcView.showMessage(qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"), StandardButton.Ok)
                         }
-                        checked = missionItem.rawEdit
+                    } else {
+                        missionItem.rawEdit = true
                     }
+                    checked = missionItem.rawEdit
                 }
             }
         }

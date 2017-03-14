@@ -33,18 +33,16 @@ public:
     QGCCorePlugin(QGCApplication* app);
     ~QGCCorePlugin();
 
-    Q_PROPERTY(QVariantList settings            READ settings           CONSTANT)
+    Q_PROPERTY(QVariantList settingsPages       READ settingsPages      NOTIFY settingsPagesChanged)
     Q_PROPERTY(int          defaultSettings     READ defaultSettings    CONSTANT)
     Q_PROPERTY(QGCOptions*  options             READ options            CONSTANT)
-    Q_PROPERTY(QVariantList toolBarIndicators   READ toolBarIndicators  CONSTANT)
+
+    Q_PROPERTY(bool         showTouchAreas      MEMBER _showTouchAreas NOTIFY showTouchAreasChanged)
+    Q_PROPERTY(bool         showAdvancedUI      MEMBER _showAdvancedUI NOTIFY showAdvancedUIChanged)
 
     /// The list of settings under the Settings Menu
     /// @return A list of QGCSettings
-    virtual QVariantList&           settings            ();
-
-    /// Allows the core plugin to override the toolbar indicators
-    /// @return A list of QUrl with the indicators (see MainToolBarIndicators.qml)
-    virtual QVariantList&           toolBarIndicators   ();
+    virtual QVariantList&           settingsPages       ();
 
     /// The default settings panel to show
     /// @return The settings index
@@ -66,6 +64,16 @@ public:
 
     // Override from QGCTool
     void                            setToolbox          (QGCToolbox *toolbox);
+
+signals:
+    void settingsPagesChanged   (void);
+    void showTouchAreasChanged  (bool showTouchAreas);
+    void showAdvancedUIChanged  (bool showAdvancedUI);
+
+protected:
+    bool                _showTouchAreas;
+    bool                _showAdvancedUI;
+
 private:
-    QGCCorePlugin_p* _p;
+    QGCCorePlugin_p*    _p;
 };

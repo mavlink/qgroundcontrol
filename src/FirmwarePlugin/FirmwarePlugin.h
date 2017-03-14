@@ -22,6 +22,7 @@
 
 #include <QList>
 #include <QString>
+#include <QVariantList>
 
 class Vehicle;
 
@@ -256,8 +257,20 @@ public:
     /// Return the resource file which contains the vehicle icon used in the compass
     virtual QString vehicleImageCompass(const Vehicle* vehicle) const;
 
+    /// Allows the core plugin to override the toolbar indicators
+    /// @return A list of QUrl with the indicators (see MainToolBarIndicators.qml)
+    virtual const QVariantList& toolBarIndicators(const Vehicle* vehicle);
+
+    /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
+    virtual const QVariantList& cameraList(const Vehicle* vehicle);
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
+
+private:
+    QVariantList _toolBarIndicatorList;
+    static QVariantList _cameraList;    ///< Standard QGC camera list
+
 };
 
 class FirmwarePluginFactory : public QObject

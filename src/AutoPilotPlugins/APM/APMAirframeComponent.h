@@ -31,7 +31,6 @@ public:
     bool setupComplete(void) const final;
     QUrl setupSource(void) const final;
     QUrl summaryQmlSource(void) const final;
-    QString prerequisiteSetup(void) const final;
 
 private:
     bool            _requiresFrameSetup; ///< true: FRAME parameter must be set

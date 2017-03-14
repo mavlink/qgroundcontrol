@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.4
+import QtQuick          2.3
 import QtQuick.Controls 1.2
 
 import QGroundControl.ScreenTools   1.0
@@ -16,23 +16,61 @@ import QGroundControl.Palette       1.0
 Rectangle {
     id:         _root
     color:      qgcPal.window
-    width:      ScreenTools.defaultFontPixelWidth * 6
+    width:      ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 6
     height:     buttonStripColumn.height + (buttonStripColumn.anchors.margins * 2)
     radius:     _radius
 
     property string title:              "Title"
     property alias  model:              repeater.model
-    property var    showAlternateIcon
-    property var    rotateImage
-    property var    buttonEnabled
-    property var    buttonVisible
+    property var    showAlternateIcon                   ///< List of bool values, one for each button in strip - true: show alternate icon, false: show normal icon
+    property var    rotateImage                         ///< List of bool values, one for each button in strip - true: animation rotation, false: static image
+    property var    buttonEnabled                       ///< List of bool values, one for each button in strip - true: button enabled, false: button disabled
+    property var    buttonVisible                       ///< List of bool values, one for each button in strip - true: button visible, false: button invisible
+    property real   maxHeight                           ///< Maximum height for control, determines whether text is hidden to make control shorter
 
     signal clicked(int index, bool checked)
 
     readonly property real  _radius:                ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _margin:                ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _buttonSpacing:         ScreenTools.defaultFontPixelWidth
-    readonly property bool  _showOptionalElements:  !ScreenTools.isShortScreen
+
+    // All of the following values, connections and function are to support the ability to determine
+    // whether to show or hide the optional elements on the fly.
+
+    property bool _showOptionalElements:    true
+    property bool _needRecalc:              true
+
+    Component.onCompleted: recalcShowOptionalElements()
+
+    onMaxHeightChanged: recalcShowOptionalElements()
+
+    Connections {
+        target: ScreenTools
+
+        onDefaultFontPixelWidthChanged:     recalcShowOptionalElements()
+        onDefaultFontPixelHeightChanged:    recalcShowOptionalElements()
+    }
+
+    onHeightChanged: {
+        if (_needRecalc) {
+            _needRecalc = false
+            if (maxHeight && height > maxHeight) {
+                _showOptionalElements = false
+            }
+        }
+    }
+
+    function recalcShowOptionalElements() {
+        if (_showOptionalElements) {
+            if (maxHeight && height > maxHeight) {
+                _showOptionalElements = false
+            }
+        } else {
+            _needRecalc = true
+            _showOptionalElements = true
+        }
+
+    }
 
     QGCPalette { id: qgcPal }
     ExclusiveGroup { id: dropButtonsExclusiveGroup }
@@ -41,19 +79,10 @@ Rectangle {
         dropButtonsExclusiveGroup.current = null
         // Signal all toggles as off
         for (var i=0; i<model.length; i++) {
-            if (model[i].toggleButton === true) {
-                clicked(index, false)
+            if (model[i].toggle === true) {
+                _root.clicked(i, false)
             }
         }
-    }
-
-    MouseArea {
-        x:          -_root.x
-        y:          -_root.y
-        width:      _root.parent.width
-        height:     _root.parent.height
-        visible:    dropPanel.visible
-        onClicked:  dropPanel.hide()
     }
 
     Column {
@@ -143,12 +172,16 @@ Rectangle {
 
                     }
 
-                    MouseArea {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        anchors.top:    parent.top
-                        height:         parent.height + (_showOptionalElements? buttonLabel.height + buttonColumn.spacing : 0)
-                        visible:        _root.buttonEnabled ? _root.buttonEnabled[index] : true
+                    QGCMouseArea {
+                        // Size of mouse area is expanded to make touch easier
+                        anchors.leftMargin:     -buttonStripColumn.anchors.margins
+                        anchors.rightMargin:    -buttonStripColumn.anchors.margins
+                        anchors.left:           parent.left
+                        anchors.right:          parent.right
+                        anchors.top:            parent.top
+                        height:                 parent.height + (_showOptionalElements? buttonLabel.height + buttonColumn.spacing : 0)
+                        visible:                _root.buttonEnabled ? _root.buttonEnabled[index] : true
+                        preventStealing:        true
 
                         onClicked: {
                             if (modelData.dropPanelComponent === undefined) {
@@ -165,6 +198,7 @@ Rectangle {
                                     dropPanel.hide()    // hide affects checked, so this needs to be duplicated inside not outside if
                                 } else {
                                     dropPanel.hide()    // hide affects checked, so this needs to be duplicated inside not outside if
+                                    uncheckAll()
                                     checked = true
                                     var panelEdgeTopPoint = mapToItem(_root, width, 0)
                                     dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)

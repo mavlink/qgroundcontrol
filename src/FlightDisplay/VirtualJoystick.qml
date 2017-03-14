@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 
-import QtQuick 2.5
+import QtQuick 2.3
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -21,7 +21,7 @@ Item {
 
     Timer {
         interval:   40  // 25Hz, same as real joystick rate
-        running:    QGroundControl.virtualTabletJoystick && _activeVehicle
+        running:    QGroundControl.settingsManager.appSettings.virtualJoystick.value && _activeVehicle
         repeat:     true
         onTriggered: {
             if (_activeVehicle) {

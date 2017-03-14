@@ -1,6 +1,6 @@
-import QtQuick                  2.5
+import QtQuick                  2.3
 import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.2
+import QtQuick.Controls.Styles  1.4
 
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0

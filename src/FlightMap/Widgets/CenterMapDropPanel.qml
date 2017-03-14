@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.4
-import QtQuick.Controls 1.3
+import QtQuick          2.3
+import QtQuick.Controls 1.2
 import QtQuick.Layouts  1.2
 import QtPositioning    5.3
 
@@ -97,7 +97,7 @@ ColumnLayout {
 
         onClicked:  {
             dropPanel.hide()
-            _root.followVehicle = checked
+            root.followVehicle = checked
         }
     }
 } // Column

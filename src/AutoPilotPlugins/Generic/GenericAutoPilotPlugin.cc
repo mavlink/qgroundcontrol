@@ -25,3 +25,9 @@ const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
     
     return emptyList;
 }
+
+QString GenericAutoPilotPlugin:: prerequisiteSetup(VehicleComponent* component) const
+{
+    Q_UNUSED(component);
+    return QString();
+}

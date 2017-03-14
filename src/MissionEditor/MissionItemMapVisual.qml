@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.2
+import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtLocation       5.3
-import QtPositioning    5.2
+import QtPositioning    5.3
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
@@ -23,7 +23,7 @@ Item {
 
     property var map    ///< Map control to place item in
 
-    property var _complexItem
+    property var _visualItem
 
     Component.onCompleted: {
         if (object.mapVisualQML) {
@@ -31,13 +31,13 @@ Item {
             if (component.status === Component.Error) {
                 console.log("Error loading Qml: ", object.mapVisualQML, component.errorString())
             }
-            _complexItem = component.createObject(map, { "map": _root.map })
+            _visualItem = component.createObject(map, { "map": _root.map })
         }
     }
 
     Component.onDestruction: {
-        if (_complexItem) {
-            _complexItem.destroy()
+        if (_visualItem) {
+            _visualItem.destroy()
         }
     }
 }

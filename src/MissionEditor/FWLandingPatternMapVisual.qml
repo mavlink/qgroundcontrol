@@ -7,55 +7,54 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.2
+import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtLocation       5.3
-import QtPositioning    5.2
+import QtPositioning    5.3
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.FlightMap     1.0
 
 /// Fixed Wing Landing Pattern map visuals
 Item {
     property var map    ///< Map control to place item in
 
     property var _missionItem:  object
+    property var _itemVisuals: [ ]
     property var _mouseArea
-    property var _dragLoiter
-    property var _dragLand
-    property var _loiterPoint
-    property var _landPoint
+    property var _dragAreas: [ ]
+    property var _loiterTangentCoordinate
     property var _flightPath
 
+    readonly property int _flightPathIndex:     0
+    readonly property int _loiterPointIndex:    1
+    readonly property int _loiterRadiusIndex:   2
+    readonly property int _landPointIndex:      3
+
     function hideItemVisuals() {
-        if (_flightPath) {
-            _flightPath.destroy()
-            _flightPath = undefined
+        for (var i=0; i<_itemVisuals.length; i++) {
+            _itemVisuals[i].destroy()
         }
-        if (_loiterPoint) {
-            _loiterPoint.destroy()
-            _loiterPoint = undefined
-        }
-        if (_landPoint) {
-            _landPoint.destroy()
-            _landPoint = undefined
-        }
+        _itemVisuals = [ ]
     }
 
     function showItemVisuals() {
-        if (!_flightPath) {
-            _flightPath = flightPathComponent.createObject(map)
-            map.addMapItem(_flightPath)
-        }
-        if (!_loiterPoint) {
-            _loiterPoint = loiterPointComponent.createObject(map)
-            map.addMapItem(_loiterPoint)
-        }
-        if (!_landPoint) {
-            _landPoint = landPointComponent.createObject(map)
-            map.addMapItem(_landPoint)
+        if (_itemVisuals.length === 0) {
+            var itemVisual = flightPathComponent.createObject(map)
+            map.addMapItem(itemVisual)
+            _itemVisuals[_flightPathIndex] =itemVisual
+            itemVisual = loiterPointComponent.createObject(map)
+            map.addMapItem(itemVisual)
+            _itemVisuals[_loiterPointIndex] = itemVisual
+            itemVisual = loiterRadiusComponent.createObject(map)
+            map.addMapItem(itemVisual)
+            _itemVisuals[_loiterRadiusIndex] = itemVisual
+            itemVisual = landPointComponent.createObject(map)
+            map.addMapItem(itemVisual)
+            _itemVisuals[_landPointIndex] = itemVisual
         }
     }
 
@@ -74,24 +73,58 @@ Item {
     }
 
     function hideDragAreas() {
-        console.log("hideDragAreas")
-        if (_dragLoiter) {
-            _dragLoiter.destroy()
-            _dragLoiter = undefined
+        for (var i=0; i<_dragAreas.length; i++) {
+            _dragAreas[i].destroy()
         }
-        if (_dragLand) {
-            _dragLand.destroy()
-            _dragLand = undefined
-        }
+        _dragAreas = [ ]
     }
 
     function showDragAreas() {
-        console.log("showDragAreas")
-        if (!_dragLoiter) {
-            _dragLoiter = dragAreaComponent.createObject(map, { "dragLoiter": true })
+        if (_dragAreas.length === 0) {
+            _dragAreas.push(loiterDragAreaComponent.createObject(map))
+            _dragAreas.push(landDragAreaComponent.createObject(map))
         }
-        if (!_dragLand) {
-            _dragLand = dragAreaComponent.createObject(map, { "dragLoiter": false })
+    }
+
+    function radiansToDegrees(radians) {
+        return radians * (180.0 / Math.PI)
+    }
+
+    function calcPointTangentToCircleWithCenter() {
+        if (_missionItem.landingCoordSet) {
+            var radius = _missionItem.loiterRadius.value
+            var loiterPointPixels = map.fromCoordinate(_missionItem.loiterCoordinate, false /* clipToViewport */)
+            var landPointPixels = map.fromCoordinate(_missionItem.landingCoordinate, false /* clipToViewport */)
+
+            var dxHypotenuse = loiterPointPixels.x - landPointPixels.x
+            var dyHypotenuse = loiterPointPixels.y - landPointPixels.y
+            var oppositeLength = radius
+            var hypotenuseLength = _missionItem.landingCoordinate.distanceTo(_missionItem.loiterCoordinate)
+            var adjacentLength = Math.sqrt(Math.pow(hypotenuseLength, 2) - Math.pow(oppositeLength, 2))
+            var angleToCenterRadians = -Math.atan2(dyHypotenuse, dxHypotenuse)
+            var angleCenterToTangentRadians = Math.asin(oppositeLength / hypotenuseLength)
+            var angleToTangentRadians
+            if (_missionItem.loiterClockwise) {
+                angleToTangentRadians = angleToCenterRadians - angleCenterToTangentRadians
+            } else {
+                angleToTangentRadians = angleToCenterRadians + angleCenterToTangentRadians
+            }
+            var angleToTangentDegrees = (radiansToDegrees(angleToTangentRadians) - 90) * -1
+            /*
+              Keep in for debugging for now
+            console.log("dxHypotenuse", dxHypotenuse)
+            console.log("dyHypotenuse", dyHypotenuse)
+            console.log("oppositeLength", oppositeLength)
+            console.log("hypotenuseLength", hypotenuseLength)
+            console.log("adjacentLength", adjacentLength)
+            console.log("angleCenterToTangentRadians", angleCenterToTangentRadians, radiansToDegrees(angleCenterToTangentRadians))
+            console.log("angleToCenterRadians", angleToCenterRadians, radiansToDegrees(angleToCenterRadians))
+            console.log("angleToTangentDegrees", angleToTangentDegrees)
+            */
+            _loiterTangentCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(adjacentLength, angleToTangentDegrees)
+            _flightPath = [ _loiterTangentCoordinate, _missionItem.landingCoordinate ]
+        } else {
+            _flightPath = undefined
         }
     }
 
@@ -104,6 +137,7 @@ Item {
         } else if (_missionItem.isCurrentItem) {
             showMouseArea()
         }
+        calcPointTangentToCircleWithCenter()
     }
 
     Component.onDestruction: {
@@ -116,7 +150,6 @@ Item {
         target: _missionItem
 
         onIsCurrentItemChanged: {
-            console.log("onIsCurrentItemChanged", _missionItem.isCurrentItem)
             if (_missionItem.isCurrentItem) {
                 if (_missionItem.landingCoordSet) {
                     showDragAreas()
@@ -138,7 +171,12 @@ Item {
                 hideDragAreas()
                 showMouseArea()
             }
+            calcPointTangentToCircleWithCenter()
         }
+
+        onLandingCoordinateChanged: calcPointTangentToCircleWithCenter()
+        onLoiterCoordinateChanged:  calcPointTangentToCircleWithCenter()
+        onLoiterClockwiseChanged:   calcPointTangentToCircleWithCenter()
     }
 
     // Mouse area to capture landing point coordindate
@@ -158,55 +196,27 @@ Item {
         }
     }
 
-    // Control which is used to drag items
+    // Control which is used to drag the loiter point
     Component {
-        id: dragAreaComponent
+        id: loiterDragAreaComponent
 
-        Rectangle {
-            id:             itemDragger
-            x:              mapQuickItem ? (mapQuickItem.x + mapQuickItem.anchorPoint.x - (itemDragger.width / 2)) : 100
-            y:              mapQuickItem ? (mapQuickItem.y + mapQuickItem.anchorPoint.y - (itemDragger.height / 2)) : 100
-            width:          ScreenTools.defaultFontPixelHeight * 2
-            height:         ScreenTools.defaultFontPixelHeight * 2
-            color:          "transparent"
-            z:              QGroundControl.zOrderMapItems + 1    // Above item icons
+        MissionItemIndicatorDrag {
+            itemIndicator:  _itemVisuals[_loiterPointIndex]
+            itemCoordinate: _missionItem.loiterCoordinate
 
-            property bool   dragLoiter
-            property var    mapQuickItem:                   dragLoiter ? _loiterPoint : _landPoint
-            property bool   _preventCoordinateBindingLoop:  false
+            onItemCoordinateChanged: _missionItem.loiterCoordinate = itemCoordinate
+        }
+    }
 
-            onXChanged: liveDrag()
-            onYChanged: liveDrag()
+    // Control which is used to drag the loiter point
+    Component {
+        id: landDragAreaComponent
 
-            function liveDrag() {
-                if (!itemDragger._preventCoordinateBindingLoop && Drag.active) {
-                    var point = Qt.point(itemDragger.x + (itemDragger.width  / 2), itemDragger.y + (itemDragger.height / 2))
-                    var coordinate = map.toCoordinate(point)
-                    itemDragger._preventCoordinateBindingLoop = true
-                    if (dragLoiter) {
-                        coordinate.altitude = _missionItem.loiterCoordinate.altitude
-                        _missionItem.loiterCoordinate = coordinate
-                    } else {
-                        coordinate.altitude = _missionItem.landingCoordinate.altitude
-                        _missionItem.landingCoordinate = coordinate
-                    }
-                    itemDragger._preventCoordinateBindingLoop = false
-                }
-            }
+        MissionItemIndicatorDrag {
+            itemIndicator:  _itemVisuals[_landPointIndex]
+            itemCoordinate: _missionItem.landingCoordinate
 
-            Drag.active:    itemDrag.drag.active
-            Drag.hotSpot.x: width  / 2
-            Drag.hotSpot.y: height / 2
-
-            MouseArea {
-                id:             itemDrag
-                anchors.fill:   parent
-                drag.target:    parent
-                drag.minimumX:  0
-                drag.minimumY:  0
-                drag.maximumX:  itemDragger.parent.width - parent.width
-                drag.maximumY:  itemDragger.parent.height - parent.height
-            }
+            onItemCoordinateChanged: _missionItem.landingCoordinate = itemCoordinate
         }
     }
 
@@ -216,9 +226,9 @@ Item {
 
         MapPolyline {
             z:          QGroundControl.zOrderMapItems - 1   // Under item indicators
-            line.color: "white"
+            line.color: "#be781c"
             line.width: 2
-            path:       _missionItem.landingCoordSet ? [ _missionItem.loiterCoordinate, _missionItem.landingCoordinate ] : undefined
+            path:       _flightPath
         }
     }
 
@@ -227,15 +237,32 @@ Item {
         id: loiterPointComponent
 
         MapQuickItem {
-            anchorPoint.x:  sourceItem.width  / 2
-            anchorPoint.y:  sourceItem.height / 2
+            anchorPoint.x:  sourceItem.anchorPointX
+            anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.loiterCoordinate
 
             sourceItem:
                 MissionItemIndexLabel {
-                label:      "P"
+                label:      "Loiter"
+                checked:    _missionItem.isCurrentItem
+
+                onClicked: setCurrentItem(_missionItem.sequenceNumber)
             }
+        }
+    }
+
+    // Loiter radius visual
+    Component {
+        id: loiterRadiusComponent
+
+        MapCircle {
+            z:              QGroundControl.zOrderMapItems
+            center:         _missionItem.loiterCoordinate
+            radius:         _missionItem.loiterRadius.value
+            border.width:   2
+            border.color:   "green"
+            color:          "transparent"
         }
     }
 
@@ -244,14 +271,17 @@ Item {
         id: landPointComponent
 
         MapQuickItem {
-            anchorPoint.x:  sourceItem.width  / 2
-            anchorPoint.y:  sourceItem.height / 2
+            anchorPoint.x:  sourceItem.anchorPointX
+            anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.landingCoordinate
 
             sourceItem:
                 MissionItemIndexLabel {
-                label:      "L"
+                label:      "Land"
+                checked:    _missionItem.isCurrentItem
+
+                onClicked: setCurrentItem(_missionItem.sequenceNumber)
             }
         }
     }

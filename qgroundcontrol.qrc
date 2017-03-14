@@ -50,7 +50,6 @@
         <file alias="PX4FlowSensor.qml">src/VehicleSetup/PX4FlowSensor.qml</file>
         <file alias="QGroundControl/Controls/AnalyzePage.qml">src/AnalyzeView/AnalyzePage.qml</file>
         <file alias="QGroundControl/Controls/AppMessages.qml">src/QmlControls/AppMessages.qml</file>
-        <file alias="QGroundControl/Controls/ComplexMissionItem.qml">src/MissionEditor/ComplexMissionItem.qml</file>
         <file alias="QGroundControl/Controls/ClickableColor.qml">src/QmlControls/ClickableColor.qml</file>
         <file alias="QGroundControl/Controls/DropButton.qml">src/QmlControls/DropButton.qml</file>
         <file alias="QGroundControl/Controls/ExclusiveGroupItem.qml">src/QmlControls/ExclusiveGroupItem.qml</file>
@@ -66,6 +65,7 @@
         <file alias="QGroundControl/Controls/MissionCommandDialog.qml">src/QmlControls/MissionCommandDialog.qml</file>
         <file alias="QGroundControl/Controls/MissionItemEditor.qml">src/MissionEditor/MissionItemEditor.qml</file>
         <file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">src/QmlControls/MissionItemIndexLabel.qml</file>
+        <file alias="QGroundControl/Controls/MissionItemMapVisual.qml">src/MissionEditor/MissionItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/MissionItemStatus.qml">src/MissionEditor/MissionItemStatus.qml</file>
         <file alias="QGroundControl/Controls/ModeSwitchDisplay.qml">src/QmlControls/ModeSwitchDisplay.qml</file>
         <file alias="QGroundControl/Controls/MultiRotorMotorDisplay.qml">src/QmlControls/MultiRotorMotorDisplay.qml</file>
@@ -79,11 +79,13 @@
         <file alias="QGroundControl/Controls/QGCFlickable.qml">src/QmlControls/QGCFlickable.qml</file>
         <file alias="QGroundControl/Controls/QGCFlickableHorizontalIndicator.qml">src/QmlControls/QGCFlickableHorizontalIndicator.qml</file>
         <file alias="QGroundControl/Controls/QGCFlickableVerticalIndicator.qml">src/QmlControls/QGCFlickableVerticalIndicator.qml</file>
+        <file alias="QGroundControl/Controls/QGCGroupBox.qml">src/QmlControls/QGCGroupBox.qml</file>
         <file alias="QGroundControl/Controls/QGCLabel.qml">src/QmlControls/QGCLabel.qml</file>
         <file alias="QGroundControl/Controls/QGCListView.qml">src/QmlControls/QGCListView.qml</file>
         <file alias="QGroundControl/Controls/QGCMapLabel.qml">src/QmlControls/QGCMapLabel.qml</file>
         <file alias="QGroundControl/Controls/QGCMobileFileOpenDialog.qml">src/QmlControls/QGCMobileFileOpenDialog.qml</file>
         <file alias="QGroundControl/Controls/QGCMobileFileSaveDialog.qml">src/QmlControls/QGCMobileFileSaveDialog.qml</file>
+        <file alias="QGroundControl/Controls/QGCMouseArea.qml">src/QmlControls/QGCMouseArea.qml</file>
         <file alias="QGroundControl/Controls/QGCMovableItem.qml">src/QmlControls/QGCMovableItem.qml</file>
         <file alias="QGroundControl/Controls/QGCPipable.qml">src/QmlControls/QGCPipable.qml</file>
         <file alias="QGroundControl/Controls/QGCRadioButton.qml">src/QmlControls/QGCRadioButton.qml</file>
@@ -99,11 +101,13 @@
         <file alias="QGroundControl/Controls/RallyPointItemEditor.qml">src/MissionEditor/RallyPointItemEditor.qml</file>
         <file alias="QGroundControl/Controls/RCChannelMonitor.qml">src/QmlControls/RCChannelMonitor.qml</file>
         <file alias="QGroundControl/Controls/RoundButton.qml">src/QmlControls/RoundButton.qml</file>
+        <file alias="QGroundControl/Controls/SectionHeader.qml">src/MissionEditor/SectionHeader.qml</file>
         <file alias="QGroundControl/Controls/SetupPage.qml">src/AutoPilotPlugins/Common/SetupPage.qml</file>
         <file alias="QGroundControl/Controls/SignalStrength.qml">src/ui/toolbar/SignalStrength.qml</file>
+        <file alias="QGroundControl/Controls/SimpleItemMapVisual.qml">src/MissionEditor/SimpleItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/SliderSwitch.qml">src/QmlControls/SliderSwitch.qml</file>
         <file alias="QGroundControl/Controls/SubMenuButton.qml">src/QmlControls/SubMenuButton.qml</file>
-        <file alias="QGroundControl/Controls/SurveyComplexItem.qml">src/MissionEditor/SurveyComplexItem.qml</file>
+        <file alias="QGroundControl/Controls/SurveyMapVisual.qml">src/MissionEditor/SurveyMapVisual.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">src/QmlControls/VehicleRotationCal.qml</file>
         <file alias="QGroundControl/Controls/VehicleSummaryRow.qml">src/QmlControls/VehicleSummaryRow.qml</file>
         <file alias="QGroundControl/Controls/ToolStrip.qml">src/QmlControls/ToolStrip.qml</file>
@@ -126,13 +130,16 @@
         <file alias="QGroundControl/FlightDisplay/qmldir">src/FlightDisplay/qmldir</file>
         <file alias="QGroundControl/FlightMap/CenterMapDropButton.qml">src/FlightMap/Widgets/CenterMapDropButton.qml</file>
         <file alias="QGroundControl/FlightMap/CenterMapDropPanel.qml">src/FlightMap/Widgets/CenterMapDropPanel.qml</file>
+        <file alias="QGroundControl/FlightMap/CompassRing.qml">src/FlightMap/Widgets/CompassRing.qml</file>
         <file alias="QGroundControl/FlightMap/MapFitFunctions.qml">src/FlightMap/Widgets/MapFitFunctions.qml</file>
         <file alias="QGroundControl/FlightMap/FlightMap.qml">src/FlightMap/FlightMap.qml</file>
         <file alias="QGroundControl/FlightMap/InstrumentSwipeView.qml">src/FlightMap/Widgets/InstrumentSwipeView.qml</file>
         <file alias="QGroundControl/FlightMap/MapScale.qml">src/FlightMap/MapScale.qml</file>
         <file alias="QGroundControl/FlightMap/MissionItemIndicator.qml">src/FlightMap/MapItems/MissionItemIndicator.qml</file>
+        <file alias="QGroundControl/FlightMap/MissionItemIndicatorDrag.qml">src/FlightMap/MapItems/MissionItemIndicatorDrag.qml</file>
         <file alias="QGroundControl/FlightMap/MissionItemView.qml">src/FlightMap/MapItems/MissionItemView.qml</file>
         <file alias="QGroundControl/FlightMap/MissionLineView.qml">src/FlightMap/MapItems/MissionLineView.qml</file>
+        <file alias="QGroundControl/FlightMap/PolygonEditor.qml">src/FlightMap/MapItems/PolygonEditor.qml</file>
         <file alias="QGroundControl/FlightMap/QGCArtificialHorizon.qml">src/FlightMap/Widgets/QGCArtificialHorizon.qml</file>
         <file alias="QGroundControl/FlightMap/QGCAttitudeHUD.qml">src/FlightMap/Widgets/QGCAttitudeHUD.qml</file>
         <file alias="QGroundControl/FlightMap/QGCAttitudeWidget.qml">src/FlightMap/Widgets/QGCAttitudeWidget.qml</file>
@@ -143,6 +150,7 @@
         <file alias="QGroundControl/FlightMap/QGCPitchIndicator.qml">src/FlightMap/Widgets/QGCPitchIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/QGCVideoBackground.qml">src/FlightMap/QGCVideoBackground.qml</file>
         <file alias="QGroundControl/FlightMap/qmldir">src/FlightMap/qmldir</file>
+        <file alias="QGroundControl/FlightMap/CameraWidget.qml">src/FlightMap/Widgets/CameraWidget.qml</file>
         <file alias="QGroundControl/FlightMap/ValuesWidget.qml">src/FlightMap/Widgets/ValuesWidget.qml</file>
         <file alias="QGroundControl/FlightMap/VehicleHealthWidget.qml">src/FlightMap/Widgets/VehicleHealthWidget.qml</file>
         <file alias="QGroundControl/FlightMap/VehicleMapItem.qml">src/FlightMap/MapItems/VehicleMapItem.qml</file>
@@ -182,11 +190,11 @@
         <file alias="Vehicle/VibrationFact.json">src/Vehicle/VibrationFact.json</file>
         <file alias="App.SettingsGroup.json">src/Settings/App.SettingsGroup.json</file>
         <file alias="AutoConnect.SettingsGroup.json">src/Settings/AutoConnect.SettingsGroup.json</file>
+        <file alias="Survey.SettingsGroup.json">src/MissionManager/Survey.SettingsGroup.json</file>
         <file alias="Units.SettingsGroup.json">src/Settings/Units.SettingsGroup.json</file>
         <file alias="Video.SettingsGroup.json">src/Settings/Video.SettingsGroup.json</file>
         <file alias="RallyPoint.FactMetaData.json">src/MissionManager/RallyPoint.FactMetaData.json</file>
         <file alias="FWLandingPattern.FactMetaData.json">src/MissionManager/FWLandingPattern.FactMetaData.json</file>
-        <file alias="Survey.FactMetaData.json">src/MissionManager/Survey.FactMetaData.json</file>
         <file alias="USBBoardInfo.json">src/comm/USBBoardInfo.json</file>
         <file alias="Vehicle/TemperatureFact.json">src/Vehicle/TemperatureFact.json</file>
     </qresource>

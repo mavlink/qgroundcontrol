@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 
-import QtQuick                  2.5
-import QtQuick.Controls         1.3
-import QtQuick.Controls.Styles  1.2
+import QtQuick                  2.3
+import QtQuick.Controls         1.2
+import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
 import QtLocation               5.3
-import QtPositioning            5.2
+import QtPositioning            5.3
 import QtMultimedia             5.5
 
 import QGroundControl               1.0
@@ -81,7 +81,7 @@ QGCView {
     }
 
     function px4JoystickCheck() {
-        if ( _activeVehicle && !_activeVehicle.supportsManualControl && (QGroundControl.virtualTabletJoystick || _activeVehicle.joystickEnabled)) {
+        if ( _activeVehicle && !_activeVehicle.supportsManualControl && (QGroundControl.settingsManager.appSettings.virtualJoystick.value || _activeVehicle.joystickEnabled)) {
             px4JoystickSupport.open()
         }
     }
@@ -99,8 +99,8 @@ QGCView {
     }
 
     Connections {
-        target: QGroundControl
-        onVirtualTabletJoystickChanged: px4JoystickCheck()
+        target:         QGroundControl.settingsManager.appSettings.virtualJoystick
+        onValueChanged: px4JoystickCheck()
     }
 
     onActiveVehicleJoystickEnabledChanged: px4JoystickCheck()
@@ -302,14 +302,16 @@ QGCView {
             z:                          _panel.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
             height:                     Math.min(ScreenTools.availableHeight * 0.25, ScreenTools.defaultFontPixelWidth * 16)
-            visible:                    QGroundControl.virtualTabletJoystick
+            visible:                    _virtualJoystick.value
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
             anchors.horizontalCenter:   flightDisplayViewWidgets.horizontalCenter
             source:                     "qrc:/qml/VirtualJoystick.qml"
-            active:                     QGroundControl.virtualTabletJoystick
+            active:                     _virtualJoystick.value
 
             property bool useLightColors: root.isBackgroundDark
+
+            property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
         }
     }
 }

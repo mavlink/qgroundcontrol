@@ -23,6 +23,7 @@
 
 MissionCommandTree::MissionCommandTree(QGCApplication* app, bool unitTest)
     : QGCTool(app)
+    , _allCommandsCategory(tr("All commands"))
     , _settingsManager(NULL)
     , _unitTest(unitTest)
 {
@@ -168,6 +169,7 @@ void MissionCommandTree::_buildAvailableCommands(Vehicle* vehicle)
             _availableCategories[baseFirmwareType][baseVehicleType].append(newCategory);
         }
     }
+    _availableCategories[baseFirmwareType][baseVehicleType].append(_allCommandsCategory);
 }
 
 QStringList MissionCommandTree::_availableCategoriesForVehicle(Vehicle* vehicle)
@@ -238,7 +240,7 @@ QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const 
     QMap<MAV_CMD, MissionCommandUIInfo*> commandMap = _availableCommands[baseFirmwareType][baseVehicleType];
     foreach (MAV_CMD command, commandMap.keys()) {
         MissionCommandUIInfo* uiInfo = commandMap[command];
-        if (uiInfo->category() == category) {
+        if (uiInfo->category() == category || category == _allCommandsCategory) {
             list.append(QVariant::fromValue(uiInfo));
         }
     }

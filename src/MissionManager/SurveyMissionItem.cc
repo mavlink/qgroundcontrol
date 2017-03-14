@@ -13,6 +13,7 @@
 #include "MissionController.h"
 #include "QGCGeo.h"
 #include "QGroundControlQmlGlobal.h"
+#include "QGCQGeoCoordinate.h"
 
 #include <QPolygonF>
 
@@ -43,82 +44,63 @@ const char* SurveyMissionItem::_jsonManualGridKey =                 "manualGrid"
 const char* SurveyMissionItem::_jsonCameraOrientationLandscapeKey = "orientationLandscape";
 const char* SurveyMissionItem::_jsonFixedValueIsAltitudeKey =       "fixedValueIsAltitude";
 
-const char* SurveyMissionItem::_gridAltitudeFactName =              "Altitude";
-const char* SurveyMissionItem::_gridAngleFactName =                 "Grid angle";
-const char* SurveyMissionItem::_gridSpacingFactName =               "Grid spacing";
-const char* SurveyMissionItem::_turnaroundDistFactName =            "Turnaround dist";
-const char* SurveyMissionItem::_cameraTriggerDistanceFactName =     "Camera trigger distance";
-const char* SurveyMissionItem::_groundResolutionFactName =          "Ground resolution";
-const char* SurveyMissionItem::_frontalOverlapFactName =            "Frontal overlap";
-const char* SurveyMissionItem::_sideOverlapFactName =               "Side overlap";
-const char* SurveyMissionItem::_cameraSensorWidthFactName =         "Camera sensor width";
-const char* SurveyMissionItem::_cameraSensorHeightFactName =        "Camera sensor height";
-const char* SurveyMissionItem::_cameraResolutionWidthFactName =     "Camera resolution width";
-const char* SurveyMissionItem::_cameraResolutionHeightFactName =    "Camera resolution height";
-const char* SurveyMissionItem::_cameraFocalLengthFactName =         "Focal length";
-
-QMap<QString, FactMetaData*> SurveyMissionItem::_metaDataMap;
+const char* SurveyMissionItem::settingsGroup =                  "Survey";
+const char* SurveyMissionItem::manualGridName =                 "ManualGrid";
+const char* SurveyMissionItem::gridAltitudeName =               "GridAltitude";
+const char* SurveyMissionItem::gridAltitudeRelativeName =       "GridAltitudeRelative";
+const char* SurveyMissionItem::gridAngleName =                  "GridAngle";
+const char* SurveyMissionItem::gridSpacingName =                "GridSpacing";
+const char* SurveyMissionItem::turnaroundDistName =             "TurnaroundDist";
+const char* SurveyMissionItem::cameraTriggerDistanceName =      "CameraTriggerDistance";
+const char* SurveyMissionItem::groundResolutionName =           "GroundResolution";
+const char* SurveyMissionItem::frontalOverlapName =             "FrontalOverlap";
+const char* SurveyMissionItem::sideOverlapName =                "SideOverlap";
+const char* SurveyMissionItem::cameraSensorWidthName =          "CameraSensorWidth";
+const char* SurveyMissionItem::cameraSensorHeightName =         "CameraSensorHeight";
+const char* SurveyMissionItem::cameraResolutionWidthName =      "CameraResolutionWidth";
+const char* SurveyMissionItem::cameraResolutionHeightName =     "CameraResolutionHeight";
+const char* SurveyMissionItem::cameraFocalLengthName =          "CameraFocalLength";
+const char* SurveyMissionItem::cameraTriggerName =              "CameraTrigger";
+const char* SurveyMissionItem::cameraOrientationLandscapeName = "CameraOrientationLandscape";
+const char* SurveyMissionItem::fixedValueIsAltitudeName =       "FixedValueIsAltitude";
+const char* SurveyMissionItem::cameraName =                     "Camera";
 
 SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     : ComplexMissionItem(vehicle, parent)
     , _sequenceNumber(0)
     , _dirty(false)
-    , _cameraTrigger(true)
-    , _gridAltitudeRelative(true)
-    , _manualGrid(true)
-    , _cameraOrientationLandscape(true)
-    , _fixedValueIsAltitude(false)
+    , _cameraOrientationFixed(false)
     , _surveyDistance(0.0)
     , _cameraShots(0)
     , _coveredArea(0.0)
     , _timeBetweenShots(0.0)
-    , _gridAltitudeFact             (0, _gridAltitudeFactName,              FactMetaData::valueTypeDouble)
-    , _gridAngleFact                (0, _gridAngleFactName,                 FactMetaData::valueTypeDouble)
-    , _gridSpacingFact              (0, _gridSpacingFactName,               FactMetaData::valueTypeDouble)
-    , _turnaroundDistFact           (0, _turnaroundDistFactName,            FactMetaData::valueTypeDouble)
-    , _cameraTriggerDistanceFact    (0, _cameraTriggerDistanceFactName,     FactMetaData::valueTypeDouble)
-    , _groundResolutionFact         (0, _groundResolutionFactName,          FactMetaData::valueTypeDouble)
-    , _frontalOverlapFact           (0, _frontalOverlapFactName,            FactMetaData::valueTypeDouble)
-    , _sideOverlapFact              (0, _sideOverlapFactName,               FactMetaData::valueTypeDouble)
-    , _cameraSensorWidthFact        (0, _cameraSensorWidthFactName,         FactMetaData::valueTypeDouble)
-    , _cameraSensorHeightFact       (0, _cameraSensorHeightFactName,        FactMetaData::valueTypeDouble)
-    , _cameraResolutionWidthFact    (0, _cameraResolutionWidthFactName,     FactMetaData::valueTypeUint32)
-    , _cameraResolutionHeightFact   (0, _cameraResolutionHeightFactName,    FactMetaData::valueTypeUint32)
-    , _cameraFocalLengthFact        (0, _cameraFocalLengthFactName,         FactMetaData::valueTypeDouble)
+    , _metaDataMap(FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))
+    , _manualGridFact                   (settingsGroup, _metaDataMap[manualGridName])
+    , _gridAltitudeFact                 (settingsGroup, _metaDataMap[gridAltitudeName])
+    , _gridAltitudeRelativeFact         (settingsGroup, _metaDataMap[gridAltitudeRelativeName])
+    , _gridAngleFact                    (settingsGroup, _metaDataMap[gridAngleName])
+    , _gridSpacingFact                  (settingsGroup, _metaDataMap[gridSpacingName])
+    , _turnaroundDistFact               (settingsGroup, _metaDataMap[turnaroundDistName])
+    , _cameraTriggerFact                (settingsGroup, _metaDataMap[cameraTriggerName])
+    , _cameraTriggerDistanceFact        (settingsGroup, _metaDataMap[cameraTriggerDistanceName])
+    , _groundResolutionFact             (settingsGroup, _metaDataMap[groundResolutionName])
+    , _frontalOverlapFact               (settingsGroup, _metaDataMap[frontalOverlapName])
+    , _sideOverlapFact                  (settingsGroup, _metaDataMap[sideOverlapName])
+    , _cameraSensorWidthFact            (settingsGroup, _metaDataMap[cameraSensorWidthName])
+    , _cameraSensorHeightFact           (settingsGroup, _metaDataMap[cameraSensorHeightName])
+    , _cameraResolutionWidthFact        (settingsGroup, _metaDataMap[cameraResolutionWidthName])
+    , _cameraResolutionHeightFact       (settingsGroup, _metaDataMap[cameraResolutionHeightName])
+    , _cameraFocalLengthFact            (settingsGroup, _metaDataMap[cameraFocalLengthName])
+    , _cameraOrientationLandscapeFact   (settingsGroup, _metaDataMap[cameraOrientationLandscapeName])
+    , _fixedValueIsAltitudeFact         (settingsGroup, _metaDataMap[fixedValueIsAltitudeName])
+    , _cameraFact                       (settingsGroup, _metaDataMap[cameraName])
 {
     _editorQml = "qrc:/qml/SurveyItemEditor.qml";
 
-    if (_metaDataMap.isEmpty()) {
-        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.FactMetaData.json"), NULL /* metaDataParent */);
+    // NULL check since object creation during unit testing passes NULL for vehicle
+    if (_vehicle && _vehicle->multiRotor()) {
+        _turnaroundDistFact.setRawValue(0);
     }
-
-    _gridAltitudeFact.setRawValue(50);
-    _gridSpacingFact.setRawValue(30);
-    _turnaroundDistFact.setRawValue((_vehicle && _vehicle->multiRotor()) ? 0 : 60);
-    _cameraTriggerDistanceFact.setRawValue(25);
-    _groundResolutionFact.setRawValue(3);
-    _frontalOverlapFact.setRawValue(10);
-    _sideOverlapFact.setRawValue(10);
-
-    _cameraSensorWidthFact.setRawValue(6.17);
-    _cameraSensorHeightFact.setRawValue(4.55);
-    _cameraResolutionWidthFact.setRawValue(4000);
-    _cameraResolutionHeightFact.setRawValue(3000);
-    _cameraFocalLengthFact.setRawValue(4.5);
-
-    _gridAltitudeFact.setMetaData(_metaDataMap[_gridAltitudeFactName]);
-    _gridAngleFact.setMetaData(_metaDataMap[_gridAngleFactName]);
-    _gridSpacingFact.setMetaData(_metaDataMap[_gridSpacingFactName]);
-    _turnaroundDistFact.setMetaData(_metaDataMap[_turnaroundDistFactName]);
-    _cameraTriggerDistanceFact.setMetaData(_metaDataMap[_cameraTriggerDistanceFactName]);
-    _groundResolutionFact.setMetaData(_metaDataMap[_groundResolutionFactName]);
-    _frontalOverlapFact.setMetaData(_metaDataMap[_frontalOverlapFactName]);
-    _sideOverlapFact.setMetaData(_metaDataMap[_sideOverlapFactName]);
-    _cameraSensorWidthFact.setMetaData(_metaDataMap[_cameraSensorWidthFactName]);
-    _cameraSensorHeightFact.setMetaData(_metaDataMap[_cameraSensorHeightFactName]);
-    _cameraResolutionWidthFact.setMetaData(_metaDataMap[_cameraResolutionWidthFactName]);
-    _cameraResolutionHeightFact.setMetaData(_metaDataMap[_cameraResolutionHeightFactName]);
-    _cameraFocalLengthFact.setMetaData(_metaDataMap[_cameraFocalLengthFactName]);
 
     connect(&_gridSpacingFact,              &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
     connect(&_gridAngleFact,                &Fact::valueChanged, this, &SurveyMissionItem::_generateGrid);
@@ -136,7 +118,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     connect(&_cameraResolutionHeightFact,   &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
     connect(&_cameraFocalLengthFact,        &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
 
-    connect(this, &SurveyMissionItem::cameraTriggerChanged,     this, &SurveyMissionItem::_cameraTriggerChanged);
+    connect(&_cameraTriggerFact,            &Fact::valueChanged, this, &SurveyMissionItem::_cameraTriggerChanged);
 
     connect(&_cameraTriggerDistanceFact, &Fact::valueChanged, this, &SurveyMissionItem::timeBetweenShotsChanged);
 
@@ -186,6 +168,8 @@ void SurveyMissionItem::clearPolygon(void)
     // will cause the polygon to go away.
     _polygonPath.clear();
 
+    _polygonModel.clearAndDeleteContents();
+
     _clearGrid();
     setDirty(true);
 
@@ -195,6 +179,8 @@ void SurveyMissionItem::clearPolygon(void)
 
 void SurveyMissionItem::addPolygonCoordinate(const QGeoCoordinate coordinate)
 {
+    _polygonModel.append(new QGCQGeoCoordinate(coordinate, this));
+
     _polygonPath << QVariant::fromValue(coordinate);
     emit polygonPathChanged();
 
@@ -210,8 +196,68 @@ void SurveyMissionItem::addPolygonCoordinate(const QGeoCoordinate coordinate)
 
 void SurveyMissionItem::adjustPolygonCoordinate(int vertexIndex, const QGeoCoordinate coordinate)
 {
+    if (vertexIndex < 0 && vertexIndex > _polygonPath.length() - 1) {
+        qWarning() << "Call to adjustPolygonCoordinate with bad vertexIndex:count" << vertexIndex << _polygonPath.length();
+        return;
+    }
+
+    _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
     _polygonPath[vertexIndex] = QVariant::fromValue(coordinate);
     emit polygonPathChanged();
+    _generateGrid();
+    setDirty(true);
+}
+
+void SurveyMissionItem::splitPolygonSegment(int vertexIndex)
+{
+    int nextIndex = vertexIndex + 1;
+    if (nextIndex > _polygonPath.length() - 1) {
+        nextIndex = 0;
+    }
+
+    QGeoCoordinate firstVertex = _polygonPath[vertexIndex].value<QGeoCoordinate>();
+    QGeoCoordinate nextVertex = _polygonPath[nextIndex].value<QGeoCoordinate>();
+
+    double distance = firstVertex.distanceTo(nextVertex);
+    double azimuth = firstVertex.azimuthTo(nextVertex);
+    QGeoCoordinate newVertex = firstVertex.atDistanceAndAzimuth(distance / 2, azimuth);
+
+    if (nextIndex == 0) {
+        addPolygonCoordinate(newVertex);
+    } else {
+        _polygonModel.insert(nextIndex, new QGCQGeoCoordinate(newVertex, this));
+        _polygonPath.insert(nextIndex, QVariant::fromValue(newVertex));
+        emit polygonPathChanged();
+
+        int pointCount = _polygonPath.count();
+        if (pointCount >= 3) {
+            if (pointCount == 3) {
+                emit specifiesCoordinateChanged();
+            }
+            _generateGrid();
+        }
+        setDirty(true);
+    }
+}
+
+void SurveyMissionItem::removePolygonVertex(int vertexIndex)
+{
+    if (vertexIndex < 0 && vertexIndex > _polygonPath.length() - 1) {
+        qWarning() << "Call to removePolygonCoordinate with bad vertexIndex:count" << vertexIndex << _polygonPath.length();
+        return;
+    }
+
+    if (_polygonPath.length() <= 3) {
+        // Don't allow the user to trash the polygon
+        return;
+    }
+
+    QObject* coordObj = _polygonModel.removeAt(vertexIndex);
+    coordObj->deleteLater();
+
+    _polygonPath.removeAt(vertexIndex);
+    emit polygonPathChanged();
+
     _generateGrid();
     setDirty(true);
 }
@@ -222,7 +268,7 @@ int SurveyMissionItem::lastSequenceNumber(void) const
 
     if (_gridPoints.count()) {
         lastSeq += _gridPoints.count() - 1;
-        if (_cameraTrigger) {
+        if (_cameraTriggerFact.rawValue().toBool()) {
             // Account for two trigger messages
             lastSeq += 2;
         }
@@ -252,27 +298,27 @@ void SurveyMissionItem::save(QJsonObject& saveObject) const
     saveObject[JsonHelper::jsonVersionKey] =                    3;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
-    saveObject[_jsonCameraTriggerKey] =                         _cameraTrigger;
-    saveObject[_jsonManualGridKey] =                            _manualGrid;
-    saveObject[_jsonFixedValueIsAltitudeKey] =                  _fixedValueIsAltitude;
+    saveObject[_jsonCameraTriggerKey] =                         _cameraTriggerFact.rawValue().toBool();
+    saveObject[_jsonManualGridKey] =                            _manualGridFact.rawValue().toBool();
+    saveObject[_jsonFixedValueIsAltitudeKey] =                  _fixedValueIsAltitudeFact.rawValue().toBool();
 
-    if (_cameraTrigger) {
+    if (_cameraTriggerFact.rawValue().toBool()) {
         saveObject[_jsonCameraTriggerDistanceKey] = _cameraTriggerDistanceFact.rawValue().toDouble();
     }
 
     QJsonObject gridObject;
     gridObject[_jsonGridAltitudeKey] =          _gridAltitudeFact.rawValue().toDouble();
-    gridObject[_jsonGridAltitudeRelativeKey] =  _gridAltitudeRelative;
+    gridObject[_jsonGridAltitudeRelativeKey] =  _gridAltitudeRelativeFact.rawValue().toBool();
     gridObject[_jsonGridAngleKey] =             _gridAngleFact.rawValue().toDouble();
     gridObject[_jsonGridSpacingKey] =           _gridSpacingFact.rawValue().toDouble();
     gridObject[_jsonTurnaroundDistKey] =        _turnaroundDistFact.rawValue().toDouble();
 
     saveObject[_jsonGridObjectKey] = gridObject;
 
-    if (!_manualGrid) {
+    if (!_manualGridFact.rawValue().toBool()) {
         QJsonObject cameraObject;
-        cameraObject[_jsonCameraNameKey] =                  _camera;
-        cameraObject[_jsonCameraOrientationLandscapeKey] =  _cameraOrientationLandscape;
+        cameraObject[_jsonCameraNameKey] =                  _cameraFact.rawValue().toString();
+        cameraObject[_jsonCameraOrientationLandscapeKey] =  _cameraOrientationLandscapeFact.rawValue().toBool();
         cameraObject[_jsonCameraSensorWidthKey] =           _cameraSensorWidthFact.rawValue().toDouble();
         cameraObject[_jsonCameraSensorHeightKey] =          _cameraSensorHeightFact.rawValue().toDouble();
         cameraObject[_jsonCameraResolutionWidthKey] =       _cameraResolutionWidthFact.rawValue().toDouble();
@@ -368,10 +414,10 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
 
     setSequenceNumber(sequenceNumber);
 
-    _manualGrid =           v2Object[_jsonManualGridKey].toBool(true);
-    _cameraTrigger =        v2Object[_jsonCameraTriggerKey].toBool(false);
-    _fixedValueIsAltitude = v2Object[_jsonFixedValueIsAltitudeKey].toBool(true);
-    _gridAltitudeRelative = v2Object[_jsonGridAltitudeRelativeKey].toBool(true);
+    _manualGridFact.setRawValue             (v2Object[_jsonManualGridKey].toBool(true));
+    _cameraTriggerFact.setRawValue          (v2Object[_jsonCameraTriggerKey].toBool(false));
+    _fixedValueIsAltitudeFact.setRawValue   (v2Object[_jsonFixedValueIsAltitudeKey].toBool(true));
+    _gridAltitudeRelativeFact.setRawValue   (v2Object[_jsonGridAltitudeRelativeKey].toBool(true));
 
     QList<JsonHelper::KeyValidateInfo> gridKeyInfoList = {
         { _jsonGridAltitudeKey,                 QJsonValue::Double, true },
@@ -389,7 +435,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
     _gridSpacingFact.setRawValue    (gridObject[_jsonGridSpacingKey].toDouble());
     _turnaroundDistFact.setRawValue (gridObject[_jsonTurnaroundDistKey].toDouble());
 
-    if (_cameraTrigger) {
+    if (_cameraTriggerFact.rawValue().toBool()) {
         if (!v2Object.contains(_jsonCameraTriggerDistanceKey)) {
             errorString = tr("%1 but %2 is missing").arg("cameraTrigger = true").arg("cameraTriggerDistance");
             return false;
@@ -397,7 +443,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
         _cameraTriggerDistanceFact.setRawValue(v2Object[_jsonCameraTriggerDistanceKey].toDouble());
     }
 
-    if (!_manualGrid) {
+    if (!_manualGridFact.rawValue().toBool()) {
         if (!v2Object.contains(_jsonCameraObjectKey)) {
             errorString = tr("%1 but %2 object is missing").arg("manualGrid = false").arg("camera");
             return false;
@@ -428,8 +474,8 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
             return false;
         }
 
-        _camera =                       cameraObject[_jsonCameraNameKey].toString();
-        _cameraOrientationLandscape =   cameraObject[_jsonCameraOrientationLandscapeKey].toBool(true);
+        _cameraFact.setRawValue(cameraObject[_jsonCameraNameKey].toString());
+        _cameraOrientationLandscapeFact.setRawValue(cameraObject[_jsonCameraOrientationLandscapeKey].toBool(true));
 
         _groundResolutionFact.setRawValue       (cameraObject[_jsonGroundResolutionKey].toDouble());
         _frontalOverlapFact.setRawValue         (cameraObject[_jsonFrontalOverlapKey].toInt());
@@ -452,6 +498,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
             return false;
         }
         _polygonPath << QVariant::fromValue(pointCoord);
+        _polygonModel.append(new QGCQGeoCoordinate(pointCoord, this));
     }
 
     _generateGrid();
@@ -781,7 +828,7 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
 
         MissionItem* item = new MissionItem(seqNum++,                       // sequence number
                                             MAV_CMD_NAV_WAYPOINT,           // MAV_CMD
-                                            _gridAltitudeRelative ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,  // MAV_FRAME
+                                            _gridAltitudeRelativeFact.rawValue().toBool() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,  // MAV_FRAME
                                             0.0, 0.0, 0.0, 0.0,             // param 1-4
                                             coord.latitude(),
                                             coord.longitude(),
@@ -791,7 +838,7 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
                                             pMissionItems);                 // parent - allow delete on pMissionItems to delete everthing
         pMissionItems->append(item);
 
-        if (_cameraTrigger && i == 0) {
+        if (_cameraTriggerFact.rawValue().toBool() && i == 0) {
             // Turn on camera
             MissionItem* item = new MissionItem(seqNum++,                       // sequence number
                                                 MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // MAV_CMD
@@ -805,7 +852,7 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
         }
     }
 
-    if (_cameraTrigger) {
+    if (_cameraTriggerFact.rawValue().toBool()) {
         // Turn off camera
         MissionItem* item = new MissionItem(seqNum++,                       // sequence number
                                             MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // MAV_CMD
@@ -832,7 +879,7 @@ void SurveyMissionItem::_cameraTriggerChanged(void)
 
 int SurveyMissionItem::cameraShots(void) const
 {
-    return _cameraTrigger ? _cameraShots : 0;
+    return _cameraTriggerFact.rawValue().toBool() ? _cameraShots : 0;
 }
 
 void SurveyMissionItem::_cameraValueChanged(void)

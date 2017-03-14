@@ -60,15 +60,3 @@ QUrl SafetyComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/SafetyComponentSummary.qml");
 }
-
-QString SafetyComponent::prerequisiteSetup(void) const
-{
-    PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    }
-
-    return QString();
-}

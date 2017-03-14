@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.4
+import QtQuick          2.3
 import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
@@ -32,6 +32,11 @@ QGCFlickable {
         if (unhealthySensors.length != 0) {
             showPage(1)
         }
+    }
+
+    MouseArea {
+        anchors.fill:   parent
+        onClicked:      showNextPage()
     }
 
     Column {

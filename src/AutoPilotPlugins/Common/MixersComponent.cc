@@ -8,8 +8,6 @@
  ****************************************************************************/
 
 #include "MixersComponent.h"
-#include "APMAutoPilotPlugin.h"
-#include "APMAirframeComponent.h"
 #include "ParameterManager.h"
 
 MixersComponent::MixersComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
@@ -56,9 +54,4 @@ QUrl MixersComponent::setupSource(void) const
 QUrl MixersComponent::summaryQmlSource(void) const
 {
     return QUrl();
-}
-
-QString MixersComponent::prerequisiteSetup(void) const
-{
-    return QString();
 }

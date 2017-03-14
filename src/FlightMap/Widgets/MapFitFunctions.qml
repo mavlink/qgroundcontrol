@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.4
+import QtQuick          2.3
 import QtPositioning    5.3
 
 import QGroundControl 1.0
@@ -95,6 +95,10 @@ Item {
     }
 
     function fitMapViewportToMissionItems() {
+        if (!mapMissionController.visualItems) {
+            // Being called prior to controller.start
+            return
+        }
         var coordList = [ ]
         addMissionItemCoordsForFit(coordList)
         fitMapViewportToAllCoordinates(coordList)
@@ -135,6 +139,10 @@ Item {
     }
 
     function fitMapViewportToAllItems() {
+        if (!mapMissionController.visualItems) {
+            // Being called prior to controller.start
+            return
+        }
         var coordList = [ ]
         addMissionItemCoordsForFit(coordList)
         addFenceItemCoordsForFit(coordList)
