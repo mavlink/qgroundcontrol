@@ -445,9 +445,7 @@ void Joystick::run(void)
             
             if ( _exponential != 0 ) {
                 // Exponential (0% to -50% range like most RC radios)
-                // 0 for no exponential
-                // -0.5 for strong exponential
-                //float expo = -0.35f;
+                //_exponential is set by a slider in joystickConfig.qml
 
                 // Calculate new RPY with exponential applied
                 roll =      -_exponential*powf(roll,3) + (1+_exponential)*roll;
