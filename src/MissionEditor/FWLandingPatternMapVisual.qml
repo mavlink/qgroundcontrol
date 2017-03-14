@@ -92,36 +92,17 @@ Item {
 
     function calcPointTangentToCircleWithCenter() {
         if (_missionItem.landingCoordSet) {
-            var radius = _missionItem.loiterRadius.value
-            var loiterPointPixels = map.fromCoordinate(_missionItem.loiterCoordinate, false /* clipToViewport */)
-            var landPointPixels = map.fromCoordinate(_missionItem.landingCoordinate, false /* clipToViewport */)
+            // See: https://en.wikipedia.org/wiki/Thales%27_theorem#/media/File:Thales%27_Theorem_Tangents.svg
+            var radius  = Math.abs(_missionItem.loiterRadius.value)
+            var range   = _missionItem.loiterCoordinate.distanceTo(_missionItem.landingCoordinate);
+            var bearing =  _missionItem.loiterCoordinate.azimuthTo(_missionItem.landingCoordinate);
 
-            var dxHypotenuse = loiterPointPixels.x - landPointPixels.x
-            var dyHypotenuse = loiterPointPixels.y - landPointPixels.y
-            var oppositeLength = radius
-            var hypotenuseLength = _missionItem.landingCoordinate.distanceTo(_missionItem.loiterCoordinate)
-            var adjacentLength = Math.sqrt(Math.pow(hypotenuseLength, 2) - Math.pow(oppositeLength, 2))
-            var angleToCenterRadians = -Math.atan2(dyHypotenuse, dxHypotenuse)
-            var angleCenterToTangentRadians = Math.asin(oppositeLength / hypotenuseLength)
-            var angleToTangentRadians
-            if (_missionItem.loiterClockwise) {
-                angleToTangentRadians = angleToCenterRadians - angleCenterToTangentRadians
+            if (range > radius) {
+                var tangentAngle = bearing + (_missionItem.loiterClockwise ? -1 : 1) * (90 - radiansToDegrees(Math.asin(radius/range)));
+                _loiterTangentCoordinate = _missionItem.loiterCoordinate.atDistanceAndAzimuth(radius, tangentAngle)
             } else {
-                angleToTangentRadians = angleToCenterRadians + angleCenterToTangentRadians
+                _loiterTangentCoordinate = _missionItem.landingCoordinate
             }
-            var angleToTangentDegrees = (radiansToDegrees(angleToTangentRadians) - 90) * -1
-            /*
-              Keep in for debugging for now
-            console.log("dxHypotenuse", dxHypotenuse)
-            console.log("dyHypotenuse", dyHypotenuse)
-            console.log("oppositeLength", oppositeLength)
-            console.log("hypotenuseLength", hypotenuseLength)
-            console.log("adjacentLength", adjacentLength)
-            console.log("angleCenterToTangentRadians", angleCenterToTangentRadians, radiansToDegrees(angleCenterToTangentRadians))
-            console.log("angleToCenterRadians", angleToCenterRadians, radiansToDegrees(angleToCenterRadians))
-            console.log("angleToTangentDegrees", angleToTangentDegrees)
-            */
-            _loiterTangentCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(adjacentLength, angleToTangentDegrees)
             _flightPath = [ _loiterTangentCoordinate, _missionItem.landingCoordinate ]
         } else {
             _flightPath = undefined
