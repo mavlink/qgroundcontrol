@@ -21,15 +21,13 @@ import QGroundControl.Controls 1.0
 Rectangle {
     property real pitchAngle:       0
     property real rollAngle:        0
-    property real size:             _defaultSize
+    property real size:             ScreenTools.isAndroid ? 300 : 100
     property real _reticleHeight:   1
     property real _reticleSpacing:  size * 0.15
     property real _reticleSlot:     _reticleSpacing + _reticleHeight
-    property real _longDash:        size * 0.40
+    property real _longDash:        size * 0.35
     property real _shortDash:       size * 0.25
-    property real _fontSize:        ScreenTools.defaultFontPointSize * (size / _defaultSize)
-
-    property real _defaultSize:     ScreenTools.isAndroid ? 300 : 100
+    property real _fontSize:        ScreenTools.defaultFontPointSize * 0.75
 
     height: size
     width:  size
@@ -55,22 +53,22 @@ Rectangle {
                     smooth: true
                     QGCLabel {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.horizontalCenterOffset: -(_longDash * 0.8)
+                        anchors.horizontalCenterOffset: -(_longDash)
                         anchors.verticalCenter: parent.verticalCenter
                         smooth: true
                         font.family: ScreenTools.demiboldFontFamily
-                        font.pointSize: _fontSize < 1 ? 1 : _fontSize;
+                        font.pointSize: _fontSize
                         text: _pitch
                         color: "white"
                         visible: (_pitch != 0) && ((_pitch % 10) === 0)
                     }
                     QGCLabel {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.horizontalCenterOffset: (_longDash * 0.8)
+                        anchors.horizontalCenterOffset: (_longDash)
                         anchors.verticalCenter: parent.verticalCenter
                         smooth: true
                         font.family: ScreenTools.demiboldFontFamily
-                        font.pointSize: _fontSize < 1 ? 1 : _fontSize;
+                        font.pointSize: _fontSize
                         text: _pitch
                         color: "white"
                         visible: (_pitch != 0) && ((_pitch % 10) === 0)
