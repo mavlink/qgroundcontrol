@@ -462,18 +462,13 @@ SetupPage {
                                 }
 
                                 Row {
-
                                     QGCSlider {
                                         id: expoSlider
-                                        value: -_activeJoystick.exponential
                                         minimumValue: 0
                                         maximumValue: 0.75
 
-                                        Binding {
-                                           target: _activeJoystick
-                                           property: "exponential"
-                                           value:-expoSlider.value
-                                        }
+                                        Component.onCompleted: value=-_activeJoystick.exponential
+                                        onValueChanged: _activeJoystick.exponential=-value
                                      }
 
                                     QGCLabel {
