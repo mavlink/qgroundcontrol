@@ -51,7 +51,7 @@ public:
     /// Calls deleteLater on all items and this itself.
     void deleteListAndContents(void);
 
-    /// Clears the list and calls delete on each entry
+    /// Clears the list and calls deleteLater on each entry
     void clearAndDeleteContents(void);
 
 signals:

@@ -92,15 +92,11 @@ QGCView {
     MapFitFunctions {
         id:                         mapFitFunctions
         map:                        editorMap
-        mapFitViewport:             Qt.rect(leftToolWidth, toolbarHeight, editorMap.width - leftToolWidth - rightPanelWidth, editorMap.height - toolbarHeight)
+        mapFitViewport:             editorMap.centerViewport
         usePlannedHomePosition:     true
         mapGeoFenceController:      geoFenceController
         mapMissionController:       missionController
         mapRallyPointController:    rallyPointController
-
-        property real toolbarHeight:    qgcView.height - ScreenTools.availableHeight
-        property real rightPanelWidth:  _rightPanelWidth
-        property real leftToolWidth:    toolStrip.x + toolStrip.width
     }
 
     MissionController {
@@ -343,6 +339,13 @@ QGCView {
                 anchors.right:  parent.right
                 mapName:        "MissionEditor"
 
+                // This is the center rectangle of the map which is not obscured by tools
+                property rect centerViewport: Qt.rect(_leftToolWidth, _toolbarHeight, editorMap.width - _leftToolWidth - _rightPanelWidth, editorMap.height - _statusHeight - _toolbarHeight)
+
+                property real _toolbarHeight:   qgcView.height - ScreenTools.availableHeight
+                property real _leftToolWidth:   toolStrip.x + toolStrip.width
+                property real _statusHeight:    waypointValuesDisplay.visible ? editorMap.height - waypointValuesDisplay.y : 0
+
                 readonly property real animationDuration: 500
 
                 // Initial map position duplicates Fly view position
@@ -467,7 +470,7 @@ QGCView {
                         vehicle:        object
                         coordinate:     object.coordinate
                         isSatellite:    editorMap.isSatelliteMap
-                        size:           ScreenTools.defaultFontPixelHeight * 5
+                        size:           ScreenTools.defaultFontPixelHeight * 3
                         z:              QGroundControl.zOrderMapItems - 1
                     }
                 }

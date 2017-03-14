@@ -5,7 +5,7 @@ if [ ! -d /Volumes/RAMDisk ] ; then
     exit 1
 fi
 #-- Set to my local installation
-QMAKE=/Applications/Qt/5.5/ios/bin/qmake
+QMAKE=/Users/gus/Applications/Qt/5.7/ios/bin/qmake
 #-- Using Travis variables as this will eventually live there
 SHADOW_BUILD_DIR=/Volumes/RAMDisk/build-qgroundcontrol-iOS-Release
 TRAVIS_BUILD_DIR=/Users/gus/github/work/qgroundcontrol
