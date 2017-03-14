@@ -237,7 +237,7 @@ TyphoonHQuickInterface::_newSSID(QString ssid)
         emit ssidListChanged();
     }
 #else
-    if(ssid.startsWith("CGO3P")) {
+    if(ssid.startsWith("CGO3P") || ssid.startsWith("CGOPRO")) {
         if(!_ssidList.contains(ssid)) {
             _ssidList << ssid;
             emit ssidListChanged();
