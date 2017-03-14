@@ -125,16 +125,6 @@ Rectangle {
     property bool _noCameraValueRecalc: false   ///< Prevents uneeded recalcs
 
     Connections {
-        target: missionItem
-
-        onIsCurrentItemChanged: {
-            if (!missionItem.isCurrentItem) {
-                polygonEditor.cancelPolygonEdit()
-            }
-        }
-    }
-
-    Connections {
         target: missionItem.camera
 
         onValueChanged: {
@@ -459,44 +449,6 @@ Rectangle {
 
         Item { height: _sectionSpacer;  width: 1; visible: !ScreenTools.isTinyScreen }
 
-        SectionHeader { text: qsTr("Polygon") }
-
-        Row {
-            spacing: ScreenTools.defaultFontPixelWidth
-            anchors.horizontalCenter: parent.horizontalCenter
-
-            QGCButton {
-                width:      _root.width * 0.45
-                text:       polygonEditor.drawingPolygon ? qsTr("Finish Draw") : qsTr("Draw")
-                visible:    !polygonEditor .adjustingPolygon
-                enabled:    ((polygonEditor.drawingPolygon && polygonEditor.polygonReady) || !polygonEditor.drawingPolygon)
-
-                onClicked: {
-                    if (polygonEditor.drawingPolygon) {
-                        polygonEditor.finishCapturePolygon()
-                    } else {
-                        polygonEditor.startCapturePolygon()
-                    }
-                }
-            }
-
-            QGCButton {
-                width:      _root.width * 0.4
-                text:       polygonEditor.adjustingPolygon ? qsTr("Finish Adjust") : qsTr("Adjust")
-                visible:    missionItem.polygonPath.length > 0 && !polygonEditor.drawingPolygon
-
-                onClicked: {
-                    if (polygonEditor.adjustingPolygon) {
-                        polygonEditor.finishAdjustPolygon()
-                    } else {
-                        polygonEditor.startAdjustPolygon(missionItem.polygonPath)
-                    }
-                }
-            }
-        }
-
-        Item { height: _sectionSpacer;  width: 1; visible: !ScreenTools.isTinyScreen }
-
         SectionHeader { text: qsTr("Statistics") }
 
         Grid {
@@ -520,11 +472,5 @@ Rectangle {
                 }
             }
         }
-    }
-
-    PolygonEditor {
-        id:             polygonEditor
-        map:            editorMap
-        callbackObject: parent
     }
 }
