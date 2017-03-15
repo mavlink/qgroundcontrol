@@ -4,6 +4,7 @@
     "shortDescription": "Distance between landing and loiter points.",
     "type":             "double",
     "units":            "m",
+    "min":              10,
     "decimalPlaces":    1,
     "defaultValue":     300.0
 },
@@ -30,7 +31,7 @@
     "shortDescription": "Loiter radius.",
     "type":             "double",
     "decimalPlaces":    1,
-    "min":              0.1,
+    "min":              1,
     "units":            "m",
     "defaultValue":     75.0
 },
