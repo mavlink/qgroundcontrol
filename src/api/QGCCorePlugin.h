@@ -37,8 +37,8 @@ public:
     Q_PROPERTY(int          defaultSettings     READ defaultSettings    CONSTANT)
     Q_PROPERTY(QGCOptions*  options             READ options            CONSTANT)
 
-    Q_PROPERTY(bool         showTouchAreas      MEMBER _showTouchAreas  NOTIFY showTouchAreasChanged)
-    Q_PROPERTY(bool         showAdvancedUI      MEMBER _showAdvancedUI  NOTIFY showAdvancedUIChanged)
+    Q_PROPERTY(bool         showTouchAreas      READ showTouchAreas     NOTIFY showTouchAreasChanged)
+    Q_PROPERTY(bool         showAdvancedUI      READ showAdvancedUI     NOTIFY showAdvancedUIChanged)
 
     Q_PROPERTY(QString      brandImageIndoor    READ brandImageIndoor   CONSTANT)
     Q_PROPERTY(QString      brandImageOutdoor   READ brandImageIndoor   CONSTANT)
@@ -70,6 +70,9 @@ public:
 
     /// Return the resource file which contains the brand image for for Outdoor theme.
     virtual QString brandImageOutdoor(void) const { return QString(); }
+
+    bool showTouchAreas(void) { return _showTouchAreas; }
+    bool showAdvancedUI(void) { return _showAdvancedUI; }
 
     // Override from QGCTool
     void                            setToolbox          (QGCToolbox *toolbox);
