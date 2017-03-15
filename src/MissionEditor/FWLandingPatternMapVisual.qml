@@ -219,7 +219,7 @@ Item {
         MapCircle {
             z:              QGroundControl.zOrderMapItems
             center:         _missionItem.loiterCoordinate
-            radius:         _missionItem.loiterRadius.value
+            radius:         _missionItem.loiterRadius.rawValue
             border.width:   2
             border.color:   "green"
             color:          "transparent"
