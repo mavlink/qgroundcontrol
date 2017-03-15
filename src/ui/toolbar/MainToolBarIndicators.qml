@@ -19,19 +19,31 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
 Item {
-    property var  activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
-    property bool communicationLost:    activeVehicle ? activeVehicle.connectionLost : false
+    property var  _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
+    property bool _communicationLost:    _activeVehicle ? _activeVehicle.connectionLost : false
 
     QGCPalette { id: qgcPal }
+
+
+    QGCLabel {
+        id:                     waitForVehicle
+        anchors.verticalCenter: parent.verticalCenter
+        text:                   qsTr("Waiting For Vehicle Connection")
+        font.pointSize:         ScreenTools.mediumFontPointSize
+        font.family:            ScreenTools.demiboldFontFamily
+        color:                  colorRed
+        visible:                !_activeVehicle
+    }
 
     Row {
         id:             indicatorRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
         spacing:        ScreenTools.defaultFontPixelWidth * 1.5
-        visible:        !communicationLost
+        visible:        _activeVehicle && !_communicationLost
+
         Repeater {
-            model:      activeVehicle ? activeVehicle.toolBarIndicators : []
+            model:      _activeVehicle ? _activeVehicle.toolBarIndicators : []
             Loader {
                 anchors.top:    parent.top
                 anchors.bottom: parent.bottom
@@ -44,23 +56,28 @@ Item {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        visible:                x > indicatorRow.width && !communicationLost
+        visible:                x > indicatorRow.width && !_communicationLost
         fillMode:               Image.PreserveAspectFit
-        source:                 activeVehicle ? activeVehicle.brandImage : ""
+        source:                 _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
+
+        property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
+        property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length != 0
+        property string _brandImageIndoor:      _corePluginBranding ? QGroundControl.corePlugin.brandImageIndoor : (_activeVehicle ? _activeVehicle.brandImageIndoor : "")
+        property string _brandImageOutdoor:     _corePluginBranding ? QGroundControl.corePlugin.brandImageOutdoor : (_activeVehicle ? _activeVehicle.brandImageOutdoor : "")
     }
 
     Row {
         anchors.fill:       parent
         layoutDirection:    Qt.RightToLeft
         spacing:            ScreenTools.defaultFontPixelWidth
-        visible:            communicationLost
+        visible:            _communicationLost
 
         QGCButton {
             id:                     disconnectButton
             anchors.verticalCenter: parent.verticalCenter
             text:                   qsTr("Disconnect")
             primary:                true
-            onClicked:              activeVehicle.disconnectInactiveVehicle()
+            onClicked:              _activeVehicle.disconnectInactiveVehicle()
         }
 
         QGCLabel {
