@@ -38,11 +38,12 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     private static WifiReceiver receiverWifi;
     private static ReceiverMode receiverMode = ReceiverMode.DISABLED;
     private static String currentConnection;
+    private static int currentWifiRssi = 0;
 
     // WiFi: https://stackoverflow.com/questions/36098871/how-to-search-and-connect-to-a-specific-wifi-network-in-android-programmatically/36099552#36099552
 
     private static native void nativeNewWifiItem(String ssid, int rssi);
-    private static native void nativeNewWifiRSSI(int rssi);
+    private static native void nativeNewWifiRSSI();
     private static native void nativeScanComplete();
     private static native void nativeAuthError();
     private static native void nativeWifiConnected();
@@ -77,6 +78,8 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
             Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!!!");
         }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        //-- Full Screen
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         //-- WiFi
         mainWifi = (WifiManager)getSystemService(Context.WIFI_SERVICE);
         mainWifi.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "QGCScanner");
@@ -90,6 +93,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
         filter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.RSSI_CHANGED_ACTION);
         registerReceiver(receiverWifi, filter);
+        findWifiConfig();
     }
 
     @Override
@@ -127,6 +131,22 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
 
     public static void reconnectWifi() {
         mainWifi.reconnect();
+    }
+
+    public static int wifiRssi() {
+        return currentWifiRssi;
+    }
+
+    public static void findWifiConfig() {
+        List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
+        for( WifiConfiguration i : list ) {
+            if(i.SSID != null) {
+                Log.i(TAG, "Found config: " + i.SSID + " | " + i.priority);
+                if(i.SSID.startsWith("CGO3P") || i.SSID.startsWith("CGOPRO")) {
+                    currentConnection = i.SSID;
+                }
+            }
+        }
     }
 
     public static void resetWifi() {
@@ -235,6 +255,8 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
                                     if(receiverMode == ReceiverMode.BINDING) {
                                         receiverMode = ReceiverMode.DISABLED;
                                         nativeWifiConnected();
+                                        currentWifiRssi = wifiInfo.getRssi();
+                                        nativeNewWifiRSSI();
                                     }
                                 }
                             }
@@ -251,9 +273,10 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
                         }
                     }
                 } else if (intent.getAction().equals(WifiManager.RSSI_CHANGED_ACTION)) {
-                    WifiInfo wi = mainWifi.getConnectionInfo();
-                    Log.e(TAG, "RSSI: " + wi.getRssi());
-                    nativeNewWifiRSSI(wi.getRssi());
+                    WifiInfo wifiInfo = mainWifi.getConnectionInfo();
+                    Log.e(TAG, "RSSI: " + wifiInfo.getRssi());
+                    currentWifiRssi = wifiInfo.getRssi();
+                    nativeNewWifiRSSI();
                 }
             } catch(Exception e) {
             }

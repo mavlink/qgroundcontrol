@@ -104,6 +104,10 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
 //-----------------------------------------------------------------------------
 TyphoonHM4Interface::~TyphoonHM4Interface()
 {
+    _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
+    QThread::msleep(SEND_INTERVAL);
+    _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
+    QThread::msleep(SEND_INTERVAL);
     emit destroyed();
     if(_commPort) {
         delete _commPort;
@@ -159,6 +163,8 @@ TyphoonHM4Interface::init(bool skipConnections)
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &TyphoonHM4Interface::_vehicleReady);
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved, this, &TyphoonHM4Interface::_vehicleRemoved);
     }
+    _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
+    QThread::msleep(SEND_INTERVAL);
 }
 
 //-----------------------------------------------------------------------------
@@ -166,7 +172,7 @@ void
 TyphoonHM4Interface::resetBind() {
     _resetBind = true;
     _rxBindInfoFeedback.clear();
-    _unbind();
+    _exitToAwait();
 }
 
 //-----------------------------------------------------------------------------
@@ -315,11 +321,11 @@ TyphoonHM4Interface::enterBindMode()
 void
 TyphoonHM4Interface::softReboot()
 {
+    qCDebug(YuneecLog) << "softReboot()";
     if(_bound && !_resetBind) {
         qCDebug(YuneecLog) << "softReboot() -> Already bound. Skipping it...";
     } else {
         _resetBind = false;
-        qCDebug(YuneecLog) << "softReboot()";
         _timer.stop();
         if(_commPort) {
             disconnect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHM4Interface::_bytesReady);
@@ -502,6 +508,19 @@ TyphoonHM4Interface::_stateManager()
             qCDebug(YuneecLogVerbose) << "Timeout:" << _state;
             break;
     }
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * Exit to Await (?)
+ */
+bool
+TyphoonHM4Interface::_exitToAwait()
+{
+    qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_TO_AWAIT";
+    m4Command enterRunCmd(Yuneec::CMD_EXIT_TO_AWAIT);
+    QByteArray cmd = enterRunCmd.pack();
+    return _commPort->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -1137,6 +1156,9 @@ TyphoonHM4Interface::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_SET_BINDKEY_FUNCTION:
                     qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_SET_BINDKEY_FUNCTION";
+                    break;
+                case Yuneec::CMD_EXIT_TO_AWAIT:
+                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_EXIT_TO_AWAIT";
                     break;
                 default:
                     qCDebug(YuneecLog) << "Received TYPE_RSP: ???" << packet.commandID() << data.toHex();

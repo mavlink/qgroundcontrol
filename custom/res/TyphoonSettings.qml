@@ -51,6 +51,10 @@ QGCView {
                 imageRotation.start()
             }
         }
+        onBindTimeout: {
+            QGroundControl.skipSetupPage = false
+            timeoutDialog.visible = true;
+        }
     }
 
     Component.onDestruction: {
@@ -65,10 +69,32 @@ QGCView {
         id:             panel
         anchors.fill:   parent
         QGCLabel {
-            text:           qsTr("Connecting...")
-            visible:        TyphoonHQuickInterface.bindingWiFi
-            font.family:    ScreenTools.demiboldFontFamily
-            anchors.centerIn: parent
+            text:               qsTr("Connecting...")
+            visible:            TyphoonHQuickInterface.bindingWiFi
+            font.family:        ScreenTools.demiboldFontFamily
+            anchors.top:        parent.top
+            anchors.topMargin:  parent.height * 0.3333
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+        QGCColoredImage {
+            height:             ScreenTools.defaultFontPixelHeight * 2
+            width:              height
+            source:             "/qmlimages/MapSync.svg"
+            sourceSize.height:  height
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            color:              qgcPal.buttonText
+            visible:            TyphoonHQuickInterface.bindingWiFi
+            anchors.centerIn:   parent
+            RotationAnimation on rotation {
+                id:             connectionRotation
+                loops:          Animation.Infinite
+                from:           0
+                to:             360
+                duration:       500
+                running:        TyphoonHQuickInterface.bindingWiFi
+            }
         }
         QGCFlickable {
             clip:               true
@@ -103,7 +129,7 @@ QGCView {
                     }
                     QGCButton {
                         id:             resetButton
-                        text:           qsTr("Reset")
+                        text:           qsTr("Reset All Links")
                         anchors.right:  parent.right
                         onClicked: {
                             QGroundControl.skipSetupPage = true
@@ -193,6 +219,38 @@ QGCView {
                 QGCLabel {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: qsTr("QGroundControl Version: " + QGroundControl.qgcVersion)
+                }
+            }
+        }
+    }
+    //-- Connection Timeout
+    Rectangle {
+        id:         timeoutDialog
+        width:      timeoutCol.width  * 1.5
+        height:     timeoutCol.height * 1.5
+        radius:     ScreenTools.defaultFontPixelWidth * 0.5
+        color:      qgcPal.window
+        visible:    false
+        border.color: qgcPal.text
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        Keys.onBackPressed: {
+            timeoutDialog.visible = false
+        }
+        Column {
+            id:         timeoutCol
+            spacing:    ScreenTools.defaultFontPixelHeight
+            anchors.centerIn: parent
+            QGCLabel {
+                text:   qsTr("Connection Timeout")
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCButton {
+                text:       qsTr("Close")
+                width:      _labelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked:  {
+                    timeoutDialog.visible = false
                 }
             }
         }

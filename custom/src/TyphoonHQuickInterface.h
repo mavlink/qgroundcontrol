@@ -50,7 +50,7 @@ public:
 
     Q_INVOKABLE void enterBindMode  ();
     Q_INVOKABLE void initM4         ();
-    Q_INVOKABLE void startScan      ();
+    Q_INVOKABLE void startScan      (int delay = 0);
     Q_INVOKABLE void stopScan       ();
     Q_INVOKABLE void bindWIFI       (QString ssid, QString password);
     Q_INVOKABLE bool isWIFIConnected();
@@ -74,9 +74,9 @@ public:
     QStringList ssidList            () { return _ssidList; }
     bool        scanningWiFi        () { return _scanningWiFi; }
     bool        bindingWiFi         () { return _bindingWiFi; }
-    int         rssi                () { return _rssi; }
+    int         rssi                ();
 
-    void    init                    (TyphoonHM4Interface* pHandler);
+    void        init                (TyphoonHM4Interface* pHandler);
 
 signals:
     void    m4StateChanged              ();
@@ -88,18 +88,20 @@ signals:
     void    connectedSSIDChanged        ();
     void    bindingWiFiChanged          ();
     void    rssiChanged                 ();
+    void    bindTimeout                 ();
 
 private slots:
     void    _m4StateChanged             ();
     void    _destroyed                  ();
     void    _controllerLocationChanged  ();
     void    _newSSID                    (QString ssid, int rssi);
-    void    _newRSSI                    (int rssi);
+    void    _newRSSI                    ();
     void    _scanComplete               ();
     void    _authenticationError        ();
     void    _wifiConnected              ();
     void    _scanWifi                   ();
     void    _delayedBind                ();
+    void    _bindTimeout                ();
 
 private:
     TyphoonHM4Interface*    _pHandler;
@@ -110,5 +112,4 @@ private:
     bool                    _scanEnabled;
     bool                    _scanningWiFi;
     bool                    _bindingWiFi;
-    int                     _rssi;
 };

@@ -58,6 +58,7 @@ private slots:
     void    _remoteControlRSSIChanged           (uint8_t rssi);
 
 private:
+    bool    _exitToAwait                        ();
     bool    _enterRun                           ();
     bool    _exitRun                            ();
     bool    _startBind                          ();
@@ -99,7 +100,7 @@ signals:
     void    destroyed                           ();
     //-- WIFI
     void    newWifiSSID                         (QString ssid, int rssi);
-    void    newWifiRSSI                         (int rssi);
+    void    newWifiRSSI                         ();
     void    scanComplete                        ();
     void    authenticationError                 ();
     void    wifiConnected                       ();
