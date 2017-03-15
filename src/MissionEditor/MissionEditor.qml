@@ -246,6 +246,8 @@ QGCView {
         id: _mapTypeButtonsExclusiveGroup
     }
 
+    /// Sets a new current mission item
+    ///     @param sequenceNumber - index for new item, -1 to clear current item
     function setCurrentItem(sequenceNumber) {
         if (sequenceNumber !== _currentMissionIndex) {
             _currentMissionItem = undefined
@@ -261,6 +263,15 @@ QGCView {
                 }
             }
         }
+    }
+
+    /// Inserts a new simple mission item
+    ///     @param coordinate Location to insert item
+    ///     @param index Insert item at this index
+    function insertSimpleMissionItem(coordinate, index) {
+        setCurrentItem(-1)
+        var sequenceNumber = missionController.insertSimpleMissionItem(coordinate, index)
+        setCurrentItem(sequenceNumber)
     }
 
     property int _moveDialogMissionItemIndex
@@ -379,8 +390,7 @@ QGCView {
                         switch (_editingLayer) {
                         case _layerMission:
                             if (_addWaypointOnClick) {
-                                var sequenceNumber = missionController.insertSimpleMissionItem(coordinate, missionController.visualItems.count)
-                                setCurrentItem(sequenceNumber)
+                                insertSimpleMissionItem(coordinate, missionController.visualItems.count)
                             }
                             break
                         case _layerGeoFence:
@@ -591,12 +601,8 @@ QGCView {
                                 setCurrentItem(removeIndex)
                             }
 
-                            onInsert: {
-                                var sequenceNumber = missionController.insertSimpleMissionItem(editorMap.center, index)
-                                setCurrentItem(sequenceNumber)
-                            }
-
-                            onMoveHomeToMapCenter: _visualItems.get(0).coordinate = editorMap.center
+                            onInsert:               insertSimpleMissionItem(editorMap.center, index)
+                            onMoveHomeToMapCenter:  _visualItems.get(0).coordinate = editorMap.center
                         }
                     } // QGCListView
                 } // Item - Mission Item editor
