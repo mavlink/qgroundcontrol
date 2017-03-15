@@ -31,8 +31,5 @@ public:
 private:
     QVariantList        _toolBarIndicators;
 
-    static const char*  _simpleFlightMode;
-    static const char*  _posCtlFlightMode;
-    static const char*  _rtlFlightMode;
     static QVariantList _cameraList;        ///< Yuneec camera list
 };

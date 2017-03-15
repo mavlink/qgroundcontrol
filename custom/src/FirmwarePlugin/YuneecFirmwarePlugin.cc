@@ -9,10 +9,6 @@
 #include "YuneecAutoPilotPlugin.h"
 #include "CameraMetaData.h"
 
-const char* YuneecFirmwarePlugin::_simpleFlightMode =   "Smart";
-const char* YuneecFirmwarePlugin::_posCtlFlightMode =   "Angle";
-const char* YuneecFirmwarePlugin::_rtlFlightMode =      "RTL";
-
 QVariantList YuneecFirmwarePlugin::_cameraList;
 
 YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
@@ -22,6 +18,10 @@ YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
     //      Position -> Angle
     //      Return -> RTL
 
+    _posCtlFlightMode = tr("Angle");
+    _rtlFlightMode = tr("RTL");
+    _simpleFlightMode = tr("Smart");
+
     // Only the following flight modes are user selectable:
     //      Simple
     //      Position
@@ -30,13 +30,11 @@ YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
 
     for (int i=0; i<_flightModeInfoList.count(); i++) {
         FlightModeInfo_t& info = _flightModeInfoList[i];
-        if (info.name == PX4FirmwarePlugin::_simpleFlightMode) {
-            info.name = YuneecFirmwarePlugin::_simpleFlightMode;
-        } else if (info.name == PX4FirmwarePlugin::_posCtlFlightMode) {
-            info.name = YuneecFirmwarePlugin::_posCtlFlightMode;
-        } else if (info.name == PX4FirmwarePlugin::_rtlFlightMode) {
-            info.name = YuneecFirmwarePlugin::_rtlFlightMode;
-        } else if (info.name != PX4FirmwarePlugin::_missionFlightMode) {
+
+        if (info.name != _simpleFlightMode &&
+                info.name != _posCtlFlightMode &&
+                info.name != _rtlFlightMode &&
+                info.name != _missionFlightMode) {
             // No other flight modes can be set
             info.canBeSet = false;
         }
