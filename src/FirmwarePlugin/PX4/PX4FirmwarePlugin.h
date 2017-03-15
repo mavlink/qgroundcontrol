@@ -63,37 +63,38 @@ public:
     QString             rtlFlightMode                   (void) override;
     QString             takeControlFlightMode           (void) override;
 
-    // NOTE: For internal use only. Do not use in mainline QGC code.
-    // Use these constants to set flight modes using setFlightMode method. Don't use hardcoded string names since the
-    // names may change.
-    static const char* _manualFlightMode;
-    static const char* _acroFlightMode;
-    static const char* _stabilizedFlightMode;
-    static const char* _rattitudeFlightMode;
-    static const char* _altCtlFlightMode;
-    static const char* _posCtlFlightMode;
-    static const char* _offboardFlightMode;
-    static const char* _readyFlightMode;
-    static const char* _takeoffFlightMode;
-    static const char* _holdFlightMode;
-    static const char* _missionFlightMode;
-    static const char* _rtlFlightMode;
-    static const char* _landingFlightMode;
-    static const char* _rtgsFlightMode;
-    static const char* _followMeFlightMode;
-    static const char* _simpleFlightMode;
-
 protected:
     typedef struct {
-        uint8_t     main_mode;
-        uint8_t     sub_mode;
-        QString     name;       ///< Name for flight mode
-        bool        canBeSet;   ///< true: Vehicle can be set to this flight mode
-        bool        fixedWing;  /// fixed wing compatible
-        bool        multiRotor;  /// multi rotor compatible
+        uint8_t         main_mode;
+        uint8_t         sub_mode;
+        const QString*  name;       ///< Name for flight mode
+        bool            canBeSet;   ///< true: Vehicle can be set to this flight mode
+        bool            fixedWing;  /// fixed wing compatible
+        bool            multiRotor; /// multi rotor compatible
     } FlightModeInfo_t;
 
     QList<FlightModeInfo_t> _flightModeInfoList;
+
+    // Use these constants to set flight modes using setFlightMode method. Don't use hardcoded string names since the
+    // names may change.
+
+    // If plugin superclass wants to change a mode name, then set a new name for the flight mode in the superclass constructor
+    QString _manualFlightMode;
+    QString _acroFlightMode;
+    QString _stabilizedFlightMode;
+    QString _rattitudeFlightMode;
+    QString _altCtlFlightMode;
+    QString _posCtlFlightMode;
+    QString _offboardFlightMode;
+    QString _readyFlightMode;
+    QString _takeoffFlightMode;
+    QString _holdFlightMode;
+    QString _missionFlightMode;
+    QString _rtlFlightMode;
+    QString _landingFlightMode;
+    QString _rtgsFlightMode;
+    QString _followMeFlightMode;
+    QString _simpleFlightMode;
 
 private:
     void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);

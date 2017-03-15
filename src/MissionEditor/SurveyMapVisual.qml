@@ -304,7 +304,8 @@ Item {
                     var dragHandle = dragHandleComponent.createObject(map)
                     dragHandle.coordinate = Qt.binding(function() { return object.coordinate })
                     map.addMapItem(dragHandle)
-                    var dragArea = dragAreaComponent.createObject(map, { "itemIndicator": dragHandle, "itemCoordinate": object.coordinate, "polygonVertex": index })
+                    var dragArea = dragAreaComponent.createObject(map, { "itemIndicator": dragHandle, "itemCoordinate": object.coordinate })
+                    dragArea.polygonVertex = Qt.binding(function() { return index })
                     _visuals.push(dragHandle)
                     _visuals.push(dragArea)
                 }
