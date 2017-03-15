@@ -79,20 +79,68 @@ InstrumentWidgetSrc::source()
 class TyphoonHOptions : public QGCOptions
 {
 public:
-    TyphoonHOptions(QObject* parent = NULL);
+    TyphoonHOptions(TyphoonHPlugin* plugin, QObject* parent = NULL);
     bool        combineSettingsAndSetup     () { return true;  }
     double      toolbarHeightMultiplier     () { return 1.25; }
     bool        enablePlanViewSelector      () { return false; }
     CustomInstrumentWidget* instrumentWidget();
+    bool        showSensorCalibrationCompass   () const final;
+    bool        showSensorCalibrationGyro      () const final;
+    bool        showSensorCalibrationAccel     () const final;
+    bool        showSensorCalibrationLevel     () const final;
+    bool        showSensorCalibrationOrient    () const final;
+
+private slots:
+    void _advancedChanged(bool advanced);
+
 private:
-    InstrumentWidgetSrc* _instrumentWidgetSrc;
+    InstrumentWidgetSrc*    _instrumentWidgetSrc;
+    TyphoonHPlugin*         _plugin;
 };
 
 //-----------------------------------------------------------------------------
-TyphoonHOptions::TyphoonHOptions(QObject* parent)
+TyphoonHOptions::TyphoonHOptions(TyphoonHPlugin* plugin, QObject* parent)
     : QGCOptions(parent)
     , _instrumentWidgetSrc(NULL)
+    , _plugin(plugin)
 {
+    connect(_plugin, &QGCCorePlugin::showAdvancedUIChanged, this, &TyphoonHOptions::_advancedChanged);
+}
+
+void TyphoonHOptions::_advancedChanged(bool advanced)
+{
+    Q_UNUSED(advanced);
+
+    emit showSensorCalibrationCompassChanged(showSensorCalibrationCompass());
+    emit showSensorCalibrationGyroChanged(showSensorCalibrationGyro());
+    emit showSensorCalibrationAccelChanged(showSensorCalibrationAccel());
+    emit showSensorCalibrationLevelChanged(showSensorCalibrationLevel());
+    emit showSensorCalibrationOrientChanged(showSensorCalibrationOrient());
+}
+
+bool TyphoonHOptions::showSensorCalibrationCompass(void) const
+{
+    return true;
+}
+
+bool TyphoonHOptions::showSensorCalibrationGyro(void) const
+{
+    return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
+}
+
+bool TyphoonHOptions::showSensorCalibrationAccel(void) const
+{
+    return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
+}
+
+bool TyphoonHOptions::showSensorCalibrationLevel(void) const
+{
+    return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
+}
+
+bool TyphoonHOptions::showSensorCalibrationOrient(void) const
+{
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -126,7 +174,7 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
     , _pHandler(NULL)
 {
     _showAdvancedUI = false;
-    _pOptions = new TyphoonHOptions(this);
+    _pOptions = new TyphoonHOptions(this, this);
     _pHandler = new TyphoonHM4Interface();
     connect(this, &QGCCorePlugin::showAdvancedUIChanged, this, &TyphoonHPlugin::_showAdvancedPages);
 }
@@ -276,3 +324,16 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     }
     return true;
 }
+
+QString
+TyphoonHPlugin::brandImageIndoor(void) const
+{
+    return QStringLiteral("/typhoonh/YuneecBrandImage.png");
+}
+
+QString
+TyphoonHPlugin::brandImageOutdoor(void) const
+{
+    return brandImageIndoor();
+}
+
