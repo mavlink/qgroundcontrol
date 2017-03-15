@@ -20,7 +20,6 @@ public:
     // FirmwarePlugin overrides
 
     AutoPilotPlugin*    autopilotPlugin     (Vehicle* vehicle) final;
-    QString             brandImage          (const Vehicle* vehicle) const final;
     QString             vehicleImageOpaque  (const Vehicle* vehicle) const final;
     QString             vehicleImageOutline (const Vehicle* vehicle) const final;
     QString             vehicleImageCompass (const Vehicle* vehicle) const final;

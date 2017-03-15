@@ -27,6 +27,8 @@ public:
     QVariantList&       settingsPages                   () final;
     bool                overrideSettingsGroupVisibility (QString name) final;
     bool                adjustSettingMetaData           (FactMetaData& metaData) final;
+    QString             brandImageIndoor                () const final;
+    QString             brandImageOutdoor               () const final;
 
     // Overrides from QGCTool
     void                setToolbox                      (QGCToolbox* toolbox);
