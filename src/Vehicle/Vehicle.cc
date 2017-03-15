@@ -2192,9 +2192,14 @@ void Vehicle::_newGeoFenceAvailable(void)
     }
 }
 
-QString Vehicle::brandImage(void) const
+QString Vehicle::brandImageIndoor(void) const
 {
-    return _firmwarePlugin->brandImage(this);
+    return _firmwarePlugin->brandImageIndoor(this);
+}
+
+QString Vehicle::brandImageOutdoor(void) const
+{
+    return _firmwarePlugin->brandImageOutdoor(this);
 }
 
 QStringList Vehicle::unhealthySensors(void) const
