@@ -101,6 +101,7 @@ private slots:
     void _updateLandingCoodinateAltitudeFromFact(void);
     double _mathematicAngleToHeading(double angle);
     double _headingToMathematicAngle(double heading);
+    void _setDirty(void);
 
 private:
     QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
