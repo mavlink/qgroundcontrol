@@ -506,8 +506,8 @@ void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
         QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath()->rawValue().toString();
         QDir saveDir(saveDirPath);
 
-        QString nameFormat("%1%2.mavlink");
-        QString dtFormat("yyyy-MMM-dd hh-mm-ss");
+        QString nameFormat("%1%2.tlog");
+        QString dtFormat("yyyy-MM-dd hh-mm-ss");
 
         int tryIndex = 1;
         QString saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat)).arg("");
