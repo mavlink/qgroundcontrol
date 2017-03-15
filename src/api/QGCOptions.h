@@ -52,12 +52,12 @@ public:
     virtual CustomInstrumentWidget* instrumentWidget();
 
     /// By returning false you can hide the following sensor calibration pages
-    bool showSensorCalibrationCompass   () const { return true; }
-    bool showSensorCalibrationGyro      () const { return true; }
-    bool showSensorCalibrationAccel     () const { return true; }
-    bool showSensorCalibrationLevel     () const { return true; }
-    bool showSensorCalibrationAirspeed  () const { return true; }
-    bool showSensorCalibrationOrient    () const { return true; }
+    virtual bool showSensorCalibrationCompass   () const { return true; }
+    virtual bool showSensorCalibrationGyro      () const { return true; }
+    virtual bool showSensorCalibrationAccel     () const { return true; }
+    virtual bool showSensorCalibrationLevel     () const { return true; }
+    virtual bool showSensorCalibrationAirspeed  () const { return true; }
+    virtual bool showSensorCalibrationOrient    () const { return true; }
 
 signals:
     void showSensorCalibrationCompassChanged    (bool show);

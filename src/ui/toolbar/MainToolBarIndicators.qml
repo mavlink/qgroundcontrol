@@ -25,6 +25,28 @@ Item {
     QGCPalette { id: qgcPal }
 
 
+    // Easter egg mechanism
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            console.log("easter egg click", ++_clickCount)
+            eggTimer.restart()
+            if (_clickCount == 5) {
+                QGroundControl.corePlugin.showAdvancedUI = true
+            } else if (_clickCount == 7) {
+                QGroundControl.corePlugin.showTouchAreas = true
+            }
+        }
+
+        property int _clickCount: 0
+
+        Timer {
+            id:             eggTimer
+            interval:       1000
+            onTriggered:    parent._clickCount = 0
+        }
+    }
+
     QGCLabel {
         id:                     waitForVehicle
         anchors.verticalCenter: parent.verticalCenter
