@@ -194,7 +194,7 @@ Item {
                 height:     width
                 radius:     width / 2
                 color:      "white"
-                opacity:    .80
+                opacity:    .50
 
                 QGCLabel {
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -285,7 +285,7 @@ Item {
                 height:     width
                 radius:     width / 2
                 color:      "white"
-                opacity:    .80
+                opacity:    .90
             }
         }
     }
