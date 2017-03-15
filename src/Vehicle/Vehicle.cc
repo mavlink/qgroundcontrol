@@ -111,6 +111,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _telemetryTXBuffer(0)
     , _telemetryLNoise(0)
     , _telemetryRNoise(0)
+    , _vehicleCapabilitiesKnown(false)
+    , _supportsMissionItemInt(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -264,6 +266,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _globalPositionIntMessageAvailable(false)
     , _cruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _hoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
+    , _vehicleCapabilitiesKnown(true)
+    , _supportsMissionItemInt(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
@@ -692,6 +696,13 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
         }
         emit gitHashChanged(_gitHash);
     }
+
+    if (autopilotVersion.capabilities & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
+        qCDebug(VehicleLog) << "Vehicle supports MISSION_ITEM_INT";
+        _supportsMissionItemInt = true;
+        _vehicleCapabilitiesKnown = true;
+        _startMissionRequest();
+    }
 }
 
 void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
@@ -724,6 +735,12 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 
     mavlink_command_ack_t ack;
     mavlink_msg_command_ack_decode(&message, &ack);
+
+    if (ack.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES && ack.result != MAV_RESULT_ACCEPTED) {
+        // We aren't going to get a response back for capabilities, so stop waiting for it before we ask for mission items
+        qCDebug(VehicleLog) << "Vehicle failed to responded to MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES with error. Starting mission request.";
+        _startMissionRequest();
+    }
 
     if (_mavCommandQueue.count() && ack.command == _mavCommandQueue[0].command) {
         _mavCommandAckTimer.stop();
@@ -1634,9 +1651,10 @@ void Vehicle::_mapTrajectoryStop()
     _mapTrajectoryTimer.stop();
 }
 
-void Vehicle::_parametersReady(bool parametersReady)
+void Vehicle::_startMissionRequest(void)
 {
-    if (parametersReady && !_missionManagerInitialRequestSent) {
+    if (!_missionManagerInitialRequestSent && _parameterManager->parametersReady() && _vehicleCapabilitiesKnown) {
+        qCDebug(VehicleLog) << "_startMissionRequest";
         _missionManagerInitialRequestSent = true;
         QString missionAutoLoadDirPath = _settingsManager->appSettings()->missionAutoLoadDir()->rawValue().toString();
         if (missionAutoLoadDirPath.isEmpty()) {
@@ -1650,6 +1668,19 @@ void Vehicle::_parametersReady(bool parametersReady)
                 MissionController::sendItemsToVehicle(this, visualItems);
             }
         }
+    } else {
+        if (!_parameterManager->parametersReady()) {
+            qCDebug(VehicleLog) << "Delaying _startMissionRequest due to parameters not ready";
+        } else if (!_vehicleCapabilitiesKnown) {
+            qCDebug(VehicleLog) << "Delaying _startMissionRequest due to vehicle capabilities not know";
+        }
+    }
+}
+
+void Vehicle::_parametersReady(bool parametersReady)
+{
+    if (parametersReady) {
+        _startMissionRequest();
     }
 
     if (parametersReady) {
@@ -2043,6 +2074,11 @@ void Vehicle::_sendMavCommandAgain(void)
     MavCommandQueueEntry_t& queuedCommand = _mavCommandQueue[0];
 
     if (_mavCommandRetryCount++ > _mavCommandMaxRetryCount) {
+        if (queuedCommand.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES) {
+            // We aren't going to get a response back for capabilities, so stop waiting for it before we ask for mission items
+            _startMissionRequest();
+        }
+
         emit mavCommandResult(_id, queuedCommand.component, queuedCommand.command, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
         if (queuedCommand.showError) {
             qgcApp()->showMessage(tr("Vehicle did not respond to command: %1").arg(qgcApp()->toolbox()->missionCommandTree()->friendlyName(queuedCommand.command)));
